@@ -128,8 +128,16 @@ with a light outline so it reads on both light and dark rows.
 There is no existing overlay/badge helper in the codebase (git status is rendered as a
 separate side-by-side image, not stacked), so this adds a small, opt-in pattern.
 
-- Extend `FileIcon` (`.../common/filetypes/FileIcon.java`) with an optional overlay badge
-  (`ImageResource` + accessible description) and a builder, e.g. `withLinkBadge()`.
+- Extend `FileIcon` (`.../common/filetypes/FileIcon.java`) with two optional, `final`
+  fields — an overlay badge (`ImageResource` + accessible description) and a per-file
+  tooltip string — keeping `FileIcon` **immutable**.
+- Add `withLinkBadge(ImageResource badge, String tooltip)` that **returns a new
+  `FileIcon`** (copying this icon's base image + description and adding the badge +
+  tooltip). It must **not** mutate `this`: `FileTypeRegistry.getIconForFile()` returns
+  shared/static singletons (`FileIcon.FOLDER_ICON`, `TEXT_ICON`, and the per-type icons
+  cached in `iconsByFilename_`/`iconsByFileExtension_`), so mutating one would leak the
+  badge and the per-file tooltip to every other row and caller using that icon. Because
+  the tooltip is per-file (a different target per row), it can only live on such a copy.
 - Update `FileIconRenderer.render()`
   (`.../common/filetypes/FileIconRenderer.java:39-55`): when a badge is present, wrap the
   base icon HTML in a `position: relative` inline-block `<span>` and append an
@@ -183,6 +191,9 @@ e.g. `RSConnectDeploy.java`).
   **including a broken alias** (`is_alias` true, `alias_target` absent) still reporting
   `isLink()` true; `getLinkTarget()` preferring the symlink target and falling back to the
   alias target and to null. Run: `cd src/gwt && ant unittest`.
+- **Icon decoration immutability:** a test asserting `FileIcon.withLinkBadge(...)` returns
+  a *distinct* instance and leaves the original shared icon's badge/tooltip absent (guards
+  against leaking per-file state onto the shared `FileTypeRegistry` singletons).
 - **Backend:** unit-test the new `FilePath::readSymlink()` API (a `FilePath`-level test,
   no session harness needed): a symlink with a **relative** target returns that relative
   string verbatim; one with an **absolute** target returns it verbatim; a non-symlink /
