@@ -359,14 +359,10 @@ jobs:
             exit 1
           }
 
-      # install-dependencies.cmd (via tools.R) checks for MSVC 2022 at a set of
-      # hardcoded paths: BuildTools, Community, and their x86 variants.  GitHub
-      # runners have Visual Studio 2022 Enterprise, which is not in that list.
-      # Use vswhere.exe to find the actual installation, then:
-      #   1. Add VC\Auxiliary\Build to GITHUB_PATH so vcvarsall.bat is on PATH
-      #      for make-package.bat (which calls it by name).
-      #   2. Create a junction at the BuildTools path so tools.R's file.exists
-      #      check finds MSVC and proceeds to compile SOCI.
+      # install-dependencies.cmd (via tools.R) locates Visual Studio with
+      # vswhere, so no junction is needed. We still add VC\Auxiliary\Build to
+      # GITHUB_PATH so vcvarsall.bat is on PATH for make-package.bat (which
+      # calls it by name).
       - name: Set up MSVC environment
         run: |
           $ErrorActionPreference = 'Stop'
@@ -379,34 +375,17 @@ jobs:
             exit 1
           }
           Write-Host "Visual Studio installation: $vsPath"
-          # 1. PATH for vcvarsall.bat
           $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
           Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
           Write-Host "Added to PATH: $vcBuildPath"
-          # 2. Junction so tools.R's hardcoded BuildTools check passes
-          $junctionTarget = $vsPath
-          $junctionPath   = 'C:\Program Files\Microsoft Visual Studio\2022\BuildTools'
-          if (-not (Test-Path $junctionPath)) {
-            New-Item -ItemType Junction -Path $junctionPath -Target $junctionTarget | Out-Null
-            Write-Host "Junction created: $junctionPath -> $junctionTarget"
-          } else {
-            Write-Host "Junction already exists: $junctionPath"
-          }
 
-      # install-soci.R defaults its CMake generator to "Visual Studio 17 2022",
-      # which doesn't exist on windows-2025 once the image moves to VS 2026
-      # (CMake reports `could not find any instance of Visual Studio`). Pass the
-      # VS 2026 generator name explicitly so SOCI can configure and build.
-      # MSVC_TOOLSET_VERSION=145 selects the msvc145 Boost prebuilts, matching
-      # the VS 2026 toolset on this runner, so CMakeLists.txt no longer needs
-      # its msvc143 fallback here.
+      # install-dependencies.cmd targets the VS 2026 toolset (msvc145) and the
+      # "Visual Studio 18 2026" CMake generator by default, matching this
+      # runner's Visual Studio 2026.
       - name: Install build dependencies
         id: install-deps
         working-directory: dependencies/windows
         shell: cmd
-        env:
-          CMAKE_GENERATOR: Visual Studio 18 2026
-          MSVC_TOOLSET_VERSION: "145"
         run: install-dependencies.cmd
 
       # GWT's build.xml looks for yarn at ${node.dir}/node_modules/yarn/bin/yarn.cmd
