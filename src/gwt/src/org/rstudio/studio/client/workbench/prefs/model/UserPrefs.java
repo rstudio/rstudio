@@ -268,11 +268,17 @@ public class UserPrefs extends UserPrefsComputed
       announceScreenReaderState();
       syncToggleTabKeyMovesFocusState();
       
-      // Send initial mousewheel zoom preferences to desktop
+      // Mirror the initial values of Electron-specific preferences into the
+      // electron-store. The value-change handlers above only fire when the user
+      // changes a preference in a running session, so this also covers values
+      // loaded from disk (e.g. set by an administrator, edited by hand, or
+      // synced from another machine) that must be available at the next startup
+      // before the session has started.
       if (BrowseCap.isElectron())
       {
          Desktop.getFrame().setMousewheelZoomEnabled(enableMousewheelZoom().getValue());
          Desktop.getFrame().setMousewheelZoomDebounce(mousewheelZoomDebounceMs().getValue());
+         Desktop.getFrame().setShowWhatsNew(showWhatsNew().getValue());
       }
    }
 
