@@ -384,8 +384,26 @@ FunctionEnd
 ; hand a non-admin user an admin-privileged file deletion.
 Function RunCrossModeUninstaller
   StrCpy $0 -1
+  ClearErrors
   ExecWait '$1 /S /uninstall _?=$2' $0
+  ${If} ${Errors}
+    ; Uninstallers from RStudio installers that predate NsisMultiUser have no
+    ; manifest, so Windows installer detection demands elevation and the
+    ; CreateProcess behind ExecWait fails outright when this instance is not
+    ; elevated. ExecShellWait goes through ShellExecute, which shows the UAC
+    ; prompt and waits. Only that legacy all-users uninstaller can end up here
+    ; (NsisMultiUser uninstallers run asInvoker and launch fine), so /allusers
+    ; is the right mode - and legacy uninstallers ignore these switches anyway.
+    ClearErrors
+    ExecShellWait "open" "$2\Uninstall.exe" "/allusers /S /uninstall _?=$2"
+    ${IfNot} ${Errors}
+      StrCpy $0 0
+    ${EndIf}
+  ${EndIf}
   ${If} $0 = 0
+    ; when this instance is not elevated and the removed installation was in
+    ; Program Files, these fail silently and leave only Uninstall.exe and an
+    ; empty folder behind; the registration is gone either way
     Delete "$2\Uninstall.exe"
     RMDir "$2"
   ${EndIf}
@@ -402,8 +420,10 @@ Section "-Remove previous installation"
       DetailPrint "Removing the existing per-user installation..."
       !insertmacro UAC_AsUser_Call Function RunCrossModeUninstaller ${UAC_SYNCREGISTERS}
     ${Else}
-      ; removing a per-machine installation requires elevation; NsisMultiUser
-      ; already elevated this instance for exactly this case (ALLOW_BOTH 0)
+      ; removing a per-machine installation needs admin rights, but selecting
+      ; per-user does not elevate this installer (the install-mode page only
+      ; shows the UAC shield); the spawned uninstaller requests elevation
+      ; itself and shows its own UAC prompt
       DetailPrint "Removing the existing all-users installation..."
       Call RunCrossModeUninstaller
     ${EndIf}
@@ -654,6 +674,50 @@ Function .onInit
   ${endif}
 
   !insertmacro MULTIUSER_INIT
+
+  ;
+  ; RSTUDIO CHANGE - detect all-users installations made by RStudio installers
+  ; that predate NsisMultiUser. Those wrote UninstallString but not
+  ; InstallLocation under the HKLM uninstall key, and InitChecks keys its
+  ; detection on InstallLocation, so a release install is otherwise invisible
+  ; here: the install-mode page would not mention it and the cross-mode
+  ; removal would skip it. Backfill the framework's variables so a legacy
+  ; install behaves like one made by this installer. This runs in both the
+  ; outer and the elevated inner instance, after each has run its own
+  ; InitChecks. The values come from HKLM, so the cross-mode removal still
+  ; acts on admin-controlled paths only.
+  ;
+  ${If} $HasPerMachineInstallation = 0
+    ReadRegStr $R0 HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "UninstallString"
+    ${If} $R0 != ""
+      ; the legacy value is an unquoted uninstaller path with no arguments;
+      ; unquote defensively, then derive the install folder from it
+      StrCpy $R1 $R0 1
+      ${If} $R1 == '"'
+        StrCpy $R0 $R0 "" 1
+        StrCpy $R1 $R0 1 -1
+        ${If} $R1 == '"'
+          StrCpy $R0 $R0 -1
+        ${EndIf}
+      ${EndIf}
+      ${GetParent} $R0 $R1
+      ${If} $R1 != ""
+        StrCpy $PerMachineUninstallString '"$R0"'
+        StrCpy $PerMachineInstallationFolder $R1
+        ReadRegStr $PerMachineInstallationVersion HKLM "${MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY_PATH}" "DisplayVersion"
+        StrCpy $HasPerMachineInstallation 1
+        ; in silent runs InstallMode.AllUsers already ran during
+        ; MULTIUSER_INIT with the un-backfilled values (and it returns early
+        ; once the mode is set); replay what it would have derived from them
+        ${If} $MultiUser.InstallMode == "AllUsers"
+          StrCpy $HasCurrentModeInstallation 1
+          ${If} $CmdLineDir == ""
+            StrCpy $INSTDIR $PerMachineInstallationFolder
+          ${EndIf}
+        ${EndIf}
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
 
   ; Component status (uses SHCTX set by MULTIUSER_INIT)
   !insertmacro SectionList "InitSection"
