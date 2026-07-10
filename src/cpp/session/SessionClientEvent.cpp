@@ -213,7 +213,6 @@ const int kPresentationPreview = 195;
 const int kSuspendBlocked = 196;
 const int kClipboardAction = 197;
 const int kDeploymentRecordsUpdated = 198;
-const int kRunAutomation = 199;
 const int kConsoleWritePendingError = 200;
 const int kConsoleWritePendingWarning = 201;
 const int kAssistantStatusChanged = 202;
@@ -222,6 +221,7 @@ const int kShowMessage = 204;
 const int kNotebookRenderCompleted = 205;
 const int kConsoleReadCompleted = 206;
 const int kRStudioAPIShowMenu = 207;
+const int kPackageVulnerabilitiesReady = 208;
 
 }
 
@@ -606,8 +606,6 @@ std::string ClientEvent::typeName() const
          return "clipboard_action";
       case client_events::kDeploymentRecordsUpdated:
          return "deployment_records_updated";
-      case client_events::kRunAutomation:
-         return "run_automation";
       case client_events::kConsoleWritePendingError:
          return "console_write_pending_error";
       case client_events::kConsoleWritePendingWarning:
@@ -622,6 +620,8 @@ std::string ClientEvent::typeName() const
          return "console_read_completed";
       case client_events::kRStudioAPIShowMenu:
          return "rstudioapi_show_menu";
+      case client_events::kPackageVulnerabilitiesReady:
+         return "package_vulnerabilities_ready";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

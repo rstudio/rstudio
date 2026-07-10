@@ -19,6 +19,7 @@ public class QuartoCommandConstants
 {
    public final static String FORMAT_HTML = "html";
    public final static String FORMAT_PDF = "pdf";
+   public final static String FORMAT_TYPST = "typst";
    public final static String FORMAT_DOCX = "docx";
    public final static String FORMAT_REVEALJS = "revealjs";
    public final static String FORMAT_BEAMER = "beamer";

@@ -325,11 +325,18 @@ int RReadConsole(const char *pmt,
       // s_captureInjected is still true so we skip injection and
       // proceed normally. The next new browse prompt (after stepping)
       // injects again.
+      //
+      // Resolve .rs.captureCurrentEnvironment explicitly through
+      // as.environment("tools:rstudio") rather than relying on the
+      // search path being reachable via lexical scope. Functions
+      // loaded by hermetic module systems (e.g. the 'box' package)
+      // have enclosure chains that bypass the user search path, so
+      // a bare .rs.captureCurrentEnvironment() lookup would fail.
       static bool s_captureInjected = false;
       if (browsing && !s_captureInjected)
       {
          s_captureInjected = true;
-         std::string cmd = ".rs.captureCurrentEnvironment()\n";
+         std::string cmd = "as.environment(\"tools:rstudio\")$.rs.captureCurrentEnvironment()\n";
          cmd.copy((char*)buf, cmd.size());
          buf[cmd.size()] = '\0';
          return 1;

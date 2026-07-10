@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' file:;">
+  <link rel="stylesheet" href="../whats-new-base.css">
+  <title>What's New in RStudio</title>
+</head>
+<body>
+  <div class="feature-section">
+    <h2>New Features</h2>
+    <ul>
+      <li><strong>Bring your own provider for Posit Assistant:</strong> Posit Assistant can now be configured to directly use providers other than Posit AI (Anthropic, OpenAI, Amazon Bedrock, and others).</li>
+      <li><strong>Typst output for Quarto documents:</strong> The Quarto Document dialog now offers separate PDF (Typst) and PDF (LaTeX) output options. Typst is bundled with Quarto and requires no additional software.</li>
+      <li><strong>Date and time formatting:</strong> Dates and times (such as the Files pane Modified column) are now formatted according to the system region by default, rather than always using a US-style format. A new settings menu on the Files pane toolbar adds options to use ISO-8601 formatting or the UTC time zone instead.</li>
+      <li><strong>Find in Files improvement:</strong> The Find in Files replace preview and Replace All results no longer present matches whose proposed replacement is identical to the matched text; lines whose every match would be unchanged are omitted entirely.</li>
+      <li><strong>rserver --check-config:</strong> Use <code>rserver --check-config</code> (and the <code>rstudio-server check-config</code> admin subcommand) to validate the configuration file without starting the service, reporting all unrecognized options in a single pass. <code>--test-config</code> is now a deprecated alias for <code>--check-config</code> with the same behavior; it previously stopped at the first unrecognized option. Using <code>--test-config</code> prints a deprecation warning, and it will be removed in a future release. <code>--check-config</code> now also validates that configured file paths (secure-cookie-key-file, rsession-config-file, database-config-file) exist on disk, and reports the detected R installation (informational). In Posit Workbench builds, the check also covers database connectivity and license status.</li>
+      <li><strong>Improved performance for projects on network or remote filesystems:</strong> RStudio can now reduce background file operations (recursive file monitoring, code indexing, and external-edit checks) for projects located on network or remote filesystems, improving responsiveness on slow drives. This applies automatically when a remote filesystem is detected, and can be configured globally (Tools > Global Options > General > Advanced) or overridden per-project (Project Options > General).</li>
+    </ul>
+  </div>
+
+  <div class="feature-section">
+    <h2>Fixes</h2>
+    <p>
+      For a full list of bug fixes in this release, see the
+      <a href="https://www.rstudio.org/links/release_notes#rstudio-2026.07.0">release notes</a>.
+    </p>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,186 @@
+import { test, expect } from '@fixtures/rstudio.fixture';
+import { TIMEOUTS } from '@utils/constants';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { CONFIRM_BTN } from '@pages/modals.page';
+import { useSuiteSandbox } from '@utils/sandbox';
+import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { rPathLiteral } from '@utils/r';
+import { documentOpen, executeCommand, openProject } from '@utils/commands';
+import { seedSandboxFile } from '@utils/files';
+import * as path from 'path';
+import type { Page } from 'playwright';
+
+const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
+const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
+// The project menu button also has a title containing the project path, so a
+// loose `title*='shinytest2'` selector hits it when the project name contains
+// the word. Match the toolbar button's exact title text instead.
+// The Shiny-test toolbar button is rendered in every editor's toolbar and
+// hidden via aria-hidden when the file isn't a shinytest2 file. Match only
+// the visible instance so strict-mode locator resolution doesn't trip
+// across multiple editors (e.g. an Untitled1 left over from prior tests).
+const SHINYTEST_BUTTON = "button[title='Run test using the shinytest2 package']:visible";
+
+async function waitForConsoleIdle(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const el = document.getElementById('rstudio_console_input');
+      return !!el && !el.classList.contains('rstudio-console-busy');
+    },
+    null,
+    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
+  );
+}
+
+async function closeProjectIfOpen(page: Page): Promise<void> {
+  const menu = page.locator(PROJECT_MENU);
+  const label = (await menu.innerText().catch(() => '')).trim();
+  if (label.includes('(None)') || label === '') return;
+  await menu.click();
+  await page.locator(CLOSE_PROJECT_MENU_ITEM).click();
+  await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
+  await page.waitForSelector(CONSOLE_INPUT, {
+    state: 'visible',
+    timeout: TIMEOUTS.sessionRestart,
+  });
+  await waitForConsoleIdle(page);
+}
+
+const SHINYTEST2_TEST_CONTENT = `library(shinytest2)
+
+test_that("01_hello produces stable values", {
+  app <- AppDriver$new(name = "hello")
+  app$set_inputs(bins = 20)
+  app$expect_values()
+})
+`;
+
+async function scaffoldShinytest2Project(
+  page: Page,
+  consoleActions: ConsolePaneActions,
+  projectDir: string,
+): Promise<void> {
+  const projectName = projectDir.split('/').pop()!;
+
+  // Seed the test file under the project's tests/testthat tree.
+  // seedSandboxFile mkdirs the parent chain and writes via Node fs when the
+  // sandbox is writable from here, falling back to R-side dir.create +
+  // writeLines on Server-on-Linux where the sandbox is owned by rsession's
+  // uid. The R-side fallback uses rPathLiteral / rStringLiteral, which
+  // escape embedded quotes correctly -- the original Node-side path was
+  // chosen to avoid quote-escape headaches, but the helper handles them too.
+  const testFilePath = await seedSandboxFile(
+    page,
+    projectDir,
+    'tests/testthat/test-shinytest2.R',
+    SHINYTEST2_TEST_CONTENT,
+  );
+
+  const projectDirLit = rPathLiteral(projectDir);
+  const appPathLit = rPathLiteral(`${projectDir}/app.R`);
+
+  // initializeProject writes ${dir}/${basename(dir)}.Rproj; no bridge
+  // equivalent for project init yet, so stays in console. The bridge's
+  // project.open then dispatches SwitchToProjectEvent directly and needs
+  // that .Rproj path (the R-side .rs.api.openProject accepts a dir and
+  // re-derives it, but the bridge does not). projectName mirrors
+  // basename(projectDir) here, so we can build the .Rproj path locally
+  // without a second R round-trip.
+  await consoleActions.executeInConsole(`.rs.api.initializeProject(${projectDirLit})`);
+  await openProject(page, `${projectDir}/${projectName}.Rproj`);
+  await expect(page.locator(PROJECT_MENU)).toContainText(projectName);
+
+  await consoleActions.executeInConsole(
+    `file.copy(file.path(system.file("examples", package = "shiny"), "01_hello", "app.R"), ${appPathLit}, overwrite = TRUE)`,
+  );
+  await documentOpen(page, testFilePath);
+}
+
+test.describe('shinytest2 integration', () => {
+  const sandbox = useSuiteSandbox();
+  let consoleActions: ConsolePaneActions;
+  let missingShiny: string[] = [];
+  let missingShinytest2: string[] = [];
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    // Installs shiny + shinytest2 and their full dependency trees, which can
+    // run well past the lowered global per-test timeout on a cold package
+    // cache -- give this hook the larger budget it had before.
+    test.setTimeout(300000);
+    consoleActions = new ConsolePaneActions(page);
+    missingShiny = await consoleActions.ensurePackages(['shiny']);
+    // shinytest2 is optional for the toolbar-button test but required for
+    // the snapshot_review stub test.
+    missingShinytest2 = await consoleActions.ensurePackages(['shinytest2']);
+  });
+
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await closeProjectIfOpen(page).catch(() => {});
+  });
+
+  test('shinytest2 file shows Shiny test toolbar button and "no tests yet" info dialog', async ({ rstudioPage: page }) => {
+    test.skip(missingShiny.length > 0, `Missing: ${missingShiny.join(', ')}`);
+
+    const projectDir = `${sandbox.dir}/shinytest2-demo-toolbar`.replace(/\\/g, '/');
+    await scaffoldShinytest2Project(page, consoleActions, projectDir);
+
+    // Button only appears when getTestType() classifies the file as
+    // TestsShinyTest -- exercises the AppDriver$new-before-test_that detection.
+    await expect(page.locator(SHINYTEST_BUTTON)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    await executeCommand(page, 'shinyCompareTest');
+
+    const okBtn = page.locator(CONFIRM_BTN);
+    await expect(okBtn).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await okBtn.click();
+    await expect(okBtn).not.toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  });
+
+  test('shinyCompareTest calls testthat::snapshot_review with the project tests dir when snaps exist', async ({ rstudioPage: page }) => {
+    test.skip(
+      missingShiny.length > 0 || missingShinytest2.length > 0,
+      `Missing: ${[...missingShiny, ...missingShinytest2].join(', ')}`,
+    );
+
+    const projectDir = `${sandbox.dir}/shinytest2-demo-snaps`.replace(/\\/g, '/');
+    await scaffoldShinytest2Project(page, consoleActions, projectDir);
+
+    // Seed a pending diff (*.new.*) so has_shinytest2_results returns true,
+    // then stub testthat::snapshot_review to capture the path argument
+    // instead of actually launching diffviewer.
+    const snapDirLit = rPathLiteral(`${projectDir}/tests/testthat/_snaps/hello`);
+    const snapFileLit = rPathLiteral(`${projectDir}/tests/testthat/_snaps/hello/snapshot.new.png`);
+    await consoleActions.executeInConsole(
+      `dir.create(${snapDirLit}, recursive = TRUE, showWarnings = FALSE)`,
+    );
+    await consoleActions.executeInConsole(`file.create(${snapFileLit})`);
+
+    const stubInstall = [
+      'ns <- asNamespace("testthat")',
+      '.rs.original.snapshot_review <- ns$snapshot_review',
+      'unlockBinding("snapshot_review", ns)',
+      'ns$snapshot_review <- function(files = NULL, path = "tests/testthat", ...) { cat("CAPTURED snapshot_review path=", path, "\\n", sep = "") }',
+      'lockBinding("snapshot_review", ns)',
+    ].join('; ');
+    await consoleActions.executeInConsole(stubInstall);
+
+    try {
+      await executeCommand(page, 'shinyCompareTest');
+
+      await expect
+        .poll(
+          async () => (await page.locator(CONSOLE_OUTPUT).innerText()),
+          { timeout: TIMEOUTS.fileOpen },
+        )
+        .toMatch(/CAPTURED snapshot_review path=.*tests\/testthat$/m);
+    } finally {
+      const restore = [
+        'ns <- asNamespace("testthat")',
+        'unlockBinding("snapshot_review", ns)',
+        'ns$snapshot_review <- .rs.original.snapshot_review',
+        'lockBinding("snapshot_review", ns)',
+      ].join('; ');
+      await executeInConsole(page, restore).catch(() => {});
+    }
+  });
+});

@@ -1,7 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { getSelectionInfo } from '@utils/console';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { waitForConsoleFocus } from '@pages/console_pane.page';
 
 test.describe('Console pane', () => {
   let consoleActions: ConsolePaneActions;
@@ -16,26 +17,26 @@ test.describe('Console pane', () => {
 
   test('print() auto-prints its argument', async () => {
     const phrase = 'If we shadows have offended, think but this, and all is mended.';
-    await consoleActions.typeInConsole(`print("${phrase}")`);
+    await consoleActions.executeInConsole(`print("${phrase}")`);
     await expect(consoleActions.consolePane.consoleOutput).toContainText(`[1] "${phrase}"`);
   });
 
   test('unknown identifier prints object-not-found error', async () => {
-    await consoleActions.typeInConsole('fake_command');
+    await consoleActions.executeInConsole('fake_command');
     await expect(consoleActions.consolePane.consoleOutput).toContainText(
       "Error: object 'fake_command' not found",
     );
   });
 
   test('arrow keys cycle through previous commands', async ({ rstudioPage: page }) => {
-    await consoleActions.typeInConsole("cat('one')");
-    await consoleActions.typeInConsole("cat('two')");
-    await consoleActions.typeInConsole("cat('three')");
+    await consoleActions.executeInConsole("cat('one')");
+    await consoleActions.executeInConsole("cat('two')");
+    await consoleActions.executeInConsole("cat('three')");
     await expect(consoleActions.consolePane.consoleOutput).toContainText('three');
 
     const input = consoleActions.consolePane.consoleInput;
     await input.click({ force: true });
-    await sleep(200);
+    await waitForConsoleFocus(page);
 
     const readInput = () => consoleActions.consolePane.consoleInputValue();
 
@@ -56,10 +57,37 @@ test.describe('Console pane', () => {
     await expect.poll(readInput).toBe('');
   });
 
+  test('timestamp() adds an entry to console history', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole('timestamp(quiet = TRUE)');
+
+    // timestamp(quiet = TRUE) produces no console output, so there is no
+    // text-based gate signalling that R is idle. Wait for the busy class to
+    // clear before recalling history -- otherwise ArrowUp fires while R is
+    // still executing and the recalled entry can be stale.
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('rstudio_console_input');
+        return !!el && !el.classList.contains('rstudio-console-busy');
+      },
+      null,
+      { timeout: TIMEOUTS.consoleReady, polling: 100 },
+    );
+
+    await consoleActions.consolePane.consoleInput.click({ force: true });
+    await waitForConsoleFocus(page);
+
+    const readInput = () => consoleActions.consolePane.consoleInputValue();
+
+    await page.keyboard.press('ArrowUp');
+    await expect.poll(readInput).toMatch(/^##.*##$/);
+
+    await page.keyboard.press('Escape');
+    await expect.poll(readInput).toBe('');
+  });
+
   test('writeLines outputs all 10000 lines without truncation', async () => {
-    test.setTimeout(90000);
-    await consoleActions.typeInConsole('long <- as.character(1:1E4)');
-    await consoleActions.typeInConsole('writeLines(long)');
+    await consoleActions.executeInConsole('long <- as.character(1:1E4)');
+    await consoleActions.executeInConsole('writeLines(long)');
     await expect(consoleActions.consolePane.consoleOutput).toContainText('10000', {
       timeout: 60000,
     });
@@ -72,11 +100,11 @@ test.describe('Console pane', () => {
   });
 
   test('Show Traceback button reveals the stack for nested calls', async () => {
-    await consoleActions.typeInConsole('f <- function() stop()');
-    await consoleActions.typeInConsole('g <- function() f()');
-    await consoleActions.typeInConsole('h <- function() g()');
-    await consoleActions.typeInConsole('k <- function() h()');
-    await consoleActions.typeInConsole('k()');
+    await consoleActions.executeInConsole('f <- function() stop()');
+    await consoleActions.executeInConsole('g <- function() f()');
+    await consoleActions.executeInConsole('h <- function() g()');
+    await consoleActions.executeInConsole('k <- function() h()');
+    await consoleActions.executeInConsole('k()');
 
     await expect(consoleActions.consolePane.tracebackBtn).toBeVisible({ timeout: 10000 });
     await consoleActions.consolePane.tracebackBtn.click();
@@ -89,15 +117,15 @@ test.describe('Console pane', () => {
 
   test.describe('Find in Console', () => {
     test.beforeEach(async () => {
-      await consoleActions.typeInConsole(`a <- "Once more unto the breach, dear friends, once more;"`);
-      await consoleActions.typeInConsole(`b <- "Or close the wall up with our English dead."`);
-      await consoleActions.typeInConsole(`c <- "In peace there's nothing so becomes a man"`);
-      await consoleActions.typeInConsole(`d <- "As modest stillness and humility."`);
+      await consoleActions.executeInConsole(`a <- "Once more unto the breach, dear friends, once more;"`);
+      await consoleActions.executeInConsole(`b <- "Or close the wall up with our English dead."`);
+      await consoleActions.executeInConsole(`c <- "In peace there's nothing so becomes a man"`);
+      await consoleActions.executeInConsole(`d <- "As modest stillness and humility."`);
       await consoleActions.clearConsole();
-      await consoleActions.typeInConsole('writeLines(a)');
-      await consoleActions.typeInConsole('writeLines(b)');
-      await consoleActions.typeInConsole('writeLines(c)');
-      await consoleActions.typeInConsole('writeLines(d)');
+      await consoleActions.executeInConsole('writeLines(a)');
+      await consoleActions.executeInConsole('writeLines(b)');
+      await consoleActions.executeInConsole('writeLines(c)');
+      await consoleActions.executeInConsole('writeLines(d)');
       await expect(consoleActions.consolePane.consoleOutput).toContainText(
         'As modest stillness and humility.',
       );

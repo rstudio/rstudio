@@ -118,9 +118,19 @@ class RStudioMain {
     }
   }
 
+  private initializeInputFeatures() {
+    // Middle-click autoscroll (the "4-way" pan puck) is a Blink feature that
+    // Chrome and Firefox enable by default, but Electron does not -- so a
+    // middle-click in a scrollable area such as the data viewer does nothing
+    // in RStudio Desktop. Opt in explicitly. `enable-blink-features` is a
+    // comma-separated list; nothing else sets it, so one switch suffices.
+    app.commandLine.appendSwitch('enable-blink-features', 'MiddleClickAutoscroll');
+  }
+
   private async startup(): Promise<void> {
     await this.initializeRenderingEngine();
     await this.initializeAccessibility();
+    this.initializeInputFeatures();
 
     const rstudio = new Application();
     rstudio.argsManager.handleLogLevel();

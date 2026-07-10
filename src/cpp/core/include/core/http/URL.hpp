@@ -121,7 +121,23 @@ public:
    {
       return protocol + "://" + formatHostPort(host, port);
    }
-   
+
+   // Map a bind address to a client-reachable host. Empty, "0.0.0.0", "::",
+   // and the bracketed "[::]" are wildcards used for binding but aren't valid
+   // as connect targets; map them to "localhost" so callers on the same host
+   // can reach the service.
+   static std::string clientHost(const std::string& bindAddress)
+   {
+      if (bindAddress.empty() ||
+          bindAddress == "0.0.0.0" ||
+          bindAddress == "::" ||
+          bindAddress == "[::]")
+      {
+         return std::string("localhost");
+      }
+      return bindAddress;
+   }
+
    void split(std::string* pBaseURL, std::string* pQueryParams) const;
    
    bool operator < (const URL& other) const

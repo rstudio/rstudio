@@ -72,6 +72,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
+import org.rstudio.studio.client.server.model.DocumentResetToUntitledEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -139,6 +140,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
                                             DocumentCloseAllNoSaveEvent.Handler,
                                             DocumentCloseEvent.Handler,
+                                            DocumentResetToUntitledEvent.Handler,
                                             AssistantRuntimeStatusChangedEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
@@ -251,6 +253,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
       events_.addHandler(DocumentCloseEvent.TYPE, this);
+      events_.addHandler(DocumentResetToUntitledEvent.TYPE, this);
       events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, this);
       
       events_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
@@ -462,12 +465,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return new ColumnName(column.getName(), column.getAccessibleName());
    }
 
-   public void initialSelect(int index)
+   public void initialSelect(String docId)
    {
       SourceColumn lastActive = getByName(columnState_.getActiveColumn());
       if (lastActive != null)
-         setActive(getByName(columnState_.getActiveColumn()));
-      getActive().initialSelect(index);
+         setActive(lastActive);
+
+      // if the persisted document is gone (e.g. it was closed before the
+      // reload), stay on the last active column; its currently selected tab
+      // still receives the initial selection (and onInitiallyLoaded())
+      SourceColumn column = findByDocument(docId);
+      if (column != null)
+         setActive(column);
+
+      getActive().initialSelect(docId);
    }
 
    public void setActive(int xpos)
@@ -623,6 +634,35 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (hasActiveEditor())
          return activeColumn_.getActiveEditor().getPath();
       return null;
+   }
+
+   public boolean isActiveDocDirty()
+   {
+      if (!hasActiveEditor())
+         return false;
+      Boolean dirty = activeColumn_.getActiveEditor().dirtyState().getValue();
+      return dirty != null && dirty;
+   }
+
+   /**
+    * Native Ace editor instance backing the active source document, or null
+    * when there is no active editor or the active editor is not Ace-backed
+    * (e.g. data viewer, object explorer, code browser). Exposed to JS via
+    * the automation bridge (`window.rstudio.documents.activeEditor()`); tests
+    * call Ace API methods (getValue, getSession, setValue, ...) on it
+    * directly instead of walking the DOM for a `.ace_editor` element.
+    */
+   public JavaScriptObject getActiveNativeEditor()
+   {
+      if (!hasActiveEditor())
+         return null;
+      EditingTarget target = activeColumn_.getActiveEditor();
+      if (!(target instanceof TextEditingTarget))
+         return null;
+      DocDisplay display = ((TextEditingTarget) target).getDocDisplay();
+      if (!(display instanceof AceEditor))
+         return null;
+      return ((AceEditor) display).getWidget().getEditor();
    }
 
    /**
@@ -1309,6 +1349,56 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void onDocumentCloseAllNoSave(DocumentCloseAllNoSaveEvent event)
    {
       revertUnsavedTargets(() -> closeAllTabs(null, false, null));
+   }
+
+   @Override
+   public void onDocumentResetToUntitled(DocumentResetToUntitledEvent event)
+   {
+      // Reuse an existing untitled doc if one is open. Untitled = no path.
+      String existingUntitledId = null;
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget editor : column.getEditors())
+         {
+            if (editor.getPath() == null)
+            {
+               existingUntitledId = editor.getId();
+               break;
+            }
+         }
+         if (existingUntitledId != null)
+            break;
+      }
+
+      if (existingUntitledId != null)
+      {
+         final String keepId = existingUntitledId;
+         revertUnsavedTargets(() -> closeAllTabs(keepId, false, null));
+         return;
+      }
+
+      // No untitled doc to keep. Create one first, then close the rest in
+      // its onSuccess -- this way the source pane never reaches zero tabs
+      // and so never starts the HIDE animation that races a subsequent
+      // file.edit.
+      newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
+      {
+         @Override
+         public void onSuccess(EditingTarget target)
+         {
+            final String keepId = target.getId();
+            revertUnsavedTargets(() -> closeAllTabs(keepId, false, null));
+         }
+
+         @Override
+         public void onFailure(ServerError error)
+         {
+            Debug.logError(error);
+            // Fall back to a plain close-all so callers still see an empty
+            // (or near-empty) pane rather than a wedged half-state.
+            revertUnsavedTargets(() -> closeAllTabs(null, false, null));
+         }
+      });
    }
 
    @Override
@@ -2506,6 +2596,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());
       dynamicCommands_.add(commands_.runSelectionAsWorkbenchJob());
       dynamicCommands_.add(commands_.toggleSoftWrapMode());
+      dynamicCommands_.add(commands_.toggleDetectMissingPackages());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

@@ -25,6 +25,7 @@ set(SERVER_SOURCE_FILES
    DBActiveSessionStorage.cpp
    DBActiveSessionsStorage.cpp
    ServerBrowser.cpp
+   ServerCheckConfig.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp
    ServerEnvVars.cpp
@@ -298,6 +299,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
   set(SERVER_TEST_FILES
      DBActiveSessionStorageTests.cpp
+     ServerCheckConfigTests.cpp
      ServerEnvVarsTests.cpp
      ServerFormatUtilsTests.cpp)
 

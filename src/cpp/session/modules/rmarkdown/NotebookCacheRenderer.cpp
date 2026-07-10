@@ -80,7 +80,8 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
                                    const std::string& outputPath,
                                    const std::string& docId,
                                    const std::string& docPath,
-                                   const std::string& encoding)
+                                   const std::string& encoding,
+                                   const std::string& inlineCachePath)
 {
    // cancel any in-progress render for the same document so we always
    // render the latest save; renders for other documents are left alone
@@ -118,6 +119,7 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
    core::system::setenv(&environment, "RS_NB_CACHE_PATH", cachePath);
    core::system::setenv(&environment, "RS_NB_OUTPUT_PATH", outputPath);
    core::system::setenv(&environment, "RS_NB_ENCODING", encoding);
+   core::system::setenv(&environment, "RS_NB_INLINE_CACHE", inlineCachePath);
 
    // store weak reference before starting (the process holds itself alive
    // via shared_from_this, but we want isRunning() to work immediately)
@@ -171,6 +173,26 @@ void NotebookCacheRenderer::onCompleted(int exitStatus)
    result["doc_path"] = docPath_;
 
    std::string output = stdOut_.str();
+
+   // a failure to install the parent-evaluated inline chunk outputs is not
+   // fatal (the child falls back to evaluating inline code itself), but the
+   // fallback can produce different results since the child cannot see the
+   // user's global environment -- log the breadcrumb even when the render
+   // itself succeeds
+   std::string::size_type inlinePos = output.find("__INLINE_CACHE_ERROR__:");
+   if (inlinePos != std::string::npos)
+   {
+      std::string inlineError =
+         output.substr(inlinePos + strlen("__INLINE_CACHE_ERROR__:"));
+      std::string::size_type newline = inlineError.find('\n');
+      if (newline != std::string::npos)
+         inlineError = inlineError.substr(0, newline);
+
+      WLOGF("Failed to install notebook inline chunk outputs for '{}': {}",
+            docPath_,
+            string_utils::trimWhitespace(inlineError));
+   }
+
    bool succeeded = (exitStatus == 0) &&
                     (output.find("__RENDER_SUCCESS__") != std::string::npos);
 

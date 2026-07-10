@@ -335,6 +335,113 @@ TEST(StringTest, PositionCanBeComputedForMultiLineString)
    EXPECT_EQ(7u, pos.column);
 }
 
+TEST(StringTest, HeredocStripsCommonIndent)
+{
+   std::string text = heredoc(R"(
+      library(knitr)
+      knit('example.Rmd')
+   )");
+   EXPECT_EQ(std::string("library(knitr)\nknit('example.Rmd')"), text);
+}
+
+TEST(StringTest, HeredocPreservesRelativeIndent)
+{
+   std::string text = heredoc(R"(
+      if (x) {
+         f()
+      }
+   )");
+   EXPECT_EQ(std::string("if (x) {\n   f()\n}"), text);
+}
+
+TEST(StringTest, HeredocHandlesBlankInteriorLines)
+{
+   std::string text = heredoc(R"(
+      a
+
+      b
+   )");
+   EXPECT_EQ(std::string("a\n\nb"), text);
+}
+
+TEST(StringTest, HeredocLeavesUnindentedTextUnchanged)
+{
+   EXPECT_EQ(std::string("a\nb"), heredoc("a\nb"));
+}
+
+TEST(StringTest, HeredocHandlesEmptyInput)
+{
+   EXPECT_EQ(std::string(""), heredoc(""));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeLeavesPlainTextUnchanged)
+{
+   EXPECT_EQ(std::string("hello"), singleQuotedStrEscape("hello"));
+   EXPECT_EQ(std::string(""), singleQuotedStrEscape(""));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeEscapesQuotesAndBackslashes)
+{
+   // a single quote is escaped so it cannot terminate the enclosing literal
+   EXPECT_EQ(std::string("it\\'s"), singleQuotedStrEscape("it's"));
+
+   // a backslash is doubled so it cannot escape the following character
+   EXPECT_EQ(std::string("a\\\\b"), singleQuotedStrEscape("a\\b"));
+}
+
+TEST(StringTest, SingleQuotedStrEscapeNeutralizesInjectionPayload)
+{
+   // a filename crafted to break out of a single-quoted R literal and inject
+   // code has every quote escaped, so the payload cannot close the literal
+   EXPECT_EQ(std::string("\\'); system(\\'rm -rf /\\'); #"),
+             singleQuotedStrEscape("'); system('rm -rf /'); #"));
+}
+
+TEST(StringTest, Utf8IncompleteSuffixLengthHandlesCompleteText)
+{
+   // empty, pure ASCII, and text ending on a character boundary are complete
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength(""));
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("hello"));
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("a\xE2\x94\x80"));       // a + U+2500
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xC3\xA9"));            // U+00E9
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xF0\x9F\x98\x80"));    // U+1F600
+}
+
+TEST(StringTest, Utf8IncompleteSuffixLengthDetectsTruncatedSequences)
+{
+   // 2-byte sequence missing its continuation byte
+   EXPECT_EQ(1u, utf8IncompleteSuffixLength("abc\xC3"));
+
+   // 3-byte sequence truncated after one and two bytes
+   EXPECT_EQ(1u, utf8IncompleteSuffixLength("abc\xE2"));
+   EXPECT_EQ(2u, utf8IncompleteSuffixLength("abc\xE2\x94"));
+
+   // 4-byte sequence truncated after one, two, and three bytes
+   EXPECT_EQ(1u, utf8IncompleteSuffixLength("abc\xF0"));
+   EXPECT_EQ(2u, utf8IncompleteSuffixLength("abc\xF0\x9F"));
+   EXPECT_EQ(3u, utf8IncompleteSuffixLength("abc\xF0\x9F\x98"));
+
+   // a truncated sequence with no preceding text
+   EXPECT_EQ(2u, utf8IncompleteSuffixLength("\xE2\x94"));
+}
+
+TEST(StringTest, Utf8IncompleteSuffixLengthIgnoresInvalidSequences)
+{
+   // a stray continuation byte is invalid, not truncated
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("abc\x80"));
+
+   // invalid lead bytes (0xF8-0xFF) cannot start a sequence
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("abc\xFE"));
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("abc\xFF\x80"));
+
+   // continuation bytes with no lead byte in reach are invalid
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("a\x80\x80\x80\x80"));
+
+   // a complete sequence followed by nothing more is not truncated, even
+   // though its last bytes are continuation bytes
+   EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xE2\x94\x80"));
+}
+
 } // end namespace string_utils
 } // end namespace core
 } // end namespace rstudio

@@ -95,6 +95,8 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String appearanceEditorFontSizeLabel();
     String appearanceEditorLineHeightLabel();
     String appearanceEditorThemeLabel();
+    String appearanceEditorThemeProjectOverrideText();
+    String ignoreProjectAppearanceLabel();
     String addThemeButtonLabel();
     String addThemeButtonCaption();
     String removeThemeButtonLabel();
@@ -199,8 +201,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String renderingEngineDesktopOption();
     String renderingEngineLinuxDesktopOption();
     String renderingEngineSoftwareOption();
-    String useGpuExclusionListLabel();
-    String useGpuDriverBugWorkaroundsLabel();
     String clipboardMonitoringLabel();
     String otherLabel();
     String experimentalLabel();
@@ -627,6 +627,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String assistantCompletionsTab();
     String assistantChatTab();
     String assistantChatProviderLabel();
+    String assistantUpdateCheckIntervalTooltip();
     String copilotCompletionsDelayLabel();
     String copilotDisabledByAdmin();
     String copilotStatusDialogCaption();
@@ -647,11 +648,14 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String restoreDefaultPaneAndTabLayoutMessage();
     String positAssistantInstallTitle();
     String positAssistantUpdateTitle();
+    String positAssistantDowngradeTitle();
     String positAssistantInstallMessage(String version);
     String positAssistantInstallMessageNoVersion();
     String positAssistantUpdateMessage(String version);
+    String positAssistantDowngradeMessage(String version);
     String positAssistantInstallButton();
     String positAssistantUpdateButton();
+    String positAssistantInstallVersionButton(String version);
     String positAssistantCancelButton();
     String positAssistantIncompatibleTitle();
     String positAssistantIncompatibleMessage();

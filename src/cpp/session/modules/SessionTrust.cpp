@@ -143,9 +143,15 @@ bool isInDirectoryList(const std::string& path,
 // Walks up the directory tree from the given path to the root,
 // checking at each level for a match. The first (most specific)
 // ancestor found wins.
+//
+// When a "trusted" or "untrusted" result is produced via an ancestor,
+// the matching directory is reported in *pSource (when non-null). This
+// allows callers to explain why a directory inherited its trust status.
+// For a "default" result, *pSource is left empty.
 std::string resolveTrustStatus(const FilePath& dir,
                                const std::vector<std::string>& trustedDirs,
-                               const std::vector<std::string>& untrustedDirs)
+                               const std::vector<std::string>& untrustedDirs,
+                               std::string* pSource = nullptr)
 {
    FilePath current(dir.getCanonicalPath());
    while (!current.isEmpty())
@@ -153,10 +159,18 @@ std::string resolveTrustStatus(const FilePath& dir,
       std::string path = current.getAbsolutePath();
 
       if (isInDirectoryList(path, untrustedDirs))
+      {
+         if (pSource != nullptr)
+            *pSource = path;
          return kTrustStatusUntrusted;
+      }
 
       if (isInDirectoryList(path, trustedDirs))
+      {
+         if (pSource != nullptr)
+            *pSource = path;
          return kTrustStatusTrusted;
+      }
 
       if (current == current.getParent())
          break;
@@ -441,20 +455,40 @@ SEXP rs_trustStatus(SEXP directorySEXP)
       return Rf_mkString(kTrustStatusUnknown);
    }
 
-   std::string status = resolveTrustStatus(dir, trustedDirs, untrustedDirs);
-   return Rf_mkString(status.c_str());
+   r::sexp::Protect protect;
+
+   std::string source;
+   std::string status =
+         resolveTrustStatus(dir, trustedDirs, untrustedDirs, &source);
+
+   SEXP statusSEXP = r::sexp::create(status, &protect);
+
+   // Attach the directory responsible for the trust decision as a "source"
+   // attribute. When a directory inherits its status from an ancestor, this
+   // is that ancestor; when the directory itself was trusted or untrusted, it
+   // is the directory itself. The attribute is omitted for "default" results.
+   if (!source.empty())
+      r::sexp::setAttrib(statusSEXP, "source", r::sexp::create(source, &protect));
+
+   return statusSEXP;
 }
 
 } // anonymous namespace
 
 void initializeTrustState()
 {
+   // Check whether projects are untrusted by default; that is, whether
+   // an explicit trust grant is required for every project, even those
+   // without risky startup files.
+   bool trustRequired = options().projectTrustRequired();
+
    // Check if trust dialogs are enabled.
    // Explicit setting (0 or 1) takes precedence; if unset (-1),
-   // fall back to the edition-specific overlay default.
+   // fall back to the edition-specific overlay default, treating
+   // project-trust-required as implicitly enabling the dialogs.
    int trustDialogs = options().projectTrustDialogs();
    bool trustDialogsEnabled = (trustDialogs == -1)
-      ? overlay::trustDialogsEnabledByDefault()
+      ? (overlay::trustDialogsEnabledByDefault() || trustRequired)
       : (trustDialogs != 0);
 
    if (!trustDialogsEnabled)
@@ -473,15 +507,18 @@ void initializeTrustState()
 
    FilePath projectDir = projContext.directory();
 
-   // Skip trust check if project dir is the user's home directory
-   if (projectDir == options().userHomePath())
+   // Skip trust check if project dir is the user's home directory.
+   // When trust is required for all projects, no such exemption applies;
+   // even the home directory must be explicitly trusted.
+   if (!trustRequired && projectDir == options().userHomePath())
    {
       s_trustStatus = TrustStatus::Trusted;
       return;
    }
 
-   // Check for risky files
-   if (!hasRiskyFiles(projectDir))
+   // Check for risky files; when trust is required for all projects,
+   // prompt even if no risky files are present
+   if (!trustRequired && !hasRiskyFiles(projectDir))
    {
       s_trustStatus = TrustStatus::NotRequired;
       return;
@@ -506,16 +543,20 @@ void initializeTrustState()
       s_trustStatus = TrustStatus::Unknown;
 }
 
-bool shouldSuppressStartupFiles()
+bool isProjectUntrusted()
 {
    return s_trustStatus == TrustStatus::Untrusted ||
           s_trustStatus == TrustStatus::Unknown;
 }
 
+bool shouldSuppressStartupFiles()
+{
+   return isProjectUntrusted();
+}
+
 bool shouldSuppressWorkspaceRestore()
 {
-   return s_trustStatus == TrustStatus::Untrusted ||
-          s_trustStatus == TrustStatus::Unknown;
+   return isProjectUntrusted();
 }
 
 std::string projectTrustStatus()

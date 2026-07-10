@@ -15,6 +15,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <sys/stat.h>
 
@@ -28,10 +29,12 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #include <core/system/FileMonitor.hpp>
+#include <core/system/System.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
+#include <session/SessionAiToolState.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionScopes.hpp>
 
@@ -258,6 +261,56 @@ Error computeScratchPaths(const FilePath& projectFile,
 }
 
 
+bool ProjectContext::reduceRemoteFilesystemOperations() const
+{
+   // resolve at most once per session and cache the result. this is called per
+   // poll from checkForExternalEdit (which fires on window focus and file-change
+   // events), and scratchPath_ (.Rproj.user) lives by default on the same remote
+   // mount this feature exists to stay off, so re-reading the local prefs file
+   // and re-probing the mount on every call would defeat the purpose. the
+   // per-project override only changes via a dialog apply that forces a session
+   // restart, so the resolved value is stable for the session.
+   if (reduceRemoteFilesystemOpsResolved_)
+      return reduceRemoteFilesystemOps_;
+
+   // an explicit per-project setting takes precedence over the global
+   // preference. this is a user-specific project-local preference, stored
+   // under .Rproj.user (so it is not shared via version control). we read the
+   // local preferences file directly rather than through the project
+   // preference layer, because this is consulted very early during project
+   // startup -- before that layer has been initialized
+   // (see session::projects::initialize).
+   boost::optional<bool> localOverride;
+   if (!scratchPath_.isEmpty())
+   {
+      FilePath localPrefsFile = scratchPath_.completePath(kUserPrefsFile);
+      if (localPrefsFile.exists())
+      {
+         std::string contents;
+         Error error = readStringFromFile(localPrefsFile, &contents);
+         if (error)
+            LOG_ERROR(error);
+         else
+            localOverride = parseReduceRemoteFilesystemOperationsOverride(contents);
+      }
+   }
+
+   bool globalPref = prefs::userPrefs().reduceRemoteFilesystemOperations();
+
+   // only probe the filesystem when the decision actually depends on it: an
+   // explicit override or a disabled global preference both decide the outcome
+   // without it, and statfs() on a hung remote mount can block.
+   bool remoteDetected = false;
+   if (!localOverride && globalPref)
+      remoteDetected = core::system::isRemotePath(directory_);
+
+   reduceRemoteFilesystemOps_ =
+         resolveReduceRemoteFilesystemOperations(localOverride, globalPref, remoteDetected);
+   reduceRemoteFilesystemOpsResolved_ = true;
+
+   return reduceRemoteFilesystemOps_;
+}
+
 FilePath ProjectContext::oldScratchPath() const
 {
    // start from the standard .Rproj.user dir
@@ -380,20 +433,16 @@ Error ProjectContext::startup(const FilePath& projectFile,
    }
 
    // initialize members
+   //
+   // NOTE: the project directory is deliberately not canonicalized here.
+   // Canonicalizing rewrote user-visible paths (getwd(), here::here()) for
+   // projects opened via a symlinked path on macOS, and resolved mapped
+   // network drives to their UNC targets on Windows (#17865). The macOS
+   // file monitor maps FSEvents' canonical event paths back to the
+   // registered path form itself (#17909), so file change events compare
+   // equal to directory() without any canonicalization on our side.
    file_ = projectFile;
    directory_ = file_.getParent();
-
-   // Canonicalize the project directory so it matches what the file
-   // monitor will see (FSEvents on macOS reports canonical paths -- e.g.
-   // /private/tmp/foo rather than /tmp/foo). Without this, paths from
-   // file change events won't compare equal to directory() and any
-   // root-anchored matches downstream silently miss.
-   if (directory_.exists())
-   {
-      std::string canonical = directory_.getCanonicalPath();
-      if (!canonical.empty())
-         directory_ = FilePath(canonical);
-   }
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = projectConfig;
@@ -413,8 +462,10 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
    // assume true so that the initial files pane listing doesn't register
    // a duplicate monitor. if it turns out to be false then this can be
-   // repaired by a single refresh of the files pane
-   hasFileMonitor_ = config_.enableCodeIndexing;
+   // repaired by a single refresh of the files pane.
+   // the recursive file monitor is suppressed when reducing remote filesystem
+   // operations, since monitoring a slow network drive is expensive.
+   hasFileMonitor_ = config_.enableCodeIndexing && !reduceRemoteFilesystemOperations();
 
    // return success
    return Success();
@@ -433,24 +484,26 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePkgTgz = R"(.*\.tgz$)";
       const std::string newLine = "\n";
 
-      const char * const kIgnorePositai = R"(^\.positai$)";
-      const char * const kIgnoreClaude = R"(^\.claude$)";
-
       // only add AI tool-state ignores when those directories actually
       // exist in the project. Decoupled from the assistant preference:
       // the directories belong to tools (Posit Assistant, Claude Code,
       // etc.) that may write them whether or not RStudio's own AI
       // integration is enabled.
-      bool wantPositai = directory().completeChildPath(".positai").exists();
-      bool wantClaude = directory().completeChildPath(".claude").exists();
+      std::vector<std::string> aiDirs = aiAssistantStateDirs();
+      aiDirs.push_back(".claude");
+
+      std::vector<std::string> aiPatterns;
+      for (const std::string& dir : aiDirs)
+      {
+         if (directory().completeChildPath(dir).exists())
+            aiPatterns.push_back(aiAssistantStateDirRegex(dir));
+      }
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
 
-      if (wantPositai)
-         ignoreLines += kIgnorePositai + newLine;
-      if (wantClaude)
-         ignoreLines += kIgnoreClaude + newLine;
+      for (const std::string& pattern : aiPatterns)
+         ignoreLines += pattern + newLine;
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -496,9 +549,21 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
-         bool hasPositai = !wantPositai || strIgnore.find(kIgnorePositai) != std::string::npos;
-         bool hasClaude = !wantClaude || strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
+
+         // AI tool-state patterns that are wanted (directory present) but not
+         // yet listed in the existing .Rbuildignore. The presence test is a
+         // plain substring search for the canonical anchored pattern we write
+         // (e.g. "^\.posit/assistant$"); this stays correct because no AI
+         // pattern is a substring of another (the "$" anchor keeps the shared
+         // ".posit" prefix from colliding "^\.positai$" with the assistant
+         // pattern). Revisit if a future entry breaks that invariant.
+         std::vector<std::string> missingAiPatterns;
+         for (const std::string& pattern : aiPatterns)
+         {
+            if (strIgnore.find(pattern) == std::string::npos)
+               missingAiPatterns.push_back(pattern);
+         }
 
          bool addExtraNewline = strIgnore.size() > 0
                                 && strIgnore[strIgnore.size() - 1] != '\n';
@@ -509,10 +574,8 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + newLine;
-         if (!hasPositai)
-            strIgnore += kIgnorePositai + newLine;
-         if (!hasClaude)
-            strIgnore += kIgnoreClaude + newLine;
+         for (const std::string& pattern : missingAiPatterns)
+            strIgnore += pattern + newLine;
 
          if (session::options().packageOutputInPackageFolder())
          {
@@ -541,7 +604,7 @@ void ProjectContext::augmentRbuildignore()
             }
          }
 
-         if (hasRProj && hasRProjUser && hasPositai && hasClaude && hasAllPackageExclusions)
+         if (hasRProj && hasRProjUser && missingAiPatterns.empty() && hasAllPackageExclusions)
             return;
 
          error = core::writeStringToFile(rbuildIgnorePath,
@@ -631,8 +694,10 @@ Error ProjectContext::initialize()
       // augment .Rbuildignore if this is a package
       augmentRbuildignore();
 
-      // subscribe to deferred init (for initializing our file monitor)
-      if (config().enableCodeIndexing)
+      // subscribe to deferred init (for initializing our file monitor); skip
+      // when reducing remote filesystem operations, as the recursive monitor
+      // would repeatedly traverse a slow network drive
+      if (config().enableCodeIndexing && !reduceRemoteFilesystemOperations())
       {
          module_context::events().onDeferredInit.connect(
                       boost::bind(&ProjectContext::onDeferredInit, this, _1));
@@ -676,8 +741,14 @@ std::vector<std::string> fileMonitorIgnoredComponents()
 
       // ignore contents of AI tool state directories. The trailing slash is
       // important: it excludes children but lets the directory entry itself
-      // ("/proj/.positai") pass through so the allowlist in fileMonitorFilter
-      // can react to its creation.
+      // ("/proj/.posit/assistant") pass through so the allowlist in
+      // fileMonitorFilter can react to its creation. Note we exclude only
+      // ".posit/assistant", not all of ".posit" -- the latter is shared with
+      // other Posit tools (e.g. the Publisher extension's ".posit/publisher",
+      // whose files are committed) and must stay monitored. ".positai" is the
+      // legacy Posit Assistant directory, retained so existing projects keep
+      // working.
+      "/.posit/assistant/",
       "/.positai/",
       "/.claude/",
 
@@ -800,9 +871,10 @@ void ProjectContext::fileMonitorRegistered(
    // update state
    hasFileMonitor_ = true;
 
-   // re-augment .Rbuildignore to pick up any .positai/.claude that were
-   // created between project init and file monitor start (small but real
-   // window). augmentRbuildignore is idempotent.
+   // re-augment .Rbuildignore to pick up any AI tool-state directories
+   // (.posit/assistant, legacy .positai) that were created between project
+   // init and file monitor start (small but real window). augmentRbuildignore
+   // is idempotent.
    augmentRbuildignore();
 
    // notify subscribers
@@ -818,17 +890,20 @@ void ProjectContext::fileMonitorFilesChanged(
    // own handler
    onProjectFilesChanged(events);
 
-   // if .positai or .claude was added at the project root, augment
-   // .Rbuildignore now (we don't add these entries until the file exists)
+   // if an AI tool-state directory (or, for the nested ".posit/assistant", its
+   // parent ".posit") was added, augment .Rbuildignore now -- we don't add
+   // these entries until the directory exists. Reacting to ".posit" as well
+   // covers the case where ".posit" and ".posit/assistant" are created
+   // together: augmentRbuildignore re-checks existence and is idempotent.
+   std::vector<std::string> triggerPaths = aiAssistantMonitorPaths();
+   triggerPaths.push_back(".claude");
    for (const auto& event : events)
    {
       if (event.type() != core::system::FileChangeEvent::FileAdded)
          continue;
       FilePath path(event.fileInfo().absolutePath());
-      if (path.getParent() != directory())
-         continue;
-      std::string filename = path.getFilename();
-      if (filename == ".positai" || filename == ".claude")
+      std::string rel = path.getRelativePath(directory());
+      if (std::find(triggerPaths.begin(), triggerPaths.end(), rel) != triggerPaths.end())
       {
          augmentRbuildignore();
          break;
@@ -899,23 +974,34 @@ bool ProjectContext::fileMonitorFilter(
       if (boost::algorithm::icontains(absPath, component))
          return false;
 
-   // Allow .positai/.claude at the project root through the filter so we
-   // can react to their creation and update ignore files accordingly.
-   // This must run before the gitignore directory check below -- a global
-   // or parent gitignore that already covers .positai/.claude would
-   // otherwise drop the FileAdded event and prevent mid-session
-   // augmentation. fileListingFilter would also drop them as hidden.
+   // Allow AI tool-state directories through the filter so we can react to
+   // their creation and update ignore files accordingly. This must run before
+   // the gitignore directory check below -- a global or parent gitignore that
+   // already covers them would otherwise drop the FileAdded event and prevent
+   // mid-session augmentation. fileListingFilter would also drop them as
+   // hidden.
    //
-   // Use a cheap string-suffix check before constructing FilePath so we
-   // don't pay the allocation cost for the ~all files that don't match.
+   // The allowed paths include each state directory plus, for the nested
+   // ".posit/assistant", its parent ".posit" -- the parent must pass the
+   // filter so its (and the nested dir's) creation event is not dropped,
+   // letting us observe ".posit/assistant" being created. ".claude" is Claude
+   // Code's directory.
+   //
+   // Use a cheap basename check before constructing FilePath so we don't pay
+   // the allocation cost for the ~all files that don't match.
    std::size_t slashPos = absPath.find_last_of('/');
    const char* filename = (slashPos == std::string::npos)
          ? absPath.c_str()
          : absPath.c_str() + slashPos + 1;
-   if (std::strcmp(filename, ".positai") == 0 ||
+   if (std::strcmp(filename, ".posit") == 0 ||
+       std::strcmp(filename, "assistant") == 0 ||
+       std::strcmp(filename, kPositAssistantStateDirLegacy) == 0 ||
        std::strcmp(filename, ".claude") == 0)
    {
-      if (FilePath(absPath).getParent() == directory())
+      std::string rel = FilePath(absPath).getRelativePath(directory());
+      std::vector<std::string> allowed = aiAssistantMonitorPaths();
+      allowed.push_back(".claude");
+      if (std::find(allowed.begin(), allowed.end(), rel) != allowed.end())
          return true;
    }
 
@@ -1086,10 +1172,14 @@ json::Object ProjectContext::uiPrefs() const
 
    if (config_.copilotEnabled != DefaultValue)
       uiPrefs[kCopilotEnabled] = config_.copilotEnabled == YesValue;
-   
+
    if (config_.copilotIndexingEnabled != DefaultValue)
       uiPrefs[kCopilotIndexingEnabled] = config_.copilotIndexingEnabled == YesValue;
-   
+
+   // editor theme -- only set the project value when overridden
+   if (!config_.editorTheme.empty())
+      uiPrefs[kEditorTheme] = config_.editorTheme;
+
    return uiPrefs;
 }
 

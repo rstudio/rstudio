@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 
 import com.google.gwt.user.client.ui.CheckBox;
@@ -103,6 +104,8 @@ public class TextEntryModalDialog extends ModalDialog<String>
       verticalPanel.setWidth(width_ + "px");
       captionLabel_.getElement().getStyle().setMarginBottom(6, Unit.PX);
       captionLabel_.getElement().getStyle().setProperty("display", "inlineBlock");
+      // Preserve "\n" in caller-supplied prompts (e.g. rstudioapi::showPrompt).
+      captionLabel_.getElement().getStyle().setWhiteSpace(Style.WhiteSpace.PRE_LINE);
       verticalPanel.add(captionLabel_);
       textBox_.getElement().getStyle().setMarginBottom(6, Unit.PX);
       verticalPanel.add(textBox_);

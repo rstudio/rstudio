@@ -24,6 +24,7 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -518,45 +519,6 @@ private:
       }
    }
 
-// permissions getter/setter (only applicable to Unix platforms)
-#ifndef _WIN32
-   Error setPermissions(const std::string& filePath, boost::filesystem::perms permissions)
-   {
-      boost::filesystem::path path(filePath);
-      try
-      {
-         boost::filesystem::permissions(path, permissions);
-      }
-      catch (const boost::filesystem::filesystem_error& e)
-      {
-         return Error(e.code(), ERROR_LOCATION);
-      }
-
-      return Success();
-   }
-
-   Error getPermissions(const std::string& filePath, boost::filesystem::perms* pPerms)
-   {
-      *pPerms = boost::filesystem::no_perms;
-
-      boost::filesystem::path path(filePath);
-      try
-      {
-         boost::filesystem::file_status fileStatus = status(path);
-         *pPerms = fileStatus.permissions();
-      }
-      catch (const boost::filesystem::filesystem_error& e)
-      {
-         return (Error(
-                  errc::findCategory(),
-                  errc::PermissionsError,
-                  "A permissions error occurred during replace operation.",
-                  ERROR_LOCATION));
-      }
-      return Success();
-   }
-#endif
-
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -594,52 +556,49 @@ private:
 
    Error completeFileReplace(std::set<std::string>* pErrorMessage)
    {
-      if (fileSuccess_)
+      if (fileSuccess_ && !currentFile_.empty() && !findResults().preview())
       {
-         if (!currentFile_.empty() &&
-             !tempReplaceFile_.getAbsolutePath().empty() &&
-             outputStream_->good())
-         {
-             Error error;
+         Error error;
 // For Windows we ignore this additional safety check
 // it will always fail because we have inputStream_ reading the file
 #ifndef _WIN32
-            error = FilePath(currentFile_).testWritePermissions();
-            if (error)
-            {
-               json::Array replaceMatchOn, replaceMatchOff;
-               addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
-                  &replaceMatchOff, &fileSuccess_);
-               return error;
-            }
+         error = FilePath(currentFile_).testWritePermissions();
+         if (error)
+         {
+            json::Array replaceMatchOn, replaceMatchOff;
+            addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
+               &replaceMatchOff, &fileSuccess_);
+            return error;
+         }
 #endif
-            std::string line;
-            while (std::getline(*inputStream_, line))
-            {
-               addNewLine(line);
-               outputStream_->write(line.c_str(), line.size());
-            }
-            outputStream_->flush();
-            inputStream_.reset();
-            outputStream_.reset();
+         // append any lines following the final match unchanged
+         std::string line;
+         while (std::getline(*inputStream_, line))
+         {
+            addNewLine(line);
+            outputContents_.append(line);
+         }
+         inputStream_.reset();
 
-// Unnecessary on Windows because this only sets write permissions which we
-// already know are correct if we are writing.
-// This needs to happen after outputStream is flushed
-#ifndef _WIN32
-            error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
-#endif
-            if (!error)
-               error = tempReplaceFile_.move(FilePath(currentFile_), FilePath::MoveType::MoveCrossDevice, true);
+         // Write the replacement atomically: writeStringToFileAtomic writes to a
+         // temporary file in the same directory, flushes it durably (so a full
+         // disk or exceeded quota surfaces as an error rather than a silently
+         // truncated write), preserves the original file's permissions, and only
+         // then renames it into place. On failure the original file is left
+         // untouched.
+         error = writeStringToFileAtomic(FilePath(currentFile_),
+                                         outputContents_,
+                                         string_utils::LineEndingPassthrough,
+                                         true /* preservePermissions */);
+         outputContents_.clear();
+         currentFile_.clear();
 
-            currentFile_.clear();
-            if (error)
-            {
-               json::Array replaceMatchOn, replaceMatchOff;
-               addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
-                  &replaceMatchOff, &fileSuccess_);
-               return error;
-            }
+         if (error)
+         {
+            json::Array replaceMatchOn, replaceMatchOff;
+            addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
+               &replaceMatchOff, &fileSuccess_);
+            return error;
          }
       }
       return Success();
@@ -709,27 +668,16 @@ private:
       if (error)
          return error;
 
-      if (!findResults().preview())
-      {
-         tempReplaceFile_ =  module_context::tempFile("replace", "txt");
-         error = tempReplaceFile_.openForWrite(outputStream_);
-         if (error)
-            return error;
-      }
-      
+      // accumulate the replaced contents in memory; completeFileReplace writes
+      // them out atomically once the whole file has been processed
+      outputContents_.clear();
+
       lineEnding_ = string_utils::LineEndingNative;
       string_utils::detectLineEndings(file, &lineEnding_);
 
       error = file.openForRead(inputStream_);
       if (error)
          return error;
-
-      // boost only acknowledges write permissions on Windows which we already know exist
-#ifndef _WIN32
-      error = getPermissions(file.getAbsolutePath(), &filePermissions_);
-      if (error)
-         return (error);
-#endif
 
       fileSuccess_ = true;
       inputLineNum_ = 0;
@@ -754,7 +702,18 @@ private:
          subtractOffsetIntegerToJsonArray(value, offset, pJsonArray);
    }
 
-   Error writeToFile(
+   void erasePositionsFromArray(json::Array* pArray, const std::set<size_t>& positions)
+   {
+      json::Array filtered;
+      for (size_t i = 0; i < pArray->getSize(); i++)
+      {
+         if (positions.count(i) == 0)
+            filtered.push_back(pArray->getValueAt(i));
+      }
+      *pArray = filtered;
+   }
+
+   void writeToFile(
          const std::string& line,
          const std::string& lineLeftContents,
          const std::string& lineRightContents)
@@ -764,19 +723,8 @@ private:
       newLine.insert(newLine.length(), lineRightContents);
       addNewLine(newLine);
 
-      Error error;
-      
-      try
-      {
-         outputStream_->write(newLine.c_str(), newLine.size());
-         outputStream_->flush();
-      }
-      catch (const std::ios_base::failure& e)
-      {
-         error = systemError(errno, e.what(), ERROR_LOCATION);
-      }
-      
-      return error;
+      // buffer the replaced line; it is written to disk in completeFileReplace
+      outputContents_.append(newLine);
    }
 
    void cleanLineAndGetMatches(std::string* pEncodedLine,
@@ -819,6 +767,7 @@ private:
                         LineInfo* pLineInfo,
                         json::Array* pReplaceMatchOn,
                         json::Array* pReplaceMatchOff,
+                        std::set<size_t>* pNoOpPositions,
                         std::set<std::string>* pErrorMessage)
    {
       std::string line;
@@ -845,7 +794,7 @@ private:
             if (!findResults().preview())
             {
                addNewLine(line);
-               outputStream_->write(line.c_str(), line.size());
+               outputContents_.append(line);
             }
          }
          else // perform replace
@@ -860,6 +809,7 @@ private:
                const size_t matchSize = matchOff - matchOn;
                size_t replaceMatchOff = matchOff;
                Error error;
+               bool isNoOp = false;
                Replacer replacer(findResults().ignoreCase(), encoding_);
 
                eMatchOn =
@@ -887,7 +837,8 @@ private:
                if (findResults().preview())
                {
                   error = replacer.replacePreview(matchOn, matchOff, eMatchOn, eMatchOff,
-                      &pLineInfo->encodedContents, &pLineInfo->decodedContents, &replaceMatchOff);
+                      &pLineInfo->encodedContents, &pLineInfo->decodedContents, &replaceMatchOff,
+                      &isNoOp);
                   if (error)
                      addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
                         pReplaceMatchOff, &lineSuccess);
@@ -896,6 +847,10 @@ private:
                {
                   pProgress->addUnits(1);
 
+                  // snapshot the line before replacement so we can detect
+                  // whether the replace actually changed anything
+                  std::string beforeReplace = pLineInfo->encodedContents;
+
                   if (findResults().regex())
                      error = replacer.replaceRegex(eMatchOn, eMatchOff, searchPattern,
                         replacePattern, &pLineInfo->encodedContents, &replaceMatchOff);
@@ -903,11 +858,25 @@ private:
                      replacer.replaceLiteral(eMatchOn, eMatchOff, replacePattern,
                            &pLineInfo->encodedContents, &replaceMatchOff);
 
+                  // when the replacement leaves the line unchanged, the matched
+                  // text and the replacement are identical: treat it as a no-op
+                  if (!error)
+                     isNoOp = (pLineInfo->encodedContents == beforeReplace);
+
                   // calculate utf8 matchOff
                   size_t utf8Length;
                   error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
                                                      pLineInfo->decodedContents.end(),
                                                      &utf8Length);
+                  if (error)
+                  {
+                     addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                                            pReplaceMatchOff, &lineSuccess);
+                     pLineInfo->decodedContents =
+                        replacer.decode(pLineInfo->encodedContents);
+                     pos--;
+                     continue;
+                  }
                   pLineInfo->decodedContents =
                      replacer.decode(pLineInfo->encodedContents);
 
@@ -915,7 +884,23 @@ private:
                   error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
                                                      pLineInfo->decodedContents.end(),
                                                      &newUtf8Length);
+                  if (error)
+                  {
+                     addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                                            pReplaceMatchOff, &lineSuccess);
+                     pos--;
+                     continue;
+                  }
                   replaceMatchOff = matchOff + (newUtf8Length - utf8Length);
+               }
+
+               // when the replacement is identical to the matched text, omit
+               // this match so it is not presented as a replacement candidate
+               if (isNoOp)
+               {
+                  pNoOpPositions->insert(static_cast<size_t>(pos));
+                  pos--;
+                  continue;
                }
 
                // Handle side-effects when replace is successful
@@ -947,14 +932,13 @@ private:
                }
                pos--;
             }
-            // write the new line to file
+            // buffer the new line; it is written to disk in completeFileReplace
             if (!findResults().preview())
             {
-               Error error = writeToFile(pLineInfo->encodedContents,
-                     pLineInfo->leadingWhitespace, pLineInfo->trailingWhitespace);
-               if (error)
-                  addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
-                     pReplaceMatchOff, &lineSuccess);
+               writeToFile(
+                     pLineInfo->encodedContents,
+                     pLineInfo->leadingWhitespace,
+                     pLineInfo->trailingWhitespace);
             }
          }
       }
@@ -977,6 +961,18 @@ private:
 
    void onStdout(const core::system::ProcessOperations& /*ops*/, const std::string& data)
    {
+      // Drop output from a grep process that is no longer the current
+      // operation. A stopped or superseded operation -- e.g. a find or replace
+      // preview that was cancelled when the user started a Replace All -- can
+      // still have buffered stdout delivered after findResults() has been
+      // reconfigured for the new operation. Processing it here would corrupt
+      // the new operation's results and, in replace mode, write files under the
+      // wrong configuration (the find/replace state is a shared singleton).
+      // onContinue applies the same guard to halt the process, but cannot
+      // prevent already-buffered output from arriving.
+      if (!findResults().isRunning() || findResults().handle() != handle())
+         return;
+
       if (debugging())
          std::cerr << "stdout: " << data << std::endl;
 
@@ -1106,13 +1102,32 @@ private:
                }
                else
                {
-                   processReplace(lineNum,
-                                  matchOn, matchOff,
-                                  &lineInfo,
-                                  &replaceMatchOn, &replaceMatchOff,
-                                  &errorMessage);
+                  std::set<size_t> noOpPositions;
+                  processReplace(lineNum,
+                                 matchOn, matchOff,
+                                 &lineInfo,
+                                 &replaceMatchOn, &replaceMatchOff,
+                                 &noOpPositions,
+                                 &errorMessage);
+
+                  // drop matches whose replacement was identical to the matched
+                  // text so the find highlights stay paired with the (filtered)
+                  // replace highlights
+                  size_t originalMatchCount = matchOn.getSize();
+                  if (!noOpPositions.empty())
+                  {
+                     erasePositionsFromArray(&matchOn, noOpPositions);
+                     erasePositionsFromArray(&matchOff, noOpPositions);
+                  }
+
+                  // if every match on this line was a no-op, the line is left
+                  // unchanged: omit it from the results entirely
+                  if (errorMessage.empty() && noOpPositions.size() == originalMatchCount)
+                     continue;
+
                   lineInfo.decodedPreview = lineInfo.decodedContents;
-                  adjustForPreview(&lineInfo.decodedPreview, &replaceMatchOn, &replaceMatchOff);
+                  if (replaceMatchOn.getSize() > 0)
+                     adjustForPreview(&lineInfo.decodedPreview, &replaceMatchOn, &replaceMatchOff);
                }
             }
 
@@ -1219,12 +1234,8 @@ private:
    bool firstDecodeError_;
    std::string stdOutBuf_;
    std::string currentFile_;
-   FilePath tempReplaceFile_;
    std::shared_ptr<std::istream> inputStream_;
-   std::shared_ptr<std::ostream> outputStream_;
-#ifndef _WIN32
-   boost::filesystem::perms filePermissions_;
-#endif
+   std::string outputContents_;
    int inputLineNum_;
    bool fileSuccess_;
    string_utils::LineEnding lineEnding_;
@@ -1916,8 +1927,11 @@ boost::regex getColorEncodingRegex(bool isGitGrep)
 Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                                size_t eMatchOn, size_t eMatchOff,
                                std::string* pEncodedLine, std::string* pDecodedLine,
-                               size_t* pReplaceMatchOff) const
+                               size_t* pReplaceMatchOff, bool* pIsNoOp) const
 {
+   if (pIsNoOp != nullptr)
+      *pIsNoOp = false;
+
    // attempt to perform the replace based on the encoded data
    std::string previewLine(*pEncodedLine);
    std::string originalValue = previewLine.substr(eMatchOn, eMatchOff  - eMatchOn);
@@ -1926,13 +1940,24 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
                               findResults().replacePattern(),
                               &previewLine,
                               pReplaceMatchOff);
-   
+
    // Concatenate the replace string to the matched string and insert this into the original line
    // so it contains the before and after.
    // The preview string is always returned in the decoded string.
    if (!error)
    {
       std::string replaceString = previewLine.substr(eMatchOn, *pReplaceMatchOff - eMatchOn);
+
+      // when the replacement is identical to the matched text, this match is a
+      // no-op; leave the line untouched and report it so the caller can omit it
+      if (replaceString == originalValue)
+      {
+         if (pIsNoOp != nullptr)
+            *pIsNoOp = true;
+         *pReplaceMatchOff = dMatchOff;
+         return Success(); // no-op: replacement is identical to matched text
+      }
+
       replaceString.insert(0, originalValue);
       replaceLiteral(eMatchOn, eMatchOff, replaceString, pEncodedLine, pReplaceMatchOff);
 
@@ -1942,6 +1967,8 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
       error = string_utils::utf8Distance(pDecodedLine->begin(),
                                          pDecodedLine->end(),
                                          &originalDecodedSize);
+      if (error)
+         LOG_ERROR(error);
 
       *pDecodedLine = decode(*pEncodedLine);
 
@@ -1949,6 +1976,8 @@ Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
       error = string_utils::utf8Distance(pDecodedLine->begin(),
                                          pDecodedLine->end(),
                                          &newDecodedSize);
+      if (error)
+         LOG_ERROR(error);
 
       *pReplaceMatchOff = dMatchOff + (newDecodedSize - originalDecodedSize);
    }
@@ -2065,6 +2094,18 @@ std::string Replacer::decode(const std::string& encoded, const std::string& enco
    return decoded;
 }
 
+// Test-only: configure the global FindInFilesState so that
+// Replacer::replacePreview can be exercised in unit tests.
+void setFindResultsForTest(const std::string& searchPattern,
+                           const std::string& replacePattern,
+                           bool regex,
+                           bool ignoreCase)
+{
+   findResults().clear();
+   findResults().onFindBegin("test-handle", searchPattern, "",
+                              regex, ignoreCase, false);
+   findResults().onReplaceBegin("test-handle", true, replacePattern, nullptr);
+}
 
 } // namespace find
 } // namespace modules

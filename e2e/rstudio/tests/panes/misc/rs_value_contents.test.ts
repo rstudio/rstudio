@@ -6,7 +6,6 @@
 // can cause str.default() to omit that header, so a data line got dropped.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 
 /**
@@ -19,10 +18,10 @@ async function getValueContents(
 ): Promise<string> {
   const marker = `__VC_${Date.now()}__`;
   await consoleActions.clearConsole();
-  await consoleActions.typeInConsole(
-    `cat("${marker}", paste(.rs.valueContents(${rExpr}), collapse = "|||"), "${marker}")`
+  await consoleActions.executeInConsole(
+    `cat("${marker}", paste(.rs.valueContents(${rExpr}), collapse = "|||"), "${marker}")`,
+    { wait: true },
   );
-  await sleep(2000);
 
   const output = await consoleActions.consolePane.consoleOutput.innerText();
   const match = output.match(new RegExp(`${marker}\\s+([\\s\\S]+?)\\s+${marker}`));
@@ -42,26 +41,31 @@ test.describe('Environment pane valueContents', { tag: ['@parallel_safe'] }, () 
   // Regression: user-defined str method drops first list element (#16985)
   // -----------------------------------------------------------------------
   test('first list element is not dropped with user-defined str method (#16985)', async () => {
-    await consoleActions.typeInConsole('obj <- structure(list(x = 10, y = 20), class = "myclass")');
-    await sleep(1000);
-    await consoleActions.typeInConsole('str.myclass <- function(object, ...) { cat("myclass:\\n"); NextMethod() }');
-    await sleep(1000);
+    await consoleActions.executeInConsole(
+      'obj <- structure(list(x = 10, y = 20), class = "myclass")',
+      { wait: true },
+    );
+    await consoleActions.executeInConsole(
+      'str.myclass <- function(object, ...) { cat("myclass:\\n"); NextMethod() }',
+      { wait: true },
+    );
 
     // Before the fix, "$ x" was dropped; only "$ y" appeared.
     const contents = await getValueContents(consoleActions, 'obj');
     expect(contents).toContain('$ x');
     expect(contents).toContain('$ y');
 
-    await consoleActions.typeInConsole('rm(obj, str.myclass)');
-    await sleep(500);
+    await consoleActions.executeInConsole('rm(obj, str.myclass)', { wait: true });
   });
 
   // -----------------------------------------------------------------------
   // Standard list (no user str method) — header should be stripped normally
   // -----------------------------------------------------------------------
   test('standard list displays all elements correctly', async () => {
-    await consoleActions.typeInConsole('plain_list <- list(a = 1, b = 2, c = 3)');
-    await sleep(1000);
+    await consoleActions.executeInConsole(
+      'plain_list <- list(a = 1, b = 2, c = 3)',
+      { wait: true },
+    );
 
     const contents = await getValueContents(consoleActions, 'plain_list');
     expect(contents).toContain('$ a');
@@ -70,16 +74,17 @@ test.describe('Environment pane valueContents', { tag: ['@parallel_safe'] }, () 
     // The "List of 3" header should have been stripped
     expect(contents).not.toContain('List of');
 
-    await consoleActions.typeInConsole('rm(plain_list)');
-    await sleep(500);
+    await consoleActions.executeInConsole('rm(plain_list)', { wait: true });
   });
 
   // -----------------------------------------------------------------------
   // Data frame — header should be stripped normally
   // -----------------------------------------------------------------------
   test('data frame displays all columns correctly', async () => {
-    await consoleActions.typeInConsole('df <- data.frame(name = c("a", "b"), val = c(1, 2))');
-    await sleep(1000);
+    await consoleActions.executeInConsole(
+      'df <- data.frame(name = c("a", "b"), val = c(1, 2))',
+      { wait: true },
+    );
 
     const contents = await getValueContents(consoleActions, 'df');
     expect(contents).toContain('$ name');
@@ -87,8 +92,7 @@ test.describe('Environment pane valueContents', { tag: ['@parallel_safe'] }, () 
     // The header (e.g. "'data.frame': 2 obs. of 2 variables:") should be stripped
     expect(contents).not.toContain('data.frame');
 
-    await consoleActions.typeInConsole('rm(df)');
-    await sleep(500);
+    await consoleActions.executeInConsole('rm(df)', { wait: true });
   });
 
   // -----------------------------------------------------------------------
@@ -99,17 +103,17 @@ test.describe('Environment pane valueContents', { tag: ['@parallel_safe'] }, () 
     // A nested list where each element expands to multiple str lines
     // (sub-header + 4 values = 5 lines × 40 groups + 1 header = 201 lines)
     // triggers the n > 150 truncation path in .rs.valueContentsImpl().
-    await consoleActions.typeInConsole(
-      'nested <- setNames(lapply(1:40, function(i) list(a = i, b = i, c = i, d = i)), paste0("g_", 1:40))'
+    await consoleActions.executeInConsole(
+      'nested <- setNames(lapply(1:40, function(i) list(a = i, b = i, c = i, d = i)), paste0("g_", 1:40))',
+      { wait: true },
     );
-    await sleep(1000);
 
     const marker = `__NEST_${Date.now()}__`;
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole(
-      `vc <- .rs.valueContents(nested); cat("${marker}", length(vc), vc[1], vc[length(vc)], "${marker}")`
+    await consoleActions.executeInConsole(
+      `vc <- .rs.valueContents(nested); cat("${marker}", length(vc), vc[1], vc[length(vc)], "${marker}")`,
+      { wait: true },
     );
-    await sleep(2000);
 
     const output = await consoleActions.consolePane.consoleOutput.innerText();
     const match = output.match(new RegExp(`${marker}\\s+([\\s\\S]+?)\\s+${marker}`));
@@ -123,7 +127,6 @@ test.describe('Environment pane valueContents', { tag: ['@parallel_safe'] }, () 
     // Truncation message at the end
     expect(contents).toContain('lines omitted');
 
-    await consoleActions.typeInConsole('rm(nested, vc)');
-    await sleep(500);
+    await consoleActions.executeInConsole('rm(nested, vc)', { wait: true });
   });
 });

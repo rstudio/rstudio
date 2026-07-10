@@ -23,6 +23,67 @@ for (binding in bindings)
    assign(binding, original, envir = .rs.files.savedBindings)
 }
 
+
+.rs.addJsonRpcHandler("list_all_files", function(path, pattern)
+{
+   list.files(path, pattern = pattern, recursive = TRUE)
+})
+
+.rs.addJsonRpcHandler("ensure_file_exists", function(path)
+{
+   if (!file.exists(path))
+      if (!file.create(path, recursive = TRUE))
+         return(.rs.scalar(FALSE))
+   
+   .rs.scalar(identical(file.info(path)$isdir, FALSE))
+})
+
+.rs.addJsonRpcHandler("create_aliased_path", function(path)
+{
+   if (!file.exists(path))
+      return(.rs.scalar(""))
+   
+   # make sure we use forward slashes here, since otherwise our
+   # home path detection will fail to work
+   # https://github.com/rstudio/rstudio/issues/13134
+   normalized <- normalizePath(path, winslash = "/", mustWork = FALSE)
+   .rs.scalar(.rs.createAliasedPath(normalized))
+})
+
+.rs.addJsonRpcHandler("get_issue_url", function(id)
+{
+   project <- .rs.getProjectDirectory()
+   if (is.null(project)) {
+      return(.rs.scalar(""))
+   }
+   
+   DESCRIPTION <- file.path(project, "DESCRIPTION")
+   if (!file.exists(DESCRIPTION)) {
+      return(.rs.scalar(""))
+   }
+
+   BugReports <- tryCatch(
+      read.dcf(DESCRIPTION, fields = "BugReports"), 
+      error = function(e) NA, 
+      warning = function(w) NA
+   )
+   if (is.na(BugReports)) {
+      return(.rs.scalar(""))
+   }
+
+   if (!is.character(BugReports) || length(BugReports) != 1L) {
+      return(.rs.scalar(""))
+   }
+
+   # make sure BugReports is a url and append the id to it
+   if (grepl("^(https?://|www.)", BugReports)) {
+      .rs.scalar(paste0(BugReports, "/", sub("#", "", id)))
+   } else {
+      .rs.scalar("")
+   }
+})
+
+
 # these hooks are added to support RStudio's transition into
 # the use of a UTF-8 code page
 .rs.addFunction("files.replaceBindings", function()
@@ -120,7 +181,6 @@ for (binding in bindings)
    as.character(utils::unzip(zipfile, list=TRUE)$Name)
 })
 
-
 .rs.addFunction("createZipFile", function(zipfile, parent, files)
 {
    # set working dir to parent (and restore on exit)
@@ -134,31 +194,6 @@ for (binding in bindings)
    
    # execute the command (return output of command)
    system(createZipCommand, intern = TRUE)
-})
-
-.rs.addJsonRpcHandler("list_all_files", function(path, pattern) {
-   list.files(path, pattern = pattern, recursive = TRUE)
-})
-
-.rs.addJsonRpcHandler("ensure_file_exists", function(path)
-{
-   if (!file.exists(path))
-      if (!file.create(path, recursive = TRUE))
-         return(.rs.scalar(FALSE))
-   
-   .rs.scalar(identical(file.info(path)$isdir, FALSE))
-})
-
-.rs.addJsonRpcHandler("create_aliased_path", function(path)
-{
-   if (!file.exists(path))
-      return(.rs.scalar(""))
-   
-   # make sure we use forward slashes here, since otherwise our
-   # home path detection will fail to work
-   # https://github.com/rstudio/rstudio/issues/13134
-   normalized <- normalizePath(path, winslash = "/", mustWork = FALSE)
-   .rs.scalar(.rs.createAliasedPath(normalized))
 })
 
 .rs.addFunction("scanFiles", function(path,
@@ -175,38 +210,14 @@ for (binding in bindings)
 
 .rs.addFunction("readLines", function(filePath)
 {
-   .Call("rs_readLines", path.expand(filePath))
+   .Call("rs_readLines", path.expand(filePath), PACKAGE = "(embedding)")
 })
 
-.rs.addJsonRpcHandler("get_issue_url", function(id)
+# Vectorized: replaces each path's HOME prefix with "~" (and HOME itself with
+# "~"), leaving paths outside HOME unchanged. Delegates to the C++
+# FilePath::createAliasedPath so the R-callable layer and the C++ session
+# share a single implementation -- see rs_createAliasedPath in SessionFiles.cpp.
+.rs.addFunction("createAliasedPath", function(path)
 {
-   project <- .rs.getProjectDirectory()
-   if (is.null(project)) {
-      return(.rs.scalar(""))
-   }
-   
-   DESCRIPTION <- file.path(project, "DESCRIPTION")
-   if (!file.exists(DESCRIPTION)) {
-      return(.rs.scalar(""))
-   }
-
-   BugReports <- tryCatch(
-      read.dcf(DESCRIPTION, fields = "BugReports"), 
-      error = function(e) NA, 
-      warning = function(w) NA
-   )
-   if (is.na(BugReports)) {
-      return(.rs.scalar(""))
-   }
-
-   if (!is.character(BugReports) || length(BugReports) != 1L) {
-      return(.rs.scalar(""))
-   }
-
-   # make sure BugReports is a url and append the id to it
-   if (grepl("^(https?://|www.)", BugReports)) {
-      .rs.scalar(paste0(BugReports, "/", sub("#", "", id)))
-   } else {
-      .rs.scalar("")
-   }
+   .Call("rs_createAliasedPath", path, PACKAGE = "(embedding)")
 })

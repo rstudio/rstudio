@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
@@ -66,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeUtil;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
@@ -261,7 +263,27 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       display_.showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
    }
 
-   public void initialSelect(int index)
+   // select the tab containing the given document at startup; the document is
+   // resolved to its logical index in editors_, which is what selectTab()
+   // operates on (tab reordering only permutes tabOrder_ and the tab-bar DOM),
+   // so this works regardless of any tab reordering. if the document is not
+   // found (e.g. it was closed before the state was restored), fall back to
+   // the currently selected tab so it still receives onInitiallyLoaded()
+   public void initialSelect(String docId)
+   {
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         if (StringUtil.equals(editors_.get(i).getId(), docId))
+         {
+            initialSelect(i);
+            return;
+         }
+      }
+
+      initialSelect(display_.getActiveTabIndex());
+   }
+
+   private void initialSelect(int index)
    {
       if (index < 0)
          return;
@@ -528,23 +550,31 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                       true);
       fireDocTabsChanged();
 
-      target.getName().addValueChangeHandler(event -> {
+      // these handlers capture the tab widget, so they must be detached when
+      // the tab is removed from this column (see closeTabIndex) -- otherwise
+      // asynchronous work on the target (e.g. the visual editor marking the
+      // document dirty after its markdown conversion completes) can fire them
+      // with a widget that is no longer in the panel
+      HandlerRegistrations registrations = new HandlerRegistrations();
+      tabRegistrations_.put(target, registrations);
+
+      registrations.add(target.getName().addValueChangeHandler(event -> {
          display_.renameTab(widget,
                             target.getIcon(),
                             event.getValue(),
                             target.getPath());
          fireDocTabsChanged();
-      });
+      }));
 
       display_.setDirty(widget, target.dirtyState().getValue());
-      target.dirtyState().addValueChangeHandler(event -> {
+      registrations.add(target.dirtyState().addValueChangeHandler(event -> {
          display_.setDirty(widget, event.getValue());
          manageCommands(false);
-      });
+      }));
 
-      target.addEnsureVisibleHandler(event -> display_.selectTab(widget));
+      registrations.add(target.addEnsureVisibleHandler(event -> display_.selectTab(widget)));
 
-      target.addCloseHandler(voidCloseEvent -> closeTab(widget, false));
+      registrations.add(target.addCloseHandler(voidCloseEvent -> closeTab(widget, false)));
 
       events_.fireEvent(new SourceDocAddedEvent(doc, mode, name_));
 
@@ -1310,7 +1340,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             String mode = RmdEditorMode.getEditorMode(document.getPath(), yaml, sessionInfo);
             if ((mode == null) && newDoc && userPrefs.visualMarkdownEditingIsDefault().getValue())
                mode = RmdEditorMode.VISUAL;
-            
+
+            // only the source editor is available in untrusted projects
+            if (mode == RmdEditorMode.VISUAL && !VisualModeUtil.isVisualEditingEnabled(sessionInfo))
+               mode = RmdEditorMode.SOURCE;
+
             if (mode != null)
             {
                HashMap<String,String> props = new HashMap<String,String>();
@@ -1340,6 +1374,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private void closeTabIndex(int idx, boolean closeDocument)
    {
       EditingTarget target = editors_.remove(idx);
+
+      HandlerRegistrations registrations = tabRegistrations_.remove(target);
+      if (registrations != null)
+         registrations.removeHandler();
 
       tabOrder_.remove(Integer.valueOf(idx));
       for (int i = 0; i < tabOrder_.size(); i++)
@@ -1395,6 +1433,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private EditingTarget activeEditor_;
    private final ArrayList<EditingTarget> editors_ = new ArrayList<>();
    private final ArrayList<Integer> tabOrder_ = new ArrayList<>();
+   private final HashMap<EditingTarget, HandlerRegistrations> tabRegistrations_ = new HashMap<>();
    private HashSet<AppCommand> activeCommands_ = new HashSet<>();
 
    private RemoteFileSystemContext fileContext_;

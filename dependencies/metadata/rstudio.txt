@@ -1,0 +1,11 @@
+dependency(GWT
+   DEPNAME      "Google Web Toolkit"
+   REPOSITORY   "https://github.com/gwtproject/gwt"
+   LICENSE      "Apache-2.0"
+   ATTRIBUTION  "Copyright Google, Inc."
+)
+
+dependency(GWTWEBSOCKETS
+   DEPNAME      "gwt-websockets"
+   PATH         "src/gwt/src/com/sksamuel/gwt/"
+)

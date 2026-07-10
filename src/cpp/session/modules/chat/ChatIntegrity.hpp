@@ -17,9 +17,15 @@
 #define SESSION_CHAT_INTEGRITY_HPP
 
 #include <string>
+#include <vector>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
+
+// forward declaration -- the signature below takes ProcessResult by reference,
+// so the full definition (<core/system/Process.hpp>) is only needed in the
+// .cpp and tests, not in every includer of this header.
+namespace rstudio { namespace core { namespace system { struct ProcessResult; } } }
 
 namespace rstudio {
 namespace session {
@@ -38,6 +44,9 @@ namespace integrity {
  * @param pPackageVersion Output: the package version string
  * @param pDownloadUrl Output: the package download URL
  * @param pSha256 Output: the SHA-256 hash (optional, may be nullptr)
+ * @param pProviders Output: the provider identifiers advertised for the
+ *                   selected protocol entry, or empty when the entry has no
+ *                   "providers" array (optional, may be nullptr)
  * @return Success() or an error if no compatible version is found
  */
 core::Error getPackageInfoFromManifest(
@@ -45,7 +54,21 @@ core::Error getPackageInfoFromManifest(
     const std::string& protocolVersion,
     std::string* pPackageVersion,
     std::string* pDownloadUrl,
-    std::string* pSha256 = nullptr);
+    std::string* pSha256 = nullptr,
+    std::vector<std::string>* pProviders = nullptr);
+
+/**
+ * Whether a manifest entry's provider identifiers opt the build into the
+ * bring-your-own-key provider set.
+ *
+ * Returns true only when "byok" is present; other identifiers (e.g. "pai")
+ * are ignored. "byok" is a string contract shared with the manifest producer.
+ *
+ * @param providers The provider identifiers from a manifest entry's
+ *                  "providers" array (e.g. as returned via getPackageInfoFromManifest).
+ * @return true if the bring-your-own-key provider is advertised.
+ */
+bool advertisesByokProvider(const std::vector<std::string>& providers);
 
 /**
  * Verify SHA-256 hash of a downloaded package file.
@@ -56,6 +79,22 @@ core::Error getPackageInfoFromManifest(
  */
 core::Error verifyPackageSha256(const core::FilePath& packagePath,
                                 const std::string& expectedSha256);
+
+/**
+ * Map a manifest download subprocess result to a parsed manifest object.
+ *
+ * The manifest body is expected on the subprocess's stdout. Any failure --
+ * non-zero exit, empty output, invalid JSON, or a JSON root that is not an
+ * object -- is returned as an error (the caller treats that as the manifest
+ * being unavailable). Error mapping is locale-independent: stderr text is only
+ * folded into the message for diagnostics, never used to decide behavior.
+ *
+ * @param result The completed download subprocess result.
+ * @param pManifest Output: the parsed manifest object (set only on success).
+ * @return Success(), or an error describing the failure.
+ */
+core::Error manifestFromDownloadResult(const core::system::ProcessResult& result,
+                                       core::json::Object* pManifest);
 
 } // namespace integrity
 } // namespace chat

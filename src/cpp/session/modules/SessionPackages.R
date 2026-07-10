@@ -23,6 +23,138 @@
 # map the repository string to the directory containing produced output
 .rs.setVar("availablePackagesPendingEnv", new.env(parent = emptyenv()))
 
+# Registry of package-library-mutating functions, keyed by the namespace that
+# provides them. Used by .rs.isPackageManagementCall() to decide whether the
+# command the user just ran could have changed the installed packages (and so
+# the Packages pane should refresh).
+#
+# This is deliberately strict: only well-known entry points are listed, and a
+# call only counts if it resolves to one of these namespaces. The cost of a
+# false positive is high -- it triggers a full library scan, which can take
+# minutes on a large library served over a network filesystem (issue #17758) --
+# whereas a false negative just means the user hits Refresh manually. Expand
+# conservatively.
+.rs.addFunction("packageMutationFunctions", function()
+{
+   list(
+      utils = c(
+         "install.packages", "update.packages", "remove.packages"
+      ),
+      renv = c(
+         "install", "update", "remove", "restore", "rebuild", "hydrate", "repair"
+      ),
+      pak = c(
+         "pak", "pkg_install", "pkg_remove",
+         "local_install", "local_install_deps", "local_install_dev_deps"
+      ),
+      pacman = c(
+         "p_install", "p_load", "p_update"
+      ),
+      remotes = c(
+         "install_bioc", "install_bitbucket", "install_cran", "install_deps",
+         "install_dev", "install_git", "install_github", "install_gitlab",
+         "install_local", "install_remote", "install_svn", "install_url",
+         "install_version"
+      ),
+      devtools = c(
+         "install", "install_bioc", "install_bitbucket", "install_cran",
+         "install_deps", "install_dev", "install_git", "install_github",
+         "install_gitlab", "install_local", "install_svn", "install_url",
+         "install_version", "load_all", "update_packages"
+      ),
+      BiocManager = c(
+         "install"
+      )
+   )
+})
+
+# Determine which namespace an unqualified symbol resolves to from the global
+# environment (i.e. where 'name(...)' would find its function at the console).
+# Walks the search path (global env -> attached packages -> base) and returns
+# the name of the first environment that binds 'name', or NA if none does.
+#
+# We deliberately do NOT read the binding's value (no get(), no mode matching):
+# that would force a promise (e.g. from delayedAssign) or re-trigger an active
+# binding, either of which could run arbitrary user code as a side effect. We
+# only test for the binding's presence, so resolution is side-effect free. It
+# also never scans the package library.
+.rs.addFunction("resolveCallNamespace", function(name)
+{
+   env <- globalenv()
+   while (!identical(env, emptyenv()))
+   {
+      if (exists(name, envir = env, inherits = FALSE))
+         return(sub("^package:", "", environmentName(env)))
+      env <- parent.env(env)
+   }
+
+   NA_character_
+})
+
+.rs.addFunction("isPackageMutationCall", function(ns, name)
+{
+   mutators <- .rs.packageMutationFunctions()
+   !is.na(ns) && !is.null(mutators[[ns]]) && name %in% mutators[[ns]]
+})
+
+# Walk a single parsed expression; TRUE if any call within it mutates the
+# package library. Namespace-qualified calls (pkg::fn) use the literal
+# namespace; bare calls resolve their namespace from the global environment.
+.rs.addFunction("exprMutatesPackageLibrary", function(expr)
+{
+   if (!is.call(expr))
+      return(FALSE)
+
+   head <- expr[[1L]]
+
+   if (is.call(head) &&
+       is.name(head[[1L]]) &&
+       as.character(head[[1L]]) %in% c("::", ":::"))
+   {
+      ns <- as.character(head[[2L]])
+      name <- as.character(head[[3L]])
+      if (.rs.isPackageMutationCall(ns, name))
+         return(TRUE)
+   }
+   else if (is.name(head))
+   {
+      name <- as.character(head)
+      if (.rs.isPackageMutationCall(.rs.resolveCallNamespace(name), name))
+         return(TRUE)
+   }
+
+   # recurse into arguments to catch nested calls (e.g. lapply(x, install.packages))
+   for (i in seq_along(expr))
+   {
+      part <- expr[[i]]
+      if (is.call(part) && .rs.exprMutatesPackageLibrary(part))
+         return(TRUE)
+   }
+
+   FALSE
+})
+
+# Decide whether console input ran a command that could have mutated the
+# package library. Invoked from onConsolePrompt (C++), gated by the cheap
+# hasPackageCallSyntax() pre-filter.
+.rs.addFunction("isPackageManagementCall", function(input)
+{
+   exprs <- tryCatch(
+      parse(text = input),
+      error = function(e) NULL
+   )
+
+   # input that doesn't parse didn't mutate the library
+   if (is.null(exprs))
+      return(FALSE)
+
+   for (expr in exprs)
+      if (.rs.exprMutatesPackageLibrary(expr))
+         return(TRUE)
+
+   FALSE
+})
+
 .rs.addJsonRpcHandler("is_package_installed", function(package, version)
 {
    installed <- if (is.null(version))
@@ -984,19 +1116,6 @@
    .rs.getSecondaryRepos(cran, custom)
 })
 
-
-# a vectorized function that takes any number of paths and aliases the home
-# directory in those paths (i.e. "/Users/bob/foo" => "~/foo"), leaving any 
-# paths outside the home directory untouched
-.rs.addFunction("createAliasedPath", function(path)
-{
-   homeDir <- path.expand("~/")
-   homePathIdx <- substr(path, 1L, nchar(homeDir)) == homeDir
-   homePaths <- path[homePathIdx]
-   homeSuffix <- substr(homePaths, nchar(homeDir), nchar(homePaths))
-   path[homePathIdx] <- paste0("~", homeSuffix)
-   path
-})
 
 # Some R commands called during packaging-related operations (such as untar)
 # delegate to the system tar binary specified in TAR. On OS X, R may set TAR to

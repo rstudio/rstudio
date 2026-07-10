@@ -30,25 +30,49 @@
    .Call("rs_showErrorMessage", title, message, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("logErrorMessage", function(message)
+# cache of (method + message) digests already logged with once = TRUE
+assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
+
+# indirection point so tests can stub the emit step without intercepting .Call
+.rs.addFunction("logMessageEmit", function(method, message)
 {
-   if (inherits(message, "condition"))
-      message <- paste(conditionMessage(message), collapse = "\n")
-   .Call("rs_logErrorMessage", message, PACKAGE = "(embedding)")
+   .Call(method, message, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("logWarningMessage", function(message)
+.rs.addFunction("logMessageImpl", function(method, fmt, args, once)
 {
-   if (inherits(message, "condition"))
-      message <- paste(conditionMessage(message), collapse = "\n")
-   .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
+   if (inherits(fmt, "condition"))
+      message <- paste(conditionMessage(fmt), collapse = "\n")
+   else if (length(args))
+      message <- do.call(base::sprintf, c(list(fmt), args))
+   else
+      message <- fmt
+
+   if (isTRUE(once))
+   {
+      key <- .rs.digest(c(method, message))
+      cache <- .rs.loggedMessageCache
+      if (exists(key, envir = cache, inherits = FALSE))
+         return(invisible())
+      assign(key, TRUE, envir = cache)
+   }
+
+   .rs.logMessageEmit(method, message)
 })
 
-.rs.addFunction("logInfoMessage", function(message)
+.rs.addFunction("logErrorMessage", function(fmt, ..., once = FALSE)
 {
-   if (inherits(message, "condition"))
-      message <- paste(conditionMessage(message), collapse = "\n")
-   .Call("rs_logInfoMessage", message, PACKAGE = "(embedding)")
+   .rs.logMessageImpl("rs_logErrorMessage", fmt, list(...), once)
+})
+
+.rs.addFunction("logWarningMessage", function(fmt, ..., once = FALSE)
+{
+   .rs.logMessageImpl("rs_logWarningMessage", fmt, list(...), once)
+})
+
+.rs.addFunction("logInfoMessage", function(fmt, ..., once = FALSE)
+{
+   .rs.logMessageImpl("rs_logInfoMessage", fmt, list(...), once)
 })
 
 .rs.addFunction("format", function(object, ...)

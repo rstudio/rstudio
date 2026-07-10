@@ -57,6 +57,22 @@ if(DEFINED ENV{GWT_XSS})
    set(GWT_XSS $ENV{GWT_XSS})
 endif()
 
+# GWT output style (allow override from env). The production compile defaults
+# to OBFUSCATED (smallest output, unreadable symbols); set GWT_STYLE=PRETTY
+# (or DETAILED) so compiled-JS stack traces -- e.g. the uncaught client
+# exceptions captured by the e2e automation agent -- carry readable Java symbol
+# names. Intended for CI / e2e builds; release builds leave this unset.
+#
+# Only the bare style value is threaded through to Ant (via the gwt.style
+# property); build.xml assembles the "-style X" argument itself. Passing the
+# single-token value avoids embedding a space in an argument that must survive
+# the CMake -> shell -> Ant boundary.
+set(GWT_STYLE "")
+if(DEFINED ENV{GWT_STYLE})
+   set(GWT_STYLE $ENV{GWT_STYLE})
+   message(STATUS "Using GWT style: ${GWT_STYLE}")
+endif()
+
 if(GWT_BUILD)
    message(STATUS "Configured to build GWT")
    message(STATUS "Using GWT module: org.rstudio.studio.${GWT_MAIN_MODULE}")
@@ -99,8 +115,9 @@ if(GWT_BUILD)
       COMMAND
          ${ANT}
          -Dbuild.dir="${GWT_BIN_DIR}"
-         -Dwww.dir="${GWT_WWW_DIR}"
          -Dextras.dir="${GWT_EXTRAS_DIR}"
+         -Dwww.dir="${GWT_WWW_DIR}"
+         -Dgwt.style="${GWT_STYLE}"
          -Dgwt.xmx="${GWT_XMX}"
          -Dgwt.xss="${GWT_XSS}"
          -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"

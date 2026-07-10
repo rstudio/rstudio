@@ -3,6 +3,16 @@
 SCRIPT="${BASH_SOURCE[0]}"
 DIR="$(dirname "${SCRIPT}")"
 
+# rsession reliably SEGFAULTs during teardown of the r-scope tests on
+# macOS when stdin isn't a TTY -- the test bodies pass but the process
+# exits 139, which reads as a real failure. Re-invoke under `script` so
+# a controlling TTY is always present. RSTUDIO_TESTS_UNDER_SCRIPT guards
+# against infinite recursion if the re-exec somehow doesn't yield a TTY.
+if [ "$(uname)" = "Darwin" ] && [ ! -t 0 ] && [ -z "${RSTUDIO_TESTS_UNDER_SCRIPT}" ]; then
+   export RSTUDIO_TESTS_UNDER_SCRIPT=1
+   exec script -q /dev/null "${SCRIPT}" "$@"
+fi
+
 # Our macOS build machines currently run on arm64, but the rsession
 # binary we produce (in the default location) is built with x86_64.
 # Ensure that an x86_64 version of R is placed on the PATH first so

@@ -1,41 +1,29 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import type { Page } from 'playwright';
+import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 
 // Return button in satellite window (has explicit ElementIds assignment)
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
-test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_only'] }, () => {
+test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@ai', '@desktop_only'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let consoleActions: ConsolePaneActions;
   let versions: EnvironmentVersions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
-
-    versions = await consoleActions.getEnvironmentVersions();
-    await consoleActions.clearConsole();
-
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
-
-    await chatActions.openChatPane();
-    await chatActions.dismissSetupPrompts();
+    ({ chatActions, chatPane, consoleActions, versions } = await setupPositAssistantChat(page));
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('conversation continuity across detach and reattach', async ({ rstudioPage: page }) => {
@@ -62,14 +50,16 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_
     await page.locator("[id^='rstudio_tb_popoutchat']").click();
     const satellitePage = await satellitePromise;
     await satellitePage.waitForLoadState('domcontentloaded');
-    await sleep(3000);
 
-    // Create a ChatPane scoped to the satellite page
+    // Create a ChatPane scoped to the satellite page and wait for it to render.
+    // The satellite re-mounts the React app from scratch, so the message DOM
+    // appears a beat after domcontentloaded.
     const satelliteChatPane = new ChatPane(satellitePage);
+    await expect(satelliteChatPane.chatRoot).toBeVisible({ timeout: 15000 });
 
     // Verify conversation continuity: same message count
-    const satelliteMessageCount = await satelliteChatPane.getMessageCount();
-    expect(satelliteMessageCount).toBe(messagesBeforeDetach);
+    await expect.poll(() => satelliteChatPane.getMessageCount(), { timeout: 10000 })
+      .toBe(messagesBeforeDetach);
 
     // Verify the original response is still there
     const satelliteLastMessage = satelliteChatPane.messageItem.last();
@@ -90,11 +80,11 @@ test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@desktop_
 
     // --- Phase 4: Return to main window ---
     await satellitePage.locator(RETURN_TO_MAIN_BTN).click();
-    await sleep(3000);
 
-    // Verify all messages persist in the main window
-    const mainMessageCount = await chatPane.getMessageCount();
-    expect(mainMessageCount).toBe(messagesBeforeReturn);
+    // Wait for the main-window chat pane to absorb the satellite's messages.
+    await expect.poll(() => chatPane.getMessageCount(), { timeout: 15000 })
+      .toBe(messagesBeforeReturn);
+    const mainMessageCount = messagesBeforeReturn;
 
     // Verify both responses are present
     const allMessages = chatPane.messageItem;

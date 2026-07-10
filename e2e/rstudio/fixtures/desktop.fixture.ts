@@ -1,29 +1,70 @@
 import type { Page } from '@playwright/test';
 import { chromium } from 'playwright';
-import type { Browser, BrowserContext } from 'playwright';
-import { spawn, execSync } from 'child_process';
-import type { ChildProcess } from 'child_process';
+import type { Browser } from 'playwright';
+import { spawn, spawnSync, execSync } from 'child_process';
+import type { ChildProcess, SpawnOptions } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
-import { CONSOLE_INPUT, typeInConsole } from '../pages/console_pane.page';
+import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
+import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { workerRLibsUser } from './r-libs-setup';
+import { trackForReaping } from './process-reaper';
+import { isDebugMode } from '../utils/debug';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
-// before any worker spawns. Fail loud if this module is imported outside the
-// Playwright runner (e.g., by a script or type-check helper) so the diagnostic
-// is clearer than a later TypeError deep inside path.join().
-if (!process.env.PW_SANDBOX) {
-  throw new Error(
-    'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any worker spawns',
-  );
+// before any worker spawns. Resolve lazily so importing this module (for
+// --list, type-checking, etc.) doesn't require the env var -- the assertion
+// fires only when a test actually launches a session.
+function sandboxRoot(): string {
+  const s = process.env.PW_SANDBOX;
+  if (!s) {
+    throw new Error(
+      'PW_SANDBOX is not set; fixtures/sandbox-setup.ts should populate it before any worker spawns',
+    );
+  }
+  return s;
 }
-const SANDBOX = process.env.PW_SANDBOX;
-const SHARED_DATA_HOME = path.join(SANDBOX, 'data-home');
-const SHARED_USER_HOME = path.join(SANDBOX, 'user-home');
+// Sandbox-level data-home: NOT used as RSTUDIO_DATA_HOME for Desktop launches
+// (each launch gets its own data home under its config root -- see
+// createTempConfig), only as the source of the seeded Posit Assistant build
+// (data-home/pai, populated by sandbox-setup.ts when PW_SEED_PAI is set).
+const sandboxDataHome = () => path.join(sandboxRoot(), 'data-home');
+
+// HOME / USERPROFILE for the current worker. Single-worker runs (the default)
+// use the seeded template home directly -- byte-for-byte the historical
+// behavior. Parallel runs give every worker its own copy of the template,
+// keyed on the stable parallel index, so concurrent workers never write the
+// same HOME (RStudio user state, command history, AI credentials, ...). The
+// copy is lazy and idempotent; the template carries the seeded AI credentials
+// and Windows AppData scaffold, so each worker's copy starts authenticated.
+function workerUserHome(): string {
+  const template = path.join(sandboxRoot(), 'user-home');
+
+  const totalWorkers = Number(process.env.PW_TOTAL_WORKERS ?? '1');
+  if (!Number.isFinite(totalWorkers) || totalWorkers <= 1) {
+    return template;
+  }
+
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  const home = path.join(sandboxRoot(), `user-home-${idx}`);
+  if (!fs.existsSync(home)) {
+    // Copy into a temp sibling and atomically rename, so a crash mid-copy can't
+    // leave a partial HOME that later reads as complete (missing seeded AI creds
+    // / Windows AppData scaffold). The parallel index is exclusive to one worker
+    // process at a time, so the temp name only needs to be unique against a
+    // prior aborted attempt.
+    const tmp = `${home}.partial`;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    fs.cpSync(template, tmp, { recursive: true });
+    fs.renameSync(tmp, home);
+  }
+  return home;
+}
 
 function readPrefsFile(filePath: string, sourceLabel: string): Record<string, unknown> {
   let raw: string;
@@ -51,14 +92,146 @@ export const RSTUDIO_PATH = process.platform === 'win32'
   : process.platform === 'darwin'
     ? '/Applications/RStudio.app/Contents/MacOS/RStudio'
     : '/usr/bin/rstudio';
-export const CDP_PORT = Number(process.env.PW_CDP_PORT) || (9231 + Math.floor(Math.random() * 69));
-export const CDP_URL = `http://localhost:${CDP_PORT}`;
+// Deterministic per-worker CDP port: each parallel worker gets its own fixed
+// port (base + checkout offset + parallel index) so concurrent workers never
+// collide. A random port would, with a handful of workers, occasionally have
+// two workers draw the same value -- and the per-launch `lsof :PORT | kill`
+// cleanup would then kill another worker's RStudio. The checkout offset (a
+// stable hash of this checkout's path) keeps concurrent runs from different
+// checkouts/worktrees on the same machine in disjoint bands, so one run's
+// cleanup can't reclaim another run's live instance (rstudio#18135). The
+// dev/logger ports derive from this (+1000/+2000); the offset is folded into
+// [0, 900) so with < 100 workers all three bands stay disjoint. PW_CDP_PORT
+// overrides for single-instance debugging.
+const CDP_PORT_BASE = 9231;
+function checkoutPortOffset(): number {
+  // FNV-1a over the checkout path (this file's directory is stable and
+  // unique per checkout/worktree).
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < __dirname.length; i++) {
+    hash ^= __dirname.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0) % 900;
+}
+function defaultCdpPort(): number {
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  return CDP_PORT_BASE + checkoutPortOffset() + idx;
+}
+export const CDP_PORT = Number(process.env.PW_CDP_PORT) || defaultCdpPort();
+// Connect over IPv4 explicitly. Electron's --remote-debugging-port listens on
+// 127.0.0.1 only, but "localhost" resolves to IPv6 ::1 first on some Linux
+// distros (e.g. Fedora), so connectOverCDP dials ::1 and gets ECONNREFUSED even
+// though RStudio is up on 127.0.0.1. Using the literal 127.0.0.1 removes the
+// resolution ambiguity and is correct on every platform.
+export const CDP_URL = `http://127.0.0.1:${CDP_PORT}`;
+
+// PW_RSTUDIO_DEV=1 launches the in-tree dev build via `npm run start`
+// (electron-forge) in src/node/desktop, instead of the installed RStudio
+// binary at RSTUDIO_PATH. Assumes the dev build is already compiled --
+// see e2e/rstudio/README.md.
+const DEV_MODE = (() => {
+  const v = process.env.PW_RSTUDIO_DEV?.toLowerCase();
+  return v === '1' || v === 'true';
+})();
+const DEV_DESKTOP_DIR = path.resolve(__dirname, '../../../src/node/desktop');
+// First-run webpack compile can take a couple of minutes; subsequent
+// starts are much faster but still slower than launching the installed
+// binary, so give dev-mode startup more headroom than installed mode.
+const DEV_STARTUP_TIMEOUT_MS = 180000;
+
+/**
+ * Kill the rstudio child process and (in dev mode) its descendants.
+ *
+ * Default mode spawns the RStudio binary directly, so `proc.kill()` is
+ * enough. In dev mode, `proc` is the npm/cmd.exe wrapper -- SIGTERM to it
+ * doesn't reliably reach electron-forge, webpack-dev-server, or Electron,
+ * so we tear down the whole tree: by process group on POSIX (set up via
+ * `detached: true` at spawn time) and via `taskkill /F /T` on Windows.
+ */
+function killProcessTree(proc: ChildProcess): void {
+  const pid = proc.pid;
+  if (pid === undefined) return;
+  try {
+    if (DEV_MODE) {
+      if (process.platform === 'win32') {
+        spawnSync('taskkill', ['/F', '/T', '/PID', String(pid)], { stdio: 'pipe' });
+      } else {
+        process.kill(-pid, 'SIGTERM');
+      }
+    } else {
+      proc.kill();
+    }
+  } catch {
+    // Process tree may already be gone
+  }
+}
 
 export interface DesktopSession {
   page: Page;
   browser: Browser;
   rstudioProcess: ChildProcess;
   configRoot: string;
+  // Directory rsession writes its log files to for this launch:
+  // RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp userLogDir). The per-test
+  // fixture reads them from here to attach backend logs on a failure.
+  logDir: string;
+}
+
+// Gated diagnostic: when PW_DEBUG_PAGES=1 is set, attach listeners to every
+// existing and future page in every context, so we can see the navigation /
+// load / console / error sequence that produces the renderer's "double load"
+// behavior during startup. Output is prefixed `[debug-launch]` with relative
+// timestamps. Leave the flag unset for normal runs.
+//
+// Deliberately a separate flag from PW_DEBUG_LAUNCH (the `[launch-timing]`
+// phase timeline CI keeps enabled): these listeners stay attached for the
+// whole run and would otherwise trace every popup and secondary window --
+// plot zoom, presentations, etc. -- long after launch.
+function attachLaunchDebug(browser: Browser): void {
+  if (process.env.PW_DEBUG_PAGES !== '1' && process.env.PW_DEBUG_PAGES !== 'true') {
+    return;
+  }
+
+  const t0 = Date.now();
+  const stamp = () => `+${(Date.now() - t0).toString().padStart(5, ' ')}ms`;
+  let pageSeq = 0;
+
+  const attach = (p: Page): void => {
+    const label = `p${pageSeq++}`;
+    console.log(`[debug-launch] ${stamp()} ${label}: page created, url=${p.url()}`);
+
+    p.on('framenavigated', (frame) => {
+      if (frame === p.mainFrame()) {
+        console.log(`[debug-launch] ${stamp()} ${label}: navigated -> ${frame.url()}`);
+      }
+    });
+    p.on('load', () => {
+      console.log(`[debug-launch] ${stamp()} ${label}: load (url=${p.url()})`);
+    });
+    p.on('domcontentloaded', () => {
+      console.log(`[debug-launch] ${stamp()} ${label}: domcontentloaded (url=${p.url()})`);
+    });
+    p.on('console', (msg) => {
+      const t = msg.type();
+      if (t === 'error' || t === 'warning' || t === 'info') {
+        console.log(`[debug-launch] ${stamp()} ${label}: console.${t}: ${msg.text()}`);
+      }
+    });
+    p.on('pageerror', (err) => {
+      console.log(`[debug-launch] ${stamp()} ${label}: pageerror: ${err.message}`);
+    });
+    p.on('close', () => {
+      console.log(`[debug-launch] ${stamp()} ${label}: closed`);
+    });
+  };
+
+  for (const ctx of browser.contexts()) {
+    ctx.on('page', attach);
+    for (const existing of ctx.pages()) {
+      attach(existing);
+    }
+  }
 }
 
 interface TempConfig {
@@ -66,6 +239,7 @@ interface TempConfig {
   configHome: string;
   configDir: string;
   electronUserData: string;
+  dataHome: string;
 }
 
 /**
@@ -73,20 +247,24 @@ interface TempConfig {
  * built by merging fixtures/base-prefs.jsonc with an optional override
  * from PW_RSTUDIO_PREFS_OVERRIDE. Plumbed into RStudio via
  * RSTUDIO_CONFIG_* env vars at spawn time so the user's real profile
- * is untouched.
+ * is untouched. Also carries a per-spec data home (RSTUDIO_DATA_HOME)
+ * so persisted client state -- window layout, pane sizes, source docs --
+ * can't leak between specs or workers.
  *
  * Desktop only -- Server mode doesn't spawn RStudio, so this mechanism
  * doesn't apply directly. See https://github.com/rstudio/rstudio/issues/17520
  * for tracking parity with Server mode.
  */
 function createTempConfig(): TempConfig {
-  const root = fs.mkdtempSync(path.join(SANDBOX, 'config_'));
+  const root = fs.mkdtempSync(path.join(sandboxRoot(), 'config_'));
   const configHome = path.join(root, 'config-home');
   const configDir = path.join(root, 'config-dir');
   const electronUserData = path.join(root, 'electron-userdata');
-  for (const d of [configHome, configDir, electronUserData]) {
+  const dataHome = path.join(root, 'data-home');
+  for (const d of [configHome, configDir, electronUserData, dataHome]) {
     fs.mkdirSync(d, { recursive: true });
   }
+  seedPaiIntoDataHome(dataHome);
 
   const basePrefs = readPrefsFile(BASE_PREFS_PATH, 'base');
   const overridePath = process.env[OVERRIDE_PREFS_ENV];
@@ -98,49 +276,133 @@ function createTempConfig(): TempConfig {
     JSON.stringify(prefs, null, 2),
   );
 
-  return { root, configHome, configDir, electronUserData };
+  // Pre-seed electron-store's config.json with explicit windowBounds, pinned
+  // to ONE geometry that both local machines and CI render identically:
+  // 1024x645, the macOS GH Actions runner's display workArea. Asking for
+  // anything taller is silently clamped to that on CI (macOS constrains
+  // windows to the visible frame regardless of the requested rect), so the
+  // previous 1400x900 request meant local runs tested a different layout
+  // than CI -- and geometry-sensitive bugs (the Viewer's ensure-height
+  // escalating to a pane maximize, the Plots-pane ImageFrame TypeError)
+  // surfaced only on CI. 800x600 was evaluated and rejected: it genuinely
+  // cramps layouts (fewer data-viewer columns visible, the Import Dataset
+  // dialog doesn't fit) and broke 7 tests.
+  fs.writeFileSync(
+    path.join(electronUserData, 'config.json'),
+    JSON.stringify(
+      { view: { windowBounds: { x: 0, y: 0, width: 1024, height: 645, maximized: false } } },
+      null,
+      2,
+    ),
+  );
+
+  return { root, configHome, configDir, electronUserData, dataHome };
 }
+
+/**
+ * Link the seeded Posit Assistant build (sandbox data-home/pai, populated by
+ * sandbox-setup.ts when PW_SEED_PAI is set) into a per-spec data home so the
+ * session under test finds it at RSTUDIO_DATA_HOME/pai. A symlink (junction
+ * on Windows, which needs no elevation) avoids copying the install once per
+ * spec. The uninstall flow deletes pai via boost::filesystem::remove_all,
+ * which removes the link itself without following it, so an uninstall test
+ * can't destroy the shared seed. Writes into pai (e.g. manifest-check.json)
+ * do go through the link to the seed -- same exposure as the previous fully
+ * shared data home, now scoped to pai only. No-op when nothing was seeded or
+ * the link already exists (config-root reuse across a restart).
+ */
+function seedPaiIntoDataHome(dataHome: string): void {
+  const seed = path.join(sandboxDataHome(), 'pai');
+  const dest = path.join(dataHome, 'pai');
+  if (!fs.existsSync(seed) || fs.existsSync(dest)) {
+    return;
+  }
+  fs.symlinkSync(seed, dest, process.platform === 'win32' ? 'junction' : 'dir');
+}
+
+// Cold CI runners can take longer than a developer machine to clear the
+// GWT-ready check (JS download/parse, R session boot, ApplicationAutomation
+// init, DeferredInitCompletedEvent). PW_GWT_READY_TIMEOUT_MS overrides
+// explicitly; otherwise default to 60s under CI and the previous 30s locally.
+const PAGE_READY_TIMEOUT_MS =
+  Number(process.env.PW_GWT_READY_TIMEOUT_MS) ||
+  (process.env.CI ? 60000 : 30000);
 
 /**
  * Launch RStudio with CDP, connect Playwright, and return the session.
  *
  * `existingConfigRoot` lets relaunchAfterRestart reuse the same config
  * directory across a quit-and-restart so prefs/state persist.
+ *
+ * Retries the underlying launch once on failure. A cold-cache flake during
+ * the GWT-ready phase is the dominant failure mode on CI runners, and the
+ * post-CDP catch already tears the process tree down on failure, so a
+ * second attempt is safe and cheap. Set PW_LAUNCH_ATTEMPTS to override the
+ * attempt count (default 2 -- one retry).
  */
 export async function launchRStudio(existingConfigRoot?: string): Promise<DesktopSession> {
-  // Clean up any existing RStudio on our specific CDP port
+  const maxAttempts = Math.max(1, Number(process.env.PW_LAUNCH_ATTEMPTS) || 2);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await launchRStudioOnce(existingConfigRoot);
+    } catch (err) {
+      lastError = err;
+      const msg = (err as Error)?.message ?? String(err);
+      if (attempt < maxAttempts) {
+        console.warn(`[launch] attempt ${attempt}/${maxAttempts} failed: ${msg} -- retrying`);
+      } else {
+        console.warn(`[launch] attempt ${attempt}/${maxAttempts} failed: ${msg} -- giving up`);
+      }
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSession> {
+  // Clean up any existing RStudio on our specific CDP port. The port is fixed
+  // per worker (base + checkout offset + parallel index), so this only ever
+  // reclaims an orphaned process from a prior interrupted run on this worker's
+  // own port -- never a sibling worker's live instance. Match the LISTEN
+  // socket only: an unqualified port match also selects the *client* end of
+  // established connections to that port, and if the band were ever shared
+  // (e.g. PW_CDP_PORT collisions) that would SIGKILL another run's Playwright
+  // worker process, not just a leftover RStudio (rstudio#18135).
   console.log(`CDP port: ${CDP_PORT}`);
   console.log(`Cleaning up any RStudio on port ${CDP_PORT}...`);
   try {
     if (process.platform === 'win32') {
       execSync(
-        `powershell.exe -NoProfile -Command "(Get-NetTCPConnection -LocalPort ${CDP_PORT} -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"`,
+        `powershell.exe -NoProfile -Command "(Get-NetTCPConnection -LocalPort ${CDP_PORT} -State Listen -ErrorAction SilentlyContinue).OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"`,
         { encoding: 'utf-8', stdio: 'pipe' }
       );
     } else {
-      execSync(`lsof -ti :${CDP_PORT} | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
+      execSync(`lsof -ti TCP:${CDP_PORT} -sTCP:LISTEN | xargs kill -9 2>/dev/null`, { stdio: 'ignore' });
     }
-    await sleep(5000); // Give RStudio time to shut down gracefully
   } catch {
     // No process on that port, that's fine
   }
-  await sleep(TIMEOUTS.processCleanup);
 
-  // Wait for port to be released (up to 15 seconds)
+  // Wait for the port to be free. When nothing was ever bound, the first
+  // probe throws immediately and we break out in microseconds. When we
+  // just killed something, the OS usually releases the port within a few
+  // hundred ms; the 15s ceiling is purely a safety net. As above, probe the
+  // LISTEN socket only -- what matters is whether Electron can bind the port,
+  // and matching connected client sockets too would stall the full 15s.
   const portDeadline = Date.now() + 15000;
   while (Date.now() < portDeadline) {
     try {
       if (process.platform === 'win32') {
-        const result = execSync(`powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort ${CDP_PORT} -ErrorAction SilentlyContinue"`, { encoding: 'utf-8' });
+        const result = execSync(`powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort ${CDP_PORT} -State Listen -ErrorAction SilentlyContinue"`, { encoding: 'utf-8' });
         if (!result.trim()) break;
       } else {
-        execSync(`lsof -i :${CDP_PORT} -t`, { encoding: 'utf-8' });
-        // If lsof succeeds, port is still in use — keep waiting
+        execSync(`lsof -ti TCP:${CDP_PORT} -sTCP:LISTEN`, { encoding: 'utf-8' });
+        // If lsof succeeds, port is still in use -- keep waiting
       }
     } catch {
-      break; // No connections on the port
+      break; // No listener on the port
     }
-    await sleep(1000);
+    await sleep(100);
   }
 
   // Set up the isolated config directory (or reuse one across a restart)
@@ -151,97 +413,291 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       configHome: path.join(existingConfigRoot, 'config-home'),
       configDir: path.join(existingConfigRoot, 'config-dir'),
       electronUserData: path.join(existingConfigRoot, 'electron-userdata'),
+      dataHome: path.join(existingConfigRoot, 'data-home'),
     };
     // Defensively recreate child dirs in case anything cleared them between runs
-    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData]) {
+    for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData, tempConfig.dataHome]) {
       fs.mkdirSync(d, { recursive: true });
     }
+    seedPaiIntoDataHome(tempConfig.dataHome);
   } else {
     tempConfig = createTempConfig();
   }
   const configRoot = tempConfig.root;
   console.log(`[sandbox] this spec's config: ${configRoot}`);
 
-  // Start RStudio with remote debugging enabled
-  console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
-  const args = [
+  // Start RStudio with remote debugging enabled. --automation-agent is
+  // forwarded to rsession (see session-launcher.ts), which causes
+  // ApplicationAutomation to expose `window.rstudio` -- the command,
+  // preference, and document helpers our tests drive instead of typing
+  // commands through the console.
+  const rstudioArgs = [
     `--remote-debugging-port=${CDP_PORT}`,
     `--user-data-dir=${tempConfig.electronUserData}`,
+    '--automation-agent',
     ...RSTUDIO_EXTRA_ARGS,
   ];
-  const rstudioProcess = spawn(RSTUDIO_PATH, args, {
+  // In dev mode, run `npm run start` in src/node/desktop. The package.json
+  // script command is `electron-forge start -- --no-sandbox`, and `npm run
+  // start -- <args>` appends our args to the script command, producing
+  // `electron-forge start -- --no-sandbox <args>`. electron-forge forwards
+  // everything after its own `--` to Electron, so our flags arrive alongside
+  // `--no-sandbox`.
+  //
+  // We deliberately avoid `shell: true`: it would re-parse each argv value
+  // through the shell, breaking paths that contain spaces (e.g. when
+  // PW_SANDBOX_ROOT points somewhere with whitespace) and changing the
+  // semantics of PW_RSTUDIO_EXTRA_ARGS from literal argv to shell text.
+  // On Windows, npm is npm.cmd, which Node refuses to spawn directly
+  // without shell: true -- go through cmd.exe /c instead. Node's normal
+  // arg quoting then preserves whitespace and most punctuation, but cmd
+  // metacharacters (`&` `|` `<` `>` `^` `%`) still go through cmd's own
+  // parser, so paths or PW_RSTUDIO_EXTRA_ARGS values containing those
+  // characters are not supported on the Windows dev path.
+  let spawnCmd: string;
+  let spawnArgs: string[];
+  const spawnOptions: SpawnOptions = {
     env: {
       ...process.env,
-      RSTUDIO_CONFIG_ROOT: tempConfig.root,
-      RSTUDIO_CONFIG_HOME: tempConfig.configHome,
+      HOME: workerUserHome(),
+      // R expands %p / %v at startup; the resolved path is the same one
+      // globalSetup pre-creates and pre-populates in r-libs-setup.ts. Setting
+      // this explicitly is necessary because HOME is redirected -- without it,
+      // R derives an empty default library inside the per-run sandbox. Under
+      // parallel runs this resolves to a per-worker hermetic clone of that
+      // library so concurrent installs/removes can't race or leak.
+      R_LIBS_USER: workerRLibsUser(),
       RSTUDIO_CONFIG_DIR: tempConfig.configDir,
-      RSTUDIO_DATA_HOME: SHARED_DATA_HOME,
-      HOME: SHARED_USER_HOME,
-      USERPROFILE: SHARED_USER_HOME,
+      RSTUDIO_CONFIG_HOME: tempConfig.configHome,
+      RSTUDIO_CONFIG_ROOT: tempConfig.root,
+      // Per-spec, not shared: RSTUDIO_DATA_HOME is where the session persists
+      // client state (data-home/pcs/*.pper -- window layout, pane sizes,
+      // source docs, ...). Sharing it across workers let one spec's leaked
+      // state (e.g. a maximized Viewer pane from a notebook preview) poison
+      // every later launch in the run, including fresh retry workers. Tied to
+      // the config root so a deliberate quit-and-restart (which reuses the
+      // config root) still sees its persisted state.
+      RSTUDIO_DATA_HOME: tempConfig.dataHome,
+      RSTUDIO_DISABLE_WHATS_NEW: '1',
+      // Under PW_DEBUG, have the launched app open Chromium DevTools on
+      // startup so the renderer's Performance profiler is ready before
+      // waitForUserConsoleInput resumes the test.
+      ...(isDebugMode() ? { RSTUDIO_OPEN_DEVTOOLS: '1' } : {}),
+      // Suppress the Electron splash screen during automation; otherwise CDP
+      // can grab the splash window before the main app loads (see the
+      // automation-bridge poll loop below).
+      RS_NO_SPLASH: '1',
+      // Force window closes through even when a page's beforeunload handler
+      // prevents unload; the interactive path shows a native "Leave page?"
+      // dialog that automation cannot dismiss (rstudio#17439).
+      RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1',
+      // Dev mode runs `npm run start` (electron-forge), whose webpack dev-server
+      // and logger otherwise bind the fixed defaults 3000 / 9000. Derive both
+      // from the per-worker CDP port so concurrent workers -- and a developer's
+      // own manually-launched dev instance on the defaults -- don't collide.
+      // CDP ports are fixed per worker (base + checkout offset + parallel
+      // index), and the offset stays under 900, so with a realistic worker
+      // count the CDP / dev (+1000) / logger (+2000) bands stay disjoint and
+      // no two workers share a port.
+      // forge.config.js reads these; ignored by the installed-binary path.
+      ...(DEV_MODE ? {
+        RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
+        RSTUDIO_DESKTOP_LOGGER_PORT: String(CDP_PORT + 2000),
+      } : {}),
+      USERPROFILE: workerUserHome(),
     },
-  });
+  };
+  if (DEV_MODE) {
+    spawnOptions.cwd = DEV_DESKTOP_DIR;
+    // Surface webpack / electron-forge output so a compile failure isn't
+    // hidden behind a 180s opaque CDP timeout.
+    spawnOptions.stdio = 'inherit';
+    // POSIX: put the child in its own process group so killProcessTree
+    // can take down electron-forge + webpack-dev-server + Electron via
+    // a single negative-PID signal. Windows uses taskkill /F /T instead.
+    if (process.platform !== 'win32') {
+      spawnOptions.detached = true;
+    }
+    if (process.platform === 'win32') {
+      spawnCmd = 'cmd.exe';
+      spawnArgs = ['/c', 'npm', 'run', 'start', '--', ...rstudioArgs];
+    } else {
+      spawnCmd = 'npm';
+      spawnArgs = ['run', 'start', '--', ...rstudioArgs];
+    }
+    console.log(`Starting RStudio dev build via "npm run start" in ${DEV_DESKTOP_DIR} (CDP port ${CDP_PORT})...`);
+  } else {
+    spawnCmd = RSTUDIO_PATH;
+    spawnArgs = rstudioArgs;
+    console.log(`Starting RStudio with CDP on port ${CDP_PORT}...`);
+  }
+  const rstudioProcess = spawn(spawnCmd, spawnArgs, spawnOptions);
+  // Backstop: if the worker exits without running shutdownRStudio (e.g. an
+  // interrupted run whose graceful teardown was skipped), force-kill the
+  // RStudio process tree on the way out so it isn't orphaned. The dev-mode
+  // tree is detached into its own group and would otherwise survive the run.
+  trackForReaping(rstudioProcess, () => killProcessTree(rstudioProcess));
+  const launchTarget = DEV_MODE ? `npm run start (cwd ${DEV_DESKTOP_DIR})` : RSTUDIO_PATH;
   let launchError: Error | undefined;
   rstudioProcess.on('error', (err) => {
-    launchError = new Error(`Failed to launch RStudio at ${RSTUDIO_PATH}: ${err.message}`);
+    launchError = new Error(`Failed to launch RStudio (${launchTarget}): ${err.message}`);
+  });
+  // `'error'` only fires on spawn-level failures (ENOENT). An exit with a
+  // non-zero code -- missing npm script, webpack abort, electron-forge
+  // crash -- would otherwise sit unnoticed for the full CDP-wait timeout.
+  // We only treat code !== 0 as an error; code === null means the process
+  // was killed by signal (typically our own killProcessTree during
+  // teardown), which isn't a launch failure.
+  rstudioProcess.on('exit', (code, signal) => {
+    if (code !== null && code !== 0) {
+      launchError = new Error(
+        `RStudio process (${launchTarget}) exited prematurely with code ${code}${signal ? ` (signal ${signal})` : ''}`,
+      );
+    }
   });
   console.log(`RStudio process started (PID: ${rstudioProcess.pid})`);
 
-  // Wait for RStudio to start
-  await sleep(TIMEOUTS.rstudioStartup);
-  if (launchError) throw launchError;
-
-  // Connect to CDP and set up the session.
-  // If anything fails after spawn, kill the process to avoid orphaning RStudio.
+  // Poll for CDP availability instead of a fixed sleep. RStudio Desktop
+  // typically has CDP up in 3-5s on a developer machine; capping at
+  // TIMEOUTS.rstudioStartup keeps the overall safety margin. Dev mode is
+  // slower because electron-forge has to run a webpack build before
+  // Electron starts, so we extend the deadline only on that path.
   let browser: Browser | undefined;
-  try {
-    browser = await chromium.connectOverCDP(CDP_URL);
-    const contexts: BrowserContext[] = browser.contexts();
-    if (contexts.length === 0) {
-      throw new Error('CDP connected but no browser contexts available — RStudio window may not be ready');
+  const startupTimeout = DEV_MODE ? DEV_STARTUP_TIMEOUT_MS : TIMEOUTS.rstudioStartup;
+  const cdpDeadline = Date.now() + startupTimeout;
+  let lastConnectErr: unknown;
+  while (Date.now() < cdpDeadline) {
+    if (launchError) {
+      killProcessTree(rstudioProcess);
+      throw launchError;
     }
-    const pages = contexts[0].pages();
-    if (pages.length === 0) {
-      throw new Error('CDP context has no pages — RStudio window may not be ready');
-    }
-    const page: Page = pages[0];
-
-    // Dismiss any "save changes" modal from a previous interrupted run
     try {
-      const dontSaveBtn = page.locator("button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no");
-      await dontSaveBtn.click({ timeout: 3000 });
+      browser = await chromium.connectOverCDP(CDP_URL, { timeout: 5000 });
+      break;
+    } catch (err) {
+      lastConnectErr = err;
+      await sleep(250);
+    }
+  }
+  if (!browser) {
+    killProcessTree(rstudioProcess);
+    throw new Error(
+      `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
+    );
+  }
+
+  attachLaunchDebug(browser);
+
+  // If anything fails after CDP connect, kill the process to avoid orphaning RStudio.
+  try {
+    // Gated diagnostic for the post-CDP wait. Helps compare what the test
+    // fixture is waiting on against what's visible in the UI. Enabled by
+    // PW_DEBUG_LAUNCH=1, same flag as attachLaunchDebug above.
+    const launchDebug =
+      process.env.PW_DEBUG_LAUNCH === '1' || process.env.PW_DEBUG_LAUNCH === 'true';
+    const launchT0 = Date.now();
+    const logLaunchStep = (label: string): void => {
+      if (launchDebug) {
+        console.log(`[launch-timing] +${(Date.now() - launchT0).toString().padStart(5, ' ')}ms ${label}`);
+      }
+    };
+    logLaunchStep('CDP connected; polling for window.rstudio.ready');
+
+    // The splash screen and (in GWT super dev mode) a transient "Compiling
+    // RStudio" page both flash before the real app loads, and the compiling
+    // page briefly exposes window.rstudio. Polling for window.rstudio.ready
+    // === true cuts through both: ApplicationAutomation initializes ready to
+    // false and only flips it on DeferredInitCompletedEvent, so the transient
+    // page never matches and we proceed exactly when R-to-GWT roundtrips are
+    // safe (no separate stability window needed).
+    const pageDeadline = Date.now() + PAGE_READY_TIMEOUT_MS;
+    let page: Page | undefined;
+    let bridgeFirstSeen = false;
+
+    while (Date.now() < pageDeadline && !page) {
+      for (const ctx of browser.contexts()) {
+        for (const candidate of ctx.pages()) {
+          if (candidate.isClosed()) continue;
+          try {
+            const state = await candidate.evaluate(() => {
+              const r = window.rstudio;
+              return {
+                hasBridge: typeof r?.commands?.activateConsole === 'function',
+                ready: r?.ready === true,
+              };
+            });
+            if (state.hasBridge && !bridgeFirstSeen) {
+              bridgeFirstSeen = true;
+              logLaunchStep('window.rstudio bridge installed (ready=false)');
+            }
+            if (state.hasBridge && state.ready) {
+              page = candidate;
+              break;
+            }
+          } catch {
+            // Page may be navigating or closing during splash -> main transition.
+          }
+        }
+        if (page) break;
+      }
+      if (page) break;
+      await sleep(250);
+    }
+    if (!page) {
+      throw new Error(
+        `GWT app did not finish loading within ${PAGE_READY_TIMEOUT_MS}ms (window.rstudio.ready never became true)`,
+      );
+    }
+    logLaunchStep('window.rstudio.ready === true');
+
+    // Dismiss any "save changes" modal from a previous interrupted run.
+    // Use isVisible() (snapshot, no wait) to gate the click -- the prior
+    // form passed timeout: 3000 to click(), which spends the full 3s waiting
+    // when no dialog exists (the common case with a fresh per-spec sandbox).
+    const dontSaveBtn = page.locator(
+      "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), #rstudio_dlg_no",
+    ).first();
+    if (await dontSaveBtn.isVisible()) {
+      await dontSaveBtn.click();
       console.log('Dismissed save dialog from previous session');
       await sleep(1000);
-    } catch {
-      // No dialog, continue normally
     }
 
-    // Dismiss any other modal overlay (e.g. update notification, options dialog)
-    try {
-      const overlay = page.locator('.gwt-PopupPanelGlass');
-      if (await overlay.isVisible({ timeout: 1000 })) {
-        await page.keyboard.press('Escape');
-        console.log('Dismissed modal overlay during startup');
-        await sleep(1000);
-      }
-    } catch {
-      // No overlay
+    // Dismiss any other modal overlay (e.g. update notification, options dialog).
+    const overlay = page.locator('.gwt-PopupPanelGlass').first();
+    if (await overlay.isVisible()) {
+      await page.keyboard.press('Escape');
+      console.log('Dismissed modal overlay during startup');
+      await sleep(1000);
     }
-
-    // Wait for RStudio's GWT app to fully initialize
-    await page.waitForFunction('typeof window.desktopHooks?.invokeCommand === "function"', null, { timeout: 30000 });
 
     // Activate console (makes it visible without zooming)
-    await page.evaluate("window.desktopHooks.invokeCommand('activateConsole')");
-    await sleep(2000);
+    await executeCommand(page, 'activateConsole');
+    logLaunchStep('activateConsole dispatched');
 
-    // Wait for console to be ready
+    // Wait for the console input to be visible AND R to be idle (no
+    // rstudio-console-busy class on #rstudio_console_input). The latter is
+    // what GWT sets while R is executing -- visibility alone can occur a
+    // beat before R is ready to accept input.
     await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: TIMEOUTS.consoleReady });
+    logLaunchStep('console input visible');
+    await page.waitForFunction(
+      () => {
+        const el = document.getElementById('rstudio_console_input');
+        return !!el && !el.classList.contains('rstudio-console-busy');
+      },
+      null,
+      { timeout: TIMEOUTS.consoleReady, polling: 100 },
+    );
+    logLaunchStep('console input not busy');
     console.log('RStudio console is ready');
 
-    return { page, browser, rstudioProcess, configRoot };
+    // rsession logs land in RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp).
+    const logDir = path.join(tempConfig.dataHome, 'log');
+    return { page, browser, rstudioProcess, configRoot, logDir };
   } catch (err) {
     await browser?.close().catch(() => {});
-    rstudioProcess.kill();
+    killProcessTree(rstudioProcess);
     throw err;
   }
 }
@@ -267,7 +723,7 @@ export async function relaunchAfterRestart(session: DesktopSession): Promise<Des
   }
   if (rstudioProcess.exitCode === null) {
     console.log('WARNING: old process did not exit within 30s');
-    rstudioProcess.kill();
+    killProcessTree(rstudioProcess);
   }
   console.log(`Old RStudio exited (code ${rstudioProcess.exitCode})`);
   await browser.close().catch(() => {});
@@ -320,7 +776,15 @@ function getRStudioPids(): Set<number> {
 }
 
 /**
- * Graceful shutdown: q() in console, close browser, kill process.
+ * Graceful shutdown: q() in console, close browser, kill process if it
+ * hasn't exited on its own.
+ *
+ * `browser.close()` over a CDP connection only disconnects the CDP session
+ * -- it does not terminate the underlying Electron process. And `q()`
+ * cascading to a full Electron quit is best-effort (a pending modal, a
+ * hung renderer, etc. can leave Electron alive after rsession exits). So
+ * after attempting graceful shutdown we always verify the process tree
+ * actually exited, and force-kill if not.
  *
  * No per-spec config-tree cleanup -- the sandbox-wide globalTeardown
  * removes everything under PW_SANDBOX at end of run.
@@ -328,18 +792,42 @@ function getRStudioPids(): Set<number> {
 export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   const { page, browser, rstudioProcess } = session;
 
-  // Close all source files without prompting to save
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
-  await sleep(1000);
+  // Dismiss any modal dialogs the test left open. An open GWT modal (Global
+  // Options, Import Dataset, ...) blocks the Electron close path: the
+  // renderer's quit confirmation prompts queue behind the existing modal and
+  // q(save="no") never gets a chance to cascade to a full quit (#17790).
+  try {
+    await dismissAllModals(page);
+  } catch {
+    // Page context may already be gone; we still force-kill below.
+  }
+
+  // Close all source files without prompting to save. If a test left the page
+  // in the middle of a navigation (e.g. opening a project triggers a session
+  // restart), `page.evaluate` will reject with "context was destroyed" --
+  // we don't care, we're shutting down anyway.
+  try {
+    await documentCloseAllNoSave(page);
+    await sleep(1000);
+  } catch {
+    // Page context may already be gone; we still force-kill below.
+  }
 
   try {
-    await typeInConsole(page, 'q(save = "no")');
-    await sleep(5000); // Give RStudio time to shut down and release port
-    await browser.close();
+    await executeInConsole(page, 'q(save = "no")');
   } catch {
-    await browser.close().catch(() => {});
-    // Only force kill if graceful shutdown failed
-    rstudioProcess.kill();
+    // Console may already be unresponsive; we still force-kill below.
+  }
+  await browser.close().catch(() => {});
+
+  // Wait briefly for Electron to exit on its own, then force-kill if it
+  // hasn't. Polling avoids a fixed sleep when the graceful path works.
+  const exitDeadline = Date.now() + 5000;
+  while (Date.now() < exitDeadline && rstudioProcess.exitCode === null && rstudioProcess.signalCode === null) {
+    await sleep(100);
+  }
+  if (rstudioProcess.exitCode === null && rstudioProcess.signalCode === null) {
+    killProcessTree(rstudioProcess);
   }
 }
 

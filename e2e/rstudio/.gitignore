@@ -1,7 +1,16 @@
 node_modules/
 dist/
 test-results/
-playwright-report/
+# Per-run HTML report dirs (playwright-report-<timestamp>) and the
+# playwright-report symlink that points at the most recent one.
+playwright-report
+playwright-report-*/
 .env
 .env.*
 !.env.example
+
+# Local-only notes, scratchpads, audit lists, etc.
+*.local.md
+
+# Local rstudio preference overrides
+.prefs.local.json

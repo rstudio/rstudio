@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.common.PreviewResult;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
@@ -64,6 +65,15 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 AssistantServerOperations,
                                                 ChatServerOperations
 {
+   // Consent check for an r2d3 ('// !preview r2d3 ...') file preview. The
+   // backend requires the built command to be a single statement, classifies
+   // it, and returns whether it is safe to run; when it is not, the front-end
+   // prompts the user and retries with allowUnsafe = true before executing the
+   // command (verbatim) in the console.
+   void previewR2d3(String command,
+                    boolean allowUnsafe,
+                    ServerRequestCallback<PreviewResult> requestCallback);
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class FormatDocumentEdit
    {

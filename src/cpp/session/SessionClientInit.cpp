@@ -258,8 +258,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initOptions["run_rprofile"] = options.rRunRprofile();
    sessionInfo["init_options"] = initOptions;
 
-   sessionInfo["startup_files_suppressed"] =
-      modules::trust::shouldSuppressStartupFiles();
+   sessionInfo["project_untrusted"] =
+      modules::trust::isProjectUntrusted();
    sessionInfo["trust_request"] = modules::trust::trustRequestData();
 
    sessionInfo["userIdentity"] = userIdentityDisplay(ptrConnection->request());
@@ -679,7 +679,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #endif
    
    // automation
-   sessionInfo["is_automation_host"] = options.runAutomation();
    sessionInfo["is_automation_agent"] = options.isAutomationAgent();
    
    // assistant running?

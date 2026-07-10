@@ -18,6 +18,8 @@
 #include <atomic>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <boost/assert.hpp>
 #include <boost/utility.hpp>
 #include <boost/format.hpp>
@@ -29,6 +31,7 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
+#include <core/Thread.hpp>
 #include <core/Debug.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
@@ -132,8 +135,15 @@ public:
    
    ~ConsoleInputService()
    {
-      thread_.interrupt();
-      thread_.timed_join(1);
+      // seconds(1) is a real 1-second bound. This replaced a prior bare
+      // timed_join(1), which boost interprets as 1 nanosecond -- effectively no
+      // wait, which left the thread joinable and could std::terminate from this
+      // destructor. The worker polls boost interruption points, so interrupt.
+      core::thread::joinOrAbandonThread(
+            thread_,
+            "console input service thread",
+            true,
+            boost::posix_time::seconds(1));
    }
    
    void enqueue(const std::string& input)
@@ -381,6 +391,16 @@ SEXP rs_rstudioProgramMode()
 SEXP rs_rstudioEdition()
 {
    return R_NilValue;
+}
+
+// get the administrator-configured list of additional functions that may be
+// evaluated without prompting when resolving a file preview connection
+// expression (see SessionDataPreview.R and the 'preview-allowed-functions'
+// session option). Returned as the raw option string; the R side splits it.
+SEXP rs_previewAllowedFunctions()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(session::options().previewAllowedFunctions(), &rProtect);
 }
 
 // get version
@@ -1219,6 +1239,17 @@ bool isVisibleUserFile(const FilePath& filePath)
 {
    return (filePath.isWithin(module_context::userHomePath()) &&
            !filePath.isWithin(module_context::userScratchPath()));
+}
+
+bool reduceRemoteFilesystemOperations()
+{
+   // resolved per-project (combines the project setting, the global
+   // preference, and remote-filesystem detection); no project means no
+   // reduction
+   if (!projects::projectContext().hasProject())
+      return false;
+
+   return projects::projectContext().reduceRemoteFilesystemOperations();
 }
 
 FilePath safeCurrentPath()
@@ -2291,6 +2322,7 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 
 namespace {
 std::atomic<bool> s_agentExecuting{false};
+std::atomic<bool> s_consoleOutputSuppressed{false};
 } // anonymous namespace
 
 void setAgentExecuting(bool executing)
@@ -2301,6 +2333,16 @@ void setAgentExecuting(bool executing)
 bool isAgentExecuting()
 {
    return s_agentExecuting.load(std::memory_order_acquire);
+}
+
+void setConsoleOutputSuppressed(bool suppressed)
+{
+   s_consoleOutputSuppressed.store(suppressed, std::memory_order_release);
+}
+
+bool isConsoleOutputSuppressed()
+{
+   return s_consoleOutputSuppressed.load(std::memory_order_acquire);
 }
 
 void consoleWriteOutput(const std::string& output)
@@ -2788,13 +2830,15 @@ std::string sessionTempDirUrl(const std::string& sessionTempPath)
 
    if (useRHelpServer)
    {
-      boost::format fmt("http://localhost:%1%/session/%2%");
-      return boost::str(fmt % rLocalHelpPort() % sessionTempPath);
+      // use the loopback IP address rather than 'localhost' here, since R's
+      // help server binds explicitly to 127.0.0.1 -- on machines where
+      // 'localhost' resolves elsewhere (e.g. only to '::1'), connections
+      // to the help server would otherwise fail (#17579)
+      return fmt::format("http://127.0.0.1:{}/session/{}", rLocalHelpPort(), sessionTempPath);
    }
    else
    {
-      boost::format fmt("session/%1%");
-      return boost::str(fmt % sessionTempPath);
+      return fmt::format("session/{}", sessionTempPath);
    }
 }
 
@@ -3100,35 +3144,48 @@ void checkXcodeLicense()
 #endif
 }
 
+bool shouldIgnoreOutputDir(const FilePath& base, const std::string& outputDir)
+{
+   if (outputDir.empty())
+      return false;
+
+   // Compare by filesystem identity rather than lexically-normal string: a
+   // configured 'output-dir: .' resolves to base, but 'base/.' does not
+   // normalize to 'base' as a string. Ignoring base would drop all project
+   // content, leaving Find in Files with no results (#17900).
+   FilePath outputDirPath = base.completeChildPath(outputDir);
+   return !outputDirPath.isEquivalentTo(base);
+}
+
 std::vector<FilePath> ignoreContentDirs()
 {
    std::vector<FilePath> ignoreDirs;
-   
+
    if (projects::projectContext().hasProject())
    {
       // python virtual environments
       ignoreDirs = projects::projectContext().pythonEnvs();
       quarto::QuartoConfig quartoConf = quarto::quartoConfig();
-      
+
+      auto addOutputDir = [&ignoreDirs](const FilePath& base, const std::string& outputDir)
+      {
+         if (shouldIgnoreOutputDir(base, outputDir))
+            ignoreDirs.push_back(base.completeChildPath(outputDir));
+      };
+
       // quarto site output dir
       if (quartoConf.is_project)
       {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
-         
-         std::string quartoOutputDir = quartoConf.project_output_dir;
-         if (!quartoOutputDir.empty())
-            ignoreDirs.push_back(quartoProjDir.completeChildPath(quartoOutputDir));
-         
+         addOutputDir(quartoProjDir, quartoConf.project_output_dir);
          ignoreDirs.push_back(quartoProjDir.completeChildPath("_freeze"));
       }
-      
+
       // rmarkdown site output dir
       if (module_context::isWebsiteProject())
       {
          FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-         std::string outputDir = module_context::websiteOutputDir();
-         if (!outputDir.empty())
-            ignoreDirs.push_back(buildTargetPath.completeChildPath(outputDir));
+         addOutputDir(buildTargetPath, module_context::websiteOutputDir());
       }
    }
    
@@ -3228,6 +3285,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_rstudioCRANReposUrl);
    RS_REGISTER_CALL_METHOD(rs_rstudioEdition);
    RS_REGISTER_CALL_METHOD(rs_rstudioProgramMode);
+   RS_REGISTER_CALL_METHOD(rs_previewAllowedFunctions);
    RS_REGISTER_CALL_METHOD(rs_rstudioVersion);
    RS_REGISTER_CALL_METHOD(rs_rstudioLongVersion);
    RS_REGISTER_CALL_METHOD(rs_rstudioReleaseName);

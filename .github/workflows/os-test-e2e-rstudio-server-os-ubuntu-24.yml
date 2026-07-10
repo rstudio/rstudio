@@ -1,0 +1,781 @@
+name: "Test: E2E Playwright RStudio (Server, Ubuntu 24, Open Source)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_from_source:
+        description: "Build RStudio Server from this branch's source. When false, downloads the latest daily .deb installer (or the URL in rstudio_installer_url, if provided)."
+        type: boolean
+        default: true
+      rstudio_installer_url:
+        description: "Optional .deb URL to test against (e.g. a specific daily from dailies.rstudio.com). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
+        type: string
+        default: ""
+      r_version:
+        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        type: string
+        default: "release"
+      project:
+        description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
+        type: string
+        default: "server"
+      grep:
+        description: "Optional Playwright --grep pattern to run only tests whose title matches."
+        type: string
+        default: ""
+      test_selector:
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        type: string
+        default: ""
+      test_ignore:
+        description: "Optional test paths/files/directories to exclude (space-separated globs). Examples: '**/code_suggestions.test.ts', '**/posit-assistant-chat/**'. Leave empty to exclude nothing."
+        type: string
+        default: ""
+      grep_invert:
+        description: "Optional Playwright --grep-invert pattern to skip tests by title. Defaults to '@ai' to skip tests that require credentials not available in unattended runs."
+        type: string
+        default: "@ai"
+      build_only:
+        description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
+        type: boolean
+        default: false
+      post_pr_comment:
+        description: "Post test results as a sticky comment on the PR. Pass true only from PR-triggered callers."
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      build_from_source:
+        type: boolean
+        default: true
+      rstudio_installer_url:
+        type: string
+        default: ""
+      r_version:
+        type: string
+        default: "release"
+      project:
+        type: string
+        default: "server"
+      grep:
+        type: string
+        default: ""
+      test_selector:
+        type: string
+        default: ""
+      test_ignore:
+        type: string
+        default: ""
+      grep_invert:
+        type: string
+        default: "@ai"
+      build_only:
+        type: boolean
+        default: false
+      post_pr_comment:
+        type: boolean
+        default: false
+      defer_merge:
+        description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
+        type: boolean
+        default: false
+    secrets:
+      CONNECT_API_KEY:
+        description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
+      AWS_E2E_REPORTS_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
+        required: false
+
+permissions:
+  contents: read
+  # Required so the e2e-merge job can post sticky PR comments via
+  # marocchino/sticky-pull-request-comment. GitHub validates ALL job-level
+  # permissions in a reusable workflow at call time, so this must be declared
+  # at the top level even though only e2e-merge uses it.
+  pull-requests: write
+  # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
+  # role (see .github/actions/os-publish-e2e-report).
+  id-token: write
+
+jobs:
+  # Builds RStudio Server from this PR's source on the same runner image as
+  # the e2e job below, then uploads the .deb as an artifact for the e2e job to
+  # consume. Skipped when build_from_source is false, in which case the e2e
+  # job downloads the daily .deb (or rstudio_installer_url) instead.
+  build:
+    if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      # Redirect the dependency / package scripts' tool root to a
+      # workspace-local path so it can be cached without sudo.
+      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/x86_64
+      # Pin R's user library to a workspace-local path so we can cache it.
+      R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
+      SCCACHE_ENABLED: '1'
+      # Route sccache to GitHub's built-in Actions cache API. The
+      # mozilla-actions/sccache-action step below installs sccache and exports
+      # ACTIONS_CACHE_URL + ACTIONS_RUNTIME_TOKEN so the sccache server uses
+      # the GHA backend. Cache hits are object-level (one entry per compiled
+      # .o), so PRs automatically inherit main's warm cache from the seed job
+      # without per-SHA tarball rotation. No AWS / S3 / secrets required.
+      # SCCACHE_GHA_ENABLED takes precedence over any SCCACHE_DIR that
+      # make-package may export internally, so we don't need to patch the
+      # build script.
+      SCCACHE_GHA_ENABLED: 'true'
+      # Quiet npm during install-common's panmirror build and any other
+      # transitive npm step -- avoids dumping the progress bar + audit
+      # report into the build log on every PR run.
+      NPM_CONFIG_LOGLEVEL: error
+      NPM_CONFIG_AUDIT: 'false'
+      # Compile GWT with readable (PRETTY) symbol names rather than the default
+      # OBFUSCATED output, so the uncaught client exceptions the e2e automation
+      # agent records (window.rstudio.errors) carry decodable Java stack traces.
+      # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
+      GWT_STYLE: PRETTY
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
+      # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
+      # Restore-only; the matching Save steps after "Install build
+      # dependencies" run only from main-scoped runs.
+      - name: Restore rstudio-tools deps
+        id: tools-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          restore-keys: |
+            rstudio-tools-linux-x86_64-
+
+      # install-common (called by install-dependencies-noble) installs R
+      # packages (via install-packages) into R_LIBS_USER. Cache the whole
+      # R-libs tree -- R's %p/%v subpaths keep different versions isolated.
+      - name: Restore build-time R packages
+        id: rlibs-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: rstudio-build-rlibs-linux-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
+          restore-keys: |
+            rstudio-build-rlibs-linux-x86_64-
+
+      # Cache compiled GWT output (package/linux/build-Server-DEB/gwt/{bin,www,extras}).
+      # GWT compilation is the single most expensive JS step (~15-30 min). When
+      # GWT Java sources / build scripts haven't changed, make-server-package
+      # can skip the recompile entirely. The Linux build script does this via
+      # the NO_REBUILD env var (sets GWT_BUILD=no, which becomes -DGWT_BUILD=no
+      # to cmake) -- see the NO_REBUILD/GWT_BUILD handling in
+      # package/linux/make-package. Restore-only
+      # here; the matching Save step runs after the build with a success gate
+      # so a failed mid-compile run can't poison the cache.
+      - name: Restore GWT output
+        id: gwt-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: package/linux/build-Server-DEB/gwt
+          key: rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          restore-keys: |
+            rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-
+
+      # GHA-backed sccache. Installs sccache on PATH and starts the sccache
+      # server with the GH Actions cache API as the storage backend (via
+      # SCCACHE_GHA_ENABLED=true above + ACTIONS_CACHE_URL / ACTIONS_RUNTIME_TOKEN
+      # which the action injects). Object-level cache hits, no per-SHA tarball,
+      # no AWS credentials. Repo-scoped so PRs inherit main's warm cache.
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+
+      # install-dependencies-noble: apt-get installs system packages (with sudo
+      # internally), then calls install-common which downloads Boost, SOCI,
+      # pandoc, quarto, node, panmirror, sccache, GWT jar, etc. into
+      # RSTUDIO_TOOLS_ROOT. The scripts are idempotent, so a cache hit on
+      # rstudio-tools-deps makes this a fast pass: the heavy downloads are
+      # skipped and the cached tools are reused.
+      - name: Install build dependencies
+        working-directory: dependencies/linux
+        run: ./install-dependencies-noble
+
+      # Save the tools / R-libs caches only from main-scoped runs (the seed
+      # and scheduled workflows), and only on a key miss. A cache saved from a
+      # PR run lands in that PR's merge-ref scope, which no other branch can
+      # restore -- each copy is pure pressure on the repo's 10 GB Actions
+      # cache quota, and that pressure is what evicts main's copies and sends
+      # every PR build cold in the first place.
+      - name: Save rstudio-tools deps
+        if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+      - name: Save build-time R packages
+        if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
+
+      - name: Zero sccache stats
+        run: sccache --zero-stats || true
+
+      - name: Build RStudio Server DEB
+        id: build
+        working-directory: package/linux
+        env:
+          RSTUDIO_VERSION_MAJOR: '99'
+          RSTUDIO_VERSION_MINOR: '9'
+          RSTUDIO_VERSION_PATCH: '9'
+          RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
+        run: |
+          # NO_REBUILD=1 (see package/linux/make-package) tells the script to
+          # set GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake, so the
+          # cached GWT bin/www/extras under build-Server-DEB/gwt are reused
+          # instead of recompiled (~15-30 min saved when sources unchanged).
+          if [ "${{ steps.gwt-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "GWT cache hit -- skipping GWT compile"
+            NO_REBUILD=1 ./make-server-package DEB
+          else
+            echo "GWT cache miss -- compiling GWT from scratch"
+            ./make-server-package DEB
+          fi
+
+      - name: Show sccache stats
+        if: always()
+        run: sccache --show-stats || true
+
+      # Save GWT output only when the build succeeded. A failed mid-compile
+      # run could otherwise write partial GWT output to the cache, and every
+      # future restore would silently ship a broken frontend until the
+      # hashFiles key rotates. Same poison-resistance pattern macOS uses.
+      # Save only from main-scoped runs, and only on a key miss: a cache saved
+      # from a PR run lands in that PR's merge-ref scope, which no other
+      # branch can restore -- each copy is pure pressure on the repo's 10 GB
+      # Actions cache quota, and that pressure is what evicts main's copy and
+      # sends every PR build cold in the first place.
+      - name: Save GWT output
+        if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: package/linux/build-Server-DEB/gwt
+          key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
+
+      # Skipped in build_only (seed) runs: no e2e job consumes the artifact,
+      # so packaging and uploading it would be pure waste.
+      - name: Package RStudio Server .deb
+        if: inputs.build_only != true
+        run: |
+          DEB=$(find package/linux/build-Server-DEB -maxdepth 1 -name '*.deb' | head -1)
+          if [ -z "$DEB" ]; then
+            echo "::error::No .deb found in package/linux/build-Server-DEB"
+            exit 1
+          fi
+          cp "$DEB" "${{ github.workspace }}/rstudio-server.deb"
+          echo "Packaged: $DEB"
+
+      - name: Upload RStudio Server .deb artifact
+        if: inputs.build_only != true
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-server-deb-ubuntu-24
+          path: rstudio-server.deb
+          retention-days: 7
+
+  e2e-server-ubuntu:
+    needs: build
+    # build is skipped when build_from_source is false; allow this job to run
+    # in that case too (needs.build.result == 'skipped' on the daily-download
+    # path). build_only seeds the build caches without running e2e, so skip.
+    if: |
+      always() &&
+      inputs.build_only != true &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      R_LIBS_USER: ${{ github.workspace }}/R-libs
+      PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
+      PW_SANDBOX_ROOT_CREATE: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install OS dependencies
+        run: |
+          sudo apt-get update
+          # xvfb + jq: virtual display for Playwright/Chrome, JSON parsing.
+          # pandoc: needed by rsession's rmarkdown rendering. Install system
+          # pandoc and point RSTUDIO_PANDOC at it below so rendering has a
+          # known-good pandoc regardless of what the .deb ships.
+          # Several R packages installed below also have system-library
+          # dependencies: libfreetype6 / libfontconfig1 (ragg, systemfonts),
+          # libharfbuzz0b / libfribidi0 (textshaping). Install the runtime
+          # libs (not the -dev variants) so rsession's R can load these
+          # packages without source compile.
+          sudo apt-get install -y xvfb jq pandoc \
+            libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
+
+      # Ubuntu 24 restricts unprivileged user namespaces by default, which
+      # blocks Chrome's sandbox. Enable them before starting the server or
+      # launching any browser process.
+      - name: Allow unprivileged user namespaces (required by Playwright/Chrome)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Install rig
+        run: |
+          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
+            | sudo tar xz -C /usr/local
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
+        run: |
+          rig add "$R_VERSION"
+          rig default "$R_VERSION"
+          rig ls
+          mkdir -p "$R_LIBS_USER"
+
+      # Build-from-source path: extract the .deb artifact produced by the
+      # build job above and install it.
+      - name: Download RStudio Server .deb artifact
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: rstudio-server-deb-ubuntu-24
+          path: ${{ github.workspace }}
+
+      - name: Install RStudio Server from artifact
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        run: |
+          sudo apt-get install -y "${{ github.workspace }}/rstudio-server.deb"
+          sudo systemctl stop rstudio-server
+          sudo rstudio-server verify-installation
+
+      # Daily-download path: resolve and install the latest (or specified)
+      # .deb. Runs when build_from_source is false (auto-resolve the daily
+      # via dailies.rstudio.com/rstudio/latest/index.json) or when an
+      # explicit rstudio_installer_url is provided (use that URL verbatim).
+      - name: Resolve RStudio Server .deb URL
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        id: resolve
+        env:
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+        run: |
+          URL="$INSTALLER_URL"
+          SHA=""
+          FILENAME=""
+          if [ -z "$URL" ]; then
+            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+            URL=$(echo "$MANIFEST" | jq -r '.products.server.platforms["noble-amd64"].link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.server.platforms["noble-amd64"].sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.server.platforms["noble-amd64"].filename // empty')
+            if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
+              echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            fi
+            echo "Auto-resolved latest noble-amd64 server daily:"
+            echo "  URL:      $URL"
+            echo "  SHA-256:  $SHA"
+            echo "  Filename: $FILENAME"
+          else
+            FILENAME=$(basename "${URL%%\?*}")
+            if [ -z "$FILENAME" ]; then
+              echo "::error::Could not derive filename from rstudio_installer_url='$URL'."
+              exit 1
+            fi
+            echo "Using override URL: $URL (SHA-256 verification skipped)"
+          fi
+          echo "url=$URL"           >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA"        >> "$GITHUB_OUTPUT"
+          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # PRs can't share a cache entry with each other anyway (only with their
+      # base branch), so caching here would just duplicate the same bytes
+      # into the shared 10 GB cache quota without saving meaningful time.
+      - name: Download RStudio Server .deb
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          curl -fsSL --retry 3 --retry-delay 5 \
+            -o "$DOWNLOAD_FILENAME" \
+            "$DOWNLOAD_URL"
+
+      - name: Verify SHA-256
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          echo "$EXPECTED_SHA256  $DOWNLOAD_FILENAME" | sha256sum -c -
+
+      - name: Install RStudio Server from .deb
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          sudo apt-get install -y "./$INSTALLER_FILENAME"
+          sudo systemctl stop rstudio-server
+          sudo rstudio-server verify-installation
+
+      - name: Configure verbose RStudio Server logging
+        run: |
+          sudo tee /etc/rstudio/logging.conf >/dev/null <<'EOF'
+          [*]
+          log-level=debug
+          logger-type=file
+          EOF
+
+      # The Playwright e2e tests drive RStudio through the window.rstudio
+      # automation bridge, which is only exposed when rsession is started with
+      # --automation-agent. server.fixture.ts forwards this flag when it
+      # spawns its own rserver-dev; we instead use the systemd-managed
+      # rstudio-server installed from the .deb, so the flag has to come from
+      # the service unit. The option is registered in the pAutomation
+      # program_options group, which feeds the CLI parser only -- writing
+      # `automation-agent=1` into /etc/rstudio/rserver.conf is rejected
+      # ("unrecognised option"). Add the flag via a systemd drop-in that
+      # overrides ExecStart, and reload systemd before the Start step.
+      # Safe to enable here because the runner is ephemeral; do NOT enable
+      # in production.
+      - name: Enable automation-agent for rsessions
+        run: |
+          sudo mkdir -p /etc/systemd/system/rstudio-server.service.d
+          sudo tee /etc/systemd/system/rstudio-server.service.d/automation-agent.conf >/dev/null <<'EOF'
+          [Service]
+          ExecStart=
+          ExecStart=/usr/lib/rstudio-server/bin/rserver --automation-agent
+          Environment=RSTUDIO_PANDOC=/usr/bin/pandoc
+          EOF
+          sudo systemctl daemon-reload
+
+      # Seed R packages into the SYSTEM R library (/usr/lib/R/site-library)
+      # so rsession's R -- which runs as $PW_RSTUDIO_SERVER_USER with an
+      # empty user library -- can resolve them without an install-prompt
+      # roundtrip during tests. Without this, rmarkdown / knitr tests fail
+      # intermittently when an in-test ensurePackages or auto-prompt fires
+      # under load. .Library is /usr/lib/R/library which is on every R
+      # session's libPaths by default, regardless of HOME. Posit Package
+      # Manager (PPM) serves prebuilt binaries for noble so this is a quick
+      # download, not a source compile.
+      #
+      # NOTE: do NOT add "fortunes" to this list. The missing_packages_banner
+      # test uses fortunes as its "package not yet installed" subject and
+      # calls remove.packages() on it in its beforeAll -- pre-seeding into
+      # root-owned .Library would make that uninstall fail with EACCES and
+      # the test would error out at setup before exercising the banner.
+      - name: Seed R packages into system library for rsession
+        run: |
+          sudo R --vanilla -s -e '
+            pkgs <- c("rmarkdown", "knitr", "readr",
+                      "shiny", "testthat", "tidyverse")
+            install.packages(
+              pkgs,
+              repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest",
+              lib = .Library
+            )
+            missing <- pkgs[!pkgs %in% rownames(installed.packages(lib.loc = .Library))]
+            if (length(missing)) {
+              cat(sprintf("::error::Failed to seed R packages: %s\n", paste(missing, collapse = ", ")))
+              quit(status = 1)
+            }
+          '
+
+      - name: Start RStudio Server
+        run: |
+          sudo systemctl start rstudio-server
+          sudo systemctl status rstudio-server --no-pager
+
+      - name: Generate test credentials
+        run: |
+          USER="pw_$(openssl rand -hex 4)"
+          PASS="$(openssl rand -base64 24)"
+          echo "::add-mask::$USER"
+          echo "::add-mask::$PASS"
+          echo "PW_RSTUDIO_SERVER_USER=$USER" >> "$GITHUB_ENV"
+          echo "PW_RSTUDIO_SERVER_PASSWORD=$PASS" >> "$GITHUB_ENV"
+
+      - name: Create test user
+        run: |
+          sudo useradd -m -s /bin/bash "$PW_RSTUDIO_SERVER_USER"
+          echo "$PW_RSTUDIO_SERVER_USER:$PW_RSTUDIO_SERVER_PASSWORD" | sudo chpasswd
+
+      - name: Wait for rstudio-server
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8787/auth-sign-in >/dev/null 2>&1; then
+              echo "rstudio-server is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "rstudio-server did not become ready"
+          sudo journalctl -u rstudio-server --no-pager -n 200
+          exit 1
+
+      - name: Install e2e test dependencies
+        uses: ./.github/actions/os-e2e-deps
+        with:
+          r-libs-user: ${{ env.R_LIBS_USER }}
+
+      - name: Run Playwright tests
+        working-directory: e2e/rstudio
+        env:
+          PW_RSTUDIO_MODE: server
+          PW_RSTUDIO_EDITION: os
+          PW_RSTUDIO_SERVER_URL: http://localhost:8787
+          # Platform-labelled project name; playwright.config.ts uses it both as
+          # the project name in reports (so a cross-platform merged report can
+          # distinguish these results) and to derive the platform+shard-unique
+          # blob report file name.
+          PW_PROJECT_LABEL: ${{ inputs.project }}-linux
+          PW_GREP: ${{ inputs.grep }}
+          PW_GREP_INVERT: ${{ inputs.grep_invert }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
+          PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          # Tells playwright.config.ts to switch to blob reporter for this shard.
+          PW_SHARD: ${{ matrix.shard }}
+          # E2E Test Insights reporter: posts per-shard results to the dashboard.
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          SHARD_NAME: server-ubuntu24-${{ matrix.shard }}
+        run: |
+          ARGS=()
+          if [ -n "$PW_TEST_SELECTOR" ]; then
+            set -f
+            ARGS+=($PW_TEST_SELECTOR)
+            set +f
+          fi
+          if [ -n "$PW_GREP" ]; then
+            ARGS+=(--grep "$PW_GREP")
+          fi
+          if [ -n "$PW_GREP_INVERT" ]; then
+            ARGS+=(--grep-invert "$PW_GREP_INVERT")
+          fi
+          ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
+          # Run Playwright under our own Xvfb and exec the watchdog as the step's
+          # main process, so a job cancellation's SIGTERM reaches the watchdog
+          # (which forwards it to Playwright's process group as SIGINT -- its
+          # cancellation signal -- then escalates to SIGKILL if the run doesn't
+          # wind down). xvfb-run is a shell wrapper that does not forward signals
+          # to its child, which left cancelled Linux e2e jobs running until
+          # their timeout-minutes instead of stopping. -ac disables X access
+          # control so Chromium connects without an auth cookie; -nolisten tcp
+          # keeps the display on the local socket only. We wait for the X socket
+          # before launching so it doesn't race a cold display, and fail loudly
+          # (dumping the Xvfb log) if it never comes up, rather than exec-ing
+          # Playwright against a dead display and surfacing an opaque launch error.
+          Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp >/tmp/xvfb.log 2>&1 &
+          export DISPLAY=:99
+          for _ in $(seq 1 50); do
+            [ -S /tmp/.X11-unix/X99 ] && break
+            sleep 0.1
+          done
+          if [ ! -S /tmp/.X11-unix/X99 ]; then
+            echo "::error::Xvfb display :99 never came up after 5s; Xvfb log follows."
+            cat /tmp/xvfb.log || true
+            exit 1
+          fi
+          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
+
+      # Platform-prefixed artifact name. When this Linux Server workflow runs
+      # from the same parent PR run as the other platforms (via the combined
+      # os-test-e2e-rstudio-pr.yml orchestrator), all platforms upload to the
+      # same artifact namespace. macOS uses `-mac-`, Windows uses `-win-`, and
+      # Linux Desktop uses `-linux-desktop-`; `-linux-server-` keeps this
+      # platform's shard reports separate so its merge job downloads ONLY its
+      # own. A bare `-linux-` prefix would also match the Linux Desktop blobs.
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-blob-report-linux-server-${{ matrix.shard }}
+          path: e2e/rstudio/blob-report/
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Platform-prefixed for the same reason as the blob report above:
+          # macOS uploads test-results-${{ matrix.shard }} too, so under the
+          # combined PR orchestrator the two would collide and upload-artifact
+          # would reject the second one. -linux-server- distinguishes this from
+          # the Linux Desktop workflow's test-results-linux-desktop-*.
+          name: test-results-linux-server-${{ matrix.shard }}
+          path: e2e/rstudio/test-results/
+          if-no-files-found: ignore
+
+      # Preserved per-spec sandbox tree on failure -- includes rsession logs,
+      # the spec's RStudio config / data home, and per-test working dirs.
+      # Platform-prefixed name to avoid colliding with the other platforms'
+      # sandbox artifacts (macOS pw-sandbox-${{ matrix.shard }}, Linux Desktop
+      # pw-sandbox-linux-desktop-*) when they run under the combined PR
+      # orchestrator.
+      - name: Upload PW sandbox (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pw-sandbox-linux-server-${{ matrix.shard }}
+          path: ${{ github.workspace }}/pw-sandbox/
+          if-no-files-found: ignore
+
+      - name: Capture rstudio-server logs and diagnostics on failure
+        if: failure()
+        run: |
+          echo "=== /etc/rstudio/logging.conf ==="
+          sudo cat /etc/rstudio/logging.conf 2>&1 || echo "(missing)"
+          echo "=== layout: /var/log/rstudio ==="
+          sudo find /var/log/rstudio -ls 2>&1 || echo "(missing)"
+          echo "=== layout: /var/lib/rstudio-server *.log ==="
+          sudo find /var/lib/rstudio-server -name '*.log' -ls 2>&1 || echo "(missing)"
+          echo "=== full journalctl (last hour, all units) ==="
+          sudo journalctl --since="1 hour ago" --no-pager
+          sudo journalctl -u rstudio-server --no-pager > rstudio-server.log || true
+          sudo cp -r /var/log/rstudio rstudio-var-log || true
+          sudo chmod -R a+r rstudio-var-log || true
+
+      - name: Upload rstudio-server logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-server-logs-${{ matrix.shard }}
+          path: |
+            rstudio-server.log
+            rstudio-var-log/
+          if-no-files-found: ignore
+
+  # Merge per-shard blob reports into a single HTML report, parse aggregated
+  # counts, and post a sticky PR comment with pass/fail/skip totals
+  # (when post_pr_comment is set).
+  e2e-merge:
+    needs: [e2e-server-ubuntu]
+    if: always() && inputs.defer_merge != true && needs.e2e-server-ubuntu.result != 'skipped' && needs.e2e-server-ubuntu.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      # OIDC token for the S3 report upload (os-publish-e2e-report).
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install Playwright
+        working-directory: e2e/rstudio
+        # --ignore-scripts skips the postinstall that downloads browser
+        # binaries; the merge job only invokes `playwright merge-reports`,
+        # which doesn't need Chromium. Saves ~30s + ~150MB of downloads per
+        # merge job invocation.
+        run: npm ci --ignore-scripts
+
+      - name: Download shard blob reports
+        uses: actions/download-artifact@v4
+        with:
+          # Linux-Server-only glob: in the combined PR orchestrator the other
+          # platforms also publish blob reports (playwright-blob-report-mac-*,
+          # -win-*, and -linux-desktop-*). A bare `playwright-blob-report-*` --
+          # or even `-linux-*`, which would match the Linux Desktop blobs --
+          # would sweep in other platforms' reports.
+          pattern: playwright-blob-report-linux-server-*
+          path: e2e/rstudio/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge shard reports
+        working-directory: e2e/rstudio
+        run: |
+          if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
+            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            exit 1
+          fi
+          npx playwright merge-reports --config merge.config.ts ./all-blob-reports
+
+      # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
+      # comment computes pass/fail counts and the rate bar from one definition.
+      - name: Parse aggregated results
+        id: summary
+        if: always()
+        working-directory: e2e/rstudio
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+
+      - name: Upload merged Playwright report
+        id: upload-report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # Match the -mac / -win / -linux-desktop suffixes the other workflows
+          # use for their merged reports. Avoids a future collision if the bare
+          # `playwright-report` name is ever introduced by another callee.
+          name: playwright-report-linux-server
+          path: e2e/rstudio/playwright-report/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      # Publish a browsable copy of the report to S3 on failure only, so
+      # reviewers can inspect it without downloading the zip. Best-effort: a
+      # no-op on fork PRs (no secret) and never fails the job.
+      - name: Publish report to S3
+        id: publish-report
+        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        uses: ./.github/actions/os-publish-e2e-report
+        with:
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          label: linux-server
+
+      - name: Post E2E results to PR
+        if: |
+          always() &&
+          inputs.post_pr_comment == true &&
+          github.event.pull_request.head.repo.fork == false &&
+          (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: e2e-server-ubuntu24-results
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ## 🐧 Linux Server E2E · Ubuntu 24
+
+            ${{ needs.e2e-server-ubuntu.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+
+            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+            | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
+            | :---: | :---: | :---: | :---: |
+            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+            <details>
+            <summary>📥 Download Playwright report</summary>
+            ${{ steps.publish-report.outputs.url != '' && format('
+            **[🌐 View report online]({0})** — opens in the browser, no download needed. Available for 14 days.
+            ', steps.publish-report.outputs.url) || '' }}
+            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
+
+            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
+
+            </details>
+
+            ---
+            <sub>2 shards · ubuntu-24.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

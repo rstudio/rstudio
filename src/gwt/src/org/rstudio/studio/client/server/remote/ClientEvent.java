@@ -38,6 +38,7 @@ class ClientEvent extends JavaScriptObject
    public static final String PlotsStateChanged = "plots_state_changed";
    public static final String PackageStatusChanged = "package_status_changed";
    public static final String PackageStateChanged = "package_state_changed";
+   public static final String PackageVulnerabilitiesReady = "package_vulnerabilities_ready";
    public static final String Locator = "locator";
    public static final String ConsoleResetHistory = "console_reset_history";
    public static final String SessionSerialization = "session_serialization";
@@ -206,7 +207,6 @@ class ClientEvent extends JavaScriptObject
    public static final String ClipboardAction = "clipboard_action";
    public static final String DeploymentRecordsUpdated = "deployment_records_updated";
    public static final String FormatDocumentCompleted = "format_document_completed";
-   public static final String RunAutomation = "run_automation";
    public static final String CopilotStatusChanged = "copilot_status_changed";
    public static final String AssistantStatusChanged = "assistant_status_changed";
    public static final String ChatBackendExit = "chat_backend_exit";

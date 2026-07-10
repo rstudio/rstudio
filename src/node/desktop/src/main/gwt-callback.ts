@@ -52,6 +52,7 @@ import {
   findRepoRoot,
   getAppPath,
   handleLocaleCookies,
+  isAutomated,
   resolveAliasedPath,
   raiseAndActivateWindow,
 } from './utils';
@@ -63,7 +64,7 @@ import { buildInfo } from './build-info';
 import { detectRosetta } from './detect-rosetta';
 import { showPersistentSplashScreen } from './splash-screen';
 import { showWhatsNewWindow } from './whats-new-window';
-import { toReleaseSlug, isValidSlug, resolveWhatsNewContentPath } from './whats-new-utils';
+import { toReleaseSlug, isValidSlug, resolveReleaseName, resolveWhatsNewContentPath } from './whats-new-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -577,7 +578,11 @@ export class GwtCallback extends EventEmitter {
         const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
         const minimalWindow = openMinimalWindow(sender, name, url, width, height);
         minimalWindow.window.once('ready-to-show', () => {
-          minimalWindow.window.show();
+          if (isAutomated()) {
+            minimalWindow.window.showInactive();
+          } else {
+            minimalWindow.window.show();
+          }
         });
       },
     );
@@ -703,7 +708,14 @@ export class GwtCallback extends EventEmitter {
     );
 
     ipcMain.on('desktop_bring_main_frame_to_front', () => {
-      this.mainWindow.window.focus();
+      // GWT requests this on flows like opening a document from a satellite
+      // window. In automation mode, surface the window without stealing OS
+      // focus from whatever the user is doing while the tests run.
+      if (isAutomated()) {
+        this.mainWindow.window.showInactive();
+      } else {
+        this.mainWindow.window.focus();
+      }
     });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
@@ -936,7 +948,7 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_set_tutorial_url', event.processId, event.frameId).setTutorialUrl(url);
     });
 
-    ipcMain.on('desktop_set_viewer_url', (event, url) => {
+    ipcMain.handle('desktop_set_viewer_url', (event, url) => {
       this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
 
@@ -1107,7 +1119,8 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_show_whats_new', () => {
       const info = buildInfo();
-      const slug = toReleaseSlug(info.RSTUDIO_RELEASE_NAME);
+      const releaseName = resolveReleaseName(info.RSTUDIO_RELEASE_NAME, findRepoRoot());
+      const slug = toReleaseSlug(releaseName);
 
       if (!isValidSlug(slug) || !resolveWhatsNewContentPath(slug)) {
         const msgBoxOptions = {
@@ -1131,7 +1144,7 @@ export class GwtCallback extends EventEmitter {
 
       showWhatsNewWindow({
         releaseSlug: slug,
-        releaseName: info.RSTUDIO_RELEASE_NAME,
+        releaseName: releaseName,
         version: info.RSTUDIO_VERSION.split(/[-+]/)[0],
         parent: this.mainWindow.window,
       });

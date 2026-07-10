@@ -114,6 +114,13 @@ core::FilePath sessionScratchPath();
 core::FilePath oldScopedScratchPath();
 bool isVisibleUserFile(const core::FilePath& filePath);
 
+// Resolves whether RStudio should reduce background filesystem operations
+// (monitoring, code indexing, external-edit checks) for the current project.
+// Combines the per-project setting, the global
+// 'reduce_remote_filesystem_operations' preference, and remote-filesystem
+// detection. See https://github.com/rstudio/rstudio/issues/10417.
+bool reduceRemoteFilesystemOperations();
+
 core::FilePath safeCurrentPath();
 
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
@@ -518,6 +525,11 @@ void consoleWriteError(const std::string& message);
 // frontend can style them differently
 void setAgentExecuting(bool executing);
 bool isAgentExecuting();
+
+// flag indicating whether console output should be captured by listeners
+// without being forwarded to the client console
+void setConsoleOutputSuppressed(bool suppressed);
+bool isConsoleOutputSuppressed();
    
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);
@@ -1050,6 +1062,14 @@ bool navigateToRenderPreviewError(const core::FilePath& previewFile,
                                   const std::string& output,
                                   const std::string& allOutput);
 
+// Returns true if a website's output directory (outputDir, resolved relative
+// to base) should be excluded from Find in Files / code search. Returns false
+// when outputDir is empty, or when it resolves to base itself (e.g.
+// 'output-dir: .') -- ignoring base would drop all project content (#17900).
+// The comparison is by filesystem identity (boost::filesystem::equivalent via
+// FilePath::isEquivalentTo), so 'base/.' is recognized as base even though it
+// differs from base as a lexically-normal string.
+bool shouldIgnoreOutputDir(const core::FilePath& base, const std::string& outputDir);
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
 
@@ -1092,4 +1112,3 @@ core::Error sendSessionRequest(const std::string& uri,
 } // namespace rstudio
 
 #endif // SESSION_MODULE_CONTEXT_HPP
-

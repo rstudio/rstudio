@@ -33,6 +33,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Xdg.hpp>
 
 #include <r/RExec.hpp>
@@ -57,6 +58,10 @@ namespace {
 const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
 const std::string kLocalCustomThemeLocation = "theme/custom/local/";
+
+// Built-in default editor theme, applied when neither the effective nor the
+// global theme is installed. Mirrors AceTheme.createDefault() on the client.
+const std::string kDefaultThemeName = "Textmate (default)";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
@@ -241,10 +246,14 @@ FilePath getGlobalCustomThemePath()
 {
    using rstudio::core::FilePath;
 
-   const char* kGlobalPathAlt = std::getenv("RS_THEME_GLOBAL_HOME");
-   if (kGlobalPathAlt)
+   // Use core::system::getenv (live Win32 environment on Windows) rather than
+   // std::getenv: R's Sys.setenv updates the Win32 environment but not the CRT
+   // environment that std::getenv reads, so RS_THEME_*_HOME set at runtime
+   // (e.g. by the themes tests) would otherwise be invisible here.
+   std::string globalPathAlt = core::system::getenv("RS_THEME_GLOBAL_HOME");
+   if (!globalPathAlt.empty())
    {
-      return FilePath(kGlobalPathAlt);
+      return FilePath(globalPathAlt);
    }
 
    return core::system::xdg::systemConfigFile("themes");
@@ -258,10 +267,12 @@ FilePath getGlobalCustomThemePath()
  */
 FilePath getEnvCustomThemePath()
 {
-   const char* kLocalPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
-   if (kLocalPathAlt)
+   // See getGlobalCustomThemePath: use the live process environment so a
+   // runtime Sys.setenv from R is visible here on Windows.
+   std::string localPathAlt = core::system::getenv("RS_THEME_LOCAL_HOME");
+   if (!localPathAlt.empty())
    {
-      return FilePath(kLocalPathAlt);
+      return FilePath(localPathAlt);
    }
 
    return FilePath();
@@ -631,36 +642,64 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 
 Error syncThemePrefs()
 {
-   // Determine whether the preference storing the theme is out of sync with the theme details in
-   // user state.
    Error err;
-   std::string prefTheme = prefs::userPrefs().editorTheme();
-   json::Object stateTheme = prefs::userState().theme();
-   auto themeName = stateTheme.find(kThemeName);
-   if (themeName != stateTheme.end() &&
-       (*themeName).getValue().getString() != prefTheme)
-   {
-      bool found = false;
-      ThemeMap themes = getAllThemes();
-      json::Array jsonThemeArray;
-      for (auto theme: themes)
-      {
-         if (std::get<0>(theme.second) == prefTheme)
-         {
-            found = true;
-            json::Object jsonTheme;
-            jsonTheme["name"] = std::get<0>(theme.second);
-            jsonTheme["url"] = std::get<1>(theme.second);
-            jsonTheme["isDark"] = std::get<2>(theme.second);
-            err = prefs::userState().setTheme(jsonTheme);
-            break;
-         }
-      }
 
-      if (!found)
+   // Global editor theme: the effective value with the project layer excluded.
+   std::string globalName = resolveGlobalThemeName(
+      [](const std::string& layer) -> boost::optional<std::string> {
+         boost::optional<json::Value> v =
+            prefs::userPrefs().readValue(layer, kEditorTheme);
+         if (v && v->isString())
+            return v->getString();
+         return boost::none;
+      });
+
+   // Effective editor theme (project layer wins if set), unless the user has
+   // opted to ignore project-level appearance settings -- then the project
+   // layer is excluded and the global theme is applied.
+   std::string effectiveName = chooseEffectiveThemeName(
+      prefs::userPrefs().ignoreProjectAppearance(),
+      prefs::userPrefs().editorTheme(),
+      globalName);
+
+   // Installed themes and the built-in default name.
+   ThemeMap themes = getAllThemes();
+   std::set<std::string> available;
+   std::map<std::string, std::tuple<std::string, std::string, bool>> byName;
+   for (const auto& theme : themes)
+   {
+      const std::string& name = std::get<0>(theme.second);
+      available.insert(name);
+      byName[name] = theme.second;
+   }
+
+   std::string appliedName =
+      chooseAppliedThemeName(effectiveName, globalName, available, kDefaultThemeName);
+
+   // Only update user state when the applied theme differs from what is stored.
+   json::Object stateTheme = prefs::userState().theme();
+   auto storedName = stateTheme.find(kThemeName);
+   bool needsUpdate =
+      storedName == stateTheme.end() ||
+      (*storedName).getValue().getString() != appliedName;
+
+   if (needsUpdate)
+   {
+      auto found = byName.find(appliedName);
+      if (found != byName.end())
       {
-         LOG_WARNING_MESSAGE("The theme preference was set to '" + prefTheme + "' "
-               "but no theme with that name was found.");
+         json::Object jsonTheme;
+         jsonTheme["name"] = std::get<0>(found->second);
+         jsonTheme["url"] = std::get<1>(found->second);
+         jsonTheme["isDark"] = std::get<2>(found->second);
+         err = prefs::userState().setTheme(jsonTheme);
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("No installed theme found to apply for editor_theme '" +
+                             effectiveName + "' (global '" + globalName +
+                             "', default '" + appliedName + "'); leaving the "
+                             "applied editor theme unchanged.");
       }
    }
 
@@ -699,6 +738,38 @@ SEXP rs_getLocalThemePath(SEXP themeFileSEXP)
 
    r::sexp::Protect protect;
    return r::sexp::create(requestedTheme.getAbsolutePath(), &protect);
+}
+
+std::string resolveGlobalThemeName(
+   const std::function<boost::optional<std::string>(const std::string& layer)>& readLayer)
+{
+   for (const char* layer : { kUserPrefsUserLayer, kUserPrefsSystemLayer,
+                              kUserPrefsComputedLayer, kUserPrefsDefaultLayer })
+   {
+      boost::optional<std::string> value = readLayer(layer);
+      if (value && !value->empty())
+         return *value;
+   }
+   return std::string();
+}
+
+std::string chooseAppliedThemeName(const std::string& effectiveName,
+                                   const std::string& globalName,
+                                   const std::set<std::string>& availableThemes,
+                                   const std::string& defaultName)
+{
+   if (availableThemes.count(effectiveName))
+      return effectiveName;
+   if (availableThemes.count(globalName))
+      return globalName;
+   return defaultName;
+}
+
+std::string chooseEffectiveThemeName(bool ignoreProjectAppearance,
+                                     const std::string& projectEffectiveName,
+                                     const std::string& globalName)
+{
+   return ignoreProjectAppearance ? globalName : projectEffectiveName;
 }
 
 Error initialize()

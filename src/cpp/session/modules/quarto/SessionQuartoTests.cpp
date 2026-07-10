@@ -21,6 +21,8 @@
 
 #include <gtest/gtest.h>
 
+#include "SessionQuartoPreview.hpp"
+
 namespace rstudio {
 namespace session {
 namespace quarto {
@@ -135,6 +137,111 @@ TEST_F(ProjectTypeResolution, ExtensionWithoutBaseTypeFallsBackToRawType)
    writeStringToFile(extYml, "title: A partial extension\n");
 
    EXPECT_EQ(resolvedType(quartoYml), "partial-ext");
+}
+
+// Tests for the preview-reuse "did the project config change?" predicate that
+// decides whether a running 'quarto preview' server can be reused for an
+// in-place re-render. See https://github.com/rstudio/rstudio/issues/17874.
+class PreviewConfigChange : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FilePath::tempFilePath(projectDir_);
+      projectDir_.ensureDirectory();
+
+      previewTarget_ = projectDir_.completeChildPath("doc.qmd");
+      writeStringToFile(previewTarget_, "---\ntitle: Test\n---\n");
+
+      // quartoProjectConfigFile() walks parents up to userHomePath(); guard against
+      // a polluted temp location (e.g. TMPDIR resolving under $HOME, or a stray
+      // ancestor _quarto.yml) that would silently flip the no-config expectations
+      ASSERT_TRUE(quartoProjectConfigFile(previewTarget_).isEmpty());
+   }
+
+   void TearDown() override
+   {
+      projectDir_.removeIfExists();
+   }
+
+   FilePath writeQuartoYml(const std::string& contents)
+   {
+      FilePath quartoYml = projectDir_.completeChildPath("_quarto.yml");
+      writeStringToFile(quartoYml, contents);
+      return quartoYml;
+   }
+
+   bool changed(const FilePath& priorConfig, const std::string& priorContents,
+                bool priorCaptured = true)
+   {
+      return modules::quarto::preview::projectConfigChanged(
+         previewTarget_, priorConfig, priorContents, priorCaptured);
+   }
+
+   FilePath projectDir_;
+   FilePath previewTarget_;
+};
+
+TEST_F(PreviewConfigChange, UnchangedConfigIsNotChanged)
+{
+   std::string contents = "project:\n  type: default\n";
+   FilePath quartoYml = writeQuartoYml(contents);
+   EXPECT_FALSE(changed(quartoYml, contents));
+}
+
+TEST_F(PreviewConfigChange, ConfigContentsModifiedIsChanged)
+{
+   // contents are compared rather than timestamps, so a content edit is detected
+   // even when it lands in the same second as the captured startup state
+   FilePath quartoYml = writeQuartoYml("pdf-engine: pdflatex\n");
+   EXPECT_TRUE(changed(quartoYml, "pdf-engine: xelatex\n"));
+}
+
+TEST_F(PreviewConfigChange, NoConfigIsNotChanged)
+{
+   // no _quarto.yml exists and none did when the preview started
+   EXPECT_FALSE(changed(FilePath(), std::string()));
+}
+
+TEST_F(PreviewConfigChange, ConfigAddedIsChanged)
+{
+   // no config when the preview started, but one exists now
+   FilePath quartoYml = writeQuartoYml("project:\n  type: default\n");
+   EXPECT_TRUE(changed(FilePath(), std::string()));
+}
+
+TEST_F(PreviewConfigChange, ConfigRemovedIsChanged)
+{
+   // a config governed the preview at startup, but none exists now
+   FilePath priorConfig = projectDir_.completeChildPath("_quarto.yml");
+   EXPECT_TRUE(changed(priorConfig, "project:\n  type: default\n"));
+}
+
+TEST_F(PreviewConfigChange, DifferentConfigFileIsChanged)
+{
+   // a different config file governs the file than did at startup
+   std::string contents = "project:\n  type: default\n";
+   FilePath quartoYml = writeQuartoYml(contents);
+   FilePath priorConfig = projectDir_.completeChildPath("_quarto.yaml");
+   EXPECT_TRUE(changed(priorConfig, contents));
+}
+
+TEST_F(PreviewConfigChange, UncapturedBaselineIsChanged)
+{
+   // the baseline config couldn't be captured when the preview started, so we
+   // can't trust the comparison -- assume it changed and restart
+   std::string contents = "project:\n  type: default\n";
+   FilePath quartoYml = writeQuartoYml(contents);
+   EXPECT_TRUE(changed(quartoYml, contents, /*priorCaptured=*/false));
+}
+
+TEST_F(PreviewConfigChange, UnreadableConfigIsChanged)
+{
+   // the config can't be read for comparison (here a directory sits where the
+   // config file is expected) -- assume it changed and restart
+   FilePath quartoYml = projectDir_.completeChildPath("_quarto.yml");
+   quartoYml.ensureDirectory();
+   EXPECT_TRUE(changed(quartoYml, "project:\n  type: default\n"));
 }
 
 } // namespace tests

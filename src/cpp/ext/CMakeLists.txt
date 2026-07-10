@@ -30,22 +30,39 @@ set(CMAKE_WARN_DEPRECATED FALSE)
 #
 # This function accepts the following single-value arguments:
 #
-# COMMENT:     A one-line description of the dependency, usually from the dependency itself.
-# VERSION:     The version of the dependency to be used.
-# REPOSITORY:  The (git) repository to be used when retrieving the dependency.
-# REVISION:    The (git) revision / commit hash to be used when retrieving the dependency.
-# CUSTOM:      Optional; when TRUE, the project is retrieved but not automatically added to the build.
-# PLATFORMS:   Optional; a list of platforms for which this dependency should be retrieved and built.
+# COMMENT:      A one-line description of the dependency, usually from the dependency itself.
+# VERSION:      The version of the dependency to be used.
+# REPOSITORY:   The (git) repository to be used when retrieving the dependency.
+# REVISION:     The (git) revision / commit hash to be used when retrieving the dependency.
+# CUSTOM:       Optional; when TRUE, the project is retrieved but not automatically added to the build.
+# PLATFORMS:    Optional; a list of platforms for which this dependency should be retrieved and built.
+#
+# This function also accepts and ignores these optional single-value arguments, which are used to render
+# the third-party license notice files (NOTICE, NOTICE-SUPPLEMENT, docs/server/licenses/index.qmd):
+#
+# DEPNAME:      The human-readable name of the dependency.
+# PATH:         Only for vendored dependencies; the path to the dependency within this repo.
+#               **Do not use in CMakeLists.txt, only in dependencies/metadata/*.txt.**
+# HOMEPAGE:     The URL to the dependency's homepage.
+# LICENSE:      An SPDX identifier for the dependency's license.
+# LICENSE_PATH: A comma-separated list of URLs or paths to the text of the dependency's license.
+#               Paths are interpreted relative to REPOSITORY or PATH.
+# AUTHOR:       The dependency's author, maintainer, or packager.
+# ATTRIBUTION:  A line of copyright attribution. If present, AUTHOR is ignored.
 #
 # Use the CUSTOM argument when you want to fetch an external dependency, but need to manually
 # set up a build target based on that package's sources. This is mainly useful for projects which
 # don't provide the requisite CMake infrastructure, or for projects which define a CMakeLists.txt
 # which we want or need to ignore.
 #
+# Files in dependencies/metadata/*.txt follow this same format but do not automatically cause
+# the dependency to be downloaded or compiled. These files are only used for rendering the third-party
+# license notice files.
+#
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION;CXXFLAGS" "PLATFORMS")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
 
    set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
    set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
@@ -193,6 +210,7 @@ endfunction()
 
 # dtl
 dependency(DTL
+   DEPNAME    "dtl"
    COMMENT    "dtl provides the functions for comparing two sequences have arbitrary type."
    VERSION    "1.21"
    REPOSITORY "https://github.com/cubicdaiya/dtl"
@@ -203,6 +221,7 @@ dependency(DTL
 
 # fmt
 dependency(FMT
+   DEPNAME    "{fmt}"
    COMMENT    "{fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams."
    VERSION    "11.1.4"
    REPOSITORY "https://github.com/fmtlib/fmt"
@@ -214,7 +233,9 @@ set(FMT_INSTALL OFF)
 
 # libgit2
 dependency(LIBGIT2
+   DEPNAME    "libgit2"
    COMMENT    "libgit2 is a portable, pure C implementation of the Git core methods."
+   LICENSE    "GPL-2.0 WITH linking-exception"
    VERSION    "1.9.2"
    REPOSITORY "https://github.com/libgit2/libgit2"
    REVISION   "ca225744b992bf2bf24e9a2eb357ddef78179667" # pragma: allowlist secret
@@ -233,11 +254,40 @@ set(USE_HTTPS OFF CACHE BOOL "" FORCE)
 set(USE_ICONV OFF CACHE BOOL "" FORCE)
 set(USE_NTLMCLIENT OFF CACHE BOOL "" FORCE)
 set(USE_BUNDLED_ZLIB OFF CACHE BOOL "" FORCE)
-set(REGEX_BACKEND "builtin" CACHE STRING "" FORCE)
+
+# Choose libgit2's regex backend. On Windows we use the bundled PCRE ("builtin"),
+# matching libgit2's own auto-detected default there. On Unix we use the libc
+# POSIX backend ("regcomp"), which avoids statically linking a private PCRE into
+# rsession.
+#
+# We deliberately avoid "regcomp_l": although libgit2's docs call it the default
+# "where available", its availability check (cmake/SelectRegex.cmake) compiles a
+# probe that includes <xlocale.h>. regcomp_l is a BSD/macOS extension that glibc
+# never provided, and glibc removed <xlocale.h> in 2.26, so that probe always
+# fails on Linux and libgit2 itself never auto-selects regcomp_l there -- it falls
+# through to system PCRE or "builtin". Forcing regcomp_l on glibc instead compiles
+# the dead #include <xlocale.h> in src/util/regexp.c. Plain "regcomp" is always
+# present in glibc (it is also libgit2's own fallback on iOS) and needs no header
+# that modern glibc has dropped.
+#
+# The "builtin" backend compiles a private, UTF-less copy of PCRE1 into rsession.
+# On ELF platforms that copy's symbols (pcre_compile, pcre_exec, ...) would land
+# in rsession's dynamic symbol table (rsession is linked with --export-dynamic so
+# libR.so can resolve callbacks against it) and interpose the system PCRE that an
+# R built --with-pcre1 uses, breaking any perl = TRUE regex that requests UTF mode.
+# See rstudio/rstudio#17841. Selecting regcomp on Unix sidesteps this entirely;
+# the visibility guard further below keeps "builtin" safe should it ever be used
+# on an ELF platform.
+if(WIN32)
+   set(REGEX_BACKEND "builtin" CACHE STRING "" FORCE)
+else()
+   set(REGEX_BACKEND "regcomp" CACHE STRING "" FORCE)
+endif()
 
 
 # gsl-lite
 dependency(GSL_LITE
+   DEPNAME    "gsl-lite"
    COMMENT    "gsl-lite is an implementation of the C++ Core Guidelines Support Library originally based on Microsoft GSL."
    VERSION    "0.42.0"
    REPOSITORY "https://github.com/gsl-lite/gsl-lite"
@@ -247,6 +297,7 @@ dependency(GSL_LITE
 
 # gtest and gmock
 dependency(GTEST
+   DEPNAME    "GoogleTest"
    COMMENT    "Google Test is a C++ test framework based on the xUnit architecture."
    VERSION    "1.17.0"
    REPOSITORY "https://github.com/google/googletest"
@@ -265,6 +316,7 @@ endif()
 
 # hunspell
 dependency(HUNSPELL
+   DEPNAME    "Hunspell"
    COMMENT    "Hunspell is a free spell checker and morphological analyzer library and command-line tool, licensed under LGPL/GPL/MPL tri-license."
    VERSION    "1.7.2"
    REPOSITORY "https://github.com/hunspell/hunspell"
@@ -275,6 +327,7 @@ dependency(HUNSPELL
 
 # rapidjson
 dependency(RAPIDJSON
+   DEPNAME    "RapidJSON"
    COMMENT    "A fast JSON parser/generator for C++ with both SAX/DOM style API"
    VERSION    "1.1.0"
    REPOSITORY "https://github.com/Tencent/rapidjson"
@@ -285,6 +338,7 @@ dependency(RAPIDJSON
 
 # tl-expected
 dependency(TL_EXPECTED
+   DEPNAME    "tl::expected"
    COMMENT    "Single header implementation of std::expected with functional-style extensions."
    VERSION    "1.1.0"
    REPOSITORY "https://github.com/TartanLlama/expected"
@@ -296,6 +350,7 @@ set(EXPECTED_BUILD_TESTS OFF)
 
 # utfcpp
 dependency(UTFCPP
+   DEPNAME    "UTF8-CPP"
    COMMENT    "UTF8-CPP: UTF-8 with C++ in a Portable Way"
    VERSION    "4.0.8"
    REPOSITORY "https://github.com/nemtrif/utfcpp"
@@ -306,6 +361,7 @@ dependency(UTFCPP
 
 # websocketpp
 dependency(WEBSOCKETPP
+   DEPNAME    "WebSocket++"
    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
    VERSION    "0.8.3"
    REPOSITORY "https://github.com/amini-allight/websocketpp"
@@ -316,6 +372,7 @@ dependency(WEBSOCKETPP
 
 # yaml-cpp
 dependency(YAML_CPP
+   DEPNAME    "yaml-cpp"
    COMMENT    "yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec."
    VERSION    "0.8.0"
    REPOSITORY "https://github.com/jbeder/yaml-cpp"
@@ -334,6 +391,7 @@ endif()
 # a target name collision with the 'zlib' OBJECT target that libgit2 creates
 # from its own bundled deps/zlib when find_package(ZLIB) fails on Windows.
 dependency(ZLIB
+   DEPNAME    "zlib"
    COMMENT    "zlib is a general purpose data compression library."
    VERSION    "1.3.1"
    REPOSITORY "https://github.com/madler/zlib"
@@ -375,17 +433,17 @@ if(EXISTS "${_LIBGIT2_GIT2_H}")
 endif()
 
 fetch(
-   dtl          DTL
-   fmt          FMT
-   gsl-lite     GSL_LITE
-   libgit2      LIBGIT2
-   gtest        GTEST
-   hunspell     HUNSPELL
-   rapidjson    RAPIDJSON
-   tl-expected  TL_EXPECTED
-   utfcpp       UTFCPP
-   websocketpp  WEBSOCKETPP
-   yaml-cpp     YAML_CPP)
+   dtl                   DTL
+   fmt                   FMT
+   gsl-lite              GSL_LITE
+   libgit2               LIBGIT2
+   gtest                 GTEST
+   hunspell              HUNSPELL
+   rapidjson             RAPIDJSON
+   tl-expected           TL_EXPECTED
+   utfcpp                UTFCPP
+   websocketpp           WEBSOCKETPP
+   yaml-cpp              YAML_CPP)
 
 if(EXISTS "${_LIBGIT2_GIT2_H}.prev")
    if(EXISTS "${_LIBGIT2_GIT2_H}")
@@ -402,6 +460,22 @@ if(EXISTS "${_LIBGIT2_GIT2_H}.prev")
 endif()
 
 restore_global_settings()
+
+
+# Regression guard for rstudio/rstudio#17841. When libgit2 uses its "builtin"
+# REGEX_BACKEND it creates a 'pcre' OBJECT target from a private, UTF-less copy
+# of PCRE1 that gets archived into rsession. On ELF platforms those symbols
+# would otherwise be exported from rsession (which is linked --export-dynamic)
+# and interpose the system PCRE that libR.so uses. We select regcomp on Unix
+# above so this target normally does not exist there, but if "builtin" is ever
+# used on an ELF platform, compiling it with hidden visibility keeps its symbols
+# out of the dynamic symbol table while still resolving libgit2's own (static)
+# calls at link time. PCRE_EXP_DECL is a bare 'extern' with no visibility
+# attribute, so -fvisibility=hidden suffices. (No-op on Windows: MSVC ignores
+# -fvisibility, and PE/COFF does not export static-lib symbols or interpose.)
+if(TARGET pcre)
+   set_target_properties(pcre PROPERTIES C_VISIBILITY_PRESET hidden)
+endif()
 
 
 # Create dtl target.

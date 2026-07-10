@@ -23,9 +23,12 @@
 #include "chat/ChatInstallation.hpp"
 #include "chat/ChatIntegrity.hpp"
 #include "chat/ChatStaticFiles.hpp"
+#include "chat/ChatUpdateThrottle.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
+#include <ctime>
 #include <map>
 #include <queue>
 #include <set>
@@ -36,8 +39,11 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/optional.hpp>
 #include <boost/regex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <core/AnsiEscapes.hpp>
 #include <core/Exec.hpp>
@@ -71,6 +77,7 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionUrlPorts.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -238,7 +245,6 @@ namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
 
 // Constants used throughout
 using chat_constants::kProtocolVersion;
-using chat_constants::kProtocolVersionFileName;
 using chat_constants::kMaxQueueSize;
 using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
@@ -264,6 +270,13 @@ using chat_installation::locatePositAssistantInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
+using chat_installation::writeProtocolVersionFileIfMissing;
+
+// Update throttle types used throughout
+using throttle::ManifestCheckRecord;
+using throttle::ResolvedBlock;
+using throttle::SuccessOutcome;
+using throttle::PendingUpdate;
 
 // Static file handler (used once for URI registration)
 using chat_staticfiles::handleAIChatRequest;
@@ -359,24 +372,12 @@ struct PendingExecutionRequest
    json::Value requestId;
    std::string code;
    std::string trackingId;
-   bool captureOutput;
-   bool capturePlot;
-   int timeout;
-   std::chrono::steady_clock::time_point queuedTime;
-
-   PendingExecutionRequest(
-      boost::weak_ptr<core::system::ProcessOperations> ops,
-      const json::Value& reqId,
-      const std::string& c,
-      const std::string& tid,
-      bool capture,
-      bool plot,
-      int to)
-      : weakOps(ops), requestId(reqId), code(c), trackingId(tid),
-        captureOutput(capture), capturePlot(plot), timeout(to),
-        queuedTime(std::chrono::steady_clock::now())
-   {
-   }
+   bool captureOutput = true;
+   bool capturePlot = false;
+   bool silentExecution = false;
+   std::string expressionBoundaryHook;
+   int timeout = 0;
+   std::chrono::steady_clock::time_point queuedTime = std::chrono::steady_clock::now();
 };
 
 static boost::mutex s_pendingExecutionMutex;
@@ -534,12 +535,53 @@ private:
 class ScopedAgentExecution
 {
 public:
-   ScopedAgentExecution() { module_context::setAgentExecuting(true); }
-   ~ScopedAgentExecution() { module_context::setAgentExecuting(false); }
+   explicit ScopedAgentExecution(bool enabled = true)
+      : enabled_(enabled)
+   {
+      if (enabled_)
+         module_context::setAgentExecuting(true);
+   }
+
+   ~ScopedAgentExecution()
+   {
+      if (enabled_)
+         module_context::setAgentExecuting(false);
+   }
 
    // non-copyable
    ScopedAgentExecution(const ScopedAgentExecution&) = delete;
    ScopedAgentExecution& operator=(const ScopedAgentExecution&) = delete;
+
+private:
+   bool enabled_;
+};
+
+class ScopedConsoleOutputSuppression
+{
+public:
+   explicit ScopedConsoleOutputSuppression(bool enabled = true)
+      : enabled_(enabled), previous_(false)
+   {
+      if (enabled_)
+      {
+         previous_ = module_context::isConsoleOutputSuppressed();
+         module_context::setConsoleOutputSuppressed(true);
+      }
+   }
+
+   ~ScopedConsoleOutputSuppression()
+   {
+      if (enabled_)
+         module_context::setConsoleOutputSuppressed(previous_);
+   }
+
+   // non-copyable
+   ScopedConsoleOutputSuppression(const ScopedConsoleOutputSuppression&) = delete;
+   ScopedConsoleOutputSuppression& operator=(const ScopedConsoleOutputSuppression&) = delete;
+
+private:
+   bool enabled_;
+   bool previous_;
 };
 
 // Echo source code with prompts (like evaluate does)
@@ -587,6 +629,66 @@ void echoSourceCode(const std::string& code)
       inputData[kConsoleAgent] = true;
       ClientEvent inputEvent(client_events::kConsoleWriteInput, inputData);
       module_context::enqueClientEvent(inputEvent);
+   }
+}
+
+// Print warnings recorded by .rs.chat.safeEval for an expression, mimicking
+// the REPL's deferred warning output (safeEval muffles warnings during
+// evaluation, so they are only surfaced here). Called after each successful
+// expression and on the error path before execution stops.
+void writeWarningMessages(SEXP conditionsSEXP)
+{
+   if (conditionsSEXP == R_NilValue)
+      return;
+
+   std::string warningOutput;
+   Error error = r::exec::RFunction(".rs.chat.formatWarningMessages")
+      .addParam(conditionsSEXP)
+      .call(&warningOutput);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   if (warningOutput.empty())
+      return;
+
+   // Fire signal first so callback captures it, then write to console UI
+   module_context::events().onConsoleOutput(
+      module_context::ConsoleOutputError, warningOutput);
+   module_context::consoleWriteError(warningOutput);
+}
+
+void callExpressionBoundaryHook(const std::string& hookName,
+                                SEXP exprSEXP,
+                                SEXP valueSEXP,
+                                bool ok,
+                                bool visible,
+                                SEXP errorSEXP,
+                                SEXP conditionsSEXP)
+{
+   if (hookName.empty())
+      return;
+
+   // Quote expr and value so language objects are not re-evaluated during
+   // argument passing (see the deparse call in executeCodeImpl)
+   Error hookError = r::exec::RFunction(".rs.chat.callExpressionBoundaryHook")
+      .addParam("name", hookName)
+      .addQuotedParam("expr", exprSEXP)
+      .addQuotedParam("value", valueSEXP)
+      .addParam("ok", ok)
+      .addParam("visible", visible)
+      .addParam("error", errorSEXP)
+      .addParam("conditions", conditionsSEXP)
+      .call();
+
+   // The R wrapper swallows hook-author errors, so a failure here means the
+   // dispatch itself broke (helper not sourced, marshalling error) -- log at
+   // error level like the sibling writeWarningMessages.
+   if (hookError)
+   {
+      LOG_ERROR(hookError);
    }
 }
 
@@ -1199,14 +1301,14 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      const std::string& trackingId,
                      bool captureOutput,
                      bool capturePlot,
+                     bool silentExecution,
+                     const std::string& expressionBoundaryHook,
                      int timeout);
 
 // Process pending execution requests from the queue
 void processPendingExecution()
 {
-   PendingExecutionRequest request(
-      boost::weak_ptr<core::system::ProcessOperations>(),
-      json::Value(), "", "", false, false, 0);
+   PendingExecutionRequest request;
 
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
@@ -1260,6 +1362,7 @@ void processPendingExecution()
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
+                   request.silentExecution, request.expressionBoundaryHook,
                    request.timeout);
 
    // Schedule next request if queued, or clear busy state
@@ -1320,10 +1423,23 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::Object options;
    json::readObject(params, "options", options);
    bool captureOutput = true, capturePlot = false;
+   std::string executionMode = "interactive";
+   std::string expressionBoundaryHook;
    int timeout = 30000;
    json::readObject(options, "captureOutput", captureOutput);
    json::readObject(options, "capturePlot", capturePlot);
+   json::readObject(options, "executionMode", executionMode);
+   json::readObject(options, "expressionBoundaryHook", expressionBoundaryHook);
    json::readObject(options, "timeout", timeout);
+
+   if (executionMode != "interactive" && executionMode != "silent")
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+         "Invalid executionMode: " + executionMode + ". Expected 'interactive' or 'silent'.");
+      return;
+   }
+
+   bool silentExecution = executionMode == "silent";
 
    // Check if R console is busy and log for debugging
    bool rIsBusy = console_input::executing() || r::session::isBusy();
@@ -1349,9 +1465,16 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          return;
       }
 
-      s_pendingExecutionQueue.push(PendingExecutionRequest(
-         ops.getWeakPtr(), requestId, code, trackingId,
-         captureOutput, capturePlot, timeout));
+      s_pendingExecutionQueue.push(PendingExecutionRequest{
+         .weakOps = ops.getWeakPtr(),
+         .requestId = requestId,
+         .code = code,
+         .trackingId = trackingId,
+         .captureOutput = captureOutput,
+         .capturePlot = capturePlot,
+         .silentExecution = silentExecution,
+         .expressionBoundaryHook = expressionBoundaryHook,
+         .timeout = timeout});
 
       if (!s_executionScheduled)
       {
@@ -1372,6 +1495,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                      const std::string& trackingId,
                      bool captureOutput,
                      bool capturePlot,
+                     bool silentExecution,
+                     const std::string& expressionBoundaryHook,
                      int timeout)
 {
    if (!pOps)
@@ -1447,10 +1572,17 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Flag that we're executing agent code so console output/error events
    // emitted by R during evaluation get the agent metadata. Uses RAII to
    // guarantee the flag is cleared even if an exception occurs.
-   ScopedAgentExecution agentScope;
+   ScopedAgentExecution agentScope(!silentExecution);
+   ScopedConsoleOutputSuppression consoleOutputScope(silentExecution);
+   // Silent executions are setup/teardown helpers that never need boundary
+   // notifications, so the hook is intentionally disabled (conditions they
+   // record are dropped along with the rest of their output).
+   std::string activeExpressionBoundaryHook =
+      silentExecution ? std::string() : expressionBoundaryHook;
 
    // Echo source code with prompts (like evaluate does)
-   echoSourceCode(code);
+   if (!silentExecution)
+      echoSourceCode(code);
 
    // Evaluate the code. For multi-line code, we parse it into separate expressions
    // and evaluate each one, mimicking REPL behavior where each line is evaluated
@@ -1493,12 +1625,16 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    if (!error && parsedSEXP != R_NilValue && TYPEOF(parsedSEXP) == EXPRSXP)
    {
       // Add code to console history so it appears in History tab
-      r::session::consoleHistory().add(code, false);
+      if (!silentExecution)
+         r::session::consoleHistory().add(code, false);
 
       // Fire events to notify modules that code is about to execute
       // (matches behavior of normal console input in SessionConsoleInput.cpp)
-      module_context::events().onBeforeExecute();
-      module_context::events().onConsoleInput(code);
+      if (!silentExecution)
+      {
+         module_context::events().onBeforeExecute();
+         module_context::events().onConsoleInput(code);
+      }
 
       numExpressions = Rf_length(parsedSEXP);
 
@@ -1581,6 +1717,19 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                errorMsg = CHAR(STRING_ELT(messageSEXP, 0));
             }
 
+            SEXP conditionsSEXP = Rf_getAttrib(
+               evalResultSEXP,
+               Rf_install("assistant_conditions"));
+
+            // NOTE: this prints warnings before the error text (which is
+            // emitted after the loop), whereas the REPL prints the error
+            // first and then "In addition: Warning messages:".
+            if (!silentExecution)
+               writeWarningMessages(conditionsSEXP);
+
+            callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, R_NilValue,
+                                       false, false, evalResultSEXP, conditionsSEXP);
+
             error = Error(boost::system::errc::state_not_recoverable, errorMsg, ERROR_LOCATION);
             break;
          }
@@ -1598,6 +1747,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // Extract result and visibility
          SEXP exprResult = VECTOR_ELT(evalResultSEXP, 0);
          SEXP visibleSEXP = VECTOR_ELT(evalResultSEXP, 1);
+         SEXP conditionsSEXP = Rf_length(evalResultSEXP) >= 3
+            ? VECTOR_ELT(evalResultSEXP, 2)
+            : R_NilValue;
 
          // Validate visibility flag
          if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP ||
@@ -1621,7 +1773,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          bool exprVisible = (visibleValue == TRUE);
 
          // Print visible results immediately (mimics REPL)
-         if (exprVisible)
+         if (exprVisible && !silentExecution)
          {
             Error printError = r::exec::RFunction("print")
                .addParam(exprResult)
@@ -1640,6 +1792,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
                module_context::consoleWriteError(userMsg);
             }
          }
+
+         // Print deferred warnings after the expression's result (mimics REPL)
+         if (!silentExecution)
+            writeWarningMessages(conditionsSEXP);
+
+         callExpressionBoundaryHook(activeExpressionBoundaryHook, exprSEXP, exprResult,
+                                    true, exprVisible, R_NilValue, conditionsSEXP);
       }
    }
 
@@ -1666,9 +1825,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
             SEXP failedExprSEXP = VECTOR_ELT(parsedSEXP, currentExpressionIndex);
             SEXP deparsedSEXP = R_NilValue;
 
-            // Try to deparse - if it fails, that's okay, we'll just skip the text
+            // Try to deparse - if it fails, that's okay, we'll just skip the text.
+            // IMPORTANT: Use addQuotedParam so the failing expression is not
+            // re-evaluated during argument passing (see safeEval call above).
             Error deparseError = r::exec::RFunction("deparse")
-               .addParam(failedExprSEXP)
+               .addQuotedParam(failedExprSEXP)
                .addParam("width.cutoff", 80)
                .call(&deparsedSEXP, &protect);
 
@@ -1710,22 +1871,28 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Send as kConsoleWritePendingError so the event queue's
-      // annotateOutput() adds ANSI error highlighting (e.g. coloring the
-      // "Error" prefix). Clear the agent flag so the event goes through the
-      // plain string buffering path where annotation happens.
-      module_context::setAgentExecuting(false);
-      console_output::setPendingOutputType(console_output::PendingOutputTypeError);
-      ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
-      module_context::enqueClientEvent(errorEvent);
+      if (!silentExecution)
+      {
+         // Send as kConsoleWritePendingError so the event queue's
+         // annotateOutput() adds ANSI error highlighting (e.g. coloring the
+         // "Error" prefix). Clear the agent flag so the event goes through the
+         // plain string buffering path where annotation happens.
+         module_context::setAgentExecuting(false);
+         console_output::setPendingOutputType(console_output::PendingOutputTypeError);
+         ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
+         module_context::enqueClientEvent(errorEvent);
+      }
    }
 
    // Close the agent output group started in echoSourceCode().
    // Clear the agent flag first so the group-end escape goes through the
    // plain string buffering path in the event queue, where it will also be
    // recorded in console actions (so the group close survives session reload).
-   module_context::setAgentExecuting(false);
-   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
+   if (!silentExecution)
+   {
+      module_context::setAgentExecuting(false);
+      module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
+   }
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics
@@ -1840,11 +2007,21 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Send successful response
    sendJsonRpcResponse(ops, requestId, result);
 
-   // Fire change detection event to trigger environment refresh
-   // Use ChangeSourceREPL if a plot was captured so the Plots pane gets activated
-   module_context::ChangeSource changeSource = !plotsArray.isEmpty()
-      ? module_context::ChangeSourceREPL
-      : module_context::ChangeSourceRPC;
+   // Fire change detection event to trigger environment refresh. Interactive
+   // executions mimic the REPL, which always reports ChangeSourceREPL after a
+   // console turn (see SessionConsoleInput.cpp); that is what lets the Plots
+   // pane activate when R drew a plot. Activation self-gates on actual
+   // graphics-device changes (SessionPlots.cpp), so this is a no-op when
+   // nothing was plotted. We cannot key off plotsArray here: it is only
+   // populated when the caller requests capturePlot, yet an interactive
+   // execution may produce a plot with capturePlot disabled (e.g. the Posit
+   // Assistant's interleaved path, which captures plots through its own R-side
+   // hook). Keying activation off whether this was a console-style turn is
+   // correct regardless of how the caller captures plots. Silent setup/teardown
+   // helpers are not REPL turns and must not activate the pane.
+   module_context::ChangeSource changeSource = silentExecution
+      ? module_context::ChangeSourceRPC
+      : module_context::ChangeSourceREPL;
    module_context::events().onDetectChanges(changeSource);
 }
 
@@ -3454,14 +3631,25 @@ void onBackgroundProcessing(bool isIdle)
 // Update Management
 // ============================================================================
 
-// Structure to hold update check state
+// Structure to hold update check state.
+//
+// The pending-update fields (updateAvailable, isDowngrade, newVersion,
+// downloadUrl, expectedSha256) mirror throttle::PendingUpdate, which carries
+// them across a throttled skip in resolveWithoutManifestFetch(). Keep the two
+// field sets in sync: a field added here that isn't carried there would be
+// silently dropped on a skip (the regression #18014 fixed).
 struct UpdateState
 {
    bool updateAvailable;
+   bool isDowngrade;
    bool noCompatibleVersion;
    bool unsupportedInstalledVersion;
    bool unsupportedProtocol;
    bool manifestUnavailable;
+   // Whether the manifest entry for our protocol opts into the bring-your-own-key
+   // provider set (its "providers" array contains "byok"), used to vary the
+   // not-installed view's copy.
+   bool additionalProvidersAvailable;
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
@@ -3482,10 +3670,12 @@ struct UpdateState
 
    UpdateState()
       : updateAvailable(false),
+        isDowngrade(false),
         noCompatibleVersion(false),
         unsupportedInstalledVersion(false),
         unsupportedProtocol(false),
         manifestUnavailable(false),
+        additionalProvidersAvailable(false),
         installStatus(Status::Idle)
    {
    }
@@ -3495,136 +3685,272 @@ struct UpdateState
 UpdateState s_updateState;
 boost::mutex s_updateStateMutex;
 
+// Posit Assistant manifest endpoints (prod + opt-in test manifest).
+const char* const kManifestUrl     = "https://cdn.posit.co/posit-ai/manifest.json";
+const char* const kManifestTestUrl = "https://cdn.posit.co/posit-ai/manifest-test.json";
+
+// Whether Posit Assistant is opted into the pre-release (test) manifest, via
+// either the command-line/session option or the user preference.
+bool isUsingTestManifest()
+{
+   return options().positAssistantTestManifest() ||
+          prefs::userPrefs().positAssistantTestManifest();
+}
+
+// Wall-clock bound for a manifest fetch; a stalled child is terminated and the
+// check fails (manifestUnavailable) after this long.
+const int kManifestDeadlineSeconds = 30;
+
+// Single-flight state for manifest update checks. All access happens on the main
+// thread, so no lock is needed here (s_updateState keeps its own mutex for
+// cross-thread reads): the two RPC handlers are not offlineable (so they run on
+// the main thread), the scheduled startup and deadline work run on the main
+// thread, and the async subprocess completion is explicitly marshalled onto the
+// main thread by fetchManifestAsync -- its process callbacks can otherwise fire
+// on the offline-service background thread while R is busy.
+// s_pendingCompletions holds the actions to run once the in-flight check
+// finishes (each RPC caller queues one); s_checkIncludesStartup records whether
+// any caller in the current batch is the startup check (which also runs the
+// recommended-RStudio-version warning).
+bool s_checkInProgress = false;
+bool s_checkIncludesStartup = false;
+std::vector<boost::function<void()>> s_pendingCompletions;
+
+// Reset single-flight state and run queued completions. Swap first so a completion
+// that kicks a fresh check sees a clean queue. Main-thread only.
+void drainPendingCompletions()
+{
+   s_checkInProgress = false;
+   s_checkIncludesStartup = false;
+   std::vector<boost::function<void()>> completions;
+   completions.swap(s_pendingCompletions);
+   for (boost::function<void()>& completion : completions)
+      completion();
+}
+
+// Defined further below (after the manifest parse/check helpers); forward-declared
+// here so onDeferredInit's startup kickoff can reference startUpdateCheck.
+void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete);
+void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest);
+
+// Automation-only override for chatCheckForUpdates. When set (via the
+// chat_set_update_check_override RPC), the next chatCheckForUpdates returns
+// this object verbatim instead of running an actual manifest fetch + parse,
+// then the override is consumed (cleared) so a forgotten clear in a test's
+// afterEach doesn't bleed forced results into unrelated subsequent checks.
+// Lets Playwright tests deterministically exercise each blocking branch
+// (manifest unavailable, unsupported protocol, version-* etc.) without
+// faking HTTP responses -- the GWT RPC layer treats Playwright route.fulfill
+// responses as status 0 in dev-mode Electron, so an in-rsession override
+// is the only path that actually reaches ChatPresenter's blocking-state
+// callbacks.
+boost::optional<json::Object> s_updateCheckOverride;
+boost::mutex s_updateCheckOverrideMutex;
+
 // Validate that a URL uses HTTPS protocol
 bool isHttpsUrl(const std::string& url)
 {
    return boost::starts_with(url, "https://");
 }
 
-Error downloadManifest(json::Object* pManifest)
-{
-   if (!pManifest)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
 #ifndef NDEBUG
-   // DEBUG builds only: Support local manifest file for testing
-   std::string debugManifestPath = core::system::getenv("RSTUDIO_CHAT_DEBUG_MANIFEST");
-   if (!debugManifestPath.empty())
+// DEBUG builds only: read a local manifest file (RSTUDIO_CHAT_DEBUG_MANIFEST)
+// for testing. Returns Success() and populates *pManifest, or an error.
+Error readDebugManifest(const std::string& debugManifestPath, json::Object* pManifest)
+{
+   // Validate path ends with manifest.json
+   if (!boost::algorithm::ends_with(debugManifestPath, "manifest.json"))
    {
-      // Validate path ends with manifest.json
-      if (!boost::algorithm::ends_with(debugManifestPath, "manifest.json"))
-      {
-         return systemError(
-            boost::system::errc::invalid_argument,
-            "RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json': " +
-               debugManifestPath,
-            ERROR_LOCATION);
-      }
-
-      FilePath debugManifestFile(debugManifestPath);
-      if (!debugManifestFile.exists())
-      {
-         return systemError(
-            boost::system::errc::no_such_file_or_directory,
-            "Debug manifest file not found: " + debugManifestPath,
-            ERROR_LOCATION);
-      }
-
-      DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
-
-      // Read and parse JSON from local file
-      std::string manifestContent;
-      Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
-      if (error)
-      {
-         WLOG("Failed to read debug manifest file: {}", error.getMessage());
-         return error;
-      }
-
-      // Parse JSON
-      json::Value manifestValue;
-      if (manifestValue.parse(manifestContent))
-      {
-         WLOG("Failed to parse debug manifest JSON");
-         return systemError(boost::system::errc::protocol_error,
-                           "Invalid JSON in debug manifest",
-                           ERROR_LOCATION);
-      }
-
-      if (!manifestValue.isObject())
-      {
-         return systemError(boost::system::errc::protocol_error,
-                           "Debug manifest must be a JSON object",
-                           ERROR_LOCATION);
-      }
-
-      *pManifest = manifestValue.getObject();
-      DLOG("Successfully loaded and parsed debug manifest");
-      return Success();
-   }
-#endif
-
-   // Get download URI; use test manifest when opted in via either the
-   // command-line/session option or the user preference.
-   bool useTestManifest = options().positAssistantTestManifest() ||
-                          prefs::userPrefs().positAssistantTestManifest();
-   std::string downloadUri = useTestManifest
-      ? "https://cdn.posit.co/posit-ai/manifest-test.json"
-      : "https://cdn.posit.co/posit-ai/manifest.json";
-
-   DLOG("Downloading manifest from: {}", downloadUri);
-
-   // Create temp file for download
-   FilePath tempFile = module_context::tempFile("manifest", "json");
-
-   // Use R's download.file() function with timeout protection.
-   // Do not hardcode the download method -- let R use whatever method the
-   // user/admin has configured via options(download.file.method).  Corporate
-   // proxy environments typically set method = "curl" with a --cacert option
-   // in download.file.extra to trust the proxy's CA certificate.
-   r::exec::RFunction downloadFunc("download.file");
-   downloadFunc.addParam("url", downloadUri);
-   downloadFunc.addParam("destfile", tempFile.getAbsolutePath());
-   downloadFunc.addParam("quiet", true);
-   downloadFunc.addParam("timeout", 30);  // 30 second timeout
-
-   Error error = downloadFunc.call();
-   if (error)
-   {
-      WLOG("Failed to download manifest: {}", error.getMessage());
-      return error;
+      return systemError(
+         boost::system::errc::invalid_argument,
+         "RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json': " + debugManifestPath,
+         ERROR_LOCATION);
    }
 
-   // Read and parse JSON
+   FilePath debugManifestFile(debugManifestPath);
+   if (!debugManifestFile.exists())
+   {
+      return systemError(
+         boost::system::errc::no_such_file_or_directory,
+         "Debug manifest file not found: " + debugManifestPath,
+         ERROR_LOCATION);
+   }
+
+   DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
+
    std::string manifestContent;
-   error = core::readStringFromFile(tempFile, &manifestContent);
+   Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
    if (error)
    {
-      WLOG("Failed to read manifest file: {}", error.getMessage());
+      WLOG("Failed to read debug manifest file: {}", error.getMessage());
       return error;
    }
 
-   // Parse JSON
    json::Value manifestValue;
    if (manifestValue.parse(manifestContent))
    {
-      WLOG("Failed to parse manifest JSON");
+      WLOG("Failed to parse debug manifest JSON");
       return systemError(boost::system::errc::protocol_error,
-                        "Invalid JSON in manifest",
-                        ERROR_LOCATION);
+                         "Invalid JSON in debug manifest", ERROR_LOCATION);
    }
 
    if (!manifestValue.isObject())
    {
       return systemError(boost::system::errc::protocol_error,
-                        "Manifest must be a JSON object",
-                        ERROR_LOCATION);
+                         "Debug manifest must be a JSON object", ERROR_LOCATION);
    }
 
    *pManifest = manifestValue.getObject();
-   DLOG("Successfully downloaded and parsed manifest");
-
+   DLOG("Successfully loaded and parsed debug manifest");
    return Success();
+}
+#endif
+
+// Collects a manifest-download subprocess's stdout/stderr and reports a
+// ProcessResult to a completion callback. Mirrors AsyncDownloadFile
+// (SessionAsyncDownloadFile.cpp), but is local so the child can run --vanilla
+// (clean stdout) with injected download.file.* options for proxy parity
+// (see .rs.chat.manifestDownloadCommand).
+class ManifestDownload : public async_r::AsyncRProcess
+{
+public:
+   explicit ManifestDownload(
+      const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+      : onCompleted_(onCompleted)
+   {
+   }
+
+   void onStdout(const std::string& output) override { stdOut_ += output; }
+   void onStderr(const std::string& output) override { stdErr_ += output; }
+
+   void onCompleted(int exitStatus) override
+   {
+      core::system::ProcessResult result;
+      result.exitStatus = exitStatus;
+      result.stdOut = stdOut_;
+      result.stdErr = stdErr_;
+      onCompleted_(result);
+   }
+
+private:
+   std::string stdOut_;
+   std::string stdErr_;
+   boost::function<void(const core::system::ProcessResult&)> onCompleted_;
+};
+
+// Fetch the manifest off the main thread via an async R subprocess. onReady runs
+// on the main thread with either an error (mapped to manifestUnavailable
+// upstream) or the parsed manifest object. Running the download in a child
+// process -- so rsession never reads its own temp file -- is what eliminates the
+// Windows ERROR_SHARING_VIOLATION (#17891).
+void fetchManifestAsync(
+   const boost::function<void(const Error&, const json::Object&)>& onReady)
+{
+#ifndef NDEBUG
+   std::string debugManifestPath = core::system::getenv("RSTUDIO_CHAT_DEBUG_MANIFEST");
+   if (!debugManifestPath.empty())
+   {
+      json::Object manifest;
+      Error error = readDebugManifest(debugManifestPath, &manifest);
+      onReady(error, manifest);
+      return;
+   }
+#endif
+
+   // Get download URI; use test manifest when opted in.
+   std::string url = isUsingTestManifest() ? kManifestTestUrl : kManifestUrl;
+   DLOG("Fetching manifest from: {}", url);
+
+   // Build the child command in the parent session so the --vanilla child
+   // reproduces the parent's resolved download.file.method/extra and timeout.
+   // --vanilla implies --no-environ, so the child does not itself re-read
+   // .Renviron; proxy config still applies because the child inherits the parent's
+   // process environment (the parent read .Renviron at startup) and the
+   // method/extra options are injected explicitly into the command.
+   std::string command;
+   Error error = r::exec::RFunction(".rs.chat.manifestDownloadCommand", url).call(&command);
+   if (error)
+   {
+      onReady(error, json::Object());
+      return;
+   }
+
+   // Single-completion guard shared by the normal completion and the deadline.
+   // The AsyncRProcess completion can fire on the offline-service background
+   // thread (processSupervisor().poll() runs there while R occupies the main
+   // thread), so pDone is claimed atomically the instant either event occurs.
+   // Claiming before we schedule means a subprocess that finishes before the
+   // deadline always wins, even if R stays busy and the main thread only drains
+   // both scheduled tasks (the deadline and this completion) afterwards -- the
+   // deadline's complete() then no-ops instead of overwriting a real result with a
+   // timeout. The winner's body is marshalled onto the main thread so onReady ->
+   // onUpdateCheckComplete (and any queued completions it runs, e.g. performInstall,
+   // which execute R) never touch the single-flight state off-thread.
+   // executeOnMainThread runs inline when already on the main thread (the deadline
+   // path below), so it adds no latency there.
+   boost::shared_ptr<std::atomic<bool>> pDone =
+      boost::make_shared<std::atomic<bool>>(false);
+   boost::function<void(const core::system::ProcessResult&)> complete =
+      [onReady, pDone](const core::system::ProcessResult& result)
+      {
+         if (pDone->exchange(true))
+            return;
+         module_context::executeOnMainThread([onReady, result]()
+         {
+            json::Object manifest;
+            Error err = integrity::manifestFromDownloadResult(result, &manifest);
+            onReady(err, manifest);
+         });
+      };
+
+   // Trim the child's startup to the packages the download command actually uses.
+   // download.file lives in utils; everything else in the command (options,
+   // tempfile, readLines, cat) is base. --vanilla still loads R's full default
+   // package set; forcing R_DEFAULT_PACKAGES=utils skips the rest of it
+   // (methods/stats/graphics/grDevices/datasets) -- the bulk of cold R
+   // startup -- cutting spawn latency
+   // (the dominant cost of this fetch -- the manifest itself is tiny).
+   core::system::Options childEnv;
+   core::system::setenv(&childEnv, "R_DEFAULT_PACKAGES", "utils");
+
+   boost::shared_ptr<ManifestDownload> pProc =
+      boost::make_shared<ManifestDownload>(complete);
+   pProc->start(command.c_str(), childEnv, FilePath(), async_r::R_PROCESS_VANILLA);
+
+   // Deadline (bounded by main-thread availability: like the completion, it fires
+   // when the main thread next services its scheduled-work queue, so a main thread
+   // wedged in a long synchronous R computation defers both -- no worse than the
+   // old in-process download). terminate() only sends a soft interrupt, so a child
+   // wedged in DNS/connect may not die promptly. complete() no-ops if the fetch
+   // already finished (pDone claimed); otherwise it resolves the waiting callers
+   // with a timeout (bounding how long they wait) and frees the single-flight,
+   // then we best-effort terminate the child; its eventual onCompleted re-enters
+   // complete() and no-ops.
+   //
+   // Intentional tradeoff: a wedged child can briefly outlive the deadline, so a
+   // retry in that window could spawn a second fetch. This is bounded and
+   // acceptable -- the manifest check is infrequent and user-paced (not auto-
+   // retried), and a stuck child self-exits when the OS DNS lookup / download
+   // timeout gives up (~tens of seconds). Holding the single-flight until the
+   // child exited was tried, but created a worse failure mode (callers arriving
+   // after the deadline could hang until the child died), so freeing the
+   // single-flight at the deadline is preferred.
+   boost::weak_ptr<ManifestDownload> wProc(pProc);
+   module_context::scheduleDelayedWork(
+      boost::posix_time::seconds(kManifestDeadlineSeconds),
+      [wProc, complete]()
+      {
+         core::system::ProcessResult timeout;
+         timeout.exitStatus = 1;
+         timeout.stdErr = "manifest download timed out";
+         complete(timeout);
+         if (boost::shared_ptr<ManifestDownload> pClient = wProc.lock())
+         {
+            if (pClient->isRunning())
+               pClient->terminate();
+         }
+      },
+      false);  // not idleOnly: fire even while R is busy (not only when idle)
 }
 
 
@@ -3703,12 +4029,37 @@ void showTestManifestWarning()
    module_context::enqueClientEvent(event);
 }
 
-void onDeferredInit(bool)
+// Fire the test-manifest warning bar from onClientInit rather than
+// onDeferredInit. onClientInit runs at the tail of every client_init handler,
+// past the point where a re-join clears pending startup events
+// (SessionClientInit.cpp), so the banner is enqueued after any such clear and
+// reliably reaches the client. Enqueuing it from onDeferredInit instead loses
+// it to an intermittent startup race: if an unlucky request order flips the
+// session-initialized flag before client_init runs, client_init treats itself
+// as a re-join and clears the just-enqueued banner (rstudio/rstudio#18166).
+void onClientInit()
 {
-   if (options().positAssistantTestManifest() ||
-       prefs::userPrefs().positAssistantTestManifest())
+   if (isUsingTestManifest())
    {
       showTestManifestWarning();
+   }
+}
+
+void onDeferredInit(bool)
+{
+   // Kick off the startup manifest check, deferred off the critical startup
+   // path. The fetch is async, but spawning the --vanilla child R process still
+   // has a cost (process creation + R DLL load, often AV-scanned on Windows), so
+   // we wait for an idle moment rather than spawning it during session startup.
+   // isStartup=true so the recommended-RStudio-version warning fires (once,
+   // startup-only). Guarded by isPositAssistantWanted() so non-PAI sessions never
+   // spawn the fetch.
+   if (isPositAssistantWanted())
+   {
+      module_context::scheduleDelayedWork(
+         boost::posix_time::seconds(1),
+         []() { startUpdateCheck(true, false, boost::function<void()>()); },
+         true);  // idleOnly: run after R becomes idle (post client attach)
    }
 }
 
@@ -3918,6 +4269,24 @@ bool shouldInstallVersion(
    return available != installed;
 }
 
+// Returns true if the available version is older than the installed version.
+// Callers should only invoke this after shouldInstallVersion() has confirmed
+// the versions differ and parse cleanly; on parse failure this returns false
+// so the caller falls back to the standard "update available" wording.
+bool isVersionDowngrade(
+    const std::string& installedVersion,
+    const std::string& availableVersion)
+{
+   SemanticVersion installed, available;
+   if (!installed.parse(installedVersion) || !available.parse(availableVersion))
+   {
+      WLOG("Version parse failed in isVersionDowngrade: {} -> {}",
+           installedVersion, availableVersion);
+      return false;
+   }
+   return available < installed;
+}
+
 // Download package to temp directory
 Error downloadPackage(const std::string& url, const FilePath& destPath)
 {
@@ -3931,8 +4300,10 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
    DLOG("Downloading package from: {} to: {}", url, destPath.getAbsolutePath());
 
-   // Use R's download.file() function with timeout protection.
-   // Do not hardcode the download method -- see downloadManifest() comment.
+   // Use R's download.file() function with timeout protection. Do not hardcode
+   // the download method -- let R use whatever the user/admin configured via
+   // options(download.file.method) (corporate proxies often set method = "curl"
+   // with a --cacert in download.file.extra to trust the proxy's CA).
    r::exec::RFunction downloadFunc("download.file");
    downloadFunc.addParam("url", url);
    downloadFunc.addParam("destfile", destPath.getAbsolutePath());
@@ -4071,13 +4442,9 @@ Error installPackage(const FilePath& packagePath)
       }
    }
 
-   // Write protocol.json so future update checks can detect mismatches
-   core::FilePath protoFile =
-      aiDir.completeChildPath(kProtocolVersionFileName);
-   json::Object protoJson;
-   protoJson["protocol"] = kProtocolVersion;
-   Error protoError = core::writeStringToFile(
-      protoFile, protoJson.write());
+   // Write protocol.json so future update checks can detect mismatches, unless
+   // the package already shipped one (newer packages bundle protocol.json).
+   Error protoError = writeProtocolVersionFileIfMissing(aiDir);
    if (protoError)
    {
       return protoError;
@@ -4087,13 +4454,17 @@ Error installPackage(const FilePath& packagePath)
    return Success();
 }
 
-// Performs the actual update check logic (must be called with mutex NOT held)
-// This populates s_updateState with current version info and available updates
-void doUpdateCheck()
+// Runs on the main thread (fetchManifestAsync marshals the subprocess completion
+// there) once a manifest fetch completes (success or failure). Computes the new
+// update state from the manifest, writes s_updateState in one atomic locked update
+// (no reset-at-start window), stops the agent when the installed version/protocol
+// is unsupported or the manifest is unavailable, runs the startup-only
+// recommended-RStudio-version warning, then drains any queued single-flight
+// completions.
+void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest)
 {
-   DLOG("Performing update check");
+   bool wasStartup = s_checkIncludesStartup;
 
-   // Get installed version
    std::string installedVersion = getInstalledVersion();
    if (installedVersion.empty())
    {
@@ -4101,345 +4472,360 @@ void doUpdateCheck()
       installedVersion = "0.0.0";
    }
 
-   // Reset blocking flags from any previous check before starting fresh
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      s_updateState.currentVersion = installedVersion;
-      s_updateState.updateAvailable = false;
-      s_updateState.noCompatibleVersion = false;
-      s_updateState.unsupportedInstalledVersion = false;
-      s_updateState.unsupportedProtocol = false;
-      s_updateState.manifestUnavailable = false;
-      s_updateState.errorMessage.clear();
-   }
+   // Check-related fields, computed into locals and written once at the end so a
+   // concurrent reader never sees a half-updated (reset) state.
+   bool manifestUnavailable = false;
+   std::string errorMessage;
+   bool unsupportedProtocol = false;
+   bool unsupportedInstalledVersion = false;
+   bool noCompatibleVersion = false;
+   bool additionalProvidersAvailable = false;
+   bool updateAvailable = false;
+   bool isDowngrade = false;
+   std::string newVersion;
+   std::string downloadUrl;
+   std::string expectedSha256;
+   // Staged on the success path (authoritative record from buildSuccessOutcome).
+   // Left unset on every other exit, so finish() falls back to preserve-and-bump.
+   boost::optional<ManifestCheckRecord> recordToWrite;
+   bool showVersionWarning = false;
+   std::string recommendedVersion;
+   std::string downloadPageUrl;
 
-   // Download manifest
-   json::Object manifest;
-   Error error = downloadManifest(&manifest);
-   if (error)
+   // Apply the computed state + side effects, then drain waiters. Runs on exactly
+   // one exit path.
+   auto finish = [&]()
    {
-      WLOG("Failed to download manifest: {}", error.getMessage());
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState.manifestUnavailable = true;
-         s_updateState.errorMessage = error.getMessage();
+         s_updateState.currentVersion = installedVersion;
+         s_updateState.manifestUnavailable = manifestUnavailable;
+         s_updateState.errorMessage = errorMessage;
+         s_updateState.unsupportedProtocol = unsupportedProtocol;
+         s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
+         s_updateState.noCompatibleVersion = noCompatibleVersion;
+         s_updateState.additionalProvidersAvailable = additionalProvidersAvailable;
+         s_updateState.updateAvailable = updateAvailable;
+         s_updateState.isDowngrade = isDowngrade;
+         s_updateState.newVersion = newVersion;
+         s_updateState.downloadUrl = downloadUrl;
+         s_updateState.expectedSha256 = expectedSha256;
       }
-      assistant::stopAgentForUpdate();
+
+      // Non-blocking: this runs inline within a process-supervisor poll (the
+      // manifest fetch completion is delivered on the main thread), so a
+      // synchronous stop would block for its full timeout under the poll
+      // re-entrancy guard -- stalling the chat_check_for_updates RPC and the
+      // "Checking for Posit Assistant installation..." UI for ~10s.
+      if (manifestUnavailable || isPositAssistantUnsupported())
+         assistant::requestAgentStop();
+
+      if (showVersionWarning)
+         showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
+
+      // Persist the attempt. The success path stages an authoritative record;
+      // every other exit leaves it unset and we preserve-and-bump (only a success
+      // may set or clear the persisted block). Every real attempt bumps the
+      // timestamp, so a bad manifest cannot bypass the throttle.
+      boost::optional<ManifestCheckRecord> prior =
+         throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+      ManifestCheckRecord record =
+         throttle::recordToPersist(recordToWrite, prior, std::time(nullptr));
+      Error writeError = throttle::writeManifestCheckRecord(
+         throttle::manifestCheckStatePath(), record);
+      if (writeError)
+         WLOG("Failed to persist manifest-check record: {}", writeError.getMessage());
+
+      drainPendingCompletions();
+   };
+
+   if (fetchError)
+   {
+      WLOG("Failed to download manifest: {}", fetchError.getMessage());
+
+      bool isInstalled = (installedVersion != "0.0.0");
+      bool protocolMismatch = hasProtocolMismatch(installedVersion);
+      if (isInstalled && !protocolMismatch)
+      {
+         // Compatible install present: use it, surface no error. Reapply any
+         // persisted (manifest-only) unsupported block so a known-bad version
+         // stays blocked across the failure.
+         boost::optional<ManifestCheckRecord> prior =
+            throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+         if (prior)
+         {
+            ResolvedBlock block = throttle::resolvePersistedBlock(
+               *prior, installedVersion, kProtocolVersion);
+            unsupportedInstalledVersion = block.unsupportedInstalledVersion;
+            unsupportedProtocol = block.unsupportedProtocol;
+         }
+      }
+      else
+      {
+         // Not installed, or protocol mismatch: cannot proceed -> block.
+         manifestUnavailable = true;
+         errorMessage = fetchError.getMessage();
+      }
+
+      // recordToWrite stays unset -> finish() preserve-and-bumps the timestamp.
+      finish();
       return;
    }
 
-   // Check for unsupported versions/protocols
+   // Parse the optional "unsupported" constraints; malformed -> fail closed.
    UnsupportedInfo unsupportedInfo;
-   error = getUnsupportedInfo(manifest, &unsupportedInfo);
+   Error error = getUnsupportedInfo(manifest, &unsupportedInfo);
    if (error)
    {
-      // Malformed unsupported info — fail closed to be safe
       WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
            error.getMessage());
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState.manifestUnavailable = true;
-         s_updateState.errorMessage = error.getMessage();
-      }
-      assistant::stopAgentForUpdate();
+      manifestUnavailable = true;
+      errorMessage = error.getMessage();
+      finish();
       return;
    }
 
-   // Check for protocol mismatch (file I/O, done outside the lock)
+   // Protocol mismatch (file I/O, no lock held).
    bool protocolMismatch = hasProtocolMismatch(installedVersion);
+   unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
+   bool versionUnsupported = isVersionUnsupported(installedVersion, unsupportedInfo);
 
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
-      s_updateState.unsupportedInstalledVersion =
-         isVersionUnsupported(installedVersion, unsupportedInfo) ||
-         protocolMismatch;
+   // Split the live composite (for s_updateState) from the manifest-only record
+   // (persisted). The local protocol mismatch contributes to the live flag but is
+   // never persisted -- it is recomputed locally, and the reapply paths run only
+   // when there is no current mismatch. The manifest fetch succeeded, so this is
+   // the authoritative result for every remaining exit (including no-compatible-
+   // version): stage it now.
+   SuccessOutcome outcome = throttle::buildSuccessOutcome(
+      std::time(nullptr), installedVersion, kProtocolVersion,
+      versionUnsupported, protocolMismatch, unsupportedProtocol);
+   unsupportedInstalledVersion = outcome.liveUnsupportedInstalledVersion;
+   recordToWrite = outcome.record;
+   DLOG("Unsupported check: protocol={}, installedVersion={}",
+        unsupportedProtocol, unsupportedInstalledVersion);
 
-      DLOG("Unsupported check: protocol={}, installedVersion={}",
-           s_updateState.unsupportedProtocol,
-           s_updateState.unsupportedInstalledVersion);
-   }
-
-   // Stop Posit Assistant agent if version/protocol is unsupported or manifest unavailable
-   if (isPositAssistantUnsupported())
-   {
-      assistant::stopAgentForUpdate();
-   }
-
-   // Get package info for our protocol version
+   // Get package info for our protocol version.
    std::string packageVersion;
-   std::string downloadUrl;
+   std::string pkgDownloadUrl;
    std::string sha256;
-   error = integrity::getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
+   std::vector<std::string> providers;
+   error = integrity::getPackageInfoFromManifest(
+      manifest, kProtocolVersion, &packageVersion, &pkgDownloadUrl, &sha256,
+      &providers);
    if (error)
    {
       WLOG("Failed to get package info from manifest: {}", error.getMessage());
 
-      // Check if this is specifically a "protocol not found" error
-      if (error.getCode() == boost::system::errc::protocol_not_supported)
+      // Protocol version not in manifest: only block if there's no installed
+      // version to fall back on. Other errors leave the installed version
+      // running (updateAvailable stays false).
+      if (error.getCode() == boost::system::errc::protocol_not_supported &&
+          installedVersion == "0.0.0")
       {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         // Only block if there's no installed version to fall back on
-         if (installedVersion == "0.0.0")
-         {
-            s_updateState.noCompatibleVersion = true;
-         }
-         s_updateState.updateAvailable = false;
+         noCompatibleVersion = true;
       }
+      finish();
       return;
    }
 
-   // Compare versions - offer install if versions differ (upgrade or downgrade)
-   boost::mutex::scoped_lock lock(s_updateStateMutex);
+   // When the manifest opts this build into the bring-your-own-key provider set,
+   // the not-installed view appends a sentence about it.
+   additionalProvidersAvailable = integrity::advertisesByokProvider(providers);
+
+   // Compare versions - offer install if versions differ (upgrade or downgrade).
    if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      // Don't offer an update if the available version is also unsupported
+      // Don't offer an update if the available version is also unsupported.
       if (isVersionUnsupported(packageVersion, unsupportedInfo))
       {
          WLOG("Available version {} is also unsupported (minimum: {}), "
               "no compatible version available",
               packageVersion, unsupportedInfo.minimumPackageVersion);
-         s_updateState.noCompatibleVersion = true;
-         s_updateState.updateAvailable = false;
+         noCompatibleVersion = true;
       }
       else
       {
-         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-         s_updateState.updateAvailable = true;
-         s_updateState.newVersion = packageVersion;
-         s_updateState.downloadUrl = downloadUrl;
-         s_updateState.expectedSha256 = sha256;
+         isDowngrade = isVersionDowngrade(installedVersion, packageVersion);
+         DLOG("{} available: {} -> {}",
+              isDowngrade ? "Downgrade" : "Update", installedVersion, packageVersion);
+         updateAvailable = true;
+         newVersion = packageVersion;
+         downloadUrl = pkgDownloadUrl;
+         expectedSha256 = sha256;
       }
    }
    else
    {
-      DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
-      s_updateState.updateAvailable = false;
+      DLOG("No update needed (installed: {}, available: {})",
+           installedVersion, packageVersion);
    }
+
+   // Startup-only: warn about an out-of-date prerelease RStudio build. Computed
+   // here, fired in finish() (after the state write); never on a pane-open/Retry
+   // check (wasStartup is false for those).
+   if (wasStartup)
+   {
+      Error versionError =
+         getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
+      if (!versionError)
+      {
+         core::Version current(RSTUDIO_VERSION);
+         core::Version recommended(recommendedVersion);
+         if (recommended.empty())
+         {
+            WLOG("Failed to parse recommended RStudio version: {}", recommendedVersion);
+         }
+         else
+         {
+            std::string versionStr(RSTUDIO_VERSION);
+            bool isPrereleaseBuild =
+               versionStr.find("-daily") != std::string::npos ||
+               versionStr.find("-hourly") != std::string::npos;
+            bool forceCheck =
+               !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
+
+            DLOG("RStudio version check: current={}, recommended={}, isPrerelease={}",
+                 RSTUDIO_VERSION, recommendedVersion, isPrereleaseBuild);
+
+            if (installedVersion == "0.0.0")
+               DLOG("  Skipping version warning (Posit Assistant not installed)");
+            else if (!isPrereleaseBuild && !forceCheck)
+               DLOG("  Skipping version warning (release build)");
+            else if (current < recommended)
+               showVersionWarning = true;
+            else
+               DLOG("  No warning needed (version is current or newer)");
+         }
+      }
+   }
+
+   finish();
 }
 
-// Called during session initialization to check for updates
-Error checkForUpdatesOnStartup()
+// Decide whether an automatic check must actually fetch the manifest. Always
+// fetches when nothing is installed or the installed protocol mismatches; otherwise
+// throttles to once per the posit_assistant_update_check_interval_hours preference
+// (0 hours = always check). The test manifest is opt-in for pre-release testing,
+// so throttling is disabled there (every check fetches, as if the interval were 0).
+// `force` (Retry / install) always fetches. Main-thread only (reads the filesystem).
+bool shouldFetchManifest(bool force)
 {
-   if (!isPositAssistantWanted())
-   {
-      DLOG("Update check skipped: posit not selected for chat or assistant");
-      return Success();
-   }
+   std::string installed = getInstalledVersion();   // "" when not installed
+   bool isInstalled = !installed.empty();
+   bool mismatch = isInstalled && hasProtocolMismatch(installed);
 
-   DLOG("Checking for updates on startup");
+   boost::optional<ManifestCheckRecord> record =
+      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+   boost::optional<std::time_t> last;
+   if (record)
+      last = record->lastCheckTime;
 
-   // Get installed version
+   int throttleSeconds = isUsingTestManifest()
+      ? 0
+      : throttle::throttleSecondsFromHours(
+           prefs::userPrefs().positAssistantUpdateCheckIntervalHours());
+
+   return throttle::manifestCheckDue(
+      force, isInstalled, mismatch, last,
+      std::time(nullptr), throttleSeconds);
+}
+
+// Resolve the update state from the installed version without fetching the
+// manifest (throttled skip). Reached only when a compatible version is installed
+// (installed + no protocol mismatch), so the installed version is current and
+// usable. Reapplies any persisted (manifest-only) unsupported block, then drains
+// the single-flight queue. Does NOT write the record -- no attempt was made.
+void resolveWithoutManifestFetch()
+{
    std::string installedVersion = getInstalledVersion();
-   if (installedVersion.empty())
+
+   bool unsupportedInstalledVersion = false;
+   bool unsupportedProtocol = false;
+   boost::optional<ManifestCheckRecord> record =
+      throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
+   if (record)
    {
-      DLOG("No installation found, checking for initial install");
-      installedVersion = "0.0.0";
+      ResolvedBlock block = throttle::resolvePersistedBlock(
+         *record, installedVersion, kProtocolVersion);
+      unsupportedInstalledVersion = block.unsupportedInstalledVersion;
+      unsupportedProtocol = block.unsupportedProtocol;
    }
 
-   // Reset blocking flags from any previous check before starting fresh
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+      // A throttled skip re-fetches no manifest, so the pending update from the
+      // last completed check is still authoritative -- carry it through instead of
+      // clearing it. Clearing it here would let a later install see no update and
+      // fail with "No update available" even though the pane still offered one. The
+      // carry is gated on the installed version being unchanged from that check
+      // (s_updateState.currentVersion), so an out-of-band install can't leave a
+      // stale target or downgrade classification behind.
+      PendingUpdate prior;
+      prior.updateAvailable = s_updateState.updateAvailable;
+      prior.isDowngrade = s_updateState.isDowngrade;
+      prior.newVersion = s_updateState.newVersion;
+      prior.downloadUrl = s_updateState.downloadUrl;
+      prior.expectedSha256 = s_updateState.expectedSha256;
+      PendingUpdate carried = throttle::carryPendingUpdateThroughSkip(
+         prior, s_updateState.currentVersion, installedVersion);
+
+      if (prior.updateAvailable)
+         DLOG("Throttled skip: pending update {} (installed {}, last checked {})",
+              carried.updateAvailable ? "carried" : "cleared",
+              installedVersion, s_updateState.currentVersion);
+
       s_updateState.currentVersion = installedVersion;
-      s_updateState.updateAvailable = false;
+      s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage = "";
+      s_updateState.unsupportedProtocol = unsupportedProtocol;
+      s_updateState.unsupportedInstalledVersion = unsupportedInstalledVersion;
       s_updateState.noCompatibleVersion = false;
-      s_updateState.unsupportedInstalledVersion = false;
-      s_updateState.unsupportedProtocol = false;
-      s_updateState.manifestUnavailable = false;
-      s_updateState.errorMessage.clear();
+      s_updateState.additionalProvidersAvailable = false;
+      s_updateState.updateAvailable = carried.updateAvailable;
+      s_updateState.isDowngrade = carried.isDowngrade;
+      s_updateState.newVersion = carried.newVersion;
+      s_updateState.downloadUrl = carried.downloadUrl;
+      s_updateState.expectedSha256 = carried.expectedSha256;
    }
 
-   // Download manifest
-   json::Object manifest;
-   Error error = downloadManifest(&manifest);
-   if (error)
-   {
-      WLOG("Failed to download manifest: {}", error.getMessage());
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState.manifestUnavailable = true;
-         s_updateState.errorMessage = error.getMessage();
-      }
-      assistant::stopAgentForUpdate();
-      return Success();
-   }
-
-   // Manifest succeeded — clear the failure flag
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      s_updateState.manifestUnavailable = false;
-      s_updateState.errorMessage.clear();
-   }
-
-   // Check for unsupported versions/protocols
-   UnsupportedInfo unsupportedInfo;
-   error = getUnsupportedInfo(manifest, &unsupportedInfo);
-   if (error)
-   {
-      // Malformed unsupported info — fail closed to be safe
-      WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
-           error.getMessage());
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState.manifestUnavailable = true;
-         s_updateState.errorMessage = error.getMessage();
-      }
-      assistant::stopAgentForUpdate();
-      return Success();
-   }
-
-   // Check for protocol mismatch (file I/O, done outside the lock)
-   bool protocolMismatch = hasProtocolMismatch(installedVersion);
-
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
-      s_updateState.unsupportedInstalledVersion =
-         isVersionUnsupported(installedVersion, unsupportedInfo) ||
-         protocolMismatch;
-
-      DLOG("Unsupported check: protocol={}, installedVersion={}",
-           s_updateState.unsupportedProtocol,
-           s_updateState.unsupportedInstalledVersion);
-   }
-
-   // Stop Posit Assistant agent if version/protocol is unsupported or manifest unavailable
+   // Non-blocking, like onUpdateCheckComplete: this resolves the
+   // chat_check_for_updates RPC, so it must not block the main thread waiting
+   // for the agent to exit. The terminated agent is reaped by background polling.
    if (isPositAssistantUnsupported())
+      assistant::requestAgentStop();
+
+   drainPendingCompletions();
+}
+
+// Begin (or join) a manifest update check. onComplete (may be empty) runs once
+// the check finishes; overlapping callers (startup + pane-open + Retry) share a
+// single fetch. Ordering invariant: enqueue the completion BEFORE starting the
+// fetch, so the synchronous DEBUG-manifest path still drains it. Main-thread only.
+void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete)
+{
+   if (onComplete)
+      s_pendingCompletions.push_back(onComplete);
+   if (isStartup)
+      s_checkIncludesStartup = true;
+
+   // A caller that joins an in-flight check only enqueues its completion above;
+   // `force` is not re-evaluated here, so the in-flight check's own fetch-vs-skip
+   // decision governs. Benign today: throttled skips resolve synchronously and so
+   // never overlap a real fetch already in flight.
+   if (s_checkInProgress)
+      return;
+
+   s_checkInProgress = true;
+
+   if (!shouldFetchManifest(force))
    {
-      assistant::stopAgentForUpdate();
+      DLOG("Manifest check throttled; using installed version without fetching");
+      resolveWithoutManifestFetch();
+      return;
    }
 
-   // Get package info for our protocol version
-   std::string packageVersion;
-   std::string downloadUrl;
-   std::string sha256;
-   error = integrity::getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl, &sha256);
-   if (error)
-   {
-      WLOG("Failed to get package info from manifest: {}", error.getMessage());
-      WLOG("Error code: {}, Expected: {}", error.getCode(),
-           static_cast<int>(boost::system::errc::protocol_not_supported));
-
-      // Check if this is specifically a "protocol not found" error
-      if (error.getCode() == boost::system::errc::protocol_not_supported)
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         // Protocol version not in manifest - only block if there's no installed
-         // version to fall back on
-         if (installedVersion == "0.0.0")
-         {
-            s_updateState.noCompatibleVersion = true;
-         }
-         s_updateState.updateAvailable = false;
-      }
-
-      // For non-protocol errors (e.g. missing fields), allow the installed
-      // version to continue running if one exists
-      return Success();
-   }
-
-   // Compare versions - offer install if versions differ (upgrade or downgrade)
-   if (shouldInstallVersion(installedVersion, packageVersion))
-   {
-      // Don't offer an update if the available version is also unsupported
-      if (isVersionUnsupported(packageVersion, unsupportedInfo))
-      {
-         WLOG("Available version {} is also unsupported (minimum: {}), "
-              "no compatible version available",
-              packageVersion, unsupportedInfo.minimumPackageVersion);
-         {
-            boost::mutex::scoped_lock lock(s_updateStateMutex);
-            s_updateState.noCompatibleVersion = true;
-            s_updateState.updateAvailable = false;
-         }
-      }
-      else
-      {
-         // Determine if this is an upgrade or downgrade
-         SemanticVersion installed, available;
-         bool isDowngrade = false;
-
-         // These parses should always succeed since shouldInstallVersion validated them
-         if (installed.parse(installedVersion) && available.parse(packageVersion))
-         {
-            isDowngrade = (available < installed);
-            DLOG("{} available: {} -> {}",
-                 isDowngrade ? "Downgrade" : "Update",
-                 installedVersion, packageVersion);
-         }
-         else
-         {
-            // Defensive: this shouldn't happen, but handle gracefully
-            WLOG("Version re-parsing failed unexpectedly: {} -> {}",
-                 installedVersion, packageVersion);
-            DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-         }
-
-         {
-            boost::mutex::scoped_lock lock(s_updateStateMutex);
-            s_updateState.updateAvailable = true;
-            s_updateState.newVersion = packageVersion;
-            s_updateState.downloadUrl = downloadUrl;
-            s_updateState.expectedSha256 = sha256;
-         }
-      }
-   }
-   else
-   {
-      DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState.updateAvailable = false;
-      }
-   }
-
-   // Check for recommended RStudio version
-   std::string recommendedVersion, downloadPageUrl;
-   Error versionError = getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
-   if (!versionError)
-   {
-      core::Version current(RSTUDIO_VERSION);
-      core::Version recommended(recommendedVersion);
-
-      // Validate version parsed successfully (non-empty with at least major version)
-      if (recommended.empty())
-      {
-         WLOG("Failed to parse recommended RStudio version: {}", recommendedVersion);
-      }
-      else
-      {
-         std::string versionStr(RSTUDIO_VERSION);
-         bool isDailyBuild = versionStr.find("-daily") != std::string::npos;
-         bool isHourlyBuild = versionStr.find("-hourly") != std::string::npos;
-         bool isPrereleaseBuild = isDailyBuild || isHourlyBuild;
-         bool forceCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
-
-         DLOG("RStudio version check: current={}, recommended={}, isPrerelease={}",
-              RSTUDIO_VERSION, recommendedVersion, isPrereleaseBuild);
-
-         // Skip if Posit Assistant not installed (user hasn't completed beta signup)
-         if (installedVersion == "0.0.0")
-         {
-            DLOG("  Skipping version warning (Posit Assistant not installed)");
-         }
-         // Only check for prerelease builds (daily/hourly) unless overridden
-         else if (!isPrereleaseBuild && !forceCheck)
-         {
-            DLOG("  Skipping version warning (release build)");
-         }
-         else if (current < recommended)
-         {
-            DLOG("  Showing version warning");
-            showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
-         }
-         else
-         {
-            DLOG("  No warning needed (version is current or newer)");
-         }
-      }
-   }
-
-   return Success();
+   fetchManifestAsync(&onUpdateCheckComplete);
 }
 
 // ============================================================================
@@ -4795,6 +5181,8 @@ Error startChatBackend(bool resumeConversation)
    // See: https://github.com/nodejs/node/pull/57165
    core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
 
+   node_tools::applySystemCaOption(&environment, nodePath);
+
    // Pass per-session auth token for WebSocket authentication
    core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
 
@@ -5071,88 +5459,160 @@ Error chatGetVersion(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error chatCheckForUpdates(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
+// Build the client-facing update-state result (under the state lock).
+void buildUpdateStateResult(json::Object* pResult)
 {
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+   (*pResult)["updateAvailable"] = s_updateState.updateAvailable;
+   (*pResult)["isDowngrade"] = s_updateState.isDowngrade;
+   (*pResult)["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
+   (*pResult)["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
+   (*pResult)["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
+   (*pResult)["manifestUnavailable"] = s_updateState.manifestUnavailable;
+   (*pResult)["additionalProvidersAvailable"] = s_updateState.additionalProvidersAvailable;
+   (*pResult)["errorMessage"] = s_updateState.errorMessage;
+   (*pResult)["currentVersion"] = s_updateState.currentVersion;
+   (*pResult)["newVersion"] = s_updateState.newVersion;
+   (*pResult)["downloadUrl"] = s_updateState.downloadUrl;
+   (*pResult)["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
+}
+
+// Resolve an async chat_check_for_updates continuation with the current state.
+void resolveWithUpdateState(const json::JsonRpcFunctionContinuation& cont)
+{
+   json::Object result;
+   buildUpdateStateResult(&result);
+
+   DLOG("chatCheckForUpdates resolving with current update state");
+
+   json::JsonRpcResponse response;
+   response.setResult(result);
+   cont(Success(), &response);
+}
+
+// Async RPC: the manifest fetch is off-thread, so the continuation resolves once
+// the (possibly already in-flight) check completes -- preserving the frontend's
+// existing per-call callback contract with no client changes.
+void chatCheckForUpdates(const json::JsonRpcRequest& request,
+                         const json::JsonRpcFunctionContinuation& cont)
+{
+   // Honor any automation-test override before doing real work. This is set
+   // via chat_set_update_check_override and lets Playwright tests force the
+   // response to a specific blocking shape without faking HTTP (see comment
+   // above s_updateCheckOverride for why route.fulfill isn't viable here).
+   // One-shot: consume the override after returning it, so a stale override
+   // doesn't influence checks the test didn't intend to drive.
+   {
+      boost::mutex::scoped_lock lock(s_updateCheckOverrideMutex);
+      if (s_updateCheckOverride)
+      {
+         json::Object override = *s_updateCheckOverride;
+         s_updateCheckOverride.reset();
+         json::JsonRpcResponse response;
+         response.setResult(override);
+         cont(Success(), &response);
+         return;
+      }
+   }
+
    // Check if a forced recheck was requested (e.g. user clicked Retry)
    bool forceRecheck = false;
    if (request.params.getSize() > 0)
    {
       Error error = json::readParam(request.params, 0, &forceRecheck);
       if (error)
-         return error;
-   }
-
-   // Perform on-demand update check if state hasn't been populated yet,
-   // or if the caller explicitly requested a recheck.
-   // This happens when user selects Posit Assistant in Preferences before the pref is saved.
-   // We allow the check regardless of isPositAssistantWanted() since checking for available
-   // updates doesn't require the preference - only actual installation does.
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      if (s_updateState.currentVersion.empty() || forceRecheck)
       {
-         DLOG("Update state not populated or recheck forced, performing on-demand check");
-         lock.unlock();
-         doUpdateCheck();
+         json::JsonRpcResponse response;
+         setErrorResponse(error, &response);
+         cont(Success(), &response);
+         return;
       }
    }
 
-   boost::mutex::scoped_lock lock(s_updateStateMutex);
+   // Return cached state immediately only when it's populated, no recheck was
+   // forced, AND no check is in flight. If a check is running (e.g. a forced
+   // Retry from another caller), fall through and join it via startUpdateCheck so
+   // we return fresh state rather than a stale snapshot. (s_checkInProgress is
+   // main-thread-only, like this handler, so it's safe to read without a lock.)
+   // Checking doesn't require isPositAssistantWanted() -- the pref only gates
+   // actual installation, and the pane/Preferences may check before it is saved.
+   bool haveState = false;
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      haveState = !s_updateState.currentVersion.empty();
+   }
 
-   // Return cached/computed check result
-   json::Object result;
-   result["updateAvailable"] = s_updateState.updateAvailable;
-   result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
-   result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
-   result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
-   result["manifestUnavailable"] = s_updateState.manifestUnavailable;
-   result["errorMessage"] = s_updateState.errorMessage;
-   result["currentVersion"] = s_updateState.currentVersion;
-   result["newVersion"] = s_updateState.newVersion;
-   result["downloadUrl"] = s_updateState.downloadUrl;
-   result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
+   if (haveState && !forceRecheck && !s_checkInProgress)
+   {
+      resolveWithUpdateState(cont);
+      return;
+   }
 
-   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}, "
-        "unsupportedVersion={}, unsupportedProtocol={}, manifestUnavailable={}",
-        s_updateState.updateAvailable, s_updateState.noCompatibleVersion,
-        s_updateState.unsupportedInstalledVersion, s_updateState.unsupportedProtocol,
-        s_updateState.manifestUnavailable);
+   // Otherwise kick (or join) an async check and resolve once it completes.
+   DLOG("Update state not populated or recheck forced, performing async check");
+   startUpdateCheck(false, forceRecheck, boost::bind(resolveWithUpdateState, cont));
+}
 
-   pResponse->setResult(result);
+// Test-only: install (or clear) a one-shot override for chatCheckForUpdates.
+// Pass a JSON object (any shape the real response would take) to install it;
+// pass JSON null to clear. The next chatCheckForUpdates returns the override
+// verbatim, then consumes it. Gated on --automation-agent so production
+// sessions (where any authenticated RPC caller could otherwise suppress
+// legitimate update checks) reject the call outright.
+Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   if (!session::options().isAutomationAgent())
+   {
+      return systemError(boost::system::errc::operation_not_permitted,
+                         "chat_set_update_check_override is only callable "
+                         "when rsession is started with --automation-agent",
+                         ERROR_LOCATION);
+   }
+
+   if (request.params.getSize() == 0)
+      return Error(json::errc::ParamMissing, ERROR_LOCATION);
+
+   const json::Value& overrideValue = request.params[0];
+
+   boost::mutex::scoped_lock lock(s_updateCheckOverrideMutex);
+   if (overrideValue.isNull())
+   {
+      s_updateCheckOverride.reset();
+   }
+   else if (overrideValue.isObject())
+   {
+      s_updateCheckOverride = overrideValue.getObject();
+   }
+   else
+   {
+      return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+   }
+
+   pResponse->setResult(true);
    return Success();
 }
 
-Error chatInstallUpdate(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+// Download + install the available update using the current state, then resolve
+// the continuation. The download/install is synchronous (the client polls
+// chat_get_update_status for progress); only the preceding update check is
+// async, so this is unchanged from the previous behavior apart from resolving a
+// continuation instead of returning a response.
+void performInstall(const json::JsonRpcFunctionContinuation& cont)
 {
-   if (!isPositAssistantWanted())
-   {
-      return systemError(boost::system::errc::operation_not_permitted,
-                        "Posit not selected for chat or assistant",
-                        ERROR_LOCATION);
-   }
-
-   // Check if we need to perform an update check first
-   // This happens when the user selects Posit Assistant after session startup
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      if (s_updateState.currentVersion.empty())
-      {
-         DLOG("Update state not populated, performing on-demand check");
-         lock.unlock();
-         doUpdateCheck();
-      }
-   }
+   json::JsonRpcResponse response;
 
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
    // Check if update is available
    if (!s_updateState.updateAvailable)
    {
-      return systemError(boost::system::errc::operation_not_permitted,
-                        "No update available",
-                        ERROR_LOCATION);
+      setErrorResponse(systemError(boost::system::errc::operation_not_permitted,
+                                   "No update available", ERROR_LOCATION),
+                       &response);
+      lock.unlock();  // don't hold the state lock across the continuation
+      cont(Success(), &response);
+      return;
    }
 
    // Check if already in progress
@@ -5160,16 +5620,19 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
        s_updateState.installStatus != UpdateState::Status::Complete &&
        s_updateState.installStatus != UpdateState::Status::Error)
    {
-      return systemError(boost::system::errc::operation_in_progress,
-                        "Update already in progress",
-                        ERROR_LOCATION);
+      setErrorResponse(systemError(boost::system::errc::operation_in_progress,
+                                   "Update already in progress", ERROR_LOCATION),
+                       &response);
+      lock.unlock();  // don't hold the state lock across the continuation
+      cont(Success(), &response);
+      return;
    }
 
-   // Start update process (async would be better, but doing sync for simplicity)
+   // Start update process (the download/install below is synchronous)
    s_updateState.installStatus = UpdateState::Status::Downloading;
    s_updateState.installMessage = "Downloading update...";
 
-   // Capture values before unlocking — a concurrent doUpdateCheck() could
+   // Capture values before unlocking — a concurrent update check could
    // reset s_updateState while we're downloading
    std::string downloadUrl = s_updateState.downloadUrl;
    std::string newVersion = s_updateState.newVersion;
@@ -5213,8 +5676,9 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       if (cleanupError)
          WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
 
-      pResponse->setResult(json::Value());
-      return Success();
+      response.setResult(json::Value());
+      cont(Success(), &response);
+      return;
    }
 
    // Verify SHA-256 integrity of the downloaded package
@@ -5233,8 +5697,9 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
          WLOG("Failed to remove temp package after missing hash: {}",
               cleanupError.getMessage());
 
-      pResponse->setResult(json::Value());
-      return Success();
+      response.setResult(json::Value());
+      cont(Success(), &response);
+      return;
    }
 
    error = integrity::verifyPackageSha256(tempPackage, expectedSha256);
@@ -5251,8 +5716,9 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
          WLOG("Failed to remove temp package after integrity failure: {}",
               cleanupError.getMessage());
 
-      pResponse->setResult(json::Value());
-      return Success();
+      response.setResult(json::Value());
+      cont(Success(), &response);
+      return;
    }
 
    // Install package
@@ -5304,8 +5770,9 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
             WLOG("Failed to clean up backup directory after failed install: {}", prevCleanup.getMessage());
       }
 
-      pResponse->setResult(json::Value());
-      return Success();
+      response.setResult(json::Value());
+      cont(Success(), &response);
+      return;
    }
 
    // Success - ensure backup is cleaned up
@@ -5330,8 +5797,46 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       s_updateState.currentVersion = newVersion;
    }
 
-   pResponse->setResult(json::Value());
-   return Success();
+   response.setResult(json::Value());
+   cont(Success(), &response);
+}
+
+// Async RPC. Installs the available update; if the update state hasn't been
+// populated yet (e.g. user selected Posit Assistant after startup), run an async
+// check first, then install. The install body itself is unchanged and the
+// client still polls chat_get_update_status for progress.
+void chatInstallUpdate(const json::JsonRpcRequest& request,
+                       const json::JsonRpcFunctionContinuation& cont)
+{
+   if (!isPositAssistantWanted())
+   {
+      json::JsonRpcResponse response;
+      setErrorResponse(systemError(boost::system::errc::operation_not_permitted,
+                                   "Posit not selected for chat or assistant",
+                                   ERROR_LOCATION),
+                       &response);
+      cont(Success(), &response);
+      return;
+   }
+
+   // Install from current state only when it's populated and no check is in
+   // flight; if a check is running, wait for it (join the single-flight queue)
+   // so we install against fresh state rather than a stale snapshot.
+   bool haveState = false;
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      haveState = !s_updateState.currentVersion.empty();
+   }
+
+   if (haveState && !s_checkInProgress)
+   {
+      performInstall(cont);
+   }
+   else
+   {
+      DLOG("Update state not populated, performing async check before install");
+      startUpdateCheck(false, true, boost::bind(performInstall, cont));
+   }
 }
 
 Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
@@ -5809,6 +6314,7 @@ Error initialize()
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
+   events().onClientInit.connect(onClientInit);
    events().onDeferredInit.connect(onDeferredInit);
 
    // Register handler to detect session close (vs suspend/restart)
@@ -5832,8 +6338,9 @@ Error initialize()
       (bind(registerRpcMethod, "chat_get_backend_url", chatGetBackendUrl))
       (bind(registerRpcMethod, "chat_get_backend_status", chatGetBackendStatus))
       (bind(registerRpcMethod, "chat_get_version", chatGetVersion))
-      (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
-      (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
+      (bind(registerAsyncRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
+      (bind(registerRpcMethod, "chat_set_update_check_override", chatSetUpdateCheckOverride))
+      (bind(registerAsyncRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
       (bind(registerRpcMethod, "chat_uninstall_posit_assistant", chatUninstallPositAssistant))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
@@ -5849,13 +6356,10 @@ Error initialize()
       return error;
    }
 
-   // Check for updates on startup (async, won't block initialization)
-   error = checkForUpdatesOnStartup();
-   if (error)
-   {
-      // Log but don't fail initialization
-      WLOG("Update check failed: {}", error.getMessage());
-   }
+   // The startup manifest check is kicked from onDeferredInit now. The fetch is
+   // async (subprocess), so it no longer needs the scheduleDelayedWork(idleOnly)
+   // workaround that previously kept the blocking download.file() off the
+   // critical startup path (see rstudio/rstudio#14202).
 
    DLOG("SessionChat module initialized successfully, URI handler registered for /ai-chat");
    return Success();

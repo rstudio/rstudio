@@ -6,7 +6,7 @@
     <script type="text/javascript" src="hist.js"></script>
     <script type="text/javascript" src="DataViewer.js"></script>
 </head>
-<body>
+<body class="overlay-scrollbars">
     <div id="errorMask"></div>
     <div id="errorWrapper" role="alert" aria-live="assertive">
         <div id="error"></div>
@@ -15,16 +15,28 @@
 
     <div id="gridContainer">
         <div id="gridPanel">
-            <div id="gridViewport">
-                <table id="rsGridData" class="autoSize" role="grid">
-                    <thead>
-                        <tr id="data_cols" role="row"></tr>
-                    </thead>
-                    <tbody id="gridBody"></tbody>
-                </table>
+            <div id="gridPanes">
+                <div id="pinnedPane">
+                    <table id="pinnedTable" class="autoSize" role="presentation">
+                        <thead>
+                            <tr id="pinned_cols" role="row"></tr>
+                        </thead>
+                        <tbody id="pinnedBody"></tbody>
+                    </table>
+                </div>
+                <div id="gridViewport">
+                    <table id="rsGridData" class="autoSize" role="grid">
+                        <thead>
+                            <tr id="data_cols" role="row"></tr>
+                        </thead>
+                        <tbody id="gridBody"></tbody>
+                    </table>
+                </div>
             </div>
             <div id="rsGridData_info" aria-live="polite" aria-atomic="true">
-                <div id="rsGridData_info_sort"></div>
+                <div id="rsGridData_info_sort">
+                    <span id="rsGridData_info_sort_text"></span><button type="button" id="rsGridData_info_sort_clear" title="Clear sort" aria-label="Clear sort"></button>
+                </div>
                 <div id="rsGridData_info_text"></div>
             </div>
         </div>

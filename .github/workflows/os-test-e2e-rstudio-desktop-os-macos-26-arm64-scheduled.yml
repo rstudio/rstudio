@@ -1,0 +1,25 @@
+name: "Test: E2E Playwright RStudio (Desktop, macOS 26 ARM64, Open Source, Scheduled)"
+
+on:
+  schedule:
+    # Mon-Fri at 02:00 UTC -- daily run against latest source on main.
+    - cron: '0 2 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  # The called workflow's e2e-merge job assumes the S3 report-upload role via
+  # OIDC; a reusable workflow's id-token grant is capped by its caller's.
+  id-token: write
+
+jobs:
+  run-macos-26:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"

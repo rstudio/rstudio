@@ -106,6 +106,8 @@ public class WebApplicationHeader extends Composite
 
       // remove some desktop-only commands
       commands.showGpuDiagnostics().remove();
+      commands.toggleGpuExclusionList().remove();
+      commands.toggleGpuDriverBugWorkarounds().remove();
       commands.showA11yDiagnostics().remove();
       commands.reloadUi().remove();
       commands.openDeveloperConsole().remove();

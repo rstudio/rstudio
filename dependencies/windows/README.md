@@ -23,6 +23,21 @@ a successful build environment if different versions of any dependencies are alr
 - `install-dependencies.cmd`
 - Wait for the script to complete
 
+### Dependency install location
+
+`install-dependencies.cmd` downloads and installs build dependencies into
+`RSTUDIO_TOOLS_ROOT` (default: `%SYSTEMDRIVE%\rstudio-tools`, so normally
+`C:\rstudio-tools`), outside the source tree. This mirrors how the other
+platforms use `/opt/rstudio-tools`. Set the `RSTUDIO_TOOLS_ROOT` environment
+variable before running the script to install elsewhere.
+
+Older checkouts installed dependencies into the source tree itself (in
+`dependencies\common` and `dependencies\windows`). The build still discovers
+dependencies there as a fallback when `RSTUDIO_TOOLS_ROOT` has not been
+populated, so existing setups keep working; when both locations are present,
+the tools root wins. To avoid confusion after migrating, delete the
+downloaded (gitignored) artifacts from the source tree.
+
 ## Build Java/Gwt
 
 - `cd rstudio\src\gwt`

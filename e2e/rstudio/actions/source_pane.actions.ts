@@ -2,8 +2,11 @@ import type { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
-import { clickConfirmIfVisible } from '../pages/modals.page';
 import { TIMEOUTS, sleep } from '../utils/constants';
+import { rStringLiteral } from '../utils/r';
+import { executeCommand } from '../utils/commands';
+import { openFile } from '../utils/files';
+import { Ace, AceEditorElement } from '../utils/ace';
 
 export class SourcePaneActions {
   readonly page: Page;
@@ -16,40 +19,47 @@ export class SourcePaneActions {
     this.consolePaneActions = consolePaneActions;
   }
 
+  /**
+   * Write `fileContent` to `fileName` in R's current working directory and
+   * open it in the editor. Pass real newlines and unescaped quotes -- the
+   * helper routes the content through `rStringLiteral` (JSON-stringify) so
+   * R receives it intact. Earlier callers had to pre-escape `\n` to `\\n`
+   * because the previous implementation interpolated the content into a
+   * plain `writeLines("...", ...)` template; that gotcha is gone.
+   */
   async createAndOpenFile(fileName: string, fileContent: string): Promise<void> {
-    await this.consolePaneActions.typeInConsole(`writeLines("${fileContent}", "${fileName}")`);
-    await sleep(1000);
+    // wait: true ensures the writeLines completes before file.edit() reads
+    // the file we just wrote (polls the busy class, no blind sleep).
+    await this.consolePaneActions.executeInConsole(
+      `writeLines(${rStringLiteral(fileContent)}, ${rStringLiteral(fileName)})`,
+      { wait: true },
+    );
 
-    await this.consolePaneActions.typeInConsole(`file.edit('${fileName}')`);
-
-    await expect(this.sourcePane.selectedTab).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
+    await openFile(this.page, fileName);
   }
 
   async closeSourceAndDeleteFile(fileName: string): Promise<void> {
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('saveAllSourceDocs')");
+    await executeCommand(this.page, 'saveAllSourceDocs');
     await sleep(1000);
-    await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('closeAllSourceDocs')");
-    await sleep(1000);
-
-    await expect(this.sourcePane.aceTextInput).toHaveCount(0, { timeout: 5000 }).catch(() => {});
-    await sleep(500);
-
-    await this.consolePaneActions.typeInConsole(`unlink("${fileName}")`);
-    await sleep(500);
+    // resetSourcePane closes every tab except a single Untitled placeholder,
+    // so the source pane never transits through the zero-tab HIDE state
+    // (#17738) and the next test starts from a known good state. The previous
+    // closeAllSourceDocs + toHaveCount(0) wait left the pane briefly empty,
+    // and the auto-spawned Untitled1 that filled the gap collided with the
+    // new file the next test opened (two publishBtns -> strict-mode error).
+    await this.consolePaneActions.resetSourcePane();
+    await this.consolePaneActions.executeInConsole(`unlink("${fileName}")`, { wait: true });
   }
 
   async sendText(text: string): Promise<void> {
     await this.sourcePane.contentPane.click();
-    await sleep(300);
     await this.page.keyboard.type(text);
-    await sleep(300);
   }
 
   async acceptNesRename(): Promise<string> {
     const { nesApply, ghostText, nesInsertionPreview, nesGutter, nesSuggestionContent } = this.sourcePane;
 
     await expect(nesApply.or(ghostText).or(nesInsertionPreview).or(nesGutter).first()).toBeVisible({ timeout: TIMEOUTS.nesApply });
-    await sleep(2000);
 
     if (await nesApply.first().isVisible()) {
       const nesSuggestion = nesSuggestionContent.first();
@@ -59,45 +69,37 @@ export class SourcePaneActions {
       console.log('  NES Apply suggestion (text): ' + nesSuggestionText);
       console.log('  NES Apply suggestion (html): ' + nesSuggestionHtml);
       await nesApply.first().click();
-      await sleep(2000);
       return 'apply';
     } else if (await nesInsertionPreview.first().isVisible()) {
       const insertionText = await nesInsertionPreview.first().textContent();
       const count = await nesInsertionPreview.count();
       console.log(`  NES inline diff: "${insertionText}" (${count} suggestion(s) visible)`);
       await this.page.keyboard.press('ControlOrMeta+;');
-      await sleep(2000);
       return 'inline-diff';
     } else if (await ghostText.first().isVisible()) {
       const ghostTextParts = await ghostText.allTextContents();
       console.log('  NES ghost text: "' + ghostTextParts.join('') + '"');
       await this.page.keyboard.press('ControlOrMeta+;');
-      await sleep(2000);
       return 'ghost-text';
     } else {
       console.log('  NES gutter icon detected — clicking to reveal suggestion...');
       await nesGutter.first().click();
-      await sleep(2000);
 
       try {
         await expect(nesApply.or(ghostText).or(nesInsertionPreview).first()).toBeVisible({ timeout: 15000 });
-        await sleep(2000);
 
         if (await nesApply.first().isVisible()) {
           const nesSuggestionText = await nesSuggestionContent.first().textContent();
           console.log('  NES Apply suggestion (after gutter click): ' + nesSuggestionText);
           await nesApply.first().click();
-          await sleep(2000);
         } else if (await nesInsertionPreview.first().isVisible()) {
           const insertionText = await nesInsertionPreview.first().textContent();
           console.log('  NES inline diff (after gutter click): "' + insertionText + '"');
           await this.page.keyboard.press('ControlOrMeta+;');
-          await sleep(2000);
         } else {
           const ghostParts = await ghostText.allTextContents();
           console.log('  NES ghost text (after gutter click): "' + ghostParts.join('') + '"');
           await this.page.keyboard.press('ControlOrMeta+;');
-          await sleep(2000);
         }
         return 'gutter-clicked';
       } catch {
@@ -110,19 +112,15 @@ export class SourcePaneActions {
   /** Move cursor to end of document (cross-platform). */
   async goToEnd(): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
     const goToEnd = process.platform === 'darwin' ? 'Meta+ArrowDown' : 'Control+End';
     await this.page.keyboard.press(goToEnd);
-    await sleep(300);
   }
 
   /** Move cursor to top of document (cross-platform). */
   async goToTop(): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
     const goToTop = process.platform === 'darwin' ? 'Meta+ArrowUp' : 'Control+Home';
     await this.page.keyboard.press(goToTop);
-    await sleep(300);
   }
 
   /**
@@ -133,7 +131,7 @@ export class SourcePaneActions {
   async navigateToChunkByIndex(chunkNumber: number): Promise<void> {
     await this.goToTop();
     for (let i = 0; i < chunkNumber; i++) {
-      await this.consolePaneActions.typeInConsole(".rs.api.executeCommand('goToNextChunk')");
+      await executeCommand(this.page, 'goToNextChunk');
       await sleep(500);
     }
   }
@@ -144,25 +142,22 @@ export class SourcePaneActions {
    */
   async navigateToChunkByLabel(label: string): Promise<void> {
     await this.sourcePane.aceTextInput.click({ force: true });
-    await sleep(300);
     await this.page.evaluate((lbl) => {
       const editors = document.querySelectorAll('.ace_editor');
       for (let i = 0; i < editors.length; i++) {
         if (editors[i].closest('#rstudio_console_input')) continue;
-        const env = (editors[i] as any).env;
-        if (env && env.editor) {
-          const lines = env.editor.getValue().split('\n');
-          const pattern = new RegExp('```\\{r\\s+' + lbl + '[\\s,}]');
-          for (let j = 0; j < lines.length; j++) {
-            if (pattern.test(lines[j])) {
-              env.editor.gotoLine(j + 1, 0);
-              return;
-            }
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (!editor) continue;
+        const lines = editor.getValue().split('\n');
+        const pattern = new RegExp('```\\{r\\s+' + lbl + '[\\s,}]');
+        for (let j = 0; j < lines.length; j++) {
+          if (pattern.test(lines[j])) {
+            editor.gotoLine(j + 1, 0);
+            return;
           }
         }
       }
     }, label);
-    await sleep(300);
   }
 
   /**
@@ -174,65 +169,67 @@ export class SourcePaneActions {
     await this.page.evaluate(({ marker: m, line: ln, startCol: sc, endCol: ec }) => {
       const editors = document.querySelectorAll('.ace_editor');
       for (let i = 0; i < editors.length; i++) {
-        const env = (editors[i] as any).env;
-        if (env && env.editor) {
-          const editor = env.editor;
-          if (editor.getValue().indexOf(m) !== -1) {
-            editor.focus();
-            editor.gotoLine(ln, 0);
-            const Range = (window as any).ace.require('ace/range').Range;
-            editor.selection.setRange(new Range(ln - 1, sc, ln - 1, ec));
-            break;
-          }
-        }
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (!editor) continue;
+        if (editor.getValue().indexOf(m) === -1) continue;
+        editor.focus();
+        editor.gotoLine(ln, 0);
+        // Ace's Range constructor lives on the global ace module loader; we
+        // grab it here rather than in utils/ace.ts because it's the only
+        // construction site and the module-loader surface isn't worth typing.
+        const aceModule = (window as unknown as {
+          ace: { require(path: string): { Range: new (sr: number, sc: number, er: number, ec: number) => Ace.Range } };
+        }).ace;
+        const Range = aceModule.require('ace/range').Range;
+        editor.selection.setRange(new Range(ln - 1, sc, ln - 1, ec));
+        return;
       }
     }, { marker, line, startCol, endCol });
     await sleep(1000);
   }
 
   /**
-   * Get the full text content of the active source editor via Ace API.
+   * Get the full text content of the active source editor via the
+   * automation bridge. `window.rstudio.documents.activeEditor()` returns
+   * the same native Ace instance the GWT side already tracks as "the
+   * active doc," so there's no DOM scan and no chance of landing on the
+   * console scroll panel, dialog editors, or stale source editors that
+   * linger in the DOM after a tab close.
    */
   async getEditorContent(): Promise<string> {
-    return await this.page.evaluate(`(function() {
-      var editors = document.querySelectorAll('.ace_editor');
-      for (var i = 0; i < editors.length; i++) {
-        if (editors[i].closest('#rstudio_console_input')) continue;
-        var env = editors[i].env;
-        if (env && env.editor) {
-          return env.editor.getValue();
-        }
-      }
-      throw new Error('No active source editor found');
-    })()`);
+    return await this.page.evaluate(() => {
+      const editor = window.rstudio?.documents.activeEditor() ?? null;
+      if (!editor) throw new Error('No active source editor');
+      return editor.getValue();
+    });
   }
 
   async getSelectedText(marker: string): Promise<string> {
     return await this.page.evaluate((m) => {
       const editors = document.querySelectorAll('.ace_editor');
       for (let i = 0; i < editors.length; i++) {
-        const env = (editors[i] as any).env;
-        if (env && env.editor && env.editor.getValue().indexOf(m) !== -1) {
-          return env.editor.getSelectedText();
+        const editor = (editors[i] as unknown as AceEditorElement).env?.editor;
+        if (editor && editor.getValue().indexOf(m) !== -1) {
+          return editor.getSelectedText();
         }
       }
       return '';
     }, marker);
   }
 
-  /** Get the first visible row index (0-based) of the active source editor. */
+  /**
+   * Get the first visible row index (0-based) of the active source editor.
+   * Uses the automation bridge's activeEditor() rather than scanning
+   * `.ace_editor` nodes -- a DOM scan can land on a stale or background
+   * editor (e.g. the empty Untitled tab the suite keeps open), which sorts
+   * first and always reports row 0. See getEditorContent for the same pattern.
+   */
   async getFirstVisibleRow(): Promise<number> {
-    return await this.page.evaluate(`(function() {
-      var editors = document.querySelectorAll('.ace_editor');
-      for (var i = 0; i < editors.length; i++) {
-        if (editors[i].closest('#rstudio_console_input')) continue;
-        var env = editors[i].env;
-        if (env && env.editor) {
-          return env.editor.getFirstVisibleRow();
-        }
-      }
-      throw new Error('No active source editor found');
-    })()`);
+    return await this.page.evaluate(() => {
+      const editor = window.rstudio?.documents.activeEditor() ?? null;
+      if (!editor) throw new Error('No active source editor');
+      return editor.getFirstVisibleRow();
+    });
   }
 
   /**
@@ -240,16 +237,41 @@ export class SourcePaneActions {
    */
   async ensureVisualMode(): Promise<void> {
     const toggle = this.sourcePane.visualMdToggle;
+    const proseMirror = this.page.locator('.ProseMirror');
+
+    // Already in visual mode? The editor mounts a .ProseMirror surface.
+    if (await proseMirror.first().isVisible().catch(() => false)) return;
+
     try {
-      const ariaPressed = await toggle.getAttribute('aria-pressed', { timeout: 3000 });
-      if (ariaPressed === 'false') {
-        await toggle.click();
-        await clickConfirmIfVisible(this.page, 5000);
-        await sleep(2000);
-      }
+      // Wait for the toggle to mount -- a freshly created template document
+      // takes a moment before its editor toolbar is ready, and a 3s attribute
+      // read could race that. If it never appears, visual mode isn't supported.
+      await toggle.waitFor({ state: 'visible', timeout: 5000 });
     } catch {
-      // Toggle not available — visual mode not supported for this file type
+      // Toggle not available -- visual mode not supported for this file type.
+      return;
     }
+
+    await toggle.click();
+
+    // The first switch to visual mode for a document can raise a confirmation
+    // dialog, but only after the pandoc conversion returns -- a server roundtrip
+    // that on a loaded machine can exceed a fixed dialog-poll window. A separate
+    // short timeout here races that roundtrip and, when it loses, leaves the
+    // modal unconfirmed so the editor never mounts. Instead wait for whichever
+    // appears first -- the dialog or the mounted editor -- then dismiss the
+    // dialog if it showed.
+    const okBtn = this.page.locator('#rstudio_dlg_ok');
+    await expect(proseMirror.first().or(okBtn)).toBeVisible({ timeout: 90000 });
+    if (await okBtn.isVisible().catch(() => false))
+      await okBtn.click();
+
+    // Wait for the visual editor to actually mount rather than sleeping a fixed
+    // interval: converting a heavier document (a template with chunks/plots)
+    // through pandoc takes longer than a blank one, and the old 2s sleep could
+    // return before .ProseMirror existed -- leaving callers asserting against a
+    // still-source-mode editor.
+    await proseMirror.first().waitFor({ state: 'visible', timeout: 90000 });
   }
 
   /**

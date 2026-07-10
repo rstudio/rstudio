@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
@@ -28,6 +30,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -65,23 +69,15 @@ public class FindOutputPane extends WorkbenchPane
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
-      stopSearch_ = new ToolbarButton(
-            ToolbarButton.NoText,
-            constants_.stopFindInFilesTitle(),
-            commands_.interruptR().getImageResource());
-      toolbar.addRightWidget(stopSearch_);
-
-      refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
-      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      toolbar.addRightWidget(refreshButton_);
-      setStopSearchButtonVisible(false);
-
       showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
+      ElementIds.assignElementId(showFindButton_, ElementIds.FIND_REPLACE_MODE_TOGGLE);
       showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
-            if (!replaceMode_)
+            // the toggle is disabled while a find is running: entering replace
+            // mode then would build the preview from incomplete search results
+            if (!replaceMode_ && replaceModeToggleEnabled_)
                turnOnReplaceMode();
          }
       });
@@ -99,6 +95,19 @@ public class FindOutputPane extends WorkbenchPane
       });
       toolbar.addRightWidget(showReplaceButton_);
 
+      toolbar.addRightSeparator();
+
+      stopSearch_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            constants_.stopFindInFilesTitle(),
+            commands_.interruptR().getImageResource());
+      toolbar.addRightWidget(stopSearch_);
+
+      refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
+      setStopSearchButtonVisible(false);
+
       return toolbar;
    }
 
@@ -108,7 +117,12 @@ public class FindOutputPane extends WorkbenchPane
       SecondaryToolbar replaceToolbar = new SecondaryToolbar(constants_.replaceLabel());
       replaceMode_ = true;
 
+      FindOutputResources resources = GWT.create(FindOutputResources.class);
+      resources.styles().ensureInjected();
+
       replaceTextBox_ = new TextBox();
+      replaceTextBox_.addStyleName(resources.styles().replaceTextBox());
+      ElementIds.assignElementId(replaceTextBox_, ElementIds.FIND_REPLACE_TEXT);
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
          public void onKeyUp(KeyUpEvent event)
@@ -117,6 +131,7 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
       FormLabel replaceLabel = new FormLabel(constants_.replaceWithLabel(), replaceTextBox_);
+      replaceLabel.addStyleName(resources.styles().replaceLabel());
       replaceToolbar.addLeftWidget(replaceLabel);
       replaceToolbar.addLeftWidget(replaceTextBox_);
 
@@ -128,6 +143,7 @@ public class FindOutputPane extends WorkbenchPane
       setStopReplaceButtonVisible(false);
 
       replaceAllButton_ = new ToolbarButton(constants_.replaceAllText(), constants_.replaceAllText(), null);
+      ElementIds.assignElementId(replaceAllButton_, ElementIds.FIND_REPLACE_ALL);
       replaceToolbar.addRightWidget(replaceAllButton_);
 
       replaceProgress_ = new ProgressBar();
@@ -243,7 +259,24 @@ public class FindOutputPane extends WorkbenchPane
       table_.clear();
       matchCount_ = 0;
       context_.updateFileMatches(value);
-      addMatches(context_.getFindResults());
+
+      ArrayList<FindResult> results = context_.getFindResults();
+
+      // for a literal (non-regex) replace preview, omit lines whose every match
+      // is a no-op (the matched text already equals the replacement); when the
+      // replacement is empty we are clearing the preview, so show everything
+      if (!StringUtil.isNullOrEmpty(value))
+      {
+         ArrayList<FindResult> effective = new ArrayList<>();
+         for (FindResult fr : results)
+         {
+            if (fr.hasEffectiveLiteralReplacement())
+               effective.add(fr);
+         }
+         results = effective;
+      }
+
+      addMatches(results);
    }
 
    @Override
@@ -443,14 +476,50 @@ public class FindOutputPane extends WorkbenchPane
    public void enableReplace()
    {
       replaceTextBox_.setReadOnly(false);
-      replaceAllButton_.setEnabled(true);
+      setReplaceAllButtonEnabled(true);
+      setReplaceModeToggleEnabled(true);
    }
 
    @Override
    public void disableReplace()
    {
       replaceTextBox_.setReadOnly(true);
-      replaceAllButton_.setEnabled(false);
+      setReplaceAllButtonEnabled(false);
+      setReplaceModeToggleEnabled(false);
+   }
+
+   // The Find/Replace mode toggle has no enabled state of its own, so grey it
+   // out, block pointer input, and expose the state via aria-disabled; the
+   // click handler also consults replaceModeToggleEnabled_ so the mode cannot be
+   // toggled while disabled. Only the find-to-replace direction is gated -- the
+   // replace-to-find toggle (showReplaceButton_) stays usable.
+   private void setReplaceModeToggleEnabled(boolean enabled)
+   {
+      replaceModeToggleEnabled_ = enabled;
+
+      Element toggle = showFindButton_.getElement();
+      if (enabled)
+      {
+         toggle.getStyle().clearOpacity();
+         toggle.getStyle().clearProperty("pointerEvents");
+      }
+      else
+      {
+         toggle.getStyle().setOpacity(0.4);
+         toggle.getStyle().setProperty("pointerEvents", "none");
+      }
+      toggle.setAttribute("aria-disabled", enabled ? "false" : "true");
+   }
+
+   @Override
+   public void setReplaceAllButtonEnabled(boolean enabled)
+   {
+      replaceAllButton_.setEnabled(enabled);
+
+      // FocusWidget stores the disabled state as a DOM property, which is not
+      // observable as an attribute; mirror it to aria-disabled so the control's
+      // state is exposed to assistive technology (and automated tests)
+      Roles.getButtonRole().setAriaDisabledState(replaceAllButton_.getElement(), !enabled);
    }
 
    @Override
@@ -489,6 +558,16 @@ public class FindOutputPane extends WorkbenchPane
    {
       if (replaceProgress_.isVisible())
          replaceProgress_.setVisible(false);
+   }
+
+   @Override
+   public void cancelReplacePreview()
+   {
+      // drop any queued replace preview so it cannot fire after a Replace All
+      // has begun -- a stale preview would stopAndClear the running replace and
+      // re-grep the just-modified files, dropping the real results
+      if (displayPreview_ != null)
+         displayPreview_.cancelPending();
    }
 
    private void createDisplayPreview()
@@ -548,6 +627,7 @@ public class FindOutputPane extends WorkbenchPane
 
    private boolean replaceMode_;
    private boolean regexPreviewMode_;
+   private boolean replaceModeToggleEnabled_ = true;
 
    private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;

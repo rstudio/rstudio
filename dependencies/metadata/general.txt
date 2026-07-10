@@ -1,0 +1,87 @@
+dependency(BOOST
+   DEPNAME      "Boost"
+   VERSION      "1.87.0"
+   REPOSITORY   "https://github.com/boostorg/boost"
+   REVISION     "boost-1.87.0"
+   LICENSE_PATH "LICENSE_1_0.txt"
+   AUTHOR       "Boost.org"
+)
+
+dependency(MSINTTYPES
+   DEPNAME      "msinttypes"
+   REPOSITORY   "https://github.com/Tencent/rapidjson"
+   LICENSE      "MIT"
+   LICENSE_PATH "license.txt"
+)
+
+dependency(OPENSSL
+   DEPNAME      "OpenSSL"
+   REPOSITORY   "https://github.com/openssl/openssl"
+   LICENSE_PATH "LICENSE.txt"
+)
+
+dependency(SYNCTEX
+   DEPNAME      "SyncTeX"
+   REPOSITORY   "https://github.com/jlaurens/synctex/"
+)
+
+dependency(PCRE2
+   DEPNAME      "PCRE2"
+   REPOSITORY   "https://github.com/PCRE2Project/pcre2"
+   LICENSE      "BSD-3-Clause WITH PCRE2-exception"
+   LICENSE_PATH "LICENCE.md"
+)
+
+dependency(NODEJS
+   DEPNAME      "Node.js"
+   REPOSITORY   "https://github.com/nodejs/node"
+   LICENSE      "MIT-with-additional"
+   ATTRIBUTION  "Copyright Node.js contributors"
+)
+
+dependency(SUNDOWN
+   DEPNAME      "Sundown"
+   PATH         "src/cpp/core/markdown/sundown"
+   LICENSE      "ISC"
+)
+
+dependency(PROMETHEUS_CPP
+   DEPNAME      "Prometheus Client Library for Modern C++"
+   PATH         "src/cpp/ext/prometheus-cpp"
+)
+
+dependency(TREE_HH
+   DEPNAME      "tree.hh"
+   PATH         "src/cpp/core/include/core/collection/Tree.hpp"
+   LICENSE      "GPL-3.0"
+   LICENSE_PATH "spdx://GPL-3.0"
+   ATTRIBUTION  "Derived from tree.hh, copyright (C) 2001-2024 Kasper Peeters"
+)
+
+dependency(RAPIDXML
+   DEPNAME      "RapidXML"
+   PATH         "src/cpp/core/include/core/rapidxml"
+   LICENSE_PATH "license.txt"
+   LICENSE      "BSL-1.0 OR MIT"
+   ATTRIBUTION  "Copyright (C) 2006, 2009 Marcin Kalicinski"
+)
+
+dependency(CATCH2
+   DEPNAME      "Catch2"
+   PATH         "src/cpp/tests/cpp/tests/vendor/catch.hpp"
+   LICENSE      "BSL-1.0"
+   ATTRIBUTION  "Copyright (c) 2022 Two Blue Cubes Ltd."
+)
+
+dependency(LIBUUID
+   DEPNAME      "libuuid"
+   REPOSITORY   "https://github.com/util-linux/util-linux/tree/master/libuuid"
+   ATTRIBUTION  "Copyright (C) 1996, 1997, 1998 Theodore Ts'o"
+)
+
+dependency(LIBR
+   DEPNAME      "libR"
+   HOMEPAGE     "https://www.r-project.org/"
+   LICENSE      "GPL-2.0-or-later"
+   ATTRIBUTION  "Copyright © 1998–2020 Kurt Hornik\nCopyright © 2021–2025 R Core Team"
+)

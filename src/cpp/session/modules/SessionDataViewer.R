@@ -134,13 +134,20 @@
    as.character(col)
 })
 
-# Compact, collision-resistant hash of a frame's column names. Used as a
+# Compact, collision-resistant hash of a frame's column structure. Used as a
 # fingerprint to detect object reassignment between data viewer loads.
 #
-# Returns NA_character_ for empty / NULL names, and also when the digest
-# helper itself fails -- in both cases the client treats "no anchor" as
-# always-mismatch and discards any saved positional state, since there
-# is no safe way to align indices against a frame we can't fingerprint.
+# The fingerprint covers column names, column classes, and factor levels --
+# not just names. Saved filters are typed (numeric ranges, factor level
+# indices), so a column changing type, or a factor being re-leveled, with
+# unchanged names must also invalidate saved state; otherwise a restored
+# filter is silently applied with the wrong semantics (an inexplicably empty
+# grid, or a factor filter matching the wrong level).
+#
+# Returns NA_character_ for empty / NULL names so the client can treat
+# "no anchor" as always-mismatch; without anchors there's no way to
+# align saved positional state with the current frame, so we want it
+# discarded.
 .rs.addFunction("dataViewer.colsFingerprint", function(x)
 {
    nms <- names(x)
@@ -148,11 +155,90 @@
    if (n == 0L)
       return(NA_character_)
 
-   hash <- .rs.digest(nms)
-   if (is.na(hash))
-      return(NA_character_)
+   sig <- list(names = nms)
+   if (is.list(x))
+   {
+      sig$types <- vapply(x, function(col) {
+         type <- paste(class(col), collapse = "/")
+         if (is.factor(col))
+            type <- paste(c(type, levels(col)), collapse = "/")
+         type
+      }, character(1), USE.NAMES = FALSE)
+   }
 
-   paste0(n, ":", hash)
+   paste0(n, ":", .rs.digest(sig))
+})
+
+#' Column Names
+#'
+#' Return the column names of a data object as a character vector, for the
+#' data viewer's go-to-column popup. Lightweight by design: no per-column
+#' statistics, just names -- the popup needs every column of the frame, not
+#' only the fetched window. Unnamed or missing entries come back as empty
+#' strings so positions stay aligned with column indices.
+#'
+#' @param x The data object being viewed.
+.rs.addFunction("dataViewer.columnNames", function(x)
+{
+   nms <- colnames(x)
+   if (is.null(nms))
+      nms <- character(.rs.ncol(x))
+
+   nms <- as.character(nms)
+   nms[is.na(nms)] <- ""
+   nms
+})
+
+# The timezone a POSIXct column is displayed in. Returns "" for non-POSIXct
+# columns. An absent or empty tzone attribute means the column is shown in the
+# session's local timezone, so resolve that to a concrete name (Sys.timezone())
+# rather than reporting a blank -- the client surfaces this next to the column
+# type so two columns in different zones don't read identically.
+.rs.addFunction("dataViewer.columnTimezone", function(col)
+{
+   if (!inherits(col, "POSIXct"))
+      return("")
+
+   tz <- attr(col, "tzone")
+   if (is.null(tz) || !nzchar(tz))
+      tz <- .rs.tryOr("", Sys.timezone())
+
+   if (is.null(tz) || is.na(tz) || !nzchar(tz))
+      return("")
+
+   tz
+})
+
+#' Column Index
+#'
+#' Return lightweight identity for every column of a data object -- name,
+#' typeof, and class -- for the data viewer's summary sidebar, which lists all
+#' columns of the frame and lazy-loads the (expensive) per-column statistics
+#' as entries scroll into view. Deliberately cheap: no histograms, ranges, or
+#' factor levels, so this scales to very wide frames where describeCols would
+#' not. The result is a list with one entry per column, parallel to the
+#' frame's columns.
+#'
+#' @param x The data object being viewed.
+.rs.addFunction("dataViewer.columnIndex", function(x)
+{
+   nms <- .rs.dataViewer.columnNames(x)
+
+   # A non-list object (matrix, atomic vector coerced to a frame upstream) has
+   # no per-column classes to report; treat every column as the object's own
+   # class so the client's type predicates still resolve.
+   columns <- lapply(seq_along(nms), function(idx) {
+      col <- if (is.list(x)) x[[idx]] else x
+      list(
+         col_name  = .rs.scalar(nms[[idx]]),
+         col_type  = .rs.scalar(typeof(col)),
+         col_class = as.character(class(col)),
+         col_index = .rs.scalar(as.integer(idx)),
+         col_tz    = .rs.scalar(.rs.dataViewer.columnTimezone(col))
+      )
+   })
+
+   columns
 })
 
 .rs.addFunction("describeCols", function(x,
@@ -160,6 +246,7 @@
                                          maxCols = -1,
                                          maxFactors = 64,
                                          totalCols = -1,
+                                         colIndices = NULL,
                                          colsFingerprint = NULL)
 {
    # The client compares this fingerprint against the one stored alongside
@@ -167,7 +254,7 @@
    # visibility). A mismatch invalidates the saved state -- without it,
    # positional indices saved against one frame can land on an unrelated
    # frame after reassignment (df <- iris; df <- mtcars). Callers that have
-   # already subset x (e.g. describeColSlice) must compute the fingerprint
+   # already subset x (e.g. describeColsByIndex) must compute the fingerprint
    # from the underlying frame and pass it in, otherwise pagination would
    # silently invalidate state on every column-frame change.
    if (is.null(colsFingerprint))
@@ -175,7 +262,15 @@
 
    # subset the data if requested
    x <- .rs.subsetData(x, maxRows, maxCols)
-   
+
+   # absolute (1-based) column indices for the columns being described. The
+   # client uses these as the stable identity for pinning, sorting, and
+   # filtering, so they survive column pagination (callers that describe an
+   # arbitrary slice -- describeColsByIndex -- pass the original indices in).
+   # Default to a contiguous range for the full-frame case.
+   if (is.null(colIndices))
+      colIndices <- seq_len(ncol(x))
+
    # get the variable labels, if any--labels may be provided either by this 
    # global attribute or by a 'label' attribute on an individual column (as in
    # e.g. Hmisc), which takes precedence if both are present
@@ -193,6 +288,19 @@
    # sampling the visible rows instead.
    maxCharsCap <- 200L
    computeMaxChars <- ncol(x) > 0 && ncol(x) <= maxCharsCap
+
+   # Maximum number of distinct values for which the summary sidebar draws
+   # one frequency bar per category; above this, a factor / character column
+   # gets a text summary (count of uniques + dominant value) instead.
+   maxCategoryBars <- 24L
+
+   # Character columns are only categorized (a full table() hash) when they
+   # have at most this many rows. The option is user-supplied, so validate
+   # it here; a malformed value (NA, wrong length, non-numeric) must not be
+   # able to break the whole describe call.
+   maxCategorizeRows <- getOption("rstudio.dataViewer.maxCategorizeRows", 1e6)
+   if (!is.numeric(maxCategorizeRows) || length(maxCategorizeRows) != 1 || is.na(maxCategorizeRows))
+      maxCategorizeRows <- 1e6
 
    # Cheap upper bound on the displayed character count for a column.
    # Only handles types where the bound is a property of range/levels/type
@@ -243,8 +351,9 @@
       col_search_type = .rs.scalar("none"),
       col_label       = .rs.scalar(""),
       col_vals        = "",
-      col_type_r      = .rs.scalar(""),
+      col_class       = "rownames",
       col_na_count    = .rs.scalar(0),
+      col_index       = .rs.scalar(0L),
       total_cols      = .rs.scalar(totalCols),
       total_rows      = .rs.scalar(nrow(x)),
       cols_fingerprint = .rs.scalar(colsFingerprint))
@@ -287,12 +396,29 @@
          colNames[idx] 
       else 
          as.character(idx)
-      col_type <- "unknown"
-      col_type_r <- "unknown"
+      # col_type and col_class are reported faithfully from the column itself
+      # (typeof / class); the cascade below only derives the search type and
+      # the histogram / factor-level metadata used by the client.
+      col_type <- typeof(x[[idx]])
+      col_class <- class(x[[idx]])
       col_breaks <- c()
       col_counts <- c()
+      col_min <- NULL
+      col_max <- NULL
       col_vals <- ""
       col_search_type <- ""
+      col_cat_vals <- NULL
+      col_cat_counts <- NULL
+      col_n_unique <- NULL
+      col_top_value <- NULL
+      col_top_count <- NULL
+      # Date/POSIXct extras: formatted labels parallel to col_breaks plus the
+      # true min/max, so the client can show dates without re-doing timezone
+      # math, and the column's display timezone (POSIXct only).
+      col_break_labels <- NULL
+      col_min_label <- NULL
+      col_max_label <- NULL
+      col_tz <- .rs.dataViewer.columnTimezone(x[[idx]])
       
       # extract label, if any, or use global label, if any
       label <- attr(x[[idx]], "label", exact = TRUE)
@@ -323,11 +449,6 @@
       if (length(x[[idx]]) > 0)
       {
          val <- x[[idx]][[1]]
-         # col_type_r feeds the sidebar's typeLabel map in DataViewer.js;
-         # changing this from typeof(val) to class(val)[[1]] is a wire-
-         # protocol-visible behavior change (e.g. Date columns now report
-         # "Date" instead of "double").
-         col_type_r <- class(val)[[1]]
          if (is.factor(val))
          {
             # we previously used the 'maxFactors' variable to try and guess
@@ -337,9 +458,49 @@
             # ignore the 'maxFactors' parameter.
             #
             # https://github.com/rstudio/rstudio/issues/14113
-            col_type <- "factor"
             col_search_type <- "factor"
             col_vals <- levels(val)
+
+            # per-level counts for the sidebar's category mini-plot: cheap
+            # via tabulate() on the underlying integer codes. at most
+            # maxCategoryBars bars are drawn (in level order, preserving
+            # ordinal structure); above that the sidebar falls back to a
+            # text summary, so only the dominant level is shipped.
+            #
+            # gate on the column type, not val: list columns whose first
+            # element is a factor reach this branch, and as.integer() on a
+            # list is an error. the counts are decorative (the client
+            # degrades gracefully without them), so any failure just drops
+            # them instead of failing the whole describe call
+            status <- .rs.tryCatch({
+               if (is.factor(x[[idx]]) && length(col_vals) > 0)
+               {
+                  counts <- tabulate(as.integer(x[[idx]]), nbins = length(col_vals))
+                  if (length(col_vals) <= maxCategoryBars)
+                  {
+                     col_cat_vals <- col_vals
+                     col_cat_counts <- counts
+                  }
+                  else if (any(counts > 0))
+                  {
+                     top <- which.max(counts)
+                     col_top_value <- col_vals[[top]]
+                     col_top_count <- counts[[top]]
+                  }
+               }
+            })
+
+            if (inherits(status, "error"))
+            {
+               col_cat_vals <- NULL
+               col_cat_counts <- NULL
+               col_top_value <- NULL
+               col_top_count <- NULL
+               .rs.logErrorMessage(
+                  "Error computing level counts for column '%s': %s",
+                  col_name,
+                  conditionMessage(status))
+            }
          }
          # for histograms, we support only the base R numeric class and its derivatives;
          # is.numeric can return true for values that can only be manipulated using
@@ -350,58 +511,194 @@
             # implicitly remove those values); if that leaves us with nothing,
             # treat this column as untyped since we can do no meaningful filtering
             # on it
-            hist_vals <- x[[idx]][is.finite(x[[idx]])]
+            #
+            # coerce to double up front: integer columns whose range exceeds
+            # .Machine$integer.max otherwise overflow both in the range
+            # computation below and in hist()'s break selection (#17951)
+            hist_vals <- as.numeric(x[[idx]][is.finite(x[[idx]])])
             if (length(hist_vals) > 1)
             {
-               # For whole-number columns spanning a small range, draw one
-               # bar per integer value (so e.g. a 1-5 Likert column shows 5
-               # distinct bars rather than Sturges' default binning, which
-               # smears the discrete structure). Gaps in the range get a
-               # zero-height bar, which is itself informative.
-               int_breaks <- NULL
-               min_v <- min(hist_vals)
-               max_v <- max(hist_vals)
-               n_distinct <- max_v - min_v + 1
-               if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
-                  int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
+               # hist() can fail outright on some pathological numeric data
+               # (e.g. it errors when its chosen breaks do not span the data
+               # range), so guard the whole computation: a failure here should
+               # just leave the column without a histogram, not abort the
+               # describe call and render the data viewer unusable.
+               # https://github.com/rstudio/rstudio/issues/17990
+               status <- .rs.tryCatch({
+                  # For whole-number columns spanning a small range, draw one
+                  # bar per integer value (so e.g. a 1-5 Likert column shows 5
+                  # distinct bars rather than Sturges' default binning, which
+                  # smears the discrete structure). Gaps in the range get a
+                  # zero-height bar, which is itself informative.
+                  int_breaks <- NULL
+                  min_v <- min(hist_vals)
+                  max_v <- max(hist_vals)
+                  n_distinct <- max_v - min_v + 1
+                  if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
+                     int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
 
-               # create histogram for brushing -- suppress warnings as in rare cases
-               # an otherwise benign integer overflow can occurs; see
-               # https://github.com/rstudio/rstudio/issues/3232
-               h <- if (is.null(int_breaks))
-                  suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
-               else
-                  suppressWarnings(graphics::hist(hist_vals, breaks = int_breaks, plot = FALSE))
-               col_breaks <- h$breaks
-               col_counts <- h$counts
+                  # at very large magnitudes (abs value >= ~2^52) the unit
+                  # step and 0.5 offsets fall below the floating-point
+                  # resolution, collapsing the sequence to a single value;
+                  # hist() would then treat it as a scalar bin count -- which
+                  # errors outright ("invalid number of 'breaks'") for large
+                  # negative values, and is meaningless for positive ones. Drop
+                  # the integer breaks in that case and fall back to default
+                  # binning. https://github.com/rstudio/rstudio/issues/17990
+                  if (length(int_breaks) < 2L)
+                     int_breaks <- NULL
 
-               # record column type
-               col_type <- "numeric"
-               col_search_type <- "numeric"
+                  # create histogram for brushing -- suppress warnings as in rare cases
+                  # an otherwise benign integer overflow can occurs; see
+                  # https://github.com/rstudio/rstudio/issues/3232
+                  h <- if (is.null(int_breaks))
+                     suppressWarnings(graphics::hist(hist_vals, plot = FALSE))
+                  else
+                     suppressWarnings(graphics::hist(hist_vals, breaks = int_breaks, plot = FALSE))
+                  col_breaks <- h$breaks
+                  col_counts <- h$counts
+
+                  # the actual (finite) data range; the histogram breaks can
+                  # extend past it (pretty()-ed for default binning, padded by
+                  # 0.5 on each side for integer bins). shown in the column
+                  # summary sidebar, where the sparkline has no axis ticks
+                  col_min <- min_v
+                  col_max <- max_v
+
+                  # record search type
+                  col_search_type <- "numeric"
+               })
+
+               if (inherits(status, "error"))
+               {
+                  col_breaks <- c()
+                  col_counts <- c()
+                  col_min <- NULL
+                  col_max <- NULL
+                  col_search_type <- ""
+                  .rs.logErrorMessage(
+                     "Error computing histogram for column '%s': %s",
+                     col_name,
+                     conditionMessage(status))
+               }
+            }
+         }
+         else if (inherits(x[[idx]], "Date") || inherits(x[[idx]], "POSIXct"))
+         {
+            # Date/POSIXct get the same brushable histogram + range filter as
+            # numeric columns. hist() needs a plain numeric, so bin on the
+            # epoch representation (days since 1970 for Date, seconds since
+            # 1970 for POSIXct). The numeric epoch breaks drive the sparkline
+            # and brush geometry; the parallel col_break_labels (and the
+            # min/max labels) carry the formatted dates for display.
+            col_obj <- x[[idx]]
+            epoch <- as.numeric(col_obj[is.finite(col_obj)])
+            if (length(epoch) > 1)
+            {
+               # hist() and format() can fail on pathological date data,
+               # just like the numeric branch. Guard the whole computation
+               # so a failure leaves the column without a histogram rather
+               # than aborting the describe call.
+               status <- .rs.tryCatch({
+                  h <- suppressWarnings(graphics::hist(epoch, plot = FALSE))
+                  col_breaks <- h$breaks
+                  col_counts <- h$counts
+                  col_search_type <- "date"
+
+                  # Format the breaks and the true data range in one pass, using
+                  # the column's own class/timezone so the labels match how the
+                  # cells render. col_min/col_max are left NULL (the numeric
+                  # footer path keys off their being numbers); the date footer
+                  # uses col_min_label/col_max_label instead.
+                  vals <- c(min(epoch), max(epoch), col_breaks)
+                  labels <- if (inherits(col_obj, "Date"))
+                     # as.numeric(Date) is whole days since 1970-01-01; days carry
+                     # no timezone, so the origin idiom is unambiguous here.
+                     format(as.Date(vals, origin = "1970-01-01"))
+                  else
+                     # as.numeric(POSIXct) is seconds since the 1970 UTC epoch.
+                     # .POSIXct() builds directly from those seconds (no origin
+                     # string to be misparsed in local time), tagging the given
+                     # tzone for display.
+                     format(.POSIXct(vals, tz = if (nzchar(col_tz)) col_tz else ""))
+
+                  col_min_label <- labels[[1]]
+                  col_max_label <- labels[[2]]
+                  col_break_labels <- labels[-(1:2)]
+               })
+
+               if (inherits(status, "error"))
+               {
+                  col_breaks <- c()
+                  col_counts <- c()
+                  col_search_type <- ""
+                  col_min_label <- NULL
+                  col_max_label <- NULL
+                  col_break_labels <- c()
+                  .rs.logErrorMessage(
+                     "Error computing histogram for column '%s': %s",
+                     col_name,
+                     conditionMessage(status))
+               }
             }
          }
          else if (inherits(x[[idx]], "integer64"))
          {
-            col_type <- "numeric"
             col_search_type <- "character"
          }
          else if (is.character(val))
          {
-            col_type <- "character"
             col_search_type <- "character"
+
+            # category counts for the sidebar mini-plot. unlike factors this
+            # costs a full hash of the column (table()), so very long columns
+            # skip it and the sidebar shows no categorical summary. at most
+            # maxCategoryBars distinct values draws one bar per value, most
+            # frequent first (no natural order to preserve); above that only
+            # the text summary fields (count of uniques, dominant value) are
+            # shipped.
+            #
+            # gate on the column type, not val: list columns whose first
+            # element is a character vector reach this branch, and table()
+            # on a list either errors (ragged elements) or counts the wrong
+            # thing. decorative only, so any failure just drops the fields
+            # instead of failing the whole describe call
+            status <- .rs.tryCatch({
+               if (is.character(x[[idx]]) && length(x[[idx]]) <= maxCategorizeRows)
+               {
+                  counts <- table(x[[idx]], useNA = "no")
+                  col_n_unique <- length(counts)
+                  if (col_n_unique > 0 && col_n_unique <= maxCategoryBars)
+                  {
+                     counts <- sort(counts, decreasing = TRUE)
+                     col_cat_vals <- names(counts)
+                     col_cat_counts <- as.integer(counts)
+                  }
+                  else if (col_n_unique > 0)
+                  {
+                     top <- which.max(counts)
+                     col_top_value <- names(counts)[[top]]
+                     col_top_count <- as.integer(counts[[top]])
+                  }
+               }
+            })
+
+            if (inherits(status, "error"))
+            {
+               col_cat_vals <- NULL
+               col_cat_counts <- NULL
+               col_n_unique <- NULL
+               col_top_value <- NULL
+               col_top_count <- NULL
+               .rs.logErrorMessage(
+                  "Error computing category counts for column '%s': %s",
+                  col_name,
+                  conditionMessage(status))
+            }
          }
          else if (is.logical(val))
          {
-            col_type <- "boolean"
             col_search_type <- "boolean"
-         }
-         else if (is.data.frame(val))
-         {
-            col_type <- "data.frame"
-         }
-         else if (is.list(val))
-         {
-            col_type <- "list"
          }
       }
       # count NA values
@@ -415,9 +712,43 @@
          col_search_type = .rs.scalar(col_search_type),
          col_label       = .rs.scalar(col_label),
          col_vals        = col_vals,
-         col_type_r      = .rs.scalar(col_type_r),
-         col_na_count    = .rs.scalar(col_na_count)
+         col_class       = as.character(col_class),
+         col_na_count    = .rs.scalar(col_na_count),
+         col_index       = .rs.scalar(as.integer(colIndices[idx]))
       )
+
+      # data range, present only for histogram-summarized numeric columns
+      if (!is.null(col_min)) {
+         result$col_min <- .rs.scalar(col_min)
+         result$col_max <- .rs.scalar(col_max)
+      }
+
+      # Date/POSIXct display metadata: formatted break labels (parallel to the
+      # numeric col_breaks), the formatted data range for the sidebar footer,
+      # and the column's display timezone.
+      if (!is.null(col_break_labels))
+         result$col_break_labels <- as.character(col_break_labels)
+      if (!is.null(col_min_label)) {
+         result$col_min_label <- .rs.scalar(col_min_label)
+         result$col_max_label <- .rs.scalar(col_max_label)
+      }
+      if (nzchar(col_tz))
+         result$col_tz <- .rs.scalar(col_tz)
+
+      # category metadata for the sidebar: bar values/counts at or below
+      # the maxCategoryBars cutoff, dominant-value fields above it; the
+      # distinct-value count ships whenever it was computed (character
+      # columns within the row gate), regardless of the cutoff
+      if (!is.null(col_cat_counts)) {
+         result$col_cat_vals <- as.character(col_cat_vals)
+         result$col_cat_counts <- as.integer(col_cat_counts)
+      }
+      if (!is.null(col_n_unique))
+         result$col_n_unique <- .rs.scalar(as.integer(col_n_unique))
+      if (!is.null(col_top_value)) {
+         result$col_top_value <- .rs.scalar(col_top_value)
+         result$col_top_count <- .rs.scalar(as.integer(col_top_count))
+      }
 
       # Optionally include a cheap upper bound on displayed character count.
       # The client uses this for initial column width sizing instead of
@@ -433,23 +764,22 @@
    c(list(rowNameCol), colAttrs)
 })
 
-.rs.addFunction("describeColSlice", function(x,
-                                             sliceStart = 1,
-                                             sliceEnd = 1)
+.rs.addFunction("describeColsByIndex", function(x, indices)
 {
    totalCols <- ncol(x)
    if (is.null(totalCols) || totalCols == 0)
       return(NULL)
-   
-   if (sliceEnd > totalCols || sliceEnd < 1)
-      sliceEnd <- totalCols
-   
-   if (sliceStart > totalCols || sliceStart < 1 || sliceStart > sliceEnd)
-      sliceStart <- 1
-   
-   indices <- sliceStart:sliceEnd
+
+   # Keep only valid, in-range column indices (1-based). The client sends an
+   # arbitrary ordered set -- pinned columns followed by the visible window --
+   # so this is not necessarily contiguous. Fall back to the full frame if the
+   # request is empty or entirely out of range.
+   indices <- indices[!is.na(indices) & indices >= 1 & indices <= totalCols]
+   if (length(indices) == 0)
+      indices <- seq_len(totalCols)
+
    colSlice <- x[indices]
-   
+
    # Make sure we preserve variable.labels if set.
    #
    # The structure of 'variable.labels' is not documented,
@@ -477,9 +807,18 @@
    
    # Pass the fingerprint of the full frame so pagination doesn't fold
    # each page into a distinct fingerprint -- doing so would invalidate
-   # saved UI state on every page change.
-   .rs.describeCols(colSlice, -1, -1, 64, totalCols,
-                    .rs.dataViewer.colsFingerprint(x))
+   # saved UI state on every page change. The original (absolute) indices
+   # are passed through as col_index so the client can track pinned/sorted/
+   # filtered columns by identity rather than by their position in the slice.
+   .rs.describeCols(
+      x                = colSlice,
+      maxRows          = -1,
+      maxCols          = -1,
+      maxFactors       = 64,
+      totalCols        = totalCols,
+      colIndices       = indices,
+      colsFingerprint  = .rs.dataViewer.colsFingerprint(x)
+   )
 })
 
 .rs.addFunction("summarizeColumn", function(x, columnIndex)
@@ -559,6 +898,12 @@
          result$min <- .rs.scalar(.rs.tryOr(NULL, as.character(min(nonNa))))
          result$max <- .rs.scalar(.rs.tryOr(NULL, as.character(max(nonNa))))
       }
+
+      # Surface the display timezone (POSIXct only) so the expanded summary can
+      # show it alongside min/max.
+      tz <- .rs.dataViewer.columnTimezone(col)
+      if (nzchar(tz))
+         result$tz <- .rs.scalar(tz)
    }
 
    result
@@ -840,7 +1185,29 @@
                # equality filter
                x <- x[is.finite(x[[i]]) & x[[i]] == filterval, , drop = FALSE]
          }
-         else if (identical(filtertype, "boolean")) 
+         else if (identical(filtertype, "date"))
+         {
+            # apply date/datetime range filter. The client sends two formatted
+            # endpoints (the same ISO strings it displays) separated by "_";
+            # parse them with the column's own class so comparison happens on
+            # the native Date/POSIXct scale. A parse failure leaves x unchanged
+            # rather than silently dropping every row.
+            bounds <- strsplit(filterval, "_")[[1]]
+            if (length(bounds) >= 2)
+            {
+               col <- x[[i]]
+               parsed <- .rs.tryCatch({
+                  if (inherits(col, "Date"))
+                     as.Date(bounds[1:2])
+                  else
+                     as.POSIXct(bounds[1:2], tz = .rs.dataViewer.columnTimezone(col))
+               })
+
+               if (!inherits(parsed, "error") && !any(is.na(parsed)))
+                  x <- x[!is.na(col) & col >= parsed[1] & col <= parsed[2], , drop = FALSE]
+            }
+         }
+         else if (identical(filtertype, "boolean"))
          {
             filterval <- isTRUE(filterval == "TRUE")
             matches <- x[[i]] == filterval
@@ -884,10 +1251,16 @@
    if (length(cols) > 0)
    {
       vals <- list()
-      for (i in length(cols))
+      # iterate every requested sort key; the previous "for (i in length(cols))"
+      # ran the loop exactly once with i == length(cols), so multi-column sorts
+      # silently applied only the last key.
+      for (i in seq_along(cols))
       {
          idx <- cols[[i]]
-         if (length(x[[idx]]) > 0)
+         # list and data.frame columns are non-atomic; order() and xtfrm()
+         # error out on them ("unimplemented type 'list'"), so skip them here
+         # as a backstop in case the client requests a sort on such a column
+         if (length(x[[idx]]) > 0 && !is.list(x[[idx]]))
          {
             if (identical(dirs[[i]], "asc"))
             {

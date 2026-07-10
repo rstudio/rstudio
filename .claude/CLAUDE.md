@@ -63,7 +63,6 @@ R code lives in several places and serves different purposes:
 
 - `src/cpp/r/R/` -- core R functions shipped with RStudio (Api.R, Tools.R, etc.)
 - `src/cpp/session/modules/*.R` -- R-side logic for session modules (e.g. SessionChat.R)
-- `src/cpp/tests/automation/testthat/` -- BRAT automation tests
 - `scripts/` -- build and code generation scripts
 
 
@@ -71,11 +70,13 @@ R code lives in several places and serves different purposes:
 
 Each backend feature is implemented as a session module. Modules follow a consistent pattern:
 
+
 ### File naming convention
 
     src/cpp/session/modules/SessionXxx.cpp   # C++ implementation
     src/cpp/session/modules/SessionXxx.hpp   # C++ header (if needed)
     src/cpp/session/modules/SessionXxx.R     # R-side logic (if needed)
+
 
 ### Module structure
 
@@ -110,6 +111,7 @@ Error initialize()
 } // namespace rstudio
 ```
 
+
 ### Key module infrastructure
 
 - `src/cpp/session/include/session/SessionModuleContext.hpp` -- module registration API (`registerRpcMethod`, `registerAsyncRpcMethod`, `sourceModuleRFile`, `enqueClientEvent`, etc.)
@@ -119,6 +121,7 @@ Error initialize()
 ## Client-Server Communication
 
 The frontend and backend communicate via JSON-RPC over HTTP. Understanding this flow is essential for most feature work.
+
 
 ### RPC (Frontend → Backend)
 
@@ -142,6 +145,7 @@ The frontend and backend communicate via JSON-RPC over HTTP. Understanding this 
 
 3. **Frontend** calls it from a presenter or view via the injected server operations interface.
 
+
 ### Client Events (Backend → Frontend)
 
 1. **Backend** fires an event using `module_context::enqueClientEvent()`:
@@ -158,6 +162,7 @@ The frontend and backend communicate via JSON-RPC over HTTP. Understanding this 
 
 ## GWT Frontend Patterns
 
+
 ### Dependency Injection (GIN)
 
 The GWT frontend uses GIN (GWT INjection, based on Guice) for dependency injection.
@@ -165,6 +170,7 @@ The GWT frontend uses GIN (GWT INjection, based on Guice) for dependency injecti
 - `RStudioGinModule.java` -- binds interfaces to implementations
 - `RStudioGinjector.java` -- provides access to injected singletons
 - Use `@Inject` on constructors to wire dependencies
+
 
 ### MVP Pattern
 
@@ -174,9 +180,11 @@ Views follow Model-View-Presenter separation:
 - **View interface** (e.g. `ChatPresenter.Display`) -- defines the UI contract
 - **View implementation** (e.g. `ChatPane.java`) -- implements the widget and UI
 
+
 ### EventBus
 
 Components communicate through a central `EventBus` using typed events. Fire events with `eventBus_.fireEvent()` and handle them by implementing the corresponding `Handler` interface.
+
 
 ### Server Operations
 
@@ -239,8 +247,7 @@ To produce runnable code (GWT transpile to JavaScript, draft/debug mode):
 
     cd src/gwt && ant draft
 
-Use `ant draft` after making changes you need to test in the browser. Use `ant javac` as a fast
-check when iterating on Java code.
+Use `ant draft` after making changes you need to test in the browser. Use `ant javac` as a fast check when iterating on Java code.
 
 If you modify JavaScript components (e.g. in `src/gwt/acesupport`), also run:
 
@@ -269,36 +276,34 @@ To build the Electron application / desktop components, you can use:
 
 ## Writing Automated Tests
 
-RStudio uses its own infrastructure for automated testing, nicknamed "BRAT". Essentially, one is able to test and automate a separate instance of RStudio from RStudio, via the Chrome Debugging Protocol (CDP).
-
-Automated tests live in:
-
-    src/cpp/tests/automation/testthat
-
-The tools that help facilitate automation (that is, communication with the automated instance of RStudio) live in
-
-    src/cpp/session/modules/automation
-
-See `src/cpp/tests/automation/CLAUDE.md` for detailed guidance on writing BRAT tests.
+End-to-end tests are written in TypeScript with Playwright, under `e2e/rstudio/`. They drive the IDE through a JS automation bridge at `window.rstudio`, documented in `e2e/rstudio/CLAUDE.md`. See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guidance on writing Playwright tests, and `.claude/skills/rstudio-run-playwright-tests/SKILL.md` for how to run them.
 
 
 ## Testing
 
-### C++ Tests
 
-C++ tests use Google Test. Run them with:
+### C++ and R Tests
 
-    ./rstudio-tests --scope <scope> --filter <pattern>
+Both are run through `rstudio-tests`, generated into the build directory
+(from `src/cpp/rstudio-tests.in`):
 
-where `<scope>` is one of `core`, `rserver`, `rsession`, or `r`.
+    ./build/src/cpp/rstudio-tests --scope <scope> --filter <pattern>
+
+The `core`, `rserver`, and `rsession` scopes run the C++ Google Test suites.
+The `r` scope runs the R `testthat` suite under `src/cpp/tests/testthat/`
+(e.g. `test-help.R`). `--filter` is a `testthat::test_dir()` filter: a regular
+expression matched against the test file name after its `test-` prefix and
+`.R` extension are stripped, so `test-help.R` is reached with
+`--scope r --filter help` -- NOT with `--scope rsession`, which only runs C++
+tests and ignores the testthat files. Rebuild first so the staged R copies
+under `build/src/cpp/session/modules/R/` are current.
 
 
 ### GWT Tests
 
     cd src/gwt && ant unittest
 
-The standalone HTML test pages in `src/gwt/test/` (autoindent, highlight)
-are exercised in headless chromium via:
+The standalone HTML test pages in `src/gwt/test/` (autoindent, highlight) are exercised in headless chromium via:
 
     cd src/gwt && ant testpage
 
@@ -311,22 +316,16 @@ are exercised in headless chromium via:
     cd src/node/desktop && npm run lint      # ESLint
     cd src/node/desktop && npm run typecheck # TypeScript type checking (tsc --noEmit)
 
-Run all three before committing changes to `src/node/desktop/`. Note that `npm run lint` only runs
-ESLint — it does not catch type errors that the webpack build will reject.
+Run all three before committing changes to `src/node/desktop/`. Note that `npm run lint` only runs ESLint — it does not catch type errors that the webpack build will reject.
 
 
 ## Code Style
 
+
 ### Non-ASCII Characters
 
-Avoid using non-ASCII characters (e.g. `·`, `—`, smart quotes) in source files,
-including comments. Use ASCII equivalents instead (e.g. `-`, `--`, `"`, `'`).
-Non-ASCII characters can cause portability issues across platforms, and the
-test in `src/cpp/tests/testthat/test-linter.R` will fail if any `.R` file
-under `src/cpp` contains them.
+In R source files (`.R`) under `src/cpp`, use only ASCII characters -- including in comments. Replace non-ASCII characters with ASCII equivalents (e.g. `-` for `·`, `--` for `—`, straight `'`/`"` for smart quotes). This is enforced: the test in `src/cpp/tests/testthat/test-linter.R` fails if any such file contains non-ASCII characters.
 
-The exception is localization `.properties` files (e.g. `*_fr.properties`),
-which may contain actual accented characters.
 
 ### R
 
@@ -340,13 +339,16 @@ When documenting R code, use Roxygen style for formatting. For example:
     #' @param timeout The maximum amount of time to wait, in seconds.
     work <- function(callback, timeout) { ... }
 
+
 ### C++
 
 C++ code is formatted with clang-format. The configuration is in `src/cpp/.clang-format`. Key settings:
 
 - 3-space indentation
-- Allman brace style
+- Allman brace style, except namespaces keep their opening brace on the same line (`namespace x {`)
 - No tabs
+- No column limit: clang-format does not re-wrap long lines, and include/using order and comment prose are left as written. It acts as a brace/indent/spacing normalizer, so running it over existing code stays low-churn.
+
 
 ### TypeScript (Desktop)
 
@@ -395,10 +397,8 @@ When a command is added here, a stub will also need to be added to the file at:
 
     src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.java
 
-When Commands.cmd.xml is modified in any way, a checksum stored in
-src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml.MD5 MUST be
-updated to match, and that file included in the commit. The MD5 file is updated when the GWT
-code is built using `ant` or `ant draft`.
+When Commands.cmd.xml is modified in any way, a checksum stored in src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml.MD5 MUST be updated to match, and that file included in the commit. The MD5 file is updated when the GWT code is built using `ant` or `ant draft`.
+
 
 ### Command Handlers
 
@@ -427,8 +427,7 @@ possibly with other injected parameters.
 
 ## NEWS.md
 
-When fixing a bug or adding a new feature, add an entry to the appropriate section (`### New`,
-`### Fixed`, etc.) of `NEWS.md`. Follow the existing format:
+When fixing a bug or adding a new feature, add an entry to the appropriate section (`### New`, `### Fixed`, etc.) of `NEWS.md`. Follow the existing format:
 
     - ([#NNNN](https://github.com/rstudio/rstudio/issues/NNNN)): Brief description of the change
 
@@ -440,20 +439,17 @@ Exceptions — do NOT add a NEWS.md entry for:
 
 ## Pull Requests
 
-When generating a pull request that fixes a known issue, please ensure the pull request body includes:
+- Pull requests that resolve a user-facing issue should be associated with a GitHub issue. Developer-only or internal changes (e.g. debugging helpers, build/tooling tweaks) do not require one.
+- Pull requests that fix an existing issue, and also include tests, should include "Fixes #<issue>." in their body.
+- Pull requests that only partially address an issue, or require manual verification, should include "Addresses #<issue>." in their body.
+- When generating a pull request, set the Milestone of the pull request to match contents of @version/RELEASE, if there is a matching milestone already defined. Never create a new milestone.
 
-    ## Intent
-
-    Addresses <issue>.
-
-When generating a pull request, set the Milestone of the pull request to match contents of @version/RELEASE, if there is a matching milestone already defined. Never create a new milestone.
 
 ## Git Conventions
 
 For commit messages:
 
 - Use "Addresses #<issue>" instead of "Fixes #<issue>".
-
 
 For branch naming:
 
@@ -462,9 +458,10 @@ For branch naming:
 - Use the 'developer/' prefix for code changes that are primarily for developer ergonomics.
 - Use the 'test/' prefix for code changes that are focused on automated tests.
 
+
 ## Issues
 
-- When opening an issue, always add the label `new`
+- When instructed to investigate or fix a GitHub issue, update the Assignee to the current user (`gh api user --jq .login`), and check that the issue has been added to the RStudio IDE project with an "In Progress" status.
 - If the issue describes a bug, add the label `bug`
 - If the issue is for a new feature or enhancements to an existing feature, add the label `enhancement`
 - These labels apply to issues only, not to pull requests

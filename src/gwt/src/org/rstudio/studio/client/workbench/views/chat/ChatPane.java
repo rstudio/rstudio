@@ -682,16 +682,19 @@ public class ChatPane
    }
 
    @Override
-   public void showNotInstalledWithInstall(String newVersion)
+   public void showNotInstalledWithInstall(String newVersion,
+                                           boolean additionalProvidersAvailable)
    {
-      String html = generateNotInstalledWithInstallHTML(newVersion);
+      String html = generateNotInstalledWithInstallHTML(
+         newVersion, additionalProvidersAvailable);
       updateFrameContent(html);
    }
 
    @Override
-   public void showUpdateAvailableWithVersions(String currentVersion, String newVersion)
+   public void showUpdateAvailableWithVersions(String currentVersion, String newVersion,
+                                                boolean isDowngrade)
    {
-      String html = generateUpdateAvailableHTML(currentVersion, newVersion);
+      String html = generateUpdateAvailableHTML(currentVersion, newVersion, isDowngrade);
       updateFrameContent(html);
    }
 
@@ -702,19 +705,39 @@ public class ChatPane
              !Desktop.isDesktop();
    }
 
-   private String generateNotInstalledWithInstallHTML(String newVersion)
+   private String generateNotInstalledWithInstallHTML(String newVersion,
+                                                      boolean additionalProvidersAvailable)
    {
-      String description = isWorkbench() ?
-         constants_.chatNotInstalledDescriptionWorkbench() :
-         constants_.chatNotInstalledDescription();
+      String descriptionHtml;
+      if (isWorkbench())
+      {
+         descriptionHtml =
+            "<p class='detail'>" + constants_.chatNotInstalledDescriptionWorkbench() + "</p>";
+      }
+      else
+      {
+         String secondParagraph = constants_.chatNotInstalledDescription2();
+
+         // The manifest can advertise additional providers for this build; when
+         // it does, extend the provider paragraph with a sentence about that
+         // support. Only the open-source (Posit AI) description is extended; the
+         // Workbench variant describes the organization's own provider and is
+         // left as-is.
+         if (additionalProvidersAvailable)
+            secondParagraph += " " + constants_.chatNotInstalledAdditionalProviders();
+
+         descriptionHtml =
+            "<p class='detail'>" + constants_.chatNotInstalledDescription() + "</p>" +
+            "<p class='detail'>" + secondParagraph + "</p>";
+      }
 
       String body =
          "<h2>" + constants_.chatNotInstalledTitle() + "</h2>" +
          "<p>" + constants_.chatNotInstalledWithVersionMessage(newVersion) + "</p>" +
          "<hr>" +
-         "<p class='detail'>" + description + "</p>" +
+         descriptionHtml +
          "<p class='detail'>" +
-         "<a href='https://posit.ai' target='_blank' rel='noopener noreferrer'>" +
+         "<a href='https://www.rstudio.org/links/posit-assistant-learn-more' target='_blank' rel='noopener noreferrer'>" +
          constants_.chatLearnMore() + "</a></p>" +
          "<hr>" +
          "<button id='install-btn' class='chatIframeButton'>" +
@@ -734,15 +757,29 @@ public class ChatPane
       return wrapInThemedHtml(body, script, true, true, extraCss);
    }
 
-   private String generateUpdateAvailableHTML(String currentVersion, String newVersion)
+   private String generateUpdateAvailableHTML(String currentVersion, String newVersion,
+                                               boolean isDowngrade)
    {
+      String title = isDowngrade
+         ? constants_.chatDowngradeAvailableTitle()
+         : constants_.chatUpdateAvailableTitle();
+      String message = isDowngrade
+         ? constants_.chatDowngradeAvailableMessage(currentVersion, newVersion)
+         : constants_.chatUpdateAvailableWithVersionsMessage(currentVersion, newVersion);
+      String installLabel = isDowngrade
+         ? constants_.chatInstallVersionButton(newVersion)
+         : constants_.chatUpdateButton();
+      String dismissLabel = isDowngrade
+         ? constants_.chatUseCurrentVersionButton()
+         : constants_.chatIgnore();
+
       String body =
-         "<h2>" + constants_.chatUpdateAvailableTitle() + "</h2>" +
-         "<p>" + constants_.chatUpdateAvailableWithVersionsMessage(currentVersion, newVersion) + "</p>" +
+         "<h2>" + title + "</h2>" +
+         "<p>" + message + "</p>" +
          "<button id='update-btn' class='chatIframeButton'>" +
-         constants_.chatUpdateButton() + "</button>" +
+         installLabel + "</button>" +
          "<button id='ignore-btn' class='chatIframeButton'>" +
-         constants_.chatIgnore() + "</button>";
+         dismissLabel + "</button>";
 
       String script =
          "document.getElementById('update-btn').addEventListener('click', function() {" +
@@ -1128,16 +1165,18 @@ public class ChatPane
    }
 
    @Override
-   public String getNotInstalledWithInstallHTML(String newVersion)
+   public String getNotInstalledWithInstallHTML(String newVersion,
+                                                boolean additionalProvidersAvailable)
    {
-      return generateNotInstalledWithInstallHTML(newVersion);
+      return generateNotInstalledWithInstallHTML(
+         newVersion, additionalProvidersAvailable);
    }
 
    @Override
    public String getUpdateAvailableWithVersionsHTML(
-      String currentVersion, String newVersion)
+      String currentVersion, String newVersion, boolean isDowngrade)
    {
-      return generateUpdateAvailableHTML(currentVersion, newVersion);
+      return generateUpdateAvailableHTML(currentVersion, newVersion, isDowngrade);
    }
 
    @Override

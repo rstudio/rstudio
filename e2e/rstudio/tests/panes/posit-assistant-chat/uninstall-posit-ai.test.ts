@@ -5,6 +5,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { YES_BTN, NO_BTN } from '@pages/modals.page';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import type { Page } from 'playwright';
 
 /**
@@ -50,7 +51,9 @@ async function invokeUninstallViaPalette(page: Page): Promise<void> {
   await sleep(500);
 }
 
-base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial', '@desktop_only'] }, () => {
+base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@serial', '@desktop_only'] }, () => {
+  requireAiCredentials(base, 'positai');
+
   let session: DesktopSession;
   let page: Page;
   let consoleActions: ConsolePaneActions;
@@ -127,7 +130,7 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@serial', '@
     await chatActions.dismissSetupPrompts();
 
     await expect(chatActions.chatPane.chatRoot).toBeVisible({ timeout: 30000 });
-    await expect(chatActions.chatPane.chatTextarea).toBeVisible({ timeout: 15000 });
+    await expect(chatActions.chatPane.chatInput).toBeVisible({ timeout: 15000 });
   });
 
   // -----------------------------------------------------------------------

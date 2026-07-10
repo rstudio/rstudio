@@ -514,7 +514,8 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    else
       configJson["zotero_libraries"] = json::Value(); // null
    configJson["project_name"] = config.projectName;
-   
+   configJson["editor_theme"] = config.editorTheme;
+
    // scratch path
    std::string scratchPath;
    Error error = readProjectScratchPath(&scratchPath);
@@ -862,6 +863,10 @@ Error writeProjectConfig(const json::Object& configJson)
    if (error)
       return error;
   
+   // editor theme -- a missing key preserves the existing value, while an
+   // explicit empty string from the Appearance pane clears the project override
+   config.editorTheme = resolveWrittenEditorTheme(existingConfig.editorTheme, configJson);
+
    // project id
    config.projectId = existingConfig.projectId;
 
@@ -1023,6 +1028,25 @@ void afterSessionInitHook(bool newSession)
          boost::posix_time::seconds(
             prefs::userPrefs().projectSafeStartupSeconds()),
          saveLastProjectPath, true);
+
+   // if background file operations have been reduced for this project (e.g.
+   // because it lives on a network or remote filesystem), let the user know,
+   // since some live-updating behaviors (file monitoring, indexing) are off.
+   // emitted via R's message() so it renders as an informational console
+   // message. See https://github.com/rstudio/rstudio/issues/10417.
+   if (module_context::reduceRemoteFilesystemOperations())
+   {
+      std::string msg =
+            "RStudio has reduced background file operations (such as file "
+            "monitoring and code indexing) for this project to improve "
+            "responsiveness on network or remote filesystems. You can change "
+            "this in Tools -> Global Options -> General -> Advanced, or for "
+            "this project in Project Options -> General.";
+
+      Error error = r::exec::RFunction("base:::message", msg).call();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
@@ -1392,6 +1416,66 @@ json::Array websiteOutputFormatsJson()
       formatsJson = json::toJsonArray(formats);
    }
    return formatsJson;
+}
+
+std::string resolveWrittenEditorTheme(const std::string& existingEditorTheme,
+                                      const json::Object& configJson)
+{
+   auto it = configJson.find("editor_theme");
+   if (it != configJson.end())
+   {
+      if ((*it).getValue().isString())
+         return (*it).getValue().getString();
+
+      // Present but not a string -- a malformed request or a client/server
+      // mismatch. Preserve the existing value (as for a missing key), but log it
+      // so this isn't indistinguishable from the normal key-omitted path.
+      LOG_WARNING_MESSAGE("Ignoring non-string 'editor_theme' in project config; "
+                          "preserving the existing value");
+   }
+   return existingEditorTheme;
+}
+
+boost::optional<bool> parseReduceRemoteFilesystemOperationsOverride(
+      const std::string& prefsContents)
+{
+   json::Value value;
+   Error error = value.parse(prefsContents);
+   if (error)
+   {
+      // a corrupt or truncated local prefs file would otherwise silently drop
+      // the user's explicit per-project setting; log it (matching the prefs
+      // subsystem, e.g. PrefLayer::loadPrefs) so there is a breadcrumb.
+      LOG_ERROR(error);
+      return boost::none;
+   }
+
+   if (!value.isObject())
+      return boost::none;
+
+   const json::Object& localPrefs = value.getObject();
+   auto it = localPrefs.find(kReduceRemoteFilesystemOperations);
+   if (it != localPrefs.end() && (*it).getValue().isBool())
+      return (*it).getValue().getBool();
+
+   return boost::none;
+}
+
+bool resolveReduceRemoteFilesystemOperations(boost::optional<bool> localOverride,
+                                             bool globalPref,
+                                             bool remoteDetected)
+{
+   // an explicit per-project override always wins
+   if (localOverride)
+      return *localOverride;
+
+   // when the global preference is disabled, never reduce
+   if (!globalPref)
+      return false;
+
+   // otherwise (automatic): reduce only when the project lives on a remote
+   // filesystem
+   return remoteDetected;
 }
 
 } // namespace projects

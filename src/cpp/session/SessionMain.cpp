@@ -31,8 +31,6 @@
 #include <vector>
 #include <cstdlib>
 #include <csignal>
-#include <fstream>
-#include <mutex>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
@@ -191,7 +189,6 @@
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/SessionUserPrefs.hpp"
-#include "modules/automation/SessionAutomation.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/clang/SessionClang.hpp"
 #include "modules/connections/SessionConnections.hpp"
@@ -778,7 +775,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::assistant::initialize)
       (modules::chat::initialize)
       (modules::trust::initialize)
-      (modules::automation::initialize)
       (modules::air::initialize)
 
       // workers
@@ -902,10 +898,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   bool isTesting =
-         rsession::options().runTests() ||
-         rsession::options().runAutomation();
-   
+   bool isTesting = rsession::options().runTests();
+
    if (!isTesting)
    {
       rsession::persistentState().setAbend(true);
@@ -977,8 +971,8 @@ void rSessionInitHook(bool newSession)
    dataJson["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
    dataJson["ppm_repository_url"] = ppmRepoUrl;
 
-   dataJson["startup_files_suppressed"] =
-      modules::trust::shouldSuppressStartupFiles();
+   dataJson["project_untrusted"] =
+      modules::trust::isProjectUntrusted();
    dataJson["trust_request"] = modules::trust::trustRequestData();
 
    // record that deferred init has completed for this R session, so that a
@@ -1125,59 +1119,14 @@ void rConsoleWrite(const std::string& output, int otype)
    console_output::simulateLatency();
 #endif
 
-#ifndef _WIN32
-   // When running automation tests, tee R's console output to a log
-   // file (for post-run inspection), and also to the rsession's
-   // inherited stderr when stderr is an interactive terminal (so a
-   // controlling terminal like rserver-dev sees it live). Without the
-   // isatty() gate the duplicate would also land in whatever pipe
-   // captured stderr -- e.g. the host RStudio's Console when the
-   // automation run was triggered from inside another RStudio.
-   // Normally these writes go only to the IDE event queue below, so
-   // there's no other way for a headless test runner to observe them.
-   // POSIX-only: the automation harness uses /tmp/rstudio-automation as
-   // a discoverable fixed path, matching the R-side report directory in
-   // SessionAutomation.R; the Windows automation entrypoint doesn't
-   // currently flow through here.
-   if (rsession::options().runAutomation())
-   {
-      // Opened once on first call (C++11 guarantees thread-safe init),
-      // reused thereafter, closed at process exit. Truncates on open so
-      // each test run starts with a clean log.
-      static std::ofstream automationLog = []() -> std::ofstream {
-         std::ofstream stream;
-         FilePath logDir("/tmp/rstudio-automation");
-         Error error = logDir.ensureDirectory();
-         if (error)
-         {
-            LOG_ERROR(error);
-            return stream;
-         }
-         std::string logPath = logDir.completePath("console.log").getAbsolutePath();
-         stream.open(logPath, std::ios::out | std::ios::trunc);
-         if (!stream.is_open())
-            LOG_WARNING_MESSAGE("Failed to open automation console log: " + logPath);
-         return stream;
-      }();
-      if (automationLog.is_open())
-      {
-         automationLog << output;
-         automationLog.flush();
-      }
-      static const bool stderrIsTty = ::isatty(STDERR_FILENO) != 0;
-      if (stderrIsTty)
-      {
-         std::cerr << output;
-         std::cerr.flush();
-      }
-   }
-#endif
-
    // notify listeners
    auto type = (otype == 1)
          ? module_context::ConsoleOutputError
          : module_context::ConsoleOutputNormal;
    module_context::events().onConsoleOutput(type, output);
+
+   if (module_context::isConsoleOutputSuppressed())
+      return;
 
    // add to event queue
    int event;
@@ -1579,7 +1528,9 @@ void rCleanup(bool terminatedNormally)
       // unix domain socket file so it is no big deal to bypass it
       if (rsession::options().programMode() == kSessionProgramModeServer)
       {
-         clientEventService().stop();
+         // on a forced suspend (e.g. SIGTERM from a server shutdown) the client
+         // is no longer reachable, so don't wait to flush pending events to it
+         clientEventService().stop(!suspend::suspendedForcibly());
          httpConnectionListener().stop();
       }
 
@@ -1619,24 +1570,6 @@ void rRunTests()
    
    // exit if we haven't already
    exitEarly(status);
-}
-
-void rRunAutomationImpl()
-{
-   ClientEvent event(client_events::kRunAutomation);
-   module_context::enqueClientEvent(event);
-}
-
-void rRunAutomation()
-{
-   // it seems like automation runs can fail to start if the
-   // RunAutomation client event is received too soon after
-   // startup, so we use a 3 second delay just to give the
-   // client more time to fully finish initialization
-   module_context::scheduleDelayedWork(
-            boost::posix_time::seconds(3),
-            rRunAutomationImpl,
-            false);
 }
 
 void ensureRProfile()
@@ -1831,6 +1764,7 @@ namespace session {
 void exitEarly(int status)
 {
    stopMonitorWorkerThread();
+   server_rpc::stop();
    offlineService().stop();
    FileLock::cleanUp();
    FilePath(s_fallbackLibraryPath).removeIfExists();
@@ -1844,46 +1778,6 @@ void controlledExit(int status)
 }
 
 namespace module_context {
-
-#ifndef _WIN32
-static std::ofstream openAutomationLog()
-{
-   std::ofstream stream;
-   FilePath logDir("/tmp/rstudio-automation");
-   Error error = logDir.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return stream;
-   }
-   std::string logPath =
-         logDir.completePath("automation.log").getAbsolutePath();
-   stream.open(logPath, std::ios::out | std::ios::trunc);
-   if (!stream.is_open())
-      LOG_WARNING_MESSAGE("Failed to open automation log: " + logPath);
-   return stream;
-}
-#endif
-
-void automationLog(const std::string& message)
-{
-#ifndef _WIN32
-   if (!rsession::options().runAutomation())
-      return;
-
-   static std::mutex automationLogMutex;
-   static std::ofstream automationLogStream = openAutomationLog();
-
-   std::lock_guard<std::mutex> lock(automationLogMutex);
-   if (automationLogStream.is_open())
-   {
-      automationLogStream << message;
-      if (message.empty() || message.back() != '\n')
-         automationLogStream << '\n';
-      automationLogStream.flush();
-   }
-#endif
-}
 
 Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler)
 {
@@ -1951,6 +1845,14 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
 
 int saveWorkspaceAction()
 {
+   // A headless script run (--run-script, e.g. the 'r' test scope) must never
+   // save or prompt to save the workspace on exit. This matters most on
+   // Windows: R's native cleanup runs at script end (our RScriptCleanUp
+   // SA_NOSAVE override is not wired into the Win32 Rstart) and would pop a
+   // modal "Save workspace image?" dialog, hanging an unattended/CI run.
+   if (!rsession::options().runScript().empty())
+      return rstudio::r::session::kSaveActionNoSave;
+
    // allow project override
    const projects::ProjectContext& projContext = projects::projectContext();
    if (projContext.hasProject())
@@ -2109,8 +2011,20 @@ Error ensureLibRSoValid()
    return Success();
 }
 
-// io_context for performing monitor work on the thread
-boost::asio::io_context s_monitorIoContext;
+// io_context for performing monitor work on the thread.
+//
+// Intentionally heap-allocated and never freed, for the same reason as
+// server_rpc's s_ioContext (see the comment there): stopMonitorWorkerThread()
+// stops it and joins the worker on the clean path, but if the join times out
+// and the worker is detached, never running ~io_context() avoids destroying it
+// while a detached worker is still inside run() -- the documented Windows-IOCP
+// teardown hang. The OS reclaims it at process exit.
+boost::asio::io_context& s_monitorIoContext = *new boost::asio::io_context();
+
+// the monitor worker thread. retained as a joinable handle so that
+// stopMonitorWorkerThread() can wait for run() to return before the process
+// tears s_monitorIoContext down at exit (see stopMonitorWorkerThread).
+boost::thread s_monitorWorkerThread;
 
 void monitorWorkerThreadFunc()
 {
@@ -2120,7 +2034,18 @@ void monitorWorkerThreadFunc()
 
 void stopMonitorWorkerThread()
 {
+   // stop() makes run() return; we then wait for the thread to actually leave
+   // run() so this is a clean, prompt shutdown of the worker (see the matching
+   // server_rpc::stop()). joinOrAbandonThread bounds the wait so we never trade
+   // a teardown hang for an indefinite join hang on the process-exit path; if it
+   // times out and detaches the worker, s_monitorIoContext is never destroyed
+   // (it is the intentionally-leaked global above), so ~io_context() cannot run
+   // while the detached worker is still inside run() -- the Windows-IOCP hang.
    s_monitorIoContext.stop();
+   core::thread::joinOrAbandonThread(
+      s_monitorWorkerThread,
+      "monitor worker thread",
+      false); // released via s_monitorIoContext.stop() above, not interruptible
 }
 
 void initMonitorClient()
@@ -2140,7 +2065,16 @@ void initMonitorClient()
    // we handle monitor calls in a separate thread to ensure that calls
    // to the monitor (which are likely across machines and thus very expensive)
    // do not hamper the liveliness of the session as a whole
-   core::thread::safeLaunchThread(monitorWorkerThreadFunc);
+   //
+   // but do not start it when running unit tests: there is no rserver-monitor to
+   // connect to, so every async log/event would fail-fast and race the worker
+   // thread against the initiating thread on the same socket. The worker thread
+   // also never gets stopped on the test path (R exits via exit()), so it would
+   // race static destruction of other process state at exit. Both produce
+   // intermittent SIGSEGVs. The client object is still initialized above so that
+  // monitor::client() stays valid; queued async ops are simply never processed.
+   if (!options().runTests())
+      core::thread::safeLaunchThread(monitorWorkerThreadFunc, &s_monitorWorkerThread);
 }
 
 void beforeResume()
@@ -2216,7 +2150,12 @@ void mainThreadWorkaround()
 } // anonymous namespace
 
 // run session
-int main(int argc, char * const argv[])
+//
+// This is the real entry point for the R session. On Windows it is compiled
+// into a shared library (rsession.dll) and invoked by main() in the thin
+// launcher stubs (rsession.exe / rsession-utf8.exe); see SessionMainStub.cpp
+// and the comments in SessionMain.hpp and CMakeLists.txt.
+RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
 {
    mainThreadWorkaround();
 
@@ -2414,7 +2353,7 @@ int main(int argc, char * const argv[])
       BOOST_SCOPE_EXIT_END
 
       // register monitor log writer (but not in standalone or verify installation mode)
-      if (!options.standalone() && !options.verifyInstallation())
+      if (!options.standalone() && !options.verifyInstallation() && !options.runTests())
       {
          core::log::addLogDestination(
             monitor::client().createLogDestination(core::system::generateShortenedUuid(), log::LogLevel::WARN, options.programIdentity()));
@@ -2873,10 +2812,6 @@ int main(int argc, char * const argv[])
       {
          rCallbacks.runTests = rRunTests;
       }
-     
-      // set automation callback if enabled
-      if (options.runAutomation())
-         rCallbacks.runAutomation = rRunAutomation;
 
       // run r (does not return, terminates process using exit)
       error = rstudio::r::session::run(rOptions, rCallbacks);

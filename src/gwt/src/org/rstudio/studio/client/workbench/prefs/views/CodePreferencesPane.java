@@ -278,15 +278,19 @@ public class CodePreferencesPane extends PreferencesPane
       VerticalPanel nonePanel = new VerticalPanel();
       CheckBox useAirFormatter = checkboxPref(prefs_.useAirFormatter());
       CheckBox reformatOnSave = checkboxPref(prefs_.reformatOnSave());
+      CheckBox airRequireToml = checkboxPref(prefs_.airFormatterRequireToml());
 
       reformatOnSave.setVisible(useAirFormatter.getValue());
+      airRequireToml.setVisible(useAirFormatter.getValue());
       useAirFormatter.addValueChangeHandler((event) ->
       {
          reformatOnSave.setVisible(event.getValue());
+         airRequireToml.setVisible(event.getValue());
       });
 
       nonePanel.add(useAirFormatter);
       nonePanel.add(reformatOnSave);
+      nonePanel.add(airRequireToml);
       nonePanel.add(spacedBefore(new HorizontalPanel()));
       nonePanel.add(HelpLink.createExternal("Formatting with Air", "https://posit-dev.github.io/air/"));
 
@@ -333,7 +337,8 @@ public class CodePreferencesPane extends PreferencesPane
       savePanel.add(checkboxPref(constants_.savingStripTrailingWhitespaceLabel(), prefs_.stripTrailingWhitespace()));
       savePanel.add(checkboxPref(constants_.savingRestoreSourceDocumentCursorPositionLabel(), prefs_.restoreSourceDocumentCursorPosition()));
       savePanel.add(checkboxPref(prefs_.reformatOnSave()));
-      
+      savePanel.add(checkboxPref(prefs_.saveFilesDurably()));
+
       Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
       savePanel.add(serializationLabel);

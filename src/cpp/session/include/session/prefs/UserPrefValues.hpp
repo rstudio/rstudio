@@ -185,6 +185,7 @@ namespace prefs {
 #define kEnableMousewheelZoom "enable_mousewheel_zoom"
 #define kMousewheelZoomDebounceMs "mousewheel_zoom_debounce_ms"
 #define kEditorTheme "editor_theme"
+#define kIgnoreProjectAppearance "ignore_project_appearance"
 #define kServerEditorFontEnabled "server_editor_font_enabled"
 #define kServerEditorFont "server_editor_font"
 #define kDefaultEncoding "default_encoding"
@@ -247,6 +248,7 @@ namespace prefs {
 #define kShowDocOutlineRmd "show_doc_outline_rmd"
 #define kDocumentOutlineFontSize "document_outline_font_size"
 #define kAutoRunSetupChunk "auto_run_setup_chunk"
+#define kNotebookExecuteInlineChunks "notebook_execute_inline_chunks"
 #define kHideConsoleOnChunkExecute "hide_console_on_chunk_execute"
 #define kExecutionBehavior "execution_behavior"
 #define kExecutionBehaviorLine "line"
@@ -279,6 +281,8 @@ namespace prefs {
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
+#define kDateTimeUseIso8601 "date_time_use_iso8601"
+#define kDateTimeUseUtc "date_time_use_utc"
 #define kSyncFilesPaneWorkingDir "sync_files_pane_working_dir"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
@@ -306,6 +310,7 @@ namespace prefs {
 #define kLatexPreviewOnCursorIdleInlineOnly "inline_only"
 #define kLatexPreviewOnCursorIdleAlways "always"
 #define kWrapTabNavigation "wrap_tab_navigation"
+#define kMousewheelChangesEditorTab "mousewheel_changes_editor_tab"
 #define kGlobalTheme "global_theme"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
@@ -355,6 +360,8 @@ namespace prefs {
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kDataViewerMaxCellSize "data_viewer_max_cell_size"
 #define kDataViewerShowSummary "data_viewer_show_summary"
+#define kDataViewerShowFilters "data_viewer_show_filters"
+#define kDataViewerUseOverlayScrollbars "data_viewer_use_overlay_scrollbars"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
@@ -367,6 +374,7 @@ namespace prefs {
 #define kAutoSaveOnIdleNone "none"
 #define kAutoSaveIdleMs "auto_save_idle_ms"
 #define kAutoSaveOnBlur "auto_save_on_blur"
+#define kReduceRemoteFilesystemOperations "reduce_remote_filesystem_operations"
 #define kTerminalInitialDirectory "terminal_initial_directory"
 #define kTerminalInitialDirectoryProject "project"
 #define kTerminalInitialDirectoryCurrent "current"
@@ -425,6 +433,7 @@ namespace prefs {
 #define kPythonVersion "python_version"
 #define kPythonPath "python_path"
 #define kSaveRetryTimeout "save_retry_timeout"
+#define kSaveFilesDurably "save_files_durably"
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
 #define kCommandPaletteMru "command_palette_mru"
 #define kShowMemoryUsage "show_memory_usage"
@@ -463,7 +472,9 @@ namespace prefs {
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
 #define kAssistantShowMessages "assistant_show_messages"
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
+#define kAssistantUseSystemCa "assistant_use_system_ca"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
+#define kPositAssistantUpdateCheckIntervalHours "posit_assistant_update_check_interval_hours"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -488,6 +499,7 @@ namespace prefs {
 #define kCodeFormatterStylerStrict "code_formatter_styler_strict"
 #define kCodeFormatterExternalCommand "code_formatter_external_command"
 #define kUseAirFormatter "use_air_formatter"
+#define kAirFormatterRequireToml "air_formatter_require_toml"
 #define kReformatOnSave "reformat_on_save"
 #define kProjectUserDataDirectory "project_user_data_directory"
 #define kConsoleHighlightConditions "console_highlight_conditions"
@@ -1084,6 +1096,12 @@ public:
    core::Error setEditorTheme(std::string val);
 
    /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   bool ignoreProjectAppearance();
+   core::Error setIgnoreProjectAppearance(bool val);
+
+   /**
     * Whether to use a custom editor font in RStudio Server.
     */
    bool serverEditorFontEnabled();
@@ -1348,6 +1366,12 @@ public:
    core::Error setAutoRunSetupChunk(bool val);
 
    /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   bool notebookExecuteInlineChunks();
+   core::Error setNotebookExecuteInlineChunks(bool val);
+
+   /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    bool hideConsoleOnChunkExecute();
@@ -1468,6 +1492,18 @@ public:
    core::Error setSortFileNamesNaturally(bool val);
 
    /**
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+    */
+   bool dateTimeUseIso8601();
+   core::Error setDateTimeUseIso8601(bool val);
+
+   /**
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
+    */
+   bool dateTimeUseUtc();
+   core::Error setDateTimeUseUtc(bool val);
+
+   /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.
     */
    bool syncFilesPaneWorkingDir();
@@ -1526,6 +1562,12 @@ public:
     */
    bool wrapTabNavigation();
    core::Error setWrapTabNavigation(bool val);
+
+   /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   bool mousewheelChangesEditorTab();
+   core::Error setMousewheelChangesEditorTab(bool val);
 
    /**
     * The theme to use for the main RStudio user interface.
@@ -1756,6 +1798,18 @@ public:
    core::Error setDataViewerShowSummary(bool val);
 
    /**
+    * Whether the data viewer filter UI is shown by default when opening the data viewer.
+    */
+   bool dataViewerShowFilters();
+   core::Error setDataViewerShowFilters(bool val);
+
+   /**
+    * Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.
+    */
+   bool dataViewerUseOverlayScrollbars();
+   core::Error setDataViewerUseOverlayScrollbars(bool val);
+
+   /**
     * Support accessibility aids such as screen readers.
     */
    bool enableScreenReader();
@@ -1808,6 +1862,12 @@ public:
     */
    bool autoSaveOnBlur();
    core::Error setAutoSaveOnBlur(bool val);
+
+   /**
+    * When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.
+    */
+   bool reduceRemoteFilesystemOperations();
+   core::Error setReduceRemoteFilesystemOperations(bool val);
 
    /**
     * Initial directory for new terminals.
@@ -1978,6 +2038,12 @@ public:
    core::Error setSaveRetryTimeout(int val);
 
    /**
+    * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+    */
+   bool saveFilesDurably();
+   core::Error setSaveFilesDurably(bool val);
+
+   /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    bool insertNativePipeOperator();
@@ -2128,10 +2194,22 @@ public:
    core::Error setAssistantToolbarButtonVisible(bool val);
 
    /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   bool assistantUseSystemCa();
+   core::Error setAssistantUseSystemCa(bool val);
+
+   /**
     * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
     */
    bool positAssistantTestManifest();
    core::Error setPositAssistantTestManifest(bool val);
+
+   /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   int positAssistantUpdateCheckIntervalHours();
+   core::Error setPositAssistantUpdateCheckIntervalHours(int val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
@@ -2218,10 +2296,16 @@ public:
    core::Error setCodeFormatterExternalCommand(std::string val);
 
    /**
-    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
     */
    bool useAirFormatter();
    core::Error setUseAirFormatter(bool val);
+
+   /**
+    * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+    */
+   bool airFormatterRequireToml();
+   core::Error setAirFormatterRequireToml(bool val);
 
    /**
     * When set, the selected formatter will be used to reformat documents on save.

@@ -1,3 +1,4 @@
+import type { Request } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS, sleep, CODE_SUGGESTION_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -5,9 +6,13 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { resetSourcePaneState } from '@utils/commands';
+import { requireAiCredentials } from '@utils/ai-credentials';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
-  test.describe(provider, () => {
+  test.describe(provider, { tag: ['@ai'] }, () => {
+    requireAiCredentials(test, key === 'copilot' ? 'copilot' : 'positai');
+
     // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
     // and closeSourceAndDeleteFile land there.
     useSuiteSandbox();
@@ -28,7 +33,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       // a save here would race a now-gone sandbox path from an earlier aborted
       // run and surface an ENOENT "Save File" dialog whose popup-glass blocks
       // every subsequent click.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await resetSourcePaneState(page);
       await sleep(1000);
 
       // Delete all possible test files in a single R command
@@ -41,14 +46,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_multiline_diff.R`,
         `${prefix}_nes_multiline_apply.R`,
         `${prefix}_ghost_dismiss.R`,
+        `${prefix}_ghost_cursor_dismiss.R`,
         `${prefix}_nes_dismiss.R`,
         `${prefix}_nes_persist.R`,
         `${prefix}_nes_leak_a.R`,
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
+        `${prefix}_visual_no_completions.qmd`,
+        `${prefix}_visual_source_probe.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
-      await consoleActions.typeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
+      await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
       await sleep(2000);
 
       await assistantActions.setupAssistantOptions(provider);
@@ -58,12 +66,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_ghost_text_accept.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -80,11 +88,9 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       console.log('Ghost text before accept: ' + ghostTextContent);
 
       await page.keyboard.press('ControlOrMeta+;');
-      await sleep(2000);
 
       await expect(sourcePane.contentPane).toContainText(ghostTextContent, { timeout: 5000 });
       await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 5000 });
-      await sleep(2000);
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
@@ -93,13 +99,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_trigger_accept.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n' +
-        'print(result)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n' +
+        'print(result)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -119,13 +125,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_distant_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'total_price <- calculate_total(100, 0.08)\\n' +
-        'print(total_price)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'total_price <- calculate_total(100, 0.08)\n' +
+        'print(total_price)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -155,15 +161,15 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_gap_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -187,17 +193,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_multi_rename.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'score <- calculate_total(100, 0.08)\\n' +
-        'print(score)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'cat(score)\\n' +
-        'summary(score)\\n' +
-        'message(score)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'score <- calculate_total(100, 0.08)\n' +
+        'print(score)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'cat(score)\n' +
+        'summary(score)\n' +
+        'message(score)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -239,12 +245,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Parameter used across multiple consecutive lines in body
       const fileContent =
-        'summarize <- function(nums) {\\n' +
-        '  mean_val <- mean(nums)\\n' +
-        '  sd_val <- sd(nums)\\n' +
-        '  range_val <- range(nums)\\n' +
-        '  list(mean = mean_val, sd = sd_val, range = range_val)\\n' +
-        '}\\n';
+        'summarize <- function(nums) {\n' +
+        '  mean_val <- mean(nums)\n' +
+        '  sd_val <- sd(nums)\n' +
+        '  range_val <- range(nums)\n' +
+        '  list(mean = mean_val, sd = sd_val, range = range_val)\n' +
+        '}\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -262,7 +268,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(2000);
 
       // If diff view appeared (Apply visible), test the Discard button
       if (await sourcePane.nesApply.first().isVisible()) {
@@ -273,7 +278,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         const contentBefore = await sourceActions.getEditorContent();
 
         await sourcePane.nesDiscard.first().click();
-        await sleep(2000);
 
         // Verify diff view is fully dismissed
         await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -298,12 +302,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Same code as Discard test, different replacement name
       const fileContent =
-        'summarize <- function(nums) {\\n' +
-        '  mean_val <- mean(nums)\\n' +
-        '  sd_val <- sd(nums)\\n' +
-        '  range_val <- range(nums)\\n' +
-        '  list(mean = mean_val, sd = sd_val, range = range_val)\\n' +
-        '}\\n';
+        'summarize <- function(nums) {\n' +
+        '  mean_val <- mean(nums)\n' +
+        '  sd_val <- sd(nums)\n' +
+        '  range_val <- range(nums)\n' +
+        '  list(mean = mean_val, sd = sd_val, range = range_val)\n' +
+        '}\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -323,14 +327,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: 10000 });
-      await sleep(2000);
 
       // If diff view appeared (Apply visible), test the Apply button
       if (await sourcePane.nesApply.first().isVisible()) {
         console.log('  Multiline diff view detected — testing Apply');
 
         await sourcePane.nesApply.first().click();
-        await sleep(2000);
 
         // Verify diff view is dismissed
         await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -339,7 +341,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
         // Verify the suggestion was applied — body should now use 'measurements'
         const content = await sourceActions.getEditorContent();
-        console.log('  Editor content after Apply: ' + content.replace(/\n/g, '\\n'));
+        console.log('  Editor content after Apply: ' + content.replace(/\n/g, '\n'));
         expect(content).toContain('measurements');
         expect(content).not.toContain('nums');
         console.log('  Apply confirmed — suggestion applied to editor');
@@ -356,12 +358,12 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_ghost_dismiss.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -374,16 +376,60 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       console.log('  Ghost text visible — pressing Escape');
 
-      // First Escape closes Ace autocomplete popup if active;
-      // second Escape dismisses the ghost text itself
-      await page.keyboard.press('Escape');
-      await sleep(500);
-      await page.keyboard.press('Escape');
+      // Press Escape until the suggestion is gone AND no completion request is
+      // still in flight. An in-flight request -- shown as "Waiting for
+      // completions..." in the status bar -- can land a response that re-renders
+      // ghost text right after we dismiss it (the original flake; the failure
+      // snapshot showed a late "Completion response received"). Gating on "no
+      // request pending" is the meaningful signal that nothing can resurrect the
+      // suggestion, so we don't need a blind stability sleep. This also covers
+      // the case where the first Escape only closes the Ace autocomplete popup.
+      await expect(async () => {
+        await page.keyboard.press('Escape');
+        await expect(sourcePane.statusBarCompletionPending).toHaveCount(0, { timeout: 1000 });
+        await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
+      }).toPass({ timeout: 15000 });
+      console.log('  Ghost text dismissed with Escape');
+
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    });
+
+    test('ghost text dismissed when cursor moves away', async ({ rstudioPage: page }) => {
+      const fileName = `${prefix}_ghost_cursor_dismiss.R`;
+
+      const fileContent =
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n';
+
+      await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      // Verify ghost text is fully cleared
-      await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 5000 });
-      console.log('  Ghost text dismissed with Escape');
+      await sourcePane.contentPane.click();
+      await sleep(500);
+
+      await page.keyboard.type('x <- func');
+
+      await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+      console.log('  Ghost text visible — moving cursor away');
+
+      // Moving the cursor away from the completion point should dismiss the
+      // ghost text (https://github.com/rstudio/rstudio/issues/17147). As in
+      // the Escape test above, gate on no in-flight completion request so a
+      // late response can't re-render ghost text after we check.
+      await expect(async () => {
+        await page.keyboard.press('ArrowLeft');
+        await expect(sourcePane.statusBarCompletionPending).toHaveCount(0, { timeout: 1000 });
+        await expect(sourcePane.ghostText).toHaveCount(0, { timeout: 1000 });
+      }).toPass({ timeout: 15000 });
+      console.log('  Ghost text dismissed by cursor movement');
+
+      // The typed text is intact and the suggestion was not inserted
+      const content = await sourceActions.getEditorContent();
+      expect(content).toContain('x <- func');
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
@@ -392,13 +438,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_dismiss.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        'result <- calculate_total(100, 0.08)\\n' +
-        'print(result)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        'result <- calculate_total(100, 0.08)\n' +
+        'print(result)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -416,13 +462,11 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(1000);
 
       const contentBefore = await sourceActions.getEditorContent();
       console.log('  NES suggestion visible — pressing Escape');
 
       await page.keyboard.press('Escape');
-      await sleep(2000);
 
       // Verify all NES indicators are cleared
       await expect(sourcePane.nesApply).toHaveCount(0, { timeout: 5000 });
@@ -443,16 +487,16 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileName = `${prefix}_nes_persist.R`;
 
       const fileContent =
-        'calculate_total <- function(price, tax_rate) {\\n' +
-        '  total <- price + (price * tax_rate)\\n' +
-        '  return(total)\\n' +
-        '}\\n' +
-        '\\n' +
-        '# placeholder line\\n' +
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'calculate_total <- function(price, tax_rate) {\n' +
+        '  total <- price + (price * tax_rate)\n' +
+        '  return(total)\n' +
+        '}\n' +
+        '\n' +
+        '# placeholder line\n' +
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(5000);
@@ -470,7 +514,6 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           .or(sourcePane.nesGutter)
           .first()
       ).toBeVisible({ timeout: TIMEOUTS.nesApply });
-      await sleep(1000);
       console.log('  NES suggestion visible — editing unrelated line');
 
       // Edit an unrelated line (the placeholder comment on line 6)
@@ -503,10 +546,10 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       const fileNameB = `${prefix}_nes_leak_b.R`;
 
       const originalCode =
-        'order_total <- calculate_total(100, 0.08)\\n' +
-        'tax_amount <- 100 * 0.08\\n' +
-        'discount <- 0.10\\n' +
-        'print(order_total)\\n';
+        'order_total <- calculate_total(100, 0.08)\n' +
+        'tax_amount <- 100 * 0.08\n' +
+        'discount <- 0.10\n' +
+        'print(order_total)\n';
 
       // --- File A: trigger and accept NES ---
       await sourceActions.createAndOpenFile(fileNameA, originalCode);
@@ -524,7 +567,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       // Close File A without saving -- the file is in the per-suite sandbox
       // and a save here would race that sandbox's later teardown.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await resetSourcePaneState(page);
       await sleep(2000);
 
       // --- File B: same original code, no edits ---
@@ -546,7 +589,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       expect(leaked).toBe(false);
 
       await sourceActions.closeSourceAndDeleteFile(fileNameB);
-      await consoleActions.typeInConsole(`unlink("${fileNameA}")`);
+      await consoleActions.executeInConsole(`unlink("${fileNameA}")`);
       await sleep(500);
     });
 
@@ -569,7 +612,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       lines.push('result <- calculate_total(100, 0.08)');
       lines.push('');
 
-      const fileContent = lines.join('\\n');
+      const fileContent = lines.join('\n');
 
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
@@ -601,22 +644,16 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await expect(sourcePane.statusBarCompletionReceived).toBeVisible({ timeout: 5000 });
       console.log('  Status bar shows "Completion response received"');
 
-      // Scroll the viewport to the middle of the file WITHOUT moving the cursor.
-      // Using keyboard shortcuts would move the cursor, triggering a new
-      // completion request that replaces the click handler we want to test.
-      // We scroll to the middle so that regardless of whether the completion
-      // is near the top or bottom, clicking the status bar causes an
-      // observable scroll change.
+      // Scroll the active editor to the top WITHOUT moving the cursor (the
+      // completion is at the bottom where we typed, so clicking the status bar
+      // produces an observable downward scroll). Using keyboard shortcuts would
+      // move the cursor and trigger a new completion request, replacing the
+      // click handler we want to test. Target activeEditor() rather than the
+      // first .ace_editor in the DOM: the suite keeps an empty Untitled tab
+      // open, whose editor sorts first and would otherwise absorb the scroll.
       await page.evaluate(`(function() {
-        var editors = document.querySelectorAll('.ace_editor');
-        for (var i = 0; i < editors.length; i++) {
-          if (editors[i].closest('#rstudio_console_input')) continue;
-          var env = editors[i].env;
-          if (env && env.editor) {
-            env.editor.scrollToLine(0, false);
-            break;
-          }
-        }
+        var editor = window.rstudio && window.rstudio.documents.activeEditor();
+        if (editor) editor.scrollToLine(0, false);
       })()`);
       await sleep(1000);
 
@@ -646,12 +683,112 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     });
 
+    test('no completion requests in visual mode', async ({ rstudioPage: page }) => {
+      const qmdFile = `${prefix}_visual_no_completions.qmd`;
+      const rFile = `${prefix}_visual_source_probe.R`;
+
+      // The two RPCs the editor issues for inline completions and next-edit
+      // suggestions. The fix suppresses these in visual mode, so assert on the
+      // RPC itself -- the status bar can retain its last message across a mode
+      // switch, which makes it a misleading proxy.
+      const completionRpc = /\/rpc\/(assistant_generate_completions|assistant_next_edit_suggestions)/;
+
+      // --- Source mode (plain R file): a completion request IS issued, and the
+      // request monitoring observes it. This guards the visual-mode check below
+      // against a false pass (completions or monitoring silently broken). A
+      // fresh R file is always a single editor, avoiding the ambiguous editor
+      // state a document leaves behind after visual mode. ---
+      await sourceActions.createAndOpenFile(rFile, 'x <- 1\n');
+      try {
+        await sleep(1000);
+        // Arm the wait before typing so a fast request isn't missed.
+        const sourceRequest = page.waitForRequest(completionRpc, { timeout: TIMEOUTS.ghostText });
+        await sourceActions.goToEnd();
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('y <- fun');
+        await sourceRequest;
+        console.log('  Completion request issued in source mode');
+      } finally {
+        await sourceActions.closeSourceAndDeleteFile(rFile).catch(() => {});
+      }
+
+      // --- Visual mode (Quarto doc): editing must not issue a completion
+      // request -- neither in prose nor inside the code chunk's embedded editor.
+      // Visual mode is only offered for markdown documents. No YAML header, so
+      // the R chunk is the only embedded editor (simplifies targeting it). ---
+      const fileContent =
+        '## Section\n' +
+        '\n' +
+        'Some introductory prose.\n' +
+        '\n' +
+        '```{r}\n' +
+        'x <- 1\n' +
+        '```\n' +
+        '\n' +
+        'Closing prose.\n';
+
+      await sourceActions.createAndOpenFile(qmdFile, fileContent);
+      try {
+        await sleep(1000);
+        await sourceActions.ensureVisualMode();
+        const proseMirror = page.locator('.ProseMirror').first();
+        // Fail loudly if visual mode didn't actually activate, rather than
+        // silently exercising source mode and passing for the wrong reason.
+        await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+        // Start watching only after visual mode is active, so requests from
+        // opening the document or the source->visual sync don't count.
+        let visualCompletionRpc: string | null = null;
+        const onVisualRequest = (request: Request) => {
+          if (completionRpc.test(request.url())) visualCompletionRpc = request.url();
+        };
+        page.on('request', onVisualRequest);
+
+        try {
+          await proseMirror.click();
+          await page.keyboard.type('Typing in the visual editor.');
+          await page.keyboard.press('Enter');
+          await page.keyboard.press('Enter');
+
+          // Also type inside the code chunk's embedded Ace editor -- where a
+          // user writes code and where completions would normally fire. Its
+          // edits reach completions through the same source documentChanged
+          // handler the guard sits on. Force-click because an ace_content
+          // overlay intercepts normal clicks on the hidden textarea.
+          const chunkInput = page.locator('.ProseMirror textarea.ace_text-input').first();
+          await chunkInput.click({ force: true });
+          await page.keyboard.press('End');
+          await page.keyboard.press('Enter');
+          await page.keyboard.type('y <- fun');
+
+          // Give the visual editor's sync-on-idle, the completion delay, and a
+          // backend round-trip ample time, so a regression (request issued in
+          // visual mode) reliably shows up.
+          await sleep(10000);
+
+          expect(
+            visualCompletionRpc,
+            `unexpected completion request in visual mode: ${visualCompletionRpc}`,
+          ).toBeNull();
+          console.log('  No completion request issued in visual mode');
+        } finally {
+          page.off('request', onVisualRequest);
+        }
+      } finally {
+        // Closing the tab tears down the visual editor entirely. Prefer this to
+        // toggling back to source mode, which only hides the panmirror and
+        // leaves its embedded Ace editors mounted -- that makes the source
+        // aceTextInput locator ambiguous for later tests in the shared IDE.
+        await sourceActions.closeSourceAndDeleteFile(qmdFile).catch(() => {});
+      }
+    });
+
     test.afterAll(async ({ rstudioPage: page }) => {
       // Post-suite cleanup: discard any open buffers and delete artifacts.
       // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
       // afterAll, so saving races the directory removal and surfaces an
       // "Error Saving File" dialog whose popup-glass blocks the shutdown.
-      await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+      await resetSourcePaneState(page);
       await sleep(1000);
 
       const testFiles = [
@@ -663,14 +800,17 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         `${prefix}_nes_multiline_diff.R`,
         `${prefix}_nes_multiline_apply.R`,
         `${prefix}_ghost_dismiss.R`,
+        `${prefix}_ghost_cursor_dismiss.R`,
         `${prefix}_nes_dismiss.R`,
         `${prefix}_nes_persist.R`,
         `${prefix}_nes_leak_a.R`,
         `${prefix}_nes_leak_b.R`,
         `${prefix}_statusbar_nav.R`,
+        `${prefix}_visual_no_completions.qmd`,
+        `${prefix}_visual_source_probe.R`,
       ];
       const unlinkExpr = testFiles.map(f => `"${f}"`).join(', ');
-      await consoleActions.typeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
+      await consoleActions.executeInConsole(`for (f in c(${unlinkExpr})) unlink(f)`);
       await sleep(2000);
     });
   });

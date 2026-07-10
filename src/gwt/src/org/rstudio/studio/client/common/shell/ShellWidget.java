@@ -36,7 +36,6 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.core.client.widget.find.BrowserSelectionFindBar;
 import org.rstudio.core.client.widget.find.FindBar;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationAutomation;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -316,11 +315,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
    
    @Inject
-   private void initialize(ApplicationAutomation automation,
-                           Session session,
+   private void initialize(Session session,
                            UserState userState)
    {
-      automation_ = automation;
       session_ = session;
       userState_ = userState;
    }
@@ -437,6 +434,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
       else
       {
          el.removeClassName(RSTUDIO_CONSOLE_BUSY);
+      }
+   }
+
+   @Override
+   public void setWaitingForInput(boolean waiting)
+   {
+      Element el = input_.getWidget().getElement();
+      if (waiting)
+      {
+         el.addClassName(RSTUDIO_CONSOLE_WAITING_FOR_INPUT);
+      }
+      else
+      {
+         el.removeClassName(RSTUDIO_CONSOLE_WAITING_FOR_INPUT);
       }
    }
 
@@ -665,19 +676,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (liveRegion_ != null)
          liveRegion_.announce(output_.getNewText());
 
-      // if we're a desktop automation host, write output to console
-      if (Desktop.isDesktop() && automation_.isAutomationHost())
-      {
-         if (isError)
-         {
-            Desktop.getFrame().writeStderr(text);
-         }
-         else
-         {
-            Desktop.getFrame().writeStdout(text);
-         }
-      }
-      
       return canContinue;
    }
 
@@ -1311,7 +1309,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean clearErrors_ = false;
 
    // Injected
-   private ApplicationAutomation automation_;
    private Session session_;
    private UserState userState_;
    
@@ -1324,4 +1321,5 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private static final String AGENT_CLASS_OUTPUT = " rstudio-agent-output";
    private static final String AGENT_CLASS_ERROR = " rstudio-agent-error";
    private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";
+   private static final String RSTUDIO_CONSOLE_WAITING_FOR_INPUT = "rstudio-console-waiting-for-input";
 }

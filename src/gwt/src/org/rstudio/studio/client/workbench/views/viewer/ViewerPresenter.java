@@ -236,8 +236,18 @@ public class ViewerPresenter extends BasePresenter
          display_.maximize();
       rmdPreviewParams_ = event.getParams();
       if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getOutputUrl()));
-      display_.previewRmd(event.getParams());
+         Desktop.getFrame().setViewerUrl(
+            StringUtil.notNull(event.getParams().getOutputUrl()),
+            new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  display_.previewRmd(event.getParams());
+               }
+            });
+      else
+         display_.previewRmd(event.getParams());
    }
 
    @Override
@@ -249,8 +259,16 @@ public class ViewerPresenter extends BasePresenter
          manageCommands(true);
          display_.bringToFront();
          if (Desktop.hasDesktopFrame())
-            Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
-         display_.previewShiny(event.getParams());
+            Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()), new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  display_.previewShiny(event.getParams());
+               }
+            });
+         else
+            display_.previewShiny(event.getParams());
          runningShinyAppParams_ = event.getParams();
       }
    }
@@ -266,8 +284,16 @@ public class ViewerPresenter extends BasePresenter
             manageCommands(true);
             display_.bringToFront();
             if (Desktop.hasDesktopFrame())
-               Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()));
-            display_.previewPlumber(event.getParams());
+               Desktop.getFrame().setViewerUrl(StringUtil.notNull(event.getParams().getUrl()), new Command()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     display_.previewPlumber(event.getParams());
+                  }
+               });
+            else
+               display_.previewPlumber(event.getParams());
             runningPlumberAPIParams_ = event.getParams();
          });
       }
@@ -527,22 +553,52 @@ public class ViewerPresenter extends BasePresenter
    private void navigate(String url)
    {
       if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
-      display_.navigate(url);
+      {
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url), new Command()
+         {
+            @Override
+            public void execute()
+            {
+               display_.navigate(url);
+            }
+         });
+      }
+      else
+      {
+         display_.navigate(url);
+      }
    }
 
    private void navigateQuarto(String url, QuartoNavigate quartoNav)
    { 
       if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
-      display_.previewQuarto(url, quartoNav);
+      {
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url), new Command()
+         {
+            @Override
+            public void execute()
+            {
+               display_.previewQuarto(url, quartoNav);
+            }
+         });
+      }
+      else
+      {
+         display_.previewQuarto(url, quartoNav);
+      }
    }
 
    private void updateZoomWindow(String url)
    {
       if (Desktop.hasDesktopFrame()) {
-         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
-         Desktop.getFrame().reloadViewerZoomWindow(StringUtil.notNull(url));
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url), new Command()
+         {
+            @Override
+            public void execute()
+            {
+               Desktop.getFrame().reloadViewerZoomWindow(StringUtil.notNull(url));
+            }
+         });
       } else if ((zoomWindow_ != null) && !zoomWindow_.isClosed()) {
          zoomWindow_.setLocationHref(url);
       }

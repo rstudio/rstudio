@@ -358,6 +358,7 @@ public class TextEditingTarget implements
       void toggleSoftWrapMode();
       void toggleRainbowParens();
       void toggleRainbowFencedDivs();
+      void toggleDetectMissingPackages();
 
       void setNotebookUIVisible(boolean visible);
 
@@ -3983,6 +3984,12 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onToggleDetectMissingPackages()
+   {
+      view_.toggleDetectMissingPackages();
+   }
+
+   @Handler
    void onEnableProsemirrorDevTools()
    {
       visualMode_.activateDevTools();
@@ -4018,7 +4025,16 @@ public class TextEditingTarget implements
 
       if (prefs_.useAirFormatter().getValue())
       {
-         boolean hasAirToml = context.air != null && context.air.path != null;
+         // When no air.toml is available, the backend synthesizes one from
+         // the editor's indentation settings; users can opt in to requiring
+         // a real air.toml instead.
+         if (!prefs_.airFormatterRequireToml().getValue())
+            return false;
+
+         // The format_context RPC reports a missing air.toml as an empty
+         // path, while the client-side cache uses null -- treat both as
+         // absent.
+         boolean hasAirToml = context.air != null && !StringUtil.isNullOrEmpty(context.air.path);
          return !hasAirToml;
       }
 
@@ -4069,24 +4085,36 @@ public class TextEditingTarget implements
    private void withFormatContext(CommandWithArg<FormatContext> command)
    {
       String path = getPath();
-      
-      // If this is a project file, we can use the cached hasProjectAirToml value
-      // to build FormatContext without an RPC call
+
+      // For project files we can usually answer from the cached air.toml
+      // path on Projects, populated by FileChangeEvent. Two cases skip the
+      // cache and fall through to an RPC for a fresh check:
+      //   (1) the cache is empty AND the air.toml presence actually gates
+      //       the formatter choice (Air enabled with "require air.toml"
+      //       set) -- the file monitor may not yet have surfaced an
+      //       air.toml that was just created in this session (e.g. via the
+      //       editor or external writeLines), so trust the filesystem over
+      //       the cache;
+      //   (2) the file isn't inside the active project -- the cache is
+      //       project-scoped and can't speak for ancestor-directory lookups.
       FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
       if (projectDir != null && path != null)
       {
-         // Check if the file is within the project directory
          String projectPath = projectDir.getPath();
          if (path.startsWith(projectPath + "/") || path.equals(projectPath))
          {
-            // Create FormatContext locally using cached value from Projects
-            FormatContext context = createFormatContext(getAirTomlPath());
-            command.execute(context);
-            return;
+            String cachedAirTomlPath = getAirTomlPath();
+            if (cachedAirTomlPath != null ||
+                !prefs_.useAirFormatter().getValue() ||
+                !prefs_.airFormatterRequireToml().getValue())
+            {
+               command.execute(createFormatContext(cachedAirTomlPath));
+               return;
+            }
+            // fall through: cache miss + Air enabled -> RPC verifies.
          }
       }
-      
-      // For non-project files or when project info is unavailable, make RPC call
+
       server_.formatContext(
          getId(),
          path,
@@ -4137,6 +4165,12 @@ public class TextEditingTarget implements
          if (useBuiltinFormatter(context))
          {
             new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
+            // Collapse the selection so the post-reformat state is always
+            // observable, even when the formatter produced an identical
+            // output. Without this, a user (or test) running reformat on
+            // already-formatted code would see no UI signal that anything
+            // happened.
+            editor.clearSelection();
          }
          else
          {
@@ -4148,7 +4182,7 @@ public class TextEditingTarget implements
                   range.getStart().setColumn(0);
                   range.getEnd().setColumn(Integer.MAX_VALUE);
                }
-               
+
                String selection = editor.getTextForRange(range);
                server_.formatCode(
                   getId(),
@@ -4160,12 +4194,17 @@ public class TextEditingTarget implements
                   public void onResponseReceived(String response)
                   {
                      editor.replaceRange(range, response);
+                     // Same rationale as the built-in path: always collapse
+                     // the selection so the reformat completion is visible
+                     // even on a no-op rewrite.
+                     editor.clearSelection();
                   }
 
                   @Override
                   public void onError(ServerError error)
                   {
                      Debug.logError(error);
+                     editor.clearSelection();
                   }
                });
             });
@@ -4476,27 +4515,11 @@ public class TextEditingTarget implements
          return;
       }
 
-      // Only format files within the current project folder
-      String path = getPath();
-      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
-      if (projectDir != null && path != null)
-      {
-         String projectPath = projectDir.getPath();
-         // Check if the file is within the project directory
-         if (!path.startsWith(projectPath + "/") && !path.equals(projectPath))
-         {
-            // File is not within the project folder, skip formatting
-            onFormatted.execute();
-            return;
-         }
-      }
-      else
-      {
-         // No project or no path, skip formatting
-         onFormatted.execute();
-         return;
-      }
-
+      // Format-on-save mirrors the "Reformat Document" command: it relies on
+      // withFormatContext() to resolve the formatter (and any air.toml) for
+      // the document, whether or not the file lives inside the active project.
+      // We deliberately do not restrict this to project files -- standalone R
+      // scripts opened outside a project should still be formatted on save.
       withFormatContext((context) ->
       {
          // If no external formatter is configured, skip formatting on save
@@ -9171,6 +9194,11 @@ public class TextEditingTarget implements
       return docDisplay_;
    }
 
+   public TextEditingTargetPackageDependencyHelper getPackageDependencyHelper()
+   {
+      return packageDependencyHelper_;
+   }
+
    private void addAdditionalResourceFiles(List<String> additionalFiles)
    {
       // it does--get the YAML front matter and modify it to include
@@ -9388,7 +9416,11 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               save(new Command()
+               // Save any unsaved documents before running tests. We use
+               // withSaveFilesBeforeCommand (rather than an unconditional save)
+               // so that unmodified documents are not re-written to disk, which
+               // would needlessly update their timestamps. See #17810.
+               source_.withSaveFilesBeforeCommand(new Command()
                {
                   @Override
                   public void execute()
@@ -9408,7 +9440,9 @@ public class TextEditingTarget implements
                         }
                      });
                   }
-               });
+               },
+               () -> {},
+               "Run Tests");
             }
          },
          true
@@ -9426,7 +9460,11 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               save(new Command()
+               // Save any unsaved documents before running tests. We use
+               // withSaveFilesBeforeCommand (rather than an unconditional save)
+               // so that unmodified documents are not re-written to disk, which
+               // would needlessly update their timestamps. See #17810.
+               source_.withSaveFilesBeforeCommand(new Command()
                {
                   @Override
                   public void execute()
@@ -9446,7 +9484,9 @@ public class TextEditingTarget implements
                         }
                      });
                   }
-               });
+               },
+               () -> {},
+               "Run Tests");
             }
          },
          false

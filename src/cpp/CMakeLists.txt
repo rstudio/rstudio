@@ -145,12 +145,16 @@ else()
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
-   # require Windows-7 SP1
+   # require Windows 10 version 1809 (build 17763), the minimum for the
+   # ConPTY pseudoconsole APIs. _WIN32_WINNT/WINVER are per-major-version and
+   # share one value across Windows 10 and 11 (0x0A00); NTDDI_VERSION selects
+   # the specific build (NTDDI_WIN10_RS5 = 1809) that gates the ConPTY headers.
    add_definitions(
       -DNOMINMAX
-      -DWINVER=0x601
-      -D_WIN32_WINNT=0x601
-      -D_WIN32_IE=0x601
+      -DWINVER=0x0A00
+      -D_WIN32_WINNT=0x0A00
+      -D_WIN32_IE=0x0A00
+      -DNTDDI_VERSION=0x0A000006
       -DWIN32_LEAN_AND_MEAN
       -DBOOST_USE_WINDOWS_H)
 
@@ -175,7 +179,7 @@ endif()
 
 # default Boost versions
 if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
-   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.90.0)
+   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.91.0)
 endif()
 
 # set up rstudio boost version components
@@ -246,15 +250,40 @@ else()
    else()
       set(BOOST_ARCH "64")
    endif()
+
+   # install-dependencies.cmd downloads Boost prebuilts keyed to a specific
+   # MSVC toolset version. When the CI runner is upgraded to a newer toolset
+   # (e.g. msvc145 on VS 2026) before new prebuilts are available, fall back
+   # to the last-known prebuilt toolset -- MSVC 14.x releases are binary-
+   # compatible, so msvc143 libs link correctly against msvc144/145/etc.
+   set(_RSTUDIO_BOOST_MSVC_TOOLSET ${MSVC_TOOLSET_VERSION})
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc${MSVC_TOOLSET_VERSION}-mt-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${MSVC_TOOLSET_VERSION}-release-static/boost${BOOST_ARCH}")
+      set(_RSTUDIO_BOOST_VARIANT "release")
    else()
-      set(BOOST_SUFFIX "vc${MSVC_TOOLSET_VERSION}-mt-gd-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${MSVC_TOOLSET_VERSION}-debug-static/boost${BOOST_ARCH}")
+      set(_RSTUDIO_BOOST_VARIANT "debug")
+   endif()
+   if(NOT EXISTS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${_RSTUDIO_BOOST_MSVC_TOOLSET}-${_RSTUDIO_BOOST_VARIANT}-static")
+      set(_RSTUDIO_BOOST_FALLBACK 143)
+      message(STATUS "Boost prebuilts for msvc${_RSTUDIO_BOOST_MSVC_TOOLSET} not found; using msvc${_RSTUDIO_BOOST_FALLBACK} prebuilts (MSVC 14.x binary-compatible)")
+      set(_RSTUDIO_BOOST_MSVC_TOOLSET ${_RSTUDIO_BOOST_FALLBACK})
+   endif()
+
+   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(BOOST_SUFFIX "vc${_RSTUDIO_BOOST_MSVC_TOOLSET}-mt-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${_RSTUDIO_BOOST_MSVC_TOOLSET}-release-static/boost${BOOST_ARCH}")
+   else()
+      set(BOOST_SUFFIX "vc${_RSTUDIO_BOOST_MSVC_TOOLSET}-mt-gd-x${BOOST_ARCH}-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${_RSTUDIO_BOOST_MSVC_TOOLSET}-debug-static/boost${BOOST_ARCH}")
    endif()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}")
-   find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
+   # CMake 4.x removed FindBoost.cmake (CMP0167). Since the Windows path
+   # hard-codes every Boost path, bypass find_package and wire up
+   # Boost_INCLUDE_DIRS directly -- equivalent validation without the module.
+   if(NOT EXISTS "${BOOST_INCLUDEDIR}")
+      message(FATAL_ERROR "Boost include directory not found: ${BOOST_INCLUDEDIR}\n"
+                          "Check that install-dependencies.cmd ran successfully.")
+   endif()
+   set(Boost_INCLUDE_DIRS "${BOOST_INCLUDEDIR}")
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
       list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}-${BOOST_SUFFIX}")
@@ -270,7 +299,15 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 # SOCI
 if(WIN32)
-   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-msvc${MSVC_TOOLSET_VERSION}-4.0.3")
+   # Same toolset-fallback logic as Boost above: install-soci.R also defaults
+   # to msvc143, so fall back when the current toolset's directory is absent.
+   set(_RSTUDIO_SOCI_MSVC_TOOLSET ${MSVC_TOOLSET_VERSION})
+   if(NOT EXISTS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-msvc${_RSTUDIO_SOCI_MSVC_TOOLSET}-4.0.3")
+      set(_RSTUDIO_SOCI_FALLBACK 143)
+      message(STATUS "SOCI for msvc${_RSTUDIO_SOCI_MSVC_TOOLSET} not found; using msvc${_RSTUDIO_SOCI_FALLBACK} prebuilts (MSVC 14.x binary-compatible)")
+      set(_RSTUDIO_SOCI_MSVC_TOOLSET ${_RSTUDIO_SOCI_FALLBACK})
+   endif()
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-msvc${_RSTUDIO_SOCI_MSVC_TOOLSET}-4.0.3")
    if(RSTUDIO_SESSION_WIN32)
       set(SOCI_ARCH "x86")
    else()
@@ -298,9 +335,6 @@ elseif(RSTUDIO_PRO_BUILD AND UNIX)
    include_directories(SYSTEM "/usr/include/pgsql")
 elseif(WIN32)
    include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite-amalgamation-3310100")
-   if(RSTUDIO_PRO_BUILD)
-      include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/include")
-   endif()
 endif()
 
 # find SOCI libraries
@@ -342,11 +376,6 @@ else()
          list(APPEND SOCI_LIBRARIES "Wldap32")
          list(APPEND SOCI_LIBRARIES "Secur32")
          list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-debug-${SOCI_ARCH}.lib")
-         if(RSTUDIO_PRO_BUILD)
-            list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpq.lib")
-            list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpgcommon.lib")
-            list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpgport.lib")
-         endif()
       endif()
    else()
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Release/*.lib")
@@ -355,11 +384,6 @@ else()
          list(APPEND SOCI_LIBRARIES "Wldap32")
          list(APPEND SOCI_LIBRARIES "Secur32")
          list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-release-${SOCI_ARCH}.lib")
-         if(RSTUDIO_PRO_BUILD)
-            list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpq.lib")
-            list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpgcommon.lib")
-            list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpgport.lib")
-         endif()
       endif()
    endif()
 endif()
@@ -385,19 +409,6 @@ if(UNIX)
 endif()
 
 if(WIN32)
-     # winpty - pseudoterminal support on Windows
-     if(RSTUDIO_SESSION_WIN32)
-        set(WINPTY_ARCH "32")
-     else()
-        set(WINPTY_ARCH "64")
-     endif()
-     set(WINPTY_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winpty-0.4.3-msys2-2.7.0")
-     set(WINPTY_INCLUDEDIR "${WINPTY_ROOT}/${WINPTY_ARCH}/include")
-     set(WINPTY_BINDIR_32 "${WINPTY_ROOT}/32/bin")
-     set(WINPTY_BINDIR_64 "${WINPTY_ROOT}/64/bin")
-
-     # add winpty as system include directory
-     include_directories(SYSTEM ${WINPTY_INCLUDEDIR})
 
      # openssl for Windows
      if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -440,7 +451,17 @@ endif()
 
 # external libraries
 add_subdirectory(ext)
-include_directories(SYSTEM "${FMT_SOURCE_DIR}/include")
+
+# Make the bundled {fmt} headers available to all targets. We deliberately add
+# this as a normal (non-SYSTEM) include placed BEFORE the other directories,
+# rather than via include_directories(SYSTEM ...). On macOS, clang searches the
+# driver-added /usr/local/include ahead of every -isystem directory, so a stray
+# fmt installed there (e.g. a Homebrew fmt under the /usr/local prefix) would
+# shadow our bundled headers and pull in a different fmt ABI version -- yielding
+# undefined fmt::v<N> symbols at link time against the bundled libfmt. A -I entry
+# is searched before /usr/local/include, so this guarantees the bundled headers
+# win regardless of what is installed on the system.
+include_directories(BEFORE "${FMT_SOURCE_DIR}/include")
 
 # shared library
 add_subdirectory(shared_core)

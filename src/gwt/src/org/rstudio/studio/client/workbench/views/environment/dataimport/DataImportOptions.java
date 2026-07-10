@@ -139,11 +139,17 @@ public class DataImportOptions extends JavaScriptObject
       
       Object.keys(response.columns).forEach(function(key, index) {
          if (!this_.columnDefinitions[response.columns[key].col_name]) {
+            // col_class is the column's class() reported as an array; take the
+            // most-specific class (class()[1]) as the scalar R type. Guard
+            // against a missing/empty array so a non-standard column descriptor
+            // degrades to a null rType (skipped downstream) instead of throwing.
+            var colClass = response.columns[key].col_class;
+            var rType = (colClass && colClass.length > 0) ? colClass[0] : null;
             this_.columnDefinitions[response.columns[key].col_name] = {
                index: index,
                name: response.columns[key].col_name,
                assignedType: null,
-               rType: response.columns[key].col_type_r
+               rType: rType
             };
          }
       });

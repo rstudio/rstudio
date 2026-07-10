@@ -102,9 +102,29 @@
    .Call("rs_objectAddress", object, PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("environmentDescription", function(object)
+{
+   .Call("rs_environmentDescription", object, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("objectClass", function(object)
 {
    .Call("rs_objectClass", object, PACKAGE = "(embedding)")
+})
+
+# 'length()' can dispatch to S3 methods, and some of those return non-scalar
+# values (e.g. 'length.Formula()' from the Formula package); fall back to the
+# internal length in that case, as callers require a scalar count (#18138)
+.rs.addFunction("explorer.length", function(object)
+{
+   n <- tryCatch(length(object), error = function(e) NULL)
+   if (is.numeric(n) && length(n) == 1L && !is.na(n))
+      return(n)
+
+   if (is.environment(object))
+      length(ls(envir = object, all.names = TRUE))
+   else
+      length(unclass(object))
 })
 
 .rs.addFunction("objectType", function(object)
@@ -127,7 +147,7 @@
             is.list(object) || is.environment(object) ||
             is.factor(object) || is.logical(object))
    {
-      type <- paste(type, sprintf("[%s]", length(object)))
+      type <- paste(type, sprintf("[%s]", .rs.explorer.length(object)))
    }
    
    type
@@ -457,7 +477,7 @@
    # figure out whether this object is expandable
    # (note that the client will still need to refine behavior
    # depending on whether attributes are being shown)
-   n <- length(.$object)
+   n <- .rs.explorer.length(.$object)
    expandable <- if (inherits(object, "python.builtin.object"))
    {
       .rs.explorer.isPythonObjectExpandable(object)
@@ -493,7 +513,7 @@
       address    = .rs.scalar(.rs.objectAddress(.$object)),
       type       = .rs.scalar(typeof(.$object)),
       class      = class(.$object),
-      length     = .rs.scalar(length(.$object)),
+      length     = .rs.scalar(n),
       access     = .rs.scalar(access),
       recursive  = .rs.scalar(is.recursive(.$object)),
       expandable = .rs.scalar(expandable),
@@ -777,32 +797,48 @@
    children <- NULL
    if (context$recursive)
    {
-      names <- names(object)
-      indices <- .rs.slice(seq_along(object), context$start, context$end)
-      context$more <- length(object) > context$end
-      
+      n <- .rs.explorer.length(object)
+      indices <- .rs.slice(seq_len(n), context$start, context$end)
+      context$more <- n > context$end
+
       # iterate over children and inspect
       children <- lapply(indices, function(i)
       {
-         if (is.null(names) || !nzchar(names[[i]]))
-         {
-            name <- sprintf("[[%i]]", i)
-            access <- sprintf("#[[%i]]", i)
-            tags <- .rs.explorer.tags$VIRTUAL
-         }
-         else
-         {
-            name <- names[[i]]
-            access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
-            tags <- character()
-         }
-         
-         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+         childContext <- .rs.explorer.childContextForElement(context, object, i)
          .rs.explorer.inspectObject(object[[i]], childContext)
       })
    }
-   
+
    .rs.explorer.createInspectionResult(object, context, children)
+})
+
+# Create a child context for the i-th element of an object, using
+# access-by-name only when that name uniquely identifies the element.
+# Duplicated names must be accessed by index, as access-by-name would
+# always retrieve the first matching element (#17937).
+.rs.addFunction("explorer.childContextForElement", function(context, object, i)
+{
+   names <- names(object)
+   name <- if (is.null(names)) "" else names[[i]]
+
+   if (is.na(name) || !nzchar(name))
+   {
+      name <- sprintf("[[%i]]", i)
+      access <- sprintf("#[[%i]]", i)
+      tags <- .rs.explorer.tags$VIRTUAL
+   }
+   else if (sum(names == name, na.rm = TRUE) > 1L)
+   {
+      access <- sprintf("#[[%i]]", i)
+      tags <- character()
+   }
+   else
+   {
+      access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
+      tags <- character()
+   }
+
+   .rs.explorer.createChildContext(context, name, access, tags)
 })
 
 .rs.addFunction("explorer.inspectEnvironment", function(object,
@@ -904,27 +940,14 @@
    children <- NULL
    if (context$recursive && !is.null(names(object)))
    {
-      names <- names(object)
-      indices <- .rs.slice(seq_along(object), context$start, context$end)
-      context$more <- length(object) > context$end
-      
+      n <- .rs.explorer.length(object)
+      indices <- .rs.slice(seq_len(n), context$start, context$end)
+      context$more <- n > context$end
+
       # iterate over children and inspect
       children <- lapply(indices, function(i)
       {
-         if (is.null(names) || !nzchar(names[[i]]))
-         {
-            name <- sprintf("[[%i]]", i)
-            access <- sprintf("#[[%i]]", i)
-            tags <- .rs.explorer.tags$VIRTUAL
-         }
-         else
-         {
-            name <- names[[i]]
-            access <- sprintf("#[[%s]]", encodeString(name, quote = "\""))
-            tags <- character()
-         }
-         
-         childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+         childContext <- .rs.explorer.childContextForElement(context, object, i)
          .rs.explorer.inspectObject(object[[i]], childContext)
       })
    }
@@ -1067,7 +1090,7 @@
    {
       header <- head(object, n)
       output <- paste(encodeString(header, quote = "'"), collapse = " ")
-      more <- length(object) > n
+      more <- .rs.explorer.length(object) > n
    }
    else if (is.call(object))
    {
@@ -1106,12 +1129,12 @@
    }
    else if (is.pairlist(object))
    {
-      output <- sprintf("Pairlist of length %i", length(object))
+      output <- sprintf("Pairlist of length %i", .rs.explorer.length(object))
       more <- FALSE
    }
    else if (is.list(object))
    {
-      output <- sprintf("List of length %i", length(object))
+      output <- sprintf("List of length %i", .rs.explorer.length(object))
       more <- FALSE
    }
    else if (is.environment(object))
@@ -1127,29 +1150,35 @@
          )
          more <- FALSE
       }
+      else if (isS4(object))
+      {
+         # S4 objects wrapping environments (e.g. reference class
+         # instances) have type "S4", and so cannot have their class
+         # attribute temporarily re-assigned -- describe them directly
+         fmt <- if (is(object, "envRefClass"))
+            "Reference class object of class %s"
+         else
+            "S4 object of class %s"
+         output <- sprintf(fmt, class(object))
+         more <- FALSE
+      }
       else
       {
-         # NOTE: R prevents us from calling 'unclass' on environment
-         # objects, so we need to do something a bit different here.
-         # We also want to avoid 'print' dispatching to custom methods
-         # to avoid evaluating arbitrary user code here
-         oldClass <- class(object)
-         tryCatch({
-            class(object) <- "environment"
-            output <- capture.output(base::print(object))[[1]]
-            more <- FALSE
-         }, error = identity)
-         class(object) <- oldClass
+         # generate the default display for the environment directly,
+         # rather than via 'print'; this avoids dispatching to custom
+         # 'print' methods, which could evaluate arbitrary user code
+         output <- .rs.environmentDescription(object)
+         more <- FALSE
       }
    }
    else if (is.double(object))
    {
-      if (length(object) > 1)
+      if (.rs.explorer.length(object) > 1)
       {
          header <- head(object, n)
          formatted <- format(header, digits = 3)
          output <- paste(formatted, collapse = " ")
-         more <- length(object) > n
+         more <- .rs.explorer.length(object) > n
       }
       else
       {
@@ -1160,7 +1189,7 @@
    else if (is.atomic(object))
    {
       output <- paste(head(object, n), collapse = " ")
-      more <- length(object) > n
+      more <- .rs.explorer.length(object) > n
    }
    else if (isS4(object))
    {

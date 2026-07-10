@@ -26,7 +26,6 @@
 
 #include <core/Exec.hpp>
 #include <core/RecursionGuard.hpp>
-#include <core/system/LibraryLoader.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RHelpers.hpp>
@@ -44,14 +43,6 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "EnvironmentUtils.hpp"
-
-#if defined(_WIN32)
-# define kLibraryName "R.dll"
-#elif defined(__APPLE__)
-# define kLibraryName "libR.dylib"
-#else
-# define kLibraryName "libR.so"
-#endif
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -76,11 +67,6 @@ EnvironmentMonitor* s_pEnvironmentMonitor = nullptr;
 // which Python module is currently being monitored, if any?
 std::string s_monitoredPythonModule;
 
-// is the browser currently active? we store this state
-// so that we can query this from R, without 'hiding' the
-// browser state by pushing new contexts / frames on the stack
-bool s_browserActive = false;
-
 // the environment being browsed (set by onConsolePrompt when entering debug).
 // this is needed because during promise forcing, the browser's environment
 // may differ from any sys.frame() visible from R.
@@ -97,10 +83,6 @@ bool s_isGlobalEnvironmentSerializable = true;
 // whether or not particular objects can be safely serialized
 using SerializationCache = boost::container::flat_map<SEXP, bool>;
 SerializationCache s_serializationCache;
-
-// by default, use regular 'INTEGER' accessor; 'INTEGER_OR_NULL' will be loaded
-// if provided by this version of R
-int* (*INTEGER_OR_NULL)(SEXP) = INTEGER;
 
 // avoid potential contention between console handlers
 std::recursive_mutex s_consoleMutex;
@@ -928,7 +910,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = R_GlobalEnv;
-   r::session::getFunctionContext(requestedDepth, s_browserActive, nullptr, &env);
+   r::session::getFunctionContext(requestedDepth, r::session::isBrowseActive(), nullptr, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -1078,15 +1060,15 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
    // first function there running user code.
-   s_browserActive = r::session::isBrowseActive();
-   if (*pContextDepth > 0 && !s_browserActive)
+   bool browserActive = r::session::isBrowseActive();
+   if (*pContextDepth > 0 && !browserActive)
    {
       s_browserEnv.set(R_NilValue);
    }
    else
    {
       // Find the function context associated with the browser
-      r::session::getFunctionContext(0, s_browserActive, &depth, &environmentTop);
+      r::session::getFunctionContext(0, browserActive, &depth, &environmentTop);
       s_browserEnv.set(environmentTop);
    }
    
@@ -1098,7 +1080,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // browser call somewhere on the stack. if there isn't, then we're
       // probably just waiting for user input inside a function (e.g. scan());
       // assume the user isn't interested in seeing the function's internals.
-      if (*pContextDepth == 0 && !s_browserActive)
+      if (*pContextDepth == 0 && !browserActive)
       {
          return;
       }
@@ -1146,8 +1128,7 @@ void onBeforeExecute()
    // however if R continues running then the client will properly restore
    // the state of the interruptR command
 
-   s_browserActive = r::session::isBrowseActive();
-   if (s_browserActive)
+   if (r::session::isBrowseActive())
    {
       ClientEvent event(client_events::kBusy, true);
       module_context::enqueClientEvent(event);
@@ -1469,7 +1450,7 @@ json::Value environmentStateAsJson()
 SEXP rs_isBrowserActive()
 {
    r::sexp::Protect protect;
-   return r::sexp::create(s_browserActive, &protect);
+   return r::sexp::create(r::session::isBrowseActive(), &protect);
 }
 
 SEXP rs_getBrowserEnv()
@@ -1844,13 +1825,6 @@ Error initialize()
    boost::shared_ptr<SEXP> pCurrentEnv =
          boost::make_shared<SEXP>(R_GlobalEnv);
    R_PreserveObject(*pCurrentEnv);
-   
-   // get reference to INTEGER_OR_NULL if provided by this version of R
-   {
-      using core::system::Library;
-      Library rLibrary(kLibraryName);
-      core::system::loadSymbol(rLibrary, "INTEGER_OR_NULL", (void**) &INTEGER_OR_NULL);
-   }
 
    // functions that emit call frames also emit source references; these
    // values capture and supply the currently executing expression emitted by R

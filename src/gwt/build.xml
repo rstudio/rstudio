@@ -96,16 +96,32 @@
    </exec>
    <dirname property="git.main.worktree" file="${git.common.dir}"/>
 
+   <!-- Environment variables (e.g. env.RSTUDIO_TOOLS_ROOT) -->
+   <property environment="env"/>
+
    <!-- Path to GWT libraries -->
+   <set-if-exists property="lib.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="${git.main.worktree}/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="/opt/rstudio-tools/dependencies/common/gwtproject"/>
+   <set-if-exists property="lib.dir" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="C:/rstudio-tools/dependencies/common/gwtproject"/>
 
    <!-- Configure path to GWT SDK -->
    <property name="gwt.sdk" value="${lib.dir}/gwt/gwt-rstudio"/>
    <property name="gwt.extra.args" value=""/>
+   <property name="gwt.style" value=""/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>
+
+   <!-- Translate the single-token gwt.style value (e.g. "PRETTY", passed in
+        by CMake from the GWT_STYLE env var) into a "-style X" compiler
+        argument. Assembling the argument here, rather than threading the
+        space-containing "-style PRETTY" string through CMake, keeps the space
+        inside Ant and avoids shell-escaping issues across the CMake boundary. -->
+   <condition property="gwt.style.args" value="-style ${gwt.style}">
+      <length string="${gwt.style}" trim="true" when="greater" length="0"/>
+   </condition>
+   <property name="gwt.style.args" value=""/>
 
    <!-- Configure code server -->
    <property name="bind.address" value="127.0.0.1"/>
@@ -234,15 +250,20 @@
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
    <property name="node.version" value="22.22.2"/>
+   <set-if-exists property="node.dir" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}"/>
    <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="C:/rstudio-tools/dependencies/common/node/${node.version}"/>
    <set-if-unset  property="node.dir" value="../../dependencies/common/node/${node.version}"/>
 
 
    <!-- use yarn from system but will prefer yarn from dependencies if available -->
    <set-if-exists property="yarn.bin" value="${node.dir}/bin/yarn"/>
    <set-if-exists property="yarn.bin" value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/yarn"/>
+   <set-if-exists property="yarn.bin" value="${env.RSTUDIO_TOOLS_ROOT}/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
+   <set-if-exists property="yarn.bin" value="${env.SYSTEMDRIVE}/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-exists property="yarn.bin" value="c:/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-exists property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-unset  property="yarn.bin" value="yarn"/>
@@ -251,7 +272,16 @@
    <set-if-exists property="panmirror.dir" value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="c:/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="./lib/quarto/apps/panmirror"/>
-   <property name="panmirror.build.dir" value="./www/js/panmirror"/>
+   <set-if-exists property="panmirror.dir" value="${git.main.worktree}/src/gwt/lib/quarto/apps/panmirror"/>
+   <!-- write panmirror to ${www.dir} so it tracks the same output tree as every
+        other ant target. cmake passes -Dwww.dir=<build>/gwt/www to redirect
+        ant output into the build tree; with the previous hardcoded ./www path
+        panmirror stayed in the source tree instead and dropped out of any
+        gwt-output cache that covered only the build tree, so cache-hit builds
+        (which skip the ant rebuild) shipped a package missing panmirror.js.
+        Standalone ant invocations and any build where www.dir is left at the
+        default resolve to ./www/js/panmirror, matching prior behavior. -->
+   <property name="panmirror.build.dir" value="${www.dir}/js/panmirror"/>
 
    <target name="panmirror" description="Compile panmirror library">
 
@@ -321,7 +351,7 @@
          <arg line="-sourceLevel ${javac.version}"/>
          <arg line="-strict"/>
          <arg line="-gen gen"/>
-         <!--<arg line="-style PRETTY"/>-->
+         <arg line="${gwt.style.args}"/>
          <arg line="-extra ${extras.dir}"/>
          <arg line="-deploy ${extras.dir}"/>
          <arg line="${gwt.extra.args}"/>

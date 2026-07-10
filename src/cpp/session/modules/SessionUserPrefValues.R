@@ -917,6 +917,16 @@
    clear = function() { .rs.clearUserPref("editor_theme") }
 )
 
+# Ignore project-specific appearance settings
+#
+# Whether to ignore appearance settings (such as the editor theme) configured at
+# the project level, always using the global settings instead.
+.rs.uiPrefs$ignoreProjectAppearance <- list(
+   get = function() { .rs.getUserPref("ignore_project_appearance") },
+   set = function(value) { .rs.setUserPref("ignore_project_appearance", value) },
+   clear = function() { .rs.clearUserPref("ignore_project_appearance") }
+)
+
 # Enable editor fonts on RStudio Server
 #
 # Whether to use a custom editor font in RStudio Server.
@@ -1319,6 +1329,18 @@
    clear = function() { .rs.clearUserPref("auto_run_setup_chunk") }
 )
 
+# Execute inline R code when previewing notebooks
+#
+# Whether to evaluate a notebook's inline R code in the current R session when
+# creating a notebook preview, so that inline code can use objects in the global
+# environment. When disabled, inline code is evaluated in the background
+# rendering process instead.
+.rs.uiPrefs$notebookExecuteInlineChunks <- list(
+   get = function() { .rs.getUserPref("notebook_execute_inline_chunks") },
+   set = function(value) { .rs.setUserPref("notebook_execute_inline_chunks", value) },
+   clear = function() { .rs.clearUserPref("notebook_execute_inline_chunks") }
+)
+
 # Hide console when running R Markdown chunks
 #
 # Whether to hide the R console when executing inline R Markdown chunks.
@@ -1512,6 +1534,26 @@
    clear = function() { .rs.clearUserPref("sort_file_names_naturally") }
 )
 
+# Use ISO-8601 date-time formatting
+#
+# Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09
+# 14:30) instead of the format inferred from the system region.
+.rs.uiPrefs$dateTimeUseIso8601 <- list(
+   get = function() { .rs.getUserPref("date_time_use_iso8601") },
+   set = function(value) { .rs.setUserPref("date_time_use_iso8601", value) },
+   clear = function() { .rs.clearUserPref("date_time_use_iso8601") }
+)
+
+# Use UTC time zone
+#
+# Whether to display dates and times in the UTC time zone instead of the local
+# time zone.
+.rs.uiPrefs$dateTimeUseUtc <- list(
+   get = function() { .rs.getUserPref("date_time_use_utc") },
+   set = function(value) { .rs.setUserPref("date_time_use_utc", value) },
+   clear = function() { .rs.clearUserPref("date_time_use_utc") }
+)
+
 # Synchronize the Files pane with the current working directory
 #
 # Whether to change the directory in the Files pane automatically when the
@@ -1603,6 +1645,16 @@
    get = function() { .rs.getUserPref("wrap_tab_navigation") },
    set = function(value) { .rs.setUserPref("wrap_tab_navigation", value) },
    clear = function() { .rs.clearUserPref("wrap_tab_navigation") }
+)
+
+# Change active editor tab with mouse wheel
+#
+# Whether scrolling the mouse wheel over the editor tab bar changes the active
+# editor tab.
+.rs.uiPrefs$mousewheelChangesEditorTab <- list(
+   get = function() { .rs.getUserPref("mousewheel_changes_editor_tab") },
+   set = function(value) { .rs.setUserPref("mousewheel_changes_editor_tab", value) },
+   clear = function() { .rs.clearUserPref("mousewheel_changes_editor_tab") }
 )
 
 # Global theme
@@ -1954,6 +2006,26 @@
    clear = function() { .rs.clearUserPref("data_viewer_show_summary") }
 )
 
+# Show data viewer filter UI by default
+#
+# Whether the data viewer filter UI is shown by default when opening the data
+# viewer.
+.rs.uiPrefs$dataViewerShowFilters <- list(
+   get = function() { .rs.getUserPref("data_viewer_show_filters") },
+   set = function(value) { .rs.setUserPref("data_viewer_show_filters", value) },
+   clear = function() { .rs.clearUserPref("data_viewer_show_filters") }
+)
+
+# Use overlay scrollbars in the data viewer
+#
+# Whether the data viewer draws its own overlay scrollbars; when disabled, native
+# scrollbars are used instead.
+.rs.uiPrefs$dataViewerUseOverlayScrollbars <- list(
+   get = function() { .rs.getUserPref("data_viewer_use_overlay_scrollbars") },
+   set = function(value) { .rs.setUserPref("data_viewer_use_overlay_scrollbars", value) },
+   clear = function() { .rs.clearUserPref("data_viewer_use_overlay_scrollbars") }
+)
+
 # Enable support for screen readers
 #
 # Support accessibility aids such as screen readers.
@@ -2035,6 +2107,18 @@
    get = function() { .rs.getUserPref("auto_save_on_blur") },
    set = function(value) { .rs.setUserPref("auto_save_on_blur", value) },
    clear = function() { .rs.clearUserPref("auto_save_on_blur") }
+)
+
+# Reduce background file operations on network and remote drives
+#
+# When enabled, RStudio reduces background file monitoring, code indexing, and
+# external-edit checks for projects detected to be on a network or remote
+# filesystem. This improves responsiveness on slow drives, at the cost of less
+# frequent automatic refreshing of file listings and version-control status.
+.rs.uiPrefs$reduceRemoteFilesystemOperations <- list(
+   get = function() { .rs.getUserPref("reduce_remote_filesystem_operations") },
+   set = function(value) { .rs.setUserPref("reduce_remote_filesystem_operations", value) },
+   clear = function() { .rs.clearUserPref("reduce_remote_filesystem_operations") }
 )
 
 # Initial working directory for new terminals
@@ -2292,6 +2376,18 @@
    clear = function() { .rs.clearUserPref("save_retry_timeout") }
 )
 
+# Use durable writes when saving files
+#
+# Whether to flush saved files all the way to physical storage so that write
+# failures (such as a full disk or an exceeded quota) are reported rather than
+# silently lost. Disabling this can improve save performance on slow or networked
+# filesystems, at the risk of not detecting some failed writes.
+.rs.uiPrefs$saveFilesDurably <- list(
+   get = function() { .rs.getUserPref("save_files_durably") },
+   set = function(value) { .rs.setUserPref("save_files_durably", value) },
+   clear = function() { .rs.clearUserPref("save_files_durably") }
+)
+
 # Use R's native pipe operator, |>
 #
 # Whether the Insert Pipe Operator command should use the native R pipe operator,
@@ -2531,6 +2627,18 @@
    clear = function() { .rs.clearUserPref("assistant_toolbar_button_visible") }
 )
 
+# Use the system certificate store (restart required)
+#
+# When enabled, the AI assistant agents trust the operating system certificate
+# store (e.g. the Windows Certificate Store or macOS Keychain) in addition to
+# Node.js's built-in certificate authorities. Useful behind a TLS-inspecting
+# proxy. Restart the R session for the change to take effect.
+.rs.uiPrefs$assistantUseSystemCa <- list(
+   get = function() { .rs.getUserPref("assistant_use_system_ca") },
+   set = function(value) { .rs.setUserPref("assistant_use_system_ca", value) },
+   clear = function() { .rs.clearUserPref("assistant_use_system_ca") }
+)
+
 # Use pre-release version of Posit Assistant (restart required)
 #
 # Use a pre-release version of the Posit Assistant for testing purposes. Do not
@@ -2539,6 +2647,16 @@
    get = function() { .rs.getUserPref("posit_assistant_test_manifest") },
    set = function(value) { .rs.setUserPref("posit_assistant_test_manifest", value) },
    clear = function() { .rs.clearUserPref("posit_assistant_test_manifest") }
+)
+
+# Posit Assistant update check interval (hours)
+#
+# The minimum number of hours between checks for a new version of the Posit
+# Assistant. Set to 0 to check every time.
+.rs.uiPrefs$positAssistantUpdateCheckIntervalHours <- list(
+   get = function() { .rs.getUserPref("posit_assistant_update_check_interval_hours") },
+   set = function(value) { .rs.setUserPref("posit_assistant_update_check_interval_hours", value) },
+   clear = function() { .rs.clearUserPref("posit_assistant_update_check_interval_hours") }
 )
 
 # Enable GitHub Copilot
@@ -2677,11 +2795,21 @@
 # Use Air for code formatting
 #
 # When set, RStudio will automatically select and use an appropriate version of
-# Air when formatting code in projects containing an air.toml file.
+# Air when formatting R code.
 .rs.uiPrefs$useAirFormatter <- list(
    get = function() { .rs.getUserPref("use_air_formatter") },
    set = function(value) { .rs.setUserPref("use_air_formatter", value) },
    clear = function() { .rs.clearUserPref("use_air_formatter") }
+)
+
+# Only use Air when an air.toml file is found
+#
+# When set, Air will only be used to format R documents located within a project
+# or directory containing an air.toml file.
+.rs.uiPrefs$airFormatterRequireToml <- list(
+   get = function() { .rs.getUserPref("air_formatter_require_toml") },
+   set = function(value) { .rs.setUserPref("air_formatter_require_toml", value) },
+   clear = function() { .rs.clearUserPref("air_formatter_require_toml") }
 )
 
 # Reformat documents on save

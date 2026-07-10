@@ -49,6 +49,7 @@ RUN `
     --installPath "C:/Program Files/Microsoft Visual Studio/2022/BuildTools" `
     --add Microsoft.VisualStudio.Workload.VCTools `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+    --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 `
     --add Microsoft.VisualStudio.Component.Windows11SDK.26100
 
 # Try testing the build tools. You might see some telemetry errors here;
@@ -84,7 +85,7 @@ RUN choco install -y awscli
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 RUN choco install -y jq
 RUN choco install -y ninja --version "1.12.1"
-RUN choco install -y nsis --version "3.10"
+RUN choco install -y nsis --version "3.12"
 RUN choco install -y python313
 RUN choco install -y strawberryperl
 RUN choco install -y temurin17
@@ -130,7 +131,7 @@ COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-blue-plumbago panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-yellow-yarrow panmirror.version.json
 
 ENV DOCKER_IMAGE_BUILD=1
 WORKDIR C:/rstudio-tools/dependencies/windows

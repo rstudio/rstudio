@@ -714,6 +714,71 @@ public class PaneManager
       restoreLayout();
    }
 
+   /**
+    * End any active pane/window or column zoom, restoring the default layout;
+    * no-op when nothing is zoomed. Runs {@code onComplete} once the restore has
+    * settled (after the relayout animation completes), or immediately when
+    * nothing was zoomed.
+    *
+    * Exposed for the automation bridge (window.rstudio.layout.reset). The
+    * worker-scoped automation session means a test that zooms a pane and fails
+    * before toggling it back leaves the layout maximized, squeezing the other
+    * panes to near-zero so the next test can't reach its targets. The guard
+    * matters because restoreLayout() resets column widths to default when no
+    * window is maximized, so firing it unconditionally would clobber any custom
+    * widths a non-zoomed test set up. Pane/window zoom is tracked by
+    * maximizedWindow_ / maximizedTab_; column zoom is reflected by
+    * getZoomedColumn().
+    *
+    * Quadrants can also be maximized without PaneManager's zoom tracking ever
+    * knowing: the pane-header min/max buttons and EnsureHeightEvent.MAXIMIZED
+    * (fired e.g. when an R Notebook preview opens in the Viewer) drive the
+    * WindowFrame state machine in DualWindowLayoutPanel directly, and that
+    * state persists across sessions via client state (windowlayoutstate). So
+    * when no tracked zoom is active, restore any MAXIMIZE-state quadrant to
+    * NORMAL -- which also restores its MINIMIZE-state sibling (see
+    * DualWindowLayoutPanel.WindowStateChangeManager). HIDE/EXCLUSIVE pairs are
+    * left alone; they encode the empty-source-pane layout owned by the
+    * source-document count logic.
+    *
+    * The onComplete callback lets the bridge expose a Promise that resolves
+    * only once the relayout has finished -- the relayout flushes on a later
+    * animation frame (panel_.animate) even under reduced_motion, so a
+    * fire-and-forget reset would otherwise return before the panes settle.
+    */
+   public void endZoomIfActive(Command onComplete)
+   {
+      if (maximizedWindow_ != null ||
+          maximizedTab_ != null ||
+          getZoomedColumn() != null)
+      {
+         restoreLayout(onComplete);
+         return;
+      }
+
+      boolean restored = false;
+      for (LogicalWindow window : panes_)
+      {
+         if (window.getState() == WindowState.MAXIMIZE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.NORMAL, true));
+            restored = true;
+         }
+      }
+
+      if (onComplete != null)
+      {
+         // The DualWindowLayoutPanel defers its relayout (and the client
+         // state persist) to a scheduled command, so chain the callback
+         // behind that rather than firing it synchronously.
+         if (restored)
+            Scheduler.get().scheduleDeferred(onComplete::execute);
+         else
+            onComplete.execute();
+      }
+   }
+
    @Handler
    public void onLayoutConsoleOnLeft()
    {
@@ -1532,13 +1597,18 @@ public class PaneManager
 
    private void restoreLayout()
    {
+      restoreLayout(null);
+   }
+
+   private void restoreLayout(Command afterComplete)
+   {
       // If we're currently zoomed, then use that to provide the previous
       // 'non-zoom' state.
       if (maximizedWindow_ != null &&
           leftList_.size() == leftWidgetSizePriorToZoom_.size())
-         restoreSavedLayout();
+         restoreSavedLayout(afterComplete);
       else
-         restorePaneLayout();
+         restorePaneLayout(afterComplete);
    }
 
    private void invalidateSavedLayoutState(boolean enableSplitter)
@@ -1555,8 +1625,21 @@ public class PaneManager
 
    private void restorePaneLayout()
    {
+      restorePaneLayout(null);
+   }
+
+   private void restorePaneLayout(Command afterComplete)
+   {
       restorePaneStateToDefault();
       restoreColumnLayout();
+
+      // restoreColumnLayout applies column widths via setWidgetSize without an
+      // explicit animate(), so there's no animation callback to hook here --
+      // the sizes are already applied by the time we return. Run afterComplete
+      // directly. (The pane/window-zoom path goes through restoreSavedLayout,
+      // which does animate and threads afterComplete into onAnimationComplete.)
+      if (afterComplete != null)
+         afterComplete.execute();
    }
 
    private Double getValidColumnWidth(Widget w, boolean set)
@@ -1635,7 +1718,7 @@ public class PaneManager
       invalidateSavedLayoutState(true);
    }
 
-   private void restoreSavedLayout()
+   private void restoreSavedLayout(Command afterComplete)
    {
       restorePaneStateToDefault();
 
@@ -1661,14 +1744,14 @@ public class PaneManager
       if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ >= 0)
       {
          if (sidebarOnRight)
-            resizeHorizontallyWithSidebarOnRight(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, null);
+            resizeHorizontallyWithSidebarOnRight(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, afterComplete);
          else
-            resizeHorizontallyWithSidebarOnLeft(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, null);
+            resizeHorizontallyWithSidebarOnLeft(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, afterComplete);
       }
       else
       {
          // No sidebar or sidebar wasn't saved - use original behavior
-         resizeHorizontally(widgetSizePriorToZoom_, leftTargets);
+         resizeHorizontally(widgetSizePriorToZoom_, leftTargets, afterComplete);
       }
 
       invalidateSavedLayoutState(true);

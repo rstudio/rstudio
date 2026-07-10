@@ -1540,6 +1540,9 @@ AFTER_FUN = function() {
 })
 
 test_that_wrapped("convertTheme gives error for file permission issues", {
+   # POSIX-only: on Windows, Sys.chmod("0555") does not deny writes, so the
+   # no-permission directory is still writable and no error is raised.
+   skip_on_os("windows")
    expect_error(
       suppressWarnings(.rs.convertTheme(
          file.path(inputFileLocation, "tmThemes", paste0(names(themes)[1], ".tmTheme")),
@@ -1713,6 +1716,9 @@ AFTER_FUN = function() {
 })
 
 test_that_wrapped("addTheme gives error when permission are bad", {
+   # POSIX-only: on Windows, Sys.chmod("0555") does not deny writes, so the
+   # no-permission directory is still writable and no error is raised.
+   skip_on_os("windows")
    expect_error(
       suppressWarnings(.rs.addTheme(
          file.path(inputFileLocation, "rsthemes", paste0(themes[[20]]$fileName, ".rstheme")),

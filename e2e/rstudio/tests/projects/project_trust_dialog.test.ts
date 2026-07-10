@@ -1,14 +1,19 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
-import { typeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, clearConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { useSuiteSandbox, SANDBOX_DIR_PREFIX } from '@utils/sandbox';
+import { documentOpen, executeCommand, getPref, setPref, resetSourcePaneState } from '@utils/commands';
+import { heredoc } from '@utils/heredoc';
+import { rStringLiteral } from '@utils/r';
 import type { Page } from 'playwright';
 
 /**
  * Project Trust Dialog — rstudio/rstudio#17231, PR #17211
+ * Visual editor gating in untrusted projects — rstudio/rstudio#17912, PR #17913
  *
  * Tests the trust dialog that prompts before auto-executing risky startup
- * files (.Rprofile, .Renviron, .RData) in untrusted project directories.
+ * files (.Rprofile, .Renviron, .RData) in untrusted project directories, and
+ * the restrictions that apply while a project is untrusted (visual editor
+ * disabled; only the source editor is available for markdown documents).
  *
  * Requires project-trust-dialogs=1 in rsession.conf (Server/Workbench only —
  * Desktop passes --config-file none and has no Pro overlay to enable it).
@@ -30,11 +35,40 @@ const LOCK_ICON = '[title^="Restricted Mode"]';
 const HEADER_UNKNOWN = 'Do you trust this project?';
 const HEADER_RESTRICTED = 'This project is restricted';
 
+// Visual editor gating (#17912): the Visual toggle of the visible editor tab.
+// Its aria-pressed state syncs synchronously with the document's visual-mode
+// property when the markdown toolbar mounts, so it tells us which mode a
+// document opened in without waiting on panmirror.
+const VISUAL_TOGGLE =
+  "xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]" +
+  "//*[contains(concat(' ', normalize-space(@class), ' '), ' rstudio_visual_md_on ')]";
+const PROSE_MIRROR = '.ProseMirror';
+const VISUAL_BLOCKED_MSG = 'The visual editor is not available in untrusted projects.';
+
 // -- Constants ----------------------------------------------------------------
 
 const PROJECT_NAME = 'trust_test_project';
 const RPROFILE_MARKER = 'TRUST_MARKER <- TRUE';
 const PALETTE_LIST = '#rstudio_command_palette_list';
+
+const PLAIN_RMD_NAME = 'trust_plain.Rmd';
+const PLAIN_RMD = heredoc`
+  ---
+  title: Trust Test
+  ---
+
+  Some markdown content.
+`;
+
+const VISUAL_RMD_NAME = 'trust_visual.Rmd';
+const VISUAL_RMD = heredoc`
+  ---
+  title: Trust Test Visual
+  editor: visual
+  ---
+
+  Some markdown content.
+`;
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -42,19 +76,25 @@ const PALETTE_LIST = '#rstudio_command_palette_list';
 async function captureResult(page: Page, rExpression: string): Promise<string> {
   const marker = `__TRUST_${Date.now()}__`;
 
-  // Retry up to 3 times — after Server page navigation, the console may
+  // Retry up to 3 times -- after Server page navigation, the console may
   // not be fully connected yet and the first attempt can silently fail.
+  // { wait: true } gates on R reporting idle inside each attempt, so we
+  // only retry when the markers genuinely never wrote.
   for (let attempt = 0; attempt < 3; attempt++) {
-    await clearConsole(page);
-    await typeInConsole(page, `cat("${marker}", ${rExpression}, "${marker}")`);
-    await sleep(1500);
-    const output = await page.locator(CONSOLE_OUTPUT).innerText();
-    const re = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
-    const match = output.match(re);
-    if (match) return match[1].trim();
-
-    // Didn't find markers — wait and retry
-    await sleep(2000);
+    try {
+      await clearConsole(page);
+      await executeInConsole(
+        page,
+        `cat("${marker}", ${rExpression}, "${marker}")`,
+        { wait: true },
+      );
+      const output = await page.locator(CONSOLE_OUTPUT).innerText();
+      const re = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
+      const match = output.match(re);
+      if (match) return match[1].trim();
+    } catch {
+      // console may not be ready yet -- retry
+    }
   }
   console.warn(`captureResult: markers not found after 3 attempts for: ${rExpression}`);
   return '';
@@ -65,49 +105,50 @@ async function waitForSessionRestart(page: Page): Promise<void> {
   // On Server, project switches navigate to a new session URL.
   // Wait for navigation to settle before checking for the console.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
-  await sleep(3000);
   await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 60000 });
-  await sleep(2000);
 
-  // Wait for GWT to fully initialize (not just the console DOM element)
+  // Wait for the automation bridge to be installed before driving any
+  // R-to-GWT round trip. The bridge is registered post workbench init, so
+  // it's a deterministic post-condition for "GWT is fully wired up".
   await page.waitForFunction(
-    'typeof window.rstudioapi !== "undefined" || typeof window.$RStudio !== "undefined"',
+    () => window.rstudio?.ready === true,
     null,
-    { timeout: 15000 }
+    { timeout: 30000 },
   ).catch(() => {});
-  await sleep(1000);
 
-  // Confirm R is actually idle by running a trivial command with retries
+  // Confirm R is actually idle by running a trivial command with retries.
+  // { wait: true } gates each attempt on the console-busy class clearing,
+  // so we only loop when console plumbing itself is still coming up.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const marker = `__READY_${Date.now()}__`;
-      await typeInConsole(page, `cat("${marker}")`);
-      await sleep(1500);
+      const marker = `[pw:session-restart-ready ${Date.now()}]`;
+      await executeInConsole(page, `cat("${marker}")`, { wait: true });
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
       if (output.includes(marker)) return;
     } catch {
-      // typeInConsole may fail if console isn't ready
+      // executeInConsole may fail if console isn't ready
     }
-    await sleep(2000);
   }
 }
 
 /** Restart R and wait for the console to be ready. */
 async function restartR(page: Page): Promise<void> {
-  await typeInConsole(page, '.rs.api.executeCommand("restartR")');
+  await executeCommand(page, 'restartR');
   await waitForSessionRestart(page);
 }
 
 /**
  * Restart R when a trust dialog is expected afterward.
  * Skips the idle check in waitForSessionRestart since the dialog
- * blocks console access.
+ * blocks console access. Wait for either the trust dialog or the console
+ * input to surface as the post-condition.
  */
 async function restartRExpectingDialog(page: Page): Promise<void> {
-  await typeInConsole(page, '.rs.api.executeCommand("restartR")');
-  await sleep(3000);
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: 30000 });
-  await sleep(2000);
+  await executeCommand(page, 'restartR');
+  await Promise.race([
+    page.locator(TRUST_DIALOG).waitFor({ state: 'visible', timeout: 30000 }),
+    page.locator(CONSOLE_INPUT).waitFor({ state: 'visible', timeout: 30000 }),
+  ]).catch(() => {});
 }
 
 /** Check if the trust dialog is visible within the given timeout. */
@@ -122,31 +163,49 @@ async function isTrustDialogVisible(page: Page, timeout = 10000): Promise<boolea
 
 /** Reset trust state for a directory (or current project). */
 async function resetTrust(page: Page, dir?: string): Promise<void> {
-  if (dir) {
-    const escaped = dir.replace(/\\/g, '/');
-    await typeInConsole(page, `.rs.trust.reset("${escaped}")`);
-  } else {
-    await typeInConsole(page, '.rs.trust.reset()');
-  }
-  await sleep(500);
+  const cmd = dir
+    ? `.rs.trust.reset("${dir.replace(/\\/g, '/')}")`
+    : '.rs.trust.reset()';
+  await executeInConsole(page, cmd, { wait: true });
 }
 
 /** Revoke trust for a directory (mark as untrusted). */
 async function revokeTrust(page: Page, dir?: string): Promise<void> {
-  if (dir) {
-    const escaped = dir.replace(/\\/g, '/');
-    await typeInConsole(page, `.rs.trust.revoke("${escaped}")`);
-  } else {
-    await typeInConsole(page, '.rs.trust.revoke()');
-  }
-  await sleep(500);
+  const cmd = dir
+    ? `.rs.trust.revoke("${dir.replace(/\\/g, '/')}")`
+    : '.rs.trust.revoke()';
+  await executeInConsole(page, cmd, { wait: true });
 }
 
 /** Write a .Rprofile in the given directory. */
 async function writeRprofile(page: Page, dir: string, content: string): Promise<void> {
   const escaped = dir.replace(/\\/g, '/');
-  await typeInConsole(page, `writeLines('${content}', file.path("${escaped}", ".Rprofile"))`);
-  await sleep(500);
+  await executeInConsole(
+    page,
+    `writeLines('${content}', file.path("${escaped}", ".Rprofile"))`,
+    { wait: true },
+  );
+}
+
+/** Write a file with the given content into the given directory. */
+async function writeProjectFile(page: Page, dir: string, name: string, content: string): Promise<void> {
+  const escaped = dir.replace(/\\/g, '/');
+  await executeInConsole(
+    page,
+    `writeLines(${rStringLiteral(content)}, file.path("${escaped}", "${name}"))`,
+    { wait: true },
+  );
+}
+
+/**
+ * Open the given markdown document and assert it landed in source mode:
+ * the Visual toggle is unlatched and no visual editor surface mounted.
+ */
+async function expectOpensInSourceMode(page: Page, path: string): Promise<void> {
+  await documentOpen(page, path);
+  await expect(page.locator(VISUAL_TOGGLE)).toBeVisible({ timeout: 10000 });
+  await expect(page.locator(VISUAL_TOGGLE)).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator(PROSE_MIRROR)).toHaveCount(0);
 }
 
 /** Get the current working directory from R. */
@@ -161,45 +220,43 @@ async function getWorkingDir(page: Page): Promise<string> {
  */
 async function createProjectViaUI(page: Page, name: string): Promise<void> {
   // Close any open source docs to prevent "unsaved changes" dialogs during project switch
-  await typeInConsole(page, '.rs.api.closeAllSourceBuffersWithoutSaving()');
-  await sleep(1000);
+  await resetSourcePaneState(page);
 
-  // Open command palette and invoke "Create a New Project..."
+  // Open command palette and invoke "Create a New Project...". Wait for the
+  // palette list to render before typing -- keystrokes are dropped if the
+  // palette hasn't mounted yet.
   await page.keyboard.press('ControlOrMeta+Shift+p');
-  await sleep(1000);
-
+  await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
   await page.keyboard.type('Create a New Project');
-  await sleep(500);
 
   const paletteItem = page.locator(`${PALETTE_LIST} >> text=Create a New Project...`);
   await expect(paletteItem).toBeVisible({ timeout: 5000 });
   await paletteItem.click();
-  await sleep(2000);
 
   // Wait for wizard dialog
   const dialog = page.locator('.gwt-DialogBox');
   await expect(dialog).toBeVisible({ timeout: 15000 });
 
-  // Step 1: Click "New Directory"
+  // Step 1: Click "New Directory" (each expect-visible is the wait gate for
+  // the next panel to mount before its click fires).
   const newDirItem = dialog.locator('#rstudio_label_new_directory_wizard_page');
   await expect(newDirItem).toBeVisible({ timeout: 5000 });
   await newDirItem.click();
-  await sleep(1000);
 
   // Step 2: Click "New Project" in the project type list
   // Each wizard item gets an ID from its title: rstudio_label_{title}_wizard_page
   const newProjItem = dialog.locator('#rstudio_label_new_project_wizard_page');
   await expect(newProjItem).toBeVisible({ timeout: 5000 });
   await newProjItem.click();
-  await sleep(1000);
 
-  // Step 3: Enter directory name — use click + pressSequentially so GWT
-  // detects keystrokes and enables the OK button
+  // Step 3: Enter directory name -- use click + pressSequentially so GWT
+  // detects keystrokes and enables the OK button. Wait for the input to
+  // actually hold the typed text before clicking Create.
   const dirInput = dialog.locator('input.gwt-TextBox').first();
   await expect(dirInput).toBeVisible({ timeout: 5000 });
   await dirInput.click();
   await dirInput.pressSequentially(name);
-  await sleep(500);
+  await expect(dirInput).toHaveValue(name, { timeout: 2000 });
 
   // Step 4: Click "Create Project"
   // Wizard overrides the OK button ID: rstudio_label_{caption}_wizard_confirm
@@ -217,29 +274,23 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   const sandbox = useSuiteSandbox();
   let projectDir = '';
   let trustEnabled = true;
-  let originalLoadWorkspace = 'FALSE';
+  let originalLoadWorkspace = false;
   let originalDefaultProjectLocation = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    // Dismiss any leftover dialog/overlay from a prior failed run.
-    // Try Escape multiple times to handle trust dialogs, save prompts, etc.
+    // Dismiss any leftover dialog/overlay from a prior failed run. Wait for
+    // the overlay to actually detach after each Escape instead of a fixed
+    // sleep -- much faster in the common no-dialog case, and only retries
+    // as many times as actually needed.
+    const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
     for (let i = 0; i < 3; i++) {
-      try {
-        const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]');
-        if (await overlay.first().isVisible({ timeout: 2000 })) {
-          await page.keyboard.press('Escape');
-          await sleep(1000);
-        } else {
-          break;
-        }
-      } catch {
-        break;
-      }
+      if (!(await overlay.isVisible())) break;
+      await page.keyboard.press('Escape');
+      await overlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
     }
 
     // Capture original load_workspace preference for restoration
-    originalLoadWorkspace = await captureResult(page,
-      '.rs.api.readRStudioPreference("load_workspace")');
+    originalLoadWorkspace = await getPref(page, 'load_workspace') as boolean;
     console.log(`Original load_workspace: ${originalLoadWorkspace}`);
 
     // Redirect the New Project Wizard's parent-directory field into the
@@ -247,15 +298,12 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     // field itself is read-only, so setting the pref is the only way.
     // If a prior crashed run left our sandbox path in the pref, treat it
     // as leftover state and restore to the schema default on afterAll.
-    const current = await captureResult(page,
-      '.rs.api.readRStudioPreference("default_project_location")');
+    const current = await getPref(page, 'default_project_location') as string;
     const basename = current.split(/[/\\]/).pop() || '';
     originalDefaultProjectLocation = basename.startsWith(SANDBOX_DIR_PREFIX) ? '' : current;
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
-    await typeInConsole(page,
-      `.rs.api.writeRStudioPreference("default_project_location", "${escaped}")`);
-    await sleep(500);
+    await setPref(page, 'default_project_location', escaped);
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
@@ -268,12 +316,8 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
       }
 
       // Restore preferences
-      await typeInConsole(page,
-        `.rs.api.writeRStudioPreference("load_workspace", ${originalLoadWorkspace})`);
-      await sleep(500);
-      await typeInConsole(page,
-        `.rs.api.writeRStudioPreference("default_project_location", "${originalDefaultProjectLocation}")`);
-      await sleep(500);
+      await setPref(page, 'load_workspace', originalLoadWorkspace);
+      await setPref(page, 'default_project_location', originalDefaultProjectLocation);
     } catch (err) {
       console.warn('project_trust_dialog afterAll cleanup failed:', err);
     }
@@ -289,9 +333,8 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     if (hasProject === 'TRUE') {
       await page.keyboard.press('ControlOrMeta+Shift+p');
-      await sleep(1000);
+      await expect(page.locator(PALETTE_LIST)).toBeVisible({ timeout: 5000 });
       await page.keyboard.type('Close Current Project');
-      await sleep(500);
       const closeItem = page.locator(`${PALETTE_LIST} >> text=Close Current Project`);
       await expect(closeItem).toBeVisible({ timeout: 5000 });
       await closeItem.click();
@@ -352,7 +395,10 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Click "No, I do not trust this project"
     await page.locator(DONT_TRUST_BTN).click();
-    await sleep(2000);
+    // Wait for the dialog to dismiss before checking the lock icon (lockIcon
+    // assertion auto-waits, but the dialog->dismiss transition has to land
+    // first or the captureResult call below sees a closed-and-busy console).
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
 
     // Verify restricted mode: lock icon visible
     await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 5000 });
@@ -385,7 +431,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Click "Keep restricted"
     await page.locator(KEEP_RESTRICTED_BTN).click();
-    await sleep(1000);
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
 
     // Lock icon still visible
     await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 5000 });
@@ -410,10 +456,9 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Press Escape to dismiss
     await page.keyboard.press('Escape');
-    await sleep(1000);
 
-    // Dialog dismissed
-    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible();
+    // Dialog dismissed (expect auto-waits for the transition).
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
 
     // Restricted mode active: lock icon visible, .Rprofile not sourced
     await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 5000 });
@@ -422,7 +467,49 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   });
 
   // ---------------------------------------------------------------------------
-  // Test 5: "Trust" restarts session and loads startup files
+  // Test 5: Visual mode toggle is blocked in restricted mode (#17912)
+  // Restricted mode is still active from test 4 (Escape, status "unknown").
+  // Attempting to switch a markdown document to visual mode is blocked with a
+  // warning bar and the document stays in source mode.
+  // ---------------------------------------------------------------------------
+  test('Visual mode toggle is blocked in restricted mode', async ({ rstudioPage: page }) => {
+    if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
+
+    // Restricted mode is active from the previous test
+    await expect(page.locator(LOCK_ICON)).toBeVisible();
+
+    await writeProjectFile(page, projectDir, PLAIN_RMD_NAME, PLAIN_RMD);
+    await expectOpensInSourceMode(page, `${projectDir}/${PLAIN_RMD_NAME}`);
+
+    // Attempt to switch to visual mode; blocked with a warning bar
+    await executeCommand(page, 'toggleRmdVisualMode');
+    await expect(page.getByText(VISUAL_BLOCKED_MSG)).toBeVisible({ timeout: 10000 });
+
+    // Still in source mode -- the visual editor never mounted
+    await expect(page.locator(VISUAL_TOGGLE)).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator(PROSE_MIRROR)).toHaveCount(0);
+
+    await resetSourcePaneState(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 6: YAML "editor: visual" is forced to source in restricted mode (#17912)
+  // A document that requests visual mode via YAML front matter opens in source
+  // mode while the project is untrusted.
+  // ---------------------------------------------------------------------------
+  test('YAML "editor: visual" is forced to source in restricted mode', async ({ rstudioPage: page }) => {
+    if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
+
+    await expect(page.locator(LOCK_ICON)).toBeVisible();
+
+    await writeProjectFile(page, projectDir, VISUAL_RMD_NAME, VISUAL_RMD);
+    await expectOpensInSourceMode(page, `${projectDir}/${VISUAL_RMD_NAME}`);
+
+    await resetSourcePaneState(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 7: "Trust" restarts session and loads startup files
   // Revoke trust so status becomes "untrusted" (different from lastTrustStatus_
   // "unknown"), which lets the restricted dialog appear. Clicking "Trust this
   // project" grants trust, restarts the session, and .Rprofile is sourced.
@@ -452,7 +539,47 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   });
 
   // ---------------------------------------------------------------------------
-  // Test 6: renv carve-out — no dialog for safe .Rprofile
+  // Test 8: Revoking trust re-blocks the visual editor after restart (#17912)
+  // The project is trusted from test 7, so visual editing works (positive
+  // control). Revoking trust and restarting R must re-block it WITHOUT a page
+  // reload: the only thing refreshing the client's trust state on restart is
+  // the SessionInfo sync in TrustPresenter.onDeferredInitCompleted, and the
+  // failure direction is fail-open (visual editing stays available).
+  // ---------------------------------------------------------------------------
+  test('Revoking trust re-blocks the visual editor after restart', async ({ rstudioPage: page }) => {
+    if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
+
+    // Positive control: project is trusted, so the YAML "editor: visual"
+    // document opens in visual mode (not a user-initiated switch, so no
+    // confirmation dialog is raised).
+    await documentOpen(page, `${projectDir}/${VISUAL_RMD_NAME}`);
+    await expect(page.locator(PROSE_MIRROR).first()).toBeVisible({ timeout: 30000 });
+    await resetSourcePaneState(page);
+
+    // Revoke trust and restart R. The restricted dialog may or may not
+    // re-appear (the GWT-side lastTrustStatus_ suppresses it when the last
+    // shown status was also "untrusted" -- granting trust in test 7 restarts
+    // the R session without reloading the page); restricted mode applies
+    // either way, signalled by the lock icon via deferred init.
+    await revokeTrust(page, projectDir);
+    await restartRExpectingDialog(page);
+    if (await isTrustDialogVisible(page, 5000)) {
+      await page.locator(KEEP_RESTRICTED_BTN).click();
+      await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
+    }
+    await expect(page.locator(LOCK_ICON)).toBeVisible({ timeout: 15000 });
+
+    // Visual editing must be blocked again, with no page reload in between
+    await expectOpensInSourceMode(page, `${projectDir}/${PLAIN_RMD_NAME}`);
+    await executeCommand(page, 'toggleRmdVisualMode');
+    await expect(page.getByText(VISUAL_BLOCKED_MSG)).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(PROSE_MIRROR)).toHaveCount(0);
+
+    await resetSourcePaneState(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Test 9: renv carve-out — no dialog for safe .Rprofile
   // A .Rprofile containing only source("renv/activate.R") is treated as safe
   // and doesn't trigger the trust dialog.
   // ---------------------------------------------------------------------------
@@ -466,10 +593,16 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     // so it doesn't error when sourced (no risky files → trust not required → .Rprofile runs)
     await writeRprofile(page, projectDir, 'source("renv/activate.R")');
     const escaped = projectDir.replace(/\\/g, '/');
-    await typeInConsole(page, `dir.create(file.path("${escaped}", "renv"), showWarnings = FALSE)`);
-    await sleep(300);
-    await typeInConsole(page, `writeLines("# dummy", file.path("${escaped}", "renv", "activate.R"))`);
-    await sleep(300);
+    await executeInConsole(
+      page,
+      `dir.create(file.path("${escaped}", "renv"), showWarnings = FALSE)`,
+      { wait: true },
+    );
+    await executeInConsole(
+      page,
+      `writeLines("# dummy", file.path("${escaped}", "renv", "activate.R"))`,
+      { wait: true },
+    );
 
     // Restart R
     await restartR(page);
@@ -483,7 +616,7 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   });
 
   // ---------------------------------------------------------------------------
-  // Test 7: .RData triggers dialog when workspace restore is enabled
+  // Test 10: .RData triggers dialog when workspace restore is enabled
   // ---------------------------------------------------------------------------
   test('.RData triggers dialog when workspace restore is enabled', async ({ rstudioPage: page }) => {
     if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
@@ -492,13 +625,15 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     await resetTrust(page, projectDir);
 
     // Enable workspace restore
-    await typeInConsole(page, '.rs.api.writeRStudioPreference("load_workspace", TRUE)');
-    await sleep(500);
+    await setPref(page, 'load_workspace', true);
 
     // Create an .RData file (empty workspace save)
     const escaped = projectDir.replace(/\\/g, '/');
-    await typeInConsole(page, `save(list = character(0), file = file.path("${escaped}", ".RData"))`);
-    await sleep(500);
+    await executeInConsole(
+      page,
+      `save(list = character(0), file = file.path("${escaped}", ".RData"))`,
+      { wait: true },
+    );
 
     // Restart — dialog expected for .RData
     await restartRExpectingDialog(page);
@@ -514,23 +649,22 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
 
     // Dismiss with Escape
     await page.keyboard.press('Escape');
-    await sleep(1000);
+    await expect(page.locator(TRUST_DIALOG)).not.toBeVisible({ timeout: 5000 });
   });
 
   // ---------------------------------------------------------------------------
-  // Test 8: .RData does NOT trigger dialog when workspace restore is disabled
+  // Test 11: .RData does NOT trigger dialog when workspace restore is disabled
   // ---------------------------------------------------------------------------
   test('.RData does not trigger dialog when workspace restore is disabled', async ({ rstudioPage: page }) => {
     if (!trustEnabled) { test.skip(true, 'Trust dialogs not enabled'); return; }
 
-    // Reset trust (idempotent — already reset after test 7's Escape, but explicit for clarity)
+    // Reset trust (idempotent — already reset after test 10's Escape, but explicit for clarity)
     await resetTrust(page, projectDir);
 
     // Disable workspace restore
-    await typeInConsole(page, '.rs.api.writeRStudioPreference("load_workspace", FALSE)');
-    await sleep(500);
+    await setPref(page, 'load_workspace', false);
 
-    // .RData still exists from test 7, renv .Rprofile from test 6
+    // .RData still exists from test 10, renv .Rprofile from test 9
     // With load_workspace=FALSE, .RData is not risky
     // renv .Rprofile is safe
     // No risky files → no dialog

@@ -109,6 +109,9 @@ public class ClassIds
    // Data Table sidebar toggle button
    public final static String DATA_TABLE_SIDEBAR_TOGGLE = "dt_sidebar_toggle";
 
+   // Data Table options (gear) button
+   public final static String DATA_TABLE_OPTIONS = "dt_options";
+
    // Document outline toggle button
    public final static String VISUAL_OUTLINE_TOGGLE = "visual_md_outline_toggle";
    public final static String SOURCE_OUTLINE_TOGGLE = "source_outline_toggle";

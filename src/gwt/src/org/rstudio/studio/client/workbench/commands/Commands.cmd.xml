@@ -228,6 +228,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="toggleSoftWrapMode"/>
          <cmd refid="toggleRainbowParens"/>
          <cmd refid="toggleRainbowFencedDivs"/>
+         <cmd refid="toggleDetectMissingPackages"/>
          <separator/>
          <cmd refid="showDiagnosticsActiveDocument"/>
          <cmd refid="showDiagnosticsProject"/>
@@ -924,7 +925,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
-         <shortcut refid="consoleFind" value="Meta+Alt+F"/>
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
@@ -3904,6 +3904,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         checkable="true"
         context="editor"/>
 
+   <cmd id="toggleDetectMissingPackages"
+        label="Toggle Detection of Missing Packages in This File"
+        menuLabel="_Detect Missing Packages in This File"
+        desc="Toggle the editor banner that warns when this file references R packages that are not installed"
+        checkable="true"
+        context="editor"/>
+
    <cmd id="maximizeConsole"
         label="Toggle Maximize Console Pane"/>
 
@@ -4127,6 +4134,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="showGpuDiagnostics"
         menuLabel="Show _GPU Diagnostics"
+        rebindable="false"
+        context="diagnostics"/>
+
+   <cmd id="toggleGpuExclusionList"
+        menuLabel="Toggle GPU _Exclusion List"
+        rebindable="false"
+        context="diagnostics"/>
+
+   <cmd id="toggleGpuDriverBugWorkarounds"
+        menuLabel="Toggle GPU Driver Bug _Workarounds"
         rebindable="false"
         context="diagnostics"/>
 

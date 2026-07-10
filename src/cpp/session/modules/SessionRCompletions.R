@@ -1044,12 +1044,17 @@ assign(x = ".rs.acCompletionTypes",
    
    # TODO: Should we include aesthetics for 'geom_*()' functions?
    # for 'geom_' functions, try to get aesthetic names
+   #
+   # Note that we key off the function name ('string') rather than 'fguess'
+   # here: 'fguess' is only populated when a formal argument matches the token,
+   # so a token that matches only an aesthetic (e.g. 'linet' -> 'linetype')
+   # would otherwise be skipped. We evaluate the already-resolved 'object'
+   # directly, which also handles namespaced calls (e.g. 'ggplot2::geom_line').
    ggplotCompletions <- NULL
-   if (grepl("(?:^|::)geom_", fguess))
+   if (grepl("(?:^|::)geom_", string))
    {
       .rs.tryCatch({
-         geomFunc <- eval(as.symbol(fguess), envir = envir)
-         layerInfo <- geomFunc()
+         layerInfo <- object()
          aesthetics <- c(
             layerInfo$geom$required_aes,
             layerInfo$stat$required_aes,
@@ -1062,7 +1067,7 @@ assign(x = ".rs.acCompletionTypes",
          ggplotCompletions <- .rs.makeCompletions(
             token = token,
             results = paste(results, "= "),
-            packages = fguess,
+            packages = string,
             type = .rs.acCompletionTypes$ARGUMENT,
             quote = FALSE
          )

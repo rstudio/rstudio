@@ -13,11 +13,13 @@
 #    archived NEWS path returns git's three-way merged result rather than
 #    the rel branch's actual content, silently corrupting the release notes.
 #
-# 2. Auto-resolve the two conflicts that result:
+# 2. Auto-resolve the expected conflicts:
 #    - NEWS.md (deleted-by-them): keep main's rotated copy.
 #    - version/news/os/NEWS-<ver>-<codename>.md (both-added): take the rel
 #      branch's content, which has any bug-fix entries that landed after
 #      the rotation.
+#    - Any conflict under a release-only directory (e.g. the whats-new
+#      assets): keep main's version, matching the reset policy below.
 #
 # 3. Reset release-only paths (version/BUILDTYPE, the whats-new assets
 #    directory, etc.) to HEAD's value. Git's trivial-merge fast path
@@ -67,6 +69,7 @@ RELEASE_ONLY_FILES=(
     version/BUILDTYPE
     version/RELEASE
     version/CALENDAR_VERSION
+    version/PATCH
 )
 
 # Directories whose contents should always retain main's value after a
@@ -145,6 +148,29 @@ while IFS= read -r path; do
             echo "  resolved $path: took rel branch's content"
             ;;
     esac
+done < <(git diff --name-only --diff-filter=U)
+
+# (3) Conflicts under release-only directories: main's version always
+# wins, same policy the reset pass below applies to paths that merged
+# cleanly. If the path exists in HEAD, restore HEAD's content into the
+# index and working tree; otherwise remove it. Note `git checkout --ours`
+# does not work for all conflict types (e.g. delete/modify, where our
+# stage is absent), so prefer the HEAD-based form.
+while IFS= read -r path; do
+    for d in "${RELEASE_ONLY_DIRS[@]}"; do
+        case "$path" in
+            "$d"/*)
+                if git cat-file -e "HEAD:$path" 2>/dev/null; then
+                    git checkout HEAD -- "$path"
+                    echo "  resolved $path: kept main's version"
+                else
+                    git rm -f -- "$path" >/dev/null
+                    echo "  resolved $path: removed (not present on main)"
+                fi
+                break
+                ;;
+        esac
+    done
 done < <(git diff --name-only --diff-filter=U)
 
 # Report any remaining (unexpected) conflicts.

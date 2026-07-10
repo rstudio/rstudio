@@ -38,6 +38,17 @@ export function getAppPath(): string {
   return appPath;
 }
 
+/**
+ * True when rsession is launched with --automation-agent (the flag the
+ * Playwright fixture passes). Use this to gate test-only behaviors such as
+ * `showInactive` over `show` -- the goal is to keep windows from leaping to
+ * the front while leaving the app visible in the dock / Cmd+Tab so the user
+ * can still find and focus it manually.
+ */
+export function isAutomated(): boolean {
+  return app.commandLine.hasSwitch('automation-agent');
+}
+
 export function initializeSharedSecret(): void {
   const sharedSecret = randomUUID();
   setenv('RS_SHARED_SECRET', sharedSecret);
@@ -402,6 +413,12 @@ export function parseFilter(filters: string): FileFilter[] {
 export function raiseAndActivateWindow(window: BrowserWindow): void {
   if (window.isMinimized()) {
     window.restore();
+  }
+  // In automation mode, surface the window without pulling OS focus away
+  // from whatever the user is doing while the tests run.
+  if (isAutomated()) {
+    window.showInactive();
+    return;
   }
   window.moveTop();
   window.focus();

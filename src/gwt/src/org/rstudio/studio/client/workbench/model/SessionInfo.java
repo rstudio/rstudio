@@ -123,14 +123,20 @@ public class SessionInfo extends JavaScriptObject
       return this.user_prefs;
    }-*/;
 
+   // The pref/state layer arrays can momentarily be incomplete during startup
+   // (e.g. if a bootstrap RPC fails before they are fully populated). Clamp the
+   // layer index to the last valid element rather than Math.min(length, LAYER_*),
+   // which would index one past the end when length <= LAYER_* and throw on the
+   // subsequent .getValues(). For a fully-populated array (length > LAYER_*) this
+   // is identical to indexing LAYER_* directly. See #18019.
    public final JsObject getUserPrefs()
    {
-      return getPrefs().get(Math.min(getPrefs().length(), UserPrefs.LAYER_USER)).getValues();
+      return getPrefs().get(Math.min(getPrefs().length() - 1, UserPrefs.LAYER_USER)).getValues();
    }
 
    public final PrefLayer getUserPrefLayer()
    {
-      return getPrefs().get(Math.min(getPrefs().length(), UserPrefs.LAYER_USER));
+      return getPrefs().get(Math.min(getPrefs().length() - 1, UserPrefs.LAYER_USER));
    }
 
    public final native JsArray<PrefLayer> getUserState() /*-{
@@ -141,7 +147,8 @@ public class SessionInfo extends JavaScriptObject
 
    public final PrefLayer getUserStateLayer()
    {
-      return getUserState().get(Math.min(getPrefs().length(), UserState.LAYER_USER));
+      // index and measure the same array (user_state, not user_prefs)
+      return getUserState().get(Math.min(getUserState().length() - 1, UserState.LAYER_USER));
    }
 
    public final static String DESKTOP_MODE = "desktop";
@@ -657,8 +664,22 @@ public class SessionInfo extends JavaScriptObject
       return this.trust_request;
    }-*/;
 
-   public final native boolean getStartupFilesSuppressed() /*-{
-      return this.startup_files_suppressed || false;
+   /**
+    * @return Whether the current project is untrusted (either explicitly, or
+    * because a trust decision is still pending). Untrusted projects run in
+    * restricted mode; see SessionTrust.hpp for the consequences.
+    */
+   public final native boolean getProjectUntrusted() /*-{
+      return this.project_untrusted || false;
+   }-*/;
+
+   /**
+    * Refreshes the cached trust state. Called on deferred init so that the
+    * client reflects the trust status of a restarted session (e.g. after the
+    * user grants or revokes trust for the project directory).
+    */
+   public final native void setProjectUntrusted(boolean untrusted) /*-{
+      this.project_untrusted = untrusted;
    }-*/;
 
    /**
@@ -701,10 +722,6 @@ public class SessionInfo extends JavaScriptObject
 
    public final native boolean getCopilotEnabled() /*-{
       return this.copilot_enabled || false;
-   }-*/;
-   
-   public final native boolean isAutomationHost() /*-{
-      return this.is_automation_host;
    }-*/;
    
    public final native boolean isAutomationAgent() /*-{

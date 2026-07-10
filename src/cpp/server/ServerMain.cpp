@@ -26,6 +26,7 @@
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/SocketRpc.hpp>
+#include <core/Thread.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/text/TemplateFilter.hpp>
@@ -44,6 +45,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <server_core/RVersionsScanner.hpp>
 #include <server_core/SecureKeyFile.hpp>
 #include <server_core/ServerDatabase.hpp>
 #include <server_core/http/SecureCookie.hpp>
@@ -74,6 +76,7 @@
 #include "server-config.h"
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
+#include "ServerCheckConfig.hpp"
 #include "ServerEval.hpp"
 #include "ServerEnvVars.hpp"
 #include "ServerInit.hpp"
@@ -84,13 +87,6 @@
 #include "ServerXdgVars.hpp"
 #include "ServerLogVars.hpp"
 
-#if defined(__linux__)
-# define kOpenProgram "xdg-open"
-#elif defined(__APPLE__)
-# define kOpenProgram "/usr/bin/open"
-#elif defined(_WIN32)
-# define kOpenProgram "start"
-#endif
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -110,6 +106,12 @@ void addProcsToShutdown(std::vector<core::system::ProcessInfo> *pChildren);
 std::set<std::string> interruptProcs();
 void shutdown();
 bool requireLocalR();
+
+// Extended --check-config hook for pro builds (database connectivity,
+// license status, etc.).  The OSS stub sets *pPassed = true and prints
+// nothing.  Returns an Error only on a hard failure to run the check
+// itself; individual sub-check failures are reported via *pPassed.
+Error checkConfig(const Options& options, std::ostream& out, bool* pPassed);
 
 } // namespace overlay
 } // namespace server
@@ -512,7 +514,15 @@ Error waitForSignals()
             }
          });
 
-         waitThread.timed_join(boost::chrono::seconds(60));
+         // the reaper blocks in waitpid(), which is not an interruption point;
+         // it ends on its own once every child is reaped. bound the wait so a
+         // child that refuses to die can't hang shutdown, and abandon it
+         // otherwise (the stuck-process check below then reports what remains).
+         core::thread::joinOrAbandonThread(
+               waitThread,
+               "child reaper thread",
+               false,
+               boost::posix_time::seconds(60));
 
          // notify user if there seem to still be some processes around
          int status = 0;
@@ -535,18 +545,6 @@ Error waitForSignals()
 
          // the overlay shuts down monitored processes that failed to stop
          overlay::shutdown();
-
-         // Short-circuit the re-raise below for the self-sent SIGTERM
-         // that follows a clean automation host exit; see
-         // s_shuttingDownForAutomation in ServerSessionManager.cpp for
-         // the full rationale (avoids 143-vs-0 ambiguity for external
-         // test harnesses). Externally-delivered SIGTERMs and non-clean
-         // automation exits fall through to the re-raise.
-         if (sig == SIGTERM && server::isShuttingDownForAutomation())
-         {
-            LOG_INFO_MESSAGE("Automation shutdown complete; exiting with status 0.");
-            std::exit(0);
-         }
 
          // clear the signal mask
          error = core::system::clearSignalMask();
@@ -719,6 +717,89 @@ int main(int argc, char * const argv[])
       if ( status.exit() )
       {
          return status.exitCode();
+      }
+
+      // Extended --check-config checks.  At this point options is fully
+      // populated and no subsystems have been started.  A clean config-file
+      // parse (handled inside program_options::read) has already printed its
+      // [PASS] line and returned run() instead of exitSuccess() so we arrive
+      // here.  We now run additional checks and collect an overall verdict.
+      if (options.checkConfigMode())
+      {
+         bool allPassed = true;
+
+         // -- File-path checks -----------------------------------------------
+         // For each configured path that is non-empty, verify that the path
+         // exists on disk and report [PASS] or [FAIL] via checkConfigFilePath.
+
+         // secureCookieKeyFile (FilePath accessor) -- informational: the server
+         // auto-generates this key on startup when the file does not exist;
+         // under load-balanced setups the key may live in the database instead.
+         // A missing file is therefore not a fatal config error.
+         checkConfigFilePath("secure-cookie-key-file",
+                             options.secureCookieKeyFile(),
+                             std::cout,
+                             true /* informational */);
+
+         // serverDataDir (FilePath accessor) -- informational: the server
+         // creates this directory on startup so a missing dir is not a fatal
+         // error; pass informational=true so it is always reported as [PASS].
+         checkConfigFilePath("server-data-dir",
+                             options.serverDataDir(),
+                             std::cout,
+                             true /* informational */);
+
+         // rsessionConfigFile (string accessor)
+         if (!checkConfigFilePath("rsession-config-file",
+                                  options.rsessionConfigFile(),
+                                  std::cout,
+                                  false /* informational */,
+                                  true  /* fileOnly */))
+            allPassed = false;
+
+         // databaseConfigFile (string accessor)
+         if (!checkConfigFilePath("database-config-file",
+                                  options.databaseConfigFile(),
+                                  std::cout,
+                                  false /* informational */,
+                                  true  /* fileOnly */))
+            allPassed = false;
+
+         // Note: product binaries resolved relative to the install (rsession,
+         // r-ldpath, rserver-pam) are intentionally not checked here. They are
+         // install artifacts rather than admin-provided configuration, and
+         // their integrity is the domain of --verify-installation.
+
+         // -- R installation check (informational, never fails the check) ----
+         {
+            core::RVersionsScanner rScanner(true,
+                                            options.rsessionWhichR(),
+                                            options.rldpathPath(),
+                                            options.rsessionLdLibraryPath());
+            core::r_util::RVersion rVersion;
+            std::string rErrMsg;
+            if (rScanner.detectSystemRVersion(&rVersion, &rErrMsg))
+               std::cout << "[PASS] R installation: found R " << rVersion.number() << std::endl;
+            else
+               std::cout << "[PASS] R installation: no R installation detected (informational)" << std::endl;
+         }
+
+         // -- Overlay (pro) hook ---------------------------------------------
+         {
+            bool overlayPassed = true;
+            Error overlayError = overlay::checkConfig(options, std::cout, &overlayPassed);
+            if (overlayError)
+            {
+               std::cout << "[FAIL] overlay check-config: " << overlayError.getSummary() << std::endl;
+               allPassed = false;
+            }
+            else if (!overlayPassed)
+            {
+               allPassed = false;
+            }
+         }
+
+         return allPassed ? EXIT_SUCCESS : EXIT_FAILURE;
       }
 
       // daemonize if requested
@@ -1103,51 +1184,6 @@ int main(int argc, char * const argv[])
       error = s_pHttpServer->run(options.wwwThreadPoolSize());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
-
-      // if we're running automation, open a browser instance and
-      // navigate to the RStudio Server instance URL to initiate
-      // the automated tests
-      if (options.runAutomation())
-      {
-         std::string address = options.wwwAddress();
-         if (address == "0.0.0.0")
-         {
-            address = "localhost";
-         }
-
-         std::string port = options.wwwPort();
-         if (port.empty())
-         {
-            Error error = systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
-            LOG_ERROR(error);
-            return EXIT_FAILURE;
-         }
-
-         FilePath openProgramPath(kOpenProgram);
-
-#ifndef _WIN32
-         if (openProgramPath.isRelative())
-         {
-            Error findError = core::system::findProgramOnPath(kOpenProgram, &openProgramPath);
-            if (findError)
-            {
-               LOG_ERROR(findError);
-               return EXIT_FAILURE;
-            }
-         }
-#endif
-
-         std::string url = http::URL::formatAddress("http", address, port);
-         core::system::ProcessOptions options;
-         core::system::ProcessCallbacks callbacks;
-         Error error = server::process_supervisor::runProgram(
-                  openProgramPath.getAbsolutePath(),
-                  { url },
-                  options,
-                  callbacks);
-         if (error)
-            LOG_ERROR(error);
-      }
 
       // wait for signals
       error = waitForSignals();

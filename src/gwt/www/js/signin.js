@@ -27,10 +27,43 @@ function speakError() {
 }
 
 /**
+ * Marks both credential fields invalid and associates them with the error text.
+ * Called only for credential/sign-in errors (empty-field validation in verifyMe);
+ * never from the prepare() network/crypto error paths.
+ */
+function setCredentialErrorState() {
+   var u = document.getElementById('username');
+   var p = document.getElementById('password');
+   if (u !== null) {
+      u.setAttribute('aria-invalid', 'true');
+      u.setAttribute('aria-describedby', 'errortext');
+   }
+   if (p !== null) {
+      p.setAttribute('aria-invalid', 'true');
+      p.setAttribute('aria-describedby', 'errortext');
+   }
+}
+
+/**
  * Verifies the sign-in form, returning true if sign in should proceed and false
  * if there's a problem.
  */
 function verifyMe() {
+   // Clear any stale credential-error ARIA state from a previous submit attempt.
+   // Done before any early return so a non-credential failure path can never see
+   // stale aria-invalid/aria-describedby. These are re-set below only if an
+   // empty-field (credential) error fires.
+   var uReset = document.getElementById('username');
+   var pReset = document.getElementById('password');
+   if (uReset !== null) {
+      uReset.setAttribute('aria-invalid', 'false');
+      uReset.removeAttribute('aria-describedby');
+   }
+   if (pReset !== null) {
+      pReset.setAttribute('aria-invalid', 'false');
+      pReset.removeAttribute('aria-describedby');
+   }
+
    // Don't allow submitting the form if disabled
    if (document.getElementById('signinbutton').disabled) {
       return false;
@@ -41,6 +74,7 @@ function verifyMe() {
    if (userEle !== null) {
      if (userEle.value === '') {
         userEle.focus();
+        setCredentialErrorState();
         showError('You must enter a username');
         return false;
      }
@@ -51,6 +85,7 @@ function verifyMe() {
    if (passwordEle !== null) {
      if (passwordEle.value === '') {
         passwordEle.focus();
+        setCredentialErrorState();
         showError('You must enter a password');
         return false;
      }

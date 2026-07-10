@@ -38,6 +38,13 @@ export class DebuggerPage extends PageObject {
   // settling on active or inactive depending on whether the function is in
   // scope at click time.
   public anyBreakpointMarker: Locator;
+  // Matches breakpoints in their settled (post-RPC) states: active or
+  // inactive. Excludes the transient `ace_pending-breakpoint` decoration
+  // that GWT applies between the gutter click and R's response. Use this
+  // when waiting for `setBreakpoint` to be fully processed -- a pending
+  // marker only means the breakpoint object exists in GWT, not that R
+  // has registered the trace.
+  public settledBreakpointMarker: Locator;
   public activeDebugLine: Locator;
   public executingLineGutter: Locator;
 
@@ -64,6 +71,10 @@ export class DebuggerPage extends PageObject {
       ` or contains(@class,'ace_pending-breakpoint')` +
       ` or contains(@class,'ace_inactive-breakpoint')]`,
     );
+    this.settledBreakpointMarker = page.locator(
+      `${ACTIVE_EDITOR}//*[contains(@class,'ace_breakpoint')` +
+      ` or contains(@class,'ace_inactive-breakpoint')]`,
+    );
     this.activeDebugLine = page.locator(`${ACTIVE_EDITOR}//*[contains(@class,'ace_active_debug_line')]`);
     this.executingLineGutter = page.locator(`${ACTIVE_EDITOR}//*[contains(@class,'ace_executing-line')]`);
 
@@ -87,6 +98,15 @@ export class DebuggerPage extends PageObject {
    *  doesn't necessarily correspond to source line N+1. */
   gutterCellForLine(line: number): Locator {
     return this.gutterCells.filter({
+      hasText: new RegExp(`^\\s*${line}\\s*$`),
+    });
+  }
+
+  /** Locate a settled (active or inactive) breakpoint marker on `line`.
+   *  See {@link settledBreakpointMarker} for why pending markers are
+   *  excluded. */
+  settledBreakpointForLine(line: number): Locator {
+    return this.settledBreakpointMarker.filter({
       hasText: new RegExp(`^\\s*${line}\\s*$`),
     });
   }

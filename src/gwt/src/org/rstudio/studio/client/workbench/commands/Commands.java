@@ -213,6 +213,7 @@ public abstract class
    public abstract AppCommand toggleSoftWrapMode();
    public abstract AppCommand toggleRainbowParens();
    public abstract AppCommand toggleRainbowFencedDivs();
+   public abstract AppCommand toggleDetectMissingPackages();
 
    // Projects
    public abstract AppCommand newProject();
@@ -592,6 +593,8 @@ public abstract class
    public abstract AppCommand openDeveloperConsole();
    public abstract AppCommand reloadUi();
    public abstract AppCommand showGpuDiagnostics();
+   public abstract AppCommand toggleGpuExclusionList();
+   public abstract AppCommand toggleGpuDriverBugWorkarounds();
    public abstract AppCommand showA11yDiagnostics();
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();

@@ -152,6 +152,11 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       
       txtTitle_.setText("Untitled"); //$NON-NLS-1$
       DomUtils.setPlaceholder(txtAuthor_, constants_.newDocAuthorPlaceholderText());
+
+      // these are short form fields rather than prose, so disable the
+      // browser's native spell checking (https://github.com/rstudio/rstudio/issues/17796)
+      txtTitle_.getElement().setAttribute("spellcheck", "false");
+      txtAuthor_.getElement().setAttribute("spellcheck", "false");
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templateAriaLabelValue());
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
@@ -217,19 +222,19 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       grid_.getElement().getStyle().setMarginTop(4, Unit.PX);
       grid_.resize(3, 2);
       grid_.setCellPadding(2);
-      
+
       grid_.addStyleName(RES.styles().grid());
-      
+
       grid_.setWidget(ROW_ENGINE, 0, engineLabel);
       grid_.setWidget(ROW_ENGINE, 1, engineSelect_);
-      
+
       grid_.setWidget(ROW_KERNEL, 0, kernelLabel);
       grid_.setWidget(ROW_KERNEL, 1, kernelSelect_);
-      
+
       grid_.setWidget(ROW_EDITOR, 0, editorLabel);
       grid_.setWidget(ROW_EDITOR, 1, editorCheckBox_);
-      
-     
+
+
       // tweak some row spacing
       RowFormatter rowFmt = grid_.getRowFormatter();
       rowFmt.addStyleName(ROW_ENGINE, RES.styles().spacedRow());
@@ -282,7 +287,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    private Result getResult(boolean empty)
    {
       String formatName = getSelectedFormat();
-      
+
       String engine = engineSelect_.getSelectedValue();
       String kernel = kernelSelect_.getSelectedValue();
       String editor = editorCheckBox_.getValue() 
@@ -384,9 +389,14 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
             constants_.htmlFormatDesc())
          );
          templateFormatPanel_.add(createFormatOption(
+            QuartoCommandConstants.FORMAT_TYPST,
+            constants_.pdfTypstFormatText(),
+            constants_.pdfFormatDescTypst())
+         );
+         templateFormatPanel_.add(createFormatOption(
             QuartoCommandConstants.FORMAT_PDF,
-            constants_.pdfFormatText(),
-            constants_.pdfFormatDesc())
+            constants_.pdfLatexFormatText(),
+            constants_.pdfFormatDescLatex())
          );
          templateFormatPanel_.add(createFormatOption(
             QuartoCommandConstants.FORMAT_DOCX,
@@ -463,11 +473,13 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    private void manageControls()
    {
       RowFormatter rowFmt = grid_.getRowFormatter();
+      boolean interactive = getSelectedTemplate().equals(TEMPLATE_INTERACTIVE);
+
       // kernel only shows for jupyter
-      rowFmt.setVisible(ROW_ENGINE, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE));
-      rowFmt.setVisible(ROW_KERNEL, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE) &&
+      rowFmt.setVisible(ROW_ENGINE, !interactive);
+      rowFmt.setVisible(ROW_KERNEL, !interactive &&
                                     engineSelect_.getSelectedValue().equals(QuartoCommandConstants.ENGINE_JUPYTER));
-      rowFmt.setVisible(ROW_EDITOR, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE));
+      rowFmt.setVisible(ROW_EDITOR, !interactive);
    }
    
    private Label createLabel(String caption)

@@ -1229,6 +1229,8 @@ Error startAgent(const std::string& assistantType = "")
 
    DLOG("Using node.js at '{}'.", nodePath.getAbsolutePath());
 
+   node_tools::applySystemCaOption(&environment, nodePath);
+
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;
@@ -1379,7 +1381,21 @@ Error startAgent(const std::string& assistantType = "")
          LOG_ERROR(error);
          return;
       }
-      
+
+      // If this continuation was cancelled (e.g. the user switched assistants
+      // before 'initialize' completed), bail out now. Otherwise, the messages
+      // below would be delivered to the newly-running agent, double-initializing
+      // it with the old assistant's configuration.
+      if (pResponse != nullptr && pResponse->result().isObject())
+      {
+         json::Value cancelledJson = pResponse->result().getObject()["cancelled"];
+         if (cancelledJson.isBool() && cancelledJson.getBool())
+         {
+            DLOG("Ignoring cancelled 'initialize' response for '{}' agent.", assistant);
+            return;
+         }
+      }
+
       // newer versions of Assistant require an 'initialized' notification, which is
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
@@ -2647,6 +2663,16 @@ int assistantRuntimeStatus()
 bool stopAgentForUpdate()
 {
    return stopAgentSync();
+}
+
+void requestAgentStop()
+{
+   // Non-blocking: terminate the agent and let normal background polling reap
+   // it via onExit. Callers on the update-check path may run inline within a
+   // process-supervisor poll, where the synchronous stopAgentSync() would block
+   // for its full timeout (the nested poll its wait relies on is a no-op under
+   // the supervisor's re-entrancy guard).
+   stopAgent();
 }
 
 Error initialize()

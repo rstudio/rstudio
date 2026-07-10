@@ -134,12 +134,14 @@ public class StringUtilTests extends GWTTestCase
 
    public void testFormatDate()
    {
-      String result = StringUtil.formatDate(new Date());
-   
-      // just check that it's got minimum valid length; don't want to 
-      // mess with timezone awareness to do exact check
-      // MMM d, yyyy, h:mm AM
-      assertTrue(result.length() >= 20);
+      // formatDate now delegates to the browser Intl API, whose exact output
+      // (length, 12h/24h, separators) varies by locale, timezone, and time of
+      // day. Use a fixed date and assert the result is non-empty and contains
+      // the year
+      Date input = new Date(1592222400000L); // 2020-06-15T12:00:00Z
+      String result = StringUtil.formatDate(input);
+      assertFalse(StringUtil.isNullOrEmpty(result));
+      assertTrue(result.contains("2020"));
    }
    
    public void testNewlineCount()
@@ -375,6 +377,42 @@ public class StringUtilTests extends GWTTestCase
       assertEquals(
          StringUtil.getCommonPrefix(lines, false, false),
          "#'"
+      );
+   }
+
+   // https://github.com/rstudio/rstudio/issues/17493
+   public void testCommonPrefixWhitespaceOnlyLines()
+   {
+      // A single whitespace-only line should still report its own indent as the
+      // common prefix when skipWhitespaceOnlyLines is enabled; otherwise the
+      // comment shortcut loses the indent and inserts "#" at column zero. The
+      // allowPhantomWhitespace argument is irrelevant here: the single-line case
+      // returns the line verbatim before any prefix comparison happens.
+      assertEquals(
+         "    ",
+         StringUtil.getCommonPrefix(new String[] { "    " }, true, true)
+      );
+
+      // Tabs are a realistic indent for the comment shortcut, and must be
+      // preserved the same way as spaces.
+      assertEquals(
+         "\t",
+         StringUtil.getCommonPrefix(new String[] { "\t" }, true, true)
+      );
+
+      // When every line is whitespace-only, fall back to comparing them rather
+      // than collapsing the prefix to the empty string. allowPhantomWhitespace
+      // must be false so the shorter line bounds the common prefix at "  ";
+      // with phantom whitespace the prefix would extend to the longer indent.
+      assertEquals(
+         "  ",
+         StringUtil.getCommonPrefix(new String[] { "  ", "    " }, false, true)
+      );
+
+      // With at least one content line, whitespace-only lines are still skipped.
+      assertEquals(
+         "  ",
+         StringUtil.getCommonPrefix(new String[] { "  x", "", "  y" }, false, true)
       );
    }
 

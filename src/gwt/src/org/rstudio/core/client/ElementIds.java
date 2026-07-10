@@ -228,6 +228,11 @@ public class ElementIds
    public final static String FIND_FILES_EXCLUDE_CUSTOM = "find_files_exclude_custom";
    public static String getExcludeCustom() { return getElementId(FIND_FILES_EXCLUDE_CUSTOM); }
 
+   // FindOutputPane (Find in Files results / replace toolbar)
+   public final static String FIND_REPLACE_MODE_TOGGLE = "find_replace_mode_toggle";
+   public final static String FIND_REPLACE_TEXT = "find_replace_text";
+   public final static String FIND_REPLACE_ALL = "find_replace_all";
+
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";
    public static String getImportFileName() { return getElementId(IMPORT_FILE_NAME); }
@@ -521,6 +526,8 @@ public class ElementIds
    public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
    public final static String MB_FILES_TOUCH_FILE = "mb_files_touch_file";
    public static String getMbFilesTouchFile() { return getElementId(MB_FILES_TOUCH_FILE); }
+   public final static String MB_FILES_SETTINGS = "mb_files_settings";
+   public static String getMbFilesSettings() { return getElementId(MB_FILES_SETTINGS); }
 
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";
@@ -765,6 +772,11 @@ public class ElementIds
    
    // ProjectGeneralPreferencesPane
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";
+
+   // AppearancePreferencesPane / ProjectAppearancePreferencesPane (editor theme)
+   public final static String APPEARANCE_EDITOR_THEME = "appearance_editor_theme";
+   public final static String APPEARANCE_EDITOR_THEME_PROJECT_OVERRIDE = "appearance_editor_theme_project_override";
+   public final static String PROJECT_EDITOR_THEME = "project_editor_theme";
    
    // Data viewer
    public final static String DATA_EDITING_TOOLBAR = "data_editing_toolbar";

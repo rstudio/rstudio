@@ -16,12 +16,11 @@ The user provides one or more targets:
 
 ## Hard Rules
 
-1. **Load skills first** — Always load `rstudio-create-playwright-tests` before doing any conversion work.
-2. **Check BRAT for ground truth** — Before writing assertions, check `rstudio/src/cpp/tests/automation/testthat/` for existing R-based tests that cover the same functionality. They contain expected values and test patterns.
-3. **Check MIGRATION_FROM_SELENIUM_PROGRESS.md** — Before starting, verify the file hasn't already been converted or partially converted. Located at `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`.
-4. **Tests must work on Desktop and Server** — Use the unified fixture (`@fixtures/rstudio.fixture`). Don't hardcode Desktop-only patterns.
-5. **No Claude dependency** — All test infrastructure must be runnable from terminal, CI, and GitHub Actions. Claude subagents are a convenience layer, not a requirement.
-6. **A test isn't migrated until it passes.** Run the converted TypeScript test against a live RStudio instance (Desktop or Server, depending on target). Retry up to 3 times. If it still fails, mark it `test.fixme()` with a blocker note and track it as Fixme in `MIGRATION_FROM_SELENIUM_PROGRESS.md`. Do not list a fixme test as migrated in summaries, PR descriptions, or progress tracking.
+1. **Load skills and the README first** — Before doing any conversion work, always: (a) load `rstudio-create-playwright-tests`; (b) read `e2e/rstudio/README.md` in full, the suite's primary reference (read it fresh for each migration; don't assume it was read earlier in the session); (c) load `rstudio-run-playwright-tests`, whose run protocol governs the verification in Hard Rule 5.
+2. **Check MIGRATION_FROM_SELENIUM_PROGRESS.md** — Before starting, verify the file hasn't already been converted or partially converted. Located at `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`.
+3. **Tests must work on Desktop and Server, and on Windows, macOS, and Linux** — Use the unified fixture (`@fixtures/rstudio.fixture`). Don't hardcode Desktop-only or OS-specific patterns; use cross-platform shortcuts (`ControlOrMeta` where appropriate) and `process.platform` guards, or tag mode/OS-specific tests (`@desktop_only`, `@windows_only`, etc.).
+4. **No Claude dependency** — All test infrastructure must be runnable from terminal, CI, and GitHub Actions. Claude subagents are a convenience layer, not a requirement.
+5. **A test isn't migrated until it passes.** Run the converted TypeScript test against a live RStudio instance (Desktop or Server, depending on target). Retry up to 3 times. If it still fails, mark it `test.fixme()` with a blocker note and track it as Fixme in `MIGRATION_FROM_SELENIUM_PROGRESS.md`. Do not list a fixme test as migrated in summaries, PR descriptions, or progress tracking.
 
 ## Steps
 
@@ -34,12 +33,14 @@ The user provides one or more targets:
 ### Step 2: Read reference materials
 
 - Load `rstudio-create-playwright-tests` skill
-- Check BRAT (`rstudio/src/cpp/tests/automation/testthat/`) for related R-based test automation
+- Read `e2e/rstudio/README.md` in full -- the suite's primary reference; read it fresh for each migration, don't assume it was read earlier in the session
+- Load `rstudio-run-playwright-tests` skill -- its run protocol governs the verification gate (Hard Rule 5)
 - Check `rstudio-ide-automation/rstudio_server_pro/electron-tests/` for other Selenium/Selene electron tests covering the same functionality — useful for test logic, assertions, and expected values
 - Check `rstudio-ide-automation/rstudio_server_pro/tests/` for Selenium/Selene server tests covering the same functionality — useful for test logic, assertions, and expected values
 - Check `rstudio-pro/e2e/` for Workbench e2e patterns (examples include `.or()` locator chaining, `clickIfVisible()` helpers, input fill with retry, reload-on-hang recovery) -- look for anything else reusable
 - Read relevant existing Playwright page objects in `e2e/rstudio/pages/`
 - Read relevant existing Playwright actions in `e2e/rstudio/actions/`
+- Read relevant existing Playwright test specs in `e2e/rstudio/tests/` -- BRAT is retired; anything that was in BRAT is now in the Playwright suite
 
 **For large files or batch migrations:** if the source has many methods (say 10+) or you're migrating a directory, consider launching a general-purpose subagent to analyze the Python source(s) and return a brief covering: test methods to convert, pytest markers / skip reasons, fixtures used, page objects referenced, parallel safety hints, and any unusual patterns. This keeps the main context lean for the writing and running phases. For typical single-file migrations with a handful of methods, do the analysis inline.
 
@@ -86,7 +87,7 @@ If the test needs locators or methods not yet available:
 
 ### Step 6: Run the test
 
-**Hard gate (Hard Rule 6):** a test doesn't count as migrated until it passes here.
+**Hard gate (Hard Rule 5):** a test doesn't count as migrated until it passes here.
 
 Defer to the `rstudio-run-playwright-tests` skill for the canonical run commands (Desktop and Server). Present the command and wait for user approval before executing.
 
@@ -115,11 +116,26 @@ Present proposed improvements to the user. Only apply if approved. Re-run after 
 
 ### Step 8: Update progress tracking
 
-Edit `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`:
+Two records to update -- the progress doc (this repo) and the migrated marker
+on the Selenium source (the `rstudio-ide-automation` repo).
+
+**Progress doc** -- edit `e2e/rstudio/docs/MIGRATION_FROM_SELENIUM_PROGRESS.md`:
 - Update the file's status (Complete, Partial, or Fixme)
 - Add the Playwright target path and test count
 - Add notes if relevant
 - Add any fixme tests to the Fixme Tests table with blocker description
+
+**Mark the Selenium source as migrated** -- in `rstudio-ide-automation`, add
+`@pytest.mark.migratedToTypeScript` so the Python suite records which tests are
+ported. Follow that repo's `migrate-test` skill, Step 15:
+- Mark **each individual test method** that passed verification. **Never mark
+  at the class level** -- a class may be only partially migrated, and class-level
+  marking would wrongly imply every method is done.
+- Module-level `pytestmark = [pytest.mark.migratedToTypeScript, ...]` is
+  acceptable only when the file has no class and every method passed.
+- Never mark a method that ended up `test.fixme()` in Playwright.
+- This is a separate repo, so it needs its own `test/ron/` branch, commit, and
+  PR -- don't fold it into the rstudio PR.
 
 ### Step 9: Commit and submit
 
@@ -156,7 +172,7 @@ Present the assessed findings with recommendations. Wait for approval before edi
 - Fix Low findings only if they're real bugs or silent failures
 - Skip cosmetic Lows and "add tests for simple scripts" suggestions
 
-Apply fixes manually. **Do not invoke `roborev-fix`** -- Ron prefers manual fixes through the migration flow. Re-run the test (Hard Rule 6 still applies). Commit per Step 9. Re-run `roborev-review` on the new commit. Repeat until no actionable findings remain.
+Apply fixes manually. **Do not invoke `roborev-fix`** -- Ron prefers manual fixes through the migration flow. Re-run the test (Hard Rule 5 still applies). Commit per Step 9. Re-run `roborev-review` on the new commit. Repeat until no actionable findings remain.
 
 Close reviewed findings via the `roborev-respond` skill once they're addressed.
 

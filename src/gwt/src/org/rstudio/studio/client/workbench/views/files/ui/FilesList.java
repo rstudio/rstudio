@@ -143,6 +143,14 @@ public class FilesList extends Composite
          @Override
          public void run()
          {
+            // re-apply the active sort once per burst (rather than once per
+            // ADD event) so a bulk add doesn't trigger a full re-sort per file
+            if (resortPending_)
+            {
+               resortPending_ = false;
+               applyColumnSortList();
+            }
+
             filesDataGrid_.redraw();
          }
       };
@@ -478,6 +486,13 @@ public class FilesList extends Composite
             {
                files.add(file);
                filesDataGrid_.setPageSize(files.size() + 1);
+
+               // re-apply the active sort so the new file lands in its
+               // sorted position rather than at the bottom of the list.
+               // the sort is deferred onto the redraw timer so that a bulk
+               // add (e.g. git pull) collapses into a single sort + redraw
+               // rather than re-sorting the whole list on every ADD event.
+               resortPending_ = true;
                scheduleRedraw();
             }
             else
@@ -730,6 +745,7 @@ public class FilesList extends Composite
    private final SortOrder order_;
    private boolean activeSortColumnAscending_ = true;
    private boolean applyingProgrammaticSort_ = false;
+   private boolean resortPending_ = false;
 
 
    private final MultiSelectionModel<FileSystemItem> selectionModel_;

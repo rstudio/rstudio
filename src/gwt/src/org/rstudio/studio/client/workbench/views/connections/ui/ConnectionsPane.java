@@ -431,9 +431,6 @@ public class ConnectionsPane extends WorkbenchPane
       secondaryToolbar_.addRightWidget(connectionIcon_);
       secondaryToolbar_.addRightWidget(connectionType_);
 
-      ThemeStyles styles = ThemeStyles.INSTANCE;
-      secondaryToolbar_.getWrapper().addStyleName(styles.tallerToolbarWrapper());
-      
       return secondaryToolbar_;
    }
    

@@ -1285,6 +1285,19 @@ core::Error UserPrefValues::setEditorTheme(std::string val)
 }
 
 /**
+ * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+ */
+bool UserPrefValues::ignoreProjectAppearance()
+{
+   return readPref<bool>("ignore_project_appearance");
+}
+
+core::Error UserPrefValues::setIgnoreProjectAppearance(bool val)
+{
+   return writePref("ignore_project_appearance", val);
+}
+
+/**
  * Whether to use a custom editor font in RStudio Server.
  */
 bool UserPrefValues::serverEditorFontEnabled()
@@ -1857,6 +1870,19 @@ core::Error UserPrefValues::setAutoRunSetupChunk(bool val)
 }
 
 /**
+ * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+ */
+bool UserPrefValues::notebookExecuteInlineChunks()
+{
+   return readPref<bool>("notebook_execute_inline_chunks");
+}
+
+core::Error UserPrefValues::setNotebookExecuteInlineChunks(bool val)
+{
+   return writePref("notebook_execute_inline_chunks", val);
+}
+
+/**
  * Whether to hide the R console when executing inline R Markdown chunks.
  */
 bool UserPrefValues::hideConsoleOnChunkExecute()
@@ -2117,6 +2143,32 @@ core::Error UserPrefValues::setSortFileNamesNaturally(bool val)
 }
 
 /**
+ * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+ */
+bool UserPrefValues::dateTimeUseIso8601()
+{
+   return readPref<bool>("date_time_use_iso8601");
+}
+
+core::Error UserPrefValues::setDateTimeUseIso8601(bool val)
+{
+   return writePref("date_time_use_iso8601", val);
+}
+
+/**
+ * Whether to display dates and times in the UTC time zone instead of the local time zone.
+ */
+bool UserPrefValues::dateTimeUseUtc()
+{
+   return readPref<bool>("date_time_use_utc");
+}
+
+core::Error UserPrefValues::setDateTimeUseUtc(bool val)
+{
+   return writePref("date_time_use_utc", val);
+}
+
+/**
  * Whether to change the directory in the Files pane automatically when the working directory in R changes.
  */
 bool UserPrefValues::syncFilesPaneWorkingDir()
@@ -2244,6 +2296,19 @@ bool UserPrefValues::wrapTabNavigation()
 core::Error UserPrefValues::setWrapTabNavigation(bool val)
 {
    return writePref("wrap_tab_navigation", val);
+}
+
+/**
+ * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+ */
+bool UserPrefValues::mousewheelChangesEditorTab()
+{
+   return readPref<bool>("mousewheel_changes_editor_tab");
+}
+
+core::Error UserPrefValues::setMousewheelChangesEditorTab(bool val)
+{
+   return writePref("mousewheel_changes_editor_tab", val);
 }
 
 /**
@@ -2741,6 +2806,32 @@ core::Error UserPrefValues::setDataViewerShowSummary(bool val)
 }
 
 /**
+ * Whether the data viewer filter UI is shown by default when opening the data viewer.
+ */
+bool UserPrefValues::dataViewerShowFilters()
+{
+   return readPref<bool>("data_viewer_show_filters");
+}
+
+core::Error UserPrefValues::setDataViewerShowFilters(bool val)
+{
+   return writePref("data_viewer_show_filters", val);
+}
+
+/**
+ * Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.
+ */
+bool UserPrefValues::dataViewerUseOverlayScrollbars()
+{
+   return readPref<bool>("data_viewer_use_overlay_scrollbars");
+}
+
+core::Error UserPrefValues::setDataViewerUseOverlayScrollbars(bool val)
+{
+   return writePref("data_viewer_use_overlay_scrollbars", val);
+}
+
+/**
  * Support accessibility aids such as screen readers.
  */
 bool UserPrefValues::enableScreenReader()
@@ -2855,6 +2946,19 @@ bool UserPrefValues::autoSaveOnBlur()
 core::Error UserPrefValues::setAutoSaveOnBlur(bool val)
 {
    return writePref("auto_save_on_blur", val);
+}
+
+/**
+ * When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.
+ */
+bool UserPrefValues::reduceRemoteFilesystemOperations()
+{
+   return readPref<bool>("reduce_remote_filesystem_operations");
+}
+
+core::Error UserPrefValues::setReduceRemoteFilesystemOperations(bool val)
+{
+   return writePref("reduce_remote_filesystem_operations", val);
 }
 
 /**
@@ -3222,6 +3326,19 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
 }
 
 /**
+ * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+ */
+bool UserPrefValues::saveFilesDurably()
+{
+   return readPref<bool>("save_files_durably");
+}
+
+core::Error UserPrefValues::setSaveFilesDurably(bool val)
+{
+   return writePref("save_files_durably", val);
+}
+
+/**
  * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
  */
 bool UserPrefValues::insertNativePipeOperator()
@@ -3547,6 +3664,19 @@ core::Error UserPrefValues::setAssistantToolbarButtonVisible(bool val)
 }
 
 /**
+ * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+ */
+bool UserPrefValues::assistantUseSystemCa()
+{
+   return readPref<bool>("assistant_use_system_ca");
+}
+
+core::Error UserPrefValues::setAssistantUseSystemCa(bool val)
+{
+   return writePref("assistant_use_system_ca", val);
+}
+
+/**
  * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
  */
 bool UserPrefValues::positAssistantTestManifest()
@@ -3557,6 +3687,19 @@ bool UserPrefValues::positAssistantTestManifest()
 core::Error UserPrefValues::setPositAssistantTestManifest(bool val)
 {
    return writePref("posit_assistant_test_manifest", val);
+}
+
+/**
+ * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+ */
+int UserPrefValues::positAssistantUpdateCheckIntervalHours()
+{
+   return readPref<int>("posit_assistant_update_check_interval_hours");
+}
+
+core::Error UserPrefValues::setPositAssistantUpdateCheckIntervalHours(int val)
+{
+   return writePref("posit_assistant_update_check_interval_hours", val);
 }
 
 /**
@@ -3742,7 +3885,7 @@ core::Error UserPrefValues::setCodeFormatterExternalCommand(std::string val)
 }
 
 /**
- * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+ * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
  */
 bool UserPrefValues::useAirFormatter()
 {
@@ -3752,6 +3895,19 @@ bool UserPrefValues::useAirFormatter()
 core::Error UserPrefValues::setUseAirFormatter(bool val)
 {
    return writePref("use_air_formatter", val);
+}
+
+/**
+ * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+ */
+bool UserPrefValues::airFormatterRequireToml()
+{
+   return readPref<bool>("air_formatter_require_toml");
+}
+
+core::Error UserPrefValues::setAirFormatterRequireToml(bool val)
+{
+   return writePref("air_formatter_require_toml", val);
 }
 
 /**
@@ -3893,6 +4049,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEnableMousewheelZoom,
       kMousewheelZoomDebounceMs,
       kEditorTheme,
+      kIgnoreProjectAppearance,
       kServerEditorFontEnabled,
       kServerEditorFont,
       kDefaultEncoding,
@@ -3937,6 +4094,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowDocOutlineRmd,
       kDocumentOutlineFontSize,
       kAutoRunSetupChunk,
+      kNotebookExecuteInlineChunks,
       kHideConsoleOnChunkExecute,
       kExecutionBehavior,
       kShowTerminalTab,
@@ -3957,6 +4115,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAlwaysShownFiles,
       kAlwaysShownExtensions,
       kSortFileNamesNaturally,
+      kDateTimeUseIso8601,
+      kDateTimeUseUtc,
       kSyncFilesPaneWorkingDir,
       kJobsTabVisibility,
       kShowLauncherJobsTab,
@@ -3967,6 +4127,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
       kWrapTabNavigation,
+      kMousewheelChangesEditorTab,
       kGlobalTheme,
       kUseDarkThemeModalDialogs,
       kGitDiffIgnoreWhitespace,
@@ -4005,6 +4166,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,
       kDataViewerShowSummary,
+      kDataViewerShowFilters,
+      kDataViewerUseOverlayScrollbars,
       kEnableScreenReader,
       kTypingStatusDelayMs,
       kReducedMotion,
@@ -4014,6 +4177,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
+      kReduceRemoteFilesystemOperations,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kVisualMarkdownEditingIsDefault,
@@ -4042,6 +4206,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonVersion,
       kPythonPath,
       kSaveRetryTimeout,
+      kSaveFilesDurably,
       kInsertNativePipeOperator,
       kCommandPaletteMru,
       kShowMemoryUsage,
@@ -4067,7 +4232,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantNesAutoshow,
       kAssistantShowMessages,
       kAssistantToolbarButtonVisible,
+      kAssistantUseSystemCa,
       kPositAssistantTestManifest,
+      kPositAssistantUpdateCheckIntervalHours,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,
@@ -4083,6 +4250,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeFormatterStylerStrict,
       kCodeFormatterExternalCommand,
       kUseAirFormatter,
+      kAirFormatterRequireToml,
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
@@ -4092,6 +4260,7 @@ std::vector<std::string> UserPrefValues::allKeys()
 std::set<std::string> UserPrefValues::localProjectPrefs()
 {
    return std::set<std::string>({
+      kReduceRemoteFilesystemOperations,
       kFileMonitorUseGitignore,
    });
 }

@@ -1,5 +1,7 @@
 // Utility methods for Jenkins pipelines
 
+import groovy.transform.Field
+
 /**
   * Returns true if branch has changes in the specified path with the target branch.
   * If invertMatch is true, returns true if branch has changes that do not match the specified path.
@@ -152,7 +154,7 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
     RSTUDIO_VERSION +
     ' --build ' +
     destinationPath +
-    ' --url https://s3.amazonaws.com/rstudio-ide-build/' +
+    ' --url https://dl.dailies.rstudio.com/' +
     urlPath +
     '/' +
     packageFile +
@@ -275,7 +277,7 @@ def getProductName() {
   * Does not work on windows.
   */
 def updateDailyRedirects(String path) {
-  sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
+  sh 'docker/jenkins/publish-daily-binary.sh https://dl.dailies.rstudio.com/' + path + ' ${RSTUDIO_ORG_PEM}'
 }
 
 /**
@@ -443,7 +445,8 @@ def checkRunsRequestWithRetry(String method, String payload = "", String url = p
   return lastResponse
 }
 
-checks = [:]
+@Field
+def checks = [:]
 
 /**
   * Posts a review check to the GitHub /check-runs API with the specified args.

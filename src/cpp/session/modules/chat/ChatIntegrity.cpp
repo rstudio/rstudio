@@ -17,10 +17,14 @@
 #include "ChatLogging.hpp"
 #include "ChatTypes.hpp"
 
+#include <algorithm>
+#include <cstdlib>
+
 #include <boost/algorithm/string.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/system/Crypto.hpp>
+#include <core/system/Process.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::types;
@@ -38,6 +42,42 @@ bool isHttpsUrl(const std::string& url)
    return boost::starts_with(url, "https://");
 }
 
+// Index just past the first balanced top-level {...} in `s` (string-literal
+// aware), or std::string::npos if there is no complete top-level object. Used
+// to detect trailing content after a parsed manifest object, which
+// json::Value::parse (kParseStopWhenDoneFlag) would otherwise accept silently.
+std::string::size_type endOfFirstJsonObject(const std::string& s)
+{
+   int depth = 0;
+   bool inString = false;
+   bool escaped = false;
+   bool started = false;
+   for (std::string::size_type i = 0; i < s.size(); ++i)
+   {
+      char c = s[i];
+      if (inString)
+      {
+         if (escaped)
+            escaped = false;
+         else if (c == '\\')
+            escaped = true;
+         else if (c == '"')
+            inString = false;
+         continue;
+      }
+      if (c == '"')
+         inString = true;
+      else if (c == '{')
+      {
+         ++depth;
+         started = true;
+      }
+      else if (c == '}' && started && --depth == 0)
+         return i + 1;
+   }
+   return std::string::npos;
+}
+
 } // anonymous namespace
 
 Error getPackageInfoFromManifest(
@@ -45,7 +85,8 @@ Error getPackageInfoFromManifest(
     const std::string& protocolVersion,
     std::string* pPackageVersion,
     std::string* pDownloadUrl,
-    std::string* pSha256)
+    std::string* pSha256,
+    std::vector<std::string>* pProviders)
 {
    if (!pPackageVersion || !pDownloadUrl)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
@@ -77,6 +118,7 @@ Error getPackageInfoFromManifest(
    std::string bestPackageVersion;
    std::string bestDownloadUrl;
    std::string bestSha256;
+   std::vector<std::string> bestProviders;
    bool foundCompatible = false;
 
    for (const auto& entry : versions)
@@ -136,6 +178,14 @@ Error getPackageInfoFromManifest(
       std::string sha256;
       json::readObject(versionInfo, "sha256", sha256); // ignore error - field is optional
 
+      // Read optional providers field (advertised provider identifiers). On any
+      // error -- absent, not an array, or a non-string element -- treat the entry
+      // as having no providers. readObject appends valid elements before failing
+      // on a bad one, so reset to avoid an order-dependent partial result.
+      std::vector<std::string> providers;
+      if (json::readObject(versionInfo, "providers", providers))
+         providers.clear();
+
       // Check if this is the best (highest) protocol version so far
       if (!foundCompatible || manifestProtocolVer > bestProtocol)
       {
@@ -143,6 +193,7 @@ Error getPackageInfoFromManifest(
          bestPackageVersion = packageVersion;
          bestDownloadUrl = downloadUrl;
          bestSha256 = sha256;
+         bestProviders = providers;
          foundCompatible = true;
          DLOG("Found compatible protocol {}.{} with package version {}",
               manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
@@ -161,12 +212,22 @@ Error getPackageInfoFromManifest(
    *pDownloadUrl = bestDownloadUrl;
    if (pSha256)
       *pSha256 = bestSha256;
+   if (pProviders)
+      *pProviders = bestProviders;
 
    DLOG("Selected best compatible protocol {}.{}: package version={}, url={}, sha256={}",
         bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl,
         bestSha256.empty() ? "(none)" : bestSha256);
 
    return Success();
+}
+
+bool advertisesByokProvider(const std::vector<std::string>& providers)
+{
+   // The manifest opts a build's protocol entry into the bring-your-own-key
+   // provider set by listing "byok" among its providers. Other identifiers
+   // (e.g. "pai") do not trip this.
+   return std::find(providers.begin(), providers.end(), "byok") != providers.end();
 }
 
 Error verifyPackageSha256(const FilePath& packagePath,
@@ -207,6 +268,53 @@ Error verifyPackageSha256(const FilePath& packagePath,
    }
 
    DLOG("SHA-256 verification passed: {}", actualSha256);
+   return Success();
+}
+
+Error manifestFromDownloadResult(const core::system::ProcessResult& result,
+                                 json::Object* pManifest)
+{
+   if (pManifest == nullptr)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   // Non-empty stderr (rare with --vanilla + quiet) is appended to every failure
+   // message for diagnostics -- the human message becomes the error's description,
+   // surfaced when the error is logged in full. It is never parsed to decide
+   // behavior, so the error mapping stays locale-independent. Any non-zero exit,
+   // and any empty / invalid / non-object / trailing-content body, is treated as
+   // "unavailable".
+   std::string detail = boost::algorithm::trim_copy(result.stdErr);
+   std::string suffix = detail.empty() ? std::string() : (": " + detail);
+
+   if (result.exitStatus != EXIT_SUCCESS)
+      return systemError(boost::system::errc::io_error,
+                         "Manifest download failed" + suffix, ERROR_LOCATION);
+
+   std::string body = boost::algorithm::trim_copy(result.stdOut);
+   if (body.empty())
+      return systemError(boost::system::errc::io_error,
+                         "Manifest download produced no output" + suffix, ERROR_LOCATION);
+
+   // json::Value::parse returns a (truthy) Error on failure.
+   json::Value value;
+   if (value.parse(body))
+      return systemError(boost::system::errc::protocol_error,
+                         "Manifest is not valid JSON" + suffix, ERROR_LOCATION);
+
+   if (!value.isObject())
+      return systemError(boost::system::errc::protocol_error,
+                         "Manifest must be a JSON object" + suffix, ERROR_LOCATION);
+
+   // json::Value::parse uses kParseStopWhenDoneFlag and would accept a valid
+   // object followed by trailing content (e.g. "{...}\nwarning"). The body is
+   // already trimmed, so anything past the top-level object's close brace is
+   // non-whitespace junk -- reject it; the manifest must be exactly one object.
+   if (endOfFirstJsonObject(body) != body.size())
+      return systemError(boost::system::errc::protocol_error,
+                         "Manifest has unexpected content after the JSON object" + suffix,
+                         ERROR_LOCATION);
+
+   *pManifest = value.getObject();
    return Success();
 }
 

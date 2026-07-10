@@ -49,7 +49,6 @@ TODO-INTERNAL
 
 node_modules/
 src/node/desktop/src/types/user-state-schema.d.ts
-rstudio-automation-results.xml
 
 venv/
 .venv/
@@ -59,8 +58,13 @@ venv/
 .claude/worktrees/
 docs/superpowers
 .superpowers/
+.posit/assistant/
 .positai/
 AGENTS.md
 GEMINI.md
 spec/
 .positai
+
+# Non-persistent Mole caches
+.mole.web_cache
+.mole.rust_cache

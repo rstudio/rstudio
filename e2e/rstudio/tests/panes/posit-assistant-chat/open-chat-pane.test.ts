@@ -1,34 +1,34 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { requireAiCredentials } from '@utils/ai-credentials';
+import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
+import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe('Open Chat Pane', () => {
+test.describe('Open Chat Pane', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let chatActions: ChatPaneActions;
   let chatPane: ChatPane;
   let versions: EnvironmentVersions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
+    const actions = createChatActions(page);
+    consoleActions = actions.consoleActions;
+    chatActions = actions.chatActions;
+    chatPane = actions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
     await consoleActions.clearConsole();
-
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
+    await actions.assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('open chat pane with keyboard shortcut', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) => {
@@ -37,16 +37,14 @@ test.describe('Open Chat Pane', () => {
 
     // Close the sidebar if it's open to ensure the chat pane is not visible
     if (await chatIframe.isVisible().catch(() => false)) {
-      await consoleActions.typeInConsole(".rs.api.executeCommand('toggleSidebar')");
-      await sleep(2000);
+      await executeCommand(page, 'toggleSidebar');
     }
 
-    // Verify the chat iframe is not visible
+    // Verify the chat iframe is not visible (expect auto-waits for the toggle).
     await expect(chatIframe).not.toBeVisible();
 
     // Open chat pane via Ctrl+Cmd+I (macOS shortcut)
     await page.keyboard.press('Control+Meta+I');
-    await sleep(2000);
 
     // Verify the chat iframe appeared
     await expect(page.locator("iframe[title='Posit Assistant']")).toBeVisible({ timeout: 15000 });
@@ -57,11 +55,10 @@ test.describe('Open Chat Pane', () => {
 
     // Close the sidebar if it's open to ensure the chat pane is not visible
     if (await chatIframe.isVisible().catch(() => false)) {
-      await consoleActions.typeInConsole(".rs.api.executeCommand('toggleSidebar')");
-      await sleep(2000);
+      await executeCommand(page, 'toggleSidebar');
     }
 
-    // Verify the chat iframe is not visible
+    // Verify the chat iframe is not visible (expect auto-waits for the toggle).
     await expect(chatIframe).not.toBeVisible();
 
     await chatActions.openChatPane();

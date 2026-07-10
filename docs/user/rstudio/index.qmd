@@ -62,13 +62,33 @@ Posit Workbench has several features that differentiate it from the open-source 
 
 ### Open Source
 
-- [RStudio Desktop download](https://posit.co/downloads/) - available for Windows/Mac/Linux
-- [RStudio Server download](https://posit.co/downloads/) - available for Linux
+- [RStudio Desktop download](#rstudio-ide-oss-downloads) - available for Windows/Mac/Linux
+- [RStudio Server download](#rstudio-server-oss-downloads) - available for Linux
 
 ### Commercial
 
 - [Posit Workbench](https://docs.posit.co/rsw/installation/) - administration guide for installation and configuration
-- [RStudio Desktop Pro](https://posit.co/download/rstudio-desktop-pro/) - available for Windows/Mac/Linux
+- [RStudio Desktop Pro](https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#direct-downloads) - available for Windows/Mac/Linux
+
+### Direct Downloads (Open Source)
+
+#### RStudio IDE {#rstudio-ide-oss-downloads}
+
+Direct download links for RStudio Desktop {{< var version >}}, the version this documentation describes:
+
+{{< include ../../_snippets/install-desktop-oss.qmd >}}
+
+#### RStudio Server {#rstudio-server-oss-downloads}
+
+Direct download links for RStudio Server {{< var version >}}, the version this documentation describes:
+
+{{< include ../../_snippets/install-server-oss.qmd >}}
+
+### Direct Downloads (Commercial)
+
+Direct download links for RStudio Desktop Pro {{< var version >}}, the version this documentation describes:
+
+{{< include ../../_snippets/install-desktop-pro.qmd >}}
 
 ::: {.callout-warning }
 

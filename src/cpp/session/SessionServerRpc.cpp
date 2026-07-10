@@ -96,8 +96,26 @@ SEXP rs_invokeServerRpc(SEXP name, SEXP args)
 // once flag for lazy initializing async RPC thread
 boost::once_flag s_threadOnce = BOOST_ONCE_INIT;
 
-// io_context for performing RPC work on the thread
-boost::asio::io_context s_ioContext;
+// io_context for performing RPC work on the thread.
+//
+// Intentionally heap-allocated and never freed. stop() below stops the context
+// and joins the worker on the clean exit path, but if a request is wedged in a
+// blocking operation that io_context::stop() cannot unblock, joinOrAbandonThread
+// detaches the worker after a timeout and lets shutdown proceed. Were this a
+// normal global, ~io_context() would then run during static destruction while
+// the detached worker is still inside run() -- a documented Windows-IOCP hang
+// (asio issue #869, rstudio#18018). Never destroying it removes that teardown
+// entirely: the OS reclaims the io_context (and force-terminates the detached
+// worker) at process exit, which is well-defined. This is the standard "no
+// exit-time destructor" idiom for a process-lifetime global with a non-trivial,
+// thread-interacting destructor. The only difference from a normal global is at
+// the instant of exit; steady-state behavior is unchanged.
+boost::asio::io_context& s_ioContext = *new boost::asio::io_context();
+
+// the RPC worker thread. retained as a joinable handle (rather than launched
+// detached) so that stop() can wait for run() to return before the process
+// tears s_ioContext down at exit -- see stop().
+boost::thread s_rpcWorkerThread;
 
 void rpcWorkerThreadFunc()
 {
@@ -111,7 +129,7 @@ void ensureRpcWorkerThreadRunning()
    boost::call_once(s_threadOnce,
                     boost::bind(core::thread::safeLaunchThread,
                                 rpcWorkerThreadFunc,
-                                nullptr));
+                                &s_rpcWorkerThread));
 }
 
 } // anonymous namespace
@@ -120,6 +138,28 @@ boost::asio::io_context& ioContext()
 {
    ensureRpcWorkerThreadRunning();
    return s_ioContext;
+}
+
+void stop()
+{
+   // The worker thread runs s_ioContext.run() behind a work guard, so it never
+   // returns on its own. stop() forces run() to return; we then wait for the
+   // thread to actually leave run(). stop() declines to start any further queued
+   // work, so when nothing is mid-flight (the common exit case) the worker leaves
+   // run() and joins almost immediately. joinOrAbandonThread bounds the wait so
+   // we never trade a clean shutdown for an indefinite join hang, and is a no-op
+   // if the thread was never started (no async RPC was ever issued).
+   //
+   // If a request is wedged in a blocking operation that stop() cannot unblock,
+   // the join times out and the worker is detached. s_ioContext is never
+   // destroyed (see its declaration), so ~io_context() cannot run while that
+   // detached worker is still inside run() -- the Windows-IOCP teardown hang
+   // this whole dance exists to avoid (rstudio#18018, asio issue #869).
+   s_ioContext.stop();
+   core::thread::joinOrAbandonThread(
+      s_rpcWorkerThread,
+      "server RPC worker thread",
+      false); // released via s_ioContext.stop() above, not interruptible
 }
 
 Error invokeServerRpc(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)

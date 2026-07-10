@@ -4,6 +4,8 @@
    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
    ui:generateLocales="default">
    <ui:style>
+   @eval THEME_MUTED_GRAY org.rstudio.core.client.theme.ThemeColors.mutedGray;
+
    .host
    {
       width: 500px;
@@ -23,7 +25,7 @@
    {
       width: 100%;
       background-color: #e5e5e5;
-      border: 1px solid #a0a0a0;
+      border: 1px solid THEME_MUTED_GRAY;
       border-radius: 3px;
       margin-top: 20px;
       padding: 15px;

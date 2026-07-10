@@ -44,6 +44,12 @@ public interface ShellDisplay extends ShellOutputWriter,
    String getPromptText();
    
    void setBusy(boolean busy);
+
+   // Indicates R is blocked waiting for interactive input from the user (e.g.
+   // readline(), menu(), scan()) rather than at the normal REPL prompt. Such a
+   // prompt clears the busy state, so the two are tracked separately.
+   void setWaitingForInput(boolean waiting);
+
    void setReadOnly(boolean readOnly);
    void setSuppressPendingInput(boolean suppressPendingInput);
 

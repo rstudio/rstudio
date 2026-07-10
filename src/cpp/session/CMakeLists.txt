@@ -188,6 +188,7 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatLogging.cpp
    modules/chat/ChatInstallation.cpp
    modules/chat/ChatIntegrity.cpp
+   modules/chat/ChatUpdateThrottle.cpp
    modules/chat/ChatStaticFiles.cpp
    modules/SessionAssistant.cpp
    modules/SessionCodeSearch.cpp
@@ -266,7 +267,6 @@ set(SESSION_SOURCE_FILES
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
-   modules/automation/SessionAutomation.cpp
    modules/clang/CompilationDatabase.cpp
    modules/clang/CodeCompletion.cpp
    modules/clang/DefinitionIndex.cpp
@@ -499,7 +499,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
 # environments found in the source tree.
 set(RSTUDIO_PANMIRROR_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/../../gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
 if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+   # Windows tools root layout (e.g. C:/rstudio-tools/src/gwt/lib/quarto)
+   set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+endif()
+if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+   # posix tools root layout (e.g. /opt/rstudio-tools/src/gwt/lib/quarto,
+   # a sibling of the arch-specific tools root)
    set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_TOOLS_ROOT}/../src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+endif()
+# quarto is gitignored, so a secondary git worktree won't have it in its source
+# tree -- fall back to the primary checkout's copy (see cmake/git-worktree.cmake)
+if(NOT EXISTS "${RSTUDIO_PANMIRROR_SCRIPT}")
+   include("${CMAKE_SOURCE_DIR}/cmake/git-worktree.cmake")
+   if(RSTUDIO_GIT_MAIN_WORKTREE)
+      set(RSTUDIO_PANMIRROR_SCRIPT ${RSTUDIO_GIT_MAIN_WORKTREE}/src/gwt/lib/quarto/packages/editor-server/src/resources/md-writer.lua)
+   endif()
 endif()
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/resources/panmirror-scripts)
 configure_file(${RSTUDIO_PANMIRROR_SCRIPT}
@@ -587,25 +601,43 @@ endif()
 # define executable
 if(WIN32)
 
-   # define shared object library (avoid re-compiling source files twice)
-   add_library(rsession-objects OBJECT
+   # Build the bulk of the session code into a single shared library shared by
+   # the thin rsession.exe / rsession-utf8.exe launcher stubs. See SessionMain.hpp.
+   add_library(rsession-shared SHARED
        ${SESSION_SOURCE_FILES}
        ${SESSION_HEADER_FILES})
 
-    target_link_libraries(rsession-objects ${SESSION_LIBRARIES})
+   # ship the runtime DLL as rsession.dll, but keep its import lib and .pdb under
+   # the rsession-shared name so they do not collide with the rsession.exe stub's
+   # own .lib/.pdb; drop any "lib" prefix
+   set_target_properties(rsession-shared PROPERTIES
+      OUTPUT_NAME "rsession"
+      ARCHIVE_OUTPUT_NAME "rsession-shared"
+      PDB_NAME "rsession-shared"
+      PREFIX "")
 
-   # main executable
+   # mark rsessionMain() for export from the DLL (vs import in the stubs)
+   target_compile_definitions(rsession-shared PRIVATE RSESSION_BUILDING_SHARED)
+
+   target_link_libraries(rsession-shared ${SESSION_LIBRARIES} "${LIBR_LIBRARIES}")
+   if(RSTUDIO_SERVER)
+      target_link_libraries(rsession-shared rstudio-server-core)
+   endif()
+
+   # thin launcher stub; identical code, manifest embedded via the .rc differs
    add_stripped_executable(
       rsession
       "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
-      $<TARGET_OBJECTS:rsession-objects>)
+      SessionMainStub.cpp)
+   target_link_libraries(rsession rsession-shared)
 
    # UTF-8 alternative
    if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
       add_stripped_executable(
          rsession-utf8
          "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc"
-         $<TARGET_OBJECTS:rsession-objects>)
+         SessionMainStub.cpp)
+      target_link_libraries(rsession-utf8 rsession-shared)
    endif()
 
 else()
@@ -613,32 +645,33 @@ else()
    add_stripped_executable(
       rsession
       ${SESSION_SOURCE_FILES}
-      ${SESSION_HEADER_FILES})
+      ${SESSION_HEADER_FILES}
+      SessionMainStub.cpp)
 
 endif()
 
-# skip libR RPATH at development time
-if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
-   set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
-endif()
+# Remaining link configuration for the single-executable (non-Windows) build;
+# the Windows shared-library and launcher-stub targets are fully configured above.
+if(NOT WIN32)
 
-target_link_libraries(rsession ${SESSION_LIBRARIES})
-if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
-   target_link_libraries(rsession-utf8 ${SESSION_LIBRARIES})
-endif()
-
-if(APPLE)
-   target_link_libraries(rsession "-undefined dynamic_lookup")
-   target_link_libraries(rsession "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/rsession.exports")
-else()
-   target_link_libraries(rsession "${LIBR_LIBRARIES}")
-   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
-      target_link_libraries(rsession-utf8 "${LIBR_LIBRARIES}")
+   # skip libR RPATH at development time
+   if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
+      set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
    endif()
-endif()
 
-if(RSTUDIO_SERVER)
-   target_link_libraries(rsession rstudio-server-core)
+   target_link_libraries(rsession ${SESSION_LIBRARIES})
+
+   if(APPLE)
+      target_link_libraries(rsession "-undefined dynamic_lookup")
+      target_link_libraries(rsession "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/rsession.exports")
+   else()
+      target_link_libraries(rsession "${LIBR_LIBRARIES}")
+   endif()
+
+   if(RSTUDIO_SERVER)
+      target_link_libraries(rsession rstudio-server-core)
+   endif()
+
 endif()
 
 # configure and install r-ldpaths script
@@ -659,6 +692,10 @@ endif()
 
 # install binary
 install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
+if(WIN32)
+   # the shared library holding the session code (loaded by the launcher stubs)
+   install(TARGETS rsession-shared RUNTIME DESTINATION "${RSTUDIO_INSTALL_BIN}")
+endif()
 if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
     install(TARGETS rsession-utf8 DESTINATION "${RSTUDIO_INSTALL_BIN}")
 endif()
@@ -667,6 +704,10 @@ endif()
 if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
    install(
       FILES "$<TARGET_PDB_FILE:rsession>"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   # the shared library carries essentially all of the session debug info
+   install(
+      FILES "$<TARGET_PDB_FILE:rsession-shared>"
       DESTINATION "${RSTUDIO_INSTALL_BIN}")
    if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
       install(
@@ -758,11 +799,23 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
-   # install node
+   # install node -- on Apple arm64-only builds, install-npm-dependencies
+   # only creates "-arm64-installed"; universal builds also have the
+   # un-suffixed "-installed" from the x86_64 primary install. Prefer the
+   # un-suffixed folder when present so universal-build behavior is
+   # unchanged.
+   set(_RSTUDIO_INSTALLED_NODE_SRC
+       "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed")
+   if(APPLE AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64"
+              AND NOT EXISTS "${_RSTUDIO_INSTALLED_NODE_SRC}")
+      set(_RSTUDIO_INSTALLED_NODE_SRC
+          "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-arm64-installed")
+   endif()
    install(
-      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed/"
+      DIRECTORY "${_RSTUDIO_INSTALLED_NODE_SRC}/"
       DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
       USE_SOURCE_PERMISSIONS)
+   unset(_RSTUDIO_INSTALLED_NODE_SRC)
 
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)
@@ -844,24 +897,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-   endif()
-
-   # install winpty on windows
-   if(WIN32)
-      install(PROGRAMS "${WINPTY_BINDIR_64}/winpty.dll"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}")
-      install(PROGRAMS "${WINPTY_BINDIR_64}/winpty-agent.exe"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}")
-
-      # install 32 bit binaries
-      file(MAKE_DIRECTORY  "${CMAKE_CURRENT_BINARY_DIR}/x86")
-      install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86"
-              USE_SOURCE_PERMISSIONS
-              DESTINATION  ${RSTUDIO_INSTALL_BIN})
-      install(PROGRAMS "${WINPTY_BINDIR_32}/winpty.dll"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
-      install(PROGRAMS "${WINPTY_BINDIR_32}/winpty-agent.exe"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
    endif()
 
    # install gnudiff, gnugrep, mysys_ssh, and sumatra-pdf on windows

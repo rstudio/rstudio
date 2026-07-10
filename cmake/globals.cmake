@@ -133,6 +133,104 @@ if(NOT RSTUDIO_TARGET)
 
 endif()
 
+# For development builds, route compilation through a compiler cache (ccache or
+# sccache) when one is available and the user has not configured a launcher
+# themselves. This makes repeat and git-worktree builds (which otherwise
+# recompile from scratch) reuse cached objects. Off for non-development builds
+# (CI/official packaging) and opt-out via -DRSTUDIO_USE_CCACHE=OFF.
+#
+# Note RSTUDIO_DEVELOPMENT is only set when no RSTUDIO_TARGET was given (the
+# inferred-development case above); a build that passes -DRSTUDIO_TARGET=Development
+# explicitly is intentionally excluded here (pass -DRSTUDIO_USE_CCACHE=ON to opt
+# in). RSTUDIO_DEVELOPMENT is a build-wide toggle (see src/cpp/CMakeLists.txt),
+# so we don't widen it just for the cache.
+#
+# CI/package builds opt into sccache explicitly via SCCACHE_ENABLED, which is
+# wired up separately (see cmake/modules/sccache.cmake, included below); defer
+# to it so the two mechanisms never both configure a launcher.
+if(RSTUDIO_DEVELOPMENT AND NOT DEFINED RSTUDIO_USE_CCACHE AND
+   NOT SCCACHE_ENABLED AND NOT "$ENV{SCCACHE_ENABLED}")
+   set(RSTUDIO_USE_CCACHE ON)
+endif()
+if(RSTUDIO_USE_CCACHE AND
+   NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER AND
+   NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
+
+   # Search the architecture-appropriate Homebrew prefix first so a native tool
+   # is preferred over, e.g., an x86_64 binary in the Intel-Homebrew tree
+   # (/usr/local) on Apple Silicon.
+   if(APPLE AND UNAME_M STREQUAL "arm64")
+      set(RSTUDIO_HOMEBREW_BIN "/opt/homebrew/bin")
+   else()
+      set(RSTUDIO_HOMEBREW_BIN "/usr/local/bin")
+   endif()
+
+   # ccache and sccache both work as compiler launchers ("<tool> <compiler>
+   # <args>"); prefer ccache, fall back to sccache (ccache is listed first in the
+   # loop, and we break on the first match). Validate each via --version with an
+   # anchored "^<name>" match: this rejects a 'ccache' that is really a symlink to
+   # sccache (its --version reports "sccache ...", and sccache invoked under the
+   # name 'ccache' misparses cmake's -E probes and breaks the build). When that
+   # happens we fall through and find the genuine sccache by its own name.
+   set(RSTUDIO_COMPILER_CACHE "")
+
+   foreach(_cache_name ccache sccache)
+      string(TOUPPER "${_cache_name}" _cache_var)
+      find_program(${_cache_var}_EXECUTABLE NAMES ${_cache_name} HINTS "${RSTUDIO_HOMEBREW_BIN}")
+      if(${_cache_var}_EXECUTABLE)
+         execute_process(
+            COMMAND "${${_cache_var}_EXECUTABLE}" --version
+            OUTPUT_VARIABLE RSTUDIO_CACHE_VERSION
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE RSTUDIO_CACHE_RESULT)
+         if(RSTUDIO_CACHE_RESULT EQUAL 0 AND RSTUDIO_CACHE_VERSION MATCHES "^${_cache_name}")
+            set(RSTUDIO_COMPILER_CACHE "${${_cache_var}_EXECUTABLE}")
+            set(RSTUDIO_COMPILER_CACHE_NAME "${_cache_name}")
+            break()
+         endif()
+      endif()
+   endforeach()
+
+   if(RSTUDIO_COMPILER_CACHE)
+      # By default the launcher is just the cache binary itself.
+      set(RSTUDIO_COMPILER_CACHE_LAUNCHER "${RSTUDIO_COMPILER_CACHE}")
+
+      # For ccache specifically, normalize absolute paths so objects compiled in
+      # one checkout (or git worktree) are reused in another. Without this, each
+      # checkout's absolute source/include paths hash differently and the cache
+      # never hits across checkouts -- defeating the git-worktree reuse this
+      # block exists to provide.
+      #
+      #   CCACHE_BASEDIR   rewrites absolute paths under the source tree to paths
+      #                    relative to the build dir before hashing.
+      #   CCACHE_NOHASHDIR stops ccache from folding the build dir into the hash.
+      #
+      # We thread these through `env` in the launcher list so the normalization
+      # is automatic (no reliance on the developer's shell). ccache-only:
+      # sccache has no BASEDIR equivalent. Non-Windows only: the worktree
+      # workflow this serves is POSIX, and `env` may not be present on Windows.
+      #
+      # Trade-off: a cross-checkout cache hit reuses the object that first
+      # populated the cache, so embedded debug / __FILE__ paths may point at the
+      # checkout that built it. Acceptable for development builds.
+      if(RSTUDIO_COMPILER_CACHE_NAME STREQUAL "ccache" AND NOT WIN32)
+         find_program(RSTUDIO_ENV_EXECUTABLE NAMES env)
+         if(RSTUDIO_ENV_EXECUTABLE)
+            set(RSTUDIO_COMPILER_CACHE_LAUNCHER
+               "${RSTUDIO_ENV_EXECUTABLE}"
+               "CCACHE_BASEDIR=${CMAKE_SOURCE_DIR}"
+               "CCACHE_NOHASHDIR=true"
+               "${RSTUDIO_COMPILER_CACHE}")
+         endif()
+      endif()
+
+      set(CMAKE_C_COMPILER_LAUNCHER   ${RSTUDIO_COMPILER_CACHE_LAUNCHER} CACHE STRING "")
+      set(CMAKE_CXX_COMPILER_LAUNCHER ${RSTUDIO_COMPILER_CACHE_LAUNCHER} CACHE STRING "")
+      message(STATUS "Using compiler cache: ${RSTUDIO_COMPILER_CACHE}")
+      message(STATUS "Compiler cache launcher: ${RSTUDIO_COMPILER_CACHE_LAUNCHER}")
+   endif()
+endif()
+
 # set desktop and server build flags
 if(NOT DEFINED RSTUDIO_SERVER)
    if(NOT WIN32 AND (RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Server"))
@@ -222,10 +320,10 @@ set(RSTUDIO_R_MINOR_VERSION_REQUIRED 6)
 set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
 
 # maximum supported R version
-set(RSTUDIO_R_VERSION_MAXIMUM "4.6.0")
+set(RSTUDIO_R_VERSION_MAXIMUM "4.6.1")
 set(RSTUDIO_R_MAJOR_VERSION_MAXIMUM 4)
 set(RSTUDIO_R_MINOR_VERSION_MAXIMUM 6)
-set(RSTUDIO_R_PATCH_VERSION_MAXIMUM 0)
+set(RSTUDIO_R_PATCH_VERSION_MAXIMUM 1)
 
 # allow opting out of version checking (for building on older distros)
 if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
@@ -288,14 +386,33 @@ endif()
 
 # dependencies
 if(WIN32)
-   if(EXISTS "C:/rstudio-tools/dependencies")
-      set(RSTUDIO_DEPENDENCIES_DIR "C:/rstudio-tools/dependencies")
-      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
-   else()
-      set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies/windows")
+
+   # Resolve the tools root first; Windows dependencies are installed within
+   # it by dependencies/windows/install-dependencies.cmd. Honor an explicit
+   # override (CMake or environment variable); otherwise, use the default
+   # install location on the system drive.
+   if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
+      if(DEFINED ENV{RSTUDIO_TOOLS_ROOT})
+         file(TO_CMAKE_PATH "$ENV{RSTUDIO_TOOLS_ROOT}" RSTUDIO_TOOLS_ROOT)
+      elseif(DEFINED ENV{SYSTEMDRIVE})
+         file(TO_CMAKE_PATH "$ENV{SYSTEMDRIVE}/rstudio-tools" RSTUDIO_TOOLS_ROOT)
+      else()
+         set(RSTUDIO_TOOLS_ROOT "C:/rstudio-tools")
+      endif()
    endif()
+
+   # Prefer dependencies installed within the tools root; fall back to
+   # dependencies installed within the source tree (the legacy layout).
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/dependencies/windows")
+      set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_TOOLS_ROOT}/dependencies")
+   else()
+      set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies")
+   endif()
+
+   set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
    set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
    set(CPACK_NSPROCESS_VERSION "1.6")
+   set(CPACK_NSIS_MULTIUSER_VERSION "a33d494c62ad")
 else()
    # look for system-wide (global) dependencies folder
    if(EXISTS "/opt/rstudio-tools/dependencies")
@@ -308,12 +425,24 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}")
    set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_PROJECT_ROOT}/dependencies")
 endif()
 
-# tools
+# When building from a secondary git worktree, downloaded dependencies are not
+# present in this checkout -- they are gitignored, so they only ever live in the
+# primary checkout. If the resolved dependencies directory has no downloaded
+# content, borrow the primary worktree's instead so worktree builds work without
+# a re-install or manual symlink (mirrors src/gwt/build.xml).
+if(NOT WIN32 AND NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/node")
+   include("${CMAKE_CURRENT_LIST_DIR}/git-worktree.cmake")
+   if(RSTUDIO_GIT_MAIN_WORKTREE AND
+      EXISTS "${RSTUDIO_GIT_MAIN_WORKTREE}/dependencies/common/node")
+      set(RSTUDIO_DEPENDENCIES_DIR "${RSTUDIO_GIT_MAIN_WORKTREE}/dependencies")
+      message(STATUS "Using primary-worktree dependencies: ${RSTUDIO_DEPENDENCIES_DIR}")
+   endif()
+endif()
+
+# tools (the Windows tools root is resolved above, before dependencies)
 if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
    if(DEFINED ENV{RSTUDIO_TOOLS_ROOT})
       set(RSTUDIO_TOOLS_ROOT $ENV{RSTUDIO_TOOLS_ROOT})
-   elseif(WIN32)
-      set(RSTUDIO_TOOLS_ROOT "${RSTUDIO_DEPENDENCIES_DIR}")
    elseif(APPLE)
       find_path(RSTUDIO_TOOLS_ROOT
          NAMES boost
@@ -515,7 +644,9 @@ if(APPLE)
 
 endif()
 
-# If enabled, use caching for the build
-if(SCCACHE_ENABLED)
+# If enabled, use caching for the build.
+# Accept both -DSCCACHE_ENABLED=1 (CMake variable) and the SCCACHE_ENABLED
+# environment variable so CI can enable sccache without modifying build scripts.
+if(SCCACHE_ENABLED OR "$ENV{SCCACHE_ENABLED}")
    include(sccache)
 endif()

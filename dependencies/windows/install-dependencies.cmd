@@ -2,28 +2,51 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-for %%F in ("%CD%\..\tools\rstudio-tools.cmd") do (
+:: Resolve paths relative to this script (not the current directory), so the
+:: tracked install scripts can be run from anywhere.
+for %%F in ("%~dp0..\tools\rstudio-tools.cmd") do (
   set "RSTUDIO_TOOLS=%%~fF"
 )
 
 echo -- Using RStudio tools: %RSTUDIO_TOOLS%
 call %RSTUDIO_TOOLS%
 
-set PATH=%CD%\tools;%PATH%
+:: The source-tree directories holding the (tracked) install scripts. The
+:: dependencies themselves are downloaded and installed into
+:: RSTUDIO_TOOLS_ROOT (set by rstudio-tools.cmd if not already defined in
+:: the environment), so that downloaded artifacts live outside the source
+:: tree. Set RSTUDIO_TOOLS_ROOT to the root of an RStudio checkout to
+:: reproduce the legacy in-tree layout.
+set "WINDOWS_SCRIPTS_DIR=%~dp0"
+for %%F in ("%~dp0..\common") do (
+  set "COMMON_SCRIPTS_DIR=%%~fF"
+)
 
-set BOOST_VERSION=1.90.0
+set "COMMON_INSTALL_DIR=%RSTUDIO_TOOLS_ROOT%\dependencies\common"
+set "WINDOWS_INSTALL_DIR=%RSTUDIO_TOOLS_ROOT%\dependencies\windows"
+
+if not exist "%COMMON_INSTALL_DIR%" mkdir "%COMMON_INSTALL_DIR%"
+if not exist "%WINDOWS_INSTALL_DIR%" mkdir "%WINDOWS_INSTALL_DIR%"
+
+echo -- Installing dependencies to: %RSTUDIO_TOOLS_ROOT%\dependencies
+
+set PATH=%WINDOWS_SCRIPTS_DIR%tools;%PATH%
+
+set BOOST_VERSION=1.91.0
 set GNUGREP_VERSION=3.0
 set GWT_VERSION=2.12.2-apple-blossom
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
-set MSVC_TOOLSET_VERSION=143
+REM The MSVC toolset used for Boost prebuilts. Can be set in the environment
+REM to select a different set of prebuilts (e.g. 145 for Visual Studio 2026).
+if not defined MSVC_TOOLSET_VERSION set MSVC_TOOLSET_VERSION=143
+set NSISMULTIUSER_VERSION=a33d494c62ad
 set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
-set QUARTO_VERSION=1.9.37
-set COPILOT_VERSION=1.480.0
+set QUARTO_VERSION=1.9.38
+set COPILOT_VERSION=1.509.1
 set SUMATRA_VERSION=3.1.2
-set WINPTY_VERSION=0.4.3-msys2-2.7.0
 set WINUTILS_VERSION=1.0
 
 set CLEAN=0
@@ -84,11 +107,6 @@ set WINUTILS_FOLDER=winutils\%WINUTILS_VERSION%
 set WINUTILS_OUTPUT=winutils\%WINUTILS_VERSION%
 
 
-set WINPTY_URL=winpty-%WINPTY_VERSION%.zip
-set WINPTY_FOLDER=winpty-%WINPTY_VERSION%
-set WINPTY_OUTPUT=
-
-
 set OPENSSL_URL=openssl-%OPENSSL_VERSION%.zip
 set OPENSSL_FOLDER=openssl-%OPENSSL_VERSION%
 set OPENSSL_OUTPUT=
@@ -107,6 +125,11 @@ set RESHACKER_OUTPUT=resource-hacker
 set NSPROCESS_URL=nsprocess/NsProcess.zip
 set NSPROCESS_FOLDER=nsprocess\%NSPROCESS_VERSION%
 set NSPROCESS_OUTPUT=nsprocess\%NSPROCESS_VERSION%
+
+
+set NSISMULTIUSER_URL=nsis-multiuser/%NSISMULTIUSER_VERSION%/NsisMultiUser.zip
+set NSISMULTIUSER_FOLDER=nsis-multiuser\%NSISMULTIUSER_VERSION%
+set NSISMULTIUSER_OUTPUT=nsis-multiuser\%NSISMULTIUSER_VERSION%
 
 
 set DICTIONARIES_URL=dictionaries/core-dictionaries.zip
@@ -129,11 +152,6 @@ set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
 
 
-set HUNSPELL_URL=hunspell/hunspell-v1.7.2.7z
-set HUNSPELL_FOLDER=hunspell-v1.7.2
-set HUNSPELL_OUTPUT=
-
-
 set NODEBUILD_VERSION=%RSTUDIO_NODE_VERSION%
 set NODEBUILD_LABEL=node (%NODEBUILD_VERSION%; build)
 set NODEBUILD_FILE=node-v%NODEBUILD_VERSION%-win-x64
@@ -148,8 +166,8 @@ set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_F
 set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-installed
 set NODEBUNDLE_OUTPUT=node
 
-:: Install dependencies within 'common' first.
-cd ..\common
+:: Install 'common' dependencies first.
+cd /d "%COMMON_INSTALL_DIR%"
 
 %RUN% install GWT
 %RUN% install DICTIONARIES
@@ -162,10 +180,27 @@ if exist quarto\bin\quarto.exe (
     if not "%%v" == "%QUARTO_VERSION%" (
       echo -- Quarto version mismatch: found %%v, expected %QUARTO_VERSION%
       rmdir /s /q quarto
+      if exist quarto (
+        echo ^^!^^! ERROR: Could not remove old quarto directory. Close any process holding files in it and retry.
+        exit /b 1
+      )
     )
   )
 )
+REM If a quarto directory exists but quarto.exe is missing, a previous install was incomplete; remove it so the install can retry.
+if exist quarto if not exist quarto\bin\quarto.exe (
+  echo -- Removing incomplete quarto directory from a prior failed install
+  rmdir /s /q quarto
+  if exist quarto (
+    echo ^^!^^! ERROR: Could not remove incomplete quarto directory. Close any process holding files in it and retry.
+    exit /b 1
+  )
+)
 %RUN% install QUARTO
+if not exist quarto\bin\quarto.exe (
+  echo ^^!^^! ERROR: Quarto install failed: quarto\bin\quarto.exe not found.
+  exit /b 1
+)
 
 REM Always remove any existing copilot-language-server installations to ensure latest version
 if exist copilot-language-server (
@@ -222,29 +257,47 @@ if not exist yarn.cmd (
 popd
 
 echo -- Installing packages
-call install-packages.cmd
+call "%COMMON_SCRIPTS_DIR%\install-packages.cmd"
 
-:: Install the rest of our dependencies in the 'windows' folder.
-cd ..\windows
+:: Install the rest of our dependencies into the 'windows' folder.
+cd /d "%WINDOWS_INSTALL_DIR%"
 
-%RUN% install HUNSPELL
 %RUN% install GNUDIFF
 %RUN% install GNUGREP
 %RUN% install SUMATRA
 %RUN% install WINUTILS
-%RUN% install WINPTY
 %RUN% install OPENSSL
 %RUN% install BOOST
 %RUN% install RESHACKER
 %RUN% install NSPROCESS
 
+REM The install helper creates the folder before downloading, so a failed download
+REM leaves an empty folder that later runs would skip as "already installed".
+REM Remove such remnants so the install can retry, and fail loudly if the
+REM framework header is still missing afterwards.
+if exist %NSISMULTIUSER_FOLDER% if not exist %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh (
+  echo -- Removing incomplete nsis-multiuser directory from a prior failed install
+  rmdir /s /q %NSISMULTIUSER_FOLDER%
+  if exist %NSISMULTIUSER_FOLDER% (
+    echo ^^!^^! ERROR: Could not remove incomplete nsis-multiuser directory. Close any process holding files in it and retry.
+    exit /b 1
+  )
+)
+%RUN% install NSISMULTIUSER
+if not exist %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh (
+  echo ^^!^^! ERROR: NsisMultiUser install failed: %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh not found.
+  exit /b 1
+)
+
 
 echo -- Installing panmirror (Visual Editor)
-pushd install-panmirror
+pushd "%WINDOWS_SCRIPTS_DIR%install-panmirror"
 call clone-panmirror-repo.cmd
 popd
 
 echo -- Installing SOCI
-call install-soci.cmd
+call "%WINDOWS_SCRIPTS_DIR%install-soci.cmd"
 
+:: The i18n helper scripts live relative to the source tree; run from there.
+cd /d "%WINDOWS_SCRIPTS_DIR%"
 %RUN% install-i18n-dependencies

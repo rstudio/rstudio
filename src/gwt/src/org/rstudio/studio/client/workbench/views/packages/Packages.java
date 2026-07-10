@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageVulnerabilitiesReadyEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.RaisePackagePaneEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
@@ -92,6 +93,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import jsinterop.base.Js;
+import jsinterop.base.JsPropertyMap;
 
 public class Packages
       extends BasePresenter
@@ -798,6 +802,14 @@ public class Packages
          updatePackageState(false, false);
    }
 
+   public void onPackageVulnerabilitiesReady(PackageVulnerabilitiesReadyEvent event)
+   {
+      // vulnerability data arrived asynchronously; refresh the table so the
+      // badges render against the current package list
+      vulns_ = event.getVulnerabilities();
+      setViewPackageList();
+   }
+
    @Override
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
@@ -829,6 +841,13 @@ public class Packages
 
    private void setViewPackageList()
    {
+      // the initial package state may not have loaded yet (e.g. an async
+      // PackageVulnerabilitiesReadyEvent can arrive first); projectContext_ is
+      // null until then, so bail out and let setPackageState() render once it
+      // populates the context
+      if (projectContext_ == null)
+         return;
+
       ArrayList<PackageInfo> packages = null;
 
       // apply filter (if any)
@@ -1215,7 +1234,12 @@ public class Packages
       // sort the packages
       allPackages_ = new ArrayList<>();
       activeRepository_ = newState.getActiveRepository();
-      vulns_ = newState.getVulnerabilityInfo();
+
+      // NOTE: vulnerability data is intentionally NOT taken from the package
+      // state here. It is fetched asynchronously and delivered via
+      // PackageVulnerabilitiesReadyEvent (see onPackageVulnerabilitiesReady),
+      // so that a slow or unreachable PPM never blocks the package list. The
+      // existing vulns_ is preserved until that event updates it.
 
       JsArray<PackageInfo> serverPackages = newState.getPackageList();
       for (int i = 0; i < serverPackages.length(); i++)
@@ -1271,7 +1295,9 @@ public class Packages
    private final PackratServerOperations packratServer_;
    private final RenvServerOperations renvServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<>();
-   private RepositoryPackageVulnerabilityListMap vulns_;
+   // starts empty (never null) so the table can render before vulnerability
+   // data arrives asynchronously; replaced wholesale by onPackageVulnerabilitiesReady
+   private RepositoryPackageVulnerabilityListMap vulns_ = Js.uncheckedCast(JsPropertyMap.of());
    private JsObject activeRepository_;
    private ProjectContext projectContext_;
    private String packageFilter_ = new String();

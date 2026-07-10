@@ -1,46 +1,32 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
-import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { AssistantOptionsActions } from '@actions/assistant_options.actions';
+import { requireAiCredentials } from '@utils/ai-credentials';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 
-test.describe.serial('Settings Button', () => {
+test.describe.serial('Settings Button', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let chatPane: ChatPane;
   let chatActions: ChatPaneActions;
   let versions: EnvironmentVersions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    const consoleActions = new ConsolePaneActions(page);
-    const assistantActions = new AssistantOptionsActions(page, consoleActions);
-    chatActions = new ChatPaneActions(page, consoleActions);
-    chatPane = chatActions.chatPane;
-
-    versions = await consoleActions.getEnvironmentVersions();
-    await consoleActions.clearConsole();
-
-    await assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
-
-    await chatActions.openChatPane();
-    await chatActions.dismissSetupPrompts();
+    ({ chatActions, chatPane, versions } = await setupPositAssistantChat(page));
     await expect(chatPane.chatRoot).toBeVisible({ timeout: 30000 });
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('settings menu opens with expected items and About dialog', async ({ rstudioPage: page }) => {
     // Verify settings button is visible
     await expect(chatPane.moreBtn).toBeVisible({ timeout: 10000 });
 
-    // Open the dropdown menu
+    // Open the dropdown menu (expect auto-waits for the menu to render).
     await chatPane.moreBtn.click();
-    await sleep(500);
 
     await expect(chatPane.settingsMenu).toBeVisible({ timeout: 5000 });
 
@@ -48,9 +34,8 @@ test.describe.serial('Settings Button', () => {
     await expect(chatPane.configurePositAiItem.first()).toBeVisible({ timeout: 5000 });
     await expect(chatPane.aboutItem.first()).toBeVisible({ timeout: 5000 });
 
-    // Click About and verify dialog appears
+    // Click About; the next expect auto-waits for the dialog to render.
     await chatPane.aboutItem.first().click();
-    await sleep(1000);
 
     const aboutDialog = chatPane.frame.locator('[role="dialog"]');
     await expect(aboutDialog).toBeVisible({ timeout: 10000 });
@@ -64,6 +49,6 @@ test.describe.serial('Settings Button', () => {
     // Close the dialog
     const closeBtn = aboutDialog.locator('button:has-text("Close")').first();
     await closeBtn.click();
-    await sleep(500);
+    await expect(aboutDialog).not.toBeVisible({ timeout: 5000 });
   });
 });

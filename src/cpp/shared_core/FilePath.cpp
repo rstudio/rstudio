@@ -1449,6 +1449,14 @@ bool FilePath::isSymlink() const
 
 bool FilePath::isWithin(const FilePath& in_scopePath) const
 {
+   // Caveat: because the component loop below stops at a "." element (see the
+   // comment there), a scope path that ends in "." -- e.g. "/proj/." -- matches
+   // ALL paths, since only the "/" and "proj" components are compared before the
+   // "." terminates the loop. Lexical normalization does not strip a trailing "."
+   // (getLexicallyNormalPath: "/proj/." stays "/proj/."), so this can happen with
+   // a path built via completeChildPath("."). Guard such cases at the call site
+   // (e.g. with isEquivalentTo) rather than relying on isWithin to reject them.
+
    // Technically, we contain ourselves.
    if (*this == in_scopePath)
       return true;
@@ -1457,7 +1465,10 @@ bool FilePath::isWithin(const FilePath& in_scopePath) const
    FilePath child(getLexicallyNormalPath());
    FilePath parent(in_scopePath.getLexicallyNormalPath());
 
-   // Easy test: We can't possibly be in this scope path if it has more components than we do
+   // Cheap early exit: boost::filesystem::path::size() is the length of the
+   // underlying pathname string (not the component count), so a parent whose
+   // string is longer than the child's can't possibly be a prefix of it. The
+   // component-wise comparison below does the real work.
    if (parent.m_impl->Path.size() > child.m_impl->Path.size())
       return false;
 

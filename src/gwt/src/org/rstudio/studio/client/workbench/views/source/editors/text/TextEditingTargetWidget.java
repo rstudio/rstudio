@@ -39,6 +39,7 @@ import org.rstudio.core.client.widget.DocShadowPropMenuItem;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
+import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
@@ -111,6 +112,8 @@ public class TextEditingTargetWidget
       implements Display, RequiresVisibilityChanged
 {
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
+
+   private static final String DISABLE_DEPENDENCY_DISCOVERY = "disableDependencyDiscovery";
 
    public TextEditingTargetWidget(final TextEditingTarget target,
                                   DocUpdateSentinel docUpdateSentinel,
@@ -229,7 +232,7 @@ public class TextEditingTargetWidget
       initWidget(panel_);
 
       // Update wrap mode on the editor when the soft wrap property changes
-      docUpdateSentinel_.addPropertyValueChangeHandler(
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
             TextEditingTarget.SOFT_WRAP_LINES, (newval) ->
             {
                boolean wrap = StringUtil.equals(newval.getValue(), DocUpdateSentinel.PROPERTY_TRUE);
@@ -244,25 +247,32 @@ public class TextEditingTargetWidget
                {
                   editor_.setWrapLimitRange(null, null);
                }
-            });
+            }));
 
-      docUpdateSentinel_.addPropertyValueChangeHandler(
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
          TextEditingTarget.USE_RAINBOW_PARENS, (newval) ->
          {
             boolean rainbowParens = StringUtil.equals(newval.getValue(),
                DocUpdateSentinel.PROPERTY_TRUE);
             commands_.toggleRainbowParens().setChecked(rainbowParens);
             editor_.setRainbowParentheses(rainbowParens);
-         });
+         }));
 
-      docUpdateSentinel_.addPropertyValueChangeHandler(
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
          TextEditingTarget.USE_RAINBOW_FENCED_DIVS, (newval) ->
          {
             boolean rainbowFencedDivs = StringUtil.equals(newval.getValue(),
                DocUpdateSentinel.PROPERTY_TRUE);
             commands_.toggleRainbowFencedDivs().setChecked(rainbowFencedDivs);
             editor_.setRainbowFencedDivs(rainbowFencedDivs);
-         });
+         }));
+
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
+         DISABLE_DEPENDENCY_DISCOVERY, (newval) ->
+         {
+            boolean disabled = StringUtil.equals(newval.getValue(), "1");
+            commands_.toggleDetectMissingPackages().setChecked(!disabled);
+         }));
 
       releaseOnDismiss_.add(userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
@@ -347,6 +357,37 @@ public class TextEditingTargetWidget
    {
       docUpdateSentinel_.setBoolProperty(
          TextEditingTarget.USE_RAINBOW_FENCED_DIVS, !editor_.getRainbowFencedDivs());
+   }
+
+   public void toggleDetectMissingPackages()
+   {
+      boolean isCurrentlyDisabled =
+            docUpdateSentinel_.hasProperty(DISABLE_DEPENDENCY_DISCOVERY) &&
+            StringUtil.equals(
+                  docUpdateSentinel_.getProperty(DISABLE_DEPENDENCY_DISCOVERY), "1");
+
+      if (isCurrentlyDisabled)
+      {
+         // Don't re-run discovery until the property write has been applied
+         // to the local property bag (which only happens once the RPC
+         // completes); the discovery response handler consults the local
+         // property and suppresses the banner if it still reads "1".
+         docUpdateSentinel_.setProperty(
+               DISABLE_DEPENDENCY_DISCOVERY, "0",
+               new NullProgressIndicator()
+               {
+                  @Override
+                  public void onCompleted()
+                  {
+                     target_.getPackageDependencyHelper().discoverPackageDependencies();
+                  }
+               });
+      }
+      else
+      {
+         docUpdateSentinel_.setProperty(DISABLE_DEPENDENCY_DISCOVERY, "1");
+         hideWarningBar();
+      }
    }
 
    public void toggleDocumentOutline()
@@ -764,11 +805,11 @@ public class TextEditingTargetWidget
       markdownToolbar_ = new MarkdownToolbar(commands_, event -> {
          toggleRmdVisualMode();
       });
-      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          markdownToolbar_.setVisualMode(isVisualMode());
          if (isVisualMode())
             findReplace_.hideFindReplace();
-      });
+      }));
       markdownToolbar_.setVisualMode(isVisualMode());
       
       addVisualModeOutlineButton(markdownToolbar_);
@@ -794,10 +835,10 @@ public class TextEditingTargetWidget
 
       // stay in sync w/ doc property
       syncVisualModeOutlineLatchState();
-      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
             (event) -> {
                syncVisualModeOutlineLatchState();
-            });
+            }));
 
       // add to toolbar
       toggleVisualModeOutlineButton_.addStyleName("rstudio-themes-inverts");
@@ -1072,6 +1113,7 @@ public class TextEditingTargetWidget
       syncWrapMode();
       syncRainbowParenMode();
       syncRainbowFencedDivs();
+      syncDetectMissingPackagesMode();
 
       toolbar_.invalidateSeparators();
    }
@@ -1235,9 +1277,9 @@ public class TextEditingTargetWidget
    @Override
    public void showRequiredPackagesMissingWarning(List<String> packages)
    {
-      if (docUpdateSentinel_.hasProperty("disableDependencyDiscovery"))
+      if (docUpdateSentinel_.hasProperty(DISABLE_DEPENDENCY_DISCOVERY))
       {
-         String disableDependencyDiscovery = docUpdateSentinel_.getProperty("disableDependencyDiscovery");
+         String disableDependencyDiscovery = docUpdateSentinel_.getProperty(DISABLE_DEPENDENCY_DISCOVERY);
          if (StringUtil.equals(disableDependencyDiscovery, "1"))
          {
             return;
@@ -1265,7 +1307,7 @@ public class TextEditingTargetWidget
       };
 
       Command onDismiss = () -> {
-         docUpdateSentinel_.setProperty("disableDependencyDiscovery", "1");
+         docUpdateSentinel_.setProperty(DISABLE_DEPENDENCY_DISCOVERY, "1");
          hideWarningBar();
       };
 
@@ -1373,8 +1415,17 @@ public class TextEditingTargetWidget
       syncWrapMode();
       syncRainbowParenMode();
       syncRainbowFencedDivs();
+      syncDetectMissingPackagesMode();
 
-      Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
+      // avoid lambda here (makes gwt devmode sad)
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            manageToolbarSizes();
+         }
+      });
    }
 
    public void setFontSize(double size)
@@ -2155,7 +2206,16 @@ public class TextEditingTargetWidget
       editor_.setRainbowFencedDivs(rainbowMode);
       commands_.toggleRainbowFencedDivs().setChecked(rainbowMode);
    }
-   
+
+   private void syncDetectMissingPackagesMode()
+   {
+      boolean disabled =
+            docUpdateSentinel_.hasProperty(DISABLE_DEPENDENCY_DISCOVERY) &&
+            StringUtil.equals(
+                  docUpdateSentinel_.getProperty(DISABLE_DEPENDENCY_DISCOVERY), "1");
+      commands_.toggleDetectMissingPackages().setChecked(!disabled);
+   }
+
    private void onUserSwitchingToVisualMode()
    {
       target_.onUserSwitchingToVisualMode();

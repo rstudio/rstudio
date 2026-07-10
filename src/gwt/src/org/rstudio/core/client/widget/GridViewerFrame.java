@@ -31,7 +31,11 @@ public class GridViewerFrame extends RStudioThemedFrame
    {
       super(
          title,
-         "grid_resource/gridviewer.html?data_source=data&max_cols=-1",
+         // show_summary=0: this frame runs in data_source=data mode (data is
+         // pushed in client-side, with no server-side cached frame), so the
+         // column-summary sidebar -- which fetches stats from the grid_data
+         // endpoint -- has nothing to summarize here. Hide it.
+         "grid_resource/gridviewer.html?data_source=data&max_cols=-1&show_summary=0",
          false,
          null, 
          GridViewerStyles.getCustomStyle(),

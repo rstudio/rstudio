@@ -69,15 +69,9 @@ protected:
    using namespace boost::program_options;
 
    pAutomation->add_options()
-      (kRunAutomationSessionOption,
-      value<bool>(&runAutomation_)->default_value(false)->implicit_value(true),
-      "Run automation tests and exit.")
       (kAutomationAgentSessionOption,
       value<bool>(&isAutomationAgent_)->default_value(false)->implicit_value(true),
-      "Run RStudio as an automation agent.")
-      ("automation-report-file",
-      value<std::string>(&automationReportFile_)->default_value(std::string()),
-      "The file where automation test results should be written.");
+      "Run RStudio as an automation agent.");
 
    pTests->add_options()
       (kRunTestsSessionOption,
@@ -439,10 +433,7 @@ protected:
       "Specifies the path to the libclang shared library")
       ("external-libclang-headers-path",
       value<std::string>(&libclangHeadersPath_)->default_value("resources/libclang/builtin-headers"),
-      "Specifies the path to the libclang builtin headers.")
-      ("external-winpty-path",
-      value<std::string>(&winptyPath_)->default_value("bin"),
-      "Specifies the path to winpty binaries.");
+      "Specifies the path to the libclang builtin headers.");
 
    pGit->add_options()
       ("git-commit-large-file-size",
@@ -509,7 +500,13 @@ protected:
    pTrust->add_options()
       ("project-trust-dialogs",
       value<int>(&projectTrustDialogs_)->default_value(-1),
-      "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.");
+      "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.")
+      ("project-trust-required",
+      value<bool>(&projectTrustRequired_)->default_value(false)->implicit_value(true),
+      "When enabled, projects are treated as untrusted by default: users are prompted to trust each project when it is opened (including projects in the user's home directory), even if it contains no auto-executing files. Projects that have not been explicitly trusted run in restricted mode. Setting this option implies project-trust-dialogs; if that option has been explicitly disabled, this option has no effect.")
+      ("preview-allowed-functions",
+      value<std::string>(&previewAllowedFunctions_)->default_value(""),
+      "A comma- or space-separated list of additional function names (for example, 'mypkg::connect') that may be evaluated without prompting when resolving a file preview connection expression -- the SQL '-- !preview conn=' header or an r2d3 preview. Each listed name is treated as a trusted constructor; its arguments are still validated. Use this to allow connection helpers from internally-built packages.");
 
    pMisc->add_options();
 
@@ -520,9 +517,7 @@ protected:
 }
 
 public:
-   bool runAutomation() const { return runAutomation_; }
    bool isAutomationAgent() const { return isAutomationAgent_; }
-   core::FilePath automationReportFile() const { return core::FilePath(automationReportFile_); }
    bool runTests() const { return runTests_; }
    std::string runScript() const { return runScript_; }
    bool verifyInstallation() const { return verifyInstallation_; }
@@ -635,7 +630,6 @@ public:
    core::FilePath deprecatedCopilotAgentPath() const { return core::FilePath(deprecatedCopilotAgentPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
-   core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
    int gitCommitLargeFileSize() const { return gitCommitLargeFileSize_; }
    std::string userIdentity() const { return userIdentity_; }
    bool showUserIdentity() const { return showUserIdentity_; }
@@ -653,12 +647,12 @@ public:
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
    int projectTrustDialogs() const { return projectTrustDialogs_; }
+   bool projectTrustRequired() const { return projectTrustRequired_; }
+   std::string previewAllowedFunctions() const { return previewAllowedFunctions_; }
 
 
 protected:
-   bool runAutomation_;
    bool isAutomationAgent_;
-   std::string automationReportFile_;
    bool runTests_;
    std::string runScript_;
    bool verifyInstallation_;
@@ -771,7 +765,6 @@ protected:
    std::string deprecatedCopilotAgentPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
-   std::string winptyPath_;
    int gitCommitLargeFileSize_;
    std::string userIdentity_;
    bool showUserIdentity_;
@@ -791,6 +784,8 @@ protected:
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
    int projectTrustDialogs_;
+   bool projectTrustRequired_;
+   std::string previewAllowedFunctions_;
    virtual bool allowOverlay() const { return false; };
 };
 

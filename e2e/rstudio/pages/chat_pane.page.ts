@@ -11,8 +11,9 @@ const CHAT_FRAME_SELECTOR = "iframe[title='Posit Assistant']";
 export class ChatPane extends FramePageObject {
   // Inside the chat iframe
   public chatRoot: Locator;
-  public chatTextarea: Locator;
+  public chatInput: Locator;
   public messageItem: Locator;
+  public assistantMessageItem: Locator;
   public allowBtn: Locator;
   public allowDropdownTrigger: Locator;
   public allowForSessionItem: Locator;
@@ -21,6 +22,8 @@ export class ChatPane extends FramePageObject {
   public installBtn: Locator;
   public updateBtn: Locator;
   public ignoreBtn: Locator;
+  public signInBtn: Locator;
+  public trustWorkspaceBtn: Locator;
   public moreBtn: Locator;
   public settingsMenu: Locator;
   public configurePositAiItem: Locator;
@@ -43,8 +46,16 @@ export class ChatPane extends FramePageObject {
     super(page, CHAT_FRAME_SELECTOR);
 
     this.chatRoot = this.frame.locator('#root');
-    this.chatTextarea = this.frame.locator('textarea');
+    // PAI 0.4.6 (#1495) rebuilt the composer on TipTap/ProseMirror: the chat
+    // input is now a contenteditable <div class="tiptap-input-editor">, not a
+    // <textarea>. editor.setEditable() toggles its contenteditable attribute.
+    this.chatInput = this.frame.locator('.tiptap-input-editor');
     this.messageItem = this.frame.locator('[data-message-id]');
+    // Assistant-role bubbles only. The message wrapper carries the role via an
+    // inner .chat-message-assistant / .chat-message-user class (ChatMessage.tsx),
+    // so this excludes the user's own prompt bubble -- letting callers match on
+    // reply content without a fragile "not the prompt text" exclusion.
+    this.assistantMessageItem = this.frame.locator('[data-message-id]:has(.chat-message-assistant)');
     this.allowBtn = this.frame.locator("button:has-text('Allow')");
     this.allowDropdownTrigger = this.frame.locator('button.rounded-l-none:has(svg.lucide-chevron-down)');
     this.allowForSessionItem = this.frame.locator('[role="menuitem"]:has-text("for this session")');
@@ -53,9 +64,16 @@ export class ChatPane extends FramePageObject {
     this.installBtn = this.frame.locator("button:has-text('Install')");
     this.updateBtn = this.frame.locator("button:has-text('Update')");
     this.ignoreBtn = this.frame.locator("button:has-text('Ignore')");
+    this.signInBtn = this.frame.locator("button:has-text('Sign In'), button:has-text('Sign in')");
+    this.trustWorkspaceBtn = this.frame.locator("button:has-text('Trust this workspace')");
     this.moreBtn = this.frame.getByRole('button', { name: 'More' });
     this.settingsMenu = this.frame.locator("[data-slot='dropdown-menu-content']");
-    this.configurePositAiItem = this.frame.locator("xpath=//span[contains(text(), 'Configure Posit AI')] | //div[contains(text(), 'Configure Posit AI')] | //*[@role='menuitem'][contains(., 'Configure Posit AI')]");
+    // The provider-settings menu item was relabeled "Configure LLM providers"
+    // (was "Configure Posit AI"). Match either so the test passes against both
+    // the current and older assistant builds we exercise during rollout.
+    this.configurePositAiItem = this.frame.getByRole('menuitem', {
+      name: /Configure (LLM providers|Posit AI)/i,
+    });
     this.aboutItem = this.frame.locator("xpath=//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]");
     this.newConversationBtn = this.frame.getByRole('button', { name: 'New conversation' });
     this.historyBtn = this.frame.getByRole('button', { name: 'Conversation history' });
@@ -85,6 +103,29 @@ export class ChatPane extends FramePageObject {
 
   async isAllowDropdownVisible(): Promise<boolean> {
     return await this.allowDropdownTrigger.isVisible().catch(() => false);
+  }
+
+  /**
+   * The chat composer is ready when it's visible and editable. TipTap reflects
+   * its editable state via the contenteditable attribute (toggled by
+   * editor.setEditable), so we check that rather than isEnabled() -- a
+   * contenteditable <div> is not a form control and always reports "enabled".
+   */
+  async isChatInputReady(): Promise<boolean> {
+    if (!(await this.chatInput.isVisible().catch(() => false))) {
+      return false;
+    }
+    return (await this.chatInput.getAttribute('contenteditable').catch(() => null)) === 'true';
+  }
+
+  /**
+   * Type into the chat composer. Playwright's fill() is unreliable on a
+   * ProseMirror contenteditable (it bypasses the editor's input handling), so
+   * focus the editor and dispatch real key events instead.
+   */
+  async typeMessage(text: string): Promise<void> {
+    await this.chatInput.click();
+    await this.chatInput.pressSequentially(text);
   }
 
   /**

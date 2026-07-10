@@ -1,0 +1,58 @@
+dependency(LLVM
+   DEPNAME      "libclang"
+   REPOSITORY   "https://github.com/llvm/llvm-project"
+   REVISION     "main"
+   LICENSE      "Apache-2.0 WITH LLVM-Exceptions"
+   LICENSE_PATH "LICENSE.TXT"
+)
+
+dependency(DIFFUTILS
+   DEPNAME      "diffutils"
+   REPOSITORY   "https://cgit.git.savannah.gnu.org/cgit/diffutils.git/plain"
+   LICENSE_PATH "spdx://GPL-3.0"
+)
+
+dependency(GREP
+   DEPNAME      "grep"
+   REPOSITORY   "https://cgit.git.savannah.gnu.org/cgit/grep.git/plain"
+   LICENSE_PATH "spdx://GPL-3.0"
+)
+
+dependency(SUMATRAPDF
+   DEPNAME      "SumatraPDF"
+   REPOSITORY   "https://github.com/sumatrapdfreader/sumatrapdf"
+   ATTRIBUTION  "Copyright SumatraPDF project authors"
+)
+
+dependency(WINUTILS
+   DEPNAME      "Hadoop Winutils"
+   REPOSITORY   "https://github.com/apache/hadoop/tree/master/hadoop-common-project/hadoop-common/src/main/winutils"
+   LICENSE      "Apache-2.0"
+   AUTHOR       "Apache Software Foundation"
+)
+
+dependency(NSIS
+   DEPNAME      "Nullsoft Scriptable Install System"
+   HOMEPAGE     "https://sourceforge.net/projects/nsis/"
+   LICENSE      "zlib AND bzip2 AND CPL-1.0"
+   LICENSE_PATH "https://github.com/kichik/nsis/blob/master/COPYING"
+)
+
+dependency(NSISMULTIUSER
+   DEPNAME      "NsisMultiUser"
+   REPOSITORY   "https://github.com/Drizin/NsisMultiUser"
+   AUTHOR       "Richard Drizin, Alex Mitev"
+   LICENSE      "MIT"
+)
+
+dependency(UAC
+   DEPNAME      "UAC NSIS Plugin"
+   HOMEPAGE     "https://nsis.sourceforge.io/UAC_plug-in"
+   LICENSE      "zlib"
+)
+
+dependency(STDUTILS
+   DEPNAME      "StdUtils NSIS Plugin"
+   HOMEPAGE     "https://nsis.sourceforge.io/StdUtils_plug-in"
+   LICENSE      "LGPL-2.1"
+)

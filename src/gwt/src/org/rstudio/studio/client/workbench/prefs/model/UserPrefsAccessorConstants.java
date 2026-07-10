@@ -846,6 +846,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String editorThemeDescription();
 
    /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   @DefaultStringValue("Ignore project-specific appearance settings")
+   String ignoreProjectAppearanceTitle();
+   @DefaultStringValue("Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.")
+   String ignoreProjectAppearanceDescription();
+
+   /**
     * Whether to use a custom editor font in RStudio Server.
     */
    @DefaultStringValue("Enable editor fonts on RStudio Server")
@@ -1198,6 +1206,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoRunSetupChunkDescription();
 
    /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   @DefaultStringValue("Execute inline R code when previewing notebooks")
+   String notebookExecuteInlineChunksTitle();
+   @DefaultStringValue("Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.")
+   String notebookExecuteInlineChunksDescription();
+
+   /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    @DefaultStringValue("Hide console when running R Markdown chunks")
@@ -1368,6 +1384,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sortFileNamesNaturallyDescription();
 
    /**
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+    */
+   @DefaultStringValue("Use ISO-8601 date-time formatting")
+   String dateTimeUseIso8601Title();
+   @DefaultStringValue("Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.")
+   String dateTimeUseIso8601Description();
+
+   /**
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
+    */
+   @DefaultStringValue("Use UTC time zone")
+   String dateTimeUseUtcTitle();
+   @DefaultStringValue("Whether to display dates and times in the UTC time zone instead of the local time zone.")
+   String dateTimeUseUtcDescription();
+
+   /**
     * Whether to change the directory in the Files pane automatically when the working directory in R changes.
     */
    @DefaultStringValue("Synchronize the Files pane with the current working directory")
@@ -1446,6 +1478,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String wrapTabNavigationTitle();
    @DefaultStringValue("Whether to wrap around when going to the previous or next editor tab.")
    String wrapTabNavigationDescription();
+
+   /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   @DefaultStringValue("Change active editor tab with mouse wheel")
+   String mousewheelChangesEditorTabTitle();
+   @DefaultStringValue("Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.")
+   String mousewheelChangesEditorTabDescription();
 
    /**
     * The theme to use for the main RStudio user interface.
@@ -1756,6 +1796,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerShowSummaryDescription();
 
    /**
+    * Whether the data viewer filter UI is shown by default when opening the data viewer.
+    */
+   @DefaultStringValue("Show data viewer filter UI by default")
+   String dataViewerShowFiltersTitle();
+   @DefaultStringValue("Whether the data viewer filter UI is shown by default when opening the data viewer.")
+   String dataViewerShowFiltersDescription();
+
+   /**
+    * Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.
+    */
+   @DefaultStringValue("Use overlay scrollbars in the data viewer")
+   String dataViewerUseOverlayScrollbarsTitle();
+   @DefaultStringValue("Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.")
+   String dataViewerUseOverlayScrollbarsDescription();
+
+   /**
     * Support accessibility aids such as screen readers.
     */
    @DefaultStringValue("Enable support for screen readers")
@@ -1832,6 +1888,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autoSaveOnBlurTitle();
    @DefaultStringValue("Whether to automatically save when the editor loses focus.")
    String autoSaveOnBlurDescription();
+
+   /**
+    * When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.
+    */
+   @DefaultStringValue("Reduce background file operations on network and remote drives")
+   String reduceRemoteFilesystemOperationsTitle();
+   @DefaultStringValue("When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.")
+   String reduceRemoteFilesystemOperationsDescription();
 
    /**
     * Initial directory for new terminals.
@@ -2058,6 +2122,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveRetryTimeoutDescription();
 
    /**
+    * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+    */
+   @DefaultStringValue("Use durable writes when saving files")
+   String saveFilesDurablyTitle();
+   @DefaultStringValue("Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.")
+   String saveFilesDurablyDescription();
+
+   /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    @DefaultStringValue("Use R's native pipe operator, |>")
@@ -2276,12 +2348,28 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantToolbarButtonVisibleDescription();
 
    /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   @DefaultStringValue("Use the system certificate store (restart required)")
+   String assistantUseSystemCaTitle();
+   @DefaultStringValue("When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.")
+   String assistantUseSystemCaDescription();
+
+   /**
     * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
     */
    @DefaultStringValue("Use pre-release version of Posit Assistant (restart required)")
    String positAssistantTestManifestTitle();
    @DefaultStringValue("Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.")
    String positAssistantTestManifestDescription();
+
+   /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   @DefaultStringValue("Posit Assistant update check interval (hours)")
+   String positAssistantUpdateCheckIntervalHoursTitle();
+   @DefaultStringValue("The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.")
+   String positAssistantUpdateCheckIntervalHoursDescription();
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
@@ -2414,12 +2502,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeFormatterExternalCommandDescription();
 
    /**
-    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
     */
    @DefaultStringValue("Use Air for code formatting")
    String useAirFormatterTitle();
-   @DefaultStringValue("When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.")
+   @DefaultStringValue("When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.")
    String useAirFormatterDescription();
+
+   /**
+    * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+    */
+   @DefaultStringValue("Only use Air when an air.toml file is found")
+   String airFormatterRequireTomlTitle();
+   @DefaultStringValue("When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.")
+   String airFormatterRequireTomlDescription();
 
    /**
     * When set, the selected formatter will be used to reformat documents on save.

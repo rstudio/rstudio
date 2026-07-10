@@ -1,8 +1,9 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep } from '@utils/constants';
+import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { resetSourcePaneState, waitForActiveDocument } from '@utils/commands';
 
 test.describe('Run Line button', () => {
   const sandbox = useSuiteSandbox();
@@ -16,19 +17,25 @@ test.describe('Run Line button', () => {
 
   test('submits queued lines to the console in document order', async ({ rstudioPage: page }) => {
     await consoleActions.clearConsole();
-    await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+    await resetSourcePaneState(page);
 
     const sandboxR = sandbox.dir.replace(/\\/g, '/');
     const filePath = `${sandboxR}/submit_order_${Date.now()}.R`;
-    await consoleActions.typeInConsole(
+    await consoleActions.executeInConsole(
       `writeLines(c("Sys.sleep(1)", "# 1", "x <- 1", "# 2", "x <- 22", "x"), "${filePath}")`,
+      { wait: true },
     );
-    await consoleActions.typeInConsole(`file.edit("${filePath}")`);
-    await sleep(1500);
+    await consoleActions.executeInConsole(`file.edit("${filePath}")`);
+    await waitForActiveDocument(page, filePath, TIMEOUTS.fileOpen);
 
     await sourceActions.goToTop();
 
-    const runLineBtn = page.locator("[class*='run_the_current_line_or_selection']").first();
+    // Scope to the active editor's toolbar. A bare class locator also matches
+    // the hidden Untitled placeholder tab's button (kept by
+    // resetSourcePaneState); `.first()` picked that hidden one and the click
+    // timed out as "not visible". sourcePane.runLineBtn scopes to the visible
+    // tabpanel.
+    const runLineBtn = sourceActions.sourcePane.runLineBtn;
     for (let i = 0; i < 4; i++) {
       await runLineBtn.click();
     }
@@ -37,6 +44,6 @@ test.describe('Run Line button', () => {
       timeout: 15000,
     });
 
-    await consoleActions.typeInConsole('.rs.api.closeAllSourceBuffersWithoutSaving()');
+    await resetSourcePaneState(page);
   });
 });

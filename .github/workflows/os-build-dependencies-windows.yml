@@ -1,0 +1,172 @@
+# Builds the Windows Boost and SOCI prebuilts consumed by
+# dependencies/windows/install-dependencies.cmd, replacing the manual
+# build-on-a-developer-machine + hand-upload process.
+#
+# The workflow always publishes the built archives as workflow artifacts.
+# When 'upload' is enabled, it also pushes them to the rstudio-buildtools
+# S3 bucket, where install-dependencies.cmd downloads them from:
+#
+#   s3://rstudio-buildtools/Boost/boost-<version>-win-msvc<toolset>.zip
+#   s3://rstudio-buildtools/soci-msvc<toolset>-<soci-version>.zip
+#
+# Prerequisites:
+#
+# - The Boost source archive Boost/boost_<X_Y_Z>.7z must already exist in
+#   the rstudio-buildtools bucket (install-boost.R downloads it from there),
+#   as must the SOCI source archive soci-<version>.tar.gz.
+# - S3 upload requires the AWS_BUILDTOOLS_UPLOAD_ROLE_ARN secret to be
+#   configured with an OIDC role that can write to rstudio-buildtools
+#   (tracked in https://github.com/rstudio/rstudio/issues/18124). Until it
+#   exists, run with 'upload' disabled and push the workflow artifacts with
+#   dependencies/tools/upload-windows-dependencies.sh.
+#
+# The MSVC toolset version selects both the compiler toolset and the names
+# of the produced archives: 143 for Visual Studio 2022 (windows-2022
+# runner), 145 for Visual Studio 2026 (windows-2025 runner). See
+# https://github.com/rstudio/rstudio/issues/17986 for background.
+
+name: "Build Dependencies (Windows, Open Source)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      boost_version:
+        description: "Boost version to build"
+        type: string
+        default: "1.91.0"
+      soci_version:
+        description: "SOCI version to build"
+        type: string
+        default: "4.0.3"
+      msvc_toolset_version:
+        description: "MSVC toolset version to target (143 = VS 2022, 145 = VS 2026)"
+        type: string
+        default: "145"
+      cmake_generator:
+        description: "CMake generator used for the SOCI build"
+        type: string
+        default: "Visual Studio 18 2026"
+      runner:
+        description: "Runner image (windows-2025 ships VS 2026, windows-2022 ships VS 2022)"
+        type: choice
+        options:
+          - windows-2025
+          - windows-2022
+        default: windows-2025
+      upload:
+        description: "Upload the built archives to s3://rstudio-buildtools"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 300
+
+    env:
+      BOOST_VERSION: ${{ inputs.boost_version }}
+      SOCI_VERSION: ${{ inputs.soci_version }}
+      MSVC_TOOLSET_VERSION: ${{ inputs.msvc_toolset_version }}
+      CMAKE_GENERATOR: ${{ inputs.cmake_generator }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # install-boost.R and install-soci.R are driven by R.
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      # tools.R checks for MSVC at a set of hardcoded VS 2022 paths
+      # (BuildTools / Community). GitHub runners ship VS Enterprise -- and on
+      # windows-2025, VS 2026 -- neither of which is in that list. Locate the
+      # actual installation with vswhere, put vcvarsall.bat on the PATH, and
+      # create a junction at the BuildTools path so tools.R's check passes.
+      # This is the same pattern used by the Windows e2e build workflow.
+      - name: Set up MSVC environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
+            -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          if ([string]::IsNullOrEmpty($vsPath)) {
+            Write-Error "vswhere could not find a Visual Studio installation with VC++ tools"
+            exit 1
+          }
+          Write-Host "Visual Studio installation: $vsPath"
+          $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
+          Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
+          Write-Host "Added to PATH: $vcBuildPath"
+          $junctionPath = 'C:\Program Files\Microsoft Visual Studio\2022\BuildTools'
+          if (-not (Test-Path $junctionPath)) {
+            New-Item -ItemType Directory -Force -Path (Split-Path $junctionPath) | Out-Null
+            New-Item -ItemType Junction -Path $junctionPath -Target $vsPath | Out-Null
+            Write-Host "Junction created: $junctionPath -> $vsPath"
+          } else {
+            Write-Host "Junction already exists: $junctionPath"
+          }
+
+      # tools.R also requires a perl installation; GitHub runner images ship
+      # Strawberry Perl, but install it if a future image drops it.
+      - name: Ensure Strawberry Perl is available
+        run: |
+          if (-not (Test-Path 'C:\Strawberry\perl\bin')) {
+            choco install -y strawberryperl
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      # Builds debug + release static variants (32- and 64-bit) and packages
+      # them as boost-<version>-win-msvc<toolset>.zip.
+      - name: Build Boost
+        working-directory: dependencies/windows
+        shell: cmd
+        run: install-boost.cmd
+
+      # Builds SOCI against the Boost prebuilts produced above; the output
+      # lands in install-soci/soci-msvc<toolset>-<version>.
+      - name: Build SOCI
+        working-directory: dependencies/windows
+        shell: cmd
+        run: install-soci.cmd
+
+      - name: Package SOCI
+        working-directory: dependencies/windows
+        shell: cmd
+        run: |
+          7z a -mmt8 -mx9 -xr!*.obj -xr!*.tlog ^
+            soci-msvc%MSVC_TOOLSET_VERSION%-%SOCI_VERSION%.zip ^
+            .\install-soci\soci-msvc%MSVC_TOOLSET_VERSION%-%SOCI_VERSION%
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-dependencies-msvc${{ inputs.msvc_toolset_version }}
+          path: |
+            dependencies/windows/boost-*.zip
+            dependencies/windows/soci-*.zip
+          if-no-files-found: error
+
+      - name: Configure AWS credentials
+        if: ${{ inputs.upload }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_BUILDTOOLS_UPLOAD_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Upload to rstudio-buildtools
+        if: ${{ inputs.upload }}
+        working-directory: dependencies/windows
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $boostZip = "boost-$env:BOOST_VERSION-win-msvc$env:MSVC_TOOLSET_VERSION.zip"
+          aws s3 cp $boostZip "s3://rstudio-buildtools/Boost/$boostZip" --acl public-read
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $sociZip = "soci-msvc$env:MSVC_TOOLSET_VERSION-$env:SOCI_VERSION.zip"
+          aws s3 cp $sociZip "s3://rstudio-buildtools/$sociZip" --acl public-read
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

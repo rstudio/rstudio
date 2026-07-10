@@ -54,6 +54,12 @@ core::Error evaluateRmdParams(const std::string& docId);
 
 std::string parsableRStudioVersion();
 
+// Returns true if the given document render function (from a document's `knit:`
+// YAML field) must be confirmed with the user before it is run, because it is
+// not one of RStudio's known-safe defaults. See SessionRMarkdown.cpp for
+// details on why a custom render function is treated as untrusted.
+bool requiresRenderConfirmation(const std::string& renderFunc);
+
 core::Error initialize();
 
 } // namespace rmarkdown

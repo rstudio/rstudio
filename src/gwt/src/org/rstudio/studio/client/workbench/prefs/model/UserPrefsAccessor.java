@@ -141,6 +141,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ENABLE_MOUSEWHEEL_ZOOM = "enable_mousewheel_zoom";
    public static final String MOUSEWHEEL_ZOOM_DEBOUNCE_MS = "mousewheel_zoom_debounce_ms";
    public static final String EDITOR_THEME = "editor_theme";
+   public static final String IGNORE_PROJECT_APPEARANCE = "ignore_project_appearance";
    public static final String SERVER_EDITOR_FONT_ENABLED = "server_editor_font_enabled";
    public static final String SERVER_EDITOR_FONT = "server_editor_font";
    public static final String DEFAULT_ENCODING = "default_encoding";
@@ -185,6 +186,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SHOW_DOC_OUTLINE_RMD = "show_doc_outline_rmd";
    public static final String DOCUMENT_OUTLINE_FONT_SIZE = "document_outline_font_size";
    public static final String AUTO_RUN_SETUP_CHUNK = "auto_run_setup_chunk";
+   public static final String NOTEBOOK_EXECUTE_INLINE_CHUNKS = "notebook_execute_inline_chunks";
    public static final String HIDE_CONSOLE_ON_CHUNK_EXECUTE = "hide_console_on_chunk_execute";
    public static final String EXECUTION_BEHAVIOR = "execution_behavior";
    public static final String SHOW_TERMINAL_TAB = "show_terminal_tab";
@@ -205,6 +207,8 @@ public class UserPrefsAccessor extends Prefs
    public static final String ALWAYS_SHOWN_FILES = "always_shown_files";
    public static final String ALWAYS_SHOWN_EXTENSIONS = "always_shown_extensions";
    public static final String SORT_FILE_NAMES_NATURALLY = "sort_file_names_naturally";
+   public static final String DATE_TIME_USE_ISO8601 = "date_time_use_iso8601";
+   public static final String DATE_TIME_USE_UTC = "date_time_use_utc";
    public static final String SYNC_FILES_PANE_WORKING_DIR = "sync_files_pane_working_dir";
    public static final String JOBS_TAB_VISIBILITY = "jobs_tab_visibility";
    public static final String SHOW_LAUNCHER_JOBS_TAB = "show_launcher_jobs_tab";
@@ -215,6 +219,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String DOC_OUTLINE_SHOW = "doc_outline_show";
    public static final String LATEX_PREVIEW_ON_CURSOR_IDLE = "latex_preview_on_cursor_idle";
    public static final String WRAP_TAB_NAVIGATION = "wrap_tab_navigation";
+   public static final String MOUSEWHEEL_CHANGES_EDITOR_TAB = "mousewheel_changes_editor_tab";
    public static final String GLOBAL_THEME = "global_theme";
    public static final String USE_DARK_THEME_MODAL_DIALOGS = "use_dark_theme_modal_dialogs";
    public static final String GIT_DIFF_IGNORE_WHITESPACE = "git_diff_ignore_whitespace";
@@ -253,6 +258,8 @@ public class UserPrefsAccessor extends Prefs
    public static final String DATA_VIEWER_MAX_COLUMNS = "data_viewer_max_columns";
    public static final String DATA_VIEWER_MAX_CELL_SIZE = "data_viewer_max_cell_size";
    public static final String DATA_VIEWER_SHOW_SUMMARY = "data_viewer_show_summary";
+   public static final String DATA_VIEWER_SHOW_FILTERS = "data_viewer_show_filters";
+   public static final String DATA_VIEWER_USE_OVERLAY_SCROLLBARS = "data_viewer_use_overlay_scrollbars";
    public static final String ENABLE_SCREEN_READER = "enable_screen_reader";
    public static final String TYPING_STATUS_DELAY_MS = "typing_status_delay_ms";
    public static final String REDUCED_MOTION = "reduced_motion";
@@ -262,6 +269,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String AUTO_SAVE_ON_IDLE = "auto_save_on_idle";
    public static final String AUTO_SAVE_IDLE_MS = "auto_save_idle_ms";
    public static final String AUTO_SAVE_ON_BLUR = "auto_save_on_blur";
+   public static final String REDUCE_REMOTE_FILESYSTEM_OPERATIONS = "reduce_remote_filesystem_operations";
    public static final String TERMINAL_INITIAL_DIRECTORY = "terminal_initial_directory";
    public static final String FULL_PROJECT_PATH_IN_WINDOW_TITLE = "full_project_path_in_window_title";
    public static final String VISUAL_MARKDOWN_EDITING_IS_DEFAULT = "visual_markdown_editing_is_default";
@@ -290,6 +298,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String PYTHON_VERSION = "python_version";
    public static final String PYTHON_PATH = "python_path";
    public static final String SAVE_RETRY_TIMEOUT = "save_retry_timeout";
+   public static final String SAVE_FILES_DURABLY = "save_files_durably";
    public static final String INSERT_NATIVE_PIPE_OPERATOR = "insert_native_pipe_operator";
    public static final String COMMAND_PALETTE_MRU = "command_palette_mru";
    public static final String SHOW_MEMORY_USAGE = "show_memory_usage";
@@ -315,7 +324,9 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
    public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
+   public static final String ASSISTANT_USE_SYSTEM_CA = "assistant_use_system_ca";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
+   public static final String POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS = "posit_assistant_update_check_interval_hours";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
    public static final String COPILOT_COMPLETIONS_DELAY = "copilot_completions_delay";
@@ -331,6 +342,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CODE_FORMATTER_STYLER_STRICT = "code_formatter_styler_strict";
    public static final String CODE_FORMATTER_EXTERNAL_COMMAND = "code_formatter_external_command";
    public static final String USE_AIR_FORMATTER = "use_air_formatter";
+   public static final String AIR_FORMATTER_REQUIRE_TOML = "air_formatter_require_toml";
    public static final String REFORMAT_ON_SAVE = "reformat_on_save";
    public static final String PROJECT_USER_DATA_DIRECTORY = "project_user_data_directory";
    public static final String CONSOLE_HIGHLIGHT_CONDITIONS = "console_highlight_conditions";
@@ -1741,6 +1753,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead.
+    */
+   public PrefValue<Boolean> ignoreProjectAppearance()
+   {
+      return bool(
+         "ignore_project_appearance",
+         _constants.ignoreProjectAppearanceTitle(), 
+         _constants.ignoreProjectAppearanceDescription(), 
+         false);
+   }
+
+   /**
     * Whether to use a custom editor font in RStudio Server.
     */
    public PrefValue<Boolean> serverEditorFontEnabled()
@@ -2317,6 +2341,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead.
+    */
+   public PrefValue<Boolean> notebookExecuteInlineChunks()
+   {
+      return bool(
+         "notebook_execute_inline_chunks",
+         _constants.notebookExecuteInlineChunksTitle(), 
+         _constants.notebookExecuteInlineChunksDescription(), 
+         true);
+   }
+
+   /**
     * Whether to hide the R console when executing inline R Markdown chunks.
     */
    public PrefValue<Boolean> hideConsoleOnChunkExecute()
@@ -2589,7 +2625,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".posit", ".positai", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -2602,6 +2638,30 @@ public class UserPrefsAccessor extends Prefs
          _constants.sortFileNamesNaturallyTitle(), 
          _constants.sortFileNamesNaturallyDescription(), 
          true);
+   }
+
+   /**
+    * Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region.
+    */
+   public PrefValue<Boolean> dateTimeUseIso8601()
+   {
+      return bool(
+         "date_time_use_iso8601",
+         _constants.dateTimeUseIso8601Title(), 
+         _constants.dateTimeUseIso8601Description(), 
+         false);
+   }
+
+   /**
+    * Whether to display dates and times in the UTC time zone instead of the local time zone.
+    */
+   public PrefValue<Boolean> dateTimeUseUtc()
+   {
+      return bool(
+         "date_time_use_utc",
+         _constants.dateTimeUseUtcTitle(), 
+         _constants.dateTimeUseUtcDescription(), 
+         false);
    }
 
    /**
@@ -2773,6 +2833,18 @@ public class UserPrefsAccessor extends Prefs
          "wrap_tab_navigation",
          _constants.wrapTabNavigationTitle(), 
          _constants.wrapTabNavigationDescription(), 
+         true);
+   }
+
+   /**
+    * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
+    */
+   public PrefValue<Boolean> mousewheelChangesEditorTab()
+   {
+      return bool(
+         "mousewheel_changes_editor_tab",
+         _constants.mousewheelChangesEditorTabTitle(), 
+         _constants.mousewheelChangesEditorTabDescription(), 
          true);
    }
 
@@ -3282,6 +3354,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the data viewer filter UI is shown by default when opening the data viewer.
+    */
+   public PrefValue<Boolean> dataViewerShowFilters()
+   {
+      return bool(
+         "data_viewer_show_filters",
+         _constants.dataViewerShowFiltersTitle(), 
+         _constants.dataViewerShowFiltersDescription(), 
+         false);
+   }
+
+   /**
+    * Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead.
+    */
+   public PrefValue<Boolean> dataViewerUseOverlayScrollbars()
+   {
+      return bool(
+         "data_viewer_use_overlay_scrollbars",
+         _constants.dataViewerUseOverlayScrollbarsTitle(), 
+         _constants.dataViewerUseOverlayScrollbarsDescription(), 
+         true);
+   }
+
+   /**
     * Support accessibility aids such as screen readers.
     */
    public PrefValue<Boolean> enableScreenReader()
@@ -3401,6 +3497,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.autoSaveOnBlurTitle(), 
          _constants.autoSaveOnBlurDescription(), 
          false);
+   }
+
+   /**
+    * When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status.
+    */
+   public PrefValue<Boolean> reduceRemoteFilesystemOperations()
+   {
+      return bool(
+         "reduce_remote_filesystem_operations",
+         _constants.reduceRemoteFilesystemOperationsTitle(), 
+         _constants.reduceRemoteFilesystemOperationsDescription(), 
+         true);
    }
 
    /**
@@ -3824,6 +3932,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes.
+    */
+   public PrefValue<Boolean> saveFilesDurably()
+   {
+      return bool(
+         "save_files_durably",
+         _constants.saveFilesDurablyTitle(), 
+         _constants.saveFilesDurablyDescription(), 
+         true);
+   }
+
+   /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    public PrefValue<Boolean> insertNativePipeOperator()
@@ -3832,7 +3952,7 @@ public class UserPrefsAccessor extends Prefs
          "insert_native_pipe_operator",
          _constants.insertNativePipeOperatorTitle(), 
          _constants.insertNativePipeOperatorDescription(), 
-         false);
+         true);
    }
 
    /**
@@ -4185,6 +4305,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect.
+    */
+   public PrefValue<Boolean> assistantUseSystemCa()
+   {
+      return bool(
+         "assistant_use_system_ca",
+         _constants.assistantUseSystemCaTitle(), 
+         _constants.assistantUseSystemCaDescription(), 
+         false);
+   }
+
+   /**
     * Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work.
     */
    public PrefValue<Boolean> positAssistantTestManifest()
@@ -4194,6 +4326,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.positAssistantTestManifestTitle(), 
          _constants.positAssistantTestManifestDescription(), 
          false);
+   }
+
+   /**
+    * The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time.
+    */
+   public PrefValue<Integer> positAssistantUpdateCheckIntervalHours()
+   {
+      return integer(
+         "posit_assistant_update_check_interval_hours",
+         _constants.positAssistantUpdateCheckIntervalHoursTitle(), 
+         _constants.positAssistantUpdateCheckIntervalHoursDescription(), 
+         2);
    }
 
    /**
@@ -4412,7 +4556,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting R code.
     */
    public PrefValue<Boolean> useAirFormatter()
    {
@@ -4420,6 +4564,18 @@ public class UserPrefsAccessor extends Prefs
          "use_air_formatter",
          _constants.useAirFormatterTitle(), 
          _constants.useAirFormatterDescription(), 
+         false);
+   }
+
+   /**
+    * When set, Air will only be used to format R documents located within a project or directory containing an air.toml file.
+    */
+   public PrefValue<Boolean> airFormatterRequireToml()
+   {
+      return bool(
+         "air_formatter_require_toml",
+         _constants.airFormatterRequireTomlTitle(), 
+         _constants.airFormatterRequireTomlDescription(), 
          false);
    }
 
@@ -4672,6 +4828,8 @@ public class UserPrefsAccessor extends Prefs
          mousewheelZoomDebounceMs().setValue(layer, source.getInteger("mousewheel_zoom_debounce_ms"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
+      if (source.hasKey("ignore_project_appearance"))
+         ignoreProjectAppearance().setValue(layer, source.getBool("ignore_project_appearance"));
       if (source.hasKey("server_editor_font_enabled"))
          serverEditorFontEnabled().setValue(layer, source.getBool("server_editor_font_enabled"));
       if (source.hasKey("server_editor_font"))
@@ -4760,6 +4918,8 @@ public class UserPrefsAccessor extends Prefs
          documentOutlineFontSize().setValue(layer, source.getInteger("document_outline_font_size"));
       if (source.hasKey("auto_run_setup_chunk"))
          autoRunSetupChunk().setValue(layer, source.getBool("auto_run_setup_chunk"));
+      if (source.hasKey("notebook_execute_inline_chunks"))
+         notebookExecuteInlineChunks().setValue(layer, source.getBool("notebook_execute_inline_chunks"));
       if (source.hasKey("hide_console_on_chunk_execute"))
          hideConsoleOnChunkExecute().setValue(layer, source.getBool("hide_console_on_chunk_execute"));
       if (source.hasKey("execution_behavior"))
@@ -4800,6 +4960,10 @@ public class UserPrefsAccessor extends Prefs
          alwaysShownExtensions().setValue(layer, source.getObject("always_shown_extensions"));
       if (source.hasKey("sort_file_names_naturally"))
          sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
+      if (source.hasKey("date_time_use_iso8601"))
+         dateTimeUseIso8601().setValue(layer, source.getBool("date_time_use_iso8601"));
+      if (source.hasKey("date_time_use_utc"))
+         dateTimeUseUtc().setValue(layer, source.getBool("date_time_use_utc"));
       if (source.hasKey("sync_files_pane_working_dir"))
          syncFilesPaneWorkingDir().setValue(layer, source.getBool("sync_files_pane_working_dir"));
       if (source.hasKey("jobs_tab_visibility"))
@@ -4820,6 +4984,8 @@ public class UserPrefsAccessor extends Prefs
          latexPreviewOnCursorIdle().setValue(layer, source.getString("latex_preview_on_cursor_idle"));
       if (source.hasKey("wrap_tab_navigation"))
          wrapTabNavigation().setValue(layer, source.getBool("wrap_tab_navigation"));
+      if (source.hasKey("mousewheel_changes_editor_tab"))
+         mousewheelChangesEditorTab().setValue(layer, source.getBool("mousewheel_changes_editor_tab"));
       if (source.hasKey("global_theme"))
          globalTheme().setValue(layer, source.getString("global_theme"));
       if (source.hasKey("use_dark_theme_modal_dialogs"))
@@ -4896,6 +5062,10 @@ public class UserPrefsAccessor extends Prefs
          dataViewerMaxCellSize().setValue(layer, source.getInteger("data_viewer_max_cell_size"));
       if (source.hasKey("data_viewer_show_summary"))
          dataViewerShowSummary().setValue(layer, source.getBool("data_viewer_show_summary"));
+      if (source.hasKey("data_viewer_show_filters"))
+         dataViewerShowFilters().setValue(layer, source.getBool("data_viewer_show_filters"));
+      if (source.hasKey("data_viewer_use_overlay_scrollbars"))
+         dataViewerUseOverlayScrollbars().setValue(layer, source.getBool("data_viewer_use_overlay_scrollbars"));
       if (source.hasKey("enable_screen_reader"))
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
@@ -4914,6 +5084,8 @@ public class UserPrefsAccessor extends Prefs
          autoSaveIdleMs().setValue(layer, source.getInteger("auto_save_idle_ms"));
       if (source.hasKey("auto_save_on_blur"))
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
+      if (source.hasKey("reduce_remote_filesystem_operations"))
+         reduceRemoteFilesystemOperations().setValue(layer, source.getBool("reduce_remote_filesystem_operations"));
       if (source.hasKey("terminal_initial_directory"))
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
@@ -4970,6 +5142,8 @@ public class UserPrefsAccessor extends Prefs
          pythonPath().setValue(layer, source.getString("python_path"));
       if (source.hasKey("save_retry_timeout"))
          saveRetryTimeout().setValue(layer, source.getInteger("save_retry_timeout"));
+      if (source.hasKey("save_files_durably"))
+         saveFilesDurably().setValue(layer, source.getBool("save_files_durably"));
       if (source.hasKey("insert_native_pipe_operator"))
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
       if (source.hasKey("command_palette_mru"))
@@ -5020,8 +5194,12 @@ public class UserPrefsAccessor extends Prefs
          assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
       if (source.hasKey("assistant_toolbar_button_visible"))
          assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
+      if (source.hasKey("assistant_use_system_ca"))
+         assistantUseSystemCa().setValue(layer, source.getBool("assistant_use_system_ca"));
       if (source.hasKey("posit_assistant_test_manifest"))
          positAssistantTestManifest().setValue(layer, source.getBool("posit_assistant_test_manifest"));
+      if (source.hasKey("posit_assistant_update_check_interval_hours"))
+         positAssistantUpdateCheckIntervalHours().setValue(layer, source.getInteger("posit_assistant_update_check_interval_hours"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -5052,6 +5230,8 @@ public class UserPrefsAccessor extends Prefs
          codeFormatterExternalCommand().setValue(layer, source.getString("code_formatter_external_command"));
       if (source.hasKey("use_air_formatter"))
          useAirFormatter().setValue(layer, source.getBool("use_air_formatter"));
+      if (source.hasKey("air_formatter_require_toml"))
+         airFormatterRequireToml().setValue(layer, source.getBool("air_formatter_require_toml"));
       if (source.hasKey("reformat_on_save"))
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
       if (source.hasKey("project_user_data_directory"))
@@ -5159,6 +5339,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(enableMousewheelZoom());
       prefs.add(mousewheelZoomDebounceMs());
       prefs.add(editorTheme());
+      prefs.add(ignoreProjectAppearance());
       prefs.add(serverEditorFontEnabled());
       prefs.add(serverEditorFont());
       prefs.add(defaultEncoding());
@@ -5203,6 +5384,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showDocOutlineRmd());
       prefs.add(documentOutlineFontSize());
       prefs.add(autoRunSetupChunk());
+      prefs.add(notebookExecuteInlineChunks());
       prefs.add(hideConsoleOnChunkExecute());
       prefs.add(executionBehavior());
       prefs.add(showTerminalTab());
@@ -5223,6 +5405,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(alwaysShownFiles());
       prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
+      prefs.add(dateTimeUseIso8601());
+      prefs.add(dateTimeUseUtc());
       prefs.add(syncFilesPaneWorkingDir());
       prefs.add(jobsTabVisibility());
       prefs.add(showLauncherJobsTab());
@@ -5233,6 +5417,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
       prefs.add(wrapTabNavigation());
+      prefs.add(mousewheelChangesEditorTab());
       prefs.add(globalTheme());
       prefs.add(useDarkThemeModalDialogs());
       prefs.add(gitDiffIgnoreWhitespace());
@@ -5271,6 +5456,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(dataViewerMaxColumns());
       prefs.add(dataViewerMaxCellSize());
       prefs.add(dataViewerShowSummary());
+      prefs.add(dataViewerShowFilters());
+      prefs.add(dataViewerUseOverlayScrollbars());
       prefs.add(enableScreenReader());
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
@@ -5280,6 +5467,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(autoSaveOnIdle());
       prefs.add(autoSaveIdleMs());
       prefs.add(autoSaveOnBlur());
+      prefs.add(reduceRemoteFilesystemOperations());
       prefs.add(terminalInitialDirectory());
       prefs.add(fullProjectPathInWindowTitle());
       prefs.add(visualMarkdownEditingIsDefault());
@@ -5308,6 +5496,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonVersion());
       prefs.add(pythonPath());
       prefs.add(saveRetryTimeout());
+      prefs.add(saveFilesDurably());
       prefs.add(insertNativePipeOperator());
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
@@ -5333,7 +5522,9 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantNesAutoshow());
       prefs.add(assistantShowMessages());
       prefs.add(assistantToolbarButtonVisible());
+      prefs.add(assistantUseSystemCa());
       prefs.add(positAssistantTestManifest());
+      prefs.add(positAssistantUpdateCheckIntervalHours());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());
@@ -5349,6 +5540,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeFormatterStylerStrict());
       prefs.add(codeFormatterExternalCommand());
       prefs.add(useAirFormatter());
+      prefs.add(airFormatterRequireToml());
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());

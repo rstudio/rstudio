@@ -1,0 +1,29 @@
+name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source, Scheduled)"
+
+on:
+  schedule:
+    # Mon-Fri at 03:00 UTC -- daily full-suite run against latest daily build.
+    - cron: '0 3 * * 1-5'
+  workflow_dispatch:
+
+concurrency:
+  group: pw-scheduled-windows-2025
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write  # e2e-merge in the called workflow declares this
+  # The called workflow's e2e-merge job assumes the S3 report-upload role via
+  # OIDC; a reusable workflow's id-token grant is capped by its caller's.
+  id-token: write
+
+jobs:
+  run-windows-2025:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"

@@ -15,6 +15,7 @@
 
 import { BrowserWindow } from 'electron';
 import { logger } from '../core/logger';
+import { isAutomated } from './utils';
 
 declare const SPLASH_WEBPACK_ENTRY: string;
 
@@ -38,5 +39,9 @@ export function createSplashScreen(): BrowserWindow {
 
 export function showPersistentSplashScreen(): void {
   const splash = createSplashScreen();
-  splash.show();
+  if (isAutomated()) {
+    splash.showInactive();
+  } else {
+    splash.show();
+  }
 }

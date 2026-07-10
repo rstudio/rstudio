@@ -3562,6 +3562,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Rainb_ow Fenced Divs") // $NON-NLS-1$
     String toggleRainbowFencedDivsMenuLabel();
     
+    // toggleDetectMissingPackages
+    @DefaultStringValue("Toggle Detection of Missing Packages in This File") // $NON-NLS-1$
+    String toggleDetectMissingPackagesLabel();
+    @DefaultStringValue("_Detect Missing Packages in This File") // $NON-NLS-1$
+    String toggleDetectMissingPackagesMenuLabel();
+    @DefaultStringValue("Toggle the editor banner that warns when this file references R packages that are not installed") // $NON-NLS-1$
+    String toggleDetectMissingPackagesDesc();
+    
     // maximizeConsole
     @DefaultStringValue("Toggle Maximize Console Pane") // $NON-NLS-1$
     String maximizeConsoleLabel();
@@ -3861,6 +3869,14 @@ public interface CmdConstants extends Constants {
     // showGpuDiagnostics
     @DefaultStringValue("Show _GPU Diagnostics") // $NON-NLS-1$
     String showGpuDiagnosticsMenuLabel();
+    
+    // toggleGpuExclusionList
+    @DefaultStringValue("Toggle GPU _Exclusion List") // $NON-NLS-1$
+    String toggleGpuExclusionListMenuLabel();
+    
+    // toggleGpuDriverBugWorkarounds
+    @DefaultStringValue("Toggle GPU Driver Bug _Workarounds") // $NON-NLS-1$
+    String toggleGpuDriverBugWorkaroundsMenuLabel();
     
     // showA11yDiagnostics
     @DefaultStringValue("Show _Accessibility Diagnostics") // $NON-NLS-1$

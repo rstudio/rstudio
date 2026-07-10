@@ -258,19 +258,11 @@ Error getPackageStateJson(json::Object* pJson)
       LOG_ERROR(error);
    (*pJson)["active_repository"] = activeRepository;
 
-   // collect vulnerability information as well
-   SEXP vulnsSEXP = R_NilValue;
-   error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")
-               .call(&vulnsSEXP, &protect);
-   if (error)
-      LOG_ERROR(error);
-
-   json::Value vulnsJson;
-   error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
-   if (error)
-      LOG_ERROR(error);
-
-   (*pJson)["vulns"] = vulnsJson;
+   // NOTE: vulnerability data is intentionally not part of the package state.
+   // It is fetched asynchronously (see ppm::refreshVulnerabilitiesAsync) so that
+   // a slow or unreachable PPM can't block the package list -- and therefore IDE
+   // startup -- and delivered separately via the kPackageVulnerabilitiesReady
+   // event.
 
    return Success();
 }
@@ -345,51 +337,19 @@ void onConsoleInput(const std::string& input)
    s_reposSEXP.set(reposSEXP);
 }
 
-// Builds the regex used to detect package-management function calls in
-// console input. Identifiers are matched as a prefix, optionally followed
-// by '.' or '_' and more identifier characters (so 'install' catches
-// 'install.packages', 'install_github', etc.).
-//
-// Two separate gates keep false positives out:
-//
-//   * The trailing '\(' rejects keyword-prefixed expressions that aren't
-//     function calls -- e.g. 'updates <- c(1, 2)' has 'update' followed
-//     by 's <-', not '('.
-//
-//   * The required '[._]' at the start of the optional suffix keeps the
-//     keyword from extending across plain word characters to reach a '('
-//     later in the line -- without it, '[\w.]*' could consume 'ed.packages'
-//     in 'installed.packages()' and the trailing '\(' would then match.
-//
-// Underscore-prefixed entries (pkg_*, p_*, local_*) are listed explicitly
-// since '\b' cannot span a '_' word boundary.
-boost::regex buildPackageCallRegex()
+// A cheap pre-filter that just asks "does this input contain a function call?".
+// It matches an identifier (the function name) followed by '(', which also
+// covers namespace-qualified calls like 'pkg::fn(' since the 'fn(' portion
+// matches. The character class includes '.' because R identifiers may contain
+// it ('install.packages'). This intentionally accepts any call, not just
+// package-management ones: it only decides whether to run the precise,
+// namespace-resolving check in '.rs.isPackageManagementCall'. Keeping the
+// syntactic gate dumb means the authoritative list of package-management
+// functions lives in exactly one place (that R function) rather than being
+// mirrored here.
+boost::regex buildCallSyntaxRegex()
 {
-   const std::vector<std::string> keywords = {
-      // base R and devtools/remotes entry points
-      "install",
-      "update",
-      "remove",
-      "restore",
-      "rebuild",
-      "load_all",
-      // pak
-      "pkg_install",
-      "pkg_update",
-      "pkg_remove",
-      "pkg_load",
-      "local_install",
-      // pacman
-      "p_install",
-      "p_load",
-      "p_remove",
-      "p_unload",
-   };
-
-   const std::string pattern =
-      "\\b(?:" + core::algorithm::join(keywords, "|") + ")(?:[._][\\w.]*)?\\s*\\(";
-
-   return boost::regex(pattern);
+   return boost::regex("[\\w.]+\\s*\\(");
 }
 
 void onConsolePrompt(const std::string&)
@@ -407,10 +367,24 @@ void onConsolePrompt(const std::string&)
    std::string lastInput = s_lastInput;
    s_lastInput.clear();
 
-   if (isPackageManagementCall(lastInput))
+   // A cheap regex pre-filter skips call-free console input without touching R;
+   // anything that contains a call is handed to the precise check, which parses
+   // it and resolves each call's namespace. This keeps a false positive (e.g.
+   // 'remove' in a comment, or base R's remove()/update()) from triggering an
+   // expensive package-library scan -- see issue #17758.
+   if (containsCallSyntax(lastInput))
    {
-      rs_packageLibraryMutated();
-      return;
+      bool isPackageCall = false;
+      Error error = r::exec::RFunction(".rs.isPackageManagementCall", lastInput)
+                       .call(&isPackageCall);
+      if (error)
+         LOG_ERROR(error);
+
+      if (isPackageCall)
+      {
+         rs_packageLibraryMutated();
+         return;
+      }
    }
 
    // check and see if the 'repos' option has been mutated
@@ -454,6 +428,9 @@ void onDeferredInit(bool /* newSession */)
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
+
+   // kick off the initial (asynchronous) vulnerability check
+   ppm::refreshVulnerabilitiesAsync();
 }
 
 Error getPackageState(const json::JsonRpcRequest& ,
@@ -465,14 +442,23 @@ Error getPackageState(const json::JsonRpcRequest& ,
       LOG_ERROR(error);
    else
       pResponse->setResult(result);
+
+   // The package list returns immediately without vulnerability data, which
+   // arrives later via kPackageVulnerabilitiesReady. This RPC is the only path
+   // for a re-join/reconnect to an already-running session (where onDeferredInit
+   // won't fire again) and for the user-facing Refresh command, so kick off a
+   // refresh here too -- otherwise a reconnected client would show no badges
+   // until some incidental package mutation happened to trigger one.
+   ppm::refreshVulnerabilitiesAsync();
+
    return error;
 }
 
 } // anonymous namespace
 
-bool isPackageManagementCall(const std::string& input)
+bool containsCallSyntax(const std::string& input)
 {
-   static const boost::regex s_pattern = buildPackageCallRegex();
+   static const boost::regex s_pattern = buildCallSyntaxRegex();
    return boost::regex_search(input, s_pattern);
 }
 
@@ -487,6 +473,10 @@ void enquePackageStateChanged()
       ClientEvent event(client_events::kPackageStateChanged, pkgState);
       module_context::enqueClientEvent(event);
    }
+
+   // the package set or active repository may have changed; refresh
+   // vulnerability data asynchronously to match
+   ppm::refreshVulnerabilitiesAsync();
 }
 
 Error initialize()

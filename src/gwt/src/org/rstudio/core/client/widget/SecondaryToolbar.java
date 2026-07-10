@@ -24,9 +24,12 @@ public class SecondaryToolbar extends Toolbar
    public SecondaryToolbar(boolean appearAsPrimary, String label)
    {
       super(label);
-      
+
       if (!appearAsPrimary)
          addStyleName(styles_.rstheme_secondaryToolbar());
+
+      // size the wrapper to fill the 24px layout slot reserved by getHeight()
+      getWrapper().addStyleName(styles_.tallerToolbarWrapper());
    }
    
    @Override

@@ -15,10 +15,13 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.PreviewResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.sql.model.SqlServerOperations;
@@ -61,37 +64,74 @@ public class TextEditingTargetSqlHelper
 
       previewSource.buildCommand(
          editingTarget.getPath(),
-         new OperationWithInput<String>() 
+         new OperationWithInput<String>()
          {
             @Override
             public void execute(String command)
             {
-               server_.previewSql(command, new ServerRequestCallback<String>()
-               {
-                  @Override
-                  public void onResponseReceived(String message)
-                  {
-                     if (!StringUtil.isNullOrEmpty(message))
-                     {
-                        display_.showErrorMessage(
-                              constants_.errorPreviewingSql(),
-                              message);
-                     }
-                  }
-                  
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
-               });
+               doPreviewSql(command, false);
             }
          }
       );
-      
+
       return true;
    }
-   
+
+   // Run the 'preview_sql' RPC. When the connection expression in the SQL
+   // header is not statically safe, the backend declines to evaluate it and
+   // returns a "confirm" result; we then ask the user before retrying with
+   // allowUnsafe = true.
+   private void doPreviewSql(final String command, boolean allowUnsafe)
+   {
+      server_.previewSql(command, allowUnsafe, new ServerRequestCallback<PreviewResult>()
+      {
+         @Override
+         public void onResponseReceived(PreviewResult result)
+         {
+            if (result == null || result.isOk())
+               return;
+
+            if (result.isConfirm())
+            {
+               display_.showYesNoMessage(
+                     MessageDisplay.MSG_WARNING,
+                     constants_.previewRunCodeConfirmCaption(),
+                     constants_.previewRunCodeConfirmMessage(result.getExpression()),
+                     new Operation()
+                     {
+                        @Override
+                        public void execute()
+                        {
+                           doPreviewSql(command, true);
+                        }
+                     },
+                     false);
+               return;
+            }
+
+            if (!StringUtil.isNullOrEmpty(result.getMessage()))
+            {
+               display_.showErrorMessage(
+                     constants_.errorPreviewingSql(),
+                     result.getMessage());
+            }
+            else
+            {
+               // an unexpected action with no message; log it rather than
+               // silently doing nothing
+               Debug.log("Unexpected SQL preview result action: '" +
+                         result.getAction() + "'");
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+
    private DocDisplay docDisplay_;
    
    private GlobalDisplay display_;

@@ -1,8 +1,9 @@
 import type { Page } from '@playwright/test';
 import * as path from 'path';
 import { test } from '../fixtures/rstudio.fixture';
-import { typeInConsole, CONSOLE_OUTPUT } from '../pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT, waitForConsoleIdle } from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
+import { assertAbsolutePath } from './paths';
 
 /**
  * Prefix for per-suite R workdir subdirectories created inside the sandbox.
@@ -45,17 +46,48 @@ function rootExpr(): string {
 export async function createSandbox(page: Page): Promise<string> {
   const marker = `__SANDBOX_${Date.now()}__`;
 
-  // Build the R expression on a single line so typeInConsole's single
+  // Gate on R actually being ready to receive input before submitting the
+  // marker command. Without this, a createSandbox called right after a
+  // session restart (project open/close, restart-R, or just the initial
+  // page load) lands while R's startup banner is still rendering -- R
+  // drops or queues the input and our cat(marker) is never echoed back,
+  // surfacing as an opaque "marker not found within 15000ms" timeout.
+  // window.rstudio.ready flips to true on DeferredInitCompletedEvent
+  // (workspace restored, deferred-init modules sourced); waitForConsoleIdle
+  // then confirms the console isn't mid-execution from anything else. Both
+  // checks are no-ops in the common case (the IDE is already ready by the
+  // time a suite's beforeAll runs), so this only pays cost on the race.
+  await page.waitForFunction(
+    () => window.rstudio?.ready === true,
+    null,
+    { timeout: 30000, polling: 50 },
+  ).catch(() => {
+    // Bridge not in scope yet -- let the marker poll below surface any
+    // real failure rather than blocking the suite on the readiness wait.
+  });
+  await waitForConsoleIdle(page);
+
+  // Build the R expression on a single line so executeInConsole's single
   // press('Enter') executes it atomically.
+  //
+  // normalizePath(winslash = "/") forces forward slashes: on Windows tempfile()
+  // yields a backslash path (the tmpdir root comes from PW_SANDBOX, a Node
+  // path), and backslashes are escape sequences in an R string literal -- so
+  // embedding the returned dir into generated R code (e.g.
+  // writeLines(..., "<dir>/foo")) mangles it or hard-errors (\p, \w are
+  // unrecognized escapes; see #17985). R accepts forward slashes on every
+  // platform, so this is the safe canonical form for callers to interpolate.
+  // (Defense in depth: callers should still pass paths through rPathLiteral.)
   const rCode = [
     `{ root <- ${rootExpr()}`,
     `d <- tempfile("${SANDBOX_DIR_PREFIX}", tmpdir = root)`,
     `dir.create(d, recursive = TRUE)`,
+    `d <- normalizePath(d, winslash = "/", mustWork = FALSE)`,
     `setwd(d)`,
     `cat("${marker}", d, "${marker}") }`,
   ].join('; ');
 
-  await typeInConsole(page, rCode);
+  await executeInConsole(page, rCode);
 
   const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`);
   const start = Date.now();
@@ -65,7 +97,9 @@ export async function createSandbox(page: Page): Promise<string> {
     const match = output.match(pattern);
     if (match) {
       const dir = match[1].trim();
-      console.log(`Sandbox: ${dir}`);
+      // Fail loudly if R handed back something unusable (empty / relative)
+      // rather than letting it flow downstream into a root-relative path.
+      assertAbsolutePath(dir, 'createSandbox: R returned workdir');
       // If the workdir's parent isn't PW_SANDBOX, the adaptive rootExpr()
       // chose the dirname(tempdir()) fallback on the rsession host -- meaning
       // PW_SANDBOX doesn't exist there (remote-rsession Server mode). Surface
@@ -105,11 +139,34 @@ export async function createSandbox(page: Page): Promise<string> {
  * Usage:
  *   const sandbox = useSuiteSandbox();
  *   test('...', async ({ rstudioPage }) => {
- *     await typeInConsole(rstudioPage, `writeLines("x", "${sandbox.dir}/foo.txt")`);
+ *     await executeInConsole(rstudioPage, `writeLines("x", "${sandbox.dir}/foo.txt")`);
  *   });
  */
 export function useSuiteSandbox(): { dir: string } {
-  const ref = { dir: '' };
+  let value = '';
+  let warnedEmpty = false;
+  const ref = {
+    get dir(): string {
+      // Instrumentation: a read while still empty means the path built from it
+      // will be rooted at "/". Surface the first such read (with a stack so we
+      // can see the caller) instead of silently producing a bad path. The
+      // downstream assertAbsolutePath guards still throw; this just pins which
+      // read raced the beforeAll.
+      if (value === '' && !warnedEmpty) {
+        warnedEmpty = true;
+        console.warn(
+          '[sandbox] useSuiteSandbox: sandbox.dir read while still empty -- ' +
+          "the suite's sandbox beforeAll has not populated it (check beforeAll " +
+          'ordering / a failed createSandbox). Stack:\n' +
+          (new Error().stack ?? '(no stack)'),
+        );
+      }
+      return value;
+    },
+    set dir(next: string) {
+      value = next;
+    },
+  };
   test.beforeAll(async ({ rstudioPage }) => {
     ref.dir = await createSandbox(rstudioPage);
   });

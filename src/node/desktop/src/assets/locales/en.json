@@ -137,5 +137,11 @@
     "errorLocalizingDocument": "Error localizing document:"
   },
   "licenseDialog": {
+  },
+  "desktopBrowserWindowTs": {
+    "leavePageTitle": "Leave page?",
+    "leavePageMessage": "This page is asking you to confirm that you want to leave. Information you've entered, or state in a running application, may not be saved.",
+    "leavePageLeaveButton": "Leave",
+    "leavePageStayButton": "Stay"
   }
 }

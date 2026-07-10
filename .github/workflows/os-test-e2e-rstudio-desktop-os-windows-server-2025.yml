@@ -1,0 +1,1010 @@
+name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_from_source:
+        description: "Build RStudio Desktop from this branch's source. When false, downloads the latest daily installer."
+        type: boolean
+        default: true
+      rstudio_installer_url:
+        description: "URL to a Desktop installer (.exe). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
+        type: string
+        default: ""
+      r_version:
+        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        type: string
+        default: "release"
+      project:
+        description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
+        type: string
+        default: "desktop"
+      grep:
+        description: "Optional Playwright --grep pattern to run only tests whose title matches."
+        type: string
+        default: ""
+      test_selector:
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests."
+        type: string
+        default: ""
+      test_ignore:
+        description: "Optional test paths/files/directories to exclude (space-separated globs). Examples: '**/code_suggestions.test.ts', '**/posit-assistant-chat/**'. Leave empty to exclude nothing."
+        type: string
+        default: ""
+      grep_invert:
+        description: "Optional Playwright --grep-invert pattern to skip tests by title."
+        type: string
+        default: ""
+      rstudio_extra_args:
+        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
+        type: string
+        default: ""
+      build_only:
+        description: "Run only the build job (to seed the rstudio-tools / sccache caches) and skip the e2e job. Only meaningful when build_from_source is true."
+        type: boolean
+        default: false
+      post_pr_comment:
+        description: "Post test results as a sticky comment on the PR. Pass true only from PR-triggered callers."
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      build_from_source:
+        type: boolean
+        # Callers (PR dispatcher, seed, scheduled) always pass this explicitly.
+        # false here is a safe fallback — if a caller omits it, the workflow
+        # downloads a daily rather than unexpectedly kicking off a 90-min build.
+        # macOS defaults to true in workflow_call; the asymmetry is intentional.
+        default: false
+      rstudio_installer_url:
+        type: string
+        default: ""
+      r_version:
+        type: string
+        default: "release"
+      project:
+        type: string
+        default: "desktop"
+      grep:
+        type: string
+        default: ""
+      test_selector:
+        type: string
+        default: ""
+      test_ignore:
+        type: string
+        default: ""
+      grep_invert:
+        type: string
+        default: ""
+      rstudio_extra_args:
+        type: string
+        default: ""
+      build_only:
+        type: boolean
+        default: false
+      post_pr_comment:
+        type: boolean
+        default: false
+      defer_merge:
+        description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
+        type: boolean
+        default: false
+    secrets:
+      CONNECT_API_KEY:
+        description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
+      AWS_E2E_REPORTS_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: write  # required in workflow_call context; job-level alone is capped by top-level
+  # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
+  # role (see .github/actions/os-publish-e2e-report).
+  id-token: write
+
+jobs:
+  # Builds RStudio Desktop from this PR's source on the same runner image as
+  # the e2e job below, then uploads a zipped Electron app directory as an
+  # artifact. Only runs when build_from_source is true; skipped on daily
+  # download runs.
+  build:
+    if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+    runs-on: windows-2025
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      R_LIBS_USER: ${{ github.workspace }}\R-libs
+      # Build dependencies install here (outside any directory holding tracked
+      # files), mirroring the RSTUDIO_TOOLS_ROOT layout the posix workflows
+      # use. Keeping tracked install scripts out of the cached path means a
+      # stale cache restore can never clobber this PR's checked-out scripts
+      # (rstudio/rstudio#18129). Consumed by install-dependencies.cmd,
+      # make-package.bat, and CMake.
+      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}\rstudio-tools
+      SCCACHE_ENABLED: '1'
+      SCCACHE_GHA_ENABLED: 'true'
+      NPM_CONFIG_LOGLEVEL: error
+      NPM_CONFIG_AUDIT: 'false'
+      # Compile GWT with readable (PRETTY) symbol names rather than the default
+      # OBFUSCATED output, so the uncaught client exceptions the e2e automation
+      # agent records (window.rstudio.errors) carry decodable Java stack traces.
+      # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
+      GWT_STYLE: PRETTY
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Enable long paths before any build step: the Electron output tree and
+      # node_modules can exceed Windows' 260-char MAX_PATH limit silently.
+      - name: Enable Windows long paths
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
+          git config --global core.longpaths true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: src/node/desktop/package-lock.json
+
+      # Windows runners have ~14GB free. RStudio's C++ build + MSVC + all
+      # downloaded deps can push that limit. Remove pre-installed components
+      # we don't need to free ~6-8GB before the build starts.
+      - name: Free disk space
+        run: |
+          $before = Get-PSDrive -Name C
+          Write-Host "Disk space before cleanup: $([math]::Round($before.Free / 1GB, 1)) GB free"
+          $dirs = @(
+            'C:\Program Files\dotnet',
+            'C:\Program Files (x86)\Android',
+            'C:\Program Files\Microsoft SQL Server',
+            'C:\Program Files\Azure Cosmos DB Emulator',
+            'C:\Program Files (x86)\Microsoft SDKs\Azure',
+            'C:\Android'
+          )
+          foreach ($d in $dirs) {
+            if (Test-Path $d) { Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue }
+          }
+          $after  = Get-PSDrive -Name C
+          $freed  = [math]::Round(($after.Free - $before.Free) / 1GB, 1)
+          $freeGB = [math]::Round($after.Free / 1GB, 1)
+          Write-Host "Disk space after cleanup:  $freeGB GB free (freed ~$freed GB)"
+
+      # Downloaded build deps (Boost, SOCI, GWT, Node, pandoc, quarto, etc.)
+      # land in RSTUDIO_TOOLS_ROOT\dependencies, outside any directory that
+      # holds tracked files, so restoring a stale cache can never overwrite
+      # this PR's install scripts. Keyed on the install scripts so a version
+      # bump forces a fresh download; the v2 prefix fences off caches saved
+      # under the old in-tree layout, whose archives would extract into
+      # dependencies/ and clobber tracked files (rstudio/rstudio#18129).
+      # Restore-only; Save rstudio-tools cache runs after the build (from
+      # main-scoped runs only) so deps are cached even when compilation fails.
+      - name: Restore rstudio-tools deps
+        id: tools-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
+          restore-keys: |
+            rstudio-tools-win64-v2-
+
+      # The cache above covers dependencies/common and dependencies/windows,
+      # which also contain tracked files (the install scripts themselves).
+      # When restore-keys pulls a stale cache, extraction overwrites the
+      # checked-out scripts with the cached copies -- silently reverting any
+      # dependency version bump in the PR (the Boost 1.91 bump hit this: the
+      # restored install-dependencies.cmd still said 1.90.0). Restore tracked
+      # files from git; the cached downloads are untracked and unaffected.
+      - name: Restore tracked files clobbered by cache restore
+        run: git checkout -- dependencies/common dependencies/windows
+
+      # Cache compiled GWT output (src/gwt/www, bin, extras). GWT compilation
+      # is the single most expensive step in the build (~15-30 min). When the
+      # GWT sources haven't changed since the last seeder run on main, the cache
+      # restores the compiled JS/CSS into src/gwt/ and the build step skips
+      # recompilation via the nogwt flag below.
+      # Restore-only; Save GWT output runs after the build with if: always().
+      - name: Restore GWT output
+        id: gwt-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            src/gwt/www
+            src/gwt/bin
+            src/gwt/extras
+          key: rstudio-gwt-win64-${{ env.GWT_STYLE }}-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          restore-keys: |
+            rstudio-gwt-win64-${{ env.GWT_STYLE }}-
+
+      - name: Install build tools
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Trust the probe, not choco: choco can exit 0 after a failed feed
+          # fetch ("installed 0/1 packages"), and can also report a package
+          # installed from a prior run's lib record even when the binary is
+          # missing/broken. Probing the real tool sidesteps both. ant is
+          # provided by the runner image; nsis is fetched from the community
+          # feed (which intermittently 503s) for the cpack -G NSIS step. Verify
+          # both so a missing tool fails here, not ~1h later at packaging.
+          function Test-AntInstalled {
+            [bool](Get-Command ant -ErrorAction SilentlyContinue)
+          }
+
+          function Test-NsisInstalled {
+            (Get-Command makensis -ErrorAction SilentlyContinue) -or
+            (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe')
+          }
+
+          $tools = @(
+            @{ Package = 'ant';  Probe = 'Test-AntInstalled'  }
+            @{ Package = 'nsis'; Probe = 'Test-NsisInstalled' }
+          )
+
+          foreach ($tool in $tools) {
+            $ok = $false
+            for ($i = 1; $i -le 3; $i++) {
+              if (& $tool.Probe) { $ok = $true; break }     # already usable -> done
+              $chocoArgs = @('install', $tool.Package, '--yes', '--no-progress', '--use-enhanced-exit-codes')
+              if ($i -gt 1) { $chocoArgs += '--force' }      # clear a half-installed record on retry
+              choco @chocoArgs
+
+              # choco updates the machine PATH and drops shims in
+              # C:\ProgramData\chocolatey\bin, but this already-running process
+              # won't see them until we re-read the environment -- otherwise a
+              # PATH-only probe (e.g. ant) could fail even after a good install.
+              # Refresh PATH only for the probe, then restore it, so we don't
+              # disturb the runner-managed PATH ($GITHUB_PATH entries for node,
+              # rig, sccache, MSVC, ...) for the rest of the step.
+              $savedPath = $env:PATH
+              try {
+                $env:PATH = $savedPath + ';' +
+                            [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                            [Environment]::GetEnvironmentVariable('Path', 'User')
+                if (& $tool.Probe) { $ok = $true }
+              } finally {
+                $env:PATH = $savedPath
+              }
+              if ($ok) { break }
+              Write-Host "::warning::$($tool.Package) not usable after attempt $i; retrying in 15s..."
+              Start-Sleep -Seconds 15
+            }
+            if (-not $ok) {
+              throw "$($tool.Package) not installed/usable after 3 attempts; aborting before the build."
+            }
+          }
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
+
+      # Pre-start the sccache server. Ninja runs parallel cl.exe compiles
+      # through `sccache.exe cl.exe ...`; on Windows each sccache.exe
+      # invocation tries to start a TCP server on 127.0.0.1:4226 if no
+      # server is running. With N parallel compiles, N processes race to
+      # bind that port -- one wins, the rest exit with os error 10048
+      # ("Only one usage of each socket address... is normally permitted"),
+      # which ninja treats as a compile failure and aborts the whole
+      # build. Starting the server explicitly here means all subsequent
+      # sccache.exe invocations connect to it instead of racing.
+      # Set SCCACHE_IDLE_TIMEOUT=0 so the server stays alive for the
+      # whole build (default is 600s and the build phase is longer).
+      - name: Start sccache server
+        shell: cmd
+        env:
+          SCCACHE_IDLE_TIMEOUT: '0'
+        run: sccache --start-server
+
+      - name: Install rig
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Drop the `msstore` winget source before installing. msstore needs
+          # the runner's 2-letter geographic region, which GHA does not send;
+          # winget's implicit `source update` then fails with 0x8a15000f
+          # ("Data required by the source is missing"), and that failure
+          # aborts the whole `winget install` even though Posit.rig lives in
+          # the community `winget` source rather than msstore. Removing
+          # msstore leaves the community source untouched. Best-effort: if
+          # msstore is already absent on this runner image, the remove exits
+          # non-zero, which we swallow.
+          winget source remove --name msstore --disable-interactivity 2>$null
+          $LASTEXITCODE = 0
+          $maxAttempts = 3
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            winget install --id Posit.rig --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($i -lt $maxAttempts) {
+              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
+              Start-Sleep -Seconds 15
+            } else {
+              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
+              exit 1
+            }
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          rig add $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig default $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig ls
+          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
+
+      # make-package.bat passes -DLIBR_HOME=C:\R\R-3.6.3 to CMake (hardcoded).
+      # Create a directory junction at that path pointing to the rig-installed
+      # R so CMake can find R headers and R.dll regardless of actual version.
+      - name: Create R junction for CMake
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $rHome = (Rscript --vanilla -e "cat(R.home())" 2>$null).Trim()
+          Write-Host "R home: $rHome"
+          New-Item -ItemType Directory -Force -Path 'C:\R' | Out-Null
+          if (Test-Path 'C:\R\R-3.6.3') { [System.IO.Directory]::Delete('C:\R\R-3.6.3') }
+          New-Item -ItemType Junction -Path 'C:\R\R-3.6.3' -Target $rHome | Out-Null
+          Write-Host "Junction created: C:\R\R-3.6.3 -> $rHome"
+          if (-not (Test-Path 'C:\R\R-3.6.3\bin\Rscript.exe')) {
+            Write-Error "Rscript.exe not found via junction; check rig install path"
+            exit 1
+          }
+
+      # install-dependencies.cmd (via tools.R) checks for MSVC 2022 at a set of
+      # hardcoded paths: BuildTools, Community, and their x86 variants.  GitHub
+      # runners have Visual Studio 2022 Enterprise, which is not in that list.
+      # Use vswhere.exe to find the actual installation, then:
+      #   1. Add VC\Auxiliary\Build to GITHUB_PATH so vcvarsall.bat is on PATH
+      #      for make-package.bat (which calls it by name).
+      #   2. Create a junction at the BuildTools path so tools.R's file.exists
+      #      check finds MSVC and proceeds to compile SOCI.
+      - name: Set up MSVC environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
+            -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          if ([string]::IsNullOrEmpty($vsPath)) {
+            Write-Error "vswhere could not find a Visual Studio installation with VC++ tools"
+            exit 1
+          }
+          Write-Host "Visual Studio installation: $vsPath"
+          # 1. PATH for vcvarsall.bat
+          $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
+          Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
+          Write-Host "Added to PATH: $vcBuildPath"
+          # 2. Junction so tools.R's hardcoded BuildTools check passes
+          $junctionTarget = $vsPath
+          $junctionPath   = 'C:\Program Files\Microsoft Visual Studio\2022\BuildTools'
+          if (-not (Test-Path $junctionPath)) {
+            New-Item -ItemType Junction -Path $junctionPath -Target $junctionTarget | Out-Null
+            Write-Host "Junction created: $junctionPath -> $junctionTarget"
+          } else {
+            Write-Host "Junction already exists: $junctionPath"
+          }
+
+      # install-soci.R defaults its CMake generator to "Visual Studio 17 2022",
+      # which doesn't exist on windows-2025 once the image moves to VS 2026
+      # (CMake reports `could not find any instance of Visual Studio`). Pass the
+      # VS 2026 generator name explicitly so SOCI can configure and build.
+      # MSVC_TOOLSET_VERSION=145 selects the msvc145 Boost prebuilts, matching
+      # the VS 2026 toolset on this runner, so CMakeLists.txt no longer needs
+      # its msvc143 fallback here.
+      - name: Install build dependencies
+        id: install-deps
+        working-directory: dependencies/windows
+        shell: cmd
+        env:
+          CMAKE_GENERATOR: Visual Studio 18 2026
+          MSVC_TOOLSET_VERSION: "145"
+        run: install-dependencies.cmd
+
+      # GWT's build.xml looks for yarn at ${node.dir}/node_modules/yarn/bin/yarn.cmd
+      # via set-if-exists (node.dir = the bundled node downloaded by install-deps).
+      # Installing directly into the bundled node dir via npm --prefix pollutes
+      # it with an incompatible node_modules/npm tree (system npm vs bundled npm),
+      # which breaks the Electron packaging step later. Instead: install yarn into
+      # a throwaway temp dir, then copy only the yarn package into the bundled
+      # node dir so build.xml's check is satisfied without touching bundled npm.
+      - name: Install yarn in bundled node directory
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
+            -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
+          $nodeDir = "$env:RSTUDIO_TOOLS_ROOT\dependencies\common\node\$nodeVersion"
+          if (-not (Test-Path $nodeDir)) {
+            Write-Error "Bundled node directory not found: $nodeDir"
+            exit 1
+          }
+          $tempDir = "$env:RUNNER_TEMP\yarn-install"
+          Write-Host "Installing yarn to temp dir: $tempDir"
+          npm install --prefix "$tempDir" yarn
+          $yarnSrc = "$tempDir\node_modules\yarn"
+          if (-not (Test-Path "$yarnSrc\bin\yarn.cmd")) {
+            Write-Error "yarn.cmd not found in temp install at $yarnSrc"
+            exit 1
+          }
+          $yarnDest = "$nodeDir\node_modules\yarn"
+          if (Test-Path $yarnDest) { Remove-Item -Recurse -Force $yarnDest }
+          Copy-Item -Recurse $yarnSrc $yarnDest
+          Write-Host "yarn installed: $yarnDest\bin\yarn.cmd"
+
+      # The Electron packaging step runs `npm ci && electron-forge package`
+      # inside src/node/desktop-build-AMD64. Because src/node/desktop ships a
+      # binding.gyp, npm auto-runs `node-gyp rebuild` as the install lifecycle
+      # and uses npm's bundled node-gyp (v11.5.0 in node 22). v11 only knows
+      # VS 2017-2022 and aborts with "Could not find any Visual Studio
+      # installation to use" on the VS 2026 runner. node-gyp v12+ supports
+      # VS 2026.
+      #
+      # npm_config_node_gyp would normally redirect this, but npm pre-injects
+      # its bundled node-gyp directory into PATH for lifecycle scripts; the
+      # env var is documented as "the command to run for npm rebuild when
+      # node-gyp isn't in the path", so the bundled v11 wins. The surgical
+      # fix is to physically replace node-gyp inside the bundled npm tree --
+      # same pattern this workflow already uses for yarn above.
+      - name: Replace bundled node-gyp with v12 for VS 2026 support
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $nodeVersion = (Select-String -Path 'dependencies\tools\rstudio-tools.cmd' `
+            -Pattern 'set RSTUDIO_NODE_VERSION=(.+)').Matches[0].Groups[1].Value.Trim()
+          $bundledNodeDir = "$env:RSTUDIO_TOOLS_ROOT\dependencies\common\node\$nodeVersion"
+          $bundledGypDir  = "$bundledNodeDir\node_modules\npm\node_modules\node-gyp"
+          if (-not (Test-Path $bundledGypDir)) {
+            Write-Error "Bundled node-gyp directory not found: $bundledGypDir"
+            exit 1
+          }
+          # Install latest node-gyp v12 into a throwaway dir, then copy its
+          # contents over the bundled one. --install-strategy=nested disables
+          # npm's default hoisting so node-gyp's transitive deps (undici,
+          # semver, tar, ...) land inside node-gyp/node_modules/. Without
+          # nested install, deps hoist to the prefix's top-level node_modules,
+          # the copy leaves them behind, and node-gyp v12 then dies at runtime
+          # with "Cannot find module 'undici'" (its new HTTP client dep).
+          # Use the bundled npm so the install runs under the same node
+          # version that will spawn node-gyp during the rebuild lifecycle.
+          $gypInstallDir = "$env:RUNNER_TEMP\node-gyp-v12"
+          if (Test-Path $gypInstallDir) { Remove-Item -Recurse -Force $gypInstallDir }
+          New-Item -ItemType Directory -Force -Path $gypInstallDir | Out-Null
+          & "$bundledNodeDir\npm.cmd" install --install-strategy=nested --prefix $gypInstallDir node-gyp@^12
+          if ($LASTEXITCODE -ne 0) { Write-Error "node-gyp v12 install failed"; exit $LASTEXITCODE }
+          $newGypDir = "$gypInstallDir\node_modules\node-gyp"
+          if (-not (Test-Path "$newGypDir\bin\node-gyp.js")) {
+            Write-Error "node-gyp v12 not installed at $newGypDir"
+            exit 1
+          }
+          if (-not (Test-Path "$newGypDir\node_modules\undici")) {
+            Write-Error "Expected nested undici at $newGypDir\node_modules\undici but not found -- nested install did not behave as expected"
+            exit 1
+          }
+          $bundledVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
+          $newVersion     = (Get-Content "$newGypDir\package.json"     | ConvertFrom-Json).version
+          Write-Host "Replacing bundled node-gyp $bundledVersion with $newVersion (nested deps included)"
+          Remove-Item -Recurse -Force $bundledGypDir
+          Copy-Item -Recurse $newGypDir $bundledGypDir
+          # Sanity check: version is 12.x and undici is reachable where
+          # node-gyp's download.js does `require('undici')`.
+          $finalVersion = (Get-Content "$bundledGypDir\package.json" | ConvertFrom-Json).version
+          if ($finalVersion -notlike '12.*') {
+            Write-Error "Replacement failed: bundled node-gyp is still $finalVersion"
+            exit 1
+          }
+          if (-not (Test-Path "$bundledGypDir\node_modules\undici")) {
+            Write-Error "undici missing from $bundledGypDir\node_modules -- nested deps were lost in copy"
+            exit 1
+          }
+          Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion with nested deps"
+
+      # Use nogwt when the GWT cache was restored -- skips the Ant compilation
+      # step and reuses the compiled JS/CSS already in src/gwt/www. On a cache
+      # miss (first run, or after GWT source changes) a full GWT build runs and
+      # the result is saved to the cache for the next PR.
+      # nozip: skip the cpack ZIP target -- we use the NSIS installer instead.
+      # (Removing 'quick' means cpack -G NSIS runs and produces the .exe, which
+      # includes rsession.exe, vcredist DLLs, GWT output, and all cmake-installed
+      # resources -- unlike a raw electron-packager zip which is missing them.)
+      - name: Build RStudio Desktop (x64)
+        id: build
+        working-directory: package/win32
+        shell: cmd
+        env:
+          RSTUDIO_VERSION_MAJOR: '99'
+          RSTUDIO_VERSION_MINOR: '9'
+          RSTUDIO_VERSION_PATCH: '9'
+          RSTUDIO_VERSION_SUFFIX: '-pr+${{ github.run_number }}'
+          GWT_CACHE_HIT: ${{ steps.gwt-cache.outputs.cache-hit }}
+        run: |
+          if "%GWT_CACHE_HIT%"=="true" (
+            echo GWT cache hit -- using nogwt flag
+            make-package.bat nozip nogwt
+          ) else (
+            echo GWT cache miss -- compiling GWT from scratch
+            make-package.bat nozip
+          )
+
+      # Save the tools cache only from main-scoped runs (the seed and
+      # scheduled workflows), and only on a key miss. A cache saved from a PR
+      # run lands in that PR's merge-ref scope, which no other branch can
+      # restore -- each copy is pure pressure on the repo's 10 GB Actions
+      # cache quota, and that pressure is what evicts main's copies and sends
+      # every PR build cold in the first place.
+      - name: Save rstudio-tools cache
+        if: steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+      # Save only from main-scoped runs, and only on a key miss. A cache saved
+      # from a PR run lands in that PR's merge-ref scope, which no other
+      # branch can restore -- each copy is pure pressure on the repo's 10 GB
+      # Actions cache quota, and that pressure is what evicts main's copy and
+      # sends every PR build cold in the first place.
+      - name: Save GWT output
+        if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            src/gwt/www
+            src/gwt/bin
+            src/gwt/extras
+          key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
+
+      # The NSIS installer is created by cpack -G NSIS (run by make-package.bat
+      # without the 'quick' flag) and placed in package\win32\build\. It
+      # includes rsession.exe, GWT output, vcredist DLLs, and all cmake-installed
+      # resources -- a complete, properly-assembled RStudio installation.
+      # The e2e job runs it with /allusers /S (silent; a mode is required for silent installs) so RStudio lands at the standard
+      # C:\Program Files\RStudio\ path identical to end-user installs.
+      # Skipped in build_only (seed) runs -- no e2e job consumes the artifact.
+      - name: Find and stage NSIS installer
+        if: inputs.build_only != true
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = Get-ChildItem -Path 'package\win32\build' -Filter 'RStudio-*.exe' |
+                       Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $installer) {
+            Write-Error "No NSIS installer found in package\win32\build\; check that make-package.bat ran without the 'quick' flag"
+            exit 1
+          }
+          $sizeMB = [math]::Round($installer.Length / 1MB, 1)
+          Write-Host "Found installer: $($installer.FullName) ($sizeMB MB)"
+          Copy-Item $installer.FullName "$env:GITHUB_WORKSPACE\RStudio-installer.exe"
+          Write-Host "Staged as: $env:GITHUB_WORKSPACE\RStudio-installer.exe"
+
+      - name: Upload RStudio Desktop artifact
+        if: inputs.build_only != true
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-app-windows-x64
+          path: RStudio-installer.exe
+          retention-days: 7
+
+  e2e-desktop-windows:
+    needs: build
+    # build is skipped when build_from_source is false; allow this job to run
+    # in that case too. build_only seeds caches without running e2e, so skip here.
+    if: |
+      always() &&
+      inputs.build_only != true &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    runs-on: windows-2025
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      R_LIBS_USER: ${{ github.workspace }}\R-libs
+      PW_SANDBOX_ROOT: ${{ github.workspace }}\pw-sandbox
+      PW_SANDBOX_ROOT_CREATE: '1'
+      # Override the default platform-specific R library template so the sandbox
+      # uses the same path that the e2e-deps action installs and caches. Without
+      # this the sandbox writes to %LOCALAPPDATA%\rstudio-playwright\r-libs\...
+      # (a different path) causing packages to be re-downloaded on every run.
+      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}\R-libs
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Enable Windows long paths
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
+          git config --global core.longpaths true
+          # Export LOCALAPPDATA to GITHUB_ENV so the crash-dump upload step can
+          # reference it via ${{ env.LOCALAPPDATA }}.  GitHub Actions' env context
+          # does not expose OS environment variables directly.
+          "LOCALAPPDATA=$env:LOCALAPPDATA" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install rig
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Drop the `msstore` winget source before installing. msstore needs
+          # the runner's 2-letter geographic region, which GHA does not send;
+          # winget's implicit `source update` then fails with 0x8a15000f
+          # ("Data required by the source is missing"), and that failure
+          # aborts the whole `winget install` even though Posit.rig lives in
+          # the community `winget` source rather than msstore. Removing
+          # msstore leaves the community source untouched. Best-effort: if
+          # msstore is already absent on this runner image, the remove exits
+          # non-zero, which we swallow.
+          winget source remove --name msstore --disable-interactivity 2>$null
+          $LASTEXITCODE = 0
+          $maxAttempts = 3
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            winget install --id Posit.rig --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($i -lt $maxAttempts) {
+              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
+              Start-Sleep -Seconds 15
+            } else {
+              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
+              exit 1
+            }
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          rig add $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig default $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig ls
+          # Prepend the rig-installed R to PATH so it wins over any R version
+          # pre-installed on the runner image (e.g. R 4.6 shipped on windows-2025).
+          # rig installs to C:\Program Files\R\R-{version}\bin\x64 on Windows.
+          $rHome = (Rscript --vanilla -e "cat(R.home())" 2>$null).Trim()
+          $rBin = "$rHome\bin\x64"
+          Write-Host "Prepending R bin to PATH: $rBin"
+          "$rBin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
+
+      # Build-from-source path: download and install the NSIS installer produced
+      # by the build job above. Runs the same /allusers /S silent install as the
+      # daily-download path so RStudio lands at C:\Program Files\RStudio\.
+      - name: Download RStudio Desktop artifact
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: rstudio-app-windows-x64
+          path: ${{ github.workspace }}
+
+      - name: Install RStudio from artifact
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installer = "$env:GITHUB_WORKSPACE\RStudio-installer.exe"
+          if (-not (Test-Path $installer)) {
+            Write-Error "RStudio installer not found at $installer"
+            exit 1
+          }
+          Write-Host "Installing from: $installer"
+          $p = Start-Process -FilePath $installer -ArgumentList '/allusers', '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
+          $exe = 'C:\Program Files\RStudio\rstudio.exe'
+          if (-not (Test-Path $exe)) {
+            Write-Error "rstudio.exe not found at $exe after install"
+            exit 1
+          }
+          Get-Item $exe | Format-List FullName, Length, LastWriteTime
+
+      # Daily-download path: resolve and install the latest (or specified) .exe.
+      # Also runs when build_from_source is true but rstudio_installer_url is set
+      # (mirrors macOS: the URL overrides the artifact path).
+      - name: Resolve RStudio .exe URL
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        id: resolve
+        env:
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = $env:INSTALLER_URL
+          $sha = ''
+          $filename = ''
+          if ([string]::IsNullOrEmpty($url)) {
+            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json' `
+              -MaximumRetryCount 3 -RetryIntervalSec 5
+            $win = $manifest.products.electron.platforms.windows
+            $url = $win.link
+            $sha = $win.sha256
+            $filename = $win.filename
+            if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
+              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            }
+            Write-Host "Auto-resolved latest windows daily:"
+            Write-Host "  URL:      $url"
+            Write-Host "  SHA-256:  $sha"
+            Write-Host "  Filename: $filename"
+          } else {
+            $filename = Split-Path -Leaf $url
+            if ([string]::IsNullOrEmpty($filename)) {
+              Write-Error "Could not derive filename from rstudio_installer_url='$url'. Provide a URL whose path ends with a filename (e.g. .../RStudio-2024.12.0-467.exe)."
+              exit 1
+            }
+            Write-Host "Using override URL: $url (SHA-256 verification skipped)"
+          }
+          "url=$url"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "sha256=$sha"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "filename=$filename" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # PRs can't share a cache entry with each other anyway (only with their
+      # base branch), so caching here would just duplicate the same bytes
+      # into the shared 10 GB cache quota without saving meaningful time.
+      - name: Download RStudio .exe
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest `
+            -Uri $env:DOWNLOAD_URL `
+            -OutFile $env:DOWNLOAD_FILENAME `
+            -MaximumRetryCount 3 -RetryIntervalSec 5
+
+      - name: Verify SHA-256
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expected = $env:EXPECTED_SHA256.ToLower()
+          $actual = (Get-FileHash -Algorithm SHA256 $env:DOWNLOAD_FILENAME).Hash.ToLower()
+          if ($expected -ne $actual) {
+            Write-Error "SHA-256 mismatch. Expected: $expected. Actual: $actual."
+            exit 1
+          }
+          Write-Host "SHA-256 OK: $actual"
+
+      - name: Install RStudio from .exe
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/allusers', '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
+          $exe = 'C:\Program Files\RStudio\rstudio.exe'
+          if (-not (Test-Path $exe)) {
+            Write-Error "RStudio binary not found at $exe after install."
+            exit 1
+          }
+          Get-Item $exe | Format-List FullName, Length, LastWriteTime
+
+      - name: Install e2e test dependencies
+        uses: ./.github/actions/os-e2e-deps
+        with:
+          r-libs-user: ${{ env.R_LIBS_USER }}
+
+      - name: Run Playwright tests
+        working-directory: e2e/rstudio
+        env:
+          PW_RSTUDIO_MODE: desktop
+          # Platform-labelled project name; playwright.config.ts uses it both as
+          # the project name in reports (so a cross-platform merged report can
+          # distinguish these results) and to derive the platform+shard-unique
+          # blob report file name.
+          PW_PROJECT_LABEL: ${{ inputs.project }}-windows
+          PW_GREP: ${{ inputs.grep }}
+          PW_GREP_INVERT: ${{ inputs.grep_invert }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
+          PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          PW_DEBUG_LAUNCH: '1'
+          # Tells playwright.config.ts to switch to blob reporter for this shard.
+          PW_SHARD: ${{ matrix.shard }}
+          # E2E Test Insights reporter: posts per-shard results to the dashboard.
+          # CONNECT_API_KEY is empty on fork PRs; reporter runs but uploads fail
+          # with warnings (never fails the run).
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          SHARD_NAME: desktop-win-${{ matrix.shard }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $pwArgs = @()
+          if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
+            $pwArgs += ($env:PW_TEST_SELECTOR -split '\s+' | Where-Object { $_ -ne '' })
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_GREP)) {
+            $pwArgs += '--grep'
+            $pwArgs += $env:PW_GREP
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_GREP_INVERT)) {
+            $pwArgs += '--grep-invert'
+            $pwArgs += $env:PW_GREP_INVERT
+          }
+          $pwArgs += '--shard'
+          $pwArgs += "$($env:PW_SHARD)/${{ strategy.job-total }}"
+          node scripts/run-with-heartbeat.mjs -- test $pwArgs
+
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-blob-report-win-${{ matrix.shard }}
+          path: e2e/rstudio/blob-report/
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-shard-${{ matrix.shard }}
+          path: e2e/rstudio/playwright-report/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-shard-${{ matrix.shard }}
+          path: e2e/rstudio/test-results/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Upload RStudio session logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rstudio-logs-shard-${{ matrix.shard }}
+          path: ${{ env.APPDATA }}\RStudio\
+          retention-days: 15
+          if-no-files-found: ignore
+
+      - name: Upload PW sandbox (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pw-sandbox-shard-${{ matrix.shard }}
+          path: ${{ github.workspace }}\pw-sandbox\
+          retention-days: 15
+          if-no-files-found: ignore
+
+      # Windows writes application crash dumps here; useful when RStudio
+      # aborts before the GWT-ready handshake.
+      - name: Upload Windows crash dumps (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-crash-dumps-shard-${{ matrix.shard }}
+          path: ${{ env.LOCALAPPDATA }}\CrashDumps\
+          retention-days: 15
+          if-no-files-found: ignore
+
+  # Merge per-shard blob reports into a single HTML report, parse aggregated
+  # counts, and post a sticky PR comment with pass/fail/skip totals
+  # (when post_pr_comment is set).
+  e2e-merge:
+    needs: [e2e-desktop-windows]
+    if: always() && inputs.defer_merge != true && needs.e2e-desktop-windows.result != 'skipped' && needs.e2e-desktop-windows.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      # OIDC token for the S3 report upload (os-publish-e2e-report).
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install Playwright
+        working-directory: e2e/rstudio
+        run: npm ci --ignore-scripts
+
+      - name: Download shard blob reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: playwright-blob-report-win-*
+          path: e2e/rstudio/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge shard reports
+        working-directory: e2e/rstudio
+        run: |
+          if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
+            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            exit 1
+          fi
+          npx playwright merge-reports --config merge.config.ts ./all-blob-reports
+
+      # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
+      # comment computes pass/fail counts and the rate bar from one definition.
+      - name: Parse aggregated results
+        id: summary
+        if: always()
+        working-directory: e2e/rstudio
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+
+      - name: Upload merged Playwright report
+        id: upload-report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-win
+          path: e2e/rstudio/playwright-report/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      # Publish a browsable copy of the report to S3 on failure only, so
+      # reviewers can inspect it without downloading the zip. Best-effort: a
+      # no-op on fork PRs (no secret) and never fails the job.
+      - name: Publish report to S3
+        id: publish-report
+        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        uses: ./.github/actions/os-publish-e2e-report
+        with:
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          label: windows
+
+      - name: Post E2E results to PR
+        if: |
+          always() &&
+          inputs.post_pr_comment == true &&
+          github.event.pull_request.head.repo.fork == false &&
+          (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: e2e-windows-2025-results
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ## 🪟 Windows Desktop E2E · Server 2025 x64
+
+            ${{ needs.e2e-desktop-windows.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+
+            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+            | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
+            | :---: | :---: | :---: | :---: |
+            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+            <details>
+            <summary>📥 Download Playwright report</summary>
+            ${{ steps.publish-report.outputs.url != '' && format('
+            **[🌐 View report online]({0})** — opens in the browser, no download needed. Available for 14 days.
+            ', steps.publish-report.outputs.url) || '' }}
+            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
+
+            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
+
+            </details>
+
+            ---
+            <sub>2 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

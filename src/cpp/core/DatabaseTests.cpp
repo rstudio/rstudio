@@ -48,7 +48,7 @@ protected:
 
    void SetUp() override
    {
-      dbPath = FilePath("/tmp/rstudio-test-db");
+      ASSERT_FALSE(FilePath::tempFilePath(dbPath));
       dbPath.removeIfExists();
 
       SqliteConnectionOptions options;
@@ -239,55 +239,63 @@ TEST_F(DatabaseTestsFixture, CanBulkInsert)
 
 TEST(DatabaseTest, CanUseConnectionPool)
 {
-   FilePath dbPath = FilePath("/tmp/rstudio-test-db-pool");
+   FilePath dbPath;
+   ASSERT_FALSE(FilePath::tempFilePath(dbPath));
    dbPath.removeIfExists();
 
    SqliteConnectionOptions options;
    options.file = dbPath.getAbsolutePath();
 
-   boost::shared_ptr<ConnectionPool> connectionPool;
-   Error error = createConnectionPool(5, options, &connectionPool);
-   ASSERT_FALSE(error) << "Failed to create connection pool: " << error.getMessage();
-   boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
-   ASSERT_TRUE(connection) << "Failed to get connection from pool";
-
-   Query query = connection->query("create table Test(id int, text varchar(255))");
-   error = connection->execute(query);
-   ASSERT_FALSE(error) << "Failed to create Test table in fixture: " << error.getMessage();
-
-   // Insert some data into the Test table
-   for (int id = 0; id < 100; ++id)
+   // Scope the pool, connections, and queries so they are all destroyed - and their
+   // SQLite handles closed - before the database file is removed. The Query objects
+   // hold prepared statements that keep the connection open, so they must go out of
+   // scope too; otherwise the file handle is still open and, on Windows, the delete
+   // fails silently and orphans the random temp file.
    {
-      std::string text = "Test text " + core::safe_convert::numberToString(id);
-      query = connection->query("insert into Test(id, text) values(:id, :text)")
-            .withInput(id)
-            .withInput(text);
+      boost::shared_ptr<ConnectionPool> connectionPool;
+      Error error = createConnectionPool(5, options, &connectionPool);
+      ASSERT_FALSE(error) << "Failed to create connection pool: " << error.getMessage();
+      boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
+      ASSERT_TRUE(connection) << "Failed to get connection from pool";
+
+      Query query = connection->query("create table Test(id int, text varchar(255))");
       error = connection->execute(query);
-      ASSERT_FALSE(error) << "Failed to insert row " << id << ": " << error.getMessage();
+      ASSERT_FALSE(error) << "Failed to create Test table in fixture: " << error.getMessage();
+
+      // Insert some data into the Test table
+      for (int id = 0; id < 100; ++id)
+      {
+         std::string text = "Test text " + core::safe_convert::numberToString(id);
+         query = connection->query("insert into Test(id, text) values(:id, :text)")
+               .withInput(id)
+               .withInput(text);
+         error = connection->execute(query);
+         ASSERT_FALSE(error) << "Failed to insert row " << id << ": " << error.getMessage();
+      }
+
+      int rowId;
+      std::string rowText;
+      query = connection->query("select id, text from Test where id = 50")
+         .withOutput(rowId)
+         .withOutput(rowText);
+
+      bool dataReturned = false;
+      error = connection->execute(query, &dataReturned);
+      ASSERT_FALSE(error) << "Failed to execute query from pool connection: " << error.getMessage();
+      ASSERT_TRUE(dataReturned) << "Expected data to be returned but none was";
+
+      boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
+      ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
+
+      Query query2 = connection2->query("select id, text from Test where id = 25")
+         .withOutput(rowId)
+         .withOutput(rowText);
+
+      dataReturned = false;
+      error = connection2->execute(query2, &dataReturned);
+      ASSERT_FALSE(error) << "Failed to execute query from second pool connection: " << error.getMessage();
+      ASSERT_TRUE(dataReturned) << "Expected data to be returned from second query but none was";
    }
-
-   int rowId;
-   std::string rowText;
-   query = connection->query("select id, text from Test where id = 50")
-      .withOutput(rowId)
-      .withOutput(rowText);
-
-   bool dataReturned = false;
-   error = connection->execute(query, &dataReturned);
-   ASSERT_FALSE(error) << "Failed to execute query from pool connection: " << error.getMessage();
-   ASSERT_TRUE(dataReturned) << "Expected data to be returned but none was";
-
-   boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
-   ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
-
-   Query query2 = connection2->query("select id, text from Test where id = 25")
-      .withOutput(rowId)
-      .withOutput(rowText);
-
-   dataReturned = false;
-   error = connection2->execute(query2, &dataReturned);
-   ASSERT_FALSE(error) << "Failed to execute query from second pool connection: " << error.getMessage();
-   ASSERT_TRUE(dataReturned) << "Expected data to be returned from second query but none was";
 
    dbPath.removeIfExists();
 }
@@ -834,7 +842,7 @@ protected:
 
    void SetUp() override
    {
-      dbPath = FilePath("/tmp/rstudio-test-db-pool");
+      ASSERT_FALSE(FilePath::tempFilePath(dbPath));
       dbPath.removeIfExists();
 
       SqliteConnectionOptions options;
@@ -896,6 +904,122 @@ TEST_F(ConnectionPoolTestsFixture, CanUseConnectionPool)
    error = connection2->execute(select25, &dataReturned);
    ASSERT_FALSE(error) << "Failed to execute second query: " << error.getMessage();
    ASSERT_TRUE(dataReturned) << "Expected data for id=25";
+}
+
+// Defense-in-depth for rstudio-pro#10885: a connection returned to the pool
+// while a transaction is still open must be rolled back before reuse, so a
+// later writer cannot inherit a stale read snapshot.
+TEST(ConnectionPoolTest, ReturningConnectionWithOpenTransactionRollsItBack)
+{
+   FilePath dbPath;
+   ASSERT_FALSE(FilePath::tempFilePath(dbPath));
+   dbPath.removeIfExists();
+
+   SqliteConnectionOptions options;
+   options.file = dbPath.getAbsolutePath();
+
+   {
+      // Pool of one so the re-acquired connection is guaranteed to be the same
+      // underlying connection we just returned.
+      boost::shared_ptr<ConnectionPool> pool;
+      ASSERT_FALSE(createConnectionPool(1, options, &pool)) << "Failed to create connection pool";
+
+      {
+         boost::shared_ptr<IConnection> conn = pool->getConnection();
+         ASSERT_TRUE(conn) << "Failed to get connection from pool";
+         ASSERT_FALSE(conn->executeStr("CREATE TABLE Txn(id int)")) << "Failed to create Txn table";
+
+         // Open a write transaction and leave it open, simulating a path that
+         // returns the connection without committing or rolling back.
+         ASSERT_FALSE(conn->executeStr("BEGIN")) << "Failed to begin transaction";
+         Query insert = conn->query("INSERT INTO Txn(id) VALUES (:id)").withInput(1);
+         ASSERT_FALSE(conn->execute(insert)) << "Failed to insert within transaction";
+         // conn leaves scope here -> returned to pool -> transaction rolled back.
+      }
+
+      boost::shared_ptr<IConnection> conn2 = pool->getConnection();
+      ASSERT_TRUE(conn2) << "Failed to re-acquire connection from pool";
+
+      // The connection must be back in autocommit: without the rollback-on-return
+      // the prior transaction would still be open and this BEGIN would fail with
+      // "cannot start a transaction within a transaction".
+      ASSERT_FALSE(conn2->executeStr("BEGIN")) << "Connection was not returned to autocommit state";
+      ASSERT_FALSE(conn2->executeStr("ROLLBACK"));
+
+      // And the uncommitted row must not have survived.
+      int count = -1;
+      Query countQuery = conn2->query("SELECT COUNT(*) FROM Txn").withOutput(count);
+      bool dataReturned = false;
+      ASSERT_FALSE(conn2->execute(countQuery, &dataReturned)) << "Failed to count Txn rows";
+      ASSERT_TRUE(dataReturned);
+      EXPECT_EQ(count, 0) << "Uncommitted row should have been rolled back on return";
+   }
+
+   dbPath.removeIfExists();
+}
+
+// Regression for rstudio-pro#10885: a SELECT's Rowset holds a SQLite read
+// snapshot until it is destroyed. A connection that is reused for a write while
+// still carrying such a snapshot - after another connection has committed -
+// fails with SQLITE_BUSY_SNAPSHOT, which busy_timeout cannot clear and retries
+// cannot resolve. This guards that Rowset-lifetime contract.
+TEST(ConnectionPoolTest, RowsetReleasesReadSnapshotWhenDestroyed)
+{
+   FilePath dbPath;
+   ASSERT_FALSE(FilePath::tempFilePath(dbPath));
+   dbPath.removeIfExists();
+
+   SqliteConnectionOptions options;
+   options.file = dbPath.getAbsolutePath();
+
+   {
+      boost::shared_ptr<ConnectionPool> pool;
+      ASSERT_FALSE(createConnectionPool(2, options, &pool)) << "Failed to create connection pool";
+
+      boost::shared_ptr<IConnection> reader = pool->getConnection();
+      boost::shared_ptr<IConnection> writer = pool->getConnection();
+      ASSERT_TRUE(reader) << "Failed to get reader connection";
+      ASSERT_TRUE(writer) << "Failed to get writer connection";
+
+      ASSERT_FALSE(reader->executeStr("CREATE TABLE Snap(id int)")) << "Failed to create Snap table";
+      ASSERT_FALSE(reader->executeStr("INSERT INTO Snap(id) VALUES (1)")) << "Failed seed insert";
+
+      // Raw write that bypasses the execute() retry ladder, so a snapshot
+      // conflict surfaces immediately rather than after the retry budget.
+      auto writeOnReader = [&]() -> bool {
+         try
+         {
+            reader->session() << "INSERT INTO Snap(id) VALUES (99)";
+            return true;
+         }
+         catch (const soci::soci_error&)
+         {
+            return false;
+         }
+      };
+
+      {
+         // Hold a read snapshot open on `reader` by starting, but not finishing,
+         // a SELECT.
+         Rowset rows;
+         Query select = reader->query("SELECT id FROM Snap");
+         ASSERT_FALSE(reader->execute(select, rows)) << "Failed to execute SELECT";
+         RowsetIterator it = rows.begin(); // first step opens the read transaction
+         ASSERT_TRUE(it != rows.end());
+
+         // Another connection commits a write, advancing the WAL past the
+         // reader's snapshot.
+         ASSERT_FALSE(writer->executeStr("INSERT INTO Snap(id) VALUES (2)")) << "Writer insert failed";
+
+         // The reader still holds the stale snapshot, so its write conflicts.
+         EXPECT_FALSE(writeOnReader()) << "expected a snapshot conflict while the Rowset is open";
+      } // Rowset/Query destroyed here -> read snapshot released
+
+      // With the snapshot released, the same connection can write.
+      EXPECT_TRUE(writeOnReader()) << "write should succeed once the Rowset is destroyed";
+   }
+
+   dbPath.removeIfExists();
 }
 
 } // namespace tests

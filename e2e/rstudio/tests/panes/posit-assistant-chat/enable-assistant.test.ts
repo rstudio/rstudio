@@ -1,19 +1,23 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { sleep, CHAT_PROVIDERS } from '@utils/constants';
+import { requireAiCredentials } from '@utils/ai-credentials';
+import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { AssistantOptions } from '@pages/assistant_options.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
+import { executeCommand } from '@utils/commands';
+import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe.serial('Enable Posit Assistant', () => {
+test.describe.serial('Enable Posit Assistant', { tag: ['@ai'] }, () => {
+  requireAiCredentials(test, 'positai');
+
   let consoleActions: ConsolePaneActions;
   let assistantActions: AssistantOptionsActions;
   let assistantOptions: AssistantOptions;
   let versions: EnvironmentVersions;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    consoleActions = new ConsolePaneActions(page);
-    assistantActions = new AssistantOptionsActions(page, consoleActions);
+    ({ consoleActions, assistantActions } = createChatActions(page));
     assistantOptions = assistantActions.assistantOptions;
 
     versions = await consoleActions.getEnvironmentVersions();
@@ -21,24 +25,24 @@ test.describe.serial('Enable Posit Assistant', () => {
   });
 
   test.beforeEach(async () => {
-    test.info().annotations.push(
-      { type: 'R version', description: versions.r },
-      { type: 'RStudio version', description: versions.rstudio },
-    );
+    annotateVersions(versions);
   });
 
   test('enable Posit Assistant and verify persistence', async ({ rstudioPage: page }) => {
     // First, set to "(None)" to ensure we're starting clean
-    await consoleActions.typeInConsole(".rs.api.executeCommand('showOptions')");
+    await executeCommand(page, 'showOptions');
     await page.waitForSelector('#rstudio_preferences_confirm', { timeout: 15000 });
 
     await expect(assistantOptions.assistantTab).toBeVisible({ timeout: 15000 });
     await assistantOptions.assistantTab.click();
     await expect(assistantOptions.assistantPanel).toBeVisible();
-    await sleep(1000);
+    // Wait for the provider options to be populated before selecting -- panel
+    // visibility precedes option load by a tick.
+    await expect(
+      assistantOptions.chatProviderSelect.locator('option', { hasText: '(None)' }),
+    ).toBeAttached({ timeout: 5000 });
 
     await assistantOptions.chatProviderSelect.selectOption({ label: '(None)' });
-    await sleep(1000);
     await assistantOptions.optionsOkButton.click();
     await expect(assistantOptions.optionsOkButton).toBeHidden({ timeout: 15000 });
 

@@ -4,21 +4,34 @@ if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-soci")
 
 SOCI_VERSION         <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
-BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.90.0")
+BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.91.0")
 MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
 CMAKE_GENERATOR      <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 17 2022")
 
-owd <- getwd()
+# the source-tree folder containing this script and its helpers
+script_dir <- getwd()
 source("../tools.R")
 section("Building SOCI %s", SOCI_VERSION)
+
+# put RStudio tools on PATH (resolve now; the working directory may change)
+PATH$prepend(normalizePath("../tools"))
+
+# build into RSTUDIO_TOOLS_ROOT when set (see install-dependencies.cmd), so
+# that build artifacts land outside the source tree; otherwise, build within
+# the source tree as before
+tools_root <- Sys.getenv("RSTUDIO_TOOLS_ROOT", unset = "")
+if (nzchar(tools_root)) {
+   install_dir <- file.path(tools_root, "dependencies/windows/install-soci")
+   dir.create(install_dir, recursive = TRUE, showWarnings = FALSE)
+   setwd(install_dir)
+}
+
+owd <- getwd()
 
 # initialize log directory (for when things go wrong)
 unlink("logs", recursive = TRUE)
 dir.create("logs")
 options(log.dir = normalizePath("logs"))
-
-# put RStudio tools on PATH
-PATH$prepend("../tools")
 
 # initialize variables
 output_dir <- normalizePath("..", winslash = "/")
@@ -36,10 +49,6 @@ sqlite_dir <- file.path(owd, "sqlite")
 sqlite_header_zip_url <- "https://sqlite.org/2020/sqlite-amalgamation-3310100.zip"
 sqlite_header_zip <- file.path(sqlite_dir, "sqlite-header.zip")
 sqlite_header_dir <- file.path(sqlite_dir, "sqlite-amalgamation-3310100")
-
-postgresql_dir <- file.path(owd, "postgresql")
-postgresql_zip <- file.path(owd, "win-postgresql.zip")
-postgresql_zip_url <- "https://rstudio-buildtools.s3.amazonaws.com/win-postgresql.zip"
 
 downloadAndUnzip <- function(outputFile, extractDir, url) {
 
@@ -73,12 +82,9 @@ Sys.setenv(PATH = paste(path, collapse = ";"))
 dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
 downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 
-# build SQLite static library
-run("build-sqlite.cmd")
-
-# download and install postgresql includes/libraries
-# we prebuild these because the postgresql build process is non-trivial
-downloadAndUnzip(postgresql_zip, owd, postgresql_zip_url)
+# build SQLite static library (the script lives in the source tree; its
+# artifacts are placed relative to the current working directory)
+run(shQuote(normalizePath(file.path(script_dir, "build-sqlite.cmd"))))
 
 # clone repository if we dont already have it
 if (!file.exists(soci_base_name)) {
@@ -117,10 +123,6 @@ build <- function(arch, config) {
    sqlite_library_name <- sprintf("sqlite3-%s-%s.lib", tolower(config), arch)
    sqlite_library_path <- file.path(sqlite_dir, sqlite_library_name)
 
-   postgresql_include_dir <- file.path(postgresql_dir, "include")
-   postgresql_library_name <- sprintf("lib/%s/%s/libpq.lib", arch, config)
-   postgresql_library_path <- file.path(postgresql_dir, "lib/x86/Debug/libpq.lib")
-
    # put together intro big string
    args <- interpolate('
       -G "{CMAKE_GENERATOR}"
@@ -136,12 +138,10 @@ build <- function(arch, config) {
       -DBoost_USE_STATIC_LIBS=ON
       -DSOCI_TESTS=OFF
       -DSOCI_SHARED=OFF
-      -DWITH_POSTGRESQL=ON
+      -DWITH_POSTGRESQL=OFF
       -DWITH_SQLITE3=ON
       -DSQLITE3_INCLUDE_DIR="{sqlite_header_dir}"
       -DSQLITE3_LIBRARY="{sqlite_library_path}"
-      -DPOSTGRESQL_INCLUDE_DIR="{postgresql_include_dir}"
-      -DPOSTGRESQL_LIBRARY="{postgresql_library_path}"
       ../..
    ')
 

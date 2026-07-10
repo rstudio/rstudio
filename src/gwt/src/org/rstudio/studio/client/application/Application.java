@@ -50,7 +50,6 @@ import org.rstudio.studio.client.application.events.QuitEvent;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.application.events.RunAutomationEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
 import org.rstudio.studio.client.application.events.ServerUnavailableEvent;
 import org.rstudio.studio.client.application.events.SessionAbendWarningEvent;
@@ -93,7 +92,6 @@ import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 
@@ -198,7 +196,6 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
       events.addHandler(ClipboardActionEvent.TYPE, this);
-      events.addHandler(RunAutomationEvent.TYPE, this);
       events.addHandler(MemoryUsageChangedEvent.TYPE, this);
       
       // register for uncaught exceptions
@@ -255,20 +252,9 @@ public class Application implements ApplicationEventHandlers
                   Desktop.getFrame().setProjectDirectory(projectDir.getPath());
             }
             
-            if (sessionInfo.isAutomationHost())
-            {
-               ApplicationAutomation automation = pAutomation_.get();
-               automation.initializeHost();
-            }
-            else if (sessionInfo.isAutomationAgent())
-            {
-               ApplicationAutomation automation = pAutomation_.get();
-               automation.initializeAgent();
-            }
-            
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();
-            
+
             // set up drag-drop handlers
             if (Desktop.isDesktop())
             {
@@ -284,11 +270,23 @@ public class Application implements ApplicationEventHandlers
 
             // initialize workbench
             // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
-            // in desktop mode, though unsure why)
+            // in desktop mode, though unsure why). The automation agent must be initialized
+            // after this refresh -- registerPrefs() iterates userPrefs_.allPrefs(), and in desktop
+            // mode that returns an incomplete set until the pref refresh has run.
+            // The completion booleans report whether the set_user_state /
+            // set_user_prefs RPCs succeeded, but we deliberately proceed to
+            // build the workbench either way: a transient persistence failure
+            // here must not dead-end startup (see #18019). The RPC error has
+            // already been logged by writeState()/writeUserPrefs().
             userState_.get().writeState(boolArg ->
             {
                userPrefs_.get().writeUserPrefs(boolArg1 ->
                {
+                  if (sessionInfo.isAutomationAgent())
+                  {
+                     ApplicationAutomation automation = pAutomation_.get();
+                     automation.initializeAgent();
+                  }
                   initializeWorkbench();
                });
             });
@@ -562,12 +560,6 @@ public class Application implements ApplicationEventHandlers
       }
       
       }
-   }
-   
-   @Override
-   public void onRunAutomation(RunAutomationEvent event)
-   {
-      events_.fireEvent(new SendToConsoleEvent(".rs.automation.run()", true));
    }
    
    @Override

@@ -708,6 +708,12 @@
             "title": "Theme",
             "description": "The name of the color theme to apply to the text editor in RStudio."
         },
+        "ignore_project_appearance": {
+            "type": "boolean",
+            "default": false,
+            "title": "Ignore project-specific appearance settings",
+            "description": "Whether to ignore appearance settings (such as the editor theme) configured at the project level, always using the global settings instead."
+        },
         "server_editor_font_enabled": {
             "type": "boolean",
             "default": false,
@@ -976,6 +982,12 @@
             "title": "Automatically run Setup chunk when needed",
             "description": "Whether to automatically run an R Markdown document's Setup chunk before running other chunks."
         },
+        "notebook_execute_inline_chunks": {
+            "type": "boolean",
+            "default": true,
+            "title": "Execute inline R code when previewing notebooks",
+            "description": "Whether to evaluate a notebook's inline R code in the current R session when creating a notebook preview, so that inline code can use objects in the global environment. When disabled, inline code is evaluated in the background rendering process instead."
+        },
         "hide_console_on_chunk_execute": {
             "type": "boolean",
             "default": true,
@@ -1115,6 +1127,7 @@
                 ".gitignore",
                 ".httr-oauth",
                 ".lintr",
+                ".posit",
                 ".positai",
                 ".quartoignore",
                 ".r",
@@ -1132,6 +1145,18 @@
             "default": true,
             "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
+        },
+        "date_time_use_iso8601": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use ISO-8601 date-time formatting",
+            "description": "Whether to display dates and times using the ISO-8601 format (e.g. 2026-03-09 14:30) instead of the format inferred from the system region."
+        },
+        "date_time_use_utc": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use UTC time zone",
+            "description": "Whether to display dates and times in the UTC time zone instead of the local time zone."
         },
         "sync_files_pane_working_dir": {
             "type": "boolean",
@@ -1194,6 +1219,12 @@
             "default": true,
             "title": "Wrap around when going to previous/next tab",
             "description": "Whether to wrap around when going to the previous or next editor tab."
+        },
+        "mousewheel_changes_editor_tab": {
+            "type": "boolean",
+            "default": true,
+            "title": "Change active editor tab with mouse wheel",
+            "description": "Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab."
         },
         "global_theme": {
             "type": "string",
@@ -1439,6 +1470,18 @@
             "title": "Show data viewer summary panel by default",
             "description": "Whether the Summary side panel is shown by default when opening the data viewer."
         },
+        "data_viewer_show_filters": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show data viewer filter UI by default",
+            "description": "Whether the data viewer filter UI is shown by default when opening the data viewer."
+        },
+        "data_viewer_use_overlay_scrollbars": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use overlay scrollbars in the data viewer",
+            "description": "Whether the data viewer draws its own overlay scrollbars; when disabled, native scrollbars are used instead."
+        },
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,
@@ -1494,6 +1537,13 @@
             "default": false,
             "title": "Save documents when editor loses input focus",
             "description": "Whether to automatically save when the editor loses focus."
+        },
+        "reduce_remote_filesystem_operations": {
+            "type": "boolean",
+            "default": true,
+            "local": true,
+            "title": "Reduce background file operations on network and remote drives",
+            "description": "When enabled, RStudio reduces background file monitoring, code indexing, and external-edit checks for projects detected to be on a network or remote filesystem. This improves responsiveness on slow drives, at the cost of less frequent automatic refreshing of file listings and version-control status."
         },
         "terminal_initial_directory": {
             "type": "string",
@@ -1703,11 +1753,17 @@
             "title": "Save Retry Timeout",
             "description": "The maximum amount of seconds of retry for save operations."
         },
+        "save_files_durably": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use durable writes when saving files",
+            "description": "Whether to flush saved files all the way to physical storage so that write failures (such as a full disk or an exceeded quota) are reported rather than silently lost. Disabling this can improve save performance on slow or networked filesystems, at the risk of not detecting some failed writes."
+        },
         "insert_native_pipe_operator": {
             "description": "Whether the Insert Pipe Operator command should use the native R pipe operator, |>",
             "title": "Use R's native pipe operator, |>",
             "type": "boolean",
-            "default": false
+            "default": true
         },
         "command_palette_mru": {
             "description": "Whether to keep track of recently used commands in the Command Palette",
@@ -1869,11 +1925,23 @@
             "title": "Show Posit Assistant button in toolbar",
             "description": "When enabled, the Posit Assistant button is displayed in the main toolbar."
         },
+        "assistant_use_system_ca": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use the system certificate store (restart required)",
+            "description": "When enabled, the AI assistant agents trust the operating system certificate store (e.g. the Windows Certificate Store or macOS Keychain) in addition to Node.js's built-in certificate authorities. Useful behind a TLS-inspecting proxy. Restart the R session for the change to take effect."
+        },
         "posit_assistant_test_manifest": {
             "type": "boolean",
             "default": false,
             "title": "Use pre-release version of Posit Assistant (restart required)",
             "description": "Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work."
+        },
+        "posit_assistant_update_check_interval_hours": {
+            "type": "integer",
+            "default": 2,
+            "title": "Posit Assistant update check interval (hours)",
+            "description": "The minimum number of hours between checks for a new version of the Posit Assistant. Set to 0 to check every time."
         },
         "copilot_enabled": {
             "type": "boolean",
@@ -1969,7 +2037,13 @@
             "type": "boolean",
             "default": false,
             "title": "Use Air for code formatting",
-            "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file."
+            "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting R code."
+        },
+        "air_formatter_require_toml": {
+            "type": "boolean",
+            "default": false,
+            "title": "Only use Air when an air.toml file is found",
+            "description": "When set, Air will only be used to format R documents located within a project or directory containing an air.toml file."
         },
         "reformat_on_save": {
             "type": "boolean",

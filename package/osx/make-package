@@ -308,7 +308,10 @@ if [ -n "$SCCACHE_ENABLED" ]; then
         export SCCACHE_BUCKET="rstudio-build-cache"
     else
         echo "No valid AWS SSO session, using only local build cache"
-        export SCCACHE_DIR=$(pwd)/object_file_cache
+        # Honor an externally-set SCCACHE_DIR (e.g. when a CI runner has
+        # already restored a cache to a known path) instead of always
+        # rooting the cache under the package dir.
+        export SCCACHE_DIR="${SCCACHE_DIR:-$(pwd)/object_file_cache}"
         mkdir -p $SCCACHE_DIR
     fi
 fi
@@ -465,9 +468,11 @@ if [ "${build_package}" = "1" ]; then
 
       cd ..
 
-      # allocate oversized dmg, which will be compressed
+      # allocate oversized dmg, which will be compressed (UDZO), so the extra
+      # headroom is reclaimed and does not bloat the final artifact. The app
+      # bundle is ~1.7G+ and outgrew the previous 2g ceiling.
       hdiutil create                       \
-         -size 2g                          \
+         -size 4g                          \
          -fs "APFS"                        \
          -volname "${RSTUDIO_BUNDLE_NAME}" \
          -srcfolder "install"              \

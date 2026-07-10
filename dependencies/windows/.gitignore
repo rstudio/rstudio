@@ -8,13 +8,13 @@ gnudiff/
 gnugrep/
 hunspell-*/
 nsprocess/
+nsis-multiuser/
 msys_ssh/
 msys-ssh*/
 hunspell/
 sumatra/
 winutils/
 rtools*
-winpty*/
 openssl*/
 crashpad*/
 yaml-cpp-*/

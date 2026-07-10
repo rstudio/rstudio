@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.dom.DocumentEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
@@ -66,24 +68,38 @@ public class AceEditorPreview extends DynamicIFrame
       {
          public void onLoaded()
          {
-            if (getDocument() != doc) 
+            // Bail if the preview was detached while ace.js was loading
+            // (Global Options dismissed, pane relayout, etc.) -- getDocument()
+            // here goes through getWindow().getDocument() and a detached frame
+            // has a null contentWindow, so the JSNI body would raise an
+            // uncaught "Cannot read properties of null (reading 'document')"
+            // TypeError that surfaces as an Error dialog.
+            if (!isAttached())
+               return;
+
+            if (getDocument() != doc)
             {
                onFrameLoaded();
                return;
             }
-            
+
             new ExternalJavaScriptLoader(getDocument(), AceResources.INSTANCE.acesupportjs().getSafeUri().asString())
                   .addCallback(new Callback()
                   {
                      public void onLoaded()
                      {
-                        
+                        // Same detached-frame guard as the outer callback:
+                        // acesupport.js can finish loading after the preview
+                        // has been removed from the DOM.
+                        if (!isAttached())
+                           return;
+
                         if (getDocument() != doc)
                         {
                            onFrameLoaded();
                            return;
                         }
-                        
+
                         final Document doc = getDocument();
                         final BodyElement body = doc.getBody();
                         
@@ -129,6 +145,15 @@ public class AceEditorPreview extends DynamicIFrame
                         {
                            Scheduler.get().scheduleFixedDelay(() ->
                            {
+                              // Stop if the preview was detached before this
+                              // timer fired (e.g. the preferences dialog was
+                              // closed, or a pane relayout reparented us).
+                              // setLineHeight would otherwise dereference the
+                              // now-null iframe contentWindow and raise an
+                              // uncaught exception.
+                              if (!isAttached())
+                                 return false;
+
                               if (div.hasClassName("ace_editor"))
                               {
                                  setLineHeight(lineHeight_);
@@ -138,7 +163,7 @@ public class AceEditorPreview extends DynamicIFrame
                               {
                                  return true;
                               }
-                              
+
                            }, 100);
                         }
                      }
@@ -150,30 +175,43 @@ public class AceEditorPreview extends DynamicIFrame
    public void setTheme(String themeUrl)
    {
       themeUrl_ = themeUrl;
-      if (!isFrameLoaded_)
+      if (!isFrameLoaded_ || !isAttached())
+         return;
+
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+      DocumentEx doc = window.getDocument();
+      if (doc == null)
          return;
 
       if (currentStyleLink_ != null)
          currentStyleLink_.removeFromParent();
 
-      Document doc = getDocument();
       currentStyleLink_ = doc.createLinkElement();
       currentStyleLink_.setRel("stylesheet");
       currentStyleLink_.setType("text/css");
       currentStyleLink_.setHref(themeUrl);
       doc.getBody().appendChild(currentStyleLink_);
    }
-   
+
    public void setFontSize(double fontSize)
    {
       fontSize_ = fontSize;
-      if (!isFrameLoaded_)
+      if (!isFrameLoaded_ || !isAttached())
+         return;
+
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+      DocumentEx doc = window.getDocument();
+      if (doc == null)
          return;
 
       if (zoomLevel_ == null)
-         FontSizer.setNormalFontSize(getDocument(), fontSize_, lineHeight_);
+         FontSizer.setNormalFontSize(doc, fontSize_, lineHeight_);
       else
-         FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_, lineHeight_);
+         FontSizer.setNormalFontSize(doc, fontSize_ * zoomLevel_, lineHeight_);
    }
    
    public void setLineHeight(double lineHeight)
@@ -181,11 +219,23 @@ public class AceEditorPreview extends DynamicIFrame
       lineHeight_ = lineHeight;
       if (!isFrameLoaded_)
          return;
-      
-      Element editorEl = getDocument().getElementById("editor");
+
+      // Defensive: this is reachable from a deferred timer (see onFrameLoaded),
+      // by which point the frame may be detached -- its contentWindow null, or
+      // the window present but its document not yet/no longer available. Either
+      // dereference would raise an uncaught TypeError.
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+
+      DocumentEx doc = window.getDocument();
+      if (doc == null)
+         return;
+
+      Element editorEl = doc.getElementById("editor");
       if (editorEl == null)
          return;
-      
+
       editorEl.getStyle().setLineHeight(lineHeight, Unit.PCT);
    }
 
@@ -193,7 +243,14 @@ public class AceEditorPreview extends DynamicIFrame
    {
       final String STYLE_EL_ID = "__rstudio_font_family";
       final String LINK_EL_ID = "__rstudio_font_link";
-      Document document = getDocument();
+      if (!isAttached())
+         return;
+      WindowEx window = getWindow();
+      if (window == null)
+         return;
+      DocumentEx document = window.getDocument();
+      if (document == null)
+         return;
 
       Element oldStyle = document.getElementById(STYLE_EL_ID);
       Element oldLink = document.getElementById(LINK_EL_ID);

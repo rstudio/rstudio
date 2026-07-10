@@ -632,18 +632,25 @@ public class RCompletionManager implements CompletionManager
                   InputEditorPosition start = selection.getStart().movePosition(-1, true);
                   InputEditorPosition end = selection.getStart();
 
+                  // when deleting a colon, the namespace-completion context can
+                  // change (e.g. 'pkg:::' shows all objects but 'pkg::' shows
+                  // only exported ones), so the cached completions are no longer
+                  // valid -- flush the cache and re-query the server
+                  boolean flushCache =
+                        StringUtil.charAt(currentLine, cursorColumn - 1) == ':';
+
                   if (StringUtil.charAt(currentLine, cursorColumn) == ')' &&
                         StringUtil.charAt(currentLine, cursorColumn - 1) == '(')
                   {
                      // flush cache as old completions no longer relevant
-                     requester_.flushCache();
+                     flushCache = true;
                      end = selection.getStart().movePosition(1, true);
                   }
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
-                  
-                  return beginSuggest(false, false, false);
+
+                  return beginSuggest(flushCache, false, false);
                }
             }
             else
@@ -720,10 +727,23 @@ public class RCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       suggestTimer_.cancel();
-      
+
       if (isDisabled())
          return false;
-      
+
+      // '(' is a function-call boundary, not a continuation of any in-progress
+      // identifier completion. If the popup is open from a prior context
+      // (typically namespace-mode completion opened by '::'), dismiss it so
+      // the no-popup branch below handles '(' fresh -- showing the signature
+      // tooltip and, for library/require/data, an argument-name popup. This
+      // also matters for Tab-triggered argument completion afterward: with a
+      // stale namespace-mode popup hanging around, Tab applies the popup's
+      // selected entry instead of re-classifying the context.
+      if (c == '(' && popup_.isShowing())
+      {
+         popup_.hide();
+      }
+
       if (popup_.isShowing())
       {
          // If insertion of this character completes an available suggestion,
@@ -1894,7 +1914,8 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 1
                && canAutoAccept_
                && completions.canAutoAccept()
-               && results[0].type != RCompletionType.DIRECTORY)
+               && results[0].type != RCompletionType.DIRECTORY
+               && !automation_.isCompletionPopupForced())
          {
             onSelection(results[0]);
          }

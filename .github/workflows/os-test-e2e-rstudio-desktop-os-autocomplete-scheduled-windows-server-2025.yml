@@ -1,0 +1,245 @@
+name: "Test: E2E Playwright RStudio Autocomplete Scheduled (Desktop, Windows Server 2025 x64, Open Source)"
+
+on:
+  schedule:
+    - cron: '0 8,20 * * *'
+  workflow_dispatch:
+    inputs:
+      rstudio_installer_url:
+        description: "URL to a Desktop installer (.deb on Ubuntu, .rpm on RHEL/Fedora, .exe on Windows, .dmg on macOS). Leave empty to auto-resolve the latest daily for this workflow's platform. To pin a specific build, paste its full URL from dailies.rstudio.com."
+        type: string
+        default: ""
+      r_version:
+        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        type: string
+        default: "release"
+      project:
+        description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
+        type: string
+        default: "desktop"
+      grep:
+        description: "Optional Playwright --grep pattern to run only tests whose title matches."
+        type: string
+        default: ""
+      test_selector:
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/', 'autocomplete tests/panes/posit-assistant-chat/'. Leave empty to run all tests (default runs autocomplete tests)."
+        type: string
+        default: "autocomplete.test.ts"
+      test_ignore:
+        description: "Optional test paths/files/directories to exclude (space-separated globs). Examples: '**/code_suggestions.test.ts', '**/posit-assistant-chat/**'. Leave empty to exclude nothing."
+        type: string
+        default: ""
+      grep_invert:
+        description: "Optional Playwright --grep-invert pattern to skip tests by title."
+        type: string
+        default: ""
+      rstudio_extra_args:
+        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
+        type: string
+        default: ""
+  workflow_call:
+    inputs:
+      rstudio_installer_url:
+        type: string
+        default: ""
+      r_version:
+        type: string
+        default: "release"
+      project:
+        type: string
+        default: "desktop"
+      grep:
+        type: string
+        default: ""
+      test_selector:
+        type: string
+        default: "autocomplete.test.ts"
+      test_ignore:
+        type: string
+        default: ""
+      grep_invert:
+        type: string
+        default: ""
+      rstudio_extra_args:
+        type: string
+        default: ""
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-desktop-windows:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      R_LIBS_USER: ${{ github.workspace }}\R-libs
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install rig
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $maxAttempts = 3
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($i -lt $maxAttempts) {
+              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
+              Start-Sleep -Seconds 15
+            } else {
+              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
+              exit 1
+            }
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version || 'release' }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          rig add $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig default $env:R_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          rig ls
+          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
+
+      - name: Resolve RStudio .exe URL
+        id: resolve
+        env:
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = $env:INSTALLER_URL
+          $sha = ''
+          $filename = ''
+          if ([string]::IsNullOrEmpty($url)) {
+            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json'
+            $win = $manifest.products.electron.platforms.windows
+            $url = $win.link
+            $sha = $win.sha256
+            $filename = $win.filename
+            if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
+              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            }
+            Write-Host "Auto-resolved latest windows daily:"
+            Write-Host "  URL:      $url"
+            Write-Host "  SHA-256:  $sha"
+            Write-Host "  Filename: $filename"
+          } else {
+            $filename = Split-Path -Leaf $url
+            Write-Host "Using override URL: $url (SHA-256 verification skipped)"
+          }
+          "url=$url"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "sha256=$sha"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "filename=$filename" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # runs can't share a cache entry with each other anyway, so caching here
+      # would just duplicate the same bytes into the shared 10 GB cache quota
+      # without saving meaningful time.
+      - name: Download RStudio .exe
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest `
+            -Uri $env:DOWNLOAD_URL `
+            -OutFile $env:DOWNLOAD_FILENAME `
+            -MaximumRetryCount 3 -RetryIntervalSec 5
+
+      - name: Verify SHA-256
+        if: steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expected = $env:EXPECTED_SHA256.ToLower()
+          $actual = (Get-FileHash -Algorithm SHA256 $env:DOWNLOAD_FILENAME).Hash.ToLower()
+          if ($expected -ne $actual) {
+            Write-Error "SHA-256 mismatch. Expected: $expected. Actual: $actual."
+            exit 1
+          }
+          Write-Host "SHA-256 OK: $actual"
+
+      - name: Install RStudio
+        env:
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $p = Start-Process -FilePath ".\$env:INSTALLER_FILENAME" -ArgumentList '/allusers', '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "RStudio installer exited $($p.ExitCode)"; exit 1 }
+          $exe = 'C:\Program Files\RStudio\rstudio.exe'
+          if (-not (Test-Path $exe)) {
+            Write-Error "RStudio binary not found at $exe after install."
+            exit 1
+          }
+          Get-Item $exe | Format-List FullName, Length, LastWriteTime
+
+      - name: Install e2e test dependencies
+        uses: ./.github/actions/os-e2e-deps
+        with:
+          r-libs-user: ${{ env.R_LIBS_USER }}
+
+      - name: Run Playwright tests
+        working-directory: e2e/rstudio
+        env:
+          PW_RSTUDIO_MODE: desktop
+          PW_RSTUDIO_EDITION: os
+          PW_PROJECT_NAME: ${{ inputs.project || 'desktop' }}
+          PW_GREP: ${{ inputs.grep }}
+          PW_GREP_INVERT: ${{ inputs.grep_invert }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector || 'autocomplete.test.ts' }}
+          PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $pwArgs = @('--project', $env:PW_PROJECT_NAME)
+          if (-not [string]::IsNullOrEmpty($env:PW_GREP)) {
+            $pwArgs += '--grep'
+            $pwArgs += $env:PW_GREP
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_GREP_INVERT)) {
+            $pwArgs += '--grep-invert'
+            $pwArgs += $env:PW_GREP_INVERT
+          }
+          if (-not [string]::IsNullOrEmpty($env:PW_TEST_SELECTOR)) {
+            $pwArgs += '--'
+            $pwArgs += ($env:PW_TEST_SELECTOR -split '\s+' | Where-Object { $_ -ne '' })
+          }
+          npx playwright test @pwArgs
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/rstudio/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/rstudio/test-results/
+          if-no-files-found: ignore

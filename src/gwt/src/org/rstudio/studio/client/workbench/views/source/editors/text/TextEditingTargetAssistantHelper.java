@@ -156,6 +156,10 @@ public class TextEditingTargetAssistantHelper
       // Whether the suggestion is currently being displayed (ghost text or diff visible)
       public boolean isRevealed;
 
+      // Whether this is a regular inline completion shown at the cursor position,
+      // as opposed to a next edit suggestion (which may be elsewhere in the document)
+      public boolean isInlineCompletion;
+
       // Anchors that track the suggestion position as the document changes
       // These must be set externally via setAnchors() since they require display_ access
       public Anchor startAnchor;
@@ -448,18 +452,22 @@ public class TextEditingTargetAssistantHelper
     */
    public void showEditSuggestion(AssistantCompletion completion)
    {
-      showEditSuggestionImpl(completion, true, false);
+      showEditSuggestionImpl(completion, true, false, false);
    }
-   
+
    /**
     * Internal implementation for showing edit suggestions.
-    * 
+    *
     * @param completion The completion containing the range and replacement text
     * @param autoshow If true, render the suggestion immediately; if false, show gutter icon only
     * @param notifyServer Whether to notify the server that the completion was shown
     *                     (true for Assistant/Copilot flow, false for API callers)
+    * @param fromCompletionFallback Whether this suggestion arrived as a fallback from a
+    *                     completion request that returned no inline completions. When true,
+    *                     the position-based collapse is skipped so the user's autoshow
+    *                     preference is honored (see issue #18046).
     */
-   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer)
+   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer, boolean fromCompletionFallback)
    {
       if (dismissed_)
          return;
@@ -472,10 +480,14 @@ public class TextEditingTargetAssistantHelper
       // (which we need to send back to the server as-is in some language-server methods).
       AssistantCompletion normalized = normalizeSuggestion(completion);
 
-      // If the suggestion starts before the cursor, collapse it by default (show gutter-only)
       Position cursorPosition = display_.getCursorPosition();
       Position suggestionStart = Position.create(normalized.range.start.line, normalized.range.start.character);
-      if (suggestionStart.isBefore(cursorPosition))
+
+      // If the suggestion starts before the cursor, collapse it by default (show gutter-only).
+      // Skip this when the suggestion arrived as a fallback from a completion request -- there,
+      // the user explicitly asked for a completion at the cursor, so honor their autoshow
+      // preference even if the agent anchored the edit slightly before the cursor (#18046).
+      if (!fromCompletionFallback && suggestionStart.isBefore(cursorPosition))
       {
          autoshow = false;
       }
@@ -486,6 +498,11 @@ public class TextEditingTargetAssistantHelper
       {
          // Ghost text at cursor position
          setEditSuggestion(normalized, SuggestionType.GHOST_TEXT, null);
+
+         // A zero-width insertion at the cursor behaves like a regular inline
+         // completion, including dismissal when the cursor moves away
+         editSuggestion_.isInlineCompletion = suggestionStart.isEqualTo(cursorPosition);
+
          if (autoshow)
             renderEditSuggestion();
          else
@@ -629,6 +646,9 @@ public class TextEditingTargetAssistantHelper
             // Perform the actual replacement
             display_.replaceRange(range, replacementText);
 
+            // Make sure the accepted edit is visible to the user
+            display_.ensureCursorVisible();
+
             // Notify server that completion was accepted
             if (command != null)
                server_.assistantDidAcceptCompletion(command, new VoidServerRequestCallback());
@@ -743,6 +763,9 @@ public class TextEditingTargetAssistantHelper
       // Move cursor to start of range, then perform the edit
       display_.setCursorPosition(range.getStart());
       display_.replaceRange(range, editSuggestion_.insertText);
+
+      // Make sure the accepted edit is visible to the user
+      display_.ensureCursorVisible();
 
       // Notify server that completion was accepted
       if (editSuggestion_.command != null)
@@ -1087,6 +1110,8 @@ public class TextEditingTargetAssistantHelper
    {
       pendingGutterRow_ = row;
       pendingGutterRegistration_ = display_.addGutterItem(row, gutterClass);
+
+      updateOffscreenIndicator();
    }
 
    /**
@@ -1170,6 +1195,8 @@ public class TextEditingTargetAssistantHelper
          default:
             break;
       }
+
+      updateOffscreenIndicator();
    }
 
    /**
@@ -1236,6 +1263,8 @@ public class TextEditingTargetAssistantHelper
          pendingGutterRegistration_ = null;
       }
       pendingGutterRow_ = -1;
+
+      removeOffscreenIndicator();
    }
 
    /**
@@ -1327,6 +1356,12 @@ public class TextEditingTargetAssistantHelper
             if (assistantDisabledInThisDocument_)
                return;
 
+            // Completions aren't surfaced in visual mode, so don't request them
+            // (which would needlessly exchange document contents with the
+            // completion backend). See issue #17327.
+            if (target_.isVisualEditorActive())
+               return;
+
             target_.withSavedDoc(() ->
             {
                requestId_ += 1;
@@ -1411,6 +1446,7 @@ public class TextEditingTargetAssistantHelper
                               // For Copilot, fall back to NES; for Posit AI, just report no completions
                               if (shouldFallbackToNes())
                               {
+                                 nesFromCompletionFallback_ = true;
                                  nesTimer_.schedule(20);
                               }
                               else
@@ -1454,6 +1490,7 @@ public class TextEditingTargetAssistantHelper
 
                               if (shouldFallbackToNes())
                               {
+                                 nesFromCompletionFallback_ = true;
                                  nesTimer_.schedule(20);
                               }
                               return;
@@ -1477,6 +1514,7 @@ public class TextEditingTargetAssistantHelper
                            editSuggestion_ = new EditSuggestion(normalized);
                            editSuggestion_.type = SuggestionType.GHOST_TEXT;
                            editSuggestion_.isRevealed = true;
+                           editSuggestion_.isInlineCompletion = true;
                            createSuggestionAnchors(
                               editSuggestion_.startLine,
                               editSuggestion_.startCharacter,
@@ -1616,6 +1654,38 @@ public class TextEditingTargetAssistantHelper
    {
       registrations_.add(
 
+               // Inline (at-cursor) ghost text completions are dismissed when the
+               // cursor moves away, rather than lingering invisibly where they could
+               // later be accepted off-screen. Next edit suggestions are excluded, as
+               // those are intentionally persistent and may be far from the cursor.
+               // https://github.com/rstudio/rstudio/issues/17147
+               display_.addCursorChangedHandler((event) ->
+               {
+                  if (editSuggestion_ == null || !editSuggestion_.isInlineCompletion)
+                     return;
+
+                  if (!editSuggestion_.isRevealed || editSuggestion_.startAnchor == null)
+                     return;
+
+                  // Ignore cursor motion caused by our own programmatic edits
+                  // (accepting a completion, partial word acceptance)
+                  if (ignoreNextDocumentChangeEvents_)
+                     return;
+
+                  Position cursorPos = display_.getCursorPosition();
+                  if (!cursorPos.isEqualTo(editSuggestion_.startAnchor.getPosition()))
+                  {
+                     sendSuggestionFeedback("ignored");
+                     resetSuggestion();
+                  }
+               }),
+
+               // Keep the off-screen suggestion indicator in sync as the user scrolls
+               display_.addScrollYHandler((event) ->
+               {
+                  updateOffscreenIndicator();
+               }),
+
                // click handler for next edit suggestion gutter icon. we use a capturing
                // event handler here so we can intercept the event before Ace does.
                DomUtils.addEventListener(display_.getElement(), "mousedown", true, (event) ->
@@ -1624,6 +1694,19 @@ public class TextEditingTargetAssistantHelper
                      return;
 
                   Element target = event.getEventTarget().cast();
+
+                  // Check for clicks on the off-screen suggestion indicator;
+                  // these navigate to the suggestion rather than accepting it
+                  Element offscreenGutterEl = DomUtils.findParentElement(target, true, (el) ->
+                     el.hasClassName(AceEditorGutterStyles.NES_GUTTER_OFFSCREEN));
+
+                  if (offscreenGutterEl != null && hasActiveSuggestion())
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     navigateToSuggestionIfOffscreen();
+                     return;
+                  }
 
                   // Check for clicks on any NES gutter icon (uses base class)
                   Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
@@ -1844,6 +1927,7 @@ public class TextEditingTargetAssistantHelper
                         {
                            event.stopPropagation();
                            event.preventDefault();
+                           navigateToSuggestionIfOffscreen();
                            showPendingSuggestionDetails();
                            return;
                         }
@@ -1864,7 +1948,8 @@ public class TextEditingTargetAssistantHelper
                         {
                            event.stopPropagation();
                            event.preventDefault();
-                           diffView_.apply();
+                           if (!navigateToSuggestionIfOffscreen())
+                              diffView_.apply();
                            return;
                         }
                      }
@@ -1876,7 +1961,8 @@ public class TextEditingTargetAssistantHelper
                         {
                            event.stopPropagation();
                            event.preventDefault();
-                           acceptEditSuggestion();
+                           if (!navigateToSuggestionIfOffscreen())
+                              acceptEditSuggestion();
                            return;
                         }
                         else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
@@ -1926,7 +2012,8 @@ public class TextEditingTargetAssistantHelper
                      {
                         event.stopPropagation();
                         event.preventDefault();
-                        acceptEditSuggestion();
+                        if (!navigateToSuggestionIfOffscreen())
+                           acceptEditSuggestion();
                      }
                      else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
                      {
@@ -1946,6 +2033,11 @@ public class TextEditingTargetAssistantHelper
 
    private void requestNextEditSuggestions()
    {
+      // Capture and clear the completion-fallback flag up-front, so that an
+      // early return below doesn't leave a stale value for a later request.
+      final boolean fromCompletionFallback = nesFromCompletionFallback_;
+      nesFromCompletionFallback_ = false;
+
       if (dismissed_)
          return;
 
@@ -1958,13 +2050,19 @@ public class TextEditingTargetAssistantHelper
       if (completionRequestsSuspended_)
          return;
 
+      // Suggestions aren't surfaced in visual mode, so don't request them
+      // (which would needlessly exchange document contents with the
+      // completion backend). See issue #17327.
+      if (target_.isVisualEditorActive())
+         return;
+
       target_.withSavedDoc(() ->
       {
-         requestNextEditSuggestionsImpl();
+         requestNextEditSuggestionsImpl(fromCompletionFallback);
       });
    }
 
-   private void requestNextEditSuggestionsImpl()
+   private void requestNextEditSuggestionsImpl(boolean fromCompletionFallback)
    {
       // Invalidate any prior requests.
       nesId_ += 1;
@@ -2017,9 +2115,9 @@ public class TextEditingTargetAssistantHelper
 
                // Check if autoshow is enabled
                boolean autoshow = prefs_.assistantNesAutoshow().getValue();
-               
+
                // Display the suggestion using the common helper
-               showEditSuggestionImpl(completion, autoshow, true);
+               showEditSuggestionImpl(completion, autoshow, true, fromCompletionFallback);
             }
 
             @Override
@@ -2138,9 +2236,15 @@ public class TextEditingTargetAssistantHelper
       // If we have a pending suggestion that hasn't been revealed, reveal it first
       if (hasPendingUnrevealedSuggestion())
       {
+         navigateToSuggestionIfOffscreen();
          showPendingSuggestionDetails();
          return;
       }
+
+      // If the suggestion is off-screen, navigate to it first so the user can
+      // see what would be accepted; a second invocation will then accept it
+      if (hasActiveSuggestion() && navigateToSuggestionIfOffscreen())
+         return;
 
       // Apply the appropriate suggestion type
       if (diffView_ != null)
@@ -2412,6 +2516,117 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
+    * Returns the document row associated with the active suggestion,
+    * or -1 if there is no active suggestion.
+    */
+   private int activeSuggestionRow()
+   {
+      if (editSuggestion_ != null)
+      {
+         return editSuggestion_.startAnchor != null
+            ? editSuggestion_.startAnchor.getRow()
+            : editSuggestion_.startLine;
+      }
+
+      if (pendingGutterRow_ != -1)
+         return pendingGutterRow_;
+
+      return -1;
+   }
+
+   /**
+    * If the active suggestion lies outside the visible viewport, move the cursor
+    * to the suggestion and scroll it into view, so the user can see what would
+    * be accepted. Returns true if navigation occurred.
+    * https://github.com/rstudio/rstudio/issues/17147
+    */
+   private boolean navigateToSuggestionIfOffscreen()
+   {
+      int row = activeSuggestionRow();
+      if (row == -1)
+         return false;
+
+      boolean visible =
+         row >= display_.getFirstVisibleRow() &&
+         row <= display_.getLastVisibleRow();
+      if (visible)
+         return false;
+
+      Position position = (editSuggestion_ != null && editSuggestion_.startAnchor != null)
+         ? editSuggestion_.startAnchor.getPosition()
+         : Position.create(row, 0);
+
+      display_.setCursorPosition(position);
+      display_.moveCursorNearTop();
+
+      updateOffscreenIndicator();
+      return true;
+   }
+
+   /**
+    * Shows or hides the edge-pinned gutter indicator that points toward an
+    * active suggestion lying outside the visible viewport.
+    */
+   private void updateOffscreenIndicator()
+   {
+      int row = activeSuggestionRow();
+      if (row == -1)
+      {
+         removeOffscreenIndicator();
+         return;
+      }
+
+      // Pin the indicator one row inside the viewport edges: the first and
+      // last visible rows are often only partially visible (clipped by the
+      // toolbar or the bottom edge), which would leave the indicator mostly
+      // hidden and unclickable.
+      int indicatorRow;
+      String indicatorStyle;
+      if (row < display_.getFirstVisibleRow())
+      {
+         indicatorRow = display_.getFirstVisibleRow() + 1;
+         indicatorStyle = AceEditorGutterStyles.NES_GUTTER_OFFSCREEN_UP;
+      }
+      else if (row > display_.getLastVisibleRow())
+      {
+         indicatorRow = display_.getLastVisibleRow() - 1;
+         indicatorStyle = AceEditorGutterStyles.NES_GUTTER_OFFSCREEN_DOWN;
+      }
+      else
+      {
+         removeOffscreenIndicator();
+         return;
+      }
+
+      // Avoid churn if the indicator is already in the right place
+      if (offscreenGutterRegistration_ != null &&
+          offscreenGutterRow_ == indicatorRow &&
+          StringUtil.equals(offscreenGutterStyle_, indicatorStyle))
+      {
+         return;
+      }
+
+      removeOffscreenIndicator();
+      offscreenGutterRegistration_ = display_.addGutterItem(indicatorRow, indicatorStyle);
+      offscreenGutterRow_ = indicatorRow;
+      offscreenGutterStyle_ = indicatorStyle;
+   }
+
+   /**
+    * Removes the off-screen suggestion gutter indicator, if showing.
+    */
+   private void removeOffscreenIndicator()
+   {
+      if (offscreenGutterRegistration_ != null)
+      {
+         offscreenGutterRegistration_.removeHandler();
+         offscreenGutterRegistration_ = null;
+      }
+      offscreenGutterRow_ = -1;
+      offscreenGutterStyle_ = null;
+   }
+
+   /**
     * Re-renders tokens for all rows that have positions in the given list.
     * This efficiently handles multiple positions on the same row by only
     * rendering each affected row once. Also removes synthetic tokens for
@@ -2604,6 +2819,11 @@ public class TextEditingTargetAssistantHelper
    private int nesId_ = 0;
    private boolean dismissed_ = false;
    private boolean completionTriggeredByCommand_ = false;
+
+   // Set when the next NES request originates as a fallback from a completion
+   // request that returned no inline completions. Consumed (and cleared) by
+   // requestNextEditSuggestions(). See issue #18046.
+   private boolean nesFromCompletionFallback_ = false;
    private final HandlerRegistrations registrations_;
    private final HandlerRegistration commandsRegistration_;
 
@@ -2641,6 +2861,11 @@ public class TextEditingTargetAssistantHelper
    private int pendingGutterRow_ = -1;
    private HandlerRegistration pendingGutterRegistration_;
    private boolean pendingSuggestionRevealed_ = false;
+
+   // Edge-pinned gutter indicator for off-screen suggestions
+   private HandlerRegistration offscreenGutterRegistration_;
+   private int offscreenGutterRow_ = -1;
+   private String offscreenGutterStyle_;
 
    // Injected ----
    private Assistant assistant_;

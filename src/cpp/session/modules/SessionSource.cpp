@@ -109,18 +109,23 @@ Error prepareFormatData(
    if (error)
       return error;
 
-   // Figure out if we're going to use the air formatter.
+   // Figure out if we're going to use the built-in air formatter.
    bool usingAirFormatter =
       prefs::userPrefs().codeFormatter() == kCodeFormatterNone &&
       prefs::userPrefs().useAirFormatter();
-   
-   // Preserve the common indent if we're using the air formatter.
+
+   // Air can also be invoked through an external "air format" command; this is
+   // the configuration recommended by the Air documentation for format-on-save.
+   bool usingExternalFormatter =
+      prefs::userPrefs().codeFormatter() == kCodeFormatterExternal;
+
    std::string indent;
-   if (usingAirFormatter)
+   if (usingAirFormatter || usingExternalFormatter)
    {
+      // Preserve the common indent if we're using the built-in air formatter.
       // Compute the common prefix for this code, and then trim
       // non-whitespace characters from the end.
-      if (computeIndent)
+      if (usingAirFormatter && computeIndent)
       {
          indent = string_utils::getCommonPrefix(code);
          auto it = indent.find_first_not_of(" \t");
@@ -128,13 +133,27 @@ Error prepareFormatData(
             indent = indent.substr(0, it);
       }
 
-      // Copy the air.toml file associated with the document, if one exists.
+      // Copy the air.toml file associated with the document, if one exists,
+      // next to the code we're about to format. We format a copy of the
+      // document in a temporary directory, and Air resolves its configuration
+      // relative to the file being formatted -- so without this, the project's
+      // air.toml would not be discovered. This matters for both the built-in
+      // air formatter and an external "air format" command. See #18003.
       FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
       if (airTomlPath.exists())
       {
          Error copyError = airTomlPath.copy(codeDir.completePath("air.toml"), true);
          if (copyError)
             LOG_ERROR(copyError);
+      }
+      else if (usingAirFormatter && !prefs::userPrefs().airFormatterRequireToml())
+      {
+         // No project air.toml: synthesize one from the user's editor settings
+         // so that the built-in air formatter's output matches the editor's
+         // indentation preferences.
+         Error writeError = modules::air::writeSynthesizedAirToml(codeDir.completePath("air.toml"));
+         if (writeError)
+            LOG_ERROR(writeError);
       }
    }
 
@@ -458,6 +477,27 @@ Error openDocument(const json::JsonRpcRequest& request,
    return Success();
 } 
 
+// Translate a low-level save failure into a message the user can act on. The
+// original error (with the precise OS message and errno) has already been
+// logged by writeStringToFile, so this only changes what is surfaced to the
+// user. Non-disk-space errors are returned unchanged.
+Error friendlySaveError(const Error& error)
+{
+   if (isDiskSpaceError(error))
+   {
+      return Error(
+         boost::system::error_code(error.getCode(), boost::system::system_category()),
+         "There is not enough free space to save this file -- the disk may be "
+         "full, or a disk quota may have been exceeded. Free up some disk space "
+         "(or increase your disk quota) and try saving the file again.",
+         ERROR_LOCATION);
+   }
+   else
+   {
+      return error;
+   }
+}
+
 Error saveDocumentCore(const std::string& contents,
                        const json::Value& jsonPath,
                        const json::Value& jsonType,
@@ -540,14 +580,22 @@ Error saveDocumentCore(const std::string& contents,
       // note whether the file existed prior to writing
       bool newFile = !fullDocPath.exists();
 
-      // write the contents to the file
+      // write the contents to the file; request a durable flush (unless the
+      // user has opted out) so that a write that fails on a full disk or over
+      // quota is reported rather than silently dropped -- which would clear the
+      // editor's unsaved marker and lose the user's work
       int writeTimeout = retryWrite ? session::prefs::userPrefs().saveRetryTimeout() : 0;
-      error = writeStringToFile(fullDocPath, encoded,
-                                module_context::lineEndings(fullDocPath),
-                                true,
-                                writeTimeout);
+      bool durable = session::prefs::userPrefs().saveFilesDurably();
+      error = writeStringToFile(
+            fullDocPath,
+            encoded,
+            module_context::lineEndings(fullDocPath),
+            true /* truncate */,
+            writeTimeout,
+            true /* logError */,
+            durable);
       if (error)
-         return error;
+         return friendlySaveError(error);
 
       // set the new path and contents for the document
       error = pDoc->setPathAndContents(path);
@@ -800,13 +848,13 @@ Error formatDocumentImpl(
          return Success();
       }
 
-      std::string airExePath;
-      Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
+      FilePath airExePath;
+      Error error = modules::air::executablePath(&airExePath);
       if (error)
          return onError(error, ERROR_LOCATION);
 
       error = module_context::processSupervisor().runProgram(
-          airExePath,
+          airExePath.getAbsolutePath(),
           {"format", documentPath.getAbsolutePath()},
           options,
           callbacks);
@@ -1077,6 +1125,17 @@ Error checkForExternalEdit(const json::JsonRpcRequest& request,
    json::Object result;
    result["modified"] = false;
    result["deleted"] = false;
+
+   // When reducing remote filesystem operations, skip the external-edit check;
+   // the exists() / getLastWriteTime() stats below can be slow on network
+   // drives. This is intentionally project-scoped (keyed on the active project,
+   // not the individual document's path), matching the rest of the feature.
+   // See https://github.com/rstudio/rstudio/issues/10417.
+   if (module_context::reduceRemoteFilesystemOperations())
+   {
+      pResponse->setResult(result);
+      return Success();
+   }
 
    // Only check if this document has ever been saved
    if (!pDoc->path().empty())

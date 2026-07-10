@@ -1317,15 +1317,20 @@ private:
       cmd << "-s";
       cmd << "-e";
 
+      // escape the paths before interpolating them into the R command, so that
+      // a filename containing a single quote cannot break out of the string
+      // literal and inject arbitrary R code
       if (type == kTestShiny)
       {
-        boost::format fmt("shinytest2::test_app('%1%')");
-        cmd << boost::str(fmt % shinyPath.getAbsolutePath());
+        cmd << fmt::format("shinytest2::test_app('{}')",
+                           string_utils::singleQuotedStrEscape(
+                              string_utils::utf8ToSystem(shinyPath.getAbsolutePath())));
       }
       else if (type == kTestShinyFile)
       {
-        boost::format fmt("testthat::test_file('%1%')");
-        cmd << boost::str(fmt % shinyTestFile);
+        cmd << fmt::format("testthat::test_file('{}')",
+                           string_utils::singleQuotedStrEscape(
+                              string_utils::utf8ToSystem(shinyTestFile)));
       }
       else
       {
@@ -1533,10 +1538,13 @@ private:
          boost::format fmt("rmarkdown::render_site(%1%)");
          std::string format;
          if (options_.websiteOutputFormat != "all")
-            format = "output_format = '" + options_.websiteOutputFormat + "', ";
+            format = "output_format = '" +
+                     string_utils::singleQuotedStrEscape(options_.websiteOutputFormat) +
+                     "', ";
 
          format += ("encoding = '" +
-                    projects::projectContext().defaultEncoding() +
+                    string_utils::singleQuotedStrEscape(
+                       projects::projectContext().defaultEncoding()) +
                     "'");
 
          command = boost::str(fmt % format);

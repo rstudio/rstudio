@@ -1,7 +1,11 @@
 #!/bin/bash
 
 testConfig() {
- `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
+ ${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config
+}
+
+checkConfig() {
+ ${CMAKE_INSTALL_PREFIX}/bin/rserver --check-config
 }
 
 verifyInstallation() {
@@ -36,6 +40,10 @@ case "$1" in
 
     test-config)
         testConfig
+        ;;
+
+    check-config)
+        checkConfig
         ;;
 
     verify-installation)
@@ -116,6 +124,6 @@ case "$1" in
         ;;
 
     *)
-        echo $"Usage: rstudio-server {status|start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|kill-session|kill-all|offline|online|active-sessions|version}"
+        echo $"Usage: rstudio-server {status|start|stop|restart|test-config|check-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|kill-session|kill-all|offline|online|active-sessions|version}"
         exit 2
 esac

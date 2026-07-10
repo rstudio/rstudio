@@ -71,7 +71,12 @@ public class ImageFrame extends Frame
    }
 
    private native final boolean replaceLocation(Element el, String url) /*-{
-      if (!el.contentWindow.document)
+      // contentWindow itself is null while the iframe is detached or being
+      // re-parented (e.g. a pane-layout quadrant swap moves the Plots pane),
+      // and dereferencing it raises an uncaught TypeError that surfaces as an
+      // error dialog. Report not-ready instead; the caller's retry timer
+      // re-attempts once the frame has a window again.
+      if (!el.contentWindow || !el.contentWindow.document)
          return false;
       var img = el.contentWindow.document.getElementById('img');
       if (!img)

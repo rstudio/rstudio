@@ -105,7 +105,44 @@ public class AssistantPreferencesPane extends PreferencesPane
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
 
-      return super.onApply(prefs);
+      // validate() only checks the completions-delay field while it is shown,
+      // but it may be hidden (manual trigger) or detached (another assistant
+      // selected) at apply time. Clamp it now, before super.onApply() below
+      // persists the field's value, so no out-of-range delay can be saved.
+      clampCompletionsDelay();
+
+      RestartRequirement restartRequirement = super.onApply(prefs);
+
+      // The system-CA checkbox value is applied by the base class (checkboxPref).
+      // The agents read NODE_OPTIONS only at launch, so a change requires an R
+      // session restart to take effect.
+      if (cbAssistantUseSystemCa_.getValue() != initialUseSystemCa_)
+      {
+         initialUseSystemCa_ = cbAssistantUseSystemCa_.getValue();
+         restartRequirement.setSessionRestartRequired(true);
+      }
+
+      return restartRequirement;
+   }
+
+   @Override
+   public boolean validate()
+   {
+      // The completions-delay field is only shown -- and only relevant -- when
+      // an assistant is selected and completions are triggered automatically.
+      // Validate it only while it is displayed, so a hidden value cannot block
+      // the dialog with an error pointing at a field the user cannot see.
+      if (nvwAssistantCompletionsDelay_.isAttached() &&
+          nvwAssistantCompletionsDelay_.isVisible() &&
+          !nvwAssistantCompletionsDelay_.validate())
+      {
+         return false;
+      }
+
+      // The update-check interval is always visible in the Chat section. Its
+      // validate() rejects non-digit input (including a typed or pasted negative)
+      // with a ^\d+$ check, so an invalid interval cannot be saved.
+      return nvwAssistantUpdateCheckInterval_.validate();
    }
 
    @Inject
@@ -222,6 +259,13 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
       cbAssistantToolbarButtonVisible_ = checkboxPref(prefs_.assistantToolbarButtonVisible(), true);
+      cbAssistantUseSystemCa_ = checkboxPref(prefs_.assistantUseSystemCa(), true);
+      nvwAssistantUpdateCheckInterval_ = numericPref(
+            prefsConstants_.positAssistantUpdateCheckIntervalHoursTitle(),
+            constants_.assistantUpdateCheckIntervalTooltip(),
+            NumericValueWidget.ZeroMinimum,
+            NumericValueWidget.NoMaximum,
+            prefs_.positAssistantUpdateCheckIntervalHours());
       selAssistantTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
@@ -256,8 +300,8 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       nvwAssistantCompletionsDelay_ = numericPref(
             constants_.assistantCompletionsDelayLabel(),
-            10,
-            5000,
+            COMPLETIONS_DELAY_MIN_MS,
+            COMPLETIONS_DELAY_MAX_MS,
             prefs_.assistantCompletionsDelay());
 
       cbAssistantNesEnabled_ = checkboxPref(prefs_.assistantNesEnabled(), true);
@@ -351,6 +395,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       });
 
       add(cbAssistantToolbarButtonVisible_);
+      add(cbAssistantUseSystemCa_);
+      add(nvwAssistantUpdateCheckInterval_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -394,8 +440,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       copilotTosPanel_.add(spaced(linkCopilotTos_));
       add(copilotTosPanel_);
 
-      // Set up panel swapping based on assistant selection
-      ChangeHandler assistantChangedHandler = new ChangeHandler()
+      // Set up panel swapping based on assistant selection. A null event means a
+      // programmatic refresh (panel load, project-options change, revert); a
+      // non-null event means a genuine user selection, which may trigger an
+      // install/version check. Callers that refresh programmatically must invoke
+      // assistantChangedHandler_.onChange(null) rather than firing a synthetic
+      // ChangeEvent, so an unrelated refresh is not mistaken for a user action.
+      assistantChangedHandler_ = new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
@@ -408,6 +459,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
+
+               // Reset both flags so each panel re-queries its status when next shown
+               copilotRefreshed_ = false;
                positAiRefreshed_ = false;
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
@@ -421,10 +475,17 @@ public class AssistantPreferencesPane extends PreferencesPane
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
 
+               // Reset the Copilot flag so it re-queries its status when next shown
+               copilotRefreshed_ = false;
+
                // Refresh Posit Assistant status when panel is shown
                if (!positAiRefreshed_)
                {
                   positAiRefreshed_ = true;
+
+                  // Clear the shared status UI now so the previous assistant's
+                  // account is not shown during the async install/status checks
+                  reset();
 
                   // Check if Posit Assistant is installed
                   server_.assistantVerifyInstalled(
@@ -434,14 +495,19 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
+                           // Ignore the result if the user switched away while
+                           // the verify call was in flight
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
+                              return;
+
                            if (event == null)
                            {
-                              // Panel just loaded, not a user action — just refresh
+                              // Panel just loaded, not a user action -- just refresh
                               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
                            }
                            else
                            {
-                              // User changed the selection — check for
+                              // User changed the selection -- check for
                               // install, update, or unsupported status
                               checkPositAssistantInstallation(/* forAssistant= */ true);
                            }
@@ -450,6 +516,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onError(ServerError error)
                         {
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
+                              return;
+
                            Debug.logError(error);
                            lblAssistantStatus_.setText(constants_.assistantStartupError());
                         }
@@ -480,6 +549,10 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   copilotRefreshed_ = true;
 
+                  // Clear the shared status UI now so the previous assistant's
+                  // account is not shown during the async install/status checks
+                  reset();
+
                   // Check if Copilot is installed (passing assistantType so backend knows
                   // which language server to check, even if preference isn't saved yet)
                   server_.assistantVerifyInstalled(
@@ -489,6 +562,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
+                           // Ignore the result if the user switched away while
+                           // the verify call was in flight
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_COPILOT))
+                              return;
+
                            if (isInstalled)
                            {
                               // Copilot is installed - refresh status by passing assistantType
@@ -504,6 +582,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onError(ServerError error)
                         {
+                           if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_COPILOT))
+                              return;
+
                            Debug.logError(error);
                            lblAssistantStatus_.setText(constants_.assistantStartupError());
                         }
@@ -513,8 +594,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       };
 
-      selAssistant_.addChangeHandler(assistantChangedHandler);
-      assistantChangedHandler.onChange(null); // Initialize
+      selAssistant_.addChangeHandler(assistantChangedHandler_);
+      assistantChangedHandler_.onChange(null); // Initialize
 
       wrapWithPanel("assistant_prefs");
    }
@@ -573,10 +654,54 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Suggestions section
       panel.add(selAssistantCompletionsTrigger_);
+      panel.add(nvwAssistantCompletionsDelay_);
       panel.add(cbAssistantNesEnabled_);
       panel.add(cbAssistantNesCollapse_);
 
+      // Match the initial visibility the trigger selector's change handler
+      // maintains; the change handler does not fire until the value changes.
+      updateCompletionsDelayVisibility();
+
       return panel;
+   }
+
+   /**
+    * Shows the completions-delay field only when completions are triggered
+    * automatically; the delay is not used for manual completions.
+    */
+   private void updateCompletionsDelayVisibility()
+   {
+      boolean isAuto = selAssistantCompletionsTrigger_.getValue().equals(
+            UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO);
+      nvwAssistantCompletionsDelay_.setVisible(isAuto);
+
+      // Keep the hidden field's value in range so re-showing it (switching back
+      // to automatic) never surfaces a stale out-of-range entry. The persisted
+      // value is guarded separately, in onApply(), for any path that hides or
+      // detaches the field.
+      if (!isAuto)
+         clampCompletionsDelay();
+   }
+
+   /**
+    * Clamps the completions-delay field to its supported range, falling back to
+    * the saved value when the field does not contain a parseable int (empty or
+    * a digit string that overflows int).
+    */
+   private void clampCompletionsDelay()
+   {
+      int delay;
+      try
+      {
+         delay = Integer.parseInt(nvwAssistantCompletionsDelay_.getValue().trim());
+      }
+      catch (NumberFormatException e)
+      {
+         delay = prefs_.assistantCompletionsDelay().getGlobalValue();
+      }
+
+      delay = Math.max(COMPLETIONS_DELAY_MIN_MS, Math.min(COMPLETIONS_DELAY_MAX_MS, delay));
+      nvwAssistantCompletionsDelay_.setValue(delay + "");
    }
 
    private VerticalPanel createQuickReferencePanel()
@@ -626,15 +751,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onChange(ChangeEvent event)
          {
-            String value = selAssistantCompletionsTrigger_.getValue();
-            if (value == UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
-            {
-               nvwAssistantCompletionsDelay_.setVisible(true);
-            }
-            else
-            {
-               nvwAssistantCompletionsDelay_.setVisible(false);
-            }
+            updateCompletionsDelayVisibility();
          }
       });
       
@@ -735,17 +852,44 @@ public class AssistantPreferencesPane extends PreferencesPane
       });
    }
 
+   /**
+    * Returns true when an async status result for the given assistant type
+    * should be ignored because the user has since selected a different
+    * assistant. The status label and buttons are shared across panels, so a
+    * late callback for a no-longer-selected assistant must not overwrite the
+    * current panel's status.
+    */
+   private boolean isStaleStatusResult(String assistantType)
+   {
+      return !assistantType.equals(selAssistant_.getValue());
+   }
+
    private void refresh(String assistantType)
    {
-      imgRefreshSpinner_.setVisible(true);
-      reset();
+      // Resolve to the current preference when no explicit type was provided
+      final String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
 
-      // Use overloaded method to pass assistantType if provided
+      // A queued or late refresh for a no-longer-selected assistant must not
+      // touch the shared status UI: it would clear the current panel and, since
+      // the callback below early-returns, leave the spinner running. This guards
+      // invocation paths such as the retry timer and the sign-in/out callbacks.
+      if (isStaleStatusResult(type))
+         return;
+
+      // Clear any prior status, then show the spinner for this request
+      reset();
+      imgRefreshSpinner_.setVisible(true);
+
       ServerRequestCallback<AssistantStatusResponse> callback = new ServerRequestCallback<AssistantStatusResponse>()
       {
          @Override
          public void onResponseReceived(AssistantStatusResponse response)
          {
+            // Ignore a result for an assistant the user has since switched
+            // away from; the now-current panel owns the shared status UI
+            if (isStaleStatusResult(type))
+               return;
+
             imgRefreshSpinner_.setVisible(false);
             hideButtons();
 
@@ -759,7 +903,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   // Assistant still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
-                     refresh(assistantType);
+                     refresh(type);
                   });
                }
                else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
@@ -778,11 +922,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
+                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(type)));
 
                   // Show Install button for Posit Assistant when not installed
                   if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
-                      assistantType.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+                      type.equals(UserPrefsAccessor.ASSISTANT_POSIT))
                   {
                      showButtons(btnInstall_, btnRefresh_);
                   }
@@ -794,7 +938,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (projectOptions_ != null &&
                         UserPrefsAccessor.ASSISTANT_NONE.equals(projectOptions_.getAssistantOptions().assistant))
                {
-                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(assistantType)));
+                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(type)));
                   showButtons(btnProjectOptions_);
                }
                else
@@ -829,6 +973,10 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onError(ServerError error)
          {
+            if (isStaleStatusResult(type))
+               return;
+
+            imgRefreshSpinner_.setVisible(false);
             Debug.logError(error);
             hideButtons();
             lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
@@ -836,8 +984,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       };
 
-      // If no assistantType specified, use current preference
-      String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
       server_.assistantStatus(type, callback);
    }
 
@@ -849,7 +995,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          prefs_.copilotEnabled().setGlobalValue(false);
          prefs_.assistant().setGlobalValue(newAssistant);
          prefs_.writeUserPrefs((completed) -> {});
-         copilotRefreshed_ = false;
       }
    }
 
@@ -880,10 +1025,14 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
 
          @Override
-         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion,
+                                       boolean isInitialInstall, boolean isDowngrade,
+                                       boolean additionalProvidersAvailable)
          {
-            showInstallUpdatePrompt(newVersion, isInitialInstall, forAssistant,
-               previousAssistantValue, previousChatProviderValue);
+            // additionalProvidersAvailable only varies the chat pane's not-installed
+            // view; the preferences install prompt does not show that description.
+            showInstallUpdatePrompt(newVersion, isInitialInstall, isDowngrade,
+               forAssistant, previousAssistantValue, previousChatProviderValue);
          }
 
          @Override
@@ -900,10 +1049,12 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          @Override
          public void onUnsupportedVersionUpgradeRequired(
-             String currentVersion, String newVersion)
+             String currentVersion, String newVersion, boolean isDowngrade)
          {
-            // Unsupported version with update available - treat as mandatory update
-            showInstallUpdatePrompt(newVersion, false, forAssistant,
+            // Unsupported version with a required install. Can still be a downgrade
+            // if the installed copy is unsupported (e.g. protocol mismatch) and the
+            // recommended package is older than what's installed.
+            showInstallUpdatePrompt(newVersion, false, isDowngrade, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
 
@@ -950,7 +1101,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             // before the preference is saved. Since we know Posit Assistant isn't installed
             // (we got here because assistantVerifyInstalled returned false, or user
             // just selected Posit Assistant), offer to install without version info.
-            showInstallUpdatePrompt(null, true, forAssistant,
+            showInstallUpdatePrompt(null, true, false, forAssistant,
                previousAssistantValue, previousChatProviderValue);
          }
       });
@@ -960,21 +1111,34 @@ public class AssistantPreferencesPane extends PreferencesPane
     * Shows the install/update prompt dialog.
     */
    private void showInstallUpdatePrompt(String newVersion, boolean isInitialInstall,
+                                        boolean isDowngrade,
                                         boolean forAssistant,
                                         String previousAssistantValue,
                                         String previousChatProviderValue)
    {
-      String title = isInitialInstall ?
-         constants_.positAssistantInstallTitle() :
-         constants_.positAssistantUpdateTitle();
-      String message = isInitialInstall ?
-         (newVersion != null ?
+      String title;
+      String message;
+      String yesLabel;
+      if (isInitialInstall)
+      {
+         title = constants_.positAssistantInstallTitle();
+         message = (newVersion != null) ?
             constants_.positAssistantInstallMessage(newVersion) :
-            constants_.positAssistantInstallMessageNoVersion()) :
-         constants_.positAssistantUpdateMessage(newVersion);
-      String yesLabel = isInitialInstall ?
-         constants_.positAssistantInstallButton() :
-         constants_.positAssistantUpdateButton();
+            constants_.positAssistantInstallMessageNoVersion();
+         yesLabel = constants_.positAssistantInstallButton();
+      }
+      else if (isDowngrade)
+      {
+         title = constants_.positAssistantDowngradeTitle();
+         message = constants_.positAssistantDowngradeMessage(newVersion);
+         yesLabel = constants_.positAssistantInstallVersionButton(newVersion);
+      }
+      else
+      {
+         title = constants_.positAssistantUpdateTitle();
+         message = constants_.positAssistantUpdateMessage(newVersion);
+         yesLabel = constants_.positAssistantUpdateButton();
+      }
 
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
@@ -1102,7 +1266,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          prefs_.writeUserPrefs((completed) -> {});
 
          // Trigger the change handler to update the UI
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
       else
       {
@@ -1125,6 +1289,10 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void reset()
    {
       assistantStartupError_ = null;
+      // Clear the shared status UI so a previous assistant's account info and
+      // loading spinner are not shown while the new status is being fetched
+      imgRefreshSpinner_.setVisible(false);
+      lblAssistantStatus_.setText("");
       hideButtons();
    }
    
@@ -1145,6 +1313,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
+      initialUseSystemCa_ = prefs.assistantUseSystemCa().getGlobalValue();
+
       // Migration: if rstudio_assistant is "none" but copilot_enabled is true, auto-migrate to "copilot"
       String assistant = prefs.assistant().getGlobalValue();
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_NONE) &&
@@ -1206,7 +1376,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setValue(projectAssistant);
 
          // Trigger the change handler to update the displayed panel
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
    }
 
@@ -1265,7 +1435,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          positAiRefreshed_ = false;
 
          // Trigger the change handler to update the displayed panel
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
       else
       {
@@ -1282,7 +1452,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          positAiRefreshed_ = false;
 
          // Trigger the change handler to update the displayed panel
-         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+         assistantChangedHandler_.onChange(null);
       }
    }
 
@@ -1327,11 +1497,13 @@ public class AssistantPreferencesPane extends PreferencesPane
    
    // State
    private String assistantStartupError_;
+   private boolean initialUseSystemCa_; // snapshot from initialize(); guards the session-restart trigger in onApply
    private HandlerRegistration assistantRuntimeStatusHandler_;
    private HandlerRegistration projectOptionsChangedHandler_;
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
    private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
+   private ChangeHandler assistantChangedHandler_; // swaps the displayed assistant panel; created in initDisplay
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
 
@@ -1353,6 +1525,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final Spinner imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
    private final CheckBox cbAssistantToolbarButtonVisible_;
+   private final CheckBox cbAssistantUseSystemCa_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesCollapse_;
    private final List<SmallButton> statusButtons_;
@@ -1365,6 +1538,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SmallButton btnProjectOptions_;
    private final SmallButton btnInstall_;
    private final NumericValueWidget nvwAssistantCompletionsDelay_;
+   private final NumericValueWidget nvwAssistantUpdateCheckInterval_;
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
    private final SelectWidget selChatProvider_;
@@ -1392,6 +1566,10 @@ public class AssistantPreferencesPane extends PreferencesPane
              container != null &&
              container.hasClassName("rstudio-themes-dark");
    }
+
+   // Supported range for the automatic completions delay, in milliseconds.
+   private static final int COMPLETIONS_DELAY_MIN_MS = 10;
+   private static final int COMPLETIONS_DELAY_MAX_MS = 5000;
 
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
