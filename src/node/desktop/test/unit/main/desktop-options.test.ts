@@ -70,6 +70,7 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
     assert.deepEqual(options.windowBounds(), properties.view.default.windowBounds);
     assert.equal(options.accessibility(), properties.view.default.accessibility);
+    assert.equal(options.showWhatsNew(), properties.view.default.showWhatsNew);
     assert.deepEqual(options.ignoredUpdateVersions(), properties.general.default.ignoredUpdateVersions);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), properties.platform.default.windows.rBinDir);
@@ -90,6 +91,7 @@ describe('DesktopOptions', () => {
     const newZoom = 1.5;
     const newWindowBounds = { width: 123, height: 321, x: 0, y: 0, maximized: false };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
+    const newShowWhatsNew = !(properties.view.default.showWhatsNew as boolean);
     const newDisableRendererAccessibility = !(properties.view.default.disableRendererAccessibility as boolean);
     const newIgnoredUpdateVersions = ['test', 'Ignored', 'Update', 'Versions'];
 
@@ -106,6 +108,7 @@ describe('DesktopOptions', () => {
     options.setZoomLevel(newZoom);
     options.saveWindowBounds(newWindowBounds);
     options.setAccessibility(newAccessibility);
+    options.setShowWhatsNew(newShowWhatsNew);
     options.setDisableRendererAccessibility(newDisableRendererAccessibility);
     options.setIgnoredUpdateVersions(newIgnoredUpdateVersions);
     options.setPeferR64(newPeferR64);
@@ -116,6 +119,7 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
     assert.equal(options.accessibility(), newAccessibility);
+    assert.equal(options.showWhatsNew(), newShowWhatsNew);
     assert.equal(options.disableRendererAccessibility(), newDisableRendererAccessibility);
     assert.deepEqual(options.ignoredUpdateVersions(), newIgnoredUpdateVersions);
     if (process.platform === 'win32') {

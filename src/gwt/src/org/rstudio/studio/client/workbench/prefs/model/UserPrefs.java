@@ -96,6 +96,7 @@ public class UserPrefs extends UserPrefsComputed
       {
          autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
          enableSplashScreen().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableSplashScreen(enabled.getValue()));
+         showWhatsNew().addValueChangeHandler(enabled -> Desktop.getFrame().setShowWhatsNew(enabled.getValue()));
          enableScreenReader().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableAccessibility(enabled.getValue()));
          enableMousewheelZoom().addValueChangeHandler(enabled -> Desktop.getFrame().setMousewheelZoomEnabled(enabled.getValue()));
          mousewheelZoomDebounceMs().addValueChangeHandler(debounceMs -> Desktop.getFrame().setMousewheelZoomDebounce(debounceMs.getValue()));
@@ -267,11 +268,19 @@ public class UserPrefs extends UserPrefsComputed
       announceScreenReaderState();
       syncToggleTabKeyMovesFocusState();
       
-      // Send initial mousewheel zoom preferences to desktop
+      // Push the current values of the Electron preferences mirrored below into
+      // the electron-store. The value-change handlers above only fire when the
+      // user changes a preference in a running session, so this init-time sync
+      // is also needed for values loaded from disk (e.g. set by an administrator,
+      // edited by hand, or synced from another machine) so they are available to
+      // the desktop process at the next startup, before the session has started.
       if (BrowseCap.isElectron())
       {
          Desktop.getFrame().setMousewheelZoomEnabled(enableMousewheelZoom().getValue());
          Desktop.getFrame().setMousewheelZoomDebounce(mousewheelZoomDebounceMs().getValue());
+         Desktop.getFrame().setEnableAccessibility(enableScreenReader().getValue());
+         Desktop.getFrame().setEnableSplashScreen(enableSplashScreen().getValue());
+         Desktop.getFrame().setShowWhatsNew(showWhatsNew().getValue());
       }
    }
 
