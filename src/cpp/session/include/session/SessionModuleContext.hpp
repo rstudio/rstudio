@@ -126,6 +126,16 @@ core::FilePath safeCurrentPath();
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
 core::json::Object createFileSystemItem(const core::FilePath& filePath);
 
+#ifdef __APPLE__
+// macOS Finder aliases are bookmark files rather than symlinks, so the
+// filesystem doesn't resolve them for us. isFinderAlias identifies them
+// (excluding symlinks, which the OS already follows); resolveFinderAlias
+// returns the alias target without mounting volumes or showing UI.
+bool isFinderAlias(const core::FilePath& filePath);
+core::Error resolveFinderAlias(const core::FilePath& aliasPath,
+                               core::FilePath* pTargetPath);
+#endif
+
 // postback helpers
 core::FilePath rPostbackPath();
 core::FilePath rPostbackScriptsDir();
