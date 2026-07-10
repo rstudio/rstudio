@@ -116,6 +116,18 @@ public class FileSystemItem extends JavaScriptObject
       return this.alias_target || null;
    }-*/;
 
+   // macOS Finder aliases carry their resolved target; navigation and open
+   // operations should act on the target, like the Finder does. Returns this
+   // item unchanged when it is not an alias.
+   public final FileSystemItem resolveAliasTarget()
+   {
+      String aliasTarget = getAliasTarget();
+      if (aliasTarget == null)
+         return this;
+
+      return isDirectory() ? createDir(aliasTarget) : createFile(aliasTarget);
+   }
+
    public final int getLength()
    {
       return getLengthNative();

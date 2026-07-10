@@ -351,15 +351,9 @@ public class Files
 
       public void onFileNavigation(FileSystemItem file)
       {
-         // macOS Finder aliases carry their resolved target; follow it like
-         // a symlink rather than opening the alias's binary bookmark data
-         String aliasTarget = file.getAliasTarget();
-         if (aliasTarget != null)
-         {
-            file = file.isDirectory() ?
-               FileSystemItem.createDir(aliasTarget) :
-               FileSystemItem.createFile(aliasTarget);
-         }
+         // follow macOS Finder aliases to their target rather than opening
+         // the alias's binary bookmark data
+         file = file.resolveAliasTarget();
 
          if (file.isDirectory())
          {
