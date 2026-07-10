@@ -44,14 +44,20 @@ const fileAliasName = `pw-dlg-file-alias-${uniq}`;
 const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
 const CHOOSE_DIR_DIALOG = '.gwt-DialogBox[aria-label*="Working Directory"]';
 
-// The dialogs open in the session's last-browsed / working directory, which
-// other specs sharing the session may have moved. Normalize to ~ (where the
-// aliases live) through the breadcrumb so the tests are order-independent.
-async function openDialogAtHome(page: Page, command: string, selector: string): Promise<Locator> {
-  await executeCommand(page, command);
-  const dialog = page.locator(selector);
+// The Open File dialog opens in the session's last-browsed directory, which
+// other specs sharing the session may have left anywhere -- including outside
+// HOME, where the breadcrumb offers no Home crumb. Typing '~' and accepting
+// is an explicit navigation FileDialog.shouldAccept supports from any
+// location, so normalize through it to keep the tests order-independent.
+async function openFileDialogAtHome(page: Page): Promise<Locator> {
+  await executeCommand(page, 'openSourceDoc');
+  const dialog = page.locator(OPEN_FILE_DIALOG);
   await expect(dialog).toBeVisible({ timeout: 15000 });
-  await dialog.getByText('Home', { exact: true }).click();
+  const filename = dialog.locator('input[type="text"]');
+  await filename.fill('~');
+  await dialog.getByRole('button', { name: 'Open' }).click();
+  // navigating clears the filename box (OpenFileDialog.onNavigated)
+  await expect(filename).toHaveValue('', { timeout: 15000 });
   return dialog;
 }
 
@@ -89,7 +95,7 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
   });
 
   test('double-clicking a directory alias lists the target folder', async ({ rstudioPage: page }) => {
-    const dialog = await openDialogAtHome(page, 'openSourceDoc', OPEN_FILE_DIALOG);
+    const dialog = await openFileDialogAtHome(page);
 
     await dialog.getByText(dirAliasName, { exact: true }).dblclick();
 
@@ -100,7 +106,7 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
   });
 
   test('Open button with a selected directory alias navigates into the target', async ({ rstudioPage: page }) => {
-    const dialog = await openDialogAtHome(page, 'openSourceDoc', OPEN_FILE_DIALOG);
+    const dialog = await openFileDialogAtHome(page);
 
     // single click selects without committing; Open triggers shouldAccept
     await dialog.getByText(dirAliasName, { exact: true }).click();
@@ -111,7 +117,7 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
   });
 
   test('Open button with a typed directory alias name navigates into the target', async ({ rstudioPage: page }) => {
-    const dialog = await openDialogAtHome(page, 'openSourceDoc', OPEN_FILE_DIALOG);
+    const dialog = await openFileDialogAtHome(page);
     await expect(dialog.getByText(dirAliasName, { exact: true })).toBeVisible({ timeout: 15000 });
 
     // typed input exercises FileDialog.navigateIfDirectory
@@ -123,7 +129,7 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
   });
 
   test('Open button with a selected file alias opens the target document', async ({ rstudioPage: page }) => {
-    const dialog = await openDialogAtHome(page, 'openSourceDoc', OPEN_FILE_DIALOG);
+    const dialog = await openFileDialogAtHome(page);
 
     await dialog.getByText(fileAliasName, { exact: true }).click();
     await dialog.getByRole('button', { name: 'Open' }).click();
@@ -131,7 +137,12 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
   });
 
   test('Choose Directory with a selected directory alias picks the target', async ({ rstudioPage: page }) => {
-    const dialog = await openDialogAtHome(page, 'setWorkingDir', CHOOSE_DIR_DIALOG);
+    // the folder chooser opens at the R working directory
+    // (Workbench.onSetWorkingDir), so pin that to ~ first
+    await consoleActions.executeInConsole('setwd(path.expand("~"))', { wait: true });
+    await executeCommand(page, 'setWorkingDir');
+    const dialog = page.locator(CHOOSE_DIR_DIALOG);
+    await expect(dialog).toBeVisible({ timeout: 15000 });
 
     await dialog.getByText(dirAliasName, { exact: true }).click();
     await dialog.getByRole('button', { name: 'Choose' }).click();
