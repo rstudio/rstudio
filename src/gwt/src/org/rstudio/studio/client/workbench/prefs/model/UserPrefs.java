@@ -278,6 +278,7 @@ public class UserPrefs extends UserPrefsComputed
       {
          Desktop.getFrame().setMousewheelZoomEnabled(enableMousewheelZoom().getValue());
          Desktop.getFrame().setMousewheelZoomDebounce(mousewheelZoomDebounceMs().getValue());
+         Desktop.getFrame().setEnableAccessibility(enableScreenReader().getValue());
          Desktop.getFrame().setEnableSplashScreen(enableSplashScreen().getValue());
          Desktop.getFrame().setShowWhatsNew(showWhatsNew().getValue());
       }
