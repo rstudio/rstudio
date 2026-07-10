@@ -12,51 +12,41 @@ import {
 /**
  * Authenticate Posit AI for the per-invocation sandbox.
  *
- * Modes (selected by PW_SANDBOX_POSITAI_AUTH):
- *   unset    Run the OAuth device flow if POSIT_EMAIL/POSIT_PASSWORD are set;
- *            otherwise log and let @auth tests skip. Tokens are written to
- *            the sandbox user-home only; nothing is cached.
- *   seed     Copy the host user's ~/.positai/store/data.json into the
- *            sandbox. Fails if the host file is not authenticated. Useful
- *            for fast local iteration when the developer is already signed
- *            in on the host.
- *   cache    Reuse a cached store file from <OS cache>/rstudio-playwright-
- *            auth/positai/data.json. On a cache miss (file absent, malformed,
- *            or expired) falls back to the device flow and saves the
- *            resulting tokens to the cache for the next run.
+ * This is a Playwright setup project (see playwright.config.ts): it runs once
+ * after globalSetup and before the desktop/server test projects, which depend
+ * on it. Its job is to leave a valid Posit AI token store at
+ * <sandbox>/user-home/.positai/store/data.json so the @ai tests start signed
+ * in. It is the sole authority for Posit AI credentials in the sandbox --
+ * globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
  *
- * Relationship with PW_SANDBOX_SEED_POSITAI:
- *   PW_SANDBOX_SEED_POSITAI runs in globalSetup and copies the entire
- *   ~/.positai/ tree (skills, settings, store) into the sandbox user-home.
- *   PW_SANDBOX_POSITAI_AUTH runs later in this setup project and only
- *   writes store/data.json. The two are complementary: SEED_POSITAI seeds
- *   the broad layout; POSITAI_AUTH refreshes (or replaces) just the token
- *   store. When both are set, SEED_POSITAI lays down the tree first and
- *   POSITAI_AUTH wins on store/data.json specifically.
+ * Modes (PW_SANDBOX_POSITAI_AUTH), default "flow":
+ *   flow   Run the OAuth device flow using POSIT_EMAIL/POSIT_PASSWORD. If
+ *          either is unset, log and let the @ai tests skip. Never falls back
+ *          to "seed". This is the default -- unset behaves as "flow".
+ *   seed   Copy the host user's ~/.positai/store/data.json into the sandbox.
+ *          Fails loud if the host file is not authenticated. Explicit only;
+ *          never used as a fallback. Useful for fast local iteration when the
+ *          developer is already signed in on the host. Suppressed by the
+ *          global host-copy kill-switch PW_SANDBOX_NO_SEED_CREDENTIALS, in
+ *          which case the @ai tests skip.
+ *   off    Provision nothing; the @ai tests skip.
  */
 
 const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
-function getCacheDir(): string {
-  if (process.platform === 'win32') {
-    const localAppData = process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local');
-    return path.join(localAppData, 'rstudio-playwright-auth', 'positai');
-  }
-  if (process.platform === 'darwin') {
-    return path.join(os.homedir(), 'Library', 'Caches', 'rstudio-playwright-auth', 'positai');
-  }
-  const xdgCache = process.env.XDG_CACHE_HOME ?? path.join(os.homedir(), '.cache');
-  return path.join(xdgCache, 'rstudio-playwright-auth', 'positai');
-}
-
 function storeFile(homeDir: string): string {
   return path.join(homeDir, POSITAI_STORE_RELATIVE);
 }
 
-function cachedStoreFile(): string {
-  return path.join(getCacheDir(), 'data.json');
+// The global host-copy kill-switch (Scope A): when set, seed mode is
+// suppressed (device flow is unaffected). Parsed the same way as in
+// sandbox-setup.ts.
+function noSeedCredentials(): boolean {
+  return ['1', 'true'].includes(
+    (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
+  );
 }
 
 function copyStoreFile(src: string, dest: string): void {
@@ -257,13 +247,23 @@ setup('authenticate Posit AI', async () => {
   if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
 
   const sandboxUserHome = path.join(sandbox, 'user-home');
-  const mode = process.env.PW_SANDBOX_POSITAI_AUTH;
+  const mode = process.env.PW_SANDBOX_POSITAI_AUTH ?? 'flow';
 
-  if (mode !== undefined && mode !== 'seed' && mode !== 'cache') {
-    throw new Error(`PW_SANDBOX_POSITAI_AUTH="${mode}" -- expected "seed", "cache", or unset`);
+  if (mode !== 'off' && mode !== 'seed' && mode !== 'flow') {
+    throw new Error(`PW_SANDBOX_POSITAI_AUTH="${mode}" -- expected "off", "seed", "flow", or unset`);
+  }
+
+  if (mode === 'off') {
+    console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=off; @ai tests will skip');
+    return;
   }
 
   if (mode === 'seed') {
+    // Scope A: the global host-copy kill-switch suppresses seed (but not flow).
+    if (noSeedCredentials()) {
+      console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping seed, @ai tests will skip');
+      return;
+    }
     const src = storeFile(os.homedir());
     if (!isStoreFileAuthenticated(src)) {
       throw new Error(
@@ -276,24 +276,12 @@ setup('authenticate Posit AI', async () => {
     return;
   }
 
-  const cached = cachedStoreFile();
-
-  if (mode === 'cache' && isStoreFileAuthenticated(cached)) {
-    copyStoreFile(cached, storeFile(sandboxUserHome));
-    verifyStoreWritten(sandboxUserHome);
-    console.log('[auth-setup] loaded PAI tokens from cache');
-    return;
-  }
-
-  if (mode === 'cache') {
-    console.log('[auth-setup] cache miss; falling back to device flow');
-  }
-
+  // mode === 'flow' (default): OAuth device flow. Never falls back to seed.
   const email = process.env.POSIT_EMAIL;
   const password = process.env.POSIT_PASSWORD;
 
   if (!email || !password) {
-    console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD not set; @auth tests will be skipped');
+    console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD not set; @ai tests will be skipped');
     return;
   }
 
@@ -309,20 +297,16 @@ setup('authenticate Posit AI', async () => {
     writeTokensToSandbox(tokenData, sandboxUserHome);
     verifyStoreWritten(sandboxUserHome);
     console.log('[auth-setup] device flow complete; PAI tokens written to sandbox');
-    if (mode === 'cache') {
-      copyStoreFile(storeFile(sandboxUserHome), cachedStoreFile());
-      console.log('[auth-setup] PAI tokens saved to cache');
-    }
   } catch (err) {
     // Terminal OAuth errors (access_denied, expired_token, invalid_grant) are
     // deterministic config/credential problems, not flake; surface them so a
     // bad POSIT_EMAIL/POSIT_PASSWORD fails the run instead of looking like a
-    // skipped @auth.
+    // skipped @ai test.
     if (err instanceof DeviceFlowTerminalError) {
       throw err;
     }
     console.warn(
-      '[auth-setup] device flow failed; @auth tests will be skipped:',
+      '[auth-setup] device flow failed; @ai tests will be skipped:',
       err instanceof Error ? err.message : err,
     );
   }
