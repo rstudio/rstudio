@@ -11,44 +11,31 @@
 //   - Open button on a typed name:       FileDialog.navigateIfDirectory
 //   - Choose Directory selection:        ChooseFolderDialog2.onSelection
 //
-// Aliases are created via `osascript -l JavaScript` (the ObjC bridge's
-// NSURL bookmark API -- the same data Finder writes) rather than Finder
-// scripting, which would require automation (TCC) permission. Creation
-// runs through the R console so paths resolve against rsession's HOME.
+// The alias fixture (creation mechanics and rationale) lives in
+// @utils/finder-aliases.
 
 import { Locator, Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand, waitForActiveDocument } from '@utils/commands';
+import {
+  createFinderAliasFixture,
+  removeFinderAliasFixture,
+  uniqueFinderAliasFixture,
+} from '@utils/finder-aliases';
 
-// JXA script: argv[0] = target path, argv[1] = alias path to create.
-// 1024 is NSURLBookmarkCreationSuitableForBookmarkFile (1 << 10); the raw
-// value avoids depending on the ObjC bridge exposing the enum constant.
-const CREATE_ALIAS_JXA = [
-  'ObjC.import("Foundation");',
-  'function run(argv) {',
-  '  var data = $.NSURL.fileURLWithPath(argv[0])',
-  '    .bookmarkDataWithOptionsIncludingResourceValuesForKeysRelativeToURLError(1024, $(), $(), null);',
-  '  var ok = $.NSURL.writeBookmarkDataToURLOptionsError(data, $.NSURL.fileURLWithPath(argv[1]), 0, null);',
-  '  return String(ok);',
-  '}',
-].join(' ');
-
-const uniq = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-const targetDirName = `pw-dlg-target-${uniq}`;
-const markerName = `marker-${uniq}.txt`;
-const targetDocName = `pw-dlg-doc-${uniq}.txt`;
-const dirAliasName = `pw-dlg-dir-alias-${uniq}`;
-const fileAliasName = `pw-dlg-file-alias-${uniq}`;
+const fx = uniqueFinderAliasFixture('dlg');
 
 const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
 const CHOOSE_DIR_DIALOG = '.gwt-DialogBox[aria-label*="Working Directory"]';
 
-// The Open File dialog opens in the session's last-browsed directory, which
-// other specs sharing the session may have left anywhere -- including outside
-// HOME, where the breadcrumb offers no Home crumb. Typing '~' and accepting
-// is an explicit navigation FileDialog.shouldAccept supports from any
-// location, so normalize through it to keep the tests order-independent.
+// The Open File dialog opens in the directory of the last dialog-opened file
+// (WorkbenchContext.getDefaultFileDialogDir), falling back to the working
+// directory -- nondeterministic across specs sharing the session, and
+// possibly outside HOME, where the breadcrumb offers no Home crumb. Typing
+// '~' and accepting is an explicit navigation FileDialog.shouldAccept
+// supports from any location, so normalize through it to keep the tests
+// order-independent.
 async function openFileDialogAtHome(page: Page): Promise<Locator> {
   await executeCommand(page, 'openSourceDoc');
   const dialog = page.locator(OPEN_FILE_DIALOG);
@@ -68,39 +55,20 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await consoleActions.executeInConsole(
-      [
-        'local({',
-        'home <- path.expand("~")',
-        `dir.create(file.path(home, "${targetDirName}"))`,
-        `writeLines("marker", file.path(home, "${targetDirName}", "${markerName}"))`,
-        `writeLines("target doc", file.path(home, "${targetDocName}"))`,
-        `jxa <- '${CREATE_ALIAS_JXA}'`,
-        'f <- tempfile(fileext = ".js")',
-        'writeLines(jxa, f)',
-        'mk <- function(target, alias) system2("osascript", c("-l", "JavaScript", f, shQuote(target), shQuote(alias)))',
-        `mk(file.path(home, "${targetDirName}"), file.path(home, "${dirAliasName}"))`,
-        `mk(file.path(home, "${targetDocName}"), file.path(home, "${fileAliasName}"))`,
-        '})',
-      ].join('; '),
-      { wait: true },
-    );
+    await createFinderAliasFixture(page, consoleActions, fx);
   });
 
   test.afterAll(async () => {
-    await consoleActions.executeInConsole(
-      `unlink(file.path(path.expand("~"), c("${targetDirName}", "${targetDocName}", "${dirAliasName}", "${fileAliasName}")), recursive = TRUE)`,
-      { wait: true },
-    );
+    await removeFinderAliasFixture(consoleActions, fx);
   });
 
   test('double-clicking a directory alias lists the target folder', async ({ rstudioPage: page }) => {
     const dialog = await openFileDialogAtHome(page);
 
-    await dialog.getByText(dirAliasName, { exact: true }).dblclick();
+    await dialog.getByText(fx.dirAliasName, { exact: true }).dblclick();
 
     // the marker file only exists inside the target directory
-    await expect(dialog.getByText(markerName, { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText(fx.markerName, { exact: true })).toBeVisible({ timeout: 15000 });
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0, { timeout: 15000 });
   });
@@ -109,21 +77,21 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
     const dialog = await openFileDialogAtHome(page);
 
     // single click selects without committing; Open triggers shouldAccept
-    await dialog.getByText(dirAliasName, { exact: true }).click();
+    await dialog.getByText(fx.dirAliasName, { exact: true }).click();
     await dialog.getByRole('button', { name: 'Open' }).click();
-    await expect(dialog.getByText(markerName, { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText(fx.markerName, { exact: true })).toBeVisible({ timeout: 15000 });
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0, { timeout: 15000 });
   });
 
   test('Open button with a typed directory alias name navigates into the target', async ({ rstudioPage: page }) => {
     const dialog = await openFileDialogAtHome(page);
-    await expect(dialog.getByText(dirAliasName, { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText(fx.dirAliasName, { exact: true })).toBeVisible({ timeout: 15000 });
 
     // typed input exercises FileDialog.navigateIfDirectory
-    await dialog.locator('input[type="text"]').fill(dirAliasName);
+    await dialog.locator('input[type="text"]').fill(fx.dirAliasName);
     await dialog.getByRole('button', { name: 'Open' }).click();
-    await expect(dialog.getByText(markerName, { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText(fx.markerName, { exact: true })).toBeVisible({ timeout: 15000 });
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0, { timeout: 15000 });
   });
@@ -131,9 +99,9 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
   test('Open button with a selected file alias opens the target document', async ({ rstudioPage: page }) => {
     const dialog = await openFileDialogAtHome(page);
 
-    await dialog.getByText(fileAliasName, { exact: true }).click();
+    await dialog.getByText(fx.fileAliasName, { exact: true }).click();
     await dialog.getByRole('button', { name: 'Open' }).click();
-    await waitForActiveDocument(page, `~/${targetDocName}`, 15000);
+    await waitForActiveDocument(page, `~/${fx.targetDocName}`, 15000);
   });
 
   test('Choose Directory with a selected directory alias picks the target', async ({ rstudioPage: page }) => {
@@ -144,14 +112,14 @@ test.describe('Web file dialogs follow macOS Finder aliases @server_only', () =>
     const dialog = page.locator(CHOOSE_DIR_DIALOG);
     await expect(dialog).toBeVisible({ timeout: 15000 });
 
-    await dialog.getByText(dirAliasName, { exact: true }).click();
+    await dialog.getByText(fx.dirAliasName, { exact: true }).click();
     await dialog.getByRole('button', { name: 'Choose' }).click();
     await expect(dialog).toHaveCount(0, { timeout: 15000 });
 
     // ChooseFolderDialog2.onSelection resolved the alias, so the session's
     // working directory must now be the target, not the bookmark file
     await consoleActions.executeInConsole(
-      `writeLines(if (identical(basename(getwd()), "${targetDirName}")) "WD-RESOLVED-OK" else paste("WD-BAD:", getwd()))`,
+      `writeLines(if (identical(basename(getwd()), "${fx.targetDirName}")) "WD-RESOLVED-OK" else paste("WD-BAD:", getwd()))`,
       { wait: true },
     );
     await expect(page.getByText('WD-RESOLVED-OK', { exact: true })).toBeVisible({ timeout: 15000 });
