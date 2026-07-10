@@ -47,18 +47,16 @@ public class FileSystemItemTests extends GWTTestCase
 
    public void testResolveAliasTargetIsIdentityForRegularFile()
    {
+      // the documented contract is that non-aliases come back unchanged,
+      // not as a rebuilt item that would drop other metadata
       FileSystemItem file = FileSystemItem.createFile("/home/user/file.txt");
-      FileSystemItem resolved = file.resolveAliasTarget();
-      assertEquals(file.getPath(), resolved.getPath());
-      assertFalse(resolved.isDirectory());
+      assertSame(file, file.resolveAliasTarget());
    }
 
    public void testResolveAliasTargetIsIdentityForDirectory()
    {
       FileSystemItem dir = FileSystemItem.createDir("/home/user/folder");
-      FileSystemItem resolved = dir.resolveAliasTarget();
-      assertEquals(dir.getPath(), resolved.getPath());
-      assertTrue(resolved.isDirectory());
+      assertSame(dir, dir.resolveAliasTarget());
    }
 
    public void testResolveAliasTargetForDirectoryAlias()
