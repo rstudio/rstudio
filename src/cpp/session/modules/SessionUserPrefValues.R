@@ -1969,6 +1969,16 @@
    clear = function() { .rs.clearUserPref("enable_splash_screen") }
 )
 
+# Show the What's New window automatically after updating RStudio
+#
+# Whether to automatically show the What's New window after updating to a new
+# version of RStudio Desktop.
+.rs.uiPrefs$showWhatsNew <- list(
+   get = function() { .rs.getUserPref("show_whats_new") },
+   set = function(value) { .rs.setUserPref("show_whats_new", value) },
+   clear = function() { .rs.clearUserPref("show_whats_new") }
+)
+
 # 
 #
 # The R version to use by default.

@@ -67,6 +67,10 @@
                 "enableSplashScreen": {
                     "type": "boolean",
                     "description": "Whether to show the splash screen on startup"
+                },
+                "showWhatsNew": {
+                    "type": "boolean",
+                    "description": "Whether to automatically show the What's New window after updating"
                 }
              },
             "default": {
@@ -74,7 +78,8 @@
                 "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0, "maximized": false },
                 "accessibility": false,
                 "disableRendererAccessibility": false,
-                "enableSplashScreen": true
+                "enableSplashScreen": true,
+                "showWhatsNew": true
             }
         },
         "renderer": {
