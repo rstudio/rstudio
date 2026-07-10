@@ -329,7 +329,7 @@ describe('whats-new-utils', () => {
       forceDisable: false,
       userPrefEnabled: true,
       isRelease: true,
-      alreadySeen: false,
+      alreadySeen: () => false,
     };
 
     it('shows when all conditions are met', () => {
@@ -350,7 +350,7 @@ describe('whats-new-utils', () => {
           forceShow: true,
           userPrefEnabled: false,
           isRelease: false,
-          alreadySeen: true,
+          alreadySeen: () => true,
         }),
       );
     });
@@ -372,7 +372,31 @@ describe('whats-new-utils', () => {
     });
 
     it('does not show a release that has already been seen', () => {
-      assert.isFalse(evaluateWhatsNewVisibility({ ...shows, alreadySeen: true }));
+      assert.isFalse(evaluateWhatsNewVisibility({ ...shows, alreadySeen: () => true }));
+    });
+
+    it('does not evaluate the seen-state thunk when an earlier gate decides', () => {
+      // Each of these gates resolves before the seen check, so the thunk (which
+      // in production opens the on-disk seen-state store) must not be called.
+      const cases: Partial<WhatsNewVisibilityInputs>[] = [
+        { contentAvailable: false },
+        { forceShow: true },
+        { forceDisable: true },
+        { userPrefEnabled: false },
+        { isRelease: false },
+      ];
+      for (const override of cases) {
+        let called = false;
+        evaluateWhatsNewVisibility({ ...shows, ...override, alreadySeen: () => { called = true; return false; } });
+        assert.isFalse(called, `seen-state thunk should not run for ${JSON.stringify(override)}`);
+      }
+    });
+
+    it('evaluates the seen-state thunk only when all earlier gates pass', () => {
+      let called = false;
+      const result = evaluateWhatsNewVisibility({ ...shows, alreadySeen: () => { called = true; return false; } });
+      assert.isTrue(called);
+      assert.isTrue(result);
     });
   });
 });

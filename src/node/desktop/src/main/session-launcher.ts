@@ -550,7 +550,7 @@ export class SessionLauncher {
       forceDisable: getenv('RSTUDIO_DISABLE_WHATS_NEW') !== '',
       userPrefEnabled: ElectronDesktopOptions().showWhatsNew(),
       isRelease: isReleaseBuild(info.RSTUDIO_VERSION),
-      alreadySeen: new WhatsNewState().hasSeenRelease(releaseName, info.RSTUDIO_VERSION_PATCH),
+      alreadySeen: () => new WhatsNewState().hasSeenRelease(releaseName, info.RSTUDIO_VERSION_PATCH),
     });
   }
 

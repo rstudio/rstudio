@@ -172,13 +172,19 @@ export interface WhatsNewVisibilityInputs {
   userPrefEnabled: boolean;
   /** The running build is a release build. */
   isRelease: boolean;
-  /** This release has already been seen at this patch level or higher. */
-  alreadySeen: boolean;
+  /**
+   * Whether this release has already been seen at this patch level or higher.
+   * Passed as a thunk because computing it opens the on-disk seen-state store;
+   * it is only invoked once every earlier gate has passed, so an earlier
+   * decision never touches (or risks throwing on) that store.
+   */
+  alreadySeen: () => boolean;
 }
 
 /**
  * Decide whether the What's New window should be shown, given already-resolved
- * inputs. Pure and side-effect free.
+ * inputs. Pure apart from the caller-supplied alreadySeen thunk, which is
+ * evaluated at most once and only when precedence requires it.
  *
  * Precedence, highest first:
  * 1. Content must be available, or it is never shown.
@@ -204,7 +210,7 @@ export function evaluateWhatsNewVisibility(inputs: WhatsNewVisibilityInputs): bo
   if (!inputs.isRelease) {
     return false;
   }
-  if (inputs.alreadySeen) {
+  if (inputs.alreadySeen()) {
     return false;
   }
   return true;
