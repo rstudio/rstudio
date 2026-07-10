@@ -20,7 +20,7 @@ features include:
   IDE using a web browser.
 
 For more information on RStudio please visit the
-[project website](https://posit.co/).
+[project website](https://posit.co/products/open-source/rstudio).
 
 Getting the Code
 -----------------------------------------------------------------------------
