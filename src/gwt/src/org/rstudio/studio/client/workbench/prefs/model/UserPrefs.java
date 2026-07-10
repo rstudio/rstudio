@@ -268,12 +268,12 @@ public class UserPrefs extends UserPrefsComputed
       announceScreenReaderState();
       syncToggleTabKeyMovesFocusState();
       
-      // Mirror the initial values of Electron-specific preferences into the
-      // electron-store. The value-change handlers above only fire when the user
-      // changes a preference in a running session, so this also covers values
-      // loaded from disk (e.g. set by an administrator, edited by hand, or
-      // synced from another machine) that must be available at the next startup
-      // before the session has started.
+      // Push the current values of the Electron preferences mirrored below into
+      // the electron-store. The value-change handlers above only fire when the
+      // user changes a preference in a running session, so this init-time sync
+      // is also needed for values loaded from disk (e.g. set by an administrator,
+      // edited by hand, or synced from another machine) so they are available to
+      // the desktop process at the next startup, before the session has started.
       if (BrowseCap.isElectron())
       {
          Desktop.getFrame().setMousewheelZoomEnabled(enableMousewheelZoom().getValue());
