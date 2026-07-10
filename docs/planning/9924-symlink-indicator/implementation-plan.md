@@ -26,22 +26,33 @@ Changes:
    - `FilePath::isSymlink()` (`src/cpp/shared_core/FilePath.cpp:1435`) uses
      `boost::filesystem::is_symlink` (a `symlink_status`/`lstat`-equivalent — it does
      **not** follow the link, and returns true even for broken links).
-3. (Optional, for the tooltip) when `is_symlink` is true, resolve and emit the target:
+3. When `is_symlink` is true, resolve and emit the target (**mandatory**, not optional —
+   the tooltip and end-to-end verification depend on it):
    `entry["symlink_target"] = createAliasedPath(filePath.resolveSymlink())`.
    - `FilePath::resolveSymlink()` (`src/cpp/shared_core/FilePath.cpp:1762`) wraps
-     `boost::filesystem::read_symlink`. Runs only for actual symlinks (rare).
+     `boost::filesystem::read_symlink`. Runs only for actual symlinks (rare). If
+     `resolveSymlink()` fails, omit `symlink_target`; the frontend tooltip falls back to
+     the plain name (see Layer 3d).
+4. **macOS aliases:** inside the existing `#ifdef __APPLE__` block (~:1944-1964), when
+   `isFinderAlias(filePath)` is true, emit `entry["is_alias"] = true` **regardless of
+   whether the target resolves**. Keep the existing `alias_target` emission exactly as-is
+   (it stays gated on successful resolution and drives navigation). This is the fix for
+   the broken-alias gap: a broken/unresolvable alias is a normal visible regular file, so
+   badging must key off `is_alias`, not `alias_target`. No new syscall — `isFinderAlias`
+   already runs here today.
 
 Deliberately **not** changed:
 
-- The `exists()` filter at `SessionFilesListingMonitor.cpp:219` — broken links stay
-  hidden (Decision 2).
+- The `exists()` filter at `SessionFilesListingMonitor.cpp:219` — broken **symlinks** stay
+  hidden (Decision 2). (Broken aliases are regular files and remain listed, now badged via
+  `is_alias`.)
 - `FileInfo`. The `FileInfo(const FilePath&)` constructor intentionally does *not* read
   symlink status (`src/cpp/core/include/core/FileInfo.hpp:47-56`, with a warning about
   boost filesystem surprises). We query the `FilePath` directly in `createFileSystemItem`
   instead of threading a bool through `FileInfo`, so `FileInfo` equality and the file
   monitor are untouched.
-- macOS Finder aliases already set `entry["alias_target"]` here; `is_symlink` stays
-  `false` for them (they are regular files, per the `#ifdef __APPLE__` comment at ~:1940).
+- `is_symlink` stays `false` for aliases (they are regular files, per the `#ifdef
+  __APPLE__` comment at ~:1940); aliases are covered by `is_alias`.
 
 ### Performance note
 
@@ -61,16 +72,30 @@ public final native boolean isSymlink() /*-{
    return !!this.is_symlink;
 }-*/;
 
-// single "link-like" predicate used by the UI: true POSIX symlink OR macOS alias
+// true for a macOS Finder alias, even one whose target could not be resolved
+// (a broken alias has is_alias == true but alias_target == null)
+public final native boolean isAlias() /*-{
+   return !!this.is_alias;
+}-*/;
+
+// single "link-like" predicate used by the UI: POSIX symlink OR macOS alias
 public final boolean isLink()
 {
-   return isSymlink() || getAliasTarget() != null;
+   return isSymlink() || isAlias();
 }
 
-// resolved symlink target for the tooltip (null when not a symlink)
+// resolved symlink target for the tooltip (null when not a symlink or unresolved)
 public final native String getSymlinkTarget() /*-{
    return this.symlink_target || null;
 }-*/;
+
+// best available "points to" target for the tooltip: symlink target or, for an
+// alias, its resolved target; null when neither is available (e.g. broken alias)
+public final String getLinkTarget()
+{
+   String target = getSymlinkTarget();
+   return target != null ? target : getAliasTarget();
+}
 ```
 
 ## Layer 3 — Frontend rendering: the badge overlay
@@ -119,16 +144,30 @@ e.g. `RSConnectDeploy.java`).
 ### 3d. Accessibility / discoverability
 
 - Badge alt/aria text: "symbolic link" (or "alias" for aliases).
-- Row tooltip: add a `title` on the name cell (`addNameColumn`, `FilesList.java:224`) of
-  the form `name -> target`, from `getSymlinkTarget()` / `getAliasTarget()`.
+- Tooltip: add a `title` attribute to the **icon-cell wrapper `<span>`** introduced in 3b
+  (in `FileIconRenderer`), of the form `name -> target` from `getLinkTarget()`; when the
+  target is null (e.g. a broken alias), fall back to just the name. Passed alongside the
+  badge when the icon column builds the decorated `FileIcon`.
+- **Not on the name column.** `LinkColumn`'s cell template hard-codes
+  `<div class="{0}" title="{1}">{1}</div>` (`LinkColumn.java:104`) — the `title` and the
+  visible text are the *same* `{1}` value, and there is no title provider. Putting the
+  `name -> target` string there would render it as visible text in the name column
+  (the "text arrow in name" style we rejected in `design.md`). Reusing `LinkColumn` for a
+  distinct tooltip would require adding a separate title provider to that shared class
+  (also used by the Packages pane / `PackageLinkColumn`); the icon-cell tooltip avoids
+  that and keeps all link-indicator logic in one place. If a name-column tooltip is later
+  deemed necessary, extend `LinkColumn` with an optional title-provider template rather
+  than overloading the value string.
 
 ## Tests
 
 - **Frontend model (baseline):** extend
   `src/gwt/test/org/rstudio/core/client/files/FileSystemItemTests.java` (already tests the
-  alias accessors) with cases that build a raw JS object with/without `is_symlink` and
-  `alias_target` and assert `isSymlink()` / `isLink()` / `getSymlinkTarget()`.
-  Run: `cd src/gwt && ant unittest`.
+  alias accessors) with cases that build a raw JS object and assert:
+  `isSymlink()` / `getSymlinkTarget()` for a symlink; `isAlias()` for an alias
+  **including a broken alias** (`is_alias` true, `alias_target` absent) still reporting
+  `isLink()` true; `getLinkTarget()` preferring the symlink target and falling back to the
+  alias target and to null. Run: `cd src/gwt && ant unittest`.
 - **Backend:** if a session-level test harness makes it practical, assert
   `createFileSystemItem` sets `is_symlink` for a symlinked path; otherwise cover
   `FilePath::isSymlink()` behavior and rely on manual verification. Investigate existing
@@ -140,10 +179,11 @@ e.g. `RSConnectDeploy.java`).
 
 1. Build: `cd build && cmake --build . --target all`; then `cd src/gwt && ant draft`.
 2. In a project dir create a file symlink (`ln -s target link`), a directory symlink, and
-   (macOS) a Finder alias. Open the Files pane and confirm:
+   (macOS) a Finder alias plus a **broken** Finder alias. Open the Files pane and confirm:
    - link/alias entries show the corner badge; plain files do not;
    - a directory symlink keeps the folder icon + badge and still navigates in;
-   - hover tooltip shows `name -> target`; screen reader announces "symbolic link".
+   - the broken alias is still listed and badged (tooltip falls back to just the name);
+   - hovering the icon shows `name -> target`; screen reader announces "symbolic link".
 3. Regression: a broken symlink is still not listed (unchanged).
 4. Performance sanity: list a large directory (thousands of entries) before/after; confirm
    no perceptible slowdown.
@@ -159,9 +199,10 @@ Add under `### New`:
 
 ## Files touched (implementation PR)
 
-- `src/cpp/session/SessionModuleContext.cpp` — emit `is_symlink` (+ optional target).
-- `src/gwt/.../core/client/files/FileSystemItem.java` — `isSymlink()` / `isLink()` /
-  `getSymlinkTarget()`.
+- `src/cpp/session/SessionModuleContext.cpp` — emit `is_symlink`, `symlink_target`, and
+  `is_alias`.
+- `src/gwt/.../core/client/files/FileSystemItem.java` — `isSymlink()` / `isAlias()` /
+  `isLink()` / `getSymlinkTarget()` / `getLinkTarget()`.
 - `src/gwt/.../common/filetypes/FileIcon.java`, `FileIconRenderer.java`,
   `FileIconResources.java` + new badge PNGs — the overlay.
 - `src/gwt/.../views/files/ui/FilesList.java`, `FilesListDataGridStyle.css` — apply badge

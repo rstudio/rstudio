@@ -62,18 +62,29 @@ in the lower-left corner of the icon.
 ### Decision 2 — Broken symlinks stay hidden
 
 The listing loop in `SessionFilesListingMonitor::listFiles` filters entries on
-`filePath.exists()`, and `exists()` follows the link — so a dangling symlink is already
-excluded from the listing today. We **do not** change this filter. Rationale: showing
-dangling links is a separate behavior change with its own edge cases (no size, no mtime,
-uncertain type), and it expands scope beyond "add an indicator". A dangling link remains
-absent from the pane, exactly as today.
+`filePath.exists()`, and `exists()` follows the link — so a dangling **symlink** is
+already excluded from the listing today. We **do not** change this filter. Rationale:
+showing dangling links is a separate behavior change with its own edge cases (no size, no
+mtime, uncertain type), and it expands scope beyond "add an indicator". A dangling
+symlink remains absent from the pane, exactly as today.
 
-### Decision 3 — One indicator for symlinks *and* aliases
+Note the asymmetry with aliases: a macOS Finder alias is a **regular file**, so its own
+`exists()` is true and it is *always* listed even when its target is broken/unresolvable.
+Decision 3 therefore badges aliases from an alias-detection flag, not from successful
+target resolution, so a broken alias is still marked (see below).
 
-The frontend treats an entry as "link-like" when the backend reports `is_symlink` **or**
-when it already carries an `alias_target` (macOS Finder alias, from #18191). Both get the
-same badge. From the user's point of view both "point somewhere else", so a single
-indicator is the least surprising.
+### Decision 3 — One indicator for symlinks *and* aliases (incl. broken aliases)
+
+The frontend treats an entry as "link-like" when the backend reports `is_symlink`
+**or** `is_alias`. Both get the same badge. From the user's point of view both "point
+somewhere else", so a single indicator is the least surprising.
+
+Crucially, `is_alias` is emitted whenever `isFinderAlias()` succeeds — **independent of
+whether the target resolves**. The pre-existing `alias_target` field is only set when
+resolution succeeds (it drives *navigation*), so keying the badge off `is_alias` (not
+`alias_target`) ensures a broken/unresolvable alias is still badged, satisfying the
+"cover Finder aliases" goal. `alias_target` remains the field that tells the client where
+to navigate.
 
 ## Addressing the two stated concerns
 
@@ -98,8 +109,13 @@ The icon column is ~26px wide with a 16px icon and a 22.5px row — tight. Mitig
   not invert them, so a single asset with an outline is expected to work in both; a
   dedicated dark asset is a fallback if contrast proves insufficient.
 - **Non-visual affordances.** The badge carries alt/aria text ("symbolic link" / "alias"),
-  and the row gets a `title` tooltip of the form `name -> target`. So even if the small
-  badge is missed, hovering reveals the relationship and screen readers announce it.
+  and the **icon cell** gets a `title` tooltip of the form `name -> target` (or just the
+  name when the target is unavailable, e.g. a broken alias). Hovering the icon reveals the
+  relationship and screen readers announce it. The tooltip lives on the icon cell rather
+  than the name cell because `LinkColumn` (the name column) hard-couples its `title` to
+  its displayed text (`LinkColumn.java:104`, `title="{1}"` reuses the name string), so it
+  cannot carry a distinct tooltip without a shared-class change — see the implementation
+  plan.
 
 ## Risks / open points for review
 
