@@ -9,7 +9,7 @@
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.509.1
+- Copilot Language Server 1.520.0
 - Electron 41.9.0
 - Node.js 22.22.2 (copilot, Posit Assistant)
 - Quarto 1.9.38
