@@ -14,10 +14,10 @@
 // The alias fixture (creation mechanics and rationale) lives in
 // @utils/finder-aliases.
 
-import { Locator, Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand, waitForActiveDocument } from '@utils/commands';
+import { openFileDialogAtHome } from '@utils/file-dialogs';
 import {
   createFinderAliasFixture,
   removeFinderAliasFixture,
@@ -26,27 +26,7 @@ import {
 
 const fx = uniqueFinderAliasFixture('dlg');
 
-const OPEN_FILE_DIALOG = '.gwt-DialogBox[aria-label="Open File"]';
 const CHOOSE_DIR_DIALOG = '.gwt-DialogBox[aria-label*="Working Directory"]';
-
-// The Open File dialog opens in the directory of the last dialog-opened file
-// (WorkbenchContext.getDefaultFileDialogDir), falling back to the working
-// directory -- nondeterministic across specs sharing the session, and
-// possibly outside HOME, where the breadcrumb offers no Home crumb. Typing
-// '~' and accepting is an explicit navigation FileDialog.shouldAccept
-// supports from any location, so normalize through it to keep the tests
-// order-independent.
-async function openFileDialogAtHome(page: Page): Promise<Locator> {
-  await executeCommand(page, 'openSourceDoc');
-  const dialog = page.locator(OPEN_FILE_DIALOG);
-  await expect(dialog).toBeVisible({ timeout: 15000 });
-  const filename = dialog.locator('input[type="text"]');
-  await filename.fill('~');
-  await dialog.getByRole('button', { name: 'Open' }).click();
-  // navigating clears the filename box (OpenFileDialog.onNavigated)
-  await expect(filename).toHaveValue('', { timeout: 15000 });
-  return dialog;
-}
 
 test.describe('Web file dialogs follow macOS Finder aliases @server_only', () => {
   test.skip(process.platform !== 'darwin', 'Finder aliases are macOS-only');
