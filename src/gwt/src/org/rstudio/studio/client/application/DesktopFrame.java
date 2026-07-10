@@ -175,7 +175,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setMousewheelZoomEnabled(boolean enabled);
    void setMousewheelZoomDebounce(double debounceMs);
    
-   void getEnableAccessibility(CommandWithArg<Boolean> callback);
    void setEnableAccessibility(boolean enable);
    void setDisableRendererAccessibility(boolean disable);
    void setEnableSplashScreen(boolean enable);

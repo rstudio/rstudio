@@ -854,10 +854,6 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.handle('desktop_get_enable_accessibility', () => {
-      return ElectronDesktopOptions().accessibility();
-    });
-
     ipcMain.on('desktop_set_enable_accessibility', (_event, enable) => {
       ElectronDesktopOptions().setAccessibility(enable);
     });
