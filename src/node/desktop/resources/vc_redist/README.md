@@ -19,8 +19,8 @@ vs_buildtools.exe --passive --add Microsoft.VisualStudio.Workload.VCTools --add 
 
 Copy all the files from the following to the x64 and x86 folders.
 
-- x64: `C:\Program Files (x86)\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x64\Microsoft.VC145.CRT\*.*`
-- x86: `C:\Program Files (x86)\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x64\Microsoft.VC145.CRT\*.*`
+- x64: `C:\Program Files\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x64\Microsoft.VC145.CRT\*.*`
+- x86: `C:\Program Files\Microsoft Visual Studio\2026\BuildTools\VC\Redist\MSVC\14.50.xxxxx\x86\Microsoft.VC145.CRT\*.*`
 - ARM: future
 
 Note that "2026", "14.50.xxxxx", and "VC145" will need to be updated to match what has actually

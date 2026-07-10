@@ -69,8 +69,8 @@ jobs:
           r-version: release
 
       # tools.R locates Visual Studio via vswhere, so no junction is needed.
-      # We still put vcvarsall.bat on the PATH here for later steps (e.g.
-      # make-package.bat) that call it by name.
+      # We still put vcvarsall.bat on the PATH here because install-boost.R
+      # locates it via Sys.which("vcvarsall.bat").
       - name: Set up MSVC environment
         run: |
           $ErrorActionPreference = 'Stop'
