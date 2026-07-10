@@ -1948,7 +1948,14 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
       {
          FilePath targetPath;
          Error error = resolveFinderAlias(filePath, &targetPath);
-         if (!error && targetPath.exists())
+         if (error)
+         {
+            // broken aliases are a normal filesystem state, so log at debug
+            // level: unexpected failures (corrupt bookmarks, sandbox denials)
+            // stay diagnosable without spamming per-file listings
+            LOG_DEBUG_MESSAGE("Failed to resolve Finder alias: " + error.asString());
+         }
+         else if (targetPath.exists())
          {
             entry["alias_target"] = createAliasedPath(targetPath);
             isDir = targetPath.isDirectory();
