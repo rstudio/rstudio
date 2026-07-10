@@ -50,28 +50,41 @@ const std::string kPasswordCharset =
 
 // Reads a line from stdin with terminal echo disabled, for the master
 // password prompt. Restores echo before returning, even on error. Only
-// disables echo when `in` is actually the controlling terminal (stdin);
-// under test, `in` is a plain istringstream and this is a no-op.
+// disables echo when `in` is actually the controlling terminal (stdin is
+// both connected to a real tty and the stream in use); under test, `in` is
+// a plain istringstream and this is a no-op.
 std::string readMaskedLine(std::istream& in, std::ostream& out)
 {
-   bool isStdin = (&in == &std::cin);
+   bool isRealTty = (&in == &std::cin) && (isatty(STDIN_FILENO) != 0);
+   bool settingsSaved = false;
    termios oldSettings{};
-   if (isStdin)
+
+   if (isRealTty)
    {
-      tcgetattr(STDIN_FILENO, &oldSettings);
-      termios noEcho = oldSettings;
-      noEcho.c_lflag &= ~ECHO;
-      tcsetattr(STDIN_FILENO, TCSANOW, &noEcho);
+      settingsSaved = (tcgetattr(STDIN_FILENO, &oldSettings) == 0);
+      if (settingsSaved)
+      {
+         termios noEcho = oldSettings;
+         noEcho.c_lflag &= ~ECHO;
+         if (tcsetattr(STDIN_FILENO, TCSANOW, &noEcho) != 0)
+         {
+            out << "[WARN] Could not disable terminal echo; password may be visible."
+                << std::endl;
+         }
+      }
    }
 
    std::string value;
    std::getline(in, value);
 
-   if (isStdin)
-   {
+   // Only restore if we actually saved the prior settings above; if
+   // tcgetattr failed, oldSettings was never populated and there is nothing
+   // to restore.
+   if (settingsSaved)
       tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);
+   if (isRealTty)
       out << std::endl;
-   }
+
    return value;
 }
 
@@ -83,12 +96,26 @@ std::string promptLine(std::istream& in, std::ostream& out, const std::string& p
    return value;
 }
 
-bool rowExists(boost::shared_ptr<IConnection> pConnection, const std::string& sql)
+// Sets *pFound to whether `sql` (expected to be a `SELECT 1 FROM ...`-style
+// existence check) returned any row. A failed query propagates its Error
+// rather than being folded into *pFound, so callers can distinguish "row
+// absent" from "could not check" -- the latter must not be treated as a
+// green light by an idempotency guard.
+Error rowExists(boost::shared_ptr<IConnection> pConnection, const std::string& sql, bool* pFound)
 {
-   bool found = false;
-   Error error = execAndProcessQuery(pConnection, sql,
-      [&found](const Row&) { found = true; });
-   return !error && found;
+   *pFound = false;
+   return execAndProcessQuery(pConnection, sql,
+      [pFound](const Row&) { *pFound = true; });
+}
+
+// Shared by validateIdentifier() (used to report --setup-db's own
+// database-name/user prompts) and createDatabaseAndUser()'s internal guard
+// (defense in depth for the Pro overlay, which also calls
+// createDatabaseAndUser directly).
+bool isValidIdentifier(const std::string& identifier)
+{
+   static const std::regex kValidIdentifier("^[A-Za-z_][A-Za-z0-9_-]*$");
+   return std::regex_match(identifier, kValidIdentifier);
 }
 
 // Resolves the database.conf path the same way ServerDatabase.cpp's
@@ -100,6 +127,25 @@ FilePath resolveDatabaseConfigFile(const std::string& databaseConfigFile)
       ? FilePath(databaseConfigFile)
       : core::system::xdg::findSystemConfigFile("database configuration", kDatabaseConfigFileName);
 }
+
+// Creates `path` as an empty, 0600 file if it doesn't already exist, before
+// any plaintext secret is written into it. A subsequent truncating write to
+// an existing file preserves its mode, so this ensures the file is never
+// briefly world/group-readable under a permissive umask between creation
+// and the trailing changeFileMode both writers already apply.
+Error ensureFileExistsWithUserOnlyMode(const FilePath& path)
+{
+   if (path.exists())
+      return Success();
+
+   Error error = writeStringToFile(path, std::string());
+   if (error)
+      return error;
+
+   return path.changeFileMode(core::FileMode::USER_READ_WRITE);
+}
+
+} // anonymous namespace
 
 // Writes the given key/value pairs as a fresh, 0600 config file at `path`,
 // overwriting anything already there. Used only for the standalone
@@ -125,6 +171,10 @@ Error writeCredentialsFileFresh(const FilePath& path,
    if (error)
       return error;
 
+   error = ensureFileExistsWithUserOnlyMode(path);
+   if (error)
+      return error;
+
    error = writeStringToFile(path, contents.str());
    if (error)
       return error;
@@ -136,8 +186,9 @@ Error writeCredentialsFileFresh(const FilePath& path,
 // error -- Settings::initialize() starts from an empty map), sets the six
 // connection keys, and writes it back -- preserving any other keys the
 // admin had already configured there rather than clobbering the whole file.
-// Settings doesn't set file permissions on write, so 0600 is applied
-// afterward to match writeCredentialsFileFresh's behavior.
+// Settings doesn't set file permissions on write, so the file is locked down
+// to 0600 before Settings ever writes to it (in case it doesn't already
+// exist), and again afterward to match writeCredentialsFileFresh's behavior.
 Error mergeWriteDatabaseConfigFile(const FilePath& path,
                                     const std::string& host,
                                     const std::string& port,
@@ -149,13 +200,18 @@ Error mergeWriteDatabaseConfigFile(const FilePath& path,
    if (error)
       return error;
 
+   error = ensureFileExistsWithUserOnlyMode(path);
+   if (error)
+      return error;
+
    Settings settings;
    error = settings.initialize(path);
    if (error)
       return error;
 
+   const std::string provider = "postgresql";
    settings.beginUpdate();
-   settings.set("provider", "postgresql");
+   settings.set("provider", provider);
    settings.set("host", host);
    settings.set("port", port);
    settings.set("database", dbName);
@@ -163,15 +219,45 @@ Error mergeWriteDatabaseConfigFile(const FilePath& path,
    settings.set("password", password);
    settings.endUpdate();
 
-   return path.changeFileMode(core::FileMode::USER_READ_WRITE);
-}
+   error = path.changeFileMode(core::FileMode::USER_READ_WRITE);
+   if (error)
+      return error;
 
-} // anonymous namespace
+   // Settings::endUpdate() writes via Settings::writeSettings(), which
+   // returns void and only LOG_ERRORs on a failed write -- so on its own, a
+   // truncated or failed write here would still let the caller report
+   // success. Re-read the file we just wrote via a fresh Settings and
+   // confirm each of the six connection keys round-tripped correctly before
+   // reporting success ourselves.
+   Settings written;
+   error = written.initialize(path);
+   if (error)
+      return error;
+
+   const std::pair<std::string, std::string> expectedValues[] = {
+      { "provider", provider },
+      { "host", host },
+      { "port", port },
+      { "database", dbName },
+      { "username", dbUser },
+      { "password", password }
+   };
+   for (const auto& expected : expectedValues)
+   {
+      if (written.get(expected.first) != expected.second)
+      {
+         return systemError(boost::system::errc::io_error,
+                            "Failed to persist database configuration to " + path.getAbsolutePath(),
+                            ERROR_LOCATION);
+      }
+   }
+
+   return Success();
+}
 
 Error validateIdentifier(const std::string& identifier, std::ostream& out, bool* pPassed)
 {
-   static const std::regex kValidIdentifier("^[A-Za-z_][A-Za-z0-9_-]*$");
-   if (!std::regex_match(identifier, kValidIdentifier))
+   if (!isValidIdentifier(identifier))
    {
       out << "[FAIL] \"" << identifier
           << "\" is not a valid database/user name (must match ^[A-Za-z_][A-Za-z0-9_-]*$)"
@@ -215,6 +301,11 @@ Error generateServiceUserPassword(std::string* pPassword)
    return Success();
 }
 
+const std::string& serviceUserPasswordCharset()
+{
+   return kPasswordCharset;
+}
+
 Error resolveMasterPassword(const std::string& masterPasswordFile,
                              std::istream& in,
                              std::ostream& out,
@@ -231,6 +322,12 @@ Error resolveMasterPassword(const std::string& masterPasswordFile,
       }
       std::string line;
       std::getline(file, line);
+      if (line.empty())
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "Master password file is empty: " + masterPasswordFile,
+                            ERROR_LOCATION);
+      }
       *pPassword = line;
       return Success();
    }
@@ -307,13 +404,40 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
    *pPassed = true;
    *pUserCreated = false;
 
-   if (rowExists(pMasterConnection, "SELECT 1 FROM pg_database WHERE datname = '" + dbName + "'"))
+   // Defense in depth: createDatabaseAndUser is public and shared with the
+   // Pro overlay, which also interpolates dbName/dbUser directly into SQL
+   // below, so re-check here rather than trusting that every caller already
+   // validated via validateIdentifier().
+   if (!isValidIdentifier(dbName))
+   {
+      out << "[FAIL] Invalid identifier \"" << dbName << "\"" << std::endl;
+      *pPassed = false;
+      return Success();
+   }
+   if (!isValidIdentifier(dbUser))
+   {
+      out << "[FAIL] Invalid identifier \"" << dbUser << "\"" << std::endl;
+      *pPassed = false;
+      return Success();
+   }
+
+   bool databaseExists = false;
+   Error error = rowExists(pMasterConnection,
+      "SELECT 1 FROM pg_database WHERE datname = '" + dbName + "'", &databaseExists);
+   if (error)
+   {
+      out << "[FAIL] Could not query database catalog: " << error.getSummary() << std::endl;
+      *pPassed = false;
+      return Success();
+   }
+
+   if (databaseExists)
    {
       out << "[INFO] Database \"" << dbName << "\" already exists, skipping" << std::endl;
    }
    else
    {
-      Error error = pMasterConnection->executeStr("CREATE DATABASE \"" + dbName + "\"");
+      error = pMasterConnection->executeStr("CREATE DATABASE \"" + dbName + "\"");
       if (error)
       {
          out << "[FAIL] Could not create database \"" << dbName << "\": "
@@ -324,13 +448,23 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
       out << "[PASS] Created database \"" << dbName << "\"" << std::endl;
    }
 
-   if (rowExists(pMasterConnection, "SELECT 1 FROM pg_roles WHERE rolname = '" + dbUser + "'"))
+   bool userExists = false;
+   error = rowExists(pMasterConnection,
+      "SELECT 1 FROM pg_roles WHERE rolname = '" + dbUser + "'", &userExists);
+   if (error)
+   {
+      out << "[FAIL] Could not query database catalog: " << error.getSummary() << std::endl;
+      *pPassed = false;
+      return Success();
+   }
+
+   if (userExists)
    {
       out << "[INFO] User \"" << dbUser << "\" already exists, skipping" << std::endl;
    }
    else
    {
-      Error error = pMasterConnection->executeStr(
+      error = pMasterConnection->executeStr(
          "CREATE USER \"" + dbUser + "\" WITH PASSWORD '" + password + "'");
       if (error)
       {
@@ -343,7 +477,7 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
       *pUserCreated = true;
    }
 
-   Error error = pMasterConnection->executeStr(
+   error = pMasterConnection->executeStr(
       "GRANT ALL PRIVILEGES ON DATABASE \"" + dbName + "\" TO \"" + dbUser + "\"");
    if (error)
    {
@@ -412,8 +546,15 @@ Error setupDb(const Options& options,
    // idempotent re-run against an already-provisioned database must never
    // write a freshly generated password into database.conf, since that
    // password is never actually applied to the (pre-existing) role.
-   bool userAlreadyExists = rowExists(pMasterConnection,
-      "SELECT 1 FROM pg_roles WHERE rolname = '" + dbUser + "'");
+   bool userAlreadyExists = false;
+   error = rowExists(pMasterConnection,
+      "SELECT 1 FROM pg_roles WHERE rolname = '" + dbUser + "'", &userAlreadyExists);
+   if (error)
+   {
+      out << "[FAIL] Could not query database catalog: " << error.getSummary() << std::endl;
+      *pPassed = false;
+      return Success();
+   }
    std::string generatedPassword;
    if (!userAlreadyExists)
    {
@@ -442,7 +583,8 @@ Error setupDb(const Options& options,
 
    if (flags.printOnly)
    {
-      FilePath credentialsPath = FilePath("./rserver-setup-db-credentials");
+      FilePath credentialsPath = resolveDatabaseConfigFile(options.databaseConfigFile())
+         .getParent().completeChildPath("rserver-setup-db-credentials");
       error = writeCredentialsFileFresh(credentialsPath, masterConnectionOptions.host,
                                          masterConnectionOptions.port, dbName, dbUser,
                                          generatedPassword);

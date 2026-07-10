@@ -210,8 +210,9 @@ ProgramStatus Options::read(int argc,
    // result returns run() rather than exitSuccess(), allowing ServerMain to
    // run extended file-path and R-installation checks before exiting.
    // --setup-db does not go through the --check-config validation branch at
-   // all (it only needs allowUnregisteredConfigOptions, set above via
-   // setupDbMode_), so it always falls through read() to a normal run().
+   // all; core::program_options::read() re-detects --setup-db from argv
+   // itself and enables unregistered config options internally when it does,
+   // so it always falls through read() to a normal run().
    bool help = false;
    ProgramStatus status = core::program_options::read(optionsDesc,
                                                       argc,

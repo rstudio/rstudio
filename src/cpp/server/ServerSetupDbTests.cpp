@@ -21,9 +21,28 @@
 
 #include <gtest/gtest.h>
 
+#include <core/FileSerializer.hpp>
+#include <shared_core/FilePath.hpp>
+
 #include "ServerSetupDb.hpp"
 
 using namespace rstudio::core;
+
+namespace {
+
+// Creates a fresh temp directory for a test's config/credentials file and
+// returns it; the caller is responsible for removing it.
+FilePath makeTempDir()
+{
+   FilePath dir;
+   Error error = FilePath::tempFilePath(dir);
+   EXPECT_FALSE(error);
+   error = dir.ensureDirectory();
+   EXPECT_FALSE(error);
+   return dir;
+}
+
+} // anonymous namespace
 
 namespace rstudio {
 namespace server {
@@ -60,6 +79,69 @@ TEST(ServerSetupDbTests, AcceptsIdentifierWithHyphenAfterLeadingChar)
    EXPECT_TRUE(out.str().empty());
 }
 
+TEST(ServerSetupDbTests, RejectsIdentifierWithLoneSingleQuote)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("x'y", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+}
+
+TEST(ServerSetupDbTests, RejectsEmptyIdentifier)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+}
+
+TEST(ServerSetupDbTests, RejectsIdentifierWithLeadingDigit)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("1rstudio", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+}
+
+TEST(ServerSetupDbTests, RejectsIdentifierWithLeadingHyphen)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("-rstudio", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+}
+
+TEST(ServerSetupDbTests, RejectsIdentifierThatIsOnlyAHyphen)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("-", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+}
+
+TEST(ServerSetupDbTests, RejectsIdentifierWithBackslash)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("x\\y", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+}
+
+TEST(ServerSetupDbTests, RejectsIdentifierWithDoubleQuote)
+{
+   std::ostringstream out;
+   bool passed = true;
+   Error error = validateIdentifier("x\"y", out, &passed);
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+}
+
 TEST(ServerSetupDbTests, GeneratesPasswordWithSafeCharsetAndLength)
 {
    std::string password;
@@ -70,6 +152,12 @@ TEST(ServerSetupDbTests, GeneratesPasswordWithSafeCharsetAndLength)
    EXPECT_EQ(std::string::npos, password.find('"'));
    EXPECT_EQ(std::string::npos, password.find('\\'));
    EXPECT_EQ(std::string::npos, password.find(';'));
+
+   // Every generated character must be a member of the real charset, not
+   // merely absent from the four forbidden characters checked above.
+   const std::string& charset = serviceUserPasswordCharset();
+   for (char c : password)
+      EXPECT_NE(std::string::npos, charset.find(c));
 }
 
 TEST(ServerSetupDbTests, GeneratesDifferentPasswordsEachCall)
@@ -167,6 +255,84 @@ TEST(ServerSetupDbTests, ConnectAsMasterReportsConnectFailure)
    EXPECT_FALSE(error);
    EXPECT_FALSE(passed);
    EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
+}
+
+TEST(ServerSetupDbTests, MergeWriteDatabaseConfigFilePreservesUnrelatedKeys)
+{
+   FilePath dir = makeTempDir();
+   FilePath configFile = dir.completeChildPath("database.conf");
+   Error error = writeStringToFile(configFile, "foo=bar\n");
+   ASSERT_FALSE(error);
+
+   error = mergeWriteDatabaseConfigFile(configFile, "db.internal", "5432",
+                                         "rstudio-os", "rstudio-os", "s3cr3t");
+   EXPECT_FALSE(error);
+
+   std::string contents;
+   error = readStringFromFile(configFile, &contents);
+   ASSERT_FALSE(error);
+
+   // Settings writes each key as key="value" (see FileSerializer's
+   // stringifyStringPair), not the bare key=value that database.conf
+   // itself accepts as input.
+   EXPECT_NE(std::string::npos, contents.find("foo=\"bar\""));
+   EXPECT_NE(std::string::npos, contents.find("provider=\"postgresql\""));
+   EXPECT_NE(std::string::npos, contents.find("host=\"db.internal\""));
+   EXPECT_NE(std::string::npos, contents.find("port=\"5432\""));
+   EXPECT_NE(std::string::npos, contents.find("database=\"rstudio-os\""));
+   EXPECT_NE(std::string::npos, contents.find("username=\"rstudio-os\""));
+   EXPECT_NE(std::string::npos, contents.find("password=\"s3cr3t\""));
+
+   dir.remove();
+}
+
+TEST(ServerSetupDbTests, MergeWriteDatabaseConfigFileOverwritesStaleValue)
+{
+   FilePath dir = makeTempDir();
+   FilePath configFile = dir.completeChildPath("database.conf");
+   Error error = writeStringToFile(configFile, "host=old\n");
+   ASSERT_FALSE(error);
+
+   error = mergeWriteDatabaseConfigFile(configFile, "db.internal", "5432",
+                                         "rstudio-os", "rstudio-os", "s3cr3t");
+   EXPECT_FALSE(error);
+
+   std::string contents;
+   error = readStringFromFile(configFile, &contents);
+   ASSERT_FALSE(error);
+
+   EXPECT_NE(std::string::npos, contents.find("host=\"db.internal\""));
+   EXPECT_EQ(std::string::npos, contents.find("old"));
+
+   dir.remove();
+}
+
+TEST(ServerSetupDbTests, WriteCredentialsFileFreshWritesExpectedContentAt0600)
+{
+   FilePath dir = makeTempDir();
+   FilePath credentialsFile = dir.completeChildPath("rserver-setup-db-credentials");
+
+   Error error = writeCredentialsFileFresh(credentialsFile, "db.internal", "5432",
+                                            "rstudio-os", "rstudio-os", "s3cr3t");
+   EXPECT_FALSE(error);
+
+   std::string contents;
+   error = readStringFromFile(credentialsFile, &contents);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("provider=postgresql\n"
+             "host=db.internal\n"
+             "port=5432\n"
+             "database=rstudio-os\n"
+             "username=rstudio-os\n"
+             "password=s3cr3t\n",
+             contents);
+
+   FileMode mode;
+   error = credentialsFile.getFileMode(mode);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(FileMode::USER_READ_WRITE, mode);
+
+   dir.remove();
 }
 
 } // namespace server

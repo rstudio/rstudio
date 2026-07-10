@@ -25,6 +25,7 @@
 #include <core/Database.hpp>
 #include <server/ServerOptions.hpp>
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace server {
@@ -37,10 +38,14 @@ core::Error validateIdentifier(const std::string& identifier,
 
 // Generates a password from an OpenSSL CSPRNG (core::system::crypto::random),
 // mapped via unbiased rejection sampling onto a SQL-literal-safe charset
-// (excludes ' " \ ;), at least 24 characters. Returns a non-Success Error
+// (excludes ' " \ ;), exactly 32 characters. Returns a non-Success Error
 // only if the underlying CSPRNG call fails (e.g. the system entropy source
 // is unavailable).
 core::Error generateServiceUserPassword(std::string* pPassword);
+
+// Returns the charset used by generateServiceUserPassword(), so tests can
+// assert every generated character is a member of it.
+const std::string& serviceUserPasswordCharset();
 
 // Resolves the master password in order of precedence: masterPasswordFile (its
 // first line), then the RSERVER_SETUP_DB_MASTER_PASSWORD environment variable,
@@ -103,6 +108,35 @@ core::Error createDatabaseAndUser(boost::shared_ptr<core::database::IConnection>
                                    std::ostream& out,
                                    bool* pPassed,
                                    bool* pUserCreated);
+
+// Writes the given key/value pairs as a fresh, 0600 config file at `path`,
+// overwriting anything already there. Used only for the standalone
+// --print-only credentials file: it has no other keys worth preserving, and
+// may be stale from a previous run, so a fresh write is the right behavior
+// there (unlike database.conf -- see mergeWriteDatabaseConfigFile below).
+// Exposed here (rather than kept file-local) so it can be unit tested
+// directly.
+core::Error writeCredentialsFileFresh(const core::FilePath& path,
+                                       const std::string& host,
+                                       const std::string& port,
+                                       const std::string& dbName,
+                                       const std::string& dbUser,
+                                       const std::string& password);
+
+// Loads any existing database.conf at `path` (a missing file is not an
+// error -- Settings::initialize() starts from an empty map), sets the six
+// connection keys, and writes it back -- preserving any other keys the
+// admin had already configured there rather than clobbering the whole file.
+// Verifies the write by re-reading the file afterward, since
+// Settings::endUpdate() only LOG_ERRORs on a failed write rather than
+// propagating it. Exposed here (rather than kept file-local) so it can be
+// unit tested directly.
+core::Error mergeWriteDatabaseConfigFile(const core::FilePath& path,
+                                          const std::string& host,
+                                          const std::string& port,
+                                          const std::string& dbName,
+                                          const std::string& dbUser,
+                                          const std::string& password);
 
 // Prompts for the main database/user name (reading from `in`, writing
 // prompts and [PASS]/[FAIL]/[INFO] lines to `out`) -- skipping each prompt

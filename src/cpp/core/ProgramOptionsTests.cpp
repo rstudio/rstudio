@@ -249,6 +249,18 @@ TEST(ProgramOptionsTests, ExtractHostEmptyByDefault)
    EXPECT_EQ("", extractHost(2, argv));
 }
 
+TEST(ProgramOptionsTests, ExtractHostEmptyWhenFlagIsFinalToken)
+{
+   const char* argv[] = { "rserver", "--host" };
+   EXPECT_EQ("", extractHost(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractHostEmptyWithEmptyEqualsForm)
+{
+   const char* argv[] = { "rserver", "--host=" };
+   EXPECT_EQ("", extractHost(2, argv));
+}
+
 TEST(ProgramOptionsTests, ExtractPortFindsSeparateArgForm)
 {
    const char* argv[] = { "rserver", "--setup-db", "--port", "5433" };

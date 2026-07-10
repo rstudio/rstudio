@@ -41,54 +41,20 @@ bool detectCheckConfigMode(int argc, const char* const argv[])
    return false;
 }
 
-bool detectSetupDbMode(int argc, const char* const argv[])
-{
-   for (int i = 1; i < argc; ++i)
-   {
-      std::string arg(argv[i]);
-      if (arg == "--setup-db")
-         return true;
-   }
-   return false;
-}
-
-bool detectShowPassword(int argc, const char* const argv[])
-{
-   for (int i = 1; i < argc; ++i)
-   {
-      std::string arg(argv[i]);
-      if (arg == "--show-password")
-         return true;
-   }
-   return false;
-}
-
-bool detectPrintOnly(int argc, const char* const argv[])
-{
-   for (int i = 1; i < argc; ++i)
-   {
-      std::string arg(argv[i]);
-      if (arg == "--print-only")
-         return true;
-   }
-   return false;
-}
-
-std::string extractMasterPasswordFile(int argc, const char* const argv[])
-{
-   const std::string kPrefix = "--master-password-file=";
-   for (int i = 1; i < argc; ++i)
-   {
-      std::string arg(argv[i]);
-      if (arg == "--master-password-file" && i + 1 < argc)
-         return std::string(argv[i + 1]);
-      if (arg.compare(0, kPrefix.size(), kPrefix) == 0)
-         return arg.substr(kPrefix.size());
-   }
-   return std::string();
-}
-
 namespace {
+
+// Returns true if `--<flag>` appears anywhere in argv. Shared by the
+// --setup-db mode-detection flags below.
+bool argHasFlag(int argc, const char* const argv[], const std::string& flag)
+{
+   const std::string needle = "--" + flag;
+   for (int i = 1; i < argc; ++i)
+   {
+      if (std::string(argv[i]) == needle)
+         return true;
+   }
+   return false;
+}
 
 // Shared implementation for the --setup-db value flags below: returns the
 // value of `--<flagName> <value>` (or `--<flagName>=<value>`) if present in
@@ -109,6 +75,26 @@ std::string extractFlagValue(int argc, const char* const argv[], const std::stri
 }
 
 } // anonymous namespace
+
+bool detectSetupDbMode(int argc, const char* const argv[])
+{
+   return argHasFlag(argc, argv, "setup-db");
+}
+
+bool detectShowPassword(int argc, const char* const argv[])
+{
+   return argHasFlag(argc, argv, "show-password");
+}
+
+bool detectPrintOnly(int argc, const char* const argv[])
+{
+   return argHasFlag(argc, argv, "print-only");
+}
+
+std::string extractMasterPasswordFile(int argc, const char* const argv[])
+{
+   return extractFlagValue(argc, argv, "master-password-file");
+}
 
 std::string extractHost(int argc, const char* const argv[])
 {
