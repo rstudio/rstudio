@@ -40,7 +40,14 @@ endif()
 #    with the real requirement beats the downstream "prebuilts not found"
 #    error, whose advice (re-run install-dependencies.cmd) cannot help a
 #    VS 2022 user: that script only ever installs msvc145 prebuilts.
-#    Keep this pin in sync with dependencies/windows/install-dependencies.cmd.
+#    When bumping the toolset, keep this pin in sync with its other
+#    definition sites:
+#      dependencies/windows/install-dependencies.cmd   (prebuilt archive names)
+#      dependencies/windows/install-boost.cmd
+#      dependencies/windows/install-boost/install-boost.R
+#      dependencies/windows/install-soci/install-soci.R
+#      .github/workflows/os-build-dependencies-windows.yml
+#      jenkins/utils.groovy                            (docker image tag suffix)
 if(NOT MSVC_TOOLSET_VERSION EQUAL 145)
    message(FATAL_ERROR
       "The RStudio Windows build requires the MSVC 14.5 toolset (Visual "

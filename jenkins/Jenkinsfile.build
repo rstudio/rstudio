@@ -1,11 +1,13 @@
 def utils
 
-def labelForOS = [
+// Maps each OS axis value to its OS family, for dispatching build stages.
+// Agent node labels are derived separately, via utils.getAgentLabelForOS().
+def familyForOS = [
   'jammy':      'linux',
   'rhel8':      'linux',
   'rhel9':      'linux',
   'opensuse15': 'linux',
-  'windows':    'windows2022',
+  'windows':    'windows',
   'macos':      'macos'
 ]
 
@@ -129,7 +131,7 @@ pipeline {
         stages {
           stage ("Pull Build Push") {
             agent {
-              label "${labelForOS[os]} && ${arch}"
+              label "${utils.getAgentLabelForOS(familyForOS[os], arch)}"
             }
 
             environment {
@@ -172,7 +174,7 @@ pipeline {
         stage ("Build Windows") {
           when {
             anyOf {
-              equals expected: params.OS_FILTER, actual: 'windows';
+              equals expected: familyForOS[params.OS_FILTER], actual: 'windows';
               equals expected: params.OS_FILTER, actual: 'all'
             }
           }
@@ -193,7 +195,7 @@ pipeline {
         stage ("Build Linux") {
           when {
             anyOf {
-              equals expected: labelForOS[params.OS_FILTER], actual: 'linux';
+              equals expected: familyForOS[params.OS_FILTER], actual: 'linux';
               equals expected: params.OS_FILTER, actual: 'all'
             }
           }
@@ -216,7 +218,7 @@ pipeline {
         stage ("Build MacOS") {
           when {
             anyOf {
-              equals expected: labelForOS[params.OS_FILTER], actual: 'macos';
+              equals expected: familyForOS[params.OS_FILTER], actual: 'macos';
               equals expected: params.OS_FILTER, actual: 'all'
             }
           }

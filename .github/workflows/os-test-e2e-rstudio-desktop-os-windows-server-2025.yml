@@ -364,20 +364,7 @@ jobs:
       # GITHUB_PATH so vcvarsall.bat is on PATH for make-package.bat (which
       # calls it by name).
       - name: Set up MSVC environment
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
-            -latest -products * `
-            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-            -property installationPath
-          if ([string]::IsNullOrEmpty($vsPath)) {
-            Write-Error "vswhere could not find a Visual Studio installation with VC++ tools"
-            exit 1
-          }
-          Write-Host "Visual Studio installation: $vsPath"
-          $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
-          Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
-          Write-Host "Added to PATH: $vcBuildPath"
+        uses: ./.github/actions/setup-msvc-environment
 
       # install-dependencies.cmd targets the VS 2026 toolset (msvc145) and the
       # "Visual Studio 18 2026" CMake generator by default, matching this
