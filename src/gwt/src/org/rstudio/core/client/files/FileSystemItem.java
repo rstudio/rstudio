@@ -110,8 +110,10 @@ public class FileSystemItem extends JavaScriptObject
       return this.dir;
    }-*/;
 
-   // resolved target path when this file is a macOS Finder alias (in which
-   // case 'dir' reflects the target rather than the alias file); null otherwise
+   // resolved target path when this file is a macOS Finder alias that the
+   // backend could resolve (in which case 'dir' reflects the target rather
+   // than the alias file); null otherwise -- including broken aliases,
+   // which behave as plain files
    public final native String getAliasTarget() /*-{
       return this.alias_target || null;
    }-*/;

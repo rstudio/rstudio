@@ -24,9 +24,10 @@ public class FileSystemItemTests extends GWTTestCase
       return "org.rstudio.studio.RStudioTests";
    }
 
-   // Mirrors a listing entry for a macOS Finder alias as emitted by
+   // Models the alias-relevant fields of a listing entry as emitted by
    // createFileSystemItem (SessionModuleContext.cpp): 'dir' carries the
-   // target's directory-ness and 'alias_target' its resolved path.
+   // target's directory-ness and 'alias_target' its resolved path. Not a
+   // complete fixture -- fields like 'exists' are omitted.
    private static native FileSystemItem createAliasEntry(String path,
                                                          boolean dir,
                                                          String aliasTarget) /*-{
