@@ -26,13 +26,28 @@ Changes:
    - `FilePath::isSymlink()` (`src/cpp/shared_core/FilePath.cpp:1435`) uses
      `boost::filesystem::is_symlink` (a `symlink_status`/`lstat`-equivalent — it does
      **not** follow the link, and returns true even for broken links).
-3. When `is_symlink` is true, resolve and emit the target (**mandatory**, not optional —
-   the tooltip and end-to-end verification depend on it):
-   `entry["symlink_target"] = createAliasedPath(filePath.resolveSymlink())`.
-   - `FilePath::resolveSymlink()` (`src/cpp/shared_core/FilePath.cpp:1762`) wraps
-     `boost::filesystem::read_symlink`. Runs only for actual symlinks (rare). If
-     `resolveSymlink()` fails, omit `symlink_target`; the frontend tooltip falls back to
-     the plain name (see Layer 3d).
+3. When `is_symlink` is true, emit the **literal link target** as a display string
+   (mandatory — the tooltip and verification depend on it):
+   `entry["symlink_target"] = <raw read_symlink contents>`.
+   - **Show the literal target, `ls -l`-style, and do NOT run it through
+     `createAliasedPath()`.** `read_symlink` returns exactly what the link stores, which is
+     commonly **relative** (e.g. `R-CMD-check.yaml -> check-full.yaml`, precisely the
+     issue's example). `createAliasedPath()` expects an absolute path and would mangle a
+     relative one. A relative target is unambiguous in the pane because the link's
+     directory *is* the directory being listed. (Alternative — resolve against
+     `filePath.getParent()` and aliasify to an absolute `~/...` path — was considered and
+     rejected: it diverges from `ls`/the issue examples and adds a path-resolution step.
+     Aliases differ intentionally: `alias_target` is an absolute resolved path aliasified
+     via `createAliasedPath`, because Finder bookmarks are inherently absolute.)
+   - **The existing `FilePath::resolveSymlink()` (`FilePath.cpp:1758`) cannot be used
+     here.** It swallows errors (`catch` → `logError` → `return *this`), so on failure it
+     returns the *symlink's own path*, which is indistinguishable from success and would
+     surface as `name -> name`. Add an error-reporting read API mirroring the alias
+     pattern (`resolveFinderAlias(const FilePath&, FilePath*)` returns `Error`), e.g.
+     `Error FilePath::readSymlink(std::string* pTarget) const` wrapping
+     `boost::filesystem::read_symlink` and propagating the `filesystem_error`.
+   - On read error, log at debug and **omit** `symlink_target`; the frontend tooltip then
+     falls back to the plain name (see Layer 3d). Runs only for actual symlinks (rare).
 4. **macOS aliases:** inside the existing `#ifdef __APPLE__` block (~:1944-1964), when
    `isFinderAlias(filePath)` is true, emit `entry["is_alias"] = true` **regardless of
    whether the target resolves**. Keep the existing `alias_target` emission exactly as-is
@@ -168,10 +183,14 @@ e.g. `RSConnectDeploy.java`).
   **including a broken alias** (`is_alias` true, `alias_target` absent) still reporting
   `isLink()` true; `getLinkTarget()` preferring the symlink target and falling back to the
   alias target and to null. Run: `cd src/gwt && ant unittest`.
-- **Backend:** if a session-level test harness makes it practical, assert
-  `createFileSystemItem` sets `is_symlink` for a symlinked path; otherwise cover
-  `FilePath::isSymlink()` behavior and rely on manual verification. Investigate existing
-  `src/cpp/tests` coverage during implementation.
+- **Backend:** unit-test the new `FilePath::readSymlink()` API (a `FilePath`-level test,
+  no session harness needed): a symlink with a **relative** target returns that relative
+  string verbatim; one with an **absolute** target returns it verbatim; a non-symlink /
+  unreadable link returns an `Error` and leaves the out-param untouched (so
+  `createFileSystemItem` omits the field). Also cover `FilePath::isSymlink()` if not
+  already covered. If a session-level harness makes it practical, assert
+  `createFileSystemItem` sets `is_symlink` + `symlink_target` for a symlinked path.
+  Investigate existing `src/cpp/tests` coverage during implementation.
 - **e2e (optional):** Playwright test creating a symlink in a temp dir and asserting the
   badge/aria appears. Optional because symlink creation on Windows CI needs privilege.
 
@@ -199,6 +218,8 @@ Add under `### New`:
 
 ## Files touched (implementation PR)
 
+- `src/cpp/shared_core/FilePath.cpp` + `.../include/shared_core/FilePath.hpp` — new
+  error-reporting `readSymlink(std::string*)` API.
 - `src/cpp/session/SessionModuleContext.cpp` — emit `is_symlink`, `symlink_target`, and
   `is_alias`.
 - `src/gwt/.../core/client/files/FileSystemItem.java` — `isSymlink()` / `isAlias()` /
