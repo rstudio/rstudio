@@ -87,7 +87,9 @@ public class FileIcon
    // symlink/alias indicator, #9924) and a per-file tooltip. Deliberately
    // creates a new FileIcon rather than mutating this one: FileTypeRegistry
    // returns shared singleton icons, so mutating one would leak the badge and
-   // the per-file tooltip onto every other row using the same icon.
+   // the per-file tooltip onto every other row using the same icon. The tooltip
+   // is only rendered alongside the badge (FileIconRenderer draws neither for a
+   // plain icon).
    public FileIcon withLinkBadge(ImageResource badgeResource,
                                  String badgeDescription,
                                  String tooltip)
@@ -104,19 +106,9 @@ public class FileIcon
       return imageResource_;
    }
 
-   public void setImageResource(ImageResource imageResource)
-   {
-      imageResource_ = imageResource;
-   }
-
    public String getDescription()
    {
       return description_;
-   }
-
-   public void setDescription(String description)
-   {
-      description_ = description;
    }
 
    // Optional corner badge composited over the icon; null for an ordinary icon.
@@ -143,8 +135,8 @@ public class FileIcon
       icon.setAltText(getDescription());
       return icon;
    }
-   private ImageResource imageResource_;
-   private String description_;
+   private final ImageResource imageResource_;
+   private final String description_;
    private final ImageResource badgeResource_;
    private final String badgeDescription_;
    private final String tooltip_;

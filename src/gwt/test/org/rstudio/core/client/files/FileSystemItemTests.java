@@ -85,13 +85,14 @@ public class FileSystemItemTests extends GWTTestCase
    // createFileSystemItem (SessionModuleContext.cpp): is_symlink / is_alias
    // flags plus their targets. A null target models an absent field.
    private static native FileSystemItem createLinkEntry(String path,
+                                                        boolean dir,
                                                         boolean isSymlink,
                                                         boolean isAlias,
                                                         String symlinkTarget,
                                                         String aliasTarget) /*-{
       return {
          path: path,
-         dir: false,
+         dir: dir,
          length: -1,
          lastModified: 0,
          is_symlink: isSymlink,
@@ -115,7 +116,7 @@ public class FileSystemItemTests extends GWTTestCase
    {
       // relative targets are surfaced verbatim, like `ls -l`
       FileSystemItem link =
-            createLinkEntry("/home/user/link", true, false, "../shared/doc.txt", null);
+            createLinkEntry("/home/user/link", false, true, false, "../shared/doc.txt", null);
       assertTrue(link.isSymlink());
       assertFalse(link.isAlias());
       assertTrue(link.isLink());
@@ -126,7 +127,7 @@ public class FileSystemItemTests extends GWTTestCase
    public void testAliasIsLinkAndFallsBackToAliasTarget()
    {
       FileSystemItem alias =
-            createLinkEntry("/home/user/alias", false, true, null, "/home/user/doc.txt");
+            createLinkEntry("/home/user/alias", false, false, true, null, "/home/user/doc.txt");
       assertFalse(alias.isSymlink());
       assertTrue(alias.isAlias());
       assertTrue(alias.isLink());
@@ -139,9 +140,33 @@ public class FileSystemItemTests extends GWTTestCase
       // a broken alias is flagged (is_alias) even though its target did not
       // resolve, so it is still badged; it has no target for the tooltip
       FileSystemItem alias =
-            createLinkEntry("/home/user/broken", false, true, null, null);
+            createLinkEntry("/home/user/broken", false, false, true, null, null);
       assertTrue(alias.isAlias());
       assertTrue(alias.isLink());
       assertNull(alias.getLinkTarget());
+   }
+
+   public void testSymlinkWithUnreadableTargetIsStillLink()
+   {
+      // when the backend cannot read the target it omits symlink_target; the
+      // entry is still a link, with no target for the tooltip
+      FileSystemItem link =
+            createLinkEntry("/home/user/deadlink", false, true, false, null, null);
+      assertTrue(link.isSymlink());
+      assertTrue(link.isLink());
+      assertNull(link.getSymlinkTarget());
+      assertNull(link.getLinkTarget());
+   }
+
+   public void testDirectorySymlinkReportsDirectory()
+   {
+      // a symlink to a directory follows the link, so dir is true; it is still
+      // flagged as a symlink and badged
+      FileSystemItem link =
+            createLinkEntry("/home/user/dirlink", true, true, false, "/home/user/dir", null);
+      assertTrue(link.isDirectory());
+      assertTrue(link.isSymlink());
+      assertTrue(link.isLink());
+      assertEquals("/home/user/dir", link.getLinkTarget());
    }
 }

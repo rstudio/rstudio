@@ -1940,8 +1940,9 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
 
    // report symbolic-link status so the client can badge links (#9924). This
    // adds one is_symlink (lstat-equivalent) call per entry; the target is read
-   // verbatim (ls -l style, possibly relative) only for actual symlinks and
-   // drives the client tooltip.
+   // only for actual symlinks and drives the client tooltip. It is shown as
+   // stored (ls -l style), so it may be relative -- and on Windows the path
+   // separators are normalized to '/'.
    bool isSymlink = filePath.isSymlink();
    entry["is_symlink"] = isSymlink;
    if (isSymlink)
@@ -1949,9 +1950,17 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
       std::string symlinkTarget;
       Error error = filePath.readSymlink(symlinkTarget);
       if (error)
+      {
+         // a read failure here is rare (isSymlink() just succeeded): typically a
+         // TOCTOU race where the entry changed mid-listing. Log at debug like
+         // the alias case below and omit the target; the row is still badged and
+         // the client tooltip falls back to the name.
          LOG_DEBUG_MESSAGE("Failed to read symlink target: " + error.asString());
+      }
       else
+      {
          entry["symlink_target"] = symlinkTarget;
+      }
    }
 
 #ifdef __APPLE__

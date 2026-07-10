@@ -161,6 +161,13 @@ public class FileSystemItem extends JavaScriptObject
    // best "points to" target for the link tooltip: the symlink target, or an
    // alias's resolved target; null when neither is available (e.g. a broken
    // alias) so callers can fall back to just the name.
+   //
+   // Display only -- do NOT use for navigation. A symlink target is the raw,
+   // possibly relative link text (relative to the link's own directory), while
+   // an alias target is an absolute resolved path; the two are not
+   // interchangeable as navigable paths. The filesystem already resolves POSIX
+   // symlinks natively (unlike aliases -- see resolveAliasTarget()), so there
+   // is intentionally no navigable symlink-target accessor.
    public final String getLinkTarget()
    {
       String target = getSymlinkTarget();

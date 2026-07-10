@@ -823,8 +823,9 @@ public:
    /**
     * @brief Reads the target of this symbolic link, reporting read failures.
     *
-    * Unlike resolveSymlink(), which silently returns this path when the link cannot be read, this reports an
-    * error instead. The target is returned verbatim, as stored in the link, so it may be a relative path.
+    * Unlike resolveSymlink(), which logs the failure but returns this path unchanged, this reports an error
+    * instead. The target is returned essentially as stored in the link (with path separators normalized to
+    * '/'), so it may be a relative path.
     *
     * @param out_targetPath  The raw link target. Set only on success.
     *
