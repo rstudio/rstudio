@@ -1,7 +1,7 @@
 # escape=`
 
 # https://hub.docker.com/r/microsoft/windows-servercore
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022
 
 # Use plain cmd shell for initial setup.
 SHELL ["cmd", "/S", "/C"]
@@ -31,7 +31,7 @@ WORKDIR "C:/BuildTools"
 #
 
 # Download the Build Tools bootstrapper.
-RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
+RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/18/release/vs_buildtools.exe
 
 #
 # Install Build Tools. For whatever reason, this fails when we try to install
@@ -46,7 +46,7 @@ RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtoo
 #
 RUN `
   start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
-    --installPath "C:/Program Files/Microsoft Visual Studio/2022/BuildTools" `
+    --installPath "C:/Program Files/Microsoft Visual Studio/2026/BuildTools" `
     --add Microsoft.VisualStudio.Workload.VCTools `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 `
@@ -54,7 +54,7 @@ RUN `
 
 # Try testing the build tools. You might see some telemetry errors here;
 # they can apparently be ignored.
-WORKDIR "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/Common7/Tools"
+WORKDIR "C:/Program Files/Microsoft Visual Studio/2026/BuildTools/Common7/Tools"
 RUN `
   start /WAIT /B cmd.exe /S /C `
   echo -- Testing VsDevCmd.bat `
