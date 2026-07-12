@@ -30,8 +30,20 @@ WORKDIR "C:/BuildTools"
 # required Windows 10 SDK, as chocolatey doesn't seem to provide the versions we need.
 #
 
+# Install a pinned release of the VS 2026 Build Tools (18.7.3). Fixed-version
+# bootstrapper URLs for other releases are published at:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-history
+#
+# Note that VS 2026 replaced the versioned 'vs/<version>/release' aka.ms URLs
+# with channel-based URLs (e.g. 'vs/stable/vs_buildtools.exe') that always
+# track the latest release; use a fixed-version bootstrapper to stay pinned.
+# Beware that unknown aka.ms links silently redirect to a Bing HTML page,
+# which fails later with 'The system cannot execute the specified program.'
+ARG VS_BUILDTOOLS_URL=https://download.visualstudio.microsoft.com/download/pr/4037ccca-d103-412b-a678-bc0aa164315e/07b09afd416dc05c781f171c881c23e42907eeb8d812fa1d2993dffb9323c869/vs_BuildTools.exe
+
 # Download the Build Tools bootstrapper.
-RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/18/release/vs_buildtools.exe
+RUN curl -SL --output vs_buildtools.exe %VS_BUILDTOOLS_URL%
 
 #
 # Install Build Tools. For whatever reason, this fails when we try to install
