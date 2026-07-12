@@ -27,6 +27,8 @@ import org.rstudio.core.client.dom.DomUtilsTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
 import org.rstudio.studio.client.application.model.SessionScopeTests;
+import org.rstudio.studio.client.common.filetypes.FileIconRendererTests;
+import org.rstudio.studio.client.common.filetypes.FileIconTests;
 import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerItemCodecTests;
 import org.rstudio.studio.client.projects.model.ProjectMRUEntryTests;
@@ -70,6 +72,8 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(FileSystemItemTests.class);
+      suite.addTestSuite(FileIconTests.class);
+      suite.addTestSuite(FileIconRendererTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
       suite.addTestSuite(LintItemTests.class);
