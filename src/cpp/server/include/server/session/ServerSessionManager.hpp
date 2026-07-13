@@ -72,6 +72,16 @@ public:
 
    void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string());
 
+   // associate the launched process with its pending launch so a launch whose
+   // process dies before a client connection can be detected and cleared
+   // (rather than suppressing relaunch attempts until it ages out)
+   void notePendingLaunchPid(const core::r_util::SessionContext& context, PidType pid);
+
+   // remove the pending launch if it still belongs to the given (now exited)
+   // process; a no-op when the context has no pending launch or the pending
+   // launch was recorded for a different process
+   void removePendingLaunchForPid(const core::r_util::SessionContext& context, PidType pid, int exitStatus);
+
    // set a custom session launcher
    typedef boost::function<core::Error(
                            boost::asio::io_context&,
@@ -104,10 +114,16 @@ private:
    int cleanStalePendingLaunches();
 
 private:
-   // pending launches
+   // pending launches; pid is -1 until the launched process is known (custom
+   // session launchers may never report one)
+   struct PendingLaunch
+   {
+      boost::posix_time::ptime launchTime;
+      PidType pid = -1;
+   };
+
    boost::mutex launchesMutex_;
-   typedef std::map<core::r_util::SessionContext,
-                    boost::posix_time::ptime> LaunchMap;
+   typedef std::map<core::r_util::SessionContext, PendingLaunch> LaunchMap;
    LaunchMap pendingLaunches_;
 
    // session launch function
