@@ -99,7 +99,9 @@ core::Error connectAsMaster(const SetupDbFlags& flags,
 // ran (i.e. `dbUser` did not already exist); callers that generate a fresh
 // password for `dbUser` should only trust/persist it when *pUserCreated is
 // true, since `password` is otherwise never applied to the (pre-existing)
-// role.
+// role. Sets *pDatabaseCreated to true only if CREATE DATABASE actually ran,
+// so callers can distinguish a freshly created database from a fully
+// pre-provisioned one when the user already existed.
 core::Error createDatabaseAndUser(boost::shared_ptr<core::database::IConnection> pMasterConnection,
                                    const core::database::PostgresqlConnectionOptions& masterConnectionOptions,
                                    const std::string& dbName,
@@ -107,7 +109,15 @@ core::Error createDatabaseAndUser(boost::shared_ptr<core::database::IConnection>
                                    const std::string& password,
                                    std::ostream& out,
                                    bool* pPassed,
-                                   bool* pUserCreated);
+                                   bool* pUserCreated,
+                                   bool* pDatabaseCreated);
+
+// Ensures `path` exists and is 0600 before any plaintext secret is written
+// into it: creates it empty if missing, and tightens its mode to 0600 whether
+// or not it already existed, so a pre-existing config file left at a
+// permissive umask never briefly holds the password at that looser mode.
+// Exposed here (rather than kept file-local) so it can be unit tested directly.
+core::Error ensureFileExistsWithUserOnlyMode(const core::FilePath& path);
 
 // Writes the given key/value pairs as a fresh, 0600 config file at `path`,
 // overwriting anything already there. Used only for the standalone
@@ -150,9 +160,13 @@ core::Error mergeWriteDatabaseConfigFile(const core::FilePath& path,
 // file only written -- when `dbUser` did not already exist; an idempotent
 // re-run against an already-provisioned database leaves any existing
 // database.conf/credentials file untouched rather than overwriting it with a
-// password that was never applied to the real (pre-existing) role. Returns a
-// non-Success Error only if the command itself could not run; SQL/connection
-// failures are reported as [FAIL] lines on `out` with *pPassed set to false.
+// password that was never applied to the real (pre-existing) role. When the
+// user already existed but the database had to be created this run, no config
+// is written (the pre-existing role's password is unknown) and an actionable
+// [INFO] message is printed rather than a misleading "already provisioned"
+// one. Returns a non-Success Error only if the command itself could not run;
+// SQL/connection failures are reported as [FAIL] lines on `out` with *pPassed
+// set to false.
 core::Error setupDb(const Options& options,
                      const SetupDbFlags& flags,
                      boost::shared_ptr<core::database::IConnection> pMasterConnection,

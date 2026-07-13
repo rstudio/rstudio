@@ -307,6 +307,57 @@ TEST(ServerSetupDbTests, MergeWriteDatabaseConfigFileOverwritesStaleValue)
    dir.remove();
 }
 
+TEST(ServerSetupDbTests, EnsureFileExistsWithUserOnlyModeTightensPreexistingLooseMode)
+{
+   FilePath dir = makeTempDir();
+   FilePath configFile = dir.completeChildPath("database.conf");
+   Error error = writeStringToFile(configFile, "foo=bar\n");
+   ASSERT_FALSE(error);
+
+   // Simulate a pre-existing config file created under a permissive umask
+   // (0644) -- the common case, since this tool adds credentials to config an
+   // admin already has. It must be tightened to 0600 up front, before any
+   // writer puts the plaintext password into it. (The writers' trailing chmod
+   // would mask this at the final state, so assert against the helper the
+   // writers call before writing rather than the writers themselves.)
+   error = configFile.changeFileMode(FileMode::USER_READ_WRITE_ALL_READ);
+   ASSERT_FALSE(error);
+
+   error = ensureFileExistsWithUserOnlyMode(configFile);
+   EXPECT_FALSE(error);
+
+   FileMode mode;
+   error = configFile.getFileMode(mode);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(FileMode::USER_READ_WRITE, mode);
+
+   // The pre-existing content is left intact -- the helper only touches the mode.
+   std::string contents;
+   error = readStringFromFile(configFile, &contents);
+   ASSERT_FALSE(error);
+   EXPECT_EQ("foo=bar\n", contents);
+
+   dir.remove();
+}
+
+TEST(ServerSetupDbTests, EnsureFileExistsWithUserOnlyModeCreatesMissingFileAt0600)
+{
+   FilePath dir = makeTempDir();
+   FilePath configFile = dir.completeChildPath("database.conf");
+   ASSERT_FALSE(configFile.exists());
+
+   Error error = ensureFileExistsWithUserOnlyMode(configFile);
+   EXPECT_FALSE(error);
+   ASSERT_TRUE(configFile.exists());
+
+   FileMode mode;
+   error = configFile.getFileMode(mode);
+   ASSERT_FALSE(error);
+   EXPECT_EQ(FileMode::USER_READ_WRITE, mode);
+
+   dir.remove();
+}
+
 TEST(ServerSetupDbTests, WriteCredentialsFileFreshWritesExpectedContentAt0600)
 {
    FilePath dir = makeTempDir();

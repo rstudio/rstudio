@@ -128,24 +128,29 @@ FilePath resolveDatabaseConfigFile(const std::string& databaseConfigFile)
       : core::system::xdg::findSystemConfigFile("database configuration", kDatabaseConfigFileName);
 }
 
-// Creates `path` as an empty, 0600 file if it doesn't already exist, before
-// any plaintext secret is written into it. A subsequent truncating write to
-// an existing file preserves its mode, so this ensures the file is never
-// briefly world/group-readable under a permissive umask between creation
-// and the trailing changeFileMode both writers already apply.
+} // anonymous namespace
+
+// Ensures `path` exists and is 0600 before any plaintext secret is written
+// into it: creates it empty if missing, and tightens its mode to 0600 whether
+// or not it already existed. A truncating write preserves an existing file's
+// mode, so a pre-existing database.conf left at a permissive umask (0644 is
+// the common case -- this tool's job is to add credentials to config the
+// admin already has) would otherwise receive the plaintext password at that
+// looser mode and only be narrowed by the trailing changeFileMode each writer
+// applies, leaving a read window (and, if the process is interrupted between
+// the write and that chmod, a permanently world-readable secret). Chmodding
+// up front closes that window and makes the trailing chmod belt-and-suspenders.
 Error ensureFileExistsWithUserOnlyMode(const FilePath& path)
 {
-   if (path.exists())
-      return Success();
-
-   Error error = writeStringToFile(path, std::string());
-   if (error)
-      return error;
+   if (!path.exists())
+   {
+      Error error = writeStringToFile(path, std::string());
+      if (error)
+         return error;
+   }
 
    return path.changeFileMode(core::FileMode::USER_READ_WRITE);
 }
-
-} // anonymous namespace
 
 // Writes the given key/value pairs as a fresh, 0600 config file at `path`,
 // overwriting anything already there. Used only for the standalone
@@ -399,10 +404,12 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
                              const std::string& password,
                              std::ostream& out,
                              bool* pPassed,
-                             bool* pUserCreated)
+                             bool* pUserCreated,
+                             bool* pDatabaseCreated)
 {
    *pPassed = true;
    *pUserCreated = false;
+   *pDatabaseCreated = false;
 
    // Defense in depth: createDatabaseAndUser is public and shared with the
    // Pro overlay, which also interpolates dbName/dbUser directly into SQL
@@ -446,6 +453,7 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
          return Success();
       }
       out << "[PASS] Created database \"" << dbName << "\"" << std::endl;
+      *pDatabaseCreated = true;
    }
 
    bool userExists = false;
@@ -568,16 +576,41 @@ Error setupDb(const Options& options,
    }
 
    bool userCreated = false;
+   bool databaseCreated = false;
    error = createDatabaseAndUser(pMasterConnection, masterConnectionOptions,
-                                  dbName, dbUser, generatedPassword, out, pPassed, &userCreated);
+                                  dbName, dbUser, generatedPassword, out, pPassed,
+                                  &userCreated, &databaseCreated);
    if (error) return error;
    if (!*pPassed)
       return Success();
 
+   // A config file is only written when the service user was created this run,
+   // since that is the only case in which we hold a password that was actually
+   // applied to the role. When the user already existed we leave config alone
+   // -- but distinguish "nothing changed" from "we created a database for a
+   // pre-existing user whose password we don't know", since the latter leaves
+   // the admin with a new database and no usable connection settings and needs
+   // actionable guidance rather than a misleading "already provisioned".
    if (!userCreated)
    {
-      out << "[INFO] Service user \"" << dbUser
-          << "\" already provisioned; leaving existing connection settings untouched." << std::endl;
+      if (databaseCreated)
+      {
+         FilePath configPath = resolveDatabaseConfigFile(options.databaseConfigFile());
+         out << "[INFO] Created database \"" << dbName << "\", but service user \"" << dbUser
+             << "\" already exists and its password is unknown to this tool, so no connection "
+                "settings were written." << std::endl;
+         out << "       Set a password for \"" << dbUser << "\" and record it in "
+             << configPath.getAbsolutePath()
+             << " (for example: ALTER USER \"" << dbUser << "\" WITH PASSWORD '<password>';),"
+                " or re-run against a database where the service user does not yet exist."
+             << std::endl;
+      }
+      else
+      {
+         out << "[INFO] Database \"" << dbName << "\" and service user \"" << dbUser
+             << "\" already provisioned; leaving existing connection settings untouched."
+             << std::endl;
+      }
       return Success();
    }
 
