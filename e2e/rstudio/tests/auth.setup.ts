@@ -4,9 +4,11 @@ import * as os from 'os';
 import * as path from 'path';
 import {
   AUTH_STORAGE_KEY,
-  POSITAI_STORE_RELATIVE,
+  POSITAI_DIR_RELATIVE,
   PositAiOAuthEntry,
   isStoreFileAuthenticated,
+  noSeedCredentials,
+  storeFile,
 } from '../utils/auth';
 
 /**
@@ -25,11 +27,11 @@ import {
  *          to "seed". This is the default -- unset behaves as "flow".
  *   seed   Copy the host user's whole ~/.posit/assistant directory (tokens
  *          under store/data.json, plus skills, settings, workspaces) into the
- *          sandbox. Fails loud if the host is not signed in. Explicit only;
- *          never used as a fallback. Useful for fast local iteration when the
- *          developer is already signed in on the host. Suppressed by the
- *          global host-copy kill-switch PW_SANDBOX_NO_SEED_CREDENTIALS, in
- *          which case the @ai tests skip.
+ *          sandbox. Skips (Posit AI tests) if the host is not signed in.
+ *          Explicit only; never used as a fallback. Useful for fast local
+ *          iteration when the developer is already signed in on the host.
+ *          Suppressed by the global host-copy kill-switch
+ *          PW_SANDBOX_NO_SEED_CREDENTIALS, in which case the tests skip.
  *   off    Provision nothing; the @ai tests skip.
  */
 
@@ -37,23 +39,10 @@ const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
-function storeFile(homeDir: string): string {
-  return path.join(homeDir, POSITAI_STORE_RELATIVE);
-}
-
-// Host directory that holds all Posit AI state -- the token store under
-// store/data.json plus skills, settings, and workspaces. seed copies this
-// whole tree so the sandbox mirrors the host's signed-in Assistant.
-const POSITAI_DIR_RELATIVE = path.join('.posit', 'assistant');
-
-// The global host-copy kill-switch (Scope A): when set, seed mode is
-// suppressed (sign-in flow is unaffected). Parsed the same way as in
-// sandbox-setup.ts.
-function noSeedCredentials(): boolean {
-  return ['1', 'true'].includes(
-    (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
-  );
-}
+// Valid PW_SANDBOX_POSITAI_AUTH values, in one place so the runtime check and
+// its error message stay in sync. Unset behaves as "flow".
+type PositAiAuthMode = 'off' | 'seed' | 'flow';
+const AUTH_MODES: readonly PositAiAuthMode[] = ['off', 'seed', 'flow'];
 
 function copyTree(src: string, dest: string): void {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -74,7 +63,8 @@ interface DeviceCodeResponse {
   verification_uri: string;
   verification_uri_complete: string;
   device_code: string;
-  interval: number;
+  // Optional per RFC 8628 §3.2 (default 5s); defaulted at the call site.
+  interval?: number;
   expires_in: number;
 }
 
@@ -89,22 +79,32 @@ interface TokenSuccessResponse {
 }
 
 // Per RFC 6749 §5.2: error is required; error_description and error_uri are
-// optional. Device-flow error codes (RFC 8628 §3.5) include authorization_-
-// pending and slow_down (transient) plus access_denied and expired_token.
+// optional. Device-flow error codes (RFC 8628 §3.5) include
+// authorization_pending and slow_down (transient) plus access_denied and
+// expired_token.
 interface TokenErrorResponse {
   error: string;
   error_description?: string;
   error_uri?: string;
 }
 
-class DeviceFlowTerminalError extends Error {
+class OAuthTerminalError extends Error {
   constructor(public readonly oauthError: string, message: string) {
     super(message);
-    this.name = 'DeviceFlowTerminalError';
+    this.name = 'OAuthTerminalError';
   }
 }
 
-const TERMINAL_OAUTH_ERRORS = new Set(['access_denied', 'expired_token', 'invalid_grant']);
+// A browser-side login failure at a step where wrong credentials or a denied
+// authorization is the likely cause (see automateLogin). Treated as fatal so a
+// bad POSIT_EMAIL/POSIT_PASSWORD fails the run rather than masquerading as a
+// skip.
+class LoginAutomationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LoginAutomationError';
+  }
+}
 
 async function fetchDeviceCode(): Promise<DeviceCodeResponse> {
   const resp = await fetch(`https://${AUTH_HOST}/oauth/device/authorize`, {
@@ -113,7 +113,7 @@ async function fetchDeviceCode(): Promise<DeviceCodeResponse> {
     body: new URLSearchParams({ scope: SCOPE, client_id: CLIENT_ID }).toString(),
   });
   if (!resp.ok) {
-    throw new Error(`Device auth request failed: ${resp.status} ${await resp.text()}`);
+    throw new Error(`OAuth sign-in request failed: ${resp.status} ${await resp.text()}`);
   }
   return resp.json() as Promise<DeviceCodeResponse>;
 }
@@ -146,24 +146,31 @@ async function pollForToken(
       waitMs += 5000;
       continue;
     }
-    if (TERMINAL_OAUTH_ERRORS.has(body.error)) {
-      const suffix = body.error_description ? `: ${body.error_description}` : '';
-      throw new DeviceFlowTerminalError(
-        body.error,
-        `Device flow terminated by OAuth server (${body.error})${suffix}`,
-      );
-    }
-    throw new Error(`Token polling failed: ${body.error}`);
+    // Only authorization_pending / slow_down are non-terminal (RFC 8628 §3.5).
+    // Every other error is a deterministic problem -- access_denied,
+    // expired_token, invalid_grant, or a config fault (invalid_client,
+    // invalid_scope, ...) -- so fail loud rather than let it look like a skip.
+    // (expired_token can also mean a slow runner missed the window; failing
+    // loud there is the accepted trade-off over silently skipping.)
+    const suffix = body.error_description ? `: ${body.error_description}` : '';
+    throw new OAuthTerminalError(
+      body.error,
+      `OAuth sign-in terminated by server (${body.error})${suffix}`,
+    );
   }
-  throw new Error('timed out waiting for device code authorization');
+  throw new Error('timed out waiting for authorization');
 }
 
-async function step<T>(name: string, fn: () => Promise<T>): Promise<T> {
+async function step<T>(name: string, fn: () => Promise<T>, fatal = false): Promise<T> {
   try {
     return await fn();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`[automate-login: ${name}] ${msg}`);
+    const wrapped = `[automate-login: ${name}] ${msg}`;
+    // Failures at credential/authorization steps are fatal (LoginAutomationError);
+    // earlier steps stay transient so a flaky page load lets the @ai tests skip
+    // rather than failing the whole run.
+    throw fatal ? new LoginAutomationError(wrapped) : new Error(wrapped);
   }
 }
 
@@ -199,8 +206,8 @@ async function automateLogin(
       await passwordInput.fill(password);
       await page.getByRole('button', { name: /log.?in|sign.?in|continue/i }).click();
       await page.waitForURL(/\/oauth\/device/, { timeout: 30000 });
-    });
-    await step('enter device code', async () => {
+    }, true);
+    await step('enter user code', async () => {
       // _complete URL prefills the userCode form; navigate to the bare URI
       // for an empty form to type into.
       await page.goto(verificationUri);
@@ -217,7 +224,7 @@ async function automateLogin(
       const authorizeBtn = page.getByRole('button', { name: 'Authorize' });
       await authorizeBtn.waitFor({ state: 'visible', timeout: 15000 });
       await authorizeBtn.click();
-    });
+    }, true);
   } finally {
     await browser.close();
   }
@@ -253,11 +260,11 @@ setup('authenticate Posit AI', async () => {
   if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
 
   const sandboxUserHome = path.join(sandbox, 'user-home');
-  const mode = process.env.PW_SANDBOX_POSITAI_AUTH ?? 'flow';
-
-  if (mode !== 'off' && mode !== 'seed' && mode !== 'flow') {
-    throw new Error(`PW_SANDBOX_POSITAI_AUTH="${mode}" -- expected "off", "seed", "flow", or unset`);
+  const modeRaw = process.env.PW_SANDBOX_POSITAI_AUTH ?? 'flow';
+  if (!AUTH_MODES.includes(modeRaw as PositAiAuthMode)) {
+    throw new Error(`PW_SANDBOX_POSITAI_AUTH="${modeRaw}" -- expected one of: ${AUTH_MODES.join(', ')}, or unset`);
   }
+  const mode: PositAiAuthMode = modeRaw as PositAiAuthMode;
 
   if (mode === 'off') {
     console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=off; Posit AI tests will skip');
@@ -265,7 +272,7 @@ setup('authenticate Posit AI', async () => {
   }
 
   if (mode === 'seed') {
-    // Scope A: the global host-copy kill-switch suppresses seed (but not flow).
+    // The global host-copy kill-switch suppresses seed (but not the sign-in flow).
     if (noSeedCredentials()) {
       console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping seed, Posit AI tests will skip');
       return;
@@ -280,8 +287,8 @@ setup('authenticate Posit AI', async () => {
     );
     verifyStoreWritten(sandboxUserHome);
     console.log('[auth-setup] seeded Posit AI state from ~/.posit/assistant');
-    console.warn(
-      '[auth-setup] WARNING: Real Posit AI credentials were copied into the sandbox from ~/.posit/assistant. Tokens persist if the run is preserved or teardown fails.',
+    console.log(
+      '[auth-setup] real Posit AI tokens now live in the sandbox and persist if the run is preserved or teardown fails.',
     );
     return;
   }
@@ -300,28 +307,42 @@ setup('authenticate Posit AI', async () => {
   }
 
   console.log('[auth-setup] starting Posit AI sign-in...');
+  let tokenData: TokenSuccessResponse;
   try {
     const { verification_uri, verification_uri_complete, user_code, device_code, interval } =
       await fetchDeviceCode();
     console.log(`[auth-setup] verification_uri: ${verification_uri}`);
     console.log(`[auth-setup] user_code: ${user_code}`);
-    const tokenPromise = pollForToken(device_code, interval, 90000);
-    await automateLogin(verification_uri_complete, user_code, email, password);
-    const tokenData = await tokenPromise;
-    writeTokensToSandbox(tokenData, sandboxUserHome);
-    verifyStoreWritten(sandboxUserHome);
-    console.log('[auth-setup] Posit AI sign-in complete; tokens written to sandbox');
+    // Drive the browser and poll for the token concurrently. Promise.all
+    // attaches a handler to both, so a failure in automateLogin can't leave the
+    // poll as an orphaned unhandled rejection. interval defaults to 5s per
+    // RFC 8628 §3.2.
+    const [, resolved] = await Promise.all([
+      automateLogin(verification_uri_complete, user_code, email, password),
+      pollForToken(device_code, interval ?? 5, 90000),
+    ]);
+    tokenData = resolved;
   } catch (err) {
-    // Terminal OAuth errors (access_denied, expired_token, invalid_grant) are
-    // deterministic config/credential problems, not flake; surface them so a
-    // bad POSIT_EMAIL/POSIT_PASSWORD fails the run instead of looking like a
-    // skipped @ai test.
-    if (err instanceof DeviceFlowTerminalError) {
+    // Fail loud on deterministic problems: a terminal OAuth error (denied or
+    // bad authorization, config fault) or a browser-side failure at the
+    // credential/authorization steps (e.g. a wrong POSIT_PASSWORD). Only
+    // genuinely transient failures (page load, network, poll timeout) fall
+    // through to a skip, so the @ai tests report "no credentials" rather than
+    // masquerading a real failure as one.
+    if (err instanceof OAuthTerminalError || err instanceof LoginAutomationError) {
       throw err;
     }
     console.warn(
-      '[auth-setup] Posit AI authentication flow failed; Posit AI tests will be skipped:',
+      '[auth-setup] WARNING: Posit AI authentication flow failed; Posit AI tests will be skipped:',
       err instanceof Error ? err.message : err,
     );
+    return;
   }
+
+  // Past this point sign-in demonstrably succeeded, so a malformed token
+  // response or a failed store write is a contract violation, not flake -- let
+  // these throw and fail the run rather than masquerade as a skip.
+  writeTokensToSandbox(tokenData, sandboxUserHome);
+  verifyStoreWritten(sandboxUserHome);
+  console.log('[auth-setup] Posit AI sign-in complete; tokens written to sandbox');
 });

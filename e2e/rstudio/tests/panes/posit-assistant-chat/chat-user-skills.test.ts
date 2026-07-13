@@ -145,7 +145,7 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     );
 
     // -----------------------------------------------------------------------
-    // Step 3: Create a user-level skill (~/.positai/skills/ in home dir)
+    // Step 3: Create a user-level skill (~/.posit/assistant/skills/ in home dir)
     // -----------------------------------------------------------------------
     await createSkillFile(
       consoleActions,

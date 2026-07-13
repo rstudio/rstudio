@@ -6,7 +6,12 @@ import * as path from 'path';
 // either changes there without a matching change here, the test gate will
 // silently disagree with the IDE about whether the sandbox is signed in.
 export const AUTH_STORAGE_KEY = 'auth:positai:oauth';
-export const POSITAI_STORE_RELATIVE = path.join('.posit', 'assistant', 'store', 'data.json');
+
+// The whole Posit AI state directory, and the token store within it. The store
+// path is derived from the directory so the shared .posit/assistant prefix
+// lives in exactly one place.
+export const POSITAI_DIR_RELATIVE = path.join('.posit', 'assistant');
+export const POSITAI_STORE_RELATIVE = path.join(POSITAI_DIR_RELATIVE, 'store', 'data.json');
 
 export interface PositAiOAuthEntry {
   authenticated: boolean;
@@ -37,6 +42,8 @@ function isAuthEntry(value: unknown): value is PositAiOAuthEntry {
   return (
     typeof tokenData.accessToken === 'string'
     && tokenData.accessToken.length > 0
+    && typeof tokenData.tokenType === 'string'
+    && tokenData.tokenType.length > 0
     && typeof tokenData.expiresAt === 'string'
     && tokenData.expiresAt.length > 0
   );
@@ -49,7 +56,7 @@ function readAuthStore(file: string): Record<string, unknown> | null {
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code !== 'ENOENT') {
-      console.warn(`[auth] failed reading ${file}: ${(err as Error).message}`);
+      console.warn(`[auth] WARNING: could not read token store: ${(err as Error).message}`);
     }
     return null;
   }
@@ -57,7 +64,7 @@ function readAuthStore(file: string): Record<string, unknown> | null {
   try {
     parsed = JSON.parse(raw);
   } catch (err) {
-    console.warn(`[auth] malformed JSON at ${file}: ${(err as Error).message}`);
+    console.warn(`[auth] WARNING: malformed JSON in token store ${file}: ${(err as Error).message}`);
     return null;
   }
   return isPlainObject(parsed) ? parsed : null;
@@ -71,10 +78,26 @@ export function isStoreFileAuthenticated(file: string): boolean {
   return !Number.isNaN(expiresAt.getTime()) && expiresAt.getTime() > Date.now();
 }
 
+// Absolute path to the Posit AI token store under a given home directory.
+export function storeFile(homeDir: string): string {
+  return path.join(homeDir, POSITAI_STORE_RELATIVE);
+}
+
 export function isPositAiAuthenticated(): boolean {
   const sandbox = process.env.PW_SANDBOX;
   if (!sandbox) {
     throw new Error('isPositAiAuthenticated called outside the sandbox; PW_SANDBOX is unset');
   }
-  return isStoreFileAuthenticated(path.join(sandbox, 'user-home', POSITAI_STORE_RELATIVE));
+  return isStoreFileAuthenticated(storeFile(path.join(sandbox, 'user-home')));
+}
+
+// The global host-copy kill-switch: when set, seed mode (and Copilot's
+// host-copy in sandbox-setup.ts) is suppressed. The sign-in flow is unaffected
+// -- it copies nothing from the host. Shared by sandbox-setup.ts (Copilot) and
+// auth.setup.ts (Posit AI seed) so the "what counts as on" rule lives in one
+// place.
+export function noSeedCredentials(): boolean {
+  return ['1', 'true'].includes(
+    (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
+  );
 }

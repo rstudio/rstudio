@@ -4,6 +4,7 @@ import * as path from 'path';
 import type { FullConfig } from '@playwright/test';
 import { prepareRLibs } from './r-libs-setup';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
+import { noSeedCredentials } from '../utils/auth';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -157,9 +158,7 @@ export default async function globalSetup(config: FullConfig) {
   // even when no credentials were actually copied.
   delete process.env.PW_AI_SEEDED_COPILOT;
 
-  const skipSeeding = ['1', 'true'].includes(
-    (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
-  );
+  const skipSeeding = noSeedCredentials();
 
   if (!skipSeeding) {
     const isWindows = process.platform === 'win32';
@@ -174,8 +173,8 @@ export default async function globalSetup(config: FullConfig) {
         fs.cpSync(realCopilot, destCopilot, { recursive: true });
         process.env.PW_AI_SEEDED_COPILOT = '1';
         console.log(`[sandbox] seeded user-home github-copilot from ${realCopilot}`);
-        console.warn(
-          `[sandbox] WARNING: Real GitHub Copilot credentials were copied into the sandbox from ${realCopilot}. Tokens persist if the run is preserved or teardown fails.`,
+        console.log(
+          `[sandbox] real GitHub Copilot tokens now live in the sandbox and persist if the run is preserved or teardown fails.`,
         );
       } catch (err) {
         throw new Error(
@@ -188,7 +187,7 @@ export default async function globalSetup(config: FullConfig) {
       );
     }
   } else {
-    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global kill-switch also suppresses Posit AI seed; device-flow sign-in (PW_SANDBOX_POSITAI_AUTH=flow) is unaffected.');
+    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global kill-switch also suppresses Posit AI seed; the sign-in flow (PW_SANDBOX_POSITAI_AUTH=flow) is unaffected.');
   }
 
   process.env.PW_SANDBOX = sandbox;
