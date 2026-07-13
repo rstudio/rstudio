@@ -113,6 +113,11 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
     RSTUDIO_CONFIG_HOME: configHome,
     RSTUDIO_DATA_HOME: dataHome,
+    // Keep the Copilot language server's OAuth token cache out of the OS
+    // keychain -- under the redirected HOME there is no keychain to write to
+    // on macOS. Inherited by every rsession this rserver spawns. Mirrors
+    // desktop.fixture.ts, which documents the full failure mode (#18205).
+    GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION: 'false',
   };
 
   const args = [
