@@ -301,7 +301,8 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
      DBActiveSessionStorageTests.cpp
      ServerCheckConfigTests.cpp
      ServerEnvVarsTests.cpp
-     ServerFormatUtilsTests.cpp)
+     ServerFormatUtilsTests.cpp
+     ServerSessionManagerTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
 
