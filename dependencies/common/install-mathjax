@@ -17,7 +17,9 @@
 
 set -e
 
-source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${SCRIPT_DIR}/../tools/rstudio-tools.sh"
 section "Installing Mathjax"
 
 URL="${RSTUDIO_BUILDTOOLS}"
@@ -60,8 +62,10 @@ if [ ! -d "$MATHJAX4_DIR" ]; then
       rm "$MATHJAX4"
    else
       # fall back to assembling the bundle from npm registry tarballs
+      # (a failed download can leave an empty file behind; remove it)
+      rm -f "$MATHJAX4"
       echo "Assembling MathJax 4 bundle from npm registry tarballs..."
-      "$(dirname "${BASH_SOURCE[0]}")/../tools/build-mathjax4" \
+      "${SCRIPT_DIR}/../tools/build-mathjax4" \
          "${RSTUDIO_TOOLS_ROOT}" \
          "${MATHJAX4_VERSION}"
    fi
