@@ -23,6 +23,7 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/make_shared.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/thread/mutex.hpp>
@@ -151,7 +152,8 @@ Error launchSessionRecovery(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::Request& request,
       bool firstAttempt,
-      const r_util::SessionContext& context)
+      const r_util::SessionContext& context,
+      boost::shared_ptr<boost::posix_time::ptime> pNextLaunchAttempt)
 {
    // if this request is marked as requiring an existing
    // session then return session unavailable error
@@ -186,19 +188,28 @@ Error launchSessionRecovery(
       LOG_ERROR(error);
    }
 
-   // attempt to launch the session only if this is the first recovery attempt
+   // attempt to launch the session. this is re-attempted (at most once per
+   // second) on subsequent recovery passes rather than only on the first:
+   // if the launched process dies before a connection is made -- e.g. it
+   // raced a suspending session's exit -- the process tracker clears its
+   // pending launch and a later pass can relaunch, instead of every request
+   // buffered behind the dead launch timing out (#18208). launchSession is
+   // the dedupe point: it no-ops while a recent pending launch is in flight.
+   boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+   if (!firstAttempt && now < *pNextLaunchAttempt)
+      return Success();
+   *pNextLaunchAttempt = now + boost::posix_time::seconds(1);
+
    if (firstAttempt)
    {
       LOG_DEBUG_MESSAGE("Launching session for user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) + " for: " + request.debugInfo());
-
-      bool launched;
-
-      core::system::Options environment;
-      return sessionManager().launchSession(ptrConnection->ioContext(), 
-            context, request, launched, environment);
    }
-   else
-      return Success();
+
+   bool launched;
+
+   core::system::Options environment;
+   return sessionManager().launchSession(ptrConnection->ioContext(),
+         context, request, launched, environment);
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(
@@ -209,8 +220,15 @@ http::ConnectionRetryProfile sessionRetryProfile(
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(options.rsessionProxyMaxWaitSeconds());
+
+   // per-request launch-attempt throttle for launchSessionRecovery (retries
+   // for a connection run sequentially on its strand, so no synchronization
+   // is needed)
+   boost::shared_ptr<boost::posix_time::ptime> pNextLaunchAttempt =
+         boost::make_shared<boost::posix_time::ptime>(boost::posix_time::min_date_time);
+
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                               ptrConnection, _1, _2, context);
+                                               ptrConnection, _1, _2, context, pNextLaunchAttempt);
    return retryProfile;
 }
 
