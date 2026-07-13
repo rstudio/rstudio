@@ -5,6 +5,10 @@ import * as path from 'path';
 // owned by the Posit AI client (NodeAuthService in the assistant repo). If
 // either changes there without a matching change here, the test gate will
 // silently disagree with the IDE about whether the sandbox is signed in.
+// NOTE: assistant main is already migrating the store to
+// ~/.posit/ai/auth/data.json (its migrateCredentialStore.ts moves the old
+// file at startup, keeping this path as a fallback for now); when the
+// shipped assistant picks that migration up, these constants must follow.
 export const AUTH_STORAGE_KEY = 'auth:positai:oauth';
 
 // The whole Posit AI state directory, and the token store within it. The store
@@ -14,7 +18,9 @@ export const POSITAI_DIR_RELATIVE = path.join('.posit', 'assistant');
 export const POSITAI_STORE_RELATIVE = path.join(POSITAI_DIR_RELATIVE, 'store', 'data.json');
 
 export interface PositAiOAuthEntry {
-  authenticated: boolean;
+  // Literal true: the guard rejects anything else, and the setup project
+  // only ever writes true.
+  authenticated: true;
   oauthAuth: {
     tokenData: {
       accessToken: string;
@@ -46,6 +52,8 @@ function isAuthEntry(value: unknown): value is PositAiOAuthEntry {
     && tokenData.tokenType.length > 0
     && typeof tokenData.expiresAt === 'string'
     && tokenData.expiresAt.length > 0
+    && typeof oauthAuth.expiresAt === 'string'
+    && oauthAuth.expiresAt.length > 0
   );
 }
 
@@ -100,4 +108,60 @@ export function noSeedCredentials(): boolean {
   return ['1', 'true'].includes(
     (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Auth-setup status: a small file the auth.setup project writes into the
+// sandbox recording what it did and why. requireAiCredentials() reads it to
+// build an accurate skip reason. The setup project runs in a separate
+// process, so a file in the sandbox (like the token store itself) is the
+// only channel that reaches the test workers.
+
+export type PositAiAuthOutcome =
+  | 'success'            // token store written and verified
+  | 'off'                // mode=off: deliberately not provisioned
+  | 'seed-suppressed'    // mode=seed suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS
+  | 'host-not-signed-in' // mode=seed: no valid token store on the host
+  | 'credentials-unset'  // mode=flow: POSIT_EMAIL/POSIT_PASSWORD not set
+  | 'flow-failed';       // mode=flow: sign-in attempted but failed (transient)
+
+export interface PositAiAuthStatus {
+  mode: string;
+  outcome: PositAiAuthOutcome;
+  reason: string;
+}
+
+const AUTH_STATUS_FILE = 'positai-auth-status.json';
+
+export function writeAuthStatus(sandbox: string, status: PositAiAuthStatus): void {
+  fs.writeFileSync(
+    path.join(sandbox, AUTH_STATUS_FILE),
+    JSON.stringify(status, null, 2),
+  );
+}
+
+// Returns null when the file is absent, unreadable, or malformed; the gate
+// falls back to a generic skip reason in that case.
+export function readAuthStatus(sandbox: string): PositAiAuthStatus | null {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(path.join(sandbox, AUTH_STATUS_FILE), 'utf-8');
+  } catch {
+    return null;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (
+    !isPlainObject(parsed)
+    || typeof parsed.mode !== 'string'
+    || typeof parsed.outcome !== 'string'
+    || typeof parsed.reason !== 'string'
+  ) {
+    return null;
+  }
+  return parsed as unknown as PositAiAuthStatus;
 }

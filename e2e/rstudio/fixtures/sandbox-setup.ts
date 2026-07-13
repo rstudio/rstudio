@@ -40,7 +40,7 @@ import { noSeedCredentials } from '../utils/auth';
  *                                  switch. By default, if the GitHub Copilot
  *                                  config dir exists on the host it's copied
  *                                  into the sandbox user-home so the Copilot
- *                                  @ai tests start authenticated; setting this
+ *                                  tests start authenticated; setting this
  *                                  suppresses that copy. It also suppresses the
  *                                  Posit AI "seed" copy (handled by the
  *                                  auth.setup project), but not the Posit AI
@@ -57,7 +57,7 @@ import { noSeedCredentials } from '../utils/auth';
  *
  * Sets PW_SANDBOX (internal) to the absolute path of the auto-created
  * subtree, and PW_AI_SEEDED_COPILOT to "1" when GitHub Copilot credentials
- * were successfully copied (consumed by requireAiCredentials in Copilot @ai
+ * were successfully copied (consumed by requireAiCredentials in Copilot
  * test files). Workers inherit it via the normal child-process env;
  * globalTeardown reads PW_SANDBOX directly from process.env.
  */
@@ -142,14 +142,14 @@ export default async function globalSetup(config: FullConfig) {
   }
 
   // Seed GitHub Copilot credentials by default when the host has them. The
-  // matching @ai Copilot tests run requireAiCredentials(test, 'copilot'),
+  // matching Copilot tests run requireAiCredentials(test, 'copilot'),
   // which gates each describe on PW_AI_SEEDED_COPILOT (set below); an unseeded
   // provider surfaces as a clean skip-with-reason rather than a 5-minute
   // mystery failure waiting for a completion that will never arrive.
   //
   // Posit AI is NOT seeded here -- the auth.setup project (tests/auth.setup.ts)
   // is the sole authority for Posit AI credentials (sign-in flow by default, or
-  // a whole-tree host copy under PW_SANDBOX_POSITAI_AUTH=seed), and its @ai
+  // a whole-tree host copy under PW_SANDBOX_POSITAI_AUTH=seed), and its
   // tests gate on the on-disk token store rather than an env flag.
   //
   // Clear the flag up front so only a value this function sets is honored -- a

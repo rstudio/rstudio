@@ -1,4 +1,4 @@
-import { test as setup, chromium } from '@playwright/test';
+import { test as setup, chromium, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -9,6 +9,7 @@ import {
   isStoreFileAuthenticated,
   noSeedCredentials,
   storeFile,
+  writeAuthStatus,
 } from '../utils/auth';
 
 /**
@@ -17,32 +18,36 @@ import {
  * This is a Playwright setup project (see playwright.config.ts): it runs once
  * after globalSetup and before the desktop/server test projects, which depend
  * on it. Its job is to leave a valid Posit AI token store at
- * <sandbox>/user-home/.posit/assistant/store/data.json so the @ai tests start
- * signed in. It is the sole authority for Posit AI credentials in the sandbox
- * -- globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
+ * <sandbox>/user-home/.posit/assistant/store/data.json so the Posit AI tests
+ * start signed in. It is the sole authority for Posit AI credentials in the
+ * sandbox -- globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
+ * Every exit path also records what happened in
+ * <sandbox>/positai-auth-status.json (see PositAiAuthStatus in utils/auth.ts),
+ * which requireAiCredentials() reads so skipped tests report the actual cause.
  *
  * Modes (PW_SANDBOX_POSITAI_AUTH), default "flow":
  *   flow   Run the OAuth sign-in using POSIT_EMAIL/POSIT_PASSWORD. If
- *          either is unset, log and let the @ai tests skip. Never falls back
- *          to "seed". This is the default -- unset behaves as "flow".
+ *          either is unset, log and let the Posit AI tests skip. Never falls
+ *          back to "seed". This is the default -- unset behaves as "flow".
  *   seed   Copy the host user's whole ~/.posit/assistant directory (tokens
- *          under store/data.json, plus skills, settings, workspaces) into the
- *          sandbox. Skips (Posit AI tests) if the host is not signed in.
- *          Explicit only; never used as a fallback. Useful for fast local
- *          iteration when the developer is already signed in on the host.
- *          Suppressed by the global host-copy kill-switch
+ *          under store/data.json, plus skills, workspaces, and any other
+ *          state) into the sandbox. Skips (Posit AI tests) if the host is
+ *          not signed in. Explicit only; never used as a fallback. Useful
+ *          for fast local iteration when the developer is already signed in
+ *          on the host. Suppressed by the global host-copy kill-switch
  *          PW_SANDBOX_NO_SEED_CREDENTIALS, in which case the tests skip.
- *   off    Provision nothing; the @ai tests skip.
+ *   off    Provision nothing; the Posit AI tests skip.
  */
 
 const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
-// Valid PW_SANDBOX_POSITAI_AUTH values, in one place so the runtime check and
-// its error message stay in sync. Unset behaves as "flow".
-type PositAiAuthMode = 'off' | 'seed' | 'flow';
-const AUTH_MODES: readonly PositAiAuthMode[] = ['off', 'seed', 'flow'];
+// Valid PW_SANDBOX_POSITAI_AUTH values. The array is the single source of
+// truth -- the type is derived from it -- so the runtime check, its error
+// message, and the type can't drift apart. Unset behaves as "flow".
+const AUTH_MODES = ['off', 'seed', 'flow'] as const;
+type PositAiAuthMode = (typeof AUTH_MODES)[number];
 
 function copyTree(src: string, dest: string): void {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -53,7 +58,7 @@ function verifyStoreWritten(sandboxUserHome: string): void {
   const dest = storeFile(sandboxUserHome);
   if (!isStoreFileAuthenticated(dest)) {
     throw new Error(
-      `[auth-setup] post-write verification failed for ${dest}: store is missing required fields or token is expired`,
+      `[auth-setup] post-write verification failed for ${dest}: store is missing, unreadable, malformed, lacks required fields, or its token is already expired (see any preceding [auth] WARNING for the specific cause)`,
     );
   }
 }
@@ -61,6 +66,8 @@ function verifyStoreWritten(sandboxUserHome: string): void {
 interface DeviceCodeResponse {
   user_code: string;
   verification_uri: string;
+  // OPTIONAL per RFC 8628 §3.2, but login.posit.cloud always returns it and
+  // automateLogin depends on it; fetchDeviceCode validates its presence.
   verification_uri_complete: string;
   device_code: string;
   // Optional per RFC 8628 §3.2 (default 5s); defaulted at the call site.
@@ -88,8 +95,12 @@ interface TokenErrorResponse {
   error_uri?: string;
 }
 
+// A deterministic OAuth-side failure: the server terminated the sign-in
+// (access_denied, expired_token, a config fault) or returned a malformed
+// response. Treated as fatal so it fails the run rather than masquerading as
+// a skip.
 class OAuthTerminalError extends Error {
-  constructor(public readonly oauthError: string, message: string) {
+  constructor(message: string) {
     super(message);
     this.name = 'OAuthTerminalError';
   }
@@ -115,7 +126,23 @@ async function fetchDeviceCode(): Promise<DeviceCodeResponse> {
   if (!resp.ok) {
     throw new Error(`OAuth sign-in request failed: ${resp.status} ${await resp.text()}`);
   }
-  return resp.json() as Promise<DeviceCodeResponse>;
+  const data = (await resp.json()) as Partial<DeviceCodeResponse>;
+  // A 200 with a shape we don't understand is a contract change on the auth
+  // server, not flake -- fail the run naming the field rather than letting a
+  // downstream TypeError read as "no credentials" (a perpetual dark skip).
+  for (const field of ['device_code', 'user_code', 'verification_uri', 'verification_uri_complete'] as const) {
+    if (typeof data[field] !== 'string' || data[field] === '') {
+      throw new OAuthTerminalError(
+        `device-authorize response is missing or has a non-string "${field}"; the endpoint contract may have changed`,
+      );
+    }
+  }
+  if (data.interval !== undefined && (typeof data.interval !== 'number' || data.interval <= 0)) {
+    throw new OAuthTerminalError(
+      `device-authorize response has invalid "interval" (${JSON.stringify(data.interval)}); expected a positive number`,
+    );
+  }
+  return data as DeviceCodeResponse;
 }
 
 async function pollForToken(
@@ -125,6 +152,10 @@ async function pollForToken(
 ): Promise<TokenSuccessResponse> {
   const deadline = Date.now() + timeoutMs;
   let waitMs = intervalSeconds * 1000;
+  // Most recent response that fit neither the success nor the RFC error shape
+  // (e.g. a proxy 502 with an HTML body); surfaced in the timeout message so
+  // a retried-through hiccup is still diagnosable.
+  let lastAnomaly: string | undefined;
   while (Date.now() < deadline) {
     await new Promise(resolve => setTimeout(resolve, waitMs));
     const resp = await fetch(`https://${AUTH_HOST}/oauth/token`, {
@@ -140,7 +171,22 @@ async function pollForToken(
     if (resp.ok) {
       return resp.json() as Promise<TokenSuccessResponse>;
     }
-    const body = (await resp.json()) as TokenErrorResponse;
+    const text = await resp.text();
+    let body: Partial<TokenErrorResponse> = {};
+    try {
+      body = JSON.parse(text) as TokenErrorResponse;
+    } catch {
+      // Not JSON; handled as an anomaly below.
+    }
+    // A 5xx, or any response without the RFC-required "error" string, is a
+    // server-side hiccup or a proxy interjection, not an OAuth verdict. Keep
+    // polling until the deadline rather than misreading it as terminal (a
+    // "(undefined)" run failure) or letting a JSON parse error escape as a
+    // transient-looking skip when the next poll might have succeeded.
+    if (resp.status >= 500 || typeof body.error !== 'string' || body.error === '') {
+      lastAnomaly = `HTTP ${resp.status}: ${text.slice(0, 200)}`;
+      continue;
+    }
     if (body.error === 'authorization_pending') continue;
     if (body.error === 'slow_down') {
       waitMs += 5000;
@@ -154,24 +200,49 @@ async function pollForToken(
     // loud there is the accepted trade-off over silently skipping.)
     const suffix = body.error_description ? `: ${body.error_description}` : '';
     throw new OAuthTerminalError(
-      body.error,
       `OAuth sign-in terminated by server (${body.error})${suffix}`,
     );
   }
-  throw new Error('timed out waiting for authorization');
+  throw new Error(
+    'timed out waiting for authorization'
+      + (lastAnomaly ? ` (last unexpected token response: ${lastAnomaly})` : ''),
+  );
 }
 
-async function step<T>(name: string, fn: () => Promise<T>, fatal = false): Promise<T> {
+async function step<T>(page: Page, name: string, fn: () => Promise<T>, fatal = false): Promise<T> {
   try {
     return await fn();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const wrapped = `[automate-login: ${name}] ${msg}`;
+    // page.url() is the one piece of non-sensitive context available with
+    // artifacts disabled for this project (see playwright.config.ts); guard
+    // it in case the page is already closed.
+    let url = 'unknown';
+    try {
+      url = page.url();
+    } catch {
+      // keep 'unknown'
+    }
+    const wrapped = `[automate-login: ${name}] ${msg} (page: ${url})`;
     // Failures at credential/authorization steps are fatal (LoginAutomationError);
-    // earlier steps stay transient so a flaky page load lets the @ai tests skip
-    // rather than failing the whole run.
+    // non-credential steps stay transient so a flaky page load lets the Posit AI
+    // tests skip rather than failing the whole run. Note this classifies by
+    // step, not by error kind -- see the catch in the setup body.
     throw fatal ? new LoginAutomationError(wrapped) : new Error(wrapped);
   }
+}
+
+// Race a promise against a deadline. On expiry, rejects with a plain Error so
+// the caller's transient path handles it; the underlying work is not
+// cancelled (Playwright kills any leftover browser at worker exit), but the
+// setup test itself settles promptly instead of running into the harness
+// timeout, which would bypass the transient path entirely.
+function withDeadline<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const expiry = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} after ${ms / 1000}s`)), ms);
+  });
+  return Promise.race([promise, expiry]).finally(() => clearTimeout(timer));
 }
 
 async function automateLogin(
@@ -191,23 +262,29 @@ async function automateLogin(
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     });
     const page = await context.newPage();
-    await step('open activation URL', () => page.goto(verificationUriComplete));
-    await step('submit email', async () => {
+    // All selectors below track the login.posit.cloud markup; when that page
+    // changes, these are the first thing to break (surfacing as a fatal error
+    // on the credential steps, or as a skip whose flow-failed reason names
+    // the step for the others).
+    await step(page, 'open activation URL', () => page.goto(verificationUriComplete));
+    await step(page, 'submit email', async () => {
       await page
         .locator('input[type="email"], input[name="username"], input[name="email"]')
         .fill(email);
       await page.getByRole('button', { name: /continue/i }).click();
     });
-    await step('submit password', async () => {
+    await step(page, 'submit password', async () => {
       // Password field appears inline after the email step submits via XHR;
-      // no navigation fires, so waitForLoadState would hang.
+      // no navigation fires, so waitForLoadState would return immediately
+      // (the page is already past "load") and waitForURL would hang. Wait
+      // for the field itself instead.
       const passwordInput = page.locator('input[type="password"]');
       await passwordInput.waitFor({ state: 'visible' });
       await passwordInput.fill(password);
       await page.getByRole('button', { name: /log.?in|sign.?in|continue/i }).click();
       await page.waitForURL(/\/oauth\/device/, { timeout: 30000 });
     }, true);
-    await step('enter user code', async () => {
+    await step(page, 'enter user code', async () => {
       // _complete URL prefills the userCode form; navigate to the bare URI
       // for an empty form to type into.
       await page.goto(verificationUri);
@@ -220,7 +297,7 @@ async function automateLogin(
       }
       await page.getByRole('button', { name: /continue/i }).click();
     });
-    await step('authorize', async () => {
+    await step(page, 'authorize', async () => {
       const authorizeBtn = page.getByRole('button', { name: 'Authorize' });
       await authorizeBtn.waitFor({ state: 'visible', timeout: 15000 });
       await authorizeBtn.click();
@@ -256,6 +333,15 @@ function writeTokensToSandbox(tokenData: TokenSuccessResponse, sandboxUserHome: 
 }
 
 setup('authenticate Posit AI', async () => {
+  // Explicit headroom above the flow's own budget: browser launch, five login
+  // steps (30s library default each on the raw chromium context -- the
+  // config's actionTimeout doesn't apply there), and the 90s token poll can
+  // legitimately exceed the global 120s test timeout. If the harness timeout
+  // fired here, the catch below would never run and every dependent test
+  // would be marked "did not run"; the withDeadline race below fails through
+  // the transient path well before this outer limit can be reached.
+  setup.setTimeout(240_000);
+
   const sandbox = process.env.PW_SANDBOX;
   if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
 
@@ -267,6 +353,11 @@ setup('authenticate Posit AI', async () => {
   const mode: PositAiAuthMode = modeRaw as PositAiAuthMode;
 
   if (mode === 'off') {
+    writeAuthStatus(sandbox, {
+      mode,
+      outcome: 'off',
+      reason: 'PW_SANDBOX_POSITAI_AUTH=off: Posit AI credentials deliberately not provisioned.',
+    });
     console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=off; Posit AI tests will skip');
     return;
   }
@@ -274,11 +365,21 @@ setup('authenticate Posit AI', async () => {
   if (mode === 'seed') {
     // The global host-copy kill-switch suppresses seed (but not the sign-in flow).
     if (noSeedCredentials()) {
+      writeAuthStatus(sandbox, {
+        mode,
+        outcome: 'seed-suppressed',
+        reason: 'PW_SANDBOX_POSITAI_AUTH=seed, but the PW_SANDBOX_NO_SEED_CREDENTIALS kill-switch suppressed the host copy.',
+      });
       console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping seed, Posit AI tests will skip');
       return;
     }
     if (!isStoreFileAuthenticated(storeFile(os.homedir()))) {
-      console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=seed: host is not signed in to Posit AI; Posit AI tests will be skipped');
+      writeAuthStatus(sandbox, {
+        mode,
+        outcome: 'host-not-signed-in',
+        reason: 'PW_SANDBOX_POSITAI_AUTH=seed, but the host is not signed in to Posit AI (or its token has expired).',
+      });
+      console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=seed: host is not signed in to Posit AI (or its token has expired); Posit AI tests will be skipped');
       return;
     }
     copyTree(
@@ -286,6 +387,11 @@ setup('authenticate Posit AI', async () => {
       path.join(sandboxUserHome, POSITAI_DIR_RELATIVE),
     );
     verifyStoreWritten(sandboxUserHome);
+    writeAuthStatus(sandbox, {
+      mode,
+      outcome: 'success',
+      reason: 'seeded from the host ~/.posit/assistant',
+    });
     console.log('[auth-setup] seeded Posit AI state from ~/.posit/assistant');
     console.log(
       '[auth-setup] real Posit AI tokens now live in the sandbox and persist if the run is preserved or teardown fails.',
@@ -298,6 +404,11 @@ setup('authenticate Posit AI', async () => {
   const password = process.env.POSIT_PASSWORD;
 
   if (!email || !password) {
+    writeAuthStatus(sandbox, {
+      mode,
+      outcome: 'credentials-unset',
+      reason: 'POSIT_EMAIL/POSIT_PASSWORD not set. Set them for the sign-in flow (default), or run with PW_SANDBOX_POSITAI_AUTH=seed while signed in to Posit AI on the host.',
+    });
     console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD not set; Posit AI tests will be skipped');
     return;
   }
@@ -317,24 +428,41 @@ setup('authenticate Posit AI', async () => {
     // attaches a handler to both, so a failure in automateLogin can't leave the
     // poll as an orphaned unhandled rejection. interval defaults to 5s per
     // RFC 8628 §3.2.
-    const [, resolved] = await Promise.all([
+    const flow = Promise.all([
       automateLogin(verification_uri_complete, user_code, email, password),
       pollForToken(device_code, interval ?? 5, 90000),
     ]);
+    // Keep a handler attached so a rejection landing after the deadline race
+    // below has already settled can't become an unhandled rejection.
+    flow.catch(() => {});
+    // Bound the whole flow well under this test's 240s timeout (set above) so
+    // a pile-up of slow steps fails through the transient path here instead
+    // of hitting the harness timeout, which would skip the catch below and
+    // fail the entire run.
+    const [, resolved] = await withDeadline(flow, 180_000, 'overall sign-in deadline exceeded');
     tokenData = resolved;
   } catch (err) {
-    // Fail loud on deterministic problems: a terminal OAuth error (denied or
-    // bad authorization, config fault) or a browser-side failure at the
-    // credential/authorization steps (e.g. a wrong POSIT_PASSWORD). Only
-    // genuinely transient failures (page load, network, poll timeout) fall
-    // through to a skip, so the @ai tests report "no credentials" rather than
-    // masquerading a real failure as one.
+    // Fail loud on deterministic problems: a terminal OAuth error (denied
+    // authorization, config fault, malformed device-authorize response) or a
+    // browser-side failure at the credential/authorization steps (e.g. a
+    // wrong POSIT_PASSWORD). Everything else falls through to a skip. That
+    // bucket is usually transient (page load, network, poll timeout, overall
+    // deadline), but the split is by step/error kind, not by root cause --
+    // deterministic login-page changes at the non-credential steps land here
+    // too. The status file keeps that visible: every skipped Posit AI test
+    // reports this failure as its skip reason.
     if (err instanceof OAuthTerminalError || err instanceof LoginAutomationError) {
       throw err;
     }
+    const msg = err instanceof Error ? err.message : String(err);
+    writeAuthStatus(sandbox, {
+      mode,
+      outcome: 'flow-failed',
+      reason: `sign-in flow was attempted but failed: ${msg}`,
+    });
     console.warn(
       '[auth-setup] WARNING: Posit AI authentication flow failed; Posit AI tests will be skipped:',
-      err instanceof Error ? err.message : err,
+      msg,
     );
     return;
   }
@@ -344,5 +472,10 @@ setup('authenticate Posit AI', async () => {
   // these throw and fail the run rather than masquerade as a skip.
   writeTokensToSandbox(tokenData, sandboxUserHome);
   verifyStoreWritten(sandboxUserHome);
+  writeAuthStatus(sandbox, {
+    mode,
+    outcome: 'success',
+    reason: 'sign-in flow completed',
+  });
   console.log('[auth-setup] Posit AI sign-in complete; tokens written to sandbox');
 });
