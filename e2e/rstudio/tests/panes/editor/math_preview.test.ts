@@ -111,6 +111,46 @@ test.describe('Inline LaTeX math previews', () => {
     const popupMath = page.locator('mjx-container:not(.rstudio-mathjax-root mjx-container)');
     await expect(popupMath).toBeVisible({ timeout: 60000 });
 
+    // watch the popup's math element: rendered TeX errors must never enter
+    // the visible DOM (typesets happen in a hidden scratch element, and a
+    // failed render keeps the previous output). track scratch-element
+    // removals on the parent as the "a re-render completed" signal.
+    await page.evaluate(() => {
+      const container = Array.from(document.querySelectorAll('mjx-container')).find(
+        (c) => (c as HTMLElement).offsetParent != null
+      );
+      const el = container!.parentElement!;
+      (window as any).__merrorSeen = false;
+      (window as any).__renderAttempts = 0;
+      new MutationObserver(() => {
+        if (el.querySelector('mjx-merror, [data-mjx-error]'))
+          (window as any).__merrorSeen = true;
+      }).observe(el, { childList: true, subtree: true });
+      new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.removedNodes.length > 0)
+            (window as any).__renderAttempts += 1;
+        }
+      }).observe(el.parentElement!, { childList: true });
+    });
+
+    // type a trailing subscript, making the expression incomplete
+    // ("Missing superscript or subscript argument")
+    await moveCursorTo(page, 5, 24);
+    await page.keyboard.type('_');
+
+    // wait for the resulting background re-render to complete, then verify
+    // the previous render was kept and no error output was ever shown
+    await expect
+      .poll(async () => await page.evaluate(() => (window as any).__renderAttempts), {
+        timeout: 30000,
+      })
+      .toBeGreaterThan(0);
+
+    expect(await page.evaluate(() => (window as any).__merrorSeen)).toBe(false);
+    await expect(popupMath).toBeVisible();
+    await expect(popupMath).not.toContainText('Missing');
+
     await sourceActions.closeSourceAndDeleteFile(fileName);
   });
 });

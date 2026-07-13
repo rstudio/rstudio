@@ -56,51 +56,62 @@ public class MathJaxTypeset
    /*-{
       var MathJax = $wnd.MathJax;
 
-      // save last successfully rendered text, so we can restore the previous
-      // rendering if the new text fails to typeset
-      var lastRenderedText = el.getAttribute("data-mathjax-last-text") || "";
-
       var onCompleted = $entry(function(error) {
          @org.rstudio.studio.client.common.mathjax.MathJaxTypeset::onMathJaxTypesetCompleted(ZLjava/lang/Object;)(error, callback);
       });
 
-      var typeset = function(text) {
-         MathJax.typesetClear([el]);
-         el.innerText = text;
-         return MathJax.typesetPromise([el]).then(function() {
-            // failed typesets surface in two ways, neither of which rejects
-            // the typeset promise: recoverable TeX errors render as 'merror'
-            // nodes, while malformed inputs (e.g. unbalanced braces) are
-            // skipped by the math finder entirely, leaving raw text behind
-            var container = el.querySelector("mjx-container");
-            var merror = el.querySelector("mjx-merror, [data-mjx-error]");
-            return container == null || merror != null;
-         });
+      // bail (keeping the typeset queue alive) if the target has been
+      // detached in the interim
+      if (el.parentNode == null)
+      {
+         onCompleted(true);
+         return;
+      }
+
+      // typeset into a hidden scratch sibling, so that in-progress (or
+      // failed) renders are never visible -- while typing, incomplete
+      // expressions would otherwise flash a rendered TeX error before the
+      // previous render could be restored. the scratch element shares the
+      // target's parent and class so it typesets with the same font metrics
+      var scratch = el.ownerDocument.createElement(el.tagName);
+      scratch.className = el.className;
+      scratch.style.position = "absolute";
+      scratch.style.visibility = "hidden";
+      if (el.offsetWidth > 0)
+         scratch.style.width = el.offsetWidth + "px";
+      scratch.innerText = currentText;
+      el.parentNode.appendChild(scratch);
+
+      var cleanup = function() {
+         MathJax.typesetClear([scratch]);
+         scratch.parentNode.removeChild(scratch);
       };
 
-      typeset(currentText).then(function(error) {
+      MathJax.typesetPromise([scratch]).then(function() {
 
-         if (!error)
+         // failed typesets surface in two ways, neither of which rejects
+         // the typeset promise: recoverable TeX errors render as 'merror'
+         // nodes, while malformed inputs (e.g. unbalanced braces) are
+         // skipped by the math finder entirely, leaving raw text behind
+         var container = scratch.querySelector("mjx-container");
+         var merror = scratch.querySelector("mjx-merror, [data-mjx-error]");
+         var error = container == null || merror != null;
+
+         // swap the new output into place on success; on failure, keep any
+         // previous (successful) render, but surface the error output when
+         // there is no previous render to preserve
+         if (!error || el.querySelector("mjx-container") == null)
          {
-            el.setAttribute("data-mathjax-last-text", currentText);
-            onCompleted(false);
-            return;
+            el.innerHTML = "";
+            while (scratch.firstChild)
+               el.appendChild(scratch.firstChild);
          }
 
-         // restore the previous (successful) render on failure
-         if (lastRenderedText.length)
-         {
-            typeset(lastRenderedText).then(function() {
-               onCompleted(true);
-            }, function() {
-               onCompleted(true);
-            });
-            return;
-         }
-
-         onCompleted(true);
+         cleanup();
+         onCompleted(error);
 
       }, function(err) {
+         cleanup();
          onCompleted(true);
       });
    }-*/;
