@@ -113,11 +113,13 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
     RSTUDIO_CONFIG_HOME: configHome,
     RSTUDIO_DATA_HOME: dataHome,
-    // Keep the Copilot language server's OAuth token cache out of the OS
-    // keychain -- under the redirected HOME there is no keychain to write to
-    // on macOS. Inherited by every rsession this rserver spawns. Mirrors
-    // desktop.fixture.ts, which documents the full failure mode (#18205).
-    GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION: 'false',
+    // No GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION here, unlike desktop.fixture.ts
+    // (#18205): rserver builds each rsession's environment from scratch
+    // (runProcess in core/system/PosixSystem.cpp), so arbitrary vars set here
+    // never reach the rsession that hosts the Copilot language server. The
+    // macOS "Keychain Not Found" modal also cannot occur in server mode --
+    // rsession's HOME comes from the passwd db, not this redirect, so the
+    // real login keychain is always found.
   };
 
   const args = [
