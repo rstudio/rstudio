@@ -1,35 +1,34 @@
 import type { TestType } from '@playwright/test';
+import { isPositAiAuthenticated } from './auth';
 
 /**
- * AI provider identifier. Matches the suffix on the PW_AI_SEEDED_* env vars
- * set by fixtures/sandbox-setup.ts when real host credentials were copied
- * into the sandbox.
+ * AI provider identifier. The two providers are provisioned differently, and
+ * so gate differently: Posit AI by the auth.setup project (its tests gate on
+ * the on-disk token store), Copilot by a host copy in sandbox-setup.ts (its
+ * tests gate on the PW_AI_SEEDED_COPILOT env flag it sets).
  */
 export type AIProvider = 'positai' | 'copilot';
 
-const PROVIDER_LABEL: Record<AIProvider, string> = {
-  positai: 'Posit AI',
-  copilot: 'GitHub Copilot',
-};
-
-const PROVIDER_HOST_PATH: Record<AIProvider, string> = {
-  positai: '~/.posit/assistant or legacy ~/.positai',
-  copilot: process.platform === 'win32'
-    ? '%LOCALAPPDATA%\\github-copilot'
-    : '~/.config/github-copilot',
-};
-
-const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
-  positai: 'PW_AI_SEEDED_POSITAI',
-  copilot: 'PW_AI_SEEDED_COPILOT',
-};
+// Copilot is the only provider still gated on a seeded env flag; Posit AI
+// switched to the on-disk store check (isPositAiAuthenticated) below.
+const COPILOT_SEEDED_ENV = 'PW_AI_SEEDED_COPILOT';
+const COPILOT_HOST_PATH = process.platform === 'win32'
+  ? '%LOCALAPPDATA%\\github-copilot'
+  : '~/.config/github-copilot';
 
 /**
- * Gate the surrounding describe block on having real credentials seeded for
+ * Gate the surrounding describe block on having real credentials available for
  * `provider`. Each test inside the describe is marked skipped (with reason)
- * when the matching PW_AI_SEEDED_* env var is unset, which happens when the
- * host has no creds at the expected location or when the user opted out via
- * PW_SANDBOX_NO_SEED_CREDENTIALS.
+ * when the credential is absent.
+ *
+ * The two providers use different signals:
+ *   positai  The auth.setup project (sign-in flow by default, or a host copy
+ *            under PW_SANDBOX_POSITAI_AUTH=seed) leaves a token store on disk.
+ *            It runs in a separate process, so the signal is the store itself,
+ *            not an env flag: isPositAiAuthenticated() reads it and also checks
+ *            the token has not expired.
+ *   copilot  sandbox-setup.ts host-copies the creds and sets
+ *            PW_AI_SEEDED_COPILOT on success; the gate reads that flag.
  *
  * `test` must be the same TestType the surrounding describe uses, since
  * Playwright hooks are scoped per-TestType (an extended fixture's tests
@@ -51,12 +50,21 @@ export function requireAiCredentials(
   provider: AIProvider,
 ): void {
   test.beforeEach(() => {
-    // Strict "1" check so a stray PW_AI_SEEDED_*=0 / "false" doesn't read as
-    // seeded. sandbox-setup.ts clears these at start of run and sets "1"
-    // only on a successful copy, so any other value is treated as unseeded.
+    if (provider === 'positai') {
+      test.skip(
+        !isPositAiAuthenticated(),
+        'No Posit AI credentials in the sandbox. Set POSIT_EMAIL/POSIT_PASSWORD '
+          + 'for the sign-in flow (default), or run with PW_SANDBOX_POSITAI_AUTH=seed '
+          + 'while signed in to Posit AI on the host.',
+      );
+      return;
+    }
+    // Strict "1" check so a stray PW_AI_SEEDED_COPILOT=0 / "false" doesn't read
+    // as seeded. sandbox-setup.ts clears this at start of run and sets "1" only
+    // on a successful copy, so any other value is treated as unseeded.
     test.skip(
-      process.env[PROVIDER_ENV_KEY[provider]] !== '1',
-      `No ${PROVIDER_LABEL[provider]} credentials seeded; sign in on the host (${PROVIDER_HOST_PATH[provider]}) and re-run.`,
+      process.env[COPILOT_SEEDED_ENV] !== '1',
+      `No GitHub Copilot credentials seeded; sign in on the host (${COPILOT_HOST_PATH}) and re-run.`,
     );
   });
 }

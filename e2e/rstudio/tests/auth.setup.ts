@@ -15,16 +15,17 @@ import {
  * This is a Playwright setup project (see playwright.config.ts): it runs once
  * after globalSetup and before the desktop/server test projects, which depend
  * on it. Its job is to leave a valid Posit AI token store at
- * <sandbox>/user-home/.positai/store/data.json so the @ai tests start signed
- * in. It is the sole authority for Posit AI credentials in the sandbox --
- * globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
+ * <sandbox>/user-home/.posit/assistant/store/data.json so the @ai tests start
+ * signed in. It is the sole authority for Posit AI credentials in the sandbox
+ * -- globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
  *
  * Modes (PW_SANDBOX_POSITAI_AUTH), default "flow":
- *   flow   Run the OAuth device flow using POSIT_EMAIL/POSIT_PASSWORD. If
+ *   flow   Run the OAuth sign-in using POSIT_EMAIL/POSIT_PASSWORD. If
  *          either is unset, log and let the @ai tests skip. Never falls back
  *          to "seed". This is the default -- unset behaves as "flow".
- *   seed   Copy the host user's ~/.positai/store/data.json into the sandbox.
- *          Fails loud if the host file is not authenticated. Explicit only;
+ *   seed   Copy the host user's whole ~/.posit/assistant directory (tokens
+ *          under store/data.json, plus skills, settings, workspaces) into the
+ *          sandbox. Fails loud if the host is not signed in. Explicit only;
  *          never used as a fallback. Useful for fast local iteration when the
  *          developer is already signed in on the host. Suppressed by the
  *          global host-copy kill-switch PW_SANDBOX_NO_SEED_CREDENTIALS, in
@@ -40,8 +41,13 @@ function storeFile(homeDir: string): string {
   return path.join(homeDir, POSITAI_STORE_RELATIVE);
 }
 
+// Host directory that holds all Posit AI state -- the token store under
+// store/data.json plus skills, settings, and workspaces. seed copies this
+// whole tree so the sandbox mirrors the host's signed-in Assistant.
+const POSITAI_DIR_RELATIVE = path.join('.posit', 'assistant');
+
 // The global host-copy kill-switch (Scope A): when set, seed mode is
-// suppressed (device flow is unaffected). Parsed the same way as in
+// suppressed (sign-in flow is unaffected). Parsed the same way as in
 // sandbox-setup.ts.
 function noSeedCredentials(): boolean {
   return ['1', 'true'].includes(
@@ -49,9 +55,9 @@ function noSeedCredentials(): boolean {
   );
 }
 
-function copyStoreFile(src: string, dest: string): void {
+function copyTree(src: string, dest: string): void {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(src, dest);
+  fs.cpSync(src, dest, { recursive: true });
 }
 
 function verifyStoreWritten(sandboxUserHome: string): void {
@@ -254,38 +260,46 @@ setup('authenticate Posit AI', async () => {
   }
 
   if (mode === 'off') {
-    console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=off; @ai tests will skip');
+    console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=off; Posit AI tests will skip');
     return;
   }
 
   if (mode === 'seed') {
     // Scope A: the global host-copy kill-switch suppresses seed (but not flow).
     if (noSeedCredentials()) {
-      console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping seed, @ai tests will skip');
+      console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping seed, Posit AI tests will skip');
       return;
     }
-    const src = storeFile(os.homedir());
-    if (!isStoreFileAuthenticated(src)) {
-      throw new Error(
-        'PW_SANDBOX_POSITAI_AUTH=seed: no valid tokens at ~/.positai/store/data.json -- sign in to Posit AI first',
-      );
+    if (!isStoreFileAuthenticated(storeFile(os.homedir()))) {
+      console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=seed: host is not signed in to Posit AI; Posit AI tests will be skipped');
+      return;
     }
-    copyStoreFile(src, storeFile(sandboxUserHome));
+    copyTree(
+      path.join(os.homedir(), POSITAI_DIR_RELATIVE),
+      path.join(sandboxUserHome, POSITAI_DIR_RELATIVE),
+    );
     verifyStoreWritten(sandboxUserHome);
-    console.log('[auth-setup] seeded PAI tokens from ~/.positai');
+    console.log('[auth-setup] seeded Posit AI state from ~/.posit/assistant');
+    console.warn(
+      '[auth-setup] WARNING: Real Posit AI credentials were copied into the sandbox from ~/.posit/assistant. Tokens persist if the run is preserved or teardown fails.',
+    );
     return;
   }
 
-  // mode === 'flow' (default): OAuth device flow. Never falls back to seed.
+  // mode === 'flow' (default): OAuth sign-in. Never falls back to seed.
   const email = process.env.POSIT_EMAIL;
   const password = process.env.POSIT_PASSWORD;
 
   if (!email || !password) {
-    console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD not set; @ai tests will be skipped');
+    console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD not set; Posit AI tests will be skipped');
     return;
   }
 
-  console.log('[auth-setup] starting device flow...');
+  if (noSeedCredentials()) {
+    console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI sign-in flow is unaffected.');
+  }
+
+  console.log('[auth-setup] starting Posit AI sign-in...');
   try {
     const { verification_uri, verification_uri_complete, user_code, device_code, interval } =
       await fetchDeviceCode();
@@ -296,7 +310,7 @@ setup('authenticate Posit AI', async () => {
     const tokenData = await tokenPromise;
     writeTokensToSandbox(tokenData, sandboxUserHome);
     verifyStoreWritten(sandboxUserHome);
-    console.log('[auth-setup] device flow complete; PAI tokens written to sandbox');
+    console.log('[auth-setup] Posit AI sign-in complete; tokens written to sandbox');
   } catch (err) {
     // Terminal OAuth errors (access_denied, expired_token, invalid_grant) are
     // deterministic config/credential problems, not flake; surface them so a
@@ -306,7 +320,7 @@ setup('authenticate Posit AI', async () => {
       throw err;
     }
     console.warn(
-      '[auth-setup] device flow failed; @ai tests will be skipped:',
+      '[auth-setup] Posit AI authentication flow failed; Posit AI tests will be skipped:',
       err instanceof Error ? err.message : err,
     );
   }

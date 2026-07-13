@@ -6,7 +6,7 @@ import * as path from 'path';
 // either changes there without a matching change here, the test gate will
 // silently disagree with the IDE about whether the sandbox is signed in.
 export const AUTH_STORAGE_KEY = 'auth:positai:oauth';
-export const POSITAI_STORE_RELATIVE = path.join('.positai', 'store', 'data.json');
+export const POSITAI_STORE_RELATIVE = path.join('.posit', 'assistant', 'store', 'data.json');
 
 export interface PositAiOAuthEntry {
   authenticated: boolean;
