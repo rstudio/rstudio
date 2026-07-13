@@ -32,6 +32,22 @@ dependency(MATHJAX
    ATTRIBUTION  "Copyright (c) 2009-2020 The MathJax Consortium"
 )
 
+dependency(MATHJAX4
+   DEPNAME      "MathJax"
+   REPOSITORY   "https://github.com/mathjax/MathJax"
+   VERSION      "4.1.3"
+   LICENSE      "Apache-2.0"
+   ATTRIBUTION  "Copyright (c) 2009-2026 The MathJax Consortium"
+)
+
+dependency(MATHJAX_NEWCM_FONT
+   DEPNAME      "MathJax NewCM Font"
+   REPOSITORY   "https://github.com/mathjax/mathjax-newcm-font"
+   VERSION      "4.1.3"
+   LICENSE      "Apache-2.0"
+   ATTRIBUTION  "Copyright (c) 2009-2026 The MathJax Consortium"
+)
+
 dependency(BOOTSTRAP
    DEPNAME      "Bootstrap"
    REPOSITORY   "https://github.com/twbs/bootstrap"

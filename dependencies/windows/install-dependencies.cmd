@@ -37,6 +37,7 @@ set GNUGREP_VERSION=3.0
 set GWT_VERSION=2.12.2-apple-blossom
 set LIBCLANG_VERSION=13.0.1
 set MATHJAX_VERSION=2.7.9
+set MATHJAX4_VERSION=4.1.3
 REM The MSVC toolset used for Boost prebuilts (145 = Visual Studio 2026).
 set MSVC_TOOLSET_VERSION=145
 set NSISMULTIUSER_VERSION=a33d494c62ad
@@ -141,6 +142,11 @@ set MATHJAX_FOLDER=mathjax-27
 set MATHJAX_OUTPUT=
 
 
+set MATHJAX4_URL=mathjax-%MATHJAX4_VERSION%.zip
+set MATHJAX4_FOLDER=mathjax-4
+set MATHJAX4_OUTPUT=
+
+
 set PANDOC_URL=pandoc/%PANDOC_VERSION%/pandoc-%PANDOC_VERSION%-windows-x86_64.zip
 set PANDOC_FOLDER=pandoc
 set PANDOC_OUTPUT=pandoc
@@ -171,6 +177,7 @@ cd /d "%COMMON_INSTALL_DIR%"
 %RUN% install GWT
 %RUN% install DICTIONARIES
 %RUN% install MATHJAX
+%RUN% install MATHJAX4
 %RUN% install LIBCLANG
 
 REM Determine if we have the correct version of quarto.exe already installed

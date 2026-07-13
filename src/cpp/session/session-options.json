@@ -817,6 +817,13 @@
             "description": "Specifies the path to the mathjax library."
          },
          {
+            "name": "external-mathjax4-path",
+            "type": "core::FilePath",
+            "memberName": "mathjax4Path_",
+            "defaultValue": "resources/mathjax-4",
+            "description": "Specifies the path to the mathjax 4 library."
+         },
+         {
             "name": "external-pandoc-path",
             "type": "core::FilePath",
             "memberName": "pandocPath_",

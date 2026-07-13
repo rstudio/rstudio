@@ -16,24 +16,21 @@ package org.rstudio.studio.client.common.mathjax;
 
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
-import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Visibility;
-import com.google.gwt.user.client.Timer;
 
 public class MathJaxTypeset
-{ 
+{
    public static interface Callback
    {
       void onMathJaxTypesetComplete(boolean error);
    }
-   
+
    public static void typeset(Element el, String currentText, Callback callback)
    {
       typeset(el, currentText, false, callback);
    }
-   
+
    public static void typeset(Element el, String currentText, boolean priority, Callback callback)
    {
       SerializedCommand cmd = (cont) -> {
@@ -44,96 +41,83 @@ public class MathJaxTypeset
                callback.onMathJaxTypesetComplete(error);
                cont.execute();
             }
-         }, 0);
+         });
       };
-         
+
       if (priority)
          TYPESET_QUEUE.addPriorityCommand(cmd);
       else
          TYPESET_QUEUE.addCommand(cmd);
    }
 
-   public static final native void typesetNative(Element el, 
-                                                 String currentText,
-                                                 Object callback,
-                                                 int attempt)
+   private static final native void typesetNative(Element el,
+                                                  String currentText,
+                                                  Object callback)
    /*-{
       var MathJax = $wnd.MathJax;
-      
-      // save last rendered text
-      var jax = MathJax.Hub.getAllJax(el)[0];
-      var lastRenderedText = jax && jax.originalText || "";
-      
-      // update text in element
-      el.innerText = currentText;
-      
-      // typeset element
-      var self = this;
-      MathJax.Hub.Queue($entry(function() {
-         MathJax.Hub.Typeset(el, $entry(function() {
-            // restore original typesetting on failure
-            jax = MathJax.Hub.getAllJax(el)[0];
-            var error = !!(jax && jax.texError);
-            if (error && lastRenderedText.length)
-               jax.Text(lastRenderedText);
 
-            // callback to GWT
-            @org.rstudio.studio.client.common.mathjax.MathJaxTypeset::onMathJaxTypesetCompleted(Ljava/lang/Object;Ljava/lang/String;ZLjava/lang/Object;I)(el, currentText, error, callback, attempt);
-         }));
-      }));
-   }-*/;
-   
-   
-   private static void onMathJaxTypesetCompleted(final Object mathjaxElObject,
-                                                 final String text,
-                                                 final boolean error,
-                                                 final Object commandObject,
-                                                 final int attempt)
-   {
-      final Element mathjaxEl = (Element) mathjaxElObject;
+      // save last successfully rendered text, so we can restore the previous
+      // rendering if the new text fails to typeset
+      var lastRenderedText = el.getAttribute("data-mathjax-last-text") || "";
 
-      if (attempt < MAX_RENDER_ATTEMPTS)
-      {
-         // if mathjax displayed an error, try re-rendering once more
-         Element[] errorEls = DomUtils.getElementsByClassName(mathjaxEl, 
-               "MathJax_Error");
-         if (errorEls != null && errorEls.length > 0 &&
-             attempt < MAX_RENDER_ATTEMPTS)
+      var onCompleted = $entry(function(error) {
+         @org.rstudio.studio.client.common.mathjax.MathJaxTypeset::onMathJaxTypesetCompleted(ZLjava/lang/Object;)(error, callback);
+      });
+
+      var typeset = function(text) {
+         MathJax.typesetClear([el]);
+         el.innerText = text;
+         return MathJax.typesetPromise([el]).then(function() {
+            // failed typesets surface in two ways, neither of which rejects
+            // the typeset promise: recoverable TeX errors render as 'merror'
+            // nodes, while malformed inputs (e.g. unbalanced braces) are
+            // skipped by the math finder entirely, leaving raw text behind
+            var container = el.querySelector("mjx-container");
+            var merror = el.querySelector("mjx-merror, [data-mjx-error]");
+            return container == null || merror != null;
+         });
+      };
+
+      typeset(currentText).then(function(error) {
+
+         if (!error)
          {
-            // hide the error and retry in 25ms (experimentally this seems to
-            // produce a better shot at rendering successfully than an immediate
-            // or deferred retry)
-            mathjaxEl.getStyle().setVisibility(Visibility.HIDDEN);
-            new Timer()
-            {
-               @Override
-               public void run()
-               {
-                  typesetNative(mathjaxEl, text, commandObject, attempt + 1);
-               }
-            }.schedule(25);
+            el.setAttribute("data-mathjax-last-text", currentText);
+            onCompleted(false);
             return;
          }
-      }
-      
-      // show whatever we've got (could be an error if we ran out of retries)
-      mathjaxEl.getStyle().setVisibility(Visibility.VISIBLE);
-      
-      // execute callback
+
+         // restore the previous (successful) render on failure
+         if (lastRenderedText.length)
+         {
+            typeset(lastRenderedText).then(function() {
+               onCompleted(true);
+            }, function() {
+               onCompleted(true);
+            });
+            return;
+         }
+
+         onCompleted(true);
+
+      }, function(err) {
+         onCompleted(true);
+      });
+   }-*/;
+
+
+   private static void onMathJaxTypesetCompleted(final boolean error,
+                                                 final Object commandObject)
+   {
       if (commandObject != null && commandObject instanceof MathJaxTypeset.Callback)
       {
          MathJaxTypeset.Callback callback = (MathJaxTypeset.Callback) commandObject;
          callback.onMathJaxTypesetComplete(error);
       }
    }
-   
-   
-   // sometimes MathJax fails to render initially but succeeds if asked to do so
-   // again; this is the maximum number of times we'll try to re-render the same
-   // text automatically before giving up
-   private static final int MAX_RENDER_ATTEMPTS = 2;
-   
+
+
    // can't call mathjax for typesetting concurrently so we serialize the calls with this queue
    private static final SerializedCommandQueue TYPESET_QUEUE = new SerializedCommandQueue();
-   
+
 }

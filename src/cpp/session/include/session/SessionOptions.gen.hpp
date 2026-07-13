@@ -413,6 +413,9 @@ protected:
       ("external-mathjax-path",
       value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-27"),
       "Specifies the path to the mathjax library.")
+      ("external-mathjax4-path",
+      value<std::string>(&mathjax4Path_)->default_value("resources/mathjax-4"),
+      "Specifies the path to the mathjax 4 library.")
       ("external-pandoc-path",
       value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
       "Specifies the path to pandoc binaries.")
@@ -623,6 +626,7 @@ public:
    core::FilePath winutilsPath() const { return core::FilePath(winutilsPath_); }
    core::FilePath hunspellDictionariesPath() const { return core::FilePath(hunspellDictionariesPath_); }
    core::FilePath mathjaxPath() const { return core::FilePath(mathjaxPath_); }
+   core::FilePath mathjax4Path() const { return core::FilePath(mathjax4Path_); }
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
    core::FilePath copilotPath() const { return core::FilePath(copilotPath_); }
@@ -758,6 +762,7 @@ protected:
    std::string winutilsPath_;
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
+   std::string mathjax4Path_;
    std::string pandocPath_;
    std::string quartoPath_;
    std::string copilotPath_;
