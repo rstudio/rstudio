@@ -8,6 +8,7 @@
 
 ### Fixed
 - ([#18174](https://github.com/rstudio/rstudio/issues/18174)): Fixed an error when viewing an object from the Object Explorer with the French user interface language enabled.
+- ([#18198](https://github.com/rstudio/rstudio/issues/18198)): Fixed tar errors and warnings printed to the console after installing a package from a URL with `install.packages(..., repos = NULL)`.
 
 ### Dependencies
 - Ace 1.43.5

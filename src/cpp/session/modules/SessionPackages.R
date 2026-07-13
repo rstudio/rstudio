@@ -2384,7 +2384,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
          # Record the package source. Note that we need to resolve the path
          # to the newly-installed package post-hoc from the provided path.
-         shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
+         #
+         # Skip URL inputs: install.packages() accepts them when 'repos' is
+         # NULL, but downloads to a private temporary file, so there is no
+         # local archive we can read a DESCRIPTION from after the fact.
+         # https://github.com/rstudio/rstudio/issues/18198
+         shouldRecord <-
+            is.character(pkgs) &&
+            length(pkgs) == 1L &&
+            !grepl("^(?:file|ftp|https?)://", pkgs)
          if (shouldRecord)
          {
             pkgDesc <- tryCatch(
