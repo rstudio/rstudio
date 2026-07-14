@@ -29,6 +29,12 @@ import {
  *   flow   Run the OAuth sign-in using POSIT_EMAIL/POSIT_PASSWORD. If
  *          either is unset, log and let the Posit AI tests skip. Never falls
  *          back to "seed". This is the default -- unset behaves as "flow".
+ *   flow-seed
+ *          Like "flow", but first copy the host's ~/.posit/assistant content
+ *          (skills, workspaces, and other state) into the sandbox, EXCLUDING
+ *          the token store -- host tokens never enter the sandbox; the
+ *          sign-in writes fresh ones. The host-copy kill-switch suppresses
+ *          the content copy (the mode then behaves as plain "flow").
  *   seed   Copy the host user's whole ~/.posit/assistant directory (tokens
  *          under store/data.json, plus skills, workspaces, and any other
  *          state) into the sandbox. Skips (Posit AI tests) if the host is
@@ -46,7 +52,7 @@ const SCOPE = 'prism';
 // Valid PW_SANDBOX_POSITAI_AUTH values. The array is the single source of
 // truth -- the type is derived from it -- so the runtime check, its error
 // message, and the type can't drift apart. Unset behaves as "flow".
-const AUTH_MODES = ['off', 'seed', 'flow'] as const;
+const AUTH_MODES = ['off', 'seed', 'flow', 'flow-seed'] as const;
 type PositAiAuthMode = (typeof AUTH_MODES)[number];
 
 function copyTree(src: string, dest: string): void {
@@ -412,7 +418,8 @@ setup('authenticate Posit AI', async () => {
     return;
   }
 
-  // mode === 'flow' (default): OAuth sign-in. Never falls back to seed.
+  // mode === 'flow' (default) or 'flow-seed': OAuth sign-in. Never falls
+  // back to "seed" -- host tokens are never used.
   const email = process.env.POSIT_EMAIL;
   const password = process.env.POSIT_PASSWORD;
 
@@ -426,7 +433,37 @@ setup('authenticate Posit AI', async () => {
     return;
   }
 
-  if (noSeedCredentials()) {
+  // flow-seed: copy the host's Posit AI content into the sandbox before
+  // signing in, excluding the token store so host tokens never enter the
+  // sandbox (the sign-in below writes fresh ones). This runs after the
+  // credentials check above, so a run that is going to skip copies nothing.
+  // The host-copy kill-switch suppresses the copy (the mode degrades to
+  // plain "flow"); the sign-in itself is never affected by the kill-switch.
+  let contentNote = '';
+  if (mode === 'flow-seed') {
+    if (noSeedCredentials()) {
+      console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; host content not copied, continuing with sign-in');
+      contentNote = '; host content copy suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS';
+    } else {
+      const hostDir = path.join(os.homedir(), POSITAI_DIR_RELATIVE);
+      if (fs.existsSync(hostDir)) {
+        const hostStore = storeFile(os.homedir());
+        const dest = path.join(sandboxUserHome, POSITAI_DIR_RELATIVE);
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.cpSync(hostDir, dest, {
+          recursive: true,
+          // Keep everything except the token store: content comes from the
+          // host, credentials come from the sign-in.
+          filter: (src) => src !== hostStore,
+        });
+        console.log('[auth-setup] seeded host ~/.posit/assistant content into the sandbox (token store excluded)');
+        contentNote = '; host content seeded (token store excluded)';
+      } else {
+        console.log('[auth-setup] no ~/.posit/assistant on host; no content to seed, continuing with sign-in');
+        contentNote = '; no host content to seed';
+      }
+    }
+  } else if (noSeedCredentials()) {
     console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI sign-in flow is unaffected.');
   }
 
@@ -488,7 +525,7 @@ setup('authenticate Posit AI', async () => {
   writeAuthStatus(sandbox, {
     mode,
     outcome: 'success',
-    reason: 'sign-in flow completed',
+    reason: `sign-in flow completed${contentNote}`,
   });
   console.log('[auth-setup] Posit AI sign-in complete; tokens written to sandbox');
 });
