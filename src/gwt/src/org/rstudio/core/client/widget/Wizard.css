@@ -109,11 +109,15 @@
 /* Dark theme overrides (only active for wizards that opt in via setThemeAware) */
 @external rstudio-themes-dark;
 @external rstudio-theme-aware-dialog;
+@external dialogContent;
 @eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
 @eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog .subcaptionLabel {
+/* The .dialogContent variant outranks the default dark-dialog .gwt-Label color
+   from themeStyles.css */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .subcaptionLabel,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogContent .subcaptionLabel {
    color: #aaa;
 }
 

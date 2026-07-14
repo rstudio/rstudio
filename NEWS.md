@@ -13,6 +13,7 @@
 - ([#18198](https://github.com/rstudio/rstudio/issues/18198)): Fixed tar errors and warnings printed to the console after installing a package from a URL with `install.packages(..., repos = NULL)`.
 - ([#18197](https://github.com/rstudio/rstudio/issues/18197)): Fixed an issue where the Render button failed to render a Quarto document living within a sub-directory of a Quarto project.
 - ([#18208](https://github.com/rstudio/rstudio/issues/18208)): Fixed an issue in RStudio Server where requests could fail with "Unable to connect to service" for 30 seconds or more while a suspended session was relaunching.
+- ([#17650](https://github.com/rstudio/rstudio/issues/17650)): Fixed unreadable label text in dark modal dialogs when using third-party themes (e.g. rsthemes) that style dialog labels for light backgrounds.
 
 ### Dependencies
 - Ace 1.43.5
