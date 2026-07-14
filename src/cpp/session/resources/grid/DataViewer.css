@@ -147,6 +147,10 @@ body.auto-scrolling {
    overflow-y: auto;
    scrollbar-width: none;                /* Firefox */
    overscroll-behavior: none;
+   /* Rows are virtualized in lockstep with #gridViewport (window replaced,
+      spacer rows resized), so opt out of scroll anchoring here too; see the
+      #gridViewport rule for the full rationale. */
+   overflow-anchor: none;
    position: relative;
    /* Separator between the frozen pane and the scrolling columns. */
    border-right: 1px solid var(--grid-border);
@@ -172,6 +176,13 @@ body.auto-scrolling {
       has known dimensions, so the boundary is already obvious without it.
       Also prevents scroll chaining out of the iframe. */
    overscroll-behavior: none;
+   /* The body rows are virtualized: scrolling replaces the rendered row window
+      and resizes the top spacer row. With scroll anchoring enabled the browser
+      adjusts scrollTop to compensate for that content shift, undoing the
+      user's scroll (wheel scrolling got "stuck" with discrete mouse-wheel
+      ticks on Windows). The virtualizer manages the scroll position itself via
+      the spacers, so opt out of anchoring (same fix as #sidebarContent). */
+   overflow-anchor: none;
 }
 /* Hide native scrollbars only in overlay-scrollbar mode -- the custom
    scrollbars are rendered as sibling divs. The body carries the
