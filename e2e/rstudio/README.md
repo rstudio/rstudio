@@ -33,13 +33,13 @@ On pre-1.61 Playwright, remove the override after upgrading to 1.61 or later.
 
 - **Desktop mode**: RStudio Desktop installed at the default path for your OS
 - **Server mode**: By default, an in-tree `rserver-dev` built at `build/src/cpp/server/rserver` (run `cmake --build build` first). To target an external server instead, set `PW_RSTUDIO_SERVER_URL`; credentials are needed only if that server presents a login form.
-- **Authentication**: The test suite does not currently automate sign-in to external services. Tests that require authentication (e.g., Posit Assistant, GitHub Copilot) assume the running RStudio instance is already signed in.
+- **Authentication**: Posit AI sign-in is automated by the `setup` project (`tests/auth.setup.ts`): set `POSIT_EMAIL`/`POSIT_PASSWORD` for the OAuth sign-in flow, or use `PW_SANDBOX_POSITAI_AUTH=copy` while signed in on the host (see Environment Variables). GitHub Copilot sign-in is not automated -- its credentials are copied from the host, so sign in to Copilot on the host first. Tests missing either credential skip cleanly rather than fail.
 
 ## Running Tests
 
 ### Pick a mode
 
-The suite has two Playwright projects: `desktop` (default) and `server`. Each filters tests automatically by edition (via `PW_RSTUDIO_EDITION`, default `os`) and by OS -- `desktop` from the host's `os.platform()`, `server` always against Linux.
+The suite has two selectable Playwright projects: `desktop` (default) and `server`. Both depend on a third project, `setup`, which runs first to provision Posit AI credentials in the sandbox (see `PW_SANDBOX_POSITAI_AUTH`). Each selectable project filters tests automatically by edition (via `PW_RSTUDIO_EDITION`, default `os`) and by OS -- `desktop` from the host's `os.platform()`, `server` always against Linux.
 
 ### Desktop Mode (Default)
 
@@ -181,7 +181,7 @@ npx playwright show-trace "$TRACE"
 
 ### Configuration
 
-The Playwright config (`playwright.config.ts`) runs tests **sequentially** (1 worker, no parallel) with a 5-minute timeout per test. Retries default to 0 locally and to 1 under CI (controlled by the standard `CI` env var) -- one retry absorbs a transient launch flake on a fresh runner without rerunning the suite by hand. Override on the CLI with `--retries N`.
+The Playwright config (`playwright.config.ts`) runs tests **sequentially** (1 worker, no parallel) with a 2-minute timeout per test (slow tests raise their own with `test.setTimeout()`). Retries default to 0 locally and to 1 under CI (controlled by the standard `CI` env var) -- one retry absorbs a transient launch flake on a fresh runner without rerunning the suite by hand. Override on the CLI with `--retries N`.
 
 ## Project Structure
 
@@ -261,7 +261,7 @@ Running in parallel: the suite defaults to `workers: 1` (see `playwright.config.
 
 `PW_SANDBOX` resolves to a runner-side path. When the rsession runs on the same host as the test runner (Desktop, or Server pointed at `localhost`), the R workdir is created inside `PW_SANDBOX`, so `globalTeardown` removes it as part of the umbrella cleanup. When the rsession runs on a remote host (Server pointed at a non-`localhost` URL), `PW_SANDBOX` doesn't exist on the rsession filesystem, so the R workdir is created under R's own `dirname(tempdir())` instead. That keeps Server tests working against remote rsession, with one caveat: remote R-side workdirs aren't covered by `globalTeardown` and will accumulate on the rsession host across runs.
 
-`HOME` / `USERPROFILE` point at a sandboxed `user-home/`. By default nothing is seeded there, so user dotfiles (`~/.Rprofile`, `~/.Renviron`, `~/.R/`, `~/.gitconfig`, `~/.ssh/`, etc.) are absent for tests. AI provider credentials are the exception, and the two providers are provisioned differently. **Posit AI** is handled by the `auth.setup` project (`tests/auth.setup.ts`), controlled by `PW_SANDBOX_POSITAI_AUTH`: by default (`login`) it runs the OAuth sign-in using `POSIT_EMAIL`/`POSIT_PASSWORD` and writes a token store into the sandbox; `login-copy` additionally copies the host's `~/.posit/assistant` content (excluding the token store) before signing in; `copy` instead copies the host's whole `~/.posit/assistant` directory; `off` provisions nothing. Its tests gate on the on-disk token store (not an env flag) via `requireAiCredentials()`, so an unsigned-in sandbox skips cleanly. **GitHub Copilot** is still copied from the host by `globalSetup` when the config directory exists (`~/.config/github-copilot`, or `%LOCALAPPDATA%\github-copilot` on Windows); its tests gate on the `PW_AI_SEEDED_COPILOT` flag set after a successful copy. Either way, a missing credential surfaces as "skipped: no credentials" rather than a 5-minute timeout. `PW_SANDBOX_NO_SEED_CREDENTIALS=1` is a global host-copy kill-switch: it blocks the Copilot copy, Posit AI's `copy` mode, and `login-copy`'s content copy (the sign-in itself is unaffected, since it copies nothing from the host). Note that with `POSIT_EMAIL`/`POSIT_PASSWORD` configured, every run performs a live sign-in against `login.posit.cloud` -- the `setup` project runs unconditionally, even when no Posit AI test is selected. For fast local iteration, use `PW_SANDBOX_POSITAI_AUTH=copy` (if already signed in on the host) or `off`.
+`HOME` / `USERPROFILE` point at a sandboxed `user-home/`. By default nothing is seeded there, so user dotfiles (`~/.Rprofile`, `~/.Renviron`, `~/.R/`, `~/.gitconfig`, `~/.ssh/`, etc.) are absent for tests. AI provider credentials are the exception, and the two providers are provisioned differently. **Posit AI** is handled by the `auth.setup` project (`tests/auth.setup.ts`), controlled by `PW_SANDBOX_POSITAI_AUTH`: by default (`login`) it runs the OAuth sign-in using `POSIT_EMAIL`/`POSIT_PASSWORD` and writes a token store into the sandbox; `login-copy` additionally copies the host's `~/.posit/assistant` content (excluding the token store) before signing in; `copy` instead copies the host's whole `~/.posit/assistant` directory; `off` provisions nothing. Its tests gate on the on-disk token store (not an env flag) via `requireAiCredentials()`, so an unsigned-in sandbox skips cleanly. **GitHub Copilot** is still copied from the host by `globalSetup` when the config directory exists (`~/.config/github-copilot`, or `%LOCALAPPDATA%\github-copilot` on Windows); its tests gate on the `PW_AI_SEEDED_COPILOT` flag set after a successful copy. Either way, a missing credential surfaces as "skipped: no credentials" rather than a test timeout. `PW_SANDBOX_NO_SEED_CREDENTIALS=1` is a global host-copy kill-switch: it blocks the Copilot copy, Posit AI's `copy` mode, and `login-copy`'s content copy (the sign-in itself is unaffected, since it copies nothing from the host). Note that with `POSIT_EMAIL`/`POSIT_PASSWORD` configured, every run performs a live sign-in against `login.posit.cloud` -- the `setup` project runs unconditionally, even when no Posit AI test is selected. For fast local iteration, use `PW_SANDBOX_POSITAI_AUTH=copy` (if already signed in on the host) or `off`.
 
 The Posit Assistant tests normally download the official assistant package into the sandbox `data-home`. To run them against a locally built assistant instead, set `PW_SEED_PAI` to an install directory and `globalSetup` seeds it into `data-home/pai` (see Environment Variables).
 
@@ -410,7 +410,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 
 ### Filtering by Tag
 
-The config defines two **projects** -- `desktop` and `server` -- each with a `grepInvert` computed at config load:
+The config defines two selectable **projects** -- `desktop` and `server` (plus the `setup` auth project, which does no tag filtering) -- each with a `grepInvert` computed at config load:
 
 - **OS**: `desktop` excludes OS-only tags that don't match the host (`os.platform()`); `server` always excludes `@windows_only|@macos_only` (server targets Linux).
 - **Edition**: `PW_RSTUDIO_EDITION=os` (default) excludes `@pro_only`; `PW_RSTUDIO_EDITION=pro` excludes `@os_only`.
