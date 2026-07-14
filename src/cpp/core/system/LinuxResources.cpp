@@ -23,6 +23,7 @@
 #include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
 #include <core/Truncating.hpp>
+#include <core/system/Container.hpp>
 #include <core/system/Resources.hpp>
 #include <core/system/PosixSystem.hpp>
 
@@ -40,6 +41,20 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace {
+
+// The mode used to compute and report memory usage. Set from the
+// "memory-usage-mode" option via setMemoryUsageMode().
+MemoryUsageMode s_memoryUsageMode = MemoryUsageModeAuto;
+
+// Returns the effective memory usage mode, resolving the "auto" mode to the
+// container mode when running inside a container and the historical default
+// otherwise.
+MemoryUsageMode effectiveMemoryUsageMode()
+{
+   if (s_memoryUsageMode == MemoryUsageModeAuto)
+      return container::isRunningInContainer() ? MemoryUsageModeContainer : MemoryUsageModeDefault;
+   return s_memoryUsageMode;
+}
 
 // Parses /proc/meminfo to look up specific memory stats.
 Error readProcFileKeys(const std::string& procPath, const std::vector<std::string>& keys, std::vector<long>* pValues)
@@ -422,12 +437,33 @@ public:
       }
    }
 
-   // Overriding the base classes's process memory method that accumulates RSS size of all children since this is way more efficient.
-   // Should be roughly the same, as long as this cgroup is scoped to the session process (as is true in all cases now)
+   // Reports the "process" memory figure for this session.
+   //
+   // In container mode the cgroup is shared by every session in the launcher
+   // container, so the cgroup usage is a container-wide aggregate, not this
+   // session's footprint. Return this session's own process-tree RSS (procfs)
+   // instead so the IDE gauge / "Session memory used" figure reflects the
+   // individual session. getTotalMemoryUsed() reports the container-wide cgroup
+   // usage via getCgroupMemoryUsed() so the shared-pressure line stays accurate.
+   //
+   // In the other cgroup-backed modes the cgroup is scoped to the session (or is
+   // being reported deliberately), so keep the cgroup usage. Reading it is also
+   // more efficient than accumulating RSS across the process tree.
    //
    // If we do add user and group based cgroups, we'll need to identify which mode is used and return the cgroup
    // values in the appropriate category.
    virtual Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+   {
+      if (effectiveMemoryUsageMode() == MemoryUsageModeContainer)
+         return LinuxMemoryProvider::getProcessMemoryUsed(pUsedKb, pProvider);
+
+      return getCgroupMemoryUsed(pUsedKb, pProvider);
+   }
+
+   // Reads the cgroup's memory usage (container-wide in container mode,
+   // session-scoped otherwise). Falls back to process-tree RSS when the cgroup
+   // memory controller isn't available.
+   Error getCgroupMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
       Error error;
       if (!isV2_)
@@ -450,6 +486,22 @@ public:
       }
 
       return error;
+   }
+
+   virtual Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
+   {
+      MemoryUsageMode mode = effectiveMemoryUsageMode();
+      if (mode == MemoryUsageModeContainer || mode == MemoryUsageModeCgroup)
+         return getCgroupsMemoryLimit(pTotalKb, pProvider);
+      return MemInfoMemoryProvider::getTotalMemory(pTotalKb, pProvider);
+   }
+
+   virtual Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
+   {
+      MemoryUsageMode mode = effectiveMemoryUsageMode();
+      if (mode == MemoryUsageModeContainer || mode == MemoryUsageModeCgroup)
+         return getCgroupMemoryUsed(pUsedKb, pProvider);
+      return MemInfoMemoryProvider::getTotalMemoryUsed(pUsedKb, pProvider);
    }
 
    // Returns a value of 0 if there's no limit
@@ -560,6 +612,12 @@ public:
          error = setCgroupMemoryStat("memory.high", highMemKb * 1024);
          if (!error)
             error = setCgroupMemoryStat("memory.max", maxMemKb * 1024);
+      }
+
+      if (error)
+      {
+         // The cgroup fs is not writable, so fall back to ulimit-based settings.
+         return MemInfoMemoryProvider::setProcessMemoryLimit(highMemKb, maxMemKb, pProvider);
       }
       return error;
    }
@@ -861,10 +919,13 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider(bool writeLimit, uid_t 
          boost::shared_ptr<CGroupsMemoryProvider> provider = 
             boost::make_shared<CGroupsMemoryProvider>(cgroup);
 
-         // Check memory limit
+         // Check memory limit. Use the raw cgroup limit (not getTotalMemory,
+         // whose reported total varies with the memory-usage mode) so that we
+         // bind the cgroup provider for reads only when a finite cgroup limit
+         // is actually in effect.
          long totalKb;
          MemoryProvider tmpProvider;
-         Error error = provider->getTotalMemory(&totalKb, &tmpProvider);
+         Error error = provider->getCgroupsMemoryLimit(&totalKb, &tmpProvider);
 
          if (error)
          {
@@ -959,6 +1020,11 @@ Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
    *pNumCpus = 0;
    *pProvider = MemoryProviderUnknown;
    return Success();
+}
+
+void setMemoryUsageMode(MemoryUsageMode mode)
+{
+   s_memoryUsageMode = mode;
 }
 
 Error setProcessMemoryLimit(long highMemKb, long maxMemKb, uid_t uid, MemoryProvider *pProvider)
