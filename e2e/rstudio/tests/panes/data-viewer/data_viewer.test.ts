@@ -1431,6 +1431,100 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/18215
+  //
+  // While the viewer tab is hidden its iframe has no layout: the grid
+  // viewport reads clientWidth/scrollLeft as 0. Grid events that land in that
+  // state (e.g. the scrollend of a gesture interrupted by the tab switch)
+  // used to (a) fold the zeroed scroll position into the lastScrollTop/Left
+  // mirrors, losing the saved position, and (b) collapse the virtualized
+  // column window to a single edge column, which the tab-activation re-render
+  // then used as-is -- leaving the grid mostly spacer. Both reads are now
+  // ignored while the tab has no layout, and onActivate re-derives the
+  // column window from live geometry.
+  test('scroll events on a hidden viewer tab do not corrupt position or column window', async ({ rstudioPage: page }) => {
+    // Wide enough that the rendered column window is a strict subset of the
+    // columns, so a collapsed window is observable.
+    await consoleActions.executeInConsole(
+      '{ .rs.hidden_evt_df <- as.data.frame(matrix(seq_len(4000), nrow = 10, ncol = 400)); View(.rs.hidden_evt_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Scroll deep into the columns and capture the settled position.
+      await dataViewer.goToColumn(300);
+      await expect(dataViewer.columnHeader(300)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      const scrollLeftBefore = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
+      expect(scrollLeftBefore).toBeGreaterThan(0);
+
+      // Hide the viewer tab, then replay the tail of a scroll gesture into
+      // the now-hidden grid (both handlers read zeroed geometry here).
+      const sourceTabs = page.locator("[class*='rstudio_source_panel'] .gwt-TabLayoutPanelTab");
+      await sourceTabs.filter({ hasText: 'Untitled' }).first().click();
+      await expect(sourcePane.selectedTab).toContainText('Untitled');
+      await dataViewer.viewport.evaluate((el) => {
+        el.dispatchEvent(new Event('scroll'));
+        el.dispatchEvent(new Event('scrollend'));
+      });
+
+      // Back to the viewer: the grid must still be at column 300, with real
+      // cells rendered there (a collapsed window leaves only spacer here).
+      await sourceTabs.filter({ hasText: '.rs.hidden_evt_df' }).first().click();
+      await expect(dataViewer.columnHeader(300)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect.poll(() => dataViewer.viewport.evaluate((el) => el.scrollLeft))
+        .toBe(scrollLeftBefore);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.hidden_evt_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18215
+  //
+  // Some activation paths (SourceColumn.onActivate) invoke the target's
+  // onActivate before its tab widget is shown. With no layout the scroll
+  // restore is a no-op that used to overwrite the lastScrollTop/Left mirrors
+  // with the hidden viewport's zeros, so the next real activation restored
+  // the top-left corner instead of the user's position. onActivate now
+  // defers itself until the tab has layout.
+  test('onActivate on a hidden viewer tab defers until layout exists', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.hidden_act_df <- as.data.frame(matrix(seq_len(4000), nrow = 10, ncol = 400)); View(.rs.hidden_act_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      await dataViewer.goToColumn(300);
+      await expect(dataViewer.columnHeader(300)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      const scrollLeftBefore = await dataViewer.viewport.evaluate((el) => el.scrollLeft);
+      expect(scrollLeftBefore).toBeGreaterThan(0);
+
+      // Hide the viewer tab, then fire the activation hook by hand while the
+      // iframe still has no layout (what the early-activation path does).
+      const sourceTabs = page.locator("[class*='rstudio_source_panel'] .gwt-TabLayoutPanelTab");
+      await sourceTabs.filter({ hasText: 'Untitled' }).first().click();
+      await expect(sourcePane.selectedTab).toContainText('Untitled');
+      await page.evaluate((sel: string) => {
+        const f = document.querySelector(sel) as HTMLIFrameElement | null;
+        const w = f?.contentWindow as unknown as { onActivate?: () => void } | undefined;
+        if (!w?.onActivate) throw new Error('onActivate() not available on data viewer iframe');
+        w.onActivate();
+      }, VIEWER_FRAME);
+
+      // Returning to the tab must land on the saved position, not the
+      // top-left corner the hidden onActivate observed.
+      await sourceTabs.filter({ hasText: '.rs.hidden_act_df' }).first().click();
+      await expect(dataViewer.columnHeader(300)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect.poll(() => dataViewer.viewport.evaluate((el) => el.scrollLeft))
+        .toBe(scrollLeftBefore);
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.hidden_act_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // Adding a column flips the server-side column fingerprint, which discards
   // the saved per-object UI state (it can no longer be trusted against the new
   // column structure). The live sidebar choice must NOT be discarded with it:
