@@ -17,6 +17,7 @@
 #define CORE_HTTP_MESSAGE_HPP
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <algorithm>
 #include <stdint.h>
@@ -126,6 +127,21 @@ protected:
       headers_ = message.headers_;
       overrideHeader_ = message.overrideHeader_;
       httpVersion_ = message.httpVersion_;
+
+      std::for_each(extraHeaders.begin(), extraHeaders.end(),
+                    boost::bind(&Message::setExtraHeader, this, _1));
+   }
+
+   // rvalue overload - moves fields instead of copying them; use when the
+   // source message is about to be discarded (e.g. handed off to a client)
+   void assign(Message&& message, const Headers& extraHeaders)
+   {
+      body_ = std::move(message.body_);
+      httpVersionMajor_ = message.httpVersionMajor_;
+      httpVersionMinor_ = message.httpVersionMinor_;
+      headers_ = std::move(message.headers_);
+      overrideHeader_ = std::move(message.overrideHeader_);
+      httpVersion_ = std::move(message.httpVersion_);
 
       std::for_each(extraHeaders.begin(), extraHeaders.end(),
                     boost::bind(&Message::setExtraHeader, this, _1));
