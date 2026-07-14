@@ -183,11 +183,13 @@ protected:
             LOG_ERROR(error);
       }
 
-      // preview target file
+      // preview target file, as a path relative to the working directory
+      // the job runs in (see previewDir())
       std::vector<std::string> args = { isShinyDoc ? "serve" : "preview" };
       if (!previewTarget_.isDirectory())
       {
-         args.push_back(string_utils::utf8ToSystem(previewTarget_.getFilename()));
+         std::string targetPath = previewTargetPath(previewTarget_, previewDir());
+         args.push_back(string_utils::utf8ToSystem(targetPath));
 
          if (!isShinyDoc)
          {
@@ -273,7 +275,7 @@ private:
 
    core::FilePath previewDir()
    {
-     return previewTarget_.isDirectory() ? previewTarget_ :  previewTarget_.getParent();
+      return previewWorkingDir(previewTarget_, configFile_);
    }
 
    virtual void onStdErr(const std::string& output)
@@ -713,6 +715,30 @@ void onResume(const Settings&)
 
 } // anonymous namespace
 
+
+core::FilePath previewWorkingDir(const core::FilePath& previewTarget,
+                                 const core::FilePath& projectConfigFile)
+{
+   // whole-project previews target the project directory itself
+   if (previewTarget.isDirectory())
+      return previewTarget;
+
+   // for files within a Quarto project, run from the project root, as
+   // 'quarto preview' can fail to resolve paths relative to a project
+   // sub-directory (https://github.com/rstudio/rstudio/issues/18197)
+   if (!projectConfigFile.isEmpty())
+      return projectConfigFile.getParent();
+
+   return previewTarget.getParent();
+}
+
+std::string previewTargetPath(const core::FilePath& previewTarget,
+                              const core::FilePath& workingDir)
+{
+   return previewTarget.isWithin(workingDir)
+      ? previewTarget.getRelativePath(workingDir)
+      : previewTarget.getAbsolutePath();
+}
 
 bool projectConfigChanged(const FilePath& previewTarget,
                           const FilePath& priorConfigFile,

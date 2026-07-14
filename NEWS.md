@@ -8,8 +8,11 @@
 - ([#8715](https://github.com/rstudio/rstudio/issues/8715)): Inline LaTeX / math previews in the source editor and visual editor are now rendered with MathJax 4 (previously MathJax 2.7), adding support for the TeX input extensions introduced in MathJax 3 and later. Rendered R Markdown documents using `mathjax = "local"` continue to use the bundled MathJax 2.7.
 
 ### Fixed
+- ([#18152](https://github.com/rstudio/rstudio/issues/18152)): Fixed a compilation error when building RStudio Server against SOCI 4.1.4 or newer.
 - ([#18174](https://github.com/rstudio/rstudio/issues/18174)): Fixed an error when viewing an object from the Object Explorer with the French user interface language enabled.
 - ([#18198](https://github.com/rstudio/rstudio/issues/18198)): Fixed tar errors and warnings printed to the console after installing a package from a URL with `install.packages(..., repos = NULL)`.
+- ([#18197](https://github.com/rstudio/rstudio/issues/18197)): Fixed an issue where the Render button failed to render a Quarto document living within a sub-directory of a Quarto project.
+- ([#18208](https://github.com/rstudio/rstudio/issues/18208)): Fixed an issue in RStudio Server where requests could fail with "Unable to connect to service" for 30 seconds or more while a suspended session was relaunching.
 
 ### Dependencies
 - Ace 1.43.5
