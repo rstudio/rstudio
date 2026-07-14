@@ -60,7 +60,7 @@ See the [Environment Variables](../../reference/environment-variables.qmd) refer
 
 Posit Assistant 0.7.7 and later can connect to a number of LLM providers in addition to Posit AI, including Anthropic (Claude), OpenAI, GitHub Copilot, Amazon Bedrock, Google Gemini, Google Vertex AI, OpenRouter, Snowflake Cortex, Microsoft Foundry, DeepSeek, and local models through Ollama or LM Studio.
 
-To connect to a provider, click the model selector at the bottom of the Posit Assistant pane and choose **Configure LLM providers**. Select a provider, then sign in with an API key or the provider's own sign-in flow.
+To connect to a provider, click the model selector at the bottom of the Posit Assistant pane and choose **Configure LLM providers**. Select a provider and complete its setup, which varies by provider: entering an API key, signing in through the provider's own flow (Posit AI, GitHub Copilot), using AWS credentials (Amazon Bedrock), or pointing to a local endpoint (Ollama, LM Studio).
 
 Most provider setup can be completed in that dialog. Settings the dialog does not expose -- custom base URLs, extra HTTP headers, model lists, and fully custom providers -- are configured by editing the provider configuration file described below.
 
