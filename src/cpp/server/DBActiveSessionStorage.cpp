@@ -302,8 +302,8 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
    // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
    if (++iter != rowset.end())
    {
-      int count = 1;
-      while (iter++ != rowset.end())
+      int count = 2;
+      while (++iter != rowset.end())
          ++count;
       return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    }
@@ -345,8 +345,8 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
       // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
       if (++iter != rowset.end())
       {
-         int count = 1;
-         while (iter++ != rowset.end())
+         int count = 2;
+         while (++iter != rowset.end())
             ++count;
          return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
       }
