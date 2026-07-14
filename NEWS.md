@@ -13,6 +13,7 @@
 - ([#18198](https://github.com/rstudio/rstudio/issues/18198)): Fixed tar errors and warnings printed to the console after installing a package from a URL with `install.packages(..., repos = NULL)`.
 - ([#18197](https://github.com/rstudio/rstudio/issues/18197)): Fixed an issue where the Render button failed to render a Quarto document living within a sub-directory of a Quarto project.
 - ([#18208](https://github.com/rstudio/rstudio/issues/18208)): Fixed an issue in RStudio Server where requests could fail with "Unable to connect to service" for 30 seconds or more while a suspended session was relaunching.
+- ([#18221](https://github.com/rstudio/rstudio/issues/18221)): Fixed an issue on Windows where scrolling the Data Viewer with the mouse wheel could get stuck when the pointer was over the table body.
 
 ### Dependencies
 - Ace 1.43.5
