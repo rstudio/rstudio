@@ -25,6 +25,7 @@
 
 #include <core/Exec.hpp>
 #include <core/system/Interrupts.hpp>
+#include <core/system/Resources.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
@@ -51,6 +52,29 @@ bool s_memoryLimitWarningSeen = false;
 // The interval, in seconds, at which we will query for memory statistics
 std::atomic<int> s_queryInterval;
 
+
+#ifdef __linux__
+// Applies the configured memory-usage-mode option to the core memory providers.
+// The core code resolves the "auto" mode to the container mode when running
+// inside a container.
+void applyMemoryUsageMode()
+{
+   std::string mode = options().memoryUsageMode();
+   core::system::MemoryUsageMode usageMode = core::system::MemoryUsageModeAuto;
+   if (mode == "default")
+      usageMode = core::system::MemoryUsageModeDefault;
+   else if (mode == "container")
+      usageMode = core::system::MemoryUsageModeContainer;
+   else if (mode == "cgroup")
+      usageMode = core::system::MemoryUsageModeCgroup;
+   else if (mode == "meminfo")
+      usageMode = core::system::MemoryUsageModeMemInfo;
+   else if (mode != "auto")
+      LOG_WARNING_MESSAGE("Unrecognized memory-usage-mode '" + mode + "'; using auto-detection.");
+
+   core::system::setMemoryUsageMode(usageMode);
+}
+#endif
 
 /**
  * Performs a previously scheduled query for available memory.
@@ -305,6 +329,12 @@ Error initialize()
    using namespace module_context;
 
    s_queryInterval = 0;
+
+#ifdef __linux__
+   // Select how memory usage is computed and reported before the memory
+   // providers are first used.
+   applyMemoryUsageMode();
+#endif
 
    // Listen for user settings changes and change events so we can perform
    // memory statistic refreshes as needed.

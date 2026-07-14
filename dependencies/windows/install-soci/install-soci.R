@@ -5,8 +5,8 @@ if (file.exists("rstudio.Rproj"))
 
 SOCI_VERSION         <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
 BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.91.0")
-MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
-CMAKE_GENERATOR      <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 17 2022")
+MSVC_TOOLSET_VERSION <- "145"
+CMAKE_GENERATOR      <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 18 2026")
 
 # the source-tree folder containing this script and its helpers
 script_dir <- getwd()

@@ -126,6 +126,11 @@
    # recurse into arguments to catch nested calls (e.g. lapply(x, install.packages))
    for (i in seq_along(expr))
    {
+      # skip empty arguments (e.g. the trailing argument in 'mtcars[1, ]');
+      # binding the empty symbol to a variable and evaluating it would error
+      if (identical(expr[[i]], quote(expr = )))
+         next
+
       part <- expr[[i]]
       if (is.call(part) && .rs.exprMutatesPackageLibrary(part))
          return(TRUE)
@@ -2384,7 +2389,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
          # Record the package source. Note that we need to resolve the path
          # to the newly-installed package post-hoc from the provided path.
-         shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
+         #
+         # Skip URL inputs: install.packages() accepts them when 'repos' is
+         # NULL, but downloads to a private temporary file, so there is no
+         # local archive we can read a DESCRIPTION from after the fact.
+         # https://github.com/rstudio/rstudio/issues/18198
+         shouldRecord <-
+            is.character(pkgs) &&
+            length(pkgs) == 1L &&
+            !grepl("^(?:file|ftp|https?)://", pkgs)
          if (shouldRecord)
          {
             pkgDesc <- tryCatch(

@@ -2754,6 +2754,19 @@ core::Error UserPrefValues::setEnableSplashScreen(bool val)
 }
 
 /**
+ * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
+ */
+bool UserPrefValues::showWhatsNew()
+{
+   return readPref<bool>("show_whats_new");
+}
+
+core::Error UserPrefValues::setShowWhatsNew(bool val)
+{
+   return writePref("show_whats_new", val);
+}
+
+/**
  * The R version to use by default.
  */
 core::json::Object UserPrefValues::defaultRVersion()
@@ -4162,6 +4175,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRestoreProjectRVersion,
       kClangVerbose,
       kEnableSplashScreen,
+      kShowWhatsNew,
       kDefaultRVersion,
       kDataViewerMaxColumns,
       kDataViewerMaxCellSize,

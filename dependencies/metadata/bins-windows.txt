@@ -37,3 +37,22 @@ dependency(NSIS
    LICENSE      "zlib AND bzip2 AND CPL-1.0"
    LICENSE_PATH "https://github.com/kichik/nsis/blob/master/COPYING"
 )
+
+dependency(NSISMULTIUSER
+   DEPNAME      "NsisMultiUser"
+   REPOSITORY   "https://github.com/Drizin/NsisMultiUser"
+   AUTHOR       "Richard Drizin, Alex Mitev"
+   LICENSE      "MIT"
+)
+
+dependency(UAC
+   DEPNAME      "UAC NSIS Plugin"
+   HOMEPAGE     "https://nsis.sourceforge.io/UAC_plug-in"
+   LICENSE      "zlib"
+)
+
+dependency(STDUTILS
+   DEPNAME      "StdUtils NSIS Plugin"
+   HOMEPAGE     "https://nsis.sourceforge.io/StdUtils_plug-in"
+   LICENSE      "LGPL-2.1"
+)

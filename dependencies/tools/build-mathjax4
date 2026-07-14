@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+#
+# build-mathjax4
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+#
+# This script assembles a MathJax 4 bundle suitable for serving locally
+# from RStudio, using the 'mathjax' and '@mathjax/mathjax-newcm-font'
+# npm packages. The bundle is pruned down to what the IDE needs for
+# inline LaTeX / math previews:
+#
+# - the 'tex-mml-chtml.js' combined component (TeX + MathML inputs,
+#   CHTML output, with the static mathjax-newcm font data inlined),
+# - the component directories used for dynamic loading (input, output,
+#   ui, a11y, sre),
+# - the mathjax-newcm font's CHTML resources (woff2 web fonts and
+#   dynamically-loaded glyph range data), placed under
+#   'fonts/mathjax-newcm-font' to match the '%%FONT%%-font' template
+#   used by the MathJax 'fontPath' output option.
+#
+# usage: build-mathjax4 <parent-dir> [version]
+#
+# The bundle is created at '<parent-dir>/mathjax-4'.
+#
+
+set -e
+
+if [ -z "$1" ]; then
+   echo "usage: build-mathjax4 <parent-dir> [version]"
+   exit 1
+fi
+
+PARENT_DIR="$1"
+VERSION="${2:-4.1.3}"
+
+REGISTRY="${NPM_REGISTRY:-https://registry.npmjs.org}"
+MATHJAX_TGZ="${REGISTRY}/mathjax/-/mathjax-${VERSION}.tgz"
+FONT_TGZ="${REGISTRY}/@mathjax/mathjax-newcm-font/-/mathjax-newcm-font-${VERSION}.tgz"
+
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "${WORK_DIR}"' EXIT
+
+# download and extract the npm tarballs (each unpacks to 'package')
+mkdir -p "${WORK_DIR}/mathjax" "${WORK_DIR}/font"
+curl -L -f -s "${MATHJAX_TGZ}" | tar -xzf - -C "${WORK_DIR}/mathjax"
+curl -L -f -s "${FONT_TGZ}" | tar -xzf - -C "${WORK_DIR}/font"
+
+BUNDLE_DIR="${WORK_DIR}/mathjax-4"
+mv "${WORK_DIR}/mathjax/package" "${BUNDLE_DIR}"
+
+# prune development / node-only files
+rm -f "${BUNDLE_DIR}/README.md"
+rm -f "${BUNDLE_DIR}/CONTRIBUTING.md"
+rm -f "${BUNDLE_DIR}/node-main-setup.cjs"
+rm -f "${BUNDLE_DIR}/node-main.cjs"
+rm -f "${BUNDLE_DIR}/node-main.js"
+rm -f "${BUNDLE_DIR}/node-main.mjs"
+rm -f "${BUNDLE_DIR}/require.mjs"
+rm -rf "${BUNDLE_DIR}/adaptors"
+
+# prune combined components other than tex-mml-chtml.js, along with
+# the SVG output component (the IDE only uses CHTML output)
+rm -f "${BUNDLE_DIR}"/mml-chtml*.js
+rm -f "${BUNDLE_DIR}"/mml-svg*.js
+rm -f "${BUNDLE_DIR}"/tex-chtml*.js
+rm -f "${BUNDLE_DIR}"/tex-svg*.js
+rm -f "${BUNDLE_DIR}"/tex-mml-svg*.js
+rm -f "${BUNDLE_DIR}/tex-mml-chtml-nofont.js"
+rm -f "${BUNDLE_DIR}/output/svg.js"
+
+# install the mathjax-newcm font's CHTML resources
+FONT_SRC="${WORK_DIR}/font/package"
+FONT_DIR="${BUNDLE_DIR}/fonts/mathjax-newcm-font"
+mkdir -p "${FONT_DIR}"
+cp "${FONT_SRC}/package.json" "${FONT_DIR}/package.json"
+cp "${FONT_SRC}/chtml.js" "${FONT_DIR}/chtml.js"
+cp -R "${FONT_SRC}/def" "${FONT_DIR}/def"
+cp -R "${FONT_SRC}/chtml" "${FONT_DIR}/chtml"
+
+# move the assembled bundle into place
+rm -rf "${PARENT_DIR}/mathjax-4"
+mkdir -p "${PARENT_DIR}"
+mv "${BUNDLE_DIR}" "${PARENT_DIR}/mathjax-4"
+
+echo "MathJax ${VERSION} bundle assembled at '${PARENT_DIR}/mathjax-4'"

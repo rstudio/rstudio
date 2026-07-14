@@ -4029,13 +4029,24 @@ void showTestManifestWarning()
    module_context::enqueClientEvent(event);
 }
 
-void onDeferredInit(bool)
+// Fire the test-manifest warning bar from onClientInit rather than
+// onDeferredInit. onClientInit runs at the tail of every client_init handler,
+// past the point where a re-join clears pending startup events
+// (SessionClientInit.cpp), so the banner is enqueued after any such clear and
+// reliably reaches the client. Enqueuing it from onDeferredInit instead loses
+// it to an intermittent startup race: if an unlucky request order flips the
+// session-initialized flag before client_init runs, client_init treats itself
+// as a re-join and clears the just-enqueued banner (rstudio/rstudio#18166).
+void onClientInit()
 {
    if (isUsingTestManifest())
    {
       showTestManifestWarning();
    }
+}
 
+void onDeferredInit(bool)
+{
    // Kick off the startup manifest check, deferred off the critical startup
    // path. The fetch is async, but spawning the --vanilla child R process still
    // has a cost (process creation + R DLL load, often AV-scanned on Windows), so
@@ -6303,6 +6314,7 @@ Error initialize()
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
+   events().onClientInit.connect(onClientInit);
    events().onDeferredInit.connect(onDeferredInit);
 
    // Register handler to detect session close (vs suspend/restart)

@@ -17,25 +17,57 @@
 
 set -e
 
-source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${SCRIPT_DIR}/../tools/rstudio-tools.sh"
 section "Installing Mathjax"
 
 URL="${RSTUDIO_BUILDTOOLS}"
 
-# download and extract mathjax if necessary
-MATHJAX_DIR="${RSTUDIO_TOOLS_ROOT}/mathjax-27"
-if [ -d "$MATHJAX_DIR" ]; then
-   echo "Mathjax already installed at '${MATHJAX_DIR}'"
+MATHJAX4_VERSION="4.1.3"
+
+# MathJax 2.7 is bundled for rendered R Markdown documents (rmarkdown's
+# 'mathjax = "local"' mode); MathJax 4 is bundled for the IDE's inline
+# LaTeX / math previews
+MATHJAX2_DIR="${RSTUDIO_TOOLS_ROOT}/mathjax-27"
+MATHJAX4_DIR="${RSTUDIO_TOOLS_ROOT}/mathjax-4"
+if [ -d "$MATHJAX2_DIR" ] && [ -d "$MATHJAX4_DIR" ]; then
+   echo "Mathjax already installed at '${MATHJAX2_DIR}' and '${MATHJAX4_DIR}'"
    exit 0
 fi
 
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "${RSTUDIO_TOOLS_ROOT}"
 
-# NOTE: Unpacks to 'mathjax-27' directory
-MATHJAX=mathjax-2.7.9.zip
-download "${URL}/${MATHJAX}"
-rm -rf "${MATHJAX_DIR}"
-unzip -q "$MATHJAX"
-rm "$MATHJAX"
+# download and extract mathjax 2.7 if necessary
+if [ ! -d "$MATHJAX2_DIR" ]; then
 
+   # NOTE: Unpacks to 'mathjax-27' directory
+   MATHJAX=mathjax-2.7.9.zip
+   download "${URL}/${MATHJAX}"
+   rm -rf "${MATHJAX2_DIR}"
+   unzip -q "$MATHJAX"
+   rm "$MATHJAX"
+
+fi
+
+# download and extract mathjax 4 if necessary
+if [ ! -d "$MATHJAX4_DIR" ]; then
+
+   # NOTE: Unpacks to 'mathjax-4' directory
+   MATHJAX4="mathjax-${MATHJAX4_VERSION}.zip"
+   if download "${URL}/${MATHJAX4}"; then
+      rm -rf "${MATHJAX4_DIR}"
+      unzip -q "$MATHJAX4"
+      rm "$MATHJAX4"
+   else
+      # fall back to assembling the bundle from npm registry tarballs
+      # (a failed download can leave an empty file behind; remove it)
+      rm -f "$MATHJAX4"
+      echo "Assembling MathJax 4 bundle from npm registry tarballs..."
+      "${SCRIPT_DIR}/../tools/build-mathjax4" \
+         "${RSTUDIO_TOOLS_ROOT}" \
+         "${MATHJAX4_VERSION}"
+   fi
+
+fi

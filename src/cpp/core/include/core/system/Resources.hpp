@@ -76,6 +76,33 @@ Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider);
 
 #ifdef __linux__
 
+// Selects how session and total memory usage are computed and reported. See the
+// rsession.conf "memory-usage-mode" option for the meaning of each mode.
+enum MemoryUsageMode {
+   // Auto-detect: resolves to MemoryUsageModeContainer when running inside a
+   // container and MemoryUsageModeDefault otherwise. This is the default.
+   MemoryUsageModeAuto = 0,
+
+   // Preserve the historical behavior: report the node's physical/cgroup RAM as
+   // the total and rely on node free memory (plus a grace period) for aborts.
+   MemoryUsageModeDefault,
+
+   // Report the session's cgroup memory limit as the total so the session is
+   // aborted when it reaches its own limit rather than when the node runs low.
+   MemoryUsageModeContainer,
+
+   // Force memory usage to be read from the cgroup.
+   MemoryUsageModeCgroup,
+
+   // Force memory usage to be read from the node's /proc/meminfo. Useful when
+   // cgroup memory includes file cache that does not reflect actual session use.
+   MemoryUsageModeMemInfo
+};
+
+// Sets the mode used to compute and report memory usage. Call once at startup,
+// before the memory providers are first used.
+void setMemoryUsageMode(MemoryUsageMode mode);
+
 // Sets the memory limit. Must have privileges and provide the uid of the ultimate process owner
 Error setProcessMemoryLimit(long memHighKb, long memMaxKb, uid_t uid, MemoryProvider *pProvider);
 

@@ -1926,6 +1926,8 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry;
 
+   FilePath filePath(fileInfo.absolutePath());
+
    std::string aliasedPath = module_context::createAliasedPath(fileInfo);
    std::string rawPath =
       module_context::resolveAliasedPath(aliasedPath).getAbsolutePath();
@@ -1933,7 +1935,67 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    entry["path"] = aliasedPath;
    if (aliasedPath != rawPath)
       entry["raw_path"] = rawPath;
-   entry["dir"] = fileInfo.isDirectory();
+
+   bool isDir = fileInfo.isDirectory();
+
+   // report symbolic-link status so the client can badge links (#9924). This
+   // adds one is_symlink (lstat-equivalent) call per entry; the target is read
+   // only for actual symlinks and drives the client tooltip. It is shown as
+   // stored (ls -l style), so it may be relative -- and on Windows the path
+   // separators are normalized to '/'.
+   bool isSymlink = filePath.isSymlink();
+   entry["is_symlink"] = isSymlink;
+   if (isSymlink)
+   {
+      std::string symlinkTarget;
+      Error error = filePath.readSymlink(symlinkTarget);
+      if (error)
+      {
+         // a read failure here is rare (isSymlink() just succeeded): typically a
+         // TOCTOU race where the entry changed mid-listing. Log at debug like
+         // the alias case below and omit the target; the row is still badged and
+         // the client tooltip falls back to the name.
+         LOG_DEBUG_MESSAGE("Failed to read symlink target: " + error.asString());
+      }
+      else
+      {
+         entry["symlink_target"] = symlinkTarget;
+      }
+   }
+
+#ifdef __APPLE__
+   // Finder aliases are regular files rather than symlinks, so the
+   // filesystem doesn't resolve them for us; surface the resolved target
+   // (and its directory-ness) so the client can follow them (#18158).
+   // Unresolvable aliases fall back to plain-file behavior.
+   if (!isDir)
+   {
+      if (isFinderAlias(filePath))
+      {
+         // flag the alias for the link badge (#9924) whether or not the target
+         // resolves, so even a broken alias is indicated (alias_target, which
+         // drives navigation, is only set when resolution succeeds)
+         entry["is_alias"] = true;
+
+         FilePath targetPath;
+         Error error = resolveFinderAlias(filePath, &targetPath);
+         if (error)
+         {
+            // broken aliases are a normal filesystem state, so log at debug
+            // level: unexpected failures (corrupt bookmarks, sandbox denials)
+            // stay diagnosable without spamming per-file listings
+            LOG_DEBUG_MESSAGE("Failed to resolve Finder alias: " + error.asString());
+         }
+         else if (targetPath.exists())
+         {
+            entry["alias_target"] = createAliasedPath(targetPath);
+            isDir = targetPath.isDirectory();
+         }
+      }
+   }
+#endif
+
+   entry["dir"] = isDir;
 
    // length requires cast
    try
@@ -1946,8 +2008,8 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
                         e.what());
       entry["length"] = 0;
    }
-   
-   entry["exists"] = FilePath(fileInfo.absolutePath()).exists();
+
+   entry["exists"] = filePath.exists();
 
    entry["lastModified"] = date_time::millisecondsSinceEpoch(
                                                    fileInfo.lastWriteTime());

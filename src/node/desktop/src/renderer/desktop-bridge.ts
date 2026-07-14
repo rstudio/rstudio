@@ -489,26 +489,16 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_mousewheel_zoom_debounce', debounceMs);
     },
 
-    getEnableAccessibility: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_get_enable_accessibility')
-        .then((enabled) => callback(enabled))
-        .catch((error) => reportIpcError('getEnableAccessibility', error));
-    },
-
     setEnableAccessibility: (enable: boolean) => {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
-    getEnableSplashScreen: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_get_enable_splash_screen')
-        .then((enabled) => callback(enabled))
-        .catch((error) => reportIpcError('getEnableSplashScreen', error));
-    },
-
     setEnableSplashScreen: (enable: boolean) => {
       ipcRenderer.send('desktop_set_enable_splash_screen', enable);
+    },
+
+    setShowWhatsNew: (enable: boolean) => {
+      ipcRenderer.send('desktop_set_show_whats_new', enable);
     },
 
     setAutohideMenubar: (enable: boolean) => {

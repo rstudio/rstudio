@@ -110,6 +110,70 @@ public class FileSystemItem extends JavaScriptObject
       return this.dir;
    }-*/;
 
+   // resolved target path when this file is a macOS Finder alias that the
+   // backend could resolve (in which case 'dir' reflects the target rather
+   // than the alias file); null otherwise -- including broken aliases,
+   // which behave as plain files
+   public final native String getAliasTarget() /*-{
+      return this.alias_target || null;
+   }-*/;
+
+   // macOS Finder aliases carry their resolved target; navigation and open
+   // operations should act on the target, like the Finder does. Returns this
+   // item unchanged when it is not an alias.
+   public final FileSystemItem resolveAliasTarget()
+   {
+      String aliasTarget = getAliasTarget();
+      if (aliasTarget == null)
+         return this;
+
+      return isDirectory() ? createDir(aliasTarget) : createFile(aliasTarget);
+   }
+
+   // true when the backend reported this entry as a POSIX symbolic link
+   // (#9924). Independent of alias status; a symlink to a directory still
+   // reports isDirectory() == true.
+   public final native boolean isSymlink() /*-{
+      return !!this.is_symlink;
+   }-*/;
+
+   // true when this entry is a macOS Finder alias, even one whose target could
+   // not be resolved (a broken alias has is_alias == true but a null
+   // getAliasTarget()). See createFileSystemItem in SessionModuleContext.cpp.
+   public final native boolean isAlias() /*-{
+      return !!this.is_alias;
+   }-*/;
+
+   // single "link-like" predicate used by the Files pane to badge links: a
+   // POSIX symlink or a macOS Finder alias (#9924).
+   public final boolean isLink()
+   {
+      return isSymlink() || isAlias();
+   }
+
+   // raw symbolic-link target as stored in the link, for display in the
+   // tooltip (ls -l style; may be a relative path). null when not a symlink or
+   // when the backend could not read the target.
+   public final native String getSymlinkTarget() /*-{
+      return this.symlink_target || null;
+   }-*/;
+
+   // best "points to" target for the link tooltip: the symlink target, or an
+   // alias's resolved target; null when neither is available (e.g. a broken
+   // alias) so callers can fall back to just the name.
+   //
+   // Display only -- do NOT use for navigation. A symlink target is the raw,
+   // possibly relative link text (relative to the link's own directory), while
+   // an alias target is an absolute resolved path; the two are not
+   // interchangeable as navigable paths. The filesystem already resolves POSIX
+   // symlinks natively (unlike aliases -- see resolveAliasTarget()), so there
+   // is intentionally no navigable symlink-target accessor.
+   public final String getLinkTarget()
+   {
+      String target = getSymlinkTarget();
+      return target != null ? target : getAliasTarget();
+   }
+
    public final int getLength()
    {
       return getLengthNative();

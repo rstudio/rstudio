@@ -325,11 +325,7 @@ jobs:
       # the sandbox still refuses to come up here, pass --no-sandbox via
       # rstudio_extra_args (PW_RSTUDIO_EXTRA_ARGS) rather than changing these.
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
-    # TEMPORARY: bumped 120 -> 300 to let a COLD-cache run finish the from-source
-    # package compile (Fedora has no binaries) so we can verify the run end to
-    # end. Revert to 120 before merge -- warm-cache runs restore the prebuilt
-    # library and finish well under 120.
-    timeout-minutes: 300
+    timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
@@ -400,8 +396,17 @@ jobs:
       # ignored on Fedora -- dnf provides whatever R the distro ships.
       - name: Install R (Fedora native)
         run: |
-          dnf -y install R-core R-core-devel
+          # Clear tsflags for this transaction so R's documentation tree is
+          # installed. Fedora container images ship /etc/dnf/dnf.conf with
+          # tsflags=nodocs (a space-saving default), which makes dnf skip
+          # /usr/share/doc/R. RStudio's R discovery (r/session/RDiscovery.cpp)
+          # requires R_DOC_DIR to exist and aborts the session otherwise, so a
+          # docless R install starts but never reaches window.rstudio.ready.
+          dnf -y install --setopt=tsflags='' R-core R-core-devel
           R --version
+          # Diagnostics: the doc dir R reports, and confirm it now exists.
+          Rscript -e 'cat("doc=", R.home("doc"), " R_DOC_DIR=", Sys.getenv("R_DOC_DIR"), "\n", sep="")'
+          ls -ld /usr/share/doc/R || echo "MISSING /usr/share/doc/R"
           mkdir -p "$R_LIBS_USER"
 
       # Build-from-source path: extract the .rpm artifact produced by the build
@@ -518,6 +523,20 @@ jobs:
           # is what PW_HEARTBEAT_TIMEOUT_SECONDS below was papering over.
           install-required-packages: 'true'
 
+      # Run the tests as a non-root user, matching the bare-runner siblings
+      # (Ubuntu/macOS/Windows all execute as a non-root user). GHA container
+      # jobs default to root, and RStudio-as-root diverges from real usage:
+      # Chromium refuses its sandbox as root, the terminal gets a root shell,
+      # and rsession warns. All the setup above needs root (dnf, the .rpm
+      # install, cache writes), so only the test step drops down -- create the
+      # user here and hand it ownership of everything the run writes under the
+      # workspace (R-libs and its per-worker clones, ms-playwright, pw-sandbox,
+      # the pak cache, and the report dirs under e2e/rstudio).
+      - name: Create non-root test user
+        run: |
+          useradd -m -s /bin/bash rstudio-tester
+          chown -R rstudio-tester:rstudio-tester "$GITHUB_WORKSPACE"
+
       - name: Run Playwright tests
         working-directory: e2e/rstudio
         env:
@@ -531,6 +550,13 @@ jobs:
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          # No --no-sandbox: the test step runs as a non-root user (see the
+          # "Create non-root test user" step and the setpriv drop below), so
+          # Chromium no longer refuses to start, and the container's SYS_ADMIN +
+          # unconfined seccomp let its namespace sandbox initialize -- matching
+          # how the bare-runner siblings run (sandbox on). If a future runner
+          # kernel forbids unprivileged user namespaces and the sandbox can't
+          # come up, set rstudio_extra_args to '--no-sandbox' as a fallback.
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
@@ -593,7 +619,18 @@ jobs:
             cat /tmp/xvfb.log || true
             exit 1
           fi
-          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
+          # Drop to the non-root user for the run itself. setpriv execs in
+          # place (no fork), so a job-cancellation SIGTERM still reaches node
+          # directly and the watchdog's SIGINT->SIGKILL path is preserved --
+          # runuser/su would fork and swallow the signal. --init-groups adopts
+          # the user's groups; the environment is left intact (DISPLAY, PW_*,
+          # PATH, R_LIBS_USER all carry through), and we only override HOME,
+          # since the step's HOME is root-owned and node/Playwright write into
+          # it. Xvfb keeps running as root above; -ac lets the non-root Chromium
+          # attach to :99 without an auth cookie.
+          exec setpriv --reuid=rstudio-tester --regid=rstudio-tester --init-groups \
+            env HOME=/home/rstudio-tester \
+            node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
       # Platform-prefixed artifact name keeps this Fedora Desktop platform's
       # shard reports separate from the other platforms (mac / win /

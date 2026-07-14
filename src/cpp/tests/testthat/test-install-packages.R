@@ -54,6 +54,35 @@ test_that("packages can be installed", {
 
 })
 
+test_that(".rs.readPackageDescription fails cleanly for URL inputs", {
+
+   # Previously a URL was handed straight to the archive reader, which
+   # shelled out to 'tar -tf <URL>' and sprayed tar errors and warnings
+   # into the console. https://github.com/rstudio/rstudio/issues/18198
+   url <- "https://cloud.r-project.org/src/contrib/RECA_1.7.1.tar.gz"
+   expect_no_warning(expect_error(.rs.readPackageDescription(url)))
+
+})
+
+test_that("install hook stays quiet for URL installs with repos = NULL", {
+
+   # https://github.com/rstudio/rstudio/issues/18198
+   skip_on_os("windows")  # source install; no toolchain guarantee in CI
+
+   lib <- tempfile("library-")
+   dir.create(lib)
+   on.exit(unlink(lib, recursive = TRUE), add = TRUE)
+
+   # A small pure-R package with no dependencies; CRAN archive URLs are stable.
+   url <- "https://cloud.r-project.org/src/contrib/Archive/RECA/RECA_1.6.tar.gz"
+   expect_no_warning(
+      install.packages(url, lib = lib, repos = NULL, type = "source", quiet = TRUE)
+   )
+
+   expect_true(file.exists(file.path(lib, "RECA", "DESCRIPTION")))
+
+})
+
 test_that(".rs.installPackagesWhichDeps maps the 'dependencies' argument correctly", {
 
    hard <- c("Depends", "Imports", "LinkingTo")

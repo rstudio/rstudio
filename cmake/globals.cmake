@@ -320,10 +320,10 @@ set(RSTUDIO_R_MINOR_VERSION_REQUIRED 6)
 set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
 
 # maximum supported R version
-set(RSTUDIO_R_VERSION_MAXIMUM "4.6.0")
+set(RSTUDIO_R_VERSION_MAXIMUM "4.6.1")
 set(RSTUDIO_R_MAJOR_VERSION_MAXIMUM 4)
 set(RSTUDIO_R_MINOR_VERSION_MAXIMUM 6)
-set(RSTUDIO_R_PATCH_VERSION_MAXIMUM 0)
+set(RSTUDIO_R_PATCH_VERSION_MAXIMUM 1)
 
 # allow opting out of version checking (for building on older distros)
 if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
@@ -412,6 +412,7 @@ if(WIN32)
    set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/windows")
    set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
    set(CPACK_NSPROCESS_VERSION "1.6")
+   set(CPACK_NSIS_MULTIUSER_VERSION "a33d494c62ad")
 else()
    # look for system-wide (global) dependencies folder
    if(EXISTS "/opt/rstudio-tools/dependencies")
