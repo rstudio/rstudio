@@ -1,10 +1,12 @@
-import { test as setup, chromium, type Page } from '@playwright/test';
+import { test as setup, chromium, type Browser, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
+  AUTH_MODES,
   AUTH_STORAGE_KEY,
   POSITAI_DIR_RELATIVE,
+  PositAiAuthMode,
   PositAiOAuthEntry,
   isStoreFileAuthenticated,
   noSeedCredentials,
@@ -21,9 +23,11 @@ import {
  * <sandbox>/user-home/.posit/assistant/store/data.json so the Posit AI tests
  * start signed in. It is the sole authority for Posit AI credentials in the
  * sandbox -- globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
- * Every exit path also records what happened in
- * <sandbox>/positai-auth-status.json (see PositAiAuthStatus in utils/auth.ts),
- * which requireAiCredentials() reads so skipped tests report the actual cause.
+ * Every exit path that lets the run continue (success or skip) also records
+ * what happened in <sandbox>/positai-auth-status.json (see PositAiAuthStatus
+ * in utils/auth.ts), which requireAiCredentials() reads so skipped tests
+ * report the actual cause. The fail-loud throw paths write nothing -- they
+ * fail the setup, so dependent tests don't run at all.
  *
  * Modes (PW_SANDBOX_POSITAI_AUTH), default "login":
  *   login  Run the OAuth sign-in using POSIT_EMAIL/POSIT_PASSWORD. If
@@ -49,22 +53,19 @@ const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
-// Valid PW_SANDBOX_POSITAI_AUTH values. The array is the single source of
-// truth -- the type is derived from it -- so the runtime check, its error
-// message, and the type can't drift apart. Unset behaves as "login".
-const AUTH_MODES = ['off', 'copy', 'login', 'login-copy'] as const;
-type PositAiAuthMode = (typeof AUTH_MODES)[number];
-
-function copyTree(src: string, dest: string): void {
+// Recursive tree copy that first creates the destination's parent. The
+// optional filter keeps the copy/login-copy difference down to "with or
+// without the token store" (cpSync treats filter: undefined as copy-all).
+function copyTree(src: string, dest: string, filter?: (src: string) => boolean): void {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.cpSync(src, dest, { recursive: true });
+  fs.cpSync(src, dest, { recursive: true, filter });
 }
 
 function verifyStoreWritten(sandboxUserHome: string): void {
   const dest = storeFile(sandboxUserHome);
   if (!isStoreFileAuthenticated(dest)) {
     throw new Error(
-      `[auth-setup] post-write verification failed for ${dest}: store is missing, unreadable, malformed, lacks required fields, or its token is already expired (see any preceding [auth] WARNING for the specific cause)`,
+      `[auth-setup] post-write verification failed for ${dest}: store is missing, unreadable, malformed, lacks required fields, or its token is already expired (the unreadable/malformed cases emit a preceding [auth] WARNING naming the cause; missing fields and expiry fail without one)`,
     );
   }
 }
@@ -78,7 +79,10 @@ interface DeviceCodeResponse {
   device_code: string;
   // Optional per RFC 8628 §3.2 (default 5s); defaulted at the call site.
   interval?: number;
-  expires_in: number;
+  // REQUIRED per RFC 8628 §3.2, but unused here (the poll runs under its own
+  // timeout), so fetchDeviceCode doesn't validate it -- optional keeps the
+  // type honest about what's actually guaranteed.
+  expires_in?: number;
 }
 
 // Per RFC 6749 §5.1 / RFC 8628 §3.5: access_token and token_type are required;
@@ -128,11 +132,42 @@ async function fetchDeviceCode(): Promise<DeviceCodeResponse> {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ scope: SCOPE, client_id: CLIENT_ID }).toString(),
+    // This fetch runs before (and outside) the withDeadline race in the setup
+    // body, so it needs its own bound: unbounded, a hung request would run
+    // into the harness timeout and bypass the transient path entirely.
+    signal: AbortSignal.timeout(30_000),
   });
   if (!resp.ok) {
-    throw new Error(`OAuth sign-in request failed: ${resp.status} ${await resp.text()}`);
+    const text = await resp.text();
+    // A 4xx carrying an RFC 6749 error body is the server rejecting the
+    // request as such (invalid_client, invalid_scope, ...) -- a config fault
+    // that a retry can't heal, so it's terminal, matching how pollForToken
+    // classifies the same codes. 5xx and proxy noise stay plain (transient).
+    if (resp.status < 500) {
+      let oauthError: unknown;
+      try {
+        oauthError = (JSON.parse(text) as Partial<TokenErrorResponse>).error;
+      } catch {
+        // Not JSON; fall through to the plain error below.
+      }
+      if (typeof oauthError === 'string' && oauthError !== '') {
+        throw new OAuthTerminalError(
+          `device-authorize request rejected by server (${oauthError}): HTTP ${resp.status}`,
+        );
+      }
+    }
+    throw new Error(`OAuth sign-in request failed: ${resp.status} ${text.slice(0, 200)}`);
   }
-  const data = (await resp.json()) as Partial<DeviceCodeResponse>;
+  let data: Partial<DeviceCodeResponse>;
+  try {
+    data = (await resp.json()) as Partial<DeviceCodeResponse>;
+  } catch (err) {
+    // A 200 that isn't JSON is a contract change, exactly like a 200 missing
+    // fields below -- terminal, not flake.
+    throw new OAuthTerminalError(
+      `device-authorize response is not valid JSON: ${(err as Error).message}`,
+    );
+  }
   // A 200 with a shape we don't understand is a contract change on the auth
   // server, not flake -- fail the run naming the field rather than letting a
   // downstream TypeError read as "no credentials" (a perpetual dark skip).
@@ -175,7 +210,29 @@ async function pollForToken(
       }).toString(),
     });
     if (resp.ok) {
-      return resp.json() as Promise<TokenSuccessResponse>;
+      let token: Partial<TokenSuccessResponse>;
+      try {
+        token = (await resp.json()) as Partial<TokenSuccessResponse>;
+      } catch (err) {
+        // A 200 that isn't JSON is a contract change on the token endpoint,
+        // not flake -- terminal, matching fetchDeviceCode. (Contrast with the
+        // non-JSON *error* responses below, which are proxy noise and are
+        // retried through.)
+        throw new OAuthTerminalError(
+          `token response is not valid JSON: ${(err as Error).message}`,
+        );
+      }
+      // Same promotion discipline as fetchDeviceCode: name the missing field
+      // here, where the culprit is identifiable as the token endpoint, rather
+      // than let it surface later as a store-verification failure.
+      for (const field of ['access_token', 'token_type'] as const) {
+        if (typeof token[field] !== 'string' || token[field] === '') {
+          throw new OAuthTerminalError(
+            `token response is missing or has a non-string "${field}"; the endpoint contract may have changed`,
+          );
+        }
+      }
+      return token as TokenSuccessResponse;
     }
     const text = await resp.text();
     let body: Partial<TokenErrorResponse> = {};
@@ -258,10 +315,22 @@ async function automateLogin(
   password: string,
 ): Promise<void> {
   const verificationUri = verificationUriComplete.split('?')[0];
-  const browser = await chromium.launch({
-    headless: true,
-    args: ['--disable-blink-features=AutomationControlled'],
-  });
+  let browser: Browser;
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: ['--disable-blink-features=AutomationControlled'],
+    });
+  } catch (err) {
+    // A launch failure is an environment gap, not flake: desktop runs connect
+    // to RStudio's Electron over CDP and never otherwise need Playwright's
+    // own chromium, so a runner can pass the whole suite while lacking the
+    // binary this flow launches. Fail the run with the remedy rather than
+    // skipping the Posit AI tests forever.
+    throw new LoginAutomationError(
+      `could not launch the sign-in browser: ${(err as Error).message} -- if the Playwright browser is not installed, run "npx playwright install" from e2e/rstudio`,
+    );
+  }
   try {
     const context = await browser.newContext({
       userAgent:
@@ -317,12 +386,34 @@ async function automateLogin(
       // drives the transient -> skip path.
       for (let attempt = 0; attempt < 5; attempt++) {
         if (!(await authorizeBtn.isVisible())) break;
-        await authorizeBtn.click();
+        try {
+          // Short explicit timeout: a click that starts just as the SPA's
+          // post-authorize transition detaches the button would otherwise
+          // retry actionability for the raw-page 30s default and surface as
+          // a fatal "authorize failed" -- on a sign-in that succeeded.
+          await authorizeBtn.click({ timeout: 2000 });
+        } catch {
+          // Button gone mid-click means a previous click registered and the
+          // page advanced -- that's success. Still attached: keep trying.
+          if (!(await authorizeBtn.isVisible())) break;
+        }
         await page.waitForTimeout(1000);
+      }
+      if (await authorizeBtn.isVisible()) {
+        console.warn(
+          '[auth-setup] WARNING: authorize button still present after 5 click attempts; authorization may not have registered (expect a poll timeout)',
+        );
       }
     }, true);
   } finally {
-    await browser.close();
+    try {
+      await browser.close();
+    } catch (err) {
+      // A rejection escaping a finally replaces the in-flight exception,
+      // which could downgrade a fatal LoginAutomationError to a transient
+      // skip and lose its message -- log and discard instead.
+      console.warn(`[auth-setup] WARNING: failed to close the sign-in browser: ${(err as Error).message}`);
+    }
   }
 }
 
@@ -396,9 +487,9 @@ setup('authenticate Posit AI', async () => {
       writeAuthStatus(sandbox, {
         mode,
         outcome: 'host-not-signed-in',
-        reason: 'PW_SANDBOX_POSITAI_AUTH=copy, but the host is not signed in to Posit AI (or its token has expired).',
+        reason: 'PW_SANDBOX_POSITAI_AUTH=copy, but the host is not signed in to Posit AI (its token store is missing or expired, or could not be read -- see the setup log).',
       });
-      console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=copy: host is not signed in to Posit AI (or its token has expired); Posit AI tests will be skipped');
+      console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=copy: host is not signed in to Posit AI (token store missing, expired, or unreadable); Posit AI tests will be skipped');
       return;
     }
     copyTree(
@@ -419,7 +510,10 @@ setup('authenticate Posit AI', async () => {
   }
 
   // mode === 'login' (default) or 'login-copy': OAuth sign-in. Never falls
-  // back to "copy" -- host tokens are never used.
+  // back to "copy" -- host tokens are never used. The satisfies turns that
+  // comment into a compile error if a new mode is added to AUTH_MODES without
+  // being dispatched above: a fifth mode must not silently run a live sign-in.
+  mode satisfies 'login' | 'login-copy';
   const email = process.env.POSIT_EMAIL;
   const password = process.env.POSIT_PASSWORD;
 
@@ -448,14 +542,13 @@ setup('authenticate Posit AI', async () => {
       const hostDir = path.join(os.homedir(), POSITAI_DIR_RELATIVE);
       if (fs.existsSync(hostDir)) {
         const hostStore = storeFile(os.homedir());
-        const dest = path.join(sandboxUserHome, POSITAI_DIR_RELATIVE);
-        fs.mkdirSync(path.dirname(dest), { recursive: true });
-        fs.cpSync(hostDir, dest, {
-          recursive: true,
-          // Keep everything except the token store: content comes from the
-          // host, credentials come from the sign-in.
-          filter: (src) => src !== hostStore,
-        });
+        // Keep everything except the token store: content comes from the
+        // host, credentials come from the sign-in.
+        copyTree(
+          hostDir,
+          path.join(sandboxUserHome, POSITAI_DIR_RELATIVE),
+          (src) => src !== hostStore,
+        );
         console.log('[auth-setup] copied host ~/.posit/assistant content into the sandbox (token store excluded)');
         contentNote = '; host content copied (token store excluded)';
       } else {
@@ -483,14 +576,33 @@ setup('authenticate Posit AI', async () => {
       pollForToken(device_code, interval ?? 5, 90000),
     ]);
     // Keep a handler attached so a rejection landing after the deadline race
-    // below has already settled can't become an unhandled rejection.
-    flow.catch(() => {});
+    // below has already settled can't become an unhandled rejection. Once the
+    // race HAS settled, though, a flow rejection is otherwise-lost diagnostic
+    // (the real cause behind a deadline expiry), so log it then. This handler
+    // is attached before the race, so when the flow's own rejection is what
+    // settles the race, it runs first -- outerSettled still false -- and
+    // stays quiet: no double-logging on the normal failure path.
+    let outerSettled = false;
+    flow.catch((err) => {
+      if (outerSettled) {
+        console.warn(
+          '[auth-setup] late sign-in rejection (after the overall deadline already fired):',
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+    });
     // Bound the whole flow well under this test's 240s timeout (set above) so
     // a pile-up of slow steps fails through the transient path here instead
     // of hitting the harness timeout, which would skip the catch below and
-    // fail the entire run.
-    const [, resolved] = await withDeadline(flow, 180_000, 'overall sign-in deadline exceeded');
-    tokenData = resolved;
+    // fail the entire run. (fetchDeviceCode above runs outside this race and
+    // carries its own 30s bound.)
+    let resolvedPair: [void, TokenSuccessResponse];
+    try {
+      resolvedPair = await withDeadline(flow, 180_000, 'overall sign-in deadline exceeded');
+    } finally {
+      outerSettled = true;
+    }
+    tokenData = resolvedPair[1];
   } catch (err) {
     // Fail loud on deterministic problems: a terminal OAuth error (denied
     // authorization, config fault, malformed device-authorize response) or a

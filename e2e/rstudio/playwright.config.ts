@@ -54,6 +54,15 @@ const editionExclusions = edition === 'os' ? ['@pro_only'] : ['@os_only'];
 const setupProject = {
   name: 'setup',
   testMatch: /tests[\\/]auth\.setup\.ts$/,
+  // Never retry the setup: only its deterministic (fail-loud) path throws --
+  // wrong credentials, an OAuth config fault -- and retrying that means a
+  // second live bad-credential sign-in against login.posit.cloud, plus the
+  // chance a flaky retry passes and launders the fail-loud verdict into
+  // green-with-skips. The transient path returns normally (tests skip via
+  // the status file), so it was never retried anyway. This overrides the
+  // config-level retries (including the CI branch below); a manual
+  // --retries=N on the CLI still outranks it, but CI never passes that.
+  retries: 0,
   // Artifacts stay off for this project: the sign-in flow types real
   // credentials (POSIT_PASSWORD) into a page, and a trace, video, or
   // screenshot would capture them into the report. Diagnostic context comes

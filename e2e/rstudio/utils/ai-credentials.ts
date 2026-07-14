@@ -73,18 +73,26 @@ export function requireAiCredentials(
   provider: AIProvider,
 ): void {
   test.beforeEach(() => {
-    if (provider === 'positai') {
-      if (!isPositAiAuthenticated()) {
-        test.skip(true, positAiSkipReason());
-      }
-      return;
+    switch (provider) {
+      case 'positai':
+        if (!isPositAiAuthenticated()) {
+          test.skip(true, positAiSkipReason());
+        }
+        return;
+      case 'copilot':
+        // Strict "1" check so a stray PW_AI_SEEDED_COPILOT=0 / "false" doesn't
+        // read as seeded. sandbox-setup.ts clears this at start of run and sets
+        // "1" only on a successful copy, so any other value is treated as
+        // unseeded.
+        test.skip(
+          process.env[COPILOT_SEEDED_ENV] !== '1',
+          `No GitHub Copilot credentials seeded; sign in on the host (${COPILOT_HOST_PATH}) and re-run.`,
+        );
+        return;
+      default:
+        // Exhaustiveness: a new AIProvider member must be given its own gate
+        // here, not silently inherit Copilot's env-flag check.
+        provider satisfies never;
     }
-    // Strict "1" check so a stray PW_AI_SEEDED_COPILOT=0 / "false" doesn't read
-    // as seeded. sandbox-setup.ts clears this at start of run and sets "1" only
-    // on a successful copy, so any other value is treated as unseeded.
-    test.skip(
-      process.env[COPILOT_SEEDED_ENV] !== '1',
-      `No GitHub Copilot credentials seeded; sign in on the host (${COPILOT_HOST_PATH}) and re-run.`,
-    );
   });
 }

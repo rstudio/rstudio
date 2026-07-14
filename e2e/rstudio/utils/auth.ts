@@ -6,9 +6,10 @@ import * as path from 'path';
 // either changes there without a matching change here, the test gate will
 // silently disagree with the IDE about whether the sandbox is signed in.
 // NOTE: assistant main is already migrating the store to
-// ~/.posit/ai/auth/data.json (its migrateCredentialStore.ts moves the old
-// file at startup, keeping this path as a fallback for now); when the
-// shipped assistant picks that migration up, these constants must follow.
+// ~/.posit/ai/auth/data.json (its migrateCredentialStore.ts copies the old
+// file to the new path at startup, leaving this path in place as a fallback
+// for now); when the shipped assistant picks that migration up, these
+// constants must follow.
 export const AUTH_STORAGE_KEY = 'auth:positai:oauth';
 
 // The whole Posit AI state directory, and the token store within it. The store
@@ -38,6 +39,13 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+// Narrowing membership test for the as-const vocabularies below: unlike a
+// plain includes() call, this propagates the literal-union type onto the
+// checked value, so readAuthStatus needs no casts.
+function isOneOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value);
+}
+
 function isAuthEntry(value: unknown): value is PositAiOAuthEntry {
   if (!isPlainObject(value)) return false;
   if (value.authenticated !== true) return false;
@@ -54,6 +62,11 @@ function isAuthEntry(value: unknown): value is PositAiOAuthEntry {
     && tokenData.expiresAt.length > 0
     && typeof oauthAuth.expiresAt === 'string'
     && oauthAuth.expiresAt.length > 0
+    // Optional fields: absent is fine, but present-with-wrong-type must not
+    // pass a guard whose return type declares them as strings.
+    && (tokenData.refreshToken === undefined || typeof tokenData.refreshToken === 'string')
+    && (tokenData.scope === undefined || typeof tokenData.scope === 'string')
+    && (oauthAuth.scope === undefined || typeof oauthAuth.scope === 'string')
   );
 }
 
@@ -99,11 +112,11 @@ export function isPositAiAuthenticated(): boolean {
   return isStoreFileAuthenticated(storeFile(path.join(sandbox, 'user-home')));
 }
 
-// The global host-copy kill-switch: when set, copy mode (and Copilot's
-// host-copy in sandbox-setup.ts) is suppressed. The sign-in flow is unaffected
-// -- it copies nothing from the host. Shared by sandbox-setup.ts (Copilot) and
-// auth.setup.ts (Posit AI copy) so the "what counts as on" rule lives in one
-// place.
+// The global host-copy kill-switch: when set, copy mode, login-copy's
+// host-content copy, and Copilot's host-copy in sandbox-setup.ts are all
+// suppressed. The sign-in flow itself is unaffected -- it copies nothing from
+// the host. Shared by sandbox-setup.ts (Copilot) and auth.setup.ts (Posit AI)
+// so the "what counts as on" rule lives in one place.
 export function noSeedCredentials(): boolean {
   return ['1', 'true'].includes(
     (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
@@ -117,16 +130,29 @@ export function noSeedCredentials(): boolean {
 // process, so a file in the sandbox (like the token store itself) is the
 // only channel that reaches the test workers.
 
-export type PositAiAuthOutcome =
-  | 'success'            // token store written and verified
-  | 'off'                // mode=off: deliberately not provisioned
-  | 'copy-suppressed'    // mode=copy suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS
-  | 'host-not-signed-in' // mode=copy: no valid token store on the host
-  | 'credentials-unset'  // mode=login/login-copy: POSIT_EMAIL/POSIT_PASSWORD not set
-  | 'login-failed';      // mode=login/login-copy: sign-in attempted but failed (transient)
+// Valid PW_SANDBOX_POSITAI_AUTH values. The array is the single source of
+// truth -- the type is derived from it -- so the runtime check, its error
+// message, and the type can't drift apart. Unset behaves as "login". Lives
+// here rather than in auth.setup.ts because mode is serialized into the
+// status file below, making it part of the cross-process contract.
+export const AUTH_MODES = ['off', 'copy', 'login', 'login-copy'] as const;
+export type PositAiAuthMode = (typeof AUTH_MODES)[number];
+
+// Same single-source-of-truth pattern as AUTH_MODES: readAuthStatus validates
+// against the array, so a status file written by a different code version
+// can't launder an unknown outcome string into the union.
+export const AUTH_OUTCOMES = [
+  'success',            // token store written and verified
+  'off',                // mode=off: deliberately not provisioned
+  'copy-suppressed',    // mode=copy suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS
+  'host-not-signed-in', // mode=copy: no valid token store on the host
+  'credentials-unset',  // mode=login/login-copy: POSIT_EMAIL/POSIT_PASSWORD not set
+  'login-failed',       // mode=login/login-copy: sign-in attempted but failed (usually transient)
+] as const;
+export type PositAiAuthOutcome = (typeof AUTH_OUTCOMES)[number];
 
 export interface PositAiAuthStatus {
-  mode: string;
+  mode: PositAiAuthMode;
   outcome: PositAiAuthOutcome;
   reason: string;
 }
@@ -141,27 +167,37 @@ export function writeAuthStatus(sandbox: string, status: PositAiAuthStatus): voi
 }
 
 // Returns null when the file is absent, unreadable, or malformed; the gate
-// falls back to a generic skip reason in that case.
+// falls back to a generic skip reason in that case. Absent (ENOENT) is a
+// normal state and stays silent; everything else warns, mirroring
+// readAuthStore, so a corrupt or version-skewed status file leaves a trace
+// of why the accurate skip reason was unavailable.
 export function readAuthStatus(sandbox: string): PositAiAuthStatus | null {
+  const file = path.join(sandbox, AUTH_STATUS_FILE);
   let raw: string;
   try {
-    raw = fs.readFileSync(path.join(sandbox, AUTH_STATUS_FILE), 'utf-8');
-  } catch {
+    raw = fs.readFileSync(file, 'utf-8');
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT') {
+      console.warn(`[auth] WARNING: could not read auth status file: ${(err as Error).message}`);
+    }
     return null;
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    console.warn(`[auth] WARNING: malformed JSON in auth status file ${file}: ${(err as Error).message}`);
     return null;
   }
   if (
     !isPlainObject(parsed)
-    || typeof parsed.mode !== 'string'
-    || typeof parsed.outcome !== 'string'
+    || !isOneOf(parsed.mode, AUTH_MODES)
+    || !isOneOf(parsed.outcome, AUTH_OUTCOMES)
     || typeof parsed.reason !== 'string'
   ) {
+    console.warn(`[auth] WARNING: unrecognized auth status shape in ${file}; ignoring it`);
     return null;
   }
-  return parsed as unknown as PositAiAuthStatus;
+  return { mode: parsed.mode, outcome: parsed.outcome, reason: parsed.reason };
 }

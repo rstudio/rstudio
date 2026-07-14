@@ -263,6 +263,18 @@ Running in parallel: the suite defaults to `workers: 1` (see `playwright.config.
 
 `HOME` / `USERPROFILE` point at a sandboxed `user-home/`. By default nothing is seeded there, so user dotfiles (`~/.Rprofile`, `~/.Renviron`, `~/.R/`, `~/.gitconfig`, `~/.ssh/`, etc.) are absent for tests. AI provider credentials are the exception, and the two providers are provisioned differently. **Posit AI** is handled by the `auth.setup` project (`tests/auth.setup.ts`), controlled by `PW_SANDBOX_POSITAI_AUTH`: by default (`login`) it runs the OAuth sign-in using `POSIT_EMAIL`/`POSIT_PASSWORD` and writes a token store into the sandbox; `login-copy` additionally copies the host's `~/.posit/assistant` content (excluding the token store) before signing in; `copy` instead copies the host's whole `~/.posit/assistant` directory; `off` provisions nothing. Its tests gate on the on-disk token store (not an env flag) via `requireAiCredentials()`, so an unsigned-in sandbox skips cleanly. **GitHub Copilot** is still copied from the host by `globalSetup` when the config directory exists (`~/.config/github-copilot`, or `%LOCALAPPDATA%\github-copilot` on Windows); its tests gate on the `PW_AI_SEEDED_COPILOT` flag set after a successful copy. Either way, a missing credential surfaces as "skipped: no credentials" rather than a test timeout. `PW_SANDBOX_NO_SEED_CREDENTIALS=1` is a global host-copy kill-switch: it blocks the Copilot copy, Posit AI's `copy` mode, and `login-copy`'s content copy (the sign-in itself is unaffected, since it copies nothing from the host). Note that with `POSIT_EMAIL`/`POSIT_PASSWORD` configured, every run performs a live sign-in against `login.posit.cloud` -- the `setup` project runs unconditionally, even when no Posit AI test is selected. For fast local iteration, use `PW_SANDBOX_POSITAI_AUTH=copy` (if already signed in on the host) or `off`.
 
+Quick reference, assuming each mode's own prerequisite is met (`login`/`login-copy` have `POSIT_EMAIL`/`POSIT_PASSWORD` set; `copy` has the host already signed in):
+
+| `PW_SANDBOX_POSITAI_AUTH` | `PW_SANDBOX_NO_SEED_CREDENTIALS` | Posit AI Tests | `<sandbox>/user-home/.posit/assistant` |
+|---|---|---|---|
+| `login` (default) | unset | Run | Nothing copied from host; a fresh token store is written here after sign-in |
+| `login` | set | Run | Same as above -- fresh token store only, no host content |
+| `copy` | unset | Run | Entire host directory (tokens, skills, workspaces, state) copied here as-is |
+| `copy` | set | Skipped (copy suppressed) | Not copied |
+| `login-copy` | unset | Run | Host content (skills, workspaces, state) copied here, token store excluded; a fresh token store is then written after sign-in |
+| `login-copy` | set | Run | Content copy suppressed; only the fresh token store from sign-in lands here |
+| `off` | either | Skipped (deliberately off) | Not copied |
+
 The Posit Assistant tests normally download the official assistant package into the sandbox `data-home`. To run them against a locally built assistant instead, set `PW_SEED_PAI` to an install directory and `globalSetup` seeds it into `data-home/pai` (see Environment Variables).
 
 On Windows, `globalSetup` pre-creates `user-home/AppData/Roaming/` and `user-home/AppData/Local/` because Electron's `app.getPath('appData')` fails at startup if those subdirs don't exist under the redirected `USERPROFILE` (the "Failed to get 'appData' path" popup). The same kind of scaffolding will likely be needed for macOS Desktop (`~/Library/Application Support`) and Linux Desktop (`~/.config`) when those platforms get tested.
