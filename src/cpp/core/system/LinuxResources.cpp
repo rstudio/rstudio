@@ -441,10 +441,13 @@ public:
    //
    // In container mode the cgroup is shared by every session in the launcher
    // container, so the cgroup usage is a container-wide aggregate, not this
-   // session's footprint. Return this session's own process-tree RSS (procfs)
-   // instead so the IDE gauge / "Session memory used" figure reflects the
-   // individual session. getTotalMemoryUsed() reports the container-wide cgroup
-   // usage via getCgroupMemoryUsed() so the shared-pressure line stays accurate.
+   // session's footprint. In meminfo mode the cgroup usage is deliberately
+   // avoided because it can include reclaimable file cache that doesn't reflect
+   // actual session use. In both of those modes, return this session's own
+   // process-tree RSS (procfs) so the IDE gauge / "Session memory used" figure
+   // reflects the individual session's real usage. getTotalMemoryUsed() reports
+   // the container-wide cgroup usage via getCgroupMemoryUsed() so the
+   // shared-pressure line stays accurate.
    //
    // In the other cgroup-backed modes the cgroup is scoped to the session (or is
    // being reported deliberately), so keep the cgroup usage. Reading it is also
@@ -454,15 +457,22 @@ public:
    // values in the appropriate category.
    virtual Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      if (effectiveMemoryUsageMode() == MemoryUsageModeContainer)
+      MemoryUsageMode mode = effectiveMemoryUsageMode();
+      if (mode == MemoryUsageModeContainer || mode == MemoryUsageModeMemInfo)
          return LinuxMemoryProvider::getProcessMemoryUsed(pUsedKb, pProvider);
 
-      return getCgroupMemoryUsed(pUsedKb, pProvider);
+      // Other cgroup-backed modes: use the cgroup usage, falling back to
+      // process-tree RSS if the cgroup memory controller isn't available.
+      Error error = getCgroupMemoryUsed(pUsedKb, pProvider);
+      if (error)
+         return LinuxMemoryProvider::getProcessMemoryUsed(pUsedKb, pProvider);
+      return Success();
    }
 
    // Reads the cgroup's memory usage (container-wide in container mode,
-   // session-scoped otherwise). Falls back to process-tree RSS when the cgroup
-   // memory controller isn't available.
+   // session-scoped otherwise). Returns an error if the cgroup memory controller
+   // isn't available; callers choose an appropriate fallback (process-tree RSS
+   // for the per-session figure, node /proc/meminfo for the container-wide one).
    Error getCgroupMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
       Error error;
@@ -477,12 +487,6 @@ public:
       if (!error)
       {
          *pProvider = MemoryProviderLinuxCgroups;
-      }
-      else
-      {
-         // Even if cgroups is enabled, the memory controller for cgroups may not be installed.
-         // Fall back on looking at process memmory from ps
-         return LinuxMemoryProvider::getProcessMemoryUsed(pUsedKb, pProvider);
       }
 
       return error;
@@ -500,7 +504,15 @@ public:
    {
       MemoryUsageMode mode = effectiveMemoryUsageMode();
       if (mode == MemoryUsageModeContainer || mode == MemoryUsageModeCgroup)
-         return getCgroupMemoryUsed(pUsedKb, pProvider);
+      {
+         // The container-wide "used" must not collapse to a single session's
+         // RSS, so on a cgroup read failure fall back to node /proc/meminfo
+         // rather than to process-tree RSS.
+         Error error = getCgroupMemoryUsed(pUsedKb, pProvider);
+         if (error)
+            return MemInfoMemoryProvider::getTotalMemoryUsed(pUsedKb, pProvider);
+         return Success();
+      }
       return MemInfoMemoryProvider::getTotalMemoryUsed(pUsedKb, pProvider);
    }
 
@@ -616,7 +628,10 @@ public:
 
       if (error)
       {
-         // The cgroup fs is not writable, so fall back to ulimit-based settings.
+         // The cgroup limit could not be written (for example, a read-only
+         // cgroup fs); log the underlying error and fall back to ulimit-based
+         // settings so the limit is still enforced.
+         LOG_ERROR(error);
          return MemInfoMemoryProvider::setProcessMemoryLimit(highMemKb, maxMemKb, pProvider);
       }
       return error;
