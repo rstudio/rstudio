@@ -99,10 +99,10 @@ export function isPositAiAuthenticated(): boolean {
   return isStoreFileAuthenticated(storeFile(path.join(sandbox, 'user-home')));
 }
 
-// The global host-copy kill-switch: when set, seed mode (and Copilot's
+// The global host-copy kill-switch: when set, copy mode (and Copilot's
 // host-copy in sandbox-setup.ts) is suppressed. The sign-in flow is unaffected
 // -- it copies nothing from the host. Shared by sandbox-setup.ts (Copilot) and
-// auth.setup.ts (Posit AI seed) so the "what counts as on" rule lives in one
+// auth.setup.ts (Posit AI copy) so the "what counts as on" rule lives in one
 // place.
 export function noSeedCredentials(): boolean {
   return ['1', 'true'].includes(
@@ -120,10 +120,10 @@ export function noSeedCredentials(): boolean {
 export type PositAiAuthOutcome =
   | 'success'            // token store written and verified
   | 'off'                // mode=off: deliberately not provisioned
-  | 'seed-suppressed'    // mode=seed suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS
-  | 'host-not-signed-in' // mode=seed: no valid token store on the host
-  | 'credentials-unset'  // mode=flow: POSIT_EMAIL/POSIT_PASSWORD not set
-  | 'flow-failed';       // mode=flow: sign-in attempted but failed (transient)
+  | 'copy-suppressed'    // mode=copy suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS
+  | 'host-not-signed-in' // mode=copy: no valid token store on the host
+  | 'credentials-unset'  // mode=login/login-copy: POSIT_EMAIL/POSIT_PASSWORD not set
+  | 'login-failed';      // mode=login/login-copy: sign-in attempted but failed (transient)
 
 export interface PositAiAuthStatus {
   mode: string;
