@@ -397,6 +397,11 @@ var pendingSparklines_ = [];
 var pendingScrollbarRaf = 0;
 var pendingScrollRaf = 0;
 
+// requestAnimationFrame token for an onActivate that arrived while the tab
+// had no layout (see window.onActivate). Non-zero means a retry is scheduled;
+// cleared on onDeactivate so a pending retry can't outlive the activation.
+var pendingActivateRaf = 0;
+
 // Latched so a localStorage write failure is reported once per session
 // rather than spamming the console on every state-change debounce tick.
 var persistWarned = false;
@@ -1834,8 +1839,16 @@ var getColumnWindow = function(scrollLeft, clientWidth) {
 // position. Returns true if the window changed (so callers can rebuild).
 var computeColumnWindow = function() {
    var viewport = domViewport;
-   var sl = viewport ? viewport.scrollLeft : 0;
-   var cw = viewport ? viewport.clientWidth : 0;
+
+   // No layout (e.g. a background tab): the zero geometry would collapse the
+   // window to a single edge column, and a rebuild against that leaves the
+   // grid mostly spacer when the tab is shown again (#18215). Keep the
+   // current window; onActivate recomputes once real layout exists.
+   if (!viewport || viewport.clientWidth === 0)
+      return false;
+
+   var sl = viewport.scrollLeft;
+   var cw = viewport.clientWidth;
    var win = getColumnWindow(sl, cw);
    var changed = (win.start !== colWinStart || win.end !== colWinEnd);
    colWinStart = win.start;
@@ -4121,7 +4134,9 @@ var onScroll = function() {
    pendingScrollRaf = requestAnimationFrame(function() {
       pendingScrollRaf = 0;
       var viewport = domViewport;
-      if (!viewport) return;
+      // A collapsed viewport reads scroll positions as 0; folding those into
+      // the mirrors would discard the saved position (see onDeactivate).
+      if (!viewport || viewport.offsetHeight === 0) return;
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
       // Horizontal scroll may slide the column window; when it does, rebuild
@@ -4161,7 +4176,9 @@ var onScrollEnd = function() {
    if (anyScrollbarDragging()) return;
    onScroll.cancel();
    var viewport = domViewport;
-   if (!viewport) return;
+   // A collapsed viewport reads scroll positions as 0; folding those into
+   // the mirrors would discard the saved position (see onDeactivate).
+   if (!viewport || viewport.offsetHeight === 0) return;
    lastScrollTop = viewport.scrollTop;
    lastScrollLeft = viewport.scrollLeft;
    var colsChanged = syncColumnWindow();
@@ -7936,8 +7953,26 @@ window.applySearch = function(text) {
 };
 
 window.onActivate = function() {
-   // Restore scroll position and re-render
    var viewport = domViewport;
+
+   // Some activation paths fire before the tab widget is actually shown
+   // (SourceColumn.onActivate activates the target before selecting its tab).
+   // With no layout every geometry read below is zero -- worse, the scroll
+   // restore would fold that zero back into the lastScrollTop/Left mirrors,
+   // losing the saved position. Defer to the next animation frame: rAF is
+   // paused while the frame is render-throttled (hidden), so the retry runs
+   // once real layout exists.
+   if (viewport && viewport.offsetHeight === 0) {
+      if (!pendingActivateRaf) {
+         pendingActivateRaf = requestAnimationFrame(function() {
+            pendingActivateRaf = 0;
+            window.onActivate();
+         });
+      }
+      return;
+   }
+
+   // Restore scroll position and re-render
    if (viewport) {
       setViewportScrollTop(viewport, lastScrollTop);
       setViewportScrollLeft(viewport, lastScrollLeft);
@@ -7950,6 +7985,14 @@ window.onActivate = function() {
       autoSizeColumns();
       applyPinnedColumns();
    }
+
+   // The column window may have gone stale while the tab was hidden (e.g.
+   // the pane was resized, so it was last computed for a different width --
+   // computeColumnWindow refuses to run against the hidden tab's zero
+   // geometry), and renderVisibleRows renders against it as-is. Re-derive it
+   // from the live geometry, like the scroll handlers and onResize do
+   // (#18215; same class of gap as #18090).
+   syncColumnWindow();
 
    renderVisibleRows(true);
    // The sidebar's visible-entry window is computed from the panel's
@@ -7968,9 +8011,18 @@ window.onActivate = function() {
 };
 
 window.onDeactivate = function() {
-   // Save scroll position
+   // Drop any activation retry still waiting on layout -- the tab is being
+   // switched away from, so the retry's work belongs to the next onActivate.
+   if (pendingActivateRaf) {
+      cancelAnimationFrame(pendingActivateRaf);
+      pendingActivateRaf = 0;
+   }
+
+   // Save scroll position. Skip when the tab already has no layout: a
+   // collapsed viewport reads scrollTop/scrollLeft as 0, and folding that
+   // into the mirrors would discard the real saved position.
    var viewport = domViewport;
-   if (viewport) {
+   if (viewport && viewport.offsetHeight > 0) {
       lastScrollTop = viewport.scrollTop;
       lastScrollLeft = viewport.scrollLeft;
    }
