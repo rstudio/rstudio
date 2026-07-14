@@ -51,6 +51,10 @@ permissions:
   # build_only=true (the only mode the cache seeder uses), so this permission
   # is never exercised here -- it's declared only to satisfy the validator.
   pull-requests: write
+  # Likewise required only by the validator: the called workflow's e2e-merge
+  # job declares id-token: write for the OIDC S3 report upload, which never
+  # runs in build_only mode.
+  id-token: write
 
 jobs:
   seed:

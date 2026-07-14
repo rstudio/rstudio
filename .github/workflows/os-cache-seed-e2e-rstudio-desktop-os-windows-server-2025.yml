@@ -32,6 +32,9 @@ permissions:
   # declares pull-requests: write. GitHub validates all declared permissions at
   # call time even for jobs that will be skipped (build_only=true skips e2e-merge).
   pull-requests: write
+  # Likewise required only by the validator: e2e-merge declares id-token: write
+  # for the OIDC S3 report upload, which never runs in build_only mode.
+  id-token: write
 
 jobs:
   seed:
