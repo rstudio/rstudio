@@ -102,6 +102,14 @@
 # namespace; bare calls resolve their namespace from the global environment.
 .rs.addFunction("exprMutatesPackageLibrary", function(expr)
 {
+   tryCatch(
+      .rs.exprMutatesPackageLibraryImpl(expr),
+      error = function(e) FALSE
+   )
+})
+
+.rs.addFunction("exprMutatesPackageLibraryImpl", function(expr)
+{
    if (!is.call(expr))
       return(FALSE)
 
