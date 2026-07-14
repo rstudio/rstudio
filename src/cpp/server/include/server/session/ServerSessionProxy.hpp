@@ -93,6 +93,10 @@ void proxyVSCodeRequest(
    
 bool requiresSession(const core::http::Request& request);
 
+// Invariant: If a filter returns false, it should not mutate and must not
+// retain the provided Request. It continues to be used and is later moved
+// to the default proxy forwarder.
+
 typedef boost::function<bool(
     boost::shared_ptr<core::http::AsyncConnection>,
     boost::shared_ptr<core::http::Request>,

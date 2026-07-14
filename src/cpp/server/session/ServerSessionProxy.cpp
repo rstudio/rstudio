@@ -1109,11 +1109,6 @@ void proxyVSCodeRequest(
                                boost::bind(handleContentError, ptrConnection, context, _1));
 }
 
-// scrambled-port URL patterns for localhost proxy requests, precompiled since
-// this function is on the hot path for every proxied localhost request
-const boost::regex kIpv4LocalhostPortRegex("/p/([a-fA-F0-9]{8,9})(/|$)");
-const boost::regex kIpv6LocalhostPortRegex("/p6/([a-fA-F0-9]{8,9})(/|$)");
-
 void proxyLocalhostRequest(
       bool ipv6,
       const std::string& username,
@@ -1138,6 +1133,8 @@ void proxyLocalhostRequest(
 
    // extract the (scrambled) port, which consists of 8 or 9 hex digits
    // (an additional prefix digit may exist for server routing)
+   static const boost::regex kIpv4LocalhostPortRegex("/p/([a-fA-F0-9]{8,9})(/|$)");
+   static const boost::regex kIpv6LocalhostPortRegex("/p6/([a-fA-F0-9]{8,9})(/|$)");
    const boost::regex& re = ipv6 ? kIpv6LocalhostPortRegex : kIpv4LocalhostPortRegex;
    boost::smatch match;
    if (!regex_utils::search(pRequest->uri(), match, re))

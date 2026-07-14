@@ -260,7 +260,7 @@ private:
    std::string rootPath_;
 
    // IMPORTANT NOTE: when adding data members be sure to update
-   // the implementation of the assign method!!!!!
+   // the implementation of the assign methods!!!!!
 
 
    std::string method_;
