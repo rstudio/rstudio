@@ -339,7 +339,10 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
             # handle any implicit conversions that we should support
             if (identical(type, "core::FilePath")) {
                accessorCode <- sprintf("return core::FilePath(%s);", memberName)
-            } else if (identical(category, "allow")) {
+            } else if (identical(category, "allow") && identical(type, "bool")) {
+               # Only bool "allow" options OR in the overlay flag. Applying this to
+               # non-bool options (e.g. the int abort-free-mem-percent) collapses the
+               # value to 0/1 (issue #3062), so they fall through to a plain return.
                accessorCode <- sprintf("return %s || allowOverlay();", memberName)
             } else {
                accessorCode <- sprintf("return %s;", memberName)
