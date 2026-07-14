@@ -300,7 +300,20 @@ async function automateLogin(
     await step(page, 'authorize', async () => {
       const authorizeBtn = page.getByRole('button', { name: 'Authorize' });
       await authorizeBtn.waitFor({ state: 'visible', timeout: 15000 });
-      await authorizeBtn.click();
+      // The button can pass Playwright's actionability checks a beat before the
+      // SPA binds its click handler, so a single too-fast click is silently
+      // swallowed: the device is never authorized and the only symptom is a
+      // later poll timeout, not a click error. Re-click while the button is
+      // still present so a swallowed click is retried once the handler is
+      // bound; once a click registers the page advances and the button
+      // detaches, ending the loop. pollForToken remains the arbiter of whether
+      // authorization actually succeeded -- if it never takes, its timeout
+      // drives the transient -> skip path.
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (!(await authorizeBtn.isVisible())) break;
+        await authorizeBtn.click();
+        await page.waitForTimeout(1000);
+      }
     }, true);
   } finally {
     await browser.close();
