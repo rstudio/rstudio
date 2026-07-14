@@ -49,6 +49,19 @@ bool projectConfigChanged(const core::FilePath& previewTarget,
                           const std::string& priorConfigContents,
                           bool priorConfigCaptured);
 
+// Compute the working directory for a 'quarto preview' / 'quarto serve' job.
+// For files within a Quarto project (identified by the governing project config
+// file) the job runs from the project root, as 'quarto preview' can fail to
+// resolve paths relative to a project sub-directory. See
+// https://github.com/rstudio/rstudio/issues/18197.
+core::FilePath previewWorkingDir(const core::FilePath& previewTarget,
+                                 const core::FilePath& projectConfigFile);
+
+// Compute the preview target path to pass on the 'quarto preview' command line,
+// relative to the working directory the job runs in.
+std::string previewTargetPath(const core::FilePath& previewTarget,
+                              const core::FilePath& workingDir);
+
 } // namespace preview
 } // namespace quarto
 } // namespace modules
