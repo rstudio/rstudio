@@ -177,6 +177,162 @@ TEST(ProgramOptionsReadTest, NoCheckFlagRunsNormally)
    cfg.removeIfExists();
 }
 
+TEST(ProgramOptionsTests, DetectSetupDbModeFindsFlag)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_TRUE(detectSetupDbMode(2, argv));
+}
+
+TEST(ProgramOptionsTests, DetectSetupDbModeAbsentByDefault)
+{
+   const char* argv[] = { "rserver", "--check-config" };
+   EXPECT_FALSE(detectSetupDbMode(2, argv));
+}
+
+TEST(ProgramOptionsTests, DetectShowPasswordFindsFlag)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--show-password" };
+   EXPECT_TRUE(detectShowPassword(3, argv));
+}
+
+TEST(ProgramOptionsTests, DetectShowPasswordAbsentByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_FALSE(detectShowPassword(2, argv));
+}
+
+TEST(ProgramOptionsTests, DetectPrintOnlyFindsFlag)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--print-only" };
+   EXPECT_TRUE(detectPrintOnly(3, argv));
+}
+
+TEST(ProgramOptionsTests, DetectPrintOnlyAbsentByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_FALSE(detectPrintOnly(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractMasterPasswordFileFindsSeparateArgForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--master-password-file", "/etc/rstudio/master-pw" };
+   EXPECT_EQ("/etc/rstudio/master-pw", extractMasterPasswordFile(4, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractMasterPasswordFileFindsEqualsForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--master-password-file=/etc/rstudio/master-pw" };
+   EXPECT_EQ("/etc/rstudio/master-pw", extractMasterPasswordFile(3, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractMasterPasswordFileEmptyByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_EQ("", extractMasterPasswordFile(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractHostFindsSeparateArgForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--host", "db.internal" };
+   EXPECT_EQ("db.internal", extractHost(4, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractHostFindsEqualsForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--host=db.internal" };
+   EXPECT_EQ("db.internal", extractHost(3, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractHostEmptyByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_EQ("", extractHost(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractHostEmptyWhenFlagIsFinalToken)
+{
+   const char* argv[] = { "rserver", "--host" };
+   EXPECT_EQ("", extractHost(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractHostEmptyWithEmptyEqualsForm)
+{
+   const char* argv[] = { "rserver", "--host=" };
+   EXPECT_EQ("", extractHost(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractPortFindsSeparateArgForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--port", "5433" };
+   EXPECT_EQ("5433", extractPort(4, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractPortFindsEqualsForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--port=5433" };
+   EXPECT_EQ("5433", extractPort(3, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractPortEmptyByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_EQ("", extractPort(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractMasterUsernameFindsSeparateArgForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--master-username", "postgres" };
+   EXPECT_EQ("postgres", extractMasterUsername(4, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractMasterUsernameFindsEqualsForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--master-username=postgres" };
+   EXPECT_EQ("postgres", extractMasterUsername(3, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractMasterUsernameEmptyByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_EQ("", extractMasterUsername(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractDatabaseNameFindsSeparateArgForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--database-name", "rstudio" };
+   EXPECT_EQ("rstudio", extractDatabaseName(4, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractDatabaseNameFindsEqualsForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--database-name=rstudio" };
+   EXPECT_EQ("rstudio", extractDatabaseName(3, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractDatabaseNameEmptyByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_EQ("", extractDatabaseName(2, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractDatabaseUserFindsSeparateArgForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--database-user", "rstudio" };
+   EXPECT_EQ("rstudio", extractDatabaseUser(4, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractDatabaseUserFindsEqualsForm)
+{
+   const char* argv[] = { "rserver", "--setup-db", "--database-user=rstudio" };
+   EXPECT_EQ("rstudio", extractDatabaseUser(3, argv));
+}
+
+TEST(ProgramOptionsTests, ExtractDatabaseUserEmptyByDefault)
+{
+   const char* argv[] = { "rserver", "--setup-db" };
+   EXPECT_EQ("", extractDatabaseUser(2, argv));
+}
+
 } // namespace program_options
 } // namespace core
 } // namespace rstudio
