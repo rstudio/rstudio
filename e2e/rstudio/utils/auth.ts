@@ -15,7 +15,7 @@ export const AUTH_STORAGE_KEY = 'auth:positai:oauth';
 // The whole Posit AI state directory, and the token store within it. The store
 // path is derived from the directory so the shared .posit/assistant prefix
 // lives in exactly one place.
-export const POSITAI_DIR_RELATIVE = path.join('.posit', 'assistant');
+const POSITAI_DIR_RELATIVE = path.join('.posit', 'assistant');
 export const POSITAI_STORE_RELATIVE = path.join(POSITAI_DIR_RELATIVE, 'store', 'data.json');
 
 export interface PositAiOAuthEntry {

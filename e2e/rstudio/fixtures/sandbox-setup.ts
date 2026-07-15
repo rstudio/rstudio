@@ -149,8 +149,9 @@ export default async function globalSetup(config: FullConfig) {
   //
   // Posit AI is NOT seeded here -- the auth.setup project (tests/auth.setup.ts)
   // is the sole authority for Posit AI credentials (sign-in flow by default, or
-  // a whole-tree host copy under PW_SANDBOX_POSITAI_AUTH=copy), and its
-  // tests gate on the on-disk token store rather than an env flag.
+  // a copy of the host's token store, ~/.posit/assistant/store/data.json, under
+  // PW_SANDBOX_POSITAI_AUTH=copy), and its tests gate on the on-disk token
+  // store rather than an env flag.
   //
   // Clear the flag up front so only a value this function sets is honored -- a
   // stray PW_AI_SEEDED_COPILOT=1 inherited from the user's shell or a prior

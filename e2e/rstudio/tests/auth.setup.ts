@@ -465,7 +465,7 @@ setup('authenticate Posit AI', async () => {
   }
 
   if (mode === 'copy') {
-    // The global host-copy kill-switch suppresses copy mode (but not the sign-in modes).
+    // The global host-copy kill-switch suppresses copy mode (but not the sign-in flow).
     if (noSeedCredentials()) {
       writeAuthStatus(sandbox, {
         mode,
