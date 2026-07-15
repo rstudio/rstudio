@@ -79,12 +79,29 @@ public class FileHyperlink extends Hyperlink
                 {
                     navigateToAliased(response);
                 }
-                else 
+                else
                 {
-                    RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                        constants_.noSuchFile(),
-                        constants_.doesNotExist(filename)
-                        );
+                    // the path may be a stale package srcref path, recorded when the
+                    // package was installed; try to recover the source from the
+                    // package's srcref database before giving up
+                    server_.recoverPackageSource(filename, new SimpleRequestCallback<String>()
+                    {
+                        @Override
+                        public void onResponseReceived(String recovered)
+                        {
+                            if (recovered.length() > 0)
+                            {
+                                navigateToAliased(recovered);
+                            }
+                            else
+                            {
+                                RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                                    constants_.noSuchFile(),
+                                    constants_.doesNotExist(filename)
+                                    );
+                            }
+                        }
+                    });
                 }
             }
         });

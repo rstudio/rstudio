@@ -93,8 +93,8 @@ export async function restartSessionWithSentinel(page: Page): Promise<void> {
  * unavailable; this best-effort sequence waits for the page to load, the
  * console input to reappear, and R to confirm idle by echoing a unique marker.
  *
- * Logs a warning and returns if R does not confirm idle within three attempts;
- * the caller decides how to proceed.
+ * Logs a warning and returns if R does not confirm idle within the retry
+ * budget; the caller decides how to proceed.
  *
  * Prefer restartSessionWithSentinel when the test is the one invoking
  * .rs.api.restartSession -- the sentinel-based confirmation avoids the
@@ -103,13 +103,30 @@ export async function restartSessionWithSentinel(page: Page): Promise<void> {
 export async function waitForSessionRestart(page: Page): Promise<void> {
   await waitForPostRestartReady(page);
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // The marker is typed in two halves so the joined string can only appear in
+  // the console as cat() output: the submitted command is echoed into the
+  // console output too, and a whole-marker cat() false-passes off its own echo
+  // when the input never reaches R (e.g. "jsonrpc error 1 (Unable to connect
+  // to service)" while a suspended session is still relaunching).
+  //
+  // One timestamp for the whole call: rserver holds an undeliverable console
+  // input for up to rsession-proxy-max-wait-secs (default 30s) before failing
+  // it, so an early attempt's cat() may only run -- and print -- while a later
+  // attempt is checking. Any attempt's output confirms readiness.
+  const stamp = Date.now();
+  const marker = `[pw:session-restart-ready ${stamp}]`;
+  const command = `cat("[pw:session-restart-", "ready ${stamp}]", sep = "")`;
+
+  // The retry budget must cover a suspended session's full relaunch, which can
+  // exceed 30s when the first reconnect RPC races the still-exiting session
+  // (its failed relaunch poisons rserver's pending-launch entry until an RPC
+  // error clears it).
+  for (let attempt = 0; attempt < 12; attempt++) {
     try {
-      const marker = `[pw:session-restart-ready ${Date.now()}]`;
       await page.locator(CONSOLE_TAB).click();
       await page.locator(CONSOLE_INPUT).click({ force: true });
       await sleep(200);
-      await page.locator(CONSOLE_INPUT).pressSequentially(`cat("${marker}")`);
+      await page.locator(CONSOLE_INPUT).pressSequentially(command);
       await page.locator(CONSOLE_INPUT).press('Enter');
       await sleep(1500);
       const output = await page.locator(CONSOLE_OUTPUT).innerText();
@@ -119,7 +136,7 @@ export async function waitForSessionRestart(page: Page): Promise<void> {
     }
     await sleep(2000);
   }
-  console.warn('waitForSessionRestart: R session did not confirm idle after 3 attempts');
+  console.warn('waitForSessionRestart: R session did not confirm idle after 12 attempts');
 }
 
 /**

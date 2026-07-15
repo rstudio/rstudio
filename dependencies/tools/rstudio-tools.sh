@@ -322,11 +322,12 @@ download () {
 		echo -e "Downloading:\n- '$SRC' -> '$DST'"
 	fi
 
-	# Invoke downloader
+	# Invoke downloader; retry so that transient server errors
+	# (e.g. S3 returning 503) don't fail the build
 	if has-command curl; then
-		curl -L -f -C - "$SRC" > "$DST"
+		curl -L -f -C - --retry 5 "$SRC" > "$DST"
 	elif has-command wget; then
-		wget -c "$SRC" -O "$DST"
+		wget -c --tries=5 --waitretry=5 "$SRC" -O "$DST"
 	else
 		echo "no downloader detected on this system (requires 'curl' or 'wget')"
 		return 1
