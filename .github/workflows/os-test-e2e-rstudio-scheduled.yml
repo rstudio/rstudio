@@ -12,19 +12,19 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # With no version given, each engine resolves the latest daily itself, which
 # keeps its SHA-256 check. Given a specific version, the resolve job builds each
 # platform's download URL from that version string and passes it in; there is no
-# per-build manifest, so that path skips SHA-256 (see rstudio/rstudio#18238).
+# per-build manifest, so that path skips SHA-256 (see rstudio/latest-builds#251).
 #
 # Note: the Debian 13 engine it calls is not yet on main; that job will fail
 # until it lands via its own PR.
 
 on:
   schedule:
-    - cron: '0 2 * * 1-5'   # Mon-Fri 02:00 UTC -- rolling pair (rotation)
-    - cron: '0 4 * * 6'     # Saturday 04:00 UTC -- all engines
+    - cron: '0 2 * * 1-5'   # Mon-Fri 02:00 UTC -- fixed pair per weekday
+    - cron: '0 4 * * 6'     # Saturday 04:00 UTC -- all engines (this string must match the check in the pick job)
   workflow_dispatch:
     inputs:
       version:
-        description: "Daily build to test as a full version string (e.g. 2026.07.0+139). Leave empty to test the latest daily. Applies to every engine."
+        description: "Daily build to test, given as the version string exactly as shown on dailies.rstudio.com (e.g. 2026.08.0-daily+44). Leave empty to test the latest daily. Applies to every engine."
         type: string
         default: ""
 
@@ -35,8 +35,9 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
-  # The engines' e2e-merge job assumes the S3 report-upload role via OIDC; a
-  # reusable workflow's id-token grant is capped by its caller's.
+  # Most engines' e2e-merge jobs assume the S3 report-upload role via OIDC
+  # (fedora and ubuntu26 don't upload); a reusable workflow's id-token grant is
+  # capped by its caller's.
   id-token: write
 
 jobs:
@@ -62,11 +63,14 @@ jobs:
               3) SEL='["ubuntu26","fedora"]' ;;
               4) SEL='["debian13","macos"]' ;;
               5) SEL='["ubuntu24s","windows"]' ;;
-              *) SEL='[]' ;;   # weekend: the weekday cron never fires here
+              # Only reachable by re-running a weekday run on Sat/Sun, or if the
+              # Saturday cron above changed without updating the check above.
+              # Fail loudly rather than silently selecting nothing.
+              *) echo "::error::No engine slate for weekday $(date -u +%u). If the Saturday cron changed, update the '0 4 * * 6' check in this job."; exit 1 ;;
             esac
           fi
           echo "selected=$SEL" >> "$GITHUB_OUTPUT"
-          echo "Selected engines: $SEL"
+          echo "::notice::Selected engines: $SEL"
 
   resolve:
     name: Resolve installer URLs
@@ -110,7 +114,16 @@ jobs:
               echo "::error::Could not build a URL for ${product}/${key} from the latest manifest." >&2
               return 1
             fi
-            printf '%s' "${link/$cur/$REQ}"
+            local out=${link//$cur/$REQ}
+            if [ "$REQ" != "$cur" ] && [ "$out" = "$link" ]; then
+              echo "::error::Version '$REQ' did not substitute into the ${product}/${key} URL ($link); the manifest link format may have changed." >&2
+              return 1
+            fi
+            if ! curl -fsI "$out" >/dev/null 2>&1; then
+              echo "::error::Resolved URL for ${product}/${key} does not exist: $out (version '$VERSION' may be unavailable or mistyped)." >&2
+              return 1
+            fi
+            printf '%s' "$out"
           }
           RHEL=$(emit electron rhel10-x86_64) || exit 1
           NOBLE=$(emit electron noble-amd64) || exit 1

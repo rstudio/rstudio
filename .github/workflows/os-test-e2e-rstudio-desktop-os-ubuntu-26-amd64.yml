@@ -380,7 +380,7 @@ jobs:
               echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
               exit 1
             fi
-            echo "Auto-resolved latest resolute-amd64 desktop daily:"
+            echo "Auto-resolved latest noble-amd64 (Ubuntu 24) desktop daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
