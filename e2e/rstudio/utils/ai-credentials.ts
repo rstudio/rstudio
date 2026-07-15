@@ -17,9 +17,9 @@ export type AIProvider = 'positai' | 'copilot';
 function positAiSkipReason(): string {
   const status = readAuthStatus(process.env.PW_SANDBOX!);
   if (status === null) {
-    return 'No Posit AI credentials in the sandbox. Set POSIT_EMAIL/POSIT_PASSWORD '
-      + 'for the sign-in flow (default), or run with PW_SANDBOX_POSITAI_AUTH=copy '
-      + 'while signed in to Posit AI on the host.';
+    return 'No Posit AI credentials in the sandbox. Sign in to Posit AI on the host '
+      + 'for the default copy mode, or set POSIT_EMAIL/POSIT_PASSWORD and '
+      + 'PW_SANDBOX_POSITAI_AUTH=login for the sign-in flow.';
   }
   if (status.outcome === 'success') {
     return 'Posit AI auth setup reported success, but the sandbox token store is '
@@ -41,8 +41,9 @@ const COPILOT_HOST_PATH = process.platform === 'win32'
  * when the credential is absent.
  *
  * The two providers use different signals:
- *   positai  The auth.setup project (sign-in flow by default, or a host copy
- *            under PW_SANDBOX_POSITAI_AUTH=copy) leaves a token store on disk.
+ *   positai  The auth.setup project (a host token-store copy by default, or
+ *            the OAuth sign-in flow under PW_SANDBOX_POSITAI_AUTH=login)
+ *            leaves a token store on disk.
  *            It runs in a separate process, so the signal is the store itself,
  *            not an env flag: isPositAiAuthenticated() reads it and also checks
  *            the token has not expired. When the store is absent or invalid,

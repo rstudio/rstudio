@@ -28,18 +28,18 @@ import {
  * report the actual cause. The fail-loud throw paths write nothing -- they
  * fail the setup, so dependent tests don't run at all.
  *
- * Modes (PW_SANDBOX_POSITAI_AUTH), default "login":
- *   login  Run the OAuth sign-in using POSIT_EMAIL/POSIT_PASSWORD. If
- *          either is unset, log and let the Posit AI tests skip. Never falls
- *          back to "copy". This is the default -- unset behaves as "login".
+ * Modes (PW_SANDBOX_POSITAI_AUTH), default "copy":
  *   copy   Copy only the host user's Posit AI token store
  *          (~/.posit/assistant/store/data.json) into the sandbox -- no
- *          skills, workspaces, or other state. Skips (Posit AI tests) if the
- *          host is not signed in. Explicit only; never used as a fallback.
- *          Useful for fast local iteration when the developer is already
- *          signed in on the host. Suppressed by the global host-copy
- *          kill-switch PW_SANDBOX_NO_SEED_CREDENTIALS, in which case the
- *          tests skip.
+ *          skills, workspaces, or other state. This is the default -- unset
+ *          behaves as "copy". Skips (Posit AI tests) if the host is not
+ *          signed in; never falls back to "login". Suppressed by the global
+ *          host-copy kill-switch PW_SANDBOX_NO_SEED_CREDENTIALS, in which
+ *          case the tests skip.
+ *   login  Run the OAuth sign-in using POSIT_EMAIL/POSIT_PASSWORD. If
+ *          either is unset, log and let the Posit AI tests skip. Explicit
+ *          only; never used as a fallback from "copy". Useful in CI or on a
+ *          host that isn't signed in to Posit AI.
  *   off    Provision nothing; the Posit AI tests skip.
  */
 
@@ -448,7 +448,7 @@ setup('authenticate Posit AI', async () => {
   if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
 
   const sandboxUserHome = path.join(sandbox, 'user-home');
-  const modeRaw = process.env.PW_SANDBOX_POSITAI_AUTH ?? 'login';
+  const modeRaw = process.env.PW_SANDBOX_POSITAI_AUTH ?? 'copy';
   if (!AUTH_MODES.includes(modeRaw as PositAiAuthMode)) {
     throw new Error(`PW_SANDBOX_POSITAI_AUTH="${modeRaw}" -- expected one of: ${AUTH_MODES.join(', ')}, or unset`);
   }
@@ -498,10 +498,10 @@ setup('authenticate Posit AI', async () => {
     return;
   }
 
-  // mode === 'login' (default): OAuth sign-in. Never falls back to "copy" --
-  // host tokens are never used. The satisfies turns that comment into a
-  // compile error if a new mode is added to AUTH_MODES without being
-  // dispatched above: a fourth mode must not silently run a live sign-in.
+  // mode === 'login': OAuth sign-in. Never falls back to "copy" -- host
+  // tokens are never used. The satisfies turns that comment into a compile
+  // error if a new mode is added to AUTH_MODES without being dispatched
+  // above: a fourth mode must not silently run a live sign-in.
   mode satisfies 'login';
   const email = process.env.POSIT_EMAIL;
   const password = process.env.POSIT_PASSWORD;
@@ -510,7 +510,7 @@ setup('authenticate Posit AI', async () => {
     writeAuthStatus(sandbox, {
       mode,
       outcome: 'credentials-unset',
-      reason: 'POSIT_EMAIL/POSIT_PASSWORD not set. Set them for the sign-in flow (default), or run with PW_SANDBOX_POSITAI_AUTH=copy while signed in to Posit AI on the host.',
+      reason: 'POSIT_EMAIL/POSIT_PASSWORD not set. Set them for the sign-in flow, or unset PW_SANDBOX_POSITAI_AUTH (or set it to copy, the default) to copy the token store while signed in to Posit AI on the host.',
     });
     console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD not set; Posit AI tests will be skipped');
     return;

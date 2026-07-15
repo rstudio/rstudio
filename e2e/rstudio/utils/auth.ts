@@ -132,7 +132,7 @@ export function noSeedCredentials(): boolean {
 
 // Valid PW_SANDBOX_POSITAI_AUTH values. The array is the single source of
 // truth -- the type is derived from it -- so the runtime check, its error
-// message, and the type can't drift apart. Unset behaves as "login". Lives
+// message, and the type can't drift apart. Unset behaves as "copy". Lives
 // here rather than in auth.setup.ts because mode is serialized into the
 // status file below, making it part of the cross-process contract.
 export const AUTH_MODES = ['off', 'copy', 'login'] as const;
