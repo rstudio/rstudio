@@ -42,6 +42,7 @@ public:
    void assign(const Request& request, const Headers& extraHeaders = Headers())
    {
       Message::assign(request, extraHeaders);
+      rootPath_ = request.rootPath_;
       method_ = request.method_;
       uri_ = request.uri_;
       remoteUid_ = request.remoteUid_;
@@ -54,6 +55,7 @@ public:
       parsedQueryParams_ = request.parsedQueryParams_;
       queryParams_ = request.queryParams_;
       username_ = request.username_;
+      handlerPrefix_ = request.handlerPrefix_;
       requestSequence_ = request.requestSequence_;
       startTime_ = request.startTime_;
       handlerStartTime_ = request.handlerStartTime_;
@@ -65,6 +67,7 @@ public:
    void assign(Request&& request, const Headers& extraHeaders = Headers())
    {
       Message::assign(std::move(request), extraHeaders);
+      rootPath_ = std::move(request.rootPath_);
       method_ = std::move(request.method_);
       uri_ = std::move(request.uri_);
       remoteUid_ = request.remoteUid_;
@@ -77,6 +80,7 @@ public:
       parsedQueryParams_ = request.parsedQueryParams_;
       queryParams_ = std::move(request.queryParams_);
       username_ = std::move(request.username_);
+      handlerPrefix_ = std::move(request.handlerPrefix_);
       requestSequence_ = request.requestSequence_;
       startTime_ = request.startTime_;
       handlerStartTime_ = request.handlerStartTime_;

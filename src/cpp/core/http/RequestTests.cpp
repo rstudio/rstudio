@@ -113,6 +113,8 @@ TEST(RequestTest, MoveAssignTransfersFields)
    src.setUsername("someuser");
    src.setBody("request body contents");
    src.setContentLength(src.body().size());
+   src.setRootPath("/proxy/root");
+   src.setHandlerPrefix("/handler/prefix");
 
    Request dest;
    dest.assign(std::move(src));
@@ -123,6 +125,40 @@ TEST(RequestTest, MoveAssignTransfersFields)
    EXPECT_EQ("abc123", dest.cookieValue("session"));
    EXPECT_EQ("someuser", dest.username());
    EXPECT_EQ("request body contents", dest.body());
+   EXPECT_EQ("/proxy/root", dest.rootPath());
+   EXPECT_EQ("/handler/prefix", dest.handlerPrefix());
+}
+
+TEST(RequestTest, CopyAssignTransfersFields)
+{
+   Request src;
+   src.setMethod("POST");
+   src.setUri("/some/path");
+   src.setHeader("X-Custom-Header", "custom-value");
+   src.addCookie("session", "abc123");
+   src.setUsername("someuser");
+   src.setBody("request body contents");
+   src.setContentLength(src.body().size());
+   src.setRootPath("/proxy/root");
+   src.setHandlerPrefix("/handler/prefix");
+
+   Request dest;
+   dest.assign(src);
+
+   EXPECT_EQ("POST", dest.method());
+   EXPECT_EQ("/some/path", dest.uri());
+   EXPECT_EQ("custom-value", dest.headerValue("X-Custom-Header"));
+   EXPECT_EQ("abc123", dest.cookieValue("session"));
+   EXPECT_EQ("someuser", dest.username());
+   EXPECT_EQ("request body contents", dest.body());
+   EXPECT_EQ("/proxy/root", dest.rootPath());
+   EXPECT_EQ("/handler/prefix", dest.handlerPrefix());
+
+   // source is untouched by a copy assign
+   EXPECT_EQ("POST", src.method());
+   EXPECT_EQ("/some/path", src.uri());
+   EXPECT_EQ("/proxy/root", src.rootPath());
+   EXPECT_EQ("/handler/prefix", src.handlerPrefix());
 }
 
 TEST(RequestTest, MoveAssignTransfersFormFields)
