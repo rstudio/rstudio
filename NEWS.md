@@ -23,7 +23,7 @@
 - Ace 1.43.5
 - MathJax 4.1.3 (inline LaTeX / math previews)
 - Copilot Language Server 1.520.0
-- Electron 41.9.0
+- Electron 41.10.2
 - Node.js 22.22.2 (copilot, Posit Assistant)
 - Quarto 1.9.38
 - xterm.js 6.0.0
