@@ -109,11 +109,11 @@ export class ChatPaneActions {
    * since credentials are provisioned by the auth.setup project (a seeded
    * host token-store copy by default, or the OAuth sign-in flow under
    * PW_SANDBOX_POSITAI_AUTH=login).
-   * The host's Posit Assistant rotates the refresh token in ~/.posit/assistant/store,
-   * so seeded copies can be invalidated between auth setup and test
-   * execution; surfacing that as "sign in on the host and re-run" is more
-   * useful than the cryptic "input not editable after 15s" downstream timeout
-   * each test would otherwise hit.
+   * The host's Posit Assistant rotates the refresh token in its credential
+   * store (~/.posit/ai/auth/data.json), so seeded copies can be invalidated
+   * between auth setup and test execution; surfacing that as "sign in on the
+   * host and re-run" is more useful than the cryptic "input not editable
+   * after 15s" downstream timeout each test would otherwise hit.
    *
    * The TrustOverlay component in databot renders as a role="dialog" with the
    * primary button; the RestrictedModeBadge also has a "Trust this workspace"
@@ -156,14 +156,14 @@ export class ChatPaneActions {
 
     // Deadline expired -- pick the most actionable error message.
     // The Sign-In affordance can flash briefly during backend startup while
-    // credentials are still being loaded from ~/.posit/assistant/store, so we only
+    // credentials are still being loaded from the token store, so we only
     // treat it as a hard failure when it's still visible at the end of the
     // polling window.
     if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
       throw new Error(
         'Posit Assistant requires sign-in despite auth.setup provisioning credentials. ' +
         'In copy mode (the default; PW_SANDBOX_POSITAI_AUTH unset or =copy), sign in on the host ' +
-        '(~/.posit/assistant/store/data.json) and re-run; ' +
+        '(token store ~/.posit/ai/auth/data.json) and re-run; ' +
         'if PW_SANDBOX_POSITAI_AUTH=login, check POSIT_EMAIL/POSIT_PASSWORD and the auth-setup log.'
       );
     }

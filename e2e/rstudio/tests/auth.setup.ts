@@ -7,9 +7,10 @@ import {
   AUTH_STORAGE_KEY,
   PositAiAuthMode,
   PositAiOAuthEntry,
+  findAuthenticatedStore,
   isStoreFileAuthenticated,
   noSeedCredentials,
-  storeFile,
+  storeFileCandidates,
   writeAuthStatus,
 } from '../utils/auth';
 
@@ -18,9 +19,10 @@ import {
  *
  * This is a Playwright setup project (see playwright.config.ts): it runs once
  * after globalSetup and before the desktop/server test projects, which depend
- * on it. Its job is to leave a valid Posit AI token store at
- * <sandbox>/user-home/.posit/assistant/store/data.json so the Posit AI tests
- * start signed in. It is the sole authority for Posit AI credentials in the
+ * on it. Its job is to leave a valid Posit AI token store in the sandbox
+ * user-home (both store locations in POSITAI_STORE_CANDIDATES, so builds on
+ * either side of the assistant's store migration find it) so the Posit AI
+ * tests start signed in. It is the sole authority for Posit AI credentials in the
  * sandbox -- globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
  * Every exit path that lets the run continue (success or skip) also records
  * what happened in <sandbox>/positai-auth-status.json (see PositAiAuthStatus
@@ -30,7 +32,8 @@ import {
  *
  * Modes (PW_SANDBOX_POSITAI_AUTH), default "copy":
  *   copy   Copy only the host user's Posit AI token store
- *          (~/.posit/assistant/store/data.json) into the sandbox -- no
+ *          (~/.posit/ai/auth/data.json, or the legacy
+ *          ~/.posit/assistant/store/data.json) into the sandbox -- no
  *          skills, workspaces, or other state. This is the default -- unset
  *          behaves as "copy". Skips (Posit AI tests) if the host is not
  *          signed in; never falls back to "login". Suppressed by the global
@@ -53,12 +56,24 @@ function copyFile(src: string, dest: string): void {
   fs.copyFileSync(src, dest);
 }
 
+// Copy the host token store into every candidate location in the sandbox, so
+// the assistant under test finds it whether it predates or postdates the
+// store migration (see POSITAI_STORE_CANDIDATES in utils/auth.ts).
+function copyStoreToSandbox(hostStore: string, sandboxUserHome: string): void {
+  for (const dest of storeFileCandidates(sandboxUserHome)) {
+    copyFile(hostStore, dest);
+  }
+}
+
+// Both modes write every candidate location, so verify every one of them: a
+// partial write must not pass.
 function verifyStoreWritten(sandboxUserHome: string): void {
-  const dest = storeFile(sandboxUserHome);
-  if (!isStoreFileAuthenticated(dest)) {
-    throw new Error(
-      `[auth-setup] post-write verification failed for ${dest}: store is missing, unreadable, malformed, lacks required fields, or its token is already expired (the unreadable/malformed cases emit a preceding [auth] WARNING naming the cause; missing fields and expiry fail without one)`,
-    );
+  for (const dest of storeFileCandidates(sandboxUserHome)) {
+    if (!isStoreFileAuthenticated(dest)) {
+      throw new Error(
+        `[auth-setup] post-write verification failed for ${dest}: store is missing, unreadable, malformed, lacks required fields, or its token is already expired (the unreadable/malformed cases emit a preceding [auth] WARNING naming the cause; missing fields and expiry fail without one)`,
+      );
+    }
   }
 }
 
@@ -429,9 +444,12 @@ function writeTokensToSandbox(tokenData: TokenSuccessResponse, sandboxUserHome: 
     },
   };
   const storeData = { [AUTH_STORAGE_KEY]: entry };
-  const dest = storeFile(sandboxUserHome);
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.writeFileSync(dest, JSON.stringify(storeData, null, 2), { mode: 0o600 });
+  // Write every candidate location so the assistant under test finds the
+  // store on either side of the store migration.
+  for (const dest of storeFileCandidates(sandboxUserHome)) {
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, JSON.stringify(storeData, null, 2), { mode: 0o600 });
+  }
 }
 
 setup('authenticate Posit AI', async () => {
@@ -480,23 +498,24 @@ setup('authenticate Posit AI', async () => {
       console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping copy, Posit AI tests will skip');
       return;
     }
-    if (!isStoreFileAuthenticated(storeFile(os.homedir()))) {
+    const hostStore = findAuthenticatedStore(os.homedir());
+    if (hostStore === null) {
       writeAuthStatus(sandbox, {
         mode,
         outcome: 'host-not-signed-in',
-        reason: 'Posit AI auth mode is copy (the default), but the host is not signed in to Posit AI (its token store is missing or expired, or could not be read -- see the setup log). Sign in on the host, or set PW_SANDBOX_POSITAI_AUTH=login with POSIT_EMAIL/POSIT_PASSWORD.',
+        reason: 'Posit AI auth mode is copy (the default), but the host is not signed in to Posit AI (no token store at ~/.posit/ai/auth/data.json or the legacy ~/.posit/assistant/store/data.json holds a valid token -- see the setup log). Sign in on the host, or set PW_SANDBOX_POSITAI_AUTH=login with POSIT_EMAIL/POSIT_PASSWORD.',
       });
-      console.log('[auth-setup] copy mode (the default): host is not signed in to Posit AI (token store missing, expired, or unreadable); Posit AI tests will be skipped');
+      console.log('[auth-setup] copy mode (the default): host is not signed in to Posit AI (no candidate token store holds a valid token); Posit AI tests will be skipped');
       return;
     }
-    copyFile(storeFile(os.homedir()), storeFile(sandboxUserHome));
+    copyStoreToSandbox(hostStore, sandboxUserHome);
     verifyStoreWritten(sandboxUserHome);
     writeAuthStatus(sandbox, {
       mode,
       outcome: 'success',
-      reason: 'copied the token store from the host ~/.posit/assistant/store/data.json',
+      reason: `copied the token store from the host ${hostStore}`,
     });
-    console.log('[auth-setup] copied Posit AI token store from ~/.posit/assistant/store/data.json');
+    console.log(`[auth-setup] copied Posit AI token store from ${hostStore}`);
     console.log(
       '[auth-setup] real Posit AI tokens now live in the sandbox and persist if the run is preserved or teardown fails.',
     );

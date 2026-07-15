@@ -1,22 +1,23 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-// AUTH_STORAGE_KEY and POSITAI_STORE_RELATIVE mirror the on-disk layout
+// AUTH_STORAGE_KEY and POSITAI_STORE_CANDIDATES mirror the on-disk layout
 // owned by the Posit AI client (NodeAuthService in the assistant repo). If
 // either changes there without a matching change here, the test gate will
 // silently disagree with the IDE about whether the sandbox is signed in.
-// NOTE: assistant main is already migrating the store to
-// ~/.posit/ai/auth/data.json (its migrateCredentialStore.ts copies the old
-// file to the new path at startup, leaving this path in place as a fallback
-// for now); when the shipped assistant picks that migration up, these
-// constants must follow.
 export const AUTH_STORAGE_KEY = 'auth:positai:oauth';
 
-// The whole Posit AI state directory, and the token store within it. The store
-// path is derived from the directory so the shared .posit/assistant prefix
-// lives in exactly one place.
-const POSITAI_DIR_RELATIVE = path.join('.posit', 'assistant');
-export const POSITAI_STORE_RELATIVE = path.join(POSITAI_DIR_RELATIVE, 'store', 'data.json');
+// The token store locations, newest first. The assistant migrated the store
+// from ~/.posit/assistant/store/data.json to ~/.posit/ai/auth/data.json (its
+// migrateCredentialStore.ts copies the old file to the new path at startup);
+// shipped builds use the new path as of the 2026.08 dailies, verified
+// 2026-07-15. The harness reads whichever location validates (new preferred)
+// and writes both, so it works against builds on either side of the
+// migration.
+export const POSITAI_STORE_CANDIDATES = [
+  path.join('.posit', 'ai', 'auth', 'data.json'),
+  path.join('.posit', 'assistant', 'store', 'data.json'),
+] as const;
 
 export interface PositAiOAuthEntry {
   // Literal true: the guard rejects anything else, and the setup project
@@ -99,9 +100,17 @@ export function isStoreFileAuthenticated(file: string): boolean {
   return !Number.isNaN(expiresAt.getTime()) && expiresAt.getTime() > Date.now();
 }
 
-// Absolute path to the Posit AI token store under a given home directory.
-export function storeFile(homeDir: string): string {
-  return path.join(homeDir, POSITAI_STORE_RELATIVE);
+// Absolute paths of all candidate token stores under a given home directory,
+// newest first.
+export function storeFileCandidates(homeDir: string): string[] {
+  return POSITAI_STORE_CANDIDATES.map((rel) => path.join(homeDir, rel));
+}
+
+// First candidate store under homeDir holding a valid (unexpired) token, or
+// null when none does. Order matters: the new location wins when both exist,
+// matching the assistant's own preference after migration.
+export function findAuthenticatedStore(homeDir: string): string | null {
+  return storeFileCandidates(homeDir).find(isStoreFileAuthenticated) ?? null;
 }
 
 export function isPositAiAuthenticated(): boolean {
@@ -109,7 +118,7 @@ export function isPositAiAuthenticated(): boolean {
   if (!sandbox) {
     throw new Error('isPositAiAuthenticated called outside the sandbox; PW_SANDBOX is unset');
   }
-  return isStoreFileAuthenticated(storeFile(path.join(sandbox, 'user-home')));
+  return findAuthenticatedStore(path.join(sandbox, 'user-home')) !== null;
 }
 
 // The global host-copy kill-switch: when set, copy mode and Copilot's
