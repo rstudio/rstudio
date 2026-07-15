@@ -91,21 +91,7 @@ jobs:
           cache-dependency-path: e2e/rstudio/package-lock.json
 
       - name: Install rig
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $maxAttempts = 3
-          for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --accept-source-agreements --accept-package-agreements --disable-interactivity
-            if ($LASTEXITCODE -eq 0) { break }
-            if ($i -lt $maxAttempts) {
-              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
-              Start-Sleep -Seconds 15
-            } else {
-              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
-              exit 1
-            }
-          }
-          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
+        uses: ./.github/actions/os-install-rig-windows
 
       - name: Install R via rig
         env:
