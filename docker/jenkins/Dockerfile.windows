@@ -1,7 +1,7 @@
 # escape=`
 
 # https://hub.docker.com/r/microsoft/windows-servercore
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022
 
 # Use plain cmd shell for initial setup.
 SHELL ["cmd", "/S", "/C"]
@@ -30,8 +30,20 @@ WORKDIR "C:/BuildTools"
 # required Windows 10 SDK, as chocolatey doesn't seem to provide the versions we need.
 #
 
+# Install a pinned release of the VS 2026 Build Tools (18.7.3). Fixed-version
+# bootstrapper URLs for other releases are published at:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-history
+#
+# Note that VS 2026 replaced the versioned 'vs/<version>/release' aka.ms URLs
+# with channel-based URLs (e.g. 'vs/stable/vs_buildtools.exe') that always
+# track the latest release; use a fixed-version bootstrapper to stay pinned.
+# Beware that unknown aka.ms links silently redirect to a Bing HTML page,
+# which fails later with 'The system cannot execute the specified program.'
+ARG VS_BUILDTOOLS_URL=https://download.visualstudio.microsoft.com/download/pr/4037ccca-d103-412b-a678-bc0aa164315e/07b09afd416dc05c781f171c881c23e42907eeb8d812fa1d2993dffb9323c869/vs_BuildTools.exe
+
 # Download the Build Tools bootstrapper.
-RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
+RUN curl -SL --output vs_buildtools.exe %VS_BUILDTOOLS_URL%
 
 #
 # Install Build Tools. For whatever reason, this fails when we try to install
@@ -46,7 +58,7 @@ RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtoo
 #
 RUN `
   start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
-    --installPath "C:/Program Files/Microsoft Visual Studio/2022/BuildTools" `
+    --installPath "C:/Program Files/Microsoft Visual Studio/2026/BuildTools" `
     --add Microsoft.VisualStudio.Workload.VCTools `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 `
@@ -54,7 +66,7 @@ RUN `
 
 # Try testing the build tools. You might see some telemetry errors here;
 # they can apparently be ignored.
-WORKDIR "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/Common7/Tools"
+WORKDIR "C:/Program Files/Microsoft Visual Studio/2026/BuildTools/Common7/Tools"
 RUN `
   start /WAIT /B cmd.exe /S /C `
   echo -- Testing VsDevCmd.bat `
@@ -130,8 +142,8 @@ COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
 COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
 # panmirror check for changes
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-pacific-dogwood panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-yellow-yarrow panmirror.version.json
 
 ENV DOCKER_IMAGE_BUILD=1
 WORKDIR C:/rstudio-tools/dependencies/windows

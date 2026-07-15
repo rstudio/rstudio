@@ -3,12 +3,12 @@ title: "Posit Assistant"
 date-meta: 2026-02-25
 ---
 
-[Posit Assistant](https://pos.it/assistant) is a set of artificial intelligence (AI) features available as a downloadable extension for RStudio. To provide feedback or report bugs, please open a [GitHub Issue on the RStudio repository](https://github.com/rstudio/rstudio/issues).
+[Posit Assistant](https://pos.it/assistant) is a set of artificial intelligence (AI) features available as a downloadable extension for RStudio. To provide feedback or report bugs, please open a [GitHub Issue](https://github.com/posit-dev/assistant-feedback/issues).
 
 ## Prerequisites
 
 -   To use Posit Assistant in RStudio, you must have a compatible version of RStudio installed. Posit Assistant is available for RStudio Desktop or Server 2026.04.0 and later. Posit Workbench disables Posit Assistant by default, but an administrator can enable it.
--   To use Posit Assistant, you must have access to the internet in order to send requests to the Posit AI APIs and receive suggestions.
+-   To use Posit Assistant, you need access to a model provider. Posit AI is the recommended provider, and other providers such as Anthropic, OpenAI, Google Gemini, and Amazon Bedrock are also supported. Most providers are cloud-based and require internet access to send requests and receive responses.
 
 ::: {.callout-note title="Posit Assistant in RStudio Server and Workbench"}
 Support for RStudio Server and Posit Workbench is currently considered experimental and will be fully supported in a future release.
@@ -16,23 +16,37 @@ Support for RStudio Server and Posit Workbench is currently considered experimen
 
 ## Setup
 
-To configure Posit Assistant in RStudio click on the "Posit Assistant" button on the toolbar to display the "Posit Assistant" pane.
+To set up Posit Assistant in RStudio, click the "Posit Assistant" button on the toolbar to display the "Posit Assistant" pane.
 
 ![](images/posit-assistant-button.png){fig-alt="Posit Assistant Toolbar Button" fig-align="left"}
 
-Click **Install Posit Assistant** to download and install the add-in package, then click **Sign In** to login and signup for Posit-AI.
+Click **Install Posit Assistant** to download and install the add-in package. Once the installation completes, configure a model provider as described below before you begin chatting.
+
+![](images/install-posit-assistant.png){fig-alt="Install Posit Assistant" fig-align="center" width="350"}
+
+## Choosing a model provider
+
+Posit Assistant works with several model providers. Posit AI is the recommended provider for most users, but you can also connect directly to other providers.
+
+![](images/posit-assistant-configure.png){fig-alt="Configure Posit Assistant" fig-align="center" width="350"}
+
+### Posit AI
+
+[Posit AI](https://docs.posit.co/posit-ai) is a managed service from Posit that provides access to a range of frontier LLMs through a single account. Click **Sign in to try Posit AI for free** to sign in to or create a Posit AI account. Once you are authenticated, the Posit Assistant chat feature is ready to use.
 
 ::: {.callout-note title="Posit AI Account Assistance"}
 For more information on signing up and managing your Posit AI account visit <https://docs.posit.co/posit-ai>.
 :::
 
-::: {layout-ncol="2"}
-![](images/install-posit-ai.png){fig-alt="Install Posit Assistant"}
+### Other providers
 
-![](images/posit-ai-sign-in.png){fig-alt="Sign in to Posit AI"}
-:::
+Posit Assistant also supports direct connections to providers such as Anthropic, OpenAI, Google Gemini, and Amazon Bedrock, among others. On the welcome screen, click **Configure another provider**, then choose the provider and enter its credentials. After initial setup, you can add or change providers from the settings (gear) menu in the Posit Assistant pane.
 
-Once signed up and authenticated, the Posit Assistant chat feature is ready to use.
+## Advanced configuration
+
+Posit Assistant reads its configuration from JSON settings files: a global file at `~/.posit/assistant/settings.json` and an optional per-project file at `.posit/assistant/settings.json`. Editing these files directly lets you set options that are not exposed in the user interface, such as custom provider base URLs, request headers, permissions, and MCP servers.
+
+For the full list of available settings, see the [Posit Assistant configuration file reference](https://assistant.posit.co/docs/reference/config-file/).
 
 ## Using Posit Assistant
 

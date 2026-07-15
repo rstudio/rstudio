@@ -479,6 +479,8 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_RSTUDIO_SERVER_LOGIN_TIMEOUT` | Server | No | Post-login wait for the IDE console, in ms (default: 60000) |
 | `PW_RSERVER_BIN` | Server | No | Path to the `rserver` binary used by the in-tree spawn (default: `build/src/cpp/server/rserver` in the repo). |
 | `PW_RSERVER_CONF` | Server | No | Path to the `rserver-dev.conf` used by the in-tree spawn (default: `build/src/cpp/conf/rserver-dev.conf` in the repo). |
+| `RSTUDIO_PROJECT_ROOT` | Server | No | Override the repo-root path passed into the in-tree `rserver-dev`'s environment. Defaults to the resolved repository root. |
+| `RS_DB_MIGRATIONS_PATH` | Server | No | Override the server database migrations directory passed to the in-tree `rserver-dev`. Defaults to `src/cpp/server/db` under the repo root. |
 | `PW_RSTUDIO_EXTRA_ARGS` | Desktop | No | Space-separated extra CLI args passed to RStudio (e.g., `--my-flag --other-option`) |
 | `PW_RSTUDIO_PREFS_OVERRIDE` | Desktop | No | Path to a JSON/JSONC file whose keys override `fixtures/base-prefs.jsonc` per-key. |
 | `PW_TEST_IGNORE` | Both | No | Space-separated globs of test paths to exclude (e.g., `**/foo.test.ts **/posit-assistant-chat/**`). Fills the gap that Playwright has no CLI option for path-based exclusion -- file inclusion uses positional CLI arguments, and title filtering uses `--grep`/`--grep-invert`. |
@@ -495,6 +497,16 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_DEBUG_LAUNCH` | Desktop | No | Set to `1`/`true` to emit `[launch-timing]` traces (post-CDP wait steps) during startup. Diagnostic only; enabled on CI so launch failures show which phase exceeded the deadline. |
 | `PW_DEBUG_PAGES` | Desktop | No | Set to `1`/`true` to emit `[debug-launch]` page-lifecycle traces (page created/navigated/load/close, console errors) for every page for the whole run, including popups like plot zoom. Diagnostic only. |
 | `PW_ENV_FILE` | Both | No | Path (relative to `e2e/rstudio/`) to a dotenv file loaded by `playwright.config.ts` before any env reads. Default: `.env.local`. Setting this to a missing file is a hard error (so typos surface immediately). See *`.env.local` (dotenv)* below. |
+| `PW_RUN_SMOKE` | Both | No | Set to `1`/`true` to include `@smoke` tests, which are excluded by default (they idle long enough to be flaky under parallel load). |
+| `PW_TRACE` | Both | No | Playwright trace mode (`on`, `off`, `retain-on-failure`, etc.). Default: `retain-on-failure`. Validated against an allow-list so a typo fails loud instead of silently disabling capture. |
+| `PW_SCREENSHOT` | Both | No | Playwright screenshot mode (`on`, `off`, `only-on-failure`). Default: `only-on-failure`. Same allow-list validation as `PW_TRACE`. |
+| `PW_DEBUG` | Both | No | Set to `1`/`true` to enable the interactive debug harness: `waitForUserConsoleInput()` pauses the test with DevTools open for profiling instead of running through. |
+| `PW_DEBUG_TIMEOUT_MS` | Both | No | Fallback timeout (ms) before a `PW_DEBUG` pause auto-resumes. Default: `3600000` (1 hour). |
+| `PW_IGNORE_CLIENT_EXCEPTIONS` | Both | No | Set to `1`/`true` to stop the fixture from failing a test on uncaught client-side (GWT) exceptions. |
+| `PW_HEARTBEAT_TIMEOUT_SECONDS` | Both | No | Idle window (no output), in seconds, after which the heartbeat run-wrapper treats the run as hung and kills it. Default: `300`. |
+| `PW_STOP_GRACE_MS` | Both | No | Grace period (ms) for a spawned process to exit on stop before it's force-killed. Default: `30000`. |
+| `PW_PROJECT_LABEL` | Both | No | Label for this run in report/blob file names (e.g. `desktop-macos`, `server-linux`). Defaults to the resolved mode. |
+| `PW_PROJECT` | Both | No | **Deprecated.** No longer used; it logs a warning and is ignored. Use `--project=desktop\|server` or `PW_RSTUDIO_MODE` instead. |
 
 `PW_SANDBOX` itself is internal: it's set by `globalSetup` to the absolute path of the auto-created sandbox subtree and is read by workers, the R workdir helper, and `globalTeardown`. Don't set it manually. `PW_AI_SEEDED_POSITAI` / `PW_AI_SEEDED_COPILOT` are also internal: `globalSetup` sets them to `1` for each provider whose credentials were successfully copied; `requireAiCredentials()` reads them to decide whether to skip an `@ai` test. Don't set those manually either.
 

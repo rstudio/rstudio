@@ -747,6 +747,13 @@
             "memberName": "limitXfsDiskQuota_",
             "defaultValue": false,
             "description": "Indicates whether or not XFS quotas should be enforced when performing file operations via the files pane."
+         },
+         {
+            "name": "memory-usage-mode",
+            "type": "std::string",
+            "memberName": "memoryUsageMode_",
+            "defaultValue": "auto",
+            "description": "Selects how Posit Workbench computes and reports session and total memory usage. 'auto' (the default) uses 'container' when the session runs inside a container and 'default' otherwise. 'default' preserves the historical behavior: total memory is the node's physical or cgroup RAM, and Workbench aborts sessions based on node free memory plus a grace period. 'container' reports the session's cgroup memory limit as the total. 'cgroup' reads memory usage from the cgroup. 'meminfo' reads memory usage from the node's /proc/meminfo (useful when cgroup memory includes file cache that does not reflect actual session use)."
          }
       ],
       "external": [
@@ -815,6 +822,13 @@
             "memberName": "mathjaxPath_",
             "defaultValue": "resources/mathjax-27",
             "description": "Specifies the path to the mathjax library."
+         },
+         {
+            "name": "external-mathjax4-path",
+            "type": "core::FilePath",
+            "memberName": "mathjax4Path_",
+            "defaultValue": "resources/mathjax-4",
+            "description": "Specifies the path to the mathjax 4 library."
          },
          {
             "name": "external-pandoc-path",

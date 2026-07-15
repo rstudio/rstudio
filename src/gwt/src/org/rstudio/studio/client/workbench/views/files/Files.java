@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.files;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.FilePosition;
@@ -351,6 +353,10 @@ public class Files
 
       public void onFileNavigation(FileSystemItem file)
       {
+         // follow macOS Finder aliases to their target rather than opening
+         // the alias's binary bookmark data
+         file = file.resolveAliasTarget();
+
          if (file.isDirectory())
          {
             navigateToDirectory(file);
@@ -784,9 +790,18 @@ public class Files
 
       // pre-process to make sure there aren't any directories, and that already-open files do not count
       // towards the column limit. Take notebooks out for additional processing.
-      for (FileSystemItem item : view_.getSelectedFiles()) 
+      final Set<String> seenPaths = new HashSet<>();
+      for (FileSystemItem selected : view_.getSelectedFiles())
       {
-         if (!item.isDirectory() && !mgr.openFileAlreadyOpen(item, null))
+         // follow macOS Finder aliases so open commands act on the target;
+         // a directory alias then skips like any other directory. Distinct
+         // selections can resolve to the same target (an alias plus its
+         // target, or two aliases to one file), so dedupe by resolved path
+         // or columns mode opens an extra column per duplicate.
+         FileSystemItem item = selected.resolveAliasTarget();
+         if (!item.isDirectory() &&
+             !mgr.openFileAlreadyOpen(item, null) &&
+             seenPaths.add(item.getPath()))
          {
             TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(item);
             if (fileType.isRNotebook())

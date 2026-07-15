@@ -23,6 +23,7 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/make_shared.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/thread/mutex.hpp>
@@ -151,7 +152,8 @@ Error launchSessionRecovery(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::Request& request,
       bool firstAttempt,
-      const r_util::SessionContext& context)
+      const r_util::SessionContext& context,
+      boost::shared_ptr<boost::posix_time::ptime> pNextLaunchAttempt)
 {
    // if this request is marked as requiring an existing
    // session then return session unavailable error
@@ -186,19 +188,28 @@ Error launchSessionRecovery(
       LOG_ERROR(error);
    }
 
-   // attempt to launch the session only if this is the first recovery attempt
+   // attempt to launch the session. this is re-attempted (at most once per
+   // second) on subsequent recovery passes rather than only on the first:
+   // if the launched process dies before a connection is made -- e.g. it
+   // raced a suspending session's exit -- the process tracker clears its
+   // pending launch and a later pass can relaunch, instead of every request
+   // buffered behind the dead launch timing out (#18208). launchSession is
+   // the dedupe point: it no-ops while a recent pending launch is in flight.
+   boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+   if (!firstAttempt && now < *pNextLaunchAttempt)
+      return Success();
+   *pNextLaunchAttempt = now + boost::posix_time::seconds(1);
+
    if (firstAttempt)
    {
       LOG_DEBUG_MESSAGE("Launching session for user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) + " for: " + request.debugInfo());
-
-      bool launched;
-
-      core::system::Options environment;
-      return sessionManager().launchSession(ptrConnection->ioContext(), 
-            context, request, launched, environment);
    }
-   else
-      return Success();
+
+   bool launched;
+
+   core::system::Options environment;
+   return sessionManager().launchSession(ptrConnection->ioContext(),
+         context, request, launched, environment);
 }
 
 http::ConnectionRetryProfile sessionRetryProfile(
@@ -209,8 +220,15 @@ http::ConnectionRetryProfile sessionRetryProfile(
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(options.rsessionProxyMaxWaitSeconds());
+
+   // per-request launch-attempt throttle for launchSessionRecovery (retries
+   // for a connection run sequentially on its strand, so no synchronization
+   // is needed)
+   boost::shared_ptr<boost::posix_time::ptime> pNextLaunchAttempt =
+         boost::make_shared<boost::posix_time::ptime>(boost::posix_time::min_date_time);
+
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                               ptrConnection, _1, _2, context);
+                                               ptrConnection, _1, _2, context, pNextLaunchAttempt);
    return retryProfile;
 }
 
@@ -807,8 +825,9 @@ void proxyRequest(
    if (!connectionRetryProfile.empty())
       pClient->setConnectionRetryProfile(connectionRetryProfile);
 
-   // assign request
-   pClient->request().assign(*pRequest);
+   // assign request - pRequest is not used again after this point, so move
+   // its contents into the client's request instead of deep-copying them
+   pClient->request().assign(std::move(*pRequest));
 
    LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
@@ -1127,21 +1146,18 @@ void proxyLocalhostRequest(
 
    LOG_DEBUG_MESSAGE("Start localhost proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo());
 
-   // make a copy of the request for forwarding
-   http::Request request;
-   request.assign(ptrConnection->request());
-
    // call request filter if we have one
-   invokeRequestFilter(&request);
+   invokeRequestFilter(pRequest.get());
 
-   // extract the (scrambled) port, which consists of 8 or 9 hex digits 
+   // extract the (scrambled) port, which consists of 8 or 9 hex digits
    // (an additional prefix digit may exist for server routing)
-   std::string pMap = ipv6 ? "/p6/" : "/p/";
-   boost::regex re(pMap + "([a-fA-F0-9]{8,9})(/|$)");
+   static const boost::regex kIpv4LocalhostPortRegex("/p/([a-fA-F0-9]{8,9})(/|$)");
+   static const boost::regex kIpv6LocalhostPortRegex("/p6/([a-fA-F0-9]{8,9})(/|$)");
+   const boost::regex& re = ipv6 ? kIpv6LocalhostPortRegex : kIpv4LocalhostPortRegex;
    boost::smatch match;
-   if (!regex_utils::search(request.uri(), match, re))
+   if (!regex_utils::search(pRequest->uri(), match, re))
    {
-      ptrConnection->response().setNotFoundError(request);
+      ptrConnection->response().setNotFoundError(*pRequest);
       return;
    }
 
@@ -1159,7 +1175,7 @@ void proxyLocalhostRequest(
    if (portNum < 0)
    {
       // act as though there's no content here if we can't determine the correct port
-      ptrConnection->response().setNotFoundError(request);
+      ptrConnection->response().setNotFoundError(*pRequest);
       return;
    }
 
@@ -1168,29 +1184,29 @@ void proxyLocalhostRequest(
    // strip the port part of the uri
    using namespace boost::algorithm;
    std::string portPath = match[0];
-   std::string uri = replace_first_copy(request.uri(), portPath, "/");
-   request.setUri(uri);
+   std::string uri = replace_first_copy(pRequest->uri(), portPath, "/");
+   pRequest->setUri(uri);
 
    // remove headers to be a correctly behaving proxy
-   request.removeHeader("Keep-Alive");
-   request.removeHeader("Proxy-Authenticate");
-   request.removeHeader("Proxy-Authorization");
-   request.removeHeader("Trailers");
+   pRequest->removeHeader("Keep-Alive");
+   pRequest->removeHeader("Proxy-Authenticate");
+   pRequest->removeHeader("Proxy-Authorization");
+   pRequest->removeHeader("Trailers");
    // spec says we should drop these but we're not sure if that's
    // true for our use case
-   //request.removeHeader("TE");
-   //request.removeHeader("Transfer-Encoding");
+   //pRequest->removeHeader("TE");
+   //pRequest->removeHeader("Transfer-Encoding");
 
    // we had trouble with sending jetty accept-encoding of gzip
    // (it returns content w/o a Content-Length which foilis our
    // decoding code)
-   request.removeHeader("Accept-Encoding");
+   pRequest->removeHeader("Accept-Encoding");
 
    // specify closing of the connection after the request unless this is
    // an attempt to upgrade to websockets
-   if (!http::util::isWSUpgradeRequest(request))
+   if (!http::util::isWSUpgradeRequest(*pRequest))
    {
-      request.setHeader("Connection", "close");
+      pRequest->setHeader("Connection", "close");
    }
 
    LocalhostResponseHandler onResponse =
@@ -1198,7 +1214,7 @@ void proxyLocalhostRequest(
    http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
 
    // see if the request should be handled by the overlay (unless it should be handled by the server)
-   if (!server && overlay::proxyLocalhostRequest(request, port, context, ptrConnection, onResponse, onError))
+   if (!server && overlay::proxyLocalhostRequest(*pRequest, port, context, ptrConnection, onResponse, onError))
    {
       // request handled by the overlay
       return;
@@ -1214,14 +1230,16 @@ void proxyLocalhostRequest(
    {
       address = "::1";
    }
-   request.setHost(http::URL::formatHostPort(address, port));
+   pRequest->setHost(http::URL::formatHostPort(address, port));
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient(
       new server_core::http::LocalhostAsyncClient(ptrConnection->ioContext(), address, port));
-   // Ensure async operations on both the browser->rserver and rserver->backend run on the same thread. 
+   // Ensure async operations on both the browser->rserver and rserver->backend run on the same thread.
    pClient->setStrand(&ptrConnection->getStrand());
-   pClient->request().assign(request);
+   // pRequest is not used again after this point, so move its contents into
+   // the client's request instead of deep-copying them
+   pClient->request().assign(std::move(*pRequest));
 
    // execute request
    pClient->execute(

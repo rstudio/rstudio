@@ -248,6 +248,17 @@ def getBuildEnv(boolean isHourly) {
 }
 
 /**
+  * Gets the Jenkins node label used to select a build agent for the given
+  * OS family ('linux', 'windows', 'macos') and arch. Windows build agents
+  * are labeled with their Windows Server version; update it here when the
+  * agent fleet is upgraded.
+  */
+def getAgentLabelForOS(String os, String arch) {
+  def label = os == 'windows' ? 'windows2022' : os
+  return "${label} && ${arch}"
+}
+
+/**
   * Gets the Linux agent label based on the arch.
   */
 def getLinuxAgentLabel(String arch) {
@@ -284,9 +295,16 @@ def updateDailyRedirects(String path) {
   * Don't try to change RSTUDIO_VERSION_FLOWER to env.RSTUDIO_VERSION_FLOWER
   * in order for it to match, because for some reason that causes it to
   * resolve to "null". I don't know why.
+  *
+  * The Windows tag carries the MSVC toolset the image provides, so a
+  * toolchain upgrade mints a new tag: builds can never silently pull a stale
+  * image built with the previous toolchain (a not-yet-built tag fails the
+  * docker pull loudly instead). Keep the suffix in sync with the msvc145
+  * pins listed in cmake/windows-checks.cmake.
   */
 def getDockerTag() {
-  return "${IS_PRO ? 'pro-' : ''}${env.OS}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
+  def toolchain = env.OS == 'windows' ? '-msvc145' : ''
+  return "${IS_PRO ? 'pro-' : ''}${env.OS}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}${toolchain}"
 }
 
 /**

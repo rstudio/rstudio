@@ -95,5 +95,10 @@
     "vue": "3.5.38",
     "winston": "3.19.0",
     "winston-syslog": "2.7.1"
+  },
+  "allowScripts": {
+    "electron@41.9.0": true,
+    "msgpackr-extract@3.0.3": true,
+    "unix-dgram@2.0.6": true
   }
 }

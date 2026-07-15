@@ -303,6 +303,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
      ServerCheckConfigTests.cpp
      ServerEnvVarsTests.cpp
      ServerFormatUtilsTests.cpp
+     ServerSessionManagerTests.cpp
      ServerSetupDbTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})

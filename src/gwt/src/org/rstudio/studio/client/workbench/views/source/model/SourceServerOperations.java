@@ -284,7 +284,10 @@ public interface SourceServerOperations extends FilesServerOperations,
 
    void createAliasedPath(String path,
                           ServerRequestCallback<String> requestCallback);
-   
+
+   void recoverPackageSource(String path,
+                             ServerRequestCallback<String> requestCallback);
+
    public void getFileContents(String path,
                                String encoding,
                                ServerRequestCallback<String> requestCallback);

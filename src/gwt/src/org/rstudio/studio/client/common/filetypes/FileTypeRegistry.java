@@ -700,6 +700,15 @@ public class FileTypeRegistry
             return FileIcon.FOLDER_ICON;
       }
 
+      // a resolved (non-directory) macOS Finder alias should show its TARGET's
+      // file-type icon: the alias file's own name doesn't carry the target's
+      // extension. The backend already derives directory-ness from the target
+      // (so folder aliases are handled above); do the same for the file icon so
+      // an alias to e.g. analysis.R shows the R icon, like the Finder (#9924).
+      String aliasTarget = file.getAliasTarget();
+      if (aliasTarget != null)
+         return getIconForFilename(FileSystemItem.getNameFromPath(aliasTarget));
+
       return getIconForFilename(file.getName());
    }
 

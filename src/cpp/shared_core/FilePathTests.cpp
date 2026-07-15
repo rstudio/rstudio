@@ -396,6 +396,59 @@ TEST(SharedCoreTest, SymlinksTests)
    }
 }
 
+TEST(SharedCoreTest, ReadSymlinkTarget)
+{
+   // absolute targets are returned verbatim
+   {
+      FilePath target("/tmp/rstudio-readlink-target");
+      FilePath link("/tmp/rstudio-readlink-abs");
+      target.ensureDirectory();
+      link.removeIfExists();
+
+      int status = ::symlink(target.getAbsolutePath().c_str(),
+                             link.getAbsolutePath().c_str());
+      ASSERT_EQ(status, 0);
+
+      std::string linkTarget;
+      Error error = link.readSymlink(linkTarget);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(linkTarget, target.getAbsolutePath());
+
+      link.remove();
+      target.remove();
+   }
+
+   // relative targets are returned verbatim, NOT resolved against the parent
+   {
+      FilePath link("/tmp/rstudio-readlink-rel");
+      link.removeIfExists();
+
+      int status = ::symlink("some-relative-target", link.getAbsolutePath().c_str());
+      ASSERT_EQ(status, 0);
+
+      std::string linkTarget;
+      Error error = link.readSymlink(linkTarget);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(linkTarget, std::string("some-relative-target"));
+
+      link.remove();
+   }
+
+   // reading a non-symlink reports an error and leaves the out-param untouched
+   {
+      FilePath regular("/tmp/rstudio-readlink-regular");
+      regular.removeIfExists();
+      ASSERT_FALSE(regular.ensureFile());
+
+      std::string linkTarget = "unchanged";
+      Error error = regular.readSymlink(linkTarget);
+      EXPECT_TRUE(error);
+      EXPECT_EQ(linkTarget, std::string("unchanged"));
+
+      regular.removeIfExists();
+   }
+}
+
 #endif
 
 TEST(SharedCoreTest, FilePathAlias)

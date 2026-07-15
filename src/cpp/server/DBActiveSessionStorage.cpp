@@ -300,13 +300,12 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
       *pValue = std::to_string(iter->get<int>(0));
 
    // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
-   if (++iter != rowset.end())
-   {
-      int count = 1;
-      while (iter++ != rowset.end())
-         ++count;
+   int count = 1;
+   for (++iter; iter != rowset.end(); ++iter)
+      ++count;
+
+   if (count > 1)
       return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
-   }
 
 
    return Success();
@@ -343,13 +342,12 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
       populateMapWithRow(iter, pValues, user_);
 
       // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
-      if (++iter != rowset.end())
-      {
-         int count = 1;
-         while (iter++ != rowset.end())
-            ++count;
+      int count = 1;
+      for (++iter; iter != rowset.end(); ++iter)
+         ++count;
+
+      if (count > 1)
          return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
-      }
    }
 
    return Success();

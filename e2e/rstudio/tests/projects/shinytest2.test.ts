@@ -3,15 +3,15 @@ import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { CONFIRM_BTN } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeInConsole, CONSOLE_INPUT, CONSOLE_OUTPUT } from '@pages/console_pane.page';
+import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rPathLiteral } from '@utils/r';
 import { documentOpen, executeCommand, openProject } from '@utils/commands';
+import { closeProjectIfOpen } from '@utils/project';
 import { seedSandboxFile } from '@utils/files';
 import * as path from 'path';
 import type { Page } from 'playwright';
 
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
-const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
 // The project menu button also has a title containing the project path, so a
 // loose `title*='shinytest2'` selector hits it when the project name contains
 // the word. Match the toolbar button's exact title text instead.
@@ -20,31 +20,6 @@ const CLOSE_PROJECT_MENU_ITEM = '#rstudio_label_close_project_command';
 // the visible instance so strict-mode locator resolution doesn't trip
 // across multiple editors (e.g. an Untitled1 left over from prior tests).
 const SHINYTEST_BUTTON = "button[title='Run test using the shinytest2 package']:visible";
-
-async function waitForConsoleIdle(page: Page): Promise<void> {
-  await page.waitForFunction(
-    () => {
-      const el = document.getElementById('rstudio_console_input');
-      return !!el && !el.classList.contains('rstudio-console-busy');
-    },
-    null,
-    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
-  );
-}
-
-async function closeProjectIfOpen(page: Page): Promise<void> {
-  const menu = page.locator(PROJECT_MENU);
-  const label = (await menu.innerText().catch(() => '')).trim();
-  if (label.includes('(None)') || label === '') return;
-  await menu.click();
-  await page.locator(CLOSE_PROJECT_MENU_ITEM).click();
-  await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
-  await page.waitForSelector(CONSOLE_INPUT, {
-    state: 'visible',
-    timeout: TIMEOUTS.sessionRestart,
-  });
-  await waitForConsoleIdle(page);
-}
 
 const SHINYTEST2_TEST_CONTENT = `library(shinytest2)
 
