@@ -1,7 +1,7 @@
 | Platform | Download |
 |----------|----------|
-| Windows | [`RStudio-pro-{{< var proVersion >}}.exe`](https://download1.rstudio.org/electron/windows/RStudio-pro-{{< var proVersion >}}.exe) |
-| Windows (zip archive) | [`RStudio-pro-{{< var proVersion >}}.zip`](https://download1.rstudio.org/electron/windows/RStudio-pro-{{< var proVersion >}}.zip) |
-| macOS 13+ | [`RStudio-pro-{{< var proVersion >}}.dmg`](https://download1.rstudio.org/electron/macos/RStudio-pro-{{< var proVersion >}}.dmg) |
-| Ubuntu 22 / 24, Debian 12 / 13 | [`rstudio-pro-{{< var proVersion >}}-amd64.deb`](https://download1.rstudio.org/electron/jammy/amd64/rstudio-pro-{{< var proVersion >}}-amd64.deb) |
+| Windows 11 | [`RStudio-pro-{{< var proVersion >}}.exe`](https://download1.rstudio.org/electron/windows/RStudio-pro-{{< var proVersion >}}.exe) |
+| Windows 11 (zip archive) | [`RStudio-pro-{{< var proVersion >}}.zip`](https://download1.rstudio.org/electron/windows/RStudio-pro-{{< var proVersion >}}.zip) |
+| macOS 14+ | [`RStudio-pro-{{< var proVersion >}}.dmg`](https://download1.rstudio.org/electron/macos/RStudio-pro-{{< var proVersion >}}.dmg) |
+| Ubuntu 22 / 24, Debian 13 | [`rstudio-pro-{{< var proVersion >}}-amd64.deb`](https://download1.rstudio.org/electron/jammy/amd64/rstudio-pro-{{< var proVersion >}}-amd64.deb) |
 | RHEL 9 / 10 | [`rstudio-pro-{{< var proVersion >}}-x86_64.rpm`](https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-pro-{{< var proVersion >}}-x86_64.rpm) |
