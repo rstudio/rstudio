@@ -106,8 +106,9 @@ export class ChatPaneActions {
    *
    * Polls (a) clicking through any trust dialog that appears late and (b)
    * failing fast with an actionable message if a Sign-In button shows up,
-   * since credentials are provisioned by the auth.setup project (sign-in flow
-   * by default, or a seeded host copy under PW_SANDBOX_POSITAI_AUTH=copy).
+   * since credentials are provisioned by the auth.setup project (a seeded
+   * host token-store copy by default, or the OAuth sign-in flow under
+   * PW_SANDBOX_POSITAI_AUTH=login).
    * The host's Posit Assistant rotates the refresh token in ~/.posit/assistant/store,
    * so seeded copies can be invalidated between auth setup and test
    * execution; surfacing that as "sign in on the host and re-run" is more
@@ -161,8 +162,9 @@ export class ChatPaneActions {
     if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
       throw new Error(
         'Posit Assistant requires sign-in despite auth.setup provisioning credentials. ' +
-        'If PW_SANDBOX_POSITAI_AUTH=copy, sign in on the host (~/.posit/assistant/store/data.json) and re-run; ' +
-        'otherwise check POSIT_EMAIL/POSIT_PASSWORD and the auth-setup log.'
+        'In copy mode (the default; PW_SANDBOX_POSITAI_AUTH unset or =copy), sign in on the host ' +
+        '(~/.posit/assistant/store/data.json) and re-run; ' +
+        'if PW_SANDBOX_POSITAI_AUTH=login, check POSIT_EMAIL/POSIT_PASSWORD and the auth-setup log.'
       );
     }
 

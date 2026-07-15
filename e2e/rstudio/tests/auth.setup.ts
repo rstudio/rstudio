@@ -465,12 +465,17 @@ setup('authenticate Posit AI', async () => {
   }
 
   if (mode === 'copy') {
+    // Mirror of the kill-switch-under-login log below: credentials that copy
+    // mode will never consult shouldn't look like they were silently ignored.
+    if (process.env.POSIT_EMAIL || process.env.POSIT_PASSWORD) {
+      console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD are set but ignored: mode is copy (the default); set PW_SANDBOX_POSITAI_AUTH=login to use them.');
+    }
     // The global host-copy kill-switch suppresses copy mode (but not the sign-in flow).
     if (noSeedCredentials()) {
       writeAuthStatus(sandbox, {
         mode,
         outcome: 'copy-suppressed',
-        reason: 'PW_SANDBOX_POSITAI_AUTH=copy, but the PW_SANDBOX_NO_SEED_CREDENTIALS kill-switch suppressed the host copy.',
+        reason: 'Posit AI auth mode is copy (the default), but the PW_SANDBOX_NO_SEED_CREDENTIALS kill-switch suppressed the host copy. Set PW_SANDBOX_POSITAI_AUTH=login with POSIT_EMAIL/POSIT_PASSWORD to provision without copying from the host, or unset the kill-switch.',
       });
       console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping copy, Posit AI tests will skip');
       return;
@@ -479,9 +484,9 @@ setup('authenticate Posit AI', async () => {
       writeAuthStatus(sandbox, {
         mode,
         outcome: 'host-not-signed-in',
-        reason: 'PW_SANDBOX_POSITAI_AUTH=copy, but the host is not signed in to Posit AI (its token store is missing or expired, or could not be read -- see the setup log).',
+        reason: 'Posit AI auth mode is copy (the default), but the host is not signed in to Posit AI (its token store is missing or expired, or could not be read -- see the setup log). Sign in on the host, or set PW_SANDBOX_POSITAI_AUTH=login with POSIT_EMAIL/POSIT_PASSWORD.',
       });
-      console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=copy: host is not signed in to Posit AI (token store missing, expired, or unreadable); Posit AI tests will be skipped');
+      console.log('[auth-setup] copy mode (the default): host is not signed in to Posit AI (token store missing, expired, or unreadable); Posit AI tests will be skipped');
       return;
     }
     copyFile(storeFile(os.homedir()), storeFile(sandboxUserHome));

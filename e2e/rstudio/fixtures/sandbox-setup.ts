@@ -42,10 +42,10 @@ import { noSeedCredentials } from '../utils/auth';
  *                                  into the sandbox user-home so the Copilot
  *                                  tests start authenticated; setting this
  *                                  suppresses that copy. It also suppresses the
- *                                  Posit AI "copy" mode (handled by the
- *                                  auth.setup project), but not the Posit AI
- *                                  sign-in flow itself, which copies nothing
- *                                  from the host. Copilot tests skip when
+ *                                  Posit AI "copy" mode (the default; handled
+ *                                  by the auth.setup project), but not the
+ *                                  Posit AI sign-in flow itself, which copies
+ *                                  nothing from the host. Copilot tests skip when
  *                                  their credentials are unseeded.
  *                                  Privacy note: real OAuth/API tokens are
  *                                  copied into the sandbox. If the run is
@@ -148,10 +148,10 @@ export default async function globalSetup(config: FullConfig) {
   // mystery failure waiting for a completion that will never arrive.
   //
   // Posit AI is NOT seeded here -- the auth.setup project (tests/auth.setup.ts)
-  // is the sole authority for Posit AI credentials (sign-in flow by default, or
-  // a copy of the host's token store, ~/.posit/assistant/store/data.json, under
-  // PW_SANDBOX_POSITAI_AUTH=copy), and its tests gate on the on-disk token
-  // store rather than an env flag.
+  // is the sole authority for Posit AI credentials (a copy of the host's token
+  // store, ~/.posit/assistant/store/data.json, by default, or the OAuth
+  // sign-in flow under PW_SANDBOX_POSITAI_AUTH=login), and its tests gate on
+  // the on-disk token store rather than an env flag.
   //
   // Clear the flag up front so only a value this function sets is honored -- a
   // stray PW_AI_SEEDED_COPILOT=1 inherited from the user's shell or a prior
