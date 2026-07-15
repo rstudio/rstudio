@@ -102,6 +102,14 @@
 # namespace; bare calls resolve their namespace from the global environment.
 .rs.addFunction("exprMutatesPackageLibrary", function(expr)
 {
+   tryCatch(
+      .rs.exprMutatesPackageLibraryImpl(expr),
+      error = function(e) FALSE
+   )
+})
+
+.rs.addFunction("exprMutatesPackageLibraryImpl", function(expr)
+{
    if (!is.call(expr))
       return(FALSE)
 
@@ -126,6 +134,11 @@
    # recurse into arguments to catch nested calls (e.g. lapply(x, install.packages))
    for (i in seq_along(expr))
    {
+      # skip empty arguments (e.g. the trailing argument in 'mtcars[1, ]');
+      # binding the empty symbol to a variable and evaluating it would error
+      if (identical(expr[[i]], quote(expr = )))
+         next
+
       part <- expr[[i]]
       if (is.call(part) && .rs.exprMutatesPackageLibrary(part))
          return(TRUE)

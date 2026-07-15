@@ -75,6 +75,12 @@ test_that(".rs.isPackageManagementCall handles multi-statement and nested calls"
    expect_false(.rs.isPackageManagementCall("x <- 1; print(remove(y)); z <- 3"))
 })
 
+test_that(".rs.isPackageManagementCall tolerates empty arguments", {
+   expect_false(.rs.isPackageManagementCall("View(mtcars[1, ])"))
+   expect_false(.rs.isPackageManagementCall("mtcars[, 1]"))
+   expect_true(.rs.isPackageManagementCall("f(x[1, ], renv::update())"))
+})
+
 test_that(".rs.isPackageManagementCall tolerates unparseable input", {
    expect_false(.rs.isPackageManagementCall(""))
    expect_false(.rs.isPackageManagementCall("install.packages("))
