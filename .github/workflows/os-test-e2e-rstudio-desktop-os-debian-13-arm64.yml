@@ -544,6 +544,18 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
+        # Explicit shell: container jobs default run steps to sh, not bash
+        # (actions/runner behavior -- the documented bash-with-sh-fallback
+        # default only describes bare runners) -- and this script uses bash
+        # arrays (ARGS=(), +=, "${ARGS[@]}"). On Debian /bin/sh is dash, which
+        # cannot parse them ("Syntax error: '(' unexpected"). The bare-runner
+        # siblings don't need this key (bash is always on PATH on GitHub-hosted
+        # images, so their default resolves to bash), and the Fedora and RHEL
+        # container siblings get away without it only because the Red Hat
+        # family symlinks /bin/sh to bash. Note: an explicit shell adds
+        # -o pipefail, which the siblings' implicit bash default lacks --
+        # harmless today, since this script has no pipelines.
+        shell: bash
         env:
           PW_RSTUDIO_MODE: desktop
           # Platform-labelled project name; playwright.config.ts uses it both as
