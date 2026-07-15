@@ -1,36 +1,14 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { installDepIfPrompted } from '@pages/modals.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral, rStringLiteral } from '@utils/r';
 import { documentOpen, executeCommand, openProject } from '@utils/commands';
+import { closeProjectIfOpen } from '@utils/project';
 import { seedSandboxFile } from '@utils/files';
 import * as path from 'path';
-import type { Page } from 'playwright';
 
 const PROJECT_MENU = '#rstudio_project_menubutton_toolbar';
-
-async function waitForConsoleIdle(page: Page): Promise<void> {
-  await page.waitForFunction(
-    () => {
-      const el = document.getElementById('rstudio_console_input');
-      return !!el && !el.classList.contains('rstudio-console-busy');
-    },
-    null,
-    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
-  );
-}
-
-async function closeProjectIfOpen(page: Page): Promise<void> {
-  const menu = page.locator(PROJECT_MENU);
-  const label = (await menu.innerText().catch(() => '')).trim();
-  if (label.includes('(None)') || label === '') return;
-  await menu.click();
-  await page.locator('#rstudio_label_close_project_command').click();
-  await expect(menu).toContainText('(None)', { timeout: TIMEOUTS.sessionRestart });
-  await waitForConsoleIdle(page);
-}
 
 test.describe('Build pane', () => {
   const sandbox = useSuiteSandbox();
