@@ -1,9 +1,9 @@
 | Platform | Download |
 |----------|----------|
-| Windows | [`RStudio-{{< var osVersion >}}.exe`](https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.exe) |
-| Windows (zip archive) | [`RStudio-{{< var osVersion >}}.zip`](https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.zip) |
-| macOS 13+ | [`RStudio-{{< var osVersion >}}.dmg`](https://download1.rstudio.org/electron/macos/RStudio-{{< var osVersion >}}.dmg) |
-| Ubuntu 22 / 24, Debian 12 / 13 | [`rstudio-{{< var osVersion >}}-amd64.deb`](https://download1.rstudio.org/electron/jammy/amd64/rstudio-{{< var osVersion >}}-amd64.deb) |
+| Windows 11 | [`RStudio-{{< var osVersion >}}.exe`](https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.exe) |
+| Windows 11 (zip archive) | [`RStudio-{{< var osVersion >}}.zip`](https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.zip) |
+| macOS 14+ | [`RStudio-{{< var osVersion >}}.dmg`](https://download1.rstudio.org/electron/macos/RStudio-{{< var osVersion >}}.dmg) |
+| Ubuntu 22 / 24, Debian 13 | [`rstudio-{{< var osVersion >}}-amd64.deb`](https://download1.rstudio.org/electron/jammy/amd64/rstudio-{{< var osVersion >}}-amd64.deb) |
 | Ubuntu / Debian (tar.gz) | [`rstudio-{{< var osVersion >}}-amd64-debian.tar.gz`](https://download1.rstudio.org/electron/jammy/amd64/rstudio-{{< var osVersion >}}-amd64-debian.tar.gz) |
 | RHEL 9 / 10, Fedora | [`rstudio-{{< var osVersion >}}-x86_64.rpm`](https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-{{< var osVersion >}}-x86_64.rpm) |
 | RHEL / Fedora (tar.gz) | [`rstudio-{{< var osVersion >}}-x86_64-fedora.tar.gz`](https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-{{< var osVersion >}}-x86_64-fedora.tar.gz) |
