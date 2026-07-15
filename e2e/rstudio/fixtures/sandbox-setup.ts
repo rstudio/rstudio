@@ -42,8 +42,7 @@ import { noSeedCredentials } from '../utils/auth';
  *                                  into the sandbox user-home so the Copilot
  *                                  tests start authenticated; setting this
  *                                  suppresses that copy. It also suppresses the
- *                                  Posit AI "copy" mode and "login-copy"'s
- *                                  host-content copy (both handled by the
+ *                                  Posit AI "copy" mode (handled by the
  *                                  auth.setup project), but not the Posit AI
  *                                  sign-in flow itself, which copies nothing
  *                                  from the host. Copilot tests skip when
@@ -188,7 +187,7 @@ export default async function globalSetup(config: FullConfig) {
       );
     }
   } else {
-    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global kill-switch also suppresses Posit AI copy mode and login-copy\'s host-content copy; the sign-in itself is unaffected.');
+    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global kill-switch also suppresses Posit AI copy mode; the sign-in itself is unaffected.');
   }
 
   process.env.PW_SANDBOX = sandbox;

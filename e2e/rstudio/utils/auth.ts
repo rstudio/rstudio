@@ -112,11 +112,11 @@ export function isPositAiAuthenticated(): boolean {
   return isStoreFileAuthenticated(storeFile(path.join(sandbox, 'user-home')));
 }
 
-// The global host-copy kill-switch: when set, copy mode, login-copy's
-// host-content copy, and Copilot's host-copy in sandbox-setup.ts are all
-// suppressed. The sign-in flow itself is unaffected -- it copies nothing from
-// the host. Shared by sandbox-setup.ts (Copilot) and auth.setup.ts (Posit AI)
-// so the "what counts as on" rule lives in one place.
+// The global host-copy kill-switch: when set, copy mode and Copilot's
+// host-copy in sandbox-setup.ts are both suppressed. The sign-in flow itself
+// is unaffected -- it copies nothing from the host. Shared by sandbox-setup.ts
+// (Copilot) and auth.setup.ts (Posit AI) so the "what counts as on" rule lives
+// in one place.
 export function noSeedCredentials(): boolean {
   return ['1', 'true'].includes(
     (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
@@ -135,7 +135,7 @@ export function noSeedCredentials(): boolean {
 // message, and the type can't drift apart. Unset behaves as "login". Lives
 // here rather than in auth.setup.ts because mode is serialized into the
 // status file below, making it part of the cross-process contract.
-export const AUTH_MODES = ['off', 'copy', 'login', 'login-copy'] as const;
+export const AUTH_MODES = ['off', 'copy', 'login'] as const;
 export type PositAiAuthMode = (typeof AUTH_MODES)[number];
 
 // Same single-source-of-truth pattern as AUTH_MODES: readAuthStatus validates
@@ -146,8 +146,8 @@ export const AUTH_OUTCOMES = [
   'off',                // mode=off: deliberately not provisioned
   'copy-suppressed',    // mode=copy suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS
   'host-not-signed-in', // mode=copy: no valid token store on the host
-  'credentials-unset',  // mode=login/login-copy: POSIT_EMAIL/POSIT_PASSWORD not set
-  'login-failed',       // mode=login/login-copy: sign-in attempted but failed (usually transient)
+  'credentials-unset',  // mode=login: POSIT_EMAIL/POSIT_PASSWORD not set
+  'login-failed',       // mode=login: sign-in attempted but failed (usually transient)
 ] as const;
 export type PositAiAuthOutcome = (typeof AUTH_OUTCOMES)[number];
 
