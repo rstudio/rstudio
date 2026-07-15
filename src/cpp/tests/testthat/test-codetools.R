@@ -147,6 +147,92 @@ test_that("HTML escaping escapes HTML entities", {
    expect_false(grepl(escaped, ">"))
 })
 
+test_that(".rs.recoverPackageSourcePath() recovers sources from the srcref database", {
+
+   # create a small package with a couple of source files
+   sourceDir <- tempfile("srcrefpkg-src-")
+   pkgDir <- file.path(sourceDir, "srcrefpkg")
+   dir.create(file.path(pkgDir, "R"), recursive = TRUE)
+
+   writeLines(
+      c("Package: srcrefpkg",
+        "Version: 0.1.0",
+        "Title: Test Package for Srcref Recovery",
+        "Description: Test package.",
+        "Author: RStudio Tests",
+        "Maintainer: RStudio Tests <tests@example.com>",
+        "License: MIT"),
+      file.path(pkgDir, "DESCRIPTION")
+   )
+
+   appleLines <- c(
+      "# a comment preserved by keep.source",
+      "apple <- function() {",
+      "   \"apple\"",
+      "}"
+   )
+
+   bananaLines <- c(
+      "banana <- function() {",
+      "   \"banana\"",
+      "}"
+   )
+
+   writeLines(appleLines, file.path(pkgDir, "R", "apple.R"))
+   writeLines(bananaLines, file.path(pkgDir, "R", "banana.R"))
+   writeLines("exportPattern(\"^[a-z]\")", file.path(pkgDir, "NAMESPACE"))
+
+   # install it with srcrefs preserved
+   lib <- tempfile("srcrefpkg-lib-")
+   dir.create(lib)
+
+   R <- file.path(R.home("bin"), if (.rs.platform.isWindows) "R.exe" else "R")
+   status <- suppressWarnings(system2(
+      R,
+      c("--vanilla", "CMD", "INSTALL", "--with-keep.source",
+        "-l", shQuote(lib), shQuote(pkgDir)),
+      stdout = FALSE,
+      stderr = FALSE
+   ))
+   expect_equal(status, 0L)
+
+   loadNamespace("srcrefpkg", lib.loc = lib)
+
+   on.exit({
+      unloadNamespace("srcrefpkg")
+      unlink(c(sourceDir, lib), recursive = TRUE)
+   }, add = TRUE)
+
+   # remove the package sources, so that the srcref paths become stale,
+   # as happens for the temporary staging directory used when installing
+   # a package from a tarball
+   unlink(sourceDir, recursive = TRUE)
+
+   ns <- asNamespace("srcrefpkg")
+   applePath <- attr(attr(ns$apple, "srcref"), "srcfile")$filename
+   bananaPath <- attr(attr(ns$banana, "srcref"), "srcfile")$filename
+   expect_false(file.exists(applePath))
+   expect_false(file.exists(bananaPath))
+
+   # both files should be recoverable, with contents intact
+   recoveredApple <- .rs.recoverPackageSourcePath(applePath)
+   expect_true(nzchar(recoveredApple))
+   expect_equal(readLines(recoveredApple), appleLines)
+
+   recoveredBanana <- .rs.recoverPackageSourcePath(bananaPath)
+   expect_true(nzchar(recoveredBanana))
+   expect_equal(readLines(recoveredBanana), bananaLines)
+
+   # paths which don't resolve to a known srcref are not recovered
+   expect_equal(.rs.recoverPackageSourcePath(""), "")
+   expect_equal(.rs.recoverPackageSourcePath("/no/such/pkg/R/file.R"), "")
+   expect_equal(
+      .rs.recoverPackageSourcePath(file.path(dirname(applePath), "missing.R")),
+      ""
+   )
+
+})
+
 test_that("heredoc trims trailing newlines + whitespace", {
    
    actual <- .rs.heredoc('

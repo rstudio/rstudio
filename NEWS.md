@@ -16,6 +16,7 @@
 - ([#18215](https://github.com/rstudio/rstudio/issues/18215)): Fixed an issue where the Data Viewer could lose its scroll position, or render an empty grid, after switching to another tab and back.
 - ([#18221](https://github.com/rstudio/rstudio/issues/18221)): Fixed an issue on Windows where scrolling the Data Viewer with the mouse wheel could get stuck when the pointer was over the table body.
 - ([#17191](https://github.com/rstudio/rstudio/issues/17191)): Fixed per-session memory limits not being enforced for Workbench sessions running in a container with a read-only cgroup filesystem, and made the memory gauge, memory-usage report, and abort gate reflect the container rather than the host. Added an `rsession.conf` `memory-usage-mode` option to control how session and total memory usage are computed and reported.
+- ([#18225](https://github.com/rstudio/rstudio/issues/18225)): Clicking a console hyperlink to a package source file that no longer exists (for example, srcref paths recording the temporary directory used during package installation) now recovers the source from the package's srcref database when available, instead of showing a "No such file" error.
 
 ### Dependencies
 - Ace 1.43.5
