@@ -1,0 +1,232 @@
+name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source)"
+
+# One workflow that drives the reusable per-OS E2E "engines" three ways:
+#   - Weekday cron (Mon-Fri): a fixed two-engine slate per weekday, so every
+#     engine runs at least once a week without running the whole matrix daily.
+#     No weekday pairs two deb-based engines.
+#   - Weekly cron (Saturday): every engine at once, for a full-matrix snapshot.
+#   - Manual dispatch: every engine at once, optionally against a specific daily
+#     build (see the "version" input).
+#
+# Binary selection: engines test the daily build (build_from_source: false).
+# With no version given, each engine resolves the latest daily itself, which
+# keeps its SHA-256 check. Given a specific version, the resolve job builds each
+# platform's download URL from that version string and passes it in; there is no
+# per-build manifest, so that path skips SHA-256 (see rstudio/rstudio#18238).
+#
+# Note: the Debian 13 engine it calls is not yet on main; that job will fail
+# until it lands via its own PR.
+
+on:
+  schedule:
+    - cron: '0 2 * * 1-5'   # Mon-Fri 02:00 UTC -- rolling pair (rotation)
+    - cron: '0 4 * * 6'     # Saturday 04:00 UTC -- all engines
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Daily build to test as a full version string (e.g. 2026.07.0+139). Leave empty to test the latest daily. Applies to every engine."
+        type: string
+        default: ""
+
+concurrency:
+  group: pw-scheduled-e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write  # the engines' e2e-merge job declares this
+  # The engines' e2e-merge job assumes the S3 report-upload role via OIDC; a
+  # reusable workflow's id-token grant is capped by its caller's.
+  id-token: write
+
+jobs:
+  pick:
+    name: Pick engines
+    runs-on: ubuntu-latest
+    outputs:
+      selected: ${{ steps.pick.outputs.selected }}
+    steps:
+      - id: pick
+        name: Select engines for this run
+        run: |
+          # workflow_dispatch and the Saturday cron run every engine; the
+          # weekday cron (Mon-Fri) runs a fixed pair per day. Each engine runs
+          # once a week except macos, windows, and ubuntu24s, which run twice.
+          ALL='["fedora","ubuntu26","ubuntu24d","ubuntu24s","macos","windows","debian13"]'
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 4 * * 6" ]; then
+            SEL="$ALL"
+          else
+            case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
+              1) SEL='["ubuntu24d","macos"]' ;;
+              2) SEL='["ubuntu24s","windows"]' ;;
+              3) SEL='["ubuntu26","fedora"]' ;;
+              4) SEL='["debian13","macos"]' ;;
+              5) SEL='["ubuntu24s","windows"]' ;;
+              *) SEL='[]' ;;   # weekend: the weekday cron never fires here
+            esac
+          fi
+          echo "selected=$SEL" >> "$GITHUB_OUTPUT"
+          echo "Selected engines: $SEL"
+
+  resolve:
+    name: Resolve installer URLs
+    runs-on: ubuntu-latest
+    outputs:
+      rhel:         ${{ steps.resolve.outputs.rhel }}
+      noble_amd64:  ${{ steps.resolve.outputs.noble_amd64 }}
+      server_noble: ${{ steps.resolve.outputs.server_noble }}
+      macos:        ${{ steps.resolve.outputs.macos }}
+      windows:      ${{ steps.resolve.outputs.windows }}
+      noble_arm64:  ${{ steps.resolve.outputs.noble_arm64 }}
+    steps:
+      - id: resolve
+        name: Build per-platform installer URLs for a specific version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          # With no version, emit empty URLs so each engine self-resolves the
+          # latest daily (keeping its SHA-256 check). With a version, swap the
+          # version token (+ -> -) into each platform's latest download URL.
+          if [ -z "$VERSION" ]; then
+            {
+              echo "rhel="
+              echo "noble_amd64="
+              echo "server_noble="
+              echo "macos="
+              echo "windows="
+              echo "noble_arm64="
+            } >> "$GITHUB_OUTPUT"
+            echo "No version given; engines will resolve the latest daily."
+            exit 0
+          fi
+          M=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+          REQ=${VERSION//+/-}
+          emit() {
+            local product="$1" key="$2" link ver cur
+            link=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].link // empty")
+            ver=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].version // empty")
+            cur=${ver//+/-}
+            if [ -z "$link" ] || [ -z "$cur" ]; then
+              echo "::error::Could not build a URL for ${product}/${key} from the latest manifest." >&2
+              return 1
+            fi
+            printf '%s' "${link/$cur/$REQ}"
+          }
+          RHEL=$(emit electron rhel10-x86_64) || exit 1
+          NOBLE=$(emit electron noble-amd64) || exit 1
+          SERVER=$(emit server noble-amd64) || exit 1
+          MAC=$(emit electron macos) || exit 1
+          WIN=$(emit electron windows) || exit 1
+          NARM=$(emit electron noble-arm64) || exit 1
+          {
+            echo "rhel=$RHEL"
+            echo "noble_amd64=$NOBLE"
+            echo "server_noble=$SERVER"
+            echo "macos=$MAC"
+            echo "windows=$WIN"
+            echo "noble_arm64=$NARM"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved URLs for version $VERSION."
+
+  fedora:
+    name: Fedora 44 x86_64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-44-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: false
+      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
+
+  ubuntu26:
+    name: Ubuntu 26 amd64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu26') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-26-amd64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: false
+      rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
+
+  ubuntu24d:
+    name: Ubuntu 24 Desktop
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu24d') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: false
+      rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
+
+  ubuntu24s:
+    name: Ubuntu 24 Server
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu24s') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: server
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: false
+      rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
+
+  macos:
+    name: macOS 26 arm64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: false
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
+  windows:
+    name: Windows Server 2025
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'windows') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: false
+      rstudio_installer_url: ${{ needs.resolve.outputs.windows }}
+
+  debian13:
+    name: Debian 13 arm64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'debian13') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-debian-13-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: false
+      rstudio_installer_url: ${{ needs.resolve.outputs.noble_arm64 }}
