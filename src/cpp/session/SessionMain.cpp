@@ -69,6 +69,7 @@
 #include <core/system/encryption/Encryption.hpp>
 
 #ifdef _WIN32
+# include <objbase.h>
 # include <core/system/Win32RuntimeLibrary.hpp>
 #else
 # include <core/system/PosixSystem.hpp>
@@ -2245,6 +2246,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                   core::log::LogLevel::WARN,
                                   core::system::xdg::userLogDir(),
                                   true); // force log dir to be under user's home directory
+
+      // initialize COM eagerly, so the main thread's apartment state is
+      // deterministic rather than depending on which Windows API happens to
+      // initialize COM first. R itself relies on COM being initialized for
+      // utils::choose.dir(), which otherwise fails silently with
+      // CO_E_NOTINITIALIZED outside of Rgui (https://github.com/rstudio/rstudio/issues/13078)
+#ifdef _WIN32
+      HRESULT hr = ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+      if (hr != S_OK && hr != S_FALSE)
+         WLOGF("CoInitializeEx() failed (HRESULT {:#010x})", static_cast<unsigned int>(hr));
+#endif
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
