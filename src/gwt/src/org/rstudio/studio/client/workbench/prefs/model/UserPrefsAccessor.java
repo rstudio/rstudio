@@ -254,6 +254,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String RESTORE_PROJECT_R_VERSION = "restore_project_r_version";
    public static final String CLANG_VERBOSE = "clang_verbose";
    public static final String ENABLE_SPLASH_SCREEN = "enable_splash_screen";
+   public static final String SHOW_WHATS_NEW = "show_whats_new";
    public static final String DEFAULT_R_VERSION = "default_r_version";
    public static final String DATA_VIEWER_MAX_COLUMNS = "data_viewer_max_columns";
    public static final String DATA_VIEWER_MAX_CELL_SIZE = "data_viewer_max_cell_size";
@@ -3284,6 +3285,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to automatically show the What's New window after updating to a new version of RStudio Desktop.
+    */
+   public PrefValue<Boolean> showWhatsNew()
+   {
+      return bool(
+         "show_whats_new",
+         _constants.showWhatsNewTitle(), 
+         _constants.showWhatsNewDescription(), 
+         true);
+   }
+
+   /**
     * The R version to use by default.
     */
    public PrefValue<DefaultRVersion> defaultRVersion()
@@ -5054,6 +5067,8 @@ public class UserPrefsAccessor extends Prefs
          clangVerbose().setValue(layer, source.getInteger("clang_verbose"));
       if (source.hasKey("enable_splash_screen"))
          enableSplashScreen().setValue(layer, source.getBool("enable_splash_screen"));
+      if (source.hasKey("show_whats_new"))
+         showWhatsNew().setValue(layer, source.getBool("show_whats_new"));
       if (source.hasKey("default_r_version"))
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
       if (source.hasKey("data_viewer_max_columns"))
@@ -5452,6 +5467,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(restoreProjectRVersion());
       prefs.add(clangVerbose());
       prefs.add(enableSplashScreen());
+      prefs.add(showWhatsNew());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
       prefs.add(dataViewerMaxCellSize());

@@ -202,14 +202,20 @@ runs:
           sleep 10
         done
 
+    # Keyed on CACHE_OS (runner.os plus the optional cache-scope) rather than
+    # bare runner.os: browser binaries are architecture-specific, and every
+    # Linux caller would otherwise share one key -- an arm64 caller restoring
+    # x86_64 chromium (or poisoning the shared key in reverse) surfaces later
+    # as an opaque exec-format launch error in a different workflow. Callers
+    # with an empty cache-scope keep the legacy runner.os key byte-for-byte.
     - name: Restore Playwright browsers
       id: pw-cache
       uses: actions/cache/restore@v4
       with:
         path: ${{ github.workspace }}/ms-playwright
-        key: ${{ runner.os }}-pw-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
+        key: ${{ env.CACHE_OS }}-pw-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
         restore-keys: |
-          ${{ runner.os }}-pw-
+          ${{ env.CACHE_OS }}-pw-
 
     - name: Set up Python
       uses: actions/setup-python@v6

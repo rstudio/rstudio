@@ -135,6 +135,9 @@ jobs:
       # agent records (window.rstudio.errors) carry decodable Java stack traces.
       # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
       GWT_STYLE: PRETTY
+      # NSIS version installed via choco and folded into the NSIS cache key
+      # below. Pinned so the cached tree and a fresh choco install can't drift.
+      NSIS_VERSION: '3.12.0'
 
     steps:
       - uses: actions/checkout@v4
@@ -224,7 +227,21 @@ jobs:
           restore-keys: |
             rstudio-gwt-win64-${{ env.GWT_STYLE }}-
 
+      # NSIS is only needed at packaging time (cpack -G NSIS) but comes from
+      # the chocolatey community feed, whose outages outlast in-step retries
+      # (run 29434172921 got 503/504 on every attempt across ~90s). Cache the
+      # installed NSIS tree: on a warm cache the probe in "Install build
+      # tools" below short-circuits and choco is never contacted. Restore-only;
+      # Save NSIS runs after the install, main-gated like the other caches.
+      - name: Restore NSIS
+        id: nsis-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: C:\Program Files (x86)\NSIS
+          key: nsis-win64-${{ env.NSIS_VERSION }}
+
       - name: Install build tools
+        id: install-tools
         run: |
           $ErrorActionPreference = 'Stop'
 
@@ -232,9 +249,10 @@ jobs:
           # fetch ("installed 0/1 packages"), and can also report a package
           # installed from a prior run's lib record even when the binary is
           # missing/broken. Probing the real tool sidesteps both. ant is
-          # provided by the runner image; nsis is fetched from the community
-          # feed (which intermittently 503s) for the cpack -G NSIS step. Verify
-          # both so a missing tool fails here, not ~1h later at packaging.
+          # provided by the runner image; nsis comes from the NSIS cache above
+          # or, on a cold cache, from the community feed (which intermittently
+          # 503s) for the cpack -G NSIS step. Verify both so a missing tool
+          # fails here, not ~1h later at packaging.
           function Test-AntInstalled {
             [bool](Get-Command ant -ErrorAction SilentlyContinue)
           }
@@ -246,14 +264,21 @@ jobs:
 
           $tools = @(
             @{ Package = 'ant';  Probe = 'Test-AntInstalled'  }
-            @{ Package = 'nsis'; Probe = 'Test-NsisInstalled' }
+            @{ Package = 'nsis'; Probe = 'Test-NsisInstalled'; Version = $env:NSIS_VERSION }
           )
+
+          # Feed outages routinely run several minutes, so back off up to
+          # ~7.5 minutes total (30/60/120/240s) before giving up -- still far
+          # cheaper than failing a ~90 minute build.
+          $delays = @(30, 60, 120, 240)
 
           foreach ($tool in $tools) {
             $ok = $false
-            for ($i = 1; $i -le 3; $i++) {
+            $attempts = $delays.Count + 1
+            for ($i = 1; $i -le $attempts; $i++) {
               if (& $tool.Probe) { $ok = $true; break }     # already usable -> done
               $chocoArgs = @('install', $tool.Package, '--yes', '--no-progress', '--use-enhanced-exit-codes')
+              if ($tool.Version) { $chocoArgs += @('--version', $tool.Version) }
               if ($i -gt 1) { $chocoArgs += '--force' }      # clear a half-installed record on retry
               choco @chocoArgs
 
@@ -274,13 +299,23 @@ jobs:
                 $env:PATH = $savedPath
               }
               if ($ok) { break }
-              Write-Host "::warning::$($tool.Package) not usable after attempt $i; retrying in 15s..."
-              Start-Sleep -Seconds 15
+              if ($i -lt $attempts) {
+                $delay = $delays[$i - 1]
+                Write-Host "::warning::$($tool.Package) not usable after attempt $i; retrying in ${delay}s..."
+                Start-Sleep -Seconds $delay
+              }
             }
             if (-not $ok) {
-              throw "$($tool.Package) not installed/usable after 3 attempts; aborting before the build."
+              throw "$($tool.Package) not installed/usable after $attempts attempts; aborting before the build."
             }
           }
+
+          # A choco install registers NSIS under HKLM\SOFTWARE\NSIS (via the
+          # official installer), which is one of the places cpack's NSIS
+          # generator looks for makensis -- but a cache-restored tree has no
+          # registry entry. Put makensis on PATH (the other place cpack
+          # looks) so packaging works on both paths.
+          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files (x86)\NSIS'
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
@@ -303,32 +338,7 @@ jobs:
         run: sccache --start-server
 
       - name: Install rig
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # Drop the `msstore` winget source before installing. msstore needs
-          # the runner's 2-letter geographic region, which GHA does not send;
-          # winget's implicit `source update` then fails with 0x8a15000f
-          # ("Data required by the source is missing"), and that failure
-          # aborts the whole `winget install` even though Posit.rig lives in
-          # the community `winget` source rather than msstore. Removing
-          # msstore leaves the community source untouched. Best-effort: if
-          # msstore is already absent on this runner image, the remove exits
-          # non-zero, which we swallow.
-          winget source remove --name msstore --disable-interactivity 2>$null
-          $LASTEXITCODE = 0
-          $maxAttempts = 3
-          for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
-            if ($LASTEXITCODE -eq 0) { break }
-            if ($i -lt $maxAttempts) {
-              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
-              Start-Sleep -Seconds 15
-            } else {
-              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
-              exit 1
-            }
-          }
-          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
+        uses: ./.github/actions/os-install-rig-windows
 
       - name: Install R via rig
         env:
@@ -359,54 +369,20 @@ jobs:
             exit 1
           }
 
-      # install-dependencies.cmd (via tools.R) checks for MSVC 2022 at a set of
-      # hardcoded paths: BuildTools, Community, and their x86 variants.  GitHub
-      # runners have Visual Studio 2022 Enterprise, which is not in that list.
-      # Use vswhere.exe to find the actual installation, then:
-      #   1. Add VC\Auxiliary\Build to GITHUB_PATH so vcvarsall.bat is on PATH
-      #      for make-package.bat (which calls it by name).
-      #   2. Create a junction at the BuildTools path so tools.R's file.exists
-      #      check finds MSVC and proceeds to compile SOCI.
+      # install-dependencies.cmd (via tools.R) locates Visual Studio with
+      # vswhere, so no junction is needed. We still add VC\Auxiliary\Build to
+      # GITHUB_PATH so vcvarsall.bat is on PATH for make-package.bat (which
+      # calls it by name).
       - name: Set up MSVC environment
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
-            -latest -products * `
-            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-            -property installationPath
-          if ([string]::IsNullOrEmpty($vsPath)) {
-            Write-Error "vswhere could not find a Visual Studio installation with VC++ tools"
-            exit 1
-          }
-          Write-Host "Visual Studio installation: $vsPath"
-          # 1. PATH for vcvarsall.bat
-          $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
-          Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
-          Write-Host "Added to PATH: $vcBuildPath"
-          # 2. Junction so tools.R's hardcoded BuildTools check passes
-          $junctionTarget = $vsPath
-          $junctionPath   = 'C:\Program Files\Microsoft Visual Studio\2022\BuildTools'
-          if (-not (Test-Path $junctionPath)) {
-            New-Item -ItemType Junction -Path $junctionPath -Target $junctionTarget | Out-Null
-            Write-Host "Junction created: $junctionPath -> $junctionTarget"
-          } else {
-            Write-Host "Junction already exists: $junctionPath"
-          }
+        uses: ./.github/actions/setup-msvc-environment
 
-      # install-soci.R defaults its CMake generator to "Visual Studio 17 2022",
-      # which doesn't exist on windows-2025 once the image moves to VS 2026
-      # (CMake reports `could not find any instance of Visual Studio`). Pass the
-      # VS 2026 generator name explicitly so SOCI can configure and build.
-      # MSVC_TOOLSET_VERSION=145 selects the msvc145 Boost prebuilts, matching
-      # the VS 2026 toolset on this runner, so CMakeLists.txt no longer needs
-      # its msvc143 fallback here.
+      # install-dependencies.cmd targets the VS 2026 toolset (msvc145) and the
+      # "Visual Studio 18 2026" CMake generator by default, matching this
+      # runner's Visual Studio 2026.
       - name: Install build dependencies
         id: install-deps
         working-directory: dependencies/windows
         shell: cmd
-        env:
-          CMAKE_GENERATOR: Visual Studio 18 2026
-          MSVC_TOOLSET_VERSION: "145"
         run: install-dependencies.cmd
 
       # GWT's build.xml looks for yarn at ${node.dir}/node_modules/yarn/bin/yarn.cmd
@@ -538,12 +514,24 @@ jobs:
       # restore -- each copy is pure pressure on the repo's 10 GB Actions
       # cache quota, and that pressure is what evicts main's copies and sends
       # every PR build cold in the first place.
+      # always() is load-bearing: without a status function GitHub implicitly
+      # prepends success(), and a failed build step would skip this save --
+      # defeating the point of saving deps even when compilation fails.
       - name: Save rstudio-tools cache
-        if: steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        if: always() && steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+      # Same shape as rstudio-tools above: the NSIS tree is complete once the
+      # install step succeeds, so save it even when the build itself fails.
+      - name: Save NSIS cache
+        if: always() && steps.install-tools.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.nsis-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:\Program Files (x86)\NSIS
+          key: ${{ steps.nsis-cache.outputs.cache-primary-key }}
 
       # Save only from main-scoped runs, and only on a key miss. A cache saved
       # from a PR run lands in that PR's merge-ref scope, which no other
@@ -639,32 +627,7 @@ jobs:
           cache-dependency-path: e2e/rstudio/package-lock.json
 
       - name: Install rig
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # Drop the `msstore` winget source before installing. msstore needs
-          # the runner's 2-letter geographic region, which GHA does not send;
-          # winget's implicit `source update` then fails with 0x8a15000f
-          # ("Data required by the source is missing"), and that failure
-          # aborts the whole `winget install` even though Posit.rig lives in
-          # the community `winget` source rather than msstore. Removing
-          # msstore leaves the community source untouched. Best-effort: if
-          # msstore is already absent on this runner image, the remove exits
-          # non-zero, which we swallow.
-          winget source remove --name msstore --disable-interactivity 2>$null
-          $LASTEXITCODE = 0
-          $maxAttempts = 3
-          for ($i = 1; $i -le $maxAttempts; $i++) {
-            winget install --id Posit.rig --source winget --accept-source-agreements --accept-package-agreements --disable-interactivity
-            if ($LASTEXITCODE -eq 0) { break }
-            if ($i -lt $maxAttempts) {
-              Write-Host "winget attempt $i failed (exit $LASTEXITCODE), retrying in 15s..."
-              Start-Sleep -Seconds 15
-            } else {
-              Write-Error "winget install Posit.rig failed after $maxAttempts attempts"
-              exit 1
-            }
-          }
-          Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'
+        uses: ./.github/actions/os-install-rig-windows
 
       - name: Install R via rig
         env:
@@ -881,6 +844,24 @@ jobs:
           path: ${{ env.APPDATA }}\RStudio\
           retention-days: 15
           if-no-files-found: ignore
+
+      # WinINet creates protected cache directories (INetCache\Content.IE5,
+      # WebCache) inside the sandbox user-home when anything on the test path
+      # touches the network. Their deny ACLs make upload-artifact's recursive
+      # directory scan fail with EPERM, so strip them before uploading.
+      - name: Remove protected Windows cache dirs from sandbox (on failure)
+        if: failure()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $cacheDirs = @('INetCache', 'INetCookies', 'WebCache')
+          Get-ChildItem -Path "${{ github.workspace }}\pw-sandbox" -Directory -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { $cacheDirs -contains $_.Name } |
+            ForEach-Object {
+              takeown /f $_.FullName /r /d y *> $null
+              icacls $_.FullName /reset /t /c /q *> $null
+              Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          exit 0
 
       - name: Upload PW sandbox (on failure)
         if: failure()

@@ -103,6 +103,113 @@ TEST(RequestTest, ProxiedUriFallsBackToHost)
    EXPECT_EQ("http://localhost:8787/path", req.proxiedUri());
 }
 
+TEST(RequestTest, MoveAssignTransfersFields)
+{
+   Request src;
+   src.setMethod("POST");
+   src.setUri("/some/path");
+   src.setHeader("X-Custom-Header", "custom-value");
+   src.addCookie("session", "abc123");
+   src.setUsername("someuser");
+   src.setBody("request body contents");
+   src.setContentLength(src.body().size());
+   src.setRootPath("/proxy/root");
+   src.setHandlerPrefix("/handler/prefix");
+
+   Request dest;
+   dest.assign(std::move(src));
+
+   EXPECT_EQ("POST", dest.method());
+   EXPECT_EQ("/some/path", dest.uri());
+   EXPECT_EQ("custom-value", dest.headerValue("X-Custom-Header"));
+   EXPECT_EQ("abc123", dest.cookieValue("session"));
+   EXPECT_EQ("someuser", dest.username());
+   EXPECT_EQ("request body contents", dest.body());
+   EXPECT_EQ("/proxy/root", dest.rootPath());
+   EXPECT_EQ("/handler/prefix", dest.handlerPrefix());
+}
+
+TEST(RequestTest, CopyAssignTransfersFields)
+{
+   Request src;
+   src.setMethod("POST");
+   src.setUri("/some/path");
+   src.setHeader("X-Custom-Header", "custom-value");
+   src.addCookie("session", "abc123");
+   src.setUsername("someuser");
+   src.setBody("request body contents");
+   src.setContentLength(src.body().size());
+   src.setRootPath("/proxy/root");
+   src.setHandlerPrefix("/handler/prefix");
+
+   Request dest;
+   dest.assign(src);
+
+   EXPECT_EQ("POST", dest.method());
+   EXPECT_EQ("/some/path", dest.uri());
+   EXPECT_EQ("custom-value", dest.headerValue("X-Custom-Header"));
+   EXPECT_EQ("abc123", dest.cookieValue("session"));
+   EXPECT_EQ("someuser", dest.username());
+   EXPECT_EQ("request body contents", dest.body());
+   EXPECT_EQ("/proxy/root", dest.rootPath());
+   EXPECT_EQ("/handler/prefix", dest.handlerPrefix());
+
+   // source is untouched by a copy assign
+   EXPECT_EQ("POST", src.method());
+   EXPECT_EQ("/some/path", src.uri());
+   EXPECT_EQ("/proxy/root", src.rootPath());
+   EXPECT_EQ("/handler/prefix", src.handlerPrefix());
+}
+
+TEST(RequestTest, MoveAssignTransfersFormFields)
+{
+   Request src;
+   src.setContentType("application/x-www-form-urlencoded");
+   src.setBody("field1=value1&field2=value2");
+   src.setContentLength(src.body().size());
+
+   // force form fields to be parsed and cached on src before the move
+   ASSERT_EQ("value1", src.formFieldValue("field1"));
+
+   Request dest;
+   dest.assign(std::move(src));
+
+   EXPECT_EQ("value1", dest.formFieldValue("field1"));
+   EXPECT_EQ("value2", dest.formFieldValue("field2"));
+}
+
+TEST(RequestTest, MoveAssignTransfersFilesAndQueryParams)
+{
+   Request src;
+   src.setUri("/some/path?param1=value1&param2=value2");
+
+   std::string boundary = "TESTBOUNDARY";
+   src.setContentType("multipart/form-data; boundary=" + boundary);
+   src.setBody(
+      "--" + boundary + "\r\n"
+      "Content-Disposition: form-data; name=\"upload\"; filename=\"hello.txt\"\r\n"
+      "Content-Type: text/plain\r\n"
+      "\r\n"
+      "hello file contents"
+      "\r\n--" + boundary + "--\r\n");
+   src.setContentLength(src.body().size());
+
+   // force query params and uploaded files to be parsed and cached on src before the move
+   ASSERT_EQ("value1", src.queryParamValue("param1"));
+   ASSERT_EQ("hello file contents", src.uploadedFile("upload").contents);
+
+   Request dest;
+   dest.assign(std::move(src));
+
+   EXPECT_EQ("value1", dest.queryParamValue("param1"));
+   EXPECT_EQ("value2", dest.queryParamValue("param2"));
+
+   const File& uploaded = dest.uploadedFile("upload");
+   EXPECT_EQ("hello.txt", uploaded.name);
+   EXPECT_EQ("text/plain", uploaded.contentType);
+   EXPECT_EQ("hello file contents", uploaded.contents);
+}
+
 } // namespace tests
 } // namespace http
 } // namespace core

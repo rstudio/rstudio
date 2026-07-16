@@ -235,6 +235,70 @@
       lines
 })
 
+#' Recover Package Source
+#'
+#' Recover the contents of a package R source file whose recorded srcref
+#' path no longer exists on disk -- for example, a path referencing the
+#' temporary directory used when the package was installed from sources
+#' with '--with-keep.source'. Such paths can be surfaced to the user via
+#' console hyperlinks, e.g. the error locations emitted by rlang.
+#'
+#' @param path The absolute path to a package R source file, normally of
+#'   the form '<prefix>/<package>/R/<file>'.
+#'
+#' @return The path to a recovered read-only copy of that file, or ""
+#'   if the source could not be recovered.
+.rs.addFunction("recoverPackageSourcePath", function(path)
+{
+   # infer the package name from the path
+   parts <- strsplit(path, "[/\\\\]")[[1L]]
+   n <- length(parts)
+   if (n < 3L || !identical(parts[[n - 1L]], "R"))
+      return("")
+   pkg <- parts[[n - 2L]]
+
+   # only consider packages which are already loaded; we don't want to
+   # load a namespace as a side effect of navigation
+   if (!pkg %in% loadedNamespaces())
+      return("")
+
+   # search the namespace for a function parsed from this file; note that
+   # srcrefs are commonly stripped on installation, in which case no
+   # recovery is possible
+   envir <- asNamespace(pkg)
+   for (name in ls(envir, all.names = TRUE))
+   {
+      object <- get0(name, envir = envir, inherits = FALSE)
+      if (!is.function(object))
+         next
+
+      srcref <- attr(object, "srcref", exact = TRUE)
+      srcfile <- attr(srcref, "srcfile", exact = TRUE)
+      if (!identical(srcfile$filename, path))
+         next
+
+      # reconstruct the file's contents from the package's srcref database
+      lines <- .rs.readSrcrefLines(srcref, FALSE)
+      if (!is.character(lines) || length(lines) == 0L)
+         next
+
+      # write a read-only copy to the session temporary directory
+      cacheDir <- file.path(tempdir(), "rstudio/sources", pkg, "R")
+      if (!dir.exists(cacheDir) && !dir.create(cacheDir, recursive = TRUE))
+         return("")
+
+      target <- file.path(cacheDir, parts[[n]])
+      if (file.exists(target))
+         Sys.chmod(target, "0644")
+      writeLines(lines, target)
+      Sys.chmod(target, "0444")
+
+      return(target)
+   }
+
+   ""
+})
+
 .rs.addFunction("deparseCall", function(call)
 {
    srcref <- attr(call, "srcref", exact = TRUE)

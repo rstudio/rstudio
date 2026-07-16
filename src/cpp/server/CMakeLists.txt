@@ -43,6 +43,7 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuthOverlay.cpp
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
+   ServerSetupDb.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerAuthHandlerOverlay.cpp
@@ -301,7 +302,9 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
      DBActiveSessionStorageTests.cpp
      ServerCheckConfigTests.cpp
      ServerEnvVarsTests.cpp
-     ServerFormatUtilsTests.cpp)
+     ServerFormatUtilsTests.cpp
+     ServerSessionManagerTests.cpp
+     ServerSetupDbTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
 

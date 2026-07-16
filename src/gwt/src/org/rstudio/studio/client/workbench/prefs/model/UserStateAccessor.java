@@ -159,6 +159,10 @@ public class UserStateAccessor extends Prefs
          return this && this.enableSplashScreen || true;
       }-*/;
 
+      public final native boolean getShowWhatsNew() /*-{
+         return this && this.showWhatsNew || true;
+      }-*/;
+
    }
 
    /**

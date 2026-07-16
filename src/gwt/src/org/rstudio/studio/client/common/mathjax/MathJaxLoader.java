@@ -31,21 +31,21 @@ public class MathJaxLoader
    {
       public void onLoaded(boolean alreadyLoaded);
    }
-   
+
    public MathJaxLoader()
    {
    }
-   
+
    public static boolean isMathJaxLoaded()
    {
       return MATHJAX_LOADED;
    }
-   
+
    public static void ensureMathJaxLoaded()
    {
       if (MATHJAX_LOADED)
          return;
-      
+
       initializeMathJaxConfig();
       ScriptElement mathJaxEl = createMathJaxScriptElement();
       HeadElement headEl = Document.get().getHead();
@@ -60,85 +60,88 @@ public class MathJaxLoader
                MATHJAX_LOADED = true;
                for (Callback callback : MATHJAX_CALLBACKS)
                   callback.onLoaded(false);
-               onMathJaxLoaded();
                return false;
             }
-            
+
             RETRY_COUNT++;
             return RETRY_COUNT < 50;
          }
       }, 500);
    }
-   
+
    public static final void withMathJaxLoaded(Callback callback)
    {
       if (callback == null)
          return;
-         
+
       if (MATHJAX_LOADED)
       {
          callback.onLoaded(true);
          return;
       }
-      
+
       MATHJAX_CALLBACKS.add(callback);
    }
-   
+
    // Private Methods ----
-   
-   private static final native void onMathJaxLoaded() /*-{
-      var MathJax = $wnd.MathJax;
-      
-      // avoid jittering
-      MathJax.Hub.processSectionDelay = 0;
-   }-*/;
-   
+
    private static final native void initializeMathJaxConfig() /*-{
 
       if (typeof $wnd.MathJax !== "undefined")
          return;
 
-      $wnd.MathJax = {
-         extensions: ['tex2jax.js', 'Safe.js'],
-         jax: ['input/TeX', 'output/HTML-CSS'],
-         tex2jax: {
-            inlineMath:  [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      var config = {
+         startup: {
+            typeset: false
+         },
+         loader: {
+            load: ["ui/safe"]
+         },
+         tex: {
+            inlineMath:  [["$", "$"], ["\\(", "\\)"]],
+            displayMath: [["$$", "$$"], ["\\[", "\\]"]],
             processEscapes: true
          },
-         "HTML-CSS": {
-            minScaleAdjust: 125,
-            availableFonts: []
+         options: {
+            enableMenu: false,
+            enableSpeech: false,
+            enableBraille: false,
+            enableEnrichment: false
          },
-         showProcessingMessages: false,
-         showMathMenu: false,
-         messageStyle: "none",
-         skipStartupTypeset: true,
-         menuSettings: {
-            zoom: "None",
-            context: "Browser",
-            inTabOrder: false,
+         output: {
+            // resolve dynamically-loaded font resources (woff2 web fonts and
+            // rare glyph range data) against our locally served copy, rather
+            // than the CDN default
+            fontPath: "mathjax4/fonts/%%FONT%%-font"
          }
       };
 
+      // MathJax's option merging only accepts plain objects whose constructor
+      // is the host window's Object; this literal is created in the GWT
+      // frame's realm, so round-trip it through the host window's JSON to
+      // re-create it there (otherwise the config is silently ignored)
+      $wnd.MathJax = $wnd.JSON.parse(JSON.stringify(config));
+
    }-*/;
-   
+
    private static final native boolean isMathJaxReady() /*-{
+      // MathJax.typesetPromise is created once startup has finished
+      // (including dynamic loading of any requested components)
       var mathjax = $wnd.MathJax || {};
-      return mathjax.isReady;
+      return typeof mathjax.typesetPromise === "function";
    }-*/;
-   
+
    private static ScriptElement createMathJaxScriptElement()
    {
       ScriptElement el = Document.get().createScriptElement();
       el.setAttribute("type", "text/javascript");
-      el.setSrc("mathjax/MathJax.js?config=TeX-MML-AM_CHTML");
+      el.setSrc("mathjax4/tex-mml-chtml.js");
       el.setAttribute("async", "true");
       return el;
    }
-   
+
    private static List<Callback> MATHJAX_CALLBACKS = new ArrayList<>();
    private static boolean MATHJAX_LOADED = false;
    private static int RETRY_COUNT = 0;
-   
+
 }

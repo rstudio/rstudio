@@ -169,18 +169,21 @@ test.describe('Global Options panels', () => {
     await closeGlobalOptions(page);
   });
 
-  // Tracked by #18064 (re-enable on Server).
-  // Server-on-Linux: PYTHON_INTERPRETERS_MODAL doesn't open within 15s
-  // after clicking the interpreter-select button. Native interpreter
-  // selection likely behaves differently on Server; needs investigation.
-  test('Python panel and interpreter selector are accessible', { tag: ['@desktop_only'] }, async ({ rstudioPage: page }) => {
+  // The interpreters modal only opens once python_find_interpreters has
+  // scanned the machine, with a "Finding interpreters..." progress box up in
+  // the meantime. On a cold CI runner that scan can run well past 15s (seen
+  // flaking at 15s on desktop-linux while the progress box was still showing,
+  // with the retry passing in under 4s) -- this, not a Server-specific
+  // behavior, is also what #18064 hit, so the modal wait gets a
+  // discovery-sized timeout and the test runs on Server again.
+  test('Python panel and interpreter selector are accessible', async ({ rstudioPage: page }) => {
     await openGlobalOptions(page);
     await page.locator(PYTHON_TAB).click();
     await expect(page.locator(PYTHON_PANEL)).toBeVisible();
     await expect(page.locator(PYTHON_INTERPRETER_PATH)).toBeVisible();
     await expect(page.locator(PYTHON_INTERPRETER_SELECT_BTN)).toBeVisible();
     await page.locator(PYTHON_INTERPRETER_SELECT_BTN).click();
-    await expect(page.locator(PYTHON_INTERPRETERS_MODAL)).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(PYTHON_INTERPRETERS_MODAL)).toBeVisible({ timeout: 60000 });
     await page.keyboard.press('Escape');
     await page.waitForSelector(PYTHON_INTERPRETERS_MODAL, { state: 'detached', timeout: 10000 });
     await closeGlobalOptions(page);

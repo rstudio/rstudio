@@ -79,15 +79,29 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 # required Windows 10 SDK, as chocolatey doesn't seem to provide the versions we need.
 #
 
+# Install a pinned release of the VS 2026 Build Tools (18.7.3). Fixed-version
+# bootstrapper URLs for other releases are published at:
+#
+#   https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-history
+#
+# Note that VS 2026 replaced the versioned 'vs/<version>/release' aka.ms URLs
+# with channel-based URLs (e.g. 'vs/stable/vs_buildtools.exe') that always
+# track the latest release; use a fixed-version bootstrapper to stay pinned.
+# Beware that unknown aka.ms links silently redirect to a Bing HTML page,
+# which fails later with 'The system cannot execute the specified program.'
+#
+# Keep this pinned version in sync with docker/jenkins/Dockerfile.windows.
+$VsBuildToolsUrl = 'https://download.visualstudio.microsoft.com/download/pr/4037ccca-d103-412b-a678-bc0aa164315e/07b09afd416dc05c781f171c881c23e42907eeb8d812fa1d2993dffb9323c869/vs_BuildTools.exe'
+
 # Download the Build Tools bootstrapper.
-Invoke-DownloadFile https://aka.ms/vs/17/release/vs_buildtools.exe vs_buildtools.exe
+Invoke-DownloadFile $VsBuildToolsUrl vs_buildtools.exe
 
 # Install Build Tools. For whatever reason, this fails when we try to install
 # into C:/Program Files (x86), so just use the "regular" C:/Program Files.
 Write-Host "Installing Visual Studio Build Tools..."
 $installArgs = @(
     '--quiet', '--wait', '--norestart', '--nocache',
-    '--installPath', '"C:/Program Files/Microsoft Visual Studio/2022/BuildTools"',
+    '--installPath', '"C:/Program Files/Microsoft Visual Studio/2026/BuildTools"',
     '--add', 'Microsoft.VisualStudio.Workload.VCTools',
     '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
     '--add', 'Microsoft.VisualStudio.Component.VC.Tools.ARM64',
@@ -102,9 +116,9 @@ if ($vsProcess.ExitCode -ne 0) {
 # Try testing the build tools. You might see some telemetry errors here;
 # they can apparently be ignored.
 Write-Host "Testing VsDevCmd.bat..."
-$vsDevCmdPath = "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
+$vsDevCmdPath = "C:\Program Files\Microsoft Visual Studio\2026\BuildTools\Common7\Tools\VsDevCmd.bat"
 if (Test-Path $vsDevCmdPath) {
-    Push-Location "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\Tools"
+    Push-Location "C:\Program Files\Microsoft Visual Studio\2026\BuildTools\Common7\Tools"
     cmd /c "VsDevCmd.bat -clean_env -no_logo && VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -no_logo && echo -- Testing VsDevCmd.bat -- success"
     Pop-Location
     Write-Host "Build tools verification completed"

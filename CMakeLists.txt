@@ -30,6 +30,9 @@ include(cmake/compiler.cmake)
 # project globals
 include(cmake/globals.cmake)
 
+# validate the Windows build environment (compiler, architecture, generator)
+include(cmake/windows-checks.cmake)
+
 # remove previous installation if requested
 if(RSTUDIO_UNINSTALL_PREVIOUS)
   install(CODE "execute_process(COMMAND rm -rf \${CMAKE_INSTALL_PREFIX})")
