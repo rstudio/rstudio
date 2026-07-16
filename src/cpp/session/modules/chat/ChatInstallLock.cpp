@@ -55,8 +55,10 @@ std::string sessionsInUseMessage(FileLock::LockType lockType)
    // (server) can linger up to the staleness timeout after a hard crash.
    if (lockType == FileLock::LOCKTYPE_LINKBASED)
    {
-      message += " If another session ended unexpectedly, this may take "
-                 "up to 30 seconds to clear.";
+      message += " If another session ended unexpectedly, this may take up "
+                 "to " +
+                 std::to_string(FileLock::getTimeoutInterval().total_seconds()) +
+                 " seconds to clear.";
    }
 
    return message;
@@ -190,11 +192,37 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
          if (child.getExtensionLowerCase() != kSessionLockSuffix)
             continue;
 
-         if (makeLock()->isLocked(child))
+         // Probe by acquisition: isLocked() reports false both for a free
+         // lock and when inspection fails, which could delete a live lock.
+         // Acquiring distinguishes the cases — success means the file was
+         // stale (an advisory leftover from a crash, or a link-based file
+         // whose owner is gone; file existence alone never means "in use"),
+         // contention means a live session, and anything else fails closed
+         // rather than risk mutating under a session we could not check.
+         boost::shared_ptr<FileLock> probe = makeLock();
+         Error probeError = probe->acquire(child);
+         if (!probeError)
          {
-            Error releaseError = lock->release();
+            Error releaseError = probe->release();
             if (releaseError)
                LOG_ERROR(releaseError);
+            Error removeError = child.removeIfExists();
+            if (removeError)
+            {
+               LOG_WARNING_MESSAGE(
+                  "Failed to remove stale Posit Assistant session lock "
+                  "file '" + child.getAbsolutePath() + "': " +
+                  removeError.getMessage());
+            }
+            continue;
+         }
+
+         Error releaseError = lock->release();
+         if (releaseError)
+            LOG_ERROR(releaseError);
+
+         if (FileLock::isNoLockAvailable(probeError))
+         {
             *pUserMessage = sessionsInUseMessage(effectiveLockType());
             return systemError(
                boost::system::errc::device_or_resource_busy,
@@ -202,16 +230,10 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
                ERROR_LOCATION);
          }
 
-         // Not locked means stale: an advisory leftover from a crash, or a
-         // link-based file whose owner is gone. File existence alone never
-         // means "in use" — delete opportunistically, log-only on failure.
-         Error removeError = child.removeIfExists();
-         if (removeError)
-         {
-            LOG_WARNING_MESSAGE(
-               "Failed to remove stale Posit Assistant session lock file '" +
-               child.getAbsolutePath() + "': " + removeError.getMessage());
-         }
+         *pUserMessage =
+            "Unable to check for other RStudio sessions using "
+            "Posit Assistant: " + probeError.getMessage();
+         return probeError;
       }
    }
 
@@ -247,7 +269,35 @@ bool InstallLock::updateInProgressElsewhere() const
    if (mutationActive_)
       return false;
 
-   return makeLock()->isLocked(installLockPath());
+   // Probe by acquisition rather than isLocked() so an inspection error is
+   // distinguishable from a free lock. The momentary take-and-release can
+   // make a racing mutator fail spuriously ("another session is updating"),
+   // which is retryable — the unsafe alternative is starting a process from
+   // a directory mid-swap.
+   Error error = locksDir_.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   boost::shared_ptr<FileLock> probe = makeLock();
+   error = probe->acquire(installLockPath());
+   if (!error)
+   {
+      Error releaseError = probe->release();
+      if (releaseError)
+         LOG_ERROR(releaseError);
+      return false;
+   }
+
+   if (FileLock::isNoLockAvailable(error))
+      return true;
+
+   // Unable to determine — fail closed (report in progress) rather than
+   // let a start proceed during a possible mutation.
+   LOG_ERROR(error);
+   return true;
 }
 
 FilePath InstallLock::installLockPath() const

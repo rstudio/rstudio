@@ -20,6 +20,9 @@
 
 #include "ChatInstallLock.hpp"
 
+#include <sys/wait.h>
+#include <unistd.h>
+
 #include <gtest/gtest.h>
 
 #include <core/FileLock.hpp>
@@ -250,6 +253,70 @@ TEST_F(ChatInstallLock, UpdateInProgressElsewhereReflectsOtherMutator)
 
    sessionA_->endMutation();
    EXPECT_FALSE(sessionB_->updateInProgressElsewhere());
+}
+
+TEST_F(ChatInstallLock, AdvisoryLockAcrossProcessesBlocksMutationAndClearsOnExit)
+{
+   // The production desktop path: advisory locks conflict across processes
+   // and are released by the kernel the moment the holder exits — even when
+   // the holder never cleans up its lock file.
+   InstallLock advisoryLocal(
+      locksDir_, "session-local", FileLock::LOCKTYPE_ADVISORY);
+
+   FilePath otherLockFile =
+      advisoryLocal.sessionLocksDir().completePath("session-remote.lock");
+   ASSERT_FALSE(otherLockFile.getParent().ensureDirectory());
+
+   int lockReady[2];
+   int parentDone[2];
+   ASSERT_EQ(::pipe(lockReady), 0);
+   ASSERT_EQ(::pipe(parentDone), 0);
+
+   pid_t child = ::fork();
+   ASSERT_NE(child, -1);
+   if (child == 0)
+   {
+      // Child: hold an advisory lock on another session's file until the
+      // parent has observed the blocked mutation, then exit WITHOUT
+      // releasing — process exit must free the lock.
+      ::close(lockReady[0]);
+      ::close(parentDone[1]);
+
+      AdvisoryFileLock remoteLock;
+      Error error = remoteLock.acquire(otherLockFile);
+      char ok = error ? 0 : 1;
+      (void)::write(lockReady[1], &ok, 1);
+      ::close(lockReady[1]);
+
+      char buf;
+      (void)::read(parentDone[0], &buf, 1);
+      ::close(parentDone[0]);
+      ::_exit(0);
+   }
+
+   ::close(lockReady[1]);
+   ::close(parentDone[0]);
+
+   char childOk = 0;
+   ASSERT_EQ(::read(lockReady[0], &childOk, 1), 1);
+   ::close(lockReady[0]);
+   ASSERT_EQ(childOk, 1);
+
+   std::string message;
+   Error error = advisoryLocal.tryBeginMutation(&message);
+   EXPECT_TRUE(error);
+   EXPECT_NE(message.find("in use by another"), std::string::npos);
+
+   ASSERT_EQ(::write(parentDone[1], "x", 1), 1);
+   ::close(parentDone[1]);
+   int status = 0;
+   ASSERT_EQ(::waitpid(child, &status, 0), child);
+
+   // The leftover lock file must not read as "in use" once its holder is
+   // gone; the mutation proceeds and cleans it up.
+   EXPECT_FALSE(advisoryLocal.tryBeginMutation(&message));
+   EXPECT_FALSE(otherLockFile.exists());
+   advisoryLocal.endMutation();
 }
 
 TEST_F(ChatInstallLock, MutationScopeReleasesOnDestruction)
