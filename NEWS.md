@@ -21,10 +21,6 @@
 - ([#13078](https://github.com/rstudio/rstudio/issues/13078)): Fixed an issue on Windows where `utils::choose.dir()` returned `NA` without showing the folder-selection dialog when running R 4.3.0 or newer.
 
 ### Dependencies
-- Ace 1.43.5
 - MathJax 4.1.3 (inline LaTeX / math previews)
 - Copilot Language Server 1.520.0
 - Electron 41.10.2
-- Node.js 22.22.2 (copilot, Posit Assistant)
-- Quarto 1.9.38
-- xterm.js 6.0.0
