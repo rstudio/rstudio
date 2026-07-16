@@ -1999,7 +1999,7 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
 #ifdef _WIN32
    // Windows .lnk shortcuts are shell objects rather than symlinks, so the
    // filesystem doesn't resolve them for us; surface the resolved target
-   // (and its directory-ness) so the client can follow them (#7327). The
+   // (and its directory-ness) so the client can follow them (#18274). The
    // target is emitted as alias_target so all alias-aware client logic
    // (navigation, open, dialogs, icons) applies unchanged; is_shortcut both
    // marks the entry as a link for the badge and selects the "Shortcut"

@@ -1,4 +1,4 @@
-// Shared fixture for Windows .lnk shortcut tests (#7327).
+// Shared fixture for Windows .lnk shortcut tests (#18274).
 //
 // Shortcuts are shell objects, not symlinks. The fixture creates real .lnk
 // files through PowerShell's WScript.Shell COM interface -- the same data

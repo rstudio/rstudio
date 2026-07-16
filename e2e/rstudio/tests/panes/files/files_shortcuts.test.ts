@@ -1,4 +1,4 @@
-// Files pane Windows .lnk shortcut navigation (#7327).
+// Files pane Windows .lnk shortcut navigation (#18274).
 //
 // Windows shortcuts are shell objects, not symlinks, so the filesystem does
 // not resolve them. The backend resolves them during listing

@@ -565,7 +565,7 @@ TEST_F(FinderAliasTest, FileSystemItemForBrokenAliasHasNoAliasTarget)
 
 #ifdef _WIN32
 
-// --- Windows shortcuts (#7327) -----------------------------------------------
+// --- Windows shortcuts (#18274) -----------------------------------------------
 //
 // Windows .lnk shortcuts are shell objects, not symlinks. The fixture creates
 // real .lnk files through IShellLinkW + IPersistFile::Save -- the same data
