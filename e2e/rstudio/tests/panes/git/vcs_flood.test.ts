@@ -13,9 +13,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { executeInConsole } from '@pages/console_pane.page';
 import { executeCommand, setPref } from '@utils/commands';
 import { closeProjectIfOpen, waitForConsoleIdle } from '@utils/project';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
+import { rPathLiteral } from '@utils/r';
 
 const PALETTE_LIST = '#rstudio_command_palette_list';
 const WIZARD_DIALOG = '.gwt-DialogBox[aria-label="New Project Wizard"]';
@@ -82,13 +80,32 @@ test.describe('VCS file change flood (#18257)', () => {
     });
     await waitForConsoleIdle(page);
 
-    // -- seed NUM_FILES tracked files and commit them (external git) --
-    const srcDir = path.join(projectDir, 'src');
-    fs.mkdirSync(srcDir, { recursive: true });
-    for (let i = 0; i < NUM_FILES; i++) {
-      fs.writeFileSync(path.join(srcDir, `file_${i}.R`), `# file ${i}\nx <- ${i}\n`);
-    }
-    execSync('git add -A && git commit -m "seed" --quiet', { cwd: projectDir });
+    // -- seed NUM_FILES tracked files and commit them. All file and git
+    //    operations in this test run through the R console: in Server mode
+    //    the rsession may live on a different host (or run as a different
+    //    user), so the Playwright process cannot write into the project
+    //    directory itself. The commit carries inline -c identity because CI
+    //    runners have no global git config. --
+    const srcDir = `${projectDir}/src`;
+    await executeInConsole(
+      page,
+      `{ dir.create(${rPathLiteral(srcDir)}, recursive = TRUE); ` +
+        `for (i in 0:${NUM_FILES - 1}) ` +
+        `writeLines(c(paste0("# file ", i), paste0("x <- ", i)), ` +
+        `paste0(${rPathLiteral(srcDir)}, "/file_", i, ".R")) }`,
+      { timeout: 120000 },
+    );
+    const gitC = `"-C", shQuote(${rPathLiteral(projectDir)})`;
+    await executeInConsole(
+      page,
+      `{ s <- c(system2("git", c(${gitC}, "add", "-A")), ` +
+        `system2("git", c(${gitC}, "-c", "user.name=rstudio-e2e", ` +
+        `"-c", "user.email=rstudio-e2e@posit.co", ` +
+        `"commit", "-m", "seed", "--quiet"))); ` +
+        `if (any(s != 0)) stop("git seed commit failed (add/commit exit status: ", ` +
+        `paste(s, collapse = "/"), ")") }`,
+      { timeout: 120000 },
+    );
 
     // -- show the git pane and force a refresh so the changelist is empty --
     await executeCommand(page, 'activateVcs');
@@ -112,9 +129,12 @@ test.describe('VCS file change flood (#18257)', () => {
     try {
       // -- the flood: modify every tracked file at once --
       const t0 = Date.now();
-      for (let i = 0; i < NUM_FILES; i++) {
-        fs.appendFileSync(path.join(srcDir, `file_${i}.R`), `y <- ${i}\n`);
-      }
+      await executeInConsole(
+        page,
+        `for (i in 0:${NUM_FILES - 1}) cat("y <- ", i, "\\n", sep = "", ` +
+          `file = paste0(${rPathLiteral(srcDir)}, "/file_", i, ".R"), append = TRUE)`,
+        { timeout: 120000 },
+      );
 
       // changelist should fill with all modified files
       await expect
@@ -152,7 +172,13 @@ test.describe('VCS file change flood (#18257)', () => {
       // exercises the normal post-burst delivery path; it cannot
       // deterministically force the fseventsd UserDropped overflow from
       // #18260, whose recovery lives in the monitor's rescan path. --
-      fs.writeFileSync(path.join(projectDir, 'extra.R'), 'z <- 1\n');
+      // the filename is assembled with paste0 so the command echo (which
+      // travels through the same get_events stream) cannot substring-match
+      // the 'extra.R' diagnostic probe below
+      await executeInConsole(
+        page,
+        `writeLines("z <- 1", paste0(${rPathLiteral(projectDir)}, "/extra", ".R"))`,
+      );
       let sawExtraEvent = false;
       let sawExtraRow = false;
       const probeStart = Date.now();
@@ -178,8 +204,13 @@ test.describe('VCS file change flood (#18257)', () => {
       }
       expect(sawExtraRow).toBe(true);
 
-      // -- probe: .gitignore change takes the full-refresh path --
-      fs.appendFileSync(path.join(projectDir, '.gitignore'), '# vcs flood probe\n');
+      // -- probe: .gitignore change takes the full-refresh path (filename
+      //    split with paste0 for the same echo-vs-event reason as above) --
+      await executeInConsole(
+        page,
+        `cat("# vcs flood probe\\n", ` +
+          `file = paste0(${rPathLiteral(projectDir)}, "/.git", "ignore"), append = TRUE)`,
+      );
       let sawGitignoreRow = false;
       const giStart = Date.now();
       while (Date.now() - giStart < 30000) {
