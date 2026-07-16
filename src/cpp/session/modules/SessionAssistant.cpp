@@ -1282,12 +1282,24 @@ Error startAgent(const std::string& assistantType = "")
       agentPathOverride = FilePath(agentPathOverrideValue);
    }
    bool overrideInEffect = !agentPathOverride.isEmpty();
+
+   // The override participates in classification only when the direct
+   // launch branch will actually select it — helper-script branches ignore
+   // it, and e.g. a Copilot start must not be refused because of an
+   // unrelated Posit Assistant update. Resolve a symlinked override so a
+   // link pointing into pai/bin is still classified as the shared install.
+   bool helperBranchSelected =
+      (assistant == kAssistantPosit && positHelperConfigured) ||
+      (assistant == kAssistantCopilot &&
+       !session::options().copilotHelper().isEmpty());
+   bool overrideSelectsSharedInstall =
+      !helperBranchSelected && overrideInEffect &&
+      agentPathOverride.resolveSymlink().isWithin(
+         xdg::userDataDir().completePath("pai/bin"));
    bool usesSharedInstall =
       (assistant == kAssistantPosit &&
        (positHelperConfigured || !overrideInEffect)) ||
-      (overrideInEffect &&
-       agentPathOverride.isWithin(
-          xdg::userDataDir().completePath("pai/bin")));
+      overrideSelectsSharedInstall;
 
    uint64_t agentGeneration = ++s_agentGeneration;
    uint64_t lockToken = 0;
