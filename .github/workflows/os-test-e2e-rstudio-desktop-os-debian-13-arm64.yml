@@ -349,6 +349,16 @@ jobs:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
+      # The minimal debian:13 image sets no locale, so R starts with a non-UTF-8
+      # charset and prints "Character set is not UTF-8; please change your
+      # locale" into the console. Console-content tests (e.g. the ANSI cursor
+      # suite) assert on exact console lines, so that warning breaks them
+      # deterministically. C.UTF-8 is built into glibc on Debian 13 (no
+      # locale-gen needed); setting it job-level carries through the setpriv
+      # drop into Electron and rsession. The bare-runner siblings inherit a
+      # UTF-8 locale from the runner image and never hit this.
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
 
     steps:
       # The debian:13 base image is minimal and the job runs as root. Install
