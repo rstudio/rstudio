@@ -345,6 +345,12 @@ public class ClientEventDispatcher
             FileChange fileChange = event.getData();
             eventBus_.dispatchEvent(new FileChangeEvent(fileChange));
          }
+         else if (type == ClientEvent.FilesChanged)
+         {
+            JsArray<FileChange> fileChanges = event.getData();
+            for (int i = 0; i < fileChanges.length(); i++)
+               eventBus_.dispatchEvent(new FileChangeEvent(fileChanges.get(i)));
+         }
          else if (type == ClientEvent.WorkingDirChanged)
          {
             String path = event.getData();

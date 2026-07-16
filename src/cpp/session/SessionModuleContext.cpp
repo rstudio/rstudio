@@ -2287,8 +2287,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles)
 
 namespace {
 
-// enque file changed event
-void enqueFileChangedEvent(
+// create the payload describing a file changed event
+json::Object fileChangedEventJson(
       const core::system::FileChangeEvent& event,
       boost::shared_ptr<modules::source_control::FileDecorationContext> pCtx)
 {
@@ -2305,10 +2305,7 @@ void enqueFileChangedEvent(
    }
 
    fileChange["file"] = fileSystemItem;
-
-   // enque it
-   ClientEvent clientEvent(client_events::kFileChanged, fileChange);
-   module_context::enqueClientEvent(clientEvent);
+   return fileChange;
 }
 
 } // namespace
@@ -2319,7 +2316,10 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
 
    using namespace session::modules::source_control;
    auto pCtx = fileDecorationContext(filePath, true);
-   enqueFileChangedEvent(event, pCtx);
+
+   ClientEvent clientEvent(client_events::kFileChanged,
+                           fileChangedEventJson(event, pCtx));
+   module_context::enqueClientEvent(clientEvent);
 }
 
 void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
@@ -2345,11 +2345,17 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    using namespace session::modules::source_control;
    auto pCtx = fileDecorationContext(commonParentPath, true);
 
-   // fire client events as necessary
+   // batch the changes into a single client event -- a bulk operation can
+   // produce thousands of file change events, and enqueuing them
+   // individually is expensive for both the session and the client
+   json::Array fileChanges;
    for (const core::system::FileChangeEvent& event : events)
    {
-      enqueFileChangedEvent(event, pCtx);
+      fileChanges.push_back(fileChangedEventJson(event, pCtx));
    }
+
+   ClientEvent clientEvent(client_events::kFilesChanged, fileChanges);
+   module_context::enqueClientEvent(clientEvent);
 }
 
 Error enqueueConsoleInput(const std::string& consoleInput)
