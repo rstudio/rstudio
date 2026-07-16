@@ -11,6 +11,7 @@ import { sleep } from '../utils/constants';
 import { setPref, documentCloseAllNoSave } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
+import { userHomeForAuthState } from '../utils/auth';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
 // before any worker spawns. Resolve lazily so importing this module (for
@@ -80,7 +81,10 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   }
 
   const port = await pickFreePort();
-  const userHome = sharedUserHome();
+  // Resolve the launch HOME through the per-test auth state: normally the
+  // shared home unchanged; under aiAuth 'none' declarations, a
+  // credential-stripped copy of it (see userHomeForAuthState in utils/auth.ts).
+  const userHome = userHomeForAuthState(sharedUserHome());
   const dataHome = sharedDataHome();
   const serverRoot = fs.mkdtempSync(path.join(sandboxRoot(), 'rserver_'));
   // rserver creates Unix-domain sockets and IPC files under server-data-dir.

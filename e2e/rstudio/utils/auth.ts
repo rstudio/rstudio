@@ -143,27 +143,34 @@ export function copilotConfigDir(homeDir: string): string {
     : path.join(homeDir, '.config', 'github-copilot');
 }
 
-// The canonical Posit AI token, stashed by the auth.setup project in the
-// sandbox root (outside any user-home) after a successful provision. The
-// per-launch auth-state fixture re-seeds authenticated homes from it, so a
-// signed-out test that deletes the token from its own home can't strand a
-// later authenticated launch with no source to restore from. It holds a real
-// token, so scrubCredentials removes it too.
-const CANONICAL_TOKEN_FILE = 'positai-token.json';
+// The AI providers whose credentials the harness manages. The array is the
+// single source of truth -- the AIProvider type, the per-test aiAuth option
+// shape, and the credential scrub all derive from it, so adding a provider
+// here forces the compiler to surface every place that must handle it.
+export const AI_PROVIDERS = ['positai', 'copilot'] as const;
+export type AIProvider = (typeof AI_PROVIDERS)[number];
 
-export function canonicalTokenPath(sandbox: string): string {
-  return path.join(sandbox, CANONICAL_TOKEN_FILE);
+// Every path under homeDir where `provider` keeps credentials. The one map
+// from provider to on-disk credential locations: the teardown scrub and the
+// signed-out home variants both use it, so "what counts as this provider's
+// credentials" can't drift between them.
+export function credentialPathsFor(provider: AIProvider, homeDir: string): string[] {
+  switch (provider) {
+    case 'positai':
+      return storeFileCandidates(homeDir);
+    case 'copilot':
+      return [copilotConfigDir(homeDir)];
+  }
 }
 
-// Remove every piece of credential material from the sandbox: the Posit AI
-// token stores and Copilot creds in each user-home* (the shared template plus
-// any per-worker or per-auth-state copies), and the canonical reference token.
-// Teardown calls this before a sandbox is left on disk -- preserved for
-// inspection, or stranded by a failed whole-tree delete -- so a surviving
-// sandbox never carries real tokens. Returns the paths it could not remove,
-// each with its error (empty on full success), so the caller can warn loudly
-// that a preserved sandbox still holds credentials. Missing paths are not
-// failures.
+// Remove every piece of credential material from the sandbox: each provider's
+// credential paths in each user-home* (the shared template plus any per-worker
+// or per-auth-state copies). Teardown calls this before a sandbox is left on
+// disk -- preserved for inspection, or stranded by a failed whole-tree delete
+// -- so a surviving sandbox never carries real tokens. Returns the paths it
+// could not remove, each with its error (empty on full success), so the caller
+// can warn loudly that a preserved sandbox still holds credentials. Missing
+// paths are not failures.
 export function scrubCredentials(sandbox: string): string[] {
   const failures: string[] = [];
   const remove = (target: string): void => {
@@ -188,12 +195,107 @@ export function scrubCredentials(sandbox: string): string[] {
     .map((name) => path.join(sandbox, name));
 
   for (const home of homes) {
-    for (const store of storeFileCandidates(home)) remove(store);
-    remove(copilotConfigDir(home));
+    for (const provider of AI_PROVIDERS) {
+      for (const credentialPath of credentialPathsFor(provider, home)) {
+        remove(credentialPath);
+      }
+    }
   }
-  remove(canonicalTokenPath(sandbox));
 
   return failures;
+}
+
+// ---------------------------------------------------------------------------
+// Per-test AI auth state: the aiAuth fixture option (rstudio.fixture.ts) lets
+// a test file declare which providers its RStudio should be signed OUT of,
+// e.g. test.use({ aiAuth: { positai: 'none' } }). The option is worker-scoped,
+// so Playwright runs tests with a different aiAuth value in their own worker
+// -- which is what makes the state real: RStudio reads credentials at launch,
+// and a new worker is a new launch. The fixture serializes the option into an
+// internal env var (the launch helpers are plain functions, not fixtures);
+// userHomeForAuthState reads it back and swaps the launch HOME for a
+// credential-stripped copy. Launches outside the rstudioSession fixture (a
+// test calling launchRStudio itself, the warmup launch) never see the env var
+// set and get the default, fully-authenticated home.
+
+export const AI_AUTH_STATES = ['authenticated', 'none'] as const;
+export type AiAuthState = (typeof AI_AUTH_STATES)[number];
+
+// The aiAuth option value: providers omitted default to 'authenticated'.
+export type AiAuthOption = Partial<Record<AIProvider, AiAuthState>>;
+
+const AI_AUTH_NONE_ENV = 'PW_AI_AUTH_NONE';
+
+// Serialize the aiAuth option into the internal env var for the launch
+// helpers. Called by the rstudioSession fixture before launching. Validates
+// the option shape at runtime because test.use values reach here untyped from
+// the config/test files.
+export function setAuthStateEnv(option: AiAuthOption): void {
+  for (const [provider, state] of Object.entries(option)) {
+    if (!(AI_PROVIDERS as readonly string[]).includes(provider)) {
+      throw new Error(
+        `aiAuth names unknown provider "${provider}"; expected: ${AI_PROVIDERS.join(', ')}`,
+      );
+    }
+    if (state !== undefined && !(AI_AUTH_STATES as readonly string[]).includes(state)) {
+      throw new Error(
+        `aiAuth.${provider}="${state}" is not a valid state; expected: ${AI_AUTH_STATES.join(', ')}`,
+      );
+    }
+  }
+  const stripped = AI_PROVIDERS.filter((provider) => option[provider] === 'none');
+  if (stripped.length > 0) {
+    process.env[AI_AUTH_NONE_ENV] = stripped.join(',');
+  } else {
+    delete process.env[AI_AUTH_NONE_ENV];
+  }
+}
+
+function strippedProvidersFromEnv(): AIProvider[] {
+  const raw = process.env[AI_AUTH_NONE_ENV];
+  if (!raw) return [];
+  return raw.split(',').map((name) => {
+    if (!(AI_PROVIDERS as readonly string[]).includes(name)) {
+      throw new Error(
+        `${AI_AUTH_NONE_ENV}="${raw}" names unknown provider "${name}" -- this env var is internal (set by the aiAuth fixture option); unset it and use test.use({ aiAuth: ... }) instead`,
+      );
+    }
+    return name as AIProvider;
+  });
+}
+
+// Resolve the HOME a launch should use, honoring the per-test auth state.
+// With no providers stripped (the default), returns baseHome unchanged --
+// byte-for-byte the historical behavior. Otherwise returns a lazily created
+// credential-stripped copy of baseHome (e.g. user-home-no-positai), so the
+// shared home is never mutated: the credential gate and any sibling
+// authenticated worker keep seeing the original. The stripped providers'
+// credential paths are re-removed on every launch, not just at creation --
+// a signed-out test may itself sign in mid-test, and the declared state must
+// win again at the next launch. The variant name keeps the user-home prefix
+// so scrubCredentials covers it.
+export function userHomeForAuthState(baseHome: string): string {
+  const stripped = strippedProvidersFromEnv();
+  if (stripped.length === 0) return baseHome;
+
+  const sorted = [...stripped].sort();
+  const variant = `${baseHome}-no-${sorted.join('-')}`;
+  if (!fs.existsSync(variant)) {
+    // Copy into a temp sibling and atomically rename, matching
+    // workerUserHome() in desktop.fixture.ts, so a crash mid-copy can't leave
+    // a partial home that later reads as complete.
+    const tmp = `${variant}.partial`;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    fs.cpSync(baseHome, tmp, { recursive: true });
+    fs.renameSync(tmp, variant);
+    console.log(`[auth-state] created ${path.basename(variant)} (signed out of: ${sorted.join(', ')})`);
+  }
+  for (const provider of sorted) {
+    for (const credentialPath of credentialPathsFor(provider, variant)) {
+      fs.rmSync(credentialPath, { recursive: true, force: true });
+    }
+  }
+  return variant;
 }
 
 // ---------------------------------------------------------------------------

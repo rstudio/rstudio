@@ -18,8 +18,8 @@ import { scrubCredentials } from '../utils/auth';
  * (PW_SANDBOX_ROOT, if user-set) is untouched.
  *
  * Whenever the sandbox is left on disk -- preserved for inspection, or
- * stranded by a failed whole-tree delete -- its credential material (seeded
- * Posit AI tokens and Copilot creds, plus the canonical reference token) is
+ * stranded by a failed whole-tree delete -- its credential material (the
+ * seeded Posit AI tokens and Copilot creds, in every user-home* variant) is
  * scrubbed first, so a surviving sandbox never carries real tokens. The normal
  * delete path needs no scrub: the rm takes the credentials with the tree.
  */

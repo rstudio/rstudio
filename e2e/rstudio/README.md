@@ -272,6 +272,16 @@ Quick reference (the setup auto-detects the source; "signed in locally" means a 
 | unset | yes | set | Skipped (copy suppressed) | Not provisioned |
 | unset | no | either | Skipped (not signed in locally) | Not provisioned |
 
+Tests default to a fully authenticated RStudio (whatever the run provisioned). To test signed-*out* behavior, declare the state per file (or describe block) with the `aiAuth` fixture option:
+
+```ts
+test.use({ aiAuth: { positai: 'none' } });        // signed out of Posit AI
+test.use({ aiAuth: { copilot: 'none' } });        // signed out of Copilot
+test.use({ aiAuth: { positai: 'none', copilot: 'none' } });
+```
+
+Omitted providers stay authenticated. The option is worker-scoped: Playwright runs tests with a different `aiAuth` value in their own worker, whose RStudio launches against a lazily created credential-stripped copy of the user home (`user-home-no-<provider>...`) -- the shared home is never mutated, and the running IDE only reads credentials at launch, so the relaunch is what makes the state real. Each launch re-strips the declared providers, so a test that signs in mid-test can't leak that state into the next launch. Group same-state tests in one file to avoid paying a relaunch per switch. The stripped-home variants are covered by the teardown credential scrub like every other `user-home*` directory.
+
 The Posit Assistant tests normally download the official assistant package into the sandbox `data-home`. To run them against a locally built assistant instead, set `PW_SEED_PAI` to an install directory and `globalSetup` seeds it into `data-home/pai` (see Environment Variables).
 
 On Windows, `globalSetup` pre-creates `user-home/AppData/Roaming/` and `user-home/AppData/Local/` because Electron's `app.getPath('appData')` fails at startup if those subdirs don't exist under the redirected `USERPROFILE` (the "Failed to get 'appData' path" popup). The same kind of scaffolding will likely be needed for macOS Desktop (`~/Library/Application Support`) and Linux Desktop (`~/.config`) when those platforms get tested.

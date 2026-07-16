@@ -1,13 +1,15 @@
 import type { TestType } from '@playwright/test';
-import { isPositAiAuthenticated, readAuthStatus } from './auth';
+import { isPositAiAuthenticated, readAuthStatus, type AIProvider } from './auth';
 
 /**
- * AI provider identifier. The two providers are provisioned differently, and
- * so gate differently: Posit AI by the auth.setup project (its tests gate on
- * the on-disk token store), Copilot by a host copy in sandbox-setup.ts (its
- * tests gate on the PW_AI_SEEDED_COPILOT env flag it sets).
+ * AI provider identifier (defined in auth.ts, the credential single source of
+ * truth; re-exported here for the test files that gate on it). The two
+ * providers are provisioned differently, and so gate differently: Posit AI by
+ * the auth.setup project (its tests gate on the on-disk token store), Copilot
+ * by a host copy in sandbox-setup.ts (its tests gate on the
+ * PW_AI_SEEDED_COPILOT env flag it sets).
  */
-export type AIProvider = 'positai' | 'copilot';
+export type { AIProvider } from './auth';
 
 // Build the Posit AI skip reason from the status file the auth.setup project
 // wrote, so a skipped test reports what actually happened (login failed, copy
