@@ -110,17 +110,18 @@ public class FileSystemItem extends JavaScriptObject
       return this.dir;
    }-*/;
 
-   // resolved target path when this file is a macOS Finder alias that the
-   // backend could resolve (in which case 'dir' reflects the target rather
-   // than the alias file); null otherwise -- including broken aliases,
-   // which behave as plain files
+   // resolved target path when this file is a macOS Finder alias or Windows
+   // .lnk shortcut that the backend could resolve (in which case 'dir'
+   // reflects the target rather than the alias/shortcut file); null otherwise
+   // -- including broken aliases/shortcuts, which behave as plain files
    public final native String getAliasTarget() /*-{
       return this.alias_target || null;
    }-*/;
 
-   // macOS Finder aliases carry their resolved target; navigation and open
-   // operations should act on the target, like the Finder does. Returns this
-   // item unchanged when it is not an alias.
+   // macOS Finder aliases and Windows shortcuts carry their resolved target;
+   // navigation and open operations should act on the target, like the Finder
+   // and Explorer do. Returns this item unchanged when it is not an alias or
+   // shortcut.
    public final FileSystemItem resolveAliasTarget()
    {
       String aliasTarget = getAliasTarget();
@@ -144,11 +145,20 @@ public class FileSystemItem extends JavaScriptObject
       return !!this.is_alias;
    }-*/;
 
+   // true when this entry is a Windows .lnk shortcut, even one whose target
+   // could not be resolved (a broken shortcut has is_shortcut == true but a
+   // null getAliasTarget()). Shortcut targets travel in alias_target, so all
+   // alias-aware logic applies; this flag only distinguishes the badge label.
+   // See createFileSystemItem in SessionModuleContext.cpp.
+   public final native boolean isShortcut() /*-{
+      return !!this.is_shortcut;
+   }-*/;
+
    // single "link-like" predicate used by the Files pane to badge links: a
-   // POSIX symlink or a macOS Finder alias (#9924).
+   // POSIX symlink, a macOS Finder alias, or a Windows shortcut (#9924).
    public final boolean isLink()
    {
-      return isSymlink() || isAlias();
+      return isSymlink() || isAlias() || isShortcut();
    }
 
    // raw symbolic-link target as stored in the link, for display in the
@@ -159,15 +169,16 @@ public class FileSystemItem extends JavaScriptObject
    }-*/;
 
    // best "points to" target for the link tooltip: the symlink target, or an
-   // alias's resolved target; null when neither is available (e.g. a broken
-   // alias) so callers can fall back to just the name.
+   // alias's/shortcut's resolved target; null when neither is available (e.g.
+   // a broken alias or shortcut) so callers can fall back to just the name.
    //
    // Display only -- do NOT use for navigation. A symlink target is the raw,
    // possibly relative link text (relative to the link's own directory), while
-   // an alias target is an absolute resolved path; the two are not
+   // an alias/shortcut target is an absolute resolved path; the two are not
    // interchangeable as navigable paths. The filesystem already resolves POSIX
-   // symlinks natively (unlike aliases -- see resolveAliasTarget()), so there
-   // is intentionally no navigable symlink-target accessor.
+   // symlinks natively (unlike aliases and shortcuts -- see
+   // resolveAliasTarget()), so there is intentionally no navigable
+   // symlink-target accessor.
    public final String getLinkTarget()
    {
       String target = getSymlinkTarget();

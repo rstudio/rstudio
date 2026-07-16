@@ -176,8 +176,9 @@ public class DirectoryContentsWidget extends Composite
          item = parentDirectory_;
       }
 
-      // follow macOS Finder aliases so committing a directory alias
-      // navigates into its target instead of cd-ing into a bookmark file
+      // follow macOS Finder aliases / Windows shortcuts so committing a
+      // directory link navigates into its target instead of cd-ing into
+      // the link file
       item = item.resolveAliasTarget();
 
       SelectionCommitEvent.fire(DirectoryContentsWidget.this, item);
