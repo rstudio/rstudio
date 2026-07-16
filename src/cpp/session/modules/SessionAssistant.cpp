@@ -16,6 +16,8 @@
 #include "SessionAssistant.hpp"
 #include "SessionChat.hpp"
 
+#include "chat/ChatConstants.hpp"
+
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
@@ -1125,15 +1127,29 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 
 void onError(ProcessOperations& operations, const Error& error)
 {
+   // A stream IO error does not mean the process exited — the default
+   // terminate-the-child behavior applies only when no onError callback is
+   // set (see ProcessCallbacks::onError). Clearing state here would leave a
+   // live agent untracked and prematurely release the in-use lock on the
+   // shared installation. Record the error and terminate the process group
+   // (operations.terminate() covers detached descendants, unlike
+   // terminateProcess); onExit then clears state and releases the lock.
    ELOG("Agent process error: {}", error.getMessage());
    s_agentStartupError = error.getMessage();
-   s_agentPid = -1;
-   s_runningAgentType.clear();
-   setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
+
+   Error terminateError = operations.terminate();
+   if (terminateError)
+      LOG_ERROR(terminateError);
 }
 
-void onExit(int status)
+void onExit(int status, uint64_t lockToken)
 {
+   // Sole release point for the agent's in-use lock component: only the
+   // reap callback knows the process is really gone. Zero or stale tokens
+   // no-op inside the helper.
+   chat::installLock().releaseInUse(
+      chat::install_lock::InstallLock::Component::NesAgent, lockToken);
+
    if (status != 0 && !s_isSessionShuttingDown)
       WLOG("Agent process exited with status {}.", status);
    else
@@ -1231,6 +1247,51 @@ Error startAgent(const std::string& assistantType = "")
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
+   // When the agent runs from the shared per-user install (pai/bin), hold
+   // this session's in-use lock while it runs and refuse to start while
+   // another session is mutating that installation. Resolve the path the
+   // same way the launch branches below do: the Posit helper-script branch
+   // uses paiLanguageServerPath() directly (ignoring RSTUDIO_AGENT_PATH).
+   // Copilot and env-override agents are unrelated to the install and skip
+   // locking (lockToken stays 0, which release treats as a no-op).
+   FilePath resolvedAgentPath =
+      (assistant == kAssistantPosit &&
+       !session::options().positAssistantHelper().isEmpty())
+         ? paiLanguageServerPath()
+         : assistantLanguageServerPath(assistant);
+   bool userDataInstall = resolvedAgentPath.isWithin(
+      xdg::userDataDir().completePath(chat::constants::kPositAiDirName));
+
+   uint64_t lockToken = 0;
+   if (userDataInstall)
+   {
+      error = chat::installLock().acquireInUse(
+         chat::install_lock::InstallLock::Component::NesAgent, &lockToken);
+      if (!error && chat::installLock().updateInProgressElsewhere())
+      {
+         chat::installLock().releaseInUse(
+            chat::install_lock::InstallLock::Component::NesAgent, lockToken);
+         error = systemError(
+            boost::system::errc::device_or_resource_busy, ERROR_LOCATION);
+      }
+      if (error)
+      {
+         // callers (ensureAgentRunning et al) tolerate failure and retry on
+         // the next request, after the mutation has finished
+         s_agentStartupError =
+            "A Posit Assistant update is in progress. "
+            "Please try again in a moment.";
+         setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
+         return error;
+      }
+   }
+
+   auto releaseAgentLock = [&lockToken]()
+   {
+      chat::installLock().releaseInUse(
+         chat::install_lock::InstallLock::Component::NesAgent, lockToken);
+   };
+
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;
@@ -1238,7 +1299,10 @@ Error startAgent(const std::string& assistantType = "")
    callbacks.onStdout = &agent::onStdout;
    callbacks.onStderr = &agent::onStderr;
    callbacks.onError = &agent::onError;
-   callbacks.onExit = &agent::onExit;
+   callbacks.onExit = [lockToken](int status)
+   {
+      agent::onExit(status, lockToken);
+   };
 
    // Set up process options
    core::system::ProcessOptions options;
@@ -1264,7 +1328,10 @@ Error startAgent(const std::string& assistantType = "")
    {
       // Run Copilot via helper script
       if (!copilotHelper.exists())
+      {
+         releaseAgentLock();
          return fileNotFoundError(copilotHelper, ERROR_LOCATION);
+      }
 
       FilePath copilotPath = copilotLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
@@ -1282,7 +1349,10 @@ Error startAgent(const std::string& assistantType = "")
    {
       // Run Posit AI via helper script
       if (!positAssistantHelper.exists())
+      {
+         releaseAgentLock();
          return fileNotFoundError(positAssistantHelper, ERROR_LOCATION);
+      }
 
       FilePath paiPath = paiLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
@@ -1301,7 +1371,10 @@ Error startAgent(const std::string& assistantType = "")
       // Run assistant directly (no helper script)
       FilePath assistantPath = assistantLanguageServerPath(assistant);
       if (!assistantPath.exists())
+      {
+         releaseAgentLock();
          return fileNotFoundError(assistantPath, ERROR_LOCATION);
+      }
 
       options.workingDir = assistantPath.getParent();
       options.environment = environment;
@@ -1318,6 +1391,8 @@ Error startAgent(const std::string& assistantType = "")
    
    if (error)
    {
+      // launch failed, so no exit callback will ever fire to release the lock
+      releaseAgentLock();
       ELOG("Failed to launch {} agent: {}", assistant, error.getMessage());
       setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       return error;
