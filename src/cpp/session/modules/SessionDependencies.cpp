@@ -375,8 +375,8 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
       else
       {
-         cmd += "utils::install.packages(c(" + pkgList + ")\n\n";
-     }
+         cmd += "utils::install.packages(c(" + pkgList + "))\n\n";
+      }
    }
 
    // Install the CRAN source packages with a single call
