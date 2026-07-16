@@ -43,11 +43,17 @@ public class VimrcLoader
       prefs_ = prefs;
       server_ = server;
 
-      // load the vimrc when the preference is enabled mid-session
+      // when the preference is enabled mid-session, load the vimrc using the
+      // focused Vim editor; when disabled, reset so that a later re-enable
+      // reloads the file (e.g. after the user has edited it)
       prefs_.vimLoadVimrc().addValueChangeHandler(event ->
       {
          if (!event.getValue())
+         {
+            if (state_ == State.DONE)
+               state_ = State.IDLE;
             return;
+         }
 
          AceEditor editor = AceEditor.getLastFocusedEditor();
          if (editor != null && editor.isVimModeOn())
@@ -57,21 +63,29 @@ public class VimrcLoader
 
    /**
     * Load and apply the user's vimrc if the associated preference is enabled.
-    * The supplied editor must have the Vim keyboard handler attached.
+    * The vimrc is applied at most once per session, no matter how often this
+    * is called; disabling and re-enabling the preference resets that, so the
+    * file can be reloaded without restarting. The supplied editor must have
+    * the Vim keyboard handler attached.
     */
    public void ensureLoaded(AceEditorNative editor)
    {
-      if (requested_ || !prefs_.vimLoadVimrc().getValue())
+      if (state_ != State.IDLE || !prefs_.vimLoadVimrc().getValue())
          return;
 
-      requested_ = true;
+      state_ = State.LOADING;
       loadVimrc(editor, 0);
    }
 
    private void loadVimrc(AceEditorNative editor, int index)
    {
       if (index >= VIMRC_PATHS.length)
+      {
+         // no vimrc could be read; treat as done for this session rather
+         // than re-trying on every editor initialization
+         state_ = State.DONE;
          return;
+      }
 
       String path = VIMRC_PATHS[index];
       server_.getFileContents(path, "UTF-8", new ServerRequestCallback<String>()
@@ -79,13 +93,32 @@ public class VimrcLoader
          @Override
          public void onResponseReceived(String contents)
          {
+            if (!prefs_.vimLoadVimrc().getValue())
+            {
+               // the preference was disabled while the request was in flight
+               state_ = State.IDLE;
+               return;
+            }
+
+            if (!hasVimState(editor))
+            {
+               // the editor that triggered the load was detached while the
+               // request was in flight; let the next Vim editor retry
+               state_ = State.IDLE;
+               return;
+            }
+
+            state_ = State.DONE;
             applyVimrc(editor, path, contents);
          }
 
          @Override
          public void onError(ServerError error)
          {
-            // the file most likely doesn't exist; try the next candidate
+            // typically the file just doesn't exist, but log the failure
+            // since the server doesn't distinguish a missing file from e.g.
+            // a permission or decoding error
+            Debug.log("VimrcLoader: couldn't read " + path + " (" + error.getMessage() + ")");
             loadVimrc(editor, index + 1);
          }
       });
@@ -108,10 +141,11 @@ public class VimrcLoader
             continue;
          }
 
-         if (applyLine(editor, prepared))
+         String error = applyLine(editor, prepared);
+         if (error == null)
             applied++;
          else
-            Debug.log("VimrcLoader: failed to apply line '" + line + "'");
+            Debug.log("VimrcLoader: failed to apply line '" + line + "' (" + error + ")");
       }
 
       if (applied > 0)
@@ -124,11 +158,11 @@ public class VimrcLoader
     * this keeps a vimrc from triggering arbitrary ex commands (e.g. ':qall')
     * as a side effect of being loaded.
     */
-   private String prepareLine(String line)
+   static String prepareLine(String line)
    {
-      String[] tokens = line.split("\\s+");
+      line = line.trim();
 
-      String command = tokens[0];
+      String command = line.split("\\s+")[0];
       if (!SUPPORTED_COMMANDS.contains(command))
          return null;
 
@@ -162,23 +196,27 @@ public class VimrcLoader
       return rest.isEmpty() ? command : command + " " + rest;
    }
 
-   private static final native boolean applyLine(AceEditorNative editor, String line)
+   private static final native boolean hasVimState(AceEditorNative editor)
+   /*-{
+      return editor.state != null && editor.state.cm != null;
+   }-*/;
+
+   // returns null on success, or an error message on failure
+   private static final native String applyLine(AceEditorNative editor, String line)
    /*-{
       try
       {
-         var cm = editor.state.cm;
-         if (cm == null)
-            return false;
-
          var Vim = $wnd.require("ace/keyboard/vim").CodeMirror.Vim;
-         Vim.handleEx(cm, line);
-         return true;
+         Vim.handleEx(editor.state.cm, line);
+         return null;
       }
       catch (e)
       {
-         return false;
+         return "" + e;
       }
    }-*/;
+
+   private enum State { IDLE, LOADING, DONE }
 
    private static final String[] VIMRC_PATHS = new String[] {
       "~/.rstudio-vimrc",
@@ -214,5 +252,5 @@ public class VimrcLoader
    private final UserPrefs prefs_;
    private final FilesServerOperations server_;
 
-   private boolean requested_ = false;
+   private State state_ = State.IDLE;
 }

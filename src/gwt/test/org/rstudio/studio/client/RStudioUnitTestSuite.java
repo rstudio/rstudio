@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumnTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoaderTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
@@ -85,6 +86,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(YamlTreeTests.class);
       suite.addTestSuite(DataImportPreviewResponseTests.class);
       suite.addTestSuite(PrefsTests.class);
+      suite.addTestSuite(VimrcLoaderTests.class);
 
       return suite;
    }
