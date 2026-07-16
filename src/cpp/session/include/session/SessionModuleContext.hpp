@@ -145,7 +145,9 @@ core::Error resolveFinderAlias(const core::FilePath& aliasPath,
 // even when the target no longer exists -- callers detect broken shortcuts
 // with exists(). pTargetIsDirectory reports the directory-ness recorded in
 // the link when it was written (also without touching the target; false
-// when the link carries no target attributes).
+// when the link carries no target attributes). Stored targets longer than
+// MAX_PATH come back truncated (a limit of the underlying shell API) and
+// so behave like broken shortcuts.
 bool isWindowsShortcut(const core::FilePath& filePath);
 core::Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
                                    core::FilePath* pTargetPath,

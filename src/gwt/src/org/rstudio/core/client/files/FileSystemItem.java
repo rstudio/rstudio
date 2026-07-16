@@ -147,8 +147,9 @@ public class FileSystemItem extends JavaScriptObject
 
    // true when this entry is a Windows .lnk shortcut, even one whose target
    // could not be resolved (a broken shortcut has is_shortcut == true but a
-   // null getAliasTarget()). Shortcut targets travel in alias_target, so all
-   // alias-aware logic applies; this flag only distinguishes the badge label.
+   // null getAliasTarget()). Shortcut targets travel in alias_target, so
+   // navigation and open behavior come from that alone; this flag both makes
+   // the entry a link (see isLink()) and selects the "Shortcut" badge label.
    // See createFileSystemItem in SessionModuleContext.cpp.
    public final native boolean isShortcut() /*-{
       return !!this.is_shortcut;

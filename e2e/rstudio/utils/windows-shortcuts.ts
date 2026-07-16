@@ -50,13 +50,17 @@ export function uniqueWindowsShortcutFixture(prefix: string): WindowsShortcutFix
 // powershell's exit status AND the script's own true/false result (a Save()
 // can fail with exit code 0) -- and a sentinel line is asserted, so an
 // environmental setup problem reads as one clear failure here instead of a
-// misleading visibility timeout in every test.
+// misleading visibility timeout in every test. On failure the captured
+// PowerShell output is echoed to the console for triage, and the success
+// sentinel embeds the fixture's unique name so a stale sentinel from an
+// earlier suite in the same session can't mask a failed setup.
 export async function createWindowsShortcutFixture(
   page: Page,
   consoleActions: ConsolePaneActions,
   fx: WindowsShortcutFixture,
 ): Promise<void> {
   const psVector = CREATE_SHORTCUT_PS1_LINES.map((line) => `"${line}"`).join(', ');
+  const okSentinel = `SHORTCUT-SETUP-OK-${fx.targetDirName}`;
   await consoleActions.executeInConsole(
     [
       'local({',
@@ -66,15 +70,15 @@ export async function createWindowsShortcutFixture(
       `writeLines("target doc", file.path(home, "${fx.targetDocName}"))`,
       'f <- tempfile(fileext = ".ps1")',
       `writeLines(c(${psVector}), f)`,
-      'mk <- function(target, link) { target <- gsub("/", "\\\\", target, fixed = TRUE); link <- gsub("/", "\\\\", link, fixed = TRUE); out <- suppressWarnings(system2("powershell", c("-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", shQuote(f), shQuote(target), shQuote(link)), stdout = TRUE, stderr = TRUE)); is.null(attr(out, "status")) && identical(tail(out, 1), "true") }',
+      'mk <- function(target, link) { target <- gsub("/", "\\\\", target, fixed = TRUE); link <- gsub("/", "\\\\", link, fixed = TRUE); out <- suppressWarnings(system2("powershell", c("-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", shQuote(f), shQuote(target), shQuote(link)), stdout = TRUE, stderr = TRUE)); ok <- is.null(attr(out, "status")) && identical(tail(out, 1), "true"); if (!ok) writeLines(out); ok }',
       `ok <- mk(file.path(home, "${fx.targetDirName}"), file.path(home, "${fx.dirShortcutName}"))`,
       `ok <- ok && mk(file.path(home, "${fx.targetDocName}"), file.path(home, "${fx.fileShortcutName}"))`,
-      'writeLines(if (ok) "SHORTCUT-SETUP-OK" else "SHORTCUT-SETUP-FAILED")',
+      `writeLines(if (ok) "${okSentinel}" else "SHORTCUT-SETUP-FAILED")`,
       '})',
     ].join('; '),
     { wait: true },
   );
-  await expect(page.getByText('SHORTCUT-SETUP-OK', { exact: true })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(okSentinel, { exact: true })).toBeVisible({ timeout: 15000 });
 }
 
 export async function removeWindowsShortcutFixture(

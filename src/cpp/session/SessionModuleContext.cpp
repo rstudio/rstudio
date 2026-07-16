@@ -2001,9 +2001,10 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    // filesystem doesn't resolve them for us; surface the resolved target
    // (and its directory-ness) so the client can follow them (#7327). The
    // target is emitted as alias_target so all alias-aware client logic
-   // (navigation, open, dialogs, icons) applies unchanged; is_shortcut lets
-   // the client label the badge "Shortcut" rather than "Alias".
-   // Unresolvable shortcuts fall back to plain-file behavior.
+   // (navigation, open, dialogs, icons) applies unchanged; is_shortcut both
+   // marks the entry as a link for the badge and selects the "Shortcut"
+   // label (is_alias stays macOS-only). Unresolvable shortcuts fall back to
+   // plain-file behavior.
    if (!isDir)
    {
       if (isWindowsShortcut(filePath))

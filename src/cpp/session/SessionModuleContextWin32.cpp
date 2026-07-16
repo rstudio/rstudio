@@ -20,6 +20,7 @@
 #include <shlobj.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 
 #include <shared_core/Error.hpp>
@@ -54,7 +55,8 @@ private:
 };
 
 // the shell APIs store and expect native (backslash) separators, while
-// FilePath::getAbsolutePathW() returns generic (forward-slash) paths
+// FilePath::getAbsolutePathW() may contain forward-slash separators (it
+// exposes the stored representation, which FilePath builds in generic form)
 std::wstring toNativeSeparators(std::wstring path)
 {
    std::replace(path.begin(), path.end(), L'/', L'\\');
@@ -62,13 +64,16 @@ std::wstring toNativeSeparators(std::wstring path)
 }
 
 // error shape mirrors resolveFinderAlias (SessionModuleContext.mm):
-// systemError + diagnostic properties
-Error shortcutError(HRESULT hr,
+// systemError + diagnostic properties. The errc distinguishes COM
+// infrastructure failures from shortcut-content failures so logs (and any
+// future caller branching on the code) don't misread a broken COM
+// environment as a broken shortcut.
+Error shortcutError(boost::system::errc::errc_t code,
+                    HRESULT hr,
                     const FilePath& shortcutPath,
                     const ErrorLocation& location)
 {
-   Error error = systemError(boost::system::errc::no_such_file_or_directory,
-                             location);
+   Error error = systemError(code, location);
    error.addProperty("shortcut-path", shortcutPath);
    char hresult[16];
    ::snprintf(hresult, sizeof(hresult), "0x%08lX",
@@ -109,19 +114,22 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
                                    IID_IShellLinkW,
                                    (void**) &pShellLink);
    if (FAILED(hr))
-      return shortcutError(hr, shortcutPath, ERROR_LOCATION);
+      return shortcutError(boost::system::errc::not_supported,
+                           hr, shortcutPath, ERROR_LOCATION);
    AutoRelease<IShellLinkW> arShellLink(pShellLink);
 
    IPersistFile* pPersistFile = nullptr;
    hr = pShellLink->QueryInterface(IID_IPersistFile, (void**) &pPersistFile);
    if (FAILED(hr))
-      return shortcutError(hr, shortcutPath, ERROR_LOCATION);
+      return shortcutError(boost::system::errc::not_supported,
+                           hr, shortcutPath, ERROR_LOCATION);
    AutoRelease<IPersistFile> arPersistFile(pPersistFile);
 
    std::wstring widePath = toNativeSeparators(shortcutPath.getAbsolutePathW());
    hr = pPersistFile->Load(widePath.c_str(), STGM_READ);
    if (FAILED(hr))
-      return shortcutError(hr, shortcutPath, ERROR_LOCATION);
+      return shortcutError(boost::system::errc::no_such_file_or_directory,
+                           hr, shortcutPath, ERROR_LOCATION);
 
    // Deliberately NO IShellLink::Resolve() -- during a listing it could
    // search the disk or hit the network for moved/remote targets. GetPath
@@ -140,7 +148,8 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
    // target (virtual shortcuts, e.g. to Control Panel applets); report
    // those as unresolvable
    if (hr != S_OK || targetPath[0] == L'\0')
-      return shortcutError(hr, shortcutPath, ERROR_LOCATION);
+      return shortcutError(boost::system::errc::no_such_file_or_directory,
+                           hr, shortcutPath, ERROR_LOCATION);
 
    *pTargetPath = FilePath(std::wstring(targetPath));
    *pTargetIsDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;

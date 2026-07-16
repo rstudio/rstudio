@@ -578,41 +578,59 @@ TEST_F(FinderAliasTest, FileSystemItemForBrokenAliasHasNoAliasTarget)
 namespace {
 
 // the shell APIs store and expect native (backslash) separators, while
-// FilePath::getAbsolutePathW() returns generic (forward-slash) paths
+// FilePath::getAbsolutePathW() may contain forward-slash separators (it
+// exposes the stored representation, which FilePath builds in generic form)
 std::wstring toNativeSeparators(std::wstring path)
 {
    std::replace(path.begin(), path.end(), L'/', L'\\');
    return path;
 }
 
+// each failing COM step records its own failure so a CI break names the
+// step and HRESULT instead of a bare "Actual: false"
 bool createWindowsShortcut(const core::FilePath& targetPath,
                            const core::FilePath& shortcutPath)
 {
    IShellLinkW* pShellLink = nullptr;
-   if (FAILED(::CoCreateInstance(CLSID_ShellLink,
-                                 nullptr,
-                                 CLSCTX_INPROC_SERVER,
-                                 IID_IShellLinkW,
-                                 (void**) &pShellLink)))
-      return false;
-
-   std::wstring target = toNativeSeparators(targetPath.getAbsolutePathW());
-   bool ok = SUCCEEDED(pShellLink->SetPath(target.c_str()));
-
-   IPersistFile* pPersistFile = nullptr;
-   if (ok)
-      ok = SUCCEEDED(pShellLink->QueryInterface(IID_IPersistFile,
-                                                (void**) &pPersistFile));
-
-   if (pPersistFile != nullptr)
+   HRESULT hr = ::CoCreateInstance(CLSID_ShellLink,
+                                   nullptr,
+                                   CLSCTX_INPROC_SERVER,
+                                   IID_IShellLinkW,
+                                   (void**) &pShellLink);
+   if (FAILED(hr))
    {
-      std::wstring shortcut = toNativeSeparators(shortcutPath.getAbsolutePathW());
-      ok = ok && SUCCEEDED(pPersistFile->Save(shortcut.c_str(), TRUE));
-      pPersistFile->Release();
+      ADD_FAILURE() << "CoCreateInstance(CLSID_ShellLink) failed, hr=0x"
+                    << std::hex << hr;
+      return false;
    }
 
+   std::wstring target = toNativeSeparators(targetPath.getAbsolutePathW());
+   hr = pShellLink->SetPath(target.c_str());
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "IShellLinkW::SetPath failed, hr=0x" << std::hex << hr;
+      pShellLink->Release();
+      return false;
+   }
+
+   IPersistFile* pPersistFile = nullptr;
+   hr = pShellLink->QueryInterface(IID_IPersistFile, (void**) &pPersistFile);
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "QueryInterface(IID_IPersistFile) failed, hr=0x"
+                    << std::hex << hr;
+      pShellLink->Release();
+      return false;
+   }
+
+   std::wstring shortcut = toNativeSeparators(shortcutPath.getAbsolutePathW());
+   hr = pPersistFile->Save(shortcut.c_str(), TRUE);
+   if (FAILED(hr))
+      ADD_FAILURE() << "IPersistFile::Save failed, hr=0x" << std::hex << hr;
+
+   pPersistFile->Release();
    pShellLink->Release();
-   return ok;
+   return SUCCEEDED(hr);
 }
 
 } // anonymous namespace
@@ -651,7 +669,8 @@ protected:
                                const std::string& name)
    {
       core::FilePath shortcutPath = baseDir_.completeChildPath(name);
-      EXPECT_TRUE(createWindowsShortcut(targetPath, shortcutPath));
+      // createWindowsShortcut records its own failure (step + HRESULT)
+      createWindowsShortcut(targetPath, shortcutPath);
       return shortcutPath;
    }
 
@@ -726,6 +745,33 @@ TEST_F(WindowsShortcutTest, ResolvesShortcutToDirectory)
    // the link's stored attributes carry the target's directory-ness, so a
    // caller can badge/navigate correctly without touching the target
    EXPECT_TRUE(targetIsDir);
+}
+
+TEST_F(WindowsShortcutTest, ResolvesShortcutWithNonAsciiNames)
+{
+   // exercise the UTF-8 <-> UTF-16 boundary that every shortcut path
+   // crosses: FilePath stores UTF-8 while the shell link APIs speak
+   // UTF-16. "\xC3\xA9" is e-acute and "\xE6\x97\xA5\xE6\x9C\xAC" is
+   // Japanese 'nihon'; byte escapes keep this source file ASCII-only.
+   const std::string suffix = "-\xC3\xA9\xE6\x97\xA5\xE6\x9C\xAC";
+
+   core::FilePath target = baseDir_.completeChildPath("cible" + suffix + ".txt");
+   core::Error error = target.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+
+   core::FilePath shortcut = makeShortcut(target, "raccourci" + suffix + ".lnk");
+   EXPECT_TRUE(isWindowsShortcut(shortcut));
+
+   core::FilePath resolved;
+   bool targetIsDir = true;
+   error = resolveWindowsShortcut(shortcut, &resolved, &targetIsDir);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(target.getAbsolutePath(), resolved.getAbsolutePath());
+   EXPECT_FALSE(targetIsDir);
+
+   core::json::Object item = createFileSystemItem(shortcut);
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(createAliasedPath(target), item["alias_target"].getString());
 }
 
 TEST_F(WindowsShortcutTest, GarbageContentFailsToResolve)

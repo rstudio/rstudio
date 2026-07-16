@@ -183,7 +183,8 @@ public class FileSystemItemTests extends GWTTestCase
    {
       // Windows shortcut targets travel in alias_target, so getLinkTarget
       // and resolveAliasTarget work for shortcuts without shortcut-specific
-      // plumbing; is_shortcut only drives the badge label
+      // plumbing; is_shortcut is what makes the entry a link at all
+      // (isLink) and selects the badge label
       FileSystemItem shortcut =
             createLinkEntry("/home/user/doc.txt.lnk", false, false, false, true, null, "/home/user/doc.txt");
       assertFalse(shortcut.isSymlink());
