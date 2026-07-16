@@ -125,7 +125,7 @@ export function isPositAiAuthenticated(): boolean {
   return findAuthenticatedStore(path.join(sandbox, 'user-home')) !== null;
 }
 
-// The global host-copy kill-switch: when set, copy mode and Copilot's
+// The global seed kill-switch: when set, copy mode and Copilot's
 // host-copy in sandbox-setup.ts are both suppressed. The sign-in flow itself
 // is unaffected -- it copies nothing from the host. Shared by sandbox-setup.ts
 // (Copilot) and auth.setup.ts (Posit AI) so the "what counts as on" rule lives
@@ -337,7 +337,7 @@ export type PositAiAuthSource = (typeof AUTH_SOURCES)[number];
 // version can't launder an unknown outcome string into the union.
 export const AUTH_OUTCOMES = [
   'success',      // token store written and verified
-  'unavailable',  // no credential source (not signed in locally, no creds set, or kill-switch blocked the copy); see reason
+  'unavailable',  // no credential source (not signed in locally, no creds set, or the seed kill-switch blocked the copy); see reason
   'login-failed', // sign-in attempted but failed (usually transient)
 ] as const;
 export type PositAiAuthOutcome = (typeof AUTH_OUTCOMES)[number];

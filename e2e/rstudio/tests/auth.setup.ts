@@ -34,7 +34,7 @@ import {
  *      in locally -- it's how you exercise the sign-in flow.
  *   2. else a valid local token store exists (~/.posit/ai/auth/data.json, or
  *      the legacy ~/.posit/assistant/store/data.json) and the
- *      PW_SANDBOX_NO_SEED_CREDENTIALS kill-switch is not set -> copy it into
+ *      PW_SANDBOX_NO_SEED_CREDENTIALS seed kill-switch is not set -> copy it into
  *      the sandbox (only the token store -- no skills, workspaces, or other
  *      state).
  *   3. else -> provision nothing; the Posit AI tests skip with a reason drawn
@@ -477,12 +477,12 @@ setup('authenticate Posit AI', async () => {
   // Source 2/3: no credentials set -> copy the local token store, else skip.
   // (Source 1, the sign-in flow, is below and runs when credentials are set.)
   if (!email || !password) {
-    // The global host-copy kill-switch blocks copying the local token store.
+    // The global seed kill-switch blocks copying the local token store.
     if (noSeedCredentials()) {
       writeAuthStatus(sandbox, {
         source: 'none',
         outcome: 'unavailable',
-        reason: 'Not provisioning Posit AI: POSIT_EMAIL/POSIT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local token store. Set the credentials for the sign-in flow, or unset the kill-switch while signed in to Posit AI locally.',
+        reason: 'Not provisioning Posit AI: POSIT_EMAIL/POSIT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local token store. Set the credentials for the sign-in flow, or unset the seed kill-switch while signed in to Posit AI locally.',
       });
       console.log('[auth-setup] no credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI tests will skip');
       return;
@@ -514,8 +514,8 @@ setup('authenticate Posit AI', async () => {
   // Source 1: credentials set -> OAuth sign-in. Chosen whenever
   // POSIT_EMAIL/POSIT_PASSWORD are set, even on a machine already signed in
   // locally: setting the credentials is the deliberate way to exercise the
-  // sign-in flow. The kill-switch never affects it (it copies nothing from the
-  // host); note it in the log so a run configured with the kill-switch set
+  // sign-in flow. The seed kill-switch never affects it (it copies nothing from
+  // the host); note it in the log so a run configured with the seed kill-switch set
   // doesn't look silently ignored.
   if (noSeedCredentials()) {
     console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI sign-in flow is unaffected.');

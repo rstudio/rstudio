@@ -188,7 +188,7 @@ export default async function globalSetup(config: FullConfig) {
       );
     }
   } else {
-    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global kill-switch also suppresses the Posit AI local token-store copy; the sign-in flow is unaffected.');
+    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global seed kill-switch also suppresses the Posit AI local token-store copy; the sign-in flow is unaffected.');
   }
 
   process.env.PW_SANDBOX = sandbox;
