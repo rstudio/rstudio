@@ -89,7 +89,11 @@ function readAuthStore(file: string): Record<string, unknown> | null {
     console.warn(`[auth] WARNING: malformed JSON in token store ${file}: ${(err as Error).message}`);
     return null;
   }
-  return isPlainObject(parsed) ? parsed : null;
+  if (!isPlainObject(parsed)) {
+    console.warn(`[auth] WARNING: token store ${file} is valid JSON but not an object; ignoring`);
+    return null;
+  }
+  return parsed;
 }
 
 export function isStoreFileAuthenticated(file: string): boolean {
@@ -251,7 +255,7 @@ export function setAuthStateEnv(option: AiAuthOption): void {
   }
 }
 
-function strippedProvidersFromEnv(): AIProvider[] {
+export function strippedProvidersFromEnv(): AIProvider[] {
   const raw = process.env[AI_AUTH_NONE_ENV];
   if (!raw) return [];
   return raw.split(',').map((name) => {
@@ -283,12 +287,22 @@ export function userHomeForAuthState(baseHome: string): string {
   if (!fs.existsSync(variant)) {
     // Copy into a temp sibling and atomically rename, matching
     // workerUserHome() in desktop.fixture.ts, so a crash mid-copy can't leave
-    // a partial home that later reads as complete.
-    const tmp = `${variant}.partial`;
+    // a partial home that later reads as complete. The temp name carries the
+    // pid because in server mode baseHome is shared across workers (see
+    // sharedUserHome in server.fixture.ts), so two parallel workers can build
+    // the same variant at once; a pid-tagged temp keeps their copies separate,
+    // and a rename that loses the race (the variant now exists) is another
+    // worker's win, not an error.
+    const tmp = `${variant}.partial-${process.pid}`;
     fs.rmSync(tmp, { recursive: true, force: true });
     fs.cpSync(baseHome, tmp, { recursive: true });
-    fs.renameSync(tmp, variant);
-    console.log(`[auth-state] created ${path.basename(variant)} (signed out of: ${sorted.join(', ')})`);
+    try {
+      fs.renameSync(tmp, variant);
+      console.log(`[auth-state] created ${path.basename(variant)} (signed out of: ${sorted.join(', ')})`);
+    } catch (err) {
+      if (!fs.existsSync(variant)) throw err;
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
   }
   for (const provider of sorted) {
     for (const credentialPath of credentialPathsFor(provider, variant)) {

@@ -13,7 +13,8 @@ export type { AIProvider } from './auth';
 
 // Build the Posit AI skip reason from the status file the auth.setup project
 // wrote, so a skipped test reports what actually happened (login failed, copy
-// suppressed, mode=off, ...) rather than guessing at missing env vars. Only
+// suppressed, not signed in locally, ...) rather than guessing at missing
+// credentials. Only
 // called when the token store gate has already failed, so PW_SANDBOX is set
 // (isPositAiAuthenticated would have thrown otherwise).
 function positAiSkipReason(): string {
@@ -51,8 +52,8 @@ const COPILOT_HOST_PATH = process.platform === 'win32'
  *            the token has not expired. When the store is absent or invalid,
  *            the skip reason is built from the status file the setup project
  *            wrote (see PositAiAuthStatus in auth.ts), so the report shows the
- *            actual cause -- mode=off, copy suppressed, sign-in flow failed --
- *            instead of a generic "set POSIT_EMAIL/POSIT_PASSWORD".
+ *            actual cause -- not signed in locally, copy suppressed, sign-in
+ *            flow failed -- instead of a generic "set POSIT_EMAIL/POSIT_PASSWORD".
  *   copilot  sandbox-setup.ts host-copies the creds and sets
  *            PW_AI_SEEDED_COPILOT on success; the gate reads that flag.
  *

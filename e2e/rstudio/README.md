@@ -272,7 +272,7 @@ Quick reference (the setup auto-detects the source; "signed in locally" means a 
 | unset | yes | set | Skipped (copy suppressed) | Not provisioned |
 | unset | no | either | Skipped (not signed in locally) | Not provisioned |
 
-Tests default to a fully authenticated RStudio (whatever the run provisioned). To test signed-*out* behavior, declare the state per file (or describe block) with the `aiAuth` fixture option:
+Tests default to a fully authenticated RStudio (whatever the run provisioned). To test signed-*out* behavior, declare the state per file (worker-scoped, so it can't go inside a describe block) with the `aiAuth` fixture option:
 
 ```ts
 test.use({ aiAuth: { positai: 'none' } });        // signed out of Posit AI

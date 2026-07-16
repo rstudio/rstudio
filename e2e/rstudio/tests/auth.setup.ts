@@ -464,6 +464,16 @@ setup('authenticate Posit AI', async () => {
   const email = process.env.POSIT_EMAIL;
   const password = process.env.POSIT_PASSWORD;
 
+  // A half-set pair is a config mistake, not a source: dropping silently into
+  // copy/skip would bypass the sign-in flow the user clearly intended, and the
+  // skip reason below would wrongly report both as unset. Fail loud so the typo
+  // (or the forgotten second variable) surfaces immediately.
+  if (!!email !== !!password) {
+    throw new Error(
+      '[auth-setup] exactly one of POSIT_EMAIL / POSIT_PASSWORD is set; set both to exercise the sign-in flow, or neither to copy the local token store',
+    );
+  }
+
   // Source 2/3: no credentials set -> copy the local token store, else skip.
   // (Source 1, the sign-in flow, is below and runs when credentials are set.)
   if (!email || !password) {

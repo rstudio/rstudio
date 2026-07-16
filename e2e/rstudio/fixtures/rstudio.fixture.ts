@@ -153,7 +153,8 @@ async function attachSessionLogs(
  *
  * The `aiAuth` option declares which AI providers this file's RStudio should
  * be signed OUT of, e.g. `test.use({ aiAuth: { positai: 'none' } })` at file
- * or describe level. Omitted providers stay authenticated (the default `{}`
+ * level. It's worker-scoped, so Playwright rejects it inside a describe block
+ * (that would force a new worker). Omitted providers stay authenticated (the default `{}`
  * keeps today's fully-authenticated behavior). It's worker-scoped, so tests
  * with a different aiAuth run in their own worker with a fresh RStudio launch
  * against a credential-stripped copy of the user home -- the running IDE only
