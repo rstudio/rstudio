@@ -31,6 +31,8 @@ PACKAGES=(
 	libffi
 	libuser-devel
 	libuuid-devel
+	libuv-devel
+	libxml2-devel
 	libXScrnSaver-devel
 	libxslt-devel
 	make
