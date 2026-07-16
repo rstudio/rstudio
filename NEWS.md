@@ -20,6 +20,7 @@
 - ([#18225](https://github.com/rstudio/rstudio/issues/18225)): Clicking a console hyperlink to a package source file that no longer exists (for example, srcref paths recording the temporary directory used during package installation) now recovers the source from the package's srcref database when available, instead of showing a "No such file" error.
 - ([#13078](https://github.com/rstudio/rstudio/issues/13078)): Fixed an issue on Windows where `utils::choose.dir()` returned `NA` without showing the folder-selection dialog when running R 4.3.0 or newer.
 - ([#18257](https://github.com/rstudio/rstudio/issues/18257)): Fixed the IDE becoming unresponsive for an extended period after a large number of git-tracked files changed at once (e.g. moving or committing thousands of files); Git pane updates are now batched instead of rebuilding the changelist once per changed file.
+- ([#18260](https://github.com/rstudio/rstudio/issues/18260)): Fixed an issue on macOS where a file change landing just after a bulk change of many files could go undetected by the Files and Git panes until a manual refresh or unrelated later file activity.
 
 ### Dependencies
 - Ace 1.43.5
