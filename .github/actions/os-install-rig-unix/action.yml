@@ -10,7 +10,9 @@ description: >
 
 inputs:
   rig-version:
-    description: "rig release version to install (without the leading 'v')."
+    description: >-
+      rig release version to install. Keep at 0.8.1 or newer: older releases
+      cannot install R >= 4.6.1 on macOS (r-lib/rig#343).
     required: false
     default: "0.8.1"
 
@@ -23,6 +25,9 @@ runs:
         RIG_VERSION: ${{ inputs.rig-version }}
       run: |
         set -euo pipefail
+
+        # Tolerate a leading 'v' (as in the release tag) in the version input.
+        RIG_VERSION="${RIG_VERSION#v}"
 
         # Container jobs run as root and may lack sudo; hosted runners need it.
         SUDO=""
