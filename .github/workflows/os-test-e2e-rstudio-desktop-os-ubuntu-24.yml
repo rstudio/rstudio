@@ -337,9 +337,20 @@ jobs:
       - name: Allow unprivileged user namespaces (required by Electron/Chromium)
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
+      # The "latest" release tag is a permanent-link release whose binary
+      # assets are not kept current (last updated 2024-04-07 as of writing --
+      # see r-lib/rig#343 for a bug this staleness reintroduces). Resolve the
+      # actual latest release via the GitHub API instead. Real releases use
+      # "arm64" in the asset name, not $(arch)'s "aarch64".
       - name: Install rig
         run: |
-          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
+          RIG_VERSION=$(curl -fsSL https://api.github.com/repos/r-lib/rig/releases/latest | jq -r '.tag_name | ltrimstr("v")')
+          case "$(arch)" in
+            x86_64)  RIG_ASSET="rig-linux-${RIG_VERSION}.tar.gz" ;;
+            aarch64) RIG_ASSET="rig-linux-arm64-${RIG_VERSION}.tar.gz" ;;
+            *) echo "::error::Unsupported arch $(arch) for rig install"; exit 1 ;;
+          esac
+          curl -fLs "https://github.com/r-lib/rig/releases/download/v${RIG_VERSION}/${RIG_ASSET}" \
             | sudo tar xz -C /usr/local
 
       - name: Install R via rig

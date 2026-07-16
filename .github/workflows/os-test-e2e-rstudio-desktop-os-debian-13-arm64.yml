@@ -406,12 +406,20 @@ jobs:
             libxss1 libxtst6 libxcb1 \
             libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
 
+      # The "latest" release tag is a permanent-link release whose binary
+      # assets are not kept current (last updated 2024-04-07 as of writing --
+      # see r-lib/rig#343 for a bug this staleness reintroduces). Resolve the
+      # actual latest release via the GitHub API instead. $(arch) resolves
+      # aarch64 on arm64, but real releases use "arm64" in the asset name.
       - name: Install rig
         run: |
-          # $(arch) resolves aarch64 on arm64; rig's rolling "latest" release
-          # publishes rig-linux-aarch64-latest.tar.gz, so this line is unchanged
-          # from the x86_64 siblings.
-          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
+          RIG_VERSION=$(curl -fsSL https://api.github.com/repos/r-lib/rig/releases/latest | jq -r '.tag_name | ltrimstr("v")')
+          case "$(arch)" in
+            x86_64)  RIG_ASSET="rig-linux-${RIG_VERSION}.tar.gz" ;;
+            aarch64) RIG_ASSET="rig-linux-arm64-${RIG_VERSION}.tar.gz" ;;
+            *) echo "::error::Unsupported arch $(arch) for rig install"; exit 1 ;;
+          esac
+          curl -fLs "https://github.com/r-lib/rig/releases/download/v${RIG_VERSION}/${RIG_ASSET}" \
             | tar xz -C /usr/local
 
       - name: Install R via rig
