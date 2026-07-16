@@ -132,6 +132,70 @@ export function noSeedCredentials(): boolean {
   );
 }
 
+// GitHub Copilot's credential directory inside a given home dir. Platform-
+// dependent, and the single definition of where sandbox-setup.ts seeds Copilot
+// creds to and where scrubCredentials removes them from, so the two can't
+// drift. (The host-side source path is computed separately in sandbox-setup.ts:
+// on Windows it honors %LOCALAPPDATA%, which need not equal AppData/Local.)
+export function copilotConfigDir(homeDir: string): string {
+  return process.platform === 'win32'
+    ? path.join(homeDir, 'AppData', 'Local', 'github-copilot')
+    : path.join(homeDir, '.config', 'github-copilot');
+}
+
+// The canonical Posit AI token, stashed by the auth.setup project in the
+// sandbox root (outside any user-home) after a successful provision. The
+// per-launch auth-state fixture re-seeds authenticated homes from it, so a
+// signed-out test that deletes the token from its own home can't strand a
+// later authenticated launch with no source to restore from. It holds a real
+// token, so scrubCredentials removes it too.
+const CANONICAL_TOKEN_FILE = 'positai-token.json';
+
+export function canonicalTokenPath(sandbox: string): string {
+  return path.join(sandbox, CANONICAL_TOKEN_FILE);
+}
+
+// Remove every piece of credential material from the sandbox: the Posit AI
+// token stores and Copilot creds in each user-home* (the shared template plus
+// any per-worker or per-auth-state copies), and the canonical reference token.
+// Teardown calls this before a sandbox is left on disk -- preserved for
+// inspection, or stranded by a failed whole-tree delete -- so a surviving
+// sandbox never carries real tokens. Returns the paths it could not remove,
+// each with its error (empty on full success), so the caller can warn loudly
+// that a preserved sandbox still holds credentials. Missing paths are not
+// failures.
+export function scrubCredentials(sandbox: string): string[] {
+  const failures: string[] = [];
+  const remove = (target: string): void => {
+    try {
+      fs.rmSync(target, { recursive: true, force: true });
+    } catch (err) {
+      failures.push(`${target}: ${(err as Error).message}`);
+    }
+  };
+
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(sandbox);
+  } catch (err) {
+    return [`${sandbox}: could not list sandbox to find user homes: ${(err as Error).message}`];
+  }
+  // Any dir whose name begins "user-home" is a home variant (the template, a
+  // per-worker copy, a per-auth-state copy) or an aborted copy's .partial temp
+  // -- all can hold seeded credentials.
+  const homes = entries
+    .filter((name) => name.startsWith('user-home'))
+    .map((name) => path.join(sandbox, name));
+
+  for (const home of homes) {
+    for (const store of storeFileCandidates(home)) remove(store);
+    remove(copilotConfigDir(home));
+  }
+  remove(canonicalTokenPath(sandbox));
+
+  return failures;
+}
+
 // ---------------------------------------------------------------------------
 // Auth-setup status: a small file the auth.setup project writes into the
 // sandbox recording what it did and why. requireAiCredentials() reads it to

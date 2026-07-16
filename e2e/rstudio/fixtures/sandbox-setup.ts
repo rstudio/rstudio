@@ -4,7 +4,7 @@ import * as path from 'path';
 import type { FullConfig } from '@playwright/test';
 import { prepareRLibs } from './r-libs-setup';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
-import { noSeedCredentials } from '../utils/auth';
+import { noSeedCredentials, copilotConfigDir } from '../utils/auth';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -48,12 +48,14 @@ import { noSeedCredentials } from '../utils/auth';
  *                                  nothing from the host. Copilot tests skip when
  *                                  their credentials are unseeded.
  *                                  Privacy note: real OAuth/API tokens are
- *                                  copied into the sandbox. If the run is
- *                                  preserved (test failure or
- *                                  PW_SANDBOX_SKIP_CLEANUP=1), the copied
- *                                  tokens persist there until the sandbox is
- *                                  removed. Set this opt-out if the host
- *                                  isn't a dedicated test account.
+ *                                  copied into the sandbox during the run.
+ *                                  sandbox-teardown scrubs them whenever the
+ *                                  sandbox is left on disk (preserved by a
+ *                                  failure or PW_SANDBOX_SKIP_CLEANUP, or
+ *                                  stranded by a failed delete), so a surviving
+ *                                  sandbox should hold no tokens; set this
+ *                                  opt-out anyway if the host isn't a dedicated
+ *                                  test account, to avoid copying them at all.
  *
  * Sets PW_SANDBOX (internal) to the absolute path of the auto-created
  * subtree, and PW_AI_SEEDED_COPILOT to "1" when GitHub Copilot credentials
@@ -167,16 +169,14 @@ export default async function globalSetup(config: FullConfig) {
     const realCopilot = isWindows
       ? path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local'), 'github-copilot')
       : path.join(os.homedir(), '.config', 'github-copilot');
-    const destCopilot = isWindows
-      ? path.join(userHome, 'AppData', 'Local', 'github-copilot')
-      : path.join(userHome, '.config', 'github-copilot');
+    const destCopilot = copilotConfigDir(userHome);
     if (fs.existsSync(realCopilot)) {
       try {
         fs.cpSync(realCopilot, destCopilot, { recursive: true });
         process.env.PW_AI_SEEDED_COPILOT = '1';
         console.log(`[sandbox] seeded user-home github-copilot from ${realCopilot}`);
         console.log(
-          `[sandbox] real GitHub Copilot tokens now live in the sandbox and persist if the run is preserved or teardown fails.`,
+          `[sandbox] real GitHub Copilot tokens now live in the sandbox; teardown scrubs them if the run is preserved, and warns loudly if it can't.`,
         );
       } catch (err) {
         throw new Error(
