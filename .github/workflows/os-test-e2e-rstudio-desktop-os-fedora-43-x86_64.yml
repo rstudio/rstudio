@@ -334,7 +334,7 @@ jobs:
 
     steps:
       # The Fedora base image is minimal and the job runs as root. Install what
-      # checkout, rig, and the .rpm install need. sudo is kept for parity with
+      # checkout, node, and the .rpm install need. sudo is kept for parity with
       # the shared scripts.
       - name: Prepare Fedora container
         run: |
@@ -731,8 +731,8 @@ jobs:
           if-no-files-found: ignore
 
       # Publish a browsable copy of the report to Connect on failure only, so
-      # reviewers can inspect it without downloading the zip. Best-effort: a
-      # no-op on fork PRs (empty key) and never fails the job.
+      # reviewers can inspect it without downloading the zip. Best-effort:
+      # does nothing on fork PRs (empty key) and never fails the job.
       - name: Publish report to Connect
         id: publish-report
         if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
