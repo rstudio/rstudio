@@ -44,6 +44,7 @@
 #include <core/IncrementalCommand.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/collection/Tree.hpp>
+#include <core/collection/LruCache.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Util.hpp>
@@ -2504,70 +2505,159 @@ void showFile(const FilePath& filePath, const std::string& window)
    }
 }
 
+namespace {
+
+// In-memory record of files the session itself surfaced to the browser via a
+// server-initiated preview/show flow (utils::file.show(), HTML "Show in
+// Browser", source-link clicks, etc.). A subsequent download request whose
+// path is present here -- with the same size and last-write-time it had when
+// registered -- is that preview fetch, not a user-initiated download, so it is
+// not audited.
+//
+// The cache lives only in this (rsession) process's memory: neither the
+// browser nor the in-session R process can insert entries, so membership is an
+// unforgeable grant and needs no signing. This replaces the old ?show=1 query
+// marker, which any authenticated client could append to skip the audit.
+//
+// Bounded to a fixed size. Overflow (eviction) or a content change since
+// registration simply falls through to auditing -- an extra audit row, never
+// a missed one, so both failure modes are fail-safe.
+struct DownloadGrant
+{
+   std::time_t lastWriteTime;
+   uintmax_t size;
+};
+
+core::collection::LruCache<std::string, DownloadGrant>& downloadGrantCache()
+{
+   static core::collection::LruCache<std::string, DownloadGrant> instance(1000);
+   return instance;
+}
+
+bool hasValidDownloadGrant(const core::FilePath& filePath)
+{
+   const std::string key = filePath.getAbsolutePath();
+
+   DownloadGrant grant;
+   if (!downloadGrantCache().get(key, &grant))
+      return false;
+
+   // Confirm the file hasn't been replaced since it was registered; if it has,
+   // drop the stale grant and audit.
+   std::time_t lastWriteTime;
+   Error error = filePath.getLastWriteTime(lastWriteTime);
+   if (error ||
+       grant.lastWriteTime != lastWriteTime ||
+       grant.size != filePath.getSize())
+   {
+      downloadGrantCache().remove(key);
+      return false;
+   }
+
+   return true;
+}
+
+} // anonymous namespace
+
+void registerDownloadGrant(const core::FilePath& filePath)
+{
+   if (!filePath.exists())
+      return;
+
+   std::time_t lastWriteTime;
+   Error error = filePath.getLastWriteTime(lastWriteTime);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   DownloadGrant grant;
+   grant.lastWriteTime = lastWriteTime;
+   grant.size = filePath.getSize();
+   downloadGrantCache().insert(filePath.getAbsolutePath(), grant);
+}
+
 bool shouldAuditFileDownload(const core::http::Request& request,
                              const core::FilePath& filePath)
 {
-   // Skip when the URL was constructed by an internal preview/show flow
-   // (?show=1 marker, set by createFileUrl above and by Files.java's
-   // companion showFileInBrowser for view-style navigations).
-   if (request.queryParamValue("show") == "1")
+   // Skip files owned by a system account -- an owner uid below the configured
+   // minimum login user id (auth-minimum-user-id), e.g. root-owned fonts or
+   // admin-installed R packages. These are provisioned by the administrator,
+   // not user data, so serving them to the browser isn't a user file download.
+   // The owner uid can't be spoofed by the requesting client, so this is a
+   // safe unconditional skip.
+   uid_t ownerUid;
+   Error ownerError = filePath.getFileOwner(ownerUid);
+   if (!ownerError && ownerUid < session::options().authMinimumUserId())
    {
-      LOG_DEBUG_MESSAGE("Audit skipped (?show=1 marker): " +
+      LOG_DEBUG_MESSAGE("Audit skipped (system-owned, uid=" +
+                        std::to_string(ownerUid) + "): " +
                         filePath.getAbsolutePath());
       return false;
    }
 
-   // Skip HTML sub-resource fetches. Browsers signal these via
-   // Sec-Fetch-Dest. Top-level navigations send "document" (or omit the
-   // header on older browsers); embedded resources send their resource
-   // type. Treat anything in the explicit sub-resource set as not-a-
-   // download so a single HTML preview doesn't generate an audit row
-   // per asset. "iframe" and "frame" are deliberately NOT in this set:
-   // an iframe loading a binary is effectively exfiltration, so let
-   // the Content-Type check below decide.
-   const std::string fetchDest = request.headerValue("Sec-Fetch-Dest");
-   if (fetchDest == "style"        || fetchDest == "script"        ||
-       fetchDest == "image"        || fetchDest == "font"          ||
-       fetchDest == "audio"        || fetchDest == "video"         ||
-       fetchDest == "track"        || fetchDest == "object"        ||
-       fetchDest == "embed"        || fetchDest == "manifest"      ||
-       fetchDest == "xslt"         || fetchDest == "report"        ||
-       fetchDest == "worker"       || fetchDest == "serviceworker" ||
-       fetchDest == "audioworklet" || fetchDest == "paintworklet")
+   // Skip files the session itself surfaced through a server-initiated
+   // preview/show flow. createFileUrl()/showFile() record a grant in the
+   // in-process cache when they build the URL; unlike the old ?show=1 marker,
+   // this grant can only be created by server-side code and so can't be forged
+   // by the requesting client.
+   if (hasValidDownloadGrant(filePath))
    {
-      LOG_DEBUG_MESSAGE("Audit skipped (Sec-Fetch-Dest=" + fetchDest +
-                        " sub-resource): " + filePath.getAbsolutePath());
+      LOG_DEBUG_MESSAGE("Audit skipped (server-initiated preview grant): " +
+                        filePath.getAbsolutePath());
       return false;
    }
 
-   // Skip when the response will be served as a browser-renderable
-   // Content-Type. The bytes are being viewed inline rather than saved
-   // to disk, so it isn't a download from the user's perspective. Note
-   // this means a real "right-click -> Save As" on a rendered PDF will
-   // not produce an audit row; that's an accepted trade-off for not
-   // logging the much more common inline-view case.
-   //
-   // For the audit decision we pass "application/octet-stream" as the
-   // default Content-Type for unknown extensions, even though the
-   // setFile()/setCacheableFile() response path falls back to
-   // "text/plain". The divergence is intentional: it closes a rename-
-   // bypass (renaming secret.zip to "secret" would otherwise resolve
-   // to text/plain and silently skip the audit) at the cost of also
-   // logging legitimate fetches of extensionless text files
-   // (LICENSE, README, Makefile, etc.). Over-logging is the safer
-   // default for an audit record.
-   const std::string mimeType =
-      filePath.getMimeContentType("application/octet-stream");
-   if (mimeType.rfind("text/", 0) == 0  ||
-       mimeType.rfind("image/", 0) == 0 ||
-       mimeType.rfind("audio/", 0) == 0 ||
-       mimeType.rfind("video/", 0) == 0 ||
-       mimeType == "application/pdf"    ||
-       mimeType == "application/json")
+   // The remaining two skips classify a request as a browser sub-resource load
+   // (an HTML preview pulling its styles/scripts/images/fonts, an inline-
+   // rendered document) rather than a download, so a single preview doesn't
+   // generate an audit row per asset. Both signals are supplied by the
+   // requesting client and can be spoofed to evade the audit (e.g. sending
+   // Sec-Fetch-Dest: image, or renaming secret.zip to secret.txt to land a
+   // text/* Content-Type), so they are gated behind an administrator opt-in.
+   // When track-resource-downloads is enabled these skips are disabled and
+   // such requests are audited.
+   if (!session::options().trackResourceDownloads())
    {
-      LOG_DEBUG_MESSAGE("Audit skipped (renderable Content-Type=" +
-                        mimeType + "): " + filePath.getAbsolutePath());
-      return false;
+      // Skip HTML sub-resource fetches. Browsers signal these via
+      // Sec-Fetch-Dest. Top-level navigations send "document" (or omit the
+      // header on older browsers); embedded resources send their resource
+      // type. Treat anything in the explicit sub-resource set as not-a-
+      // download. "iframe" and "frame" are deliberately NOT in this set:
+      // an iframe loading a binary is effectively exfiltration, so let
+      // the Content-Type check below decide.
+      const std::string fetchDest = request.headerValue("Sec-Fetch-Dest");
+      if (fetchDest == "style"        || fetchDest == "script"        ||
+          fetchDest == "image"        || fetchDest == "font"          ||
+          fetchDest == "audio"        || fetchDest == "video"         ||
+          fetchDest == "track"        || fetchDest == "object"        ||
+          fetchDest == "embed"        || fetchDest == "manifest"      ||
+          fetchDest == "xslt"         || fetchDest == "report"        ||
+          fetchDest == "worker"       || fetchDest == "serviceworker" ||
+          fetchDest == "audioworklet" || fetchDest == "paintworklet")
+      {
+         LOG_DEBUG_MESSAGE("Audit skipped (Sec-Fetch-Dest=" + fetchDest +
+                           " sub-resource): " + filePath.getAbsolutePath());
+         return false;
+      }
+
+      // Skip when the response will be served as a browser-renderable
+      // Content-Type. The bytes are being viewed inline rather than saved
+      // to disk, so it isn't a download from the user's perspective.
+      const std::string mimeType =
+         filePath.getMimeContentType("application/octet-stream");
+      if (mimeType.rfind("text/", 0) == 0  ||
+          mimeType.rfind("image/", 0) == 0 ||
+          mimeType.rfind("audio/", 0) == 0 ||
+          mimeType.rfind("video/", 0) == 0 ||
+          mimeType == "application/pdf"    ||
+          mimeType == "application/json")
+      {
+         LOG_DEBUG_MESSAGE("Audit skipped (renderable Content-Type=" +
+                           mimeType + "): " + filePath.getAbsolutePath());
+         return false;
+      }
    }
 
    return true;
@@ -2575,25 +2665,28 @@ bool shouldAuditFileDownload(const core::http::Request& request,
 
 std::string createFileUrl(const core::FilePath& filePath)
 {
-   // determine url based on whether this is in ~ or not. Tag the result
-   // with show=1 so handleFilesRequest / handleFileShow can distinguish
-   // server-initiated preview/show flows from user-initiated downloads
-   // and skip audit logging for the former.
+   // This is a server-initiated preview/show flow, so record a download grant
+   // for the file. handleFilesRequest / handleFileShow / handleShowRequest
+   // consult the grant (via shouldAuditFileDownload) to distinguish this from
+   // a user-initiated download and skip audit logging for the former.
+   registerDownloadGrant(filePath);
+
+   // determine url based on whether this is in ~ or not.
    std::string url;
    if (isVisibleUserFile(filePath))
    {
       auto home = module_context::userHomePath();
       auto path = filePath.getRelativePath(home);
-      url = "files/" + path + "?show=1";
+      url = "files/" + path;
    }
    else if (isPathViewAllowed(filePath))
    {
-      url = "show" + filePath.getAbsolutePath() + "?show=1";
+      url = "show" + filePath.getAbsolutePath();
    }
    else
    {
       auto path = core::http::util::urlEncode(filePath.getAbsolutePath(), true);
-      url = "file_show?path=" + path + "&show=1";
+      url = "file_show?path=" + path;
    }
    return url;
 }

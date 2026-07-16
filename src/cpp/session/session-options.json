@@ -1054,7 +1054,13 @@
          }
       ],
       "misc": [
-
+         {
+            "name": "track-resource-downloads",
+            "type": "bool",
+            "defaultValue": false,
+            "memberName": "trackResourceDownloads_",
+            "description": "When enabled, downloads of browser-renderable resources (fonts, images, HTML, and other inline content types served via /files, /file_show, and /show) generate session_file_download audit events instead of being skipped. Defaults to disabled to avoid audit noise from routine resource loads. Administrators who require these downloads to be audited can enable this option."
+         }
       ]
    }
 }

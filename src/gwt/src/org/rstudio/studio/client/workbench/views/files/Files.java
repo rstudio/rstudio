@@ -987,7 +987,7 @@ public class Files
 
    public void onOpenFileInBrowser(OpenFileInBrowserEvent event)
    {
-      showFileInBrowser(event.getFile(), event.isDownload());
+      showFileInBrowser(event.getFile());
    }
 
    public void onDirectoryNavigate(DirectoryNavigateEvent event)
@@ -1112,26 +1112,10 @@ public class Files
 
    private void showFileInBrowser(FileSystemItem file)
    {
-      showFileInBrowser(file, false);
-   }
-
-   private void showFileInBrowser(FileSystemItem file, boolean asDownload)
-   {
       // show the file in a new window if we can get a file url for it
       String fileURL = server_.getFileUrl(file);
       if (fileURL != null)
-      {
-         // for server URLs that aren't user-initiated downloads (HTML
-         // "Show in Browser", source-code link clicks), tag the URL so
-         // the server skips audit logging - matching the marker that
-         // module_context::createFileUrl applies to server-side preview
-         // flows. Files-pane downloads stay unmarked and are logged like
-         // any other top-level navigation.
-         // Desktop URLs are file:// and don't go through the session.
-         if (!asDownload && !fileURL.startsWith("file:"))
-            fileURL += (fileURL.contains("?") ? "&" : "?") + "show=1";
          globalDisplay_.openWindow(fileURL);
-      }
    }
 
    // generate a filename based on the file type and currentPath_ variable

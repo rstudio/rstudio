@@ -250,6 +250,14 @@ public:
       return authRequiredUserGroup_;
    }
 
+   // Test hook: track-resource-downloads is a regular (non-overlay) option and
+   // is therefore fixed at process start. The unit tests need to flip it at
+   // runtime to exercise both the default (skip) and opt-in (audit) paths.
+   void setTrackResourceDownloads(bool value)
+   {
+      trackResourceDownloads_ = value;
+   }
+
 private:
    bool multiSession_;
    bool showUserHomePage_;
@@ -278,7 +286,7 @@ private:
    // root directory for locating resources
    core::FilePath resourcePath_;
 
-   unsigned int authMinimumUserId_;
+   unsigned int authMinimumUserId_ = 0;
    int64_t limitRpcClientUid_;
 
    // in-session generated RSA keys

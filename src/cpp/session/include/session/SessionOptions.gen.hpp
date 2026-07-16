@@ -514,7 +514,10 @@ protected:
       value<std::string>(&previewAllowedFunctions_)->default_value(""),
       "A comma- or space-separated list of additional function names (for example, 'mypkg::connect') that may be evaluated without prompting when resolving a file preview connection expression -- the SQL '-- !preview conn=' header or an r2d3 preview. Each listed name is treated as a trusted constructor; its arguments are still validated. Use this to allow connection helpers from internally-built packages.");
 
-   pMisc->add_options();
+   pMisc->add_options()
+      ("track-resource-downloads",
+      value<bool>(&trackResourceDownloads_)->default_value(false),
+      "When enabled, downloads of browser-renderable resources (fonts, images, HTML, and other inline content types served via /files, /file_show, and /show) generate session_file_download audit events instead of being skipped. Defaults to disabled to avoid audit noise from routine resource loads. Administrators who require these downloads to be audited can enable this option.");
 
    FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
@@ -657,6 +660,7 @@ public:
    int projectTrustDialogs() const { return projectTrustDialogs_; }
    bool projectTrustRequired() const { return projectTrustRequired_; }
    std::string previewAllowedFunctions() const { return previewAllowedFunctions_; }
+   bool trackResourceDownloads() const { return trackResourceDownloads_; }
 
 
 protected:
@@ -796,6 +800,7 @@ protected:
    int projectTrustDialogs_;
    bool projectTrustRequired_;
    std::string previewAllowedFunctions_;
+   bool trackResourceDownloads_;
    virtual bool allowOverlay() const { return false; };
 };
 
