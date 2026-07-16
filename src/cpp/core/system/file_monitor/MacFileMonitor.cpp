@@ -365,7 +365,9 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       // fold duplicate paths into a single event, merging their flags
       std::map<std::string, std::size_t>::iterator it = eventIndex.find(path);
       if (it != eventIndex.end())
+      {
          events[it->second].second |= eventFlags[i];
+      }
       else
       {
          eventIndex[path] = events.size();
