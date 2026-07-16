@@ -143,5 +143,44 @@ TEST(SecureKeyFileTest, ReadableSystemKeyIsUsed)
    tempDir.removeIfExists();
 }
 
+// The common unprivileged deployment: no system key anywhere, so a new key is
+// generated in the per-user cache. This is also the path that previously logged
+// a spurious ENOENT error on every start.
+TEST(SecureKeyFileTest, AbsentSystemKeyGeneratesInCache)
+{
+   if (core::system::effectiveUserIsRoot())
+      GTEST_SKIP() << "root reads system paths and would not fall back to cache";
+
+   FilePath tempDir;
+   ASSERT_FALSE(FilePath::tempFilePath(tempDir));
+   ASSERT_FALSE(tempDir.ensureDirectory());
+
+   FilePath configDir = tempDir.completeChildPath("config");
+   ASSERT_FALSE(configDir.ensureDirectory());
+   FilePath cacheDir = tempDir.completeChildPath("cache");
+   ASSERT_FALSE(cacheDir.ensureDirectory());
+
+   {
+      ScopedEnv config("RSTUDIO_CONFIG_DIR", configDir.getAbsolutePath());
+      ScopedEnv cache("XDG_CACHE_HOME", cacheDir.getAbsolutePath());
+      // userCacheDir() resolves RSTUDIO_CACHE_HOME before XDG_CACHE_HOME.
+      ScopedEnv cacheHome("RSTUDIO_CACHE_HOME", cacheDir.getAbsolutePath());
+
+      std::string contents, hash, pathUsed;
+      Error error = key_file::readSecureKeyFile(
+            "session-rpc-key", &contents, &hash, &pathUsed);
+
+      FilePath expectedCacheKey =
+            core::system::xdg::userCacheDir().completePath("session-rpc-key");
+
+      EXPECT_FALSE(error);
+      EXPECT_FALSE(contents.empty());
+      EXPECT_EQ(pathUsed, expectedCacheKey.getAbsolutePath());
+      EXPECT_TRUE(expectedCacheKey.exists());
+   }
+
+   tempDir.removeIfExists();
+}
+
 } // namespace server_core
 } // namespace rstudio
