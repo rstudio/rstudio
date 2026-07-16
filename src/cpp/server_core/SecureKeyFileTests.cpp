@@ -86,6 +86,8 @@ TEST(SecureKeyFileTest, UnreadableSystemKeyFallsBackToCache)
    {
       ScopedEnv config("RSTUDIO_CONFIG_DIR", configDir.getAbsolutePath());
       ScopedEnv cache("XDG_CACHE_HOME", cacheDir.getAbsolutePath());
+      // userCacheDir() resolves RSTUDIO_CACHE_HOME before XDG_CACHE_HOME.
+      ScopedEnv cacheHome("RSTUDIO_CACHE_HOME", cacheDir.getAbsolutePath());
 
       std::string contents, hash, pathUsed;
       Error error = key_file::readSecureKeyFile(
@@ -126,6 +128,8 @@ TEST(SecureKeyFileTest, ReadableSystemKeyIsUsed)
    {
       ScopedEnv config("RSTUDIO_CONFIG_DIR", configDir.getAbsolutePath());
       ScopedEnv cache("XDG_CACHE_HOME", cacheDir.getAbsolutePath());
+      // userCacheDir() resolves RSTUDIO_CACHE_HOME before XDG_CACHE_HOME.
+      ScopedEnv cacheHome("RSTUDIO_CACHE_HOME", cacheDir.getAbsolutePath());
 
       std::string contents, hash, pathUsed;
       Error error = key_file::readSecureKeyFile(

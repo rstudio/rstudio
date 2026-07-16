@@ -122,14 +122,31 @@ core::Error readSecureKeyFile(const std::string& filename,
       secureKeyPath = core::FilePath("/var/lib/rstudio-server")
          .completePath(filename);
 
+   bool secureKeyExists = secureKeyPath.exists();
    bool secureKeyReadable = false;
-   secureKeyPath.isReadable(secureKeyReadable);
+
+   // isReadable reports EACCES as simply "not readable"; any other error is
+   // unexpected and would otherwise be coerced to "not readable" silently.
+   core::Error readableError = secureKeyPath.isReadable(secureKeyReadable);
+   if (readableError)
+   {
+      readableError.addProperty("path", secureKeyPath.getAbsolutePath());
+      LOG_ERROR(readableError);
+      secureKeyReadable = false;
+   }
 
    // A non-root server must not fail on a system key it cannot read (e.g. a
    // root-owned mode-600 key in an HPC container image); fall back to the
-   // per-user cache. 
+   // per-user cache.
    if (!core::system::effectiveUserIsRoot() && !secureKeyReadable)
    {
+      if (secureKeyExists)
+      {
+         LOG_WARNING_MESSAGE("Running without privilege; system secure key at " +
+                             secureKeyPath.getAbsolutePath() +
+                             " is not readable, falling back to user cache");
+      }
+
       secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
       if (secureKeyPath.exists())
       {
