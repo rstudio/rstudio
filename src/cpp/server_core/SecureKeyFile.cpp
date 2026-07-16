@@ -108,6 +108,14 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
    return core::Success();
 }
 
+bool detail::useUserCacheKey(bool isRoot, bool systemKeyExists, bool systemKeyReadable)
+{
+   if (isRoot)
+      return false;
+
+   return !systemKeyExists || !systemKeyReadable;
+}
+
 core::Error readSecureKeyFile(const std::string& filename,
                               std::string* pContents,
                               std::string* pContentsHash,
@@ -122,9 +130,19 @@ core::Error readSecureKeyFile(const std::string& filename,
       secureKeyPath = core::FilePath("/var/lib/rstudio-server")
          .completePath(filename);
 
-   // If no system key exists and we're not privileged, fall back to the
-   // user cache (read if present, generate otherwise).
-   if (!secureKeyPath.exists() && !core::system::effectiveUserIsRoot())
+   // A non-root server must not fail on a system key it cannot read (e.g. a
+   // root-owned mode-600 key in an HPC container image); fall back to the cache.
+   bool systemKeyReadable = false;
+   if (secureKeyPath.exists())
+   {
+      core::Error error = secureKeyPath.isReadable(systemKeyReadable);
+      if (error)
+         systemKeyReadable = false;
+   }
+
+   if (detail::useUserCacheKey(core::system::effectiveUserIsRoot(),
+                               secureKeyPath.exists(),
+                               systemKeyReadable))
    {
       secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
       if (secureKeyPath.exists())

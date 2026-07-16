@@ -54,6 +54,14 @@ core::Error readSecureKeyFile(const std::string& filename,
 // Does not attempt to read or create the file.
 core::FilePath systemKeyFilePath(const std::string& filename);
 
+namespace detail {
+
+// Non-root falls back to the per-user cache when the system key is absent or
+// unreadable; root never does. Exposed for unit testing.
+bool useUserCacheKey(bool isRoot, bool systemKeyExists, bool systemKeyReadable);
+
+} // namespace detail
+
 } // namespace key_file
 } // namespace server
 } // namespace rstudio

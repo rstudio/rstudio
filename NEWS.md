@@ -5,6 +5,7 @@
 
 ### Fixed
 - ([#18174](https://github.com/rstudio/rstudio/issues/18174)): Fixed an error when viewing an object from the Object Explorer with the French user interface language enabled.
+- ([#18255](https://github.com/rstudio/rstudio/issues/18255)): Fixed a regression where an unprivileged RStudio Server would fail to start when it could not read a system secure key file (for example, a root-owned key baked into an HPC container image), rather than falling back to its per-user cache.
 
 ### Dependencies
 - Ace 1.43.5
