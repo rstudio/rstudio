@@ -211,6 +211,32 @@ TEST_F(ChatInstallLock, StaleTokenReleaseIsNoOp)
    EXPECT_FALSE(sessionA_->inUseHeld());
 }
 
+TEST_F(ChatInstallLock, OverlappingGenerationsKeepLockHeldUntilAllReaped)
+{
+   // A force-terminated backend may still be alive (unreaped) when a new one
+   // starts: both generations are outstanding, and the session lock must not
+   // release until BOTH exit callbacks have run — otherwise the new process
+   // exiting first would unlock while the old one still runs from pai/bin.
+   uint64_t oldToken = 0;
+   uint64_t newToken = 0;
+   ASSERT_FALSE(sessionA_->acquireInUse(
+      InstallLock::Component::ChatBackend, &oldToken));
+   ASSERT_FALSE(sessionA_->acquireInUse(
+      InstallLock::Component::ChatBackend, &newToken));
+
+   sessionA_->releaseInUse(InstallLock::Component::ChatBackend, newToken);
+   EXPECT_TRUE(sessionA_->inUseHeld());
+
+   std::string message;
+   EXPECT_TRUE(sessionB_->tryBeginMutation(&message));
+
+   sessionA_->releaseInUse(InstallLock::Component::ChatBackend, oldToken);
+   EXPECT_FALSE(sessionA_->inUseHeld());
+
+   EXPECT_FALSE(sessionB_->tryBeginMutation(&message));
+   sessionB_->endMutation();
+}
+
 TEST_F(ChatInstallLock, ProbesDoNotReleaseOwnLocks)
 {
    uint64_t token = 0;

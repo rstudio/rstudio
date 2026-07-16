@@ -74,7 +74,6 @@ InstallLock::InstallLock(
      ownerId_(ownerId),
      lockType_(lockType),
      nextToken_(0),
-     componentTokens_{0, 0},
      mutationActive_(false)
 {
 }
@@ -104,18 +103,15 @@ Error InstallLock::acquireInUse(Component component, uint64_t* pToken)
    }
 
    uint64_t token = ++nextToken_;
-   componentTokens_[componentIndex(component)] = token;
+   componentTokens_[componentIndex(component)].insert(token);
    *pToken = token;
    return Success();
 }
 
 void InstallLock::releaseInUse(Component component, uint64_t token)
 {
-   std::size_t index = componentIndex(component);
-   if (componentTokens_[index] == 0 || componentTokens_[index] != token)
+   if (componentTokens_[componentIndex(component)].erase(token) == 0)
       return;
-
-   componentTokens_[index] = 0;
 
    if (!anyComponentHeld() && inUseLock_)
    {
@@ -329,7 +325,7 @@ FileLock::LockType InstallLock::effectiveLockType() const
 
 bool InstallLock::anyComponentHeld() const
 {
-   return componentTokens_[0] != 0 || componentTokens_[1] != 0;
+   return !componentTokens_[0].empty() || !componentTokens_[1].empty();
 }
 
 MutationScope::MutationScope(InstallLock& lock)

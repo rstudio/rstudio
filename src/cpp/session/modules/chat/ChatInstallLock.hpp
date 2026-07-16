@@ -17,6 +17,7 @@
 #define SESSION_CHAT_INSTALL_LOCK_HPP
 
 #include <cstdint>
+#include <set>
 #include <string>
 
 #include <boost/noncopyable.hpp>
@@ -83,14 +84,16 @@ public:
    // intentionally ignores our own install.lock.
    //
    // On success *pToken receives a generation token identifying this holder.
-   // Re-acquiring an already-held component issues a new token and
-   // invalidates the previous one (models a restarted process).
+   // Each acquisition adds an outstanding generation for the component: a
+   // force-terminated process may still be alive (unreaped) when its
+   // replacement starts, and both generations then legitimately pin the
+   // lock at once.
    core::Error acquireInUse(Component component, uint64_t* pToken);
 
-   // Releases a component. No-op unless token matches the component's
-   // current holder: a late exit callback from a terminated previous process
-   // must not release the lock a restarted process now holds. The file lock
-   // is released when the last held component is released.
+   // Releases one generation of a component. No-op unless the token is
+   // outstanding: a late exit callback from a previous process must not
+   // release anything twice or on behalf of a replacement. The file lock is
+   // released only when no generation of any component remains outstanding.
    void releaseInUse(Component component, uint64_t token);
 
    // True while any component is held. Because components are released only
@@ -136,7 +139,7 @@ private:
    boost::shared_ptr<core::FileLock> inUseLock_;
    boost::shared_ptr<core::FileLock> mutationLock_;
    uint64_t nextToken_;
-   uint64_t componentTokens_[2];
+   std::set<uint64_t> componentTokens_[2];
    bool mutationActive_;
 };
 
