@@ -53,6 +53,7 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -2013,7 +2014,8 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
          entry["is_shortcut"] = true;
 
          FilePath targetPath;
-         Error error = resolveWindowsShortcut(filePath, &targetPath);
+         bool targetIsDir = false;
+         Error error = resolveWindowsShortcut(filePath, &targetPath, &targetIsDir);
          if (error)
          {
             // shortcuts without a file-system target and garbage .lnk
@@ -2021,11 +2023,23 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
             // like the alias case above
             LOG_DEBUG_MESSAGE("Failed to resolve Windows shortcut: " + error.asString());
          }
+         else if (targetPath.getAbsolutePath().rfind("//", 0) == 0 ||
+                  core::system::isRemotePath(targetPath))
+         {
+            // never probe a network target during a listing: stat'ing a
+            // disconnected share or dead UNC host can block the session for
+            // seconds per entry. Trust the link instead, using the
+            // directory-ness stored when it was written. (The "//" prefix
+            // check covers UNC paths in FilePath's generic form, which the
+            // backslash-oriented shell check may not recognize.)
+            entry["alias_target"] = createAliasedPath(targetPath);
+            isDir = targetIsDir;
+         }
          else if (targetPath.exists())
          {
             // resolution returns the STORED path even when the target has
-            // been deleted (no shell search), so this exists() check is
-            // what demotes broken shortcuts to plain-file behavior
+            // been deleted (no shell search), so this local, cheap exists()
+            // check is what demotes broken shortcuts to plain-file behavior
             entry["alias_target"] = createAliasedPath(targetPath);
             isDir = targetPath.isDirectory();
          }

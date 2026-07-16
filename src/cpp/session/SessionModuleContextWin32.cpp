@@ -94,7 +94,8 @@ bool isWindowsShortcut(const core::FilePath& filePath)
 }
 
 Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
-                             core::FilePath* pTargetPath)
+                             core::FilePath* pTargetPath,
+                             bool* pTargetIsDirectory)
 {
    // NOTE: rsession initializes COM (STA) eagerly on the main thread at
    // startup (SessionMain.cpp), and listings / file-monitor callbacks run
@@ -127,9 +128,13 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
    // returns the shortcut's STORED target path even when that target no
    // longer exists; broken-shortcut detection is the caller's exists()
    // check on the result (createFileSystemItem does this, matching the
-   // broken-alias handling).
+   // broken-alias handling). The WIN32_FIND_DATAW is likewise filled from
+   // the link's stored target metadata, not from the filesystem, so the
+   // reported directory-ness costs no target I/O either.
    wchar_t targetPath[MAX_PATH];
-   hr = pShellLink->GetPath(targetPath, MAX_PATH, nullptr, 0);
+   WIN32_FIND_DATAW findData;
+   ::ZeroMemory(&findData, sizeof(findData));
+   hr = pShellLink->GetPath(targetPath, MAX_PATH, &findData, 0);
 
    // S_FALSE (or an empty path) means the shortcut has no file-system
    // target (virtual shortcuts, e.g. to Control Panel applets); report
@@ -138,6 +143,7 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
       return shortcutError(hr, shortcutPath, ERROR_LOCATION);
 
    *pTargetPath = FilePath(std::wstring(targetPath));
+   *pTargetIsDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
    return Success();
 }
 

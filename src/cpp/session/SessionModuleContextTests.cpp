@@ -706,19 +706,26 @@ TEST_F(WindowsShortcutTest, ResolvesShortcutToFile)
 {
    core::FilePath shortcut = makeShortcut(targetFile_, "file-shortcut.lnk");
    core::FilePath target;
-   core::Error error = resolveWindowsShortcut(shortcut, &target);
+   bool targetIsDir = true;
+   core::Error error = resolveWindowsShortcut(shortcut, &target, &targetIsDir);
    EXPECT_FALSE(error) << error.asString();
    EXPECT_EQ(targetFile_.getAbsolutePath(), target.getAbsolutePath());
+   EXPECT_FALSE(targetIsDir);
 }
 
 TEST_F(WindowsShortcutTest, ResolvesShortcutToDirectory)
 {
    core::FilePath shortcut = makeShortcut(targetDir_, "dir-shortcut.lnk");
    core::FilePath target;
-   core::Error error = resolveWindowsShortcut(shortcut, &target);
+   bool targetIsDir = false;
+   core::Error error = resolveWindowsShortcut(shortcut, &target, &targetIsDir);
    EXPECT_FALSE(error) << error.asString();
    EXPECT_EQ(targetDir_.getAbsolutePath(), target.getAbsolutePath());
    EXPECT_TRUE(target.isDirectory());
+
+   // the link's stored attributes carry the target's directory-ness, so a
+   // caller can badge/navigate correctly without touching the target
+   EXPECT_TRUE(targetIsDir);
 }
 
 TEST_F(WindowsShortcutTest, GarbageContentFailsToResolve)
@@ -732,7 +739,8 @@ TEST_F(WindowsShortcutTest, GarbageContentFailsToResolve)
    EXPECT_TRUE(isWindowsShortcut(garbage));
 
    core::FilePath target;
-   error = resolveWindowsShortcut(garbage, &target);
+   bool targetIsDir = false;
+   error = resolveWindowsShortcut(garbage, &target, &targetIsDir);
    EXPECT_TRUE(static_cast<bool>(error));
 }
 
@@ -751,10 +759,12 @@ TEST_F(WindowsShortcutTest, ResolveReturnsStoredPathWhenTargetDeleted)
    ASSERT_FALSE(error) << error.asString();
 
    core::FilePath target;
-   error = resolveWindowsShortcut(shortcut, &target);
+   bool targetIsDir = true;
+   error = resolveWindowsShortcut(shortcut, &target, &targetIsDir);
    EXPECT_FALSE(error) << error.asString();
    EXPECT_EQ(doomed.getAbsolutePath(), target.getAbsolutePath());
    EXPECT_FALSE(target.exists());
+   EXPECT_FALSE(targetIsDir);
 }
 
 // --- createFileSystemItem shortcut contract -----------------------------------
@@ -792,6 +802,24 @@ TEST_F(WindowsShortcutTest, FileSystemItemForRegularFileHasNoShortcutFields)
    core::json::Object item = createFileSystemItem(targetFile_);
    EXPECT_FALSE(item.hasMember("is_shortcut"));
    EXPECT_FALSE(item.hasMember("alias_target"));
+}
+
+TEST_F(WindowsShortcutTest, FileSystemItemForNetworkShortcutKeepsTarget)
+{
+   // shortcuts to network targets are followed without probing the target
+   // during the listing -- stat'ing a disconnected share can block the
+   // session for seconds -- so even an unreachable UNC target keeps its
+   // alias_target. Directory-ness comes from the attributes stored in the
+   // link (none for an unreachable target, so false).
+   core::FilePath uncTarget("//pw-nonexistent-host-1f3a/share/data");
+   core::FilePath shortcut = makeShortcut(uncTarget, "unc-shortcut.lnk");
+
+   core::json::Object item = createFileSystemItem(shortcut);
+   ASSERT_TRUE(item.hasMember("is_shortcut"));
+   EXPECT_TRUE(item["is_shortcut"].getBool());
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(createAliasedPath(uncTarget), item["alias_target"].getString());
+   EXPECT_FALSE(item["dir"].getBool());
 }
 
 TEST_F(WindowsShortcutTest, FileSystemItemForBrokenShortcut)

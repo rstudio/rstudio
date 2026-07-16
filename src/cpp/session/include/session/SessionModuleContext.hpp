@@ -143,10 +143,13 @@ core::Error resolveFinderAlias(const core::FilePath& aliasPath,
 // reads the shortcut's stored target path without invoking shell resolution
 // (no disk search, no network access, no UI). The stored path is returned
 // even when the target no longer exists -- callers detect broken shortcuts
-// with exists().
+// with exists(). pTargetIsDirectory reports the directory-ness recorded in
+// the link when it was written (also without touching the target; false
+// when the link carries no target attributes).
 bool isWindowsShortcut(const core::FilePath& filePath);
 core::Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
-                                   core::FilePath* pTargetPath);
+                                   core::FilePath* pTargetPath,
+                                   bool* pTargetIsDirectory);
 #endif
 
 // postback helpers
