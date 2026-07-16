@@ -845,6 +845,24 @@ jobs:
           retention-days: 15
           if-no-files-found: ignore
 
+      # WinINet creates protected cache directories (INetCache\Content.IE5,
+      # WebCache) inside the sandbox user-home when anything on the test path
+      # touches the network. Their deny ACLs make upload-artifact's recursive
+      # directory scan fail with EPERM, so strip them before uploading.
+      - name: Remove protected Windows cache dirs from sandbox (on failure)
+        if: failure()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $cacheDirs = @('INetCache', 'INetCookies', 'WebCache')
+          Get-ChildItem -Path "${{ github.workspace }}\pw-sandbox" -Directory -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { $cacheDirs -contains $_.Name } |
+            ForEach-Object {
+              takeown /f $_.FullName /r /d y *> $null
+              icacls $_.FullName /reset /t /c /q *> $null
+              Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          exit 0
+
       - name: Upload PW sandbox (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
