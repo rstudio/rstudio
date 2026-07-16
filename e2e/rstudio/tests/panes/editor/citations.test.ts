@@ -269,9 +269,31 @@ test.describe('Citations', () => {
       // title matches). Poll to ride out the list still populating.
       await citation.search(searchBox, searchTerm);
       const matcher = new RegExp(searchTerm, 'i');
+      const searchOutcome = async (): Promise<'pending' | 'matched' | 'error'> => {
+        if ((await citation.resultTexts(5)).some((t) => matcher.test(t))) {
+          return 'matched';
+        }
+        if (await citation.searchError.isVisible()) {
+          return 'error';
+        }
+        return 'pending';
+      };
       await expect
-        .poll(async () => (await citation.resultTexts(5)).some((t) => matcher.test(t)), { timeout: 30000 })
-        .toBe(true);
+        .poll(searchOutcome, {
+          timeout: 30000,
+          message: `no ${source.alt} results mentioning "${searchTerm}" and no error status within 30s`,
+        })
+        .not.toBe('pending');
+
+      // The reachability probe above only proves the host answers from Node;
+      // the query itself runs in the rsession and can still fail (e.g. NCBI
+      // rate-limits shared CI egress IPs). That is a service problem, not a
+      // product bug -- skip, as skipUnlessReachable() would have. A timeout
+      // with neither results nor an error line still fails above.
+      if ((await searchOutcome()) === 'error') {
+        await citation.cancel();
+        test.skip(true, `${source.alt} search failed service-side from this runner`);
+      }
 
       await citation.cancel();
     });
