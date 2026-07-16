@@ -289,18 +289,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
-      # The "latest" release tag is a permanent-link release whose binary
-      # assets are not kept current (last updated 2024-04-07 as of writing --
-      # see r-lib/rig#343 for a bug this staleness reintroduces). Resolve the
-      # actual latest release via the GitHub API instead.
       - name: Install rig
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          RIG_VERSION=$(curl -fsSL --retry 3 --retry-delay 5 -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/r-lib/rig/releases/latest | jq -r '.tag_name | ltrimstr("v")')
-          case "$RIG_VERSION" in ''|null) echo "::error::Could not resolve rig's latest version (GitHub API rate limit or outage?)"; exit 1 ;; esac
-          curl -fLs --retry 3 --retry-delay 5 -o rig.pkg "https://github.com/r-lib/rig/releases/download/v${RIG_VERSION}/rig-${RIG_VERSION}-macOS-arm64.pkg"
-          sudo installer -pkg rig.pkg -target /
+        uses: ./.github/actions/os-install-rig-unix
 
       - name: Install R via rig
         env:

@@ -1,0 +1,67 @@
+name: "Install rig (Linux / macOS)"
+description: >
+  Install the rig R version manager on a Linux or macOS runner from a pinned
+  GitHub release. Replaces the resolve-latest-via-GitHub-API step: querying
+  api.github.com at runtime is a recurring flake source (intermittent 503s),
+  while a runner-to-GitHub release download needs no API call and is about as
+  reliable as CI networking gets. The "latest" permanent-link release is not
+  an option either -- its binary assets are stale (last updated 2024-04-07 as
+  of writing; see r-lib/rig#343 for a bug this staleness reintroduces).
+
+inputs:
+  rig-version:
+    description: "rig release version to install (without the leading 'v')."
+    required: false
+    default: "0.8.1"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install rig from GitHub releases
+      shell: bash
+      env:
+        RIG_VERSION: ${{ inputs.rig-version }}
+      run: |
+        set -euo pipefail
+
+        # Container jobs run as root and may lack sudo; hosted runners need it.
+        SUDO=""
+        if [ "$(id -u)" != "0" ]; then
+          SUDO="sudo"
+        fi
+
+        # Release assets use "arm64", not uname's "aarch64"; the Linux x86_64
+        # asset carries no arch token.
+        case "$(uname -s)-$(uname -m)" in
+          Linux-x86_64)
+            ASSET="rig-linux-${RIG_VERSION}.tar.gz"
+            ;;
+          Linux-aarch64)
+            ASSET="rig-linux-arm64-${RIG_VERSION}.tar.gz"
+            ;;
+          Darwin-arm64)
+            ASSET="rig-${RIG_VERSION}-macOS-arm64.pkg"
+            ;;
+          Darwin-x86_64)
+            ASSET="rig-${RIG_VERSION}-macOS-x86_64.pkg"
+            ;;
+          *)
+            echo "::error::Unsupported platform $(uname -s)-$(uname -m) for rig install"
+            exit 1
+            ;;
+        esac
+
+        URL="https://github.com/r-lib/rig/releases/download/v${RIG_VERSION}/${ASSET}"
+        echo "Downloading $URL"
+        curl -fsSL --retry 5 --retry-delay 10 -o "${RUNNER_TEMP}/${ASSET}" "$URL"
+
+        case "$ASSET" in
+          *.pkg)
+            $SUDO installer -pkg "${RUNNER_TEMP}/${ASSET}" -target /
+            ;;
+          *)
+            $SUDO tar xzf "${RUNNER_TEMP}/${ASSET}" -C /usr/local
+            ;;
+        esac
+
+        rig --version
