@@ -136,6 +136,19 @@ core::Error resolveFinderAlias(const core::FilePath& aliasPath,
                                core::FilePath* pTargetPath);
 #endif
 
+#ifdef _WIN32
+// Windows .lnk shortcuts are shell objects rather than symlinks, so the
+// filesystem doesn't resolve them for us. isWindowsShortcut identifies them
+// (a cheap .lnk extension check on regular files); resolveWindowsShortcut
+// reads the shortcut's stored target path without invoking shell resolution
+// (no disk search, no network access, no UI). The stored path is returned
+// even when the target no longer exists -- callers detect broken shortcuts
+// with exists().
+bool isWindowsShortcut(const core::FilePath& filePath);
+core::Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
+                                   core::FilePath* pTargetPath);
+#endif
+
 // postback helpers
 core::FilePath rPostbackPath();
 core::FilePath rPostbackScriptsDir();

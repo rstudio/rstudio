@@ -1995,6 +1995,44 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    }
 #endif
 
+#ifdef _WIN32
+   // Windows .lnk shortcuts are shell objects rather than symlinks, so the
+   // filesystem doesn't resolve them for us; surface the resolved target
+   // (and its directory-ness) so the client can follow them (#7327). The
+   // target is emitted as alias_target so all alias-aware client logic
+   // (navigation, open, dialogs, icons) applies unchanged; is_shortcut lets
+   // the client label the badge "Shortcut" rather than "Alias".
+   // Unresolvable shortcuts fall back to plain-file behavior.
+   if (!isDir)
+   {
+      if (isWindowsShortcut(filePath))
+      {
+         // flag the shortcut for the link badge whether or not the target
+         // resolves, so even a broken shortcut is indicated (alias_target,
+         // which drives navigation, is only set when resolution succeeds)
+         entry["is_shortcut"] = true;
+
+         FilePath targetPath;
+         Error error = resolveWindowsShortcut(filePath, &targetPath);
+         if (error)
+         {
+            // shortcuts without a file-system target and garbage .lnk
+            // content are a normal filesystem state, so log at debug level,
+            // like the alias case above
+            LOG_DEBUG_MESSAGE("Failed to resolve Windows shortcut: " + error.asString());
+         }
+         else if (targetPath.exists())
+         {
+            // resolution returns the STORED path even when the target has
+            // been deleted (no shell search), so this exists() check is
+            // what demotes broken shortcuts to plain-file behavior
+            entry["alias_target"] = createAliasedPath(targetPath);
+            isDir = targetPath.isDirectory();
+         }
+      }
+   }
+#endif
+
    entry["dir"] = isDir;
 
    // length requires cast
