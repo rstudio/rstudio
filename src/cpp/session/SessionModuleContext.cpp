@@ -2581,6 +2581,7 @@ void registerDownloadGrant(const core::FilePath& filePath)
 bool shouldAuditFileDownload(const core::http::Request& request,
                              const core::FilePath& filePath)
 {
+#ifndef _WIN32
    // Skip files owned by a system account -- an owner uid below the configured
    // minimum login user id (auth-minimum-user-id), e.g. root-owned fonts or
    // admin-installed R packages. These are provisioned by the administrator,
@@ -2596,6 +2597,7 @@ bool shouldAuditFileDownload(const core::http::Request& request,
                         filePath.getAbsolutePath());
       return false;
    }
+#endif
 
    // Skip files the session itself surfaced through a server-initiated
    // preview/show flow. createFileUrl()/showFile() record a grant in the
