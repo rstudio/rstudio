@@ -13,9 +13,6 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # keeps its SHA-256 check. Given a specific version, the resolve job builds each
 # platform's download URL from that version string and passes it in; there is no
 # per-build manifest, so that path skips SHA-256 (see rstudio/latest-builds#251).
-#
-# Note: the Debian 13 engine it calls is not yet on main; that job will fail
-# until it lands via its own PR.
 
 on:
   schedule:
