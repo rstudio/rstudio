@@ -1262,19 +1262,32 @@ Error startAgent(const std::string& assistantType = "")
    // hold this session's in-use lock while it runs and refuse to start
    // while another session is mutating that installation. Decide from the
    // configured source, not a path lookup — mid-swap the path can read as
-   // missing and then reappear, which must not skip the lock. The Posit
-   // helper-script branch always uses paiLanguageServerPath() (ignoring
-   // RSTUDIO_AGENT_PATH); the direct branch honors the env override.
-   // Copilot and env-override agents are unrelated to the install and skip
+   // missing and then reappear, which must not skip the lock. The
+   // RSTUDIO_AGENT_PATH override is pinned once here: the direct launch
+   // branch reuses the pinned path rather than re-reading the environment,
+   // so an override that disappears cannot silently fall back to the
+   // shared install without a lock; and an override that points inside
+   // pai/bin still takes the lock. The Posit helper-script branch always
+   // uses paiLanguageServerPath() (ignoring the override). Copilot and
+   // external-override agents are unrelated to the install and skip
    // locking (lockToken stays 0, which release treats as a no-op).
    bool positHelperConfigured =
       !session::options().positAssistantHelper().isEmpty();
-   std::string agentPathOverride = core::system::getenv("RSTUDIO_AGENT_PATH");
-   bool overrideInEffect =
-      !agentPathOverride.empty() && FilePath::exists(agentPathOverride);
+   FilePath agentPathOverride;
+   std::string agentPathOverrideValue =
+      core::system::getenv("RSTUDIO_AGENT_PATH");
+   if (!agentPathOverrideValue.empty() &&
+       FilePath::exists(agentPathOverrideValue))
+   {
+      agentPathOverride = FilePath(agentPathOverrideValue);
+   }
+   bool overrideInEffect = !agentPathOverride.isEmpty();
    bool usesSharedInstall =
-      assistant == kAssistantPosit &&
-      (positHelperConfigured || !overrideInEffect);
+      (assistant == kAssistantPosit &&
+       (positHelperConfigured || !overrideInEffect)) ||
+      (overrideInEffect &&
+       agentPathOverride.isWithin(
+          xdg::userDataDir().completePath("pai/bin")));
 
    uint64_t agentGeneration = ++s_agentGeneration;
    uint64_t lockToken = 0;
@@ -1309,15 +1322,20 @@ Error startAgent(const std::string& assistantType = "")
 
    // Resolve the agent executable once — after acquiring the lock, so a
    // concurrent install cannot change what we launch — and reuse it in the
-   // launch branches below.
+   // launch branches below. The pinned override is used directly (never
+   // re-read) so it cannot fall back to a different source mid-start.
    FilePath resolvedAgentPath;
    if (assistant == kAssistantPosit && positHelperConfigured)
       resolvedAgentPath = paiLanguageServerPath();
    else if (assistant == kAssistantCopilot &&
             !session::options().copilotHelper().isEmpty())
       resolvedAgentPath = copilotLanguageServerPath();
-   else
-      resolvedAgentPath = assistantLanguageServerPath(assistant);
+   else if (overrideInEffect)
+      resolvedAgentPath = agentPathOverride;
+   else if (assistant == kAssistantPosit)
+      resolvedAgentPath = paiLanguageServerPath();
+   else if (assistant == kAssistantCopilot)
+      resolvedAgentPath = copilotLanguageServerPath();
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
