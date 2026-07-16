@@ -63,30 +63,6 @@ private:
 
 } // anonymous namespace
 
-TEST(SecureKeyFileTest, RootNeverFallsBackToUserCache)
-{
-   EXPECT_FALSE(key_file::detail::useUserCacheKey(true, true, true));
-   EXPECT_FALSE(key_file::detail::useUserCacheKey(true, true, false));
-   EXPECT_FALSE(key_file::detail::useUserCacheKey(true, false, false));
-}
-
-TEST(SecureKeyFileTest, NonRootUsesReadableSystemKey)
-{
-   EXPECT_FALSE(key_file::detail::useUserCacheKey(false, true, true));
-}
-
-TEST(SecureKeyFileTest, NonRootFallsBackWhenSystemKeyMissing)
-{
-   EXPECT_TRUE(key_file::detail::useUserCacheKey(false, false, false));
-}
-
-// Regression for #18255: a non-root server falls back rather than failing when
-// the system key exists but is unreadable (e.g. a root-owned mode-600 key).
-TEST(SecureKeyFileTest, NonRootFallsBackWhenSystemKeyUnreadable)
-{
-   EXPECT_TRUE(key_file::detail::useUserCacheKey(false, true, false));
-}
-
 // End-to-end regression for #18255. Skipped as root, where permission bits are
 // not enforced and the fallback branch cannot be exercised.
 TEST(SecureKeyFileTest, UnreadableSystemKeyFallsBackToCache)

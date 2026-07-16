@@ -108,14 +108,6 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
    return core::Success();
 }
 
-bool detail::useUserCacheKey(bool isRoot, bool systemKeyExists, bool systemKeyReadable)
-{
-   if (isRoot)
-      return false;
-
-   return !systemKeyExists || !systemKeyReadable;
-}
-
 core::Error readSecureKeyFile(const std::string& filename,
                               std::string* pContents,
                               std::string* pContentsHash,
@@ -130,31 +122,18 @@ core::Error readSecureKeyFile(const std::string& filename,
       secureKeyPath = core::FilePath("/var/lib/rstudio-server")
          .completePath(filename);
 
-   // A non-root server must not fail on a system key it cannot read (e.g. a
-   // root-owned mode-600 key in an HPC container image); fall back to the cache.
-   bool systemKeyReadable = false;
-   if (secureKeyPath.exists())
-   {
-      core::Error error = secureKeyPath.isReadable(systemKeyReadable);
-      if (error)
-         systemKeyReadable = false;
-   }
+   bool secureKeyReadable = false;
+   secureKeyPath.isReadable(secureKeyReadable);
 
-   if (detail::useUserCacheKey(core::system::effectiveUserIsRoot(),
-                               secureKeyPath.exists(),
-                               systemKeyReadable))
+   // A non-root server must not fail on a system key it cannot read (e.g. a
+   // root-owned mode-600 key in an HPC container image); fall back to the
+   // per-user cache. 
+   if (!core::system::effectiveUserIsRoot() && !secureKeyReadable)
    {
       secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
-      if (secureKeyPath.exists())
-      {
-         LOG_INFO_MESSAGE("Running without privilege; using secure key at " +
-                          secureKeyPath.getAbsolutePath());
-      }
-      else
-      {
-         LOG_INFO_MESSAGE("Running without privilege; generating secure key at " +
-                          secureKeyPath.getAbsolutePath());
-      }
+      LOG_INFO_MESSAGE("Running without privilege; " +
+                       std::string(secureKeyPath.exists() ? "using" : "generating") +
+                       " secure key at " + secureKeyPath.getAbsolutePath());
    }
 
    return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
