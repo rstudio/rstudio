@@ -2,29 +2,37 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 
 # One workflow that drives the reusable per-OS E2E "engines" three ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday (two engines, except
-#     Thursday which runs three to fit fedora43 in), so every engine runs at
-#     least once a week without running the whole matrix daily. No weekday
-#     pairs two deb-based engines.
-#   - Weekly cron (Saturday): every engine at once, for a full-matrix snapshot.
+#     Thursday's three), so every engine runs at least once a week without
+#     running the whole matrix daily.
+#     No weekday pairs two deb-based engines.
+#   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
 #   - Manual dispatch: every engine at once, optionally against a specific daily
-#     build (see the "version" input).
+#     build (the "version" input) or built from source (the "build_from_source"
+#     input).
 #
-# Binary selection: engines test the daily build (build_from_source: false).
-# With no version given, each engine resolves the latest daily itself, which
-# keeps its SHA-256 check. Given a specific version, the resolve job builds each
-# platform's download URL from that version string and passes it in; there is no
-# per-build manifest, so that path skips SHA-256 (see rstudio/latest-builds#251).
+# Binary selection: scheduled runs test the daily build (build_from_source
+# false). With no version, each engine self-resolves the latest daily (keeping
+# its SHA-256 check); a specific version builds each platform's download URL by
+# token-swap, and since there is no per-build manifest that path skips SHA-256
+# (see rstudio/latest-builds#251). Manual dispatch can instead build every
+# engine from source via build_from_source.
+#
+# Cron times are UTC: 08:00 UTC is 4 AM EDT in summer, 3 AM EST in winter.
 
 on:
   schedule:
-    - cron: '0 2 * * 1-5'   # Mon-Fri 02:00 UTC -- fixed pair per weekday
-    - cron: '0 4 * * 6'     # Saturday 04:00 UTC -- all engines (this string must match the check in the pick job)
+    - cron: '0 8 * * 1-5'   # Mon-Fri 08:00 UTC (4 AM EDT) -- fixed pair per weekday
+    - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- all engines (this string must match the check in the pick job)
   workflow_dispatch:
     inputs:
       version:
-        description: "Daily build to test, given as the version string exactly as shown on dailies.rstudio.com (e.g. 2026.08.0-daily+44). Leave empty to test the latest daily. Applies to every engine."
+        description: "Daily build to test, given as the version string exactly as shown on dailies.rstudio.com (e.g. 2026.08.0-daily+44). Leave empty to test the latest daily. Ignored when build_from_source is checked. Applies to every engine."
         type: string
         default: ""
+      build_from_source:
+        description: "Build every engine from source instead of installing a daily build. Overrides the version input."
+        type: boolean
+        default: false
 
 concurrency:
   group: pw-scheduled-e2e
@@ -34,8 +42,8 @@ permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
   # Most engines' e2e-merge jobs assume the S3 report-upload role via OIDC
-  # (fedora44, fedora43, and ubuntu26 don't upload); a reusable workflow's
-  # id-token grant is capped by its caller's.
+  # (fedora43, fedora44, and ubuntu26 don't upload); a reusable workflow's id-token grant
+  # is capped by its caller's.
   id-token: write
 
 jobs:
@@ -48,25 +56,24 @@ jobs:
       - id: pick
         name: Select engines for this run
         run: |
-          # workflow_dispatch and the Saturday cron run every engine; the
-          # weekday cron (Mon-Fri) runs a fixed slate per day (two engines,
-          # except Thursday which runs three to fit fedora43 in). Each engine
-          # runs once a week except macos, windows, and ubuntu24s, which run
-          # twice.
-          ALL='["fedora","fedora43","ubuntu26","ubuntu24d","ubuntu24s","macos","windows","debian13"]'
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 4 * * 6" ]; then
+          # workflow_dispatch and the Sunday cron run every engine; the weekday
+          # cron (Mon-Fri) runs a fixed slate per day (a pair, except Thursday's
+          # three). Each engine runs once a week except macos26, windows2025,
+          # and ubuntu24s, which run twice.
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13"]'
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
-              1) SEL='["ubuntu24d","macos"]' ;;
-              2) SEL='["ubuntu24s","windows"]' ;;
-              3) SEL='["ubuntu26","fedora"]' ;;
-              4) SEL='["debian13","macos","fedora43"]' ;;
-              5) SEL='["ubuntu24s","windows"]' ;;
+              1) SEL='["ubuntu24d","macos26"]' ;;
+              2) SEL='["ubuntu24s","windows2025"]' ;;
+              3) SEL='["ubuntu26","fedora44"]' ;;
+              4) SEL='["fedora43","debian13","macos26"]' ;;
+              5) SEL='["ubuntu24s","windows2025"]' ;;
               # Only reachable by re-running a weekday run on Sat/Sun, or if the
-              # Saturday cron above changed without updating the check above.
+              # Sunday cron above changed without updating the check above.
               # Fail loudly rather than silently selecting nothing.
-              *) echo "::error::No engine slate for weekday $(date -u +%u). If the Saturday cron changed, update the '0 4 * * 6' check in this job."; exit 1 ;;
+              *) echo "::error::No engine slate for weekday $(date -u +%u). If the Sunday cron changed, update the '0 8 * * 0' check in this job."; exit 1 ;;
             esac
           fi
           echo "selected=$SEL" >> "$GITHUB_OUTPUT"
@@ -87,11 +94,14 @@ jobs:
         name: Build per-platform installer URLs for a specific version
         env:
           VERSION: ${{ inputs.version }}
+          BUILD_FROM_SOURCE: ${{ inputs.build_from_source }}
         run: |
-          # With no version, emit empty URLs so each engine self-resolves the
-          # latest daily (keeping its SHA-256 check). With a version, swap the
-          # version token (+ -> -) into each platform's latest download URL.
-          if [ -z "$VERSION" ]; then
+          # Emit empty URLs when building from source (engines build, ignoring
+          # any URL) or when no version is given (engines self-resolve the
+          # latest daily, keeping their SHA-256 check). Only a specific version
+          # needs URLs built here: swap the version token (+ -> -) into each
+          # platform's latest download URL.
+          if [ "$BUILD_FROM_SOURCE" = "true" ] || [ -z "$VERSION" ]; then
             {
               echo "rhel="
               echo "noble_amd64="
@@ -100,7 +110,7 @@ jobs:
               echo "windows="
               echo "noble_arm64="
             } >> "$GITHUB_OUTPUT"
-            echo "No version given; engines will resolve the latest daily."
+            echo "No installer URLs to resolve (building from source or using the latest daily)."
             exit 0
           fi
           M=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
@@ -141,20 +151,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Resolved URLs for version $VERSION."
 
-  fedora:
-    name: Fedora 44 x86_64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-44-x86_64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-    with:
-      project: desktop
-      r_version: "release"
-      grep_invert: "@ai"
-      build_from_source: false
-      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
-
   fedora43:
     name: Fedora 43 x86_64
     needs: [pick, resolve]
@@ -166,9 +162,23 @@ jobs:
       project: desktop
       r_version: "release"
       grep_invert: "@ai"
-      build_from_source: false
+      build_from_source: ${{ inputs.build_from_source }}
       # Same rhel10-x86_64 .rpm the Fedora 44 engine tests -- there is no
       # separate Fedora 43 daily either.
+      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
+
+  fedora44:
+    name: Fedora 44 x86_64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora44') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-44-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
 
   ubuntu26:
@@ -182,7 +192,7 @@ jobs:
       project: desktop
       r_version: "release"
       grep_invert: "@ai"
-      build_from_source: false
+      build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
 
   ubuntu24d:
@@ -197,7 +207,7 @@ jobs:
       project: desktop
       r_version: "release"
       grep_invert: "@ai"
-      build_from_source: false
+      build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
 
   ubuntu24s:
@@ -212,13 +222,13 @@ jobs:
       project: server
       r_version: "release"
       grep_invert: "@ai"
-      build_from_source: false
+      build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
 
-  macos:
+  macos26:
     name: macOS 26 arm64
     needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos') }}
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos26') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
@@ -227,13 +237,13 @@ jobs:
       project: desktop
       r_version: "release"
       grep_invert: "@ai"
-      build_from_source: false
+      build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
-  windows:
+  windows2025:
     name: Windows Server 2025
     needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'windows') }}
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'windows2025') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
@@ -242,7 +252,7 @@ jobs:
       project: desktop
       r_version: "release"
       grep_invert: "@ai"
-      build_from_source: false
+      build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ needs.resolve.outputs.windows }}
 
   debian13:
@@ -257,5 +267,5 @@ jobs:
       project: desktop
       r_version: "release"
       grep_invert: "@ai"
-      build_from_source: false
+      build_from_source: ${{ inputs.build_from_source }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_arm64 }}
