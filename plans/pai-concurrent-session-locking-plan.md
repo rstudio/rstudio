@@ -23,7 +23,8 @@ Two lock kinds under `<userDataDir>/pai/locks/` (survives uninstall — uninstal
 Protocols (TOCTOU-safe two-flag ordering):
 - **Mutator**: acquire `install.lock` (fail → "another session is updating") → enumerate `pai/locks/sessions/*.lock`, probe each with `isLocked()` **excluding own file by name** (POSIX fcntl hazard: probing a lock you hold releases it — confirmed by core's own `FileLockTests.cpp:222-223`) → any live lock → release `install.lock`, fail with "in use" message → files probing unlocked are opportunistically deleted (log-only on failure; file existence alone never means "in use").
 - **Starter** (`startChatBackend` / `startAgent`): acquire own in-use lock first, then probe `install.lock` with `isLocked()`; if held, release own lock and fail the start with an "update in progress" error. Simultaneous racers each see the other and back off — no corruption either way.
-- In-process re-entrancy (event-loop pumping inside stop-wait loops can dispatch RPCs mid-mutation) is guarded by plain bools, **never** by the file lock (fcntl doesn't conflict within one process).
+- In-process re-entrancy (event-loop pumping inside stop-wait loops can dispatch RPCs mid-mutation) is guarded by plain bools, **never** by the file lock (fcntl doesn't conflict within one process). Concretely: `tryBeginMutation` fails while `mutationActive_` or any component is held by this process, and `acquireInUse` fails while `mutationActive_` — the helper enforces both internally so call sites can't forget.
+- **Single release point for the backend component**: `onBackendExit` (supervisor reap callback) is the only place that calls `releaseInUse(ChatBackend)`. `terminateProcess()` merely signals — releasing at the stop call sites would drop the lock while the process may still be alive and holding its CWD, letting another session mutate under it. When the rsession process itself exits (suspend, shutdown, crash) without a reap, the OS auto-releases advisory locks and `FileLock::cleanUp()` (SessionMain.cpp:1504) removes link-based files. Same rule for the agent: release only in `agent::onExit`/`onError`.
 
 Locking only applies when PA runs from the user-data install; env-var (`RSTUDIO_POSIT_AI_PATH`) and system (`/etc/rstudio/ai`) installs are not mutation targets and skip all locking.
 
@@ -40,7 +41,11 @@ public:
    InstallLock(const core::FilePath& locksDir, const std::string& ownerId);
    enum class Component { ChatBackend, NesAgent };
 
-   core::Error acquireInUse(Component c);   // idempotent; first component takes the file lock
+   core::Error acquireInUse(Component c);   // idempotent; first component takes the file lock.
+                                            // Fails while mutationActive_ is set: a re-entrant
+                                            // start during our own mutation must not launch from
+                                            // the dir being swapped (updateInProgressElsewhere()
+                                            // intentionally ignores our own install.lock)
    void releaseInUse(Component c);          // idempotent; last component releases it
    bool inUseHeld() const;
 
@@ -74,12 +79,10 @@ Wiring: `install_lock::InstallLock& installLock();` declared in `SessionChat.hpp
 | Location | Change |
 |---|---|
 | `startChatBackend` (:5048) | After `locatePositAssistantInstallation()` (:5055), only if the path is the user-data install: `acquireInUse(ChatBackend)`, then `updateInProgressElsewhere()` → if true release and return error with `description` = update-in-progress text. Scope-guard release on later error returns (findNode :5071, missing script :5076, port :5082, `runProgram` fail :5236). Covers both callers (RPC :5294, `onResume` :6148). |
-| `onBackendExit` (:4997) | `releaseInUse(ChatBackend)` next to `s_chatBackendPid = -1` (:5030) — the single reap funnel; idempotency makes double-clears safe. |
-| `chatStopBackend` (:5313) | `releaseInUse(ChatBackend)` after :5374. |
-| `performInstall` (:5601) | After :5642, **before** stopping own backend: `tryBeginMutation(&msg)`; on failure set `installStatus = Error` + `installMessage = msg` under `s_updateStateMutex` and return via continuation (mirrors download-failure pattern :5668-5682). On success hold `MutationScope` across all five exits (:5681, :5701, :5720, :5775, :5801). `releaseInUse(ChatBackend)` after the terminate at :5653. |
-| `chatUninstallPositAssistant` (:5890) | Keep not-installed early branch (:5902-5940) untouched (no disk mutation). Before the backend-stop block (:5943): `tryBeginMutation(&msg)`; on failure `pResponse->setError(systemError(errc::device_or_resource_busy, ERROR_LOCATION), json::Value(msg))` — existing client_info pattern (:5907-5913). `MutationScope` through the delete. `releaseInUse(ChatBackend)` after :5990. |
-| `onSuspend` (:6052) | `releaseInUse(ChatBackend)` after :6127. Agent: no suspend handler exists; on server suspend the process exits — advisory auto-releases, `FileLock::cleanUp()` (SessionMain.cpp:1504) removes link-based files. Resume re-acquires via `startChatBackend` (:6148). |
-| `onShutdown` (:6154) | `releaseInUse(ChatBackend)` after :6213 (belt-and-braces). |
+| `onBackendExit` (:4997) | `releaseInUse(ChatBackend)` next to `s_chatBackendPid = -1` (:5030). **Sole release point for this component** — the supervisor reap callback fires in every stop path (graceful, force-terminate, crash), even when a stop call site already set `s_chatBackendPid = -1` manually; idempotency makes the double-clear safe. No release in `chatStopBackend` — `terminateProcess()` only signals, and the process may still be alive holding its CWD. |
+| `performInstall` (:5601) | After :5642, **before** stopping own backend: `tryBeginMutation(&msg)`; on failure set `installStatus = Error` + `installMessage = msg` under `s_updateStateMutex` and return via continuation (mirrors download-failure pattern :5668-5682). On success hold `MutationScope` across all five exits (:5681, :5701, :5720, :5775, :5801). No manual `releaseInUse` — the component stays held until `onBackendExit` reaps, which is harmless: our own lock is excluded from the probe and we hold `install.lock`. |
+| `chatUninstallPositAssistant` (:5890) | Keep not-installed early branch (:5902-5940) untouched (no disk mutation). Before the backend-stop block (:5943): `tryBeginMutation(&msg)`; on failure `pResponse->setError(systemError(errc::device_or_resource_busy, ERROR_LOCATION), json::Value(msg))` — existing client_info pattern (:5907-5913). `MutationScope` through the delete. Release funnels through `onBackendExit` as above. |
+| `onSuspend` (:6052) / `onShutdown` (:6154) | No manual release. If `onBackendExit` fires during the stop-wait polling, release happens there; otherwise the rsession process exits — advisory locks auto-release, `FileLock::cleanUp()` (SessionMain.cpp:1504) removes link-based files. Resume re-acquires via `startChatBackend` (:6148). |
 
 ## Integration points — `SessionAssistant.cpp`
 
@@ -117,12 +120,12 @@ Wiring: `install_lock::InstallLock& installLock();` declared in `SessionChat.hpp
 
 ## Testing
 
-- **Unit** (`ChatInstallLockTests.cpp`, gtest; `FileLock::initialize()` in tests per `core/FileLockTests.cpp:84`): two `InstallLock` instances, distinct ownerIds, temp dir. Use `LOCKTYPE_LINKBASED` for cross-instance exclusion (advisory can't conflict in-process); `fork()` for advisory cross-process cases (POSIX-only, per `forkAndCheckLock`). Cases: mutation-vs-mutation exclusion; live in-use blocks mutation; own session excluded from probe; stale leftover file doesn't block and is deleted; component flags (backend+agent, release one keeps held); probes never self-release (assert own lock still held after `updateInProgressElsewhere()`); locks-dir auto-creation; stale link-based reclaim after simulated crash.
+- **Unit** (`ChatInstallLockTests.cpp`, gtest; `FileLock::initialize()` in tests per `core/FileLockTests.cpp:84`): two `InstallLock` instances, distinct ownerIds, temp dir. Use `LOCKTYPE_LINKBASED` for cross-instance exclusion (advisory can't conflict in-process); `fork()` for advisory cross-process cases (POSIX-only, per `forkAndCheckLock`). Cases: mutation-vs-mutation exclusion; live in-use blocks mutation; own session excluded from probe; stale leftover file doesn't block and is deleted; component flags (backend+agent, release one keeps held); **`acquireInUse` fails while own mutation is active (re-entrancy)**; `tryBeginMutation` fails while own components are held; probes never self-release (assert own lock still held after `updateInProgressElsewhere()`); locks-dir auto-creation; stale link-based reclaim after simulated crash.
 - **Build/checks**: `cd build && cmake --build . --target all`; run `./build/src/cpp/rstudio-tests --scope rsession --filter '*InstallLock*'` (and existing chat test suites).
 - **Manual verification** (two sessions; desktop = two project windows, server = two browser sessions): (a) A chatting, B updates → refused with in-use message; (b) A chatting, B uninstalls → refused; (c) A stops chat (or closes), B update/uninstall succeeds; (d) `kill -9` A's rsession mid-chat → B update succeeds immediately (desktop / same-host server); (e) A mid-update (throttle with slow network or automation override RPC `chat_set_update_check_override`), B opens chat → "update in progress" start refusal, retry after A finishes succeeds. A two-context server-mode Playwright test is a feasible follow-up, not part of this change.
 
 ## Process notes
 
 - Branch: `bugfix/pai-concurrent-session-locking` (never commit to main).
-- NEWS.md: user-facing fix to a released feature → needs an entry with an issue link. **Ask Gary for / create the GitHub issue number before opening the PR**; PR body "Addresses #<issue>." (manual multi-session verification required).
+- Issue: [#18271](https://github.com/rstudio/rstudio/issues/18271) (filed 2026-07-16; references the existing Windows uninstall issue #17365). NEWS.md entry links #18271. PR body: "Addresses #18271." (manual multi-session verification required; other-session change notification is out of scope for Phase 1).
 - Commit per logical change; monitor roborev after each commit and close the review.
