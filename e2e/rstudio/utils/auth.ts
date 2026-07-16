@@ -203,29 +203,31 @@ export function scrubCredentials(sandbox: string): string[] {
 // process, so a file in the sandbox (like the token store itself) is the
 // only channel that reaches the test workers.
 
-// Valid PW_SANDBOX_POSITAI_AUTH values. The array is the single source of
-// truth -- the type is derived from it -- so the runtime check, its error
-// message, and the type can't drift apart. Unset behaves as "copy". Lives
-// here rather than in auth.setup.ts because mode is serialized into the
-// status file below, making it part of the cross-process contract.
-export const AUTH_MODES = ['off', 'copy', 'login'] as const;
-export type PositAiAuthMode = (typeof AUTH_MODES)[number];
+// Which credential source the auth.setup project used, chosen by
+// auto-detection (not user-selected). The array is the single source of truth
+// -- the type is derived from it -- so the values written and the values
+// validated on read can't drift apart. Lives here rather than in auth.setup.ts
+// because source is serialized into the status file below, making it part of
+// the cross-process contract.
+export const AUTH_SOURCES = [
+  'login', // signed in with POSIT_EMAIL/POSIT_PASSWORD
+  'copy',  // copied the local token store
+  'none',  // no source available; nothing provisioned
+] as const;
+export type PositAiAuthSource = (typeof AUTH_SOURCES)[number];
 
-// Same single-source-of-truth pattern as AUTH_MODES: readAuthStatus validates
-// against the array, so a status file written by a different code version
-// can't launder an unknown outcome string into the union.
+// Same single-source-of-truth pattern as AUTH_SOURCES: readAuthStatus
+// validates against the array, so a status file written by a different code
+// version can't launder an unknown outcome string into the union.
 export const AUTH_OUTCOMES = [
-  'success',            // token store written and verified
-  'off',                // mode=off: deliberately not provisioned
-  'copy-suppressed',    // mode=copy suppressed by PW_SANDBOX_NO_SEED_CREDENTIALS
-  'host-not-signed-in', // mode=copy: no valid token store on the host
-  'credentials-unset',  // mode=login: POSIT_EMAIL/POSIT_PASSWORD not set
-  'login-failed',       // mode=login: sign-in attempted but failed (usually transient)
+  'success',      // token store written and verified
+  'unavailable',  // no credential source (not signed in locally, no creds set, or kill-switch blocked the copy); see reason
+  'login-failed', // sign-in attempted but failed (usually transient)
 ] as const;
 export type PositAiAuthOutcome = (typeof AUTH_OUTCOMES)[number];
 
 export interface PositAiAuthStatus {
-  mode: PositAiAuthMode;
+  source: PositAiAuthSource;
   outcome: PositAiAuthOutcome;
   reason: string;
 }
@@ -265,12 +267,12 @@ export function readAuthStatus(sandbox: string): PositAiAuthStatus | null {
   }
   if (
     !isPlainObject(parsed)
-    || !isOneOf(parsed.mode, AUTH_MODES)
+    || !isOneOf(parsed.source, AUTH_SOURCES)
     || !isOneOf(parsed.outcome, AUTH_OUTCOMES)
     || typeof parsed.reason !== 'string'
   ) {
     console.warn(`[auth] WARNING: unrecognized auth status shape in ${file}; ignoring it`);
     return null;
   }
-  return { mode: parsed.mode, outcome: parsed.outcome, reason: parsed.reason };
+  return { source: parsed.source, outcome: parsed.outcome, reason: parsed.reason };
 }

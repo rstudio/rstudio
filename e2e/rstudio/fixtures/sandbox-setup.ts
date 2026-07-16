@@ -42,11 +42,11 @@ import { noSeedCredentials, copilotConfigDir } from '../utils/auth';
  *                                  into the sandbox user-home so the Copilot
  *                                  tests start authenticated; setting this
  *                                  suppresses that copy. It also suppresses the
- *                                  Posit AI "copy" mode (the default; handled
- *                                  by the auth.setup project), but not the
- *                                  Posit AI sign-in flow itself, which copies
- *                                  nothing from the host. Copilot tests skip when
- *                                  their credentials are unseeded.
+ *                                  auth.setup project's copy of the local Posit
+ *                                  AI token store, but not its sign-in flow,
+ *                                  which copies nothing from the host. Copilot
+ *                                  tests skip when their credentials are
+ *                                  unseeded.
  *                                  Privacy note: real OAuth/API tokens are
  *                                  copied into the sandbox during the run.
  *                                  sandbox-teardown scrubs them whenever the
@@ -150,11 +150,10 @@ export default async function globalSetup(config: FullConfig) {
   // mystery failure waiting for a completion that will never arrive.
   //
   // Posit AI is NOT seeded here -- the auth.setup project (tests/auth.setup.ts)
-  // is the sole authority for Posit AI credentials (a copy of the host's token
-  // store by default, or the OAuth sign-in flow under
-  // PW_SANDBOX_POSITAI_AUTH=login; store locations live in
-  // POSITAI_STORE_CANDIDATES in utils/auth.ts), and its tests gate on the
-  // on-disk token store rather than an env flag.
+  // is the sole authority for Posit AI credentials (the OAuth sign-in flow when
+  // POSIT_EMAIL/POSIT_PASSWORD are set, else a copy of the local token store;
+  // store locations live in POSITAI_STORE_CANDIDATES in utils/auth.ts), and its
+  // tests gate on the on-disk token store rather than an env flag.
   //
   // Clear the flag up front so only a value this function sets is honored -- a
   // stray PW_AI_SEEDED_COPILOT=1 inherited from the user's shell or a prior
@@ -189,7 +188,7 @@ export default async function globalSetup(config: FullConfig) {
       );
     }
   } else {
-    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global kill-switch also suppresses Posit AI copy mode; the sign-in itself is unaffected.');
+    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global kill-switch also suppresses the Posit AI local token-store copy; the sign-in flow is unaffected.');
   }
 
   process.env.PW_SANDBOX = sandbox;

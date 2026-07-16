@@ -106,14 +106,14 @@ export class ChatPaneActions {
    *
    * Polls (a) clicking through any trust dialog that appears late and (b)
    * failing fast with an actionable message if a Sign-In button shows up,
-   * since credentials are provisioned by the auth.setup project (a seeded
-   * host token-store copy by default, or the OAuth sign-in flow under
-   * PW_SANDBOX_POSITAI_AUTH=login).
-   * The host's Posit Assistant rotates the refresh token in its credential
-   * store (~/.posit/ai/auth/data.json), so seeded copies can be invalidated
-   * between auth setup and test execution; surfacing that as "sign in on the
-   * host and re-run" is more useful than the cryptic "input not editable
-   * after 15s" downstream timeout each test would otherwise hit.
+   * since credentials are provisioned by the auth.setup project (the OAuth
+   * sign-in flow when POSIT_EMAIL/POSIT_PASSWORD are set, else a copy of the
+   * local token store).
+   * The local Posit Assistant rotates the refresh token in its credential
+   * store (~/.posit/ai/auth/data.json), so copied tokens can be invalidated
+   * between auth setup and test execution; surfacing that as "sign in locally
+   * and re-run" is more useful than the cryptic "input not editable after 15s"
+   * downstream timeout each test would otherwise hit.
    *
    * The TrustOverlay component in databot renders as a role="dialog" with the
    * primary button; the RestrictedModeBadge also has a "Trust this workspace"
@@ -162,9 +162,9 @@ export class ChatPaneActions {
     if (await this.chatPane.signInBtn.first().isVisible().catch(() => false)) {
       throw new Error(
         'Posit Assistant requires sign-in despite auth.setup provisioning credentials. ' +
-        'In copy mode (the default; PW_SANDBOX_POSITAI_AUTH unset or =copy), sign in on the host ' +
+        'If the token store was copied from the local machine, sign in to Posit AI locally ' +
         '(token store ~/.posit/ai/auth/data.json) and re-run; ' +
-        'if PW_SANDBOX_POSITAI_AUTH=login, check POSIT_EMAIL/POSIT_PASSWORD and the auth-setup log.'
+        'if POSIT_EMAIL/POSIT_PASSWORD are set for the sign-in flow, check them and the auth-setup log.'
       );
     }
 

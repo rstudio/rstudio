@@ -3,9 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import {
-  AUTH_MODES,
   AUTH_STORAGE_KEY,
-  PositAiAuthMode,
   PositAiOAuthEntry,
   findAuthenticatedStore,
   isStoreFileAuthenticated,
@@ -23,27 +21,24 @@ import {
  * user-home (both store locations in POSITAI_STORE_CANDIDATES, so builds on
  * either side of the assistant's store migration find it) so the Posit AI
  * tests start signed in. It is the sole authority for Posit AI credentials in the
- * sandbox -- globalSetup (sandbox-setup.ts) no longer copies Posit AI creds.
+ * sandbox -- globalSetup (sandbox-setup.ts) does not copy Posit AI creds.
  * Every exit path that lets the run continue (success or skip) also records
  * what happened in <sandbox>/positai-auth-status.json (see PositAiAuthStatus
  * in utils/auth.ts), which requireAiCredentials() reads so skipped tests
  * report the actual cause. The fail-loud throw paths write nothing -- they
  * fail the setup, so dependent tests don't run at all.
  *
- * Modes (PW_SANDBOX_POSITAI_AUTH), default "copy":
- *   copy   Copy only the host user's Posit AI token store
- *          (~/.posit/ai/auth/data.json, or the legacy
- *          ~/.posit/assistant/store/data.json) into the sandbox -- no
- *          skills, workspaces, or other state. This is the default -- unset
- *          behaves as "copy". Skips (Posit AI tests) if the host is not
- *          signed in; never falls back to "login". Suppressed by the global
- *          host-copy kill-switch PW_SANDBOX_NO_SEED_CREDENTIALS, in which
- *          case the tests skip.
- *   login  Run the OAuth sign-in using POSIT_EMAIL/POSIT_PASSWORD. If
- *          either is unset, log and let the Posit AI tests skip. Explicit
- *          only; never used as a fallback from "copy". Useful in CI or on a
- *          host that isn't signed in to Posit AI.
- *   off    Provision nothing; the Posit AI tests skip.
+ * The credential source is auto-detected, not selected by an env var:
+ *   1. POSIT_EMAIL/POSIT_PASSWORD set -> run the OAuth sign-in. Setting the
+ *      credentials is deliberate, so it wins even on a machine already signed
+ *      in locally -- it's how you exercise the sign-in flow.
+ *   2. else a valid local token store exists (~/.posit/ai/auth/data.json, or
+ *      the legacy ~/.posit/assistant/store/data.json) and the
+ *      PW_SANDBOX_NO_SEED_CREDENTIALS kill-switch is not set -> copy it into
+ *      the sandbox (only the token store -- no skills, workspaces, or other
+ *      state).
+ *   3. else -> provision nothing; the Posit AI tests skip with a reason drawn
+ *      from the status file.
  */
 
 const AUTH_HOST = 'login.posit.cloud';
@@ -56,12 +51,12 @@ function copyFile(src: string, dest: string): void {
   fs.copyFileSync(src, dest);
 }
 
-// Copy the host token store into every candidate location in the sandbox, so
+// Copy the local token store into every candidate location in the sandbox, so
 // the assistant under test finds it whether it predates or postdates the
 // store migration (see POSITAI_STORE_CANDIDATES in utils/auth.ts).
-function copyStoreToSandbox(hostStore: string, sandboxUserHome: string): void {
+function copyStoreToSandbox(localStore: string, sandboxUserHome: string): void {
   for (const dest of storeFileCandidates(sandboxUserHome)) {
-    copyFile(hostStore, dest);
+    copyFile(localStore, dest);
   }
 }
 
@@ -466,83 +461,52 @@ setup('authenticate Posit AI', async () => {
   if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
 
   const sandboxUserHome = path.join(sandbox, 'user-home');
-  const modeRaw = process.env.PW_SANDBOX_POSITAI_AUTH ?? 'copy';
-  if (!AUTH_MODES.includes(modeRaw as PositAiAuthMode)) {
-    throw new Error(`PW_SANDBOX_POSITAI_AUTH="${modeRaw}" -- expected one of: ${AUTH_MODES.join(', ')}, or unset`);
-  }
-  const mode: PositAiAuthMode = modeRaw as PositAiAuthMode;
+  const email = process.env.POSIT_EMAIL;
+  const password = process.env.POSIT_PASSWORD;
 
-  if (mode === 'off') {
-    writeAuthStatus(sandbox, {
-      mode,
-      outcome: 'off',
-      reason: 'PW_SANDBOX_POSITAI_AUTH=off: Posit AI credentials deliberately not provisioned.',
-    });
-    console.log('[auth-setup] PW_SANDBOX_POSITAI_AUTH=off; Posit AI tests will skip');
-    return;
-  }
-
-  if (mode === 'copy') {
-    // Mirror of the kill-switch-under-login log below: credentials that copy
-    // mode will never consult shouldn't look like they were silently ignored.
-    if (process.env.POSIT_EMAIL || process.env.POSIT_PASSWORD) {
-      console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD are set but ignored: mode is copy (the default); set PW_SANDBOX_POSITAI_AUTH=login to use them.');
-    }
-    // The global host-copy kill-switch suppresses copy mode (but not the sign-in flow).
+  // Source 2/3: no credentials set -> copy the local token store, else skip.
+  // (Source 1, the sign-in flow, is below and runs when credentials are set.)
+  if (!email || !password) {
+    // The global host-copy kill-switch blocks copying the local token store.
     if (noSeedCredentials()) {
       writeAuthStatus(sandbox, {
-        mode,
-        outcome: 'copy-suppressed',
-        reason: 'Posit AI auth mode is copy (the default), but the PW_SANDBOX_NO_SEED_CREDENTIALS kill-switch suppressed the host copy. Set PW_SANDBOX_POSITAI_AUTH=login with POSIT_EMAIL/POSIT_PASSWORD to provision without copying from the host, or unset the kill-switch.',
+        source: 'none',
+        outcome: 'unavailable',
+        reason: 'Not provisioning Posit AI: POSIT_EMAIL/POSIT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local token store. Set the credentials for the sign-in flow, or unset the kill-switch while signed in to Posit AI locally.',
       });
-      console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; skipping copy, Posit AI tests will skip');
+      console.log('[auth-setup] no credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI tests will skip');
       return;
     }
-    const hostStore = findAuthenticatedStore(os.homedir());
-    if (hostStore === null) {
+    const localStore = findAuthenticatedStore(os.homedir());
+    if (localStore === null) {
       writeAuthStatus(sandbox, {
-        mode,
-        outcome: 'host-not-signed-in',
-        reason: 'Posit AI auth mode is copy (the default), but the host is not signed in to Posit AI (no token store at ~/.posit/ai/auth/data.json or the legacy ~/.posit/assistant/store/data.json holds a valid token -- see the setup log). Sign in on the host, or set PW_SANDBOX_POSITAI_AUTH=login with POSIT_EMAIL/POSIT_PASSWORD.',
+        source: 'none',
+        outcome: 'unavailable',
+        reason: 'Not provisioning Posit AI: not signed in locally (no valid token store at ~/.posit/ai/auth/data.json or the legacy ~/.posit/assistant/store/data.json) and POSIT_EMAIL/POSIT_PASSWORD are unset. Sign in to Posit AI locally, or set the credentials for the sign-in flow.',
       });
-      console.log('[auth-setup] copy mode (the default): host is not signed in to Posit AI (no candidate token store holds a valid token); Posit AI tests will be skipped');
+      console.log('[auth-setup] not signed in locally and no credentials set; Posit AI tests will skip');
       return;
     }
-    copyStoreToSandbox(hostStore, sandboxUserHome);
+    copyStoreToSandbox(localStore, sandboxUserHome);
     verifyStoreWritten(sandboxUserHome);
     writeAuthStatus(sandbox, {
-      mode,
+      source: 'copy',
       outcome: 'success',
-      reason: `copied the token store from the host ${hostStore}`,
+      reason: `copied the local token store from ${localStore}`,
     });
-    console.log(`[auth-setup] copied Posit AI token store from ${hostStore}`);
+    console.log(`[auth-setup] copied Posit AI token store from ${localStore}`);
     console.log(
-      '[auth-setup] real Posit AI tokens now live in the sandbox and persist if the run is preserved or teardown fails.',
+      "[auth-setup] real Posit AI tokens now live in the sandbox; teardown scrubs them if the run is preserved, and warns loudly if it can't.",
     );
     return;
   }
 
-  // mode === 'login': OAuth sign-in. Never falls back to "copy" -- host
-  // tokens are never used. The satisfies turns that comment into a compile
-  // error if a new mode is added to AUTH_MODES without being dispatched
-  // above: a fourth mode must not silently run a live sign-in.
-  mode satisfies 'login';
-  const email = process.env.POSIT_EMAIL;
-  const password = process.env.POSIT_PASSWORD;
-
-  if (!email || !password) {
-    writeAuthStatus(sandbox, {
-      mode,
-      outcome: 'credentials-unset',
-      reason: 'POSIT_EMAIL/POSIT_PASSWORD not set. Set them for the sign-in flow, or unset PW_SANDBOX_POSITAI_AUTH (or set it to copy, the default) to copy the token store while signed in to Posit AI on the host.',
-    });
-    console.log('[auth-setup] POSIT_EMAIL/POSIT_PASSWORD not set; Posit AI tests will be skipped');
-    return;
-  }
-
-  // The host-copy kill-switch never affects the sign-in flow -- it copies
-  // nothing from the host -- but note it in the log so a run configured with
-  // the kill-switch set doesn't look like it was silently ignored.
+  // Source 1: credentials set -> OAuth sign-in. Chosen whenever
+  // POSIT_EMAIL/POSIT_PASSWORD are set, even on a machine already signed in
+  // locally: setting the credentials is the deliberate way to exercise the
+  // sign-in flow. The kill-switch never affects it (it copies nothing from the
+  // host); note it in the log so a run configured with the kill-switch set
+  // doesn't look silently ignored.
   if (noSeedCredentials()) {
     console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI sign-in flow is unaffected.');
   }
@@ -605,7 +569,7 @@ setup('authenticate Posit AI', async () => {
     }
     const msg = err instanceof Error ? err.message : String(err);
     writeAuthStatus(sandbox, {
-      mode,
+      source: 'login',
       outcome: 'login-failed',
       reason: `sign-in flow was attempted but failed: ${msg}`,
     });
@@ -622,7 +586,7 @@ setup('authenticate Posit AI', async () => {
   writeTokensToSandbox(tokenData, sandboxUserHome);
   verifyStoreWritten(sandboxUserHome);
   writeAuthStatus(sandbox, {
-    mode,
+    source: 'login',
     outcome: 'success',
     reason: 'sign-in flow completed',
   });
