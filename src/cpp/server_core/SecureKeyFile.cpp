@@ -131,9 +131,16 @@ core::Error readSecureKeyFile(const std::string& filename,
    if (!core::system::effectiveUserIsRoot() && !secureKeyReadable)
    {
       secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
-      LOG_INFO_MESSAGE("Running without privilege; " +
-                       std::string(secureKeyPath.exists() ? "using" : "generating") +
-                       " secure key at " + secureKeyPath.getAbsolutePath());
+      if (secureKeyPath.exists())
+      {
+         LOG_INFO_MESSAGE("Running without privilege; using secure key at " +
+                          secureKeyPath.getAbsolutePath());
+      }
+      else
+      {
+         LOG_INFO_MESSAGE("Running without privilege; generating secure key at " +
+                          secureKeyPath.getAbsolutePath());
+      }
    }
 
    return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
