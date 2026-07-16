@@ -1,8 +1,9 @@
 name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source)"
 
 # One workflow that drives the reusable per-OS E2E "engines" three ways:
-#   - Weekday cron (Mon-Fri): a fixed two-engine slate per weekday, so every
-#     engine runs at least once a week without running the whole matrix daily.
+#   - Weekday cron (Mon-Fri): a fixed slate per weekday (two engines, except
+#     Thursday's three), so every engine runs at least once a week without
+#     running the whole matrix daily.
 #     No weekday pairs two deb-based engines.
 #   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
 #   - Manual dispatch: every engine at once, optionally against a specific daily
@@ -41,7 +42,7 @@ permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
   # Most engines' e2e-merge jobs assume the S3 report-upload role via OIDC
-  # (fedora44 and ubuntu26 don't upload); a reusable workflow's id-token grant
+  # (fedora43, fedora44, and ubuntu26 don't upload); a reusable workflow's id-token grant
   # is capped by its caller's.
   id-token: write
 
@@ -56,9 +57,10 @@ jobs:
         name: Select engines for this run
         run: |
           # workflow_dispatch and the Sunday cron run every engine; the weekday
-          # cron (Mon-Fri) runs a fixed pair per day. Each engine runs once a
-          # week except macos26, windows2025, and ubuntu24s, which run twice.
-          ALL='["fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13"]'
+          # cron (Mon-Fri) runs a fixed slate per day (a pair, except Thursday's
+          # three). Each engine runs once a week except macos26, windows2025,
+          # and ubuntu24s, which run twice.
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
           else
@@ -66,7 +68,7 @@ jobs:
               1) SEL='["ubuntu24d","macos26"]' ;;
               2) SEL='["ubuntu24s","windows2025"]' ;;
               3) SEL='["ubuntu26","fedora44"]' ;;
-              4) SEL='["debian13","macos26"]' ;;
+              4) SEL='["fedora43","debian13","macos26"]' ;;
               5) SEL='["ubuntu24s","windows2025"]' ;;
               # Only reachable by re-running a weekday run on Sat/Sun, or if the
               # Sunday cron above changed without updating the check above.
@@ -148,6 +150,22 @@ jobs:
             echo "noble_arm64=$NARM"
           } >> "$GITHUB_OUTPUT"
           echo "Resolved URLs for version $VERSION."
+
+  fedora43:
+    name: Fedora 43 x86_64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora43') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-43-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+    with:
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
+      build_from_source: ${{ inputs.build_from_source }}
+      # Same rhel10-x86_64 .rpm the Fedora 44 engine tests -- there is no
+      # separate Fedora 43 daily either.
+      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
 
   fedora44:
     name: Fedora 44 x86_64
