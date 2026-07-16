@@ -369,16 +369,18 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
-            # The Linux Desktop build ships as an Electron .deb keyed
-            # "resolute-amd64" under the electron product in the daily manifest.
-            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["resolute-amd64"].link // empty')
-            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["resolute-amd64"].sha256 // empty')
-            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["resolute-amd64"].filename // empty')
+            # There is no separate Ubuntu 26 (resolute) daily: the manifest has
+            # no resolute-amd64 key, so we install the Ubuntu 24 build -- the
+            # Electron .deb keyed "noble-amd64" (itself a jammy-built deb Posit
+            # ships across Ubuntu versions).
+            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["noble-amd64"].link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["noble-amd64"].sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["noble-amd64"].filename // empty')
             if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
               echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
               exit 1
             fi
-            echo "Auto-resolved latest resolute-amd64 desktop daily:"
+            echo "Auto-resolved latest noble-amd64 (Ubuntu 24) desktop daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
