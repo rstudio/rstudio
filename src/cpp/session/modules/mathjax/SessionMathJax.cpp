@@ -24,6 +24,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #define kMathJaxURIPrefix "/mathjax/"
+#define kMathJax4URIPrefix "/mathjax4/"
 
 using namespace rstudio::core;
 
@@ -38,9 +39,20 @@ void handleMathJax(const http::Request& request, http::Response* pResponse)
 {
    // extract path from URI
    std::string path = request.path().substr(strlen(kMathJaxURIPrefix));
-   
+
    // construct path to resource
    FilePath mathjaxPath = options().mathjaxPath();
+   FilePath resourcePath = mathjaxPath.completePath(path);
+   pResponse->setCacheableFile(resourcePath, request);
+}
+
+void handleMathJax4(const http::Request& request, http::Response* pResponse)
+{
+   // extract path from URI
+   std::string path = request.path().substr(strlen(kMathJax4URIPrefix));
+
+   // construct path to resource
+   FilePath mathjaxPath = options().mathjax4Path();
    FilePath resourcePath = mathjaxPath.completePath(path);
    pResponse->setCacheableFile(resourcePath, request);
 }
@@ -53,7 +65,10 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock;
+   // NOTE: URI handlers match by prefix, in registration order, so
+   // "/mathjax4" must be registered before "/mathjax"
    initBlock.addFunctions()
+      (bind(registerUriHandler, "/mathjax4", handleMathJax4))
       (bind(registerUriHandler, "/mathjax", handleMathJax))
    ;
    return initBlock.execute();

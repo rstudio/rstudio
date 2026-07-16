@@ -2610,6 +2610,15 @@ input[type="checkbox"]:checked:before {
    color: #eee;
 }
 
+/* Default label color for dark dialogs. The extra .dialogContent class is
+   needed to outrank third-party full-IDE themes (e.g. rsthemes) that hardcode
+   a dark .gwt-DialogBox-ModalDialog .dialogContent .gwt-Label color intended
+   for light dialog backgrounds (#17650). Rules that dim specific labels must
+   match this specificity and appear later in the cascade. */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogContent .gwt-Label {
+   color: #eee;
+}
+
 .rstudio-themes-dark.rstudio-theme-aware-dialog input[type="text"],
 .rstudio-themes-dark.rstudio-theme-aware-dialog input[type="password"],
 .rstudio-themes-dark.rstudio-theme-aware-dialog input[type="number"],
@@ -2677,7 +2686,8 @@ input[type="checkbox"]:checked:before {
    color: #888;
 }
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-trust-detail {
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-trust-detail,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogContent .rstudio-trust-detail {
    color: #aaa;
 }
 
@@ -2696,7 +2706,8 @@ input[type="checkbox"]:checked:before {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-HyperlinkLabel {
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-HyperlinkLabel,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogContent .rstudio-HyperlinkLabel {
    color: #abc;
 }
 

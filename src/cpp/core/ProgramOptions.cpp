@@ -43,6 +43,86 @@ bool detectCheckConfigMode(int argc, const char* const argv[])
 
 namespace {
 
+// Returns true if `--<flag>` appears anywhere in argv. Shared by the
+// --setup-db mode-detection flags below.
+bool argHasFlag(int argc, const char* const argv[], const std::string& flag)
+{
+   const std::string needle = "--" + flag;
+   for (int i = 1; i < argc; ++i)
+   {
+      if (std::string(argv[i]) == needle)
+         return true;
+   }
+   return false;
+}
+
+// Shared implementation for the --setup-db value flags below: returns the
+// value of `--<flagName> <value>` (or `--<flagName>=<value>`) if present in
+// argv, or an empty string otherwise.
+std::string extractFlagValue(int argc, const char* const argv[], const std::string& flagName)
+{
+   const std::string flag = "--" + flagName;
+   const std::string prefix = flag + "=";
+   for (int i = 1; i < argc; ++i)
+   {
+      std::string arg(argv[i]);
+      if (arg == flag && i + 1 < argc)
+         return std::string(argv[i + 1]);
+      if (arg.compare(0, prefix.size(), prefix) == 0)
+         return arg.substr(prefix.size());
+   }
+   return std::string();
+}
+
+} // anonymous namespace
+
+bool detectSetupDbMode(int argc, const char* const argv[])
+{
+   return argHasFlag(argc, argv, "setup-db");
+}
+
+bool detectShowPassword(int argc, const char* const argv[])
+{
+   return argHasFlag(argc, argv, "show-password");
+}
+
+bool detectPrintOnly(int argc, const char* const argv[])
+{
+   return argHasFlag(argc, argv, "print-only");
+}
+
+std::string extractMasterPasswordFile(int argc, const char* const argv[])
+{
+   return extractFlagValue(argc, argv, "master-password-file");
+}
+
+std::string extractHost(int argc, const char* const argv[])
+{
+   return extractFlagValue(argc, argv, "host");
+}
+
+std::string extractPort(int argc, const char* const argv[])
+{
+   return extractFlagValue(argc, argv, "port");
+}
+
+std::string extractMasterUsername(int argc, const char* const argv[])
+{
+   return extractFlagValue(argc, argv, "master-username");
+}
+
+std::string extractDatabaseName(int argc, const char* const argv[])
+{
+   return extractFlagValue(argc, argv, "database-name");
+}
+
+std::string extractDatabaseUser(int argc, const char* const argv[])
+{
+   return extractFlagValue(argc, argv, "database-user");
+}
+
+namespace {
+
 enum class OptionsParseState
 {
    Initial,
@@ -251,7 +331,8 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
    // this lets us collect ALL unrecognized keys in a single pass rather than
    // stopping at the first
    bool checkConfigMode = detectCheckConfigMode(argc, argv);
-   if (checkConfigMode)
+   bool setupDbMode = detectSetupDbMode(argc, argv);
+   if (checkConfigMode || setupDbMode)
       allowUnregisteredConfigOptions = true;
 
    try
@@ -262,6 +343,15 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          ("help", "print help message")
          ("test-config", "deprecated alias for --check-config")
          ("check-config", "validate the configuration file and report all unrecognized options in a single pass")
+         ("setup-db", "create the product database, service user, and grants on a PostgreSQL server")
+         ("master-password-file", value<std::string>(), "path to a file whose first line is the --setup-db master database password")
+         ("show-password", "print the generated service-user password to stdout when running --setup-db")
+         ("print-only", "write --setup-db credentials to a standalone file instead of the product config file")
+         ("host", value<std::string>(), "PostgreSQL host for --setup-db (skips the interactive prompt when set)")
+         ("port", value<std::string>(), "PostgreSQL port for --setup-db (skips the interactive prompt when set)")
+         ("master-username", value<std::string>(), "PostgreSQL master username for --setup-db (skips the interactive prompt when set)")
+         ("database-name", value<std::string>(), "database name for --setup-db (skips the interactive prompt when set)")
+         ("database-user", value<std::string>(), "database user for --setup-db (skips the interactive prompt when set)")
          ("config-file",
            value<std::string>(&configFile)->default_value(
                                     optionsDescription.defaultConfigFilePath),

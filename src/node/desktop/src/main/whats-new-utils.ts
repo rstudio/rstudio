@@ -155,3 +155,63 @@ export function resolveWhatsNewContentPath(slug: string): string | null {
     return null;
   }
 }
+
+/**
+ * Inputs to the What's New visibility decision, resolved by the caller.
+ * Kept as plain booleans so the precedence of the checks can be unit-tested
+ * without touching the filesystem, environment, or electron-store.
+ */
+export interface WhatsNewVisibilityInputs {
+  /** Renderable content exists for the current release. */
+  contentAvailable: boolean;
+  /** RSTUDIO_SHOW_WHATS_NEW is set (force show). */
+  forceShow: boolean;
+  /** RSTUDIO_DISABLE_WHATS_NEW is set (force skip). */
+  forceDisable: boolean;
+  /** The show_whats_new user preference is enabled. */
+  userPrefEnabled: boolean;
+  /** The running build is a release build. */
+  isRelease: boolean;
+  /**
+   * Whether this release has already been seen at this patch level or higher.
+   * Passed as a thunk because computing it opens the on-disk seen-state store;
+   * it is only invoked once every earlier gate has passed, so an earlier
+   * decision never touches (or risks throwing on) that store.
+   */
+  alreadySeen: () => boolean;
+}
+
+/**
+ * Decide whether the What's New window should be shown, given already-resolved
+ * inputs. Pure apart from the caller-supplied alreadySeen thunk, which is
+ * evaluated at most once and only when precedence requires it.
+ *
+ * Precedence, highest first:
+ * 1. Content must be available, or it is never shown.
+ * 2. RSTUDIO_SHOW_WHATS_NEW forces it to show, overriding everything below.
+ * 3. RSTUDIO_DISABLE_WHATS_NEW forces it to be skipped.
+ * 4. The show_whats_new user preference can disable it.
+ * 5. Only release builds auto-show.
+ * 6. A release already seen is not shown again.
+ */
+export function evaluateWhatsNewVisibility(inputs: WhatsNewVisibilityInputs): boolean {
+  if (!inputs.contentAvailable) {
+    return false;
+  }
+  if (inputs.forceShow) {
+    return true;
+  }
+  if (inputs.forceDisable) {
+    return false;
+  }
+  if (!inputs.userPrefEnabled) {
+    return false;
+  }
+  if (!inputs.isRelease) {
+    return false;
+  }
+  if (inputs.alreadySeen()) {
+    return false;
+  }
+  return true;
+}

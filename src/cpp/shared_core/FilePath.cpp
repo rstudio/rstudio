@@ -1771,6 +1771,21 @@ FilePath FilePath::resolveSymlink() const
    }
 }
 
+Error FilePath::readSymlink(std::string& out_targetPath) const
+{
+   try
+   {
+      out_targetPath = BOOST_FS_PATH2STR(boost::filesystem::read_symlink(m_impl->Path));
+      return Success();
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(m_impl->Path, &error);
+      return error;
+   }
+}
+
 void FilePath::setLastWriteTime(std::time_t in_time) const
 {
    try

@@ -244,6 +244,82 @@ TEST_F(PreviewConfigChange, UnreadableConfigIsChanged)
    EXPECT_TRUE(changed(quartoYml, "project:\n  type: default\n"));
 }
 
+// Tests for the working directory and target path used to launch a
+// 'quarto preview' job. Files within a Quarto project are previewed from the
+// project root with a project-relative path, as 'quarto preview' can fail to
+// resolve paths relative to a project sub-directory. See
+// https://github.com/rstudio/rstudio/issues/18197.
+class PreviewWorkingDir : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FilePath::tempFilePath(projectDir_);
+      projectDir_.ensureDirectory();
+   }
+
+   void TearDown() override
+   {
+      projectDir_.removeIfExists();
+   }
+
+   FilePath writeFile(const std::string& relativePath)
+   {
+      FilePath file = projectDir_.completeChildPath(relativePath);
+      file.getParent().ensureDirectory();
+      writeStringToFile(file, "---\ntitle: Test\n---\n");
+      return file;
+   }
+
+   FilePath projectDir_;
+};
+
+TEST_F(PreviewWorkingDir, FileInProjectSubdirectoryRunsFromProjectRoot)
+{
+   FilePath quartoYml = writeFile("_quarto.yml");
+   FilePath previewTarget = writeFile("labs/doc.qmd");
+
+   FilePath workingDir = modules::quarto::preview::previewWorkingDir(previewTarget, quartoYml);
+   EXPECT_EQ(workingDir, projectDir_);
+   EXPECT_EQ(modules::quarto::preview::previewTargetPath(previewTarget, workingDir), "labs/doc.qmd");
+}
+
+TEST_F(PreviewWorkingDir, FileAtProjectRootRunsFromProjectRoot)
+{
+   FilePath quartoYml = writeFile("_quarto.yml");
+   FilePath previewTarget = writeFile("doc.qmd");
+
+   FilePath workingDir = modules::quarto::preview::previewWorkingDir(previewTarget, quartoYml);
+   EXPECT_EQ(workingDir, projectDir_);
+   EXPECT_EQ(modules::quarto::preview::previewTargetPath(previewTarget, workingDir), "doc.qmd");
+}
+
+TEST_F(PreviewWorkingDir, FileOutsideProjectRunsFromParentDirectory)
+{
+   FilePath previewTarget = writeFile("labs/doc.qmd");
+
+   FilePath workingDir = modules::quarto::preview::previewWorkingDir(previewTarget, FilePath());
+   EXPECT_EQ(workingDir, previewTarget.getParent());
+   EXPECT_EQ(modules::quarto::preview::previewTargetPath(previewTarget, workingDir), "doc.qmd");
+}
+
+TEST_F(PreviewWorkingDir, DirectoryTargetRunsFromItself)
+{
+   FilePath quartoYml = writeFile("_quarto.yml");
+
+   FilePath workingDir = modules::quarto::preview::previewWorkingDir(projectDir_, quartoYml);
+   EXPECT_EQ(workingDir, projectDir_);
+}
+
+TEST_F(PreviewWorkingDir, TargetOutsideWorkingDirFallsBackToAbsolutePath)
+{
+   FilePath previewTarget = writeFile("doc.qmd");
+   FilePath unrelatedDir = projectDir_.completeChildPath("elsewhere");
+
+   EXPECT_EQ(modules::quarto::preview::previewTargetPath(previewTarget, unrelatedDir),
+             previewTarget.getAbsolutePath());
+}
+
 } // namespace tests
 } // namespace quarto
 } // namespace session

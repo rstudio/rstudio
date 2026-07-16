@@ -383,7 +383,10 @@ protected:
       "Sets a limit in minutes for the amount of time top level R computations may run before being interrupted.")
       ("limit-xfs-disk-quota",
       value<bool>(&limitXfsDiskQuota_)->default_value(false),
-      "Indicates whether or not XFS quotas should be enforced when performing file operations via the files pane.");
+      "Indicates whether or not XFS quotas should be enforced when performing file operations via the files pane.")
+      ("memory-usage-mode",
+      value<std::string>(&memoryUsageMode_)->default_value("auto"),
+      "Selects how Posit Workbench computes and reports session and total memory usage. 'auto' (the default) uses 'container' when the session runs inside a container and 'default' otherwise. 'default' preserves the historical behavior: total memory is the node's physical or cgroup RAM, and Workbench aborts sessions based on node free memory plus a grace period. 'container' reports the session's cgroup memory limit as the total. 'cgroup' reads memory usage from the cgroup. 'meminfo' reads memory usage from the node's /proc/meminfo (useful when cgroup memory includes file cache that does not reflect actual session use).");
 
    pExternal->add_options()
       ("external-rpostback-path",
@@ -413,6 +416,9 @@ protected:
       ("external-mathjax-path",
       value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-27"),
       "Specifies the path to the mathjax library.")
+      ("external-mathjax4-path",
+      value<std::string>(&mathjax4Path_)->default_value("resources/mathjax-4"),
+      "Specifies the path to the mathjax 4 library.")
       ("external-pandoc-path",
       value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
       "Specifies the path to pandoc binaries.")
@@ -591,7 +597,7 @@ public:
    bool allowFullUI() const { return allowFullUI_ || allowOverlay(); }
    bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
    bool allowOverLimitSessions() const { return allowOverLimitSessions_ || allowOverlay(); }
-   int abortFreeMemPercent() const { return abortFreeMemPercent_ || allowOverlay(); }
+   int abortFreeMemPercent() const { return abortFreeMemPercent_; }
    bool allowCopilot() const { return allowCopilot_ || allowOverlay(); }
    bool allowPositAssistant() const { return allowPositAssistant_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
@@ -614,6 +620,7 @@ public:
    int limitFileUploadSizeMb() const { return limitFileUploadSizeMb_; }
    int limitCpuTimeMinutes() const { return limitCpuTimeMinutes_; }
    bool limitXfsDiskQuota() const { return limitXfsDiskQuota_; }
+   std::string memoryUsageMode() const { return memoryUsageMode_; }
    core::FilePath rpostbackPath() const { return core::FilePath(rpostbackPath_); }
    core::FilePath consoleIoPath() const { return core::FilePath(consoleIoPath_); }
    core::FilePath gnudiffPath() const { return core::FilePath(gnudiffPath_); }
@@ -623,6 +630,7 @@ public:
    core::FilePath winutilsPath() const { return core::FilePath(winutilsPath_); }
    core::FilePath hunspellDictionariesPath() const { return core::FilePath(hunspellDictionariesPath_); }
    core::FilePath mathjaxPath() const { return core::FilePath(mathjaxPath_); }
+   core::FilePath mathjax4Path() const { return core::FilePath(mathjax4Path_); }
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
    core::FilePath copilotPath() const { return core::FilePath(copilotPath_); }
@@ -749,6 +757,7 @@ protected:
    int limitFileUploadSizeMb_;
    int limitCpuTimeMinutes_;
    bool limitXfsDiskQuota_;
+   std::string memoryUsageMode_;
    std::string rpostbackPath_;
    std::string consoleIoPath_;
    std::string gnudiffPath_;
@@ -758,6 +767,7 @@ protected:
    std::string winutilsPath_;
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
+   std::string mathjax4Path_;
    std::string pandocPath_;
    std::string quartoPath_;
    std::string copilotPath_;

@@ -50,6 +50,21 @@ for (binding in bindings)
    .rs.scalar(.rs.createAliasedPath(normalized))
 })
 
+.rs.addJsonRpcHandler("recover_package_source", function(path)
+{
+   # given a package source path which no longer exists (e.g. a srcref
+   # path recorded when the package was installed from sources), try to
+   # recover a copy of the file from the package's srcref database
+   recovered <- .rs.recoverPackageSourcePath(path)
+   if (nzchar(recovered))
+   {
+      normalized <- normalizePath(recovered, winslash = "/", mustWork = FALSE)
+      recovered <- .rs.createAliasedPath(normalized)
+   }
+
+   .rs.scalar(recovered)
+})
+
 .rs.addJsonRpcHandler("get_issue_url", function(id)
 {
    project <- .rs.getProjectDirectory()

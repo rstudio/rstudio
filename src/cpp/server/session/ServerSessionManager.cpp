@@ -19,6 +19,7 @@
 
 #include <shared_core/SafeConvert.hpp>
 
+#include <core/Log.hpp>
 #include <core/SocketRpc.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
@@ -270,7 +271,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
       if (pos != pendingLaunches_.end())
       {
          // if the launch is less than one minute old then return success
-         if ( (pos->second + boost::posix_time::minutes(1))
+         if ( (pos->second.launchTime + boost::posix_time::minutes(1))
                > microsec_clock::universal_time() )
          {
             LOG_DEBUG_MESSAGE("Found existing recent launch < 1 min for: " + context.username + " id: " + context.scope.id());
@@ -290,7 +291,7 @@ Error SessionManager::launchSession(boost::asio::io_context& ioContext,
          }
       }
 
-      pendingLaunches_[context] =  microsec_clock::universal_time();
+      pendingLaunches_[context] = PendingLaunch{ microsec_clock::universal_time() };
 
       numRemoved = cleanStalePendingLaunches();
    }
@@ -414,8 +415,17 @@ Error SessionManager::launchAndTrackSession(
                      " pid: " + safe_convert::numberToString(pid));
    metrics::sessionLaunch(metrics::kEditorRStudio);
 
-   // track it for subsequent reaping
-   processTracker_.addProcess(pid);
+   // record the pid on the pending launch, then track the process for
+   // subsequent reaping. if it dies before a client connection removes the
+   // pending launch (e.g. the launch raced a suspending session's exit), the
+   // exit handler clears the entry so waiting connection retries can relaunch
+   // instead of stalling behind a launch that will never become connectable
+   r_util::SessionContext context = profile.context;
+   notePendingLaunchPid(context, pid);
+   processTracker_.addProcess(pid, [this, context, pid](PidType, int status)
+   {
+      removePendingLaunchForPid(context, pid, status);
+   });
 
    // return success
    return Success();
@@ -443,7 +453,7 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
       if (it != pendingLaunches_.cend())
       {
          removed = true;
-         startTime = it->second;
+         startTime = it->second.launchTime;
          pendingLaunches_.erase(context);
       }
    }
@@ -481,7 +491,7 @@ void SessionManager::removePendingSessionLaunch(const std::string& username, con
          if (it->first.username == username && it->first.scope.id() == sessionId)
          {
             removed = true;
-            startTime = it->second;
+            startTime = it->second.launchTime;
             pendingLaunches_.erase(it++);
             break;
          }
@@ -505,6 +515,41 @@ void SessionManager::removePendingSessionLaunch(const std::string& username, con
    }
 }
 
+void SessionManager::notePendingLaunchPid(const r_util::SessionContext& context, PidType pid)
+{
+   LOCK_MUTEX(launchesMutex_)
+   {
+      LaunchMap::iterator it = pendingLaunches_.find(context);
+      if (it != pendingLaunches_.end())
+         it->second.pid = pid;
+   }
+   END_LOCK_MUTEX
+}
+
+void SessionManager::removePendingLaunchForPid(const r_util::SessionContext& context, PidType pid, int exitStatus)
+{
+   bool removed = false;
+   LOCK_MUTEX(launchesMutex_)
+   {
+      // only remove the entry recorded for this pid: a long-lived session's
+      // eventual exit must not clear a newer pending launch for the same
+      // context (its pid differs, or is still unset at -1)
+      LaunchMap::const_iterator it = pendingLaunches_.find(context);
+      if (it != pendingLaunches_.cend() && it->second.pid == pid)
+      {
+         removed = true;
+         pendingLaunches_.erase(it);
+      }
+   }
+   END_LOCK_MUTEX
+
+   if (removed)
+   {
+      WLOGF("Session process {} for user {} (id: {}) exited with status {} before a connection was made; clearing pending launch",
+            pid, context.username, context.scope.id(), exitStatus);
+   }
+}
+
 // Caller should have launchesMutex_. Removes any pendingLaunches that were recorded but where the
 // session never started, or rpcs ended up being handled by another rserver node in the cluster
 int SessionManager::cleanStalePendingLaunches()
@@ -514,7 +559,7 @@ int SessionManager::cleanStalePendingLaunches()
    int numRemoved = 0;
    while (it != pendingLaunches_.cend())
    {
-      if (now > (it->second + boost::posix_time::minutes(3)))
+      if (now > (it->second.launchTime + boost::posix_time::minutes(3)))
       {
          pendingLaunches_.erase(it++);
          numRemoved++;

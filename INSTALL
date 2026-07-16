@@ -35,8 +35,8 @@ a) From the root of the RStudio tree create a build directory and then
 
 b) Configure the build using cmake as appropriate, e.g.
 
-   cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release
-   cmake .. -DRSTUDIO_TARGET=Electron -DRSTUDIO_PACKAGE_BUILD=1
+   cmake .. -G Ninja -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release
+   cmake .. -G Ninja -DRSTUDIO_TARGET=Electron -DRSTUDIO_PACKAGE_BUILD=1
 
    Variables that control configuration include:
 
@@ -57,14 +57,15 @@ b) Configure the build using cmake as appropriate, e.g.
 
 c) There are additional considerations on Windows. First, RStudio Server
    is not supported on Windows so the configuration always defaults to
-   Electron. Second, you need to add an extra -G parameter to specify the
-   correct build toolchain, for example:
+   Electron. Second, the Windows build uses the Ninja generator (the Visual
+   Studio multi-config generator is not supported), so configure from a
+   Visual Studio developer command prompt with:
 
-   cmake .. -G "Visual Studio 17 2022" -A Win64 -DCMAKE_BUILD_TYPE=Release
+   cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 
    To build on Windows:
 
-   cmake --build . --config Release
+   cmake --build .
 
 
 3) Building and Installing
