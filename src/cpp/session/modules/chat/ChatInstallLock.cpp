@@ -265,35 +265,18 @@ bool InstallLock::updateInProgressElsewhere() const
    if (mutationActive_)
       return false;
 
-   // Probe by acquisition rather than isLocked() so an inspection error is
-   // distinguishable from a free lock. The momentary take-and-release can
-   // make a racing mutator fail spuriously ("another session is updating"),
-   // which is retryable — the unsafe alternative is starting a process from
-   // a directory mid-swap.
-   Error error = locksDir_.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return true;
-   }
-
-   boost::shared_ptr<FileLock> probe = makeLock();
-   error = probe->acquire(installLockPath());
-   if (!error)
-   {
-      Error releaseError = probe->release();
-      if (releaseError)
-         LOG_ERROR(releaseError);
-      return false;
-   }
-
-   if (FileLock::isNoLockAvailable(error))
-      return true;
-
-   // Unable to determine — fail closed (report in progress) rather than
-   // let a start proceed during a possible mutation.
-   LOG_ERROR(error);
-   return true;
+   // Probe non-destructively with isLocked(). An acquire-and-release probe
+   // would distinguish errors from a free lock, but AdvisoryFileLock's
+   // release unlinks the file after unlocking, and running that on every
+   // start opens a takeover race: a mutator can lock the inode between the
+   // probe's unlock and unlink, after which a second mutator locks a fresh
+   // file at the same path — two concurrent mutations. isLocked() never
+   // unlinks. Its failure mode (an inspection error reads as "free") is
+   // covered by the protocol's second flag: starters acquire their session
+   // lock before probing, and mutators probe session locks fail-closed
+   // after taking install.lock, so one bad probe cannot pair a mutation
+   // with a running process.
+   return makeLock()->isLocked(installLockPath());
 }
 
 FilePath InstallLock::installLockPath() const
