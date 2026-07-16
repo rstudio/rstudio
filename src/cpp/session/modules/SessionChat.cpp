@@ -21,6 +21,7 @@
 #include "chat/ChatTypes.hpp"
 #include "chat/ChatLogging.hpp"
 #include "chat/ChatInstallation.hpp"
+#include "chat/ChatInstallLock.hpp"
 #include "chat/ChatIntegrity.hpp"
 #include "chat/ChatStaticFiles.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
@@ -107,6 +108,10 @@ PidType s_chatBackendPid = -1;
 int s_chatBackendPort = constants::kChatBackendPortNone;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
+
+// Incremented on every backend start so a late exit callback from a
+// terminated previous process can be told apart from the current one
+uint64_t s_chatBackendGeneration = 0;
 
 // Per-session auth token for WebSocket connections (defense-in-depth)
 std::string s_chatBackendAuthToken;
@@ -4994,8 +4999,23 @@ void onBackendStderr(core::system::ProcessOperations& ops, const std::string& ou
    WLOG("Chat backend stderr: {}", output);
 }
 
-void onBackendExit(int exitCode)
+void onBackendExit(int exitCode, uint64_t generation, uint64_t lockToken)
 {
+   // Sole release point for the backend's in-use lock component: the
+   // supervisor reap callback fires on every stop path (graceful, force
+   // terminate, crash), and only here do we know the process is gone.
+   // Stale or zero tokens no-op inside the helper.
+   installLock().releaseInUse(
+      install_lock::InstallLock::Component::ChatBackend, lockToken);
+
+   // A late reap callback from a previous backend process (force-terminated,
+   // then restarted) must not stomp the state of the current backend.
+   if (generation != s_chatBackendGeneration)
+   {
+      DLOG("Ignoring exit callback from stale chat backend generation");
+      return;
+   }
+
    ILOG("Chat backend exited with code: {}", exitCode);
 
    // Clear chat backend busy state to prevent stuck suspension blocking
@@ -5193,6 +5213,39 @@ Error startChatBackend(bool resumeConversation)
    core::system::setHomeToUserProfile(&environment);
 #endif
 
+   // Coordinate with other rsession processes sharing the per-user install:
+   // hold this session's in-use lock while the backend runs, and refuse to
+   // start while an install/update/uninstall is in progress (we would be
+   // launching from a directory mid-swap). Env-var and system installs are
+   // not mutation targets and skip locking. Acquire-then-probe mirrors the
+   // mutator's probe-after-acquire, so simultaneous racers each see the
+   // other and back off.
+   uint64_t generation = ++s_chatBackendGeneration;
+   uint64_t lockToken = 0;
+   bool userDataInstall =
+      (positAiPath == xdg::userDataDir().completePath(kPositAiDirName));
+   if (userDataInstall)
+   {
+      error = installLock().acquireInUse(
+         install_lock::InstallLock::Component::ChatBackend, &lockToken);
+      if (!error && installLock().updateInProgressElsewhere())
+      {
+         installLock().releaseInUse(
+            install_lock::InstallLock::Component::ChatBackend, lockToken);
+         error = systemError(
+            boost::system::errc::device_or_resource_busy, ERROR_LOCATION);
+      }
+      if (error)
+      {
+         error.addProperty(
+            "description",
+            "A Posit Assistant update is in progress. "
+            "Please try again in a moment.");
+         clearChatBackendPort();
+         return error;
+      }
+   }
+
    // Set up callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = [](core::system::ProcessOperations& ops) {
@@ -5202,7 +5255,10 @@ Error startChatBackend(bool resumeConversation)
    };
    callbacks.onStdout = onBackendStdout;
    callbacks.onStderr = onBackendStderr;
-   callbacks.onExit = onBackendExit;
+   callbacks.onExit = [generation, lockToken](int exitCode)
+   {
+      onBackendExit(exitCode, generation, lockToken);
+   };
 
    // Process options
    core::system::ProcessOptions processOpts;
@@ -5235,6 +5291,8 @@ Error startChatBackend(bool resumeConversation)
 
    if (error)
    {
+      installLock().releaseInUse(
+         install_lock::InstallLock::Component::ChatBackend, lockToken);
       error.addProperty("description",
          "Failed to launch chat backend: node=" +
          nodePath.getAbsolutePath() + ", workingDir=" +
@@ -5598,6 +5656,82 @@ Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
 // chat_get_update_status for progress); only the preceding update check is
 // async, so this is unchanged from the previous behavior apart from resolving a
 // continuation instead of returning a response.
+// Stops the chat backend for an install mutation: graceful shutdown request,
+// bounded wait, force terminate, then a bounded wait for the process to
+// actually exit so file handles are released before the installation
+// directory is modified. The in-use lock component is released by
+// onBackendExit once the process is reaped.
+void stopChatBackendForInstallMutation(const std::string& reason)
+{
+   if (s_chatBackendPid == -1)
+      return;
+
+   auto backendOps = s_chatBackendOps;
+   if (backendOps)
+   {
+      s_expectedShutdown = true;
+      requestBackendShutdown(*backendOps, reason, 1000);
+      const int POLL_INTERVAL_MS = 50;
+      int elapsed = 0;
+      while (s_chatBackendPid != -1 && elapsed < 1000)
+      {
+         module_context::onBackgroundProcessing(false);
+         r::session::event_loop::processEvents();
+         boost::this_thread::sleep(
+            boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+         elapsed += POLL_INTERVAL_MS;
+      }
+   }
+   s_chatBackendOps.reset();
+
+   // Force-terminate if still running after grace period, then wait for the
+   // process to actually exit so file handles are released.
+   if (s_chatBackendPid != -1)
+   {
+      DLOG("Backend did not exit within grace period, force terminating");
+      Error error = core::system::terminateProcess(s_chatBackendPid);
+      if (error)
+         LOG_ERROR(error);
+
+      const int TERM_POLL_MS = 50;
+      const int TERM_TIMEOUT_MS = 2000;
+      int termElapsed = 0;
+      while (s_chatBackendPid != -1 && termElapsed < TERM_TIMEOUT_MS)
+      {
+         module_context::onBackgroundProcessing(false);
+         r::session::event_loop::processEvents();
+         boost::this_thread::sleep(
+            boost::posix_time::milliseconds(TERM_POLL_MS));
+         termElapsed += TERM_POLL_MS;
+      }
+   }
+
+   s_chatBackendPid = -1;
+   clearChatBackendPort();
+   s_chatBusy = false;
+   s_backendOutputBuffer.clear();
+}
+
+// Waits (bounded, pumping the event loop so exit callbacks are delivered)
+// until this session's components have released the in-use lock — the
+// authoritative signal that our own backend/agent processes are reaped.
+// Mutators must not touch the installation on disk while it is held: their
+// session-lock probe excludes our own lock, so our processes are on us.
+// Returns false on timeout.
+bool waitForOwnComponentsReaped(int timeoutMs)
+{
+   const int POLL_MS = 50;
+   int elapsed = 0;
+   while (installLock().inUseHeld() && elapsed < timeoutMs)
+   {
+      module_context::onBackgroundProcessing(false);
+      r::session::event_loop::processEvents();
+      boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_MS));
+      elapsed += POLL_MS;
+   }
+   return !installLock().inUseHeld();
+}
+
 void performInstall(const json::JsonRpcFunctionContinuation& cont)
 {
    json::JsonRpcResponse response;
@@ -5641,24 +5775,49 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
 
-   // Stop backend if running
-   if (s_chatBackendPid != -1)
+   // Serialize with other rsession processes and refuse while any other
+   // session is running Posit Assistant — checked before stopping our own
+   // processes, so a refused update doesn't kill a working assistant.
+   // The scope releases the mutation lock on every exit below.
+   install_lock::MutationScope mutationScope(installLock());
+   if (mutationScope.error())
    {
-      DLOG("Stopping backend for update");
-      Error error = core::system::terminateProcess(s_chatBackendPid);
-      if (error)
-      {
-         WLOG("Failed to stop backend: {}", error.getMessage());
-      }
-      s_chatBackendPid = -1;
-      clearChatBackendPort();
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage = mutationScope.userMessage();
+      lock2.unlock();
+
+      response.setResult(json::Value());
+      cont(Success(), &response);
+      return;
    }
+
+   // Stop backend if running (graceful request + reap wait so file handles
+   // are released before the directory swap)
+   DLOG("Stopping backend for update");
+   stopChatBackendForInstallMutation("update");
 
    // Stop assistant agent (language server) if running - it also uses pai/bin/
    DLOG("Stopping assistant agent for update");
    if (!assistant::stopAgentForUpdate())
    {
       WLOG("Timeout waiting for assistant agent to stop");
+   }
+
+   // Confirm our own processes are actually gone before touching the
+   // installation on disk.
+   if (!waitForOwnComponentsReaped(2000))
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage =
+         "A Posit Assistant process is still shutting down. "
+         "Please try again, or restart RStudio.";
+      lock2.unlock();
+
+      response.setResult(json::Value());
+      cont(Success(), &response);
+      return;
    }
 
    // Download package
@@ -5939,59 +6098,23 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // Stop chat backend
-   if (s_chatBackendPid != -1)
+   // Serialize with other rsession processes and refuse while any other
+   // session is running Posit Assistant — checked before stopping our own
+   // processes. The scope releases the mutation lock on every exit below.
+   install_lock::MutationScope mutationScope(installLock());
+   if (mutationScope.error())
    {
-      auto backendOps = s_chatBackendOps;
-      if (backendOps)
-      {
-         s_expectedShutdown = true;
-         requestBackendShutdown(*backendOps, "uninstall", 1000);
-         const int POLL_INTERVAL_MS = 50;
-         int elapsed = 0;
-         while (s_chatBackendPid != -1 && elapsed < 1000)
-         {
-            module_context::onBackgroundProcessing(false);
-            r::session::event_loop::processEvents();
-            boost::this_thread::sleep(
-               boost::posix_time::milliseconds(POLL_INTERVAL_MS));
-            elapsed += POLL_INTERVAL_MS;
-         }
-      }
-      s_chatBackendOps.reset();
-
-      // Force-terminate if still running after grace period, then wait
-      // for the process to actually exit so file handles are released
-      // before we delete the installation directory.
-      if (s_chatBackendPid != -1)
-      {
-         DLOG("Backend did not exit within grace period, force terminating");
-         Error error = core::system::terminateProcess(s_chatBackendPid);
-         if (error)
-            LOG_ERROR(error);
-
-         const int TERM_POLL_MS = 50;
-         const int TERM_TIMEOUT_MS = 2000;
-         int termElapsed = 0;
-         while (s_chatBackendPid != -1 && termElapsed < TERM_TIMEOUT_MS)
-         {
-            module_context::onBackgroundProcessing(false);
-            r::session::event_loop::processEvents();
-            boost::this_thread::sleep(
-               boost::posix_time::milliseconds(TERM_POLL_MS));
-            termElapsed += TERM_POLL_MS;
-         }
-
-         if (s_chatBackendPid != -1)
-            WLOG("Chat backend did not exit after terminate; "
-                 "proceeding with uninstall");
-      }
-
-      s_chatBackendPid = -1;
-      clearChatBackendPort();
-      s_chatBusy = false;
-      s_backendOutputBuffer.clear();
+      pResponse->setError(
+         systemError(boost::system::errc::device_or_resource_busy,
+                     ERROR_LOCATION),
+         json::Value("Unable to uninstall Posit Assistant: " +
+                     mutationScope.userMessage()));
+      return Success();
    }
+
+   // Stop chat backend (graceful request + reap wait so file handles are
+   // released before we delete the installation directory)
+   stopChatBackendForInstallMutation("uninstall");
 
    // Stop assistant agent (NES language server).
    // stopAgentForUpdate() is synchronous — it waits for the agent
@@ -5999,6 +6122,19 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
    bool agentStopped = assistant::stopAgentForUpdate();
    if (!agentStopped)
       WLOG("Timeout waiting for assistant agent to stop during uninstall");
+
+   // Deleting the installation under a still-live process is exactly the
+   // corruption this lock prevents for other sessions — abort rather than
+   // proceed when our own processes could not be reaped.
+   if (!waitForOwnComponentsReaped(2000))
+   {
+      pResponse->setError(
+         systemError(boost::system::errc::device_or_resource_busy,
+                     ERROR_LOCATION),
+         json::Value("Failed to stop Posit Assistant processes. "
+                     "Please restart RStudio and try again."));
+      return Success();
+   }
 
    // Delete installation.
    // If the agent timed out it may still hold file handles open
@@ -6026,10 +6162,26 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
          boost::system::errc::io_error, message, ERROR_LOCATION);
    }
 
-   // Clean up orphaned backup from failed install/update
+   // Remove any backup left by a failed install/update. Unlike an install,
+   // reporting uninstall success while an executable tree remains would leave
+   // it behind with no guaranteed later cleanup, so treat failure to remove
+   // it as an uninstall failure (mirrors the pai/bin failure path above).
    Error prevError = aiPrevDir.removeIfExists();
    if (prevError)
-      WLOG("Failed to remove backup directory: {}", prevError.getMessage());
+   {
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+
+      return systemError(
+         boost::system::errc::io_error,
+         "Failed to remove Posit Assistant installation backup: " +
+            prevError.getMessage() +
+            ". Please restart RStudio and try again.",
+         ERROR_LOCATION);
+   }
 
    // Reset cached update state so the session correctly detects the
    // missing installation if the user cancels the subsequent restart.
@@ -6229,6 +6381,22 @@ void onShutdown(bool terminatedNormally)
 
 // ============================================================================
 // Public API
+
+install_lock::InstallLock& installLock()
+{
+   // Constructed lazily so FileLock::initialize() (SessionMain) has run.
+   // The owner id names this session's lock file; activeSession().id() can
+   // be empty for dev/automation-launched sessions (no launcher token), so
+   // fall back to a per-process UUID to keep concurrent sessions from
+   // colliding on one file. Stability across restarts is not required —
+   // a crashed session's leftover file is stale-cleaned by the next mutator.
+   static install_lock::InstallLock instance(
+      xdg::userDataDir().completePath(chat_constants::kPositAiLocksDirName),
+      !module_context::activeSession().id().empty()
+         ? module_context::activeSession().id()
+         : core::system::generateUuid(false));
+   return instance;
+}
 // ============================================================================
 
 bool isSuspendable()
