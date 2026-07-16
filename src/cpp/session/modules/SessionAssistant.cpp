@@ -16,8 +16,6 @@
 #include "SessionAssistant.hpp"
 #include "SessionChat.hpp"
 
-#include "chat/ChatConstants.hpp"
-
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
@@ -189,6 +187,10 @@ bool s_assistantEnabled = false;
 
 // The PID of the active agent process.
 PidType s_agentPid = -1;
+
+// Incremented on every agent start so a late exit callback from a
+// superseded agent process can be told apart from the current one.
+uint64_t s_agentGeneration = 0;
 
 // The type of the currently running agent (e.g., "copilot", "posit").
 std::string s_runningAgentType;
@@ -1142,13 +1144,22 @@ void onError(ProcessOperations& operations, const Error& error)
       LOG_ERROR(terminateError);
 }
 
-void onExit(int status, uint64_t lockToken)
+void onExit(int status, uint64_t generation, uint64_t lockToken)
 {
    // Sole release point for the agent's in-use lock component: only the
    // reap callback knows the process is really gone. Zero or stale tokens
    // no-op inside the helper.
    chat::installLock().releaseInUse(
       chat::install_lock::InstallLock::Component::NesAgent, lockToken);
+
+   // A late reap from a superseded agent process (e.g. a replacement start
+   // after a startup timeout) must not mark the current agent stopped or
+   // clear its tracking.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring exit callback from stale agent generation");
+      return;
+   }
 
    if (status != 0 && !s_isSessionShuttingDown)
       WLOG("Agent process exited with status {}.", status);
@@ -1247,23 +1258,27 @@ Error startAgent(const std::string& assistantType = "")
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
-   // When the agent runs from the shared per-user install (pai/bin), hold
-   // this session's in-use lock while it runs and refuse to start while
-   // another session is mutating that installation. Resolve the path the
-   // same way the launch branches below do: the Posit helper-script branch
-   // uses paiLanguageServerPath() directly (ignoring RSTUDIO_AGENT_PATH).
+   // When the agent will run from the shared per-user install (pai/bin),
+   // hold this session's in-use lock while it runs and refuse to start
+   // while another session is mutating that installation. Decide from the
+   // configured source, not a path lookup — mid-swap the path can read as
+   // missing and then reappear, which must not skip the lock. The Posit
+   // helper-script branch always uses paiLanguageServerPath() (ignoring
+   // RSTUDIO_AGENT_PATH); the direct branch honors the env override.
    // Copilot and env-override agents are unrelated to the install and skip
    // locking (lockToken stays 0, which release treats as a no-op).
-   FilePath resolvedAgentPath =
-      (assistant == kAssistantPosit &&
-       !session::options().positAssistantHelper().isEmpty())
-         ? paiLanguageServerPath()
-         : assistantLanguageServerPath(assistant);
-   bool userDataInstall = resolvedAgentPath.isWithin(
-      xdg::userDataDir().completePath(chat::constants::kPositAiDirName));
+   bool positHelperConfigured =
+      !session::options().positAssistantHelper().isEmpty();
+   std::string agentPathOverride = core::system::getenv("RSTUDIO_AGENT_PATH");
+   bool overrideInEffect =
+      !agentPathOverride.empty() && FilePath::exists(agentPathOverride);
+   bool usesSharedInstall =
+      assistant == kAssistantPosit &&
+      (positHelperConfigured || !overrideInEffect);
 
+   uint64_t agentGeneration = ++s_agentGeneration;
    uint64_t lockToken = 0;
-   if (userDataInstall)
+   if (usesSharedInstall)
    {
       error = chat::installLock().acquireInUse(
          chat::install_lock::InstallLock::Component::NesAgent, &lockToken);
@@ -1292,6 +1307,18 @@ Error startAgent(const std::string& assistantType = "")
          chat::install_lock::InstallLock::Component::NesAgent, lockToken);
    };
 
+   // Resolve the agent executable once — after acquiring the lock, so a
+   // concurrent install cannot change what we launch — and reuse it in the
+   // launch branches below.
+   FilePath resolvedAgentPath;
+   if (assistant == kAssistantPosit && positHelperConfigured)
+      resolvedAgentPath = paiLanguageServerPath();
+   else if (assistant == kAssistantCopilot &&
+            !session::options().copilotHelper().isEmpty())
+      resolvedAgentPath = copilotLanguageServerPath();
+   else
+      resolvedAgentPath = assistantLanguageServerPath(assistant);
+
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;
@@ -1299,9 +1326,9 @@ Error startAgent(const std::string& assistantType = "")
    callbacks.onStdout = &agent::onStdout;
    callbacks.onStderr = &agent::onStderr;
    callbacks.onError = &agent::onError;
-   callbacks.onExit = [lockToken](int status)
+   callbacks.onExit = [agentGeneration, lockToken](int status)
    {
-      agent::onExit(status, lockToken);
+      agent::onExit(status, agentGeneration, lockToken);
    };
 
    // Set up process options
@@ -1333,10 +1360,9 @@ Error startAgent(const std::string& assistantType = "")
          return fileNotFoundError(copilotHelper, ERROR_LOCATION);
       }
 
-      FilePath copilotPath = copilotLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", copilotPath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", resolvedAgentPath.getAbsolutePath()));
       options.environment = environment;
 
       error = module_context::processSupervisor().runProgram(
@@ -1354,10 +1380,9 @@ Error startAgent(const std::string& assistantType = "")
          return fileNotFoundError(positAssistantHelper, ERROR_LOCATION);
       }
 
-      FilePath paiPath = paiLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", paiPath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_PAI_PATH", paiPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_PAI_PATH", resolvedAgentPath.getAbsolutePath()));
       options.environment = environment;
 
       error = module_context::processSupervisor().runProgram(
@@ -1369,7 +1394,7 @@ Error startAgent(const std::string& assistantType = "")
    else
    {
       // Run assistant directly (no helper script)
-      FilePath assistantPath = assistantLanguageServerPath(assistant);
+      const FilePath& assistantPath = resolvedAgentPath;
       if (!assistantPath.exists())
       {
          releaseAgentLock();

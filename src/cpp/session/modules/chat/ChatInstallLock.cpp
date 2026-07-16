@@ -18,7 +18,15 @@
 #include <cstddef>
 #include <vector>
 
+// boost/interprocess requires this undef under mingw64 (mirrors
+// core/file_lock/AdvisoryFileLock.cpp)
+#if defined(__GNUC__) && defined(_WIN64)
+   #undef BOOST_USE_WINDOWS_H
+#endif
+#include <boost/interprocess/sync/file_lock.hpp>
+
 #include <core/Log.hpp>
+#include <core/StringUtils.hpp>
 
 namespace rstudio {
 namespace session {
@@ -62,6 +70,52 @@ std::string sessionsInUseMessage(FileLock::LockType lockType)
    }
 
    return message;
+}
+
+enum class LockProbe
+{
+   Free,
+   Held,
+   Error
+};
+
+// Non-destructive tri-state lock probe. Unlike FileLock::isLocked() it
+// distinguishes an inspection error from a free lock (so callers can fail
+// closed), and unlike an acquire-and-release probe it never unlinks the lock
+// file (an advisory release unlocks and then deletes the file, opening a
+// takeover race where two mutators end up holding locks on different inodes
+// of the same path).
+LockProbe probeLock(const FilePath& lockFilePath, FileLock::LockType lockType)
+{
+   if (!lockFilePath.exists())
+      return LockProbe::Free;
+
+   // Link-based locks never run on Windows (FileLock forces advisory there)
+   if (lockType == FileLock::LOCKTYPE_LINKBASED)
+   {
+      return LinkBasedFileLock::isLockFileStale(lockFilePath)
+         ? LockProbe::Free
+         : LockProbe::Held;
+   }
+
+   try
+   {
+      boost::interprocess::file_lock lock(
+         string_utils::utf8ToSystem(lockFilePath.getAbsolutePath()).c_str());
+      if (lock.try_lock())
+      {
+         lock.unlock();
+         return LockProbe::Free;
+      }
+      return LockProbe::Held;
+   }
+   catch (boost::interprocess::interprocess_exception& e)
+   {
+      LOG_WARNING_MESSAGE(
+         "Unable to inspect lock file '" + lockFilePath.getAbsolutePath() +
+         "': " + e.what());
+      return LockProbe::Error;
+   }
 }
 
 } // anonymous namespace
@@ -265,18 +319,21 @@ bool InstallLock::updateInProgressElsewhere() const
    if (mutationActive_)
       return false;
 
-   // Probe non-destructively with isLocked(). An acquire-and-release probe
-   // would distinguish errors from a free lock, but AdvisoryFileLock's
-   // release unlinks the file after unlocking, and running that on every
-   // start opens a takeover race: a mutator can lock the inode between the
-   // probe's unlock and unlink, after which a second mutator locks a fresh
-   // file at the same path — two concurrent mutations. isLocked() never
-   // unlinks. Its failure mode (an inspection error reads as "free") is
-   // covered by the protocol's second flag: starters acquire their session
-   // lock before probing, and mutators probe session locks fail-closed
-   // after taking install.lock, so one bad probe cannot pair a mutation
-   // with a running process.
-   return makeLock()->isLocked(installLockPath());
+   switch (probeLock(installLockPath(), effectiveLockType()))
+   {
+      case LockProbe::Free:
+         return false;
+      case LockProbe::Held:
+         return true;
+      case LockProbe::Error:
+      default:
+         // Fail closed: refuse the start rather than launch a process from
+         // a directory that may be mid-swap. The refusal is retryable.
+         LOG_WARNING_MESSAGE(
+            "Unable to inspect the Posit Assistant install lock; "
+            "assuming an update is in progress");
+         return true;
+   }
 }
 
 FilePath InstallLock::installLockPath() const
