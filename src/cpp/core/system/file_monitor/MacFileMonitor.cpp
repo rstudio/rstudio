@@ -50,9 +50,9 @@ public:
    DirectoryHandle(const std::string& path)
       : fd_(-1)
    {
-      // O_CLOEXEC so the descriptor (held for the monitor's lifetime) does
-      // not leak into forked children, where it would pin the watched
-      // directory for as long as the child runs
+      // O_CLOEXEC so the descriptor (held for the monitor's lifetime) is
+      // closed across exec, rather than leaking into child processes where
+      // it would pin the watched directory for as long as the child runs
       const char* cpath = path.c_str();
       auto f = [&]() { return ::open(cpath, O_DIRECTORY | O_CLOEXEC); };
       Error error = posix::posixCall<int>(f, ERROR_LOCATION, &fd_);
@@ -393,8 +393,9 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    // overflow), the loss is not necessarily confined to the delivered paths,
    // and the flagged path may even be excluded by our filter (e.g. .git).
    // Reconcile with a single recursive rescan from the stream root rather
-   // than trusting the flagged path; the per-path scans below would be
-   // redundant after that.
+   // than trusting the flagged path; the per-path scans below are redundant
+   // after a successful rescan, but on rescan failure fall through to them
+   // so the delivered events are still processed.
    if (eventsDropped)
    {
       LOG_WARNING_MESSAGE("File monitor events were dropped; rescanning " +
@@ -406,13 +407,11 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                             pContext->filter,
                             &(pContext->fileTree),
                             pContext->callbacks.onFilesChanged);
-      if (error &&
-         (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
-      {
-         LOG_ERROR(error);
-      }
+      if (!error)
+         return;
 
-      return;
+      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+         LOG_ERROR(error);
    }
 
    for (const std::pair<std::string, FSEventStreamEventFlags>& event : events)

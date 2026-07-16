@@ -143,13 +143,30 @@ public abstract class VcsState
          return;
       }
 
-      // apply all pending changes in a single pass over the status list
+      ArrayList<StatusAndPath> merged = mergeFileChanges(status_, pendingChanges_.values());
+      pendingChanges_.clear();
+
+      if (merged == null)
+         return;
+
+      status_ = merged;
+      handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
+   }
+
+   // apply a batch of file changes to a status list in a single pass: an
+   // empty status removes the entry, otherwise the entry is replaced or
+   // appended. Returns the merged list, or null if nothing changed.
+   // Package-private for testing.
+   static ArrayList<StatusAndPath> mergeFileChanges(
+         ArrayList<StatusAndPath> statusList,
+         Iterable<StatusAndPath> changes)
+   {
       LinkedHashMap<String, StatusAndPath> statusByPath = new LinkedHashMap<>();
-      for (StatusAndPath status : status_)
+      for (StatusAndPath status : statusList)
          statusByPath.put(status.getRawPath(), status);
 
       boolean changed = false;
-      for (StatusAndPath status : pendingChanges_.values())
+      for (StatusAndPath status : changes)
       {
          if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
          {
@@ -162,13 +179,8 @@ public abstract class VcsState
             changed = true;
          }
       }
-      pendingChanges_.clear();
 
-      if (!changed)
-         return;
-
-      status_ = new ArrayList<>(statusByPath.values());
-      handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
+      return changed ? new ArrayList<>(statusByPath.values()) : null;
    }
 
    public void bindRefreshHandler(Widget owner,

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.server.remote;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandCallbacksChangedEvent;
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.HighlightEvent;
@@ -347,9 +348,23 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.FilesChanged)
          {
+            // the backend batches bulk file changes into a single event to cut
+            // transport cost; unpack here so per-file consumers are unchanged
             JsArray<FileChange> fileChanges = event.getData();
-            for (int i = 0; i < fileChanges.length(); i++)
-               eventBus_.dispatchEvent(new FileChangeEvent(fileChanges.get(i)));
+            int n = (fileChanges == null) ? 0 : fileChanges.length();
+            for (int i = 0; i < n; i++)
+            {
+               // dispatch each change independently so a failure doesn't
+               // silently drop the rest of the batch
+               try
+               {
+                  eventBus_.dispatchEvent(new FileChangeEvent(fileChanges.get(i)));
+               }
+               catch (Exception e)
+               {
+                  Debug.logException(e);
+               }
+            }
          }
          else if (type == ClientEvent.WorkingDirChanged)
          {
