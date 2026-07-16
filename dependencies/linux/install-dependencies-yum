@@ -39,6 +39,8 @@ PACKAGES=(
 	pam-devel
 	pango-devel
 	postgresql-devel
+	R-core
+	R-core-devel
 	rpmdevtools
 	sqlite-devel
 	wget
