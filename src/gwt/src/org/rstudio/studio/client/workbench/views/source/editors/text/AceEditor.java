@@ -1145,11 +1145,18 @@ public class AceEditor implements DocDisplay
 
       // set default key handler
       if (useVimMode_)
+      {
          widget_.getEditor().setKeyboardHandler(KeyboardHandler.vim());
+         RStudioGinjector.INSTANCE.getVimrcLoader().ensureLoaded(widget_.getEditor());
+      }
       else if (useEmacsKeybindings_)
+      {
          widget_.getEditor().setKeyboardHandler(KeyboardHandler.emacs());
+      }
       else
+      {
          widget_.getEditor().setKeyboardHandler(null);
+      }
 
       // add the previewer
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());

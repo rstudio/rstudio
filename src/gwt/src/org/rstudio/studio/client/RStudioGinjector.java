@@ -174,6 +174,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeTreeMa
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCommentHeaderHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoader;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetAssistantHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
@@ -398,6 +399,7 @@ public interface RStudioGinjector extends Ginjector
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();
    SourceWindow getSourceWindow();
+   VimrcLoader getVimrcLoader();
    Server getServer();
    ChunkWindowManager getChunkWindowManager();
    Projects getProjects();
