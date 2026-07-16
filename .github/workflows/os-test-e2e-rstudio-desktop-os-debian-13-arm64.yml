@@ -335,7 +335,15 @@ jobs:
       # bare-runner siblings. If a future runner kernel forbids unprivileged user
       # namespaces and the sandbox can't come up, set rstudio_extra_args to
       # '--no-sandbox' as a fallback rather than changing these.
-      options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
+      #
+      # --shm-size=2g: container jobs default /dev/shm to 64 MB, which Chromium
+      # uses for cross-process shared memory. Under that cap the Electron
+      # renderer crashes to a blank page with no logged cause after a while
+      # (observed in the first arm64 run: the app worked for dozens of tests,
+      # then "Target crashed" mid-suite with nothing in rdesktop.log or the
+      # trace). The bare-runner siblings get the host's full /dev/shm and never
+      # hit this. Raising it to 2g is the standard container fix.
+      options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined --shm-size=2g
     timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
