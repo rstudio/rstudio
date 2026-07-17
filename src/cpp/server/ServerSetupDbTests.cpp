@@ -257,6 +257,162 @@ TEST(ServerSetupDbTests, ConnectAsMasterReportsConnectFailure)
    EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
 }
 
+TEST(ServerSetupDbTests, ConnectAsMasterFailsOnEofForMissingHost)
+{
+   // The host prompt is the first one connectAsMaster issues, so hitting EOF
+   // there is reachable without ever attempting a connection -- no live
+   // PostgreSQL server needed for this case.
+   std::istringstream in(""); // at EOF from the start; host flag left empty
+   std::ostringstream out;
+
+   SetupDbFlags flags;
+   boost::shared_ptr<database::IConnection> pConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = connectAsMaster(flags, in, out, &pConnection, &masterOptions, &passed);
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
+   EXPECT_NE(std::string::npos, out.str().find("--setup-db-host"));
+}
+
+TEST(ServerSetupDbTests, ConnectAsMasterFailsOnEofForMissingPort)
+{
+   // Supply host via flag so the port prompt is the one reached at EOF.
+   std::istringstream in("");
+   std::ostringstream out;
+
+   SetupDbFlags flags;
+   flags.host = "127.0.0.1";
+   boost::shared_ptr<database::IConnection> pConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = connectAsMaster(flags, in, out, &pConnection, &masterOptions, &passed);
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("--setup-db-port"));
+}
+
+TEST(ServerSetupDbTests, ConnectAsMasterFailsOnEofForMissingMasterUsername)
+{
+   // Supply host and port via flags so the master username prompt is the one
+   // reached at EOF.
+   std::istringstream in("");
+   std::ostringstream out;
+
+   SetupDbFlags flags;
+   flags.host = "127.0.0.1";
+   flags.port = "5432";
+   boost::shared_ptr<database::IConnection> pConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = connectAsMaster(flags, in, out, &pConnection, &masterOptions, &passed);
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("--setup-db-master-username"));
+}
+
+TEST(ServerSetupDbTests, ConnectAsMasterHonorsHostPortAndMasterUsernameFlags)
+{
+   // host/port/masterUsername are all supplied via flags against a fully
+   // empty (already-at-EOF) input stream. If any of the three flags were not
+   // honored, the corresponding prompt would consume from the empty stream,
+   // hit EOF, and fail with a "no ... provided" message before ever
+   // attempting to connect. Getting past all three to a real (failing, since
+   // nothing is listening) connect attempt proves the flags were honored and
+   // their prompts skipped.
+   std::istringstream in("");
+   std::ostringstream out;
+   setenv("RSERVER_SETUP_DB_MASTER_PASSWORD", "unused", 1 /* overwrite */);
+
+   SetupDbFlags flags;
+   flags.host = "127.0.0.1";
+   flags.port = "1";
+   flags.masterUsername = "no-such-user";
+   boost::shared_ptr<database::IConnection> pConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = connectAsMaster(flags, in, out, &pConnection, &masterOptions, &passed);
+
+   unsetenv("RSERVER_SETUP_DB_MASTER_PASSWORD");
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_EQ(std::string::npos, out.str().find("No PostgreSQL host provided"));
+   EXPECT_EQ(std::string::npos, out.str().find("No PostgreSQL port provided"));
+   EXPECT_EQ(std::string::npos, out.str().find("No PostgreSQL master username provided"));
+   EXPECT_NE(std::string::npos, out.str().find("[FAIL] Could not connect"));
+}
+
+TEST(ServerSetupDbTests, SetupDbFailsOnEofForMissingDatabaseName)
+{
+   // The database-name prompt is the first setupDb() issues, and this EOF
+   // path returns before pMasterConnection is ever dereferenced, so a null
+   // connection is safe here -- no live PostgreSQL server needed.
+   Options& options = server::options();
+   SetupDbFlags flags;
+   std::istringstream in("");
+   std::ostringstream out;
+   boost::shared_ptr<database::IConnection> pMasterConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = setupDb(options, flags, pMasterConnection, masterOptions, in, out, &passed);
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
+   EXPECT_NE(std::string::npos, out.str().find("--setup-db-database-name"));
+}
+
+TEST(ServerSetupDbTests, SetupDbFailsOnEofForMissingDatabaseUser)
+{
+   // Supply the database name via flag so the database-user prompt is the
+   // one reached at EOF; still returns before pMasterConnection is
+   // dereferenced.
+   Options& options = server::options();
+   SetupDbFlags flags;
+   flags.databaseName = "rstudio-os";
+   std::istringstream in("");
+   std::ostringstream out;
+   boost::shared_ptr<database::IConnection> pMasterConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = setupDb(options, flags, pMasterConnection, masterOptions, in, out, &passed);
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("--setup-db-database-user"));
+}
+
+TEST(ServerSetupDbTests, SetupDbHonorsDatabaseNameAndUserFlagsAndSkipsPrompts)
+{
+   // Supplying invalid identifiers (rather than valid ones) via flags keeps
+   // this test DB-free: an invalid identifier fails validateIdentifier() and
+   // returns before setupDb() ever touches pMasterConnection, while still
+   // proving the flags were honored -- if they were NOT honored, the empty
+   // (already-at-EOF) `in` stream below would instead trip the "no ...
+   // provided" EOF guard first.
+   Options& options = server::options();
+   SetupDbFlags flags;
+   flags.databaseName = "not valid!";
+   flags.databaseUser = "not valid!";
+   std::istringstream in("");
+   std::ostringstream out;
+   boost::shared_ptr<database::IConnection> pMasterConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = setupDb(options, flags, pMasterConnection, masterOptions, in, out, &passed);
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_EQ(std::string::npos, out.str().find("No database name provided"));
+   EXPECT_EQ(std::string::npos, out.str().find("No database user provided"));
+   EXPECT_NE(std::string::npos, out.str().find("not a valid database/user name"));
+}
+
 TEST(ServerSetupDbTests, MergeWriteDatabaseConfigFilePreservesUnrelatedKeys)
 {
    FilePath dir = makeTempDir();

@@ -88,11 +88,21 @@ std::string readMaskedLine(std::istream& in, std::ostream& out)
    return value;
 }
 
-std::string promptLine(std::istream& in, std::ostream& out, const std::string& prompt)
+// Reads a line from `in`, writing `prompt` to `out` first. If `pEof` is
+// non-null, *pEof is set to true only when the stream hit end-of-input with
+// nothing typed -- interactively pressing enter also yields an empty value,
+// but without eof(), so that case leaves *pEof false and existing
+// empty-value defaults still apply. Callers use *pEof to distinguish a
+// deliberate blank answer from a non-interactive run that piped in less
+// input than --setup-db needed.
+std::string promptLine(std::istream& in, std::ostream& out, const std::string& prompt,
+                        bool* pEof = nullptr)
 {
    out << prompt;
    std::string value;
    std::getline(in, value);
+   if (pEof != nullptr)
+      *pEof = in.eof() && value.empty();
    return value;
 }
 
@@ -360,17 +370,47 @@ Error connectAsMaster(const SetupDbFlags& flags,
 
    std::string host = flags.host;
    if (host.empty())
-      host = promptLine(in, out, "PostgreSQL host: ");
+   {
+      bool eof = false;
+      host = promptLine(in, out, "PostgreSQL host: ", &eof);
+      if (eof)
+      {
+         out << "[FAIL] No PostgreSQL host provided. Pass --setup-db-host to run --setup-db "
+                "without interactive input." << std::endl;
+         *pPassed = false;
+         return Success();
+      }
+   }
 
    std::string port = flags.port;
    if (port.empty())
-      port = promptLine(in, out, "PostgreSQL port [5432]: ");
+   {
+      bool eof = false;
+      port = promptLine(in, out, "PostgreSQL port [5432]: ", &eof);
+      if (eof)
+      {
+         out << "[FAIL] No PostgreSQL port provided. Pass --setup-db-port to run --setup-db "
+                "without interactive input." << std::endl;
+         *pPassed = false;
+         return Success();
+      }
+   }
    if (port.empty())
       port = "5432";
 
    std::string masterUser = flags.masterUsername;
    if (masterUser.empty())
-      masterUser = promptLine(in, out, "Master username: ");
+   {
+      bool eof = false;
+      masterUser = promptLine(in, out, "Master username: ", &eof);
+      if (eof)
+      {
+         out << "[FAIL] No PostgreSQL master username provided. Pass --setup-db-master-username "
+                "to run --setup-db without interactive input." << std::endl;
+         *pPassed = false;
+         return Success();
+      }
+   }
 
    std::string masterPassword;
    Error error = resolveMasterPassword(flags.masterPasswordFile, in, out, &masterPassword);
@@ -533,13 +573,33 @@ Error setupDb(const Options& options,
 
    std::string dbName = flags.databaseName;
    if (dbName.empty())
-      dbName = promptLine(in, out, "Database name [" + defaultName + "]: ");
+   {
+      bool eof = false;
+      dbName = promptLine(in, out, "Database name [" + defaultName + "]: ", &eof);
+      if (eof)
+      {
+         out << "[FAIL] No database name provided. Pass --setup-db-database-name to run "
+                "--setup-db without interactive input." << std::endl;
+         *pPassed = false;
+         return Success();
+      }
+   }
    if (dbName.empty())
       dbName = defaultName;
 
    std::string dbUser = flags.databaseUser;
    if (dbUser.empty())
-      dbUser = promptLine(in, out, "Database user [" + defaultName + "]: ");
+   {
+      bool eof = false;
+      dbUser = promptLine(in, out, "Database user [" + defaultName + "]: ", &eof);
+      if (eof)
+      {
+         out << "[FAIL] No database user provided. Pass --setup-db-database-user to run "
+                "--setup-db without interactive input." << std::endl;
+         *pPassed = false;
+         return Success();
+      }
+   }
    if (dbUser.empty())
       dbUser = defaultName;
 
