@@ -347,9 +347,6 @@
         "r2d3": {
             "description": "R2D3",
             "packages": [
-                "htmltools",
-                "htmlwidgets",
-                "jsonlite",
                 "r2d3"
             ]
         },
@@ -362,11 +359,6 @@
         "plumber": {
             "description": "Plumber R APIs",
             "packages": [
-                "R6",
-                "stringi",
-                "jsonlite",
-                "httpuv",
-                "crayon",
                 "plumber"
             ]
         },
@@ -379,32 +371,17 @@
         "rsconnect": {
             "description": "Publishing",
             "packages": [
-                "curl",
-                "jsonlite",
-                "openssl",
-                "rstudioapi",
-                "yaml",
-                "packrat",
                 "rsconnect"
             ]
         },
         "rmarkdown": {
             "description": "R Markdown",
             "packages": [
-                "base64enc",
                 "digest",
-                "evaluate",
-                "glue",
-                "highr",
                 "htmltools",
                 "jsonlite",
                 "knitr",
-                "magrittr",
-                "mime",
                 "rmarkdown",
-                "stringi",
-                "stringr",
-                "xfun",
                 "yaml"
             ]
         },
@@ -418,27 +395,12 @@
         "shiny": {
             "description": "Shiny",
             "packages": [
-                "crayon",
-                "digest",
-                "htmltools",
-                "httpuv",
-                "jsonlite",
-                "later",
-                "mime",
-                "promises",
-                "rlang",
-                "R6",
-                "Rcpp",
-                "shiny",
-                "sourcetools",
-                "xtable"
+                "shiny"
             ]
         },
         "reticulate": {
             "description": "Python/Reticulate",
             "packages": [
-                "jsonlite",
-                "png",
                 "reticulate"
             ]
         },
@@ -464,22 +426,19 @@
         "import_csv": {
             "description": "CSV Import",
             "packages": [
-                "readr",
-                "Rcpp"
+                "readr"
             ]
         },
         "import_sav": {
             "description": "SPSS/SAS/Stata Import",
             "packages": [
-                "haven",
-                "Rcpp"
+                "haven"
             ]
         },
         "import_xls": {
             "description": "Excel Import",
             "packages": [
-                "readxl",
-                "Rcpp"
+                "readxl"
             ]
         },
         "import_xml": {
@@ -497,8 +456,7 @@
         "import_jdbc": {
             "description": "JDBC Import",
             "packages": [
-                "RJDBC",
-                "rJava"
+                "RJDBC"
             ]
         },
         "import_odbc": {
@@ -510,17 +468,12 @@
         "import_mongo": {
             "description": "Mongo DB Import",
             "packages": [
-                "mongolite",
-                "jsonlite"
+                "mongolite"
             ]
         },
         "profvis": {
             "description": "Visual Profiling",
             "packages": [
-                "stringr",
-                "jsonlite",
-                "htmltools",
-                "yaml",
                 "htmlwidgets",
                 "profvis"
             ]
@@ -573,22 +526,8 @@
         "tutorial": {
             "description": "RStudio Tutorials",
             "packages": [
-                "checkmate",
-                "ellipsis",
-                "evaluate",
-                "fastmap",
-                "htmltools",
-                "htmlwidgets",
-                "jsonlite",
-                "knitr",
                 "learnr",
-                "rmarkdown",
-                "rappdirs",
-                "renv",
-                "rprojroot",
-                "rstudioapi",
-                "shiny",
-                "withr"
+                "rstudioapi"
             ]
         }
     }
