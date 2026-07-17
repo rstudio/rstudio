@@ -246,6 +246,30 @@ void silentUpdateEmbeddedPackage(const EmbeddedPackage& pkg)
       LOG_ERROR(error);
 }
 
+// Fills in the version of the package available on CRAN, and whether that
+// version satisfies the dependency's version requirement.
+void fillCranVersionInfo(Dependency* pDep)
+{
+   // presume package is available unless we can demonstrate otherwise
+   // (we don't want to block installation attempt unless we're
+   // reasonably confident it will not result in a viable version)
+   r::sexp::Protect protect;
+   SEXP versionInfo = R_NilValue;
+
+   // find the version that will be installed from CRAN
+   Error error = r::exec::RFunction(".rs.packageCRANVersionAvailable",
+         pDep->name, pDep->version, pDep->source).call(&versionInfo, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // if these fail, we'll fall back on defaults
+   r::sexp::getNamedListElement(versionInfo, "version", &pDep->availableVersion);
+   r::sexp::getNamedListElement(versionInfo, "satisfied", &pDep->versionSatisfied);
+}
+
 
 Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
                               json::JsonRpcResponse* pResponse)
@@ -265,34 +289,23 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // build the list of unsatisfied dependencies
+   // build the list of unsatisfied dependencies, keeping track of the
+   // dependencies which are installed so their own runtime dependencies can
+   // be validated below
    using namespace module_context;
    std::vector<Dependency> unsatisfiedDeps;
+   std::vector<std::string> installedPackages;
    for (Dependency& dep : deps)
    {
       if (dep.location == kCRANPackageDependency)
       {
-         if (!isPackageVersionInstalled(dep.name, dep.version))
+         if (isPackageVersionInstalled(dep.name, dep.version))
          {
-            // presume package is available unless we can demonstrate otherwise
-            // (we don't want to block installation attempt unless we're
-            // reasonably confident it will not result in a viable version)
-            r::sexp::Protect protect;
-            SEXP versionInfo = R_NilValue;
-
-            // find the version that will be installed from CRAN
-            error = r::exec::RFunction(".rs.packageCRANVersionAvailable", 
-                  dep.name, dep.version, dep.source).call(&versionInfo, &protect);
-            if (error) {
-               LOG_ERROR(error);
-            } else {
-               // if these fail, we'll fall back on defaults set above
-               r::sexp::getNamedListElement(versionInfo, "version", 
-                     &dep.availableVersion);
-               r::sexp::getNamedListElement(versionInfo, "satisfied", 
-                     &dep.versionSatisfied);
-            }
-
+            installedPackages.push_back(dep.name);
+         }
+         else
+         {
+            fillCranVersionInfo(&dep);
             unsatisfiedDeps.push_back(dep);
          }
       }
@@ -304,9 +317,13 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
          if (!isPackageInstalled(dep.name))
          {
             unsatisfiedDeps.push_back(dep);
+            continue;
          }
+
+         installedPackages.push_back(dep.name);
+
          // silent update if necessary (as long as we aren't packified)
-         else if (silentUpdate && !packratContext().packified)
+         if (silentUpdate && !packratContext().packified)
          {
             // package installed was from IDE but is out of date
             if (embeddedPackageRequiresUpdate(pkg))
@@ -325,6 +342,46 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
                // already installed (e.g. directly from github). in this case
                // we do nothing
             }
+         }
+      }
+   }
+
+   // the checks above only consider the dependencies declared by RStudio;
+   // verify that the recursive runtime dependencies declared by the installed
+   // packages themselves are also installed (a package's dependencies can
+   // change between releases, so this cannot be known statically)
+   if (!installedPackages.empty())
+   {
+      r::sexp::Protect protect;
+      SEXP unsatisfiedSEXP = R_NilValue;
+      error = r::exec::RFunction(".rs.findUnsatisfiedRuntimeDependencies", installedPackages)
+            .call(&unsatisfiedSEXP, &protect);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else
+      {
+         int numRecords = r::sexp::length(unsatisfiedSEXP);
+         for (int i = 0; i < numRecords; i++)
+         {
+            Dependency dep(VECTOR_ELT(unsatisfiedSEXP, i));
+            if (dep.empty())
+               continue;
+
+            // skip dependencies already reported above
+            auto matchesName = [&dep](const Dependency& unsatisfied)
+            {
+               return unsatisfied.name == dep.name;
+            };
+            if (std::find_if(unsatisfiedDeps.begin(), unsatisfiedDeps.end(), matchesName) !=
+                unsatisfiedDeps.end())
+            {
+               continue;
+            }
+
+            fillCranVersionInfo(&dep);
+            unsatisfiedDeps.push_back(dep);
          }
       }
    }
@@ -375,8 +432,8 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
       else
       {
-         cmd += "utils::install.packages(c(" + pkgList + ")\n\n";
-     }
+         cmd += "utils::install.packages(c(" + pkgList + "))\n\n";
+      }
    }
 
    // Install the CRAN source packages with a single call
