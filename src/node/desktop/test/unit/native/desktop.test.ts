@@ -38,6 +38,20 @@ describe('Desktop Native Code', () => {
     assert.equal(clipboard.readText('clipboard'), text);
   });
 
+  // Malformed UTF-16 that decodes to nothing must not wipe the clipboard:
+  // conversion happens before the pasteboard is cleared, and cleanClipboard
+  // bails out when it produces no text. macOS-only (utf16 pasteboard flavor).
+  it('cleanClipboard leaves malformed UTF-16 data untouched', function () {
+    if (process.platform !== 'darwin') {
+      this.skip();
+    }
+    const malformed = Buffer.from([0x00, 0xd8]); // lone high surrogate (U+D800)
+    clipboard.clear();
+    clipboard.writeBuffer('public.utf16-plain-text', malformed);
+    desktop.cleanClipboard(false);
+    assert.deepEqual([...clipboard.readBuffer('public.utf16-plain-text')], [...malformed]);
+  });
+
   // HTML stripping only available on Mac to handle pasteboard types
   it('cleanClipboard with strip HTML', () => {
     const htmlText =

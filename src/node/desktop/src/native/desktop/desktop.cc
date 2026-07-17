@@ -551,19 +551,22 @@ void cleanClipboardImpl(bool stripHtml)
 
       // Decode as little-endian UTF-16: macOS runs only on little-endian CPUs
       // and producers write this flavor in native byte order, so decoding as LE
-      // preserves the previous host-order behavior. On malformed input
-      // CFStringCreateWithBytes returns NULL; bail out rather than clearing the
-      // clipboard and discarding the user's data.
+      // preserves the previous host-order behavior.
       CFReleaseHandle<CFStringRef> utf16Text = CFStringCreateWithBytes(
           nullptr, buffer.data(), length, kCFStringEncodingUTF16LE, false);
-      if (length > 0 && !utf16Text.value())
-         return;
 
-      // cfStringToStdString yields UTF-8
+      // cfStringToStdString yields UTF-8 (empty if utf16Text is NULL)
       utf8Text = cfStringToStdString(utf16Text);
 
       // convert '\r' line endings to '\n' -- not sure why these sneak in?
       std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
+
+      // If non-empty UTF-16 data failed to convert (malformed bytes:
+      // CFStringCreateWithBytes returned NULL, or the string could not be
+      // encoded as UTF-8), leave the clipboard untouched rather than clearing
+      // it and replacing the user's data with an empty string.
+      if (length > 0 && utf8Text.empty())
+         return;
    }
 
    // clear the clipboard
