@@ -191,4 +191,58 @@ test_that("dependencies are installed only once", {
               source   = FALSE)))
 })
 
+test_that("dependency fields are parsed correctly", {
+   contents <- "R (>= 3.5), foo (>= 1.0), bar,\n  baz.qux (> 2.0-1)"
+   deps <- .rs.parsePackageDependencyFields(contents)
+
+   expect_equal(deps$name, c("foo", "bar", "baz.qux"))
+   expect_equal(deps$op, c(">=", "", ">"))
+   expect_equal(deps$version, c("1.0", "", "2.0-1"))
+
+   # multiple fields are combined; NA fields are ignored
+   deps <- .rs.parsePackageDependencyFields(c(Depends = "foo", Imports = NA))
+   expect_equal(deps$name, "foo")
+
+   deps <- .rs.parsePackageDependencyFields(character())
+   expect_equal(nrow(deps), 0L)
+})
+
+test_that("packages with intact runtime dependency trees are satisfied", {
+   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("stats"), list())
+   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("testthat"), list())
+})
+
+test_that("packages which are not installed are reported as unsatisfied", {
+   unsatisfied <- .rs.findUnsatisfiedRuntimeDependencies("nosuchpackage54321")
+   expect_equal(unsatisfied, list(list(name = "nosuchpackage54321", version = "")))
+})
+
+test_that("missing and outdated runtime dependencies are reported", {
+   # fabricate an installed package whose declared dependencies cannot be
+   # satisfied: one is not installed, and one is installed (utils) but cannot
+   # meet the declared version requirement
+   lib <- tempfile("library-")
+   pkgDir <- file.path(lib, "fakepkg")
+   dir.create(file.path(pkgDir, "Meta"), recursive = TRUE)
+
+   description <- c(
+      Package = "fakepkg",
+      Version = "1.0",
+      Imports = "missingpkg (>= 2.0), utils (>= 999.999)")
+   write.dcf(t(as.matrix(description)), file.path(pkgDir, "DESCRIPTION"))
+   saveRDS(list(DESCRIPTION = description), file.path(pkgDir, "Meta", "package.rds"))
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   unsatisfied <- .rs.findUnsatisfiedRuntimeDependencies("fakepkg")
+   names <- vapply(unsatisfied, `[[`, "", "name")
+   versions <- vapply(unsatisfied, `[[`, "", "version")
+
+   expect_setequal(names, c("missingpkg", "utils"))
+   expect_equal(versions[names == "missingpkg"], "2.0")
+   expect_equal(versions[names == "utils"], "999.999")
+})
+
 
