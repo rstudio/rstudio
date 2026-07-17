@@ -31,6 +31,7 @@ namespace constants {
 // ============================================================================
 extern const char* const kPositAiDirName;
 extern const char* const kPositAiBackupDirName;
+extern const char* const kPositAiLocksDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
 extern const char* const kIndexFileName;
