@@ -249,17 +249,19 @@ TEST_F(ChatInstallLock, OverlappingGenerationsKeepLockHeldUntilAllReaped)
    sessionB_->endMutation();
 }
 
-TEST_F(ChatInstallLock, ProbesDoNotReleaseOwnLocks)
+TEST_F(ChatInstallLock, StartProbeDoesNotReleaseOwnSessionLock)
 {
+   // acquireInUseForStart probes install.lock right after taking the session
+   // lock; the probe must not drop the lock just acquired (POSIX fcntl
+   // hazard), or the in-use protection would silently vanish.
    uint64_t token = 0;
-   ASSERT_FALSE(
-      sessionA_->acquireInUse(InstallLock::Component::ChatBackend, &token));
-
-   // Probing must not drop the lock we hold (POSIX fcntl hazard).
-   EXPECT_FALSE(sessionA_->updateInProgressElsewhere());
+   std::string userMessage;
+   ASSERT_FALSE(sessionA_->acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
 
    std::string message;
    EXPECT_TRUE(sessionB_->tryBeginMutation(&message));
+   EXPECT_NE(message.find("in use by another"), std::string::npos);
 
    sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
 }
@@ -277,20 +279,6 @@ TEST_F(ChatInstallLock, LocksDirAutoCreated)
    std::string message;
    ASSERT_FALSE(sessionB_->tryBeginMutation(&message));
    sessionB_->endMutation();
-}
-
-TEST_F(ChatInstallLock, UpdateInProgressElsewhereReflectsOtherMutator)
-{
-   std::string message;
-   ASSERT_FALSE(sessionA_->tryBeginMutation(&message));
-
-   EXPECT_TRUE(sessionB_->updateInProgressElsewhere());
-
-   // Never self-probes: we hold it, so it is not in progress "elsewhere".
-   EXPECT_FALSE(sessionA_->updateInProgressElsewhere());
-
-   sessionA_->endMutation();
-   EXPECT_FALSE(sessionB_->updateInProgressElsewhere());
 }
 
 TEST_F(ChatInstallLock, AdvisoryLockAcrossProcessesBlocksMutationAndClearsOnExit)
@@ -489,21 +477,9 @@ TEST_F(ChatInstallLock, FailClosedWhenSessionLockUninspectable)
    advisory.endMutation();
 }
 
-TEST_F(ChatInstallLock, FailClosedWhenInstallLockUninspectable)
+TEST_F(ChatInstallLock, AdvisoryStartProbeIsNonDestructive)
 {
-   // A directory planted where install.lock belongs makes the advisory probe
-   // throw; updateInProgressElsewhere must fail closed (report in progress)
-   // rather than launch from a directory that may be mid-swap.
-   InstallLock advisory(
-      locksDir_, "session-advisory", FileLock::LOCKTYPE_ADVISORY);
-   ASSERT_FALSE(advisory.installLockPath().ensureDirectory());
-
-   EXPECT_TRUE(advisory.updateInProgressElsewhere());
-}
-
-TEST_F(ChatInstallLock, AdvisoryInstallLockProbeIsNonDestructive)
-{
-   // updateInProgressElsewhere must observe an advisory install.lock held by
+   // The start-side probe must observe an advisory install.lock held by
    // another process, yet never unlink the file: an acquire-and-release probe
    // would delete it, opening a takeover race across inodes of the same path.
    InstallLock advisory(
@@ -514,7 +490,11 @@ TEST_F(ChatInstallLock, AdvisoryInstallLockProbeIsNonDestructive)
    // An existing but unlocked install.lock (a crashed updater's leftover) is
    // not "in progress"; file existence alone must not block starts.
    ASSERT_FALSE(writeStringToFile(installLockFile, ""));
-   EXPECT_FALSE(advisory.updateInProgressElsewhere());
+   uint64_t token = 0;
+   std::string userMessage;
+   ASSERT_FALSE(advisory.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
+   advisory.releaseInUse(InstallLock::Component::ChatBackend, token);
    EXPECT_TRUE(installLockFile.exists());
 
    int lockReady[2];
@@ -551,8 +531,15 @@ TEST_F(ChatInstallLock, AdvisoryInstallLockProbeIsNonDestructive)
    ::close(lockReady[0]);
    ASSERT_EQ(childOk, 1);
 
-   // Held elsewhere: reported in progress, and the file is left in place.
-   EXPECT_TRUE(advisory.updateInProgressElsewhere());
+   // Held elsewhere: the start is refused with the retryable message, its
+   // session-lock acquisition rolled back, and the file left in place.
+   token = 0;
+   Error error = advisory.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage);
+   EXPECT_TRUE(error);
+   EXPECT_NE(userMessage.find("update is in progress"), std::string::npos);
+   EXPECT_EQ(token, 0u);
+   EXPECT_FALSE(advisory.inUseHeld());
    EXPECT_TRUE(installLockFile.exists());
 
    ASSERT_EQ(::write(parentDone[1], "x", 1), 1);
@@ -560,8 +547,12 @@ TEST_F(ChatInstallLock, AdvisoryInstallLockProbeIsNonDestructive)
    int status = 0;
    ASSERT_EQ(::waitpid(child, &status, 0), child);
 
-   // Holder gone: clears, and the leftover file the probe never removes stays.
-   EXPECT_FALSE(advisory.updateInProgressElsewhere());
+   // Holder gone: the start succeeds, and the leftover file the probe never
+   // removes stays.
+   ASSERT_FALSE(advisory.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
+   EXPECT_NE(token, 0u);
+   advisory.releaseInUse(InstallLock::Component::ChatBackend, token);
    EXPECT_TRUE(installLockFile.exists());
 }
 
@@ -597,6 +588,12 @@ TEST_F(ChatInstallLock, AcquireInUseForStartRollsBackOnOtherMutation)
    EXPECT_FALSE(sessionB_->inUseHeld());
 
    sessionA_->endMutation();
+
+   // The refusal is retryable: once the mutation ends, the start succeeds.
+   ASSERT_FALSE(sessionB_->acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
+   EXPECT_NE(token, 0u);
+   sessionB_->releaseInUse(InstallLock::Component::ChatBackend, token);
 }
 
 TEST_F(ChatInstallLock, AcquireInUseForStartFailsDuringOwnMutation)

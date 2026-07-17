@@ -89,8 +89,9 @@ public:
    // Acquires the in-use lock (first component takes the file lock; the
    // second just marks itself held). Fails while this process's own mutation
    // is active: a re-entrant start dispatched during the mutation must not
-   // launch from the directory being swapped, and updateInProgressElsewhere()
-   // intentionally ignores our own install.lock.
+   // launch from the directory being swapped, and the install.lock probe in
+   // acquireInUseForStart() cannot catch it (our own advisory lock does not
+   // conflict in-process), so this in-process check is the only guard.
    //
    // On success *pToken receives a generation token identifying this holder;
    // on failure it receives 0. Tokens are never 0, so callers may use 0 as a
@@ -142,17 +143,11 @@ public:
    // Releases install.lock. No-op when no mutation is active.
    void endMutation();
 
-   // In-process flag only; never probes the file (self-probing an advisory
-   // lock would release it).
+   // Test seams; production callers use the class API. Tests plant
+   // stale/foreign lock files at the paths, and observe MutationScope
+   // transitions via mutationInProgress() (in-process flag only; it never
+   // probes the file — self-probing an advisory lock would release it).
    bool mutationInProgress() const;
-
-   // True when another process holds install.lock — or when the lock cannot
-   // be inspected (fails closed; the refusal is retryable). Returns false
-   // without probing while we hold it ourselves.
-   bool updateInProgressElsewhere() const;
-
-   // Test seams: tests plant stale/foreign lock files at these locations.
-   // Production callers use the class API.
    core::FilePath installLockPath() const;
    core::FilePath sessionLocksDir() const;
 

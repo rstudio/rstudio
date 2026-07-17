@@ -193,12 +193,10 @@ Error InstallLock::acquireInUseForStart(Component component,
       return error;
    }
 
-   // Probe with the tri-state directly (rather than updateInProgressElsewhere,
-   // which collapses inspection failures into "held") so a genuine failure
-   // gets honest text. Both non-Free outcomes refuse the start — fail closed —
-   // but only real contention claims an update is in progress. acquireInUse
-   // already failed above if our own mutation is active, so no self-probe
-   // guard is needed here.
+   // Both non-Free outcomes refuse the start — fail closed — but only real
+   // contention claims an update is in progress; a genuine inspection
+   // failure gets honest text. acquireInUse already failed above if our own
+   // mutation is active, so no self-probe guard is needed here.
    switch (probeLock(installLockPath(), effectiveLockType()))
    {
       case LockProbe::Free:
@@ -376,30 +374,6 @@ void InstallLock::endMutation()
 bool InstallLock::mutationInProgress() const
 {
    return mutationActive_;
-}
-
-bool InstallLock::updateInProgressElsewhere() const
-{
-   // Never probe a lock we hold ourselves (self-probing an advisory lock
-   // releases it); while our own mutation is active it is not "elsewhere".
-   if (mutationActive_)
-      return false;
-
-   switch (probeLock(installLockPath(), effectiveLockType()))
-   {
-      case LockProbe::Free:
-         return false;
-      case LockProbe::Held:
-         return true;
-      case LockProbe::Error:
-      default:
-         // Fail closed: refuse the start rather than launch a process from
-         // a directory that may be mid-swap. The refusal is retryable.
-         LOG_WARNING_MESSAGE(
-            "Unable to inspect the Posit Assistant install lock; "
-            "assuming an update is in progress");
-         return true;
-   }
 }
 
 FilePath InstallLock::installLockPath() const
