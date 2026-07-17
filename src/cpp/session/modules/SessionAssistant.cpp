@@ -2125,7 +2125,13 @@ void synchronize()
    // Start or stop the agent as appropriate.
    if (s_assistantEnabled)
    {
-      startAgent();
+      // Log a start failure the way ensureAgentRunning() does; otherwise a
+      // synchronize triggered by a preference or project-option change would
+      // drop the error silently (several startAgent failure paths report
+      // nothing on their own and rely on the caller to log).
+      Error error = startAgent();
+      if (error)
+         LOG_ERROR(error);
    }
    else
    {
