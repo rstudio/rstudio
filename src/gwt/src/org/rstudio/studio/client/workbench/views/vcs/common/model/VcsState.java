@@ -19,6 +19,7 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEve
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public abstract class VcsState
 {
@@ -92,39 +94,93 @@ public abstract class VcsState
             FileChange fileChange = event.getFileChange();
             FileSystemItem file = fileChange.getFile();
 
-            StatusAndPath status = StatusAndPath.fromInfo(
-                  getStatusFromFile(file));
-
             if (needsFullRefresh(file))
             {
-               refresh(false);
+               fullRefreshPending_ = true;
+               pendingChanges_.clear();
+               scheduleApplyFileChanges();
                return;
             }
 
-            if (status_ != null && status != null)
-            {
-               for (int i = 0; i < status_.size(); i++)
-               {
-                  if (status.getRawPath() == status_.get(i).getRawPath())
-                  {
-                     if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
-                        status_.remove(i);
-                     else
-                        status_.set(i, status);
-                     handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
-                     return;
-                  }
-               }
+            StatusAndPath status = StatusAndPath.fromInfo(
+                  getStatusFromFile(file));
 
-               if (status.getStatus().trim().length() != 0)
-               {
-                  status_.add(status);
-                  handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
-                  return;
-               }
-            }
+            if (status_ == null || status == null)
+               return;
+
+            // coalesce changes (last change per path wins) and apply them in
+            // batches -- a bulk operation can produce thousands of file change
+            // events, and updating the status list and firing a refresh per
+            // event makes the UI unresponsive (rebuilding the changelist table
+            // once per changed file)
+            pendingChanges_.put(status.getRawPath(), status);
+            scheduleApplyFileChanges();
          }
       }));
+   }
+
+   private void scheduleApplyFileChanges()
+   {
+      // throttle rather than debounce so a steady stream of file change
+      // events can't postpone applying the changes indefinitely
+      if (!applyFileChangesTimer_.isRunning())
+         applyFileChangesTimer_.schedule(APPLY_FILE_CHANGES_DELAY_MS);
+   }
+
+   private void applyFileChanges()
+   {
+      if (fullRefreshPending_)
+      {
+         fullRefreshPending_ = false;
+         pendingChanges_.clear();
+         refresh(false);
+         return;
+      }
+
+      if (status_ == null || pendingChanges_.isEmpty())
+      {
+         pendingChanges_.clear();
+         return;
+      }
+
+      ArrayList<StatusAndPath> merged = mergeFileChanges(status_, pendingChanges_.values());
+      pendingChanges_.clear();
+
+      if (merged == null)
+         return;
+
+      status_ = merged;
+      handlers_.fireEvent(new VcsRefreshEvent(Reason.FileChange));
+   }
+
+   // apply a batch of file changes to a status list in a single pass: an
+   // empty status removes the entry, otherwise the entry is replaced or
+   // appended. Returns the merged list, or null if nothing changed.
+   // Package-private for testing.
+   static ArrayList<StatusAndPath> mergeFileChanges(
+         ArrayList<StatusAndPath> statusList,
+         Iterable<StatusAndPath> changes)
+   {
+      LinkedHashMap<String, StatusAndPath> statusByPath = new LinkedHashMap<>();
+      for (StatusAndPath status : statusList)
+         statusByPath.put(status.getRawPath(), status);
+
+      boolean changed = false;
+      for (StatusAndPath status : changes)
+      {
+         if (StringUtil.notNull(status.getStatus()).trim().length() == 0)
+         {
+            if (statusByPath.remove(status.getRawPath()) != null)
+               changed = true;
+         }
+         else
+         {
+            statusByPath.put(status.getRawPath(), status);
+            changed = true;
+         }
+      }
+
+      return changed ? new ArrayList<>(statusByPath.values()) : null;
    }
 
    public void bindRefreshHandler(Widget owner,
@@ -181,4 +237,18 @@ public abstract class VcsState
    protected final EventBus eventBus_;
    protected final GlobalDisplay globalDisplay_;
    protected final Session session_;
+
+   private final LinkedHashMap<String, StatusAndPath> pendingChanges_ = new LinkedHashMap<>();
+   private boolean fullRefreshPending_ = false;
+
+   private final Timer applyFileChangesTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         applyFileChanges();
+      }
+   };
+
+   private static final int APPLY_FILE_CHANGES_DELAY_MS = 100;
 }
