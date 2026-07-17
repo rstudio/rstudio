@@ -54,8 +54,8 @@ public abstract class FileDialog extends FileSystemDialog
    {
       FileSystemItem item = context_.itemForName(browser_.getFilename(), false, false);
 
-      // follow macOS Finder aliases so accepting an alias acts on its
-      // target rather than the bookmark file
+      // follow macOS Finder aliases / Windows shortcuts so accepting one
+      // acts on its target rather than the link file
       return item != null ? item.resolveAliasTarget() : null;
    }
 
@@ -178,9 +178,9 @@ public abstract class FileDialog extends FileSystemDialog
                                                  false);
       if (item != null && item.isDirectory())
       {
-         // follow macOS Finder aliases into their target; for regular
-         // directories this is the item itself, and its absolute path is
-         // equivalent to the name relative to the browsed directory
+         // follow macOS Finder aliases / Windows shortcuts into their target;
+         // for regular directories this is the item itself, and its absolute
+         // path is equivalent to the name relative to the browsed directory
          item = item.resolveAliasTarget();
          browser_.setFilename("");
          cd(item.getPath());

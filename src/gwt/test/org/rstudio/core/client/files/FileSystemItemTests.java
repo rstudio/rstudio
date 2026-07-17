@@ -82,12 +82,14 @@ public class FileSystemItemTests extends GWTTestCase
    }
 
    // Models the link-relevant fields of a listing entry as emitted by
-   // createFileSystemItem (SessionModuleContext.cpp): is_symlink / is_alias
-   // flags plus their targets. A null target models an absent field.
+   // createFileSystemItem (SessionModuleContext.cpp): is_symlink / is_alias /
+   // is_shortcut flags plus their targets. A null target models an absent
+   // field. Shortcut targets travel in alias_target (see the backend contract).
    private static native FileSystemItem createLinkEntry(String path,
                                                         boolean dir,
                                                         boolean isSymlink,
                                                         boolean isAlias,
+                                                        boolean isShortcut,
                                                         String symlinkTarget,
                                                         String aliasTarget) /*-{
       return {
@@ -97,6 +99,7 @@ public class FileSystemItemTests extends GWTTestCase
          lastModified: 0,
          is_symlink: isSymlink,
          is_alias: isAlias,
+         is_shortcut: isShortcut,
          symlink_target: symlinkTarget,
          alias_target: aliasTarget
       };
@@ -116,7 +119,7 @@ public class FileSystemItemTests extends GWTTestCase
    {
       // relative targets are surfaced verbatim, like `ls -l`
       FileSystemItem link =
-            createLinkEntry("/home/user/link", false, true, false, "../shared/doc.txt", null);
+            createLinkEntry("/home/user/link", false, true, false, false, "../shared/doc.txt", null);
       assertTrue(link.isSymlink());
       assertFalse(link.isAlias());
       assertTrue(link.isLink());
@@ -127,7 +130,7 @@ public class FileSystemItemTests extends GWTTestCase
    public void testAliasIsLinkAndFallsBackToAliasTarget()
    {
       FileSystemItem alias =
-            createLinkEntry("/home/user/alias", false, false, true, null, "/home/user/doc.txt");
+            createLinkEntry("/home/user/alias", false, false, true, false, null, "/home/user/doc.txt");
       assertFalse(alias.isSymlink());
       assertTrue(alias.isAlias());
       assertTrue(alias.isLink());
@@ -140,7 +143,7 @@ public class FileSystemItemTests extends GWTTestCase
       // a broken alias is flagged (is_alias) even though its target did not
       // resolve, so it is still badged; it has no target for the tooltip
       FileSystemItem alias =
-            createLinkEntry("/home/user/broken", false, false, true, null, null);
+            createLinkEntry("/home/user/broken", false, false, true, false, null, null);
       assertTrue(alias.isAlias());
       assertTrue(alias.isLink());
       assertNull(alias.getLinkTarget());
@@ -151,7 +154,7 @@ public class FileSystemItemTests extends GWTTestCase
       // when the backend cannot read the target it omits symlink_target; the
       // entry is still a link, with no target for the tooltip
       FileSystemItem link =
-            createLinkEntry("/home/user/deadlink", false, true, false, null, null);
+            createLinkEntry("/home/user/deadlink", false, true, false, false, null, null);
       assertTrue(link.isSymlink());
       assertTrue(link.isLink());
       assertNull(link.getSymlinkTarget());
@@ -163,10 +166,58 @@ public class FileSystemItemTests extends GWTTestCase
       // a symlink to a directory follows the link, so dir is true; it is still
       // flagged as a symlink and badged
       FileSystemItem link =
-            createLinkEntry("/home/user/dirlink", true, true, false, "/home/user/dir", null);
+            createLinkEntry("/home/user/dirlink", true, true, false, false, "/home/user/dir", null);
       assertTrue(link.isDirectory());
       assertTrue(link.isSymlink());
       assertTrue(link.isLink());
       assertEquals("/home/user/dir", link.getLinkTarget());
+   }
+
+   public void testRegularFileIsNotShortcut()
+   {
+      FileSystemItem file = FileSystemItem.createFile("/home/user/file.txt");
+      assertFalse(file.isShortcut());
+   }
+
+   public void testShortcutIsLinkAndFallsBackToAliasTarget()
+   {
+      // Windows shortcut targets travel in alias_target, so getLinkTarget
+      // and resolveAliasTarget work for shortcuts without shortcut-specific
+      // plumbing; is_shortcut is what makes the entry a link at all
+      // (isLink) and selects the badge label
+      FileSystemItem shortcut =
+            createLinkEntry("/home/user/doc.txt.lnk", false, false, false, true, null, "/home/user/doc.txt");
+      assertFalse(shortcut.isSymlink());
+      assertFalse(shortcut.isAlias());
+      assertTrue(shortcut.isShortcut());
+      assertTrue(shortcut.isLink());
+      assertNull(shortcut.getSymlinkTarget());
+      assertEquals("/home/user/doc.txt", shortcut.getLinkTarget());
+   }
+
+   public void testBrokenShortcutIsStillLinkWithNoTarget()
+   {
+      // a broken shortcut is flagged (is_shortcut) even though its target did
+      // not resolve, so it is still badged; it has no target for the tooltip
+      FileSystemItem shortcut =
+            createLinkEntry("/home/user/broken.lnk", false, false, false, true, null, null);
+      assertTrue(shortcut.isShortcut());
+      assertTrue(shortcut.isLink());
+      assertNull(shortcut.getLinkTarget());
+   }
+
+   public void testDirectoryShortcutReportsDirectory()
+   {
+      // the backend derives dir-ness from the shortcut's target, and
+      // resolveAliasTarget must yield the navigable target directory --
+      // this is the contract the Files pane navigation relies on
+      FileSystemItem shortcut =
+            createLinkEntry("/home/user/dir.lnk", true, false, false, true, null, "/home/user/dir");
+      assertTrue(shortcut.isDirectory());
+      assertTrue(shortcut.isLink());
+
+      FileSystemItem resolved = shortcut.resolveAliasTarget();
+      assertEquals("/home/user/dir", resolved.getPath());
+      assertTrue(resolved.isDirectory());
    }
 }

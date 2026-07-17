@@ -226,10 +226,11 @@ public class FilesList extends Composite
       return iconColumn;
    }
 
-   // Decorates a file-type icon with the link badge (#9924) for a symlink or
-   // macOS Finder alias. The tooltip mimics `ls -l` ("name -> target"), falling
-   // back to just the name when the target is unavailable (e.g. a broken
-   // alias). Returns a new FileIcon, leaving the shared registry icon untouched.
+   // Decorates a file-type icon with the link badge (#9924) for a symlink,
+   // macOS Finder alias, or Windows shortcut. The tooltip mimics `ls -l`
+   // ("name -> target"), falling back to just the name when the target is
+   // unavailable (e.g. a broken alias or shortcut). Returns a new FileIcon,
+   // leaving the shared registry icon untouched.
    private static FileIcon decorateLinkIcon(FileSystemItem item, FileIcon icon)
    {
       ImageResource2x badge =
@@ -237,7 +238,9 @@ public class FilesList extends Composite
 
       String description = item.isSymlink()
          ? constants_.symbolicLinkBadgeLabel()
-         : constants_.aliasBadgeLabel();
+         : item.isShortcut()
+            ? constants_.shortcutBadgeLabel()
+            : constants_.aliasBadgeLabel();
 
       String target = item.getLinkTarget();
       String tooltip = target != null

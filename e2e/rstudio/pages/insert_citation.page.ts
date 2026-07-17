@@ -36,6 +36,14 @@ export class InsertCitationDialog extends PageObject {
   /** Result rows in the R Package (typeahead) source's list. */
   public readonly packageResults: Locator;
   public readonly searchButton: Locator;
+  /**
+   * Status line shown in the results area when a latent search fails
+   * service-side (the rsession's download errored or the host was unreachable).
+   * The wording comes from panmirror's errorForStatus() plus the panels'
+   * "unknown error" fallback; the same node also carries "No results..." and
+   * progress text, hence the text filter.
+   */
+  public readonly searchError: Locator;
   public readonly insertButton: Locator;
   public readonly cancelButton: Locator;
   /** Staged citations, shown as tag chips at the bottom of the dialog. */
@@ -47,6 +55,10 @@ export class InsertCitationDialog extends PageObject {
     this.results = page.locator('.pm-insert-citation-source-panel-item-detailed');
     this.packageResults = page.locator('.pm-insert-citation-source-panel-item');
     this.searchButton = page.locator('button.pm-insert-citation-panel-latent-search-button');
+    this.searchError = page
+      .locator('.pm-insert-citation-source-panel-list-noresults-text')
+      .filter({ hasText: /error occurred|Unable to search/ })
+      .first();
     this.insertButton = this.dialog.getByRole('button', { name: 'Insert', exact: true });
     this.cancelButton = this.dialog.getByRole('button', { name: 'Cancel', exact: true });
     this.stagedCitations = page.locator('.pm-tag-input-tag');
