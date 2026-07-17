@@ -20,7 +20,6 @@
 #include "SessionNodeTools.hpp"
 
 #include <boost/current_function.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
 
@@ -1259,19 +1258,15 @@ Error startAgent(const std::string& assistantType = "")
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
-   // When the agent will run from the shared per-user install (pai/bin),
+   // When the agent may run from the shared per-user install (pai/bin),
    // hold this session's in-use lock while it runs and refuse to start
    // while another session is mutating that installation. Decide from the
-   // configured source, not a path lookup — mid-swap the path can read as
-   // missing and then reappear, which must not skip the lock. The
+   // configured assistant type, not a path lookup — mid-swap the path can
+   // read as missing and then reappear, which must not skip the lock. The
    // RSTUDIO_AGENT_PATH override is pinned once here: the direct launch
    // branch reuses the pinned path rather than re-reading the environment,
-   // so an override that disappears cannot silently fall back to the
-   // shared install without a lock; and an override that points inside
-   // pai/bin still takes the lock. The Posit helper-script branch always
-   // uses paiLanguageServerPath() (ignoring the override). Copilot and
-   // external-override agents are unrelated to the install and skip
-   // locking (lockToken stays 0, which release treats as a no-op).
+   // so an override that disappears cannot silently fall back to a
+   // different source mid-start.
    bool positHelperConfigured =
       !session::options().positAssistantHelper().isEmpty();
    FilePath agentPathOverride;
@@ -1284,64 +1279,16 @@ Error startAgent(const std::string& assistantType = "")
    }
    bool overrideInEffect = !agentPathOverride.isEmpty();
 
-   // The override participates in classification only when the direct
-   // launch branch will actually select it — helper-script branches ignore
-   // it, and e.g. a Copilot start must not be refused because of an
-   // unrelated Posit Assistant update. Classify conservatively: lock when
-   // the override path itself, or its fully-canonicalized target (all
-   // symlinks in the path resolved), lies inside the managed install; on
-   // canonicalization failure err toward locking. Over-locking a dev
-   // override is a harmless retryable refusal during an update, while
-   // under-locking the shared install is the corruption this prevents.
-   bool helperBranchSelected =
-      (assistant == kAssistantPosit && positHelperConfigured) ||
-      (assistant == kAssistantCopilot &&
-       !session::options().copilotHelper().isEmpty());
-   bool overrideSelectsSharedInstall = false;
-   if (!helperBranchSelected && overrideInEffect)
-   {
-      FilePath paiBinDir = xdg::userDataDir().completePath("pai/bin");
-      if (agentPathOverride.isWithin(paiBinDir))
-      {
-         overrideSelectsSharedInstall = true;
-      }
-      else
-      {
-         // Canonicalize BOTH sides: with only the override canonicalized, a
-         // symlinked ancestor of the user-data dir (e.g. /var vs
-         // /private/var on macOS) would defeat the containment check.
-         // utf8ToSystem mirrors core's boost path handling so non-ASCII
-         // paths survive the narrow-path constructor on Windows.
-         boost::system::error_code overrideEc;
-         boost::filesystem::path canonicalOverride = boost::filesystem::canonical(
-            string_utils::utf8ToSystem(agentPathOverride.getAbsolutePath()),
-            overrideEc);
-         boost::system::error_code paiBinEc;
-         boost::filesystem::path canonicalPaiBin = boost::filesystem::canonical(
-            string_utils::utf8ToSystem(paiBinDir.getAbsolutePath()),
-            paiBinEc);
-
-         if (overrideEc || paiBinEc)
-         {
-            // fail toward locking, except the one benign case: pai/bin
-            // missing entirely (nothing installed, so a resolvable override
-            // cannot point into it)
-            overrideSelectsSharedInstall = overrideEc || paiBinDir.exists();
-         }
-         else
-         {
-            overrideSelectsSharedInstall =
-               FilePath(string_utils::systemToUtf8(
-                           canonicalOverride.generic_string()))
-                  .isWithin(FilePath(string_utils::systemToUtf8(
-                     canonicalPaiBin.generic_string())));
-         }
-      }
-   }
-   bool usesSharedInstall =
-      (assistant == kAssistantPosit &&
-       (positHelperConfigured || !overrideInEffect)) ||
-      overrideSelectsSharedInstall;
+   // The Posit assistant type always takes the lock — including when a
+   // dev override points elsewhere. Classifying whether an override truly
+   // resolves inside the managed install is a rabbit hole (symlink chains,
+   // canonicalization failures, platform path semantics), and over-locking
+   // is always safe: it costs at most a retryable refusal while an update
+   // runs, and an update refused because a dev agent is running is the
+   // conservative outcome. Copilot and "none" never launch from pai/bin in
+   // any supported configuration and never lock (lockToken stays 0, which
+   // release treats as a no-op).
+   bool usesSharedInstall = (assistant == kAssistantPosit);
 
    uint64_t agentGeneration = ++s_agentGeneration;
    uint64_t lockToken = 0;
