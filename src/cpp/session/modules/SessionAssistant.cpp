@@ -1131,11 +1131,13 @@ void onError(ProcessOperations& operations, const Error& error)
 {
    // A stream IO error does not mean the process exited — the default
    // terminate-the-child behavior applies only when no onError callback is
-   // set (see ProcessCallbacks::onError). Clearing state here would leave a
-   // live agent untracked and prematurely release the in-use lock on the
-   // shared installation. Record the error and terminate the process group
-   // (operations.terminate() covers detached descendants, unlike
-   // terminateProcess); onExit then clears state and releases the lock.
+   // set (see ProcessCallbacks::onError). Treating this as an exit —
+   // clearing tracking state or releasing the lock token — would leave a
+   // live agent untracked while it still runs from the shared installation.
+   // Record the error and terminate: on POSIX operations.terminate()
+   // signals the detached process group (we set detachSession), unlike
+   // terminateProcess; on Windows it can only terminate the tracked
+   // process. onExit then clears state and releases the lock.
    ELOG("Agent process error: {}", error.getMessage());
    s_agentStartupError = error.getMessage();
 
@@ -1146,9 +1148,10 @@ void onError(ProcessOperations& operations, const Error& error)
 
 void onExit(int status, uint64_t generation, uint64_t lockToken)
 {
-   // Sole release point for the agent's in-use lock component: only the
-   // reap callback knows the process is really gone. Zero or stale tokens
-   // no-op inside the helper.
+   // Sole release point for the agent's in-use lock component once the
+   // process has launched (pre-launch failures release the just-acquired
+   // token in startAgent): only the reap callback knows the process is
+   // really gone. Zero or stale tokens no-op inside the helper.
    chat::installLock().releaseInUse(
       chat::install_lock::InstallLock::Component::NesAgent, lockToken);
 
@@ -1260,9 +1263,10 @@ Error startAgent(const std::string& assistantType = "")
 
    // When the agent may run from the shared per-user install (pai/bin),
    // hold this session's in-use lock while it runs and refuse to start
-   // while another session is mutating that installation. Decide from the
-   // configured assistant type, not a path lookup — mid-swap the path can
-   // read as missing and then reappear, which must not skip the lock. The
+   // while another session is mutating that installation. For the managed
+   // install, decide from the configured assistant type, not a path
+   // lookup — mid-swap the path can read as missing and then reappear,
+   // which must not skip the lock. The
    // RSTUDIO_AGENT_PATH override is pinned once here: the direct launch
    // branch reuses the pinned path rather than re-reading the environment,
    // so an override that disappears cannot silently fall back to a
@@ -1301,22 +1305,16 @@ Error startAgent(const std::string& assistantType = "")
    uint64_t lockToken = 0;
    if (usesSharedInstall)
    {
-      error = chat::installLock().acquireInUse(
-         chat::install_lock::InstallLock::Component::NesAgent, &lockToken);
-      if (!error && chat::installLock().updateInProgressElsewhere())
-      {
-         chat::installLock().releaseInUse(
-            chat::install_lock::InstallLock::Component::NesAgent, lockToken);
-         error = systemError(
-            boost::system::errc::device_or_resource_busy, ERROR_LOCATION);
-      }
+      std::string lockMessage;
+      error = chat::installLock().acquireInUseForStart(
+         chat::install_lock::InstallLock::Component::NesAgent,
+         &lockToken,
+         &lockMessage);
       if (error)
       {
          // callers (ensureAgentRunning et al) tolerate failure and retry on
          // the next request, after the mutation has finished
-         s_agentStartupError =
-            "A Posit Assistant update is in progress. "
-            "Please try again in a moment.";
+         s_agentStartupError = lockMessage;
          setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
          return error;
       }

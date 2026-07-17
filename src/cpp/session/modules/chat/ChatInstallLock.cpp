@@ -53,6 +53,12 @@ std::string mutationContentionMessage()
           "Posit Assistant. Please wait for it to finish, then try again.";
 }
 
+std::string updateInProgressMessage()
+{
+   return "A Posit Assistant update is in progress. "
+          "Please try again in a moment.";
+}
+
 std::string sessionsInUseMessage(FileLock::LockType lockType)
 {
    std::string message =
@@ -134,6 +140,8 @@ InstallLock::InstallLock(
 
 Error InstallLock::acquireInUse(Component component, uint64_t* pToken)
 {
+   *pToken = 0;
+
    if (mutationActive_)
    {
       return systemError(
@@ -159,6 +167,44 @@ Error InstallLock::acquireInUse(Component component, uint64_t* pToken)
    uint64_t token = ++nextToken_;
    componentTokens_[componentIndex(component)].insert(token);
    *pToken = token;
+   return Success();
+}
+
+Error InstallLock::acquireInUseForStart(Component component,
+                                        uint64_t* pToken,
+                                        std::string* pUserMessage)
+{
+   Error error = acquireInUse(component, pToken);
+   if (error)
+   {
+      // contention (our own active mutation, or a lock held elsewhere —
+      // e.g. this session's own unreleased link-based file, which clears
+      // with staleness) reads as an update in progress; anything else is a
+      // real failure whose message must reach the user rather than
+      // masquerading as an update
+      bool contention =
+         error == systemError(boost::system::errc::operation_in_progress,
+                              ErrorLocation()) ||
+         FileLock::isNoLockAvailable(error);
+      *pUserMessage = contention
+         ? updateInProgressMessage()
+         : "Unable to verify the Posit Assistant installation state: " +
+              error.getMessage();
+      return error;
+   }
+
+   if (updateInProgressElsewhere())
+   {
+      releaseInUse(component, *pToken);
+      *pToken = 0;
+      *pUserMessage = updateInProgressMessage();
+      return systemError(
+         boost::system::errc::device_or_resource_busy,
+         "A Posit Assistant install operation is in progress in another "
+         "session",
+         ERROR_LOCATION);
+   }
+
    return Success();
 }
 
@@ -365,7 +411,12 @@ FileLock::LockType InstallLock::effectiveLockType() const
 
 bool InstallLock::anyComponentHeld() const
 {
-   return !componentTokens_[0].empty() || !componentTokens_[1].empty();
+   for (const std::set<uint64_t>& tokens : componentTokens_)
+   {
+      if (!tokens.empty())
+         return true;
+   }
+   return false;
 }
 
 MutationScope::MutationScope(InstallLock& lock)

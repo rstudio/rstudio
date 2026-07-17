@@ -16,6 +16,7 @@
 #ifndef SESSION_CHAT_INSTALL_LOCK_HPP
 #define SESSION_CHAT_INSTALL_LOCK_HPP
 
+#include <array>
 #include <cstdint>
 #include <set>
 #include <string>
@@ -53,6 +54,13 @@ namespace install_lock {
 // probe the session locks; starters take their session lock and then probe
 // install.lock. Simultaneous racers each see the other and back off.
 //
+// The protocol assumes every process sharing the locks directory uses the
+// same lock type. Mixing types (e.g. a desktop rsession's advisory locks
+// alongside a server rsession's link-based locks over one home directory)
+// makes each side misread the other's live locks as stale — a pre-existing
+// core::FileLock limitation; a uniform type can be forced via the
+// file-locks configuration file.
+//
 // All methods must be called on the main thread (both subprocess lifecycles
 // run their callbacks there via callbacksRequireMainThread); no internal
 // locking is performed.
@@ -62,7 +70,8 @@ public:
    enum class Component
    {
       ChatBackend,
-      NesAgent
+      NesAgent,
+      Count // sentinel for array sizing; not a component
    };
 
    // locksDir: directory for lock files (e.g. <userDataDir>/pai/locks); it
@@ -83,12 +92,27 @@ public:
    // launch from the directory being swapped, and updateInProgressElsewhere()
    // intentionally ignores our own install.lock.
    //
-   // On success *pToken receives a generation token identifying this holder.
-   // Each acquisition adds an outstanding generation for the component: a
-   // force-terminated process may still be alive (unreaped) when its
-   // replacement starts, and both generations then legitimately pin the
-   // lock at once.
+   // On success *pToken receives a generation token identifying this holder;
+   // on failure it receives 0. Tokens are never 0, so callers may use 0 as a
+   // "never acquired" sentinel that releaseInUse ignores. Each acquisition
+   // adds an outstanding generation for the component: a force-terminated
+   // process may still be alive (unreaped) when its replacement starts, and
+   // both generations then legitimately pin the lock at once.
    core::Error acquireInUse(Component component, uint64_t* pToken);
+
+   // The start-side half of the two-flag protocol: acquires the in-use lock,
+   // then probes for a mutation in progress elsewhere and rolls the
+   // acquisition back if one is found. Acquire-then-probe mirrors the
+   // mutator's probe-after-acquire, so simultaneous racers each see the
+   // other and back off — callers must not reorder or skip the probe, which
+   // is why the sequence lives here rather than at the call sites.
+   //
+   // On failure *pUserMessage receives user-facing text: the retryable
+   // "update in progress" refusal for contention, or the underlying error
+   // for anything else (a disk failure must not masquerade as an update).
+   core::Error acquireInUseForStart(Component component,
+                                    uint64_t* pToken,
+                                    std::string* pUserMessage);
 
    // Releases one generation of a component. No-op unless the token is
    // outstanding: a late exit callback from a previous process must not
@@ -96,16 +120,18 @@ public:
    // released only when no generation of any component remains outstanding.
    void releaseInUse(Component component, uint64_t token);
 
-   // True while any component is held. Because components are released only
-   // by reaped-exit callbacks, this is the authoritative "this session's
-   // processes are really gone" signal mutators wait on.
+   // True while any component is held. Callers release a token only when
+   // its process is known not to be running (a reaped exit callback, or a
+   // launch that never happened), so this is the authoritative "this
+   // session's processes are really gone" signal mutators wait on.
    bool inUseHeld() const;
 
    // Begins a mutation: acquires install.lock (non-blocking), then probes
-   // all other sessions' lock files with isLocked(), excluding our own file
-   // by name (probing a lock this process holds would release it under POSIX
-   // fcntl semantics). Files that probe as unlocked are stale leftovers and
-   // are opportunistically deleted.
+   // each other session's lock file by acquiring it — isLocked() cannot
+   // distinguish a free lock from an inspection failure; see the probe loop
+   // in the .cpp — excluding our own file by name (probing a lock this
+   // process holds would release it under POSIX fcntl semantics). Files
+   // whose probe acquisition succeeds are stale leftovers and are deleted.
    //
    // On failure, *pUserMessage receives user-facing text describing why
    // (another mutator, or live sessions in use). This process's own held
@@ -120,15 +146,18 @@ public:
    // lock would release it).
    bool mutationInProgress() const;
 
-   // True when ANOTHER process holds install.lock. Returns false without
-   // probing while we hold it ourselves.
+   // True when another process holds install.lock — or when the lock cannot
+   // be inspected (fails closed; the refusal is retryable). Returns false
+   // without probing while we hold it ourselves.
    bool updateInProgressElsewhere() const;
 
+   // Test seams: tests plant stale/foreign lock files at these locations.
+   // Production callers use the class API.
    core::FilePath installLockPath() const;
    core::FilePath sessionLocksDir() const;
-   core::FilePath ownSessionLockPath() const;
 
 private:
+   core::FilePath ownSessionLockPath() const;
    boost::shared_ptr<core::FileLock> makeLock() const;
    core::FileLock::LockType effectiveLockType() const;
    bool anyComponentHeld() const;
@@ -139,7 +168,8 @@ private:
    boost::shared_ptr<core::FileLock> inUseLock_;
    boost::shared_ptr<core::FileLock> mutationLock_;
    uint64_t nextToken_;
-   std::set<uint64_t> componentTokens_[2];
+   std::array<std::set<uint64_t>, static_cast<std::size_t>(Component::Count)>
+      componentTokens_;
    bool mutationActive_;
 };
 

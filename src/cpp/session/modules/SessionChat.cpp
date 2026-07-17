@@ -5001,10 +5001,12 @@ void onBackendStderr(core::system::ProcessOperations& ops, const std::string& ou
 
 void onBackendExit(int exitCode, uint64_t generation, uint64_t lockToken)
 {
-   // Sole release point for the backend's in-use lock component: the
-   // supervisor reap callback fires on every stop path (graceful, force
-   // terminate, crash), and only here do we know the process is gone.
-   // Stale or zero tokens no-op inside the helper.
+   // Sole release point for the backend's in-use lock component once the
+   // process has launched (pre-launch failures release the just-acquired
+   // token in startChatBackend): the supervisor reap callback fires on
+   // every stop path (graceful, force terminate, crash), and only here do
+   // we know the process is gone. Stale or zero tokens no-op inside the
+   // helper.
    installLock().releaseInUse(
       install_lock::InstallLock::Component::ChatBackend, lockToken);
 
@@ -5216,31 +5218,31 @@ Error startChatBackend(bool resumeConversation)
    // Coordinate with other rsession processes sharing the per-user install:
    // hold this session's in-use lock while the backend runs, and refuse to
    // start while an install/update/uninstall is in progress (we would be
-   // launching from a directory mid-swap). Env-var and system installs are
-   // not mutation targets and skip locking. Acquire-then-probe mirrors the
-   // mutator's probe-after-acquire, so simultaneous racers each see the
-   // other and back off.
+   // launching from a directory mid-swap). Only the read-only system
+   // install skips locking: mutations never touch it, and it cannot alias
+   // the per-user install. Env-var overrides over-lock deliberately —
+   // mirroring the agent's rule — because deciding whether an override
+   // truly resolves outside pai/bin is unreliable (symlinks), and
+   // over-locking costs at most a retryable refusal.
    uint64_t generation = ++s_chatBackendGeneration;
+
+   // A stale flag from a previous unreaped generation must not classify a
+   // later crash of this backend as an expected shutdown.
+   s_expectedShutdown = false;
+
    uint64_t lockToken = 0;
-   bool userDataInstall =
-      (positAiPath == xdg::userDataDir().completePath(kPositAiDirName));
-   if (userDataInstall)
+   bool systemInstall =
+      (positAiPath == xdg::systemConfigDir().completePath(kPositAiDirName));
+   if (!systemInstall)
    {
-      error = installLock().acquireInUse(
-         install_lock::InstallLock::Component::ChatBackend, &lockToken);
-      if (!error && installLock().updateInProgressElsewhere())
-      {
-         installLock().releaseInUse(
-            install_lock::InstallLock::Component::ChatBackend, lockToken);
-         error = systemError(
-            boost::system::errc::device_or_resource_busy, ERROR_LOCATION);
-      }
+      std::string lockMessage;
+      error = installLock().acquireInUseForStart(
+         install_lock::InstallLock::Component::ChatBackend,
+         &lockToken,
+         &lockMessage);
       if (error)
       {
-         error.addProperty(
-            "description",
-            "A Posit Assistant update is in progress. "
-            "Please try again in a moment.");
+         error.addProperty("description", lockMessage);
          clearChatBackendPort();
          return error;
       }
@@ -5291,6 +5293,7 @@ Error startChatBackend(bool resumeConversation)
 
    if (error)
    {
+      // launch failed, so no exit callback will ever fire to release the lock
       installLock().releaseInUse(
          install_lock::InstallLock::Component::ChatBackend, lockToken);
       error.addProperty("description",
@@ -5651,11 +5654,6 @@ Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// Download + install the available update using the current state, then resolve
-// the continuation. The download/install is synchronous (the client polls
-// chat_get_update_status for progress); only the preceding update check is
-// async, so this is unchanged from the previous behavior apart from resolving a
-// continuation instead of returning a response.
 // Stops the chat backend for an install mutation: graceful shutdown request,
 // bounded wait, force terminate, then a bounded wait for the process to
 // actually exit so file handles are released before the installation
@@ -5732,6 +5730,11 @@ bool waitForOwnComponentsReaped(int timeoutMs)
    return !installLock().inUseHeld();
 }
 
+// Download + install the available update using the current state, then resolve
+// the continuation. The download/install is synchronous (the client polls
+// chat_get_update_status for progress); only the preceding update check is
+// async, so this is unchanged from the previous behavior apart from resolving a
+// continuation instead of returning a response.
 void performInstall(const json::JsonRpcFunctionContinuation& cont)
 {
    json::JsonRpcResponse response;
@@ -6384,7 +6387,9 @@ void onShutdown(bool terminatedNormally)
 
 install_lock::InstallLock& installLock()
 {
-   // Constructed lazily so FileLock::initialize() (SessionMain) has run.
+   // Constructed lazily so xdg paths and activeSession() are initialized
+   // (FileLock::initialize() has also run by first use; the helper creates
+   // its FileLock instances per-operation, not at construction).
    // The owner id names this session's lock file; activeSession().id() can
    // be empty for dev/automation-launched sessions (no launcher token), so
    // fall back to a per-process UUID to keep concurrent sessions from
