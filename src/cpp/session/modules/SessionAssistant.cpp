@@ -1307,12 +1307,35 @@ Error startAgent(const std::string& assistantType = "")
       }
       else
       {
-         boost::system::error_code ec;
+         // Canonicalize BOTH sides: with only the override canonicalized, a
+         // symlinked ancestor of the user-data dir (e.g. /var vs
+         // /private/var on macOS) would defeat the containment check.
+         // utf8ToSystem mirrors core's boost path handling so non-ASCII
+         // paths survive the narrow-path constructor on Windows.
+         boost::system::error_code overrideEc;
          boost::filesystem::path canonicalOverride = boost::filesystem::canonical(
-            agentPathOverride.getAbsolutePath(), ec);
-         overrideSelectsSharedInstall =
-            ec ? true
-               : FilePath(canonicalOverride.generic_string()).isWithin(paiBinDir);
+            string_utils::utf8ToSystem(agentPathOverride.getAbsolutePath()),
+            overrideEc);
+         boost::system::error_code paiBinEc;
+         boost::filesystem::path canonicalPaiBin = boost::filesystem::canonical(
+            string_utils::utf8ToSystem(paiBinDir.getAbsolutePath()),
+            paiBinEc);
+
+         if (overrideEc || paiBinEc)
+         {
+            // fail toward locking, except the one benign case: pai/bin
+            // missing entirely (nothing installed, so a resolvable override
+            // cannot point into it)
+            overrideSelectsSharedInstall = overrideEc || paiBinDir.exists();
+         }
+         else
+         {
+            overrideSelectsSharedInstall =
+               FilePath(string_utils::systemToUtf8(
+                           canonicalOverride.generic_string()))
+                  .isWithin(FilePath(string_utils::systemToUtf8(
+                     canonicalPaiBin.generic_string())));
+         }
       }
    }
    bool usesSharedInstall =
