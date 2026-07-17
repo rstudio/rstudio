@@ -52,6 +52,19 @@ describe('Desktop Native Code', () => {
     assert.deepEqual([...clipboard.readBuffer('public.utf16-plain-text')], [...malformed]);
   });
 
+  // Valid UTF-16 that begins with a NUL must still be cleaned rather than
+  // mistaken for a decode failure: the NUL is preserved and the text converted.
+  it('cleanClipboard handles valid UTF-16 with a leading NUL', function () {
+    if (process.platform !== 'darwin') {
+      this.skip();
+    }
+    clipboard.clear();
+    // UTF-16LE bytes for a NUL (U+0000) followed by 'A'
+    clipboard.writeBuffer('public.utf16-plain-text', Buffer.from([0x00, 0x00, 0x41, 0x00]));
+    desktop.cleanClipboard(false);
+    assert.equal(clipboard.readText('clipboard'), '\u0000A');
+  });
+
   // HTML stripping only available on Mac to handle pasteboard types
   it('cleanClipboard with strip HTML', () => {
     const htmlText =

@@ -375,20 +375,43 @@ private:
    TValue value_;
 };
 
-// Helper to convert CFStringRef to std::string
-std::string cfStringToStdString(CFStringRef cfStr)
+// Convert a CFStringRef to UTF-8, preserving embedded NULs. Returns false if
+// cfStr is NULL or contains characters that cannot be represented in UTF-8
+// (e.g. an unpaired surrogate); a valid but empty string returns true.
+bool cfStringToUtf8(CFStringRef cfStr, std::string& result)
 {
+   result.clear();
    if (!cfStr)
-      return std::string();
+      return false;
 
    CFIndex length = CFStringGetLength(cfStr);
-   CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
-   std::vector<char> buffer(maxSize);
+   if (length == 0)
+      return true;
 
-   if (CFStringGetCString(cfStr, buffer.data(), maxSize, kCFStringEncodingUTF8))
-      return std::string(buffer.data());
+   CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
+   std::vector<UInt8> buffer(maxSize);
 
-   return std::string();
+   // CFStringGetBytes returns the number of characters it managed to encode;
+   // fewer than 'length' means some character could not be represented.
+   CFIndex usedSize = 0;
+   CFIndex converted = CFStringGetBytes(
+       cfStr, CFRangeMake(0, length), kCFStringEncodingUTF8,
+       0 /* no loss byte */, false /* no BOM */, buffer.data(), maxSize, &usedSize);
+
+   if (converted < length)
+      return false;
+
+   result.assign((const char*) buffer.data(), usedSize);
+   return true;
+}
+
+// Helper to convert CFStringRef to std::string (UTF-8), returning an empty
+// string if the value is NULL or cannot be encoded.
+std::string cfStringToStdString(CFStringRef cfStr)
+{
+   std::string result;
+   cfStringToUtf8(cfStr, result);
+   return result;
 }
 
 // Single-pass font enumeration that populates both monospace and proportional lists
@@ -555,18 +578,14 @@ void cleanClipboardImpl(bool stripHtml)
       CFReleaseHandle<CFStringRef> utf16Text = CFStringCreateWithBytes(
           nullptr, buffer.data(), length, kCFStringEncodingUTF16LE, false);
 
-      // cfStringToStdString yields UTF-8 (empty if utf16Text is NULL)
-      utf8Text = cfStringToStdString(utf16Text);
+      // If non-empty UTF-16 data cannot be converted to UTF-8 (malformed bytes,
+      // e.g. an unpaired surrogate), leave the clipboard untouched rather than
+      // clearing it and replacing the user's data with an empty string.
+      if (length > 0 && !cfStringToUtf8(utf16Text, utf8Text))
+         return;
 
       // convert '\r' line endings to '\n' -- not sure why these sneak in?
       std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
-
-      // If non-empty UTF-16 data failed to convert (malformed bytes:
-      // CFStringCreateWithBytes returned NULL, or the string could not be
-      // encoded as UTF-8), leave the clipboard untouched rather than clearing
-      // it and replacing the user's data with an empty string.
-      if (length > 0 && utf8Text.empty())
-         return;
    }
 
    // clear the clipboard
