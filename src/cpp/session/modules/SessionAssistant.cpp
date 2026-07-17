@@ -192,6 +192,10 @@ bool s_assistantEnabled = false;
 // The PID of the active agent process.
 PidType s_agentPid = -1;
 
+// Incremented on every agent start so a late exit callback from a
+// superseded agent process can be told apart from the current one.
+uint64_t s_agentGeneration = 0;
+
 // The type of the currently running agent (e.g., "copilot", "posit").
 std::string s_runningAgentType;
 
@@ -961,8 +965,17 @@ void sendWarmupRequest()
 
 namespace agent {
 
-void onStarted(ProcessOperations& operations)
+void onStarted(ProcessOperations& operations, uint64_t generation)
 {
+   // A late start notification from a superseded agent process must not
+   // stomp the replacement's PID or runtime status — the superseded
+   // generation's onExit deliberately leaves both alone.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring start callback from stale agent generation");
+      return;
+   }
+
    // Record the PID of the agent.
    DLOG("Agent has started [PID = {}, type = {}]",
         operations.getPid(),
@@ -971,10 +984,19 @@ void onStarted(ProcessOperations& operations)
    setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
 
-bool onContinue(ProcessOperations& operations)
+bool onContinue(ProcessOperations& operations, uint64_t generation)
 {
    if (s_isSessionShuttingDown)
       return false;
+
+   // A superseded agent process must not drain the replacement's pending
+   // requests (or flip s_agentInitialized on its behalf). Returning false
+   // also has the supervisor terminate the leftover process.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Terminating superseded agent generation from continue callback");
+      return false;
+   }
 
    auto debugCallback = [](const std::string& htmlRequest)
    {
@@ -1025,10 +1047,18 @@ bool onContinue(ProcessOperations& operations)
    return true;
 }
 
-void onStdout(ProcessOperations& operations, const std::string& stdOut)
+void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t generation)
 {
    if (s_isSessionShuttingDown)
       return;
+
+   // A superseded agent process's late output must not feed the
+   // replacement's response queue or mark it Running.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring stdout from stale agent generation");
+      return;
+   }
 
    // Discard empty lines.
    static const boost::regex reWhitespace("^\\s*$");
@@ -1109,10 +1139,18 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    setAgentRuntimeStatus(AgentRuntimeStatus::Running);
 }
 
-void onStderr(ProcessOperations& operations, const std::string& stdErr)
+void onStderr(ProcessOperations& operations, const std::string& stdErr, uint64_t generation)
 {
    if (s_isSessionShuttingDown)
       return;
+
+   // A superseded agent process's dying gasps must not append to the
+   // replacement's startup error or push its status to Stopping.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring stderr from stale agent generation: {}", stdErr);
+      return;
+   }
 
    LOG_ERROR_MESSAGE(stdErr);
  
@@ -1136,17 +1174,47 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 
 }
 
-void onError(ProcessOperations& operations, const Error& error)
+void onError(ProcessOperations& operations, const Error& error, uint64_t generation)
 {
+   // A stream IO error does not mean the process exited — the default
+   // terminate-the-child behavior applies only when no onError callback is
+   // set (see ProcessCallbacks::onError). Treating this as an exit —
+   // clearing tracking state or releasing the lock token — would leave a
+   // live agent untracked while it still runs from the shared installation.
+   // Record the error and terminate: on POSIX operations.terminate()
+   // signals the detached process group (we set detachSession), unlike
+   // terminateProcess; on Windows it can only terminate the tracked
+   // process. onExit then clears state and releases the lock.
    ELOG("Agent process error: {}", error.getMessage());
-   s_agentStartupError = error.getMessage();
-   s_agentPid = -1;
-   s_runningAgentType.clear();
-   setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
+
+   // A superseded process's stream error is not the replacement's startup
+   // error — but terminating the errored process is right either way.
+   if (generation == s_agentGeneration)
+      s_agentStartupError = error.getMessage();
+
+   Error terminateError = operations.terminate();
+   if (terminateError)
+      LOG_ERROR(terminateError);
 }
 
-void onExit(int status)
+void onExit(int status, uint64_t generation, uint64_t lockToken)
 {
+   // Sole release point for the agent's in-use lock component once the
+   // process has launched (pre-launch failures release the just-acquired
+   // token in startAgent): only the reap callback knows the process is
+   // really gone. Zero or stale tokens no-op inside the helper.
+   chat::installLock().releaseInUse(
+      chat::install_lock::InstallLock::Component::NesAgent, lockToken);
+
+   // A late reap from a superseded agent process (e.g. a replacement start
+   // after a startup timeout) must not mark the current agent stopped or
+   // clear its tracking.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring exit callback from stale agent generation");
+      return;
+   }
+
    if (status != 0 && !s_isSessionShuttingDown)
       WLOG("Agent process exited with status {}.", status);
    else
@@ -1244,14 +1312,114 @@ Error startAgent(const std::string& assistantType = "")
 
    node_tools::applySystemCaOption(&environment, nodePath);
 
+   // When the agent may run from the shared per-user install (pai/bin),
+   // hold this session's in-use lock while it runs and refuse to start
+   // while another session is mutating that installation. For the managed
+   // install, decide from the configured assistant type, not a path
+   // lookup — mid-swap the path can read as missing and then reappear,
+   // which must not skip the lock. The
+   // RSTUDIO_AGENT_PATH override is pinned once here: the direct launch
+   // branch reuses the pinned path rather than re-reading the environment,
+   // so an override that disappears cannot silently fall back to a
+   // different source mid-start.
+   bool positHelperConfigured =
+      !session::options().positAssistantHelper().isEmpty();
+   FilePath agentPathOverride;
+   std::string agentPathOverrideValue =
+      core::system::getenv("RSTUDIO_AGENT_PATH");
+   if (!agentPathOverrideValue.empty() &&
+       FilePath::exists(agentPathOverrideValue))
+   {
+      agentPathOverride = FilePath(agentPathOverrideValue);
+   }
+   bool overrideInEffect = !agentPathOverride.isEmpty();
+
+   // The Posit assistant type always takes the lock — including when a
+   // dev override points elsewhere — and so does any other assistant whose
+   // direct launch honors an effective override, since that override could
+   // resolve into the managed install. Classifying whether an override
+   // truly does so is a rabbit hole (symlink chains, canonicalization
+   // failures, platform path semantics), and over-locking is always safe:
+   // it costs at most a retryable refusal while an update runs, and an
+   // update refused because a dev agent is running is the conservative
+   // outcome. Copilot without an override never launches from pai/bin and
+   // never locks (lockToken stays 0, which release treats as a no-op).
+   bool helperBranchSelected =
+      (assistant == kAssistantPosit && positHelperConfigured) ||
+      (assistant == kAssistantCopilot &&
+       !session::options().copilotHelper().isEmpty());
+   bool usesSharedInstall =
+      assistant == kAssistantPosit ||
+      (!helperBranchSelected && overrideInEffect);
+
+   uint64_t agentGeneration = ++s_agentGeneration;
+   uint64_t lockToken = 0;
+   if (usesSharedInstall)
+   {
+      std::string lockMessage;
+      error = chat::installLock().acquireInUseForStart(
+         chat::install_lock::InstallLock::Component::NesAgent,
+         &lockToken,
+         &lockMessage);
+      if (error)
+      {
+         // callers (ensureAgentRunning et al) tolerate failure and retry on
+         // the next request, after the mutation has finished
+         s_agentStartupError = lockMessage;
+         setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
+         return error;
+      }
+   }
+
+   auto releaseAgentLock = [&lockToken]()
+   {
+      chat::installLock().releaseInUse(
+         chat::install_lock::InstallLock::Component::NesAgent, lockToken);
+   };
+
+   // Resolve the agent executable once — after acquiring the lock, so a
+   // concurrent install cannot change what we launch — and reuse it in the
+   // launch branches below. The pinned override is used directly (never
+   // re-read) so it cannot fall back to a different source mid-start.
+   FilePath resolvedAgentPath;
+   if (assistant == kAssistantPosit && positHelperConfigured)
+      resolvedAgentPath = paiLanguageServerPath();
+   else if (assistant == kAssistantCopilot &&
+            !session::options().copilotHelper().isEmpty())
+      resolvedAgentPath = copilotLanguageServerPath();
+   else if (overrideInEffect)
+      resolvedAgentPath = agentPathOverride;
+   else if (assistant == kAssistantPosit)
+      resolvedAgentPath = paiLanguageServerPath();
+   else if (assistant == kAssistantCopilot)
+      resolvedAgentPath = copilotLanguageServerPath();
+
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
-   callbacks.onStarted = &agent::onStarted;
-   callbacks.onContinue = &agent::onContinue;
-   callbacks.onStdout = &agent::onStdout;
-   callbacks.onStderr = &agent::onStderr;
-   callbacks.onError = &agent::onError;
-   callbacks.onExit = &agent::onExit;
+   callbacks.onStarted = [agentGeneration](ProcessOperations& operations)
+   {
+      agent::onStarted(operations, agentGeneration);
+   };
+   callbacks.onContinue = [agentGeneration](ProcessOperations& operations)
+   {
+      return agent::onContinue(operations, agentGeneration);
+   };
+   callbacks.onStdout = [agentGeneration](ProcessOperations& operations, const std::string& stdOut)
+   {
+      agent::onStdout(operations, stdOut, agentGeneration);
+   };
+   callbacks.onStderr = [agentGeneration](ProcessOperations& operations, const std::string& stdErr)
+   {
+      agent::onStderr(operations, stdErr, agentGeneration);
+   };
+   callbacks.onError = [agentGeneration](ProcessOperations& operations, const Error& error)
+   {
+      agent::onError(operations, error, agentGeneration);
+   };
+   callbacks.onExit = [agentGeneration, lockToken](int status)
+   {
+      agent::onExit(status, agentGeneration, lockToken);
+   };
 
    // Set up process options
    core::system::ProcessOptions options;
@@ -1277,12 +1445,17 @@ Error startAgent(const std::string& assistantType = "")
    {
       // Run Copilot via helper script
       if (!copilotHelper.exists())
+      {
+         releaseAgentLock();
          return fileNotFoundError(copilotHelper, ERROR_LOCATION);
+      }
 
-      FilePath copilotPath = copilotLanguageServerPath();
-      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", copilotPath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
+      // setenv (not push_back) so an inherited RSTUDIO_AGENT_PATH override
+      // is replaced rather than duplicated — with duplicates the helper
+      // could observe either value and launch an unintended agent
+      core::system::setenv(&environment, "RSTUDIO_NODE_PATH", nodePath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_COPILOT_PATH", resolvedAgentPath.getAbsolutePath());
       options.environment = environment;
 
       error = module_context::processSupervisor().runProgram(
@@ -1295,12 +1468,16 @@ Error startAgent(const std::string& assistantType = "")
    {
       // Run Posit AI via helper script
       if (!positAssistantHelper.exists())
+      {
+         releaseAgentLock();
          return fileNotFoundError(positAssistantHelper, ERROR_LOCATION);
+      }
 
-      FilePath paiPath = paiLanguageServerPath();
-      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", paiPath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_PAI_PATH", paiPath.getAbsolutePath()));
+      // setenv (not push_back) so an inherited RSTUDIO_AGENT_PATH override
+      // is replaced rather than duplicated (see the Copilot branch above)
+      core::system::setenv(&environment, "RSTUDIO_NODE_PATH", nodePath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_PAI_PATH", resolvedAgentPath.getAbsolutePath());
       options.environment = environment;
 
       error = module_context::processSupervisor().runProgram(
@@ -1312,9 +1489,12 @@ Error startAgent(const std::string& assistantType = "")
    else
    {
       // Run assistant directly (no helper script)
-      FilePath assistantPath = assistantLanguageServerPath(assistant);
+      const FilePath& assistantPath = resolvedAgentPath;
       if (!assistantPath.exists())
+      {
+         releaseAgentLock();
          return fileNotFoundError(assistantPath, ERROR_LOCATION);
+      }
 
       options.workingDir = assistantPath.getParent();
       options.environment = environment;
@@ -1331,6 +1511,8 @@ Error startAgent(const std::string& assistantType = "")
    
    if (error)
    {
+      // launch failed, so no exit callback will ever fire to release the lock
+      releaseAgentLock();
       ELOG("Failed to launch {} agent: {}", assistant, error.getMessage());
       setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       return error;

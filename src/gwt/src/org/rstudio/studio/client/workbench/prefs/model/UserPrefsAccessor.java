@@ -79,6 +79,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CONTINUE_COMMENTS_ON_NEWLINE = "continue_comments_on_newline";
    public static final String HIGHLIGHT_WEB_LINK = "highlight_web_link";
    public static final String EDITOR_KEYBINDINGS = "editor_keybindings";
+   public static final String VIM_LOAD_VIMRC = "vim_load_vimrc";
    public static final String INSERT_MATCHING = "insert_matching";
    public static final String INSERT_SPACES_AROUND_EQUALS = "insert_spaces_around_equals";
    public static final String INSERT_PARENS_AFTER_FUNCTION_COMPLETION = "insert_parens_after_function_completion";
@@ -938,6 +939,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String EDITOR_KEYBINDINGS_VIM = "vim";
    public final static String EDITOR_KEYBINDINGS_EMACS = "emacs";
    public final static String EDITOR_KEYBINDINGS_SUBLIME = "sublime";
+
+   /**
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    */
+   public PrefValue<Boolean> vimLoadVimrc()
+   {
+      return bool(
+         "vim_load_vimrc",
+         _constants.vimLoadVimrcTitle(), 
+         _constants.vimLoadVimrcDescription(), 
+         false);
+   }
 
    /**
     * Whether to insert matching pairs, such as () and [], when the first is typed.
@@ -4717,6 +4730,8 @@ public class UserPrefsAccessor extends Prefs
          highlightWebLink().setValue(layer, source.getBool("highlight_web_link"));
       if (source.hasKey("editor_keybindings"))
          editorKeybindings().setValue(layer, source.getString("editor_keybindings"));
+      if (source.hasKey("vim_load_vimrc"))
+         vimLoadVimrc().setValue(layer, source.getBool("vim_load_vimrc"));
       if (source.hasKey("insert_matching"))
          insertMatching().setValue(layer, source.getBool("insert_matching"));
       if (source.hasKey("insert_spaces_around_equals"))
@@ -5292,6 +5307,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(continueCommentsOnNewline());
       prefs.add(highlightWebLink());
       prefs.add(editorKeybindings());
+      prefs.add(vimLoadVimrc());
       prefs.add(insertMatching());
       prefs.add(insertSpacesAroundEquals());
       prefs.add(insertParensAfterFunctionCompletion());

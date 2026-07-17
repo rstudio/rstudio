@@ -28,6 +28,43 @@ describe('Desktop Native Code', () => {
     assert.equal(clipboard.readText('clipboard'), 'write to clipboard');
   });
 
+  // Exercises the UTF-16 -> UTF-8 conversion with multibyte BMP characters
+  // (cafe, CJK) and an astral character requiring a surrogate pair (emoji),
+  // which the ASCII-only cases above do not cover.
+  it('cleanClipboard preserves non-ASCII plain text', () => {
+    const text = 'café 世界 😀';
+    clipboard.writeText(text);
+    desktop.cleanClipboard(false);
+    assert.equal(clipboard.readText('clipboard'), text);
+  });
+
+  // Malformed UTF-16 that decodes to nothing must not wipe the clipboard:
+  // conversion happens before the pasteboard is cleared, and cleanClipboard
+  // bails out when it produces no text. macOS-only (utf16 pasteboard flavor).
+  it('cleanClipboard leaves malformed UTF-16 data untouched', function () {
+    if (process.platform !== 'darwin') {
+      this.skip();
+    }
+    const malformed = Buffer.from([0x00, 0xd8]); // lone high surrogate (U+D800)
+    clipboard.clear();
+    clipboard.writeBuffer('public.utf16-plain-text', malformed);
+    desktop.cleanClipboard(false);
+    assert.deepEqual([...clipboard.readBuffer('public.utf16-plain-text')], [...malformed]);
+  });
+
+  // Valid UTF-16 that begins with a NUL must still be cleaned rather than
+  // mistaken for a decode failure: the NUL is preserved and the text converted.
+  it('cleanClipboard handles valid UTF-16 with a leading NUL', function () {
+    if (process.platform !== 'darwin') {
+      this.skip();
+    }
+    clipboard.clear();
+    // UTF-16LE bytes for a NUL (U+0000) followed by 'A'
+    clipboard.writeBuffer('public.utf16-plain-text', Buffer.from([0x00, 0x00, 0x41, 0x00]));
+    desktop.cleanClipboard(false);
+    assert.equal(clipboard.readText('clipboard'), '\u0000A');
+  });
+
   // HTML stripping only available on Mac to handle pasteboard types
   it('cleanClipboard with strip HTML', () => {
     const htmlText =

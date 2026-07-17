@@ -108,6 +108,7 @@ namespace prefs {
 #define kEditorKeybindingsVim "vim"
 #define kEditorKeybindingsEmacs "emacs"
 #define kEditorKeybindingsSublime "sublime"
+#define kVimLoadVimrc "vim_load_vimrc"
 #define kInsertMatching "insert_matching"
 #define kInsertSpacesAroundEquals "insert_spaces_around_equals"
 #define kInsertParensAfterFunctionCompletion "insert_parens_after_function_completion"
@@ -723,6 +724,12 @@ public:
     */
    std::string editorKeybindings();
    core::Error setEditorKeybindings(std::string val);
+
+   /**
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    */
+   bool vimLoadVimrc();
+   core::Error setVimLoadVimrc(bool val);
 
    /**
     * Whether to insert matching pairs, such as () and [], when the first is typed.
