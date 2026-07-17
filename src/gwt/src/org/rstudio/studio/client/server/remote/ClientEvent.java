@@ -34,6 +34,7 @@ class ClientEvent extends JavaScriptObject
    public static final String Quit = "quit";
    public static final String Suicide = "suicide";
    public static final String FileChanged = "file_changed";
+   public static final String FilesChanged = "files_changed";
    public static final String WorkingDirChanged = "working_dir_changed";
    public static final String PlotsStateChanged = "plots_state_changed";
    public static final String PackageStatusChanged = "package_status_changed";
