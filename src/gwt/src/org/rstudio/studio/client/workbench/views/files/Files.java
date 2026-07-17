@@ -353,8 +353,8 @@ public class Files
 
       public void onFileNavigation(FileSystemItem file)
       {
-         // follow macOS Finder aliases to their target rather than opening
-         // the alias's binary bookmark data
+         // follow macOS Finder aliases and Windows shortcuts to their target
+         // rather than opening the link file's binary data
          file = file.resolveAliasTarget();
 
          if (file.isDirectory())
@@ -793,11 +793,12 @@ public class Files
       final Set<String> seenPaths = new HashSet<>();
       for (FileSystemItem selected : view_.getSelectedFiles())
       {
-         // follow macOS Finder aliases so open commands act on the target;
-         // a directory alias then skips like any other directory. Distinct
-         // selections can resolve to the same target (an alias plus its
-         // target, or two aliases to one file), so dedupe by resolved path
-         // or columns mode opens an extra column per duplicate.
+         // follow macOS Finder aliases / Windows shortcuts so open commands
+         // act on the target; a directory alias/shortcut then skips like any
+         // other directory. Distinct selections can resolve to the same
+         // target (a link plus its target, or two links to one file), so
+         // dedupe by resolved path or columns mode opens an extra column per
+         // duplicate.
          FileSystemItem item = selected.resolveAliasTarget();
          if (!item.isDirectory() &&
              !mgr.openFileAlreadyOpen(item, null) &&
