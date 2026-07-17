@@ -20,6 +20,7 @@
 #include "SessionNodeTools.hpp"
 
 #include <boost/current_function.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
 
@@ -1286,16 +1287,34 @@ Error startAgent(const std::string& assistantType = "")
    // The override participates in classification only when the direct
    // launch branch will actually select it — helper-script branches ignore
    // it, and e.g. a Copilot start must not be refused because of an
-   // unrelated Posit Assistant update. Resolve a symlinked override so a
-   // link pointing into pai/bin is still classified as the shared install.
+   // unrelated Posit Assistant update. Classify conservatively: lock when
+   // the override path itself, or its fully-canonicalized target (all
+   // symlinks in the path resolved), lies inside the managed install; on
+   // canonicalization failure err toward locking. Over-locking a dev
+   // override is a harmless retryable refusal during an update, while
+   // under-locking the shared install is the corruption this prevents.
    bool helperBranchSelected =
       (assistant == kAssistantPosit && positHelperConfigured) ||
       (assistant == kAssistantCopilot &&
        !session::options().copilotHelper().isEmpty());
-   bool overrideSelectsSharedInstall =
-      !helperBranchSelected && overrideInEffect &&
-      agentPathOverride.resolveSymlink().isWithin(
-         xdg::userDataDir().completePath("pai/bin"));
+   bool overrideSelectsSharedInstall = false;
+   if (!helperBranchSelected && overrideInEffect)
+   {
+      FilePath paiBinDir = xdg::userDataDir().completePath("pai/bin");
+      if (agentPathOverride.isWithin(paiBinDir))
+      {
+         overrideSelectsSharedInstall = true;
+      }
+      else
+      {
+         boost::system::error_code ec;
+         boost::filesystem::path canonicalOverride = boost::filesystem::canonical(
+            agentPathOverride.getAbsolutePath(), ec);
+         overrideSelectsSharedInstall =
+            ec ? true
+               : FilePath(canonicalOverride.generic_string()).isWithin(paiBinDir);
+      }
+   }
    bool usesSharedInstall =
       (assistant == kAssistantPosit &&
        (positHelperConfigured || !overrideInEffect)) ||
