@@ -971,10 +971,19 @@ void onStarted(ProcessOperations& operations, uint64_t generation)
    setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
 
-bool onContinue(ProcessOperations& operations)
+bool onContinue(ProcessOperations& operations, uint64_t generation)
 {
    if (s_isSessionShuttingDown)
       return false;
+
+   // A superseded agent process must not drain the replacement's pending
+   // requests (or flip s_agentInitialized on its behalf). Returning false
+   // also has the supervisor terminate the leftover process.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Terminating superseded agent generation from continue callback");
+      return false;
+   }
 
    auto debugCallback = [](const std::string& htmlRequest)
    {
@@ -1025,10 +1034,18 @@ bool onContinue(ProcessOperations& operations)
    return true;
 }
 
-void onStdout(ProcessOperations& operations, const std::string& stdOut)
+void onStdout(ProcessOperations& operations, const std::string& stdOut, uint64_t generation)
 {
    if (s_isSessionShuttingDown)
       return;
+
+   // A superseded agent process's late output must not feed the
+   // replacement's response queue or mark it Running.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring stdout from stale agent generation");
+      return;
+   }
 
    // Discard empty lines.
    static const boost::regex reWhitespace("^\\s*$");
@@ -1109,10 +1126,18 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    setAgentRuntimeStatus(AgentRuntimeStatus::Running);
 }
 
-void onStderr(ProcessOperations& operations, const std::string& stdErr)
+void onStderr(ProcessOperations& operations, const std::string& stdErr, uint64_t generation)
 {
    if (s_isSessionShuttingDown)
       return;
+
+   // A superseded agent process's dying gasps must not append to the
+   // replacement's startup error or push its status to Stopping.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring stderr from stale agent generation: {}", stdErr);
+      return;
+   }
 
    LOG_ERROR_MESSAGE(stdErr);
  
@@ -1136,7 +1161,7 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 
 }
 
-void onError(ProcessOperations& operations, const Error& error)
+void onError(ProcessOperations& operations, const Error& error, uint64_t generation)
 {
    // A stream IO error does not mean the process exited — the default
    // terminate-the-child behavior applies only when no onError callback is
@@ -1148,7 +1173,11 @@ void onError(ProcessOperations& operations, const Error& error)
    // terminateProcess; on Windows it can only terminate the tracked
    // process. onExit then clears state and releases the lock.
    ELOG("Agent process error: {}", error.getMessage());
-   s_agentStartupError = error.getMessage();
+
+   // A superseded process's stream error is not the replacement's startup
+   // error — but terminating the errored process is right either way.
+   if (generation == s_agentGeneration)
+      s_agentStartupError = error.getMessage();
 
    Error terminateError = operations.terminate();
    if (terminateError)
@@ -1358,10 +1387,22 @@ Error startAgent(const std::string& assistantType = "")
    {
       agent::onStarted(operations, agentGeneration);
    };
-   callbacks.onContinue = &agent::onContinue;
-   callbacks.onStdout = &agent::onStdout;
-   callbacks.onStderr = &agent::onStderr;
-   callbacks.onError = &agent::onError;
+   callbacks.onContinue = [agentGeneration](ProcessOperations& operations)
+   {
+      return agent::onContinue(operations, agentGeneration);
+   };
+   callbacks.onStdout = [agentGeneration](ProcessOperations& operations, const std::string& stdOut)
+   {
+      agent::onStdout(operations, stdOut, agentGeneration);
+   };
+   callbacks.onStderr = [agentGeneration](ProcessOperations& operations, const std::string& stdErr)
+   {
+      agent::onStderr(operations, stdErr, agentGeneration);
+   };
+   callbacks.onError = [agentGeneration](ProcessOperations& operations, const Error& error)
+   {
+      agent::onError(operations, error, agentGeneration);
+   };
    callbacks.onExit = [agentGeneration, lockToken](int status)
    {
       agent::onExit(status, agentGeneration, lockToken);
