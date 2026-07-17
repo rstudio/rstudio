@@ -57,7 +57,7 @@
 #define kMaxIndexingFileSize (1048576)
 
 // How long to wait after a failed agent launch before automatic triggers
-// (document events, completion requests) may attempt another launch.
+// (e.g. completion requests) may attempt another launch.
 #define kAgentLaunchRetrySeconds (30)
 
 // Maximum number of variables to include in session notifications
@@ -1533,7 +1533,9 @@ bool ensureAgentRunning(const std::string& assistantType = "",
    // each attempt can block the session for the full launch timeout, and
    // automatic triggers (e.g. completion requests) can arrive many times a
    // minute. Explicit requests (those naming an assistant type, e.g. from the
-   // preferences dialog) always retry.
+   // preferences dialog) always retry. Note that pAgentLaunchError is left
+   // unset on this path; callers that request the launch error pass an
+   // explicit assistantType and so never take this early return.
    if (assistantType.empty() && !s_agentLastLaunchFailure.is_not_a_date_time())
    {
       auto elapsed = boost::posix_time::second_clock::universal_time() - s_agentLastLaunchFailure;
@@ -1764,20 +1766,22 @@ void didClose(lsp::DidCloseTextDocumentParams params)
    docClosed(params.textDocument.uri);
 }
 
-void didFocus(lsp::DidFocusTextDocumentParams params)
+void didFocus(lsp::DidFocusTextDocumentParams params,
+              boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!checkAgentRunning())
       return;
 
-   // Resolve the source document, skipping the read of its contents;
-   // only document metadata is needed to check indexability here.
-   auto pDoc = boost::make_shared<source_database::SourceDocument>();
-   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, false, pDoc);
-   if (error)
-      return;
+   // Note: unlike the handlers above, we intentionally don't skip when the
+   // agent hasn't finished initializing. Pre-init requests are held in
+   // s_pendingRequests (onContinue only drains initialization methods until
+   // 'initialized' is sent), and unlike document state -- which
+   // syncOpenDocuments() re-sends after initialization -- nothing re-sends
+   // focus, so dropping the notification here would lose it.
 
    // If document is NOT indexable we tell the agent that no file has focus via an empty request.
    // This is to prevent the agent from attempting to read the contents of the file.
+   // (pDoc arrives without contents loaded, so skip the contents-based check.)
    json::Object paramsJson;
    if (isIndexableDocument(pDoc, false))
       paramsJson = lsp::toJson(params);

@@ -251,18 +251,10 @@ core::Error sourceDocumentFromUri(
    const std::string& uri,
    boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   return sourceDocumentFromUri(uri, true, pDoc);
-}
-
-core::Error sourceDocumentFromUri(
-   const std::string& uri,
-   bool includeContents,
-   boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
    if (boost::algorithm::starts_with(uri, kRStudioDocumentPrefix))
    {
       std::string id = uri.substr(strlen(kRStudioDocumentPrefix));
-      return source_database::get(id, includeContents, pDoc);
+      return source_database::get(id, pDoc);
    }
    else if (boost::algorithm::starts_with(uri, kFilePrefix))
    {
@@ -273,7 +265,7 @@ core::Error sourceDocumentFromUri(
       if (error)
          return error;
 
-      return source_database::get(id, includeContents, pDoc);
+      return source_database::get(id, pDoc);
    }
    else
    {
@@ -356,7 +348,8 @@ void didClose(DidCloseTextDocumentParams params)
    logEvent("textDocument/didClose", toJson(params));
 }
 
-void didFocus(DidFocusTextDocumentParams params)
+void didFocus(DidFocusTextDocumentParams params,
+              boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    logEvent("textDocument/didFocus", toJson(params));
 }
@@ -380,12 +373,21 @@ Error lspDocFocused(const core::json::JsonRpcRequest& request,
    }
 
    // Resolve the source document, skipping the read of its contents;
-   // only document metadata is needed to compute the URI. The document
-   // may have been closed by the time we get here, so don't log errors.
+   // only document metadata is needed here.
    auto pDoc = boost::make_shared<source_database::SourceDocument>();
    error = source_database::get(documentId, false, pDoc);
    if (error)
    {
+      // The document may have been closed before we handled the notification;
+      // that's expected during ordinary tab churn, so acknowledge it quietly.
+      // Anything else (e.g. malformed document metadata) is a real error.
+      if (isFileNotFoundError(error))
+      {
+         continuation(Success(), &response);
+         return Success();
+      }
+
+      LOG_ERROR(error);
       continuation(error, &response);
       return error;
    }
@@ -396,7 +398,7 @@ Error lspDocFocused(const core::json::JsonRpcRequest& request,
       }
    };
 
-   events().didFocus(params);
+   events().didFocus(params, pDoc);
 
    continuation(Success(), &response);
    return Success();

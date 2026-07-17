@@ -17,6 +17,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { documentOpen } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 import * as path from 'path';
 
 test.describe('Document focus notification', () => {
@@ -34,11 +35,21 @@ test.describe('Document focus notification', () => {
     rstudioPage: page,
   }) => {
     await writeAndOpenFile(page, sandbox.dir, fileA, `# ${fileA}`);
+
+    // A is active right after opening; capture its document id so we can
+    // match the focus RPC for A specifically (and not a stray, late
+    // notification for B from the opens above).
+    const docIdA = await page.evaluate(() => window.rstudio?.documents.active()?.id ?? null);
+    expect(docIdA).not.toBeNull();
+
     await writeAndOpenFile(page, sandbox.dir, fileB, `# ${fileB}`);
 
-    // Re-focusing A fires DocFocusedEvent -> lsp_doc_focused.
-    const focusResponse = page.waitForResponse((response) =>
-      response.url().includes('/rpc/lsp_doc_focused'),
+    // Re-focusing A fires DocFocusedEvent -> lsp_doc_focused for A's doc id.
+    const focusResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/rpc/lsp_doc_focused') &&
+        (response.request().postData() ?? '').includes(`"${docIdA}"`),
+      { timeout: TIMEOUTS.fileOpen },
     );
     await documentOpen(page, path.join(sandbox.dir, fileA));
 

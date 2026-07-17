@@ -276,7 +276,11 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void(DidOpenTextDocumentParams)>   didOpen;
    RSTUDIO_BOOST_SIGNAL<void(DidChangeTextDocumentParams)> didChange;
    RSTUDIO_BOOST_SIGNAL<void(DidCloseTextDocumentParams)>  didClose;
-   RSTUDIO_BOOST_SIGNAL<void(DidFocusTextDocumentParams)>  didFocus;
+
+   // The source document is provided pre-resolved, but WITHOUT its contents
+   // loaded, so that subscribers don't need to re-read it from the source
+   // database on every focus change.
+   RSTUDIO_BOOST_SIGNAL<void(DidFocusTextDocumentParams, boost::shared_ptr<source_database::SourceDocument>)> didFocus;
 };
 
 inline Events& events()
@@ -287,13 +291,6 @@ inline Events& events()
 
 core::Error sourceDocumentFromUri(
    const std::string& uri,
-   boost::shared_ptr<source_database::SourceDocument> pDoc);
-
-// As above, but allows skipping the read of the document's contents
-// sidecar file when only document metadata is needed.
-core::Error sourceDocumentFromUri(
-   const std::string& uri,
-   bool includeContents,
    boost::shared_ptr<source_database::SourceDocument> pDoc);
 
 std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc);
