@@ -56,6 +56,10 @@
 #define kAssistantDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
+// How long to wait after a failed agent launch before automatic triggers
+// (document events, completion requests) may attempt another launch.
+#define kAgentLaunchRetrySeconds (30)
+
 // Maximum number of variables to include in session notifications
 #define kAssistantMaxVariables (100)
 
@@ -200,6 +204,11 @@ AgentNotRunningReason s_agentNotRunningReason = AgentNotRunningReason::Unknown;
 
 // The current runtime status of the agent process.
 AgentRuntimeStatus s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+
+// When the last failed agent launch attempt occurred, if any. Used to avoid
+// re-attempting (and re-waiting on) doomed launches on every automatic
+// trigger; see kAgentLaunchRetrySeconds in ensureAgentRunning().
+boost::posix_time::ptime s_agentLastLaunchFailure(boost::posix_time::not_a_date_time);
 
 // Whether or not we've handled the Assistant 'initialized' notification.
 // Primarily done to allow proper sequencing of Assistant callbacks.
@@ -1438,6 +1447,16 @@ Error startAgent(const std::string& assistantType = "")
    return Success();
 }
 
+// Check whether the agent is already running, without attempting to launch
+// it. Passive paths (document lifecycle notifications and the like) use this
+// rather than ensureAgentRunning() so they never stall the session waiting
+// on an agent launch; the agent is started from synchronize() when enabled,
+// and from the user-facing paths that call ensureAgentRunning().
+bool checkAgentRunning()
+{
+   return !s_isSessionShuttingDown && s_agentPid != -1;
+}
+
 bool ensureAgentRunning(const std::string& assistantType = "",
                         Error* pAgentLaunchError = nullptr)
 {
@@ -1510,10 +1529,26 @@ bool ensureAgentRunning(const std::string& assistantType = "",
    if (!thread::isMainThread())
       return false;
 
+   // If a recent launch attempt failed, don't automatically retry right away:
+   // each attempt can block the session for the full launch timeout, and
+   // automatic triggers (e.g. completion requests) can arrive many times a
+   // minute. Explicit requests (those naming an assistant type, e.g. from the
+   // preferences dialog) always retry.
+   if (assistantType.empty() && !s_agentLastLaunchFailure.is_not_a_date_time())
+   {
+      auto elapsed = boost::posix_time::second_clock::universal_time() - s_agentLastLaunchFailure;
+      if (elapsed < boost::posix_time::seconds(kAgentLaunchRetrySeconds))
+         return false;
+   }
+
    // preflight checks passed; try to start the agent
    Error error = startAgent(assistantType);
    if (error)
       LOG_ERROR(error);
+
+   s_agentLastLaunchFailure = error
+      ? boost::posix_time::second_clock::universal_time()
+      : boost::posix_time::ptime(boost::posix_time::not_a_date_time);
 
    if (pAgentLaunchError)
       *pAgentLaunchError = error;
@@ -1657,7 +1692,7 @@ void indexFile(const core::FileInfo& info)
 
 void didOpen(lsp::DidOpenTextDocumentParams params)
 {
-   if (!ensureAgentRunning())
+   if (!checkAgentRunning())
       return;
 
    // Skip if agent isn't fully initialized yet; syncOpenDocuments()
@@ -1682,7 +1717,7 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
 
 void didChange(lsp::DidChangeTextDocumentParams params)
 {
-   if (!ensureAgentRunning())
+   if (!checkAgentRunning())
       return;
 
    // Skip if agent isn't fully initialized yet; syncOpenDocuments()
@@ -1710,7 +1745,7 @@ void didChange(lsp::DidChangeTextDocumentParams params)
 
 void didClose(lsp::DidCloseTextDocumentParams params)
 {
-   if (!ensureAgentRunning())
+   if (!checkAgentRunning())
       return;
 
    // Skip if agent isn't fully initialized yet; the agent won't have
@@ -1731,11 +1766,7 @@ void didClose(lsp::DidCloseTextDocumentParams params)
 
 void didFocus(lsp::DidFocusTextDocumentParams params)
 {
-   // Focus events are frequent, so don't try to start the agent here -- a
-   // slow or failing agent launch would stall the session on every editor
-   // tab switch. If the agent isn't running yet, other paths (didOpen,
-   // completion requests, etc.) will start it.
-   if (s_agentPid == -1)
+   if (!checkAgentRunning())
       return;
 
    // Resolve the source document, skipping the read of its contents;
@@ -2440,12 +2471,9 @@ Error assistantStatus(const json::JsonRpcRequest& request,
 Error assistantDidShowCompletion(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
+   // nothing to do if the agent isn't running
+   if (!checkAgentRunning())
       return Success();
-   }
 
    // Read params
    json::Object completionJson;
@@ -2465,8 +2493,8 @@ Error assistantDidShowCompletion(const json::JsonRpcRequest& request,
 Error assistantDidAcceptCompletion(const json::JsonRpcRequest& request,
                                    json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
+   // nothing to do if the agent isn't running
+   if (!checkAgentRunning())
       return Success();
 
    // Read params
@@ -2485,12 +2513,9 @@ Error assistantDidAcceptCompletion(const json::JsonRpcRequest& request,
 Error assistantDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
                                           json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
+   // nothing to do if the agent isn't running
+   if (!checkAgentRunning())
       return Success();
-   }
 
    // Read params
    json::Object partialCompletionJson;
