@@ -952,8 +952,17 @@ void sendWarmupRequest()
 
 namespace agent {
 
-void onStarted(ProcessOperations& operations)
+void onStarted(ProcessOperations& operations, uint64_t generation)
 {
+   // A late start notification from a superseded agent process must not
+   // stomp the replacement's PID or runtime status — the superseded
+   // generation's onExit deliberately leaves both alone.
+   if (generation != s_agentGeneration)
+   {
+      DLOG("Ignoring start callback from stale agent generation");
+      return;
+   }
+
    // Record the PID of the agent.
    DLOG("Agent has started [PID = {}, type = {}]",
         operations.getPid(),
@@ -1345,7 +1354,10 @@ Error startAgent(const std::string& assistantType = "")
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
-   callbacks.onStarted = &agent::onStarted;
+   callbacks.onStarted = [agentGeneration](ProcessOperations& operations)
+   {
+      agent::onStarted(operations, agentGeneration);
+   };
    callbacks.onContinue = &agent::onContinue;
    callbacks.onStdout = &agent::onStdout;
    callbacks.onStderr = &agent::onStderr;
