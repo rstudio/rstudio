@@ -205,6 +205,11 @@ jobs:
       # cache hits, no per-SHA tarball, no AWS credentials.
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+        with:
+          # Pinned: resolving "latest" queries api.github.com at runtime,
+          # which fails during GitHub API incidents (503s). A pinned version
+          # downloads directly from the release CDN with no API call.
+          version: "v0.16.0"
 
       # install-dependencies-yum: dnf installs system packages (with sudo
       # internally), then calls install-common which downloads Boost, SOCI,
@@ -424,7 +429,7 @@ jobs:
       - name: Install RStudio Desktop from artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         run: |
-          dnf -y install "${{ github.workspace }}/rstudio-desktop.rpm"
+          dnf -y install "$GITHUB_WORKSPACE/rstudio-desktop.rpm"
           ls -la /usr/bin/rstudio
 
       # Daily-download path: resolve and install the latest (or specified) .rpm.

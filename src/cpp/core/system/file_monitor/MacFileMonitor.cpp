@@ -19,6 +19,8 @@
 
 #include <sys/stat.h>
 
+#include <map>
+
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/bind/bind.hpp>
@@ -48,8 +50,11 @@ public:
    DirectoryHandle(const std::string& path)
       : fd_(-1)
    {
+      // O_CLOEXEC so the descriptor (held for the monitor's lifetime) is
+      // closed across exec, rather than leaking into child processes where
+      // it would pin the watched directory for as long as the child runs
       const char* cpath = path.c_str();
-      auto f = [&]() { return ::open(cpath, O_DIRECTORY); };
+      auto f = [&]() { return ::open(cpath, O_DIRECTORY | O_CLOEXEC); };
       Error error = posix::posixCall<int>(f, ERROR_LOCATION, &fd_);
       if (error)
          LOG_ERROR(error);
@@ -263,20 +268,24 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
    // a matter of cross-backend consistency.
    if (needsFullRescan)
    {
+      LOG_WARNING_MESSAGE("File monitor events were dropped; rescanning " +
+                          rootPathStr);
+
+      // scan the root unconditionally, matching registration -- the filter
+      // is meant for entries within the directory, and gating recovery on
+      // the root itself would leave dropped events unrecovered for watches
+      // whose root the filter excludes (e.g. a hidden directory)
       FileInfo rootInfo(pContext->rootPath);
-      if (!pContext->filter || pContext->filter(rootInfo))
+      Error error = impl::discoverAndProcessFileChanges(
+                                          rootInfo,
+                                          false,
+                                          pContext->filter,
+                                          &(pContext->fileTree),
+                                          pContext->callbacks.onFilesChanged);
+      if (error &&
+         (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
       {
-         Error error = impl::discoverAndProcessFileChanges(
-                                             rootInfo,
-                                             false,
-                                             pContext->filter,
-                                             &(pContext->fileTree),
-                                             pContext->callbacks.onFilesChanged);
-         if (error &&
-            (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
-         {
-            LOG_ERROR(error);
-         }
+         LOG_ERROR(error);
       }
    }
 
@@ -340,6 +349,18 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       return;
    }
 
+   // Coalesce the batch before processing: fseventsd delivers batches in
+   // which the same directory can appear many times (e.g. a bulk operation
+   // whose changes span multiple coalescing windows, or a backlog that
+   // accumulated while a previous scan was in progress). Each entry costs a
+   // full readdir + diff of that directory, so processing duplicates is pure
+   // waste -- worse, the redundant scans can back up event processing far
+   // enough that fseventsd drops events (UserDropped), and a dropped change
+   // stays invisible until unrelated later activity triggers the
+   // MustScanSubDirs recovery rescan (#18260).
+   std::vector<std::pair<std::string, FSEventStreamEventFlags>> events;
+   std::map<std::string, std::size_t> eventIndex;
+   bool eventsDropped = false;
    for (std::size_t i = 0; i < numEvents; i++)
    {
       // make a copy of the path and strip off trailing / if necessary
@@ -349,15 +370,61 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       // map the canonical event path back to the registered path form
       path = mapEventPath(pContext, path);
 
+      if (eventFlags[i] & (kFSEventStreamEventFlagUserDropped |
+                           kFSEventStreamEventFlagKernelDropped))
+      {
+         eventsDropped = true;
+      }
+
+      // fold duplicate paths into a single event, merging their flags
+      std::map<std::string, std::size_t>::iterator it = eventIndex.find(path);
+      if (it != eventIndex.end())
+      {
+         events[it->second].second |= eventFlags[i];
+      }
+      else
+      {
+         eventIndex[path] = events.size();
+         events.push_back(std::make_pair(path, eventFlags[i]));
+      }
+   }
+
+   // If fseventsd dropped events for this stream (kernel or user-space queue
+   // overflow), the loss is not necessarily confined to the delivered paths,
+   // and the flagged path may even be excluded by our filter (e.g. .git).
+   // Reconcile with a single recursive rescan from the stream root rather
+   // than trusting the flagged path; the per-path scans below are redundant
+   // after a successful rescan, but on rescan failure fall through to them
+   // so the delivered events are still processed.
+   if (eventsDropped)
+   {
+      LOG_WARNING_MESSAGE("File monitor events were dropped; rescanning " +
+                          pContext->rootPath.getAbsolutePath());
+
+      Error error = impl::discoverAndProcessFileChanges(
+                            FileInfo(pContext->rootPath.getAbsolutePath(), true),
+                            true,
+                            pContext->filter,
+                            &(pContext->fileTree),
+                            pContext->callbacks.onFilesChanged);
+      if (!error)
+         return;
+
+      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+         LOG_ERROR(error);
+   }
+
+   for (const std::pair<std::string, FSEventStreamEventFlags>& event : events)
+   {
       // get FileInfo for this directory
-      FileInfo fileInfo(path, true);
+      FileInfo fileInfo(event.first, true);
 
       // apply the filter (if any)
       if (!pContext->filter || pContext->filter(fileInfo))
       {
          // check for need to do recursive scan
          bool recursive = pContext->recursive &&
-                          (eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs);
+                          (event.second & kFSEventStreamEventFlagMustScanSubDirs);
 
          // process changes
          Error error = impl::discoverAndProcessFileChanges(

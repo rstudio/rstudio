@@ -223,6 +223,7 @@ extern const int kNotebookRenderCompleted;
 extern const int kConsoleReadCompleted;
 extern const int kRStudioAPIShowMenu;
 extern const int kPackageVulnerabilitiesReady;
+extern const int kFilesChanged;
 
 }
    

@@ -52,7 +52,7 @@ public class OpenFileDialog extends FileDialog
       // if the user has selected a directory, and there
       // is no user input, interpret that as a request to
       // navigate into that directory (following macOS Finder
-      // aliases to their target)
+      // aliases and Windows shortcuts to their target)
       if (item != null && fileInput.isEmpty() && item.isDirectory())
       {
          cd(item.resolveAliasTarget().getPath());

@@ -5,7 +5,9 @@
 - ([#18153](https://github.com/rstudio/rstudio/issues/18153)): Added a preference (General > Basic) to disable the "What's New" window that RStudio Desktop shows after updating to a new version.
 - ([#18158](https://github.com/rstudio/rstudio/issues/18158)): On macOS, the Files pane now follows Finder aliases: clicking an alias to a folder navigates to that folder, and clicking an alias to a file opens the file.
 - ([#9924](https://github.com/rstudio/rstudio/issues/9924)): The Files pane now shows a link indicator on symbolic links and macOS Finder aliases, with the link target shown in the icon's tooltip.
+- ([#18274](https://github.com/rstudio/rstudio/issues/18274)): On Windows, the Files pane now follows .lnk shortcuts: clicking a shortcut to a folder navigates to that folder, and clicking a shortcut to a file opens the file. Shortcuts are marked with a link indicator, like symbolic links and macOS Finder aliases.
 - ([#8715](https://github.com/rstudio/rstudio/issues/8715)): Inline LaTeX / math previews in the source editor and visual editor are now rendered with MathJax 4 (previously MathJax 2.7), adding support for the TeX input extensions introduced in MathJax 3 and later. Rendered R Markdown documents using `mathjax = "local"` continue to use the bundled MathJax 2.7.
+- ([#7350](https://github.com/rstudio/rstudio/issues/7350)): RStudio can now load custom Vim key mappings from `~/.rstudio-vimrc` (or `~/.vimrc`) when Vim editor keybindings are in use. Enable the new preference under Tools > Global Options > Code > Editing; key mapping commands (`map`, `noremap`, `unmap`, and friends) and `set` commands supported by the editor's Vim emulation are applied, and other vimrc content is ignored.
 
 ### Fixed
 - ([#18152](https://github.com/rstudio/rstudio/issues/18152)): Fixed a compilation error when building RStudio Server against SOCI 4.1.4 or newer.
@@ -20,6 +22,8 @@
 - ([#18225](https://github.com/rstudio/rstudio/issues/18225)): Clicking a console hyperlink to a package source file that no longer exists (for example, srcref paths recording the temporary directory used during package installation) now recovers the source from the package's srcref database when available, instead of showing a "No such file" error.
 - ([#13078](https://github.com/rstudio/rstudio/issues/13078)): Fixed an issue on Windows where `utils::choose.dir()` returned `NA` without showing the folder-selection dialog when running R 4.3.0 or newer.
 - ([#18199](https://github.com/rstudio/rstudio/issues/18199)): RStudio no longer prompts to install packages that are no longer dependencies of rmarkdown (e.g. stringr, glue) when rendering R Markdown or Quarto documents, most visibly in renv projects with minimal project libraries. Required packages are now validated against the dependencies declared by the installed packages themselves, rather than a hard-coded dependency tree.
+- ([#18257](https://github.com/rstudio/rstudio/issues/18257)): Fixed the IDE becoming unresponsive for an extended period after a large number of git-tracked files changed at once (e.g. moving or committing thousands of files); Git pane updates are now batched instead of rebuilding the changelist once per changed file.
+- ([#18260](https://github.com/rstudio/rstudio/issues/18260)): Fixed an issue on macOS where a file change landing just after a bulk change of many files could go undetected by the Files and Git panes until a manual refresh or unrelated later file activity.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)

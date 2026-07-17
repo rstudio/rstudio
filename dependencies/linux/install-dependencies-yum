@@ -31,6 +31,8 @@ PACKAGES=(
 	libffi
 	libuser-devel
 	libuuid-devel
+	libuv-devel
+	libxml2-devel
 	libXScrnSaver-devel
 	libxslt-devel
 	make
@@ -39,6 +41,8 @@ PACKAGES=(
 	pam-devel
 	pango-devel
 	postgresql-devel
+	R-core
+	R-core-devel
 	rpmdevtools
 	sqlite-devel
 	wget

@@ -337,6 +337,16 @@
    clear = function() { .rs.clearUserPref("editor_keybindings") }
 )
 
+# Load Vim keybindings from a vimrc file
+#
+# Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim
+# editor keybindings are enabled.
+.rs.uiPrefs$vimLoadVimrc <- list(
+   get = function() { .rs.getUserPref("vim_load_vimrc") },
+   set = function(value) { .rs.setUserPref("vim_load_vimrc", value) },
+   clear = function() { .rs.clearUserPref("vim_load_vimrc") }
+)
+
 # Auto-insert matching parentheses and brackets
 #
 # Whether to insert matching pairs, such as () and [], when the first is typed.

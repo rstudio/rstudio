@@ -139,6 +139,11 @@ public class CodePreferencesPane extends PreferencesPane
       lessSpaced(keyboardPanel);
       editingPanel.add(keyboardPanel);
 
+      vimLoadVimrc_ = checkboxPref(prefs_.vimLoadVimrc());
+      vimLoadVimrc_.getElement().getStyle().setMarginTop(6, Unit.PX);
+      editorMode_.addChangeHandler(event -> syncVimLoadVimrcEnabled());
+      editingPanel.add(vimLoadVimrc_);
+
       HorizontalPanel projectPrefsPanel = new HorizontalPanel();
       projectPrefsPanel.getElement().getStyle().setMarginTop(5, Unit.PX);
       Label projectOverride = new Label(constants_.editingProjectOverrideInfoText());
@@ -627,6 +632,7 @@ public class CodePreferencesPane extends PreferencesPane
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
+      syncVimLoadVimrcEnabled();
       foldMode_.setValue(prefs_.foldStyle().getValue());
       indentGuides_.setValue(prefs.indentGuides().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
@@ -640,6 +646,11 @@ public class CodePreferencesPane extends PreferencesPane
       {
          autoSaveIdleMs_.setValue("1000");
       }
+   }
+
+   private void syncVimLoadVimrcEnabled()
+   {
+      vimLoadVimrc_.setEnabled(editorMode_.getValue() == UserPrefs.EDITOR_KEYBINDINGS_VIM);
    }
 
    @Override
@@ -731,6 +742,7 @@ public class CodePreferencesPane extends PreferencesPane
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
+   private final CheckBox vimLoadVimrc_;
    private final SelectWidget foldMode_;
    private final SelectWidget indentGuides_;
    private final SelectWidget delimiterSurroundWidget_;
