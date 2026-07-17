@@ -20,6 +20,7 @@
 - ([#17191](https://github.com/rstudio/rstudio/issues/17191)): Fixed per-session memory limits not being enforced for Workbench sessions running in a container with a read-only cgroup filesystem, and made the memory gauge, memory-usage report, and abort gate reflect the container rather than the host. Added an `rsession.conf` `memory-usage-mode` option to control how session and total memory usage are computed and reported.
 - ([#18225](https://github.com/rstudio/rstudio/issues/18225)): Clicking a console hyperlink to a package source file that no longer exists (for example, srcref paths recording the temporary directory used during package installation) now recovers the source from the package's srcref database when available, instead of showing a "No such file" error.
 - ([#13078](https://github.com/rstudio/rstudio/issues/13078)): Fixed an issue on Windows where `utils::choose.dir()` returned `NA` without showing the folder-selection dialog when running R 4.3.0 or newer.
+- ([#17608](https://github.com/rstudio/rstudio/issues/17608)): Switching between editor tabs no longer blocks the session on GitHub Copilot / Posit Assistant work: the document-focus notification no longer reads document contents from disk, no longer tries to launch the assistant agent (previously up to a 10-second stall per focus when the agent failed to start), and no longer holds up subsequent requests while it completes. Also removed a stray 25ms pause from every source-document metadata read.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)

@@ -398,12 +398,16 @@ bool isIndexableFile(const FilePath& documentPath)
    return !languageId.empty();
 }
 
-bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+// Note: 'checkContents' should be false for documents loaded without their
+// contents (e.g. via source_database::get(id, false, pDoc)); the binary-file
+// check is skipped for those, and file type heuristics alone decide.
+bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc,
+                         bool checkContents = true)
 {
    // Don't index binary files.
-   if (pDoc->contents().find('\0') != std::string::npos)
+   if (checkContents && pDoc->contents().find('\0') != std::string::npos)
       return false;
-   
+
    // Our source database uses non-standard names for certain R file types,
    // so explicitly check for those and allow them to be indexed.
    if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
@@ -1725,6 +1729,31 @@ void didClose(lsp::DidCloseTextDocumentParams params)
    docClosed(params.textDocument.uri);
 }
 
+void didFocus(lsp::DidFocusTextDocumentParams params)
+{
+   // Focus events are frequent, so don't try to start the agent here -- a
+   // slow or failing agent launch would stall the session on every editor
+   // tab switch. If the agent isn't running yet, other paths (didOpen,
+   // completion requests, etc.) will start it.
+   if (s_agentPid == -1)
+      return;
+
+   // Resolve the source document, skipping the read of its contents;
+   // only document metadata is needed to check indexability here.
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, false, pDoc);
+   if (error)
+      return;
+
+   // If document is NOT indexable we tell the agent that no file has focus via an empty request.
+   // This is to prevent the agent from attempting to read the contents of the file.
+   json::Object paramsJson;
+   if (isIndexableDocument(pDoc, false))
+      paramsJson = lsp::toJson(params);
+
+   sendNotification("textDocument/didFocus", paramsJson);
+}
+
 void onBackgroundProcessing(bool isIdle)
 {
    // extract requests that appear to have been dropped
@@ -2408,52 +2437,6 @@ Error assistantStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error assistantDocFocused(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
-{
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
-      return Success();
-   }
-
-   // Read params
-   std::string documentId;
-   Error error = core::json::readParams(request.params, &documentId);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   // Resolve source document from id
-   auto pDoc = boost::make_shared<source_database::SourceDocument>();
-   error = source_database::get(documentId, pDoc);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   // If document is NOT indexable we tell the agent that no file has focus via an empty request.
-   // This is to prevent the agent from attempting to read the contents of the file.
-   json::Object paramsJson;
-   if (isIndexableDocument(pDoc))
-   {
-      lsp::DidFocusTextDocumentParams params = {
-         .textDocument = {
-            .uri = lsp::uriFromDocument(pDoc),
-         }
-      };
-      
-      paramsJson = lsp::toJson(params);
-   }
-
-   sendNotification("textDocument/didFocus", paramsJson);
-   return Success();
-}
-
 Error assistantDidShowCompletion(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
@@ -2723,6 +2706,7 @@ Error initialize()
    lsp::events().didOpen.connect(didOpen);
    lsp::events().didChange.connect(didChange);
    lsp::events().didClose.connect(didClose);
+   lsp::events().didFocus.connect(didFocus);
 
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
@@ -2740,7 +2724,6 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "assistant_sign_out", assistantSignOut))
          (bind(registerAsyncRpcMethod, "assistant_status", assistantStatus))
          (bind(registerRpcMethod, "assistant_verify_installed", assistantVerifyInstalled))
-         (bind(registerRpcMethod, "assistant_doc_focused", assistantDocFocused))
          (bind(registerRpcMethod, "assistant_did_show_completion", assistantDidShowCompletion))
          (bind(registerRpcMethod, "assistant_did_accept_completion", assistantDidAcceptCompletion))
          (bind(registerRpcMethod, "assistant_did_accept_partial_completion", assistantDidAcceptPartialCompletion))

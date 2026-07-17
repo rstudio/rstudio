@@ -15,6 +15,11 @@
 
 #include "SessionLSP.hpp"
 
+#include <boost/make_shared.hpp>
+
+#include <core/Exec.hpp>
+#include <core/json/JsonRpc.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio;
@@ -246,10 +251,18 @@ core::Error sourceDocumentFromUri(
    const std::string& uri,
    boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   return sourceDocumentFromUri(uri, true, pDoc);
+}
+
+core::Error sourceDocumentFromUri(
+   const std::string& uri,
+   bool includeContents,
+   boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
    if (boost::algorithm::starts_with(uri, kRStudioDocumentPrefix))
    {
       std::string id = uri.substr(strlen(kRStudioDocumentPrefix));
-      return source_database::get(id, pDoc);
+      return source_database::get(id, includeContents, pDoc);
    }
    else if (boost::algorithm::starts_with(uri, kFilePrefix))
    {
@@ -260,7 +273,7 @@ core::Error sourceDocumentFromUri(
       if (error)
          return error;
 
-      return source_database::get(id, pDoc);
+      return source_database::get(id, includeContents, pDoc);
    }
    else
    {
@@ -343,6 +356,52 @@ void didClose(DidCloseTextDocumentParams params)
    logEvent("textDocument/didClose", toJson(params));
 }
 
+void didFocus(DidFocusTextDocumentParams params)
+{
+   logEvent("textDocument/didFocus", toJson(params));
+}
+
+// Fired by the client whenever a source document receives focus. This is
+// intentionally cheap: resolve the document's metadata (no contents), then
+// broadcast the focus change to interested modules via the didFocus signal.
+// The RPC is registered async so the client never waits on a response.
+Error lspDocFocused(const core::json::JsonRpcRequest& request,
+                    const core::json::JsonRpcFunctionContinuation& continuation)
+{
+   core::json::JsonRpcResponse response;
+
+   std::string documentId;
+   Error error = core::json::readParams(request.params, &documentId);
+   if (error)
+   {
+      LOG_ERROR(error);
+      continuation(error, &response);
+      return error;
+   }
+
+   // Resolve the source document, skipping the read of its contents;
+   // only document metadata is needed to compute the URI. The document
+   // may have been closed by the time we get here, so don't log errors.
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   error = source_database::get(documentId, false, pDoc);
+   if (error)
+   {
+      continuation(error, &response);
+      return error;
+   }
+
+   DidFocusTextDocumentParams params = {
+      .textDocument = {
+         .uri = uriFromDocument(pDoc),
+      }
+   };
+
+   events().didFocus(params);
+
+   continuation(Success(), &response);
+   return Success();
+}
+
 } // end anonymous namespace
 
 Error initialize()
@@ -357,8 +416,16 @@ Error initialize()
    events().didOpen.connect(didOpen);
    events().didChange.connect(didChange);
    events().didClose.connect(didClose);
+   events().didFocus.connect(didFocus);
 
-   return Success();
+   using boost::bind;
+   using namespace module_context;
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(registerAsyncRpcMethod, "lsp_doc_focused", lspDocFocused))
+         ;
+   return initBlock.execute();
 }
 
 } // end namespace lsp
