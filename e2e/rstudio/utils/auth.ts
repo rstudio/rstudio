@@ -7,16 +7,10 @@ import * as path from 'path';
 // silently disagree with the IDE about whether the sandbox is signed in.
 export const AUTH_STORAGE_KEY = 'auth:positai:oauth';
 
-// The token store locations, newest first. The assistant migrated the store
-// from ~/.posit/assistant/store/data.json to ~/.posit/ai/auth/data.json (its
-// migrateCredentialStore.ts copies the old file to the new path at startup);
-// shipped builds use the new path as of the 2026.08 dailies, verified
-// 2026-07-15. The harness reads whichever location validates (new preferred)
-// and writes both, so it works against builds on either side of the
-// migration.
+// The token store location. Shipped builds use this path as of the 2026.08
+// dailies, verified 2026-07-15.
 export const POSITAI_STORE_CANDIDATES = [
   path.join('.posit', 'ai', 'auth', 'data.json'),
-  path.join('.posit', 'assistant', 'store', 'data.json'),
 ] as const;
 
 export interface PositAiOAuthEntry {
@@ -104,15 +98,13 @@ export function isStoreFileAuthenticated(file: string): boolean {
   return !Number.isNaN(expiresAt.getTime()) && expiresAt.getTime() > Date.now();
 }
 
-// Absolute paths of all candidate token stores under a given home directory,
-// newest first.
+// Absolute path of the token store under a given home directory.
 export function storeFileCandidates(homeDir: string): string[] {
   return POSITAI_STORE_CANDIDATES.map((rel) => path.join(homeDir, rel));
 }
 
-// First candidate store under homeDir holding a valid (unexpired) token, or
-// null when none does. Order matters: the new location wins when both exist,
-// matching the assistant's own preference after migration.
+// The token store under homeDir if it holds a valid (unexpired) token, or
+// null otherwise.
 export function findAuthenticatedStore(homeDir: string): string | null {
   return storeFileCandidates(homeDir).find(isStoreFileAuthenticated) ?? null;
 }

@@ -18,25 +18,24 @@ import {
  * This is a Playwright setup project (see playwright.config.ts): it runs once
  * after globalSetup and before the desktop/server test projects, which depend
  * on it. Its job is to leave a valid Posit AI token store in the sandbox
- * user-home (both store locations in POSITAI_STORE_CANDIDATES, so builds on
- * either side of the assistant's store migration find it) so the Posit AI
- * tests start signed in. It is the sole authority for Posit AI credentials in the
- * sandbox -- globalSetup (sandbox-setup.ts) does not copy Posit AI creds.
- * Every exit path that lets the run continue (success or skip) also records
- * what happened in <sandbox>/positai-auth-status.json (see PositAiAuthStatus
- * in utils/auth.ts), which requireAiCredentials() reads so skipped tests
- * report the actual cause. The fail-loud throw paths write nothing -- they
- * fail the setup, so dependent tests don't run at all.
+ * user-home so the Posit AI tests start signed in. It is the sole authority
+ * for Posit AI credentials in the sandbox -- globalSetup (sandbox-setup.ts)
+ * does not copy Posit AI creds. Every exit path that lets the run continue
+ * (success or skip) also records what happened in
+ * <sandbox>/positai-auth-status.json (see PositAiAuthStatus in utils/auth.ts),
+ * which requireAiCredentials() reads so skipped tests report the actual
+ * cause. The fail-loud throw paths write nothing -- they fail the setup, so
+ * dependent tests don't run at all.
  *
- * The credential source is auto-detected, not selected by an env var:
+ * The credential source is auto-detected, not selected by an environment
+ * variable:
  *   1. POSIT_EMAIL/POSIT_PASSWORD set -> run the OAuth sign-in. Setting the
  *      credentials is deliberate, so it wins even on a machine already signed
  *      in locally -- it's how you exercise the sign-in flow.
- *   2. else a valid local token store exists (~/.posit/ai/auth/data.json, or
- *      the legacy ~/.posit/assistant/store/data.json) and the
- *      PW_SANDBOX_NO_SEED_CREDENTIALS seed kill-switch is not set -> copy it into
- *      the sandbox (only the token store -- no skills, workspaces, or other
- *      state).
+ *   2. else a valid local token store exists (~/.posit/ai/auth/data.json) and
+ *      the PW_SANDBOX_NO_SEED_CREDENTIALS seed kill-switch is not set -> copy
+ *      it into the sandbox (only the token store -- no skills, workspaces, or
+ *      other state).
  *   3. else -> provision nothing; the Posit AI tests skip with a reason drawn
  *      from the status file.
  */
@@ -51,17 +50,14 @@ function copyFile(src: string, dest: string): void {
   fs.copyFileSync(src, dest);
 }
 
-// Copy the local token store into every candidate location in the sandbox, so
-// the assistant under test finds it whether it predates or postdates the
-// store migration (see POSITAI_STORE_CANDIDATES in utils/auth.ts).
+// Copy the local token store into the sandbox.
 function copyStoreToSandbox(localStore: string, sandboxUserHome: string): void {
   for (const dest of storeFileCandidates(sandboxUserHome)) {
     copyFile(localStore, dest);
   }
 }
 
-// Both modes write every candidate location, so verify every one of them: a
-// partial write must not pass.
+// Verify the write succeeded: a partial or failed write must not pass.
 function verifyStoreWritten(sandboxUserHome: string): void {
   for (const dest of storeFileCandidates(sandboxUserHome)) {
     if (!isStoreFileAuthenticated(dest)) {
@@ -492,9 +488,9 @@ setup('authenticate Posit AI', async () => {
       writeAuthStatus(sandbox, {
         source: 'none',
         outcome: 'unavailable',
-        reason: 'Not provisioning Posit AI: not signed in locally (no valid token store at ~/.posit/ai/auth/data.json or the legacy ~/.posit/assistant/store/data.json) and POSIT_EMAIL/POSIT_PASSWORD are unset. Sign in to Posit AI locally, or set the credentials for the sign-in flow.',
+        reason: 'Not provisioning Posit AI: not signed in to Posit AI locally (no valid token store at ~/.posit/ai/auth/data.json) and POSIT_EMAIL/POSIT_PASSWORD are unset. Sign in to Posit AI locally, or set the credentials for the sign-in flow.',
       });
-      console.log('[auth-setup] not signed in locally and no credentials set; Posit AI tests will skip');
+      console.log('[auth-setup] not signed in to Posit AI locally and no credentials set; Posit AI tests will skip');
       return;
     }
     copyStoreToSandbox(localStore, sandboxUserHome);
