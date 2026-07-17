@@ -22,6 +22,7 @@
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -1252,6 +1253,20 @@ Error startAgent(const std::string& assistantType = "")
    }
 
    setAgentRuntimeStatus(AgentRuntimeStatus::Preparing);
+
+   // The guard above only advances from 'Unknown' or 'Stopped', so any early
+   // error return that leaves the status at 'Preparing' would wedge every
+   // later start attempt for the rest of the session (issue #18277). Reset to
+   // 'Stopped' on any exit that leaves the status stuck at 'Preparing'; exits
+   // that reach a terminal status deliberately are left untouched (the success
+   // path reaches 'Starting'/'Running', the runProgram and startup-timeout
+   // failures set 'Unknown', and the install-lock refusal sets 'Stopped').
+   BOOST_SCOPE_EXIT(void)
+   {
+      if (s_agentRuntimeStatus == AgentRuntimeStatus::Preparing)
+         setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
+   }
+   BOOST_SCOPE_EXIT_END
 
    Error error;
 
