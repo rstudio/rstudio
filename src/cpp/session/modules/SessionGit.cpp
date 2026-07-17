@@ -2857,7 +2857,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       return hr;
    AutoRelease<IPersistFile> arPersistFile(pPersistFile);
 
-   pPersistFile->Load(path.c_str(), STGM_READ);
+   hr = pPersistFile->Load(path.c_str(), STGM_READ);
    if (FAILED(hr))
       return hr;
 

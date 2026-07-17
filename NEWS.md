@@ -25,6 +25,7 @@
 - ([#18199](https://github.com/rstudio/rstudio/issues/18199)): RStudio no longer prompts to install packages that are no longer dependencies of rmarkdown (e.g. stringr, glue) when rendering R Markdown or Quarto documents, most visibly in renv projects with minimal project libraries. Required packages are now validated against the dependencies declared by the installed packages themselves, rather than a hard-coded dependency tree.
 - ([#18257](https://github.com/rstudio/rstudio/issues/18257)): Fixed the IDE becoming unresponsive for an extended period after a large number of git-tracked files changed at once (e.g. moving or committing thousands of files); Git pane updates are now batched instead of rebuilding the changelist once per changed file.
 - ([#18260](https://github.com/rstudio/rstudio/issues/18260)): Fixed an issue on macOS where a file change landing just after a bulk change of many files could go undetected by the Files and Git panes until a manual refresh or unrelated later file activity.
+- ([#18273](https://github.com/rstudio/rstudio/issues/18273)): Fixed an issue on Windows where a failure to load the Start Menu Git shortcut while auto-detecting the Git installation went undetected, causing detection to fail later with a less accurate error.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)
