@@ -1280,15 +1280,22 @@ Error startAgent(const std::string& assistantType = "")
    bool overrideInEffect = !agentPathOverride.isEmpty();
 
    // The Posit assistant type always takes the lock — including when a
-   // dev override points elsewhere. Classifying whether an override truly
-   // resolves inside the managed install is a rabbit hole (symlink chains,
-   // canonicalization failures, platform path semantics), and over-locking
-   // is always safe: it costs at most a retryable refusal while an update
-   // runs, and an update refused because a dev agent is running is the
-   // conservative outcome. Copilot and "none" never launch from pai/bin in
-   // any supported configuration and never lock (lockToken stays 0, which
-   // release treats as a no-op).
-   bool usesSharedInstall = (assistant == kAssistantPosit);
+   // dev override points elsewhere — and so does any other assistant whose
+   // direct launch honors an effective override, since that override could
+   // resolve into the managed install. Classifying whether an override
+   // truly does so is a rabbit hole (symlink chains, canonicalization
+   // failures, platform path semantics), and over-locking is always safe:
+   // it costs at most a retryable refusal while an update runs, and an
+   // update refused because a dev agent is running is the conservative
+   // outcome. Copilot without an override never launches from pai/bin and
+   // never locks (lockToken stays 0, which release treats as a no-op).
+   bool helperBranchSelected =
+      (assistant == kAssistantPosit && positHelperConfigured) ||
+      (assistant == kAssistantCopilot &&
+       !session::options().copilotHelper().isEmpty());
+   bool usesSharedInstall =
+      assistant == kAssistantPosit ||
+      (!helperBranchSelected && overrideInEffect);
 
    uint64_t agentGeneration = ++s_agentGeneration;
    uint64_t lockToken = 0;
