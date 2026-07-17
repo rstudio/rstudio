@@ -19,11 +19,10 @@
 
 #include <napi.h>
 
+#include <algorithm>
 #include <chrono>
-#include <codecvt>
 #include <iomanip>
 #include <iostream>
-#include <locale>
 #include <set>
 #include <sstream>
 #include <string>
@@ -55,7 +54,7 @@ std::string timestamp()
 
 }
 
-void logDebug(const std::string& message)
+[[maybe_unused]] void logDebug(const std::string& message)
 {
    if (s_loggingEnabled && message.length())
    {
@@ -554,10 +553,12 @@ void cleanClipboardImpl(bool stripHtml)
       std::vector<UInt8> buffer(length);
       ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), (UInt8*) buffer.data());
 
-      // convert those bytes from UTF-16 to UTF-8
-      char16_t* pBytes = (char16_t*) &buffer[0];
-      std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-      std::string utf8Text = converter.to_bytes(pBytes, pBytes + length / 2);
+      // convert those bytes from UTF-16 to UTF-8. The pasteboard stores UTF-16
+      // in the platform's native (little-endian) byte order, so decode it as
+      // such; cfStringToStdString then yields UTF-8.
+      CFReleaseHandle<CFStringRef> utf16Text = CFStringCreateWithBytes(
+          nullptr, buffer.data(), length, kCFStringEncodingUTF16LE, false);
+      std::string utf8Text = cfStringToStdString(utf16Text);
 
       // convert '\r' line endings to '\n' -- not sure why these sneak in?
       std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
@@ -654,6 +655,30 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 namespace {
 
+// Convert a wide string to UTF-8. On Windows, wchar_t strings hold UTF-16;
+// on other platforms the CSIDL helpers below always return empty strings, so
+// there is nothing to convert.
+std::string wideToUtf8(const std::wstring& value)
+{
+#ifdef _WIN32
+   if (value.empty())
+      return std::string();
+
+   int size = ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), (int) value.size(), nullptr, 0, nullptr, nullptr);
+   if (size <= 0)
+      return std::string();
+
+   std::string result(size, '\0');
+   ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), (int) value.size(), &result[0], size, nullptr, nullptr);
+   return result;
+#else
+   (void) value;
+   return std::string();
+#endif
+}
+
 std::wstring currentCSIDLPersonalHomePathImpl()
 {
 #ifdef _WIN32
@@ -681,11 +706,7 @@ std::wstring currentCSIDLPersonalHomePathImpl()
 
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   auto value = currentCSIDLPersonalHomePathImpl();
-
-   // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-   std::string u8str = converter.to_bytes(value);
+   std::string u8str = wideToUtf8(currentCSIDLPersonalHomePathImpl());
    return Napi::String::New(info.Env(), u8str);
 }
 
@@ -718,11 +739,7 @@ std::wstring defaultCSIDLPersonalHomePathImpl()
 
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   auto value = defaultCSIDLPersonalHomePathImpl();
-
-   // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-   std::string u8str = converter.to_bytes(value);
+   std::string u8str = wideToUtf8(defaultCSIDLPersonalHomePathImpl());
    return Napi::String::New(info.Env(), u8str);
 }
 
@@ -875,7 +892,7 @@ int CALLBACK win32ListMonospaceFontsProc(
 
 #endif
 
-std::vector<std::string> win32ListMonospaceFontsImpl()
+[[maybe_unused]] std::vector<std::string> win32ListMonospaceFontsImpl()
 {
     std::vector<std::string> fontList;
 
