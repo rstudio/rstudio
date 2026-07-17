@@ -539,30 +539,40 @@ void cleanClipboardImpl(bool stripHtml)
          return;
    }
 
+   // Convert any UTF-16 clipboard data to UTF-8 *before* clearing the
+   // clipboard, so that a decoding failure leaves the user's clipboard intact.
+   std::string utf8Text;
+   if (utf16Data.value())
+   {
+      // copy the UTF-16 bytes out of the pasteboard data
+      CFIndex length = ::CFDataGetLength(utf16Data);
+      std::vector<UInt8> buffer(length);
+      ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), buffer.data());
+
+      // Decode as little-endian UTF-16: macOS runs only on little-endian CPUs
+      // and producers write this flavor in native byte order, so decoding as LE
+      // preserves the previous host-order behavior. On malformed input
+      // CFStringCreateWithBytes returns NULL; bail out rather than clearing the
+      // clipboard and discarding the user's data.
+      CFReleaseHandle<CFStringRef> utf16Text = CFStringCreateWithBytes(
+          nullptr, buffer.data(), length, kCFStringEncodingUTF16LE, false);
+      if (length > 0 && !utf16Text.value())
+         return;
+
+      // cfStringToStdString yields UTF-8
+      utf8Text = cfStringToStdString(utf16Text);
+
+      // convert '\r' line endings to '\n' -- not sure why these sneak in?
+      std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
+   }
+
    // clear the clipboard
    if (::PasteboardClear(clipboard))
       return;
 
-   // if we had some UTF-16 data on the clipboard, convert it to UTF-8
-   // and write that to the clipboard instead
+   // write the converted UTF-8 text back to the clipboard
    if (utf16Data.value())
    {
-      // read the clipboard data (as bytes)
-      // include extra byte for null terminator, just in case?
-      auto length = ::CFDataGetLength(utf16Data);
-      std::vector<UInt8> buffer(length);
-      ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), (UInt8*) buffer.data());
-
-      // convert those bytes from UTF-16 to UTF-8. The pasteboard stores UTF-16
-      // in the platform's native (little-endian) byte order, so decode it as
-      // such; cfStringToStdString then yields UTF-8.
-      CFReleaseHandle<CFStringRef> utf16Text = CFStringCreateWithBytes(
-          nullptr, buffer.data(), length, kCFStringEncodingUTF16LE, false);
-      std::string utf8Text = cfStringToStdString(utf16Text);
-
-      // convert '\r' line endings to '\n' -- not sure why these sneak in?
-      std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
-
       CFReleaseHandle<CFDataRef> utf8TextRef = CFDataCreate(nullptr, (UInt8*) utf8Text.data(), utf8Text.size());
       if (utf8TextRef && utf8TextRef.value())
          ::PasteboardPutItemFlavor(clipboard, (PasteboardItemID) 1, CFSTR("public.utf8-plain-text"), utf8TextRef, 0);
@@ -655,9 +665,10 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 namespace {
 
-// Convert a wide string to UTF-8. On Windows, wchar_t strings hold UTF-16;
-// on other platforms the CSIDL helpers below always return empty strings, so
-// there is nothing to convert.
+// Convert a wide string to UTF-8. On Windows, wchar_t strings hold UTF-16 and
+// are converted with WideCharToMultiByte. On other platforms this is a
+// deliberate stub that returns an empty string for any input: wide-to-UTF-8
+// conversion is only needed on the Windows-only CSIDL code paths below.
 std::string wideToUtf8(const std::wstring& value)
 {
 #ifdef _WIN32

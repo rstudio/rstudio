@@ -28,6 +28,16 @@ describe('Desktop Native Code', () => {
     assert.equal(clipboard.readText('clipboard'), 'write to clipboard');
   });
 
+  // Exercises the UTF-16 -> UTF-8 conversion with multibyte BMP characters
+  // (cafe, CJK) and an astral character requiring a surrogate pair (emoji),
+  // which the ASCII-only cases above do not cover.
+  it('cleanClipboard preserves non-ASCII plain text', () => {
+    const text = 'café 世界 😀';
+    clipboard.writeText(text);
+    desktop.cleanClipboard(false);
+    assert.equal(clipboard.readText('clipboard'), text);
+  });
+
   // HTML stripping only available on Mac to handle pasteboard types
   it('cleanClipboard with strip HTML', () => {
     const htmlText =
