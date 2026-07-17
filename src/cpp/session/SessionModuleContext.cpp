@@ -53,6 +53,7 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -1995,6 +1996,58 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
    }
 #endif
 
+#ifdef _WIN32
+   // Windows .lnk shortcuts are shell objects rather than symlinks, so the
+   // filesystem doesn't resolve them for us; surface the resolved target
+   // (and its directory-ness) so the client can follow them (#18274). The
+   // target is emitted as alias_target so all alias-aware client logic
+   // (navigation, open, dialogs, icons) applies unchanged; is_shortcut both
+   // marks the entry as a link for the badge and selects the "Shortcut"
+   // label (is_alias stays macOS-only). Unresolvable shortcuts fall back to
+   // plain-file behavior.
+   if (!isDir)
+   {
+      if (isWindowsShortcut(filePath))
+      {
+         // flag the shortcut for the link badge whether or not the target
+         // resolves, so even a broken shortcut is indicated (alias_target,
+         // which drives navigation, is only set when resolution succeeds)
+         entry["is_shortcut"] = true;
+
+         FilePath targetPath;
+         bool targetIsDir = false;
+         Error error = resolveWindowsShortcut(filePath, &targetPath, &targetIsDir);
+         if (error)
+         {
+            // shortcuts without a file-system target and garbage .lnk
+            // content are a normal filesystem state, so log at debug level,
+            // like the alias case above
+            LOG_DEBUG_MESSAGE("Failed to resolve Windows shortcut: " + error.asString());
+         }
+         else if (targetPath.getAbsolutePath().rfind("//", 0) == 0 ||
+                  core::system::isRemotePath(targetPath))
+         {
+            // never probe a network target during a listing: stat'ing a
+            // disconnected share or dead UNC host can block the session for
+            // seconds per entry. Trust the link instead, using the
+            // directory-ness stored when it was written. (The "//" prefix
+            // check covers UNC paths in FilePath's generic form, which the
+            // backslash-oriented shell check may not recognize.)
+            entry["alias_target"] = createAliasedPath(targetPath);
+            isDir = targetIsDir;
+         }
+         else if (targetPath.exists())
+         {
+            // resolution returns the STORED path even when the target has
+            // been deleted (no shell search), so this local, cheap exists()
+            // check is what demotes broken shortcuts to plain-file behavior
+            entry["alias_target"] = createAliasedPath(targetPath);
+            isDir = targetPath.isDirectory();
+         }
+      }
+   }
+#endif
+
    entry["dir"] = isDir;
 
    // length requires cast
@@ -2287,8 +2340,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles)
 
 namespace {
 
-// enque file changed event
-void enqueFileChangedEvent(
+// create the payload describing a file changed event
+json::Object fileChangedEventJson(
       const core::system::FileChangeEvent& event,
       boost::shared_ptr<modules::source_control::FileDecorationContext> pCtx)
 {
@@ -2305,10 +2358,7 @@ void enqueFileChangedEvent(
    }
 
    fileChange["file"] = fileSystemItem;
-
-   // enque it
-   ClientEvent clientEvent(client_events::kFileChanged, fileChange);
-   module_context::enqueClientEvent(clientEvent);
+   return fileChange;
 }
 
 } // namespace
@@ -2319,7 +2369,10 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
 
    using namespace session::modules::source_control;
    auto pCtx = fileDecorationContext(filePath, true);
-   enqueFileChangedEvent(event, pCtx);
+
+   ClientEvent clientEvent(client_events::kFileChanged,
+                           fileChangedEventJson(event, pCtx));
+   module_context::enqueClientEvent(clientEvent);
 }
 
 void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
@@ -2345,11 +2398,17 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    using namespace session::modules::source_control;
    auto pCtx = fileDecorationContext(commonParentPath, true);
 
-   // fire client events as necessary
+   // batch the changes into a single client event -- a bulk operation can
+   // produce thousands of file change events, and enqueuing them
+   // individually is expensive for both the session and the client
+   json::Array fileChanges;
    for (const core::system::FileChangeEvent& event : events)
    {
-      enqueFileChangedEvent(event, pCtx);
+      fileChanges.push_back(fileChangedEventJson(event, pCtx));
    }
+
+   ClientEvent clientEvent(client_events::kFilesChanged, fileChanges);
+   module_context::enqueClientEvent(clientEvent);
 }
 
 Error enqueueConsoleInput(const std::string& consoleInput)

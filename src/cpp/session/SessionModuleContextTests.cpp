@@ -30,6 +30,14 @@
 # include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#ifdef _WIN32
+# include <windows.h>
+# include <objbase.h>
+# include <shlobj.h>
+# include <algorithm>
+# include <core/FileSerializer.hpp>
+#endif
+
 namespace rstudio {
 namespace session {
 namespace module_context {
@@ -554,6 +562,331 @@ TEST_F(FinderAliasTest, FileSystemItemForBrokenAliasHasNoAliasTarget)
 }
 
 #endif // __APPLE__
+
+#ifdef _WIN32
+
+// --- Windows shortcuts (#18274) -----------------------------------------------
+//
+// Windows .lnk shortcuts are shell objects, not symlinks. The fixture creates
+// real .lnk files through IShellLinkW + IPersistFile::Save -- the same data
+// Explorer writes -- so these tests exercise genuine shortcut resolution.
+//
+// COM note: rsession --run-tests reaches gtest on the main thread, after the
+// eager CoInitializeEx in SessionMain.cpp, so the fixture (like the resolver
+// itself) uses COM without initializing it here.
+
+namespace {
+
+// the shell APIs store and expect native (backslash) separators, while
+// FilePath::getAbsolutePathW() may contain forward-slash separators (it
+// exposes the stored representation, which FilePath builds in generic form)
+std::wstring toNativeSeparators(std::wstring path)
+{
+   std::replace(path.begin(), path.end(), L'/', L'\\');
+   return path;
+}
+
+// each failing COM step records its own failure so a CI break names the
+// step and HRESULT instead of a bare "Actual: false"
+bool createWindowsShortcut(const core::FilePath& targetPath,
+                           const core::FilePath& shortcutPath)
+{
+   IShellLinkW* pShellLink = nullptr;
+   HRESULT hr = ::CoCreateInstance(CLSID_ShellLink,
+                                   nullptr,
+                                   CLSCTX_INPROC_SERVER,
+                                   IID_IShellLinkW,
+                                   (void**) &pShellLink);
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "CoCreateInstance(CLSID_ShellLink) failed, hr=0x"
+                    << std::hex << hr;
+      return false;
+   }
+
+   std::wstring target = toNativeSeparators(targetPath.getAbsolutePathW());
+   hr = pShellLink->SetPath(target.c_str());
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "IShellLinkW::SetPath failed, hr=0x" << std::hex << hr;
+      pShellLink->Release();
+      return false;
+   }
+
+   IPersistFile* pPersistFile = nullptr;
+   hr = pShellLink->QueryInterface(IID_IPersistFile, (void**) &pPersistFile);
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "QueryInterface(IID_IPersistFile) failed, hr=0x"
+                    << std::hex << hr;
+      pShellLink->Release();
+      return false;
+   }
+
+   std::wstring shortcut = toNativeSeparators(shortcutPath.getAbsolutePathW());
+   hr = pPersistFile->Save(shortcut.c_str(), TRUE);
+   if (FAILED(hr))
+      ADD_FAILURE() << "IPersistFile::Save failed, hr=0x" << std::hex << hr;
+
+   pPersistFile->Release();
+   pShellLink->Release();
+   return SUCCEEDED(hr);
+}
+
+} // anonymous namespace
+
+class WindowsShortcutTest : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      core::FilePath tempPath;
+      core::Error error = core::FilePath::tempFilePath(tempPath);
+      ASSERT_FALSE(error) << error.asString();
+      error = tempPath.ensureDirectory();
+      ASSERT_FALSE(error) << error.asString();
+
+      // canonicalize (8.3 short names, e.g. RUNNER~1 in TEMP) so fixture
+      // paths compare equal to targets read back from the shell, which
+      // stores long-form paths
+      baseDir_ = core::FilePath(tempPath.getCanonicalPath());
+
+      targetFile_ = baseDir_.completeChildPath("target.txt");
+      error = targetFile_.ensureFile();
+      ASSERT_FALSE(error) << error.asString();
+
+      targetDir_ = baseDir_.completeChildPath("target-dir");
+      error = targetDir_.ensureDirectory();
+      ASSERT_FALSE(error) << error.asString();
+   }
+
+   void TearDown() override
+   {
+      baseDir_.removeIfExists();
+   }
+
+   core::FilePath makeShortcut(const core::FilePath& targetPath,
+                               const std::string& name)
+   {
+      core::FilePath shortcutPath = baseDir_.completeChildPath(name);
+      // createWindowsShortcut records its own failure (step + HRESULT)
+      createWindowsShortcut(targetPath, shortcutPath);
+      return shortcutPath;
+   }
+
+   core::FilePath baseDir_;
+   core::FilePath targetFile_;
+   core::FilePath targetDir_;
+};
+
+TEST_F(WindowsShortcutTest, DetectsShortcutToFile)
+{
+   core::FilePath shortcut = makeShortcut(targetFile_, "file-shortcut.lnk");
+   EXPECT_TRUE(isWindowsShortcut(shortcut));
+}
+
+TEST_F(WindowsShortcutTest, DetectsShortcutToDirectory)
+{
+   core::FilePath shortcut = makeShortcut(targetDir_, "dir-shortcut.lnk");
+   EXPECT_TRUE(isWindowsShortcut(shortcut));
+}
+
+TEST_F(WindowsShortcutTest, DetectsUppercaseLnkExtension)
+{
+   core::FilePath shortcut = makeShortcut(targetFile_, "FILE-SHORTCUT.LNK");
+   EXPECT_TRUE(isWindowsShortcut(shortcut));
+}
+
+TEST_F(WindowsShortcutTest, RegularFileIsNotShortcut)
+{
+   EXPECT_FALSE(isWindowsShortcut(targetFile_));
+}
+
+TEST_F(WindowsShortcutTest, DirectoryIsNotShortcut)
+{
+   EXPECT_FALSE(isWindowsShortcut(targetDir_));
+}
+
+TEST_F(WindowsShortcutTest, DirectoryNamedLnkIsNotShortcut)
+{
+   // a directory can be named *.lnk; only regular files are shortcuts
+   core::FilePath dir = baseDir_.completeChildPath("folder.lnk");
+   core::Error error = dir.ensureDirectory();
+   ASSERT_FALSE(error) << error.asString();
+   EXPECT_FALSE(isWindowsShortcut(dir));
+}
+
+TEST_F(WindowsShortcutTest, NonexistentPathIsNotShortcut)
+{
+   EXPECT_FALSE(isWindowsShortcut(baseDir_.completeChildPath("missing.lnk")));
+}
+
+TEST_F(WindowsShortcutTest, ResolvesShortcutToFile)
+{
+   core::FilePath shortcut = makeShortcut(targetFile_, "file-shortcut.lnk");
+   core::FilePath target;
+   bool targetIsDir = true;
+   core::Error error = resolveWindowsShortcut(shortcut, &target, &targetIsDir);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(targetFile_.getAbsolutePath(), target.getAbsolutePath());
+   EXPECT_FALSE(targetIsDir);
+}
+
+TEST_F(WindowsShortcutTest, ResolvesShortcutToDirectory)
+{
+   core::FilePath shortcut = makeShortcut(targetDir_, "dir-shortcut.lnk");
+   core::FilePath target;
+   bool targetIsDir = false;
+   core::Error error = resolveWindowsShortcut(shortcut, &target, &targetIsDir);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(targetDir_.getAbsolutePath(), target.getAbsolutePath());
+   EXPECT_TRUE(target.isDirectory());
+
+   // the link's stored attributes carry the target's directory-ness, so a
+   // caller can badge/navigate correctly without touching the target
+   EXPECT_TRUE(targetIsDir);
+}
+
+TEST_F(WindowsShortcutTest, ResolvesShortcutWithNonAsciiNames)
+{
+   // exercise the UTF-8 <-> UTF-16 boundary that every shortcut path
+   // crosses: FilePath stores UTF-8 while the shell link APIs speak
+   // UTF-16. "\xC3\xA9" is e-acute and "\xE6\x97\xA5\xE6\x9C\xAC" is
+   // Japanese 'nihon'; byte escapes keep this source file ASCII-only.
+   const std::string suffix = "-\xC3\xA9\xE6\x97\xA5\xE6\x9C\xAC";
+
+   core::FilePath target = baseDir_.completeChildPath("cible" + suffix + ".txt");
+   core::Error error = target.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+
+   core::FilePath shortcut = makeShortcut(target, "raccourci" + suffix + ".lnk");
+   EXPECT_TRUE(isWindowsShortcut(shortcut));
+
+   core::FilePath resolved;
+   bool targetIsDir = true;
+   error = resolveWindowsShortcut(shortcut, &resolved, &targetIsDir);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(target.getAbsolutePath(), resolved.getAbsolutePath());
+   EXPECT_FALSE(targetIsDir);
+
+   core::json::Object item = createFileSystemItem(shortcut);
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(createAliasedPath(target), item["alias_target"].getString());
+}
+
+TEST_F(WindowsShortcutTest, GarbageContentFailsToResolve)
+{
+   // any *.lnk regular file is treated as a shortcut (like Explorer), so
+   // non-shortcut content must surface as a resolution error, not a crash
+   core::FilePath garbage = baseDir_.completeChildPath("garbage.lnk");
+   core::Error error = core::writeStringToFile(garbage, "this is not a shell link");
+   ASSERT_FALSE(error) << error.asString();
+
+   EXPECT_TRUE(isWindowsShortcut(garbage));
+
+   core::FilePath target;
+   bool targetIsDir = false;
+   error = resolveWindowsShortcut(garbage, &target, &targetIsDir);
+   EXPECT_TRUE(static_cast<bool>(error));
+}
+
+TEST_F(WindowsShortcutTest, ResolveReturnsStoredPathWhenTargetDeleted)
+{
+   // DIVERGENCE from FinderAliasTest.ResolveFailsWhenTargetDeleted: a .lnk
+   // stores its target path, and resolveWindowsShortcut deliberately skips
+   // IShellLink::Resolve (no disk/network search during listings), so
+   // resolution still succeeds after the target is deleted. Broken-shortcut
+   // detection is createFileSystemItem's exists() check on the result.
+   core::FilePath doomed = baseDir_.completeChildPath("doomed.txt");
+   core::Error error = doomed.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+   core::FilePath shortcut = makeShortcut(doomed, "doomed-shortcut.lnk");
+   error = doomed.remove();
+   ASSERT_FALSE(error) << error.asString();
+
+   core::FilePath target;
+   bool targetIsDir = true;
+   error = resolveWindowsShortcut(shortcut, &target, &targetIsDir);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(doomed.getAbsolutePath(), target.getAbsolutePath());
+   EXPECT_FALSE(target.exists());
+   EXPECT_FALSE(targetIsDir);
+}
+
+// --- createFileSystemItem shortcut contract -----------------------------------
+//
+// The Files pane decides navigate-vs-open from 'dir' and substitutes
+// 'alias_target' for the clicked path, so a directory shortcut must carry the
+// target's directory-ness, not the .lnk file's. Unlike the macOS fixture,
+// %TEMP% lives under the user home, so emitted paths are home-aliased --
+// compare against createAliasedPath rather than raw absolute paths.
+
+TEST_F(WindowsShortcutTest, FileSystemItemForDirectoryShortcut)
+{
+   core::FilePath shortcut = makeShortcut(targetDir_, "dir-shortcut.lnk");
+   core::json::Object item = createFileSystemItem(shortcut);
+   EXPECT_TRUE(item["dir"].getBool());
+   ASSERT_TRUE(item.hasMember("is_shortcut"));
+   EXPECT_TRUE(item["is_shortcut"].getBool());
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(createAliasedPath(targetDir_), item["alias_target"].getString());
+}
+
+TEST_F(WindowsShortcutTest, FileSystemItemForFileShortcut)
+{
+   core::FilePath shortcut = makeShortcut(targetFile_, "file-shortcut.lnk");
+   core::json::Object item = createFileSystemItem(shortcut);
+   EXPECT_FALSE(item["dir"].getBool());
+   ASSERT_TRUE(item.hasMember("is_shortcut"));
+   EXPECT_TRUE(item["is_shortcut"].getBool());
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(createAliasedPath(targetFile_), item["alias_target"].getString());
+}
+
+TEST_F(WindowsShortcutTest, FileSystemItemForRegularFileHasNoShortcutFields)
+{
+   core::json::Object item = createFileSystemItem(targetFile_);
+   EXPECT_FALSE(item.hasMember("is_shortcut"));
+   EXPECT_FALSE(item.hasMember("alias_target"));
+}
+
+TEST_F(WindowsShortcutTest, FileSystemItemForNetworkShortcutKeepsTarget)
+{
+   // shortcuts to network targets are followed without probing the target
+   // during the listing -- stat'ing a disconnected share can block the
+   // session for seconds -- so even an unreachable UNC target keeps its
+   // alias_target. Directory-ness comes from the attributes stored in the
+   // link (none for an unreachable target, so false).
+   core::FilePath uncTarget("//pw-nonexistent-host-1f3a/share/data");
+   core::FilePath shortcut = makeShortcut(uncTarget, "unc-shortcut.lnk");
+
+   core::json::Object item = createFileSystemItem(shortcut);
+   ASSERT_TRUE(item.hasMember("is_shortcut"));
+   EXPECT_TRUE(item["is_shortcut"].getBool());
+   ASSERT_TRUE(item.hasMember("alias_target"));
+   EXPECT_EQ(createAliasedPath(uncTarget), item["alias_target"].getString());
+   EXPECT_FALSE(item["dir"].getBool());
+}
+
+TEST_F(WindowsShortcutTest, FileSystemItemForBrokenShortcut)
+{
+   // deleted target: still flagged for the badge, but no alias_target and
+   // plain-file dir-ness (resolution succeeds; the exists() check filters it)
+   core::FilePath doomed = baseDir_.completeChildPath("doomed.txt");
+   core::Error error = doomed.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+   core::FilePath shortcut = makeShortcut(doomed, "doomed-shortcut.lnk");
+   error = doomed.remove();
+   ASSERT_FALSE(error) << error.asString();
+
+   core::json::Object item = createFileSystemItem(shortcut);
+   ASSERT_TRUE(item.hasMember("is_shortcut"));
+   EXPECT_TRUE(item["is_shortcut"].getBool());
+   EXPECT_FALSE(item.hasMember("alias_target"));
+   EXPECT_FALSE(item["dir"].getBool());
+}
+
+#endif // _WIN32
 
 } // namespace tests
 } // namespace module_context

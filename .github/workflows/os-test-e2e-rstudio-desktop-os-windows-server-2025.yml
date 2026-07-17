@@ -319,6 +319,11 @@ jobs:
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
+        with:
+          # Pinned: resolving "latest" queries api.github.com at runtime,
+          # which fails during GitHub API incidents (503s). A pinned version
+          # downloads directly from the release CDN with no API call.
+          version: "v0.16.0"
 
       # Pre-start the sccache server. Ninja runs parallel cl.exe compiles
       # through `sccache.exe cl.exe ...`; on Windows each sccache.exe
@@ -844,6 +849,24 @@ jobs:
           path: ${{ env.APPDATA }}\RStudio\
           retention-days: 15
           if-no-files-found: ignore
+
+      # WinINet creates protected cache directories (INetCache\Content.IE5,
+      # WebCache) inside the sandbox user-home when anything on the test path
+      # touches the network. Their deny ACLs make upload-artifact's recursive
+      # directory scan fail with EPERM, so strip them before uploading.
+      - name: Remove protected Windows cache dirs from sandbox (on failure)
+        if: failure()
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $cacheDirs = @('INetCache', 'INetCookies', 'WebCache')
+          Get-ChildItem -Path "${{ github.workspace }}\pw-sandbox" -Directory -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { $cacheDirs -contains $_.Name } |
+            ForEach-Object {
+              takeown /f $_.FullName /r /d y *> $null
+              icacls $_.FullName /reset /t /c /q *> $null
+              Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          exit 0
 
       - name: Upload PW sandbox (on failure)
         if: failure()
