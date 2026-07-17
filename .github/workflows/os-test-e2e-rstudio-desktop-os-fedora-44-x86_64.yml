@@ -428,7 +428,7 @@ jobs:
       - name: Install RStudio Desktop from artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         run: |
-          dnf -y install "${{ github.workspace }}/rstudio-desktop.rpm"
+          dnf -y install "$GITHUB_WORKSPACE/rstudio-desktop.rpm"
           ls -la /usr/bin/rstudio
 
       # Daily-download path: resolve and install the latest (or specified) .rpm.

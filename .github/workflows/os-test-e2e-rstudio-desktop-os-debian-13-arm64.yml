@@ -455,7 +455,7 @@ jobs:
       - name: Install RStudio Desktop from artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         run: |
-          apt-get install -y "${{ github.workspace }}/rstudio-desktop.deb"
+          apt-get install -y "$GITHUB_WORKSPACE/rstudio-desktop.deb"
           ls -la /usr/bin/rstudio
 
       # Daily-download path: resolve and install the latest (or specified) .deb.
