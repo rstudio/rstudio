@@ -193,19 +193,39 @@ Error InstallLock::acquireInUseForStart(Component component,
       return error;
    }
 
-   if (updateInProgressElsewhere())
+   // Probe with the tri-state directly (rather than updateInProgressElsewhere,
+   // which collapses inspection failures into "held") so a genuine failure
+   // gets honest text. Both non-Free outcomes refuse the start — fail closed —
+   // but only real contention claims an update is in progress. acquireInUse
+   // already failed above if our own mutation is active, so no self-probe
+   // guard is needed here.
+   switch (probeLock(installLockPath(), effectiveLockType()))
    {
-      releaseInUse(component, *pToken);
-      *pToken = 0;
-      *pUserMessage = updateInProgressMessage();
-      return systemError(
-         boost::system::errc::device_or_resource_busy,
-         "A Posit Assistant install operation is in progress in another "
-         "session",
-         ERROR_LOCATION);
-   }
+      case LockProbe::Free:
+         return Success();
 
-   return Success();
+      case LockProbe::Held:
+         releaseInUse(component, *pToken);
+         *pToken = 0;
+         *pUserMessage = updateInProgressMessage();
+         return systemError(
+            boost::system::errc::device_or_resource_busy,
+            "A Posit Assistant install operation is in progress in another "
+            "session",
+            ERROR_LOCATION);
+
+      case LockProbe::Error:
+      default:
+         releaseInUse(component, *pToken);
+         *pToken = 0;
+         *pUserMessage =
+            "Unable to verify the Posit Assistant installation state. "
+            "Please try again; if the problem persists, restart RStudio.";
+         return systemError(
+            boost::system::errc::io_error,
+            "Unable to inspect the Posit Assistant install lock",
+            ERROR_LOCATION);
+   }
 }
 
 void InstallLock::releaseInUse(Component component, uint64_t token)
