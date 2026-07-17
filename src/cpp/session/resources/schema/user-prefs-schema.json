@@ -326,6 +326,12 @@
             "title": "Keybinding set for editor",
             "description": "The keybindings to use in the RStudio code editor."
         },
+        "vim_load_vimrc": {
+            "type": "boolean",
+            "default": false,
+            "title": "Load Vim keybindings from a vimrc file",
+            "description": "Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled."
+        },
         "insert_matching": {
             "type": "boolean",
             "default": true,
