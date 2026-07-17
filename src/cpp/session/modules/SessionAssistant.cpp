@@ -1386,9 +1386,12 @@ Error startAgent(const std::string& assistantType = "")
          return fileNotFoundError(copilotHelper, ERROR_LOCATION);
       }
 
-      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", resolvedAgentPath.getAbsolutePath()));
+      // setenv (not push_back) so an inherited RSTUDIO_AGENT_PATH override
+      // is replaced rather than duplicated — with duplicates the helper
+      // could observe either value and launch an unintended agent
+      core::system::setenv(&environment, "RSTUDIO_NODE_PATH", nodePath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_COPILOT_PATH", resolvedAgentPath.getAbsolutePath());
       options.environment = environment;
 
       error = module_context::processSupervisor().runProgram(
@@ -1406,9 +1409,11 @@ Error startAgent(const std::string& assistantType = "")
          return fileNotFoundError(positAssistantHelper, ERROR_LOCATION);
       }
 
-      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_PAI_PATH", resolvedAgentPath.getAbsolutePath()));
+      // setenv (not push_back) so an inherited RSTUDIO_AGENT_PATH override
+      // is replaced rather than duplicated (see the Copilot branch above)
+      core::system::setenv(&environment, "RSTUDIO_NODE_PATH", nodePath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_AGENT_PATH", resolvedAgentPath.getAbsolutePath());
+      core::system::setenv(&environment, "RSTUDIO_PAI_PATH", resolvedAgentPath.getAbsolutePath());
       options.environment = environment;
 
       error = module_context::processSupervisor().runProgram(
