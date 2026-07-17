@@ -1532,7 +1532,7 @@ Error startAgent(const std::string& assistantType = "")
    {
       ELOG("Agent startup timed out [node='{}', stderr='{}'].",
            nodePath.getAbsolutePath(), s_agentStartupError);
-      s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+      setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       s_runningAgentType.clear();  // Clear since agent failed to start
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    }
@@ -1574,7 +1574,7 @@ Error startAgent(const std::string& assistantType = "")
    {
       if (error)
       {
-         s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+         setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
          LOG_ERROR(error);
          return;
       }
@@ -2757,7 +2757,7 @@ Error assistantNotifyInstalled(const json::JsonRpcRequest& request,
    stopAgentSync();
 
    // Reset the runtime status to allow the agent to start fresh
-   s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+   setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
 
    synchronize();
    return Success();
