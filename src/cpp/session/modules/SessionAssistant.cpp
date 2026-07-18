@@ -56,6 +56,10 @@
 #define kAssistantDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
+// How long to wait after a failed agent launch before automatic triggers
+// (e.g. completion requests) may attempt another launch.
+#define kAgentLaunchRetrySeconds (30)
+
 // Maximum number of variables to include in session notifications
 #define kAssistantMaxVariables (100)
 
@@ -204,6 +208,11 @@ AgentNotRunningReason s_agentNotRunningReason = AgentNotRunningReason::Unknown;
 
 // The current runtime status of the agent process.
 AgentRuntimeStatus s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+
+// When the last failed agent launch attempt occurred, if any. Used to avoid
+// re-attempting (and re-waiting on) doomed launches on every automatic
+// trigger; see kAgentLaunchRetrySeconds in ensureAgentRunning().
+boost::posix_time::ptime s_agentLastLaunchFailure(boost::posix_time::not_a_date_time);
 
 // Whether or not we've handled the Assistant 'initialized' notification.
 // Primarily done to allow proper sequencing of Assistant callbacks.
@@ -402,12 +411,16 @@ bool isIndexableFile(const FilePath& documentPath)
    return !languageId.empty();
 }
 
-bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+// Note: 'checkContents' should be false for documents loaded without their
+// contents (e.g. via source_database::get(id, false, pDoc)); the binary-file
+// check is skipped for those, and file type heuristics alone decide.
+bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc,
+                         bool checkContents = true)
 {
    // Don't index binary files.
-   if (pDoc->contents().find('\0') != std::string::npos)
+   if (checkContents && pDoc->contents().find('\0') != std::string::npos)
       return false;
-   
+
    // Our source database uses non-standard names for certain R file types,
    // so explicitly check for those and allow them to be indexed.
    if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
@@ -1616,6 +1629,16 @@ Error startAgent(const std::string& assistantType = "")
    return Success();
 }
 
+// Check whether the agent is already running, without attempting to launch
+// it. Passive paths (document lifecycle notifications and the like) use this
+// rather than ensureAgentRunning() so they never stall the session waiting
+// on an agent launch; the agent is started from synchronize() when enabled,
+// and from the user-facing paths that call ensureAgentRunning().
+bool checkAgentRunning()
+{
+   return !s_isSessionShuttingDown && s_agentPid != -1;
+}
+
 bool ensureAgentRunning(const std::string& assistantType = "",
                         Error* pAgentLaunchError = nullptr)
 {
@@ -1688,10 +1711,28 @@ bool ensureAgentRunning(const std::string& assistantType = "",
    if (!thread::isMainThread())
       return false;
 
+   // If a recent launch attempt failed, don't automatically retry right away:
+   // each attempt can block the session for the full launch timeout, and
+   // automatic triggers (e.g. completion requests) can arrive many times a
+   // minute. Explicit requests (those naming an assistant type, e.g. from the
+   // preferences dialog) always retry. Note that pAgentLaunchError is left
+   // unset on this path; callers that request the launch error pass an
+   // explicit assistantType and so never take this early return.
+   if (assistantType.empty() && !s_agentLastLaunchFailure.is_not_a_date_time())
+   {
+      auto elapsed = boost::posix_time::second_clock::universal_time() - s_agentLastLaunchFailure;
+      if (elapsed < boost::posix_time::seconds(kAgentLaunchRetrySeconds))
+         return false;
+   }
+
    // preflight checks passed; try to start the agent
    Error error = startAgent(assistantType);
    if (error)
       LOG_ERROR(error);
+
+   s_agentLastLaunchFailure = error
+      ? boost::posix_time::second_clock::universal_time()
+      : boost::posix_time::ptime(boost::posix_time::not_a_date_time);
 
    if (pAgentLaunchError)
       *pAgentLaunchError = error;
@@ -1835,7 +1876,7 @@ void indexFile(const core::FileInfo& info)
 
 void didOpen(lsp::DidOpenTextDocumentParams params)
 {
-   if (!ensureAgentRunning())
+   if (!checkAgentRunning())
       return;
 
    // Skip if agent isn't fully initialized yet; syncOpenDocuments()
@@ -1860,7 +1901,7 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
 
 void didChange(lsp::DidChangeTextDocumentParams params)
 {
-   if (!ensureAgentRunning())
+   if (!checkAgentRunning())
       return;
 
    // Skip if agent isn't fully initialized yet; syncOpenDocuments()
@@ -1888,7 +1929,7 @@ void didChange(lsp::DidChangeTextDocumentParams params)
 
 void didClose(lsp::DidCloseTextDocumentParams params)
 {
-   if (!ensureAgentRunning())
+   if (!checkAgentRunning())
       return;
 
    // Skip if agent isn't fully initialized yet; the agent won't have
@@ -1905,6 +1946,29 @@ void didClose(lsp::DidCloseTextDocumentParams params)
       return;
 
    docClosed(params.textDocument.uri);
+}
+
+void didFocus(lsp::DidFocusTextDocumentParams params,
+              boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (!checkAgentRunning())
+      return;
+
+   // Note: unlike the handlers above, we intentionally don't skip when the
+   // agent hasn't finished initializing. Pre-init requests are held in
+   // s_pendingRequests (onContinue only drains initialization methods until
+   // 'initialized' is sent), and unlike document state -- which
+   // syncOpenDocuments() re-sends after initialization -- nothing re-sends
+   // focus, so dropping the notification here would lose it.
+
+   // If document is NOT indexable we tell the agent that no file has focus via an empty request.
+   // This is to prevent the agent from attempting to read the contents of the file.
+   // (pDoc arrives without contents loaded, so skip the contents-based check.)
+   json::Object paramsJson;
+   if (isIndexableDocument(pDoc, false))
+      paramsJson = lsp::toJson(params);
+
+   sendNotification("textDocument/didFocus", paramsJson);
 }
 
 void onBackgroundProcessing(bool isIdle)
@@ -2590,61 +2654,12 @@ Error assistantStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error assistantDocFocused(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
-{
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
-      return Success();
-   }
-
-   // Read params
-   std::string documentId;
-   Error error = core::json::readParams(request.params, &documentId);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   // Resolve source document from id
-   auto pDoc = boost::make_shared<source_database::SourceDocument>();
-   error = source_database::get(documentId, pDoc);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   // If document is NOT indexable we tell the agent that no file has focus via an empty request.
-   // This is to prevent the agent from attempting to read the contents of the file.
-   json::Object paramsJson;
-   if (isIndexableDocument(pDoc))
-   {
-      lsp::DidFocusTextDocumentParams params = {
-         .textDocument = {
-            .uri = lsp::uriFromDocument(pDoc),
-         }
-      };
-      
-      paramsJson = lsp::toJson(params);
-   }
-
-   sendNotification("textDocument/didFocus", paramsJson);
-   return Success();
-}
-
 Error assistantDidShowCompletion(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
+   // nothing to do if the agent isn't running
+   if (!checkAgentRunning())
       return Success();
-   }
 
    // Read params
    json::Object completionJson;
@@ -2664,8 +2679,8 @@ Error assistantDidShowCompletion(const json::JsonRpcRequest& request,
 Error assistantDidAcceptCompletion(const json::JsonRpcRequest& request,
                                    json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
+   // nothing to do if the agent isn't running
+   if (!checkAgentRunning())
       return Success();
 
    // Read params
@@ -2684,12 +2699,9 @@ Error assistantDidAcceptCompletion(const json::JsonRpcRequest& request,
 Error assistantDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
                                           json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
+   // nothing to do if the agent isn't running
+   if (!checkAgentRunning())
       return Success();
-   }
 
    // Read params
    json::Object partialCompletionJson;
@@ -2905,6 +2917,7 @@ Error initialize()
    lsp::events().didOpen.connect(didOpen);
    lsp::events().didChange.connect(didChange);
    lsp::events().didClose.connect(didClose);
+   lsp::events().didFocus.connect(didFocus);
 
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
@@ -2922,7 +2935,6 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "assistant_sign_out", assistantSignOut))
          (bind(registerAsyncRpcMethod, "assistant_status", assistantStatus))
          (bind(registerRpcMethod, "assistant_verify_installed", assistantVerifyInstalled))
-         (bind(registerRpcMethod, "assistant_doc_focused", assistantDocFocused))
          (bind(registerRpcMethod, "assistant_did_show_completion", assistantDidShowCompletion))
          (bind(registerRpcMethod, "assistant_did_accept_completion", assistantDidAcceptCompletion))
          (bind(registerRpcMethod, "assistant_did_accept_partial_completion", assistantDidAcceptPartialCompletion))
