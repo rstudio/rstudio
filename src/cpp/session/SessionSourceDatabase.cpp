@@ -771,7 +771,7 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
          error.addProperty("path", propertiesPath);
          return error;
       }
-      else
+      else if (retry)
       {
          boost::this_thread::sleep(boost::posix_time::milliseconds(25));
       }

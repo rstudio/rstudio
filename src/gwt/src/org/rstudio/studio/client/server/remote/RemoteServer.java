@@ -763,14 +763,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void assistantDocFocused(String documentId,
-                                   ServerRequestCallback<VoidResponse> requestCallback)
+   public void lspDocFocused(String documentId,
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
             .get();
 
-      sendRequest(RPC_SCOPE, "assistant_doc_focused", params, requestCallback);
+      sendRequest(RPC_SCOPE, "lsp_doc_focused", params, requestCallback);
    };
 
    @Override

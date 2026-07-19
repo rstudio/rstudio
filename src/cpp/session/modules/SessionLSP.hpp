@@ -276,6 +276,11 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void(DidOpenTextDocumentParams)>   didOpen;
    RSTUDIO_BOOST_SIGNAL<void(DidChangeTextDocumentParams)> didChange;
    RSTUDIO_BOOST_SIGNAL<void(DidCloseTextDocumentParams)>  didClose;
+
+   // The source document is provided pre-resolved, but WITHOUT its contents
+   // loaded, so that subscribers don't need to re-read it from the source
+   // database on every focus change.
+   RSTUDIO_BOOST_SIGNAL<void(DidFocusTextDocumentParams, boost::shared_ptr<source_database::SourceDocument>)> didFocus;
 };
 
 inline Events& events()

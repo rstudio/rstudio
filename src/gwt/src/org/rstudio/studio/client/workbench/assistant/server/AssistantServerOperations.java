@@ -44,9 +44,6 @@ public interface AssistantServerOperations
    public void assistantStatus(String assistantType,
                                ServerRequestCallback<AssistantStatusResponse> requestCallback);
 
-   public void assistantDocFocused(String documentId,
-                                   ServerRequestCallback<VoidResponse> requestCallback);
-
    public void assistantDidShowCompletion(AssistantCompletion command,
                                           ServerRequestCallback<VoidResponse> requestCallback);
 
