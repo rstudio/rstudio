@@ -22,6 +22,7 @@
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -1266,6 +1267,20 @@ Error startAgent(const std::string& assistantType = "")
 
    setAgentRuntimeStatus(AgentRuntimeStatus::Preparing);
 
+   // The guard above only advances from 'Unknown' or 'Stopped', so any early
+   // error return that leaves the status at 'Preparing' would wedge every
+   // later start attempt for the rest of the session (issue #18277). Reset to
+   // 'Stopped' on any exit that leaves the status stuck at 'Preparing'; exits
+   // that set a status deliberately are left untouched (the success path
+   // reaches 'Starting'/'Running', the runProgram and startup-timeout failures
+   // set 'Unknown', and the install-lock refusal sets 'Stopped').
+   BOOST_SCOPE_EXIT(void)
+   {
+      if (s_agentRuntimeStatus == AgentRuntimeStatus::Preparing)
+         setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
+   }
+   BOOST_SCOPE_EXIT_END
+
    Error error;
 
    // Determine effective assistant type
@@ -1530,7 +1545,7 @@ Error startAgent(const std::string& assistantType = "")
    {
       ELOG("Agent startup timed out [node='{}', stderr='{}'].",
            nodePath.getAbsolutePath(), s_agentStartupError);
-      s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+      setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       s_runningAgentType.clear();  // Clear since agent failed to start
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    }
@@ -1572,7 +1587,7 @@ Error startAgent(const std::string& assistantType = "")
    {
       if (error)
       {
-         s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+         setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
          LOG_ERROR(error);
          return;
       }
@@ -2174,7 +2189,13 @@ void synchronize()
    // Start or stop the agent as appropriate.
    if (s_assistantEnabled)
    {
-      startAgent();
+      // Log a start failure the way ensureAgentRunning() does; otherwise a
+      // synchronize triggered by a preference or project-option change would
+      // drop the error silently (several startAgent failure paths report
+      // nothing on their own and rely on the caller to log).
+      Error error = startAgent();
+      if (error)
+         LOG_ERROR(error);
    }
    else
    {
@@ -2748,7 +2769,7 @@ Error assistantNotifyInstalled(const json::JsonRpcRequest& request,
    stopAgentSync();
 
    // Reset the runtime status to allow the agent to start fresh
-   s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+   setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
 
    synchronize();
    return Success();
