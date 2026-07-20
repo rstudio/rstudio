@@ -170,34 +170,26 @@ public class AssistantPreferencesPane extends PreferencesPane
       chatServer_ = chatServer;
       installManager_ = new PositAiInstallManager();
 
-      // Create assistant selector - conditionally include Posit AI option
+      // Create assistant selector - conditionally include each provider based
+      // on whether it is available in this build and enabled by the administrator.
       boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
-      String[] assistantLabels;
-      String[] assistantValues;
+      boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
+      List<String> assistantLabelList = new ArrayList<>();
+      List<String> assistantValueList = new ArrayList<>();
+      assistantLabelList.add(prefsConstants_.assistantEnum_none());
+      assistantValueList.add(UserPrefsAccessor.ASSISTANT_NONE);
       if (paiEnabled)
       {
-         assistantLabels = new String[] {
-               prefsConstants_.assistantEnum_none(),
-               prefsConstants_.assistantEnum_posit(),
-               prefsConstants_.assistantEnum_copilot()
-         };
-         assistantValues = new String[] {
-               UserPrefsAccessor.ASSISTANT_NONE,
-               UserPrefsAccessor.ASSISTANT_POSIT,
-               UserPrefsAccessor.ASSISTANT_COPILOT
-         };
+         assistantLabelList.add(prefsConstants_.assistantEnum_posit());
+         assistantValueList.add(UserPrefsAccessor.ASSISTANT_POSIT);
       }
-      else
+      if (copilotEnabled)
       {
-         assistantLabels = new String[] {
-               prefsConstants_.assistantEnum_none(),
-               prefsConstants_.assistantEnum_copilot()
-         };
-         assistantValues = new String[] {
-               UserPrefsAccessor.ASSISTANT_NONE,
-               UserPrefsAccessor.ASSISTANT_COPILOT
-         };
+         assistantLabelList.add(prefsConstants_.assistantEnum_copilot());
+         assistantValueList.add(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
+      String[] assistantLabels = assistantLabelList.toArray(new String[0]);
+      String[] assistantValues = assistantValueList.toArray(new String[0]);
       selAssistant_ = new SelectWidget(
             constants_.assistantSelectLabel(),
             assistantLabels,

@@ -115,6 +115,15 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
          hidePane(TerminalPreferencesPane.class);
       }
 
+      // Hide the AI preferences pane when the product was built without any AI
+      // features (e.g. RSTUDIO_ENABLE_AI_FEATURES=OFF, or both GitHub Copilot
+      // and Posit Assistant disabled).
+      if (!session.getSessionInfo().getCopilotEnabled() &&
+          !session.getSessionInfo().getPositAssistantEnabled())
+      {
+         hidePane(AssistantPreferencesPane.class);
+      }
+
       ElementIds.assignElementId(this, ElementIds.DIALOG_GLOBAL_PREFS);
    }
 
