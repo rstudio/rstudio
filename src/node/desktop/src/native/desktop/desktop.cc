@@ -903,7 +903,11 @@ HWINEVENTHOOK s_sessionDialogHook = nullptr;
 void CALLBACK onSessionDialogStart(HWINEVENTHOOK, DWORD, HWND hwnd, LONG, LONG, DWORD, DWORD)
 {
    DLOG("Raising dialog created by watched process (hwnd " << hwnd << ")");
-   ::BringWindowToTop(hwnd);
+   if (!::BringWindowToTop(hwnd))
+   {
+      DWORD error = ::GetLastError();
+      DLOG("Error " << error << " raising dialog (hwnd " << hwnd << "): " << getErrorMessage(error));
+   }
 }
 
 void win32StopWatchingSessionDialogsImpl()
@@ -927,6 +931,7 @@ Napi::Value win32WatchSessionDialogs(const Napi::CallbackInfo& info)
    win32StopWatchingSessionDialogsImpl();
 
    // a process id of 0 would tell SetWinEventHook to watch all processes
+   // on the current desktop
    if (processId != 0)
    {
       // WINEVENT_OUTOFCONTEXT delivers events via this thread's message
@@ -938,6 +943,16 @@ Napi::Value win32WatchSessionDialogs(const Napi::CallbackInfo& info)
           processId,
           0,
           WINEVENT_OUTOFCONTEXT);
+
+      if (s_sessionDialogHook == nullptr)
+      {
+         DWORD error = ::GetLastError();
+         DLOG("Error " << error << " watching for dialogs from process " << processId << ": " << getErrorMessage(error));
+      }
+      else
+      {
+         DLOG("Watching for dialogs created by process " << processId);
+      }
    }
 #endif
 

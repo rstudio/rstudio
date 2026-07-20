@@ -111,7 +111,7 @@ describe('Desktop Native Code', () => {
       desktop.win32StopWatchingSessionDialogs();
     });
 
-    it('watching again replaces an existing hook without error', () => {
+    it('watching again with an active hook does not throw', () => {
       desktop.win32WatchSessionDialogs(process.pid);
       desktop.win32WatchSessionDialogs(process.pid);
       desktop.win32StopWatchingSessionDialogs();

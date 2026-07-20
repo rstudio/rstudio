@@ -73,12 +73,14 @@ export declare function win32ListMonospaceFonts(): string[];
 /**
  * (Windows only)
  *
- * Watch for native dialogs created by the given process, raising them
- * above our windows. Used so that dialogs shown by the rsession process
- * (e.g. via utils::askYesNo()) don't open behind the RStudio window.
- * Replaces any watch registered by a previous call.
+ * Watch for native dialogs created by the given process, raising each new
+ * dialog above our windows. Replaces any watch registered by a previous
+ * call. Must be called from the Electron main thread (events are delivered
+ * via its message loop); failure to install the watch is silent (logged
+ * only when RS_LOG_LEVEL=debug).
  *
- * @param pid The process to watch (normally the rsession process).
+ * @param pid The process to watch. A pid of 0 stops any existing watch
+ *   without registering a new one.
  */
 export declare function win32WatchSessionDialogs(pid: number): void;
 
