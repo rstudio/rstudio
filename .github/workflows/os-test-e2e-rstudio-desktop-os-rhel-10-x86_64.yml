@@ -356,7 +356,23 @@ jobs:
       # the .rpm install need. sudo is kept for parity with the shared scripts.
       - name: Prepare UBI container
         run: |
-          dnf -y install sudo git tar gzip xz jq which findutils
+          dnf -y install sudo git tar gzip xz jq which findutils dnf-plugins-core
+
+      # This is a separate container from the build job, so it needs its own
+      # repo enablement. RHEL 10 dropped the X.Org server, so Xvfb is gone; the
+      # display now comes from Xwayland running under Cage. Neither Xwayland,
+      # Cage, nor libXScrnSaver live in UBI's base repos; they resolve from
+      # EPEL / CodeReady Builder. dnf5 (UBI 10) and dnf4 differ on config-manager
+      # syntax, so try both.
+      - name: Enable EPEL and CRB repos
+        run: |
+          dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm || true
+          dnf config-manager --set-enabled ubi-10-codeready-builder-rpms 2>/dev/null \
+            || dnf config-manager setopt ubi-10-codeready-builder-rpms.enabled=1 2>/dev/null \
+            || dnf config-manager --set-enabled crb 2>/dev/null \
+            || true
+          dnf repolist --enabled | grep -qiE 'codeready|crb' \
+            || echo "::warning::CodeReady Builder repo not enabled; Xwayland/Cage/libXScrnSaver may fail to resolve."
 
       - uses: actions/checkout@v4
 
@@ -368,17 +384,19 @@ jobs:
 
       - name: Install OS dependencies
         run: |
-          # Xvfb (virtual display for the Electron app / Playwright) plus the
-          # runtime libraries Chromium/Electron and the Playwright-managed
-          # chromium need on RHEL. This list is load-bearing, not redundant: the
-          # RStudio Electron RPM is built with CPACK_RPM_PACKAGE_AUTOREQPROV off
-          # (see package/linux/CMakeLists.txt) and declares only libxkbcommon-x11
-          # and sqlite, so dnf does NOT auto-pull the GUI/Chromium libs on
-          # install -- they must come from here. The last row mirrors the
-          # font/text libs some test R packages load: freetype/fontconfig (ragg,
-          # systemfonts), harfbuzz/fribidi (textshaping).
+          # RHEL 10 removed Xvfb along with the X.Org server, so the virtual
+          # display comes from Xwayland running under Cage (a minimal headless
+          # Wayland compositor). Everything else is the runtime the Electron app
+          # and the Playwright-managed chromium need. This list is load-bearing,
+          # not redundant: the RStudio Electron RPM is built with
+          # CPACK_RPM_PACKAGE_AUTOREQPROV off (see package/linux/CMakeLists.txt)
+          # and declares only libxkbcommon-x11 and sqlite, so dnf does NOT
+          # auto-pull the GUI/Chromium libs on install; they must come from here.
+          # The last row mirrors the font/text libs some test R packages load:
+          # freetype/fontconfig (ragg, systemfonts), harfbuzz/fribidi
+          # (textshaping).
           dnf -y install \
-            xorg-x11-server-Xvfb \
+            xorg-x11-server-Xwayland cage \
             nss nspr atk at-spi2-atk at-spi2-core cups-libs \
             libdrm mesa-libgbm libxkbcommon \
             libX11 libXcomposite libXdamage libXext libXfixes libXrandr libXScrnSaver libXtst libxcb \
@@ -529,28 +547,21 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
-          # Run Playwright under our own Xvfb and exec it as the step's main
-          # process, so a job cancellation's SIGTERM reaches Playwright
-          # directly. xvfb-run is a shell wrapper that does not forward signals
-          # to its child, which left cancelled Linux e2e jobs running until
-          # their timeout-minutes instead of stopping. -ac disables X access
-          # control so Chromium connects without an auth cookie; -nolisten tcp
-          # keeps the display on the local socket only. We wait for the X socket
-          # before launching so it doesn't race a cold display, and fail loudly
-          # (dumping the Xvfb log) if it never comes up, rather than exec-ing
-          # Playwright against a dead display and surfacing an opaque launch error.
-          Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp >/tmp/xvfb.log 2>&1 &
-          export DISPLAY=:99
-          for _ in $(seq 1 50); do
-            [ -S /tmp/.X11-unix/X99 ] && break
-            sleep 0.1
-          done
-          if [ ! -S /tmp/.X11-unix/X99 ]; then
-            echo "::error::Xvfb display :99 never came up after 5s; Xvfb log follows."
-            cat /tmp/xvfb.log || true
-            exit 1
-          fi
-          exec npx playwright test "${ARGS[@]}"
+          # RHEL 10 has no Xvfb, so the display comes from Xwayland running under
+          # Cage, a minimal Wayland compositor. WLR_BACKENDS=headless makes
+          # wlroots (Cage's backend) run without a GPU/DRM device, and
+          # WLR_LIBINPUT_NO_DEVICES=1 stops it waiting for input devices a
+          # container doesn't have. Cage starts a rootful Xwayland, exports
+          # DISPLAY to its child, and exits when the child exits. We exec Cage as
+          # the step's main process so a job cancellation's SIGTERM reaches it.
+          # "sep" holds the end-of-options separator ("--") in a variable to keep
+          # the file free of a spaced double dash.
+          export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg}"
+          mkdir -p "$XDG_RUNTIME_DIR"; chmod 700 "$XDG_RUNTIME_DIR"
+          export WLR_BACKENDS=headless
+          export WLR_LIBINPUT_NO_DEVICES=1
+          sep='--'
+          exec cage "$sep" npx playwright test "${ARGS[@]}"
 
       - name: Upload blob report
         if: always()
