@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <boost/function.hpp>
@@ -29,7 +30,6 @@ namespace rstudio {
 namespace core {
 
 class Error;
-class FilePath;
 
 } // end namespace core
 } // end namespace rstudio
@@ -68,34 +68,53 @@ private:
    std::string resourcePath_;
 };
 
+// A unit of indexing work produced by the background library scan: a package
+// resource matching a worker's resourcePath() (or the package directory
+// itself, for workers with an empty resourcePath).
+struct IndexEntry
+{
+   std::string pkgName;
+   std::string resource;
+   core::FilePath resourcePath;
+};
+
+struct IndexScan;
+
 class Indexer : boost::noncopyable
 {
 public:
    explicit Indexer();
    virtual ~Indexer() {}
-   
+
 public:
    void addWorker(boost::shared_ptr<Worker> pWorker);
    void removeWorker(boost::shared_ptr<Worker> pWorker);
-   
+
 public:
    void start();
    bool running() { return running_; }
    core::json::Object getPayload() { return payload_; }
-   
+
+   // package directories discovered by the most recent library scan;
+   // stable from the first onWork() until the next scan completes
+   const std::vector<core::FilePath>& packageDirs() { return pkgDirs_; }
+
 private:
    void beginIndexing();
+   bool checkScan(boost::shared_ptr<IndexScan> pScan);
    bool work();
    void endIndexing();
-   
+
 private:
    std::vector<boost::shared_ptr<Worker> > workers_;
    std::vector<core::FilePath> pkgDirs_;
+   std::vector<IndexEntry> entries_;
    core::json::Object payload_;
-   
+
    std::size_t index_;
    std::size_t n_;
    bool running_;
+   bool pending_;
 };
 
 Indexer& indexer();

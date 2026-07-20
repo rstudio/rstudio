@@ -15,12 +15,14 @@
 
 #include <session/SessionPackageProvidedExtension.hpp>
 
+#include <boost/make_shared.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Thread.hpp>
 #include <core/text/DcfParser.hpp>
 
 #include <r/ROptions.hpp>
@@ -73,7 +75,70 @@ Error parseDcfResourceFile(
    return Success();
 }
 
-Indexer::Indexer() : index_(0), n_(0), running_(false) {}
+// Result of a background library scan. The background thread fills in the
+// discovered package directories and index entries and sets 'done' under the
+// mutex; the main thread polls it via schedulePeriodicWork. We deliberately
+// avoid executeOnMainThread() here, as scheduling work from a background
+// thread mutates the scheduled-command list without synchronization.
+struct IndexScan
+{
+   boost::mutex mutex;
+   bool done = false;
+   std::vector<core::FilePath> pkgDirs;
+   std::vector<IndexEntry> entries;
+};
+
+namespace {
+
+// Runs on a background thread: filesystem access only, no R.
+void scanLibraryPaths(std::vector<FilePath> libPaths,
+                      std::vector<std::string> resources,
+                      boost::shared_ptr<IndexScan> pScan)
+{
+   std::vector<FilePath> pkgDirs;
+   std::vector<IndexEntry> entries;
+
+   for (const FilePath& libPath : libPaths)
+   {
+      if (!libPath.exists())
+         continue;
+
+      std::vector<FilePath> pkgPaths;
+      Error error = libPath.getChildren(pkgPaths);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      for (const FilePath& pkgPath : pkgPaths)
+      {
+         pkgDirs.push_back(pkgPath);
+
+         std::string pkgName = pkgPath.getFilename();
+         for (const std::string& resource : resources)
+         {
+            // an empty resource path denotes a worker interested in the
+            // package directory itself; no probing required
+            FilePath resourcePath = pkgPath.completeChildPath(resource);
+            if (resource.empty() || resourcePath.exists())
+               entries.push_back({ pkgName, resource, resourcePath });
+         }
+      }
+   }
+
+   LOCK_MUTEX(pScan->mutex)
+   {
+      pScan->pkgDirs = std::move(pkgDirs);
+      pScan->entries = std::move(entries);
+      pScan->done = true;
+   }
+   END_LOCK_MUTEX
+}
+
+} // end anonymous namespace
+
+Indexer::Indexer() : index_(0), n_(0), running_(false), pending_(false) {}
 
 void Indexer::addWorker(boost::shared_ptr<Worker> pWorker)
 {
@@ -87,16 +152,42 @@ void Indexer::removeWorker(boost::shared_ptr<Worker> pWorker)
 
 void Indexer::start()
 {
+   // if an index is already in flight, request another pass once it
+   // completes -- the running scan may have raced with the library
+   // mutation that triggered this call
    if (running_)
+   {
+      pending_ = true;
       return;
+   }
 
    running_ = true;
    beginIndexing();
+}
+
+// Main-thread poll for scan completion; returns true to keep polling.
+bool Indexer::checkScan(boost::shared_ptr<IndexScan> pScan)
+{
+   LOCK_MUTEX(pScan->mutex)
+   {
+      if (!pScan->done)
+         return true;
+
+      pkgDirs_ = std::move(pScan->pkgDirs);
+      entries_ = std::move(pScan->entries);
+   }
+   END_LOCK_MUTEX
+
+   index_ = 0;
+   n_ = entries_.size();
+
    module_context::scheduleIncrementalWork(
             boost::posix_time::milliseconds(300),
             boost::posix_time::milliseconds(20),
             boost::bind(&Indexer::work, this),
             true);
+
+   return false;
 }
 
 bool Indexer::work()
@@ -110,18 +201,16 @@ bool Indexer::work()
 
    std::size_t index = index_++;
 
-   // invoke workers with package name + path
-   FilePath pkgPath = pkgDirs_[index];
-   std::string pkgName = pkgPath.getFilename();
+   // invoke workers interested in this resource
+   const IndexEntry& entry = entries_[index];
    for (boost::shared_ptr<Worker> pWorker : workers_)
    {
-      FilePath resourcePath = pkgPath.completeChildPath(pWorker->resourcePath());
-      if (!resourcePath.exists())
+      if (pWorker->resourcePath() != entry.resource)
          continue;
-      
+
       try
       {
-         pWorker->onWork(pkgName, resourcePath);
+         pWorker->onWork(entry.pkgName, entry.resourcePath);
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
@@ -131,28 +220,10 @@ bool Indexer::work()
 void Indexer::beginIndexing()
 {
    // reset indexer state
-   pkgDirs_.clear();
+   entries_.clear();
    index_ = 0;
+   n_ = 0;
 
-   // discover packages available on the current library paths
-   std::vector<core::FilePath> libPaths = module_context::getLibPaths();
-   for (const core::FilePath& libPath : libPaths)
-   {
-      if (!libPath.exists())
-         continue;
-
-      std::vector<core::FilePath> pkgPaths;
-      core::Error error = libPath.getChildren(pkgPaths);
-      if (error)
-         LOG_ERROR(error);
-
-      pkgDirs_.insert(
-               pkgDirs_.end(),
-               pkgPaths.begin(),
-               pkgPaths.end());
-   }
-   n_ = pkgDirs_.size();
-   
    for (boost::shared_ptr<Worker> pWorker : workers_)
    {
       try
@@ -161,13 +232,38 @@ void Indexer::beginIndexing()
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
+
+   // snapshot the library paths (this calls into R) and the resources the
+   // registered workers are interested in
+   std::vector<FilePath> libPaths = module_context::getLibPaths();
+
+   std::vector<std::string> resources;
+   for (boost::shared_ptr<Worker> pWorker : workers_)
+   {
+      if (!core::algorithm::contains(resources, pWorker->resourcePath()))
+         resources.push_back(pWorker->resourcePath());
+   }
+
+   // enumerating (and probing) every package in the library paths can be
+   // slow, or block outright, when a library lives on a remote filesystem,
+   // so the scan runs on a background thread; workers are invoked on the
+   // main thread once it completes
+   auto pScan = boost::make_shared<IndexScan>();
+   core::thread::safeLaunchThread(
+            boost::bind(scanLibraryPaths, libPaths, resources, pScan));
+
+   module_context::schedulePeriodicWork(
+            boost::posix_time::milliseconds(100),
+            boost::bind(&Indexer::checkScan, this, pScan),
+            true);
 }
 
 void Indexer::endIndexing()
 {
    running_ = false;
+   entries_.clear();
    payload_.clear();
-   
+
    for (boost::shared_ptr<Worker> pWorker : workers_)
    {
       try
@@ -176,12 +272,18 @@ void Indexer::endIndexing()
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
-   
+
    ClientEvent event(
             client_events::kPackageExtensionIndexingCompleted,
             payload_);
-   
+
    module_context::enqueClientEvent(event);
+
+   if (pending_)
+   {
+      pending_ = false;
+      start();
+   }
 }
 
 Indexer& indexer()

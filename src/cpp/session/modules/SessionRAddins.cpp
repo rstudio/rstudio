@@ -15,6 +15,8 @@
 
 #include "SessionRAddins.hpp"
 
+#include <set>
+
 #include <gsl/gsl-lite.hpp>
 
 #include <core/Macros.hpp>
@@ -356,24 +358,48 @@ class AddinWorker : public ppe::Worker
       }
    }
    
-   void onWork(const std::string& pkgName, const FilePath& pkgPath)
+   void onWork(const std::string& pkgName, const FilePath& addinsPath)
    {
-      // first, check for bundled addins
-      FilePath bundledAddinsPath = pkgPath.completeChildPath("rstudio/addins.dcf");
-      if (bundledAddinsPath.exists())
-         pRegistry_->add(pkgName, bundledAddinsPath);
-      
-      // next, check for addins in R_user_dir() folder
-      if (!userConfigPath_.isEmpty())
+      // the indexer only invokes us for packages bundling an addins.dcf
+      pRegistry_->add(pkgName, addinsPath);
+   }
+
+   // check for addins in R_user_dir() folders; only packages installed on
+   // the current library paths are consulted
+   void addUserConfigAddins()
+   {
+      if (userConfigPath_.isEmpty() || !userConfigPath_.exists())
+         return;
+
+      std::set<std::string> installedPkgNames;
+      for (const FilePath& pkgPath : ppe::indexer().packageDirs())
+         installedPkgNames.insert(pkgPath.getFilename());
+
+      std::vector<FilePath> configPaths;
+      Error error = userConfigPath_.getChildren(configPaths);
+      if (error)
       {
-         FilePath configAddinsPath = userConfigPath_.completeChildPath(pkgName + "/rstudio/addins.dcf");
+         LOG_ERROR(error);
+         return;
+      }
+
+      for (const FilePath& configPath : configPaths)
+      {
+         std::string pkgName = configPath.getFilename();
+         if (installedPkgNames.count(pkgName) == 0)
+            continue;
+
+         FilePath configAddinsPath = configPath.completeChildPath("rstudio/addins.dcf");
          if (configAddinsPath.exists())
             pRegistry_->add(pkgName, configAddinsPath);
       }
    }
-   
+
    void onIndexingCompleted(json::Object* pPayload)
    {
+      // include addins registered via user config folders
+      addUserConfigAddins();
+
       // finalize by indexing current package
       if (isDevtoolsLoadAllActive())
       {
@@ -408,7 +434,7 @@ class AddinWorker : public ppe::Worker
 
 public:
    
-   AddinWorker() : ppe::Worker() {}
+   AddinWorker() : ppe::Worker("rstudio/addins.dcf") {}
    
    void addContinuation(json::JsonRpcFunctionContinuation continuation)
    {

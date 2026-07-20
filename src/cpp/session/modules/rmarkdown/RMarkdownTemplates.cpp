@@ -50,14 +50,11 @@ class Worker : public ppe::Worker
       s_templates.clear();
    }
    
-   void onWork(const std::string& pkgName, const FilePath& pkgPath)
+   void onWork(const std::string& pkgName, const FilePath& templateRoot)
    {
-      // form the path to the template folder
-      FilePath templateRoot = pkgPath.completePath("rmarkdown")
-                                     .completePath("templates");
-
-      // skip if this folder doesn't exist or isn't a directory
-      if (!templateRoot.exists() || !templateRoot.isDirectory())
+      // the indexer only invokes us for packages with a template folder;
+      // skip if it isn't a directory
+      if (!templateRoot.isDirectory())
          return;
 
       // get a list of all template folders under the root
@@ -119,7 +116,7 @@ class Worker : public ppe::Worker
    
 public:
    
-   Worker() : ppe::Worker() 
+   Worker() : ppe::Worker("rmarkdown/templates")
    {
    }
 };

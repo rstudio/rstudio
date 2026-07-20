@@ -82,6 +82,9 @@ void enqueueTutorialClientEvent(const std::string& type,
 
 class TutorialWorker : public ppe::Worker
 {
+public:
+   TutorialWorker() : ppe::Worker("tutorials") {}
+
 private:
    void onIndexingStarted() override
    {
@@ -98,13 +101,14 @@ private:
    }
    
    void onWork(const std::string& pkgName,
-               const core::FilePath& resourcePath) override
+               const core::FilePath& tutorialsPath) override
    {
       r::sexp::Protect protect;
       SEXP tutorialsSEXP;
-      
+
+      // .rs.tutorial.findTutorials expects the package root
       Error error = r::exec::RFunction(".rs.tutorial.findTutorials")
-            .addParam(resourcePath.getAbsolutePath())
+            .addParam(tutorialsPath.getParent().getAbsolutePath())
             .call(&tutorialsSEXP, &protect);
       
       if (error)
