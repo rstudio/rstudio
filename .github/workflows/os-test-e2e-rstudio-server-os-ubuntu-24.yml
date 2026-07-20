@@ -32,9 +32,9 @@ on:
         type: string
         default: ""
       grep_invert:
-        description: "Optional Playwright --grep-invert pattern to skip tests by title. Defaults to '@ai' to skip tests that require credentials not available in unattended runs."
+        description: "Optional Playwright --grep-invert pattern to skip tests by title. Empty by default (runs all tests)."
         type: string
-        default: "@ai"
+        default: ""
       build_only:
         description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
         type: boolean
@@ -68,7 +68,7 @@ on:
         default: ""
       grep_invert:
         type: string
-        default: "@ai"
+        default: ""
       build_only:
         type: boolean
         default: false

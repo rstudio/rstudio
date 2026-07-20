@@ -161,7 +161,6 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       # Same rhel10-x86_64 .rpm the Fedora 44 engine tests -- there is no
       # separate Fedora 43 daily either.
@@ -177,7 +176,6 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
 
@@ -191,7 +189,6 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
 
@@ -206,7 +203,6 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
 
@@ -221,7 +217,6 @@ jobs:
     with:
       project: server
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
 
@@ -236,7 +231,6 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
@@ -251,7 +245,6 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.windows }}
 
@@ -266,6 +259,5 @@ jobs:
     with:
       project: desktop
       r_version: "release"
-      grep_invert: "@ai"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_arm64 }}
