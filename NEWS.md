@@ -11,6 +11,7 @@
 
 ### Fixed
 - ([#18152](https://github.com/rstudio/rstudio/issues/18152)): Fixed a compilation error when building RStudio Server against SOCI 4.1.4 or newer.
+- ([#18287](https://github.com/rstudio/rstudio/issues/18287)): Fixed another compilation error when building RStudio against system SOCI packages (4.1 or newer), which no longer expose the SQLite C API through their headers.
 - ([#18174](https://github.com/rstudio/rstudio/issues/18174)): Fixed an error when viewing an object from the Object Explorer with the French user interface language enabled.
 - ([#18255](https://github.com/rstudio/rstudio/issues/18255)): Fixed a regression where an unprivileged RStudio Server would fail to start when it could not read a system secure key file (for example, a root-owned key baked into an HPC container image), rather than falling back to its per-user cache.
 - ([#18198](https://github.com/rstudio/rstudio/issues/18198)): Fixed tar errors and warnings printed to the console after installing a package from a URL with `install.packages(..., repos = NULL)`.
