@@ -97,15 +97,18 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    {
       switch (id)
       {
-         // Posit Assistant-specific preferences (chat is Posit-only). Note that
-         // assistant_show_messages is deliberately not listed: the preferences
-         // pane surfaces it under the Copilot section, so hiding it only from
-         // the palette would leave the two surfaces inconsistent.
+         // Posit Assistant-specific preferences (chat is Posit-only).
          case UserPrefsAccessor.ASSISTANT_TOOLBAR_BUTTON_VISIBLE:
          case UserPrefsAccessor.POSIT_ASSISTANT_TEST_MANIFEST:
          case UserPrefsAccessor.POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS:
          case UserPrefsAccessor.CHAT_PROVIDER:
             return !sessionInfo_.getPositAssistantEnabled();
+         // assistant_show_messages is a Posit Assistant setting, but the
+         // preferences pane only surfaces it under the Copilot section, so its
+         // palette availability follows Copilot to stay consistent with where
+         // the pane actually shows it.
+         case UserPrefsAccessor.ASSISTANT_SHOW_MESSAGES:
+            return !sessionInfo_.getCopilotEnabled();
          // The assistant selector and the shared code-suggestion preferences
          // apply to any AI agent (Copilot or Posit Assistant), so hide them
          // only when no AI assistant is available -- matching the preferences
