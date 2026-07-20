@@ -42,11 +42,15 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
 
       // Create marginally more user friendly names for option values by
       // removing common separators and adding some casing. Values excluded
-      // because they are unavailable in this build are skipped.
+      // because they are unavailable in this build are skipped -- except the
+      // current value, which is kept selectable so a stale/unavailable
+      // selection is shown and can be changed away from (otherwise it would
+      // appear as the first option and could not be cleared).
+      String currentValue = val_.getGlobalValue();
       String[] values = val.getAllowedValues();
       for (String value: values)
       {
-         if (excludedValues.contains(value))
+         if (excludedValues.contains(value) && !StringUtil.equals(value, currentValue))
             continue;
          String option = value.replace("-", " ");
          option = option.replace("_", " ");
@@ -57,7 +61,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       // Show the currently selected value (indices reflect the filtered list)
       for (int i = 0; i < selector_.getItemCount(); i++)
       {
-         if (StringUtil.equals(selector_.getValue(i), val_.getGlobalValue()))
+         if (StringUtil.equals(selector_.getValue(i), currentValue))
          {
             selector_.setSelectedIndex(i);
             break;
