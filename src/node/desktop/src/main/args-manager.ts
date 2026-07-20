@@ -205,8 +205,9 @@ export class ArgsManager {
   }
 
   handleLogLevel() {
-    const logOptions = new LogOptions();
+    // constructing LogOptions can throw if logging.conf is unreadable
     try {
+      const logOptions = new LogOptions();
       setLogger(new WinstonLogger(logOptions));
     } catch (error: unknown) {
       console.error(safeError(error));

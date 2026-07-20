@@ -16,6 +16,7 @@
 import { BrowserWindow, WebContents } from 'electron';
 import { Client, Server } from 'net-ipc';
 import { FilePath } from '../core/file-path';
+import { UserDirIssue } from '../core/xdg';
 
 import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
@@ -57,6 +58,7 @@ export interface AppState {
   eventBus?: TypedEventEmitter<EventBusTypes>;
   argsManager: ArgsManager;
   projectDirectory?: string;
+  stateDirIssues: UserDirIssue[];
 }
 
 let rstudio: AppState | null = null;

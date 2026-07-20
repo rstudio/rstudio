@@ -23,6 +23,8 @@
 
 #include <shared_core/FileLogDestination.hpp>
 
+#include <iostream>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 
@@ -276,6 +278,25 @@ struct FileLogDestination::Impl
          LogOutputStream->flush();
          LogOutputStream.reset();
       }
+   }
+
+   // Invoked when the log file cannot be written (e.g. because the log
+   // directory is not writable). Rather than dropping the message, emit it on
+   // stderr so it remains visible to the parent process or system journal.
+   void writeToStderrFallback(const std::string& in_message)
+   {
+      if (!StderrFallbackNotified)
+      {
+         StderrFallbackNotified = true;
+         std::cerr << "Unable to write to log file "
+                   << LogFile.getAbsolutePath()
+                   << "; falling back to stderr. Check this location for missing "
+                   << "or misconfigured directory permissions."
+                   << std::endl;
+      }
+
+      std::cerr << in_message;
+      std::cerr.flush();
    }
 
    // Returns true if the log file was opened, false otherwise.
@@ -538,6 +559,7 @@ struct FileLogDestination::Impl
    FileLogOptions LogOptions;
    FilePath LogFile;
    std::string LogName;
+   bool StderrFallbackNotified = false;
    boost::mutex Mutex;
    std::shared_ptr<std::ostream> LogOutputStream;
    boost::optional<boost::posix_time::ptime> FirstLogLineTime;
@@ -618,18 +640,25 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
             m_impl->SyslogDest->writeLog(in_logLevel, in_message);
 #endif
 
-      // Check to make sure path to file is valid. If not, log nothing.
+      // Check to make sure path to file is valid. If not, fall back to stderr.
       if (!m_impl->verifyLogFilePath())
+      {
+         m_impl->writeToStderrFallback(in_message);
          return;
+      }
 
-      // Rotate the log file if necessary. If it fails to rotate, log nothing.
+      // Rotate the log file if necessary. If it fails to rotate, fall back to stderr.
       if (!m_impl->rotateLogFile())
+      {
+         m_impl->writeToStderrFallback(in_message);
          return;
+      }
 
-      // Open the log file. If it fails to open, log nothing.
+      // Open the log file. If it fails to open, fall back to stderr.
       if (!m_impl->openLogFile())
       {
          m_impl->closeLogFile();
+         m_impl->writeToStderrFallback(in_message);
          return;
       }
 
@@ -643,6 +672,7 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
          if (!m_impl->openLogFile())
          {
             m_impl->closeLogFile();
+            m_impl->writeToStderrFallback(in_message);
             return;
          }
 

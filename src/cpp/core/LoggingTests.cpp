@@ -18,6 +18,8 @@
 #include <core/Log.hpp>
 #include <core/LogOptions.hpp>
 
+#include <shared_core/FileLogDestination.hpp>
+
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
@@ -29,8 +31,13 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <sstream>
 #include <iomanip>
+#include <iostream>
+#include <sstream>
+
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
 
 namespace rstudio {
 namespace core {
@@ -981,6 +988,46 @@ TEST(LoggingTest, FileLogsAreCreatedWithCorrectPermissions)
    Error err3 = logFile.getFileMode(mode3);
    ASSERT_FALSE(err3);
    ASSERT_EQ(FileMode::USER_READ_WRITE, mode3);
+}
+
+TEST(LoggingTest, FileLogFallsBackToStderrWhenDirectoryNotWritable)
+{
+   // https://github.com/rstudio/rstudio/issues/18179
+   FilePath tmpPath;
+   ASSERT_FALSE(FilePath::tempFilePath(tmpPath));
+   ASSERT_FALSE(tmpPath.ensureDirectory());
+
+   FilePath logDir = tmpPath.completeChildPath("readonly-logs");
+   ASSERT_FALSE(logDir.ensureDirectory());
+   ASSERT_EQ(0, ::chmod(logDir.getAbsolutePath().c_str(), 0500));
+
+   log::FileLogOptions options(logDir);
+   log::FileLogDestination destination(
+      "stderr-fallback-test",
+      log::LogLevel::WARN,
+      log::LogMessageFormatType::PRETTY,
+      "logging-tests-stderr-fallback",
+      options,
+      false);
+
+   std::ostringstream captured;
+   std::streambuf* previous = std::cerr.rdbuf(captured.rdbuf());
+   destination.writeLog(log::LogLevel::ERR, "first fallback message\n");
+   destination.writeLog(log::LogLevel::ERR, "second fallback message\n");
+   std::cerr.rdbuf(previous);
+
+   // both messages should have been emitted on stderr rather than dropped
+   std::string output = captured.str();
+   EXPECT_NE(std::string::npos, output.find("first fallback message"));
+   EXPECT_NE(std::string::npos, output.find("second fallback message"));
+
+   // the notice explaining the fallback should be emitted exactly once
+   size_t noticePos = output.find("falling back to stderr");
+   ASSERT_NE(std::string::npos, noticePos);
+   EXPECT_EQ(std::string::npos, output.find("falling back to stderr", noticePos + 1));
+
+   ASSERT_EQ(0, ::chmod(logDir.getAbsolutePath().c_str(), 0700));
+   ASSERT_FALSE(tmpPath.remove());
 }
 #endif
 
