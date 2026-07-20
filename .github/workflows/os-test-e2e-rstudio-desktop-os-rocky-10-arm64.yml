@@ -134,6 +134,15 @@ jobs:
     # the RHEL/Fedora build jobs.
     container:
       image: rockylinux/rockylinux:10
+      # The rockylinux/rockylinux:10 image config defines no default PATH, so
+      # once a tool-cache action (Setup sccache here) prepends its bin dir via
+      # GITHUB_PATH, the runner rebuilds the container-exec PATH as just that dir
+      # and later run steps can't find sh/dnf ("exec: sh: not found", exit 127).
+      # Define an explicit base PATH so the prepend adds to it instead of
+      # replacing it. The fedora/debian sibling images set PATH themselves and
+      # so don't need this.
+      env:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
     timeout-minutes: 90
     env:
@@ -371,6 +380,11 @@ jobs:
       # on the Debian arm64 sibling). The bare-runner siblings get the host's
       # full /dev/shm and never hit this. Raising it to 2g is the standard
       # container fix.
+      # See the build job's container env note: the rockylinux/rockylinux:10
+      # image sets no default PATH, so tool-cache actions (setup-node here) would
+      # otherwise clobber it and break later run steps. Define a base PATH.
+      env:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined --shm-size=2g
     timeout-minutes: 120
     env:
