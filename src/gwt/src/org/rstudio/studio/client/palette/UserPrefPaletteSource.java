@@ -23,8 +23,10 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 /**
  * A command palette entry source which serves as a factory for user preference
@@ -32,9 +34,10 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
  */
 public class UserPrefPaletteSource implements CommandPaletteEntryProvider
 {
-   public UserPrefPaletteSource(UserPrefs prefs)
+   public UserPrefPaletteSource(UserPrefs prefs, SessionInfo sessionInfo)
    {
       prefs_ = prefs;
+      sessionInfo_ = sessionInfo;
    }
 
    @Override
@@ -49,9 +52,14 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
             // reasonable thing we can display)
             continue;
          }
+         if (isPrefUnavailable(val.getId()))
+         {
+            // Ignore preferences for AI features not available in this build
+            continue;
+         }
          items.add(new UserPrefPaletteItem(val));
       }
-      
+
       return items;
    }
 
@@ -59,6 +67,11 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    public CommandPaletteItem getCommandPaletteItem(String id)
    {
       if (StringUtil.isNullOrEmpty(id))
+      {
+         return null;
+      }
+
+      if (isPrefUnavailable(id))
       {
          return null;
       }
@@ -73,6 +86,31 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
       return new UserPrefPaletteItem(val);
    }
 
+   /**
+    * Preferences for AI features that should not appear in the palette when the
+    * corresponding feature is unavailable in this build (e.g. built with
+    * RSTUDIO_ENABLE_POSIT_ASSISTANT=OFF) or disabled by the administrator.
+    */
+   private boolean isPrefUnavailable(String id)
+   {
+      switch (id)
+      {
+         // Posit Assistant-specific preferences.
+         case UserPrefsAccessor.ASSISTANT_TOOLBAR_BUTTON_VISIBLE:
+         case UserPrefsAccessor.ASSISTANT_SHOW_MESSAGES:
+         case UserPrefsAccessor.POSIT_ASSISTANT_TEST_MANIFEST:
+         case UserPrefsAccessor.POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS:
+            return !sessionInfo_.getPositAssistantEnabled();
+         // Applies to every AI agent (Copilot and Posit Assistant), so hide it
+         // only when no AI assistant is available.
+         case UserPrefsAccessor.ASSISTANT_USE_SYSTEM_CA:
+            return !sessionInfo_.getCopilotEnabled() &&
+                   !sessionInfo_.getPositAssistantEnabled();
+         default:
+            return false;
+      }
+   }
+
    @Override
    public String getProviderScope()
    {
@@ -80,4 +118,5 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    }
 
    private final UserPrefs prefs_;
+   private final SessionInfo sessionInfo_;
 }

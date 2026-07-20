@@ -139,10 +139,17 @@ public class AssistantPreferencesPane extends PreferencesPane
          return false;
       }
 
-      // The update-check interval is always visible in the Chat section. Its
-      // validate() rejects non-digit input (including a typed or pasted negative)
-      // with a ^\d+$ check, so an invalid interval cannot be saved.
-      return nvwAssistantUpdateCheckInterval_.validate();
+      // The update-check interval is shown only for Posit Assistant. Validate it
+      // only while it is displayed, so a hidden value cannot block the dialog.
+      // Its validate() rejects non-digit input (including a typed or pasted
+      // negative) with a ^\d+$ check, so an invalid interval cannot be saved.
+      if (nvwAssistantUpdateCheckInterval_.isAttached() &&
+          !nvwAssistantUpdateCheckInterval_.validate())
+      {
+         return false;
+      }
+
+      return true;
    }
 
    @Inject
@@ -386,9 +393,16 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       });
 
-      add(cbAssistantToolbarButtonVisible_);
+      // The toolbar button and update-check interval apply only to Posit
+      // Assistant; show them only when it is available. The system certificate
+      // store option applies to every AI agent (Copilot included), so it stays
+      // visible whenever this pane is shown.
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
+      if (paiEnabled)
+         add(cbAssistantToolbarButtonVisible_);
       add(cbAssistantUseSystemCa_);
-      add(nvwAssistantUpdateCheckInterval_);
+      if (paiEnabled)
+         add(nvwAssistantUpdateCheckInterval_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
