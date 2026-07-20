@@ -677,8 +677,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // copilot
 #ifdef COPILOT_ENABLED
-   // Mirror isCopilotAllowedByAdmin() so the client's view of Copilot
-   // availability matches the backend gate (both admin options).
+   // Mirror isCopilotAllowedByAdmin() (SessionAssistant.cpp) so the client's
+   // view of Copilot availability matches the backend gate. The two sites are
+   // kept in sync by hand: if that gate gains another condition, update this too.
    sessionInfo["copilot_enabled"] = options.copilotEnabled() && options.allowCopilot();
 #else
    sessionInfo["copilot_enabled"] = false;

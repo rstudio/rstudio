@@ -44,9 +44,11 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       // Create marginally more user friendly names for option values by
       // removing common separators and adding some casing. Values excluded
       // because they are unavailable in this build are skipped -- except the
-      // current value, which is kept selectable so a stale/unavailable
-      // selection is shown and can be changed away from (otherwise it would
-      // appear as the first option and could not be cleared).
+      // current value, which is kept selectable. If the current (stale) value
+      // were dropped, the ListBox would default to its first option while the
+      // preference still held the unavailable value, and the user could not
+      // correct it: selecting the already-shown first option fires no change
+      // event. Keeping it lets the user change away from it.
       String currentValue = val_.getGlobalValue();
       String[] values = val.getAllowedValues();
       for (String value: values)
