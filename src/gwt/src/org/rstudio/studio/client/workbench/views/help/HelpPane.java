@@ -19,6 +19,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -52,8 +53,8 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -109,13 +110,15 @@ public class HelpPane extends WorkbenchPane
                    GlobalDisplay globalDisplay,
                    Commands commands,
                    EventBus events,
-                   UserPrefs prefs)
+                   UserPrefs prefs,
+                   SatelliteManager satelliteManager)
    {
       super(constants_.helpText(), events);
 
       searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      satelliteManager_ = satelliteManager;
       server_ = RStudioGinjector.INSTANCE.getServer();
 
       // init with a no-op timer
@@ -937,10 +940,16 @@ public class HelpPane extends WorkbenchPane
    @Override
    public void popout()
    {
-      String href = getContentWindow().getLocationHref();
-      NewWindowOptions options = new NewWindowOptions();
-      options.setName("helppanepopout_" + popoutCount_++);
-      globalDisplay_.openWebMinimalWindow(href, false, 0, 0, options);
+      // open the current help page in a satellite window; unlike a plain
+      // browser window, the satellite runs GWT code and so can theme the
+      // help content to match the IDE (#8345)
+      WindowEx contentWindow = getContentWindow();
+      String href = contentWindow.getLocationHref();
+      String title = StringUtil.notNull(contentWindow.getDocument().getTitle());
+
+      HelpPopoutParams params = HelpPopoutParams.create(href, title);
+      String name = HelpPopoutSatellite.NAME_PREFIX + popoutCount_++;
+      satelliteManager_.openSatellite(name, params, new Size(800, 900));
    }
 
    @Override
@@ -1033,6 +1042,13 @@ public class HelpPane extends WorkbenchPane
    private static final Resources RES = GWT.create(Resources.class);
    static { RES.styles().ensureInjected(); }
 
+   // used by HelpPopoutPanel so popped-out help windows share the
+   // same content styling as the help pane
+   static String getEditorStyles()
+   {
+      return RES.editorStyles().getText();
+   }
+
    private UserPrefs prefs_;
 
    private final VirtualHistory navStack_;
@@ -1043,6 +1059,7 @@ public class HelpPane extends WorkbenchPane
    private final Provider<HelpSearch> searchProvider_;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;
+   private final SatelliteManager satelliteManager_;
    private boolean navigated_;
    private boolean initialized_;
    private String targetUrl_;
