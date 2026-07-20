@@ -97,19 +97,28 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    {
       switch (id)
       {
-         // Posit Assistant-specific preferences (chat is Posit-only).
+         // Posit Assistant-specific preferences (chat is Posit-only). Note that
+         // assistant_show_messages is deliberately not listed: the preferences
+         // pane surfaces it under the Copilot section, so hiding it only from
+         // the palette would leave the two surfaces inconsistent.
          case UserPrefsAccessor.ASSISTANT_TOOLBAR_BUTTON_VISIBLE:
-         case UserPrefsAccessor.ASSISTANT_SHOW_MESSAGES:
          case UserPrefsAccessor.POSIT_ASSISTANT_TEST_MANIFEST:
          case UserPrefsAccessor.POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS:
          case UserPrefsAccessor.CHAT_PROVIDER:
             return !sessionInfo_.getPositAssistantEnabled();
-         // The assistant selector and the system-CA option apply to any AI
-         // agent (Copilot or Posit Assistant), so hide them only when no AI
-         // assistant is available. The assistant selector additionally filters
-         // out unavailable providers via excludedValues().
+         // The assistant selector and the shared code-suggestion preferences
+         // apply to any AI agent (Copilot or Posit Assistant), so hide them
+         // only when no AI assistant is available -- matching the preferences
+         // pane, which is hidden entirely in that case. The assistant selector
+         // additionally filters out unavailable providers via excludedValues().
          case UserPrefsAccessor.ASSISTANT:
          case UserPrefsAccessor.ASSISTANT_USE_SYSTEM_CA:
+         case UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER:
+         case UserPrefsAccessor.ASSISTANT_COMPLETIONS_DELAY:
+         case UserPrefsAccessor.ASSISTANT_TAB_KEY_BEHAVIOR:
+         case UserPrefsAccessor.ASSISTANT_INDEXING_ENABLED:
+         case UserPrefsAccessor.ASSISTANT_NES_ENABLED:
+         case UserPrefsAccessor.ASSISTANT_NES_AUTOSHOW:
             return !sessionInfo_.getCopilotEnabled() &&
                    !sessionInfo_.getPositAssistantEnabled();
          default:
