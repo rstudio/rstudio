@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.Help.LinkMenu;
 import org.rstudio.studio.client.workbench.views.help.events.HelpNavigateEvent;
+import org.rstudio.studio.client.workbench.views.help.model.HelpPopoutParams;
 import org.rstudio.studio.client.workbench.views.help.model.VirtualHistory;
 import org.rstudio.studio.client.workbench.views.help.search.HelpSearch;
 
@@ -943,9 +944,25 @@ public class HelpPane extends WorkbenchPane
       // open the current help page in a satellite window; unlike a plain
       // browser window, the satellite runs GWT code and so can theme the
       // help content to match the IDE (#8345)
-      WindowEx contentWindow = getContentWindow();
-      String href = contentWindow.getLocationHref();
-      String title = StringUtil.notNull(contentWindow.getDocument().getTitle());
+
+      // getUrl() returns null if the frame hasn't loaded yet, or if the
+      // content is cross-origin; nothing sensible to pop out in either case
+      String href = getUrl();
+      if (StringUtil.isNullOrEmpty(href))
+         return;
+
+      String title = "";
+      try
+      {
+         WindowEx contentWindow = getContentWindow();
+         if (contentWindow != null)
+            title = StringUtil.notNull(contentWindow.getDocument().getTitle());
+      }
+      catch (Exception e)
+      {
+         // reading the title can throw a DOM security exception for
+         // cross-origin content; fall back to the default satellite title
+      }
 
       HelpPopoutParams params = HelpPopoutParams.create(href, title);
       String name = HelpPopoutSatellite.NAME_PREFIX + popoutCount_++;

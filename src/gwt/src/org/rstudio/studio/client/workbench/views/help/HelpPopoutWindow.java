@@ -28,6 +28,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.help.model.HelpPopoutParams;
 
 @Singleton
 public class HelpPopoutWindow extends SatelliteWindow

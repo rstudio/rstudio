@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.help;
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
@@ -33,7 +34,8 @@ public class HelpPopoutPanel extends SatelliteFramePanel<RStudioThemedFrame>
    @Override
    protected void initToolbar(Toolbar toolbar, Commands commands)
    {
-      // the popped-out help window has no toolbar
+      // no toolbar buttons; the toolbar itself is removed by showHelp()
+      // passing removeToolbar = true to showUrl()
    }
 
    public void showHelp(String url)
@@ -52,6 +54,7 @@ public class HelpPopoutPanel extends SatelliteFramePanel<RStudioThemedFrame>
          false,
          true);
 
+      ElementIds.assignElementId(frame.getElement(), ElementIds.HELP_POPOUT_FRAME);
       frame.addStyleName("ace_editor_theme");
       return frame;
    }
