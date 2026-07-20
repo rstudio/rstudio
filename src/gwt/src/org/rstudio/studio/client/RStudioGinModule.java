@@ -176,6 +176,8 @@ import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.help.Help;
 import org.rstudio.studio.client.workbench.views.help.HelpPane;
+import org.rstudio.studio.client.workbench.views.help.HelpPopoutView;
+import org.rstudio.studio.client.workbench.views.help.HelpPopoutWindow;
 import org.rstudio.studio.client.workbench.views.help.HelpTab;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.help.search.HelpSearch;
@@ -359,6 +361,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ReviewPresenter.class).to(ReviewPresenterImpl.class);
       
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
+      bind(HelpPopoutView.class).to(HelpPopoutWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(PlumberAPIView.class).to(PlumberAPIWindow.class);
       bind(ChatSatelliteView.class).to(ChatSatelliteWindow.class);

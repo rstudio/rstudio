@@ -145,6 +145,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImpo
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportFileChooser;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsv;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsvLocale;
+import org.rstudio.studio.client.workbench.views.help.HelpPopoutSatellite;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
@@ -273,6 +274,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SetupChunkOptionsPopupPanel panel);
    void injectMembers(SourceSatellite satellite);
    void injectMembers(ShinyApplicationSatellite satellite);
+   void injectMembers(HelpPopoutSatellite satellite);
    void injectMembers(ModifyKeyboardShortcutsWidget widget);
    void injectMembers(ShortcutManager manager);
    void injectMembers(UserCommandManager manager);
