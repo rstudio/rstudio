@@ -115,3 +115,49 @@ test_that(".rs.isPackageManagementCall does not force promises", {
    expect_false(.rs.isPackageManagementCall("install.packages(x)"))
    expect_identical(forced, 0L)
 })
+
+test_that(".rs.registerPackageEventHooks registers hooks once per package", {
+   fakePkg <- basename(tempfile("rstudioFakePkg"))
+   expect_false(fakePkg %in% .rs.hookedPackages)
+
+   result <- withVisible(.rs.registerPackageEventHooks(fakePkg))
+   expect_false(result$visible)
+   expect_identical(result$value, fakePkg)
+
+   expect_true(fakePkg %in% .rs.hookedPackages)
+   expect_length(getHook(packageEvent(fakePkg, "attach")), 1L)
+   expect_length(getHook(packageEvent(fakePkg, "onLoad")), 1L)
+   expect_length(getHook(packageEvent(fakePkg, "onUnload")), 1L)
+   expect_length(getHook(packageEvent(fakePkg, "detach")), 1L)
+
+   # re-registering an already-hooked package is a no-op
+   result <- .rs.registerPackageEventHooks(fakePkg)
+   expect_length(result, 0L)
+   expect_length(getHook(packageEvent(fakePkg, "attach")), 1L)
+})
+
+test_that(".rs.updatePackageEvents hooks packages found on the library paths", {
+   libDir <- tempfile("rstudioFakeLib")
+   fakePkg <- basename(tempfile("rstudioFakePkg"))
+   dir.create(file.path(libDir, fakePkg), recursive = TRUE)
+   on.exit(unlink(libDir, recursive = TRUE), add = TRUE)
+
+   oldPaths <- .libPaths()
+   .libPaths(c(libDir, oldPaths))
+   on.exit(.libPaths(oldPaths), add = TRUE)
+
+   .rs.updatePackageEvents()
+
+   # the library scan runs on a background thread, and hooks are registered
+   # from a scheduled command on the main thread, so wait for the round trip;
+   # background processing must be pumped manually during headless tests
+   deadline <- Sys.time() + 30
+   while (!fakePkg %in% .rs.hookedPackages && Sys.time() < deadline)
+   {
+      .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
+      Sys.sleep(0.1)
+   }
+
+   expect_true(fakePkg %in% .rs.hookedPackages)
+   expect_length(getHook(packageEvent(fakePkg, "onLoad")), 1L)
+})

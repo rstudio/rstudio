@@ -8,6 +8,7 @@
 - ([#18274](https://github.com/rstudio/rstudio/issues/18274)): On Windows, the Files pane now follows .lnk shortcuts: clicking a shortcut to a folder navigates to that folder, and clicking a shortcut to a file opens the file. Shortcuts are marked with a link indicator, like symbolic links and macOS Finder aliases.
 - ([#8715](https://github.com/rstudio/rstudio/issues/8715)): Inline LaTeX / math previews in the source editor and visual editor are now rendered with MathJax 4 (previously MathJax 2.7), adding support for the TeX input extensions introduced in MathJax 3 and later. Rendered R Markdown documents using `mathjax = "local"` continue to use the bundled MathJax 2.7.
 - ([#7350](https://github.com/rstudio/rstudio/issues/7350)): RStudio can now load custom Vim key mappings from `~/.rstudio-vimrc` (or `~/.vimrc`) when Vim editor keybindings are in use. Enable the new preference under Tools > Global Options > Code > Editing; key mapping commands (`map`, `noremap`, `unmap`, and friends) and `set` commands supported by the editor's Vim emulation are applied, and other vimrc content is ignored.
+- ([#18060](https://github.com/rstudio/rstudio/issues/18060)): The installed-package scan used to track package load and attach events now runs on a background thread, so session startup (and package installation) no longer blocks while enumerating library paths on slow or remote filesystems.
 
 ### Fixed
 - ([#18152](https://github.com/rstudio/rstudio/issues/18152)): Fixed a compilation error when building RStudio Server against SOCI 4.1.4 or newer.

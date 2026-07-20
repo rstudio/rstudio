@@ -1167,92 +1167,112 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
 })
 
+.rs.addFunction("reportPackageStatus", function(pkgname, attached)
+{
+   packagePath <- .rs.pathPackage(pkgname, quiet = TRUE)
+   libraryPath <- dirname(packagePath)
+
+   # For renv with shared cache, the loaded package path might be in the cache,
+   # but we want to report the library path that contains a symlink to it.
+   # This ensures the status update matches the listed package.
+   normalizedPackagePath <- normalizePath(packagePath, winslash = "/", mustWork = FALSE)
+   for (libPath in .libPaths())
+   {
+      pkgInLib <- file.path(libPath, pkgname)
+      if (file.exists(pkgInLib))
+      {
+         normalizedPkgInLib <- normalizePath(pkgInLib, winslash = "/", mustWork = FALSE)
+         if (identical(normalizedPkgInLib, normalizedPackagePath))
+         {
+            libraryPath <- libPath
+            break
+         }
+      }
+   }
+
+   packageStatus <- list(
+      name     = I(pkgname),
+      library  = I(.rs.createAliasedPath(libraryPath)),
+      path     = I(.rs.createAliasedPath(packagePath)),
+      attached = I(attached)
+   )
+   .rs.enqueClientEvent("package_status_changed", packageStatus)
+})
+
+.rs.addFunction("notifyPackageAttached", function(pkgname, ...)
+{
+   .rs.reportPackageStatus(pkgname, attached = TRUE)
+})
+
+.rs.addFunction("notifyPackageDetached", function(pkgname, ...)
+{
+   .rs.reportPackageStatus(pkgname, attached = FALSE)
+})
+
+.rs.addFunction("notifyPackageLoaded", function(pkgname, ...)
+{
+   .Call("rs_packageLoaded", pkgname, PACKAGE = "(embedding)")
+
+   # when a package is loaded, it can register S3 methods which replace overrides we've
+   # attached manually; take this opportunity to reattach them.
+   .rs.reattachS3Overrides()
+})
+
+.rs.addFunction("notifyPackageUnloaded", function(pkgname, ...)
+{
+   .rs.beforePackageUnloaded(pkgname)
+   .Call("rs_packageUnloaded", pkgname, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("registerPackageEventHooks", function(pkgNames)
+{
+   pkgNames <- setdiff(pkgNames, .rs.hookedPackages)
+
+   for (packageName in pkgNames)
+   {
+      attachEventName <- packageEvent(packageName, "attach")
+      setHook(attachEventName, .rs.notifyPackageAttached, action = "append")
+
+      loadEventName <- packageEvent(packageName, "onLoad")
+      setHook(loadEventName, .rs.notifyPackageLoaded, action = "append")
+
+      unloadEventName <- packageEvent(packageName, "onUnload")
+      setHook(unloadEventName, .rs.notifyPackageUnloaded, action = "append")
+
+      detachEventName <- packageEvent(packageName, "detach")
+      setHook(detachEventName, .rs.notifyPackageDetached, action = "append")
+   }
+
+   .rs.setVar("hookedPackages", union(.rs.hookedPackages, pkgNames))
+
+   # a package loaded between the scan being scheduled and these hooks being
+   # registered may have clobbered our S3 overrides without the onLoad hook
+   # firing, so reattach them now
+   .rs.reattachS3Overrides()
+
+   invisible(pkgNames)
+})
+
 .rs.addFunction("updatePackageEvents", function()
 {
-   reportPackageStatus <- function(attached)
-   {
-      function(pkgname, ...)
-      {
-         packagePath <- .rs.pathPackage(pkgname, quiet = TRUE)
-         libraryPath <- dirname(packagePath)
-
-         # For renv with shared cache, the loaded package path might be in the cache,
-         # but we want to report the library path that contains a symlink to it.
-         # This ensures the status update matches the listed package.
-         normalizedPackagePath <- normalizePath(packagePath, winslash = "/", mustWork = FALSE)
-         for (libPath in .libPaths())
-         {
-            pkgInLib <- file.path(libPath, pkgname)
-            if (file.exists(pkgInLib))
-            {
-               normalizedPkgInLib <- normalizePath(pkgInLib, winslash = "/", mustWork = FALSE)
-               if (identical(normalizedPkgInLib, normalizedPackagePath))
-               {
-                  libraryPath <- libPath
-                  break
-               }
-            }
-         }
-
-         packageStatus = list(
-            name     = I(pkgname),
-            library  = I(.rs.createAliasedPath(libraryPath)),
-            path     = I(.rs.createAliasedPath(packagePath)),
-            attached = I(attached)
-         )
-         .rs.enqueClientEvent("package_status_changed", packageStatus)
-      }
-   }
-   
-   notifyPackageLoaded <- function(pkgname, ...)
-   {
-      .Call("rs_packageLoaded", pkgname, PACKAGE = "(embedding)")
-
-      # when a package is loaded, it can register S3 methods which replace overrides we've
-      # attached manually; take this opportunity to reattach them.
-      .rs.reattachS3Overrides()
-   }
-
-   notifyPackageUnloaded <- function(pkgname, ...)
-   {
-      .rs.beforePackageUnloaded(pkgname)
-      .Call("rs_packageUnloaded", pkgname, PACKAGE = "(embedding)")
-   }
-   
-   pkgNames <-
-      base::list.dirs(.libPaths(), full.names = FALSE, recursive = FALSE)
-   
-   sapply(pkgNames, function(packageName)
-   {
-      if ( !(packageName %in% .rs.hookedPackages) )
-      {
-         attachEventName = packageEvent(packageName, "attach")
-         setHook(attachEventName, reportPackageStatus(TRUE), action = "append")
-         
-         loadEventName = packageEvent(packageName, "onLoad")
-         setHook(loadEventName, notifyPackageLoaded, action = "append")
-
-         unloadEventName = packageEvent(packageName, "onUnload")
-         setHook(unloadEventName, notifyPackageUnloaded, action = "append")
-             
-         detachEventName = packageEvent(packageName, "detach")
-         setHook(detachEventName, reportPackageStatus(FALSE), action = "append")
-          
-         .rs.setVar("hookedPackages", append(.rs.hookedPackages, packageName))
-      }
-   })
+   # enumerating every package in .libPaths() can be slow (or block outright)
+   # when a library lives on a remote filesystem, so the scan runs on a
+   # background thread; hooks are registered via .rs.registerPackageEventHooks
+   # on the main R thread once it completes
+   invisible(.Call("rs_updatePackageEvents", PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("packages.initialize", function()
-{  
+{
    # list of packages we have hooked attach/detach for
    .rs.setVar("hookedPackages", character())
 
    # set flag indicating we should not ignore loadedPackageUpdates checks
    .rs.setVar("ignoreNextLoadedPackageCheck", FALSE)
-    
-   # ensure we are subscribed to package attach/detach events
-   .rs.updatePackageEvents()
+
+   # NOTE: the initial subscription to package attach/detach events happens
+   # at deferred init (see onDeferredInit in SessionPackages.cpp), as the
+   # rs_updatePackageEvents routine is not yet available for .Call here
 })
 
 .rs.addFunction( "addRToolsToPath", function()

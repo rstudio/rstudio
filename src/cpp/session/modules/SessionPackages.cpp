@@ -22,12 +22,15 @@
 
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
+#include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
@@ -304,6 +307,127 @@ SEXP rs_packageLibraryMutated()
    return R_NilValue;
 }
 
+// Result of a background package-event scan. The background thread fills in
+// 'pkgNames' and sets 'done' under the mutex; the main thread polls it via
+// schedulePeriodicWork. We deliberately avoid executeOnMainThread() here, as
+// scheduling work from a background thread mutates the scheduled-command list
+// without synchronization.
+struct PackageEventScan
+{
+   boost::mutex mutex;
+   bool done = false;
+   std::vector<std::string> pkgNames;
+};
+
+// Coalescing state for package-event scans; main thread only.
+bool s_packageEventScanRunning = false;
+bool s_packageEventScanPending = false;
+
+void startPackageEventScan();
+
+// Runs on a background thread: filesystem access only, no R.
+void scanForInstalledPackages(std::vector<FilePath> libPaths,
+                              boost::shared_ptr<PackageEventScan> pScan)
+{
+   std::vector<std::string> pkgNames;
+   for (const FilePath& libPath : libPaths)
+   {
+      if (!libPath.exists())
+         continue;
+
+      std::vector<FilePath> children;
+      Error error = libPath.getChildren(children);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      for (const FilePath& child : children)
+      {
+         if (child.isDirectory())
+            pkgNames.push_back(child.getFilename());
+      }
+   }
+
+   LOCK_MUTEX(pScan->mutex)
+   {
+      pScan->pkgNames = std::move(pkgNames);
+      pScan->done = true;
+   }
+   END_LOCK_MUTEX
+}
+
+// Main-thread poll for scan completion; returns true to keep polling.
+bool checkPackageEventScan(boost::shared_ptr<PackageEventScan> pScan)
+{
+   std::vector<std::string> pkgNames;
+
+   LOCK_MUTEX(pScan->mutex)
+   {
+      if (!pScan->done)
+         return true;
+
+      // consume the result: background processing can run re-entrantly while
+      // the R call below executes, and a second poll of this same scan should
+      // treat it as still pending rather than register twice
+      pScan->done = false;
+      pkgNames = std::move(pScan->pkgNames);
+   }
+   END_LOCK_MUTEX
+
+   Error error = r::exec::RFunction(".rs.registerPackageEventHooks", pkgNames).call();
+   if (error)
+      LOG_ERROR(error);
+
+   s_packageEventScanRunning = false;
+
+   // if another scan was requested while this one was in flight (e.g. an
+   // install completed), run it now so newly-installed packages get hooked
+   if (s_packageEventScanPending)
+   {
+      s_packageEventScanPending = false;
+      startPackageEventScan();
+   }
+
+   return false;
+}
+
+void startPackageEventScan()
+{
+   s_packageEventScanRunning = true;
+
+   // resolve library paths on the main thread; this calls into R
+   std::vector<FilePath> libPaths = module_context::getLibPaths();
+
+   auto pScan = boost::make_shared<PackageEventScan>();
+   core::thread::safeLaunchThread(
+            boost::bind(scanForInstalledPackages, libPaths, pScan));
+
+   module_context::schedulePeriodicWork(
+            boost::posix_time::milliseconds(100),
+            boost::bind(checkPackageEventScan, pScan),
+            false);
+}
+
+// Enumerating the library paths can be slow on remote filesystems, so it runs
+// on a background thread; if a scan is already in flight, just request another
+// pass once it completes (the running scan may have raced with the library
+// mutation that triggered this call).
+void updatePackageEventsAsync()
+{
+   if (s_packageEventScanRunning)
+      s_packageEventScanPending = true;
+   else
+      startPackageEventScan();
+}
+
+SEXP rs_updatePackageEvents()
+{
+   updatePackageEventsAsync();
+   return R_NilValue;
+}
+
 void detectLibPathsChanges()
 {
    static std::vector<std::string> s_lastLibPaths;
@@ -425,6 +549,12 @@ void onDeferredInit(bool /* newSession */)
    if (error)
       LOG_ERROR(error);
 
+   // subscribe to package attach / detach events. this happens here (rather
+   // than at module init) both to keep the scan off the startup critical path
+   // and because the rs_* routines it relies upon are only registered with R
+   // once the init sequence has completed
+   updatePackageEventsAsync();
+
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
@@ -494,6 +624,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_packageLibraryMutated);
    RS_REGISTER_CALL_METHOD(rs_getCachedAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_downloadAvailablePackages);
+   RS_REGISTER_CALL_METHOD(rs_updatePackageEvents);
 
    using boost::bind;
    using namespace module_context;
