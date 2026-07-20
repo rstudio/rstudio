@@ -20,6 +20,7 @@ import { Err, safeError } from '../core/err';
 import { logger } from '../core/logger';
 
 import i18next from 'i18next';
+import desktop from '../native/desktop.node';
 import { setDockLabel } from '../native/dock.node';
 import { appState, getEventBus } from './app-state';
 import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
@@ -306,6 +307,18 @@ export class MainWindow extends GwtWindow {
 
   setSessionProcess(sessionProcess: ChildProcess | undefined): void {
     this.sessionProcess = sessionProcess;
+
+    // on Windows, dialogs created by the rsession process (e.g. via
+    // utils::askYesNo()) can open behind the RStudio window, leaving the
+    // IDE seemingly frozen while R waits on a dialog the user cannot see
+    // (https://github.com/rstudio/rstudio/issues/18270)
+    if (process.platform === 'win32') {
+      if (sessionProcess?.pid) {
+        desktop.win32WatchSessionDialogs(sessionProcess.pid);
+      } else {
+        desktop.win32StopWatchingSessionDialogs();
+      }
+    }
   }
 
   closeEvent(event: Electron.Event): void {

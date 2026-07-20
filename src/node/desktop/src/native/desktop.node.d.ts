@@ -71,6 +71,27 @@ export declare function openExternal(path: string): void;
 export declare function win32ListMonospaceFonts(): string[];
 
 /**
+ * (Windows only)
+ *
+ * Watch for native dialogs created by the given process, raising each new
+ * dialog above our windows. Replaces any watch registered by a previous
+ * call. Must be called from the Electron main thread (events are delivered
+ * via its message loop); failure to install the watch is silent (logged
+ * only when RS_LOG_LEVEL=debug).
+ *
+ * @param pid The process to watch. A pid of 0 stops any existing watch
+ *   without registering a new one.
+ */
+export declare function win32WatchSessionDialogs(pid: number): void;
+
+/**
+ * (Windows only)
+ *
+ * Stop watching for session dialogs. Safe to call when no watch is active.
+ */
+export declare function win32StopWatchingSessionDialogs(): void;
+
+/**
  * (macOS only)
  *
  * List all fonts available on the system in a single pass.

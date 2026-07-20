@@ -209,7 +209,9 @@ assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.tools
 
    # NOTE: here, 'satisfied' means that the package dependency is satisfiable
    # by the version of the package available on CRAN, not that the dependency
-   # is already installed + satisfies the version constraint
+   # is already installed + satisfies the version constraint; when the package
+   # is not available at all, 'satisfied' instead reports whether the package
+   # is installed (see above)
    satisfied <- !nzchar(version) ||
       package_version(availableVersion) >= package_version(version)
 

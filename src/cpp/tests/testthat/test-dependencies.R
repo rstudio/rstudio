@@ -15,6 +15,24 @@
 
 context("dependencies")
 
+# Fabricates an installed package directory named 'name' in the library at
+# 'lib', with the given DESCRIPTION fields (e.g. Imports, LinkingTo, Priority).
+# Used to exercise the runtime dependency walker against controlled fixtures.
+fabricateInstalledPackage <- function(lib, name, ..., meta = TRUE) {
+   pkgDir <- file.path(lib, name)
+   dir.create(pkgDir, recursive = TRUE)
+
+   description <- c(Package = name, Version = "1.0", c(...))
+   write.dcf(t(as.matrix(description)), file.path(pkgDir, "DESCRIPTION"))
+
+   if (meta) {
+      dir.create(file.path(pkgDir, "Meta"))
+      saveRDS(list(DESCRIPTION = description), file.path(pkgDir, "Meta", "package.rds"))
+   }
+
+   invisible(pkgDir)
+}
+
 test_that("simple topological sort works", {
    # unsorted nodes
    nodes <- c("b", "a", "c")
@@ -207,9 +225,28 @@ test_that("dependency fields are parsed correctly", {
    expect_equal(nrow(deps), 0L)
 })
 
+test_that("malformed declared versions are treated as no version requirement", {
+   deps <- .rs.parsePackageDependencyFields("foo (>= 1.0-), bar (>= 1..0), baz (>= 1)")
+
+   expect_equal(deps$name, c("foo", "bar", "baz"))
+   expect_equal(deps$op, c("", "", ""))
+   expect_equal(deps$version, c("", "", ""))
+})
+
 test_that("packages with intact runtime dependency trees are satisfied", {
+   # base packages are treated as having no runtime dependencies
    expect_equal(.rs.findUnsatisfiedRuntimeDependencies("stats"), list())
-   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("testthat"), list())
+
+   # a controlled fixture: the declared requirement is satisfied exactly
+   lib <- tempfile("library-")
+   fabricateInstalledPackage(lib, "childpkg")
+   fabricateInstalledPackage(lib, "parentpkg", Imports = "childpkg (>= 1.0)")
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("parentpkg"), list())
 })
 
 test_that("packages which are not installed are reported as unsatisfied", {
@@ -222,15 +259,8 @@ test_that("missing and outdated runtime dependencies are reported", {
    # satisfied: one is not installed, and one is installed (utils) but cannot
    # meet the declared version requirement
    lib <- tempfile("library-")
-   pkgDir <- file.path(lib, "fakepkg")
-   dir.create(file.path(pkgDir, "Meta"), recursive = TRUE)
-
-   description <- c(
-      Package = "fakepkg",
-      Version = "1.0",
+   fabricateInstalledPackage(lib, "fakepkg",
       Imports = "missingpkg (>= 2.0), utils (>= 999.999)")
-   write.dcf(t(as.matrix(description)), file.path(pkgDir, "DESCRIPTION"))
-   saveRDS(list(DESCRIPTION = description), file.path(pkgDir, "Meta", "package.rds"))
 
    libPaths <- .libPaths()
    on.exit(.libPaths(libPaths), add = TRUE)
@@ -243,6 +273,137 @@ test_that("missing and outdated runtime dependencies are reported", {
    expect_setequal(names, c("missingpkg", "utils"))
    expect_equal(versions[names == "missingpkg"], "2.0")
    expect_equal(versions[names == "utils"], "999.999")
+})
+
+test_that("the strongest version requirement wins across multiple parents", {
+   lib <- tempfile("library-")
+   fabricateInstalledPackage(lib, "parenta", Imports = "missingpkg (>= 1.0)")
+   fabricateInstalledPackage(lib, "parentb", Imports = "missingpkg (>= 3.0)")
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   # the strongest requirement is kept regardless of visit order
+   unsatisfied <- .rs.findUnsatisfiedRuntimeDependencies(c("parenta", "parentb"))
+   expect_equal(unsatisfied, list(list(name = "missingpkg", version = "3.0")))
+
+   unsatisfied <- .rs.findUnsatisfiedRuntimeDependencies(c("parentb", "parenta"))
+   expect_equal(unsatisfied, list(list(name = "missingpkg", version = "3.0")))
+})
+
+test_that("strict version requirements are honored at the boundary", {
+   utilsVersion <- as.character(packageVersion("utils"))
+
+   lib <- tempfile("library-")
+   fabricateInstalledPackage(lib, "minpkg",
+      Imports = sprintf("utils (>= %s)", utilsVersion))
+   fabricateInstalledPackage(lib, "strictpkg",
+      Imports = sprintf("utils (> %s)", utilsVersion))
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   # '>=' is satisfied by an equal version; '>' is not
+   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("minpkg"), list())
+   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("strictpkg"),
+                list(list(name = "utils", version = utilsVersion)))
+})
+
+test_that("LinkingTo dependencies are not treated as runtime dependencies", {
+   lib <- tempfile("library-")
+   fabricateInstalledPackage(lib, "linkpkg", LinkingTo = "missingheaderpkg")
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("linkpkg"), list())
+})
+
+test_that("the DESCRIPTION file is consulted when parsed metadata is missing", {
+   lib <- tempfile("library-")
+   fabricateInstalledPackage(lib, "nometapkg",
+      Imports = "missingpkg (>= 2.0)", meta = FALSE)
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   unsatisfied <- .rs.findUnsatisfiedRuntimeDependencies("nometapkg")
+   expect_equal(unsatisfied, list(list(name = "missingpkg", version = "2.0")))
+})
+
+test_that("packages with base priority are treated as having no dependencies", {
+   lib <- tempfile("library-")
+   fabricateInstalledPackage(lib, "fakebasepkg",
+      Priority = "base", Imports = "missingpkg")
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   expect_equal(.rs.findUnsatisfiedRuntimeDependencies("fakebasepkg"), list())
+})
+
+test_that("malformed version requirements do not break the walker", {
+   lib <- tempfile("library-")
+   fabricateInstalledPackage(lib, "badverpkg",
+      Imports = "missingpkg (>= 1.0-), utils (>= 1..0)")
+
+   libPaths <- .libPaths()
+   on.exit(.libPaths(libPaths), add = TRUE)
+   .libPaths(c(lib, libPaths))
+
+   # the missing package is still reported, minus its unparseable version;
+   # the malformed requirement on the installed package is ignored
+   unsatisfied <- .rs.findUnsatisfiedRuntimeDependencies("badverpkg")
+   expect_equal(unsatisfied, list(list(name = "missingpkg", version = "")))
+})
+
+test_that("unreadable package metadata is treated as no dependencies", {
+   deps <- .rs.installedPackageDependencies(tempfile("nonexistent-"))
+   expect_equal(nrow(deps), 0L)
+})
+
+test_that("packageCRANVersionAvailable checks the available version", {
+   # fabricate a package repository advertising a single package
+   repo <- tempfile("repo-")
+   contrib <- file.path(repo, "src", "contrib")
+   dir.create(contrib, recursive = TRUE)
+   writeLines(
+      c("Package: fakecranpkg", "Version: 1.5", ""),
+      file.path(contrib, "PACKAGES"))
+
+   oldRepos <- getOption("repos")
+   on.exit(options(repos = oldRepos), add = TRUE)
+   repoUrl <- paste0("file:///", sub("^/+", "", normalizePath(repo, winslash = "/")))
+   options(repos = c(CRAN = repoUrl))
+
+   # no version requirement: satisfiable
+   result <- .rs.packageCRANVersionAvailable("fakecranpkg", "", source = TRUE)
+   expect_equal(result$version, "1.5")
+   expect_true(result$satisfied)
+
+   # requirement met by the available version
+   result <- .rs.packageCRANVersionAvailable("fakecranpkg", "1.0", source = TRUE)
+   expect_true(result$satisfied)
+
+   # regression check: the required version was previously shadowed by the
+   # available version, so unsatisfiable requirements were reported satisfied
+   result <- .rs.packageCRANVersionAvailable("fakecranpkg", "2.0", source = TRUE)
+   expect_equal(result$version, "1.5")
+   expect_false(result$satisfied)
+
+   # packages missing from the repository fall back to reporting whether the
+   # package is installed
+   result <- .rs.packageCRANVersionAvailable("utils", "1.0", source = TRUE)
+   expect_equal(result$version, "")
+   expect_true(result$satisfied)
+
+   result <- .rs.packageCRANVersionAvailable("nosuchpackage54321", "1.0", source = TRUE)
+   expect_false(result$satisfied)
 })
 
 
