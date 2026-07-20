@@ -201,6 +201,11 @@ describe('Xdg', () => {
     });
   });
   describe('verifyUserDirs', () => {
+    // NOTE: the non-writable scenarios below are skipped on win32; creating a
+    // directory that denies writes requires ACL manipulation that isn't
+    // practical here, so the probe-file behavior (which exists because
+    // fs.accessSync is unreliable for directories on Windows) is only
+    // exercised on POSIX platforms
     let testRoot: string;
 
     beforeEach(() => {

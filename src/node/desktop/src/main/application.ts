@@ -52,6 +52,28 @@ import { ModalDialogTracker } from './modal-dialog-tracker';
 import LogOptions from './log-options';
 
 /**
+ * Collects problems with the state folders RStudio needs to write at runtime:
+ * the user config and data directories, plus the log directory actually in
+ * use (which may have been relocated via logging.conf). Missing folders are
+ * created as a side effect.
+ */
+export function collectStateDirIssues(): UserDirIssue[] {
+  const issues = Xdg.verifyUserDirs();
+
+  try {
+    const logDir = new LogOptions().getLogFile().getParent();
+    const message = checkDirectoryWritable(logDir);
+    if (message) {
+      issues.push({ directory: logDir.getAbsolutePath(), message: message });
+    }
+  } catch (error: unknown) {
+    logger().logError(error);
+  }
+
+  return issues;
+}
+
+/**
  * The RStudio application
  */
 export class Application implements AppState {
@@ -126,20 +148,7 @@ export class Application implements AppState {
    * error page (which also includes these details) can be shown.
    */
   private checkStateDirectories(): void {
-    const issues = Xdg.verifyUserDirs();
-
-    // the log directory may have been relocated via logging.conf, so check
-    // the directory actually in use rather than assuming the default
-    try {
-      const logDir = new LogOptions().getLogFile().getParent();
-      const message = checkDirectoryWritable(logDir);
-      if (message) {
-        issues.push({ directory: logDir.getAbsolutePath(), message: message });
-      }
-    } catch (error: unknown) {
-      logger().logError(error);
-    }
-
+    const issues = collectStateDirIssues();
     if (issues.length === 0) {
       return;
     }

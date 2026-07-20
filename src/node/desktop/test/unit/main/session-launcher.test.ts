@@ -20,7 +20,7 @@ import { restore, saveAndClear } from '../unit-utils';
 import { FilePath } from '../../../src/core/file-path';
 import { getenv } from '../../../src/core/environment';
 
-import { SessionLauncher } from '../../../src/main/session-launcher';
+import { launchFailedDetail, SessionLauncher } from '../../../src/main/session-launcher';
 import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -48,6 +48,21 @@ describe('SessionLauncher', () => {
     const token = SessionLauncher.launcherToken;
     assert.isNotEmpty(token);
     assert.strictEqual(SessionLauncher.launcherToken, token);
+  });
+  describe('launchFailedDetail', () => {
+    const issues = [{ directory: '/home/user/.local/share/rstudio/log', message: 'permission denied' }];
+
+    it('prefers the abend log message when present', () => {
+      assert.strictEqual(launchFailedDetail('session aborted', issues), 'session aborted');
+    });
+    it('reports state folder issues when there is no abend message', () => {
+      const detail = launchFailedDetail(null, issues);
+      assert.include(detail, '/home/user/.local/share/rstudio/log');
+      assert.include(detail, 'permission denied');
+    });
+    it('falls back to a placeholder when there is nothing to report', () => {
+      assert.strictEqual(launchFailedDetail(null, []), '[No error available]');
+    });
   });
   it('buildLaunchContext sets RS_LOCAL_PEER on Win32', async () => {
     const launcher = getNewLauncher();

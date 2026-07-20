@@ -60,7 +60,12 @@ describe('WinstonLogger', () => {
     });
   });
 
-  it('Logger falls back to console when log directory is not writable', function () {
+  // NOTE: the non-writable scenarios below are skipped on win32; creating a
+  // directory that denies writes requires ACL manipulation that isn't
+  // practical here, so the probe-file behavior (which exists because
+  // fs.accessSync is unreliable for directories on Windows) is only
+  // exercised on POSIX platforms
+  it('Logger falls back to console when log directory cannot be created', function () {
     if (process.platform === 'win32') {
       this.skip();
     }
@@ -73,6 +78,28 @@ describe('WinstonLogger', () => {
 
     // constructing the logger must not throw even though the log directory
     // cannot be created; it should fall back to console logging
+    const logger = new WinstonLogger(logOptions);
+    assert.isNull(logger.fileTransport);
+    assert.doesNotThrow(() => logger.logErrorMessage('message after log dir failure'));
+    logger.closeLogFile();
+
+    chmodSync(roDir, 0o700);
+  });
+
+  it('Logger falls back to console when existing log directory is not writable', function () {
+    if (process.platform === 'win32') {
+      this.skip();
+    }
+
+    // winston does not throw in this case -- it swallows the stream error and
+    // silently drops all log output -- so the fallback relies on the explicit
+    // writability probe rather than the constructor try/catch
+    const roDir = './tmp/readonly-existing';
+    mkdirSync(roDir, { recursive: true });
+    chmodSync(roDir, 0o500);
+
+    const logOptions = new LogOptions(undefined, { config: `[*]\nlog-dir=${roDir}` });
+
     const logger = new WinstonLogger(logOptions);
     assert.isNull(logger.fileTransport);
     assert.doesNotThrow(() => logger.logErrorMessage('message after log dir failure'));

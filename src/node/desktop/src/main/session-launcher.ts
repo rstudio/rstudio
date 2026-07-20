@@ -27,6 +27,7 @@ import { generateShortenedUuid, localPeer } from '../core/system';
 
 import i18next from 'i18next';
 import { setTimeoutPromise, sleepPromise } from '../core/wait-utils';
+import { UserDirIssue } from '../core/xdg';
 import { DesktopActivation } from './activation-overlay';
 import { appState } from './app-state';
 import { ApplicationLaunch } from './application-launch';
@@ -138,6 +139,26 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
 
 function abendLogPath(): FilePath {
   return userLogPath().completePath('rsession_abort_msg.log');
+}
+
+/**
+ * Selects the 'launch_failed' detail for the launch error page: the abend log
+ * message when the session wrote one, otherwise any state folder issues found
+ * at startup (the session cannot write an abend log when the log folder
+ * itself is not writable), otherwise a placeholder.
+ */
+export function launchFailedDetail(abendMessage: string | null, stateDirIssues: UserDirIssue[]): string {
+  if (abendMessage !== null) {
+    return abendMessage;
+  }
+
+  if (stateDirIssues.length > 0) {
+    return stateDirIssues
+      .map((issue) => `Unable to write to folder ${issue.directory}: ${issue.message}`)
+      .join('\n');
+  }
+
+  return '[No error available]';
 }
 
 export class SessionLauncher {
@@ -367,20 +388,10 @@ export class SessionLauncher {
     const ss = `RStudio ${info.RSTUDIO_VERSION} "${info.RSTUDIO_RELEASE_NAME} " (${gitCommit}, ${info.RSTUDIO_BUILD_DATE}) for ${info.RSTUDIO_PACKAGE_OS}`;
     vars.set('version', ss);
 
-    // Collect message from the abnormal end log path; if the session could
-    // not write one (e.g. because the log folder itself is not writable),
-    // report any state folder issues discovered at startup instead
-    const stateDirIssues = appState().stateDirIssues;
-    if (abendLogPath().existsSync()) {
-      vars.set('launch_failed', this.launchFailedErrorMessage());
-    } else if (stateDirIssues.length > 0) {
-      const details = stateDirIssues
-        .map((issue) => `Unable to write to folder ${issue.directory}: ${issue.message}`)
-        .join('\n');
-      vars.set('launch_failed', details);
-    } else {
-      vars.set('launch_failed', '[No error available]');
-    }
+    // Collect message from the abnormal end log path, falling back to any
+    // state folder issues discovered at startup
+    const abendMessage = abendLogPath().existsSync() ? this.launchFailedErrorMessage() : null;
+    vars.set('launch_failed', launchFailedDetail(abendMessage, appState().stateDirIssues));
 
     // Collect the rsession process exit code
     let exitCode = EXIT_FAILURE;
