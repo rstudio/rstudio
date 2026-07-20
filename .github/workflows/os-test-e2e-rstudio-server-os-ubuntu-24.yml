@@ -445,6 +445,17 @@ jobs:
           logger-type=file
           EOF
 
+      # GitHub Copilot is enabled by default only in RStudio Desktop; on Server
+      # it is an admin opt-in and `copilot-enabled` defaults to false. Without
+      # it, the Assistant preferences pane omits the "GitHub Copilot" code
+      # assistant option, which breaks the @ai Copilot suite and the general
+      # Assistant preference tests that select that option. Enable it here so
+      # Server matches Desktop. (Posit Assistant is already available on Server
+      # via the open-source overlay, so it needs no equivalent flag.)
+      - name: Enable GitHub Copilot for rsessions
+        run: |
+          echo "copilot-enabled=1" | sudo tee -a /etc/rstudio/rsession.conf >/dev/null
+
       # The Playwright e2e tests drive RStudio through the window.rstudio
       # automation bridge, which is only exposed when rsession is started with
       # --automation-agent. server.fixture.ts forwards this flag when it
