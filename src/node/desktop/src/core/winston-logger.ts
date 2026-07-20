@@ -80,17 +80,32 @@ export class WinstonLogger implements Logger {
     }
 
     if (!logTransport) {
-      logTransport = new winston.transports.File({
-        filename: logFile.getAbsolutePath(),
-        tailable: true,
-        maxsize: 2000000, // TODO: use max-size from logging.conf (convert from mb to bytes)
-        maxFiles: 100,
-      }); // TODO: use max-rotation from logging.conf
+      try {
+        logTransport = new winston.transports.File({
+          filename: logFile.getAbsolutePath(),
+          tailable: true,
+          maxsize: 2000000, // TODO: use max-size from logging.conf (convert from mb to bytes)
+          maxFiles: 100,
+        }); // TODO: use max-rotation from logging.conf
 
-      this.fileTransport = logTransport;
+        this.fileTransport = logTransport;
+      } catch (error: unknown) {
+        // winston throws if the log directory cannot be created (e.g. EACCES);
+        // fall back to console logging so startup errors remain visible
+        // https://github.com/rstudio/rstudio/issues/18179
+        logTransport = new Console();
+        consoleLogging = true;
+        optionError = `Unable to write log file ${logFile.getAbsolutePath()}: ${safeError(error).message}`;
+      }
     }
 
     this.logger.add(logTransport);
+
+    // don't let transport errors (e.g. the log file becoming unwritable after
+    // startup) surface as uncaught exceptions
+    this.logger.on('error', (error) => {
+      console.error(safeError(error));
+    });
 
     // on dev builds, always log to console
     if (!consoleLogging && !app.isPackaged) {

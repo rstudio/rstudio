@@ -47,8 +47,9 @@ import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
-import { Xdg } from '../core/xdg';
+import { checkDirectoryWritable, UserDirIssue, Xdg } from '../core/xdg';
 import { ModalDialogTracker } from './modal-dialog-tracker';
+import LogOptions from './log-options';
 
 /**
  * The RStudio application
@@ -69,6 +70,7 @@ export class Application implements AppState {
   pendingWindows = new Array<PendingWindow>();
   server?: Server;
   client?: Client;
+  stateDirIssues: UserDirIssue[] = [];
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
@@ -86,6 +88,11 @@ export class Application implements AppState {
     if (status.exit) {
       return status;
     }
+
+    // verify that the folders RStudio writes at runtime are accessible, and
+    // surface any problems in an error dialog once the app is ready
+    // https://github.com/rstudio/rstudio/issues/18179
+    this.checkStateDirectories();
 
     // attempt to remove stale lockfiles, as they can impede application startup
     try {
@@ -110,6 +117,53 @@ export class Application implements AppState {
 
     logger().logDebug('Ready to run');
     return run();
+  }
+
+  /**
+   * Checks that the state folders RStudio needs to write at runtime exist
+   * (creating them when missing) and are writable, reporting any problems
+   * with an error dialog. Startup continues regardless, so that the R session
+   * error page (which also includes these details) can be shown.
+   */
+  private checkStateDirectories(): void {
+    const issues = Xdg.verifyUserDirs();
+
+    // the log directory may have been relocated via logging.conf, so check
+    // the directory actually in use rather than assuming the default
+    try {
+      const logDir = new LogOptions().getLogFile().getParent();
+      const message = checkDirectoryWritable(logDir);
+      if (message) {
+        issues.push({ directory: logDir.getAbsolutePath(), message: message });
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
+    }
+
+    if (issues.length === 0) {
+      return;
+    }
+
+    for (const issue of issues) {
+      logger().logErrorMessage(`Unable to write to folder ${issue.directory}: ${issue.message}`);
+    }
+
+    this.stateDirIssues = issues;
+
+    // the dialog can only be shown once the app is ready; don't block startup
+    // on it, as Chromium command-line switches must be appended before then
+    const details = issues.map((issue) => `${issue.directory}\n(${issue.message})`).join('\n\n');
+    app
+      .whenReady()
+      .then(async () =>
+        createStandaloneErrorDialog(
+          i18next.t('applicationTs.stateFolderErrorTitle'),
+          `${i18next.t('applicationTs.stateFolderErrorPrefix')}\n\n${details}\n\n${i18next.t(
+            'applicationTs.stateFolderErrorSuffix',
+          )}`,
+        ),
+      )
+      .catch((error: unknown) => logger().logError(error));
   }
 
   private shouldInstanceOpen() {

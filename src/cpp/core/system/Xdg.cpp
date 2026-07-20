@@ -393,6 +393,7 @@ void verifyUserDirs(
 
    testDir(userConfigDir(user, homeDir), ERROR_LOCATION);
    testDir(userDataDir(user, homeDir), ERROR_LOCATION);
+   testDir(userDataDir(user, homeDir).completePath("log"), ERROR_LOCATION);
 #endif
 }
 

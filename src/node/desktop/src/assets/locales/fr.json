@@ -110,7 +110,10 @@
     "notFoundDotLowercase": "non trouvé.",
     "errorFindingR": "Erreur de recherche de R",
     "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio n'a pas réussi à trouver d'installation R sur le système. Merci d'installer R avant d'utiliser RStudio.\n\nVous pouvez télécharger R sur le site officiel du projet R. \nVoulez-vous y aller maintenant ?",
-    "newRstudioWindow": "Nouvelle fenêtre RStudio"
+    "newRstudioWindow": "Nouvelle fenêtre RStudio",
+    "stateFolderErrorTitle": "RStudio ne peut pas écrire dans les dossiers requis",
+    "stateFolderErrorPrefix": "RStudio nécessite un accès en écriture aux dossiers suivants, mais l'écriture a échoué :",
+    "stateFolderErrorSuffix": "RStudio peut ne pas démarrer ou ne pas fonctionner correctement tant que ce problème n'est pas résolu. Veuillez vérifier que ces dossiers ont les permissions et le propriétaire attendus."
   },
   "detectRTs": {
     "rNotFound": "R non trouvé",
