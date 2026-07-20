@@ -624,20 +624,51 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (projectAssistant == null || projectAssistant.isEmpty())
          selAssistant_.setValue(ASSISTANT_DEFAULT);
       else
-         selAssistant_.setValue(projectAssistant);
+         setPreservingValue(selAssistant_, projectAssistant, assistantLabel(projectAssistant));
 
       // Load chat provider selection from project options
       String projectChatProvider = options.getAssistantOptions().chat_provider;
       if (projectChatProvider == null || projectChatProvider.isEmpty())
          selChatProvider_.setValue(CHAT_PROVIDER_DEFAULT);
       else
-         selChatProvider_.setValue(projectChatProvider);
+         setPreservingValue(selChatProvider_, projectChatProvider, chatProviderLabel(projectChatProvider));
 
       initDisplay(options);
       initModel();
 
       // Note: Status refresh is now handled in the onChange handler
       // which is triggered by assistantChangedHandler.onChange(null) in initDisplay()
+   }
+
+   // Set a selector's value, keeping a stored selection whose provider is not
+   // offered in this build (filtered out of the selector) selectable, so the
+   // existing project setting is shown and preserved rather than silently reset
+   // to "(Default)" when project options are next saved.
+   private void setPreservingValue(SelectWidget selector, String value, String label)
+   {
+      if (!selector.setValue(value))
+      {
+         selector.addChoice(label, value);
+         selector.setValue(value);
+      }
+   }
+
+   // Labels for the provider values that may be filtered out of the selectors.
+   // "(Default)" and "none" are always present, so they never need re-adding.
+   private String assistantLabel(String value)
+   {
+      if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+         return prefsConstants_.assistantEnum_posit();
+      if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
+         return prefsConstants_.assistantEnum_copilot();
+      return value;
+   }
+
+   private String chatProviderLabel(String value)
+   {
+      if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
+         return prefsConstants_.chatProviderEnum_posit();
+      return value;
    }
    
    @Override
