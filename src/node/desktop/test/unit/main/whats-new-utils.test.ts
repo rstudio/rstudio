@@ -27,6 +27,8 @@ import {
   resolveReleaseName,
   resolveWhatsNewContentPath,
   createLocalUrlChecker,
+  evaluateWhatsNewVisibility,
+  WhatsNewVisibilityInputs,
 } from '../../../src/main/whats-new-utils';
 
 // Unix-style file URLs (no drive letter) are not valid Windows paths,
@@ -317,5 +319,84 @@ describe('whats-new-utils', () => {
           `${entry.name}/index.html is missing the base stylesheet link`);
       });
     }
+  });
+
+  describe('evaluateWhatsNewVisibility', () => {
+    // A baseline where every gate says "show"; individual tests flip one field.
+    const shows: WhatsNewVisibilityInputs = {
+      contentAvailable: true,
+      forceShow: false,
+      forceDisable: false,
+      userPrefEnabled: true,
+      isRelease: true,
+      alreadySeen: () => false,
+    };
+
+    it('shows when all conditions are met', () => {
+      assert.isTrue(evaluateWhatsNewVisibility(shows));
+    });
+
+    it('never shows when content is unavailable, even if force-shown', () => {
+      assert.isFalse(evaluateWhatsNewVisibility({ ...shows, contentAvailable: false }));
+      assert.isFalse(
+        evaluateWhatsNewVisibility({ ...shows, contentAvailable: false, forceShow: true }),
+      );
+    });
+
+    it('force-show overrides the user preference, build type, and seen state', () => {
+      assert.isTrue(
+        evaluateWhatsNewVisibility({
+          ...shows,
+          forceShow: true,
+          userPrefEnabled: false,
+          isRelease: false,
+          alreadySeen: () => true,
+        }),
+      );
+    });
+
+    it('force-show takes precedence over force-disable', () => {
+      assert.isTrue(evaluateWhatsNewVisibility({ ...shows, forceShow: true, forceDisable: true }));
+    });
+
+    it('force-disable overrides an enabled preference on an unseen release', () => {
+      assert.isFalse(evaluateWhatsNewVisibility({ ...shows, forceDisable: true }));
+    });
+
+    it('does not show when the user preference is disabled', () => {
+      assert.isFalse(evaluateWhatsNewVisibility({ ...shows, userPrefEnabled: false }));
+    });
+
+    it('does not show on non-release builds', () => {
+      assert.isFalse(evaluateWhatsNewVisibility({ ...shows, isRelease: false }));
+    });
+
+    it('does not show a release that has already been seen', () => {
+      assert.isFalse(evaluateWhatsNewVisibility({ ...shows, alreadySeen: () => true }));
+    });
+
+    it('does not evaluate the seen-state thunk when an earlier gate decides', () => {
+      // Each of these gates resolves before the seen check, so the thunk (which
+      // in production opens the on-disk seen-state store) must not be called.
+      const cases: Partial<WhatsNewVisibilityInputs>[] = [
+        { contentAvailable: false },
+        { forceShow: true },
+        { forceDisable: true },
+        { userPrefEnabled: false },
+        { isRelease: false },
+      ];
+      for (const override of cases) {
+        let called = false;
+        evaluateWhatsNewVisibility({ ...shows, ...override, alreadySeen: () => { called = true; return false; } });
+        assert.isFalse(called, `seen-state thunk should not run for ${JSON.stringify(override)}`);
+      }
+    });
+
+    it('evaluates the seen-state thunk only when all earlier gates pass', () => {
+      let called = false;
+      const result = evaluateWhatsNewVisibility({ ...shows, alreadySeen: () => { called = true; return false; } });
+      assert.isTrue(called);
+      assert.isTrue(result);
+    });
   });
 });

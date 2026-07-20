@@ -26,11 +26,13 @@ import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VirtualizedDataGrid;
 import org.rstudio.studio.client.ResizableHeader;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
+import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesConstants;
@@ -196,8 +198,11 @@ public class FilesList extends Composite
             {
                if (object == parentPath_)
                   return FileIcon.PARENT_FOLDER_ICON;
-               else
-                  return fileTypeRegistry.getIconForFile(object);
+
+               FileIcon icon = fileTypeRegistry.getIconForFile(object);
+               if (object.isLink())
+                  icon = decorateLinkIcon(object, icon);
+               return icon;
             }
          };
       iconColumn.setSortable(true);
@@ -219,6 +224,30 @@ public class FilesList extends Composite
       });
 
       return iconColumn;
+   }
+
+   // Decorates a file-type icon with the link badge (#9924) for a symlink,
+   // macOS Finder alias, or Windows shortcut. The tooltip mimics `ls -l`
+   // ("name -> target"), falling back to just the name when the target is
+   // unavailable (e.g. a broken alias or shortcut). Returns a new FileIcon,
+   // leaving the shared registry icon untouched.
+   private static FileIcon decorateLinkIcon(FileSystemItem item, FileIcon icon)
+   {
+      ImageResource2x badge =
+         new ImageResource2x(FileIconResources.INSTANCE.iconLinkBadge2x());
+
+      String description = item.isSymlink()
+         ? constants_.symbolicLinkBadgeLabel()
+         : item.isShortcut()
+            ? constants_.shortcutBadgeLabel()
+            : constants_.aliasBadgeLabel();
+
+      String target = item.getLinkTarget();
+      String tooltip = target != null
+         ? item.getName() + " -> " + target
+         : item.getName();
+
+      return icon.withLinkBadge(badge, description, tooltip);
    }
 
    private LinkColumn<FileSystemItem> addNameColumn()

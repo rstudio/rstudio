@@ -29,6 +29,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
+import org.rstudio.studio.client.workbench.lsp.LspServerOperations;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
@@ -63,7 +64,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 TestServerOperations,
                                                 CryptoServerOperations,
                                                 AssistantServerOperations,
-                                                ChatServerOperations
+                                                ChatServerOperations,
+                                                LspServerOperations
 {
    // Consent check for an r2d3 ('// !preview r2d3 ...') file preview. The
    // backend requires the built command to be a single statement, classifies
@@ -284,7 +286,10 @@ public interface SourceServerOperations extends FilesServerOperations,
 
    void createAliasedPath(String path,
                           ServerRequestCallback<String> requestCallback);
-   
+
+   void recoverPackageSource(String path,
+                             ServerRequestCallback<String> requestCallback);
+
    public void getFileContents(String path,
                                String encoding,
                                ServerRequestCallback<String> requestCallback);

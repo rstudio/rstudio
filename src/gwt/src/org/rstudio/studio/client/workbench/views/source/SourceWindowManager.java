@@ -938,7 +938,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             // notify Copilot and Chat of the focused document
             if (event.getId() != null)
             {
-               server_.assistantDocFocused(event.getId(), new VoidServerRequestCallback());
+               server_.lspDocFocused(event.getId(), new VoidServerRequestCallback());
                // Get selections from the active editor and send to Chat
                JsArray<JavaScriptObject> selections = pSource_.get().getActiveEditorSelectionsJson();
                server_.chatDocFocused(event.getId(), selections, new VoidServerRequestCallback());

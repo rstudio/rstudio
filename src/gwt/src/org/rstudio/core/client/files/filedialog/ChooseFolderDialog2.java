@@ -75,9 +75,15 @@ public class ChooseFolderDialog2 extends FileSystemDialog
       super.onSelection(event);
       FileSystemItem item = event.getSelectedItem();
       if (item != null)
-         browser_.setFilename(item.getPath());
+      {
+         // a macOS Finder alias or Windows shortcut to a folder stands in
+         // for its target; choosing it must yield the target directory
+         browser_.setFilename(item.resolveAliasTarget().getPath());
+      }
       else
+      {
          browser_.setFilename("");
+      }
    }
 
    @Override

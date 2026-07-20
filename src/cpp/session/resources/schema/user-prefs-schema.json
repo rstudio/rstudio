@@ -326,6 +326,12 @@
             "title": "Keybinding set for editor",
             "description": "The keybindings to use in the RStudio code editor."
         },
+        "vim_load_vimrc": {
+            "type": "boolean",
+            "default": false,
+            "title": "Load Vim keybindings from a vimrc file",
+            "description": "Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled."
+        },
         "insert_matching": {
             "type": "boolean",
             "default": true,
@@ -1429,6 +1435,12 @@
             "default": true,
             "title": "Show splash screen when RStudio is starting",
             "description": "Whether to show the splash screen when RStudio is starting."
+        },
+        "show_whats_new": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show the What's New window automatically after updating RStudio",
+            "description": "Whether to automatically show the What's New window after updating to a new version of RStudio Desktop."
         },
         "default_r_version": {
             "type": "object",

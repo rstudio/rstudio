@@ -15,6 +15,11 @@
 
 #include "SessionLSP.hpp"
 
+#include <boost/make_shared.hpp>
+
+#include <core/Exec.hpp>
+#include <core/json/JsonRpc.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio;
@@ -343,6 +348,62 @@ void didClose(DidCloseTextDocumentParams params)
    logEvent("textDocument/didClose", toJson(params));
 }
 
+void didFocus(DidFocusTextDocumentParams params,
+              boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   logEvent("textDocument/didFocus", toJson(params));
+}
+
+// Fired by the client whenever a source document receives focus. This is
+// intentionally cheap: resolve the document's metadata (no contents), then
+// broadcast the focus change to interested modules via the didFocus signal.
+// The RPC is registered async so the client never waits on a response.
+Error lspDocFocused(const core::json::JsonRpcRequest& request,
+                    const core::json::JsonRpcFunctionContinuation& continuation)
+{
+   core::json::JsonRpcResponse response;
+
+   std::string documentId;
+   Error error = core::json::readParams(request.params, &documentId);
+   if (error)
+   {
+      LOG_ERROR(error);
+      continuation(error, &response);
+      return error;
+   }
+
+   // Resolve the source document, skipping the read of its contents;
+   // only document metadata is needed here.
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   error = source_database::get(documentId, false, pDoc);
+   if (error)
+   {
+      // The document may have been closed before we handled the notification;
+      // that's expected during ordinary tab churn, so acknowledge it quietly.
+      // Anything else (e.g. malformed document metadata) is a real error.
+      if (isFileNotFoundError(error))
+      {
+         continuation(Success(), &response);
+         return Success();
+      }
+
+      LOG_ERROR(error);
+      continuation(error, &response);
+      return error;
+   }
+
+   DidFocusTextDocumentParams params = {
+      .textDocument = {
+         .uri = uriFromDocument(pDoc),
+      }
+   };
+
+   events().didFocus(params, pDoc);
+
+   continuation(Success(), &response);
+   return Success();
+}
+
 } // end anonymous namespace
 
 Error initialize()
@@ -357,8 +418,16 @@ Error initialize()
    events().didOpen.connect(didOpen);
    events().didChange.connect(didChange);
    events().didClose.connect(didClose);
+   events().didFocus.connect(didFocus);
 
-   return Success();
+   using boost::bind;
+   using namespace module_context;
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(registerAsyncRpcMethod, "lsp_doc_focused", lspDocFocused))
+         ;
+   return initBlock.execute();
 }
 
 } // end namespace lsp

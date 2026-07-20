@@ -205,14 +205,17 @@ assign(".rs.loggedMessageCache", new.env(parent = emptyenv()), envir = .rs.tools
    
    # take the first row in case we had duplicates
    dbEntry <- dbEntries[1, ]
-   version <- dbEntry$Version
-   
+   availableVersion <- dbEntry$Version
+
    # NOTE: here, 'satisfied' means that the package dependency is satisfiable
    # by the version of the package available on CRAN, not that the dependency
    # is already installed + satisfies the version constraint
+   satisfied <- !nzchar(version) ||
+      package_version(availableVersion) >= package_version(version)
+
    list(
-      version   = version,
-      satisfied = package_version(version) >= package_version(version)
+      version   = availableVersion,
+      satisfied = satisfied
    )
 })
 

@@ -1,0 +1,26 @@
+name: "Set up MSVC environment"
+description: >
+  Locate the newest Visual Studio installation providing the VC++ x86/x64
+  toolset (via vswhere) and add its VC\Auxiliary\Build folder to GITHUB_PATH,
+  so later steps can invoke vcvarsall.bat by name. Fails the job when no
+  suitable Visual Studio installation exists on the runner. Windows-only.
+
+runs:
+  using: "composite"
+  steps:
+    - name: Locate Visual Studio and add vcvarsall.bat to PATH
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $vsPath = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' `
+          -latest -products * `
+          -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+          -property installationPath
+        if ([string]::IsNullOrEmpty($vsPath)) {
+          Write-Error "vswhere could not find a Visual Studio installation with VC++ tools"
+          exit 1
+        }
+        Write-Host "Visual Studio installation: $vsPath"
+        $vcBuildPath = Join-Path $vsPath 'VC\Auxiliary\Build'
+        Add-Content -Path $env:GITHUB_PATH -Value $vcBuildPath
+        Write-Host "Added to PATH: $vcBuildPath"

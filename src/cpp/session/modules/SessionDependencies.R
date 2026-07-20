@@ -198,6 +198,137 @@
    result
 })
 
+# Parses DESCRIPTION-style dependency fields (e.g. "foo (>= 1.0), bar") into a
+# data frame with 'name', 'op', and 'version' columns. Entries without a version
+# requirement have empty 'op' and 'version'; the R version requirement is dropped.
+.rs.addFunction("parsePackageDependencyFields", function(contents) {
+   contents <- paste(contents[!is.na(contents)], collapse = ", ")
+   entries <- trimws(strsplit(contents, ",")[[1]])
+   entries <- entries[nzchar(entries)]
+
+   pattern <- "^([a-zA-Z0-9._]+)(?:\\s*\\(\\s*([><=]+)\\s*([0-9.-]+)\\s*\\))?"
+   matches <- regmatches(entries, regexec(pattern, entries))
+
+   name <- character()
+   op <- character()
+   version <- character()
+   for (match in matches) {
+      if (length(match) < 4 || identical(match[[2]], "R"))
+         next
+
+      name <- c(name, match[[2]])
+      op <- c(op, match[[3]])
+      version <- c(version, match[[4]])
+   }
+
+   data.frame(name = name, op = op, version = version, stringsAsFactors = FALSE)
+})
+
+# Reads the runtime dependencies (Depends and Imports) declared by an installed
+# package, preferring the parsed DESCRIPTION metadata stored with the package.
+# LinkingTo is excluded, as it declares a build-time requirement rather than a
+# runtime one. Base packages are treated as having no dependencies.
+.rs.addFunction("installedPackageDependencies", function(pkgPath) {
+   description <- tryCatch(
+      readRDS(file.path(pkgPath, "Meta", "package.rds"))$DESCRIPTION,
+      error = function(e) NULL)
+
+   if (is.null(description)) {
+      description <- tryCatch(
+         drop(read.dcf(file.path(pkgPath, "DESCRIPTION"))),
+         error = function(e) NULL)
+   }
+
+   if (is.null(description) || identical(unname(description["Priority"]), "base"))
+      return(.rs.parsePackageDependencyFields(character()))
+
+   fields <- description[intersect(c("Depends", "Imports"), names(description))]
+   .rs.parsePackageDependencyFields(fields)
+})
+
+# Records an unsatisfied dependency, keeping the strongest version requirement
+# seen when a dependency is required by multiple packages.
+.rs.addFunction("markUnsatisfiedDependency", function(unsatisfied, name, version) {
+   record <- unsatisfied[[name]]
+   supersedes <- is.null(record) ||
+      (nzchar(version) &&
+       (!nzchar(record$version) ||
+        package_version(version) > package_version(record$version)))
+
+   if (supersedes)
+      unsatisfied[[name]] <- list(name = name, version = version)
+
+   unsatisfied
+})
+
+# Verifies that the given packages, along with their recursive runtime
+# dependencies (the Depends and Imports declared by the installed packages
+# themselves), are installed with the required versions. Returns a list of
+# records with 'name' and 'version' entries for each missing or outdated
+# dependency; 'version' is the strongest declared requirement, or an empty
+# string when no version was required.
+#
+# Note that this intentionally visits only the packages reachable from the
+# requested packages, rather than scanning the entire library with
+# installed.packages() -- full library scans can be very slow with large
+# libraries on networked filesystems.
+.rs.addFunction("findUnsatisfiedRuntimeDependencies", function(packages) {
+   queue <- as.character(packages)
+   visited <- character()
+   unsatisfied <- list()
+
+   while (length(queue) > 0) {
+      pkg <- queue[[1]]
+      queue <- queue[-1]
+
+      if (pkg %in% visited)
+         next
+      visited <- c(visited, pkg)
+
+      pkgPath <- find.package(pkg, quiet = TRUE)
+      if (length(pkgPath) == 0) {
+         # only packages supplied by the caller can be missing here; missing
+         # recursive dependencies are recorded when their edge is examined
+         if (is.null(unsatisfied[[pkg]]))
+            unsatisfied[[pkg]] <- list(name = pkg, version = "")
+         next
+      }
+
+      deps <- .rs.installedPackageDependencies(pkgPath[[1]])
+      for (i in seq_len(nrow(deps))) {
+         depName <- deps$name[[i]]
+         depOp <- deps$op[[i]]
+         depVersion <- deps$version[[i]]
+
+         depPath <- find.package(depName, quiet = TRUE)
+         if (length(depPath) == 0) {
+            unsatisfied <- .rs.markUnsatisfiedDependency(unsatisfied, depName, depVersion)
+            next
+         }
+
+         # the dependency is installed; check any declared version requirement.
+         # as in .rs.expandDependencies, operators other than '>' are treated
+         # as a simple minimum version
+         if (nzchar(depVersion)) {
+            installedVersion <- tryCatch(packageVersion(depName), error = function(e) NULL)
+            satisfied <- if (is.null(installedVersion))
+               FALSE
+            else if (identical(depOp, ">"))
+               installedVersion > package_version(depVersion)
+            else
+               installedVersion >= package_version(depVersion)
+
+            if (!satisfied)
+               unsatisfied <- .rs.markUnsatisfiedDependency(unsatisfied, depName, depVersion)
+         }
+
+         queue <- c(queue, depName)
+      }
+   }
+
+   unname(unsatisfied)
+})
+
 .rs.addFunction("onInstallScriptJobStarted", function()
 {
    .rs.setVar("jobPackageInfo", .rs.installedPackagesFileInfo())

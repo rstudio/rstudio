@@ -33,6 +33,7 @@ endif()
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
    set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
+   set(RSTUDIO_DEPENDENCIES_MATHJAX4_DIR     "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-4")
    set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
    set(RSTUDIO_DEPENDENCIES_COPILOT_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/copilot-language-server-js")
 else()
@@ -48,6 +49,12 @@ else()
       set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "${RSTUDIO_TOOLS_ROOT}/mathjax-27")
    else()
       set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "${RSTUDIO_DEPENDENCIES_DIR}/mathjax-27")
+   endif()
+
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/mathjax-4")
+      set(RSTUDIO_DEPENDENCIES_MATHJAX4_DIR "${RSTUDIO_TOOLS_ROOT}/mathjax-4")
+   else()
+      set(RSTUDIO_DEPENDENCIES_MATHJAX4_DIR "${RSTUDIO_DEPENDENCIES_DIR}/mathjax-4")
    endif()
 
    if(EXISTS "${RSTUDIO_TOOLS_ROOT}/quarto")
@@ -79,6 +86,7 @@ endif()
 # validate our dependencies exist
 foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
             RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+            RSTUDIO_DEPENDENCIES_MATHJAX4_DIR
             RSTUDIO_DEPENDENCIES_PANDOC_DIR
             RSTUDIO_DEPENDENCIES_QUARTO_DIR
             RSTUDIO_DEPENDENCIES_COPILOT_DIR)
@@ -187,6 +195,7 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatTypes.cpp
    modules/chat/ChatLogging.cpp
    modules/chat/ChatInstallation.cpp
+   modules/chat/ChatInstallLock.cpp
    modules/chat/ChatIntegrity.cpp
    modules/chat/ChatUpdateThrottle.cpp
    modules/chat/ChatStaticFiles.cpp
@@ -409,6 +418,7 @@ else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
       modules/build/SessionInstallRtools.cpp
+      SessionModuleContextWin32.cpp
    )
 endif()
 
@@ -797,6 +807,10 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
    # install mathjax for local html preview
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
+           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+
+   # install mathjax 4 for inline latex / math previews
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX4_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install node -- on Apple arm64-only builds, install-npm-dependencies

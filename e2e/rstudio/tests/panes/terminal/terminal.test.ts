@@ -94,27 +94,32 @@ test.describe.serial('Terminal pane', () => {
     // Send the terminal contents to a new editor tab.
     await executeCommand(page, 'sendTerminalToEditor');
 
-    // Find the new editor by its marker and assert it contains both the
-    // command and the result "2" on its own line. We can't require the
-    // literal substring "expr 1 + 1\n2\n" -- on Server-on-Linux the prompt
-    // ($USER@$HOST:$CWD$ ) is long enough that "expr 1 + 1" wraps in xterm,
-    // and the captured editor content interleaves a wrap marker (·) and the
-    // shell prompt between the command and its output. The semantic check
-    // ("editor has the command and the output 2") is what the test is really
-    // verifying, and that holds regardless of wrap. The rstudioapi::terminalBuffer
-    // ^2$ poll above is the authoritative output check; this assertion only
+    // Find the new editor as the active tab (sendTerminalToEditor activates
+    // it) and assert it contains both the command and the result "2" on its
+    // own line. We can't require any contiguous substring of the command --
+    // on Server-on-Linux the prompt ($USER@$HOST:$CWD$ ) pushes the command
+    // toward the xterm wrap column, and depending on the prompt length the
+    // hard wrap can land anywhere, even mid-word ("...$ exp" / "r 1 + 1" was
+    // observed when the cwd was a long sandbox path). That also rules out
+    // locating the editor by content marker. So compare with all whitespace
+    // and wrap markers (U+00B7 middle dot) stripped, which is invariant
+    // under any wrap position, and check the result "2" (a single character,
+    // so it can't wrap) on a raw line of its own. The rstudioapi::terminalBuffer ^2$
+    // poll above is the authoritative output check; this assertion only
     // confirms the editor tab received both the command and the result.
-    const editor = new AceEditor(page, 'expr 1 + 1');
+    const editor = new AceEditor(page, '');
     await expect.poll(
       async () => {
         try {
-          return (await editor.getValue()).replace(/\r?\n+/g, '\n');
+          const value = (await editor.getValue()).replace(/\r?\n+/g, '\n');
+          const dewrapped = value.replace(/[\s\u00B7]+/g, '');
+          return dewrapped.includes('expr1+1') && /(?:^|\n)2(?:\n|$)/.test(value);
         } catch {
-          return '';
+          return false;
         }
       },
       { timeout: TIMEOUTS.fileOpen },
-    ).toMatch(/expr 1 \+ 1[\s\S]*\n2(?:\n|$)/);
+    ).toBe(true);
   });
 
   test('toolbar shows next and previous terminal buttons', async ({ rstudioPage: page }) => {

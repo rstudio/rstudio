@@ -49,7 +49,20 @@ After the install, verify that:
 
 The lockfile must be included in the commit — if it drifts from the manifest, `npm ci` in CI will fail.
 
-### 4. Run tests
+### 4. Update the `allowScripts` allowlist entry
+
+`src/node/desktop/package.json` has an `allowScripts` object whose keys are exact `package@version` strings. The Electron entry pins the old version and is **not** touched by `npm install`, so it must be updated by hand:
+
+```json
+"allowScripts": {
+  "electron@<NEW_VERSION>": true,
+  ...
+}
+```
+
+Change the `electron@<OLD_VERSION>` key to `electron@<NEW_VERSION>`. The allowlist matches by exact `package@version`, so the version in the key must track the Electron dependency version precisely. If the key is left stale, npm's install-script gating (npm 12+) blocks Electron's required install script, leaving the binary unavailable and breaking desktop packaging/startup.
+
+### 5. Run tests
 
 Run from `src/node/desktop`:
 
@@ -59,6 +72,6 @@ cd src/node/desktop && npm test
 
 Confirm the command exits successfully. If tests fail, report the failures and stop.
 
-### 5. Done
+### 6. Done
 
 Report that the Electron version has been updated and both `npm i` and `npm test` passed.

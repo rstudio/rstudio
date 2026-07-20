@@ -217,6 +217,11 @@ jobs:
       # cache hits, no per-SHA tarball, no AWS credentials.
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+        with:
+          # Pinned: resolving "latest" queries api.github.com at runtime,
+          # which fails during GitHub API incidents (503s). A pinned version
+          # downloads directly from the release CDN with no API call.
+          version: "v0.16.0"
 
       # install-dependencies-yum: dnf installs system packages (with sudo
       # internally), then calls install-common which downloads Boost, SOCI,
@@ -381,9 +386,7 @@ jobs:
             freetype fontconfig harfbuzz fribidi
 
       - name: Install rig
-        run: |
-          curl -fLs https://github.com/r-lib/rig/releases/download/latest/rig-linux-$(arch)-latest.tar.gz \
-            | tar xz -C /usr/local
+        uses: ./.github/actions/os-install-rig-unix
 
       - name: Install R via rig
         env:

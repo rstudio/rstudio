@@ -1,0 +1,54 @@
+name: "Install rig (Windows)"
+description: >
+  Install the rig R version manager on a Windows runner from a pinned GitHub
+  release. Replaces `winget install Posit.rig`: the winget community source
+  is a recurring flake source (and its msstore source needs a geographic
+  region GHA does not send, so winget's implicit source update fails with
+  0x8a15000f unless msstore is removed first), while a runner-to-GitHub
+  release download needs no workarounds and is about as reliable as CI
+  networking gets.
+
+inputs:
+  rig-version:
+    description: "rig release version to install."
+    required: false
+    default: "0.8.1"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install rig from GitHub releases
+      shell: pwsh
+      env:
+        RIG_VERSION: ${{ inputs.rig-version }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+
+        # Tolerate a leading 'v' (as in the release tag) in the version input.
+        $env:RIG_VERSION = $env:RIG_VERSION -replace '^v', ''
+
+        $url = "https://github.com/r-lib/rig/releases/download/v$env:RIG_VERSION/rig-windows-$env:RIG_VERSION.exe"
+        $installer = Join-Path $env:RUNNER_TEMP "rig-windows-$env:RIG_VERSION.exe"
+        Write-Host "Downloading $url"
+        Invoke-WebRequest -Uri $url -OutFile $installer -MaximumRetryCount 5 -RetryIntervalSec 10
+
+        # rig's Windows installer is Inno Setup (rig.iss in r-lib/rig);
+        # /VERYSILENT runs it headless. It installs to C:\Program Files\rig.
+        $p = Start-Process -FilePath $installer `
+          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' `
+          -Wait -PassThru
+        if ($p.ExitCode -ne 0) {
+          Write-Error "rig installer exited $($p.ExitCode)"
+          exit 1
+        }
+
+        $rig = 'C:\Program Files\rig\rig.exe'
+        if (-not (Test-Path $rig)) {
+          Write-Error "rig.exe not found at $rig after install"
+          exit 1
+        }
+        & $rig --version
+
+        # The installer adds rig to the machine PATH, but the already-running
+        # runner process won't see that; export it for subsequent steps.
+        Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\rig'

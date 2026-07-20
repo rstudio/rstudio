@@ -2413,6 +2413,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("readPackageDescription", function(packagePath)
 {
+   # Fail early for non-file inputs (e.g. URLs); the archive readers below
+   # shell out to tar / unzip, which emit noisy errors for such paths.
+   if (!file.exists(packagePath))
+      stop(sprintf("no package file exists at path '%s'", packagePath))
+
    info <- file.info(packagePath, extra_cols = FALSE)
    if (identical(info$isdir, TRUE))
       .rs.readPackageDescriptionFromDirectory(packagePath)

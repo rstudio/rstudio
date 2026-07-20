@@ -52,7 +52,11 @@ public abstract class FileDialog extends FileSystemDialog
    @Override
    protected FileSystemItem getSelectedItem()
    {
-      return context_.itemForName(browser_.getFilename(), false, false);
+      FileSystemItem item = context_.itemForName(browser_.getFilename(), false, false);
+
+      // follow macOS Finder aliases / Windows shortcuts so accepting one
+      // acts on its target rather than the link file
+      return item != null ? item.resolveAliasTarget() : null;
    }
 
    @Override
@@ -174,8 +178,12 @@ public abstract class FileDialog extends FileSystemDialog
                                                  false);
       if (item != null && item.isDirectory())
       {
+         // follow macOS Finder aliases / Windows shortcuts into their target;
+         // for regular directories this is the item itself, and its absolute
+         // path is equivalent to the name relative to the browsed directory
+         item = item.resolveAliasTarget();
          browser_.setFilename("");
-         cd(item.getName());
+         cd(item.getPath());
          return true;
       }
       return false;

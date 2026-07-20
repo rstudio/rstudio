@@ -26,6 +26,8 @@ namespace constants {
 // Installation paths
 const char* const kPositAiDirName = "pai/bin";
 const char* const kPositAiBackupDirName = "ai.prev";
+// Cross-process lock files; outside pai/bin so it survives install mutations
+const char* const kPositAiLocksDirName = "pai/locks";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";

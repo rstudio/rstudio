@@ -1,0 +1,17 @@
+/* Wraps a file-type icon so a link badge can be composited over it (#9924).
+   No vertical-align override: the inline-block wrapper keeps the base image on
+   the baseline like a bare <img>, so badged and unbadged rows stay aligned. */
+.overlayWrapper {
+   position: relative;
+   display: inline-block;
+   line-height: 0;
+}
+
+/* Small link indicator pinned to the lower-left corner of the icon, nudged
+   slightly past the edge so it reads without obscuring the file-type glyph.
+   The Files grid's dark-theme rule (.dataGridCell img) dims this too. */
+.overlayBadge {
+   position: absolute;
+   left: -2px;
+   bottom: -2px;
+}

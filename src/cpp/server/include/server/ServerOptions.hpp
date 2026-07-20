@@ -88,6 +88,7 @@ public:
    }
 
    bool checkConfigMode() const { return checkConfigMode_; }
+   bool setupDbMode() const { return setupDbMode_; }
 
    std::string getOverlayOption(const std::string& name)
    {
@@ -98,6 +99,7 @@ private:
    std::string monitorSharedSecret_;
    bool serverOffline_;
    bool checkConfigMode_ = false;
+   bool setupDbMode_ = false;
    core::FilePath installPath_;
 
    std::map<std::string,std::string> overlayOptions_;

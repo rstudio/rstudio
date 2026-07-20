@@ -511,26 +511,27 @@ exit /b %ERRORLEVEL%
 ::
 :add-vstools-to-path
 
-for %%Q in ("BuildTools" "Community") do (
-  for %%P in ("%ProgramFiles%" "%ProgramFiles(x86)%") do (
-    call :add-vstools-to-path-impl "%%~P\Microsoft Visual Studio\2022\%%~Q"
-    if defined _VCTOOLSDIR (
-      goto :add-vstools-to-path-done
-    )
-  )
+:: Locate Visual Studio via vswhere (ships with the VS installer at a fixed
+:: path). This finds any edition/version carrying the C++ toolset, so we avoid
+:: hardcoding install paths that change across VS releases.
+set "_VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+if not exist "%_VSWHERE%" (
+  echo ^^!^^! ERROR: vswhere.exe not found; cannot locate Visual Studio build tools.
+  exit /b 1
 )
 
-:add-vstools-to-path-impl
-
-if exist "%~f1" (
-  set "_VCTOOLSDIR=%~f1\Common7\Tools"
-  set "_VCBUILDDIR=%~f1\VC\Auxiliary\Build"
+set "_VSINSTALL="
+for /f "usebackq delims=" %%I in (`"%_VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+  set "_VSINSTALL=%%I"
 )
 
-goto :eof
+if not defined _VSINSTALL (
+  echo ^^!^^! ERROR: Could not find a Visual Studio installation with the C++ toolset.
+  exit /b 1
+)
 
-:add-vstools-to-path-done:
-
+set "_VCTOOLSDIR=%_VSINSTALL%\Common7\Tools"
+set "_VCBUILDDIR=%_VSINSTALL%\VC\Auxiliary\Build"
 set "PATH=%_VCTOOLSDIR%;%_VCBUILDDIR%;%PATH%"
 where /Q VsDevCmd.bat
 if %ERRORLEVEL% neq 0 (

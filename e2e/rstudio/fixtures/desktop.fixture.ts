@@ -496,6 +496,15 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // prevents unload; the interactive path shows a native "Leave page?"
       // dialog that automation cannot dismiss (rstudio#17439).
       RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1',
+      // The bundled Copilot language server stores the master key for its
+      // encrypted OAuth token cache in the OS keychain (@github/keytar,
+      // service "copilot-language-server", account "oauth-token-key"). Under
+      // the redirected HOME, macOS finds no login keychain and blocks the
+      // run with a "Keychain Not Found" system modal; on Windows the key
+      // would land in the host's real Credential Manager, leaking test state
+      // out of the sandbox. Disable the encryption path so the token cache
+      // stays inside the sandboxed user-home (#18205).
+      GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION: 'false',
       // Dev mode runs `npm run start` (electron-forge), whose webpack dev-server
       // and logger otherwise bind the fixed defaults 3000 / 9000. Derive both
       // from the per-worker CDP port so concurrent workers -- and a developer's

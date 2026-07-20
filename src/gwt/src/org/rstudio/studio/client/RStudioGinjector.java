@@ -184,6 +184,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoader;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
@@ -398,6 +399,7 @@ public interface RStudioGinjector extends Ginjector
    SatelliteManager getSatelliteManager();
    SourceWindowManager getSourceWindowManager();
    SourceWindow getSourceWindow();
+   VimrcLoader getVimrcLoader();
    Server getServer();
    ChunkWindowManager getChunkWindowManager();
    Projects getProjects();

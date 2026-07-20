@@ -19,11 +19,10 @@
 
 #include <napi.h>
 
+#include <algorithm>
 #include <chrono>
-#include <codecvt>
 #include <iomanip>
 #include <iostream>
-#include <locale>
 #include <set>
 #include <sstream>
 #include <string>
@@ -55,7 +54,7 @@ std::string timestamp()
 
 }
 
-void logDebug(const std::string& message)
+[[maybe_unused]] void logDebug(const std::string& message)
 {
    if (s_loggingEnabled && message.length())
    {
@@ -376,20 +375,43 @@ private:
    TValue value_;
 };
 
-// Helper to convert CFStringRef to std::string
-std::string cfStringToStdString(CFStringRef cfStr)
+// Convert a CFStringRef to UTF-8, preserving embedded NULs. Returns false if
+// cfStr is NULL or contains characters that cannot be represented in UTF-8
+// (e.g. an unpaired surrogate); a valid but empty string returns true.
+bool cfStringToUtf8(CFStringRef cfStr, std::string& result)
 {
+   result.clear();
    if (!cfStr)
-      return std::string();
+      return false;
 
    CFIndex length = CFStringGetLength(cfStr);
-   CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
-   std::vector<char> buffer(maxSize);
+   if (length == 0)
+      return true;
 
-   if (CFStringGetCString(cfStr, buffer.data(), maxSize, kCFStringEncodingUTF8))
-      return std::string(buffer.data());
+   CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
+   std::vector<UInt8> buffer(maxSize);
 
-   return std::string();
+   // CFStringGetBytes returns the number of characters it managed to encode;
+   // fewer than 'length' means some character could not be represented.
+   CFIndex usedSize = 0;
+   CFIndex converted = CFStringGetBytes(
+       cfStr, CFRangeMake(0, length), kCFStringEncodingUTF8,
+       0 /* no loss byte */, false /* no BOM */, buffer.data(), maxSize, &usedSize);
+
+   if (converted < length)
+      return false;
+
+   result.assign((const char*) buffer.data(), usedSize);
+   return true;
+}
+
+// Helper to convert CFStringRef to std::string (UTF-8), returning an empty
+// string if the value is NULL or cannot be encoded.
+std::string cfStringToStdString(CFStringRef cfStr)
+{
+   std::string result;
+   cfStringToUtf8(cfStr, result);
+   return result;
 }
 
 // Single-pass font enumeration that populates both monospace and proportional lists
@@ -540,28 +562,39 @@ void cleanClipboardImpl(bool stripHtml)
          return;
    }
 
+   // Convert any UTF-16 clipboard data to UTF-8 *before* clearing the
+   // clipboard, so that a decoding failure leaves the user's clipboard intact.
+   std::string utf8Text;
+   if (utf16Data.value())
+   {
+      // copy the UTF-16 bytes out of the pasteboard data
+      CFIndex length = ::CFDataGetLength(utf16Data);
+      std::vector<UInt8> buffer(length);
+      ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), buffer.data());
+
+      // Decode as little-endian UTF-16: macOS runs only on little-endian CPUs
+      // and producers write this flavor in native byte order, so decoding as LE
+      // preserves the previous host-order behavior.
+      CFReleaseHandle<CFStringRef> utf16Text = CFStringCreateWithBytes(
+          nullptr, buffer.data(), length, kCFStringEncodingUTF16LE, false);
+
+      // If non-empty UTF-16 data cannot be converted to UTF-8 (malformed bytes,
+      // e.g. an unpaired surrogate), leave the clipboard untouched rather than
+      // clearing it and replacing the user's data with an empty string.
+      if (length > 0 && !cfStringToUtf8(utf16Text, utf8Text))
+         return;
+
+      // convert '\r' line endings to '\n' -- not sure why these sneak in?
+      std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
+   }
+
    // clear the clipboard
    if (::PasteboardClear(clipboard))
       return;
 
-   // if we had some UTF-16 data on the clipboard, convert it to UTF-8
-   // and write that to the clipboard instead
+   // write the converted UTF-8 text back to the clipboard
    if (utf16Data.value())
    {
-      // read the clipboard data (as bytes)
-      // include extra byte for null terminator, just in case?
-      auto length = ::CFDataGetLength(utf16Data);
-      std::vector<UInt8> buffer(length);
-      ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), (UInt8*) buffer.data());
-
-      // convert those bytes from UTF-16 to UTF-8
-      char16_t* pBytes = (char16_t*) &buffer[0];
-      std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-      std::string utf8Text = converter.to_bytes(pBytes, pBytes + length / 2);
-
-      // convert '\r' line endings to '\n' -- not sure why these sneak in?
-      std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
-
       CFReleaseHandle<CFDataRef> utf8TextRef = CFDataCreate(nullptr, (UInt8*) utf8Text.data(), utf8Text.size());
       if (utf8TextRef && utf8TextRef.value())
          ::PasteboardPutItemFlavor(clipboard, (PasteboardItemID) 1, CFSTR("public.utf8-plain-text"), utf8TextRef, 0);
@@ -654,6 +687,31 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 namespace {
 
+// Convert a wide string to UTF-8. On Windows, wchar_t strings hold UTF-16 and
+// are converted with WideCharToMultiByte. On other platforms this is a
+// deliberate stub that returns an empty string for any input: wide-to-UTF-8
+// conversion is only needed on the Windows-only CSIDL code paths below.
+std::string wideToUtf8(const std::wstring& value)
+{
+#ifdef _WIN32
+   if (value.empty())
+      return std::string();
+
+   int size = ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), (int) value.size(), nullptr, 0, nullptr, nullptr);
+   if (size <= 0)
+      return std::string();
+
+   std::string result(size, '\0');
+   ::WideCharToMultiByte(
+       CP_UTF8, 0, value.data(), (int) value.size(), &result[0], size, nullptr, nullptr);
+   return result;
+#else
+   (void) value;
+   return std::string();
+#endif
+}
+
 std::wstring currentCSIDLPersonalHomePathImpl()
 {
 #ifdef _WIN32
@@ -681,11 +739,7 @@ std::wstring currentCSIDLPersonalHomePathImpl()
 
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   auto value = currentCSIDLPersonalHomePathImpl();
-
-   // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-   std::string u8str = converter.to_bytes(value);
+   std::string u8str = wideToUtf8(currentCSIDLPersonalHomePathImpl());
    return Napi::String::New(info.Env(), u8str);
 }
 
@@ -718,11 +772,7 @@ std::wstring defaultCSIDLPersonalHomePathImpl()
 
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   auto value = defaultCSIDLPersonalHomePathImpl();
-
-   // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-   std::string u8str = converter.to_bytes(value);
+   std::string u8str = wideToUtf8(defaultCSIDLPersonalHomePathImpl());
    return Napi::String::New(info.Env(), u8str);
 }
 
@@ -875,7 +925,7 @@ int CALLBACK win32ListMonospaceFontsProc(
 
 #endif
 
-std::vector<std::string> win32ListMonospaceFontsImpl()
+[[maybe_unused]] std::vector<std::string> win32ListMonospaceFontsImpl()
 {
     std::vector<std::string> fontList;
 

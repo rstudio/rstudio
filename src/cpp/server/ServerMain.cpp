@@ -84,6 +84,7 @@
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
+#include "ServerSetupDb.hpp"
 #include "ServerXdgVars.hpp"
 #include "ServerLogVars.hpp"
 
@@ -112,6 +113,17 @@ bool requireLocalR();
 // nothing.  Returns an Error only on a hard failure to run the check
 // itself; individual sub-check failures are reported via *pPassed.
 Error checkConfig(const Options& options, std::ostream& out, bool* pPassed);
+
+// Extended --setup-db hook for pro builds (audit-database setup). The OSS
+// stub sets *pPassed = true and prints nothing. Returns an Error only on a
+// hard failure to run the check itself; individual sub-check failures are
+// reported via *pPassed. Reuses the master connection ServerMain's
+// --setup-db dispatch already opened (via server::connectAsMaster) so the
+// master password is only prompted for once per invocation.
+Error setupDb(boost::shared_ptr<core::database::IConnection> pMasterConnection,
+              const core::database::PostgresqlConnectionOptions& masterConnectionOptions,
+              std::ostream& out,
+              bool* pPassed);
 
 } // namespace overlay
 } // namespace server
@@ -800,6 +812,48 @@ int main(int argc, char * const argv[])
          }
 
          return allPassed ? EXIT_SUCCESS : EXIT_FAILURE;
+      }
+
+      // --setup-db: create the product database, service user, and grants on
+      // a PostgreSQL server. Like --check-config, this never starts the
+      // service -- it always exits before daemonize. The master connection
+      // is prompted for and opened once here so it can be shared between the
+      // base setupDb() call (main database) and the Pro overlay's setupDb()
+      // call (audit database) without prompting for the master password twice.
+      if (options.setupDbMode())
+      {
+         SetupDbFlags flags;
+         flags.showPassword = program_options::detectShowPassword(argc, argv);
+         flags.printOnly = program_options::detectPrintOnly(argc, argv);
+         flags.masterPasswordFile = program_options::extractMasterPasswordFile(argc, argv);
+         flags.host = program_options::extractHost(argc, argv);
+         flags.port = program_options::extractPort(argc, argv);
+         flags.masterUsername = program_options::extractMasterUsername(argc, argv);
+         flags.databaseName = program_options::extractDatabaseName(argc, argv);
+         flags.databaseUser = program_options::extractDatabaseUser(argc, argv);
+
+         boost::shared_ptr<core::database::IConnection> pMasterConnection;
+         core::database::PostgresqlConnectionOptions masterOptions;
+         bool connectPassed = true;
+         Error error = server::connectAsMaster(flags, std::cin, std::cout, &pMasterConnection,
+                                               &masterOptions, &connectPassed);
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
+         if (!connectPassed)
+            return EXIT_FAILURE;
+
+         bool passed = true;
+         error = server::setupDb(options, flags, pMasterConnection, masterOptions,
+                                 std::cin, std::cout, &passed);
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
+
+         bool overlayPassed = true;
+         Error overlayError = overlay::setupDb(pMasterConnection, masterOptions, std::cout, &overlayPassed);
+         if (overlayError)
+            return core::system::exitFailure(overlayError, ERROR_LOCATION);
+
+         return (passed && overlayPassed) ? EXIT_SUCCESS : EXIT_FAILURE;
       }
 
       // daemonize if requested

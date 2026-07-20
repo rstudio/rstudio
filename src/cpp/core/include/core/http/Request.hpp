@@ -42,6 +42,7 @@ public:
    void assign(const Request& request, const Headers& extraHeaders = Headers())
    {
       Message::assign(request, extraHeaders);
+      rootPath_ = request.rootPath_;
       method_ = request.method_;
       uri_ = request.uri_;
       remoteUid_ = request.remoteUid_;
@@ -54,6 +55,32 @@ public:
       parsedQueryParams_ = request.parsedQueryParams_;
       queryParams_ = request.queryParams_;
       username_ = request.username_;
+      handlerPrefix_ = request.handlerPrefix_;
+      requestSequence_ = request.requestSequence_;
+      startTime_ = request.startTime_;
+      handlerStartTime_ = request.handlerStartTime_;
+      handlerEndTime_ = request.handlerEndTime_;
+   }
+
+   // rvalue overload - moves fields instead of copying them; use when the
+   // source request is about to be discarded (e.g. handed off to a client)
+   void assign(Request&& request, const Headers& extraHeaders = Headers())
+   {
+      Message::assign(std::move(request), extraHeaders);
+      rootPath_ = std::move(request.rootPath_);
+      method_ = std::move(request.method_);
+      uri_ = std::move(request.uri_);
+      remoteUid_ = request.remoteUid_;
+      parsedCookies_ = request.parsedCookies_;
+      cookies_ = std::move(request.cookies_);
+      parsedFormFields_ = request.parsedFormFields_;
+      formFields_ = std::move(request.formFields_);
+      files_ = std::move(request.files_);
+      emptyFile_ = std::move(request.emptyFile_);
+      parsedQueryParams_ = request.parsedQueryParams_;
+      queryParams_ = std::move(request.queryParams_);
+      username_ = std::move(request.username_);
+      handlerPrefix_ = std::move(request.handlerPrefix_);
       requestSequence_ = request.requestSequence_;
       startTime_ = request.startTime_;
       handlerStartTime_ = request.handlerStartTime_;
@@ -237,7 +264,7 @@ private:
    std::string rootPath_;
 
    // IMPORTANT NOTE: when adding data members be sure to update
-   // the implementation of the assign method!!!!!
+   // the implementation of the assign methods!!!!!
 
 
    std::string method_;
