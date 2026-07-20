@@ -315,6 +315,35 @@ TEST(ServerSetupDbTests, ConnectAsMasterFailsOnEofForMissingMasterUsername)
    EXPECT_NE(std::string::npos, out.str().find("--setup-db-master-username"));
 }
 
+TEST(ServerSetupDbTests, ConnectAsMasterFailsOnEofForMissingMasterPassword)
+{
+   // Supply host/port/master-username via flags and provide neither a
+   // password file nor RSERVER_SETUP_DB_MASTER_PASSWORD, so the masked
+   // password prompt is the one reached at EOF. Before this hardening the
+   // prompt returned "" on exhausted stdin and setup proceeded with an empty
+   // password; it must now fail loudly like the sibling prompts.
+   unsetenv("RSERVER_SETUP_DB_MASTER_PASSWORD");
+   std::istringstream in("");
+   std::ostringstream out;
+
+   SetupDbFlags flags;
+   flags.host = "127.0.0.1";
+   flags.port = "5432";
+   flags.masterUsername = "postgres";
+   boost::shared_ptr<database::IConnection> pConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = connectAsMaster(flags, in, out, &pConnection, &masterOptions, &passed);
+
+   EXPECT_FALSE(error);
+   EXPECT_FALSE(passed);
+   EXPECT_NE(std::string::npos, out.str().find("[FAIL]"));
+   EXPECT_NE(std::string::npos, out.str().find("--setup-db-master-password-file"));
+   EXPECT_NE(std::string::npos, out.str().find("RSERVER_SETUP_DB_MASTER_PASSWORD"));
+   // Must not have reached the connect attempt with an empty password.
+   EXPECT_EQ(std::string::npos, out.str().find("[FAIL] Could not connect"));
+}
+
 TEST(ServerSetupDbTests, ConnectAsMasterHonorsHostPortAndMasterUsernameFlags)
 {
    // host/port/masterUsername are all supplied via flags against a fully
@@ -345,6 +374,48 @@ TEST(ServerSetupDbTests, ConnectAsMasterHonorsHostPortAndMasterUsernameFlags)
    EXPECT_EQ(std::string::npos, out.str().find("No PostgreSQL port provided"));
    EXPECT_EQ(std::string::npos, out.str().find("No PostgreSQL master username provided"));
    EXPECT_NE(std::string::npos, out.str().find("[FAIL] Could not connect"));
+
+   // Prove the flag values flowed into the master connection options (which
+   // are populated before connect() and survive its failure), not merely that
+   // the prompts were skipped -- a bug that skipped the prompt but assigned a
+   // wrong/fixed value would still get past the EOF guards above.
+   EXPECT_EQ("127.0.0.1", masterOptions.host);
+   EXPECT_EQ("1", masterOptions.port);
+   EXPECT_EQ("no-such-user", masterOptions.username);
+}
+
+TEST(ServerSetupDbTests, ConnectAsMasterBlankPortLineKeepsDefaultWhenNotEof)
+{
+   // The port prompt receives a blank line, but more input follows on the
+   // stream, so this is an interactive "press enter to accept the default"
+   // rather than an exhausted-stdin EOF. The blank must fall through to the
+   // documented 5432 default instead of tripping the EOF guard. This is the
+   // only test that exercises the not-eof side of promptLine's
+   // (!in.good() && value.empty()) predicate: with every other guarded-prompt
+   // test feeding either "" (immediate EOF) or a flag value, weakening the
+   // predicate to just value.empty() would otherwise leave the suite green.
+   std::istringstream in("\nno-such-user\n"); // blank port, then master username
+   std::ostringstream out;
+   setenv("RSERVER_SETUP_DB_MASTER_PASSWORD", "unused", 1 /* overwrite */);
+
+   SetupDbFlags flags;
+   flags.host = "127.0.0.1"; // supplied so the port prompt is the blank one
+   boost::shared_ptr<database::IConnection> pConnection;
+   database::PostgresqlConnectionOptions masterOptions;
+   bool passed = true;
+   Error error = connectAsMaster(flags, in, out, &pConnection, &masterOptions, &passed);
+
+   unsetenv("RSERVER_SETUP_DB_MASTER_PASSWORD");
+
+   EXPECT_FALSE(error);
+   // The blank port must not be mistaken for exhausted stdin...
+   EXPECT_EQ(std::string::npos, out.str().find("No PostgreSQL port provided"));
+   // ...and must default to 5432. masterOptions.port is assigned immediately
+   // before connect(), so this holds whether or not anything is actually
+   // listening on 5432 -- keeping the test independent of the local
+   // environment while still proving both the port and username prompts were
+   // reached and cleared without tripping the EOF guard.
+   EXPECT_EQ("5432", masterOptions.port);
 }
 
 TEST(ServerSetupDbTests, SetupDbFailsOnEofForMissingDatabaseName)
@@ -411,6 +482,10 @@ TEST(ServerSetupDbTests, SetupDbHonorsDatabaseNameAndUserFlagsAndSkipsPrompts)
    EXPECT_EQ(std::string::npos, out.str().find("No database name provided"));
    EXPECT_EQ(std::string::npos, out.str().find("No database user provided"));
    EXPECT_NE(std::string::npos, out.str().find("not a valid database/user name"));
+   // The invalid-identifier message quotes the offending name, so asserting the
+   // supplied flag value appears proves the flag value itself reached
+   // validateIdentifier() -- not just that the prompt was skipped.
+   EXPECT_NE(std::string::npos, out.str().find("\"not valid!\""));
 }
 
 TEST(ServerSetupDbTests, MergeWriteDatabaseConfigFilePreservesUnrelatedKeys)

@@ -50,11 +50,17 @@ const std::string& serviceUserPasswordCharset();
 // Resolves the master password in order of precedence: masterPasswordFile (its
 // first line), then the RSERVER_SETUP_DB_MASTER_PASSWORD environment variable,
 // then a masked interactive prompt on `in`/`out`. Returns a non-Success Error
-// only if masterPasswordFile was specified but could not be read.
+// only if masterPasswordFile was specified but could not be read. If pEof is
+// non-null, *pEof is set to true when the interactive prompt was reached but
+// `in` was already exhausted (a non-interactive run that supplied neither the
+// file nor the env var); the caller should then fail loudly rather than
+// proceed with an empty password. An interactively empty password (stream
+// still good()) leaves *pEof false, preserving peer/trust-auth logins.
 core::Error resolveMasterPassword(const std::string& masterPasswordFile,
                                    std::istream& in,
                                    std::ostream& out,
-                                   std::string* pPassword);
+                                   std::string* pPassword,
+                                   bool* pEof = nullptr);
 
 // Options controlling --setup-db behavior, parsed from argv by the caller
 // (see program_options::detectShowPassword/detectPrintOnly/extractMasterPasswordFile/
@@ -121,7 +127,7 @@ core::Error ensureFileExistsWithUserOnlyMode(const core::FilePath& path);
 
 // Writes the given key/value pairs as a fresh, 0600 config file at `path`,
 // overwriting anything already there. Used only for the standalone
-// --print-only credentials file: it has no other keys worth preserving, and
+// --setup-db-print-only credentials file: it has no other keys worth preserving, and
 // may be stale from a previous run, so a fresh write is the right behavior
 // there (unlike database.conf -- see mergeWriteDatabaseConfigFile below).
 // Exposed here (rather than kept file-local) so it can be unit tested

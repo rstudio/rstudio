@@ -52,8 +52,13 @@ const std::string kPasswordCharset =
 // password prompt. Restores echo before returning, even on error. Only
 // disables echo when `in` is actually the controlling terminal (stdin is
 // both connected to a real tty and the stream in use); under test, `in` is
-// a plain istringstream and this is a no-op.
-std::string readMaskedLine(std::istream& in, std::ostream& out)
+// a plain istringstream and this is a no-op. The `pEof` out-parameter mirrors
+// promptLine(): if non-null, *pEof is set to true only when the read failed
+// with nothing typed (!in.good() && value.empty()), so callers can fail a
+// non-interactive run that never supplied a password while still allowing an
+// interactively empty password (e.g. peer/trust auth, where the stream stays
+// good()).
+std::string readMaskedLine(std::istream& in, std::ostream& out, bool* pEof = nullptr)
 {
    bool isRealTty = (&in == &std::cin) && (isatty(STDIN_FILENO) != 0);
    bool settingsSaved = false;
@@ -76,6 +81,8 @@ std::string readMaskedLine(std::istream& in, std::ostream& out)
 
    std::string value;
    std::getline(in, value);
+   if (pEof != nullptr)
+      *pEof = !in.good() && value.empty();
 
    // Only restore if we actually saved the prior settings above; if
    // tcgetattr failed, oldSettings was never populated and there is nothing
@@ -89,9 +96,10 @@ std::string readMaskedLine(std::istream& in, std::ostream& out)
 }
 
 // Reads a line from `in`, writing `prompt` to `out` first. If `pEof` is
-// non-null, *pEof is set to true only when the stream hit end-of-input with
-// nothing typed -- interactively pressing enter also yields an empty value,
-// but without eof(), so that case leaves *pEof false and existing
+// non-null, *pEof is set to true only when the read failed with nothing typed
+// -- i.e. end-of-input (eofbit) or a stream error (failbit/badbit), detected
+// as !in.good(). Interactively pressing enter also yields an empty value, but
+// the stream stays good(), so that case leaves *pEof false and existing
 // empty-value defaults still apply. Callers use *pEof to distinguish a
 // deliberate blank answer from a non-interactive run that piped in less
 // input than --setup-db needed.
@@ -102,7 +110,7 @@ std::string promptLine(std::istream& in, std::ostream& out, const std::string& p
    std::string value;
    std::getline(in, value);
    if (pEof != nullptr)
-      *pEof = in.eof() && value.empty();
+      *pEof = !in.good() && value.empty();
    return value;
 }
 
@@ -164,7 +172,7 @@ Error ensureFileExistsWithUserOnlyMode(const FilePath& path)
 
 // Writes the given key/value pairs as a fresh, 0600 config file at `path`,
 // overwriting anything already there. Used only for the standalone
-// --print-only credentials file: it has no other keys worth preserving, and
+// --setup-db-print-only credentials file: it has no other keys worth preserving, and
 // may be stale from a previous run, so a fresh write is the right behavior
 // there (unlike database.conf -- see mergeWriteDatabaseConfigFile below).
 Error writeCredentialsFileFresh(const FilePath& path,
@@ -324,8 +332,12 @@ const std::string& serviceUserPasswordCharset()
 Error resolveMasterPassword(const std::string& masterPasswordFile,
                              std::istream& in,
                              std::ostream& out,
-                             std::string* pPassword)
+                             std::string* pPassword,
+                             bool* pEof)
 {
+   if (pEof != nullptr)
+      *pEof = false;
+
    if (!masterPasswordFile.empty())
    {
       std::ifstream file(masterPasswordFile);
@@ -355,7 +367,7 @@ Error resolveMasterPassword(const std::string& masterPasswordFile,
    }
 
    out << "Master password: ";
-   *pPassword = readMaskedLine(in, out);
+   *pPassword = readMaskedLine(in, out, pEof);
    return Success();
 }
 
@@ -413,9 +425,18 @@ Error connectAsMaster(const SetupDbFlags& flags,
    }
 
    std::string masterPassword;
-   Error error = resolveMasterPassword(flags.masterPasswordFile, in, out, &masterPassword);
+   bool passwordEof = false;
+   Error error = resolveMasterPassword(flags.masterPasswordFile, in, out, &masterPassword, &passwordEof);
    if (error)
       return error;
+   if (passwordEof)
+   {
+      out << "[FAIL] No master password provided. Pass --setup-db-master-password-file or set "
+             "RSERVER_SETUP_DB_MASTER_PASSWORD to run --setup-db without interactive input."
+          << std::endl;
+      *pPassed = false;
+      return Success();
+   }
 
    pMasterOptions->host = host;
    pMasterOptions->port = port;
@@ -687,7 +708,7 @@ Error setupDb(const Options& options,
          *pPassed = false;
          return Success();
       }
-      out << "[INFO] --print-only set: no config file was modified. Credentials written to "
+      out << "[INFO] --setup-db-print-only set: no config file was modified. Credentials written to "
           << credentialsPath.getAbsolutePath() << "." << std::endl;
       out << "       host=" << masterConnectionOptions.host << " port=" << masterConnectionOptions.port
           << " database=" << dbName << " username=" << dbUser << std::endl;
