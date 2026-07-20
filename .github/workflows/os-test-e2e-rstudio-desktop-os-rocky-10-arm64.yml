@@ -465,6 +465,23 @@ jobs:
           rig ls
           mkdir -p "$R_LIBS_USER"
 
+      # The Playwright harness's R provisioner (fixtures/r-libs-setup.ts) only
+      # derives a PPM binary repo from an Ubuntu codename; on Rocky there is
+      # none, so it compiles CRAN packages from source. That needs a compiler
+      # stack (gcc/g++/gfortran + make) plus the -devel headers the compiled
+      # dependencies link against: libcurl/openssl/libxml2 (curl, openssl, xml2),
+      # the font/text stack (systemfonts, textshaping, ragg), the image libs
+      # (ragg), zlib (data.table and others; RHEL 10 ships zlib as zlib-ng), and
+      # ICU (stringi). These -devel packages come from CRB/EPEL, enabled above.
+      - name: Install R build toolchain and headers
+        run: |
+          dnf -y install \
+            gcc gcc-c++ gcc-gfortran make \
+            libcurl-devel openssl-devel libxml2-devel \
+            fontconfig-devel freetype-devel harfbuzz-devel fribidi-devel \
+            libpng-devel libjpeg-turbo-devel libtiff-devel \
+            zlib-ng-compat-devel libicu-devel cairo-devel
+
       # Build-from-source path: extract the .rpm artifact produced by the build
       # job above and install it. The RPM declares only minimal deps (AUTOREQPROV
       # is off), so the GUI/Chromium runtime libs come from the "Install OS
@@ -555,13 +572,14 @@ jobs:
           dnf -y install "./$INSTALLER_FILENAME"
           ls -la /usr/bin/rstudio
 
-      # os-e2e-deps installs the harness's R packages into R_LIBS_USER. It
-      # derives the PPM binary repo from the distro; if PPM has no RHEL-family
-      # aarch64 binaries, pak falls back to source compilation. Should the source
-      # path prove too slow or fail for lack of headers, the fix mirrors the
-      # Fedora engine: add an R build toolchain (gcc/-devel) and set
-      # install-required-packages here. Left off for now to match the RHEL x86
-      # engine and see what PPM actually serves.
+      # os-e2e-deps installs the harness's R packages into R_LIBS_USER. On Rocky
+      # there are no PPM binaries the harness can use (fixtures/r-libs-setup.ts
+      # maps only Ubuntu codenames to PPM), so packages compile from source
+      # against the toolchain installed above. install-required-packages pulls
+      # the full REQUIRED_PACKAGES set here (not just the e2e DESCRIPTION deps),
+      # so the in-test globalSetup, pointed at this same library via
+      # PW_RSTUDIO_R_LIBS_USER below, finds everything present and compiles
+      # nothing at test time. Matches the Fedora engine's no-PPM handling.
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
@@ -570,6 +588,7 @@ jobs:
           # they all share runner.os == Linux, and this arm64 RHEL-family
           # library is not interchangeable with the x86_64 or Debian caches.
           cache-scope: rocky10-arm64
+          install-required-packages: 'true'
 
       # Run the tests as a non-root user, matching the bare-runner siblings
       # (Ubuntu/macOS/Windows all execute as a non-root user) and the Fedora /
@@ -620,6 +639,18 @@ jobs:
           # Print the GWT launch timeline so the next launch failure shows which
           # phase exceeded the deadline.
           PW_DEBUG_LAUNCH: '1'
+          # Point the harness's R-libs provisioner (fixtures/r-libs-setup.ts, run
+          # in globalSetup) at the same library os-e2e-deps populated, instead of
+          # its default per-host cache. Because os-e2e-deps ran with
+          # install-required-packages, that library already holds the full set,
+          # so globalSetup installs nothing.
+          PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
+          # Defensive ceiling. With install-required-packages above, globalSetup
+          # normally compiles nothing. But if a package slips through and has to
+          # source-compile here (Rocky has no PPM binaries), that is a long
+          # silent stretch the default 300s heartbeat would kill (exit 124, as
+          # the first run showed); the higher ceiling lets it finish.
+          PW_HEARTBEAT_TIMEOUT_SECONDS: '2400'
         run: |
           ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then
@@ -636,9 +667,11 @@ jobs:
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
           # Rocky 10 has no Xvfb, so the display comes from Xwayland running under
           # Cage, a minimal Wayland compositor. WLR_BACKENDS=headless makes
-          # wlroots (Cage's backend) run with no GPU/DRM device, and
-          # WLR_LIBINPUT_NO_DEVICES=1 stops it waiting for input devices a
-          # container doesn't have. Cage starts a rootful Xwayland, exports
+          # wlroots (Cage's backend) run with no GPU/DRM device,
+          # WLR_RENDERER=pixman forces software rendering so it never probes for
+          # a DRM device (otherwise wlroots logs "drmGetDevices2 failed" before
+          # falling back), and WLR_LIBINPUT_NO_DEVICES=1 stops it waiting for
+          # input devices a container doesn't have. Cage starts a rootful Xwayland, exports
           # DISPLAY to its child, and exits when the child exits.
           #
           # The whole run drops to the non-root test user via setpriv, which
@@ -659,6 +692,7 @@ jobs:
                 XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
                 WLR_BACKENDS=headless \
                 WLR_LIBINPUT_NO_DEVICES=1 \
+                WLR_RENDERER=pixman \
             cage "$sep" node scripts/run-with-heartbeat.mjs "$sep" test "${ARGS[@]}"
 
       # Platform-prefixed artifact name keeps this Rocky arm64 platform's shard
