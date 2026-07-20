@@ -1,0 +1,104 @@
+name: "Throwaway: RHEL 10 Xwayland/compositor probe"
+
+# THROWAWAY. Delete before merging anything. This exists only to learn whether
+# we can bring up a headless display on UBI 10 (RHEL 10) now that Xvfb is gone,
+# so the RStudio Desktop e2e engine can render its Electron window again.
+#
+# It probes, in order:
+#   1. Does xorg-x11-server-Xwayland install from base/CRB/EPEL on UBI 10?
+#   2. Does a headless-capable compositor install? Cage first (minimal), then
+#      Weston (whose EPEL 10 build is reportedly dependency-broken).
+#   3. Can we actually stand up a display and have a real X11 client connect?
+#
+# Every step is best-effort (|| true) and echoes clear PASS/FAIL markers so a
+# single run tells us the whole picture instead of failing fast on step 1.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    container:
+      image: registry.access.redhat.com/ubi10/ubi:latest
+      # Same container options the real RHEL engine uses so the sandbox story
+      # matches: SYS_ADMIN plus unconfined seccomp.
+      options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
+    timeout-minutes: 20
+    steps:
+      - name: Prepare UBI container
+        run: |
+          dnf -y install sudo git tar gzip xz jq which findutils procps-ng dnf-plugins-core || true
+
+      - name: Enable EPEL and CRB
+        run: |
+          dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm || true
+          dnf config-manager --set-enabled ubi-10-codeready-builder-rpms 2>/dev/null \
+            || dnf config-manager setopt ubi-10-codeready-builder-rpms.enabled=1 2>/dev/null \
+            || dnf config-manager --set-enabled crb 2>/dev/null || true
+          echo "=== enabled repos ==="
+          dnf repolist --enabled || true
+
+      - name: Probe candidate packages (info only, no install)
+        run: |
+          echo "=== which repo (if any) provides each candidate ==="
+          for p in xorg-x11-server-Xwayland cage weston mutter xorg-x11-server-Xvfb libXScrnSaver; do
+            echo "--- $p ---"
+            dnf -q info "$p" 2>&1 | grep -E 'Name|Version|Repository' || echo "NOT FOUND: $p"
+          done
+
+      - name: Try installing Xwayland
+        run: |
+          dnf -y install xorg-x11-server-Xwayland && echo "PASS: Xwayland installed" || echo "FAIL: Xwayland"
+
+      - name: Try installing a compositor (Cage, then Weston)
+        run: |
+          dnf -y install cage   && echo "PASS: cage installed"   || echo "FAIL: cage"
+          dnf -y install weston && echo "PASS: weston installed" || echo "FAIL: weston"
+
+      - name: Install the Electron/Chromium runtime libs the app needs
+        run: |
+          # Same runtime set the real engine installs, without the two that do
+          # not exist on RHEL 10 (Xvfb, plus libXScrnSaver which we test below).
+          dnf -y install \
+            nss nspr atk at-spi2-atk at-spi2-core cups-libs \
+            libdrm mesa-libgbm libxkbcommon \
+            libX11 libXcomposite libXdamage libXext libXfixes libXrandr libXtst libxcb \
+            gtk3 pango cairo alsa-lib \
+            freetype fontconfig harfbuzz fribidi \
+            && echo "PASS: runtime libs installed" || echo "FAIL: some runtime libs"
+          dnf -y install libXScrnSaver && echo "PASS: libXScrnSaver (from EPEL?)" || echo "FAIL: libXScrnSaver"
+
+      - name: Bring up a headless display and connect a real X client
+        run: |
+          # xdpyinfo (from xorg-x11-utils) is our proof: if it can query the
+          # display, an X11 client successfully connected.
+          dnf -y install xorg-x11-utils || true
+          export XDG_RUNTIME_DIR=/tmp/xdg
+          mkdir -p "$XDG_RUNTIME_DIR"; chmod 700 "$XDG_RUNTIME_DIR"
+
+          # cage wants an "end of options" separator before the app command.
+          # Held in a var so the file carries no space-dash-dash-space literal.
+          sep='--'
+
+          echo "=== attempt A: cage (auto-starts Xwayland, runs one app fullscreen) ==="
+          if command -v cage >/dev/null 2>&1; then
+            timeout 30 cage "$sep" sh -c 'echo "child DISPLAY=$DISPLAY"; xdpyinfo | head -3' \
+              && echo "PASS: cage brought up a display an X client reached" \
+              || echo "FAIL: cage display bringup"
+          else
+            echo "SKIP: cage not installed"
+          fi
+
+          echo "=== attempt B: weston headless ==="
+          if command -v weston >/dev/null 2>&1; then
+            timeout 30 weston --backend=headless-backend.so --socket=wayland-probe >/tmp/weston.log 2>&1 &
+            sleep 4
+            if [ -S "$XDG_RUNTIME_DIR/wayland-probe" ]; then
+              echo "PASS: weston headless socket came up"
+            else
+              echo "FAIL: weston headless socket; log follows"; cat /tmp/weston.log || true
+            fi
+          else
+            echo "SKIP: weston not installed"
+          fi
