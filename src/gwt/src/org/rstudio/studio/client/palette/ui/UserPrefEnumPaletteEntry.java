@@ -36,6 +36,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       super(val, item);
       val_ = val;
       prefItem_ = item;
+      excludedValues_ = excludedValues;
 
       selector_ = new ListBox();
       selector_.setVisibleItemCount(1);
@@ -75,10 +76,17 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       selector_.addChangeHandler((evt) ->
       {
          // Change the preference to the new value
-         val_.setGlobalValue(selector_.getSelectedValue());
+         String selected = selector_.getSelectedValue();
+         val_.setGlobalValue(selected);
 
          // Save new state
          prefItem_.nudgeWriter();
+
+         // The current value may be an unavailable provider that was kept
+         // selectable so it could be changed away from. Once the user has
+         // moved off it, drop such options so they cannot be re-selected while
+         // the palette is open.
+         removeExcludedOptions(selected);
       });
 
       initialize();
@@ -101,8 +109,38 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
    {
       DomUtils.setActive(selector_.getElement());
    }
-   
+
+   // Remove options whose provider is unavailable, keeping the current value.
+   // Removing an option before the selected one shifts indices, so re-select
+   // the current value by value afterwards.
+   private void removeExcludedOptions(String keepValue)
+   {
+      boolean removed = false;
+      for (int i = selector_.getItemCount() - 1; i >= 0; i--)
+      {
+         String value = selector_.getValue(i);
+         if (excludedValues_.contains(value) && !StringUtil.equals(value, keepValue))
+         {
+            selector_.removeItem(i);
+            removed = true;
+         }
+      }
+
+      if (removed)
+      {
+         for (int i = 0; i < selector_.getItemCount(); i++)
+         {
+            if (StringUtil.equals(selector_.getValue(i), keepValue))
+            {
+               selector_.setSelectedIndex(i);
+               break;
+            }
+         }
+      }
+   }
+
    private ListBox selector_;
    private EnumValue val_;
    private final UserPrefPaletteItem prefItem_;
+   private final Set<String> excludedValues_;
 }
