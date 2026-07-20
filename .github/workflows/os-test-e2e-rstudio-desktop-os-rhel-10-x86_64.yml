@@ -374,6 +374,25 @@ jobs:
           dnf repolist --enabled | grep -qiE 'codeready|crb' \
             || echo "::warning::CodeReady Builder repo not enabled; Xwayland/Cage/libXScrnSaver may fail to resolve."
 
+      # DIAGNOSTIC (temporary): pin down whether UBI 10's enabled repos actually
+      # carry Xwayland, and under what package name. Best-effort so it never
+      # fails the job; the install step below is the real gate. Remove once we
+      # know the answer.
+      - name: DIAGNOSTIC probe Xwayland availability
+        run: |
+          echo "=== enabled repos ==="
+          dnf repolist --enabled || true
+          echo "=== what provides Xwayland ==="
+          dnf provides '*/Xwayland' 2>&1 | head -40 || true
+          dnf provides '*bin/Xwayland' 2>&1 | head -40 || true
+          echo "=== search xwayland ==="
+          dnf search xwayland 2>&1 | head -40 || true
+          echo "=== info on candidate names ==="
+          for p in xorg-x11-server-Xwayland Xwayland xwayland cage weston libXScrnSaver; do
+            echo "=== $p ==="
+            dnf -q info "$p" 2>&1 | grep -E 'Name|Version|Repository' || echo "NOT FOUND: $p"
+          done
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
