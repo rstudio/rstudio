@@ -32,9 +32,9 @@ on:
         type: string
         default: ""
       grep_invert:
-        description: "Optional Playwright --grep-invert pattern to skip tests by title. Defaults to '@ai' to skip tests that require credentials not available in unattended runs."
+        description: "Optional Playwright --grep-invert pattern to skip tests by title. Empty by default (runs all tests)."
         type: string
-        default: "@ai"
+        default: ""
       rstudio_extra_args:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS. Set to '--no-sandbox' if the in-container Chromium sandbox won't initialize (see the container options below)."
         type: string
@@ -72,7 +72,7 @@ on:
         default: ""
       grep_invert:
         type: string
-        default: "@ai"
+        default: ""
       rstudio_extra_args:
         type: string
         default: ""
