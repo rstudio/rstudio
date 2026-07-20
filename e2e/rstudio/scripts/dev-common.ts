@@ -184,6 +184,57 @@ export function runCmakeBuild(tag: string): void {
   }
 }
 
+// Decide where the desktop dev launcher (findComponents in
+// src/node/desktop/src/main/utils.ts) should find the built C++ session.
+//
+// Returns an env fragment to merge into the Playwright environment when the
+// default build/ flow does NOT apply -- in that case the caller must also
+// skip runCmakeBuild. Returns null for the default flow (configured build/
+// in this checkout; caller runs the incremental cmake build as usual).
+//
+// The non-default cases:
+//
+// - RSTUDIO_CPP_BUILD_OUTPUT already set: respect it and skip the cmake
+//   build -- the caller has taken ownership of session freshness.
+// - No configured build/ here, but a bootstrap-worktree.sh dev shim exists
+//   (build-dev-shim/): point the launcher at the shim. The shim borrows the
+//   main checkout's built session but serves THIS worktree's src/gwt/www.
+//   Without the explicit pointer the launcher's own build-root scan can land
+//   on a build dir whose generated conf serves the main checkout's GWT, and
+//   the run silently stops exercising this worktree's changes.
+export function resolveCppBuildOutput(tag: string): Record<string, string> | null {
+  const explicit = process.env.RSTUDIO_CPP_BUILD_OUTPUT;
+  if (explicit) {
+    if (fs.existsSync(explicit)) {
+      step(tag, `Using RSTUDIO_CPP_BUILD_OUTPUT=${explicit} (skipping cmake build).`);
+      return {};
+    }
+    console.warn(
+      `[${tag}] warning: RSTUDIO_CPP_BUILD_OUTPUT=${explicit} does not exist; ignoring it.`,
+    );
+  }
+
+  if (fs.existsSync(path.join(BUILD_DIR, 'CMakeCache.txt'))) {
+    return null;
+  }
+
+  const shim = path.join(REPO_ROOT, 'build-dev-shim');
+  const shimUsable =
+    fs.existsSync(path.join(shim, 'conf', 'rdesktop-dev.conf')) &&
+    fs.existsSync(path.join(shim, 'session'));
+  if (!shimUsable) {
+    return null;
+  }
+
+  step(tag, `No configured build/ in this checkout; using the dev shim at ${shim}.`);
+  console.log(
+    `[${tag}] The shim serves this checkout's src/gwt/www with the main checkout's built ` +
+      'session (see scripts/bootstrap-worktree.sh); rebuild the main checkout if the C++ ' +
+      'session must be current.',
+  );
+  return { RSTUDIO_CPP_BUILD_OUTPUT: shim };
+}
+
 // GWT devmode runs as a Java process whose command line ends with
 // `org.rstudio.studio.RStudioSuperDevMode`. That token is unique to this
 // project, so matching it avoids colliding with other Java processes.
@@ -221,10 +272,43 @@ export function isGwtDevmodeRunning(): boolean {
 
 // True if a precompiled GWT bootstrap exists on disk. `ant draft` writes
 // this; presence is enough to know the dev build can serve a working IDE
-// without devmode. We don't bother comparing source mtimes -- if the user
-// edits Java without re-running `ant draft`, that's on them.
+// without devmode.
 function hasPrecompiledGwt(): boolean {
   return fs.existsSync(path.join(REPO_ROOT, 'src/gwt/www/rstudio/rstudio.nocache.js'));
+}
+
+// Newest file mtime (ms) under dir, recursively. Symlinks are not followed.
+function newestMtimeMs(dir: string): number {
+  let newest = 0;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const entryPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      newest = Math.max(newest, newestMtimeMs(entryPath));
+    } else if (entry.isFile()) {
+      newest = Math.max(newest, fs.statSync(entryPath).mtimeMs);
+    }
+  }
+  return newest;
+}
+
+// A precompiled bootstrap knows nothing about Java edited after it was
+// built, so the run would silently exercise stale UI code. Mtimes are only a
+// heuristic (a branch switch rewrites files without changing content), so
+// this warns loudly rather than failing the run.
+function warnIfPrecompiledGwtStale(tag: string): void {
+  try {
+    const built = fs.statSync(path.join(REPO_ROOT, 'src/gwt/www/rstudio/rstudio.nocache.js')).mtimeMs;
+    const newest = newestMtimeMs(path.join(REPO_ROOT, 'src/gwt/src'));
+    if (newest > built) {
+      console.warn(
+        `[${tag}] WARNING: sources under src/gwt/src are newer than the precompiled GWT ` +
+          'bootstrap; tests may run against stale UI code. Rebuild with:\n' +
+          '    (cd src/gwt && ant draft)',
+      );
+    }
+  } catch {
+    // best-effort: a stat hiccup shouldn't block the run
+  }
 }
 
 export function checkGwtBuildReady(tag: string): void {
@@ -237,6 +321,7 @@ export function checkGwtBuildReady(tag: string): void {
 
   if (hasPrecompiledGwt()) {
     console.log(`[${tag}] Precompiled GWT bootstrap present (devmode not running).`);
+    warnIfPrecompiledGwtStale(tag);
     return;
   }
 
