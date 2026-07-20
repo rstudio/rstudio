@@ -14,9 +14,8 @@ export type { AIProvider } from './auth';
 // Build the Posit AI skip reason from the status file the auth.setup project
 // wrote, so a skipped test reports what actually happened (login failed, copy
 // suppressed, not signed in locally, ...) rather than guessing at missing
-// credentials. Only
-// called when the token store gate has already failed, so PW_SANDBOX is set
-// (isPositAiAuthenticated would have thrown otherwise).
+// credentials. Only called when the token store gate has already failed, so
+// PW_SANDBOX is set (isPositAiAuthenticated would have thrown otherwise).
 function positAiSkipReason(): string {
   const status = readAuthStatus(process.env.PW_SANDBOX!);
   if (status === null) {

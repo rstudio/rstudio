@@ -72,7 +72,7 @@ function readAuthStore(file: string): Record<string, unknown> | null {
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code !== 'ENOENT') {
-      console.warn(`[auth] WARNING: could not read token store: ${(err as Error).message}`);
+      console.warn(`[auth] WARNING: could not read token store ${file}: ${(err as Error).message}`);
     }
     return null;
   }
@@ -98,7 +98,7 @@ export function isStoreFileAuthenticated(file: string): boolean {
   return !Number.isNaN(expiresAt.getTime()) && expiresAt.getTime() > Date.now();
 }
 
-// Absolute path of the token store under a given home directory.
+// Absolute paths of the token store candidates under a given home directory.
 export function storeFileCandidates(homeDir: string): string[] {
   return POSITAI_STORE_CANDIDATES.map((rel) => path.join(homeDir, rel));
 }
@@ -109,6 +109,12 @@ export function findAuthenticatedStore(homeDir: string): string | null {
   return storeFileCandidates(homeDir).find(isStoreFileAuthenticated) ?? null;
 }
 
+// Whether the shared user-home template holds a valid token store. This reads
+// the template, not any aiAuth-stripped launch variant, so combining
+// test.use({ aiAuth: { positai: 'none' } }) with
+// requireAiCredentials(test, 'positai') in one file is contradictory: the
+// gate would pass while the launched IDE is signed out. Declare one or the
+// other.
 export function isPositAiAuthenticated(): boolean {
   const sandbox = process.env.PW_SANDBOX;
   if (!sandbox) {
@@ -125,6 +131,17 @@ export function isPositAiAuthenticated(): boolean {
 export function noSeedCredentials(): boolean {
   return ['1', 'true'].includes(
     (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
+  );
+}
+
+// Strict provisioning: when set, the auth.setup project fails the run instead
+// of returning normally when it ends without Posit AI credentials (outcome
+// 'unavailable' or 'login-failed'). For runs that expect credentials to be
+// present (e.g. CI once secrets are wired in), so a broken credential source
+// turns the run red instead of green-with-skips.
+export function strictAiAuth(): boolean {
+  return ['1', 'true'].includes(
+    (process.env.PW_AI_AUTH_STRICT ?? '').toLowerCase(),
   );
 }
 
@@ -181,6 +198,10 @@ export function scrubCredentials(sandbox: string): string[] {
   try {
     entries = fs.readdirSync(sandbox);
   } catch (err) {
+    // A sandbox that no longer exists holds no credentials, so it's not a
+    // failure (the SIGTERM handler can fire after normal teardown has already
+    // deleted the sandbox; warning there would be a false alarm).
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
     return [`${sandbox}: could not list sandbox to find user homes: ${(err as Error).message}`];
   }
   // Any dir whose name begins "user-home" is a home variant (the template, a
@@ -208,11 +229,13 @@ export function scrubCredentials(sandbox: string): string[] {
 // so Playwright runs tests with a different aiAuth value in their own worker
 // -- which is what makes the state real: RStudio reads credentials at launch,
 // and a new worker is a new launch. The fixture serializes the option into an
-// internal env var (the launch helpers are plain functions, not fixtures);
-// userHomeForAuthState reads it back and swaps the launch HOME for a
-// credential-stripped copy. Launches outside the rstudioSession fixture (a
-// test calling launchRStudio itself, the warmup launch) never see the env var
-// set and get the default, fully-authenticated home.
+// internal environment variable (the launch helpers are plain functions, not
+// fixtures); userHomeForAuthState reads it back and swaps the launch HOME for
+// a credential-stripped copy. The variable is worker-process-wide: once the
+// fixture has run in a worker, a direct launchRStudio()/launchServer() call
+// in that worker inherits the declared state too. Only launches in processes
+// where the fixture never runs (e.g. the globalSetup warmup) are guaranteed
+// the default, fully-authenticated home.
 
 export const AI_AUTH_STATES = ['authenticated', 'none'] as const;
 export type AiAuthState = (typeof AI_AUTH_STATES)[number];
@@ -362,7 +385,7 @@ export function readAuthStatus(sandbox: string): PositAiAuthStatus | null {
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code !== 'ENOENT') {
-      console.warn(`[auth] WARNING: could not read auth status file: ${(err as Error).message}`);
+      console.warn(`[auth] WARNING: could not read auth status file ${file}: ${(err as Error).message}`);
     }
     return null;
   }

@@ -9,6 +9,7 @@ import {
   isStoreFileAuthenticated,
   noSeedCredentials,
   storeFileCandidates,
+  strictAiAuth,
   writeAuthStatus,
 } from '../utils/auth';
 
@@ -62,7 +63,7 @@ function verifyStoreWritten(sandboxUserHome: string): void {
   for (const dest of storeFileCandidates(sandboxUserHome)) {
     if (!isStoreFileAuthenticated(dest)) {
       throw new Error(
-        `[auth-setup] post-write verification failed for ${dest}: store is missing, unreadable, malformed, lacks required fields, or its token is already expired (the unreadable/malformed cases emit a preceding [auth] WARNING naming the cause; missing fields and expiry fail without one)`,
+        `[auth-setup] post-write verification failed for ${dest}: store is missing, unreadable, malformed, lacks required fields, or its token is already expired (the unreadable/malformed cases emit a preceding [auth] WARNING naming the cause; the missing-file, missing-fields, and expiry cases fail without one)`,
       );
     }
   }
@@ -306,6 +307,13 @@ function withDeadline<T>(promise: Promise<T>, ms: number, label: string): Promis
   return Promise.race([promise, expiry]).finally(() => clearTimeout(timer));
 }
 
+// Set by the authorize step when its clicks never visibly registered. The
+// console warning it emits is only visible in the setup's own output; this
+// variable carries the same diagnosis into the status file, so the eventual
+// poll-timeout skip reason names the likely culprit. (Written at most once
+// per process: the setup project runs one test with retries: 0.)
+let authorizeStepWarning: string | undefined;
+
 async function automateLogin(
   verificationUriComplete: string,
   userCode: string,
@@ -398,9 +406,9 @@ async function automateLogin(
         await page.waitForTimeout(1000);
       }
       if (await authorizeBtn.isVisible()) {
-        console.warn(
-          '[auth-setup] WARNING: authorize button still present after 5 click attempts; authorization may not have registered (expect a poll timeout)',
-        );
+        authorizeStepWarning =
+          'authorize button still present after 5 click attempts; authorization may not have registered';
+        console.warn(`[auth-setup] WARNING: ${authorizeStepWarning} (expect a poll timeout)`);
       }
     }, true);
   } finally {
@@ -435,11 +443,25 @@ function writeTokensToSandbox(tokenData: TokenSuccessResponse, sandboxUserHome: 
     },
   };
   const storeData = { [AUTH_STORAGE_KEY]: entry };
-  // Write every candidate location so the assistant under test finds the
-  // store on either side of the store migration.
+  // Write every candidate location (currently one; the array exists so a
+  // future store migration only needs to change POSITAI_STORE_CANDIDATES).
   for (const dest of storeFileCandidates(sandboxUserHome)) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, JSON.stringify(storeData, null, 2), { mode: 0o600 });
+  }
+}
+
+// PW_AI_AUTH_STRICT: fail the run instead of returning normally when the
+// setup ends without credentials. Called after the status file is written, so
+// the record of what happened survives either way. This is the guard against
+// perpetual green-with-skips: on runs that expect credentials to be present
+// (e.g. CI once secrets are wired in), a broken credential source must turn
+// the run red, however the failure was classified.
+function failIfStrict(reason: string): void {
+  if (strictAiAuth()) {
+    throw new Error(
+      `[auth-setup] PW_AI_AUTH_STRICT is set but Posit AI was not provisioned: ${reason}`,
+    );
   }
 }
 
@@ -481,6 +503,7 @@ setup('authenticate Posit AI', async () => {
         reason: 'Not provisioning Posit AI: POSIT_EMAIL/POSIT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local token store. Set the credentials for the sign-in flow, or unset the seed kill-switch while signed in to Posit AI locally.',
       });
       console.log('[auth-setup] no credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI tests will skip');
+      failIfStrict('POSIT_EMAIL/POSIT_PASSWORD are unset and PW_SANDBOX_NO_SEED_CREDENTIALS blocked the local copy');
       return;
     }
     const localStore = findAuthenticatedStore(os.homedir());
@@ -491,6 +514,7 @@ setup('authenticate Posit AI', async () => {
         reason: 'Not provisioning Posit AI: not signed in to Posit AI locally (no valid token store at ~/.posit/ai/auth/data.json) and POSIT_EMAIL/POSIT_PASSWORD are unset. Sign in to Posit AI locally, or set the credentials for the sign-in flow.',
       });
       console.log('[auth-setup] not signed in to Posit AI locally and no credentials set; Posit AI tests will skip');
+      failIfStrict('not signed in to Posit AI locally and POSIT_EMAIL/POSIT_PASSWORD are unset');
       return;
     }
     copyStoreToSandbox(localStore, sandboxUserHome);
@@ -574,15 +598,20 @@ setup('authenticate Posit AI', async () => {
       throw err;
     }
     const msg = err instanceof Error ? err.message : String(err);
+    // A swallowed authorize click surfaces here as a generic poll timeout;
+    // append the authorize step's own diagnosis so the skip reason names the
+    // likely culprit rather than only the symptom.
+    const authorizeNote = authorizeStepWarning ? ` [${authorizeStepWarning}]` : '';
     writeAuthStatus(sandbox, {
       source: 'login',
       outcome: 'login-failed',
-      reason: `sign-in flow was attempted but failed: ${msg}`,
+      reason: `sign-in flow was attempted but failed: ${msg}${authorizeNote}`,
     });
     console.warn(
       '[auth-setup] WARNING: Posit AI authentication flow failed; Posit AI tests will be skipped:',
       msg,
     );
+    failIfStrict(`the sign-in flow was attempted but failed: ${msg}${authorizeNote}`);
     return;
   }
 

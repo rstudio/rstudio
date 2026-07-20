@@ -61,7 +61,8 @@ const setupProject = {
   // green-with-skips. The transient path returns normally (tests skip via
   // the status file), so it was never retried anyway. This overrides the
   // config-level retries (including the CI branch below); a manual
-  // --retries=N on the CLI still outranks it, but CI never passes that.
+  // --retries=N on the CLI still outranks it (the CI workflows don't pass
+  // one today, and shouldn't).
   retries: 0,
   // Artifacts stay off for this project: the sign-in flow types real
   // credentials (POSIT_PASSWORD) into a page, and a trace, video, or

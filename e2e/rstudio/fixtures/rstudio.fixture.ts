@@ -153,15 +153,17 @@ async function attachSessionLogs(
  *
  * The `aiAuth` option declares which AI providers this file's RStudio should
  * be signed OUT of, e.g. `test.use({ aiAuth: { positai: 'none' } })` at file
- * level. It's worker-scoped, so Playwright rejects it inside a describe block
- * (that would force a new worker). Omitted providers stay authenticated (the default `{}`
- * keeps today's fully-authenticated behavior). It's worker-scoped, so tests
- * with a different aiAuth run in their own worker with a fresh RStudio launch
- * against a credential-stripped copy of the user home -- the running IDE only
+ * level. Omitted providers stay authenticated (the default `{}` is the
+ * fully-authenticated behavior). It's worker-scoped: Playwright rejects it
+ * inside a describe block (that would force a new worker), and tests with a
+ * different aiAuth run in their own worker with a fresh RStudio launch
+ * against a credential-stripped copy of the user home (the running IDE only
  * reads credentials at launch, so a per-test toggle without a relaunch would
- * be fiction. Group same-state tests in one file to avoid relaunch churn.
- * Only sessions launched by this fixture honor it; tests that call
- * launchRStudio() themselves get the default authenticated home.
+ * be fiction). Group same-state tests in one file to avoid relaunch churn.
+ * The fixture publishes the state worker-wide before launching, so a test
+ * that also calls launchRStudio() itself inherits the worker's declared
+ * state; only workers where this fixture never runs launch against the
+ * default authenticated home.
  */
 export const test = base.extend<
   { perTestReset: void },

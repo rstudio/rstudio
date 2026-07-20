@@ -143,6 +143,42 @@ export default async function globalSetup(config: FullConfig) {
     fs.mkdirSync(path.join(userHome, 'AppData', 'Local'), { recursive: true });
   }
 
+  // Emergency credential scrub on SIGTERM. Registered before any credential
+  // is copied into the sandbox (the Copilot seeding just below), so there is
+  // no window where seeded tokens sit unprotected.
+  //
+  // globalTeardown (which scrubs a preserved sandbox's seeded tokens; see
+  // sandbox-teardown) runs on Playwright's completion path, including a
+  // graceful Ctrl-C: the runner turns that SIGINT into an "interrupted" stop
+  // that still executes its teardown tasks. It does NOT run when the main
+  // runner process is terminated by a bare SIGTERM (e.g. a CI job cancelling
+  // `npx playwright test`): Node's default disposition kills the process
+  // outright with no teardown, stranding the real tokens seeded into the
+  // sandbox on disk. Catch SIGTERM here, in the main process, and scrub
+  // synchronously (scrubCredentials is all fs.rmSync) before re-raising the
+  // signal to exit with the conventional status.
+  //
+  // Only SIGTERM is handled: Playwright owns SIGINT through its own handler
+  // (the runner's FixedNodeSIGINTHandler), and racing it would break that
+  // shutdown coordination, the same reason process-reaper.ts stays off both
+  // signals in the worker. SIGKILL, OOM kills, and hard crashes are
+  // uncatchable by any handler and leave the sandbox for manual cleanup.
+  const scrubOnSigterm = () => {
+    process.removeListener('SIGTERM', scrubOnSigterm);
+    const failures = scrubCredentials(sandbox);
+    if (failures.length > 0) {
+      console.warn(
+        `[sandbox] SIGTERM: could not scrub all credentials from ${sandbox}; left behind:\n  ${failures.join('\n  ')}`,
+      );
+    } else {
+      console.warn(`[sandbox] SIGTERM: credentials scrubbed from ${sandbox}`);
+    }
+    // Re-raise now that our handler is removed, so the process dies with the
+    // conventional 143 (128 + SIGTERM) status instead of exiting 0.
+    process.kill(process.pid, 'SIGTERM');
+  };
+  process.on('SIGTERM', scrubOnSigterm);
+
   // Seed GitHub Copilot credentials by default when the host has them. The
   // matching Copilot tests run requireAiCredentials(test, 'copilot'),
   // which gates each describe on PW_AI_SEEDED_COPILOT (set below); an unseeded
@@ -193,40 +229,6 @@ export default async function globalSetup(config: FullConfig) {
 
   process.env.PW_SANDBOX = sandbox;
   console.log(`[sandbox] root: ${sandbox}`);
-
-  // Emergency credential scrub on SIGTERM.
-  //
-  // globalTeardown -- which scrubs a preserved sandbox's seeded tokens (see
-  // sandbox-teardown) -- runs on Playwright's completion path, including a
-  // graceful Ctrl-C: the runner turns that SIGINT into an "interrupted" stop
-  // that still executes its teardown tasks. It does NOT run when the main
-  // runner process is terminated by a bare SIGTERM (e.g. a CI job cancelling
-  // `npx playwright test`): Node's default disposition kills the process
-  // outright with no teardown, stranding the real tokens seeded into the
-  // sandbox on disk. Catch SIGTERM here, in the main process, and scrub
-  // synchronously (scrubCredentials is all fs.rmSync) before re-raising the
-  // signal to exit with the conventional status.
-  //
-  // Only SIGTERM is handled: Playwright owns SIGINT through its own handler
-  // (the runner's FixedNodeSIGINTHandler), and racing it would break that
-  // shutdown coordination -- the same reason process-reaper.ts stays off both
-  // signals in the worker. SIGKILL, OOM kills, and hard crashes are
-  // uncatchable by any handler and leave the sandbox for manual cleanup.
-  const scrubOnSigterm = () => {
-    process.removeListener('SIGTERM', scrubOnSigterm);
-    const failures = scrubCredentials(sandbox);
-    if (failures.length > 0) {
-      console.warn(
-        `[sandbox] SIGTERM: could not scrub all credentials from ${sandbox} -- left behind:\n  ${failures.join('\n  ')}`,
-      );
-    } else {
-      console.warn(`[sandbox] SIGTERM: credentials scrubbed from ${sandbox}`);
-    }
-    // Re-raise now that our handler is removed, so the process dies with the
-    // conventional 143 (128 + SIGTERM) status instead of exiting 0.
-    process.kill(process.pid, 'SIGTERM');
-  };
-  process.on('SIGTERM', scrubOnSigterm);
 
   // Stable per-host R library, lives outside PW_SANDBOX so it survives across
   // runs. Without this the redirected HOME (set by Desktop/Server fixtures)
