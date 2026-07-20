@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 import { launchServer, shutdownServer } from './server.fixture';
+import { setAuthStateEnv, type AiAuthOption } from '../utils/auth';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
 import { drainClientExceptions } from '../utils/commands';
 import { resetForNextTest } from '../utils/test-reset';
@@ -149,13 +150,32 @@ async function attachSessionLogs(
  *
  * The `mode` option is set per-project in playwright.config.ts; select with
  * `--project=desktop` (default) or `--project=server`.
+ *
+ * The `aiAuth` option declares which AI providers this file's RStudio should
+ * be signed OUT of, e.g. `test.use({ aiAuth: { positai: 'none' } })` at file
+ * level. Omitted providers stay authenticated (the default `{}` is the
+ * fully-authenticated behavior). It's worker-scoped: Playwright rejects it
+ * inside a describe block (that would force a new worker), and tests with a
+ * different aiAuth run in their own worker with a fresh RStudio launch
+ * against a credential-stripped copy of the user home (the running IDE only
+ * reads credentials at launch, so a per-test toggle without a relaunch would
+ * be fiction). Group same-state tests in one file to avoid relaunch churn.
+ * The fixture publishes the state worker-wide before launching, so a test
+ * that also calls launchRStudio() itself inherits the worker's declared
+ * state; only workers where this fixture never runs launch against the
+ * default authenticated home.
  */
 export const test = base.extend<
   { perTestReset: void },
-  { mode: Mode; rstudioSession: SessionContext; rstudioPage: Page }
+  { mode: Mode; aiAuth: AiAuthOption; rstudioSession: SessionContext; rstudioPage: Page }
 >({
   mode: ['desktop', { option: true, scope: 'worker' }],
-  rstudioSession: [async ({ mode }, use) => {
+  aiAuth: [{}, { option: true, scope: 'worker' }],
+  rstudioSession: [async ({ mode, aiAuth }, use) => {
+    // Publish the per-worker auth state before launching; launchRStudio /
+    // launchServer resolve their HOME through userHomeForAuthState, which
+    // reads it back.
+    setAuthStateEnv(aiAuth);
     const consoleBuffer: ConsoleLine[] = [];
     if (mode === 'server') {
       const session = await launchServer();
