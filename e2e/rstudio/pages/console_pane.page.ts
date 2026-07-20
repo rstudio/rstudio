@@ -201,6 +201,46 @@ export async function waitForConsoleFocus(page: Page, timeout: number = 5000): P
   );
 }
 
+/**
+ * Focus the console input, re-issuing `activateConsole` until focus sticks.
+ *
+ * A single activateConsole + waitForConsoleFocus is not enough: other UI can
+ * take focus *after* the command has run and nothing gives it back, so the
+ * wait can never succeed. The known offender is the Posit Assistant pane,
+ * whose iframe reload (e.g. the workspace-trust prompt shown after a project
+ * open) grabs document focus asynchronously. Re-issuing the command inside
+ * the poll loop wins that race deterministically.
+ *
+ * Use this on "just get me a focused console" paths. Tests that assert the
+ * focus behavior of a single activateConsole dispatch should keep using
+ * executeCommand + waitForConsoleFocus so a product regression isn't masked
+ * by the retry.
+ */
+export async function focusConsole(page: Page, timeout: number = 10000): Promise<void> {
+  const deadline = Date.now() + timeout;
+  let attempts = 0;
+
+  for (;;) {
+    attempts++;
+    await executeCommand(page, 'activateConsole');
+
+    const remaining = deadline - Date.now();
+    try {
+      await waitForConsoleFocus(page, Math.min(1000, Math.max(remaining, 100)));
+      return;
+    } catch (err) {
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `focusConsole: console input did not hold focus after ${attempts} ` +
+            `activateConsole dispatches over ${timeout}ms; something is ` +
+            `stealing focus (e.g. an assistant-pane iframe load or a modal)`,
+          { cause: err },
+        );
+      }
+    }
+  }
+}
+
 /** Options accepted by `executeInConsole`. */
 export interface ExecuteInConsoleOptions {
   /**
