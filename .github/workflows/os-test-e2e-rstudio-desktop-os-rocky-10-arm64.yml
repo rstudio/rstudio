@@ -144,7 +144,13 @@ jobs:
       env:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
-    timeout-minutes: 90
+    # 150 rather than the siblings' 90: this engine has no seeded main-branch
+    # cache yet (rstudio-tools / R-libs / GWT all restore-miss on its first
+    # runs), so the build compiles fully cold on arm64. The first real run
+    # (29777019692) was killed by a 90-minute timeout with no compile error --
+    # just ran out of time. Once main has a seeded cache, builds should be much
+    # faster, but the higher ceiling stays as headroom rather than re-tightening.
+    timeout-minutes: 150
     env:
       # Redirect the dependency / package scripts' tool root to a
       # workspace-local path so it can be cached without sudo.
