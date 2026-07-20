@@ -17,6 +17,12 @@
 #define SESSION_SESSION_DEPENDENCIES_HPP
 
 #include <string>
+#include <vector>
+
+#include <r/RSexp.hpp>
+
+#define kCRANPackageDependency "cran"
+#define kEmbeddedPackageDependency "embedded"
 
 namespace rstudio {
 namespace core {
@@ -26,8 +32,34 @@ namespace core {
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace dependencies {
+
+struct Dependency
+{
+   Dependency() = default;
+
+   // Construct a new Dependency record from an S-expression containing a named
+   // list. Fields not present in the list keep their defaults; in particular,
+   // a dependency is presumed version-satisfied until demonstrated otherwise.
+   Dependency(SEXP sexp);
+
+   bool empty() const { return name.empty(); }
+
+   // Return a version of the dependency as an S-expression for processing in R.
+   SEXP asSEXP(r::sexp::Protect* protect) const;
+
+   std::string location = kCRANPackageDependency;
+   std::string name;
+   std::string version;
+   bool source = false;
+   std::string availableVersion;
+   bool versionSatisfied = true;
+};
+
+// Builds an installation script which will install all the dependencies at
+// once. Exposed for testing.
+std::string buildCombinedInstallScript(const std::vector<Dependency>& deps);
 
 core::Error initialize();
 

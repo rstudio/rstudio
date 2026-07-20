@@ -103,62 +103,36 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
 namespace modules {
 namespace dependencies {
 
-namespace {
-
-#define kCRANPackageDependency "cran"
-#define kEmbeddedPackageDependency "embedded"
-
-struct Dependency
+Dependency::Dependency(SEXP sexp)
 {
-   Dependency() : 
-      location(kCRANPackageDependency), 
-      source(false), 
-      versionSatisfied(true) {}
+   // Required fields
+   Error error = r::sexp::getNamedListElement(sexp, "name", &name);
+   if (error)
+      LOG_ERROR(error);
+   error = r::sexp::getNamedListElement(sexp, "version", &version);
+   if (error)
+      LOG_ERROR(error);
 
-   // Construct a new Dependency record from an S-expression containing a named list
-   Dependency(SEXP sexp)
-   {
-      // Required fields
-      Error error = r::sexp::getNamedListElement(sexp, "name", &name);
-      if (error)
-         LOG_ERROR(error);
-      error = r::sexp::getNamedListElement(sexp, "version", &version);
-      if (error)
-         LOG_ERROR(error);
+   // Optional fields; members not present in the list keep their defaults
+   r::sexp::getNamedListElement(sexp, "source", &source);
+   r::sexp::getNamedListElement(sexp, "location", &location);
+   r::sexp::getNamedListElement(sexp, "availableVersion", &availableVersion);
+   r::sexp::getNamedListElement(sexp, "versionSatisfied", &versionSatisfied);
+}
 
-      // Establish defaults
-      source = false;
-      location = "cran";
+SEXP Dependency::asSEXP(r::sexp::Protect* protect) const
+{
+   r::sexp::ListBuilder list(protect);
+   list.add("name", name);
+   list.add("location", location);
+   list.add("version", version);
+   list.add("source", source);
+   list.add("availableVersion", availableVersion);
+   list.add("versionSatisfied", versionSatisfied);
+   return r::sexp::create(list, protect);
+}
 
-      // Optional fields
-      r::sexp::getNamedListElement(sexp, "source", &source);
-      r::sexp::getNamedListElement(sexp, "location", &location);
-      r::sexp::getNamedListElement(sexp, "availableVersion", &availableVersion);
-      r::sexp::getNamedListElement(sexp, "versionSatisfied", &versionSatisfied);
-   }
-
-   bool empty() const { return name.empty(); }
-
-   // Return a version of the dependency as an S-expression for processing in R.
-   SEXP asSEXP(r::sexp::Protect *protect) const
-   {
-      r::sexp::ListBuilder list(protect);
-      list.add("name", name);
-      list.add("location", location);
-      list.add("version", version);
-      list.add("source", source);
-      list.add("availableVersion", availableVersion);
-      list.add("versionSatisfied", versionSatisfied);
-      return r::sexp::create(list, protect);
-   }
-
-   std::string location;
-   std::string name;
-   std::string version;
-   bool source;
-   std::string availableVersion;
-   bool versionSatisfied;
-};
+namespace {
 
 std::string nameFromDep(const Dependency& dep)
 {
@@ -250,9 +224,10 @@ void silentUpdateEmbeddedPackage(const EmbeddedPackage& pkg)
 // version satisfies the dependency's version requirement.
 void fillCranVersionInfo(Dependency* pDep)
 {
-   // presume package is available unless we can demonstrate otherwise
-   // (we don't want to block installation attempt unless we're
-   // reasonably confident it will not result in a viable version)
+   // the Dependency defaults presume the package is available and its
+   // version requirement satisfiable; on error we leave those defaults in
+   // place, since we don't want to block an installation attempt unless
+   // we're reasonably confident it will not result in a viable version
    r::sexp::Protect protect;
    SEXP versionInfo = R_NilValue;
 
@@ -391,7 +366,9 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// Builds an installation script which will install all the dependencies at once. 
+} // anonymous namespace
+
+// Builds an installation script which will install all the dependencies at once.
 std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
 {
    bool isRenv = module_context::isRenvActive();
@@ -461,6 +438,8 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
 
    return cmd;
 }
+
+namespace {
 
 // Builds an installation script which will install the packages one at a time. This is desirable
 // because it allows us to give much better progress and feedback during the installation process,
@@ -729,7 +708,7 @@ Error installEmbeddedPackage(const std::string& name)
    return module_context::installPackage(pkg.archivePath);
 }
 
-} // anonymous namespace
+} // namespace module_context
 
 } // namespace session
 } // namespace rstudio
