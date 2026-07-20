@@ -677,7 +677,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // copilot
 #ifdef COPILOT_ENABLED
-   sessionInfo["copilot_enabled"] = options.copilotEnabled();
+   // Mirror isCopilotAllowedByAdmin() so the client's view of Copilot
+   // availability matches the backend gate (both admin options).
+   sessionInfo["copilot_enabled"] = options.copilotEnabled() && options.allowCopilot();
 #else
    sessionInfo["copilot_enabled"] = false;
 #endif

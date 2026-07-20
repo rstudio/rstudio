@@ -117,38 +117,28 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       projectServer_ = projectServer;
       paiUtil_ = paiUtil;
 
-      // Create assistant selector - conditionally include Posit AI option
+      // Create assistant selector - conditionally include each provider based
+      // on whether it is available in this build and enabled by the administrator.
       boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
-      String[] assistantLabels;
-      String[] assistantValues;
+      boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
+      List<String> assistantLabelList = new ArrayList<>();
+      List<String> assistantValueList = new ArrayList<>();
+      assistantLabelList.add(constants_.defaultInParentheses());
+      assistantValueList.add(ASSISTANT_DEFAULT);
+      assistantLabelList.add(constants_.none());
+      assistantValueList.add(UserPrefsAccessor.ASSISTANT_NONE);
       if (paiEnabled)
       {
-         assistantLabels = new String[] {
-               constants_.defaultInParentheses(),
-               constants_.none(),
-               prefsConstants_.assistantEnum_posit(),
-               prefsConstants_.assistantEnum_copilot()
-         };
-         assistantValues = new String[] {
-               ASSISTANT_DEFAULT,
-               UserPrefsAccessor.ASSISTANT_NONE,
-               UserPrefsAccessor.ASSISTANT_POSIT,
-               UserPrefsAccessor.ASSISTANT_COPILOT
-         };
+         assistantLabelList.add(prefsConstants_.assistantEnum_posit());
+         assistantValueList.add(UserPrefsAccessor.ASSISTANT_POSIT);
       }
-      else
+      if (copilotEnabled)
       {
-         assistantLabels = new String[] {
-               constants_.defaultInParentheses(),
-               constants_.none(),
-               prefsConstants_.assistantEnum_copilot()
-         };
-         assistantValues = new String[] {
-               ASSISTANT_DEFAULT,
-               UserPrefsAccessor.ASSISTANT_NONE,
-               UserPrefsAccessor.ASSISTANT_COPILOT
-         };
+         assistantLabelList.add(prefsConstants_.assistantEnum_copilot());
+         assistantValueList.add(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
+      String[] assistantLabels = assistantLabelList.toArray(new String[0]);
+      String[] assistantValues = assistantValueList.toArray(new String[0]);
       selAssistant_ = new SelectWidget(
             constants_.assistantSelectLabel(),
             assistantLabels,

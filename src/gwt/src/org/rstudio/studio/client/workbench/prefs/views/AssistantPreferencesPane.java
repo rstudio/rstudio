@@ -1307,18 +1307,29 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       initialUseSystemCa_ = prefs.assistantUseSystemCa().getGlobalValue();
 
-      // Migration: if rstudio_assistant is "none" but copilot_enabled is true, auto-migrate to "copilot"
+      // Migration: if rstudio_assistant is "none" but the legacy copilot_enabled
+      // pref is set, auto-migrate to "copilot" -- but only when Copilot is
+      // actually available in this build and enabled by the administrator.
       String assistant = prefs.assistant().getGlobalValue();
+      boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_NONE) &&
-          prefs.copilotEnabled().getGlobalValue())
+          prefs.copilotEnabled().getGlobalValue() &&
+          copilotEnabled)
       {
          prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_COPILOT);
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
 
-      // Reset to "none" if user has Posit AI selected but Posit Assistant is no longer enabled
+      // Reset to "none" if the selected assistant is no longer available in this
+      // build or enabled by the administrator.
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
           !paiUtil_.isPositAssistantEnabled())
+      {
+         prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
+         selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
+      }
+      else if (assistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT) &&
+               !copilotEnabled)
       {
          prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
