@@ -1579,24 +1579,40 @@ void rollbackOpenSqliteTransaction(const boost::shared_ptr<Connection>& connecti
    if (connection->driver() != Driver::Sqlite)
       return;
 
-   auto* backend = static_cast<soci::sqlite3_session_backend*>(connection->session().get_backend());
-   if (backend == nullptr || backend->conn_ == nullptr)
-      return;
+   // Probe for an open transaction with BEGIN rather than calling
+   // sqlite3_get_autocommit(): SOCI 4.1+ no longer exposes the SQLite C API
+   // through soci-sqlite3.h, so builds against a system SOCI cannot use it
+   // (#18287). A deferred BEGIN acquires no locks, so the probe is cheap.
+   try
+   {
+      connection->session() << "BEGIN";
+   }
+   catch (const soci::soci_error&)
+   {
+      // BEGIN failed, so a transaction is already open; roll it back.
+      try
+      {
+         connection->session() << "ROLLBACK";
+         LOG_DEBUG_MESSAGE("Rolled back an open transaction before returning a "
+                           "connection to the pool");
+      }
+      catch (const soci::soci_error& e)
+      {
+         LOG_WARNING_MESSAGE(std::string("Failed to roll back open transaction on a "
+                                         "pooled connection: ") + e.what());
+      }
 
-   // A nonzero result means the connection is in autocommit (no open
-   // transaction), which is the expected state - nothing to roll back.
-   if (sqlite_api::sqlite3_get_autocommit(backend->conn_) != 0)
       return;
+   }
 
+   // No transaction was open; close the one the probe just started.
    try
    {
       connection->session() << "ROLLBACK";
-      LOG_DEBUG_MESSAGE("Rolled back an open transaction before returning a "
-                        "connection to the pool");
    }
    catch (const soci::soci_error& e)
    {
-      LOG_WARNING_MESSAGE(std::string("Failed to roll back open transaction on a "
+      LOG_WARNING_MESSAGE(std::string("Failed to close transaction probe on a "
                                       "pooled connection: ") + e.what());
    }
 }
