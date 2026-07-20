@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.palette.ui;
 
 
+import java.util.Set;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
@@ -29,30 +31,33 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
 {
-   public UserPrefEnumPaletteEntry(EnumValue val, UserPrefPaletteItem item)
+   public UserPrefEnumPaletteEntry(EnumValue val, UserPrefPaletteItem item, Set<String> excludedValues)
    {
       super(val, item);
       val_ = val;
       prefItem_ = item;
-      
+
       selector_ = new ListBox();
       selector_.setVisibleItemCount(1);
 
       // Create marginally more user friendly names for option values by
-      // removing common separators and adding some casing
+      // removing common separators and adding some casing. Values excluded
+      // because they are unavailable in this build are skipped.
       String[] values = val.getAllowedValues();
       for (String value: values)
       {
+         if (excludedValues.contains(value))
+            continue;
          String option = value.replace("-", " ");
          option = option.replace("_", " ");
          option = StringUtil.capitalizeAllWords(option);
          selector_.addItem(option, value);
       }
-      
-      // Show the currently selected value
-      for (int i = 0; i < values.length; i++)
+
+      // Show the currently selected value (indices reflect the filtered list)
+      for (int i = 0; i < selector_.getItemCount(); i++)
       {
-         if (StringUtil.equals(values[i], val_.getGlobalValue()))
+         if (StringUtil.equals(selector_.getValue(i), val_.getGlobalValue()))
          {
             selector_.setSelectedIndex(i);
             break;

@@ -16,7 +16,9 @@
 package org.rstudio.studio.client.palette;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -57,7 +59,7 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
             // Ignore preferences for AI features not available in this build
             continue;
          }
-         items.add(new UserPrefPaletteItem(val));
+         items.add(new UserPrefPaletteItem(val, excludedValues(val.getId())));
       }
 
       return items;
@@ -83,7 +85,7 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
          return null;
       }
 
-      return new UserPrefPaletteItem(val);
+      return new UserPrefPaletteItem(val, excludedValues(id));
    }
 
    /**
@@ -95,20 +97,42 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    {
       switch (id)
       {
-         // Posit Assistant-specific preferences.
+         // Posit Assistant-specific preferences (chat is Posit-only).
          case UserPrefsAccessor.ASSISTANT_TOOLBAR_BUTTON_VISIBLE:
          case UserPrefsAccessor.ASSISTANT_SHOW_MESSAGES:
          case UserPrefsAccessor.POSIT_ASSISTANT_TEST_MANIFEST:
          case UserPrefsAccessor.POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS:
+         case UserPrefsAccessor.CHAT_PROVIDER:
             return !sessionInfo_.getPositAssistantEnabled();
-         // Applies to every AI agent (Copilot and Posit Assistant), so hide it
-         // only when no AI assistant is available.
+         // The assistant selector and the system-CA option apply to any AI
+         // agent (Copilot or Posit Assistant), so hide them only when no AI
+         // assistant is available. The assistant selector additionally filters
+         // out unavailable providers via excludedValues().
+         case UserPrefsAccessor.ASSISTANT:
          case UserPrefsAccessor.ASSISTANT_USE_SYSTEM_CA:
             return !sessionInfo_.getCopilotEnabled() &&
                    !sessionInfo_.getPositAssistantEnabled();
          default:
             return false;
       }
+   }
+
+   /**
+    * Enum preference values to hide because the provider they select is
+    * unavailable. Only the "assistant" selector filters providers today; every
+    * other preference returns an empty set (no filtering).
+    */
+   private Set<String> excludedValues(String id)
+   {
+      Set<String> excluded = new HashSet<>();
+      if (id.equals(UserPrefsAccessor.ASSISTANT))
+      {
+         if (!sessionInfo_.getPositAssistantEnabled())
+            excluded.add(UserPrefsAccessor.ASSISTANT_POSIT);
+         if (!sessionInfo_.getCopilotEnabled())
+            excluded.add(UserPrefsAccessor.ASSISTANT_COPILOT);
+      }
+      return excluded;
    }
 
    @Override
