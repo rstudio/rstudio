@@ -393,6 +393,11 @@ void verifyUserDirs(
 
    testDir(userConfigDir(user, homeDir), ERROR_LOCATION);
    testDir(userDataDir(user, homeDir), ERROR_LOCATION);
+
+   // the session always writes its logs beneath the data directory (the log
+   // location is forced in SessionMain); an unwritable log directory made
+   // startup fail with no visible error (https://github.com/rstudio/rstudio/issues/18179)
+   testDir(userDataDir(user, homeDir).completePath("log"), ERROR_LOCATION);
 #endif
 }
 

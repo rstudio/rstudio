@@ -11,6 +11,7 @@ import { sleep } from '../utils/constants';
 import { setPref, documentCloseAllNoSave } from '../utils/commands';
 import { rLibsUserTemplate } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
+import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
 // before any worker spawns. Resolve lazily so importing this module (for
@@ -80,7 +81,10 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   }
 
   const port = await pickFreePort();
-  const userHome = sharedUserHome();
+  // Resolve the launch HOME through the per-test auth state: normally the
+  // shared home unchanged; under aiAuth 'none' declarations, a
+  // credential-stripped copy of it (see userHomeForAuthState in utils/auth.ts).
+  const userHome = userHomeForAuthState(sharedUserHome());
   const dataHome = sharedDataHome();
   const serverRoot = fs.mkdtempSync(path.join(sandboxRoot(), 'rserver_'));
   // rserver creates Unix-domain sockets and IPC files under server-data-dir.
@@ -210,6 +214,16 @@ export async function launchServer(): Promise<ServerSession> {
   let rserverCleanupDirs: string[] | undefined;
   let serverUrl: string;
   if (externalUrl) {
+    // The signed-out home (userHomeForAuthState) is applied only on the spawn
+    // path below. An external server uses its own home, so an aiAuth 'none'
+    // declaration can't be honored here -- fail loud rather than silently run a
+    // signed-out test against a server that may well be signed in.
+    const stripped = strippedProvidersFromEnv();
+    if (stripped.length > 0) {
+      throw new Error(
+        `test.use({ aiAuth }) requests signing out of ${stripped.join(', ')}, but PW_RSTUDIO_SERVER_URL points at an external server whose credentials the harness cannot control. Unset PW_RSTUDIO_SERVER_URL to use a spawned server, or remove the aiAuth declaration.`,
+      );
+    }
     const url = new URL(externalUrl);
     if (process.env.PW_RSTUDIO_SERVER_PORT) {
       url.port = process.env.PW_RSTUDIO_SERVER_PORT;

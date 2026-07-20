@@ -17,6 +17,7 @@
 - ([#18198](https://github.com/rstudio/rstudio/issues/18198)): Fixed tar errors and warnings printed to the console after installing a package from a URL with `install.packages(..., repos = NULL)`.
 - ([#18197](https://github.com/rstudio/rstudio/issues/18197)): Fixed an issue where the Render button failed to render a Quarto document living within a sub-directory of a Quarto project.
 - ([#18208](https://github.com/rstudio/rstudio/issues/18208)): Fixed an issue in RStudio Server where requests could fail with "Unable to connect to service" for 30 seconds or more while a suspended session was relaunching.
+- ([#18179](https://github.com/rstudio/rstudio/issues/18179)): RStudio Desktop now shows an error dialog at startup when folders it needs to write (e.g. `~/.local/share/rstudio`) cannot be created or written, instead of failing silently, and log messages now fall back to stderr when the log directory is not writable.
 - ([#17650](https://github.com/rstudio/rstudio/issues/17650)): Fixed unreadable label text in dark modal dialogs when using third-party themes (e.g. rsthemes) that style dialog labels for light backgrounds.
 - ([#18215](https://github.com/rstudio/rstudio/issues/18215)): Fixed an issue where the Data Viewer could lose its scroll position, or render an empty grid, after switching to another tab and back.
 - ([#18221](https://github.com/rstudio/rstudio/issues/18221)): Fixed an issue on Windows where scrolling the Data Viewer with the mouse wheel could get stuck when the pointer was over the table body.

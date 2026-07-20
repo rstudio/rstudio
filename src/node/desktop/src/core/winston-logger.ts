@@ -21,6 +21,7 @@ import LogOptions from '../main/log-options';
 import { getenv } from './environment';
 import { safeError } from './err';
 import { Logger, showDiagnosticsOutput } from './logger';
+import { checkDirectoryWritable } from './xdg';
 
 const { combine, printf, timestamp, json } = winston.format;
 
@@ -52,7 +53,7 @@ export class WinstonLogger implements Logger {
 
     const messageFormat = combine(timestamp({ alias: 'time' }), format);
     const logFile = logOptions.getLogFile();
-    let optionError;
+    const optionErrors: string[] = [];
 
     this.logger = winston.createLogger({
       level: winstonLevel,
@@ -76,28 +77,54 @@ export class WinstonLogger implements Logger {
       this.logger.levels = winston.config.syslog.levels;
       this.usingSyslog = true;
     } else if (loggerType === 'syslog') {
-      optionError = 'syslog not supported';
+      optionErrors.push('syslog not supported');
     }
 
     if (!logTransport) {
-      logTransport = new winston.transports.File({
-        filename: logFile.getAbsolutePath(),
-        tailable: true,
-        maxsize: 2000000, // TODO: use max-size from logging.conf (convert from mb to bytes)
-        maxFiles: 100,
-      }); // TODO: use max-rotation from logging.conf
+      // winston only throws when it must create the log directory; when the
+      // directory exists but is not writable, it discards stream write errors
+      // internally and the log output is silently lost. Probe the directory
+      // explicitly so both cases fall back to console logging, keeping
+      // startup errors visible.
+      // https://github.com/rstudio/rstudio/issues/18179
+      const logDirError = checkDirectoryWritable(logFile.getParent());
+      if (logDirError === null) {
+        try {
+          logTransport = new winston.transports.File({
+            filename: logFile.getAbsolutePath(),
+            tailable: true,
+            maxsize: 2000000, // TODO: use max-size from logging.conf (convert from mb to bytes)
+            maxFiles: 100,
+          }); // TODO: use max-rotation from logging.conf
 
-      this.fileTransport = logTransport;
+          this.fileTransport = logTransport;
+        } catch (error: unknown) {
+          optionErrors.push(`Unable to write log file ${logFile.getAbsolutePath()}: ${safeError(error).message}`);
+        }
+      } else {
+        optionErrors.push(`Unable to write log file ${logFile.getAbsolutePath()}: ${logDirError}`);
+      }
+
+      if (!logTransport) {
+        logTransport = new Console();
+        consoleLogging = true;
+      }
     }
 
     this.logger.add(logTransport);
+
+    // don't let transport errors (e.g. the log file becoming unwritable after
+    // startup) surface as uncaught exceptions
+    this.logger.on('error', (error) => {
+      console.error(safeError(error));
+    });
 
     // on dev builds, always log to console
     if (!consoleLogging && !app.isPackaged) {
       this.logger.add(new Console());
     }
 
-    if (optionError) {
+    for (const optionError of optionErrors) {
       this.logErrorMessage(optionError);
     }
   }

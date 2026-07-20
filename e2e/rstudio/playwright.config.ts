@@ -51,6 +51,26 @@ if (edition !== 'os' && edition !== 'pro') {
 }
 const editionExclusions = edition === 'os' ? ['@pro_only'] : ['@os_only'];
 
+const setupProject = {
+  name: 'setup',
+  testMatch: /tests[\\/]auth\.setup\.ts$/,
+  // Never retry the setup: only its deterministic (fail-loud) path throws --
+  // wrong credentials, an OAuth config fault -- and retrying that means a
+  // second live bad-credential sign-in against login.posit.cloud, plus the
+  // chance a flaky retry passes and launders the fail-loud verdict into
+  // green-with-skips. The transient path returns normally (tests skip via
+  // the status file), so it was never retried anyway. This overrides the
+  // config-level retries (including the CI branch below); a manual
+  // --retries=N on the CLI still outranks it (the CI workflows don't pass
+  // one today, and shouldn't).
+  retries: 0,
+  // Artifacts stay off for this project: the sign-in flow types real
+  // credentials (POSIT_PASSWORD) into a page, and a trace, video, or
+  // screenshot would capture them into the report. Diagnostic context comes
+  // from the flow's own error messages instead (step name, page URL).
+  use: { trace: 'off' as const, video: 'off' as const, screenshot: 'off' as const },
+};
+
 // The @smoke startup test is a long, low-information liveness check that just
 // idles for 30s. It is redundant alongside the full suite, and with no timeout
 // headroom (and full runs often capping the global timeout low) it is the first
@@ -62,11 +82,13 @@ const allProjects = [
     name: 'desktop',
     use: { mode: 'desktop' as const },
     grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
+    dependencies: ['setup'],
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
     grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
+    dependencies: ['setup'],
   },
 ];
 
@@ -110,9 +132,15 @@ if (modeEnv !== 'desktop' && modeEnv !== 'server') {
 // Insights reporter also records this as its dashboard "project" field, so
 // per-platform labels show up there as distinct series.
 const projectLabel = process.env.PW_PROJECT_LABEL || modeEnv;
-const projects = allProjects
-  .filter(p => p.name === modeEnv)
-  .map(p => ({ ...p, name: projectLabel }));
+const projects = [
+  // The auth setup project runs auth.setup.ts (raw chromium, no RStudio launch),
+  // so mode is inert for it -- it's set only to satisfy ProjectOptions. modeEnv
+  // is validated to be 'desktop'|'server' above, so the cast is sound.
+  { ...setupProject, use: { ...setupProject.use, mode: modeEnv as ProjectOptions['mode'] } },
+  ...allProjects
+    .filter(p => p.name === modeEnv)
+    .map(p => ({ ...p, name: projectLabel })),
+];
 
 const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)

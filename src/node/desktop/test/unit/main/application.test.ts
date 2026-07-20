@@ -16,10 +16,12 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { Application } from '../../../src/main/application';
+import { restore, saveAndClear } from '../unit-utils';
+import { Application, collectStateDirIssues } from '../../../src/main/application';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { randomString } from '../../../src/main/utils';
@@ -37,6 +39,58 @@ describe('Application', () => {
   function testDir(): FilePath {
     return new FilePath(path.join(os.tmpdir(), 'temp-folder-for-Application-tests-' + randomString()));
   }
+
+  describe('collectStateDirIssues', () => {
+    // NOTE: non-writable scenarios are skipped on win32; creating a directory
+    // that denies writes requires ACL manipulation that isn't practical here,
+    // so the probe-file behavior is only exercised on POSIX platforms
+    const stateEnv: Record<string, string> = {
+      RSTUDIO_CONFIG_HOME: '',
+      RSTUDIO_DATA_HOME: '',
+      RS_LOG_DIR: '',
+      RS_LOG_CONF_FILE: '',
+    };
+    let testRoot: string;
+
+    beforeEach(() => {
+      saveAndClear(stateEnv);
+      testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-application-test-'));
+      process.env.RSTUDIO_CONFIG_HOME = path.join(testRoot, 'config');
+      process.env.RSTUDIO_DATA_HOME = path.join(testRoot, 'data');
+      process.env.RS_LOG_DIR = path.join(testRoot, 'logs');
+    });
+
+    afterEach(() => {
+      restore(stateEnv);
+      for (const entry of fs.readdirSync(testRoot)) {
+        try {
+          fs.chmodSync(path.join(testRoot, entry), 0o700);
+        } catch {
+          // ignore; removal below is best-effort
+        }
+      }
+      fs.rmSync(testRoot, { recursive: true, force: true });
+    });
+
+    it('returns no issues when all state dirs are writable', () => {
+      assert.isEmpty(collectStateDirIssues());
+    });
+
+    it('reports a relocated, unwritable log directory', function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      const logDir = path.join(testRoot, 'logs');
+      fs.mkdirSync(logDir);
+      fs.chmodSync(logDir, 0o500);
+
+      const issues = collectStateDirIssues();
+      assert.lengthOf(issues, 1);
+      assert.strictEqual(issues[0].directory, logDir);
+      assert.isNotEmpty(issues[0].message);
+    });
+  });
 
   describe('Command line switches', () => {
     it('run-diagnostics sets diag mode and continues', () => {

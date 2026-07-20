@@ -4,6 +4,7 @@ import * as path from 'path';
 import type { FullConfig } from '@playwright/test';
 import { prepareRLibs } from './r-libs-setup';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
+import { noSeedCredentials, copilotConfigDir, scrubCredentials } from '../utils/auth';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -35,30 +36,32 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
  *                                  compatibility is enforced by the IDE at
  *                                  runtime, which treats an incompatible
  *                                  seeded build as needing an update.
- *   PW_SANDBOX_NO_SEED_CREDENTIALS "1"/"true" to opt out of copying real AI
- *                                  credentials into the sandbox. By default,
- *                                  if the Posit Assistant state dir
- *                                  (`~/.posit/assistant` or legacy `~/.positai`)
- *                                  and/or the GitHub Copilot
- *                                  config dir exist on the host, they're
- *                                  copied into the sandbox user-home so the
- *                                  matching @ai tests start authenticated.
- *                                  AI tests skip when the corresponding
- *                                  credentials are unseeded.
+ *   PW_SANDBOX_NO_SEED_CREDENTIALS "1"/"true" is a global host-copy kill-
+ *                                  switch. By default, if the GitHub Copilot
+ *                                  config dir exists on the host it's copied
+ *                                  into the sandbox user-home so the Copilot
+ *                                  tests start authenticated; setting this
+ *                                  suppresses that copy. It also suppresses the
+ *                                  auth.setup project's copy of the local Posit
+ *                                  AI token store, but not its sign-in flow,
+ *                                  which copies nothing from the host. Copilot
+ *                                  tests skip when their credentials are
+ *                                  unseeded.
  *                                  Privacy note: real OAuth/API tokens are
- *                                  copied into the sandbox. If the run is
- *                                  preserved (test failure or
- *                                  PW_SANDBOX_SKIP_CLEANUP=1), the copied
- *                                  tokens persist there until the sandbox is
- *                                  removed. Set this opt-out if the host
- *                                  isn't a dedicated test account.
+ *                                  copied into the sandbox during the run.
+ *                                  sandbox-teardown scrubs them whenever the
+ *                                  sandbox is left on disk (preserved by a
+ *                                  failure or PW_SANDBOX_SKIP_CLEANUP, or
+ *                                  stranded by a failed delete), so a surviving
+ *                                  sandbox should hold no tokens; set this
+ *                                  opt-out anyway if the host isn't a dedicated
+ *                                  test account, to avoid copying them at all.
  *
  * Sets PW_SANDBOX (internal) to the absolute path of the auto-created
- * subtree, and PW_AI_SEEDED_POSITAI / PW_AI_SEEDED_COPILOT to "1" for each
- * provider whose credentials were successfully copied (consumed by
- * requireAiCredentials in @ai test files). Workers inherit them via the
- * normal child-process env; globalTeardown reads PW_SANDBOX directly from
- * process.env.
+ * subtree, and PW_AI_SEEDED_COPILOT to "1" when GitHub Copilot credentials
+ * were successfully copied (consumed by requireAiCredentials in Copilot
+ * test files). Workers inherit it via the normal child-process env;
+ * globalTeardown reads PW_SANDBOX directly from process.env.
  */
 export default async function globalSetup(config: FullConfig) {
   // Export the resolved worker count so the Desktop fixture and r-libs helpers
@@ -140,68 +143,75 @@ export default async function globalSetup(config: FullConfig) {
     fs.mkdirSync(path.join(userHome, 'AppData', 'Local'), { recursive: true });
   }
 
-  // Seed AI credentials by default when the host has them. The matching @ai
-  // tests run requireAiCredentials() which gates each describe on the
-  // corresponding PW_AI_SEEDED_* flag set below; unseeded providers surface
-  // as a clean skip-with-reason rather than a 5-minute mystery failure
-  // waiting for a completion that will never arrive.
+  // Emergency credential scrub on SIGTERM. Registered before any credential
+  // is copied into the sandbox (the Copilot seeding just below), so there is
+  // no window where seeded tokens sit unprotected.
   //
-  // Clear the flags up front so only values this function sets are honored
-  // -- a stray PW_AI_SEEDED_POSITAI=1 inherited from the user's shell or a
-  // prior partially-cleaned run could otherwise smuggle past
-  // requireAiCredentials() even when no credentials were actually copied.
-  delete process.env.PW_AI_SEEDED_POSITAI;
+  // globalTeardown (which scrubs a preserved sandbox's seeded tokens; see
+  // sandbox-teardown) runs on Playwright's completion path, including a
+  // graceful Ctrl-C: the runner turns that SIGINT into an "interrupted" stop
+  // that still executes its teardown tasks. It does NOT run when the main
+  // runner process is terminated by a bare SIGTERM (e.g. a CI job cancelling
+  // `npx playwright test`): Node's default disposition kills the process
+  // outright with no teardown, stranding the real tokens seeded into the
+  // sandbox on disk. Catch SIGTERM here, in the main process, and scrub
+  // synchronously (scrubCredentials is all fs.rmSync) before re-raising the
+  // signal to exit with the conventional status.
+  //
+  // Only SIGTERM is handled: Playwright owns SIGINT through its own handler
+  // (the runner's FixedNodeSIGINTHandler), and racing it would break that
+  // shutdown coordination, the same reason process-reaper.ts stays off both
+  // signals in the worker. SIGKILL, OOM kills, and hard crashes are
+  // uncatchable by any handler and leave the sandbox for manual cleanup.
+  const scrubOnSigterm = () => {
+    process.removeListener('SIGTERM', scrubOnSigterm);
+    const failures = scrubCredentials(sandbox);
+    if (failures.length > 0) {
+      console.warn(
+        `[sandbox] SIGTERM: could not scrub all credentials from ${sandbox}; left behind:\n  ${failures.join('\n  ')}`,
+      );
+    } else {
+      console.warn(`[sandbox] SIGTERM: credentials scrubbed from ${sandbox}`);
+    }
+    // Re-raise now that our handler is removed, so the process dies with the
+    // conventional 143 (128 + SIGTERM) status instead of exiting 0.
+    process.kill(process.pid, 'SIGTERM');
+  };
+  process.on('SIGTERM', scrubOnSigterm);
+
+  // Seed GitHub Copilot credentials by default when the host has them. The
+  // matching Copilot tests run requireAiCredentials(test, 'copilot'),
+  // which gates each describe on PW_AI_SEEDED_COPILOT (set below); an unseeded
+  // provider surfaces as a clean skip-with-reason rather than a test-timeout
+  // mystery failure waiting for a completion that will never arrive.
+  //
+  // Posit AI is NOT seeded here -- the auth.setup project (tests/auth.setup.ts)
+  // is the sole authority for Posit AI credentials (the OAuth sign-in flow when
+  // POSIT_EMAIL/POSIT_PASSWORD are set, else a copy of the local token store;
+  // store locations live in POSITAI_STORE_CANDIDATES in utils/auth.ts), and its
+  // tests gate on the on-disk token store rather than an env flag.
+  //
+  // Clear the flag up front so only a value this function sets is honored -- a
+  // stray PW_AI_SEEDED_COPILOT=1 inherited from the user's shell or a prior
+  // partially-cleaned run could otherwise smuggle past requireAiCredentials()
+  // even when no credentials were actually copied.
   delete process.env.PW_AI_SEEDED_COPILOT;
 
-  const skipSeeding = ['1', 'true'].includes(
-    (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
-  );
+  const skipSeeding = noSeedCredentials();
 
   if (!skipSeeding) {
-    // Posit Assistant moved its state directory from ~/.positai to
-    // ~/.posit/assistant. Seed whichever the host has, preferring the new
-    // location, and mirror it at the same relative path inside the sandbox
-    // user-home so the under-test Assistant (which may recognize either)
-    // finds it.
-    const positaiCandidates = [path.join('.posit', 'assistant'), '.positai'];
-    const seededFrom = positaiCandidates
-      .map((rel) => ({ rel, abs: path.join(os.homedir(), rel) }))
-      .find(({ abs }) => fs.existsSync(abs));
-    if (seededFrom) {
-      try {
-        const dest = path.join(userHome, seededFrom.rel);
-        fs.mkdirSync(path.dirname(dest), { recursive: true });
-        fs.cpSync(seededFrom.abs, dest, { recursive: true });
-        process.env.PW_AI_SEEDED_POSITAI = '1';
-        console.log(`[sandbox] seeded user-home/${seededFrom.rel} from ${seededFrom.abs}`);
-        console.warn(
-          `[sandbox] WARNING: Real Posit AI credentials were copied into the sandbox from ${seededFrom.abs}. Tokens persist if the run is preserved or teardown fails. Set PW_SANDBOX_NO_SEED_CREDENTIALS=1 to opt out.`,
-        );
-      } catch (err) {
-        throw new Error(
-          `Failed copying ${seededFrom.abs} into sandbox: ${(err as Error).message}`,
-        );
-      }
-    } else {
-      console.log(
-        `[sandbox] no Posit Assistant state dir (~/.posit/assistant or ~/.positai) on host; @ai Posit Assistant tests will skip`,
-      );
-    }
-
     const isWindows = process.platform === 'win32';
     const realCopilot = isWindows
       ? path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local'), 'github-copilot')
       : path.join(os.homedir(), '.config', 'github-copilot');
-    const destCopilot = isWindows
-      ? path.join(userHome, 'AppData', 'Local', 'github-copilot')
-      : path.join(userHome, '.config', 'github-copilot');
+    const destCopilot = copilotConfigDir(userHome);
     if (fs.existsSync(realCopilot)) {
       try {
         fs.cpSync(realCopilot, destCopilot, { recursive: true });
         process.env.PW_AI_SEEDED_COPILOT = '1';
         console.log(`[sandbox] seeded user-home github-copilot from ${realCopilot}`);
-        console.warn(
-          `[sandbox] WARNING: Real GitHub Copilot credentials were copied into the sandbox from ${realCopilot}. Tokens persist if the run is preserved or teardown fails. Set PW_SANDBOX_NO_SEED_CREDENTIALS=1 to opt out.`,
+        console.log(
+          `[sandbox] real GitHub Copilot tokens now live in the sandbox; teardown scrubs them if the run is preserved, and warns loudly if it can't.`,
         );
       } catch (err) {
         throw new Error(
@@ -210,11 +220,11 @@ export default async function globalSetup(config: FullConfig) {
       }
     } else {
       console.log(
-        `[sandbox] no ${realCopilot} on host; @ai Copilot tests will skip`,
+        `[sandbox] no ${realCopilot} on host; Copilot tests will skip`,
       );
     }
   } else {
-    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; @ai tests will skip');
+    console.log('[sandbox] PW_SANDBOX_NO_SEED_CREDENTIALS set; GitHub Copilot not seeded (Copilot tests will skip). This global seed kill-switch also suppresses the Posit AI local token-store copy; the sign-in flow is unaffected.');
   }
 
   process.env.PW_SANDBOX = sandbox;

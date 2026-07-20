@@ -1,47 +1,65 @@
 import type { TestType } from '@playwright/test';
+import { isPositAiAuthenticated, readAuthStatus, type AIProvider } from './auth';
 
 /**
- * AI provider identifier. Matches the suffix on the PW_AI_SEEDED_* env vars
- * set by fixtures/sandbox-setup.ts when real host credentials were copied
- * into the sandbox.
+ * AI provider identifier (defined in auth.ts, the credential single source of
+ * truth; re-exported here for the test files that gate on it). The two
+ * providers are provisioned differently, and so gate differently: Posit AI by
+ * the auth.setup project (its tests gate on the on-disk token store), Copilot
+ * by a host copy in sandbox-setup.ts (its tests gate on the
+ * PW_AI_SEEDED_COPILOT env flag it sets).
  */
-export type AIProvider = 'positai' | 'copilot';
+export type { AIProvider } from './auth';
 
-const PROVIDER_LABEL: Record<AIProvider, string> = {
-  positai: 'Posit AI',
-  copilot: 'GitHub Copilot',
-};
+// Build the Posit AI skip reason from the status file the auth.setup project
+// wrote, so a skipped test reports what actually happened (login failed, copy
+// suppressed, not signed in locally, ...) rather than guessing at missing
+// credentials. Only called when the token store gate has already failed, so
+// PW_SANDBOX is set (isPositAiAuthenticated would have thrown otherwise).
+function positAiSkipReason(): string {
+  const status = readAuthStatus(process.env.PW_SANDBOX!);
+  if (status === null) {
+    return 'No Posit AI credentials in the sandbox. Sign in to Posit AI '
+      + 'locally so the setup project can copy the token store, or set '
+      + 'POSIT_EMAIL/POSIT_PASSWORD for the sign-in flow.';
+  }
+  if (status.outcome === 'success') {
+    return 'Posit AI auth setup reported success, but the sandbox token store is '
+      + 'now missing or invalid -- the token may have expired mid-run.';
+  }
+  return `No Posit AI credentials in the sandbox: ${status.reason}`;
+}
 
-const PROVIDER_HOST_PATH: Record<AIProvider, string> = {
-  positai: '~/.posit/assistant or legacy ~/.positai',
-  copilot: process.platform === 'win32'
-    ? '%LOCALAPPDATA%\\github-copilot'
-    : '~/.config/github-copilot',
-};
-
-const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
-  positai: 'PW_AI_SEEDED_POSITAI',
-  copilot: 'PW_AI_SEEDED_COPILOT',
-};
+// Copilot is the only provider still gated on a seeded env flag; Posit AI
+// switched to the on-disk store check (isPositAiAuthenticated) below.
+const COPILOT_SEEDED_ENV = 'PW_AI_SEEDED_COPILOT';
+const COPILOT_HOST_PATH = process.platform === 'win32'
+  ? '%LOCALAPPDATA%\\github-copilot'
+  : '~/.config/github-copilot';
 
 /**
- * Gate the surrounding describe block on having real credentials seeded for
- * `provider`. When the matching PW_AI_SEEDED_* env var is unset -- the host has
- * no creds at the expected location, or the user opted out via
- * PW_SANDBOX_NO_SEED_CREDENTIALS -- every test in the describe is marked
- * skipped (with reason).
+ * Gate the surrounding describe block on having real credentials available for
+ * `provider`. Each test inside the describe is marked skipped (with reason)
+ * when the credential is absent.
  *
- * The skip is registered at describe-group scope (evaluated at collection
- * time), NOT in a beforeEach. Playwright runs a group's `beforeAll` BEFORE any
- * `beforeEach`, so a beforeEach skip lets a beforeAll that configures the
- * provider (e.g. selecting it in the Options dialog) run -- and throw -- for a
- * provider that isn't available in this build/host, even though every test is
- * destined to skip. A group-level skip marks the whole group skipped before any
- * hook runs, so `beforeAll` never fires.
+ * The two providers use different signals:
+ *   positai  The auth.setup project (the OAuth sign-in flow when
+ *            POSIT_EMAIL/POSIT_PASSWORD are set, else a copy of the local
+ *            token store) leaves a token store on disk.
+ *            It runs in a separate process, so the signal is the store itself,
+ *            not an env flag: isPositAiAuthenticated() reads it and also checks
+ *            the token has not expired. When the store is absent or invalid,
+ *            the skip reason is built from the status file the setup project
+ *            wrote (see PositAiAuthStatus in auth.ts), so the report shows the
+ *            actual cause -- not signed in locally, copy suppressed, sign-in
+ *            flow failed -- instead of a generic "set POSIT_EMAIL/POSIT_PASSWORD".
+ *   copilot  sandbox-setup.ts host-copies the creds and sets
+ *            PW_AI_SEEDED_COPILOT on success; the gate reads that flag.
  *
- * `test` must be the same TestType the surrounding describe uses, so the skip
- * targets that describe. Pass the imported `test` from the file's fixture
- * import.
+ * `test` must be the same TestType the surrounding describe uses, since
+ * Playwright hooks are scoped per-TestType (an extended fixture's tests
+ * don't see hooks registered on the base, and vice versa). Pass the
+ * imported `test` from the file's fixture import.
  *
  * Call at the top of any `test.describe(..., { tag: ['@ai'] }, () => { ... })`
  * that drives an AI provider. The skip-vs-fail distinction matters: a missing
@@ -49,19 +67,35 @@ const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
  * reflect that.
  */
 // Playwright's TestType is parameterized by per-test and per-worker fixture
-// argument types. The helper only ever calls test.skip, which doesn't depend
-// on the fixture shape, so {} (the constraint TestType imposes) is the minimum
-// type that accepts an extended-fixture `test`. Using `any, any` here would
-// pollute callers with the wider type; {} keeps the signature honest.
+// argument types. The helper only ever calls beforeEach / skip, which don't
+// depend on the fixture shape, so {} (the constraint TestType imposes) is the
+// minimum type that accepts an extended-fixture `test`. Using `any, any` here
+// would pollute callers with the wider type; {} keeps the signature honest.
 export function requireAiCredentials(
   test: TestType<{}, {}>,
   provider: AIProvider,
 ): void {
-  // Strict "1" check so a stray PW_AI_SEEDED_*=0 / "false" doesn't read as
-  // seeded. sandbox-setup.ts clears these at start of run and sets "1" only on
-  // a successful copy, so any other value is treated as unseeded.
-  test.skip(
-    process.env[PROVIDER_ENV_KEY[provider]] !== '1',
-    `No ${PROVIDER_LABEL[provider]} credentials seeded; sign in on the host (${PROVIDER_HOST_PATH[provider]}) and re-run.`,
-  );
+  test.beforeEach(() => {
+    switch (provider) {
+      case 'positai':
+        if (!isPositAiAuthenticated()) {
+          test.skip(true, positAiSkipReason());
+        }
+        return;
+      case 'copilot':
+        // Strict "1" check so a stray PW_AI_SEEDED_COPILOT=0 / "false" doesn't
+        // read as seeded. sandbox-setup.ts clears this at start of run and sets
+        // "1" only on a successful copy, so any other value is treated as
+        // unseeded.
+        test.skip(
+          process.env[COPILOT_SEEDED_ENV] !== '1',
+          `No GitHub Copilot credentials seeded; sign in on the host (${COPILOT_HOST_PATH}) and re-run.`,
+        );
+        return;
+      default:
+        // Exhaustiveness: a new AIProvider member must be given its own gate
+        // here, not silently inherit Copilot's env-flag check.
+        provider satisfies never;
+    }
+  });
 }

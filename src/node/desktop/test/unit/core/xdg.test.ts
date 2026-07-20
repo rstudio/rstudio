@@ -22,7 +22,7 @@ import os from 'os';
 import path from 'path';
 
 import { FilePath } from '../../../src/core/file-path';
-import { Xdg, SHGetKnownFolderPath, WinFolderID } from '../../../src/core/xdg';
+import { checkDirectoryWritable, Xdg, SHGetKnownFolderPath, WinFolderID } from '../../../src/core/xdg';
 
 function folder() {
   return process.platform === 'win32' ? 'RStudio' : 'rstudio';
@@ -197,8 +197,92 @@ describe('Xdg', () => {
   });
   describe('NYI placeholders', () => {
     it('sync methods should throw exception', () => {
-      assert.throws(() => Xdg.verifyUserDirs());
       assert.throws(() => Xdg.forwardXdgEnvVars({ FOO: 'bar' }));
+    });
+  });
+  describe('verifyUserDirs', () => {
+    // NOTE: the non-writable scenarios below are skipped on win32; creating a
+    // directory that denies writes requires ACL manipulation that isn't
+    // practical here, so the probe-file behavior (which exists because
+    // fs.accessSync is unreliable for directories on Windows) is only
+    // exercised on POSIX platforms
+    let testRoot: string;
+
+    beforeEach(() => {
+      testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-xdg-test-'));
+    });
+
+    afterEach(() => {
+      // restore permissions so cleanup can succeed
+      for (const entry of fs.readdirSync(testRoot)) {
+        try {
+          fs.chmodSync(path.join(testRoot, entry), 0o700);
+        } catch {
+          // ignore; removal below is best-effort
+        }
+      }
+      fs.rmSync(testRoot, { recursive: true, force: true });
+    });
+
+    it('checkDirectoryWritable creates missing directories', () => {
+      const dir = new FilePath(path.join(testRoot, 'a', 'b'));
+
+      assert.isNull(checkDirectoryWritable(dir));
+      assert.isTrue(dir.existsSync());
+    });
+
+    it('checkDirectoryWritable reports non-writable directories', function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      const dir = path.join(testRoot, 'readonly');
+      fs.mkdirSync(dir);
+      fs.chmodSync(dir, 0o500);
+
+      const message = checkDirectoryWritable(new FilePath(dir));
+      assert.isString(message);
+      assert.isNotEmpty(message);
+    });
+
+    it('checkDirectoryWritable reports directories that cannot be created', function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      const parent = path.join(testRoot, 'readonly');
+      fs.mkdirSync(parent);
+      fs.chmodSync(parent, 0o500);
+
+      const message = checkDirectoryWritable(new FilePath(path.join(parent, 'child')));
+      assert.isString(message);
+      assert.isNotEmpty(message);
+    });
+
+    it('verifyUserDirs returns no issues when user dirs are writable', () => {
+      process.env.RSTUDIO_CONFIG_HOME = path.join(testRoot, 'config');
+      process.env.RSTUDIO_DATA_HOME = path.join(testRoot, 'data');
+
+      const issues = Xdg.verifyUserDirs();
+      assert.isEmpty(issues);
+    });
+
+    it('verifyUserDirs reports non-writable user dirs', function () {
+      if (process.platform === 'win32') {
+        this.skip();
+      }
+
+      const configDir = path.join(testRoot, 'config');
+      const dataDir = path.join(testRoot, 'data');
+      fs.mkdirSync(dataDir);
+      fs.chmodSync(dataDir, 0o500);
+      process.env.RSTUDIO_CONFIG_HOME = configDir;
+      process.env.RSTUDIO_DATA_HOME = dataDir;
+
+      const issues = Xdg.verifyUserDirs();
+      assert.lengthOf(issues, 1);
+      assert.strictEqual(issues[0].directory, dataDir);
+      assert.isNotEmpty(issues[0].message);
     });
   });
 });

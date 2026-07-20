@@ -24,9 +24,9 @@ const PROJECT_MARKER = 'PROJECT_SKILL_ACTIVE_QA7742';
 
 // ---------------------------------------------------------------------------
 // User-level skill (lives in ~/.posit/assistant/skills/ under the user home
-// dir; the legacy ~/.positai/ location is only consulted when the new
-// directory does not exist, and the sandbox seeds ~/.posit/assistant with
-// the host's credentials).
+// dir). This test creates the skill file itself (see createSkillFile below);
+// it does not depend on any host-seeded skills -- only on Posit AI being
+// signed in, which the auth.setup project provisions.
 //
 // The Playwright sandbox redirects HOME / USERPROFILE for the rstudio child
 // process (and therefore Databot, which inherits its env) to
@@ -145,7 +145,7 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
     );
 
     // -----------------------------------------------------------------------
-    // Step 3: Create a user-level skill (~/.positai/skills/ in home dir)
+    // Step 3: Create a user-level skill (~/.posit/assistant/skills/ in home dir)
     // -----------------------------------------------------------------------
     await createSkillFile(
       consoleActions,
