@@ -71,6 +71,25 @@ export declare function openExternal(path: string): void;
 export declare function win32ListMonospaceFonts(): string[];
 
 /**
+ * (Windows only)
+ *
+ * Watch for native dialogs created by the given process, raising them
+ * above our windows. Used so that dialogs shown by the rsession process
+ * (e.g. via utils::askYesNo()) don't open behind the RStudio window.
+ * Replaces any watch registered by a previous call.
+ *
+ * @param pid The process to watch (normally the rsession process).
+ */
+export declare function win32WatchSessionDialogs(pid: number): void;
+
+/**
+ * (Windows only)
+ *
+ * Stop watching for session dialogs. Safe to call when no watch is active.
+ */
+export declare function win32StopWatchingSessionDialogs(): void;
+
+/**
  * (macOS only)
  *
  * List all fonts available on the system in a single pass.

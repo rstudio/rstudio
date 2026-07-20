@@ -28,6 +28,7 @@
 - ([#18260](https://github.com/rstudio/rstudio/issues/18260)): Fixed an issue on macOS where a file change landing just after a bulk change of many files could go undetected by the Files and Git panes until a manual refresh or unrelated later file activity.
 - ([#18273](https://github.com/rstudio/rstudio/issues/18273)): Fixed an issue on Windows where a failure to load the Start Menu Git shortcut while auto-detecting the Git installation went undetected, causing detection to fail later with a less accurate error.
 - ([#18277](https://github.com/rstudio/rstudio/issues/18277)): Fixed an issue where the GitHub Copilot or Posit Assistant agent could fail to start for the rest of the session after an early startup failure (for example, a misconfigured Node.js path). The agent now retries and starts once the underlying problem is corrected, without restarting the session.
+- ([#18270](https://github.com/rstudio/rstudio/issues/18270)): Fixed an issue on Windows where native dialogs shown by R (e.g. via `utils::askYesNo()`, or when `install.packages()` asks about installing from sources) could open behind the RStudio Desktop window, making the IDE appear frozen while R waited on a dialog the user could not see.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)

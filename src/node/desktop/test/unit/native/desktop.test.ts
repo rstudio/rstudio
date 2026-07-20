@@ -101,4 +101,25 @@ describe('Desktop Native Code', () => {
     desktop.cleanClipboard(false);
     assert.equal(clipboard.readHTML('clipboard'), expected);
   });
+
+  // The dialog watcher's observable behavior (raising rsession dialogs above
+  // the RStudio window) needs a live rsession showing a Win32 dialog, so these
+  // tests only exercise the exported API surface across its lifecycle.
+  describe('win32 session dialog watcher', () => {
+    it('watch followed by stop does not throw', () => {
+      desktop.win32WatchSessionDialogs(process.pid);
+      desktop.win32StopWatchingSessionDialogs();
+    });
+
+    it('watching again replaces an existing hook without error', () => {
+      desktop.win32WatchSessionDialogs(process.pid);
+      desktop.win32WatchSessionDialogs(process.pid);
+      desktop.win32StopWatchingSessionDialogs();
+    });
+
+    it('stop without a prior watch is a no-op', () => {
+      desktop.win32StopWatchingSessionDialogs();
+      desktop.win32StopWatchingSessionDialogs();
+    });
+  });
 });
