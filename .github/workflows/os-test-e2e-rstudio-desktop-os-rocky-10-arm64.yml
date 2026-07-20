@@ -9,7 +9,7 @@ name: "Test: E2E Playwright RStudio (Desktop, Rocky 10 arm64, Open Source)"
 # CRB, and EPEL 10). Rocky's full repo set does carry it, so Cage plus Xwayland
 # can provide the virtual display the Electron app and Playwright need.
 #
-# Shape: build the arm64 Electron .rpm inside a rockylinux:10 container on an
+# Shape: build the arm64 Electron .rpm inside a rockylinux/rockylinux:10 container on an
 # ubuntu-24.04-arm runner (GitHub has no RHEL/Rocky-hosted runner), then run the
 # e2e job in the same container image and drive Playwright under Cage/Xwayland.
 
@@ -119,7 +119,7 @@ permissions:
   id-token: write
 
 jobs:
-  # Builds RStudio Desktop (Electron) from this PR's source inside a rockylinux:10
+  # Builds RStudio Desktop (Electron) from this PR's source inside a rockylinux/rockylinux:10
   # container on an ubuntu-24.04-arm runner (GitHub has no RHEL/Rocky-hosted
   # runner), then uploads the arm64 .rpm as an artifact for the e2e job to
   # consume. Skipped when build_from_source is false or rstudio_installer_url is
@@ -133,7 +133,7 @@ jobs:
     # identical across the build and e2e containers avoids surprises and mirrors
     # the RHEL/Fedora build jobs.
     container:
-      image: rockylinux:10
+      image: rockylinux/rockylinux:10
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
     timeout-minutes: 90
     env:
@@ -162,7 +162,7 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
 
     steps:
-      # The rockylinux:10 base image is minimal and the job runs as root. Install
+      # The rockylinux/rockylinux:10 base image is minimal and the job runs as root. Install
       # the tools the checkout action, the dependency scripts, and the build need
       # up front. sudo is required because install-dependencies-yum calls it
       # internally (root's sudo is a straight passthrough).
@@ -354,7 +354,7 @@ jobs:
         shard: [1, 2]
     runs-on: ubuntu-24.04-arm
     container:
-      image: rockylinux:10
+      image: rockylinux/rockylinux:10
       # SYS_ADMIN plus unconfined seccomp let Chromium/Electron's namespace
       # sandbox initialize inside the container. The Ubuntu jobs instead flip a
       # host sysctl (kernel.apparmor_restrict_unprivileged_userns=0), which
@@ -377,7 +377,7 @@ jobs:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
-      # The minimal rockylinux:10 image sets no UTF-8 locale, so R starts with a
+      # The minimal rockylinux/rockylinux:10 image sets no UTF-8 locale, so R starts with a
       # non-UTF-8 charset and prints "Character set is not UTF-8; please change
       # your locale" into the console. Console-content tests (e.g. the ANSI
       # cursor suite) assert on exact console lines, so that warning breaks them
@@ -389,7 +389,7 @@ jobs:
       LC_ALL: C.UTF-8
 
     steps:
-      # The rockylinux:10 base image is minimal and the job runs as root.
+      # The rockylinux/rockylinux:10 base image is minimal and the job runs as root.
       # Install what checkout, rig, and the .rpm install need. sudo is kept for
       # parity with the shared scripts.
       - name: Prepare Rocky container
@@ -787,4 +787,4 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · rockylinux:10 arm64 container · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>2 shards · rockylinux/rockylinux:10 arm64 container · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
