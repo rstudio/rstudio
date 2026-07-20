@@ -26,15 +26,22 @@ const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
 
 /**
  * Gate the surrounding describe block on having real credentials seeded for
- * `provider`. Each test inside the describe is marked skipped (with reason)
- * when the matching PW_AI_SEEDED_* env var is unset, which happens when the
- * host has no creds at the expected location or when the user opted out via
- * PW_SANDBOX_NO_SEED_CREDENTIALS.
+ * `provider`. When the matching PW_AI_SEEDED_* env var is unset -- the host has
+ * no creds at the expected location, or the user opted out via
+ * PW_SANDBOX_NO_SEED_CREDENTIALS -- every test in the describe is marked
+ * skipped (with reason).
  *
- * `test` must be the same TestType the surrounding describe uses, since
- * Playwright hooks are scoped per-TestType (an extended fixture's tests
- * don't see hooks registered on the base, and vice versa). Pass the
- * imported `test` from the file's fixture import.
+ * The skip is registered at describe-group scope (evaluated at collection
+ * time), NOT in a beforeEach. Playwright runs a group's `beforeAll` BEFORE any
+ * `beforeEach`, so a beforeEach skip lets a beforeAll that configures the
+ * provider (e.g. selecting it in the Options dialog) run -- and throw -- for a
+ * provider that isn't available in this build/host, even though every test is
+ * destined to skip. A group-level skip marks the whole group skipped before any
+ * hook runs, so `beforeAll` never fires.
+ *
+ * `test` must be the same TestType the surrounding describe uses, so the skip
+ * targets that describe. Pass the imported `test` from the file's fixture
+ * import.
  *
  * Call at the top of any `test.describe(..., { tag: ['@ai'] }, () => { ... })`
  * that drives an AI provider. The skip-vs-fail distinction matters: a missing
@@ -42,21 +49,19 @@ const PROVIDER_ENV_KEY: Record<AIProvider, string> = {
  * reflect that.
  */
 // Playwright's TestType is parameterized by per-test and per-worker fixture
-// argument types. The helper only ever calls beforeEach / skip, which don't
-// depend on the fixture shape, so {} (the constraint TestType imposes) is the
-// minimum type that accepts an extended-fixture `test`. Using `any, any` here
-// would pollute callers with the wider type; {} keeps the signature honest.
+// argument types. The helper only ever calls test.skip, which doesn't depend
+// on the fixture shape, so {} (the constraint TestType imposes) is the minimum
+// type that accepts an extended-fixture `test`. Using `any, any` here would
+// pollute callers with the wider type; {} keeps the signature honest.
 export function requireAiCredentials(
   test: TestType<{}, {}>,
   provider: AIProvider,
 ): void {
-  test.beforeEach(() => {
-    // Strict "1" check so a stray PW_AI_SEEDED_*=0 / "false" doesn't read as
-    // seeded. sandbox-setup.ts clears these at start of run and sets "1"
-    // only on a successful copy, so any other value is treated as unseeded.
-    test.skip(
-      process.env[PROVIDER_ENV_KEY[provider]] !== '1',
-      `No ${PROVIDER_LABEL[provider]} credentials seeded; sign in on the host (${PROVIDER_HOST_PATH[provider]}) and re-run.`,
-    );
-  });
+  // Strict "1" check so a stray PW_AI_SEEDED_*=0 / "false" doesn't read as
+  // seeded. sandbox-setup.ts clears these at start of run and sets "1" only on
+  // a successful copy, so any other value is treated as unseeded.
+  test.skip(
+    process.env[PROVIDER_ENV_KEY[provider]] !== '1',
+    `No ${PROVIDER_LABEL[provider]} credentials seeded; sign in on the host (${PROVIDER_HOST_PATH[provider]}) and re-run.`,
+  );
 }
