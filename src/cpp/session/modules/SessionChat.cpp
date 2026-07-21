@@ -4537,8 +4537,8 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       // timestamp, so a bad manifest cannot bypass the throttle.
       boost::optional<ManifestCheckRecord> prior =
          throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
-      ManifestCheckRecord record =
-         throttle::recordToPersist(recordToWrite, prior, std::time(nullptr));
+      ManifestCheckRecord record = throttle::recordToPersist(
+         recordToWrite, prior, std::time(nullptr), RSTUDIO_VERSION);
       Error writeError = throttle::writeManifestCheckRecord(
          throttle::manifestCheckStatePath(), record);
       if (writeError)
@@ -4728,13 +4728,22 @@ bool shouldFetchManifest(bool force)
    if (record)
       last = record->lastCheckTime;
 
+   // A record written by a different RStudio build (or by a build that predates
+   // the rstudioVersion field) must not throttle this build: the first check
+   // after installing a different build always fetches (#18305).
+   bool rstudioVersionChanged =
+      record && record->rstudioVersion != RSTUDIO_VERSION;
+   if (rstudioVersionChanged)
+      DLOG("RStudio build changed since last manifest check ('{}' -> '{}'); "
+           "update check due", record->rstudioVersion, RSTUDIO_VERSION);
+
    int throttleSeconds = isUsingTestManifest()
       ? 0
       : throttle::throttleSecondsFromHours(
            prefs::userPrefs().positAssistantUpdateCheckIntervalHours());
 
    return throttle::manifestCheckDue(
-      force, isInstalled, mismatch, last,
+      force, isInstalled, mismatch, rstudioVersionChanged, last,
       std::time(nullptr), throttleSeconds);
 }
 

@@ -96,6 +96,7 @@ boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePat
    // A present field of the wrong type means the record is corrupt -> malformed.
    boost::optional<std::string> installedVersion;
    boost::optional<std::string> rstudioProtocol;
+   boost::optional<std::string> rstudioVersion;
    boost::optional<bool> unsupportedInstalledVersion;
    boost::optional<bool> unsupportedProtocol;
    auto readOptionalField = [&](const char* fieldName, auto& outValue) -> bool
@@ -111,6 +112,7 @@ boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePat
    };
    if (readOptionalField("installedVersion", installedVersion) ||
        readOptionalField("rstudioProtocol", rstudioProtocol) ||
+       readOptionalField("rstudioVersion", rstudioVersion) ||
        readOptionalField("unsupportedInstalledVersion", unsupportedInstalledVersion) ||
        readOptionalField("unsupportedProtocol", unsupportedProtocol))
       return boost::none;
@@ -118,6 +120,8 @@ boost::optional<ManifestCheckRecord> readManifestCheckRecord(const core::FilePat
       record.installedVersion = *installedVersion;
    if (rstudioProtocol)
       record.rstudioProtocol = *rstudioProtocol;
+   if (rstudioVersion)
+      record.rstudioVersion = *rstudioVersion;
    if (unsupportedInstalledVersion)
       record.unsupportedInstalledVersion = *unsupportedInstalledVersion;
    if (unsupportedProtocol)
@@ -137,6 +141,7 @@ core::Error writeManifestCheckRecord(const core::FilePath& stateFile,
    obj["lastCheckTime"] = std::to_string(static_cast<long long>(record.lastCheckTime));
    obj["installedVersion"] = record.installedVersion;
    obj["rstudioProtocol"] = record.rstudioProtocol;
+   obj["rstudioVersion"] = record.rstudioVersion;
    obj["unsupportedInstalledVersion"] = record.unsupportedInstalledVersion;
    obj["unsupportedProtocol"] = record.unsupportedProtocol;
    return core::writeStringToFile(stateFile, obj.write());
@@ -152,9 +157,14 @@ ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
 
 ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& staged,
                                     const boost::optional<ManifestCheckRecord>& prior,
-                                    std::time_t now)
+                                    std::time_t now,
+                                    const std::string& rstudioVersion)
 {
-   return staged ? *staged : bumpRecord(prior, now);
+   ManifestCheckRecord out = staged ? *staged : bumpRecord(prior, now);
+   // Every attempt stamps the running build, whatever staged or prior carried:
+   // this is the single owner of the field (see header).
+   out.rstudioVersion = rstudioVersion;
+   return out;
 }
 
 int throttleSecondsFromHours(int hours)
@@ -172,11 +182,12 @@ int throttleSecondsFromHours(int hours)
 bool manifestCheckDue(bool force,
                       bool installed,
                       bool protocolMismatch,
+                      bool rstudioVersionChanged,
                       boost::optional<std::time_t> lastCheckTime,
                       std::time_t now,
                       int throttleSeconds)
 {
-   if (force || !installed || protocolMismatch)
+   if (force || !installed || protocolMismatch || rstudioVersionChanged)
       return true;
    if (!lastCheckTime)
       return true;
