@@ -4711,7 +4711,8 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 }
 
 // Decide whether an automatic check must actually fetch the manifest. Always
-// fetches when nothing is installed or the installed protocol mismatches; otherwise
+// fetches when nothing is installed, the installed protocol mismatches, or the
+// persisted record was written by a different RStudio build; otherwise
 // throttles to once per the posit_assistant_update_check_interval_hours preference
 // (0 hours = always check). The test manifest is opt-in for pre-release testing,
 // so throttling is disabled there (every check fetches, as if the interval were 0).
@@ -4732,7 +4733,7 @@ bool shouldFetchManifest(bool force)
    // the rstudioVersion field) must not throttle this build: the first check
    // after installing a different build always fetches (#18305).
    bool rstudioVersionChanged =
-      record && record->rstudioVersion != RSTUDIO_VERSION;
+      throttle::rstudioVersionChanged(record, RSTUDIO_VERSION);
    if (rstudioVersionChanged)
       DLOG("RStudio build changed since last manifest check ('{}' -> '{}'); "
            "update check due", record->rstudioVersion, RSTUDIO_VERSION);

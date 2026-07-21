@@ -108,6 +108,40 @@ TEST(ChatUpdateThrottle, DueWhenThrottleZero)
    EXPECT_TRUE(manifestCheckDue(false, true, false, false, kNow, kNow, 0));
 }
 
+// ---- rstudioVersionChanged ----
+
+TEST(ChatUpdateThrottle, VersionNotChangedWithoutRecord)
+{
+   // No record: not "changed" -- the check is already due via !lastCheckTime,
+   // and the distinct reason keeps the bypass log honest.
+   EXPECT_FALSE(rstudioVersionChanged(boost::none, "2026.08.0+200"));
+}
+
+TEST(ChatUpdateThrottle, VersionNotChangedWhenStampMatches)
+{
+   ManifestCheckRecord r = makeRecord(kNow, "1.2.3", "10.0", false, false);
+   r.rstudioVersion = "2026.08.0+200";
+   EXPECT_FALSE(rstudioVersionChanged(r, "2026.08.0+200"));
+}
+
+TEST(ChatUpdateThrottle, VersionChangedWhenStampDiffers)
+{
+   ManifestCheckRecord r = makeRecord(kNow, "1.2.3", "10.0", false, false);
+   r.rstudioVersion = "2026.07.0+100";
+   EXPECT_TRUE(rstudioVersionChanged(r, "2026.08.0+200"));
+}
+
+TEST(ChatUpdateThrottle, VersionChangedWhenStampMissing)
+{
+   // A record from a build that predates the field reads back with an empty
+   // stamp; it must count as a different build so the first check after
+   // upgrading from any pre-field build fetches. Guards against a later
+   // "hardening" that skips empty stamps and would silently disable the fix
+   // for exactly the most common upgrade path (#18305).
+   ManifestCheckRecord r = makeRecord(kNow, "1.2.3", "10.0", false, false);
+   EXPECT_TRUE(rstudioVersionChanged(r, "2026.08.0+200"));
+}
+
 // ---- throttleSecondsFromHours ----
 
 TEST(ChatUpdateThrottle, ThrottleZeroHoursMeansAlwaysCheck)
@@ -395,6 +429,20 @@ TEST(ChatUpdateThrottle, ReadMissingFileReturnsNone)
    EXPECT_FALSE(readManifestCheckRecord(tmp));
 }
 
+TEST(ChatUpdateThrottle, ReadUnknownKeysIgnored)
+{
+   // Forward compat: a record written by a future build with extra fields must
+   // still parse -- the same contract that lets builds predating rstudioVersion
+   // read records that carry it. A strict/exhaustive reader would return none
+   // here and silently drop the persisted unsupported-version block on downgrade.
+   FilePath tmp;
+   ASSERT_FALSE(FilePath::tempFilePath(tmp));
+   ASSERT_FALSE(writeStringToFile(tmp,
+      "{\"lastCheckTime\":\"100\",\"someFutureField\":true}"));
+   EXPECT_TRUE(readManifestCheckRecord(tmp));
+   tmp.removeIfExists();
+}
+
 TEST(ChatUpdateThrottle, ReadMalformedReturnsNone)
 {
    FilePath tmp;
@@ -428,9 +476,10 @@ TEST(ChatUpdateThrottle, ReadNonNumericLastCheckTimeReturnsNone)
 
 TEST(ChatUpdateThrottle, ReadMissingOptionalFieldsTolerated)
 {
-   // Also the shape written by builds that predate the rstudioVersion field:
-   // the missing key must read back as empty (-> treated as a different build,
-   // so the first check under this build fetches) rather than as malformed.
+   // Also covers records written by builds that predate the rstudioVersion
+   // field: that key is absent there and must read back as empty (-> treated
+   // as a different build, so the first check under this build fetches)
+   // rather than as malformed.
    FilePath tmp;
    ASSERT_FALSE(FilePath::tempFilePath(tmp));
    ASSERT_FALSE(writeStringToFile(tmp, "{\"lastCheckTime\":\"100\"}"));

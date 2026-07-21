@@ -109,6 +109,15 @@ ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& 
                                     std::time_t now,
                                     const std::string& rstudioVersion);
 
+// Pure: was the persisted record written by a different RStudio build than the
+// one running now? True also for records that predate the rstudioVersion field
+// (the missing key reads back as ""), so the first check after upgrading from
+// any such build fetches. False when there is no record at all: the check is
+// already due via manifestCheckDue's !lastCheckTime disjunct, and "changed"
+// would misattribute the reason.
+bool rstudioVersionChanged(const boost::optional<ManifestCheckRecord>& record,
+                           const std::string& runningVersion);
+
 // Pure: convert a throttle window expressed in whole hours to seconds, for use as
 // the throttleSeconds argument to manifestCheckDue(). A non-positive value yields 0
 // ("always check" -- manifestCheckDue treats a zero window as always due); a value

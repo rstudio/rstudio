@@ -167,6 +167,12 @@ ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& 
    return out;
 }
 
+bool rstudioVersionChanged(const boost::optional<ManifestCheckRecord>& record,
+                           const std::string& runningVersion)
+{
+   return record && record->rstudioVersion != runningVersion;
+}
+
 int throttleSecondsFromHours(int hours)
 {
    if (hours <= 0)
