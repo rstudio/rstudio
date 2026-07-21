@@ -1,0 +1,31 @@
+name: "TEMP: macOS 15 x86_64 engine validation trigger"
+
+# TEMPORARY. Runs the macOS 15 x86_64 E2E engine on push to this branch so the
+# engine can be exercised before it exists on the default branch
+# (workflow_dispatch and schedule both need the workflow file on main). Scoped
+# to this branch only. DELETE this file before the PR merges.
+on:
+  push:
+    branches:
+      - test/ron/e2e-macos-15-x86_64-engine-workflow
+
+permissions:
+  contents: read
+  # The engine's e2e-merge job declares these; a caller's grant must cover the
+  # called workflow's job permissions even when those jobs don't run here.
+  pull-requests: write
+  id-token: write
+
+jobs:
+  validate:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-15-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      # First validation run uses the latest daily .dmg rather than building
+      # from source, per the plan (source build is the second run).
+      build_from_source: false
+      project: desktop
+      r_version: "release"
+      grep_invert: "@ai"
