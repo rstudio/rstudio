@@ -1241,9 +1241,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
       detachEventName <- packageEvent(packageName, "detach")
       setHook(detachEventName, .rs.notifyPackageDetached, action = "append")
-   }
 
-   .rs.setVar("hookedPackages", union(.rs.hookedPackages, pkgNames))
+      # record each package as its hooks land, rather than all at once after
+      # the loop: if we error out partway through, packages already hooked
+      # must be on record, or a later scan would register their hooks again
+      # and produce duplicate package_status_changed events
+      .rs.setVar("hookedPackages", c(.rs.hookedPackages, packageName))
+   }
 
    # a package loaded between the scan being scheduled and these hooks being
    # registered may have clobbered our S3 overrides without the onLoad hook
@@ -1258,7 +1262,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # enumerating every package in .libPaths() can be slow (or block outright)
    # when a library lives on a remote filesystem, so the scan runs on a
    # background thread; hooks are registered via .rs.registerPackageEventHooks
-   # on the main R thread once it completes
+   # on the main R thread once it completes. returns TRUE if a new scan was
+   # started, or FALSE if a scan was already in flight (in which case a
+   # follow-up pass has been queued behind it)
    invisible(.Call("rs_updatePackageEvents", PACKAGE = "(embedding)"))
 })
 

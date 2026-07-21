@@ -116,6 +116,36 @@ test_that(".rs.isPackageManagementCall does not force promises", {
    expect_identical(forced, 0L)
 })
 
+# Pump background processing until 'pkg' appears in .rs.hookedPackages, or
+# the timeout elapses; returns TRUE if the package was hooked. The library
+# scan runs on a background thread and hooks are registered from a scheduled
+# command on the main thread, so tests must pump background processing
+# manually (the headless test harness has no scheduled-command pump). Note
+# that scan state is process-global: a scan kicked off outside the test (e.g.
+# at deferred init) may still be in flight when a test starts; polling until
+# the package of interest is hooked tolerates that.
+waitUntilHooked <- function(pkg, timeout = 30)
+{
+   deadline <- Sys.time() + timeout
+   while (!pkg %in% .rs.hookedPackages && Sys.time() < deadline)
+   {
+      .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
+      Sys.sleep(0.1)
+   }
+   pkg %in% .rs.hookedPackages
+}
+
+# testthat::local_mocked_bindings cannot mock functions in the locked
+# "tools:rstudio" environment, so save, replace, and restore via assign().
+withRsMock <- function(targetName, newValue, expr)
+{
+   rsEnv <- as.environment("tools:rstudio")
+   original <- get(targetName, envir = rsEnv)
+   on.exit(assign(targetName, original, envir = rsEnv), add = TRUE)
+   assign(targetName, newValue, envir = rsEnv)
+   force(expr)
+}
+
 test_that(".rs.registerPackageEventHooks registers hooks once per package", {
    fakePkg <- basename(tempfile("rstudioFakePkg"))
    expect_false(fakePkg %in% .rs.hookedPackages)
@@ -125,10 +155,13 @@ test_that(".rs.registerPackageEventHooks registers hooks once per package", {
    expect_identical(result$value, fakePkg)
 
    expect_true(fakePkg %in% .rs.hookedPackages)
-   expect_length(getHook(packageEvent(fakePkg, "attach")), 1L)
-   expect_length(getHook(packageEvent(fakePkg, "onLoad")), 1L)
-   expect_length(getHook(packageEvent(fakePkg, "onUnload")), 1L)
-   expect_length(getHook(packageEvent(fakePkg, "detach")), 1L)
+
+   # each event must be bound to its matching handler; a transposition here
+   # would invert the attached flag reported to the client
+   expect_identical(getHook(packageEvent(fakePkg, "attach")), list(.rs.notifyPackageAttached))
+   expect_identical(getHook(packageEvent(fakePkg, "onLoad")), list(.rs.notifyPackageLoaded))
+   expect_identical(getHook(packageEvent(fakePkg, "onUnload")), list(.rs.notifyPackageUnloaded))
+   expect_identical(getHook(packageEvent(fakePkg, "detach")), list(.rs.notifyPackageDetached))
 
    # re-registering an already-hooked package is a no-op
    result <- .rs.registerPackageEventHooks(fakePkg)
@@ -136,28 +169,80 @@ test_that(".rs.registerPackageEventHooks registers hooks once per package", {
    expect_length(getHook(packageEvent(fakePkg, "attach")), 1L)
 })
 
+test_that(".rs.registerPackageEventHooks dedupes duplicate package names", {
+   # the same package name can appear under multiple library paths, so a
+   # single scan can hand us duplicates; each package must be hooked once
+   fakePkg <- basename(tempfile("rstudioFakePkg"))
+   .rs.registerPackageEventHooks(c(fakePkg, fakePkg))
+   expect_length(getHook(packageEvent(fakePkg, "attach")), 1L)
+})
+
+test_that("package attach and detach hooks report the matching attached flag", {
+   events <- list()
+   recorder <- function(type, data = NULL)
+      events[[length(events) + 1L]] <<- list(type = type, data = data)
+
+   withRsMock(".rs.enqueClientEvent", recorder, {
+      .rs.notifyPackageAttached("stats")
+      .rs.notifyPackageDetached("stats")
+   })
+
+   expect_length(events, 2L)
+   expect_identical(events[[1L]]$type, "package_status_changed")
+   expect_identical(as.character(events[[1L]]$data$name), "stats")
+   expect_true(as.logical(events[[1L]]$data$attached))
+   expect_identical(events[[2L]]$type, "package_status_changed")
+   expect_identical(as.character(events[[2L]]$data$name), "stats")
+   expect_false(as.logical(events[[2L]]$data$attached))
+})
+
 test_that(".rs.updatePackageEvents hooks packages found on the library paths", {
    libDir <- tempfile("rstudioFakeLib")
    fakePkg <- basename(tempfile("rstudioFakePkg"))
    dir.create(file.path(libDir, fakePkg), recursive = TRUE)
-   on.exit(unlink(libDir, recursive = TRUE), add = TRUE)
 
    oldPaths <- .libPaths()
-   .libPaths(c(libDir, oldPaths))
    on.exit(.libPaths(oldPaths), add = TRUE)
+   on.exit(unlink(libDir, recursive = TRUE), add = TRUE)
+   .libPaths(c(libDir, oldPaths))
 
    .rs.updatePackageEvents()
 
-   # the library scan runs on a background thread, and hooks are registered
-   # from a scheduled command on the main thread, so wait for the round trip;
-   # background processing must be pumped manually during headless tests
-   deadline <- Sys.time() + 30
-   while (!fakePkg %in% .rs.hookedPackages && Sys.time() < deadline)
-   {
-      .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
-      Sys.sleep(0.1)
-   }
-
-   expect_true(fakePkg %in% .rs.hookedPackages)
+   expect_true(
+      waitUntilHooked(fakePkg),
+      info = "timed out waiting for the package event scan to hook the fake package"
+   )
    expect_length(getHook(packageEvent(fakePkg, "onLoad")), 1L)
+})
+
+test_that(".rs.updatePackageEvents coalesces overlapping scans into a follow-up pass", {
+   libDir1 <- tempfile("rstudioFakeLib")
+   libDir2 <- tempfile("rstudioFakeLib")
+   pkgA <- basename(tempfile("rstudioFakePkg"))
+   pkgB <- basename(tempfile("rstudioFakePkg"))
+   dir.create(file.path(libDir1, pkgA), recursive = TRUE)
+   dir.create(file.path(libDir2, pkgB), recursive = TRUE)
+
+   oldPaths <- .libPaths()
+   on.exit(.libPaths(oldPaths), add = TRUE)
+   on.exit(unlink(c(libDir1, libDir2), recursive = TRUE), add = TRUE)
+   .libPaths(c(libDir1, oldPaths))
+
+   # after this call a scan is in flight: either this call started one, or it
+   # queued a follow-up pass behind a scan that was already running
+   .rs.updatePackageEvents()
+
+   # make libDir2 visible only now, after any in-flight scan has already
+   # snapshotted the library paths: pkgB can only be hooked by a follow-up
+   # pass started after the in-flight scan completes
+   .libPaths(c(libDir2, libDir1, oldPaths))
+
+   # no background processing has been pumped since the call above, so the
+   # scan is still in flight and this call must take the coalescing branch
+   expect_false(.rs.updatePackageEvents())
+
+   expect_true(
+      waitUntilHooked(pkgB),
+      info = "timed out waiting for the follow-up package event scan to hook the fake package"
+   )
 })

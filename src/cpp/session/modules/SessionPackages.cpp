@@ -20,6 +20,8 @@
 
 #include "SessionPackages.hpp"
 
+#include <atomic>
+
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/make_shared.hpp>
@@ -27,6 +29,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
@@ -308,14 +311,17 @@ SEXP rs_packageLibraryMutated()
 }
 
 // Result of a background package-event scan. The background thread fills in
-// 'pkgNames' and sets 'done' under the mutex; the main thread polls it via
-// schedulePeriodicWork. We deliberately avoid executeOnMainThread() here, as
-// scheduling work from a background thread mutates the scheduled-command list
-// without synchronization.
+// 'pkgNames' under the mutex and then sets 'done'; the main thread polls it
+// via schedulePeriodicWork. We deliberately avoid executeOnMainThread() here,
+// as scheduling work from a background thread mutates the scheduled-command
+// list without synchronization.
 struct PackageEventScan
 {
    boost::mutex mutex;
-   bool done = false;
+   std::atomic<bool> done = { false };
+   bool consumed = false; // main thread only
+   boost::posix_time::ptime startTime =
+         boost::posix_time::microsec_clock::universal_time();
    std::vector<std::string> pkgNames;
 };
 
@@ -323,55 +329,93 @@ struct PackageEventScan
 bool s_packageEventScanRunning = false;
 bool s_packageEventScanPending = false;
 
+// If a scan hasn't completed after this long (e.g. a library path on a hung
+// network mount), stop polling it so package-event tracking isn't wedged for
+// the rest of the session.
+constexpr int kPackageEventScanTimeoutSeconds = 300;
+
 void startPackageEventScan();
 
-// Runs on a background thread: filesystem access only, no R.
+// Runs on a background thread: filesystem access only, no R. No exception may
+// escape (safeLaunchThread doesn't guard the thread body, so one would
+// terminate the process), and 'done' must be set on every exit path, as the
+// main-thread poller relies on it to stop polling and allow future scans.
 void scanForInstalledPackages(std::vector<FilePath> libPaths,
                               boost::shared_ptr<PackageEventScan> pScan)
 {
    std::vector<std::string> pkgNames;
-   for (const FilePath& libPath : libPaths)
+
+   try
    {
-      if (!libPath.exists())
-         continue;
-
-      std::vector<FilePath> children;
-      Error error = libPath.getChildren(children);
-      if (error)
+      for (const FilePath& libPath : libPaths)
       {
-         LOG_ERROR(error);
-         continue;
-      }
+         if (!libPath.exists())
+            continue;
 
-      for (const FilePath& child : children)
-      {
-         if (child.isDirectory())
-            pkgNames.push_back(child.getFilename());
+         std::vector<FilePath> children;
+         Error error = libPath.getChildren(children);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+
+         for (const FilePath& child : children)
+         {
+            if (child.isDirectory())
+               pkgNames.push_back(child.getFilename());
+         }
       }
    }
+   CATCH_UNEXPECTED_EXCEPTION
 
    LOCK_MUTEX(pScan->mutex)
    {
       pScan->pkgNames = std::move(pkgNames);
-      pScan->done = true;
    }
    END_LOCK_MUTEX
+
+   // set 'done' last, outside the mutex block: a throwing lock is swallowed
+   // by END_LOCK_MUTEX, and 'done' must still be set in that case
+   pScan->done = true;
 }
 
 // Main-thread poll for scan completion; returns true to keep polling.
 bool checkPackageEventScan(boost::shared_ptr<PackageEventScan> pScan)
 {
-   std::vector<std::string> pkgNames;
+   // if this scan's result was already consumed, this is a re-entrant poll
+   // (background processing can run while the R call below executes); treat
+   // the scan as still pending rather than register twice -- the outermost
+   // poll returns false and stops the polling
+   if (pScan->consumed)
+      return true;
 
+   if (!pScan->done)
+   {
+      // watchdog: if the scan has overrun (e.g. blocked on a hung network
+      // mount), abandon it rather than wedge package-event tracking for the
+      // rest of the session; later library mutations can start fresh scans.
+      // don't run a pending pass here -- it would most likely hang the same
+      // way and pile up abandoned threads
+      auto elapsed = boost::posix_time::microsec_clock::universal_time() - pScan->startTime;
+      if (elapsed > boost::posix_time::seconds(kPackageEventScanTimeoutSeconds))
+      {
+         LOG_WARNING_MESSAGE("Abandoning package event scan; it did not complete within " +
+                             safe_convert::numberToString(kPackageEventScanTimeoutSeconds) +
+                             " seconds");
+         s_packageEventScanRunning = false;
+         s_packageEventScanPending = false;
+         return false;
+      }
+
+      return true;
+   }
+
+   pScan->consumed = true;
+
+   std::vector<std::string> pkgNames;
    LOCK_MUTEX(pScan->mutex)
    {
-      if (!pScan->done)
-         return true;
-
-      // consume the result: background processing can run re-entrantly while
-      // the R call below executes, and a second poll of this same scan should
-      // treat it as still pending rather than register twice
-      pScan->done = false;
       pkgNames = std::move(pScan->pkgNames);
    }
    END_LOCK_MUTEX
@@ -413,19 +457,25 @@ void startPackageEventScan()
 // Enumerating the library paths can be slow on remote filesystems, so it runs
 // on a background thread; if a scan is already in flight, just request another
 // pass once it completes (the running scan may have raced with the library
-// mutation that triggered this call).
-void updatePackageEventsAsync()
+// mutation that triggered this call). Returns true if a new scan was started,
+// false if one was already in flight and a follow-up pass was queued.
+bool updatePackageEventsAsync()
 {
    if (s_packageEventScanRunning)
+   {
       s_packageEventScanPending = true;
-   else
-      startPackageEventScan();
+      return false;
+   }
+
+   startPackageEventScan();
+   return true;
 }
 
 SEXP rs_updatePackageEvents()
 {
-   updatePackageEventsAsync();
-   return R_NilValue;
+   bool started = updatePackageEventsAsync();
+   r::sexp::Protect protect;
+   return r::sexp::create(started, &protect);
 }
 
 void detectLibPathsChanges()
