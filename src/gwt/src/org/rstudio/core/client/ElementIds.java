@@ -131,6 +131,7 @@ public class ElementIds
    public final static String DEPLOY_CONTENT = "deploy_content";
    public final static String FIND_REPLACE_BAR = "find_replace_bar";
    public final static String HELP_FRAME = "help_frame";
+   public final static String HELP_POPOUT_FRAME = "help_popout_frame";
    public final static String LOADING_SPINNER = "loading_image";
    public final static String PLOT_IMAGE_FRAME = "plot_image_frame";
    public final static String POPUP_COMPLETIONS = "popup_completions";

@@ -139,10 +139,17 @@ public class AssistantPreferencesPane extends PreferencesPane
          return false;
       }
 
-      // The update-check interval is always visible in the Chat section. Its
-      // validate() rejects non-digit input (including a typed or pasted negative)
-      // with a ^\d+$ check, so an invalid interval cannot be saved.
-      return nvwAssistantUpdateCheckInterval_.validate();
+      // The update-check interval is shown only for Posit Assistant. Validate it
+      // only while it is displayed, so a hidden value cannot block the dialog.
+      // Its validate() rejects non-digit input (including a typed or pasted
+      // negative) with a ^\d+$ check, so an invalid interval cannot be saved.
+      if (nvwAssistantUpdateCheckInterval_.isAttached() &&
+          !nvwAssistantUpdateCheckInterval_.validate())
+      {
+         return false;
+      }
+
+      return true;
    }
 
    @Inject
@@ -170,34 +177,26 @@ public class AssistantPreferencesPane extends PreferencesPane
       chatServer_ = chatServer;
       installManager_ = new PositAiInstallManager();
 
-      // Create assistant selector - conditionally include Posit AI option
+      // Create assistant selector - conditionally include each provider based
+      // on whether it is available in this build and enabled by the administrator.
       boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
-      String[] assistantLabels;
-      String[] assistantValues;
+      boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
+      List<String> assistantLabelList = new ArrayList<>();
+      List<String> assistantValueList = new ArrayList<>();
+      assistantLabelList.add(prefsConstants_.assistantEnum_none());
+      assistantValueList.add(UserPrefsAccessor.ASSISTANT_NONE);
       if (paiEnabled)
       {
-         assistantLabels = new String[] {
-               prefsConstants_.assistantEnum_none(),
-               prefsConstants_.assistantEnum_posit(),
-               prefsConstants_.assistantEnum_copilot()
-         };
-         assistantValues = new String[] {
-               UserPrefsAccessor.ASSISTANT_NONE,
-               UserPrefsAccessor.ASSISTANT_POSIT,
-               UserPrefsAccessor.ASSISTANT_COPILOT
-         };
+         assistantLabelList.add(prefsConstants_.assistantEnum_posit());
+         assistantValueList.add(UserPrefsAccessor.ASSISTANT_POSIT);
       }
-      else
+      if (copilotEnabled)
       {
-         assistantLabels = new String[] {
-               prefsConstants_.assistantEnum_none(),
-               prefsConstants_.assistantEnum_copilot()
-         };
-         assistantValues = new String[] {
-               UserPrefsAccessor.ASSISTANT_NONE,
-               UserPrefsAccessor.ASSISTANT_COPILOT
-         };
+         assistantLabelList.add(prefsConstants_.assistantEnum_copilot());
+         assistantValueList.add(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
+      String[] assistantLabels = assistantLabelList.toArray(new String[0]);
+      String[] assistantValues = assistantValueList.toArray(new String[0]);
       selAssistant_ = new SelectWidget(
             constants_.assistantSelectLabel(),
             assistantLabels,
@@ -394,9 +393,16 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       });
 
-      add(cbAssistantToolbarButtonVisible_);
+      // The toolbar button and update-check interval apply only to Posit
+      // Assistant; show them only when it is available. The system certificate
+      // store option applies to every AI agent (Copilot included), so it stays
+      // visible whenever this pane is shown.
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
+      if (paiEnabled)
+         add(cbAssistantToolbarButtonVisible_);
       add(cbAssistantUseSystemCa_);
-      add(nvwAssistantUpdateCheckInterval_);
+      if (paiEnabled)
+         add(nvwAssistantUpdateCheckInterval_);
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -1315,18 +1321,29 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       initialUseSystemCa_ = prefs.assistantUseSystemCa().getGlobalValue();
 
-      // Migration: if rstudio_assistant is "none" but copilot_enabled is true, auto-migrate to "copilot"
+      // Migration: if rstudio_assistant is "none" but the legacy copilot_enabled
+      // pref is set, auto-migrate to "copilot" -- but only when Copilot is
+      // actually available in this build and enabled by the administrator.
       String assistant = prefs.assistant().getGlobalValue();
+      boolean copilotEnabled = session_.getSessionInfo().getCopilotEnabled();
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_NONE) &&
-          prefs.copilotEnabled().getGlobalValue())
+          prefs.copilotEnabled().getGlobalValue() &&
+          copilotEnabled)
       {
          prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_COPILOT);
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
 
-      // Reset to "none" if user has Posit AI selected but Posit Assistant is no longer enabled
+      // Reset to "none" if the selected assistant is no longer available in this
+      // build or enabled by the administrator.
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
           !paiUtil_.isPositAssistantEnabled())
+      {
+         prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
+         selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
+      }
+      else if (assistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT) &&
+               !copilotEnabled)
       {
          prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);

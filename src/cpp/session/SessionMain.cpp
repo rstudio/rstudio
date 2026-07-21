@@ -27,6 +27,7 @@
 #include <unistd.h>
 #endif
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -1899,7 +1900,15 @@ int sessionExitFailure(const core::Error& error,
                        const core::ErrorLocation& location)
 {
    if (error)
+   {
       core::log::logError(error, location);
+
+      // also write the error to stderr, so it remains visible even when file
+      // logging is unavailable (e.g. an unwritable log directory); the desktop
+      // frontend surfaces rsession's stderr on its launch-failed error page
+      std::cerr << "rsession startup failed: " << error.asString() << std::endl;
+   }
+
    return EXIT_FAILURE;
 }
 

@@ -36,6 +36,7 @@ import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
@@ -54,12 +55,13 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       Hidden          // The panel is ready, but currently hidden
    }
    
-   @Inject 
+   @Inject
    public CommandPaletteLauncher(Commands commands,
                                  AddinsCommandManager addins,
                                  Provider<Source> pSource,
                                  Provider<UserPrefs> pPrefs,
                                  Provider<WorkbenchListManager> pWorkbenchLists,
+                                 Provider<Session> pSession,
                                  EventBus events,
                                  GlobalDisplay display,
                                  Binder binder)
@@ -69,6 +71,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       commands_ = commands;
       pSource_ = pSource;
       pPrefs_ = pPrefs;
+      pSession_ = pSession;
       display_ = display;
       pWorkbenchLists_ = pWorkbenchLists;
       state_ = State.Hidden;
@@ -134,7 +137,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          providers.add(provider);
       }
       providers.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
-      providers.add(new UserPrefPaletteSource(pPrefs_.get()));
+      providers.add(new UserPrefPaletteSource(pPrefs_.get(), pSession_.get().getSessionInfo()));
 
       // Populate the MRU on first show if enabled
       if (mru_ == null && pPrefs_.get().commandPaletteMru().getValue())
@@ -231,6 +234,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private final Provider<Source> pSource_;
    private final Provider<UserPrefs> pPrefs_;
    private final Provider<WorkbenchListManager> pWorkbenchLists_;
+   private final Provider<Session> pSession_;
 
    private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

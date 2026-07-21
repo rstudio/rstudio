@@ -896,6 +896,82 @@ namespace {
 
 #ifdef _WIN32
 
+// Hook watching for dialogs created by the rsession process; see
+// win32WatchSessionDialogs().
+HWINEVENTHOOK s_sessionDialogHook = nullptr;
+
+void CALLBACK onSessionDialogStart(HWINEVENTHOOK, DWORD, HWND hwnd, LONG, LONG, DWORD, DWORD)
+{
+   DLOG("Raising dialog created by watched process (hwnd " << hwnd << ")");
+   if (!::BringWindowToTop(hwnd))
+   {
+      DWORD error = ::GetLastError();
+      DLOG("Error " << error << " raising dialog (hwnd " << hwnd << "): " << getErrorMessage(error));
+   }
+}
+
+void win32StopWatchingSessionDialogsImpl()
+{
+   if (s_sessionDialogHook != nullptr)
+   {
+      ::UnhookWinEvent(s_sessionDialogHook);
+      s_sessionDialogHook = nullptr;
+   }
+}
+
+#endif
+
+} // end anonymous namespace
+
+Napi::Value win32WatchSessionDialogs(const Napi::CallbackInfo& info)
+{
+#ifdef _WIN32
+   DWORD processId = info[0].As<Napi::Number>().Uint32Value();
+
+   win32StopWatchingSessionDialogsImpl();
+
+   // a process id of 0 would tell SetWinEventHook to watch all processes
+   // on the current desktop
+   if (processId != 0)
+   {
+      // WINEVENT_OUTOFCONTEXT delivers events via this thread's message
+      // loop (Electron's main thread), so no DLL injection is involved
+      s_sessionDialogHook = ::SetWinEventHook(
+          EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
+          nullptr,
+          onSessionDialogStart,
+          processId,
+          0,
+          WINEVENT_OUTOFCONTEXT);
+
+      if (s_sessionDialogHook == nullptr)
+      {
+         DWORD error = ::GetLastError();
+         DLOG("Error " << error << " watching for dialogs from process " << processId << ": " << getErrorMessage(error));
+      }
+      else
+      {
+         DLOG("Watching for dialogs created by process " << processId);
+      }
+   }
+#endif
+
+   return Napi::Value();
+}
+
+Napi::Value win32StopWatchingSessionDialogs(const Napi::CallbackInfo& info)
+{
+#ifdef _WIN32
+   win32StopWatchingSessionDialogsImpl();
+#endif
+
+   return Napi::Value();
+}
+
+namespace {
+
+#ifdef _WIN32
+
 int CALLBACK win32ListMonospaceFontsProc(
     ENUMLOGFONTEX* lpelfe,
     NEWTEXTMETRICEX* lpntme,
@@ -1005,6 +1081,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    RS_EXPORT_FUNCTION("searchRegistryForDefaultInstallationOfR", rstudio::desktop::searchRegistryForDefaultInstallationOfR);
    RS_EXPORT_FUNCTION("openExternal", rstudio::desktop::openExternal);
    RS_EXPORT_FUNCTION("win32ListMonospaceFonts", rstudio::desktop::win32ListMonospaceFonts);
+   RS_EXPORT_FUNCTION("win32WatchSessionDialogs", rstudio::desktop::win32WatchSessionDialogs);
+   RS_EXPORT_FUNCTION("win32StopWatchingSessionDialogs", rstudio::desktop::win32StopWatchingSessionDialogs);
    RS_EXPORT_FUNCTION("macOSListFonts", rstudio::desktop::macOSListFonts);
 
    return exports;

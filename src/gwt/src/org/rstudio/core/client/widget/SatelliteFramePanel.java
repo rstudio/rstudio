@@ -49,7 +49,7 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    
    protected void showUrl(String url, boolean removeToolbar)
    {
-      showUrl(url, false, null);
+      showUrl(url, removeToolbar, null);
    }
 
    protected void showUrl(String url, boolean removeToolbar, LoadHandler onLoad)

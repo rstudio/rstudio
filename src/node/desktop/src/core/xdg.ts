@@ -32,9 +32,11 @@
  * the boost::optional arguments.
  */
 
+import fs from 'fs';
 import os from 'os';
 
 import { logger } from './logger';
+import { safeError } from './err';
 import { Environment, expandEnvVars, getenv } from './environment';
 import { username, userHomePath } from './user';
 import { FilePath } from './file-path';
@@ -63,6 +65,47 @@ export function SHGetKnownFolderPath(folderId: WinFolderID): string {
       break;
   }
   return getenv(envVar);
+}
+
+/**
+ * Describes a problem discovered with a directory RStudio needs to write to.
+ */
+export interface UserDirIssue {
+  directory: string;
+  message: string;
+}
+
+/**
+ * Verifies that a directory exists (creating it if necessary) and is writable
+ * by the current user.
+ *
+ * Writability is tested with a probe file rather than `fs.accessSync()`, as
+ * access checks are unreliable for directories on Windows.
+ *
+ * @returns An error message describing the problem, or null if the directory
+ *   is usable.
+ */
+export function checkDirectoryWritable(dir: FilePath): string | null {
+  const error = dir.ensureDirectorySync();
+  if (error) {
+    return error.message;
+  }
+
+  const probeFile = dir.completeChildPath(`.rstudio-write-check-${process.pid}-${Date.now().toString(36)}`);
+  try {
+    fs.writeFileSync(probeFile.getAbsolutePath(), '');
+  } catch (err: unknown) {
+    return safeError(err).message;
+  }
+
+  try {
+    fs.unlinkSync(probeFile.getAbsolutePath());
+  } catch (err: unknown) {
+    // a cleanup failure doesn't imply the directory is unusable
+    logger().logError(err);
+  }
+
+  return null;
 }
 
 // Store the hostname so we don't have to look it up multiple times
@@ -199,19 +242,24 @@ export class Xdg {
   }
 
   /**
-   * This function verifies that the `userConfigDir()` and `userDataDir()` exist and are
-   * owned by the running user.
+   * This function verifies that the `userConfigDir()` and `userDataDir()` exist
+   * (creating them when missing) and are writable by the running user.
    *
-   * It should be invoked once. Any issues with these directories will be emitted to the
-   * session log.
+   * @returns A list of directories that could not be created or written to,
+   *   along with the underlying error messages.
    */
-  static verifyUserDirs(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    user?: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    homeDir?: FilePath,
-  ): void {
-    throw Error('Xdg.verifyUserDirs is NYI');
+  static verifyUserDirs(user?: string, homeDir?: FilePath): UserDirIssue[] {
+    const issues: UserDirIssue[] = [];
+
+    const dirs = [Xdg.userConfigDir(user, homeDir), Xdg.userDataDir(user, homeDir)];
+    for (const dir of dirs) {
+      const message = checkDirectoryWritable(dir);
+      if (message) {
+        issues.push({ directory: dir.getAbsolutePath(), message: message });
+      }
+    }
+
+    return issues;
   }
 
   /**

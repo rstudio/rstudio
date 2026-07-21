@@ -126,6 +126,15 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
 
       if (!pSession_.get().getSessionInfo().projectSupportsSharing())
          hidePane(SHARING);
+
+      // Hide the AI (assistant) pane when no AI feature is available -- either
+      // compiled out (RSTUDIO_ENABLE_AI_FEATURES=OFF, or both GitHub Copilot and
+      // Posit Assistant disabled) or disabled by the administrator.
+      if (!pSession_.get().getSessionInfo().getCopilotEnabled() &&
+          !pSession_.get().getSessionInfo().getPositAssistantEnabled())
+      {
+         hidePane(ProjectAssistantPreferencesPane.class);
+      }
    }
 
    @Override

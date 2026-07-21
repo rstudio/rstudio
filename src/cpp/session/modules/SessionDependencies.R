@@ -201,6 +201,9 @@
 # Parses DESCRIPTION-style dependency fields (e.g. "foo (>= 1.0), bar") into a
 # data frame with 'name', 'op', and 'version' columns. Entries without a version
 # requirement have empty 'op' and 'version'; the R version requirement is dropped.
+# Declared versions that package_version() cannot parse are treated as though no
+# version requirement was declared, so that a single malformed DESCRIPTION in a
+# dependency closure cannot break version comparisons downstream.
 .rs.addFunction("parsePackageDependencyFields", function(contents) {
    contents <- paste(contents[!is.na(contents)], collapse = ", ")
    entries <- trimws(strsplit(contents, ",")[[1]])
@@ -216,9 +219,16 @@
       if (length(match) < 4 || identical(match[[2]], "R"))
          next
 
+      entryOp <- match[[3]]
+      entryVersion <- match[[4]]
+      if (!grepl("^[0-9]+([.-][0-9]+)+$", entryVersion)) {
+         entryOp <- ""
+         entryVersion <- ""
+      }
+
       name <- c(name, match[[2]])
-      op <- c(op, match[[3]])
-      version <- c(version, match[[4]])
+      op <- c(op, entryOp)
+      version <- c(version, entryVersion)
    }
 
    data.frame(name = name, op = op, version = version, stringsAsFactors = FALSE)
@@ -227,19 +237,27 @@
 # Reads the runtime dependencies (Depends and Imports) declared by an installed
 # package, preferring the parsed DESCRIPTION metadata stored with the package.
 # LinkingTo is excluded, as it declares a build-time requirement rather than a
-# runtime one. Base packages are treated as having no dependencies.
+# runtime one. Base packages, and packages whose metadata cannot be read at all
+# (a warning is logged in that case), are treated as having no dependencies.
 .rs.addFunction("installedPackageDependencies", function(pkgPath) {
-   description <- tryCatch(
-      readRDS(file.path(pkgPath, "Meta", "package.rds"))$DESCRIPTION,
-      error = function(e) NULL)
-
-   if (is.null(description)) {
-      description <- tryCatch(
-         drop(read.dcf(file.path(pkgPath, "DESCRIPTION"))),
-         error = function(e) NULL)
+   metaPath <- file.path(pkgPath, "Meta", "package.rds")
+   description <- if (file.exists(metaPath)) {
+      tryCatch(readRDS(metaPath)$DESCRIPTION, error = function(e) NULL)
    }
 
-   if (is.null(description) || identical(unname(description["Priority"]), "base"))
+   descPath <- file.path(pkgPath, "DESCRIPTION")
+   if (is.null(description) && file.exists(descPath)) {
+      description <- tryCatch(drop(read.dcf(descPath)), error = function(e) NULL)
+   }
+
+   if (is.null(description)) {
+      # unreadable package metadata may mask a corrupt installation, so leave
+      # a trace rather than failing silently
+      .rs.logWarningMessage("Unable to read package metadata from '%s'", pkgPath)
+      return(.rs.parsePackageDependencyFields(character()))
+   }
+
+   if (identical(unname(description["Priority"]), "base"))
       return(.rs.parsePackageDependencyFields(character()))
 
    fields <- description[intersect(c("Depends", "Imports"), names(description))]

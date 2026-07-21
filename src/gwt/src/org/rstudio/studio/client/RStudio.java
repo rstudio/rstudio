@@ -85,6 +85,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWiz
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.files.ui.FilesListDataGridResources;
+import org.rstudio.studio.client.workbench.views.help.HelpPopoutSatellite;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
@@ -343,6 +344,13 @@ public class RStudio implements EntryPoint
       {
          RStudioGinjector.INSTANCE.getPlumberAPISatellite().go(
                RootLayoutPanel.get(),
+               dismissProgressAnimation_);
+      }
+      else if (view != null &&
+            view.startsWith(HelpPopoutSatellite.NAME_PREFIX))
+      {
+         HelpPopoutSatellite satellite = new HelpPopoutSatellite(view);
+         satellite.go(RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }
       else if (ChatSatellite.NAME.equals(view))

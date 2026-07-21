@@ -32,9 +32,9 @@ on:
         type: string
         default: ""
       grep_invert:
-        description: "Optional Playwright --grep-invert pattern to skip tests by title. Defaults to '@ai' to skip tests that require credentials not available in unattended runs."
+        description: "Optional Playwright --grep-invert pattern to skip tests by title. Empty by default (runs all tests)."
         type: string
-        default: "@ai"
+        default: ""
       build_only:
         description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
         type: boolean
@@ -68,7 +68,7 @@ on:
         default: ""
       grep_invert:
         type: string
-        default: "@ai"
+        default: ""
       build_only:
         type: boolean
         default: false
@@ -444,6 +444,17 @@ jobs:
           log-level=debug
           logger-type=file
           EOF
+
+      # GitHub Copilot is enabled by default only in RStudio Desktop; on Server
+      # it is an admin opt-in and `copilot-enabled` defaults to false. Without
+      # it, the Assistant preferences pane omits the "GitHub Copilot" code
+      # assistant option, which breaks the @ai Copilot suite and the general
+      # Assistant preference tests that select that option. Enable it here so
+      # Server matches Desktop. (Posit Assistant is already available on Server
+      # via the open-source overlay, so it needs no equivalent flag.)
+      - name: Enable GitHub Copilot for rsessions
+        run: |
+          echo "copilot-enabled=1" | sudo tee -a /etc/rstudio/rsession.conf >/dev/null
 
       # The Playwright e2e tests drive RStudio through the window.rstudio
       # automation bridge, which is only exposed when rsession is started with

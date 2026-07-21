@@ -2831,11 +2831,19 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showPaiUi = paiUtil_.isPositAssistantEnabled() && !isTabHidden(Tab.Chat);
+      boolean paiEnabled = paiUtil_.isPositAssistantEnabled();
+      boolean showPaiUi = paiEnabled && !isTabHidden(Tab.Chat);
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
       commands_.assistantPaneToggle().setVisible(
             showPaiUi && paiUtil_.isChatProviderPosit());
+
+      // The chat window commands only apply to Posit Assistant; hide them when
+      // it is unavailable (their enabled state is managed by ChatPresenter).
+      // "Uninstall Posit Assistant" stays available so a previously installed
+      // Posit Assistant can still be removed.
+      commands_.popOutChat().setVisible(paiEnabled);
+      commands_.returnChatToMain().setVisible(paiEnabled);
    }
 
    private boolean isTabHidden(Tab tab)
