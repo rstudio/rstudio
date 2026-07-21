@@ -20,8 +20,11 @@
 
 #include <gtest/gtest.h>
 
+#include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
 #include <shared_core/FilePath.hpp>
+
+#include <session/SessionOptions.hpp>
 
 #ifdef __APPLE__
 # include <climits>
@@ -59,35 +62,10 @@ void initRequest(core::http::Request& request,
 
 } // anonymous namespace
 
-// --- Returns false: ?show=1 marker -----------------------------------------
-
-TEST(ShouldAuditFileDownloadTest, ShowOneSkipsForNonRenderable)
-{
-   // ?show=1 forces a skip even for binary types that the browser would
-   // otherwise download (file.show() of a zip, etc.).
-   core::http::Request request;
-   initRequest(request, "/files/archive.zip?show=1");
-   core::FilePath file("archive.zip");
-   EXPECT_FALSE(shouldAuditFileDownload(request, file));
-}
-
-TEST(ShouldAuditFileDownloadTest, ShowOneSkipsRegardlessOfFetchDest)
-{
-   // The preview marker wins over Sec-Fetch-Dest analysis.
-   core::http::Request request;
-   initRequest(request, "/files/archive.zip?show=1", "document");
-   core::FilePath file("archive.zip");
-   EXPECT_FALSE(shouldAuditFileDownload(request, file));
-}
-
-TEST(ShouldAuditFileDownloadTest, ShowZeroStillAudits)
-{
-   // Only the exact value "1" trips the gate; other values fall through.
-   core::http::Request request;
-   initRequest(request, "/files/archive.zip?show=0");
-   core::FilePath file("archive.zip");
-   EXPECT_TRUE(shouldAuditFileDownload(request, file));
-}
+// The Sec-Fetch-Dest and Content-Type based skips below only apply when the
+// track-resource-downloads option is disabled, which is its default value.
+// The FileDownloadGrantTest fixture further down exercises the opt-in-enabled
+// behavior and the server-initiated preview grant.
 
 // --- Returns false: Sec-Fetch-Dest sub-resource ----------------------------
 
@@ -257,26 +235,135 @@ TEST(ShouldAuditFileDownloadTest, IframeFetchDestForRenderableSkips)
    EXPECT_FALSE(shouldAuditFileDownload(request, file));
 }
 
-// --- Producer-side: createFileUrl round-trip --------------------------------
+// --- Grant + opt-in behavior ------------------------------------------------
+//
+// These need real files (registerDownloadGrant stamps size/mtime) and toggle
+// the process-wide track-resource-downloads option, so they use a fixture that
+// creates temp files and resets the option after each case.
 
-TEST(CreateFileUrlTest, HomeFileRoundTripSkipsAudit)
+class FileDownloadGrantTest : public ::testing::Test
 {
-   // Regression test for the producer-consumer contract between
-   // createFileUrl and shouldAuditFileDownload. If a future edit drops
-   // the ?show=1 marker in the in-home branch of createFileUrl, this
-   // round trip will fail (the URL won't trigger the preview skip and
-   // - because .zip resolves to application/zip - the helper will
-   // return true instead of false).
-   core::FilePath file = userHomePath().completeChildPath("preview.zip");
-   const std::string url = createFileUrl(file);
-   ASSERT_NE(url.find("show=1"), std::string::npos)
-      << "createFileUrl output missing show=1: " << url;
+protected:
+   void TearDown() override
+   {
+      // options() is a process-wide singleton; make sure an opt-in enabled by
+      // one test doesn't leak into the next.
+      session::options().setTrackResourceDownloads(false);
+      for (core::FilePath& file : tempFiles_)
+         file.removeIfExists();
+   }
+
+   core::FilePath makeTempFile(const std::string& extension,
+                               const std::string& contents)
+   {
+      core::FilePath path;
+      core::Error error = core::FilePath::tempFilePath(extension, path);
+      EXPECT_FALSE(error) << error.asString();
+      error = core::writeStringToFile(path, contents);
+      EXPECT_FALSE(error) << error.asString();
+      tempFiles_.push_back(path);
+      return path;
+   }
+
+   void enableResourceTracking()
+   {
+      session::options().setTrackResourceDownloads(true);
+   }
+
+   std::vector<core::FilePath> tempFiles_;
+};
+
+TEST_F(FileDownloadGrantTest, RegisteredPreviewSkipsAudit)
+{
+   // A server-initiated preview registers a grant; the subsequent request for
+   // that exact file (a non-renderable .zip, so nothing else would skip it) is
+   // not audited. This is the unforgeable replacement for the old ?show=1
+   // marker.
+   core::FilePath file = makeTempFile(".zip", "payload");
+   registerDownloadGrant(file);
 
    core::http::Request request;
-   request.setUri("/" + url);
+   EXPECT_FALSE(shouldAuditFileDownload(request, file));
+}
+
+TEST_F(FileDownloadGrantTest, GrantIsPathSpecific)
+{
+   // A grant for one file must not suppress the audit for a different file.
+   core::FilePath granted = makeTempFile(".zip", "payload");
+   core::FilePath other = makeTempFile(".zip", "secret");
+   registerDownloadGrant(granted);
+
+   core::http::Request request;
+   EXPECT_TRUE(shouldAuditFileDownload(request, other));
+}
+
+TEST_F(FileDownloadGrantTest, StaleGrantAudits)
+{
+   // If the file is replaced after the grant is recorded, the size/mtime stamp
+   // no longer matches, so the download is audited -- a grant can't be reused
+   // to smuggle out content swapped in at the same path.
+   core::FilePath file = makeTempFile(".zip", "preview");
+   registerDownloadGrant(file);
+
+   // Rewrite with different-length content to change the stamp.
+   core::Error error = core::writeStringToFile(file, "swapped-in-secret-data");
+   ASSERT_FALSE(error) << error.asString();
+
+   core::http::Request request;
+   EXPECT_TRUE(shouldAuditFileDownload(request, file));
+}
+
+TEST_F(FileDownloadGrantTest, CreateFileUrlRegistersGrantAndDropsShowMarker)
+{
+   // Producer side: createFileUrl registers the grant and no longer appends a
+   // ?show=1 marker. Regression guard for the producer/consumer contract.
+   core::FilePath file = makeTempFile(".zip", "preview");
+   const std::string url = createFileUrl(file);
+
+   EXPECT_EQ(url.find("show=1"), std::string::npos)
+      << "createFileUrl should no longer emit a show=1 marker: " << url;
+
+   core::http::Request request;
    EXPECT_FALSE(shouldAuditFileDownload(request, file))
-      << "round-trip URL " << url
-      << " should skip audit via the ?show=1 marker";
+      << "createFileUrl should have registered a download grant for " << url;
+}
+
+TEST_F(FileDownloadGrantTest, TrackingEnabledAuditsRenamedText)
+{
+   // #3: renaming a binary to a text extension lands a text/* Content-Type,
+   // which is skipped by default. With resource tracking enabled that skip is
+   // off, so the download is audited regardless of the client-influenced type.
+   core::FilePath file = makeTempFile(".txt", "actually-not-text");
+   enableResourceTracking();
+
+   core::http::Request request;
+   EXPECT_TRUE(shouldAuditFileDownload(request, file));
+}
+
+TEST_F(FileDownloadGrantTest, TrackingEnabledAuditsSpoofedFetchDest)
+{
+   // #2: a client can send Sec-Fetch-Dest: image to masquerade as a sub-
+   // resource. With resource tracking enabled that skip is off, so the
+   // download is audited.
+   core::FilePath file = makeTempFile(".zip", "payload");
+   enableResourceTracking();
+
+   core::http::Request request;
+   request.setHeader("Sec-Fetch-Dest", "image");
+   EXPECT_TRUE(shouldAuditFileDownload(request, file));
+}
+
+TEST_F(FileDownloadGrantTest, TrackingEnabledAuditsRenderableType)
+{
+   // A genuinely renderable type (PDF) is skipped by default but audited once
+   // resource tracking is enabled.
+   core::FilePath file = makeTempFile(".pdf", "%PDF-1.4");
+
+   core::http::Request request;
+   EXPECT_FALSE(shouldAuditFileDownload(request, file));
+
+   enableResourceTracking();
+   EXPECT_TRUE(shouldAuditFileDownload(request, file));
 }
 
 // --- shouldIgnoreOutputDir --------------------------------------------------

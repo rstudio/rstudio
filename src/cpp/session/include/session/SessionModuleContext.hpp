@@ -95,14 +95,23 @@ std::string createAliasedPath(const core::FilePath& path);
 std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 
-// Returns true if a /files/ or /file_show request for filePath should
+// Records that filePath was surfaced to the browser by a server-initiated
+// preview/show flow, so a subsequent request for it is not audited as a
+// download. Called by createFileUrl() and by the Show-in-Browser RPC.
+void registerDownloadGrant(const core::FilePath& filePath);
+
+// Returns true if a /files, /file_show, or /show request for filePath should
 // produce a session_file_download audit event. Returns false when:
-//   (1) the URL carries ?show=1 (server-initiated preview/show flow),
-//   (2) Sec-Fetch-Dest indicates a sub-resource (style/script/image/
-//       font/audio/video/track/object/embed/manifest/xslt/report/
-//       worker/serviceworker/audioworklet/paintworklet), or
-//   (3) the file's Content-Type is browser-renderable: text/*, image/*,
-//       audio/*, video/*, application/pdf, application/json.
+//   (1) the file is owned by a system account (owner uid below
+//       auth-minimum-user-id) -- an admin-provisioned resource, not user data,
+//   (2) filePath has an unexpired server-initiated preview grant recorded via
+//       registerDownloadGrant (replaces the old, forgeable ?show=1 marker), or
+//   (3) track-resource-downloads is disabled (the default) AND the request
+//       looks like a browser sub-resource load -- Sec-Fetch-Dest indicates a
+//       sub-resource, or the file's Content-Type is browser-renderable
+//       (text/*, image/*, audio/*, video/*, application/pdf, application/json).
+//       These signals are client-supplied and spoofable, so administrators who
+//       require such downloads to be audited enable track-resource-downloads.
 bool shouldAuditFileDownload(const core::http::Request& request,
                              const core::FilePath& filePath);
 core::FilePath userScratchPath();

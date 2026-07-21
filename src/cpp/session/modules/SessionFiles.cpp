@@ -231,7 +231,7 @@ core::Error getFileContents(const json::JsonRpcRequest& request,
    FilePath targetPath = module_context::resolveAliasedPath(path);
    if (!module_context::isPathViewAllowed(targetPath))
    {
-      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+      return Error(json::errc::DirectoryViewListingProhibited, ERROR_LOCATION);
    }
 
    std::string contents;
@@ -257,6 +257,10 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    if (error)
       return error;
    FilePath targetPath = module_context::resolveAliasedPath(path);
+   if (!module_context::isPathViewAllowed(targetPath))
+   {  
+      return Error(json::errc::DirectoryViewListingProhibited, ERROR_LOCATION);
+   }
 
    json::Object result;
    
@@ -693,6 +697,7 @@ void handleFilesRequest(const http::Request& request,
    if (module_context::shouldAuditFileDownload(request, filePath))
    {
       using namespace monitor;
+      LOG_DEBUG_MESSAGE("Sending file session download event for: " + filePath.getAbsolutePath());
       client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
                               module_context::createAliasedPath(filePath)));
    }
@@ -733,7 +738,15 @@ void handleShowRequest(const http::Request& request,
          return;
       }
    }
-   
+
+   if (module_context::shouldAuditFileDownload(request, filePath))
+   {
+      using namespace monitor;
+      LOG_DEBUG_MESSAGE("Sending show session download event for: " + filePath.getAbsolutePath());
+      client().logEvent(Event(kSessionScope, kSessionDownloadEvent,
+                              module_context::createAliasedPath(filePath)));
+   }
+
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
 }
@@ -832,7 +845,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
       {
          // calculate target path
          FilePath targetPath = targetDirectoryPath.completeChildPath(filename);
-         
+
          // move the source to the destination, falling back to a copy
          // if the move cannot be completed
          Error copyError = uploadedTempFilePath.move(targetPath, FilePath::MoveCrossDevice, true);
@@ -1470,6 +1483,7 @@ void handleMultipleFileExportRequest(const http::Request& request,
    {
       // let the monitor client know the user has downloaded this file
       using namespace monitor;
+      LOG_DEBUG_MESSAGE("Sending multi session download event for: " + f);
       client().logEvent(Event(kSessionScope, kSessionDownloadEvent, f));
    }
    
@@ -1520,6 +1534,7 @@ void handleFileExportRequest(const http::Request& request,
       
       // let the monitor client know the user has downloaded this file
       using namespace monitor;
+      LOG_DEBUG_MESSAGE("Sending export session download event for: " + file);
       client().logEvent(Event(kSessionScope, kSessionDownloadEvent, file));
 
       // download as attachment
