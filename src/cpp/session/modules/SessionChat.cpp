@@ -4044,7 +4044,10 @@ void showTestManifestWarning()
 // as a re-join and clears the just-enqueued banner (rstudio/rstudio#18166).
 void onClientInit()
 {
-   if (isUsingTestManifest())
+   // Only warn about the test manifest when Posit Assistant is actually
+   // available; a build without Posit Assistant (or one where an administrator
+   // disabled it) never uses the manifest, so the banner would be misleading.
+   if (isPositAssistantEnabledByAdmin() && isUsingTestManifest())
    {
       showTestManifestWarning();
    }

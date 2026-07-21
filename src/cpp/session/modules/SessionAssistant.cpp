@@ -94,9 +94,14 @@ private:
 
 bool isCopilotAllowedByAdmin()
 {
+#ifdef COPILOT_ENABLED
    return
       session::options().allowCopilot() &&
       session::options().copilotEnabled();
+#else
+   // RStudio built without GitHub Copilot support
+   return false;
+#endif
 }
 
 bool isPositAssistantAllowedByAdmin()
