@@ -306,7 +306,11 @@ jobs:
           # not the requested patch or alias. Query rig for the just-installed
           # name so `rig default` works regardless of input form.
           INSTALLED_NAME=$(rig list --json | jq -r '.[-1].name')
-          rig default "$INSTALLED_NAME"
+          # `rig add` installs R root-owned under /Library/Frameworks, and on the
+          # Intel macOS runner it skips the "fix permissions" pass that the arm64
+          # runner performs. Switching the default therefore needs root to rewrite
+          # the system symlinks; without sudo it fails with "Permission denied".
+          sudo rig default "$INSTALLED_NAME"
           rig ls
           mkdir -p "$R_LIBS_USER"
 
