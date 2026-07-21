@@ -3,10 +3,10 @@ name: "TEMP: trigger Rocky 10 arm64 engine"
 # TEMPORARY. Shakes out the new Rocky 10 arm64 engine on its feature branch,
 # because workflow_dispatch only works for workflows already on the default
 # branch. This caller fires on every push to the feature branch and runs the
-# engine via workflow_call. The download path (build_from_source: false) is
-# already validated green, so this now sets build_from_source: true to exercise
-# the Rocky container build job (install-dependencies-yum, make-electron-package
-# RPM) before merge. DELETE this file before merging to main.
+# engine via workflow_call. Both paths are now validated green (download and
+# build-from-source), so this uses build_from_source: false (the fast download
+# path, matching how the real scheduled rotation invokes the engine) to validate
+# the merged and reconciled state. DELETE this file before merging to main.
 
 on:
   push:
@@ -22,5 +22,5 @@ jobs:
   rocky10-arm64:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-10-arm64.yml
     with:
-      build_from_source: true
+      build_from_source: false
     secrets: inherit
