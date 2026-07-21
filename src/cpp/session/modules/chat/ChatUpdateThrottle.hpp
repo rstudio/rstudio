@@ -36,11 +36,18 @@ namespace throttle {
 // were computed for, so a stale block is never applied to a different install.
 // Never apply the bool flags directly: resolve them through resolvePersistedBlock(),
 // which drops a flag whose context no longer matches the current install.
+// rstudioVersion records which RStudio build made the last check attempt: a record
+// written by a different build never throttles this one (see manifestCheckDue), so
+// the first check after installing a different RStudio build always fetches.
+// Compatibility: builds that predate the field ignore the extra key when reading
+// and drop it when writing; a missing key reads back as "" here, which compares
+// unequal to any real build and so just costs one extra fetch.
 struct ManifestCheckRecord
 {
    std::time_t lastCheckTime = 0;
    std::string installedVersion;
    std::string rstudioProtocol;
+   std::string rstudioVersion;
    bool unsupportedInstalledVersion = false;
    bool unsupportedProtocol = false;
 };
@@ -93,10 +100,23 @@ ManifestCheckRecord bumpRecord(boost::optional<ManifestCheckRecord> prior,
 // preserve `prior`'s block and bump only the timestamp via bumpRecord(). Only a
 // success may set or clear the persisted block, and every real attempt bumps the
 // timestamp -- so a failed or bad-manifest fetch still records the attempt and
-// cannot bypass the throttle.
+// cannot bypass the throttle. Every attempt (success or failure) also stamps
+// rstudioVersion, the running RStudio build: a new build's first check bypasses
+// the throttle exactly once, then normal throttling resumes even if that first
+// fetch failed.
 ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& staged,
                                     const boost::optional<ManifestCheckRecord>& prior,
-                                    std::time_t now);
+                                    std::time_t now,
+                                    const std::string& rstudioVersion);
+
+// Pure: was the persisted record written by a different RStudio build than the
+// one running now? True also for records that predate the rstudioVersion field
+// (the missing key reads back as ""), so the first check after upgrading from
+// any such build fetches. False when there is no record at all: the check is
+// already due via manifestCheckDue's !lastCheckTime disjunct, and "changed"
+// would misattribute the reason.
+bool rstudioVersionChanged(const boost::optional<ManifestCheckRecord>& record,
+                           const std::string& runningVersion);
 
 // Pure: convert a throttle window expressed in whole hours to seconds, for use as
 // the throttleSeconds argument to manifestCheckDue(). A non-positive value yields 0
@@ -105,14 +125,19 @@ ManifestCheckRecord recordToPersist(const boost::optional<ManifestCheckRecord>& 
 int throttleSecondsFromHours(int hours);
 
 // Pure: is a manifest fetch due now?
-//   force || !installed || protocolMismatch || !lastCheckTime ||
-//   now < *lastCheckTime || (now - *lastCheckTime) >= throttleSeconds
+//   force || !installed || protocolMismatch || rstudioVersionChanged ||
+//   !lastCheckTime || now < *lastCheckTime ||
+//   (now - *lastCheckTime) >= throttleSeconds
+// rstudioVersionChanged means the persisted record was written by a different
+// RStudio build: its timestamp must not throttle this build, so the first check
+// after installing a different build always fetches (#18305).
 // A future lastCheckTime (clock skew or a corrupted/copied state file) is treated
 // as due (the `now < *lastCheckTime` disjunct), so checks resume immediately
 // rather than being suppressed.
 bool manifestCheckDue(bool force,
                       bool installed,
                       bool protocolMismatch,
+                      bool rstudioVersionChanged,
                       boost::optional<std::time_t> lastCheckTime,
                       std::time_t now,
                       int throttleSeconds);

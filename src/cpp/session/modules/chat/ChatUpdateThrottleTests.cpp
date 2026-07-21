@@ -52,52 +52,94 @@ ManifestCheckRecord makeRecord(std::time_t t,
 
 TEST(ChatUpdateThrottle, DueWhenForced)
 {
-   EXPECT_TRUE(manifestCheckDue(true, true, false, kNow, kNow, kDay));
+   EXPECT_TRUE(manifestCheckDue(true, true, false, false, kNow, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, DueWhenNotInstalled)
 {
-   EXPECT_TRUE(manifestCheckDue(false, false, false, kNow, kNow, kDay));
+   EXPECT_TRUE(manifestCheckDue(false, false, false, false, kNow, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, DueWhenProtocolMismatch)
 {
-   EXPECT_TRUE(manifestCheckDue(false, true, true, kNow, kNow, kDay));
+   EXPECT_TRUE(manifestCheckDue(false, true, true, false, kNow, kNow, kDay));
+}
+
+TEST(ChatUpdateThrottle, DueWhenRStudioVersionChanged)
+{
+   // The persisted record was written by a different RStudio build, so its
+   // timestamp must not throttle this build even within the window: the first
+   // check after installing a different build always fetches (#18305).
+   EXPECT_TRUE(manifestCheckDue(false, true, false, true, kNow, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, DueWhenNoPriorCheck)
 {
-   EXPECT_TRUE(manifestCheckDue(false, true, false, boost::none, kNow, kDay));
+   EXPECT_TRUE(manifestCheckDue(false, true, false, false, boost::none, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, NotDueWithinWindow)
 {
    std::time_t last = kNow - (kDay - 1);
-   EXPECT_FALSE(manifestCheckDue(false, true, false, last, kNow, kDay));
+   EXPECT_FALSE(manifestCheckDue(false, true, false, false, last, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, DueAtWindowBoundary)
 {
    std::time_t last = kNow - kDay;
-   EXPECT_TRUE(manifestCheckDue(false, true, false, last, kNow, kDay));
+   EXPECT_TRUE(manifestCheckDue(false, true, false, false, last, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, DuePastWindow)
 {
    std::time_t last = kNow - (kDay + 100);
-   EXPECT_TRUE(manifestCheckDue(false, true, false, last, kNow, kDay));
+   EXPECT_TRUE(manifestCheckDue(false, true, false, false, last, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, DueWhenLastCheckInFuture)
 {
    std::time_t future = kNow + kDay;
-   EXPECT_TRUE(manifestCheckDue(false, true, false, future, kNow, kDay));
+   EXPECT_TRUE(manifestCheckDue(false, true, false, false, future, kNow, kDay));
 }
 
 TEST(ChatUpdateThrottle, DueWhenThrottleZero)
 {
    // A zero window means "always check": even a check made this instant is due.
-   EXPECT_TRUE(manifestCheckDue(false, true, false, kNow, kNow, 0));
+   EXPECT_TRUE(manifestCheckDue(false, true, false, false, kNow, kNow, 0));
+}
+
+// ---- rstudioVersionChanged ----
+
+TEST(ChatUpdateThrottle, VersionNotChangedWithoutRecord)
+{
+   // No record: not "changed" -- the check is already due via !lastCheckTime,
+   // and the distinct reason keeps the bypass log honest.
+   EXPECT_FALSE(rstudioVersionChanged(boost::none, "2026.08.0+200"));
+}
+
+TEST(ChatUpdateThrottle, VersionNotChangedWhenStampMatches)
+{
+   ManifestCheckRecord r = makeRecord(kNow, "1.2.3", "10.0", false, false);
+   r.rstudioVersion = "2026.08.0+200";
+   EXPECT_FALSE(rstudioVersionChanged(r, "2026.08.0+200"));
+}
+
+TEST(ChatUpdateThrottle, VersionChangedWhenStampDiffers)
+{
+   ManifestCheckRecord r = makeRecord(kNow, "1.2.3", "10.0", false, false);
+   r.rstudioVersion = "2026.07.0+100";
+   EXPECT_TRUE(rstudioVersionChanged(r, "2026.08.0+200"));
+}
+
+TEST(ChatUpdateThrottle, VersionChangedWhenStampMissing)
+{
+   // A record from a build that predates the field reads back with an empty
+   // stamp; it must count as a different build so the first check after
+   // upgrading from any pre-field build fetches. Guards against a later
+   // "hardening" that skips empty stamps and would silently disable the fix
+   // for exactly the most common upgrade path (#18305).
+   ManifestCheckRecord r = makeRecord(kNow, "1.2.3", "10.0", false, false);
+   EXPECT_TRUE(rstudioVersionChanged(r, "2026.08.0+200"));
 }
 
 // ---- throttleSecondsFromHours ----
@@ -307,7 +349,7 @@ TEST(ChatUpdateThrottle, PersistUsesStagedRecordOnSuccess)
    // how a successful check sets or clears the block.
    ManifestCheckRecord staged = makeRecord(kNow, "1.2.3", "10.0", true, false);
    ManifestCheckRecord prior = makeRecord(kNow - kDay, "1.0.0", "10.0", false, true);
-   ManifestCheckRecord out = recordToPersist(staged, prior, kNow + 5);
+   ManifestCheckRecord out = recordToPersist(staged, prior, kNow + 5, "2026.08.0+200");
    EXPECT_EQ(out.lastCheckTime, kNow);
    EXPECT_EQ(out.installedVersion, "1.2.3");
    EXPECT_TRUE(out.unsupportedInstalledVersion);
@@ -320,7 +362,7 @@ TEST(ChatUpdateThrottle, PersistBumpsAndPreservesPriorWhenNotStaged)
    // attempt is recorded and cannot bypass the throttle) while preserving the prior
    // block (only a success may clear it).
    ManifestCheckRecord prior = makeRecord(kNow - kDay, "1.2.3", "10.0", true, false);
-   ManifestCheckRecord out = recordToPersist(boost::none, prior, kNow);
+   ManifestCheckRecord out = recordToPersist(boost::none, prior, kNow, "2026.08.0+200");
    EXPECT_EQ(out.lastCheckTime, kNow);
    EXPECT_EQ(out.installedVersion, "1.2.3");
    EXPECT_TRUE(out.unsupportedInstalledVersion);
@@ -328,10 +370,34 @@ TEST(ChatUpdateThrottle, PersistBumpsAndPreservesPriorWhenNotStaged)
 
 TEST(ChatUpdateThrottle, PersistBumpsDefaultWhenNoStagedNoPrior)
 {
-   ManifestCheckRecord out = recordToPersist(boost::none, boost::none, kNow);
+   ManifestCheckRecord out =
+      recordToPersist(boost::none, boost::none, kNow, "2026.08.0+200");
    EXPECT_EQ(out.lastCheckTime, kNow);
    EXPECT_TRUE(out.installedVersion.empty());
    EXPECT_FALSE(out.unsupportedInstalledVersion);
+}
+
+TEST(ChatUpdateThrottle, PersistStampsRunningBuildOnSuccess)
+{
+   // recordToPersist owns the rstudioVersion stamp: whatever a staged record
+   // carries is overwritten with the running build.
+   ManifestCheckRecord staged = makeRecord(kNow, "1.2.3", "10.0", false, false);
+   staged.rstudioVersion = "2026.07.0+100";
+   ManifestCheckRecord out =
+      recordToPersist(staged, boost::none, kNow, "2026.08.0+200");
+   EXPECT_EQ(out.rstudioVersion, "2026.08.0+200");
+}
+
+TEST(ChatUpdateThrottle, PersistStampsRunningBuildOnFailedAttempt)
+{
+   // Failure path: the attempt still stamps the running build, so a new build's
+   // first check bypasses the throttle exactly once -- afterward normal
+   // throttling resumes even though the fetch failed.
+   ManifestCheckRecord prior = makeRecord(kNow - kDay, "1.2.3", "10.0", false, false);
+   prior.rstudioVersion = "2026.07.0+100";
+   ManifestCheckRecord out =
+      recordToPersist(boost::none, prior, kNow, "2026.08.0+200");
+   EXPECT_EQ(out.rstudioVersion, "2026.08.0+200");
 }
 
 // ---- read / write round-trip ----
@@ -341,6 +407,7 @@ TEST(ChatUpdateThrottle, RecordRoundTrip)
    FilePath tmp;
    ASSERT_FALSE(FilePath::tempFilePath(tmp));
    ManifestCheckRecord in = makeRecord(kNow, "1.2.3", "10.0", true, false);
+   in.rstudioVersion = "2026.08.0+200";
    ASSERT_FALSE(writeManifestCheckRecord(tmp, in));
 
    boost::optional<ManifestCheckRecord> out = readManifestCheckRecord(tmp);
@@ -348,6 +415,7 @@ TEST(ChatUpdateThrottle, RecordRoundTrip)
    EXPECT_EQ(out->lastCheckTime, kNow);
    EXPECT_EQ(out->installedVersion, "1.2.3");
    EXPECT_EQ(out->rstudioProtocol, "10.0");
+   EXPECT_EQ(out->rstudioVersion, "2026.08.0+200");
    EXPECT_TRUE(out->unsupportedInstalledVersion);
    EXPECT_FALSE(out->unsupportedProtocol);
    tmp.removeIfExists();
@@ -359,6 +427,20 @@ TEST(ChatUpdateThrottle, ReadMissingFileReturnsNone)
    ASSERT_FALSE(FilePath::tempFilePath(tmp));
    tmp.removeIfExists();
    EXPECT_FALSE(readManifestCheckRecord(tmp));
+}
+
+TEST(ChatUpdateThrottle, ReadUnknownKeysIgnored)
+{
+   // Forward compat: a record written by a future build with extra fields must
+   // still parse -- the same contract that lets builds predating rstudioVersion
+   // read records that carry it. A strict/exhaustive reader would return none
+   // here and silently drop the persisted unsupported-version block on downgrade.
+   FilePath tmp;
+   ASSERT_FALSE(FilePath::tempFilePath(tmp));
+   ASSERT_FALSE(writeStringToFile(tmp,
+      "{\"lastCheckTime\":\"100\",\"someFutureField\":true}"));
+   EXPECT_TRUE(readManifestCheckRecord(tmp));
+   tmp.removeIfExists();
 }
 
 TEST(ChatUpdateThrottle, ReadMalformedReturnsNone)
@@ -394,6 +476,10 @@ TEST(ChatUpdateThrottle, ReadNonNumericLastCheckTimeReturnsNone)
 
 TEST(ChatUpdateThrottle, ReadMissingOptionalFieldsTolerated)
 {
+   // Also covers records written by builds that predate the rstudioVersion
+   // field: that key is absent there and must read back as empty (-> treated
+   // as a different build, so the first check under this build fetches)
+   // rather than as malformed.
    FilePath tmp;
    ASSERT_FALSE(FilePath::tempFilePath(tmp));
    ASSERT_FALSE(writeStringToFile(tmp, "{\"lastCheckTime\":\"100\"}"));
@@ -401,6 +487,7 @@ TEST(ChatUpdateThrottle, ReadMissingOptionalFieldsTolerated)
    ASSERT_TRUE(out);
    EXPECT_EQ(out->lastCheckTime, static_cast<std::time_t>(100));
    EXPECT_TRUE(out->installedVersion.empty());
+   EXPECT_TRUE(out->rstudioVersion.empty());
    EXPECT_FALSE(out->unsupportedInstalledVersion);
    tmp.removeIfExists();
 }
