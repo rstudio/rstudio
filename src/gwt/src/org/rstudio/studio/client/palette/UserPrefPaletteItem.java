@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.palette;
 
+import java.util.Set;
+
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.palette.ui.UserPrefBooleanPaletteEntry;
@@ -27,9 +29,10 @@ import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 
 public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
 {
-   public UserPrefPaletteItem(PrefValue<?> val)
+   public UserPrefPaletteItem(PrefValue<?> val, Set<String> excludedValues)
    {
       val_ = val;
+      excludedValues_ = excludedValues;
    }
 
    @Override
@@ -41,7 +44,7 @@ public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
       }
       else if (val_ instanceof EnumValue)
       {
-         return new UserPrefEnumPaletteEntry((EnumValue)val_, this);
+         return new UserPrefEnumPaletteEntry((EnumValue)val_, this, excludedValues_);
       }
       else if (val_ instanceof IntValue)
       {
@@ -121,4 +124,5 @@ public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
    };
 
    private final PrefValue<?> val_;
+   private final Set<String> excludedValues_;
 }

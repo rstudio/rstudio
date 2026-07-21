@@ -16,15 +16,19 @@
 package org.rstudio.studio.client.palette;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 /**
  * A command palette entry source which serves as a factory for user preference
@@ -32,9 +36,10 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
  */
 public class UserPrefPaletteSource implements CommandPaletteEntryProvider
 {
-   public UserPrefPaletteSource(UserPrefs prefs)
+   public UserPrefPaletteSource(UserPrefs prefs, SessionInfo sessionInfo)
    {
       prefs_ = prefs;
+      sessionInfo_ = sessionInfo;
    }
 
    @Override
@@ -49,9 +54,14 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
             // reasonable thing we can display)
             continue;
          }
-         items.add(new UserPrefPaletteItem(val));
+         if (isPrefUnavailable(val.getId()))
+         {
+            // Ignore preferences for AI features not available in this build
+            continue;
+         }
+         items.add(new UserPrefPaletteItem(val, excludedValues(val.getId())));
       }
-      
+
       return items;
    }
 
@@ -63,6 +73,11 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
          return null;
       }
 
+      if (isPrefUnavailable(id))
+      {
+         return null;
+      }
+
       PrefValue<?> val = prefs_.getPrefValue(id);
       if (val == null)
       {
@@ -70,7 +85,66 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
          return null;
       }
 
-      return new UserPrefPaletteItem(val);
+      return new UserPrefPaletteItem(val, excludedValues(id));
+   }
+
+   /**
+    * Preferences for AI features that should not appear in the palette when the
+    * corresponding feature is unavailable in this build (e.g. built with
+    * RSTUDIO_ENABLE_POSIT_ASSISTANT=OFF) or disabled by the administrator.
+    */
+   private boolean isPrefUnavailable(String id)
+   {
+      switch (id)
+      {
+         // Posit Assistant-specific preferences (chat is Posit-only).
+         case UserPrefsAccessor.ASSISTANT_TOOLBAR_BUTTON_VISIBLE:
+         case UserPrefsAccessor.POSIT_ASSISTANT_TEST_MANIFEST:
+         case UserPrefsAccessor.POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS:
+         case UserPrefsAccessor.CHAT_PROVIDER:
+            return !sessionInfo_.getPositAssistantEnabled();
+         // assistant_show_messages is a Posit Assistant setting, but the
+         // preferences pane only surfaces it under the Copilot section, so its
+         // palette availability follows Copilot to stay consistent with where
+         // the pane actually shows it.
+         case UserPrefsAccessor.ASSISTANT_SHOW_MESSAGES:
+            return !sessionInfo_.getCopilotEnabled();
+         // The assistant selector and the shared code-suggestion preferences
+         // apply to any AI agent (Copilot or Posit Assistant), so hide them
+         // only when no AI assistant is available -- matching the preferences
+         // pane, which is hidden entirely in that case. The assistant selector
+         // additionally filters out unavailable providers via excludedValues().
+         case UserPrefsAccessor.ASSISTANT:
+         case UserPrefsAccessor.ASSISTANT_USE_SYSTEM_CA:
+         case UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER:
+         case UserPrefsAccessor.ASSISTANT_COMPLETIONS_DELAY:
+         case UserPrefsAccessor.ASSISTANT_TAB_KEY_BEHAVIOR:
+         case UserPrefsAccessor.ASSISTANT_INDEXING_ENABLED:
+         case UserPrefsAccessor.ASSISTANT_NES_ENABLED:
+         case UserPrefsAccessor.ASSISTANT_NES_AUTOSHOW:
+            return !sessionInfo_.getCopilotEnabled() &&
+                   !sessionInfo_.getPositAssistantEnabled();
+         default:
+            return false;
+      }
+   }
+
+   /**
+    * Enum preference values to hide because the provider they select is
+    * unavailable. Only the "assistant" selector filters providers today; every
+    * other preference returns an empty set (no filtering).
+    */
+   private Set<String> excludedValues(String id)
+   {
+      Set<String> excluded = new HashSet<>();
+      if (id.equals(UserPrefsAccessor.ASSISTANT))
+      {
+         if (!sessionInfo_.getPositAssistantEnabled())
+            excluded.add(UserPrefsAccessor.ASSISTANT_POSIT);
+         if (!sessionInfo_.getCopilotEnabled())
+            excluded.add(UserPrefsAccessor.ASSISTANT_COPILOT);
+      }
+      return excluded;
    }
 
    @Override
@@ -80,4 +154,5 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
    }
 
    private final UserPrefs prefs_;
+   private final SessionInfo sessionInfo_;
 }

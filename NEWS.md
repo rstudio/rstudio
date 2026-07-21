@@ -9,9 +9,11 @@
 - ([#8715](https://github.com/rstudio/rstudio/issues/8715)): Inline LaTeX / math previews in the source editor and visual editor are now rendered with MathJax 4 (previously MathJax 2.7), adding support for the TeX input extensions introduced in MathJax 3 and later. Rendered R Markdown documents using `mathjax = "local"` continue to use the bundled MathJax 2.7.
 - ([#7350](https://github.com/rstudio/rstudio/issues/7350)): RStudio can now load custom Vim key mappings from `~/.rstudio-vimrc` (or `~/.vimrc`) when Vim editor keybindings are in use. Enable the new preference under Tools > Global Options > Code > Editing; key mapping commands (`map`, `noremap`, `unmap`, and friends) and `set` commands supported by the editor's Vim emulation are applied, and other vimrc content is ignored.
 - ([#18060](https://github.com/rstudio/rstudio/issues/18060)): The installed-package scan used to track package load and attach events now runs on a background thread, so session startup (and package installation) no longer blocks while enumerating library paths on slow or remote filesystems.
+- ([#18248](https://github.com/rstudio/rstudio/issues/18248)): RStudio can now be built without Posit Assistant support (including its chat pane and Posit AI Next Edit Suggestions) via the new `RSTUDIO_ENABLE_POSIT_ASSISTANT` CMake option; GitHub Copilot, including Copilot-provided suggestions, remains available. A new `RSTUDIO_ENABLE_AI_FEATURES` master option removes all AI features (GitHub Copilot and Posit Assistant) from the build when disabled.
 
 ### Fixed
 - ([#18152](https://github.com/rstudio/rstudio/issues/18152)): Fixed a compilation error when building RStudio Server against SOCI 4.1.4 or newer.
+- ([#18287](https://github.com/rstudio/rstudio/issues/18287)): Fixed another compilation error when building RStudio against system SOCI packages (4.1 or newer), which no longer expose the SQLite C API through their headers.
 - ([#18174](https://github.com/rstudio/rstudio/issues/18174)): Fixed an error when viewing an object from the Object Explorer with the French user interface language enabled.
 - ([#18255](https://github.com/rstudio/rstudio/issues/18255)): Fixed a regression where an unprivileged RStudio Server would fail to start when it could not read a system secure key file (for example, a root-owned key baked into an HPC container image), rather than falling back to its per-user cache.
 - ([#18198](https://github.com/rstudio/rstudio/issues/18198)): Fixed tar errors and warnings printed to the console after installing a package from a URL with `install.packages(..., repos = NULL)`.
@@ -32,6 +34,7 @@
 - ([#18273](https://github.com/rstudio/rstudio/issues/18273)): Fixed an issue on Windows where a failure to load the Start Menu Git shortcut while auto-detecting the Git installation went undetected, causing detection to fail later with a less accurate error.
 - ([#18277](https://github.com/rstudio/rstudio/issues/18277)): Fixed an issue where the GitHub Copilot or Posit Assistant agent could fail to start for the rest of the session after an early startup failure (for example, a misconfigured Node.js path). The agent now retries and starts once the underlying problem is corrected, without restarting the session.
 - ([#18270](https://github.com/rstudio/rstudio/issues/18270)): Fixed an issue on Windows where native dialogs shown by R (e.g. via `utils::askYesNo()`, or when `install.packages()` asks about installing from sources) could open behind the RStudio Desktop window, making the IDE appear frozen while R waited on a dialog the user could not see.
+- ([#8345](https://github.com/rstudio/rstudio/issues/8345)): Help pages opened via the Help pane's "Show in new window" button now follow the IDE's editor theme, instead of always rendering with a light palette.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)

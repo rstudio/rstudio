@@ -1589,9 +1589,14 @@ bool disablePackages()
 
 bool isPositAssistantEnabledByAdmin()
 {
+#ifdef POSIT_ASSISTANT_ENABLED
    return session::options().allowPositAssistant() &&
           session::options().positAssistantEnabled() &&
           core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
+#else
+   // RStudio built without Posit Assistant support
+   return false;
+#endif
 }
 
 bool isPositAssistantEnabled()

@@ -1579,25 +1579,47 @@ void rollbackOpenSqliteTransaction(const boost::shared_ptr<Connection>& connecti
    if (connection->driver() != Driver::Sqlite)
       return;
 
-   auto* backend = static_cast<soci::sqlite3_session_backend*>(connection->session().get_backend());
-   if (backend == nullptr || backend->conn_ == nullptr)
-      return;
-
-   // A nonzero result means the connection is in autocommit (no open
-   // transaction), which is the expected state - nothing to roll back.
-   if (sqlite_api::sqlite3_get_autocommit(backend->conn_) != 0)
-      return;
-
+   // This runs from ~PooledConnection(), an implicitly noexcept destructor, so
+   // no exception may escape; SOCI statements can also throw non-soci_error
+   // types (e.g. std::bad_alloc), hence the catch-all below.
    try
    {
+      // Probe for an open transaction with BEGIN rather than calling
+      // sqlite3_get_autocommit(): SOCI 4.1+ no longer exposes the SQLite C API
+      // through soci-sqlite3.h, so builds against a system SOCI cannot use it
+      // (#18287). A deferred BEGIN acquires no locks, so the probe is cheap.
+      bool hadOpenTransaction = false;
+      try
+      {
+         connection->session() << "BEGIN";
+      }
+      catch (const soci::soci_error& e)
+      {
+         // BEGIN normally fails here because a transaction is already open,
+         // but log the original error in case it failed for another reason.
+         DLOGF("BEGIN probe failed on a pooled connection: {}", e.what());
+         hadOpenTransaction = true;
+      }
+
+      // Roll back the open transaction (or the one the probe just started).
       connection->session() << "ROLLBACK";
-      LOG_DEBUG_MESSAGE("Rolled back an open transaction before returning a "
-                        "connection to the pool");
+
+      if (hadOpenTransaction)
+      {
+         LOG_DEBUG_MESSAGE("Rolled back an open transaction before returning a "
+                           "connection to the pool");
+      }
    }
    catch (const soci::soci_error& e)
    {
-      LOG_WARNING_MESSAGE(std::string("Failed to roll back open transaction on a "
-                                      "pooled connection: ") + e.what());
+      ELOGF("Failed to roll back transaction on a pooled connection; the "
+            "connection may be returned with a transaction still open: {}",
+            e.what());
+   }
+   catch (...)
+   {
+      ELOGF("Failed to roll back transaction on a pooled connection; the "
+            "connection may be returned with a transaction still open");
    }
 }
 

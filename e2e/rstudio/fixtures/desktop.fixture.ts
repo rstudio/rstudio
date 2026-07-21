@@ -12,6 +12,7 @@ import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../uti
 import { workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { isDebugMode } from '../utils/debug';
+import { userHomeForAuthState } from '../utils/auth';
 
 const BASE_PREFS_PATH = path.join(__dirname, 'base-prefs.jsonc');
 const OVERRIDE_PREFS_ENV = 'PW_RSTUDIO_PREFS_OVERRIDE';
@@ -456,10 +457,14 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   // characters are not supported on the Windows dev path.
   let spawnCmd: string;
   let spawnArgs: string[];
+  // Resolve the launch HOME through the per-test auth state: normally the
+  // worker home unchanged; under aiAuth 'none' declarations, a
+  // credential-stripped copy of it (see userHomeForAuthState in utils/auth.ts).
+  const launchHome = userHomeForAuthState(workerUserHome());
   const spawnOptions: SpawnOptions = {
     env: {
       ...process.env,
-      HOME: workerUserHome(),
+      HOME: launchHome,
       // R expands %p / %v at startup; the resolved path is the same one
       // globalSetup pre-creates and pre-populates in r-libs-setup.ts. Setting
       // this explicitly is necessary because HOME is redirected -- without it,
@@ -513,7 +518,7 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
         RSTUDIO_DESKTOP_DEV_PORT: String(CDP_PORT + 1000),
         RSTUDIO_DESKTOP_LOGGER_PORT: String(CDP_PORT + 2000),
       } : {}),
-      USERPROFILE: workerUserHome(),
+      USERPROFILE: launchHome,
     },
   };
   if (DEV_MODE) {

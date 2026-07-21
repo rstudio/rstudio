@@ -537,9 +537,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_file_upload"] = options.allowFileUploads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
    sessionInfo["allow_full_ui"] = options.allowFullUI();
+#ifdef POSIT_ASSISTANT_ENABLED
    sessionInfo["posit_assistant_enabled"] = options.positAssistantEnabled() &&
       options.allowPositAssistant() &&
       core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT").empty();
+#else
+   sessionInfo["posit_assistant_enabled"] = false;
+#endif
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 
@@ -673,7 +677,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // copilot
 #ifdef COPILOT_ENABLED
-   sessionInfo["copilot_enabled"] = options.copilotEnabled();
+   // Mirror isCopilotAllowedByAdmin() (SessionAssistant.cpp) so the client's
+   // view of Copilot availability matches the backend gate. The two sites are
+   // kept in sync by hand: if that gate gains another condition, update this too.
+   sessionInfo["copilot_enabled"] = options.copilotEnabled() && options.allowCopilot();
 #else
    sessionInfo["copilot_enabled"] = false;
 #endif

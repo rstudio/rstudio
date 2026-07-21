@@ -958,6 +958,57 @@ TEST(ConnectionPoolTest, ReturningConnectionWithOpenTransactionRollsItBack)
    dbPath.removeIfExists();
 }
 
+// The rollback-on-return probe opens its own transaction when none was left
+// open (BEGIN succeeds); that probe transaction must itself be closed before
+// the connection is pooled, or every cleanly-returned connection would come
+// back inside a stale deferred transaction.
+TEST(ConnectionPoolTest, ReturningConnectionCleanlyLeavesAutocommit)
+{
+   FilePath dbPath;
+   ASSERT_FALSE(FilePath::tempFilePath(dbPath));
+   dbPath.removeIfExists();
+
+   SqliteConnectionOptions options;
+   options.file = dbPath.getAbsolutePath();
+
+   {
+      // Pool of one so the re-acquired connection is guaranteed to be the same
+      // underlying connection we just returned.
+      boost::shared_ptr<ConnectionPool> pool;
+      ASSERT_FALSE(createConnectionPool(1, options, &pool)) << "Failed to create connection pool";
+
+      {
+         boost::shared_ptr<IConnection> conn = pool->getConnection();
+         ASSERT_TRUE(conn) << "Failed to get connection from pool";
+         ASSERT_FALSE(conn->executeStr("CREATE TABLE Txn(id int)")) << "Failed to create Txn table";
+
+         // A plain autocommit insert; no transaction is left open.
+         Query insert = conn->query("INSERT INTO Txn(id) VALUES (:id)").withInput(1);
+         ASSERT_FALSE(conn->execute(insert)) << "Failed to insert row";
+         // conn leaves scope here -> returned to pool -> probe runs.
+      }
+
+      boost::shared_ptr<IConnection> conn2 = pool->getConnection();
+      ASSERT_TRUE(conn2) << "Failed to re-acquire connection from pool";
+
+      // The connection must be back in autocommit: if the probe's own BEGIN
+      // had leaked, this BEGIN would fail with "cannot start a transaction
+      // within a transaction".
+      ASSERT_FALSE(conn2->executeStr("BEGIN")) << "Probe transaction leaked into the pooled connection";
+      ASSERT_FALSE(conn2->executeStr("ROLLBACK"));
+
+      // And the committed row must have survived.
+      int count = -1;
+      Query countQuery = conn2->query("SELECT COUNT(*) FROM Txn").withOutput(count);
+      bool dataReturned = false;
+      ASSERT_FALSE(conn2->execute(countQuery, &dataReturned)) << "Failed to count Txn rows";
+      ASSERT_TRUE(dataReturned);
+      EXPECT_EQ(count, 1) << "Committed row should survive the return-to-pool probe";
+   }
+
+   dbPath.removeIfExists();
+}
+
 // Regression for rstudio-pro#10885: a SELECT's Rowset holds a SQLite read
 // snapshot until it is destroyed. A connection that is reused for a write while
 // still carrying such a snapshot - after another connection has committed -

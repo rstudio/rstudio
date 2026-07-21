@@ -362,12 +362,41 @@ endif()
 
 message(STATUS "Quarto enabled: ${QUARTO_ENABLED}")
 
+# AI features
+#
+# RSTUDIO_ENABLE_AI_FEATURES is a master switch for all AI features (GitHub
+# Copilot, Posit Assistant, and any future AI functionality). When disabled,
+# every AI feature is removed from the build regardless of the individual
+# per-feature options below. Individual features can also be disabled on their
+# own while leaving the others enabled.
+option(RSTUDIO_ENABLE_AI_FEATURES "Enable AI features (GitHub Copilot, Posit Assistant)" ON)
 option(RSTUDIO_ENABLE_COPILOT "Enable the GitHub Copilot Feature" ON)
+option(RSTUDIO_ENABLE_POSIT_ASSISTANT "Enable the Posit Assistant Feature" ON)
+
+# When the master switch is off, force all AI sub-features off. Any new AI
+# feature option should be added here so the master switch continues to cover it.
+# These are plain (non-cache) overrides so re-enabling the master switch on a
+# later configure restores each feature's own option value.
+if(NOT RSTUDIO_ENABLE_AI_FEATURES)
+   set(RSTUDIO_ENABLE_COPILOT OFF)
+   set(RSTUDIO_ENABLE_POSIT_ASSISTANT OFF)
+   message(STATUS "AI features disabled")
+else()
+   message(STATUS "AI features enabled")
+endif()
+
 if(RSTUDIO_ENABLE_COPILOT)
    message(STATUS "GitHub Copilot support enabled")
    add_definitions(-DCOPILOT_ENABLED)
 else()
    message(STATUS "GitHub Copilot support disabled")
+endif()
+
+if(RSTUDIO_ENABLE_POSIT_ASSISTANT)
+   message(STATUS "Posit Assistant support enabled")
+   add_definitions(-DPOSIT_ASSISTANT_ENABLED)
+else()
+   message(STATUS "Posit Assistant support disabled")
 endif()
 
 # install freedesktop integration files if we are installing into /usr
