@@ -199,9 +199,9 @@ export function runCmakeBuild(tag: string): void {
 // - No configured build/ here, but a bootstrap-worktree.sh dev shim exists
 //   (build-dev-shim/): point the launcher at the shim. The shim borrows the
 //   main checkout's built session but serves THIS worktree's src/gwt/www.
-//   Without the explicit pointer the launcher's own build-root scan can land
-//   on a build dir whose generated conf serves the main checkout's GWT, and
-//   the run silently stops exercising this worktree's changes.
+//   The pointer is required: the launcher's own build-root scan only
+//   recognizes real CMake trees (.ninja_log / CMakeFiles markers), so it
+//   skips the shim and the launch dies with rsession-not-found.
 export function resolveCppBuildOutput(tag: string): Record<string, string> | null {
   const explicit = process.env.RSTUDIO_CPP_BUILD_OUTPUT;
   if (explicit) {
@@ -291,18 +291,23 @@ function newestMtimeMs(dir: string): number {
   return newest;
 }
 
-// A precompiled bootstrap knows nothing about Java edited after it was
-// built, so the run would silently exercise stale UI code. Mtimes are only a
-// heuristic (a branch switch rewrites files without changing content), so
-// this warns loudly rather than failing the run.
+// A precompiled bootstrap knows nothing about sources edited after it was
+// built, so the run would silently exercise stale UI code. Both scanned dirs
+// feed the bootstrap: `ant draft` compiles src/gwt/src and, via its `ext`
+// dependency, src/gwt/acesupport (whose output is bundled into www). Mtimes
+// are only a heuristic (a branch switch rewrites files without changing
+// content), so this warns loudly rather than failing the run.
 function warnIfPrecompiledGwtStale(tag: string): void {
   try {
     const built = fs.statSync(path.join(REPO_ROOT, 'src/gwt/www/rstudio/rstudio.nocache.js')).mtimeMs;
-    const newest = newestMtimeMs(path.join(REPO_ROOT, 'src/gwt/src'));
+    const newest = Math.max(
+      newestMtimeMs(path.join(REPO_ROOT, 'src/gwt/src')),
+      newestMtimeMs(path.join(REPO_ROOT, 'src/gwt/acesupport')),
+    );
     if (newest > built) {
       console.warn(
-        `[${tag}] WARNING: sources under src/gwt/src are newer than the precompiled GWT ` +
-          'bootstrap; tests may run against stale UI code. Rebuild with:\n' +
+        `[${tag}] WARNING: sources under src/gwt/src or src/gwt/acesupport are newer than ` +
+          'the precompiled GWT bootstrap; tests may run against stale UI code. Rebuild with:\n' +
           '    (cd src/gwt && ant draft)',
       );
     }
