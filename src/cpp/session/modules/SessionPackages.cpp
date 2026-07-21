@@ -377,8 +377,9 @@ void onPackageEventScanTimeout(boost::shared_ptr<PackageEventScan> pScan)
 
 // Runs on a background thread: filesystem access only, no R. No exception may
 // escape (safeLaunchThread doesn't guard the thread body, so one would
-// terminate the process), and the completion callback must be posted on every
-// exit path, as the main thread relies on it to allow future scans.
+// terminate the process). The completion callback is posted on every exit
+// path; if the post itself fails, the watchdog reclaims the scan state after
+// the timeout.
 void scanForInstalledPackages(std::vector<FilePath> libPaths,
                               boost::shared_ptr<PackageEventScan> pScan)
 {
@@ -408,9 +409,16 @@ void scanForInstalledPackages(std::vector<FilePath> libPaths,
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-   pScan->pkgNames = std::move(pkgNames);
-   module_context::executeOnMainThread(
-            boost::bind(onPackageEventScanCompleted, pScan));
+   // guard the post separately: its allocations (binding the callback,
+   // scheduling the delayed work) can throw under memory pressure, and an
+   // exception here would escape the thread body
+   try
+   {
+      pScan->pkgNames = std::move(pkgNames);
+      module_context::executeOnMainThread(
+               boost::bind(onPackageEventScanCompleted, pScan));
+   }
+   CATCH_UNEXPECTED_EXCEPTION
 }
 
 void startPackageEventScan()
