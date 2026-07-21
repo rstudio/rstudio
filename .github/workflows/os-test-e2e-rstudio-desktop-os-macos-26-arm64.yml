@@ -290,9 +290,7 @@ jobs:
           cache-dependency-path: e2e/rstudio/package-lock.json
 
       - name: Install rig
-        run: |
-          curl -fLs -o rig.pkg https://github.com/r-lib/rig/releases/download/latest/rig-latest-macOS-arm64.pkg
-          sudo installer -pkg rig.pkg -target /
+        uses: ./.github/actions/os-install-rig-unix
 
       - name: Install R via rig
         env:
