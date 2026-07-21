@@ -246,3 +246,49 @@ test_that(".rs.updatePackageEvents coalesces overlapping scans into a follow-up 
       info = "timed out waiting for the follow-up package event scan to hook the fake package"
    )
 })
+
+test_that("the watchdog abandons a scan that does not complete in time", {
+   libDir <- tempfile("rstudioFakeLib")
+   fakePkg <- basename(tempfile("rstudioFakePkg"))
+   dir.create(file.path(libDir, fakePkg), recursive = TRUE)
+
+   oldPaths <- .libPaths()
+   on.exit(.libPaths(oldPaths), add = TRUE)
+   on.exit(unlink(libDir, recursive = TRUE), add = TRUE)
+   .libPaths(c(libDir, oldPaths))
+
+   # a zero-second timeout makes the watchdog due at the first pump; it is
+   # queued when the scan starts, ahead of the scan's completion command, so
+   # the scan is deterministically abandoned no matter how quickly the
+   # background thread finishes
+   options(rstudio.packageEventScanTimeout = 0L)
+   on.exit(options(rstudio.packageEventScanTimeout = NULL), add = TRUE)
+
+   # a scan started outside this test (e.g. at deferred init, or coalesced
+   # behind one from an earlier test) uses the default timeout; pump until we
+   # can start a scan of our own, which picks up the zero-second timeout
+   deadline <- Sys.time() + 30
+   started <- .rs.updatePackageEvents()
+   while (!started && Sys.time() < deadline)
+   {
+      .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
+      Sys.sleep(0.1)
+      started <- .rs.updatePackageEvents()
+   }
+   expect_true(started, info = "timed out waiting to start a zero-timeout scan")
+
+   # pump: the watchdog abandons the scan, and its completion (arriving
+   # whenever the background thread finishes) is dropped, so the package
+   # must not be hooked
+   expect_false(waitUntilHooked(fakePkg, timeout = 1))
+
+   # the watchdog must also have reset the coalescing state: with the
+   # timeout restored, a fresh scan can start immediately and hooks the
+   # package the abandoned scan never delivered
+   options(rstudio.packageEventScanTimeout = NULL)
+   expect_true(.rs.updatePackageEvents())
+   expect_true(
+      waitUntilHooked(fakePkg),
+      info = "timed out waiting for the post-abandonment scan to hook the fake package"
+   )
+})

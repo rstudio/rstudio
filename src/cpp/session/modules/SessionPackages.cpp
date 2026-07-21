@@ -326,8 +326,17 @@ bool s_packageEventScanPending = false;
 
 // If a scan hasn't completed after this long (e.g. a library path on a hung
 // network mount), abandon it so package-event tracking isn't wedged for the
-// rest of the session.
+// rest of the session. The R option exists so tests can exercise the
+// watchdog path without waiting out the default.
 constexpr int kPackageEventScanTimeoutSeconds = 300;
+
+int packageEventScanTimeoutSeconds()
+{
+   return r::options::getOption<int>(
+            "rstudio.packageEventScanTimeout",
+            kPackageEventScanTimeoutSeconds,
+            false);
+}
 
 void startPackageEventScan();
 
@@ -360,14 +369,19 @@ void onPackageEventScanCompleted(boost::shared_ptr<PackageEventScan> pScan)
 // a hung network mount), abandon it rather than wedge package-event tracking
 // for the rest of the session; later library mutations can start fresh scans.
 // We don't run a pending pass here -- it would most likely hang the same way
-// and pile up abandoned threads.
-void onPackageEventScanTimeout(boost::shared_ptr<PackageEventScan> pScan)
+// and pile up abandoned threads. Note that a scan completing right at the
+// timeout boundary loses the race with this watchdog (it is queued ahead of
+// the scan's completion command): the completion then sees 'abandoned' and
+// drops the result, and hooks wait for the next library mutation to trigger
+// a fresh scan.
+void onPackageEventScanTimeout(boost::shared_ptr<PackageEventScan> pScan,
+                               int timeoutSeconds)
 {
    if (pScan->completed)
       return;
 
    LOG_WARNING_MESSAGE("Abandoning package event scan; it did not complete within " +
-                       safe_convert::numberToString(kPackageEventScanTimeoutSeconds) +
+                       safe_convert::numberToString(timeoutSeconds) +
                        " seconds");
 
    pScan->abandoned = true;
@@ -425,17 +439,23 @@ void startPackageEventScan()
 {
    s_packageEventScanRunning = true;
 
-   // resolve library paths on the main thread; this calls into R
+   // resolve library paths and the watchdog timeout on the main thread;
+   // both call into R
    std::vector<FilePath> libPaths = module_context::getLibPaths();
+   int timeoutSeconds = packageEventScanTimeoutSeconds();
 
    auto pScan = boost::make_shared<PackageEventScan>();
+
+   // queue the watchdog before launching the thread, so that it is always
+   // ordered ahead of the scan's completion command in the scheduled-command
+   // queue (and still reclaims the scan state if the launch itself fails)
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(timeoutSeconds),
+            boost::bind(onPackageEventScanTimeout, pScan, timeoutSeconds),
+            false);
+
    core::thread::safeLaunchThread(
             boost::bind(scanForInstalledPackages, libPaths, pScan));
-
-   module_context::scheduleDelayedWork(
-            boost::posix_time::seconds(kPackageEventScanTimeoutSeconds),
-            boost::bind(onPackageEventScanTimeout, pScan),
-            false);
 }
 
 // Enumerating the library paths can be slow on remote filesystems, so it runs
