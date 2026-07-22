@@ -900,6 +900,40 @@ TEST_F(WindowsShortcutTest, ResolveReturnsStoredPathWhenTargetDeleted)
    EXPECT_FALSE(targetIsDir);
 }
 
+TEST_F(WindowsShortcutTest, ResolvesStoredShortPathToLongForm)
+{
+   // home aliasing (createAliasedPath) and the client's duplicate-document
+   // detection are literal string comparisons, so a target reported in 8.3
+   // short form (C:\Users\RUNNER~1\...) fails to alias even when it lives
+   // under the home directory. Resolution must return the canonical long
+   // form regardless of the form the link stores. (The shell itself often
+   // canonicalizes at SetPath/Save time; the GetLongPathName call in
+   // resolveWindowsShortcut covers links where it did not.)
+   core::FilePath target = baseDir_.completeChildPath("long-target-name.txt");
+   core::Error error = target.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+
+   std::wstring wideTarget = toNativeSeparators(target.getAbsolutePathW());
+   wchar_t shortBuf[MAX_PATH];
+   DWORD length = ::GetShortPathNameW(wideTarget.c_str(), shortBuf, MAX_PATH);
+   ASSERT_GT(length, 0u) << "GetShortPathName failed";
+   ASSERT_LT(length, static_cast<DWORD>(MAX_PATH));
+
+   std::wstring shortForm(shortBuf, length);
+   if (shortForm == wideTarget)
+      GTEST_SKIP() << "8.3 short names are unavailable on this volume";
+
+   core::FilePath shortcut =
+         makeShortcut(core::FilePath(shortForm), "short-form-shortcut.lnk");
+
+   core::FilePath resolved;
+   bool targetIsDir = true;
+   error = resolveWindowsShortcut(shortcut, &resolved, &targetIsDir);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(target.getAbsolutePath(), resolved.getAbsolutePath());
+   EXPECT_FALSE(targetIsDir);
+}
+
 // --- createFileSystemItem shortcut contract -----------------------------------
 //
 // The Files pane decides navigate-vs-open from 'dir' and substitutes

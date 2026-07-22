@@ -97,7 +97,15 @@ export default async function globalSetup(config: FullConfig) {
   // computes JS-side and paths reported by RStudio would differ otherwise.
   // TextEditingTarget's project-prefix check on save (#16721 / styler reformat
   // on save) is one place that breaks under a path-form mismatch.
-  const sandbox = fs.realpathSync(fs.mkdtempSync(path.join(parent, 'pw_sandbox_')));
+  //
+  // The .native variant is required on Windows: os.tmpdir() commonly contains
+  // 8.3 short-name components (C:\Users\RUNNER~1\... on CI runners), and only
+  // the native realpath expands those to the canonical long form. The JS
+  // implementation leaves them in place, and a short-form HOME defeats
+  // RStudio's home-path aliasing of paths the shell reports in long form --
+  // resolved .lnk targets in the Files pane being the known casualty
+  // (files_shortcuts.test.ts).
+  const sandbox = fs.realpathSync.native(fs.mkdtempSync(path.join(parent, 'pw_sandbox_')));
   fs.mkdirSync(path.join(sandbox, 'data-home'), { recursive: true });
 
   // Seed a locally built Posit Assistant into the sandbox data-home so tests

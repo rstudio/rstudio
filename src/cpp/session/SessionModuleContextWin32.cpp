@@ -23,6 +23,8 @@
 #include <cstdio>
 #include <string>
 
+#include <core/system/System.hpp>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
@@ -151,7 +153,26 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
       return shortcutError(boost::system::errc::no_such_file_or_directory,
                            hr, shortcutPath, ERROR_LOCATION);
 
-   *pTargetPath = FilePath(std::wstring(targetPath));
+   // The stored target may be in a non-canonical form: 8.3 short-name
+   // components (e.g. C:\Users\RUNNER~1\...) or stale character case.
+   // Home aliasing (createAliasedPath) and the client's duplicate-document
+   // detection are literal string comparisons, so a non-canonical form
+   // defeats both even when the target is under the home directory.
+   // Normalize local targets to the canonical long form. UNC and remote
+   // targets are skipped (the lookup would touch the network, violating
+   // the no-target-I/O contract above), and a failed lookup (e.g. a
+   // deleted target) keeps the stored form.
+   std::wstring storedPath(targetPath);
+   if (storedPath.rfind(L"\\\\", 0) != 0 &&
+       !core::system::isRemotePath(FilePath(storedPath)))
+   {
+      wchar_t longPath[MAX_PATH];
+      DWORD length = ::GetLongPathNameW(storedPath.c_str(), longPath, MAX_PATH);
+      if (length > 0 && length < MAX_PATH)
+         storedPath.assign(longPath, length);
+   }
+
+   *pTargetPath = FilePath(storedPath);
    *pTargetIsDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
    return Success();
 }
