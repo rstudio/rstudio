@@ -26,6 +26,7 @@ set (SERVER_CORE_SOURCE_FILES
    ServerLicense.cpp
    sessions/SessionSignature.cpp
    UrlPorts.cpp
+   SocketOwnership.cpp
 )
 
 if (RSTUDIO_HAS_SOCI)
