@@ -28,6 +28,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Hash.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
@@ -42,7 +43,6 @@
 #include <core/markdown/Markdown.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/IncrementalCommand.hpp>
-#include <core/Memory.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/collection/Tree.hpp>
 #include <core/collection/LruCache.hpp>
