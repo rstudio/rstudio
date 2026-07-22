@@ -3,14 +3,14 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { authorizeDeviceCode } from './github-device-authorize';
+import { authorizeDeviceCode } from '../utils/github-device-authorize';
 import {
   CopilotAgent,
   STATUS_ALREADY_SIGNED_IN,
   STATUS_NOT_AUTHORIZED,
   STATUS_OK,
   STATUS_PROMPT_DEVICE_FLOW,
-} from './copilot-agent';
+} from '../utils/copilot-agent';
 
 /**
  * Prototype: prove the full agent-driven Copilot sign-in, end to end, with no

@@ -1,60 +1,51 @@
 import type { TestType } from '@playwright/test';
-import { isPositAiAuthenticated, readAuthStatus, type AIProvider } from './auth';
+import {
+  isCopilotAuthenticated,
+  isPositAiAuthenticated,
+  readAuthStatus,
+  type AIProvider,
+} from './auth';
 
 /**
  * AI provider identifier (defined in auth.ts, the credential single source of
- * truth; re-exported here for the test files that gate on it). The two
- * providers are provisioned differently, and so gate differently: Posit AI by
- * the auth.setup project (its tests gate on the on-disk token store), Copilot
- * by a host copy in sandbox-setup.ts (its tests gate on the
- * PW_AI_SEEDED_COPILOT env flag it sets).
+ * truth; re-exported here for the test files that gate on it). Both providers
+ * are provisioned by the auth.setup project and gate on their on-disk
+ * credential store in the sandbox user-home.
  */
 export type { AIProvider } from './auth';
 
-// Build the Posit AI skip reason from the status file the auth.setup project
-// wrote, so a skipped test reports what actually happened (login failed, copy
-// suppressed, not signed in locally, ...) rather than guessing at missing
-// credentials. Only called when the token store gate has already failed, so
-// PW_SANDBOX is set (isPositAiAuthenticated would have thrown otherwise).
-function positAiSkipReason(): string {
-  const status = readAuthStatus(process.env.PW_SANDBOX!);
+// Build the skip reason from the status file the auth.setup project wrote for
+// the provider, so a skipped test reports what actually happened (login
+// failed, copy suppressed, not signed in locally, ...) rather than guessing at
+// missing credentials. Only called when the store gate has already failed, so
+// PW_SANDBOX is set (the is*Authenticated call would have thrown otherwise).
+function skipReason(provider: AIProvider, label: string, fallback: string): string {
+  const status = readAuthStatus(process.env.PW_SANDBOX!, provider);
   if (status === null) {
-    return 'No Posit AI credentials in the sandbox. Sign in to Posit AI '
-      + 'locally so the setup project can copy the token store, or set '
-      + 'POSIT_EMAIL/POSIT_PASSWORD for the sign-in flow.';
+    return fallback;
   }
   if (status.outcome === 'success') {
-    return 'Posit AI auth setup reported success, but the sandbox token store is '
-      + 'now missing or invalid -- the token may have expired mid-run.';
+    return `${label} auth setup reported success, but the sandbox credential store is `
+      + 'now missing or invalid -- the credential may have expired or been removed mid-run.';
   }
-  return `No Posit AI credentials in the sandbox: ${status.reason}`;
+  return `No ${label} credentials in the sandbox: ${status.reason}`;
 }
-
-// Copilot is the only provider still gated on a seeded env flag; Posit AI
-// switched to the on-disk store check (isPositAiAuthenticated) below.
-const COPILOT_SEEDED_ENV = 'PW_AI_SEEDED_COPILOT';
-const COPILOT_HOST_PATH = process.platform === 'win32'
-  ? '%LOCALAPPDATA%\\github-copilot'
-  : '~/.config/github-copilot';
 
 /**
  * Gate the surrounding describe block on having real credentials available for
  * `provider`. Each test inside the describe is marked skipped (with reason)
  * when the credential is absent.
  *
- * The two providers use different signals:
- *   positai  The auth.setup project (the OAuth sign-in flow when
- *            POSIT_EMAIL/POSIT_PASSWORD are set, else a copy of the local
- *            token store) leaves a token store on disk.
- *            It runs in a separate process, so the signal is the store itself,
- *            not an env flag: isPositAiAuthenticated() reads it and also checks
- *            the token has not expired. When the store is absent or invalid,
- *            the skip reason is built from the status file the setup project
- *            wrote (see PositAiAuthStatus in auth.ts), so the report shows the
- *            actual cause -- not signed in locally, copy suppressed, sign-in
- *            flow failed -- instead of a generic "set POSIT_EMAIL/POSIT_PASSWORD".
- *   copilot  sandbox-setup.ts host-copies the creds and sets
- *            PW_AI_SEEDED_COPILOT on success; the gate reads that flag.
+ * Both providers are provisioned by the auth.setup project (a live sign-in
+ * flow when the provider's credentials are set -- POSIT_EMAIL/POSIT_PASSWORD
+ * or GH_COPILOT_USER/GH_COPILOT_PASSWORD -- else a copy of the local
+ * credential store), which leaves the store on disk in the sandbox user-home.
+ * It runs in a separate process, so the signal is the store itself, not an
+ * env flag: isPositAiAuthenticated() reads the token store (and checks
+ * expiry), isCopilotAuthenticated() reads the agent's auth.db (and checks for
+ * a token row). When the store is absent or invalid, the skip reason is built
+ * from the status file the setup project wrote (see AiAuthStatus in auth.ts),
+ * so the report shows the actual cause instead of a generic hint.
  *
  * `test` must be the same TestType the surrounding describe uses, since
  * Playwright hooks are scoped per-TestType (an extended fixture's tests
@@ -79,22 +70,29 @@ export function requireAiCredentials(
     switch (provider) {
       case 'positai':
         if (!isPositAiAuthenticated()) {
-          test.skip(true, positAiSkipReason());
+          test.skip(true, skipReason(
+            'positai',
+            'Posit AI',
+            'No Posit AI credentials in the sandbox. Sign in to Posit AI '
+              + 'locally so the setup project can copy the token store, or set '
+              + 'POSIT_EMAIL/POSIT_PASSWORD for the sign-in flow.',
+          ));
         }
         return;
       case 'copilot':
-        // Strict "1" check so a stray PW_AI_SEEDED_COPILOT=0 / "false" doesn't
-        // read as seeded. sandbox-setup.ts clears this at start of run and sets
-        // "1" only on a successful copy, so any other value is treated as
-        // unseeded.
-        test.skip(
-          process.env[COPILOT_SEEDED_ENV] !== '1',
-          `No GitHub Copilot credentials seeded; sign in on the host (${COPILOT_HOST_PATH}) and re-run.`,
-        );
+        if (!isCopilotAuthenticated()) {
+          test.skip(true, skipReason(
+            'copilot',
+            'GitHub Copilot',
+            'No GitHub Copilot credentials in the sandbox. Sign in to Copilot '
+              + 'locally so the setup project can copy the credential store, or '
+              + 'set GH_COPILOT_USER/GH_COPILOT_PASSWORD for the sign-in flow.',
+          ));
+        }
         return;
       default:
         // Exhaustiveness: a new AIProvider member must be given its own gate
-        // here, not silently inherit Copilot's env-flag check.
+        // here, not silently fall through.
         provider satisfies never;
     }
   });

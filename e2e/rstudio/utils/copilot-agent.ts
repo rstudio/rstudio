@@ -3,15 +3,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
- * Prototype: a minimal stdio LSP client for the GitHub copilot-language-server,
- * just enough to drive its sign-in flow the same way RStudio's backend does
+ * A minimal stdio LSP client for the GitHub copilot-language-server, just
+ * enough to drive its sign-in flow the same way RStudio's backend does
  * (src/cpp/session/modules/SessionAssistant.cpp): spawn `node
  * language-server.js --stdio`, send `initialize` + `initialized`, then
  * `signInInitiate` and poll `checkStatus`.
  *
  * The agent owns the whole OAuth exchange (device-code fetch, token poll) and
- * writes its own credential store (~/.config/github-copilot/auth.db under the
- * HOME we give it), so nothing here touches SQLite or tokens directly.
+ * writes its own credential store (auth.db under the HOME we give it -- see
+ * copilotConfigDir in utils/auth.ts), so nothing here touches SQLite or
+ * tokens directly.
  */
 
 // Values mirrored from the SessionAssistant.cpp initialize request. The agent
@@ -51,16 +52,30 @@ function log(msg: string): void {
   console.log(`[copilot-agent] ${msg}`);
 }
 
+// Where an installed RStudio keeps the bundled agent, per platform. Only the
+// macOS location has been verified against a real install; the Windows and
+// Linux guesses follow the Electron resources/app layout and should be
+// checked (or overridden via RSTUDIO_COPILOT_JS_FOLDER) the first time the
+// sign-in flow runs there.
+function installedAgentFolder(): string {
+  switch (process.platform) {
+    case 'win32':
+      return 'C:\\Program Files\\RStudio\\resources\\app\\copilot-language-server-js';
+    case 'darwin':
+      return '/Applications/RStudio.app/Contents/Resources/app/copilot-language-server-js';
+    default:
+      return '/usr/lib/rstudio/resources/app/copilot-language-server-js';
+  }
+}
+
 /**
  * Resolve the language-server.js to run: RSTUDIO_COPILOT_JS_FOLDER when set
  * (the same override the IDE honors), otherwise the agent bundled with the
- * installed macOS RStudio. Fails loud so a wrong path never turns into a
- * silent spawn of nothing.
+ * installed RStudio. Fails loud so a wrong path never turns into a silent
+ * spawn of nothing.
  */
 export function resolveAgentScript(): string {
-  const folder =
-    process.env.RSTUDIO_COPILOT_JS_FOLDER
-    || '/Applications/RStudio.app/Contents/Resources/app/copilot-language-server-js';
+  const folder = process.env.RSTUDIO_COPILOT_JS_FOLDER || installedAgentFolder();
   const script = path.join(folder, 'language-server.js');
   if (!fs.existsSync(script)) {
     throw new Error(
@@ -80,8 +95,8 @@ export class CopilotAgent {
 
   /**
    * Spawn the agent with HOME redirected to `homeDir`, so its credential store
-   * lands in `<homeDir>/.config/github-copilot/` and the real user profile is
-   * never touched. Runs on the same node executable as the test process.
+   * lands in copilotConfigDir(homeDir) and the real user profile is never
+   * touched. Runs on the same node executable as the test process.
    */
   constructor(homeDir: string) {
     const script = resolveAgentScript();
@@ -97,6 +112,12 @@ export class CopilotAgent {
     // XDG_CONFIG_HOME would win over HOME for the config path; drop it so the
     // redirect cannot be bypassed on hosts that set it.
     delete env.XDG_CONFIG_HOME;
+    // On Windows the agent resolves its config dir from LOCALAPPDATA, which
+    // still points at the real profile after the HOME/USERPROFILE redirect;
+    // pin it inside homeDir to match copilotConfigDir's AppData/Local layout.
+    if (process.platform === 'win32') {
+      env.LOCALAPPDATA = path.join(homeDir, 'AppData', 'Local');
+    }
 
     log(`spawning ${process.execPath} ${script} --stdio (HOME=${homeDir})`);
     this.child = spawn(process.execPath, [script, '--stdio'], {

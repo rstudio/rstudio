@@ -5,40 +5,55 @@ import * as path from 'path';
 import {
   AUTH_STORAGE_KEY,
   PositAiOAuthEntry,
+  copilotConfigDir,
   findAuthenticatedStore,
+  isCopilotStoreAuthenticated,
   isStoreFileAuthenticated,
   noSeedCredentials,
   storeFileCandidates,
   strictAiAuth,
   writeAuthStatus,
 } from '../utils/auth';
+import {
+  CopilotAgent,
+  STATUS_ALREADY_SIGNED_IN,
+  STATUS_NOT_AUTHORIZED,
+  STATUS_OK,
+  STATUS_PROMPT_DEVICE_FLOW,
+} from '../utils/copilot-agent';
+import { authorizeDeviceCode } from '../utils/github-device-authorize';
 
 /**
- * Authenticate Posit AI for the per-invocation sandbox.
+ * Authenticate the AI providers (Posit AI and GitHub Copilot) for the
+ * per-invocation sandbox.
  *
  * This is a Playwright setup project (see playwright.config.ts): it runs once
  * after globalSetup and before the desktop/server test projects, which depend
- * on it. Its job is to leave a valid Posit AI token store in the sandbox
- * user-home so the Posit AI tests start signed in. It is the sole authority
- * for Posit AI credentials in the sandbox -- globalSetup (sandbox-setup.ts)
- * does not copy Posit AI creds. Every exit path that lets the run continue
- * (success or skip) also records what happened in
- * <sandbox>/positai-auth-status.json (see PositAiAuthStatus in utils/auth.ts),
- * which requireAiCredentials() reads so skipped tests report the actual
- * cause. The fail-loud throw paths write nothing -- they fail the setup, so
- * dependent tests don't run at all.
+ * on it. Its job is to leave each provider's credential store in the sandbox
+ * user-home so the AI tests start signed in. It is the sole authority for AI
+ * credentials in the sandbox -- globalSetup (sandbox-setup.ts) copies nothing.
+ * Every exit path that lets the run continue (success or skip) also records
+ * what happened in <sandbox>/<provider>-auth-status.json (see AiAuthStatus in
+ * utils/auth.ts), which requireAiCredentials() reads so skipped tests report
+ * the actual cause. The fail-loud throw paths write nothing -- they fail the
+ * setup, so dependent tests don't run at all.
  *
- * The credential source is auto-detected, not selected by an environment
- * variable:
- *   1. POSIT_EMAIL/POSIT_PASSWORD set -> run the OAuth sign-in. Setting the
- *      credentials is deliberate, so it wins even on a machine already signed
- *      in locally -- it's how you exercise the sign-in flow.
- *   2. else a valid local token store exists (~/.posit/ai/auth/data.json) and
- *      the PW_SANDBOX_NO_SEED_CREDENTIALS seed kill-switch is not set -> copy
- *      it into the sandbox (only the token store -- no skills, workspaces, or
- *      other state).
- *   3. else -> provision nothing; the Posit AI tests skip with a reason drawn
- *      from the status file.
+ * Each provider's credential source is auto-detected, not selected by an
+ * environment variable:
+ *   1. The provider's credentials are set (POSIT_EMAIL/POSIT_PASSWORD, or
+ *      GH_COPILOT_USER/GH_COPILOT_PASSWORD) -> run its live sign-in flow.
+ *      Setting the credentials is deliberate, so it wins even on a machine
+ *      already signed in locally -- it's how you exercise the sign-in flow.
+ *   2. else a local credential store exists (~/.posit/ai/auth/data.json;
+ *      ~/.config/github-copilot or %LOCALAPPDATA%\github-copilot) and the
+ *      PW_SANDBOX_NO_SEED_CREDENTIALS seed kill-switch is not set -> copy it
+ *      into the sandbox.
+ *   3. else -> provision nothing; that provider's tests skip with a reason
+ *      drawn from its status file.
+ *
+ * The two providers detect their sources independently: Posit AI falling back
+ * to copy never makes Copilot copy, and vice versa. Their only shared inputs
+ * are the seed kill-switch and strict mode.
  */
 
 const AUTH_HOST = 'login.posit.cloud';
@@ -457,10 +472,10 @@ function writeTokensToSandbox(tokenData: TokenSuccessResponse, sandboxUserHome: 
 // perpetual green-with-skips: on runs that expect credentials to be present
 // (e.g. CI once secrets are wired in), a broken credential source must turn
 // the run red, however the failure was classified.
-function failIfStrict(reason: string): void {
+function failIfStrict(providerLabel: string, reason: string): void {
   if (strictAiAuth()) {
     throw new Error(
-      `[auth-setup] PW_AI_AUTH_STRICT is set but Posit AI was not provisioned: ${reason}`,
+      `[auth-setup] PW_AI_AUTH_STRICT is set but ${providerLabel} was not provisioned: ${reason}`,
     );
   }
 }
@@ -497,29 +512,29 @@ setup('authenticate Posit AI', async () => {
   if (!email || !password) {
     // The global seed kill-switch blocks copying the local token store.
     if (noSeedCredentials()) {
-      writeAuthStatus(sandbox, {
+      writeAuthStatus(sandbox, 'positai', {
         source: 'none',
         outcome: 'unavailable',
         reason: 'Not provisioning Posit AI: POSIT_EMAIL/POSIT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local token store. Set the credentials for the sign-in flow, or unset the seed kill-switch while signed in to Posit AI locally.',
       });
       console.log('[auth-setup] no credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Posit AI tests will skip');
-      failIfStrict('POSIT_EMAIL/POSIT_PASSWORD are unset and PW_SANDBOX_NO_SEED_CREDENTIALS blocked the local copy');
+      failIfStrict('Posit AI', 'POSIT_EMAIL/POSIT_PASSWORD are unset and PW_SANDBOX_NO_SEED_CREDENTIALS blocked the local copy');
       return;
     }
     const localStore = findAuthenticatedStore(os.homedir());
     if (localStore === null) {
-      writeAuthStatus(sandbox, {
+      writeAuthStatus(sandbox, 'positai', {
         source: 'none',
         outcome: 'unavailable',
         reason: 'Not provisioning Posit AI: not signed in to Posit AI locally (no valid token store at ~/.posit/ai/auth/data.json) and POSIT_EMAIL/POSIT_PASSWORD are unset. Sign in to Posit AI locally, or set the credentials for the sign-in flow.',
       });
       console.log('[auth-setup] not signed in to Posit AI locally and no credentials set; Posit AI tests will skip');
-      failIfStrict('not signed in to Posit AI locally and POSIT_EMAIL/POSIT_PASSWORD are unset');
+      failIfStrict('Posit AI', 'not signed in to Posit AI locally and POSIT_EMAIL/POSIT_PASSWORD are unset');
       return;
     }
     copyStoreToSandbox(localStore, sandboxUserHome);
     verifyStoreWritten(sandboxUserHome);
-    writeAuthStatus(sandbox, {
+    writeAuthStatus(sandbox, 'positai', {
       source: 'copy',
       outcome: 'success',
       reason: `copied the local token store from ${localStore}`,
@@ -602,7 +617,7 @@ setup('authenticate Posit AI', async () => {
     // append the authorize step's own diagnosis so the skip reason names the
     // likely culprit rather than only the symptom.
     const authorizeNote = authorizeStepWarning ? ` [${authorizeStepWarning}]` : '';
-    writeAuthStatus(sandbox, {
+    writeAuthStatus(sandbox, 'positai', {
       source: 'login',
       outcome: 'login-failed',
       reason: `sign-in flow was attempted but failed: ${msg}${authorizeNote}`,
@@ -611,7 +626,7 @@ setup('authenticate Posit AI', async () => {
       '[auth-setup] WARNING: Posit AI authentication flow failed; Posit AI tests will be skipped:',
       msg,
     );
-    failIfStrict(`the sign-in flow was attempted but failed: ${msg}${authorizeNote}`);
+    failIfStrict('Posit AI', `the sign-in flow was attempted but failed: ${msg}${authorizeNote}`);
     return;
   }
 
@@ -620,10 +635,209 @@ setup('authenticate Posit AI', async () => {
   // these throw and fail the run rather than masquerade as a skip.
   writeTokensToSandbox(tokenData, sandboxUserHome);
   verifyStoreWritten(sandboxUserHome);
-  writeAuthStatus(sandbox, {
+  writeAuthStatus(sandbox, 'positai', {
     source: 'login',
     outcome: 'success',
     reason: 'sign-in flow completed',
   });
   console.log('[auth-setup] Posit AI sign-in complete; tokens written to sandbox');
+});
+
+// ---------------------------------------------------------------------------
+// GitHub Copilot. Same auto-detect shape as Posit AI above, different
+// mechanics: the sign-in flow spawns the copilot-language-server itself
+// (utils/copilot-agent.ts) with HOME pointed at the sandbox user-home, lets it
+// run GitHub's OAuth device flow, and completes the browser half
+// (utils/github-device-authorize.ts). The agent writes its own credential
+// store (auth.db), so the sandbox ends up with exactly what a real sign-in
+// through the IDE would produce. The copy mode replicates the host's
+// github-copilot config dir, as sandbox-setup.ts used to do.
+
+// The host-side Copilot config dir (the copy-mode source). Windows honors
+// %LOCALAPPDATA%, which need not equal <home>\AppData\Local -- that's why this
+// is computed here and not with copilotConfigDir, which owns the sandbox-side
+// (destination) layout.
+function hostCopilotConfigDir(): string {
+  return process.platform === 'win32'
+    ? path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local'), 'github-copilot')
+    : path.join(os.homedir(), '.config', 'github-copilot');
+}
+
+// A deterministic Copilot sign-in failure: the flow worked but the account
+// can't use Copilot, or the config is unusable. Fails the run rather than
+// masquerading as a skip, mirroring OAuthTerminalError / LoginAutomationError
+// for Posit AI.
+class CopilotTerminalError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CopilotTerminalError';
+  }
+}
+
+setup('authenticate GitHub Copilot', async () => {
+  // Same reasoning as the Posit AI block: agent startup, five browser steps,
+  // the authorize-button delay (up to 120s), and the agent's own token poll
+  // can legitimately exceed the global 120s test timeout; the withDeadline
+  // race below settles well before this outer limit.
+  setup.setTimeout(300_000);
+
+  const sandbox = process.env.PW_SANDBOX;
+  if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
+
+  const sandboxUserHome = path.join(sandbox, 'user-home');
+  const user = process.env.GH_COPILOT_USER;
+  const password = process.env.GH_COPILOT_PASSWORD;
+  const totpSecret = process.env.GH_COPILOT_TOTP_SECRET;
+
+  // Mirror the POSIT_EMAIL/POSIT_PASSWORD rule: a half-set pair is a config
+  // mistake, not a source.
+  if (!!user !== !!password) {
+    throw new Error(
+      '[auth-setup] exactly one of GH_COPILOT_USER / GH_COPILOT_PASSWORD is set; set both to exercise the Copilot sign-in flow, or neither to copy the local credential store',
+    );
+  }
+
+  // Source 2/3: no credentials set -> copy the host's Copilot config dir,
+  // else skip.
+  if (!user || !password) {
+    if (noSeedCredentials()) {
+      writeAuthStatus(sandbox, 'copilot', {
+        source: 'none',
+        outcome: 'unavailable',
+        reason: 'Not provisioning GitHub Copilot: GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local credential store. Set the credentials for the sign-in flow, or unset the seed kill-switch while signed in to Copilot locally.',
+      });
+      console.log('[auth-setup] no Copilot credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Copilot tests will skip');
+      failIfStrict('GitHub Copilot', 'GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset and PW_SANDBOX_NO_SEED_CREDENTIALS blocked the local copy');
+      return;
+    }
+    const hostDir = hostCopilotConfigDir();
+    if (!fs.existsSync(hostDir)) {
+      writeAuthStatus(sandbox, 'copilot', {
+        source: 'none',
+        outcome: 'unavailable',
+        reason: `Not provisioning GitHub Copilot: no local credential store (${hostDir} does not exist) and GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset. Sign in to Copilot locally, or set the credentials for the sign-in flow.`,
+      });
+      console.log(`[auth-setup] no ${hostDir} on host and no Copilot credentials set; Copilot tests will skip`);
+      failIfStrict('GitHub Copilot', 'not signed in to Copilot locally and GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset');
+      return;
+    }
+    fs.cpSync(hostDir, copilotConfigDir(sandboxUserHome), { recursive: true });
+    // A config dir can exist without a signed-in token (the agent creates one
+    // on first launch); a copy of that must not read as provisioned.
+    if (!isCopilotStoreAuthenticated(sandboxUserHome)) {
+      writeAuthStatus(sandbox, 'copilot', {
+        source: 'copy',
+        outcome: 'unavailable',
+        reason: `Copied ${hostDir}, but its credential store holds no signed-in token. Sign in to Copilot locally (e.g. through RStudio), or set GH_COPILOT_USER/GH_COPILOT_PASSWORD for the sign-in flow.`,
+      });
+      console.log('[auth-setup] host Copilot config dir copied but holds no signed-in token; Copilot tests will skip');
+      failIfStrict('GitHub Copilot', 'the local Copilot store holds no signed-in token');
+      return;
+    }
+    writeAuthStatus(sandbox, 'copilot', {
+      source: 'copy',
+      outcome: 'success',
+      reason: `copied the local credential store from ${hostDir}`,
+    });
+    console.log(`[auth-setup] copied GitHub Copilot credential store from ${hostDir}`);
+    console.log(
+      "[auth-setup] real GitHub Copilot tokens now live in the sandbox; teardown scrubs them if the run is preserved, and warns loudly if it can't.",
+    );
+    return;
+  }
+
+  // Source 1: credentials set -> agent-driven sign-in. Same precedence rule as
+  // Posit AI: setting the credentials is deliberate, so this wins even on a
+  // machine signed in locally, and the seed kill-switch never affects it.
+  if (noSeedCredentials()) {
+    console.log('[auth-setup] PW_SANDBOX_NO_SEED_CREDENTIALS set; Copilot sign-in flow is unaffected.');
+  }
+
+  console.log('[auth-setup] starting GitHub Copilot sign-in...');
+  const agent = new CopilotAgent(sandboxUserHome);
+  try {
+    const flow = (async () => {
+      await agent.initialize();
+      const initiate = await agent.signInInitiate();
+
+      // With credentials the sandbox user-home may already hold a token from a
+      // prior source; the agent then just confirms it, which is success.
+      if (initiate.status === STATUS_ALREADY_SIGNED_IN || initiate.status === STATUS_OK) {
+        console.log(`[auth-setup] Copilot agent reports already signed in (${initiate.user ?? 'unknown user'})`);
+        return;
+      }
+
+      if (initiate.status !== STATUS_PROMPT_DEVICE_FLOW || !initiate.userCode || !initiate.verificationUri) {
+        // An unrecognized signInInitiate shape is a protocol change on the
+        // agent, not flake.
+        throw new CopilotTerminalError(
+          `signInInitiate returned an unexpected result (status "${initiate.status}"); the agent protocol may have changed`,
+        );
+      }
+      console.log(`[auth-setup] Copilot device flow: ${initiate.verificationUri}`);
+
+      // The browser half: sign in to GitHub and authorize the agent's device
+      // code. The agent polls GitHub itself afterwards, exchanges the code,
+      // and persists the token.
+      await authorizeDeviceCode({
+        verificationUri: initiate.verificationUri,
+        userCode: initiate.userCode,
+        user,
+        password,
+        totpSecret,
+      });
+
+      const finalStatus = await agent.waitForSignIn();
+      if (finalStatus.status === STATUS_NOT_AUTHORIZED) {
+        // The mechanics worked (GitHub authorized the device) but the account
+        // has no Copilot access -- deterministic, so fail the run with the
+        // remedy rather than skipping forever.
+        throw new CopilotTerminalError(
+          `Copilot sign-in completed but the account (${finalStatus.user ?? user}) has no Copilot access (NotAuthorized). Enable Copilot Free at https://github.com/settings/copilot and re-run.`,
+        );
+      }
+      if (finalStatus.status !== STATUS_OK && finalStatus.status !== STATUS_ALREADY_SIGNED_IN) {
+        throw new Error(`Copilot sign-in ended in unexpected status "${finalStatus.status}"`);
+      }
+      console.log(`[auth-setup] Copilot signed in as ${finalStatus.user ?? '(unknown user)'}`);
+    })();
+
+    // Bound the whole flow under this test's 300s timeout (set above), for the
+    // same reason as the Posit AI block: fail through the transient path here
+    // rather than hit the harness timeout and take the whole run down.
+    await withDeadline(flow, 270_000, 'overall Copilot sign-in deadline exceeded');
+  } catch (err) {
+    if (err instanceof CopilotTerminalError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    writeAuthStatus(sandbox, 'copilot', {
+      source: 'login',
+      outcome: 'login-failed',
+      reason: `Copilot sign-in flow was attempted but failed: ${msg}`,
+    });
+    console.warn(
+      '[auth-setup] WARNING: GitHub Copilot sign-in flow failed; Copilot tests will be skipped:',
+      msg,
+    );
+    failIfStrict('GitHub Copilot', `the sign-in flow was attempted but failed: ${msg}`);
+    return;
+  } finally {
+    // Orderly shutdown before reading the store, so the SQLite WAL is
+    // checkpointed into auth.db and the row is visible to fresh readers (the
+    // gate here, and the IDE processes launched later).
+    await agent.shutdown();
+  }
+
+  // Past this point sign-in demonstrably succeeded, so a store the gate can't
+  // read back is a contract violation, not flake.
+  if (!isCopilotStoreAuthenticated(sandboxUserHome)) {
+    throw new Error(
+      '[auth-setup] Copilot sign-in reported success, but the sandbox credential store holds no token row afterwards',
+    );
+  }
+  writeAuthStatus(sandbox, 'copilot', {
+    source: 'login',
+    outcome: 'success',
+    reason: 'agent-driven sign-in flow completed',
+  });
+  console.log('[auth-setup] GitHub Copilot sign-in complete; credential store written to sandbox');
 });

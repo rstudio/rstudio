@@ -4,16 +4,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
- * Prototype: the browser half of the Copilot device-flow sign-in, extracted
- * from copilot-authorize.spec.ts (where every step here was proven live) and
- * parameterized so a caller that already holds a userCode/verificationUri --
- * i.e. the copilot-language-server after signInInitiate -- can complete the
- * GitHub authorization.
+ * The browser half of the GitHub Copilot device-flow sign-in: given a
+ * userCode/verificationUri pair (obtained by the copilot-language-server via
+ * signInInitiate -- see utils/copilot-agent.ts), sign in to GitHub, enter the
+ * code, and click Authorize with a genuine trusted interaction.
  *
- * What this deliberately does NOT contain, compared to the original spec:
- * the device-code fetch and the token poll. The agent owns both ends of that
- * exchange; our job is only the human part in the middle (sign in, enter the
- * code, click Authorize with a trusted interaction).
+ * Every step here was proven live against github.com (see
+ * prototypes/copilot-authorize.spec.ts for the original standalone flow).
+ * The key finding: GitHub's anti-clickjacking gate renders the Authorize
+ * button disabled and arms it only after a trusted scroll/wheel event;
+ * page.mouse.wheel() (a real CDP event) satisfies it, including in headless
+ * bundled Chromium, so no attribute hacks and no display are needed.
+ *
+ * This deliberately excludes the device-code fetch and the token poll: the
+ * agent owns both ends of that exchange. Our job is only the human part in
+ * the middle.
  */
 
 export interface AuthorizeDeviceCodeOptions {
@@ -34,14 +39,17 @@ function log(msg: string): void {
 }
 
 // This browser is launched directly, so it sits outside Playwright's
-// trace/screenshot capture. Dump the live page state to files so a stuck step
-// is diagnosable from the actual DOM rather than guesswork.
+// trace/screenshot capture. Dump the live page state into test-results/
+// (gitignored) so a stuck step is diagnosable from the actual DOM rather
+// than guesswork.
 async function dumpPage(page: Page, label: string): Promise<void> {
   try {
+    const outDir = path.join(__dirname, '..', 'test-results');
+    fs.mkdirSync(outDir, { recursive: true });
     log(`[${label}] page ${page.url()} (title: ${await page.title().catch(() => '?')})`);
-    await page.screenshot({ path: path.join(__dirname, `last-${label}.png`), fullPage: true });
-    fs.writeFileSync(path.join(__dirname, `last-${label}.html`), await page.content());
-    log(`[${label}] saved prototypes/last-${label}.png and last-${label}.html`);
+    await page.screenshot({ path: path.join(outDir, `gh-authorize-${label}.png`), fullPage: true });
+    fs.writeFileSync(path.join(outDir, `gh-authorize-${label}.html`), await page.content());
+    log(`[${label}] saved test-results/gh-authorize-${label}.png and .html`);
   } catch (dumpErr) {
     log(`[${label}] could not capture page: ${(dumpErr as Error).message}`);
   }
@@ -49,7 +57,7 @@ async function dumpPage(page: Page, label: string): Promise<void> {
 
 // ---------------------------------------------------------------------------
 // TOTP (RFC 6238), used only if the account has 2FA enrolled. Dependency-free
-// so the prototype adds nothing to package.json: base32-decode the secret, HMAC
+// so the helper adds nothing to package.json: base32-decode the secret, HMAC
 // it against the current 30s time window, truncate to 6 digits. That is the
 // same computation an authenticator app runs, so it yields the code GitHub
 // expects.
@@ -86,7 +94,7 @@ function totp(secret: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Browser steps (each proven in the copilot-authorize.spec.ts runs).
+// Browser steps.
 
 async function signIn(page: Page, user: string, password: string, totpSecret?: string): Promise<void> {
   const loginField = page.locator('#login_field');
