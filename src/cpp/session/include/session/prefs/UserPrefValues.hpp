@@ -472,7 +472,6 @@ namespace prefs {
 #define kAssistantIndexingEnabled "assistant_indexing_enabled"
 #define kAssistantNesEnabled "assistant_nes_enabled"
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
-#define kAssistantShowMessages "assistant_show_messages"
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
 #define kAssistantUseSystemCa "assistant_use_system_ca"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
@@ -2194,12 +2193,6 @@ public:
     */
    bool assistantNesAutoshow();
    core::Error setAssistantNesAutoshow(bool val);
-
-   /**
-    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
-    */
-   bool assistantShowMessages();
-   core::Error setAssistantShowMessages(bool val);
 
    /**
     * When enabled, the Posit Assistant button is displayed in the main toolbar.
