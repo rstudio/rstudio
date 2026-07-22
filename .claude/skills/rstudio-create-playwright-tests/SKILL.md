@@ -47,6 +47,7 @@ This file covers RStudio-specific gotchas that aren't in the README.
    import helpers from `@utils/commands` (`executeCommand`, `setPref`, etc.).
    Don't use `.rs.api.executeCommand(...)` (slow console roundtrip) or
    `window.desktopHooks.invokeCommand(...)` (Electron-only, crashes on Server).
+   The full bridge surface is documented in `e2e/rstudio/CLAUDE.md`.
 
 5. **Decision order for triggering an action:** GUI button/menu/shortcut, then
    `executeCommand(page, id)`, then `page.evaluate()` as a last resort.
@@ -64,6 +65,91 @@ This file covers RStudio-specific gotchas that aren't in the README.
    selectors. Tag mode-specific tests `@desktop_only` or `@server_only`
    rather than runtime-branching on `testInfo.project.name`.
 
+## Waits and markers that lie
+
+1. **Console markers can false-pass off the command echo.** The command you
+   type travels the same output/event stream you're checking, so
+   `output.includes(marker)` can match the echo of `cat("<marker>")` even when
+   R never ran it. Split the marker across `cat()` args
+   (`cat("[pw:", "ready]", sep = "")`) or build probe strings with `paste0()`.
+
+2. **Closing a project on Server reloads the page.** `waitForLoadState`,
+   console-visible, and console-idle can all satisfy against the *old* page;
+   the late reload then breaks the next test. Use `closeProjectIfOpen`
+   (`@utils/project`), which blocks on `window.rstudio.project.isActive() ===
+   false` -- a signal only the post-reload page can produce. Never hand-roll it.
+
+3. **Focus needs re-dispatch, not dispatch-once + poll.** Other UI (e.g. the
+   Assistant iframe reloading after a project open) can steal focus *after*
+   your command ran. `focusConsole(page)` (`pages/console_pane.page.ts`)
+   re-issues `activateConsole` inside its poll loop. Retrying helpers are for
+   setup; keep raw one-shot dispatch only where single-dispatch behavior is
+   itself under test.
+
+4. **Session restarts: use the helpers, respect the timing.** rserver can hold
+   undeliverable console input up to ~30s, and a suspended session's relaunch
+   can take 38s+. `waitForSessionRestart` / `restartSessionWithSentinel`
+   (`@utils/project`) already encode both -- reuse them.
+
+5. **Size timeouts to what gates the UI.** The Python-interpreters modal opens
+   only after a machine-wide scan (60s), not a flat 15s. Before tagging a test
+   `@desktop_only` for "server-specific" behavior, check whether it's just slow.
+
+6. **External services: skip on service error, fail on silent nothing.** Poll
+   a three-state outcome (matched/error/pending); `test.skip` on error, but a
+   timeout with neither must still fail so a regression that renders nothing
+   isn't masked. Worked example in `visual-editor.md`.
+
+7. **Document paths come back home-aliased** (`~/sub/file.R`) when the file is
+   under the rsession's home. Reuse `openFile` / `waitForActiveDocument`, which
+   handle it -- don't compare `doc.path` to an absolute path yourself.
+
+## Server mode and the sandbox
+
+1. **Do file and git operations through the R console, not Node's `fs`.** The
+   rsession's HOME differs from what Node sees -- Desktop's sandboxed HOME and
+   Server's passwd-db HOME are both invisible to `fs`/`os.homedir()`. Git
+   commits from a test need inline `-c user.name=... -c user.email=...`, since
+   CI runners have no global git config. Use `@utils/heredoc` to send
+   multi-line file content through the console cleanly.
+
+2. **Components that store secrets via the OS keychain need it disabled in
+   the fixture.** Under the sandboxed HOME, macOS has no login keychain, so a
+   keytar-based write throws a blocking "Keychain Not Found" modal; on
+   Windows the write would instead land in the *host's real* Credential
+   Manager, leaking test state onto the developer's machine.
+
+## Techniques
+
+1. **Asserting on real RPC/event traffic is a legitimate technique, not just
+   mocking it.** `page.waitForResponse` can pin that a specific RPC fired and
+   inspect its body (e.g. confirm `asyncHandle` is set, proving it registered
+   as async rather than blocking). `page.on('response')` filtered to
+   `get_events` URLs, with `expect.poll` on the body text, can confirm *how*
+   the backend delivered something (e.g. one batched event vs. many
+   per-file events) -- detach the listener in `finally`. When
+   substring-matching event names, include the JSON quotes
+   (`'"files_changed"'`), since an unquoted match can also hit a
+   similarly-named event.
+
+2. **Fixture setup should fail loudly, not as a mysterious timeout.** Verify
+   both the subprocess's exit status AND the setup script's own boolean
+   result (a COM `Save()` or an AppleScript bookmark write can fail with exit
+   code 0), then assert a unique sentinel line in console output. This turns
+   an environment problem into one clear setup-failure message instead of a
+   visibility timeout in every downstream test.
+
+3. **Replay a hidden-tab/iframe race deterministically instead of chasing
+   timing.** Dispatch synthetic events into the hidden iframe
+   (`el.dispatchEvent(new Event('scroll'))`) or call the component's lifecycle
+   hook directly from `page.evaluate` (e.g. `iframe.contentWindow.onActivate()`)
+   to reproduce the race on demand, with no flaky timing needed.
+
+4. **Capturing a satellite (popout) window:** register
+   `page.context().waitForEvent('page')` *before* issuing the command that
+   opens it, then assert the new page's URL contains the expected `view=<name>`
+   marker. Works the same way for Desktop (Electron satellite) and Server.
+
 ## Feature-specific patterns
 
 When working in these areas, also read the corresponding file:
@@ -74,3 +160,7 @@ When working in these areas, also read the corresponding file:
   (`tests/panes/posit-assistant-chat/`): see `chat-pane.md`.
 - **Visual editor / citations** (`tests/panes/editor/citations.test.ts`, and any
   test that drives the panmirror visual editor): see `visual-editor.md`.
+- **Files pane / Open File dialog** (`tests/panes/files/`): see `files-pane.md`.
+- **Terminal pane** (`tests/panes/terminal/`): see `terminal.md`.
+- **Auth setup / AI credentials** (`tests/auth.setup.ts`, `utils/auth.ts`, or
+  anything touching credential provisioning): see `auth-credentials.md`.

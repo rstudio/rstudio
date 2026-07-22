@@ -89,3 +89,29 @@ async RPCs: the POST returns only `{asyncHandle}`, and the results arrive later
 via `/events/get_events` as an `async_completion` event keyed by that handle.
 The service HTTP request is made server-side (rsession), so it is not reachable
 at the API boundary from Playwright -- only the browser<->rsession RPC seam is.
+
+## Citation search failures: skip on service error, still fail on nothing
+
+The search query runs in the *rsession*, so a Node-side reachability probe can
+pass while the query still fails (e.g. NCBI rate-limits shared CI egress IPs).
+That's a service problem, not a product bug -- skip. But a timeout with
+*neither* results nor an error must still fail, so a regression that silently
+renders nothing isn't masked. From `citations.test.ts`:
+
+```typescript
+const searchOutcome = async (): Promise<'pending' | 'matched' | 'error'> => {
+  if ((await citation.resultTexts(5)).some((t) => matcher.test(t))) return 'matched';
+  if (await citation.searchError.isVisible()) return 'error';
+  return 'pending';
+};
+await expect.poll(searchOutcome, { timeout: 30000 }).not.toBe('pending');
+if ((await searchOutcome()) === 'error') {
+  await citation.cancel();
+  test.skip(true, 'search failed service-side from this runner');
+}
+```
+
+`searchError` (in `insert_citation.page.ts`) filters
+`.pm-insert-citation-source-panel-list-noresults-text` by
+`/error occurred|Unable to search/` -- required because the same node also
+carries "No results..." and progress text.
