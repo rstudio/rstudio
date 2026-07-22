@@ -1,6 +1,6 @@
 name: "Cache: Seed macOS 15 x86_64 build caches"
 
-# Seeds the build caches (rstudio-tools, build-time R packages, and sccache)
+# Seeds the build caches (rstudio-tools, build-time R packages, GWT, and sccache)
 # on the default branch so that PR builds start warm. GitHub Actions caches
 # are scoped per-branch: a cache can only be restored from the same branch,
 # the PR's base branch, or the default branch. Sibling branches / PRs cannot
@@ -21,8 +21,8 @@ on:
       - "dependencies/**"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-15-x86_64.yml"
       - ".github/workflows/os-cache-seed-e2e-macos-15-x86_64.yml"
-  # Nightly re-seed keeps the sccache object cache (keyed per-commit, restored
-  # by prefix) recent on main so PR builds get a high compile-cache hit rate.
+  # Nightly re-seed keeps the sccache object cache recent on main so PR
+  # builds get a high compile-cache hit rate.
   schedule:
     - cron: '0 7 * * *'
   # Also dispatched by os-cache-seed-sentinel.yml when this seed's caches

@@ -32,15 +32,15 @@ on:
         type: string
         default: ""
       grep_invert:
-        description: "Optional Playwright --grep-invert pattern to skip tests by title. Defaults to '@ai' to skip tests that require credentials not available in unattended runs."
+        description: "Optional Playwright --grep-invert pattern to skip tests by title. Empty by default (runs all tests)."
         type: string
-        default: "@ai"
+        default: ""
       rstudio_extra_args:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
         default: ""
       build_only:
-        description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
+        description: "Run only the build job (to seed the rstudio-tools / R-libs / GWT / sccache caches) and skip the e2e job."
         type: boolean
         default: false
       post_pr_comment:
@@ -72,7 +72,7 @@ on:
         default: ""
       grep_invert:
         type: string
-        default: "@ai"
+        default: ""
       rstudio_extra_args:
         type: string
         default: ""
@@ -164,8 +164,9 @@ jobs:
       # GWT compilation is the single most expensive JS step (~15-30 min). When
       # GWT Java sources / build scripts haven't changed, cmake skips
       # recompilation via --build-gwt=0 and uses the cached output directly.
-      # Restore-only here; the matching Save GWT output step runs after the build
-      # with if: always() so the cache is written even when a later step fails.
+      # Restore-only here; the matching Save GWT output step after the build
+      # saves only from main-scoped runs after a successful build, and only
+      # on a key miss (see that step's comment).
       - name: Restore GWT output
         id: gwt-cache
         uses: actions/cache/restore@v4
@@ -174,13 +175,14 @@ jobs:
           key: rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
             rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-
-      # install-dependencies-osx (the entry-point script) builds both arm64
-      # and x86_64 dependencies on an M1 Mac, which we don't need. Call the
-      # per-arch script directly to install only x86_64 brew formulae; that
-      # script also chains into dependencies/common/install-common at the
-      # end, so this single step covers brew formulae + Boost + SOCI + GWT
-      # + node + pandoc/quarto + panmirror + copilot-language-server +
-      # sccache + dictionaries + mathjax.
+      # install-dependencies-osx (the entry-point script) adds dual-arch
+      # handling (needed on arm64, not here) and local-dev extras (PAM
+      # profile, i18n venv) we don't need in CI. Call the per-arch script
+      # directly to install only x86_64 brew formulae; that script also
+      # chains into dependencies/common/install-common at the end, so this
+      # single step covers brew formulae + Boost + SOCI + GWT + node +
+      # pandoc/quarto + panmirror + copilot-language-server + sccache +
+      # dictionaries + mathjax.
       - name: Install build dependencies
         working-directory: dependencies/osx
         run: ./install-dependencies-osx-arch
@@ -265,7 +267,7 @@ jobs:
     # build is skipped when build_from_source is false; allow this job to
     # run in that case too. needs.build.result is "success" on a normal run
     # and "skipped" on the daily-download path. build_only seeds the build
-    # caches (rstudio-tools / R-libs / sccache) without running e2e, so skip.
+    # caches (rstudio-tools / R-libs / GWT / sccache) without running e2e, so skip.
     if: |
       always() &&
       inputs.build_only != true &&
@@ -306,6 +308,13 @@ jobs:
           # not the requested patch or alias. Query rig for the just-installed
           # name so `rig default` works regardless of input form.
           INSTALLED_NAME=$(rig list --json | jq -r '.[-1].name')
+          # No pipefail in this shell: if `rig list` fails above, jq still
+          # exits 0 and the assignment quietly lands empty. Fail loudly here
+          # rather than let `rig default` run against an empty name.
+          if [ -z "$INSTALLED_NAME" ] || [ "$INSTALLED_NAME" = "null" ]; then
+            echo "::error::rig list returned no installed R versions"
+            exit 1
+          fi
           # `rig add` installs R root-owned under /Library/Frameworks, and on the
           # Intel macOS runner it skips the "fix permissions" pass that the arm64
           # runner performs. Switching the default therefore needs root to rewrite
