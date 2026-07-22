@@ -79,6 +79,8 @@ PW_RSTUDIO_DEV=1 npx playwright test tests/panes/misc/autocomplete.test.ts
 
 Assumes the rest of the product (gwt, the C++ session, etc.) is already built such that `npm run start` in `src/node/desktop` would launch a working IDE. The CDP-wait deadline is extended to 3 minutes on this path to accommodate the first-run webpack compile; subsequent starts are faster. Tests that exercise the doRestart() flow (e.g. uninstall Posit Assistant) aren't fully supported in dev mode because the Electron relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
 
+**Running from a git worktree:** don't point `RSTUDIO_CPP_BUILD_OUTPUT` at the main checkout's `build/src/cpp` -- its `rdesktop-dev.conf` serves the main checkout's `src/gwt/www`, which after `ant devmode`/`ant draft` is a Super Dev Mode stub redirecting to `localhost:9876`. Without that code server, RStudio dies at startup ("code server not available"). `scripts/bootstrap-worktree.sh` (repo root) builds `<worktree>/build-dev-shim` (linking the main build's `session/`, with `conf` rewritten to the worktree's own `www`) and prints the `npm run test:desktop-dev` command to run -- the wrapper detects the shim automatically when the worktree has no configured `build/`.
+
 ### Server Mode
 
 Pass `--project=server`. By default the fixture spawns a private in-tree `rserver-dev` per worker (using `build/src/cpp/server/rserver` and `build/src/cpp/conf/rserver-dev.conf`), launches a headed Chromium, and connects to it -- credentials aren't needed because the spawned server uses `--auth-none`. Build the server first with `cmake --build build`. Override the binary and conf paths with `PW_RSERVER_BIN` / `PW_RSERVER_CONF` if needed.
@@ -128,6 +130,20 @@ the most recent run, which is what `show-report` opens by default. The runners
 print the full path to both on exit. All of these are gitignored; prune old
 ones with `rm -rf playwright-report-*` (and `rm -rf test-results/*` for traces
 and screenshots).
+
+### Failure diagnostics
+
+When a test fails, the per-test fixture (`fixtures/rstudio.fixture.ts`)
+attaches two diagnostics to the report so symptoms that never reach a failed
+assertion are still recoverable: `browser-console.log` (buffered
+`console.error`/`console.warning` plus uncaught `pageerror`s captured during
+the test body) and, on Desktop, the slice of each rsession log file
+(`RSTUDIO_DATA_HOME/log/*.log`) written while the test ran. Both are scoped
+to the single test -- the console buffer is cleared and the log byte-offsets
+are snapshotted at test start. This is separate from the fixture failing a
+test on uncaught client exceptions (see `window.rstudio.errors` in
+`CLAUDE.md`): the exception itself fails the test; the attachments add the
+surrounding browser-console and backend-log context.
 
 ### Profiling a slow test
 
@@ -255,7 +271,7 @@ Because each Desktop launch has its own `--user-data-dir`, RStudio's single-inst
 Running in parallel: the suite defaults to `workers: 1` (see `playwright.config.ts`), but you can raise it (`npm run test:desktop-dev -- --workers=4`). `fullyParallel` stays off, so parallelism is at the file level -- each worker owns whole spec files and runs them serially. The per-worker CDP / dev-server / logger ports are already derived to avoid collisions; the two shared writers are partitioned per worker only when `workers > 1` (resolved into `PW_TOTAL_WORKERS` by `globalSetup`):
 
 - `HOME` / `USERPROFILE` get a per-worker copy of the seeded template home (`user-home-<parallelIndex>`), so RStudio user state, command history, and seeded AI credentials don't collide.
-- `R_LIBS_USER` becomes a per-worker *hermetic* hardlink clone of the prebuilt template library (not layered with it). Each worker can install or remove packages independently -- including the uninstall/reinstall tests -- without racing on a shared library or leaking changes across workers. Clones persist beside the template (`<template>-w<N>`); delete them to force a refresh after changing `REQUIRED_PACKAGES`.
+- `R_LIBS_USER` becomes a per-worker *hermetic* hardlink clone of the prebuilt template library (not layered with it). Each worker can install or remove packages independently -- including the uninstall/reinstall tests -- without racing on a shared library or leaking changes across workers. Clones persist beside the template (`<template>-w<N>`); delete them to force a refresh after changing `required-packages.txt`.
 
 `RSTUDIO_DATA_HOME` and `RSTUDIO_CONFIG_*` are already per-spec, and the sandbox `data-home/pai` is only ever read (symlinked into each spec), so those need no further partitioning. Each worker is a full Electron IDE + R session, so the practical worker ceiling is roughly half the host's cores before contention erodes the gains.
 
@@ -383,7 +399,7 @@ PW_RSTUDIO_PREFS_OVERRIDE=/path/to/my-prefs.json npx playwright test ...
 
 ### Package Dependencies
 
-`globalSetup` pre-installs a baseline manifest of CRAN packages into the shared `R_LIBS_USER` cache (see *R package pre-population* under Environment Variables). For tests using a package that's already in `REQUIRED_PACKAGES`, no extra setup is required.
+`globalSetup` pre-installs a baseline manifest of CRAN packages into the shared `R_LIBS_USER` cache (see *R package pre-population* under Environment Variables). For tests using a package that's already in the manifest (`required-packages.txt`), no extra setup is required.
 
 For tests using a package outside the manifest, add it via `ensurePackages` in `beforeAll`. The helper installs into the same cache, so subsequent runs are no-ops:
 
@@ -400,7 +416,7 @@ test.describe('Tests needing packages', () => {
 });
 ```
 
-If you find yourself adding the same package to many tests, promote it into `REQUIRED_PACKAGES` so it gets pre-installed once at setup time.
+If you find yourself adding the same package to many tests, promote it into `required-packages.txt` so it gets pre-installed once at setup time.
 
 ## Tags
 
@@ -534,7 +550,7 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 
 ### R package pre-population
 
-Because the Desktop and Server fixtures redirect `HOME` / `USERPROFILE` into the per-run sandbox, R computes an empty default user library and won't see the host user's installed packages. `globalSetup` works around this by pointing `R_LIBS_USER` at a stable per-host cache (see `PW_RSTUDIO_R_LIBS_USER` above) and pre-installing a manifest of packages that tests use -- the list lives in `REQUIRED_PACKAGES` inside `fixtures/r-libs-setup.ts`. The check is idempotent (`installed.packages()` then `setdiff`), so a warm cache adds almost no startup time; the first run installs ~23 packages from CRAN (or PPM on Linux) and may take a few minutes.
+Because the Desktop and Server fixtures redirect `HOME` / `USERPROFILE` into the per-run sandbox, R computes an empty default user library and won't see the host user's installed packages. `globalSetup` works around this by pointing `R_LIBS_USER` at a stable per-host cache (see `PW_RSTUDIO_R_LIBS_USER` above) and pre-installing a manifest of packages that tests use -- the list lives in `required-packages.txt` (read at load by `fixtures/r-libs-setup.ts`). The check is idempotent (`installed.packages()` then `setdiff`), so a warm cache adds almost no startup time; the first run installs ~23 packages from CRAN (or PPM on Linux) and may take a few minutes.
 
 ## Variable Helpers
 
