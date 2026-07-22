@@ -330,10 +330,12 @@ SEXP rs_chatNormalizePath(SEXP pathSEXP)
 // R is single-threaded, so only one execution can be active at a time,
 // but we need to track canceled IDs to handle pre-cancellation of queued requests
 //
-// this state (and the other cross-thread chat state below) is intentionally
-// leaked: backend callbacks can fire on background threads that may still be
-// running while the process exits, and they must not find these statics
-// destroyed during static teardown (#18318)
+// this state (and the other mutex-guarded chat state below) is intentionally
+// leaked. current callers stay on the main thread (the backend process sets
+// callbacksRequireMainThread, and the manifest completion marshals through
+// executeOnMainThread), but the mutex-guarded design anticipates cross-thread
+// access; leaking is free and guarantees a late-running background thread can
+// never find these statics destroyed during static teardown (#18318)
 boost::mutex& s_executionTrackingMutex = make_leaked<boost::mutex>();
 std::string& s_currentTrackingId = make_leaked<std::string>();  // Empty string when not executing
 std::set<std::string>& s_canceledTrackingIds = make_leaked<std::set<std::string>>();  // TrackingIds that have been canceled
@@ -3694,9 +3696,9 @@ struct UpdateState
    }
 };
 
-// Global update state; written on the main thread but read cross-thread, and
-// async process completions can fire on the offline-service background thread,
-// so intentionally leaked to survive static teardown (#18318)
+// Global update state; mutex-guarded for cross-thread reads. Intentionally
+// leaked, defensively -- see the note above the execution-tracking state
+// (#18318)
 UpdateState& s_updateState = make_leaked<UpdateState>();
 boost::mutex& s_updateStateMutex = make_leaked<boost::mutex>();
 

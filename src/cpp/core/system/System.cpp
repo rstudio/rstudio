@@ -114,13 +114,14 @@ std::string generateShortenedUuid()
    return core::hash::crc32HexHash(uuid);
 }
 
-// logger's program identity (this process's binary name)
-std::string s_programIdentity;
+// the program identity, logging options, and mutex are all read by the
+// detached SIGHUP config-reload thread (logConfigReloadThreadFunc in
+// PosixSystem.cpp), which calls reinitLog() and can still be running while
+// the process exits; all three are intentionally leaked so that thread never
+// finds them destroyed during static teardown (#18318)
 
-// the logging options and mutex are on the log-write path (loggerType,
-// lowestLogLevel) for any thread that logs; background threads can still be
-// logging while the process exits, so both are intentionally leaked to avoid
-// running their destructors during static teardown (#18318)
+// logger's program identity (this process's binary name)
+std::string& s_programIdentity = make_leaked<std::string>();
 
 // logging options representing the latest state of the logging configuration file
 boost::shared_ptr<log::LogOptions>& s_logOptions = make_leaked<boost::shared_ptr<log::LogOptions>>();
