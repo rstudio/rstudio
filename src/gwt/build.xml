@@ -440,6 +440,21 @@
    </target>
 
    <!-- configure props for i18n tasks -->
+
+   <!-- Resolve the i18n venv's python. Prefer this checkout's own venv, then
+        fall back to the primary checkout's when this is a linked git worktree
+        without one: the venv is gitignored (created by dependencies/.../
+        install-dependencies), so `git worktree add` never materializes it.
+        set-if-exists also disambiguates OS: only one of bin/python (unix) or
+        Scripts/python.exe (windows) is available on a given platform. -->
+   <set-if-exists property="python.bin" value="${tools.dir}/i18n-helpers/VENV/bin/python"/>
+   <set-if-exists property="python.bin" value="${tools.dir}/i18n-helpers/VENV/Scripts/python.exe"/>
+   <set-if-exists property="python.bin" value="${git.main.worktree}/src/gwt/tools/i18n-helpers/VENV/bin/python"/>
+   <set-if-exists property="python.bin" value="${git.main.worktree}/src/gwt/tools/i18n-helpers/VENV/Scripts/python.exe"/>
+
+   <!-- No venv found anywhere: default to the expected local path so a missing
+        venv fails with a clear path (prompting install-dependencies) rather
+        than a literal ${python.bin} in the exec below. -->
    <condition property="python.bin.detect" value="${tools.dir}/i18n-helpers/VENV/Scripts/python.exe">
      <os family="windows" />
    </condition>
@@ -463,72 +478,59 @@
       <echo message="Commands.cmd.xml i18n checksum matches: ${isMD5ok}"/>
    </target>
 
-   <!-- determine what type of i18n generation is required (if any) -->
-   <target name="i18n-windows-check" depends="i18n-checksum">
-      <condition property="generate-i18n-windows">
-         <and>
-            <os family="windows"/>
-            <isfalse value="${isMD5ok}"/>
-         </and>
-      </condition>
-   </target>
-   <target name="i18n-unix-check" depends="i18n-checksum">
-      <condition property="generate-i18n-unix">
-         <and>
-            <os family="unix"/>
-            <isfalse value="${isMD5ok}"/>
-         </and>
+   <!-- determine whether i18n generation is required -->
+   <target name="i18n-check" depends="i18n-checksum">
+      <condition property="generate-i18n-required">
+         <isfalse value="${isMD5ok}"/>
       </condition>
    </target>
 
-   <!-- execute i18n tasks -->
-   <target name="i18n-windows" depends="i18n-windows-check" if="generate-i18n-windows">
+   <!-- Execute i18n tasks. Invoke the venv python directly (no cmd /c or
+        /bin/sh -c) so ant quotes each argument itself: paths containing spaces
+        are then passed intact on every platform, and a single target serves
+        both Windows and Unix. -->
+   <target name="i18n-generate" depends="i18n-check" if="generate-i18n-required">
       <!-- generate Commands interface -->
-      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
-         <arg value="/c"/>
-         <arg line="${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd constant &quot;${command-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;"/>
+      <exec executable="${python.bin}" failifexecutionfails="true" failonerror="true">
+         <arg value="${python-executable-full-path}"/>
+         <arg value="${commands-xml-full-path}"/>
+         <arg value="cmd"/>
+         <arg value="constant"/>
+         <arg value="${command-constants-full-path}"/>
+         <arg value="--package"/>
+         <arg value="package org.rstudio.studio.client.workbench.commands;"/>
       </exec>
       <!-- generate Commands english property file -->
-      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
-         <arg value="/c"/>
-         <arg line="${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd properties &quot;${command-prop-full-path}&quot;"/>
+      <exec executable="${python.bin}" failifexecutionfails="true" failonerror="true">
+         <arg value="${python-executable-full-path}"/>
+         <arg value="${commands-xml-full-path}"/>
+         <arg value="cmd"/>
+         <arg value="properties"/>
+         <arg value="${command-prop-full-path}"/>
       </exec>
       <!-- generate Menu interface -->
-      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
-         <arg value="/c"/>
-         <arg line="${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu constant &quot;${menu-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;"/>
+      <exec executable="${python.bin}" failifexecutionfails="true" failonerror="true">
+         <arg value="${python-executable-full-path}"/>
+         <arg value="${commands-xml-full-path}"/>
+         <arg value="menu"/>
+         <arg value="constant"/>
+         <arg value="${menu-constants-full-path}"/>
+         <arg value="--package"/>
+         <arg value="package org.rstudio.studio.client.workbench.commands;"/>
       </exec>
       <!-- generate Menu english prop file -->
-      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
-         <arg value="/c"/>
-         <arg line="${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu properties &quot;${menu-prop-full-path}&quot;"/>
-      </exec>
-      <!-- regenerate checksum -->
-      <checksum file="${commands-xml-full-path}" forceOverwrite="yes"/>
-   </target>
-   <target name="i18n-unix" depends="i18n-unix-check" if="generate-i18n-unix">
-
-      <!-- generate Commands interface -->
-      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
-         <arg line="-c '${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd constant &quot;${command-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;'"/>
-      </exec>
-      <!-- generate Commands english property file -->
-      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
-         <arg line="-c '${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd properties &quot;${command-prop-full-path}&quot;'"/>
-      </exec>
-      <!-- generate Menu interface -->
-      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
-         <arg line="-c '${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu constant &quot;${menu-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;'"/>
-      </exec>
-      <!-- generate Menu english prop file -->
-      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
-         <arg line="-c '${python.bin} ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu properties &quot;${menu-prop-full-path}&quot;'"/>
+      <exec executable="${python.bin}" failifexecutionfails="true" failonerror="true">
+         <arg value="${python-executable-full-path}"/>
+         <arg value="${commands-xml-full-path}"/>
+         <arg value="menu"/>
+         <arg value="properties"/>
+         <arg value="${menu-prop-full-path}"/>
       </exec>
       <!-- regenerate checksum -->
       <checksum file="${commands-xml-full-path}" forceOverwrite="yes"/>
    </target>
 
-   <target name="generate-i18n" depends="i18n-unix, i18n-windows" description="Generates i18n for Command and Menu constants" />
+   <target name="generate-i18n" depends="i18n-generate" description="Generates i18n for Command and Menu constants" />
 
    <target name="build" depends="generate-i18n, gwtc" description="Build this project" />
 
