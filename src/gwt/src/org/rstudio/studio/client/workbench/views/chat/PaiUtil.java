@@ -104,6 +104,19 @@ public class PaiUtil
    }
 
    /**
+    * Returns true if Posit Assistant is wanted -- selected either as the chat
+    * provider or as the assistant (completions). Mirrors the backend
+    * isPositAssistantWanted() gate on chat_install_update: installs and updates
+    * are refused unless one of these is set to Posit.
+    *
+    * @return true if Posit Assistant is selected for chat or completions
+    */
+   public boolean isPositAssistantWanted()
+   {
+      return isChatProviderPosit() || isPaiSelected();
+   }
+
+   /**
     * Returns true if Posit Assistant is the configured chat provider, checking:
     * 1. Project-level chat provider setting (if set and not "default")
     * 2. Global user preference

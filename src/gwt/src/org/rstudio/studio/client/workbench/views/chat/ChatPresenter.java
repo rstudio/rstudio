@@ -687,12 +687,23 @@ public class ChatPresenter extends BasePresenter
             if (isInitialInstall)
             {
                promptToInstallUpdate(
+                  constants_.chatCheckForUpdatesCaption(),
                   constants_.chatInstallAvailableConfirmMessage(newVersion),
                   constants_.chatInstallButton());
+            }
+            else if (isDowngrade)
+            {
+               // The recommended version is older than what's installed; make
+               // the downgrade explicit rather than presenting it as an update.
+               promptToInstallUpdate(
+                  constants_.chatDowngradeAvailableTitle(),
+                  constants_.chatDowngradeAvailableMessage(currentVersion, newVersion),
+                  constants_.chatInstallVersionButton(newVersion));
             }
             else
             {
                promptToInstallUpdate(
+                  constants_.chatCheckForUpdatesCaption(),
                   constants_.chatUpdateAvailableConfirmMessage(currentVersion, newVersion),
                   constants_.chatUpdateButton());
             }
@@ -704,6 +715,7 @@ public class ChatPresenter extends BasePresenter
          {
             finishUpdateCheck(dismissProgress);
             promptToInstallUpdate(
+               constants_.chatCheckForUpdatesCaption(),
                constants_.chatUnsupportedVersionUpdateConfirmMessage(currentVersion, newVersion),
                constants_.chatUpdateButton());
          }
@@ -761,11 +773,23 @@ public class ChatPresenter extends BasePresenter
    // backend under a cross-process lock (refusing if another session is using
    // Posit Assistant), swaps the installation, and restarts -- preserving the
    // in-progress conversation via the existing resume mechanism.
-   private void promptToInstallUpdate(String message, String confirmLabel)
+   private void promptToInstallUpdate(String caption, String message, String confirmLabel)
    {
+      // chat_install_update is refused unless Posit Assistant is selected as the
+      // chat provider or assistant (isPositAssistantWanted). Offering an install
+      // that would fail is confusing, so direct the user to select it instead.
+      if (!paiUtil_.isPositAssistantWanted())
+      {
+         globalDisplay_.showMessage(
+            GlobalDisplay.MSG_INFO,
+            constants_.chatCheckForUpdatesCaption(),
+            constants_.chatAssistantNotEnabledMessage());
+         return;
+      }
+
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_QUESTION,
-         constants_.chatCheckForUpdatesCaption(),
+         caption,
          message,
          false,                          // no separate Cancel; No is the decline
          () -> {                         // yes: perform the update
