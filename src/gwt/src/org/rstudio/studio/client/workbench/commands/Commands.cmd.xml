@@ -4446,8 +4446,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"/>
 
    <cmd id="checkForPositAssistantUpdates"
-        label="Check for Posit Assistant updates..."
-        menuLabel="_Check for Posit Assistant updates..."
+        label="Check for Posit Assistant Updates"
+        menuLabel="_Check for Posit Assistant Updates..."
         windowMode="main"/>
 
    <cmd id="showReleaseNotes"

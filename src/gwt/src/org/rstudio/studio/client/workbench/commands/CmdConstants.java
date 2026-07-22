@@ -4207,9 +4207,9 @@ public interface CmdConstants extends Constants {
     String uninstallPositAssistantMenuLabel();
     
     // checkForPositAssistantUpdates
-    @DefaultStringValue("Check for Posit Assistant updates...") // $NON-NLS-1$
+    @DefaultStringValue("Check for Posit Assistant Updates") // $NON-NLS-1$
     String checkForPositAssistantUpdatesLabel();
-    @DefaultStringValue("_Check for Posit Assistant updates...") // $NON-NLS-1$
+    @DefaultStringValue("_Check for Posit Assistant Updates...") // $NON-NLS-1$
     String checkForPositAssistantUpdatesMenuLabel();
     
     // showReleaseNotes
