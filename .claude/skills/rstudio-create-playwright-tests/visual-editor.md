@@ -96,7 +96,7 @@ The search query runs in the *rsession*, so a Node-side reachability probe can
 pass while the query still fails (e.g. NCBI rate-limits shared CI egress IPs).
 That's a service problem, not a product bug -- skip. But a timeout with
 *neither* results nor an error must still fail, so a regression that silently
-renders nothing isn't masked. From `citations.test.ts`:
+renders nothing isn't masked. Condensed from `citations.test.ts`:
 
 ```typescript
 const searchOutcome = async (): Promise<'pending' | 'matched' | 'error'> => {

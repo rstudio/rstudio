@@ -10,12 +10,19 @@ so it varies per CI runner. The stale pre-edit image stays in
 `rstudioapi::terminalBuffer()` and `!grepl(...)` fails even though the edit
 worked.
 
-Verify keystrokes through a filesystem side effect instead:
+Verify keystrokes through a filesystem side effect instead (condensed from
+`tests/panes/terminal/terminal.test.ts`; `captureResult` is a file-local
+helper there -- copy the pattern, it isn't exported):
 
 ```typescript
-await typeInTerminal(page, 'touch term_bs_test.txtQ');   // then Shift+Backspace, Enter
-await expect.poll(() => captureResult(page, 'file.exists("term_bs_test.txt")')).toBe(true);
-await expect.poll(() => captureResult(page, 'file.exists("term_bs_test.txtQ")')).toBe(false);
+await page.keyboard.type('touch term_bs_test.txtQ');
+await page.keyboard.press('Shift+Backspace');
+await page.keyboard.press('Enter');
+await expect.poll(
+  () => captureResult(page,
+    '{ file.exists("term_bs_test.txt") && !file.exists("term_bs_test.txtQ") }'),
+  { timeout: TIMEOUTS.consoleReady },
+).toBe('TRUE');
 ```
 
 Design the pair so no-effect and over-deletion both fail.

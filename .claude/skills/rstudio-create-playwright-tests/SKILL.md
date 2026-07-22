@@ -88,7 +88,7 @@ This file covers RStudio-specific gotchas that aren't in the README.
 
 4. **Session restarts: use the helpers, respect the timing.** rserver can hold
    undeliverable console input up to ~30s, and a suspended session's relaunch
-   can take 38s+. `waitForSessionRestart` / `restartSessionWithSentinel`
+   can exceed 30s. `waitForSessionRestart` / `restartSessionWithSentinel`
    (`@utils/project`) already encode both -- reuse them.
 
 5. **Size timeouts to what gates the UI.** The Python-interpreters modal opens
