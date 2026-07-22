@@ -109,11 +109,18 @@ public class PaiUtil
     * isPositAssistantWanted() gate on chat_install_update: installs and updates
     * are refused unless one of these is set to Posit.
     *
+    * The two halves intentionally differ, matching the backend exactly: the
+    * chat-provider check is project-aware (isChatProviderPosit), but the
+    * assistant check uses the global preference only (backend isPaiSelected
+    * reads only the global assistant pref, ignoring any project override).
+    *
     * @return true if Posit Assistant is selected for chat or completions
     */
    public boolean isPositAssistantWanted()
    {
-      return isChatProviderPosit() || isPaiSelected();
+      boolean assistantPositGlobal =
+         userPrefs_.assistant().getGlobalValue().equals(UserPrefsAccessor.ASSISTANT_POSIT);
+      return isChatProviderPosit() || assistantPositGlobal;
    }
 
    /**
