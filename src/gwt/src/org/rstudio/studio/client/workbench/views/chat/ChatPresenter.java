@@ -714,15 +714,23 @@ public class ChatPresenter extends BasePresenter
              String currentVersion, String newVersion, boolean isDowngrade)
          {
             finishUpdateCheck(dismissProgress);
-            // The unsupported message names both versions and explains why the
-            // change is required, so keep it even for a downgrade; only the
-            // confirmation label switches to make an older target explicit.
-            promptToInstallUpdate(
-               constants_.chatCheckForUpdatesCaption(),
-               constants_.chatUnsupportedVersionUpdateConfirmMessage(currentVersion, newVersion),
-               isDowngrade
-                  ? constants_.chatInstallVersionButton(newVersion)
-                  : constants_.chatUpdateButton());
+            if (isDowngrade)
+            {
+               // Installed version is unsupported and the recommended version is
+               // older: warn about the downgrade while still explaining why the
+               // change is required.
+               promptToInstallUpdate(
+                  constants_.chatDowngradeAvailableTitle(),
+                  constants_.chatUnsupportedVersionDowngradeConfirmMessage(currentVersion, newVersion),
+                  constants_.chatInstallVersionButton(newVersion));
+            }
+            else
+            {
+               promptToInstallUpdate(
+                  constants_.chatCheckForUpdatesCaption(),
+                  constants_.chatUnsupportedVersionUpdateConfirmMessage(currentVersion, newVersion),
+                  constants_.chatUpdateButton());
+            }
          }
 
          @Override
