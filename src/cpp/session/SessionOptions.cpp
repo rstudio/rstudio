@@ -128,6 +128,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    }
 #endif
 
+   // Rootless sessions run rsession from bin/<platform>/, which leaves the
+   // computed resource path one level shallow (on bin/); step up to the root.
+   if (resourcePath_.getFilename() == "bin")
+      resourcePath_ = resourcePath_.getParent();
+
    // build options
    options_description automation("automation");
    options_description tests("tests");
