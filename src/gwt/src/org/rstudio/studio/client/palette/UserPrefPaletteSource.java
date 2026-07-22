@@ -103,11 +103,9 @@ public class UserPrefPaletteSource implements CommandPaletteEntryProvider
          case UserPrefsAccessor.POSIT_ASSISTANT_UPDATE_CHECK_INTERVAL_HOURS:
          case UserPrefsAccessor.CHAT_PROVIDER:
             return !sessionInfo_.getPositAssistantEnabled();
-         // assistant_show_messages is a Posit Assistant setting, but the
-         // preferences pane only surfaces it under the Copilot section, so its
-         // palette availability follows Copilot to stay consistent with where
-         // the pane actually shows it.
-         case UserPrefsAccessor.ASSISTANT_SHOW_MESSAGES:
+         // copilot_show_messages is a GitHub Copilot setting, surfaced in the
+         // preferences pane only under the Copilot section.
+         case UserPrefsAccessor.COPILOT_SHOW_MESSAGES:
             return !sessionInfo_.getCopilotEnabled();
          // The assistant selector and the shared code-suggestion preferences
          // apply to any AI agent (Copilot or Posit Assistant), so hide them

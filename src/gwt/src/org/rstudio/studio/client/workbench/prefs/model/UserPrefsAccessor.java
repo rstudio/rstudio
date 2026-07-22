@@ -324,7 +324,6 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_INDEXING_ENABLED = "assistant_indexing_enabled";
    public static final String ASSISTANT_NES_ENABLED = "assistant_nes_enabled";
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
-   public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
    public static final String ASSISTANT_USE_SYSTEM_CA = "assistant_use_system_ca";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
@@ -4307,18 +4306,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
-    */
-   public PrefValue<Boolean> assistantShowMessages()
-   {
-      return bool(
-         "assistant_show_messages",
-         _constants.assistantShowMessagesTitle(), 
-         _constants.assistantShowMessagesDescription(), 
-         true);
-   }
-
-   /**
     * When enabled, the Posit Assistant button is displayed in the main toolbar.
     */
    public PrefValue<Boolean> assistantToolbarButtonVisible()
@@ -5220,8 +5207,6 @@ public class UserPrefsAccessor extends Prefs
          assistantNesEnabled().setValue(layer, source.getBool("assistant_nes_enabled"));
       if (source.hasKey("assistant_nes_autoshow"))
          assistantNesAutoshow().setValue(layer, source.getBool("assistant_nes_autoshow"));
-      if (source.hasKey("assistant_show_messages"))
-         assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
       if (source.hasKey("assistant_toolbar_button_visible"))
          assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
       if (source.hasKey("assistant_use_system_ca"))
@@ -5552,7 +5537,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantIndexingEnabled());
       prefs.add(assistantNesEnabled());
       prefs.add(assistantNesAutoshow());
-      prefs.add(assistantShowMessages());
       prefs.add(assistantToolbarButtonVisible());
       prefs.add(assistantUseSystemCa());
       prefs.add(positAssistantTestManifest());

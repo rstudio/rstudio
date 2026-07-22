@@ -2086,7 +2086,6 @@ void onBackgroundProcessing(bool isIdle)
                 boost::iequals(type, "Warning") ||
                 boost::iequals(type, "Info"))
             {
-               // TODO: Copilot vs. Assistant preference here?
                if (prefs::userPrefs().copilotShowMessages())
                   module_context::showErrorMessage("Copilot", message);
                else
