@@ -17,6 +17,8 @@
 
 #include <string>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
@@ -110,7 +112,7 @@ boost::once_flag s_threadOnce = BOOST_ONCE_INIT;
 // exit-time destructor" idiom for a process-lifetime global with a non-trivial,
 // thread-interacting destructor. The only difference from a normal global is at
 // the instant of exit; steady-state behavior is unchanged.
-boost::asio::io_context& s_ioContext = *new boost::asio::io_context();
+boost::asio::io_context& s_ioContext = core::make_leaked<boost::asio::io_context>();
 
 // the RPC worker thread. retained as a joinable handle (rather than launched
 // detached) so that stop() can wait for run() to return before the process
