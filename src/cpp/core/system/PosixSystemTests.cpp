@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <grp.h>
+#include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
 #include <gtest/gtest.h>
 
@@ -442,14 +443,24 @@ TEST(PosixTests, ResolveBindAddressPassesThroughSpecificAddresses)
 
 TEST(PosixTests, ResolveBindAddressHandlesIpv4Wildcard)
 {
-   std::string result = resolveBindAddress("0.0.0.0");
-   EXPECT_TRUE(result == "0.0.0.0" || result == "::");
+   // resolution may pick either family depending on the host's interfaces,
+   // so just require some wildcard address back
+   boost::system::error_code ec;
+   boost::asio::ip::address addr =
+      boost::asio::ip::make_address(resolveBindAddress("0.0.0.0"), ec);
+
+   ASSERT_FALSE(ec);
+   EXPECT_TRUE(addr.is_unspecified());
 }
 
 TEST(PosixTests, ResolveBindAddressHandlesIpv6Wildcard)
 {
-   std::string result = resolveBindAddress("::");
-   EXPECT_TRUE(result == "::" || result == "0.0.0.0");
+   boost::system::error_code ec;
+   boost::asio::ip::address addr =
+      boost::asio::ip::make_address(resolveBindAddress("::"), ec);
+
+   ASSERT_FALSE(ec);
+   EXPECT_TRUE(addr.is_unspecified());
 }
 
 TEST(PosixTests, ResolveBindAddressPrefersIpv6WhenOnlyIpv6Available)
