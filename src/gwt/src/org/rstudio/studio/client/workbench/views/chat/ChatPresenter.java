@@ -661,10 +661,12 @@ public class ChatPresenter extends BasePresenter
    {
       if (updateCheckInProgress_)
          return;
-      updateCheckInProgress_ = true;
 
+      // Set the guard only after the progress indicator is up, so a failure
+      // creating it can't leave the command permanently disabled.
       final Command dismissProgress =
          globalDisplay_.showProgress(constants_.chatCheckingForUpdates());
+      updateCheckInProgress_ = true;
 
       try
       {
@@ -838,11 +840,12 @@ public class ChatPresenter extends BasePresenter
          message,
          false,                          // no separate Cancel; No is the decline
          () -> {                         // yes: perform the update
-            // Only surface the chat pane when Posit Assistant is the chat
-            // provider; otherwise (completions-only) it would show the
-            // "not selected" screen. The install proceeds either way.
-            if (paiUtil_.isChatProviderPosit())
-               onActivateChat();
+            // installUpdate() renders progress/result feedback in the chat pane,
+            // so surface it. When Posit Assistant is completions-only (not the
+            // chat provider) the pane also shows a "not selected" screen once the
+            // post-install restart bails -- acceptable, and better than silent
+            // install feedback in a hidden pane.
+            onActivateChat();
             installUpdate();
          },
          () -> {},                       // no: dismiss
