@@ -42,8 +42,9 @@ permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
   # Most engines' e2e-merge jobs assume the S3 report-upload role via OIDC
-  # (fedora43, fedora44, and ubuntu26 don't upload); a reusable workflow's id-token grant
-  # is capped by its caller's.
+  # (fedora43, fedora44, and ubuntu26 don't upload), and every engine's build
+  # job assumes the S3 sccache role via OIDC; a reusable workflow's id-token
+  # grant is capped by its caller's.
   id-token: write
 
 jobs:
@@ -162,6 +163,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-43-x86_64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -177,6 +179,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-44-x86_64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -190,6 +193,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-26-amd64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -204,6 +208,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -218,6 +223,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: server
       r_version: "release"
@@ -232,6 +238,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -246,6 +253,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -277,6 +285,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -291,6 +300,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"

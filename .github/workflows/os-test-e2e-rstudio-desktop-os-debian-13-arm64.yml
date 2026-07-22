@@ -107,6 +107,9 @@ on:
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
+      AWS_SCCACHE_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
+        required: false
 
 permissions:
   contents: read
@@ -138,14 +141,9 @@ jobs:
       # Pin R's user library to a workspace-local path so we can cache it.
       R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
       SCCACHE_ENABLED: '1'
-      # Route sccache to GitHub's built-in Actions cache API. The
-      # mozilla-actions/sccache-action step below installs sccache and exports
-      # ACTIONS_CACHE_URL + ACTIONS_RUNTIME_TOKEN so the sccache server uses
-      # the GHA backend. Cache hits are object-level (one entry per compiled
-      # .o), so branch runs automatically inherit main's warm cache (seeded by
-      # a build_only dispatch on main) without per-SHA tarball rotation. No
-      # AWS / S3 / secrets required.
-      SCCACHE_GHA_ENABLED: 'true'
+      # Backend selection happens in the "Select sccache backend" step below:
+      # S3 when the OIDC role + bucket are configured, GHA cache otherwise.
+      SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       # Compile GWT with readable (PRETTY) symbol names rather than the default
       # OBFUSCATED output, so the uncaught client exceptions the e2e automation
       # agent records (window.rstudio.errors) carry decodable Java stack traces.
@@ -208,9 +206,54 @@ jobs:
           restore-keys: |
             rstudio-gwt-linux-desktop-arm64-${{ env.GWT_STYLE }}-v1-
 
-      # GHA-backed sccache. Installs sccache on PATH and starts the sccache
-      # server with the GH Actions cache API as the storage backend. Object-level
-      # cache hits, no per-SHA tarball, no AWS credentials.
+      # Prefer the S3 sccache backend when the infra is configured (the
+      # AWS_SCCACHE_ROLE_ARN secret plus the AWS_SCCACHE_BUCKET repo
+      # variable). The GHA cache backend writes per-object entries into each
+      # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
+      # (6000+ of its entries were sccache objects) and LRU-evicting the
+      # main-scoped copies the seed maintains -- PR builds then compile at a
+      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
+      # writes one shared cache.
+      - name: Configure AWS credentials for sccache
+        id: sccache-aws
+        if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
+        # A failed OIDC exchange degrades to the GHA backend below rather
+        # than failing the build.
+        continue-on-error: true
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
+          aws-region: us-east-1
+          # Cold builds can run past the default 1-hour session; the role
+          # must be created with a max session duration of at least 2 hours.
+          role-duration-seconds: 7200
+
+      # Falls back to the GHA cache backend when the secret/variable are
+      # unset (e.g. fork PRs) or the credential exchange failed, preserving
+      # today's behavior. Must run before the sccache-action below: that
+      # action only exports the Actions cache URL/token the GHA backend
+      # needs when SCCACHE_GHA_ENABLED is already set as it runs.
+      - name: Select sccache backend
+        env:
+          SCCACHE_S3_BUCKET: ${{ vars.AWS_SCCACHE_BUCKET }}
+          SCCACHE_AWS_OUTCOME: ${{ steps.sccache-aws.outcome }}
+        run: |
+          if [ "$SCCACHE_AWS_OUTCOME" = "success" ]; then
+            echo "sccache backend: S3 ($SCCACHE_S3_BUCKET)"
+            {
+              echo "SCCACHE_BUCKET=$SCCACHE_S3_BUCKET"
+              echo "SCCACHE_REGION=us-east-1"
+              echo "SCCACHE_S3_KEY_PREFIX=debian13-arm64"
+            } >> "$GITHUB_ENV"
+          else
+            echo "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
+            echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+          fi
+
+      # Installs sccache on PATH and starts the sccache server with the
+      # backend chosen by "Select sccache backend" above (S3 when available,
+      # GH Actions cache as the fallback). Object-level cache hits, no per-SHA
+      # tarball.
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
         with:
