@@ -37,6 +37,7 @@
 - ([#18270](https://github.com/rstudio/rstudio/issues/18270)): Fixed an issue on Windows where native dialogs shown by R (e.g. via `utils::askYesNo()`, or when `install.packages()` asks about installing from sources) could open behind the RStudio Desktop window, making the IDE appear frozen while R waited on a dialog the user could not see.
 - ([#8345](https://github.com/rstudio/rstudio/issues/8345)): Help pages opened via the Help pane's "Show in new window" button now follow the IDE's editor theme, instead of always rendering with a light palette.
 - ([#18305](https://github.com/rstudio/rstudio/issues/18305)): The first run of a new RStudio build now always checks for Posit Assistant updates, instead of the check being suppressed for up to the update-check interval (two hours by default) when the previous build had checked recently.
+- ([#18326](https://github.com/rstudio/rstudio/issues/18326)): Fixed an issue where "Restart R and Run All Chunks" (and "Restart R and Clear Output") could intermittently restart R without then running the chunks (or clearing the output).
 - ([#18315](https://github.com/rstudio/rstudio/issues/18315)): Fixed the GitHub Copilot section of the Assistant preferences showing a mislabeled "Display account and billing messages from Posit Assistant" checkbox that had no effect. It is now correctly labeled for GitHub Copilot and controls whether Copilot's account and billing messages are shown.
 
 ### Dependencies

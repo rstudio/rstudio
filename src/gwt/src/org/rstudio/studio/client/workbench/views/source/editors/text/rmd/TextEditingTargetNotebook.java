@@ -1044,12 +1044,33 @@ public class TextEditingTargetNotebook
       clearChunkExecQueue();
       cleanCurrentExecChunk();
 
-      // run any queued command
+      // run any queued command; the queued command is a dynamic source
+      // command (e.g. executeAllCode) whose enabled/visible state is
+      // re-synced by command management that may not have run yet when this
+      // handler fires, so retry briefly rather than dropping the command if
+      // it is transiently disabled (#18326)
       if (postRestartCommand_ != null)
       {
-         if (postRestartCommand_.isEnabled())
-            postRestartCommand_.execute();
+         final AppCommand command = postRestartCommand_;
          postRestartCommand_ = null;
+
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+               if (command.isEnabled())
+                  command.execute();
+               else if (++retries_ <= 50)
+                  schedule(100);
+               else
+                  Debug.logWarning("Dropping post-restart command '" +
+                        command.getId() + "' (command not re-enabled after restart)");
+            }
+
+            private int retries_ = 0;
+         }.schedule(10);
+
          return;
       }
    }

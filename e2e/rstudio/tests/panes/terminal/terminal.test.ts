@@ -42,6 +42,26 @@ async function openTerminal(page: Page): Promise<void> {
   await expect(page.locator(TERMINAL_TAB)).toHaveAttribute('aria-selected', 'true', {
     timeout: TIMEOUTS.consoleReady,
   });
+
+  // The xterm widget becomes visible before the shell has attached to the pty
+  // and echoed its prompt; keystrokes sent before then are dropped (observed
+  // on macOS CI: the buffer held only the prompt, every typed line lost).
+  // Wait until the buffer has a non-empty line -- proof the shell is echoing.
+  await expect.poll(
+    () => captureResult(
+      page,
+      '{ ids <- rstudioapi::terminalList(); ' +
+      'length(ids) > 0 && any(nzchar(trimws(rstudioapi::terminalBuffer(ids[[1]])))) }',
+    ),
+    { timeout: TIMEOUTS.consoleReady },
+  ).toBe('TRUE');
+
+  // captureResult drives the R console (it clicks the Console tab and focuses
+  // the console input), so reselect the terminal and give it keyboard focus
+  // before callers start typing.
+  await page.locator(TERMINAL_TAB).click();
+  await expect(page.locator(XTERM_SELECTOR)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
+  await page.locator(XTERM_SELECTOR).click();
 }
 
 // Sandbox for file-creation test (terminal cwd is its own shell, so we
