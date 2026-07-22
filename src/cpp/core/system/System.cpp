@@ -29,6 +29,7 @@
 #include <shared_core/Hash.hpp>
 #include <shared_core/FileLogDestination.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/StderrLogDestination.hpp>
 
@@ -116,11 +117,16 @@ std::string generateShortenedUuid()
 // logger's program identity (this process's binary name)
 std::string s_programIdentity;
 
+// the logging options and mutex are on the log-write path (loggerType,
+// lowestLogLevel) for any thread that logs; background threads can still be
+// logging while the process exits, so both are intentionally leaked to avoid
+// running their destructors during static teardown (#18318)
+
 // logging options representing the latest state of the logging configuration file
-boost::shared_ptr<log::LogOptions> s_logOptions;
+boost::shared_ptr<log::LogOptions>& s_logOptions = make_leaked<boost::shared_ptr<log::LogOptions>>();
 
 // mutex for logging synchronization
-boost::recursive_mutex s_loggingMutex;
+boost::recursive_mutex& s_loggingMutex = make_leaked<boost::recursive_mutex>();
 
 namespace {
 
