@@ -43,6 +43,26 @@ test_that(".rs.truncateDataCapture() truncates data.table columns positionally (
    expect_identical(names(data), c("V1", "V2", "V3"))
 })
 
+test_that(".rs.truncateDataCapture() tolerates as.data.frame methods that retain class", {
+   # a data.table-like class: single-argument '[' selects rows, and
+   # as.data.frame() returns the object with its class intact
+   registerS3method("as.data.frame", "sticky", function(x, ...) x)
+   registerS3method("[", "sticky", function(x, i, ...) {
+      df <- structure(x, class = "data.frame")
+      structure(df[i, , drop = FALSE], class = c("sticky", "data.frame"))
+   })
+   on.exit({
+      table <- get(".__S3MethodsTable__.", envir = asNamespace("base"))
+      rm(list = c("as.data.frame.sticky", "[.sticky"), envir = table)
+   }, add = TRUE)
+
+   x <- structure(data.frame(matrix(seq_len(10), nrow = 2)), class = c("sticky", "data.frame"))
+
+   data <- .rs.truncateDataCapture(x, max.print = 10, cols.max.print = 3)
+   expect_identical(class(data), "data.frame")
+   expect_identical(dim(data), c(2L, 3L))
+})
+
 test_that(".rs.truncateDataCapture() limits rows and columns for data.frames", {
    df <- data.frame(matrix(seq_len(20), nrow = 4))
 

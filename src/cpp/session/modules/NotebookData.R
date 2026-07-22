@@ -230,6 +230,10 @@
   # returns the integer vector rather than the leading columns
   data <- as.data.frame(head(x, max.print))
 
+  # an as.data.frame method may return the object with its class intact,
+  # re-exposing a custom '[' below; force a plain data.frame
+  class(data) <- "data.frame"
+
   if (NCOL(data) > cols.max.print) {
     data <- data[seq_len(cols.max.print)]
   }
