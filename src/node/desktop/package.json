@@ -97,7 +97,7 @@
     "winston-syslog": "2.7.1"
   },
   "allowScripts": {
-    "electron@42.7.0": true,
+    "electron@42.7.1": true,
     "msgpackr-extract@3.0.3": true,
     "unix-dgram@2.0.6": true
   }
