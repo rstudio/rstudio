@@ -2348,14 +2348,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantNesAutoshowDescription();
 
    /**
-    * When enabled, RStudio will show messages from the Posit Assistant in a message box.
-    */
-   @DefaultStringValue("Display account and billing messages from Posit Assistant")
-   String assistantShowMessagesTitle();
-   @DefaultStringValue("When enabled, RStudio will show messages from the Posit Assistant in a message box.")
-   String assistantShowMessagesDescription();
-
-   /**
     * When enabled, the Posit Assistant button is displayed in the main toolbar.
     */
    @DefaultStringValue("Show Posit Assistant button in toolbar")

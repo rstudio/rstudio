@@ -256,7 +256,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblProjectOverride_ = new Label();
       lblProjectOverride_.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
 
-      cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
+      cbCopilotShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
       cbAssistantToolbarButtonVisible_ = checkboxPref(prefs_.assistantToolbarButtonVisible(), true);
       cbAssistantUseSystemCa_ = checkboxPref(prefs_.assistantUseSystemCa(), true);
       nvwAssistantUpdateCheckInterval_ = numericPref(
@@ -650,7 +650,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       VerticalPanel panel = new VerticalPanel();
       panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
-      panel.add(cbAssistantShowMessages_);
+      panel.add(cbCopilotShowMessages_);
       return panel;
    }
 
@@ -1540,7 +1540,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblAssistantStatus_;
    private final Spinner imgRefreshSpinner_;
-   private final CheckBox cbAssistantShowMessages_;
+   private final CheckBox cbCopilotShowMessages_;
    private final CheckBox cbAssistantToolbarButtonVisible_;
    private final CheckBox cbAssistantUseSystemCa_;
    private final CheckBox cbAssistantNesEnabled_;
