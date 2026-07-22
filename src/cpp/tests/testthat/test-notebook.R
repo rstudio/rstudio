@@ -29,6 +29,31 @@ test_that("--| cell options are removed by .rs.extractChunkInnerCode() (#18093)"
    expect_true(any(grepl("SELECT 1", extract)))
 })
 
+test_that(".rs.truncateDataCapture() truncates data.table columns positionally (#18317)", {
+   skip_if_not_installed("data.table")
+
+   # [.data.table evaluates 'j' expressions in the frame of the table, so a
+   # naive x[, c(1:n)] returns the integer vector 1:n rather than the columns
+   dt <- data.table::as.data.table(as.list(seq_len(5)))
+
+   data <- .rs.truncateDataCapture(dt, max.print = 10, cols.max.print = 3)
+
+   expect_s3_class(data, "data.frame")
+   expect_identical(dim(data), c(1L, 3L))
+   expect_identical(names(data), c("V1", "V2", "V3"))
+})
+
+test_that(".rs.truncateDataCapture() limits rows and columns for data.frames", {
+   df <- data.frame(matrix(seq_len(20), nrow = 4))
+
+   data <- .rs.truncateDataCapture(df, max.print = 2, cols.max.print = 3)
+   expect_identical(dim(data), c(2L, 3L))
+
+   # data within the limits is returned unchanged
+   data <- .rs.truncateDataCapture(df, max.print = 10, cols.max.print = 10)
+   expect_identical(dim(data), c(4L, 5L))
+})
+
 test_that(".rs.rnb.extractInlineRCode() finds inline R code in prose only", {
    contents <- c(
       "---",

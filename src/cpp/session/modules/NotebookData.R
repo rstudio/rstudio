@@ -84,9 +84,6 @@
     max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else options$max.print
 
     cols.max.print <- if (is.null(options$cols.max.print)) getOption("cols.max.print", 1000) else options$cols.max.print
-    if (NCOL(x) > cols.max.print) {
-      x <- x[,c(1:cols.max.print)]
-    }
 
     # standard metadata
     metadata <- list(classes = className, nrow = nRow, ncol = nCol, summary = list())
@@ -96,7 +93,7 @@
        metadata$summary <- as.list(tibble::tbl_sum(original))
 
     # format and save object representation, for later printing
-    data <- as.data.frame(head(x, max.print))
+    data <- .rs.truncateDataCapture(x, max.print, cols.max.print)
     result <- .rs.formatDataCapture(data, options)
     save(result, file = output)
 
@@ -223,6 +220,21 @@
   data <- envir[["x"]]
   options <- envir[["options"]]
   .rs.formatDataCapture(data, options)
+})
+
+.rs.addFunction("truncateDataCapture", function(x, max.print, cols.max.print)
+{
+  # truncate rows first, then coerce; truncate columns on the plain
+  # data.frame, as '[' dispatch on the original object can misbehave --
+  # e.g. [.data.table evaluates c(1:n) in the frame of the table and
+  # returns the integer vector rather than the leading columns
+  data <- as.data.frame(head(x, max.print))
+
+  if (NCOL(data) > cols.max.print) {
+    data <- data[seq_len(cols.max.print)]
+  }
+
+  data
 })
 
 .rs.addFunction("formatDataCapture", function(data, options)
