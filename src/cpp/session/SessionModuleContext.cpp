@@ -872,24 +872,42 @@ namespace {
 
 typedef std::vector<boost::shared_ptr<ScheduledCommand> >
                                                       ScheduledCommands;
-ScheduledCommands s_scheduledCommands;
-ScheduledCommands s_idleScheduledCommands;
+
+// the scheduled-command lists and their mutex are reached from background
+// threads (via executeOnMainThread and friends), so they are intentionally
+// leaked via construct-on-first-use: rsession exits through ::exit() (or
+// exit() within libR), which runs static destructors, and a background
+// thread that unblocks during teardown must not find them destroyed (#18318)
+ScheduledCommands& scheduledCommands()
+{
+   static ScheduledCommands* pCommands = new ScheduledCommands();
+   return *pCommands;
+}
+
+ScheduledCommands& idleScheduledCommands()
+{
+   static ScheduledCommands* pCommands = new ScheduledCommands();
+   return *pCommands;
+}
 
 // guards the scheduled command lists: commands are scheduled from background
-// threads (via executeOnMainThread and friends) while the main thread
-// executes them. command execution itself always happens on the main thread,
-// outside the mutex.
-boost::mutex s_scheduledCommandsMutex;
+// threads while the main thread executes them. command execution itself
+// always happens on the main thread, outside the mutex.
+boost::mutex& scheduledCommandsMutex()
+{
+   static boost::mutex* pMutex = new boost::mutex();
+   return *pMutex;
+}
 
 void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCommand,
                          bool idleOnly)
 {
-   LOCK_MUTEX(s_scheduledCommandsMutex)
+   LOCK_MUTEX(scheduledCommandsMutex())
    {
       if (idleOnly)
-         s_idleScheduledCommands.push_back(pCommand);
+         idleScheduledCommands().push_back(pCommand);
       else
-         s_scheduledCommands.push_back(pCommand);
+         scheduledCommands().push_back(pCommand);
    }
    END_LOCK_MUTEX
 }
@@ -902,7 +920,7 @@ void executeScheduledCommands(ScheduledCommands* pCommands)
    // scheduled commands to be mutated and these iterators
    // invalidated)
    ScheduledCommands commands;
-   LOCK_MUTEX(s_scheduledCommandsMutex)
+   LOCK_MUTEX(scheduledCommandsMutex())
    {
       commands = *pCommands;
    }
@@ -916,7 +934,7 @@ void executeScheduledCommands(ScheduledCommands* pCommands)
                  boost::bind(&ScheduledCommand::execute, _1));
 
    // remove any commands which are finished
-   LOCK_MUTEX(s_scheduledCommandsMutex)
+   LOCK_MUTEX(scheduledCommandsMutex())
    {
       pCommands->erase(
                     std::remove_if(
@@ -1062,9 +1080,9 @@ void onBackgroundProcessing(bool isIdle)
    events().onBackgroundProcessing(isIdle);
 
    // execute incremental commands
-   executeScheduledCommands(&s_scheduledCommands);
+   executeScheduledCommands(&scheduledCommands());
    if (isIdle)
-      executeScheduledCommands(&s_idleScheduledCommands);
+      executeScheduledCommands(&idleScheduledCommands());
 }
 
 #ifdef _WIN32
