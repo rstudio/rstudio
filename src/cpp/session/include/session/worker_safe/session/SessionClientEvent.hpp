@@ -219,6 +219,7 @@ extern const int kConsoleWritePendingError;
 extern const int kConsoleWritePendingWarning;
 extern const int kAssistantStatusChanged;
 extern const int kChatBackendExit;
+extern const int kChatCheckForUpdates;
 extern const int kNotebookRenderCompleted;
 extern const int kConsoleReadCompleted;
 extern const int kRStudioAPIShowMenu;

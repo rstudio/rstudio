@@ -223,6 +223,7 @@ const int kConsoleReadCompleted = 206;
 const int kRStudioAPIShowMenu = 207;
 const int kPackageVulnerabilitiesReady = 208;
 const int kFilesChanged = 209;
+const int kChatCheckForUpdates = 210;
 
 }
 
@@ -615,6 +616,8 @@ std::string ClientEvent::typeName() const
          return "assistant_status_changed";
       case client_events::kChatBackendExit:
          return "chat_backend_exit";
+      case client_events::kChatCheckForUpdates:
+         return "chat_check_for_updates";
       case client_events::kNotebookRenderCompleted:
          return "notebook_render_completed";
       case client_events::kConsoleReadCompleted:

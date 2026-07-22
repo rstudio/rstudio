@@ -45,6 +45,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatCheckForUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatPaneActiveEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompl
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.inject.Inject;
@@ -303,6 +305,11 @@ public class ChatPresenter extends BasePresenter
             }
          }
       });
+
+      // Listen for Posit Assistant-initiated update checks (ui/checkForUpdates
+      // JSON-RPC request). Runs the same modal flow as the Help menu command.
+      events_.addHandler(ChatCheckForUpdatesEvent.TYPE, (ChatCheckForUpdatesEvent event) ->
+         onCheckForPositAssistantUpdates());
 
       // Listen for session suspension/resume events
       events_.addHandler(SessionSerializationEvent.TYPE, new SessionSerializationEvent.Handler()
@@ -641,6 +648,145 @@ public class ChatPresenter extends BasePresenter
                message);
          }
       });
+   }
+
+   // No @Handler: bound via ChatTab.Shim so the command works before the
+   // presenter is delay-loaded. Also invoked when Posit Assistant sends a
+   // ui/checkForUpdates JSON-RPC request (see ChatCheckForUpdatesEvent).
+   //
+   // Unlike the startup flow (checkForUpdates), this always ends in a modal
+   // result dialog and never starts or restarts the backend on its own -- it
+   // only offers to update when an update is available.
+   void onCheckForPositAssistantUpdates()
+   {
+      if (updateCheckInProgress_)
+         return;
+      updateCheckInProgress_ = true;
+
+      final Command dismissProgress =
+         globalDisplay_.showProgress(constants_.chatCheckingForUpdates());
+
+      installManager_.checkForUpdates(true, new PositAiInstallManager.UpdateCheckCallback()
+      {
+         @Override
+         public void onNoUpdateAvailable()
+         {
+            finishUpdateCheck(dismissProgress);
+            globalDisplay_.showMessage(
+               GlobalDisplay.MSG_INFO,
+               constants_.chatCheckForUpdatesCaption(),
+               constants_.chatNoUpdateAvailableMessage());
+         }
+
+         @Override
+         public void onUpdateAvailable(String currentVersion, String newVersion,
+                                       boolean isInitialInstall, boolean isDowngrade,
+                                       boolean additionalProvidersAvailable)
+         {
+            finishUpdateCheck(dismissProgress);
+            if (isInitialInstall)
+            {
+               promptToInstallUpdate(
+                  constants_.chatInstallAvailableConfirmMessage(newVersion),
+                  constants_.chatInstallButton());
+            }
+            else
+            {
+               promptToInstallUpdate(
+                  constants_.chatUpdateAvailableConfirmMessage(currentVersion, newVersion),
+                  constants_.chatUpdateButton());
+            }
+         }
+
+         @Override
+         public void onUnsupportedVersionUpgradeRequired(
+             String currentVersion, String newVersion, boolean isDowngrade)
+         {
+            finishUpdateCheck(dismissProgress);
+            promptToInstallUpdate(
+               constants_.chatUnsupportedVersionUpdateConfirmMessage(currentVersion, newVersion),
+               constants_.chatUpdateButton());
+         }
+
+         @Override
+         public void onIncompatibleVersion()
+         {
+            finishUpdateCheck(dismissProgress);
+            showRStudioUpdateRequired(constants_.chatIncompatibleVersion());
+         }
+
+         @Override
+         public void onUnsupportedVersionNoUpdate(String currentVersion)
+         {
+            finishUpdateCheck(dismissProgress);
+            showRStudioUpdateRequired(
+               constants_.chatUnsupportedVersionNoUpdateMessage(currentVersion));
+         }
+
+         @Override
+         public void onUnsupportedProtocol()
+         {
+            finishUpdateCheck(dismissProgress);
+            showRStudioUpdateRequired(constants_.chatUnsupportedProtocolMessage());
+         }
+
+         @Override
+         public void onManifestUnavailable(String errorMessage)
+         {
+            finishUpdateCheck(dismissProgress);
+            globalDisplay_.showErrorMessage(
+               constants_.chatCheckForUpdatesCaption(),
+               constants_.chatManifestUnavailableMessage());
+         }
+
+         @Override
+         public void onCheckFailed(String errorMessage)
+         {
+            finishUpdateCheck(dismissProgress);
+            globalDisplay_.showErrorMessage(
+               constants_.chatCheckForUpdatesCaption(),
+               errorMessage);
+         }
+      });
+   }
+
+   private void finishUpdateCheck(Command dismissProgress)
+   {
+      dismissProgress.execute();
+      updateCheckInProgress_ = false;
+   }
+
+   // An update (or initial install) is available -- offer to install it.
+   // Accepting reuses the existing install engine, which stops the running
+   // backend under a cross-process lock (refusing if another session is using
+   // Posit Assistant), swaps the installation, and restarts -- preserving the
+   // in-progress conversation via the existing resume mechanism.
+   private void promptToInstallUpdate(String message, String confirmLabel)
+   {
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_QUESTION,
+         constants_.chatCheckForUpdatesCaption(),
+         message,
+         false,                          // no separate Cancel; No is the decline
+         () -> {                         // yes: perform the update
+            onActivateChat();            // surface progress in the pane/satellite
+            installUpdate();
+         },
+         () -> {},                       // no: dismiss
+         null,                           // cancel operation (unused)
+         confirmLabel,
+         constants_.chatCancelButton(),
+         true);                          // confirm is the default button
+   }
+
+   // A newer Posit Assistant needs a newer RStudio (protocol mismatch or no
+   // compatible build). Informational only -- no action from this dialog.
+   private void showRStudioUpdateRequired(String message)
+   {
+      globalDisplay_.showMessage(
+         GlobalDisplay.MSG_WARNING,
+         constants_.chatCheckForUpdatesCaption(),
+         message);
    }
 
    // No @Handler: bound via ChatTab.Shim so the command works before the
@@ -1368,6 +1514,10 @@ public class ChatPresenter extends BasePresenter
 
    // Guard against concurrent initialization (multiple polling loops)
    private boolean initializing_ = false;
+
+   // Guard against overlapping user-initiated update checks (Help menu command
+   // or Posit Assistant ui/checkForUpdates request)
+   private boolean updateCheckInProgress_ = false;
 
    // Monotonic counter invalidating stale pollForBackendUrl callbacks
    private int backendPollGeneration_ = 0;
