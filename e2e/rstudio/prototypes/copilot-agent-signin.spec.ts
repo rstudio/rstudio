@@ -13,11 +13,16 @@ import {
 } from '../utils/copilot-agent';
 
 /**
- * Prototype: prove the full agent-driven Copilot sign-in, end to end, with no
- * RStudio involved. This is the capability that gives Copilot parity with
- * Posit AI's auth.setup.ts: a machine that has never signed in to Copilot,
+ * Standalone smoke test for the agent-driven Copilot sign-in, end to end,
+ * with no RStudio involved: a machine that has never signed in to Copilot,
  * holding only a GitHub username/password, ends up with a valid credential
- * store (auth.db) written by the copilot-language-server itself.
+ * store (auth.db) written by the copilot-language-server itself. This is the
+ * same machinery the `setup` project uses (tests/auth.setup.ts); run this
+ * spec to verify the sign-in pipeline in isolation -- e.g. after a GitHub
+ * login-page change, an agent upgrade, or a test-account change -- without
+ * paying for an RStudio launch. Run from e2e/rstudio with:
+ *
+ *   npx playwright test --config=prototypes/playwright.prototype.config.ts
  *
  * Flow: spawn the agent with HOME pointed at a throwaway temp directory ->
  * initialize/initialized -> signInInitiate (agent fetches the device code) ->
@@ -28,7 +33,8 @@ import {
  * The temp HOME is deleted in finally, pass or fail, so no token ever
  * outlives the run. The real ~/.config/github-copilot is never touched.
  *
- * Credentials (e2e/rstudio/.env.local, gitignored; use a throwaway account):
+ * Credentials (e2e/rstudio/.env.local, gitignored; use a dedicated test
+ * account with Copilot access):
  *   COPILOT_USER          GitHub login (username, not email)
  *   COPILOT_PASSWORD      that account's password
  *   COPILOT_TOTP_SECRET   optional; base32 2FA secret if the account has one
