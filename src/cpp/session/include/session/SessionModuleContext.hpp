@@ -503,6 +503,11 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                          const boost::function<void()> &execute,
                          bool idleOnly = true);
 
+// execute work on the main thread: immediately when already on the main
+// thread, otherwise as delayed work the next time the main thread performs
+// background processing. this function (like the schedule*Work functions
+// above) may be called from background threads; the work itself always runs
+// on the main thread, so it may safely call into R.
 void executeOnMainThread(const boost::function<void()> &execute);
 
 core::string_utils::LineEnding lineEndings(const core::FilePath& filePath);

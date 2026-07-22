@@ -22,12 +22,16 @@
 
 #include <boost/format.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
+#include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
@@ -304,6 +308,180 @@ SEXP rs_packageLibraryMutated()
    return R_NilValue;
 }
 
+// Result of a background package-event scan. The background thread fills in
+// 'pkgNames' and then posts onPackageEventScanCompleted() to the main thread
+// via executeOnMainThread(); the scheduled-command queue provides the
+// happens-before edge for 'pkgNames', and the other fields are only ever
+// touched on the main thread.
+struct PackageEventScan
+{
+   std::vector<std::string> pkgNames; // written by the background thread
+   bool completed = false;            // main thread only
+   bool abandoned = false;            // main thread only
+};
+
+// Coalescing state for package-event scans; main thread only.
+bool s_packageEventScanRunning = false;
+bool s_packageEventScanPending = false;
+
+// If a scan hasn't completed after this long (e.g. a library path on a hung
+// network mount), abandon it so package-event tracking isn't wedged for the
+// rest of the session. The R option exists so tests can exercise the
+// watchdog path without waiting out the default.
+constexpr int kPackageEventScanTimeoutSeconds = 300;
+
+int packageEventScanTimeoutSeconds()
+{
+   return r::options::getOption<int>(
+            "rstudio.packageEventScanTimeout",
+            kPackageEventScanTimeoutSeconds,
+            false);
+}
+
+void startPackageEventScan();
+
+// Runs on the main thread once the background scan has finished.
+void onPackageEventScanCompleted(boost::shared_ptr<PackageEventScan> pScan)
+{
+   // if the watchdog abandoned this scan, drop its (very late) result: the
+   // coalescing state no longer tracks it, and a fresh scan may be in flight
+   if (pScan->abandoned)
+      return;
+
+   pScan->completed = true;
+
+   Error error = r::exec::RFunction(".rs.registerPackageEventHooks", pScan->pkgNames).call();
+   if (error)
+      LOG_ERROR(error);
+
+   s_packageEventScanRunning = false;
+
+   // if another scan was requested while this one was in flight (e.g. an
+   // install completed), run it now so newly-installed packages get hooked
+   if (s_packageEventScanPending)
+   {
+      s_packageEventScanPending = false;
+      startPackageEventScan();
+   }
+}
+
+// Watchdog, on the main thread: if the scan hasn't completed (e.g. blocked on
+// a hung network mount), abandon it rather than wedge package-event tracking
+// for the rest of the session; later library mutations can start fresh scans.
+// We don't run a pending pass here -- it would most likely hang the same way
+// and pile up abandoned threads. Note that a scan completing right at the
+// timeout boundary loses the race with this watchdog (it is queued ahead of
+// the scan's completion command): the completion then sees 'abandoned' and
+// drops the result, and hooks wait for the next library mutation to trigger
+// a fresh scan.
+void onPackageEventScanTimeout(boost::shared_ptr<PackageEventScan> pScan,
+                               int timeoutSeconds)
+{
+   if (pScan->completed)
+      return;
+
+   LOG_WARNING_MESSAGE("Abandoning package event scan; it did not complete within " +
+                       safe_convert::numberToString(timeoutSeconds) +
+                       " seconds");
+
+   pScan->abandoned = true;
+   s_packageEventScanRunning = false;
+   s_packageEventScanPending = false;
+}
+
+// Runs on a background thread: filesystem access only, no R. No exception may
+// escape (safeLaunchThread doesn't guard the thread body, so one would
+// terminate the process). The completion callback is posted on every exit
+// path; if the post itself fails, the watchdog reclaims the scan state after
+// the timeout.
+void scanForInstalledPackages(std::vector<FilePath> libPaths,
+                              boost::shared_ptr<PackageEventScan> pScan)
+{
+   std::vector<std::string> pkgNames;
+
+   try
+   {
+      for (const FilePath& libPath : libPaths)
+      {
+         if (!libPath.exists())
+            continue;
+
+         std::vector<FilePath> children;
+         Error error = libPath.getChildren(children);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+
+         for (const FilePath& child : children)
+         {
+            if (child.isDirectory())
+               pkgNames.push_back(child.getFilename());
+         }
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // guard the post separately: its allocations (binding the callback,
+   // scheduling the delayed work) can throw under memory pressure, and an
+   // exception here would escape the thread body
+   try
+   {
+      pScan->pkgNames = std::move(pkgNames);
+      module_context::executeOnMainThread(
+               boost::bind(onPackageEventScanCompleted, pScan));
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
+void startPackageEventScan()
+{
+   s_packageEventScanRunning = true;
+
+   // resolve library paths and the watchdog timeout on the main thread;
+   // both call into R
+   std::vector<FilePath> libPaths = module_context::getLibPaths();
+   int timeoutSeconds = packageEventScanTimeoutSeconds();
+
+   auto pScan = boost::make_shared<PackageEventScan>();
+
+   // queue the watchdog before launching the thread, so that it is always
+   // ordered ahead of the scan's completion command in the scheduled-command
+   // queue (and still reclaims the scan state if the launch itself fails)
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(timeoutSeconds),
+            boost::bind(onPackageEventScanTimeout, pScan, timeoutSeconds),
+            false);
+
+   core::thread::safeLaunchThread(
+            boost::bind(scanForInstalledPackages, libPaths, pScan));
+}
+
+// Enumerating the library paths can be slow on remote filesystems, so it runs
+// on a background thread; if a scan is already in flight, just request another
+// pass once it completes (the running scan may have raced with the library
+// mutation that triggered this call). Returns true if a new scan was started,
+// false if one was already in flight and a follow-up pass was queued.
+bool updatePackageEventsAsync()
+{
+   if (s_packageEventScanRunning)
+   {
+      s_packageEventScanPending = true;
+      return false;
+   }
+
+   startPackageEventScan();
+   return true;
+}
+
+SEXP rs_updatePackageEvents()
+{
+   bool started = updatePackageEventsAsync();
+   r::sexp::Protect protect;
+   return r::sexp::create(started, &protect);
+}
+
 void detectLibPathsChanges()
 {
    static std::vector<std::string> s_lastLibPaths;
@@ -425,6 +603,12 @@ void onDeferredInit(bool /* newSession */)
    if (error)
       LOG_ERROR(error);
 
+   // subscribe to package attach / detach events. this happens here (rather
+   // than at module init) both to keep the scan off the startup critical path
+   // and because the rs_* routines it relies upon are only registered with R
+   // once the init sequence has completed
+   updatePackageEventsAsync();
+
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
@@ -494,6 +678,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_packageLibraryMutated);
    RS_REGISTER_CALL_METHOD(rs_getCachedAvailablePackages);
    RS_REGISTER_CALL_METHOD(rs_downloadAvailablePackages);
+   RS_REGISTER_CALL_METHOD(rs_updatePackageEvents);
 
    using boost::bind;
    using namespace module_context;

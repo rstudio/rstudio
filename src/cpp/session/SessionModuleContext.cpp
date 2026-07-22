@@ -875,13 +875,23 @@ typedef std::vector<boost::shared_ptr<ScheduledCommand> >
 ScheduledCommands s_scheduledCommands;
 ScheduledCommands s_idleScheduledCommands;
 
+// guards the scheduled command lists: commands are scheduled from background
+// threads (via executeOnMainThread and friends) while the main thread
+// executes them. command execution itself always happens on the main thread,
+// outside the mutex.
+boost::mutex s_scheduledCommandsMutex;
+
 void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCommand,
                          bool idleOnly)
 {
-   if (idleOnly)
-      s_idleScheduledCommands.push_back(pCommand);
-   else
-      s_scheduledCommands.push_back(pCommand);
+   LOCK_MUTEX(s_scheduledCommandsMutex)
+   {
+      if (idleOnly)
+         s_idleScheduledCommands.push_back(pCommand);
+      else
+         s_scheduledCommands.push_back(pCommand);
+   }
+   END_LOCK_MUTEX
 }
 
 void executeScheduledCommands(ScheduledCommands* pCommands)
@@ -891,20 +901,31 @@ void executeScheduledCommands(ScheduledCommands* pCommands)
    // R code executing which in turn could cause the list of
    // scheduled commands to be mutated and these iterators
    // invalidated)
-   ScheduledCommands commands = *pCommands;
+   ScheduledCommands commands;
+   LOCK_MUTEX(s_scheduledCommandsMutex)
+   {
+      commands = *pCommands;
+   }
+   END_LOCK_MUTEX
 
-   // execute all commands
+   // execute all commands (outside the mutex: commands can themselves
+   // schedule more commands, and can run R code which pumps background
+   // processing re-entrantly)
    std::for_each(commands.begin(),
                  commands.end(),
                  boost::bind(&ScheduledCommand::execute, _1));
 
    // remove any commands which are finished
-   pCommands->erase(
-                 std::remove_if(
-                    pCommands->begin(),
-                    pCommands->end(),
-                    boost::bind(&ScheduledCommand::finished, _1)),
-                 pCommands->end());
+   LOCK_MUTEX(s_scheduledCommandsMutex)
+   {
+      pCommands->erase(
+                    std::remove_if(
+                       pCommands->begin(),
+                       pCommands->end(),
+                       boost::bind(&ScheduledCommand::finished, _1)),
+                    pCommands->end());
+   }
+   END_LOCK_MUTEX
 }
 
 
