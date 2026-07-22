@@ -16,14 +16,18 @@
 #ifndef _WIN32
 
 #include <core/system/PosixSystem.hpp>
-#include <core/system/PosixGroup.hpp>
+
+#include <grp.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <grp.h>
+
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
+
 #include <gtest/gtest.h>
+
+#include <core/system/PosixGroup.hpp>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
 
