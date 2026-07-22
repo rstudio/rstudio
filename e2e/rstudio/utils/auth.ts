@@ -393,7 +393,7 @@ export function userHomeForAuthState(baseHome: string): string {
 // because source is serialized into the status file below, making it part of
 // the cross-process contract.
 export const AUTH_SOURCES = [
-  'login', // signed in with the provider's credentials (POSIT_EMAIL/POSIT_PASSWORD or GH_COPILOT_USER/GH_COPILOT_PASSWORD)
+  'login', // signed in with the provider's credentials (POSIT_EMAIL/POSIT_PASSWORD or COPILOT_USER/COPILOT_PASSWORD)
   'copy',  // copied the local credential store
   'none',  // no source available; nothing provisioned
 ] as const;

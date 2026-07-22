@@ -1,7 +1,6 @@
-import { chromium, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
+import { launchAuthBrowser } from './auth-debug';
 
 /**
  * The browser half of the GitHub Copilot device-flow sign-in: given a
@@ -38,21 +37,17 @@ function log(msg: string): void {
   console.log(`[gh-authorize] ${msg}`);
 }
 
-// This browser is launched directly, so it sits outside Playwright's
-// trace/screenshot capture. Dump the live page state into test-results/
-// (gitignored) so a stuck step is diagnosable from the actual DOM rather
-// than guesswork.
-async function dumpPage(page: Page, label: string): Promise<void> {
-  try {
-    const outDir = path.join(__dirname, '..', 'test-results');
-    fs.mkdirSync(outDir, { recursive: true });
-    log(`[${label}] page ${page.url()} (title: ${await page.title().catch(() => '?')})`);
-    await page.screenshot({ path: path.join(outDir, `gh-authorize-${label}.png`), fullPage: true });
-    fs.writeFileSync(path.join(outDir, `gh-authorize-${label}.html`), await page.content());
-    log(`[${label}] saved test-results/gh-authorize-${label}.png and .html`);
-  } catch (dumpErr) {
-    log(`[${label}] could not capture page: ${(dumpErr as Error).message}`);
-  }
+// Locator.isVisible({ timeout }) does not actually wait -- Playwright's own
+// types document the option as ignored, so it checks the DOM at that instant
+// and returns immediately. Every optional-step check in this flow needs to
+// genuinely wait (a step-conditional page can still be mid-navigation or
+// mid-render when we ask), so route them all through waitFor instead: true
+// if the element shows up within timeoutMs, false (not thrown) otherwise.
+async function appears(locator: import('@playwright/test').Locator, timeoutMs: number): Promise<boolean> {
+  return locator
+    .waitFor({ state: 'visible', timeout: timeoutMs })
+    .then(() => true)
+    .catch(() => false);
 }
 
 // ---------------------------------------------------------------------------
@@ -98,7 +93,7 @@ function totp(secret: string): string {
 
 async function signIn(page: Page, user: string, password: string, totpSecret?: string): Promise<void> {
   const loginField = page.locator('#login_field');
-  if (await loginField.isVisible({ timeout: 10_000 }).catch(() => false)) {
+  if (await appears(loginField, 10_000)) {
     log('login page shown; entering username and password');
     await loginField.fill(user);
     await page.locator('#password').fill(password);
@@ -109,10 +104,10 @@ async function signIn(page: Page, user: string, password: string, totpSecret?: s
 
   // 2FA (authenticator app). GitHub renders the app-code field as #app_totp.
   const totpField = page.locator('#app_totp');
-  if (await totpField.isVisible({ timeout: 5_000 }).catch(() => false)) {
+  if (await appears(totpField, 5_000)) {
     if (!totpSecret) {
       throw new Error(
-        'GitHub is asking for a 2FA authenticator code, but GH_COPILOT_TOTP_SECRET is not set. '
+        'GitHub is asking for a 2FA authenticator code, but COPILOT_TOTP_SECRET is not set. '
         + 'Add the account\'s base32 2FA secret to .env.local, or remove 2FA from the account.',
       );
     }
@@ -130,9 +125,9 @@ async function enterUserCode(page: Page, userCode: string): Promise<void> {
   // button before the code-entry boxes appear. Only click it when the code
   // field is not already present, so we never submit an empty code on flows
   // that skip the intro.
-  if (!(await first.isVisible({ timeout: 5_000 }).catch(() => false))) {
+  if (!(await appears(first, 5_000))) {
     const intro = page.getByRole('button', { name: /continue/i });
-    if (await intro.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    if (await appears(intro, 3_000)) {
       log('device-activation intro shown; clicking Continue to reach the code form');
       await intro.click();
     }
@@ -171,8 +166,9 @@ async function authorize(page: Page): Promise<void> {
     .then(() => true)
     .catch(() => false);
   if (!appeared) {
-    log('.js-oauth-authorize-btn not found; capturing page to diagnose');
-    await dumpPage(page, 'no-authorize-button');
+    // The final page capture on close (see auth-debug.ts) records what showed
+    // instead; the caller's checkStatus poll decides whether it mattered.
+    log('.js-oauth-authorize-btn not found; continuing (the app may already be authorized)');
     return;
   }
 
@@ -197,7 +193,6 @@ async function authorize(page: Page): Promise<void> {
   const enabled = await authorizeBtn.isEnabled();
   log(`after ${Math.round((Date.now() - t0) / 1000)}s the Authorize button is ${enabled ? 'ENABLED' : 'still DISABLED'}`);
   if (!enabled) {
-    await dumpPage(page, 'still-disabled');
     throw new Error('Authorize button never enabled within 120s');
   }
 
@@ -217,38 +212,17 @@ async function authorize(page: Page): Promise<void> {
  * until it reports OK).
  */
 export async function authorizeDeviceCode(opts: AuthorizeDeviceCodeOptions): Promise<void> {
-  const browser = await chromium.launch({
-    headless: true,
-    args: ['--disable-blink-features=AutomationControlled'],
-  });
+  // The shared launcher owns the browser config and the PW_DEBUG_AUTH page
+  // captures; session.close() takes the final capture (the failure-state
+  // record when a step throws) and never itself throws.
+  const session = await launchAuthBrowser('copilot');
   try {
-    const context = await browser.newContext({
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    });
-    // Hide the automation flag before any page script runs. The wheel event is
-    // what actually arms the Authorize button, but there is no reason to
-    // advertise automation to the rest of GitHub's scripts either.
-    await context.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    });
-    const page = await context.newPage();
-
-    page.on('pageerror', (err) => log(`[pageerror] ${err.message}`));
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') log(`[console.error] ${msg.text()}`);
-    });
-
-    try {
-      await page.goto(opts.verificationUri, { waitUntil: 'domcontentloaded' });
-      await signIn(page, opts.user, opts.password, opts.totpSecret);
-      await enterUserCode(page, opts.userCode);
-      await authorize(page);
-    } catch (err) {
-      await dumpPage(page, 'failure');
-      throw err;
-    }
+    const page = session.page;
+    await page.goto(opts.verificationUri, { waitUntil: 'domcontentloaded' });
+    await signIn(page, opts.user, opts.password, opts.totpSecret);
+    await enterUserCode(page, opts.userCode);
+    await authorize(page);
   } finally {
-    await browser.close();
+    await session.close();
   }
 }

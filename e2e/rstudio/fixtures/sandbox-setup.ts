@@ -178,7 +178,7 @@ export default async function globalSetup(config: FullConfig) {
   // No credentials are seeded here. The auth.setup project
   // (tests/auth.setup.ts) is the sole authority for both AI providers' sandbox
   // credentials -- a live sign-in flow when the provider's credentials are set
-  // (POSIT_EMAIL/POSIT_PASSWORD, GH_COPILOT_USER/GH_COPILOT_PASSWORD), else a
+  // (POSIT_EMAIL/POSIT_PASSWORD, COPILOT_USER/COPILOT_PASSWORD), else a
   // copy of the local credential store -- and their tests gate on the on-disk
   // stores it leaves behind (see requireAiCredentials in utils/ai-credentials.ts).
 

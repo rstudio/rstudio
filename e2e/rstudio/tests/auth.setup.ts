@@ -1,4 +1,4 @@
-import { test as setup, chromium, type Browser, type Page } from '@playwright/test';
+import { test as setup, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -22,6 +22,7 @@ import {
   STATUS_PROMPT_DEVICE_FLOW,
 } from '../utils/copilot-agent';
 import { authorizeDeviceCode } from '../utils/github-device-authorize';
+import { launchAuthBrowser } from '../utils/auth-debug';
 
 /**
  * Authenticate the AI providers (Posit AI and GitHub Copilot) for the
@@ -41,7 +42,7 @@ import { authorizeDeviceCode } from '../utils/github-device-authorize';
  * Each provider's credential source is auto-detected, not selected by an
  * environment variable:
  *   1. The provider's credentials are set (POSIT_EMAIL/POSIT_PASSWORD, or
- *      GH_COPILOT_USER/GH_COPILOT_PASSWORD) -> run its live sign-in flow.
+ *      COPILOT_USER/COPILOT_PASSWORD) -> run its live sign-in flow.
  *      Setting the credentials is deliberate, so it wins even on a machine
  *      already signed in locally -- it's how you exercise the sign-in flow.
  *   2. else a local credential store exists (~/.posit/ai/auth/data.json;
@@ -291,9 +292,10 @@ async function step<T>(page: Page, name: string, fn: () => Promise<T>, fatal = f
     return await fn();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // page.url() is the one piece of non-sensitive context available with
-    // artifacts disabled for this project (see playwright.config.ts); guard
-    // it in case the page is already closed.
+    // page.url() is the one piece of non-sensitive context always available
+    // with artifacts disabled for this project (see playwright.config.ts);
+    // guard it in case the page is already closed. PW_DEBUG_AUTH=1 opts into
+    // page captures via the shared auth browser (utils/auth-debug.ts).
     let url = 'unknown';
     try {
       url = page.url();
@@ -336,12 +338,9 @@ async function automateLogin(
   password: string,
 ): Promise<void> {
   const verificationUri = verificationUriComplete.split('?')[0];
-  let browser: Browser;
+  let session: Awaited<ReturnType<typeof launchAuthBrowser>>;
   try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--disable-blink-features=AutomationControlled'],
-    });
+    session = await launchAuthBrowser('positai');
   } catch (err) {
     // A launch failure is an environment gap, not flake: desktop runs connect
     // to RStudio's Electron over CDP and never otherwise need Playwright's
@@ -353,11 +352,7 @@ async function automateLogin(
     );
   }
   try {
-    const context = await browser.newContext({
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    });
-    const page = await context.newPage();
+    const page = session.page;
     // All selectors below track the login.posit.cloud markup; when that page
     // changes, these are the first thing to break (surfacing as a fatal error
     // on the credential steps, or as a skip whose login-failed reason names
@@ -427,14 +422,9 @@ async function automateLogin(
       }
     }, true);
   } finally {
-    try {
-      await browser.close();
-    } catch (err) {
-      // A rejection escaping a finally replaces the in-flight exception,
-      // which could downgrade a fatal LoginAutomationError to a transient
-      // skip and lose its message -- log and discard instead.
-      console.warn(`[auth-setup] WARNING: failed to close the sign-in browser: ${(err as Error).message}`);
-    }
+    // session.close() takes the final page capture and never throws, so it
+    // can't replace an in-flight LoginAutomationError (see auth-debug.ts).
+    await session.close();
   }
 }
 
@@ -685,15 +675,15 @@ setup('authenticate GitHub Copilot', async () => {
   if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
 
   const sandboxUserHome = path.join(sandbox, 'user-home');
-  const user = process.env.GH_COPILOT_USER;
-  const password = process.env.GH_COPILOT_PASSWORD;
-  const totpSecret = process.env.GH_COPILOT_TOTP_SECRET;
+  const user = process.env.COPILOT_USER;
+  const password = process.env.COPILOT_PASSWORD;
+  const totpSecret = process.env.COPILOT_TOTP_SECRET;
 
   // Mirror the POSIT_EMAIL/POSIT_PASSWORD rule: a half-set pair is a config
   // mistake, not a source.
   if (!!user !== !!password) {
     throw new Error(
-      '[auth-setup] exactly one of GH_COPILOT_USER / GH_COPILOT_PASSWORD is set; set both to exercise the Copilot sign-in flow, or neither to copy the local credential store',
+      '[auth-setup] exactly one of COPILOT_USER / COPILOT_PASSWORD is set; set both to exercise the Copilot sign-in flow, or neither to copy the local credential store',
     );
   }
 
@@ -704,10 +694,10 @@ setup('authenticate GitHub Copilot', async () => {
       writeAuthStatus(sandbox, 'copilot', {
         source: 'none',
         outcome: 'unavailable',
-        reason: 'Not provisioning GitHub Copilot: GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local credential store. Set the credentials for the sign-in flow, or unset the seed kill-switch while signed in to Copilot locally.',
+        reason: 'Not provisioning GitHub Copilot: COPILOT_USER/COPILOT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local credential store. Set the credentials for the sign-in flow, or unset the seed kill-switch while signed in to Copilot locally.',
       });
       console.log('[auth-setup] no Copilot credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Copilot tests will skip');
-      failIfStrict('GitHub Copilot', 'GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset and PW_SANDBOX_NO_SEED_CREDENTIALS blocked the local copy');
+      failIfStrict('GitHub Copilot', 'COPILOT_USER/COPILOT_PASSWORD are unset and PW_SANDBOX_NO_SEED_CREDENTIALS blocked the local copy');
       return;
     }
     const hostDir = hostCopilotConfigDir();
@@ -715,10 +705,10 @@ setup('authenticate GitHub Copilot', async () => {
       writeAuthStatus(sandbox, 'copilot', {
         source: 'none',
         outcome: 'unavailable',
-        reason: `Not provisioning GitHub Copilot: no local credential store (${hostDir} does not exist) and GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset. Sign in to Copilot locally, or set the credentials for the sign-in flow.`,
+        reason: `Not provisioning GitHub Copilot: no local credential store (${hostDir} does not exist) and COPILOT_USER/COPILOT_PASSWORD are unset. Sign in to Copilot locally, or set the credentials for the sign-in flow.`,
       });
       console.log(`[auth-setup] no ${hostDir} on host and no Copilot credentials set; Copilot tests will skip`);
-      failIfStrict('GitHub Copilot', 'not signed in to Copilot locally and GH_COPILOT_USER/GH_COPILOT_PASSWORD are unset');
+      failIfStrict('GitHub Copilot', 'not signed in to Copilot locally and COPILOT_USER/COPILOT_PASSWORD are unset');
       return;
     }
     fs.cpSync(hostDir, copilotConfigDir(sandboxUserHome), { recursive: true });
@@ -728,7 +718,7 @@ setup('authenticate GitHub Copilot', async () => {
       writeAuthStatus(sandbox, 'copilot', {
         source: 'copy',
         outcome: 'unavailable',
-        reason: `Copied ${hostDir}, but its credential store holds no signed-in token. Sign in to Copilot locally (e.g. through RStudio), or set GH_COPILOT_USER/GH_COPILOT_PASSWORD for the sign-in flow.`,
+        reason: `Copied ${hostDir}, but its credential store holds no signed-in token. Sign in to Copilot locally (e.g. through RStudio), or set COPILOT_USER/COPILOT_PASSWORD for the sign-in flow.`,
       });
       console.log('[auth-setup] host Copilot config dir copied but holds no signed-in token; Copilot tests will skip');
       failIfStrict('GitHub Copilot', 'the local Copilot store holds no signed-in token');

@@ -38,7 +38,7 @@ function skipReason(provider: AIProvider, label: string, fallback: string): stri
  *
  * Both providers are provisioned by the auth.setup project (a live sign-in
  * flow when the provider's credentials are set -- POSIT_EMAIL/POSIT_PASSWORD
- * or GH_COPILOT_USER/GH_COPILOT_PASSWORD -- else a copy of the local
+ * or COPILOT_USER/COPILOT_PASSWORD -- else a copy of the local
  * credential store), which leaves the store on disk in the sandbox user-home.
  * It runs in a separate process, so the signal is the store itself, not an
  * env flag: isPositAiAuthenticated() reads the token store (and checks
@@ -86,7 +86,7 @@ export function requireAiCredentials(
             'GitHub Copilot',
             'No GitHub Copilot credentials in the sandbox. Sign in to Copilot '
               + 'locally so the setup project can copy the credential store, or '
-              + 'set GH_COPILOT_USER/GH_COPILOT_PASSWORD for the sign-in flow.',
+              + 'set COPILOT_USER/COPILOT_PASSWORD for the sign-in flow.',
           ));
         }
         return;

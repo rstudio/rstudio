@@ -1,4 +1,4 @@
-import { test, expect, chromium, type Page } from '@playwright/test';
+import { test, expect, chromium, type Page, type Locator } from '@playwright/test';
 import crypto from 'crypto';
 import * as fs from 'fs';
 
@@ -20,10 +20,10 @@ import * as fs from 'fs';
  * (prototypes/playwright.prototype.config.ts).
  *
  * Credentials (e2e/rstudio/.env.local, gitignored; use a throwaway account):
- *   GH_COPILOT_USER          GitHub login (username, not email)
- *   GH_COPILOT_PASSWORD      that account's password
- *   GH_COPILOT_TOTP_SECRET   optional; base32 2FA secret. Only needed if the
- *                            account has an authenticator app enrolled.
+ *   COPILOT_USER          GitHub login (username, not email)
+ *   COPILOT_PASSWORD      that account's password
+ *   COPILOT_TOTP_SECRET   optional; base32 2FA secret. Only needed if the
+ *                         account has an authenticator app enrolled.
  */
 
 // The public client id of the GitHub Copilot OAuth app; the same value the
@@ -33,6 +33,19 @@ const SCOPE = 'read:user';
 
 function log(msg: string): void {
   console.log(`[copilot-proto] ${msg}`);
+}
+
+// Locator.isVisible({ timeout }) does not actually wait -- Playwright's own
+// types document the option as ignored, so it checks the DOM at that instant
+// and returns immediately. Every optional-step check below needs to
+// genuinely wait (a step-conditional page can still be mid-navigation or
+// mid-render when we ask), so route them all through waitFor instead: true
+// if the element shows up within timeoutMs, false (not thrown) otherwise.
+async function appears(locator: Locator, timeoutMs: number): Promise<boolean> {
+  return locator
+    .waitFor({ state: 'visible', timeout: timeoutMs })
+    .then(() => true)
+    .catch(() => false);
 }
 
 // This browser is launched directly, so it sits outside Playwright's
@@ -159,7 +172,7 @@ async function pollForToken(
 
 async function signIn(page: Page, user: string, password: string, totpSecret?: string): Promise<void> {
   const loginField = page.locator('#login_field');
-  if (await loginField.isVisible({ timeout: 10_000 }).catch(() => false)) {
+  if (await appears(loginField, 10_000)) {
     log('login page shown; entering username and password');
     await loginField.fill(user);
     await page.locator('#password').fill(password);
@@ -170,10 +183,10 @@ async function signIn(page: Page, user: string, password: string, totpSecret?: s
 
   // 2FA (authenticator app). GitHub renders the app-code field as #app_totp.
   const totpField = page.locator('#app_totp');
-  if (await totpField.isVisible({ timeout: 5_000 }).catch(() => false)) {
+  if (await appears(totpField, 5_000)) {
     if (!totpSecret) {
       throw new Error(
-        'GitHub is asking for a 2FA authenticator code, but GH_COPILOT_TOTP_SECRET is not set. '
+        'GitHub is asking for a 2FA authenticator code, but COPILOT_TOTP_SECRET is not set. '
         + 'Add the account\'s base32 2FA secret to .env.local, or remove 2FA from the account.',
       );
     }
@@ -191,9 +204,9 @@ async function enterUserCode(page: Page, userCode: string): Promise<void> {
   // button before the code-entry boxes appear (the Workbench flow hits this
   // too). Only click it when the code field is not already present, so we never
   // submit an empty code on flows that skip the intro.
-  if (!(await first.isVisible({ timeout: 5_000 }).catch(() => false))) {
+  if (!(await appears(first, 5_000))) {
     const intro = page.getByRole('button', { name: /continue/i });
-    if (await intro.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    if (await appears(intro, 3_000)) {
       log('device-activation intro shown; clicking Continue to reach the code form');
       await intro.click();
     }
@@ -293,13 +306,13 @@ async function authorize(page: Page): Promise<void> {
 // ---------------------------------------------------------------------------
 
 test('GitHub device-flow Authorize registers with a trusted click (no attribute hack)', async () => {
-  const user = process.env.GH_COPILOT_USER;
-  const password = process.env.GH_COPILOT_PASSWORD;
-  const totpSecret = process.env.GH_COPILOT_TOTP_SECRET;
+  const user = process.env.COPILOT_USER;
+  const password = process.env.COPILOT_PASSWORD;
+  const totpSecret = process.env.COPILOT_TOTP_SECRET;
 
   test.skip(
     !user || !password,
-    'Set GH_COPILOT_USER and GH_COPILOT_PASSWORD in e2e/rstudio/.env.local (throwaway account).',
+    'Set COPILOT_USER and COPILOT_PASSWORD in e2e/rstudio/.env.local (throwaway account).',
   );
 
   const device = await fetchDeviceCode();

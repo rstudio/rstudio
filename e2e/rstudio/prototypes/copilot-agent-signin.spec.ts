@@ -29,9 +29,9 @@ import {
  * outlives the run. The real ~/.config/github-copilot is never touched.
  *
  * Credentials (e2e/rstudio/.env.local, gitignored; use a throwaway account):
- *   GH_COPILOT_USER          GitHub login (username, not email)
- *   GH_COPILOT_PASSWORD      that account's password
- *   GH_COPILOT_TOTP_SECRET   optional; base32 2FA secret if the account has one
+ *   COPILOT_USER          GitHub login (username, not email)
+ *   COPILOT_PASSWORD      that account's password
+ *   COPILOT_TOTP_SECRET   optional; base32 2FA secret if the account has one
  */
 
 function log(msg: string): void {
@@ -39,13 +39,13 @@ function log(msg: string): void {
 }
 
 test('copilot-language-server signs in via device flow and writes auth.db', async () => {
-  const user = process.env.GH_COPILOT_USER;
-  const password = process.env.GH_COPILOT_PASSWORD;
-  const totpSecret = process.env.GH_COPILOT_TOTP_SECRET;
+  const user = process.env.COPILOT_USER;
+  const password = process.env.COPILOT_PASSWORD;
+  const totpSecret = process.env.COPILOT_TOTP_SECRET;
 
   test.skip(
     !user || !password,
-    'Set GH_COPILOT_USER and GH_COPILOT_PASSWORD in e2e/rstudio/.env.local (throwaway account).',
+    'Set COPILOT_USER and COPILOT_PASSWORD in e2e/rstudio/.env.local (throwaway account).',
   );
 
   const homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'copilot-agent-home-'));

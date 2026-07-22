@@ -155,14 +155,26 @@ export class CopilotAgent {
       const header = this.buffer.subarray(0, headerEnd).toString('ascii');
       const match = /Content-Length:\s*(\d+)/i.exec(header);
       if (!match) {
-        throw new Error(`malformed LSP header from agent: ${header}`);
+        // A throw here would escape the stdout 'data' handler as an uncaught
+        // exception and crash the whole process; fail the client instead --
+        // reject everything in flight and kill the agent, so the caller sees
+        // an ordinary request failure it can classify.
+        this.failAll(new Error(`malformed LSP header from agent: ${header}`));
+        return;
       }
       const length = parseInt(match[1], 10);
       const bodyStart = headerEnd + 4;
       if (this.buffer.length < bodyStart + length) return;
       const body = this.buffer.subarray(bodyStart, bodyStart + length).toString('utf8');
       this.buffer = this.buffer.subarray(bodyStart + length);
-      this.onMessage(JSON.parse(body) as JsonRpcMessage);
+      let msg: JsonRpcMessage;
+      try {
+        msg = JSON.parse(body) as JsonRpcMessage;
+      } catch {
+        this.failAll(new Error(`malformed LSP message body from agent: ${body.slice(0, 200)}`));
+        return;
+      }
+      this.onMessage(msg);
     }
   }
 
@@ -192,6 +204,17 @@ export class CopilotAgent {
       // useful trace of where the sign-in stands.
       log(`notification "${msg.method}": ${JSON.stringify(msg.params ?? {}).slice(0, 200)}`);
     }
+  }
+
+  // Unrecoverable client-side failure: reject everything in flight, drop any
+  // buffered bytes, and kill the agent. Subsequent request() calls fail via
+  // the exited flag once the kill lands.
+  private failAll(err: Error): void {
+    log(err.message);
+    for (const [, p] of this.pending) p.reject(err);
+    this.pending.clear();
+    this.buffer = Buffer.alloc(0);
+    this.child.kill('SIGKILL');
   }
 
   // --- JSON-RPC surface -----------------------------------------------------

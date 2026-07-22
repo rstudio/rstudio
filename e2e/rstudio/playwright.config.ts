@@ -64,10 +64,12 @@ const setupProject = {
   // --retries=N on the CLI still outranks it (the CI workflows don't pass
   // one today, and shouldn't).
   retries: 0,
-  // Artifacts stay off for this project: the sign-in flow types real
-  // credentials (POSIT_PASSWORD) into a page, and a trace, video, or
-  // screenshot would capture them into the report. Diagnostic context comes
-  // from the flow's own error messages instead (step name, page URL).
+  // Artifacts stay off for this project: the sign-in flows type real
+  // credentials (POSIT_PASSWORD, COPILOT_PASSWORD) into pages, and a
+  // trace, video, or screenshot would capture them into the report.
+  // Diagnostic context comes from the flows' own error messages instead
+  // (step name, page URL); PW_DEBUG_AUTH=1 opts into flow-owned page dumps
+  // for debugging login-page changes (see utils/auth-debug.ts).
   use: { trace: 'off' as const, video: 'off' as const, screenshot: 'off' as const },
 };
 
