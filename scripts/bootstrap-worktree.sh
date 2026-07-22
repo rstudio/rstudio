@@ -35,11 +35,15 @@
 # in src/node/desktop/src/main/utils.ts) honors RSTUDIO_CPP_BUILD_OUTPUT and
 # needs <root>/session/rsession.exe plus <root>/conf/rdesktop-dev.conf; the
 # shim links session/ from the main checkout's build and rewrites the conf's
-# www paths to THIS worktree's GWT output. Do NOT point
+# www paths to THIS worktree's GWT output. `npm run test:desktop-dev` detects
+# the shim automatically when the worktree has no configured build/ (see
+# resolveCppBuildOutput in e2e/rstudio/scripts/dev-common.ts); set
+# RSTUDIO_CPP_BUILD_OUTPUT yourself only to override it. Do NOT point
 # RSTUDIO_CPP_BUILD_OUTPUT at the main checkout's build/src/cpp directly: its
-# conf serves the main checkout's src/gwt/www, which (after `ant desktop` /
-# `ant devmode`) is a Super Dev Mode stub that redirects to a code server on
-# localhost:9876 -- without that code server running, RStudio dies at startup
+# conf serves the main checkout's src/gwt/www -- your worktree changes would
+# silently not be exercised, and after `ant desktop` / `ant devmode` that
+# output is a Super Dev Mode stub that redirects to a code server on
+# localhost:9876, so without that code server running RStudio dies at startup
 # with "code server not available" and automation times out waiting for
 # window.rstudio.ready.
 #
@@ -107,8 +111,63 @@ clone_tree() {
   cp -R "$src" "$dst"
 }
 
+# Locate the pinned node toolchain's bin directory (version from
+# dependencies/tools/rstudio-tools.sh): this worktree, then the main checkout,
+# then the global tools location -- mirroring pinnedNodeBinDir in
+# e2e/rstudio/scripts/dev-common.ts. Prints nothing when not found.
+pinned_node_bin() {
+  local version
+  version="$(sed -n 's/^export RSTUDIO_NODE_VERSION="\(.*\)"$/\1/p' \
+    "$WORKTREE/dependencies/tools/rstudio-tools.sh" 2>/dev/null | head -1)"
+  if [ -z "$version" ]; then
+    return
+  fi
+
+  # the '-arm64' dir suffix is a macOS-only convention in this repo
+  local suffix=""
+  if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]; then
+    suffix="-arm64"
+  fi
+
+  local root
+  for root in "$WORKTREE" "$MAIN_CHECKOUT" /opt/rstudio-tools; do
+    local bin="$root/dependencies/common/node/$version$suffix/bin"
+    if [ -x "$bin/node" ]; then
+      echo "$bin"
+      return
+    fi
+  done
+}
+
+# True when main's installed node_modules is current relative to main's own
+# lockfile. npm records what it installed in node_modules/.package-lock.json;
+# if any package version there disagrees with package-lock.json (or a
+# non-optional package is missing entirely), the tree is stale -- typically
+# npm ci was not rerun in main after a dependency bump -- and cloning it
+# would propagate a broken tree that npm ci in the worktree would not.
+main_tree_current() {
+  local main="$1"
+  [ -f "$main/node_modules/.package-lock.json" ] || return 1
+  node -e '
+    const fs = require("fs");
+    const lock = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const installed = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+    for (const [name, meta] of Object.entries(lock.packages ?? {})) {
+      if (!name) continue; // root entry
+      const inst = installed.packages?.[name];
+      // optional (often platform-specific) packages may be legitimately
+      // absent from the installed tree
+      if (!inst) {
+        if (!meta.optional) process.exit(1);
+        continue;
+      }
+      if (meta.version && inst.version !== meta.version) process.exit(1);
+    }
+  ' "$main/package-lock.json" "$main/node_modules/.package-lock.json"
+}
+
 # Make sure a package dir has node_modules: clone from main when the lockfiles
-# match, otherwise npm ci.
+# match and main's installed tree is current, otherwise npm ci.
 ensure_deps() {
   local pkg="$1"
   local wt="$WORKTREE/$pkg"
@@ -126,15 +185,28 @@ ensure_deps() {
   if [ "$WORKTREE" != "$MAIN_CHECKOUT" ] \
      && [ -d "$main/node_modules" ] \
      && cmp -s "$wt/package-lock.json" "$main/package-lock.json"; then
-    echo "[bootstrap] cloning $pkg/node_modules from main (lockfiles match)"
-    if clone_tree "$main/node_modules" "$wt/node_modules"; then
-      return
+    if main_tree_current "$main"; then
+      echo "[bootstrap] cloning $pkg/node_modules from main (lockfiles match)"
+      if clone_tree "$main/node_modules" "$wt/node_modules"; then
+        return
+      fi
+      echo "[bootstrap] clone failed; falling back to npm ci"
+    else
+      echo "[bootstrap] main's $pkg/node_modules is stale relative to its lockfile (rerun npm ci there); falling back to npm ci"
     fi
-    echo "[bootstrap] clone failed; falling back to npm ci"
   fi
 
-  echo "[bootstrap] npm ci in $pkg"
-  ( cd "$wt" && npm ci )
+  # use the repo's pinned node for npm ci -- a mismatched system node can
+  # break the desktop postinstall (native rebuilds, generate.ts)
+  local node_bin
+  node_bin="$(pinned_node_bin)"
+  if [ -n "$node_bin" ]; then
+    echo "[bootstrap] npm ci in $pkg (using pinned node from $node_bin)"
+    ( cd "$wt" && PATH="$node_bin:$PATH" npm ci )
+  else
+    echo "[bootstrap] npm ci in $pkg (pinned node not found; using system node)"
+    ( cd "$wt" && npm ci )
+  fi
 }
 
 # Copy a generated, gitignored file from the main checkout when the worktree is
@@ -208,7 +280,8 @@ make_dev_shim() {
     echo "[bootstrap] NOTE: worktree GWT output missing; build it first: (cd src/gwt && ant draft)"
   fi
   echo "[bootstrap] run desktop-dev e2e from e2e/rstudio with:"
-  echo "[bootstrap]   PW_RSTUDIO_DEV=1 RSTUDIO_CPP_BUILD_OUTPUT=\"$dir\" npx playwright test <spec> --project=desktop"
+  echo "[bootstrap]   npm run test:desktop-dev -- <spec>"
+  echo "[bootstrap] (the wrapper detects this shim when the worktree has no configured build/)"
 }
 
 # Configure a CMake build directory for the worktree. Always a fresh configure
