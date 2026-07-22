@@ -18,6 +18,8 @@ This file covers RStudio-specific gotchas that aren't in the README.
 
 - Skim `e2e/rstudio/tests/` for an existing similar test.
 - Skim `e2e/rstudio/pages/`, `actions/`, and `utils/` for existing helpers.
+- Extend `PageObject` (panes) or `FramePageObject` (iframe-hosted UI) from
+  `pages/page_object_base_classes.ts` when adding a page object.
 
 ## Universal rules
 
@@ -28,7 +30,10 @@ This file covers RStudio-specific gotchas that aren't in the README.
    Inputs driven by a discrete trigger like `press('Enter')` or a button click
    (e.g., the console Find bar) work fine with `fill()`, which has the bonus
    of replacing text instead of appending. Start with `fill()`; switch to
-   `pressSequentially()` only if the handler doesn't fire.
+   `pressSequentially()` only if the handler doesn't fire. For GWT type-ahead
+   widgets (e.g. the Open File dialog's file list) even `pressSequentially()`
+   can outrace the per-keystroke handler -- use `typeSlowly`
+   (`@utils/constants`, 200ms/char).
 
 2. **Force-click Ace textareas:** `await locator.click({ force: true })`. An
    `ace_content` div overlays the hidden textarea and intercepts normal
@@ -90,6 +95,8 @@ This file covers RStudio-specific gotchas that aren't in the README.
    undeliverable console input up to ~30s, and a suspended session's relaunch
    can exceed 30s. `waitForSessionRestart` / `restartSessionWithSentinel`
    (`@utils/project`) already encode both -- reuse them.
+   `ConsolePaneActions.restartSession()` is the third option, for when the
+   test needs `.rs.api.restartSession()` itself (e.g. its `clean:` argument).
 
 5. **Size timeouts to what gates the UI.** The Python-interpreters modal opens
    only after a machine-wide scan (60s), not a flat 15s. Before tagging a test
@@ -104,14 +111,33 @@ This file covers RStudio-specific gotchas that aren't in the README.
    under the rsession's home. Reuse `openFile` / `waitForActiveDocument`, which
    handle it -- don't compare `doc.path` to an absolute path yourself.
 
+8. **Bracket async-dispatched console jobs with `waitForConsoleBusy`.** A
+   command dispatched off-tick (e.g. `executeCurrentChunk`) may not have
+   started when a follow-up idle-wait samples the console, which then reads
+   spuriously idle. Wait for busy first (`waitForConsoleBusy`,
+   `pages/console_pane.page.ts`), then for idle.
+
+9. **A stray modal reads as "intercepts pointer events".** Any GWT modal
+   renders a `gwt-PopupPanelGlass` overlay, so an unexpected dialog (e.g.
+   "Error Listing Packages" after resume) surfaces as an opaque
+   `gwt-PopupPanelGlass intercepts pointer events` timeout at an unrelated
+   click. Call `dismissBlockingModals` (`pages/modals.page.ts`) after
+   suspend/resume/restart; stable dialog-button ids are exported there
+   (`CONFIRM_BTN` = `#rstudio_dlg_ok`, `YES_BTN`, `NO_BTN`, `CANCEL_BTN`).
+
 ## Server mode and the sandbox
 
-1. **Do file and git operations through the R console, not Node's `fs`.** The
-   rsession's HOME differs from what Node sees -- Desktop's sandboxed HOME and
-   Server's passwd-db HOME are both invisible to `fs`/`os.homedir()`. Git
-   commits from a test need inline `-c user.name=... -c user.email=...`, since
-   CI runners have no global git config. Use `@utils/heredoc` to send
-   multi-line file content through the console cleanly.
+1. **Use the `@utils/files` helpers for test-file operations, not raw Node
+   `fs`.** `writeAndOpenFile` / `seedSandboxFile` / `removeSandboxFile` /
+   `closeAndDeleteSandboxFiles` auto-detect whether the workdir is writable
+   by the test process and fall back to R-console `writeLines`/`unlink` when
+   it isn't (Server's rsession runs as a different user; remote rsessions
+   have a different filesystem), staying byte-identical to `fs.writeFileSync`
+   (`sep="", useBytes=TRUE`). Git operations go through the R console, with
+   inline `-c user.name=... -c user.email=...` since CI runners have no
+   global git config. When interpolating a test-computed value into an R
+   command, use `rStringLiteral` / `rPathLiteral` (`@utils/r`) -- never
+   hand-build `"${path}"`. `@utils/heredoc` sends multi-line content cleanly.
 
 2. **Components that store secrets via the OS keychain need it disabled in
    the fixture.** Under the sandboxed HOME, macOS has no login keychain, so a
@@ -149,6 +175,19 @@ This file covers RStudio-specific gotchas that aren't in the README.
    `page.context().waitForEvent('page')` *before* issuing the command that
    opens it, then assert the new page's URL contains the expected `view=<name>`
    marker. Works the same way for Desktop (Electron satellite) and Server.
+
+5. **Drive Ace through the `AceEditor` page object**
+   (`pages/ace_editor.page.ts`) rather than ad-hoc `page.evaluate`. An empty
+   marker (`new AceEditor(page, '')`) resolves the *active* editor via the
+   bridge -- prefer it. A non-empty marker does a `.ace_editor` DOM walk that
+   can land on stale editors left after a tab close; use it only to target a
+   non-active tab. Typed Ace bindings live in `@utils/ace` -- extend them
+   there instead of casting at the call site.
+
+6. **Probe R-side state with `evalRLogical`**
+   (`actions/console_pane.actions.ts`): runs an R expression returning one
+   logical and reads `TRUE`/`FALSE` back from the console -- e.g.
+   `evalRLogical('requireNamespace("dplyr", quietly = TRUE)')`.
 
 ## Feature-specific patterns
 
