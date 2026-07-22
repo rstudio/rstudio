@@ -68,7 +68,7 @@ const setupProject = {
   // credentials (POSIT_PASSWORD, COPILOT_PASSWORD) into pages, and a
   // trace, video, or screenshot would capture them into the report.
   // Diagnostic context comes from the flows' own error messages instead
-  // (step name, page URL); PW_DEBUG_AUTH=1 opts into flow-owned page dumps
+  // (step name, page URL); PW_DEBUG_AUTH_CAPTURE=1 opts into flow-owned page dumps
   // for debugging login-page changes (see utils/auth-debug.ts).
   use: { trace: 'off' as const, video: 'off' as const, screenshot: 'off' as const },
 };

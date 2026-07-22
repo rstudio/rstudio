@@ -21,7 +21,7 @@ import {
   STATUS_OK,
   STATUS_PROMPT_DEVICE_FLOW,
 } from '../utils/copilot-agent';
-import { authorizeDeviceCode } from '../utils/github-device-authorize';
+import { authorizeDeviceCode, GitHubLoginError } from '../utils/github-device-authorize';
 import { launchAuthBrowser } from '../utils/auth-debug';
 
 /**
@@ -294,7 +294,7 @@ async function step<T>(page: Page, name: string, fn: () => Promise<T>, fatal = f
     const msg = err instanceof Error ? err.message : String(err);
     // page.url() is the one piece of non-sensitive context always available
     // with artifacts disabled for this project (see playwright.config.ts);
-    // guard it in case the page is already closed. PW_DEBUG_AUTH=1 opts into
+    // guard it in case the page is already closed. PW_DEBUG_AUTH_CAPTURE=1 opts into
     // page captures via the shared auth browser (utils/auth-debug.ts).
     let url = 'unknown';
     try {
@@ -552,7 +552,6 @@ setup('authenticate Posit AI', async () => {
     const { verification_uri, verification_uri_complete, user_code, device_code, interval } =
       await fetchDeviceCode();
     console.log(`[auth-setup] verification_uri: ${verification_uri}`);
-    console.log(`[auth-setup] user_code: ${user_code}`);
     // Drive the browser and poll for the token concurrently. Promise.all
     // attaches a handler to both, so a failure in automateLogin can't leave the
     // poll as an orphaned unhandled rejection. interval defaults to 5s per
@@ -696,7 +695,7 @@ setup('authenticate GitHub Copilot', async () => {
         outcome: 'unavailable',
         reason: 'Not provisioning GitHub Copilot: COPILOT_USER/COPILOT_PASSWORD are unset (so no sign-in) and PW_SANDBOX_NO_SEED_CREDENTIALS blocked copying the local credential store. Set the credentials for the sign-in flow, or unset the seed kill-switch while signed in to Copilot locally.',
       });
-      console.log('[auth-setup] no Copilot credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Copilot tests will skip');
+      console.log('[auth-setup] no GitHub credentials set and PW_SANDBOX_NO_SEED_CREDENTIALS set; Copilot tests will skip');
       failIfStrict('GitHub Copilot', 'COPILOT_USER/COPILOT_PASSWORD are unset and PW_SANDBOX_NO_SEED_CREDENTIALS blocked the local copy');
       return;
     }
@@ -707,7 +706,7 @@ setup('authenticate GitHub Copilot', async () => {
         outcome: 'unavailable',
         reason: `Not provisioning GitHub Copilot: no local credential store (${hostDir} does not exist) and COPILOT_USER/COPILOT_PASSWORD are unset. Sign in to Copilot locally, or set the credentials for the sign-in flow.`,
       });
-      console.log(`[auth-setup] no ${hostDir} on host and no Copilot credentials set; Copilot tests will skip`);
+      console.log(`[auth-setup] no ${hostDir} on host and no GitHub credentials set; Copilot tests will skip`);
       failIfStrict('GitHub Copilot', 'not signed in to Copilot locally and COPILOT_USER/COPILOT_PASSWORD are unset');
       return;
     }
@@ -753,7 +752,7 @@ setup('authenticate GitHub Copilot', async () => {
       // With credentials the sandbox user-home may already hold a token from a
       // prior source; the agent then just confirms it, which is success.
       if (initiate.status === STATUS_ALREADY_SIGNED_IN || initiate.status === STATUS_OK) {
-        console.log(`[auth-setup] Copilot agent reports already signed in (${initiate.user ?? 'unknown user'})`);
+        console.log('[auth-setup] Copilot agent reports already signed in');
         return;
       }
 
@@ -783,13 +782,13 @@ setup('authenticate GitHub Copilot', async () => {
         // has no Copilot access -- deterministic, so fail the run with the
         // remedy rather than skipping forever.
         throw new CopilotTerminalError(
-          `Copilot sign-in completed but the account (${finalStatus.user ?? user}) has no Copilot access (NotAuthorized). Enable Copilot Free at https://github.com/settings/copilot and re-run.`,
+          'Copilot sign-in completed but the account has no Copilot access (NotAuthorized). Enable Copilot Free at https://github.com/settings/copilot and re-run.',
         );
       }
       if (finalStatus.status !== STATUS_OK && finalStatus.status !== STATUS_ALREADY_SIGNED_IN) {
         throw new Error(`Copilot sign-in ended in unexpected status "${finalStatus.status}"`);
       }
-      console.log(`[auth-setup] Copilot signed in as ${finalStatus.user ?? '(unknown user)'}`);
+      console.log('[auth-setup] Copilot signed in');
     })();
 
     // Bound the whole flow under this test's 300s timeout (set above), for the
@@ -797,7 +796,7 @@ setup('authenticate GitHub Copilot', async () => {
     // rather than hit the harness timeout and take the whole run down.
     await withDeadline(flow, 270_000, 'overall Copilot sign-in deadline exceeded');
   } catch (err) {
-    if (err instanceof CopilotTerminalError) throw err;
+    if (err instanceof CopilotTerminalError || err instanceof GitHubLoginError) throw err;
     const msg = err instanceof Error ? err.message : String(err);
     writeAuthStatus(sandbox, 'copilot', {
       source: 'login',

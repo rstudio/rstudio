@@ -19,7 +19,7 @@ import * as path from 'path';
  * to disk. Playwright tracing is deliberately not used even for debugging:
  * a trace records fill() argument values, i.e. the password itself.
  *
- * Set PW_DEBUG_AUTH=1 to also write a numbered full-page screenshot and the
+ * Set PW_DEBUG_AUTH_CAPTURE=1 to also write a numbered full-page screenshot and the
  * page HTML into test-results/ on every page load, plus a final capture just
  * before the browser closes (which is the failure-state capture when a flow
  * throws). That is what you want when a provider's login page changes markup
@@ -32,8 +32,21 @@ import * as path from 'path';
  * the next load or the final capture.
  */
 
-export function authDebugEnabled(): boolean {
-  return ['1', 'true'].includes((process.env.PW_DEBUG_AUTH ?? '').toLowerCase());
+// PW_DEBUG_AUTH_CAPTURE: write page screenshots + HTML to disk.
+export function authCaptureEnabled(): boolean {
+  return ['1', 'true'].includes((process.env.PW_DEBUG_AUTH_CAPTURE ?? '').toLowerCase());
+}
+
+// PW_DEBUG_AUTH_STEPS: emit the sign-in flows' step-level console output --
+// the browser narration ([gh-authorize]: which page, which field, button
+// state) and the Copilot agent's raw diagnostics ([copilot-agent]: LSP
+// notifications, spawn/exit, checkStatus polling). Off by default, so a normal
+// run shows only the [auth-setup] outcome milestones; this detail is opt-in
+// for troubleshooting a flow. Independent of authCaptureEnabled -- this output
+// is authored text kept free of account identifiers, whereas the captures
+// include unredacted page content, so the lower-risk detail has its own switch.
+export function authStepsEnabled(): boolean {
+  return ['1', 'true'].includes((process.env.PW_DEBUG_AUTH_STEPS ?? '').toLowerCase());
 }
 
 // One shared user agent: a plain desktop Chrome, so the login pages serve
@@ -56,13 +69,36 @@ function hostLabel(page: Page): string {
   }
 }
 
+// Origin + path only, dropping the query string. Device-flow URLs carry the
+// user code in a query param (e.g. .../login?redirect=...user_code=XXXX-XXXX),
+// so logging the raw URL would print the code. The path alone is enough to
+// tell which page we're on.
+function safeUrl(page: Page): string {
+  try {
+    const u = new URL(page.url());
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return '(unknown url)';
+  }
+}
+
 /**
  * Launch the headless browser a sign-in flow drives, with logging and the
- * PW_DEBUG_AUTH capture wired up. Callers must close via session.close() (in
+ * PW_DEBUG_AUTH_CAPTURE capture wired up. Callers must close via session.close() (in
  * a finally), which takes the final capture and shuts the browser down.
  */
 export async function launchAuthBrowser(flowName: string): Promise<AuthBrowserSession> {
-  const log = (msg: string) => console.log(`[auth-browser] [${flowName}] ${msg}`);
+  // Two gates, so quiet mode (neither flag) stays purely [auth-setup]:
+  //   stepLog    -- browser diagnostics (final page, page errors); shown with
+  //                 PW_DEBUG_AUTH_STEPS, same switch as the flows' step logs.
+  //   captureLog -- capture-mechanism messages (what was written); shown with
+  //                 PW_DEBUG_AUTH_CAPTURE, and only reached when it's set.
+  const stepLog = (msg: string) => {
+    if (authStepsEnabled()) console.log(`[auth-browser] [${flowName}] ${msg}`);
+  };
+  const captureLog = (msg: string) => {
+    if (authCaptureEnabled()) console.log(`[auth-browser] [${flowName}] ${msg}`);
+  };
 
   const browser = await chromium.launch({
     headless: true,
@@ -77,9 +113,9 @@ export async function launchAuthBrowser(flowName: string): Promise<AuthBrowserSe
   });
   const page = await context.newPage();
 
-  page.on('pageerror', (err) => log(`[pageerror] ${err.message}`));
+  page.on('pageerror', (err) => stepLog(`[pageerror] ${err.message}`));
   page.on('console', (msg) => {
-    if (msg.type() === 'error') log(`[console.error] ${msg.text()}`);
+    if (msg.type() === 'error') stepLog(`[console.error] ${msg.text()}`);
   });
 
   // Numbered captures tell the story in order; the counter also keys the
@@ -89,21 +125,21 @@ export async function launchAuthBrowser(flowName: string): Promise<AuthBrowserSe
     try {
       seq += 1;
       const name = `auth-debug-${flowName}-${String(seq).padStart(2, '0')}-${label}`;
-      log(`[${label}] page ${page.url()} (title: ${await page.title().catch(() => '?')})`);
-      if (!authDebugEnabled()) return;
+      stepLog(`[${label}] page ${safeUrl(page)} (title: ${await page.title().catch(() => '?')})`);
+      if (!authCaptureEnabled()) return;
       const outDir = path.join(__dirname, '..', 'test-results');
       fs.mkdirSync(outDir, { recursive: true });
       await page.screenshot({ path: path.join(outDir, `${name}.png`), fullPage: true });
       fs.writeFileSync(path.join(outDir, `${name}.html`), await page.content());
-      log(`[${label}] saved test-results/${name}.png and .html`);
+      captureLog(`[${label}] saved test-results/${name}.png and .html`);
     } catch (dumpErr) {
       // A failed capture must never replace the flow failure it documents.
-      log(`[${label}] could not capture page: ${(dumpErr as Error).message}`);
+      captureLog(`[${label}] could not capture page: ${(dumpErr as Error).message}`);
     }
   };
 
-  if (authDebugEnabled()) {
-    log('PW_DEBUG_AUTH is set; capturing every page load into test-results/');
+  if (authCaptureEnabled()) {
+    captureLog('PW_DEBUG_AUTH_CAPTURE is set; capturing every page load into test-results/');
     page.on('load', () => {
       void capture(hostLabel(page));
     });
@@ -121,7 +157,7 @@ export async function launchAuthBrowser(flowName: string): Promise<AuthBrowserSe
       } catch (err) {
         // A rejection escaping a caller's finally would replace the in-flight
         // flow error -- log and discard instead.
-        log(`failed to close the sign-in browser: ${(err as Error).message}`);
+        stepLog(`failed to close the sign-in browser: ${(err as Error).message}`);
       }
     },
   };

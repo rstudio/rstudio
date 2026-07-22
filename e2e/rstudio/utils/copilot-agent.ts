@@ -1,6 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { authStepsEnabled } from './auth-debug';
 
 /**
  * A minimal stdio LSP client for the GitHub copilot-language-server, just
@@ -48,8 +49,25 @@ interface JsonRpcMessage {
   error?: { code: number; message: string; data?: unknown };
 }
 
+// Agent diagnostics -- LSP notifications, spawn/exit, checkStatus polling --
+// are opt-in via PW_DEBUG_AUTH_STEPS, the same switch that gates the browser
+// flow's step narration (see auth-debug.ts). A normal run shows only the
+// [auth-setup] outcome milestones; this is the raw agent chatter you turn on
+// when troubleshooting. Failures still surface regardless: they reject/throw
+// and the caller (auth.setup.ts) reports them under [auth-setup].
 function log(msg: string): void {
-  console.log(`[copilot-agent] ${msg}`);
+  if (authStepsEnabled()) console.log(`[copilot-agent] ${msg}`);
+}
+
+// Notifications and status results from the agent can carry the signed-in
+// GitHub username at arbitrary nesting depth (e.g. didChangeStatus/v2's
+// statuses[].result.user, or CheckStatusResult.user directly). Redact any
+// "user" field before logging so account identifiers never land in test
+// output or CI logs. String-level redaction (rather than walking the object)
+// is deliberate: it catches the field regardless of how deep it's nested,
+// which a shallow destructure would miss.
+function redactJson(value: unknown): string {
+  return JSON.stringify(value).replace(/"user":\s*"[^"]*"/g, '"user":"[redacted]"');
 }
 
 // Where an installed RStudio keeps the bundled agent, per platform. Only the
@@ -202,7 +220,7 @@ export class CopilotAgent {
     } else if (msg.method !== undefined) {
       // Notification; observe and move on. didChangeStatus in particular is a
       // useful trace of where the sign-in stands.
-      log(`notification "${msg.method}": ${JSON.stringify(msg.params ?? {}).slice(0, 200)}`);
+      log(`notification "${msg.method}": ${redactJson(msg.params ?? {}).slice(0, 200)}`);
     }
   }
 
@@ -282,12 +300,12 @@ export class CopilotAgent {
     let last: CheckStatusResult = { status: 'unknown' };
     while (Date.now() < deadline) {
       last = await this.checkStatus();
-      log(`checkStatus: ${JSON.stringify(last)}`);
+      log(`checkStatus: ${redactJson(last)}`);
       if (last.status === STATUS_OK || last.status === STATUS_ALREADY_SIGNED_IN) return last;
       if (last.status === STATUS_NOT_AUTHORIZED) return last;
       await new Promise((r) => setTimeout(r, 2000));
     }
-    throw new Error(`sign-in did not complete within ${timeoutMs}ms (last status: ${JSON.stringify(last)})`);
+    throw new Error(`sign-in did not complete within ${timeoutMs}ms (last status: ${redactJson(last)})`);
   }
 
   /**

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import crypto from 'crypto';
-import { launchAuthBrowser } from './auth-debug';
+import { authStepsEnabled, launchAuthBrowser } from './auth-debug';
 
 /**
  * The browser half of the GitHub Copilot device-flow sign-in: given a
@@ -33,8 +33,24 @@ export interface AuthorizeDeviceCodeOptions {
   totpSecret?: string;
 }
 
+// Per-step narration, off unless PW_DEBUG_AUTH_STEPS is set (see auth-debug.ts).
+// A normal run reports only the [auth-setup] outcome milestones; these lines
+// are the opt-in detail for troubleshooting the GitHub flow. Failures don't
+// rely on this -- they throw (GitHubLoginError and friends) and surface
+// regardless.
 function log(msg: string): void {
-  console.log(`[gh-authorize] ${msg}`);
+  if (authStepsEnabled()) console.log(`[gh-authorize] ${msg}`);
+}
+
+// A deterministic GitHub-side login rejection (wrong username/password). The
+// caller (auth.setup.ts) treats this as fatal, matching how a wrong
+// POSIT_PASSWORD fails the Posit AI sign-in flow: credentials were set
+// deliberately, so a rejection should turn the run red, not quietly skip.
+export class GitHubLoginError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GitHubLoginError';
+  }
 }
 
 // Locator.isVisible({ timeout }) does not actually wait -- Playwright's own
@@ -98,6 +114,14 @@ async function signIn(page: Page, user: string, password: string, totpSecret?: s
     await loginField.fill(user);
     await page.locator('#password').fill(password);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+
+    // GitHub re-renders the login page with this banner on a rejected
+    // password; a short wait is enough since it's part of the page GitHub
+    // sends back, not something that appears after a delay.
+    const loginError = page.getByText(/incorrect username or password/i);
+    if (await appears(loginError, 3_000)) {
+      throw new GitHubLoginError('GitHub rejected the login: incorrect username or password.');
+    }
   } else {
     log('no login form (session may already be authenticated)');
   }
@@ -144,13 +168,14 @@ async function enterUserCode(page: Page, userCode: string): Promise<void> {
   await first.click();
   await first.pressSequentially(code, { delay: 150 });
 
-  // Read every user-code box back so a partial entry is visible in the log
-  // before we submit.
+  // Read every user-code box back to confirm the entry landed correctly
+  // before submitting -- log only whether it matches, never the code itself
+  // (it's a live device-authorization code, not something to print).
   const boxes = page.locator('[id^="user-code-"]');
   const n = await boxes.count();
   const vals: string[] = [];
   for (let i = 0; i < n; i++) vals.push(await boxes.nth(i).inputValue().catch(() => '?'));
-  log(`user-code boxes (${n}) hold "${vals.join('')}" (expected "${code}")`);
+  log(`user-code boxes (${n}) filled; entry matches expected: ${vals.join('').replace(/-/g, '') === code}`);
   await page.getByRole('button', { name: /continue/i }).click();
 }
 
@@ -212,7 +237,7 @@ async function authorize(page: Page): Promise<void> {
  * until it reports OK).
  */
 export async function authorizeDeviceCode(opts: AuthorizeDeviceCodeOptions): Promise<void> {
-  // The shared launcher owns the browser config and the PW_DEBUG_AUTH page
+  // The shared launcher owns the browser config and the PW_DEBUG_AUTH_CAPTURE page
   // captures; session.close() takes the final capture (the failure-state
   // record when a step throws) and never itself throws.
   const session = await launchAuthBrowser('copilot');
