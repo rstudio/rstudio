@@ -224,10 +224,17 @@
 
 .rs.addFunction("truncateDataCapture", function(x, max.print, cols.max.print)
 {
-  # truncate rows first, then coerce; truncate columns on the plain
-  # data.frame, as '[' dispatch on the original object can misbehave --
-  # e.g. [.data.table evaluates c(1:n) in the frame of the table and
-  # returns the integer vector rather than the leading columns
+  # the ordering here is deliberate; 'x' is a user object, and may not even
+  # be backed by a data.frame (e.g. a dbplyr tbl_sql is a lazy query), so:
+  #
+  # 1. truncate rows with head() while dispatch is still meaningful: for a
+  #    lazy table this compiles to a SQL LIMIT, and for large local tables
+  #    it bounds the copy made by the coercion below;
+  # 2. normalize via each class's own as.data.frame() method;
+  # 3. only then truncate columns, on the plain data.frame -- '[' semantics
+  #    diverge across classes; e.g. [.data.table evaluates c(1:n) in the
+  #    frame of the table and returns the integer vector rather than the
+  #    leading columns
   data <- as.data.frame(head(x, max.print))
 
   # an as.data.frame method may return the object with its class intact,
