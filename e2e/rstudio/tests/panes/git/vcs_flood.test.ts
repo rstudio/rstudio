@@ -63,7 +63,11 @@ test.describe('VCS file change flood (#18257)', () => {
     const paletteItem = page.locator(`${PALETTE_LIST} >> text=Create a New Project...`);
     await expect(paletteItem).toBeVisible({ timeout: 5000 });
     await paletteItem.click();
-    await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 15000 });
+    // The wizard shows only after the get_new_project_context RPC returns,
+    // and that call probes the build toolchain (canBuildCpp/packrat); on a
+    // cold Windows CI runner it has been observed taking ~57s, so give it a
+    // generous budget.
+    await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 90000 });
 
     await page.locator(NEW_DIRECTORY_OPTION).click();
     await page.locator(NEW_PROJECT_OPTION).click();

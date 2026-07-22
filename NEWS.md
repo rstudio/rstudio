@@ -36,6 +36,7 @@
 - ([#18270](https://github.com/rstudio/rstudio/issues/18270)): Fixed an issue on Windows where native dialogs shown by R (e.g. via `utils::askYesNo()`, or when `install.packages()` asks about installing from sources) could open behind the RStudio Desktop window, making the IDE appear frozen while R waited on a dialog the user could not see.
 - ([#8345](https://github.com/rstudio/rstudio/issues/8345)): Help pages opened via the Help pane's "Show in new window" button now follow the IDE's editor theme, instead of always rendering with a light palette.
 - ([#18305](https://github.com/rstudio/rstudio/issues/18305)): The first run of a new RStudio build now always checks for Posit Assistant updates, instead of the check being suppressed for up to the update-check interval (two hours by default) when the previous build had checked recently.
+- ([#18326](https://github.com/rstudio/rstudio/issues/18326)): Fixed an issue where "Restart R and Run All Chunks" (and "Restart R and Clear Output") could intermittently restart R without then running the chunks (or clearing the output).
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)
