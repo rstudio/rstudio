@@ -235,6 +235,11 @@ public:
          return core::FilePath();
    }
 
+   core::FilePath resourcePath() const
+   {
+      return resourcePath_;
+   }
+
    std::string defaultRVersion() const
    {
       return defaultRVersion_;

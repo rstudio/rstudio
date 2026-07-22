@@ -95,9 +95,13 @@ FilePath rPostbackPath()
 
 FilePath rPostbackScriptsDir()
 {
-   // postback scripts should lie in a 'postback' directory,
-   // located in the same folder as the 'rpostback' binary
-   return rPostbackPath().getParent().completeChildPath("postback");
+   // postback scripts normally sit next to the rpostback binary; in the
+   // in-place bin/<platform>/ layout the binary moves but the shared scripts
+   // stay at the top-level bin/postback
+   FilePath dir = rPostbackPath().getParent().completeChildPath("postback");
+   if (!dir.exists())
+      dir = session::options().resourcePath().completeChildPath("bin/postback");
+   return dir;
 }
 
 FilePath rPostbackScriptPath(const std::string& scriptName)
