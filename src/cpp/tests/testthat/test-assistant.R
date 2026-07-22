@@ -30,11 +30,16 @@ test_that("describeChildren does not use S3 dispatch when subsetting (#18317)", 
    # simulate a data.table-style '[' method, which treats indices
    # as row indices and so returns all columns
    registerS3method("[", "rowsFirst", function(x, i) unclass(x))
+   on.exit({
+      table <- get(".__S3MethodsTable__.", envir = asNamespace("base"))
+      rm(list = "[.rowsFirst", envir = table)
+   }, add = TRUE)
 
    value <- structure(as.list(rep(0, 51)), class = "rowsFirst")
 
    expect_no_warning(children <- .rs.assistant.describeChildren(value, 50L))
    expect_length(children, 50L)
+   expect_identical(unclass(children[[1]]$name), "[[1]]")
 })
 
 test_that("describeChildren handles wide data.tables without warnings (#18317)", {
