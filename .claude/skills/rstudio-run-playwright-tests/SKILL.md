@@ -31,6 +31,14 @@ npm run test:server-dev -- -g "test name here"
 2. `(cd src/gwt && ant draft)` -- GWT transpile (2-5 min; rerun after Java edits)
 3. `(cd src/node/desktop && npm ci)` -- Electron deps
 
+In a secondary worktree, run `scripts/bootstrap-worktree.sh` instead of steps
+1 and 3: when the worktree has no configured `build/`, the wrapper skips the
+cmake build and automatically points the launcher at the worktree's
+`build-dev-shim` (worktree GWT + main checkout's built session). Step 2 is
+still on you -- the wrapper only warns when `src/gwt/src` is newer than the
+precompiled bootstrap. Do NOT symlink the worktree's `build/` at the main
+checkout's: its conf would silently serve main's GWT.
+
 Tests that exercise `doRestart()` (e.g. uninstall Posit Assistant) aren't
 supported in this mode.
 

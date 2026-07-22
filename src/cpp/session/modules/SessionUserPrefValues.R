@@ -2628,16 +2628,6 @@
    clear = function() { .rs.clearUserPref("assistant_nes_autoshow") }
 )
 
-# Display account and billing messages from Posit Assistant
-#
-# When enabled, RStudio will show messages from the Posit Assistant in a message
-# box.
-.rs.uiPrefs$assistantShowMessages <- list(
-   get = function() { .rs.getUserPref("assistant_show_messages") },
-   set = function(value) { .rs.setUserPref("assistant_show_messages", value) },
-   clear = function() { .rs.clearUserPref("assistant_show_messages") }
-)
-
 # Show Posit Assistant button in toolbar
 #
 # When enabled, the Posit Assistant button is displayed in the main toolbar.

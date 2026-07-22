@@ -2,8 +2,8 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 
 # One workflow that drives the reusable per-OS E2E "engines" three ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday (two engines, except
-#     Thursday's three), so every engine runs at least once a week without
-#     running the whole matrix daily.
+#     Tuesday's, Wednesday's, and Thursday's three), so every engine runs at
+#     least once a week without running the whole matrix daily.
 #     No weekday pairs two deb-based engines.
 #   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
 #   - Manual dispatch: every engine at once, optionally against a specific daily
@@ -57,19 +57,19 @@ jobs:
         name: Select engines for this run
         run: |
           # workflow_dispatch and the Sunday cron run every engine; the weekday
-          # cron (Mon-Fri) runs a fixed slate per day (a pair, except Thursday's
-          # three). Each engine runs once a week except macos26, windows2025,
-          # and ubuntu24s, which run twice.
-          ALL='["fedora43","fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13"]'
+          # cron (Mon-Fri) runs a fixed slate per day (a pair, except Tuesday's,
+          # Wednesday's, and Thursday's three). Each engine runs once a week
+          # except macos26, windows2025, and ubuntu24s, which run twice.
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","macos15"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
               1) SEL='["ubuntu24d","macos26"]' ;;
-              2) SEL='["ubuntu24s","windows2025"]' ;;
-              3) SEL='["ubuntu26","fedora44"]' ;;
-              4) SEL='["fedora43","debian13","macos26"]' ;;
-              5) SEL='["ubuntu24s","windows2025"]' ;;
+              2) SEL='["ubuntu24s","windows2025","rocky10"]' ;;
+              3) SEL='["ubuntu26","fedora44","macos15"]' ;;
+              4) SEL='["fedora43","debian13","windows2025"]' ;;
+              5) SEL='["ubuntu24s","macos26"]' ;;
               # Only reachable by re-running a weekday run on Sat/Sun, or if the
               # Sunday cron above changed without updating the check above.
               # Fail loudly rather than silently selecting nothing.
@@ -89,6 +89,7 @@ jobs:
       macos:        ${{ steps.resolve.outputs.macos }}
       windows:      ${{ steps.resolve.outputs.windows }}
       noble_arm64:  ${{ steps.resolve.outputs.noble_arm64 }}
+      rocky:        ${{ steps.resolve.outputs.rocky }}
     steps:
       - id: resolve
         name: Build per-platform installer URLs for a specific version
@@ -109,6 +110,7 @@ jobs:
               echo "macos="
               echo "windows="
               echo "noble_arm64="
+              echo "rocky="
             } >> "$GITHUB_OUTPUT"
             echo "No installer URLs to resolve (building from source or using the latest daily)."
             exit 0
@@ -141,6 +143,7 @@ jobs:
           MAC=$(emit electron macos) || exit 1
           WIN=$(emit electron windows) || exit 1
           NARM=$(emit electron noble-arm64) || exit 1
+          ROCKY=$(emit electron rhel10-arm64) || exit 1
           {
             echo "rhel=$RHEL"
             echo "noble_amd64=$NOBLE"
@@ -148,6 +151,7 @@ jobs:
             echo "macos=$MAC"
             echo "windows=$WIN"
             echo "noble_arm64=$NARM"
+            echo "rocky=$ROCKY"
           } >> "$GITHUB_OUTPUT"
           echo "Resolved URLs for version $VERSION."
 
@@ -234,6 +238,22 @@ jobs:
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
+  macos15:
+    name: macOS 15 x86_64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos15') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-15-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      build_from_source: ${{ inputs.build_from_source || false }}
+      # Same universal macOS .dmg the arm64 engine tests; the daily manifest
+      # ships one "macos" installer for both architectures.
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
   windows2025:
     name: Windows Server 2025
     needs: [pick, resolve]
@@ -261,3 +281,19 @@ jobs:
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_arm64 }}
+
+  rocky10:
+    name: Rocky 10 arm64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'rocky10') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-10-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      build_from_source: ${{ inputs.build_from_source || false }}
+      # RHEL/Rocky 10 arm64 daily .rpm (served from rhel9/arm64 as an
+      # aarch64.rpm); the Rocky engine installs the same package.
+      rstudio_installer_url: ${{ needs.resolve.outputs.rocky }}

@@ -65,7 +65,10 @@
    idxs <- seq_len(n)
    nms <- names(value)
    keys <- if (is.null(nms)) character(n) else nms[idxs]
-   vals <- value[idxs]
+
+   # use .subset() to avoid S3 dispatch; e.g. [.data.table would
+   # treat 'idxs' as row indices and return all columns
+   vals <- .subset(value, idxs)
 
    .mapply(function(idx, key, val) {
       list(
