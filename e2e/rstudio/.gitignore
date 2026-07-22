@@ -1,6 +1,9 @@
 node_modules/
 dist/
 test-results/
+# Page dumps written by the prototype flows (screenshots/HTML of the live
+# GitHub pages); regenerated on every failed run.
+prototypes/last-*
 # Per-run HTML report dirs (playwright-report-<timestamp>) and the
 # playwright-report symlink that points at the most recent one.
 playwright-report
