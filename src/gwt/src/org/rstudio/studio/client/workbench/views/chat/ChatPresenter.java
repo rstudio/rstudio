@@ -57,9 +57,9 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompl
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
@@ -654,9 +654,9 @@ public class ChatPresenter extends BasePresenter
    // presenter is delay-loaded. Also invoked when Posit Assistant sends a
    // ui/checkForUpdates JSON-RPC request (see ChatCheckForUpdatesEvent).
    //
-   // Unlike the startup flow (checkForUpdates), this always ends in a modal
-   // result dialog and never starts or restarts the backend on its own -- it
-   // only offers to update when an update is available.
+   // Unlike the startup flow (checkForUpdates), every completed check ends in a
+   // modal result dialog and this never starts or restarts the backend on its
+   // own -- it only offers to update when an update is available.
    void onCheckForPositAssistantUpdates()
    {
       if (updateCheckInProgress_)
@@ -666,126 +666,158 @@ public class ChatPresenter extends BasePresenter
       final Command dismissProgress =
          globalDisplay_.showProgress(constants_.chatCheckingForUpdates());
 
-      installManager_.checkForUpdates(true, new PositAiInstallManager.UpdateCheckCallback()
+      try
       {
-         @Override
-         public void onNoUpdateAvailable()
+         installManager_.checkForUpdates(true, new PositAiInstallManager.UpdateCheckCallback()
          {
-            finishUpdateCheck(dismissProgress);
-            globalDisplay_.showMessage(
-               GlobalDisplay.MSG_INFO,
-               constants_.chatCheckForUpdatesCaption(),
-               constants_.chatNoUpdateAvailableMessage());
-         }
-
-         @Override
-         public void onUpdateAvailable(String currentVersion, String newVersion,
-                                       boolean isInitialInstall, boolean isDowngrade,
-                                       boolean additionalProvidersAvailable)
-         {
-            finishUpdateCheck(dismissProgress);
-            if (isInitialInstall)
+            @Override
+            public void onNoUpdateAvailable()
             {
-               promptToInstallUpdate(
+               finishUpdateCheck(dismissProgress);
+               globalDisplay_.showMessage(
+                  GlobalDisplay.MSG_INFO,
                   constants_.chatCheckForUpdatesCaption(),
-                  constants_.chatInstallAvailableConfirmMessage(newVersion),
-                  constants_.chatInstallButton());
+                  constants_.chatNoUpdateAvailableMessage());
             }
-            else if (isDowngrade)
+
+            @Override
+            public void onUpdateAvailable(String currentVersion, String newVersion,
+                                          boolean isInitialInstall, boolean isDowngrade,
+                                          boolean additionalProvidersAvailable)
             {
-               // The recommended version is older than what's installed; make
-               // the downgrade explicit rather than presenting it as an update.
-               promptToInstallUpdate(
-                  constants_.chatDowngradeAvailableTitle(),
-                  constants_.chatDowngradeAvailableMessage(currentVersion, newVersion),
-                  constants_.chatInstallVersionButton(newVersion));
+               finishUpdateCheck(dismissProgress);
+               if (isInitialInstall)
+               {
+                  promptToInstallUpdate(
+                     constants_.chatCheckForUpdatesCaption(),
+                     constants_.chatInstallAvailableConfirmMessage(newVersion),
+                     constants_.chatInstallButton());
+               }
+               else if (isDowngrade)
+               {
+                  // The recommended version is older than what's installed; make
+                  // the downgrade explicit rather than presenting it as an update.
+                  promptToInstallUpdate(
+                     constants_.chatDowngradeAvailableTitle(),
+                     constants_.chatDowngradeAvailableMessage(currentVersion, newVersion),
+                     constants_.chatInstallVersionButton(newVersion));
+               }
+               else
+               {
+                  promptToInstallUpdate(
+                     constants_.chatCheckForUpdatesCaption(),
+                     constants_.chatUpdateAvailableConfirmMessage(currentVersion, newVersion),
+                     constants_.chatUpdateButton());
+               }
             }
-            else
+
+            @Override
+            public void onUnsupportedVersionUpgradeRequired(
+                String currentVersion, String newVersion, boolean isDowngrade)
             {
-               promptToInstallUpdate(
+               finishUpdateCheck(dismissProgress);
+               if (isDowngrade)
+               {
+                  // Installed version is unsupported and the recommended version is
+                  // older: warn about the downgrade while still explaining why the
+                  // change is required.
+                  promptToInstallUpdate(
+                     constants_.chatDowngradeAvailableTitle(),
+                     constants_.chatUnsupportedVersionDowngradeConfirmMessage(currentVersion, newVersion),
+                     constants_.chatInstallVersionButton(newVersion));
+               }
+               else
+               {
+                  promptToInstallUpdate(
+                     constants_.chatCheckForUpdatesCaption(),
+                     constants_.chatUnsupportedVersionUpdateConfirmMessage(currentVersion, newVersion),
+                     constants_.chatUpdateButton());
+               }
+            }
+
+            @Override
+            public void onIncompatibleVersion()
+            {
+               finishUpdateCheck(dismissProgress);
+               showRStudioUpdateRequired(constants_.chatIncompatibleVersion());
+            }
+
+            @Override
+            public void onUnsupportedVersionNoUpdate(String currentVersion)
+            {
+               finishUpdateCheck(dismissProgress);
+               showRStudioUpdateRequired(
+                  constants_.chatUnsupportedVersionNoUpdateMessage(currentVersion));
+            }
+
+            @Override
+            public void onUnsupportedProtocol()
+            {
+               finishUpdateCheck(dismissProgress);
+               showRStudioUpdateRequired(constants_.chatUnsupportedProtocolMessage());
+            }
+
+            @Override
+            public void onManifestUnavailable(String errorMessage)
+            {
+               finishUpdateCheck(dismissProgress);
+               Debug.log("Posit Assistant manifest unavailable: " + errorMessage);
+               globalDisplay_.showErrorMessage(
                   constants_.chatCheckForUpdatesCaption(),
-                  constants_.chatUpdateAvailableConfirmMessage(currentVersion, newVersion),
-                  constants_.chatUpdateButton());
+                  appendDetail(constants_.chatManifestUnavailableMessage(), errorMessage));
             }
-         }
 
-         @Override
-         public void onUnsupportedVersionUpgradeRequired(
-             String currentVersion, String newVersion, boolean isDowngrade)
-         {
-            finishUpdateCheck(dismissProgress);
-            if (isDowngrade)
+            @Override
+            public void onCheckFailed(String errorMessage)
             {
-               // Installed version is unsupported and the recommended version is
-               // older: warn about the downgrade while still explaining why the
-               // change is required.
-               promptToInstallUpdate(
-                  constants_.chatDowngradeAvailableTitle(),
-                  constants_.chatUnsupportedVersionDowngradeConfirmMessage(currentVersion, newVersion),
-                  constants_.chatInstallVersionButton(newVersion));
-            }
-            else
-            {
-               promptToInstallUpdate(
+               finishUpdateCheck(dismissProgress);
+               Debug.log("Posit Assistant update check failed: " + errorMessage);
+               // Always show a framed, non-empty message: the backend error can
+               // be empty or null (transport failures), which showErrorMessage
+               // would otherwise render as an empty (or throwing) dialog.
+               globalDisplay_.showErrorMessage(
                   constants_.chatCheckForUpdatesCaption(),
-                  constants_.chatUnsupportedVersionUpdateConfirmMessage(currentVersion, newVersion),
-                  constants_.chatUpdateButton());
+                  appendDetail(constants_.chatCheckFailedMessage(), errorMessage));
             }
-         }
+         });
+      }
+      catch (Exception e)
+      {
+         // Defensive: a synchronous failure while dispatching the check must not
+         // leave the progress indicator up or the guard stuck -- that would make
+         // the command a silent no-op for the rest of the session.
+         Debug.logException(e);
+         finishUpdateCheck(dismissProgress);
+         globalDisplay_.showErrorMessage(
+            constants_.chatCheckForUpdatesCaption(),
+            constants_.chatCheckFailedMessage());
+      }
+   }
 
-         @Override
-         public void onIncompatibleVersion()
-         {
-            finishUpdateCheck(dismissProgress);
-            showRStudioUpdateRequired(constants_.chatIncompatibleVersion());
-         }
-
-         @Override
-         public void onUnsupportedVersionNoUpdate(String currentVersion)
-         {
-            finishUpdateCheck(dismissProgress);
-            showRStudioUpdateRequired(
-               constants_.chatUnsupportedVersionNoUpdateMessage(currentVersion));
-         }
-
-         @Override
-         public void onUnsupportedProtocol()
-         {
-            finishUpdateCheck(dismissProgress);
-            showRStudioUpdateRequired(constants_.chatUnsupportedProtocolMessage());
-         }
-
-         @Override
-         public void onManifestUnavailable(String errorMessage)
-         {
-            finishUpdateCheck(dismissProgress);
-            globalDisplay_.showErrorMessage(
-               constants_.chatCheckForUpdatesCaption(),
-               constants_.chatManifestUnavailableMessage());
-         }
-
-         @Override
-         public void onCheckFailed(String errorMessage)
-         {
-            finishUpdateCheck(dismissProgress);
-            globalDisplay_.showErrorMessage(
-               constants_.chatCheckForUpdatesCaption(),
-               errorMessage);
-         }
-      });
+   // Appends an optional backend detail to a base message when the detail is
+   // non-empty, so error dialogs always have a meaningful body.
+   private String appendDetail(String base, String detail)
+   {
+      if (detail == null || detail.isEmpty())
+         return base;
+      return base + "\n\n" + detail;
    }
 
    private void finishUpdateCheck(Command dismissProgress)
    {
-      dismissProgress.execute();
+      // Clear the guard first so a failure while dismissing the progress
+      // indicator can't leave the command permanently disabled.
       updateCheckInProgress_ = false;
+      if (dismissProgress != null)
+         dismissProgress.execute();
    }
 
    // An update (or initial install) is available -- offer to install it.
    // Accepting reuses the existing install engine, which stops the running
    // backend under a cross-process lock (refusing if another session is using
-   // Posit Assistant), swaps the installation, and restarts -- preserving the
-   // in-progress conversation via the existing resume mechanism.
+   // Posit Assistant) and swaps the installation; the client then restarts the
+   // backend (onInstallComplete -> initializeChat), preserving the in-progress
+   // conversation via the existing resume mechanism.
    private void promptToInstallUpdate(String caption, String message, String confirmLabel)
    {
       // chat_install_update is refused unless Posit Assistant is selected as the
@@ -806,7 +838,11 @@ public class ChatPresenter extends BasePresenter
          message,
          false,                          // no separate Cancel; No is the decline
          () -> {                         // yes: perform the update
-            onActivateChat();            // surface progress in the pane/satellite
+            // Only surface the chat pane when Posit Assistant is the chat
+            // provider; otherwise (completions-only) it would show the
+            // "not selected" screen. The install proceeds either way.
+            if (paiUtil_.isChatProviderPosit())
+               onActivateChat();
             installUpdate();
          },
          () -> {},                       // no: dismiss

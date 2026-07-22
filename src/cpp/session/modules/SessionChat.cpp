@@ -3272,13 +3272,17 @@ void handleCheckForUpdates(core::system::ProcessOperations& ops,
 {
    DLOG("Handling ui/checkForUpdates request");
 
-   // Trigger the client-side "Check for Posit Assistant updates" command flow.
-   // The check and its result dialogs run entirely in the frontend; this
-   // request only initiates them. Advertised via rstudioCapabilities() so
-   // Posit Assistant can decide whether to surface this option.
+   // This handler is a thin trigger: it does not perform the check itself. It
+   // fires a client event that runs the frontend "Check for Posit Assistant
+   // updates" command flow, which drives the check via the chat_check_for_updates
+   // RPC (whose manifest download and version comparison run in C++, elsewhere in
+   // this file) and shows the result dialogs. Advertised via rstudioCapabilities()
+   // so Posit Assistant can decide whether to surface this option.
    ClientEvent event(client_events::kChatCheckForUpdates);
    module_context::enqueClientEvent(event);
 
+   // success here means the request was accepted and the event enqueued, not
+   // that the check has run.
    json::Object result;
    result["success"] = true;
    sendJsonRpcResponse(ops, requestId, result);
