@@ -2086,6 +2086,11 @@ void onBackgroundProcessing(bool isIdle)
                 boost::iequals(type, "Warning") ||
                 boost::iequals(type, "Info"))
             {
+               // This handler is shared by the Copilot and Posit completions
+               // agents (see s_runningAgentType), but always titles the dialog
+               // "Copilot" and gates on the Copilot-specific pref. If the Posit
+               // agent emits window/showMessageRequest, its messages surface
+               // here mislabeled -- revisit with a per-agent title/pref then.
                if (prefs::userPrefs().copilotShowMessages())
                   module_context::showErrorMessage("Copilot", message);
                else
