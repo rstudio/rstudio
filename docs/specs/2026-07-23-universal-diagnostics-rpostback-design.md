@@ -113,9 +113,10 @@ When absent it substitutes to the empty string.
 A new block at the end of the file, after the existing x86_64 library-path fix
 (current lines 133-145) so `bin/diagnostics` and `bin/rpostback` already point
 at `@executable_path/../Frameworks`. The whole block is guarded by
-`if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")`. For each tool, guarded by an
-inner `if(EXISTS <arm64 path>)` sanity check (skip with an echoed warning if the
-arm64 build did not produce it):
+`if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")`. For each tool: a universal build
+promises both slices, so a missing x86_64 or arm64 input is a `FATAL_ERROR`
+naming the missing path (fail fast rather than silently ship a thin binary that
+still needs Rosetta). Otherwise:
 
 1. Copy the arm64 binary into a throwaway staging dir
    (`${CMAKE_INSTALL_PREFIX}/.arm64-lipo-staging`).

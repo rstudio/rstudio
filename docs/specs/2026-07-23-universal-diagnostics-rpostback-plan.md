@@ -64,8 +64,8 @@ Do NOT add it to the arm64 configure blocks (lines ~393 and ~409) — only the x
 Run: `bash -n package/osx/make-package && echo OK`
 Expected: `OK`
 
-Run: `grep -n "RSTUDIO_UNIVERSAL_BUILD" package/osx/make-package`
-Expected: two lines — the `universal_build=1` assignment and the single `-DRSTUDIO_UNIVERSAL_BUILD=${universal_build}` on the x86_64 configure.
+Run: `grep -in "universal_build" package/osx/make-package`
+Expected: three lines — the `universal_build=0` default, the `universal_build=1` assignment inside the guard, and the `-DRSTUDIO_UNIVERSAL_BUILD=${universal_build}` argument on the x86_64 configure (the uppercase name matches case-insensitively).
 
 - [ ] **Step 4: Expose the arm64 build paths in `package/osx/CMakeLists.txt`**
 
@@ -112,39 +112,42 @@ if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")
 
       set(X64_BINARY "${RSESSION_BINARY_DIR}/${TOOL}")
 
-      if(EXISTS "${ARM64_SOURCE}" AND EXISTS "${X64_BINARY}")
-
-         echo("Creating universal '${TOOL}' binary")
-
-         # stage the arm64 build and point it at the arm64 Frameworks directory
-         file(COPY "${ARM64_SOURCE}" DESTINATION "${LIPO_STAGING_DIR}")
-         execute_process(
-            COMMAND
-               "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
-               "${LIPO_STAGING_DIR}"
-               "@executable_path/../Frameworks/arm64"
-               "${TOOL}")
-
-         # fuse the (already path-fixed) x86_64 slice with the arm64 slice
-         execute_process(
-            COMMAND
-               lipo -create
-                  "${X64_BINARY}"
-                  "${LIPO_STAGING_DIR}/${TOOL}"
-               -output "${X64_BINARY}.universal"
-            RESULT_VARIABLE LIPO_RESULT)
-
-         if(NOT LIPO_RESULT EQUAL 0)
-            message(FATAL_ERROR "lipo failed for '${TOOL}' (exit ${LIPO_RESULT})")
-         endif()
-
-         file(RENAME "${X64_BINARY}.universal" "${X64_BINARY}")
-
-      else()
-
-         echo("Skipping universal '${TOOL}': arm64 build not found at '${ARM64_SOURCE}'")
-
+      # A universal build promises both slices. A missing input means the
+      # x86_64 or arm64 build did not produce the tool; fail fast rather than
+      # silently ship a thin binary that would still require Rosetta.
+      if(NOT EXISTS "${X64_BINARY}")
+         message(FATAL_ERROR "Universal build: missing x86_64 '${TOOL}' at '${X64_BINARY}'")
       endif()
+
+      if(NOT EXISTS "${ARM64_SOURCE}")
+         message(FATAL_ERROR "Universal build: missing arm64 '${TOOL}' at '${ARM64_SOURCE}'")
+      endif()
+
+      echo("Creating universal '${TOOL}' binary")
+
+      # stage the arm64 build and point it at the arm64 Frameworks directory
+      file(COPY "${ARM64_SOURCE}" DESTINATION "${LIPO_STAGING_DIR}")
+      execute_process(
+         COMMAND
+            "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
+            "${LIPO_STAGING_DIR}"
+            "@executable_path/../Frameworks/arm64"
+            "${TOOL}")
+
+      # fuse the (already path-fixed) x86_64 slice with the arm64 slice
+      execute_process(
+         COMMAND
+            lipo -create
+               "${X64_BINARY}"
+               "${LIPO_STAGING_DIR}/${TOOL}"
+            -output "${X64_BINARY}.universal"
+         RESULT_VARIABLE LIPO_RESULT)
+
+      if(NOT LIPO_RESULT EQUAL 0)
+         message(FATAL_ERROR "lipo failed for '${TOOL}' (exit ${LIPO_RESULT})")
+      endif()
+
+      file(RENAME "${X64_BINARY}.universal" "${X64_BINARY}")
 
    endforeach()
 
@@ -176,10 +179,15 @@ Expected: `3`
 
 - [ ] **Step 8: Commit**
 
+Commit with an explicit pathspec so the already-modified `@electron/universal`
+files (left for Task 2) are not swept in even if they happen to be staged:
+
 ```bash
-git add package/osx/make-package package/osx/CMakeLists.txt \
-        package/osx/cmake/prepare-package.cmake NEWS.md
-git commit -m "Build universal diagnostics/rpostback on macOS"
+git commit -m "Build universal diagnostics/rpostback on macOS" -- \
+   package/osx/make-package \
+   package/osx/CMakeLists.txt \
+   package/osx/cmake/prepare-package.cmake \
+   NEWS.md
 ```
 
 ---
