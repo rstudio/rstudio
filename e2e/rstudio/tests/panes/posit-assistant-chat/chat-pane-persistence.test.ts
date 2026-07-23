@@ -90,6 +90,10 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai'] }, () => {
   // Regression test for rstudio/rstudio#17240: chat pane must remain
   // populated after an R session restart.
   test('chat pane content survives R session restart', async ({ rstudioPage: page }) => {
+    // Headroom for the post-restart event-stream backoff in server mode
+    // (see restartSessionWithSentinel).
+    test.setTimeout(240000);
+
     await ensureChatPaneVisible(page, chatActions);
 
     // Restart the R session (sentinel-confirmed)

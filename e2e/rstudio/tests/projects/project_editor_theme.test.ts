@@ -44,6 +44,12 @@ test.describe.serial('Project-level EditorTheme in .Rproj', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
+    // The restartSessionWithSentinel below can legitimately take over two
+    // minutes in server mode when the post-restart event-stream backoff hits
+    // (see restartSessionWithSentinel); keep the hook budget above its wait
+    // so a slow-but-successful restart is not converted into a hook timeout.
+    test.setTimeout(240000);
+
     // Defensively clear the ignore-project-appearance opt-out so a failing test
     // can't leak it into other suites in this worker.
     try {
