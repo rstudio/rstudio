@@ -305,7 +305,9 @@ if [ -n "$SCCACHE_ENABLED" ]; then
    
     if [ -n "$AWS_ACCESS_KEY_ID" ] || [ $(aws sts get-caller-identity --query "Account" --profile ${AWS_PROFILE:-sso}) -eq 14 ]; then
         echo "AWS credentials valid, using S3 build cache"
-        export SCCACHE_BUCKET="rstudio-build-cache"
+        # Honor an externally-set SCCACHE_BUCKET (e.g. GitHub Actions points
+        # at its own bucket via an OIDC role that cannot read the default).
+        export SCCACHE_BUCKET="${SCCACHE_BUCKET:-rstudio-build-cache}"
     else
         echo "No valid AWS SSO session, using only local build cache"
         # Honor an externally-set SCCACHE_DIR (e.g. when a CI runner has
