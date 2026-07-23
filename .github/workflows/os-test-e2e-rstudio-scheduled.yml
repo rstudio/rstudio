@@ -1,10 +1,9 @@
 name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source)"
 
 # One workflow that drives the reusable per-OS E2E "engines" three ways:
-#   - Weekday cron (Mon-Fri): a fixed slate per weekday (two engines, except
-#     Tuesday's, Wednesday's, and Thursday's three), so every engine runs at
-#     least once a week without running the whole matrix daily.
-#     No weekday pairs two deb-based engines.
+#   - Weekday cron (Mon-Fri): a fixed slate per weekday (two or three engines
+#     per day), so every engine runs at least once a week without running the
+#     whole matrix daily. No weekday pairs two deb-based engines.
 #   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
 #   - Manual dispatch: every engine at once, optionally against a specific daily
 #     build (the "version" input) or built from source (the "build_from_source"
@@ -57,15 +56,15 @@ jobs:
         name: Select engines for this run
         run: |
           # workflow_dispatch and the Sunday cron run every engine; the weekday
-          # cron (Mon-Fri) runs a fixed slate per day (a pair, except Tuesday's,
-          # Wednesday's, and Thursday's three). Each engine runs once a week
-          # except macos26, windows2025, and ubuntu24s, which run twice.
-          ALL='["fedora43","fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","macos15"]'
+          # cron (Mon-Fri) runs a fixed slate per day (two or three engines).
+          # Each engine runs once a week except macos26, windows2025, and
+          # ubuntu24s, which run twice.
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
-              1) SEL='["ubuntu24d","macos26"]' ;;
+              1) SEL='["ubuntu24d","macos26","rocky9"]' ;;
               2) SEL='["ubuntu24s","windows2025","rocky10"]' ;;
               3) SEL='["ubuntu26","fedora44","macos15"]' ;;
               4) SEL='["fedora43","debian13","windows2025"]' ;;
@@ -84,6 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       rhel:         ${{ steps.resolve.outputs.rhel }}
+      rhel9:        ${{ steps.resolve.outputs.rhel9 }}
       noble_amd64:  ${{ steps.resolve.outputs.noble_amd64 }}
       server_noble: ${{ steps.resolve.outputs.server_noble }}
       macos:        ${{ steps.resolve.outputs.macos }}
@@ -105,6 +105,7 @@ jobs:
           if [ "$BUILD_FROM_SOURCE" = "true" ] || [ -z "$VERSION" ]; then
             {
               echo "rhel="
+              echo "rhel9="
               echo "noble_amd64="
               echo "server_noble="
               echo "macos="
@@ -138,6 +139,7 @@ jobs:
             printf '%s' "$out"
           }
           RHEL=$(emit electron rhel10-x86_64) || exit 1
+          RHEL9=$(emit electron rhel9-x86_64) || exit 1
           NOBLE=$(emit electron noble-amd64) || exit 1
           SERVER=$(emit server noble-amd64) || exit 1
           MAC=$(emit electron macos) || exit 1
@@ -146,6 +148,7 @@ jobs:
           ROCKY=$(emit electron rhel10-arm64) || exit 1
           {
             echo "rhel=$RHEL"
+            echo "rhel9=$RHEL9"
             echo "noble_amd64=$NOBLE"
             echo "server_noble=$SERVER"
             echo "macos=$MAC"
@@ -297,3 +300,19 @@ jobs:
       # RHEL/Rocky 10 arm64 daily .rpm (served from rhel9/arm64 as an
       # aarch64.rpm); the Rocky engine installs the same package.
       rstudio_installer_url: ${{ needs.resolve.outputs.rocky }}
+
+  rocky9:
+    name: Rocky 9 x86_64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'rocky9') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-9-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      build_from_source: ${{ inputs.build_from_source || false }}
+      # RHEL/Rocky 9 x86_64 daily .rpm; the Rocky 9 engine installs the same
+      # package.
+      rstudio_installer_url: ${{ needs.resolve.outputs.rhel9 }}
