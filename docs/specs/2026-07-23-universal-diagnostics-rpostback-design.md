@@ -57,7 +57,40 @@ along as maintenance but is not the mechanism for this fix.
 The arm64 build already produces both binaries (`make-package` runs the arm64
 build with `--target all`); they are simply not merged into the packaged app.
 
-### 1. `package/osx/CMakeLists.txt`
+### Gating: merge only in a universal build
+
+`lipo -create` rejects two inputs of the same architecture, so the merge must
+run **only** when the primary build is x86_64 and a *separate* arm64 build was
+produced in the same run. File existence alone is not a safe signal:
+
+- In an **arm64-only** build the primary build is arm64 and
+  `build-arm64/.../diagnostics` is that same arm64 binary, so
+  `lipo -create arm64 arm64` would error.
+- In an **x86_64-only incremental** build, `make-package` retains a stale
+  `build-arm64` from a previous universal build (it is only removed by
+  `--clean`), so an existence check would wrongly merge stale arm64 code.
+
+The fix is an explicit universal-build signal from `make-package`, mirroring the
+reviewer guidance: gate on configuration, not file presence.
+
+### 1. `package/osx/make-package`
+
+The primary (x86_64) configure knows whether an arm64 build is also happening
+(`build_x86_64` and `build_arm64` are both computed before the x86_64 build).
+Pass an explicit flag on that configure:
+
+```sh
+universal_build=0
+if [ -n "${build_x86_64}" ] && [ -n "${build_arm64}" ]; then
+   universal_build=1
+fi
+```
+
+Add `-DRSTUDIO_UNIVERSAL_BUILD=${universal_build}` to the `arch -x86_64
+"${CMAKE}"` configure invocation (the x86_64 primary build that owns the
+install/package targets and runs `prepare-package.cmake`).
+
+### 2. `package/osx/CMakeLists.txt`
 
 Expose the arm64 build outputs, mirroring the existing `RSESSION_ARM64_PATH`:
 
@@ -70,12 +103,19 @@ set(RPOSTBACK_ARM64_PATH
    CACHE INTERNAL "")
 ```
 
-### 2. `package/osx/cmake/prepare-package.cmake`
+`RSTUDIO_UNIVERSAL_BUILD` arrives as a `-D` cache variable, so it is available
+for `@RSTUDIO_UNIVERSAL_BUILD@` substitution in the configured
+`prepare-package.cmake` (via `configure_and_install` -> `configure_file(@ONLY)`).
+When absent it substitutes to the empty string.
+
+### 3. `package/osx/cmake/prepare-package.cmake`
 
 A new block at the end of the file, after the existing x86_64 library-path fix
 (current lines 133-145) so `bin/diagnostics` and `bin/rpostback` already point
-at `@executable_path/../Frameworks`. For each tool, guarded by
-`if(EXISTS <arm64 path>)`:
+at `@executable_path/../Frameworks`. The whole block is guarded by
+`if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")`. For each tool, guarded by an
+inner `if(EXISTS <arm64 path>)` sanity check (skip with an echoed warning if the
+arm64 build did not produce it):
 
 1. Copy the arm64 binary into a throwaway staging dir
    (`${CMAKE_INSTALL_PREFIX}/.arm64-lipo-staging`).
@@ -100,24 +140,45 @@ entitlements, so the default-entitlement signing already covers these two.
 
 ## Edge cases
 
-- x86_64-only builds (Intel host, no arm64 build): the `if(EXISTS ...)` guards
-  are false, so the binaries stay thin x86_64 exactly as today. No regression.
-- Partial/local builds degrade gracefully, matching the existing arm64 block's
-  `RSESSION_ARM64_PATH` existence guard and the `nullglob` tolerance in
-  `fix-library-paths.sh`.
+Gating on `RSTUDIO_UNIVERSAL_BUILD` gives correct behavior across all three
+build modes:
+
+- **Universal** (`--arch=x86_64,arm64`): flag is `1`; primary build is x86_64,
+  arm64 outputs exist -> `lipo` produces fat binaries. (`file` reports two
+  architectures.)
+- **arm64-only** (`--arch=arm64`): flag is `0` -> block skipped; the primary
+  arm64 build's `bin/diagnostics` and `bin/rpostback` ship thin arm64. Avoids
+  the `lipo` same-architecture error (finding 1).
+- **x86_64-only** (`--arch=x86_64`): flag is `0` -> block skipped, even when a
+  stale `build-arm64` from an earlier universal build is present. The binaries
+  ship thin x86_64, exactly as today (finding 2).
+
+The existing `rsession-arm64` / `node-arm64` merge in the same file keeps its
+`if(EXISTS "@RSESSION_ARM64_PATH@")` gating unchanged. It uses `configure_file`
+(copy), which tolerates a same-architecture source, so it does not hit the
+`lipo` failure that motivates the stricter gate here; retrofitting that
+pre-existing block onto the new flag is out of scope for this bugfix.
 
 ## Verification
 
-Build-time packaging change; verify against a universal build artifact:
+Build-time packaging change; verify against build artifacts:
 
-- `file bin/diagnostics` and `file bin/rpostback` report
-  "Mach-O universal binary with 2 architectures [x86_64] [arm64]".
-- `otool -L -arch arm64 bin/diagnostics` shows OpenSSL refs under
-  `../Frameworks/arm64`; `-arch x86_64` shows `../Frameworks`.
-- `codesign -vvv --strict` passes on both binaries (already part of the
-  packaging script's final validation step).
-- On Apple Silicon with an arm64 R: no Rosetta prompt at startup; a diagnostics
-  report runs, and a git-over-ssh operation (which invokes `rpostback`) works.
+- **Universal build** (`--arch=x86_64,arm64`):
+  - `file bin/diagnostics` and `file bin/rpostback` report
+    "Mach-O universal binary with 2 architectures [x86_64] [arm64]".
+  - `otool -L -arch arm64 bin/diagnostics` shows OpenSSL refs under
+    `../Frameworks/arm64`; `-arch x86_64` shows `../Frameworks`.
+  - `codesign -vvv --strict` passes on both binaries (already part of the
+    packaging script's final validation step).
+  - On Apple Silicon with an arm64 R: no Rosetta prompt at startup; a
+    diagnostics report runs, and a git-over-ssh operation (which invokes
+    `rpostback`) works.
+- **arm64-only build** (`--arch=arm64`): packaging succeeds (no `lipo`
+  same-architecture error); `file bin/diagnostics` / `bin/rpostback` report a
+  single arm64 architecture.
+- **x86_64-only build** (`--arch=x86_64`) with a stale `build-arm64` present:
+  packaging succeeds and `file bin/diagnostics` / `bin/rpostback` report a
+  single x86_64 architecture (no arm64 slice leaks in).
 
 No C++/GWT/desktop unit-test surface -- this is build-time packaging only.
 
