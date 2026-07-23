@@ -29,6 +29,7 @@
 #include <shared_core/Hash.hpp>
 #include <shared_core/FileLogDestination.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/StderrLogDestination.hpp>
 
@@ -113,14 +114,20 @@ std::string generateShortenedUuid()
    return core::hash::crc32HexHash(uuid);
 }
 
+// the program identity, logging options, and mutex are all read by the
+// detached SIGHUP config-reload thread (logConfigReloadThreadFunc in
+// PosixSystem.cpp), which calls reinitLog() and can still be running while
+// the process exits; all three are intentionally leaked so that thread never
+// finds them destroyed during static teardown (#18318)
+
 // logger's program identity (this process's binary name)
-std::string s_programIdentity;
+std::string& s_programIdentity = make_leaked<std::string>();
 
 // logging options representing the latest state of the logging configuration file
-boost::shared_ptr<log::LogOptions> s_logOptions;
+boost::shared_ptr<log::LogOptions>& s_logOptions = make_leaked<boost::shared_ptr<log::LogOptions>>();
 
 // mutex for logging synchronization
-boost::recursive_mutex s_loggingMutex;
+boost::recursive_mutex& s_loggingMutex = make_leaked<boost::recursive_mutex>();
 
 namespace {
 

@@ -36,6 +36,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FileLogDestination.hpp>
 #include <shared_core/json/Json.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/ReaderWriterMutex.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/StderrLogDestination.hpp>
@@ -187,7 +188,12 @@ json::Object errorToJson(const Error& in_error)
    return error;
 }
 
-std::unordered_map<std::type_index, boost::function<void(json::Object&, const std::pair<std::string, boost::any>&)>> s_logMessagePropertiesToJsonMap =
+// the property-formatter maps are on the log-write path for any thread that
+// logs with message properties; background threads can still be logging while
+// the process exits, so the maps are intentionally leaked to avoid running
+// their destructors during static teardown (#18318)
+typedef std::unordered_map<std::type_index, boost::function<void(json::Object&, const std::pair<std::string, boost::any>&)>> LogMessagePropertiesToJsonMap;
+LogMessagePropertiesToJsonMap& s_logMessagePropertiesToJsonMap = make_leaked<LogMessagePropertiesToJsonMap>(LogMessagePropertiesToJsonMap
 {
    {typeid(int), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<int>(prop.second);}},
    {typeid(uint64_t), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<uint64_t>(prop.second);}},
@@ -201,7 +207,7 @@ std::unordered_map<std::type_index, boost::function<void(json::Object&, const st
    {typeid(json::Object), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<json::Object>(prop.second);}},
    {typeid(json::Array), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<json::Array>(prop.second);}},
    {typeid(Error), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = errorToJson(boost::any_cast<Error>(prop.second));}}
-};
+});
 
 json::Object logMessagePropertiesToJson(const LogMessageProperties& in_properties)
 {
@@ -233,7 +239,8 @@ json::Object logMessagePropertiesToJson(const LogMessageProperties& in_propertie
    return obj;
 }
 
-std::unordered_map<std::type_index, boost::function<std::string(const std::pair<std::string, boost::any>&)>> s_logMessagePropertiesToStringMap =
+typedef std::unordered_map<std::type_index, boost::function<std::string(const std::pair<std::string, boost::any>&)>> LogMessagePropertiesToStringMap;
+LogMessagePropertiesToStringMap& s_logMessagePropertiesToStringMap = make_leaked<LogMessagePropertiesToStringMap>(LogMessagePropertiesToStringMap
 {
    {typeid(int), [](const std::pair<std::string, boost::any>& prop){return safe_convert::numberToString(boost::any_cast<int>(prop.second));}},
    {typeid(uint64_t), [](const std::pair<std::string, boost::any>& prop){return safe_convert::numberToString(boost::any_cast<uint64_t>(prop.second));}},
@@ -247,7 +254,7 @@ std::unordered_map<std::type_index, boost::function<std::string(const std::pair<
    {typeid(json::Object), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<json::Object>(prop.second).write();}},
    {typeid(json::Array), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<json::Array>(prop.second).write();}},
    {typeid(Error), [](const std::pair<std::string, boost::any>& prop){return errorToJson(boost::any_cast<Error>(prop.second)).write();}}
-};
+});
 
 std::string logMessagePropertiesToString(const LogMessageProperties& in_properties)
 {
@@ -440,8 +447,8 @@ Logger& logger()
 {
    // Intentionally leak the logger object to avoid some crashes because we don't (can't currently) always wait for all
    // the background threads of a process, and destruction isn't necessary.
-   static Logger* logger = new Logger();
-   return *logger;
+   static Logger& logger = make_leaked<Logger>();
+   return logger;
 }
 
 void Logger::writeMessageToDestinations(

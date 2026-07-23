@@ -115,6 +115,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/StderrLogDestination.hpp>
 #include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 
@@ -2029,7 +2030,7 @@ Error ensureLibRSoValid()
 // and the worker is detached, never running ~io_context() avoids destroying it
 // while a detached worker is still inside run() -- the documented Windows-IOCP
 // teardown hang. The OS reclaims it at process exit.
-boost::asio::io_context& s_monitorIoContext = *new boost::asio::io_context();
+boost::asio::io_context& s_monitorIoContext = core::make_leaked<boost::asio::io_context>();
 
 // the monitor worker thread. retained as a joinable handle so that
 // stopMonitorWorkerThread() can wait for run() to return before the process
