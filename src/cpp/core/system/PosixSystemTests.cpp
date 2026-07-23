@@ -16,13 +16,18 @@
 #ifndef _WIN32
 
 #include <core/system/PosixSystem.hpp>
-#include <core/system/PosixGroup.hpp>
+
+#include <grp.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <grp.h>
+
+#include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
+
 #include <gtest/gtest.h>
+
+#include <core/system/PosixGroup.hpp>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
 
@@ -430,6 +435,8 @@ TEST(PosixTests, WorkingDirProcFs)
    }
 }
 
+#endif // !__APPLE__
+
 TEST(PosixTests, ResolveBindAddressPassesThroughSpecificAddresses)
 {
    EXPECT_EQ(resolveBindAddress("127.0.0.1"), std::string("127.0.0.1"));
@@ -440,14 +447,24 @@ TEST(PosixTests, ResolveBindAddressPassesThroughSpecificAddresses)
 
 TEST(PosixTests, ResolveBindAddressHandlesIpv4Wildcard)
 {
-   std::string result = resolveBindAddress("0.0.0.0");
-   EXPECT_TRUE(result == "0.0.0.0" || result == "::");
+   // resolution may pick either family depending on the host's interfaces,
+   // so just require some wildcard address back
+   boost::system::error_code ec;
+   boost::asio::ip::address addr =
+      boost::asio::ip::make_address(resolveBindAddress("0.0.0.0"), ec);
+
+   ASSERT_FALSE(ec);
+   EXPECT_TRUE(addr.is_unspecified());
 }
 
 TEST(PosixTests, ResolveBindAddressHandlesIpv6Wildcard)
 {
-   std::string result = resolveBindAddress("::");
-   EXPECT_TRUE(result == "::" || result == "0.0.0.0");
+   boost::system::error_code ec;
+   boost::asio::ip::address addr =
+      boost::asio::ip::make_address(resolveBindAddress("::"), ec);
+
+   ASSERT_FALSE(ec);
+   EXPECT_TRUE(addr.is_unspecified());
 }
 
 TEST(PosixTests, ResolveBindAddressPrefersIpv6WhenOnlyIpv6Available)
@@ -550,7 +567,28 @@ TEST(PosixTests, ResolveBindAddressFallsBackToIpv4WithoutIpv6)
    EXPECT_EQ(detail::resolveBindAddressForAddresses("::", addrs), std::string("0.0.0.0"));
 }
 
-#endif // !__APPLE__
+TEST(PosixTests, ResolveBindAddressPassesThroughHostNames)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("localhost", addrs), std::string("localhost"));
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("", addrs), std::string(""));
+}
+
+TEST(PosixTests, ResolveBindAddressTreatsAlternateWildcardSpellingsAsWildcard)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10")
+   };
+
+   // alternate spellings of the IPv6 wildcard resolve like "::" itself
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("::0", addrs), std::string("0.0.0.0"));
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0:0:0:0:0:0:0:0", addrs), std::string("0.0.0.0"));
+}
 
 // Test fixture for privilege tests with user and group handling
 class PosixTestsRequiresPrivilege : public rstudio::tests::fixtures::RequiresPrivilegeTestFixture
