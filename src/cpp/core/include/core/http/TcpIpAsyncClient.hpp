@@ -60,6 +60,21 @@ protected:
 
 private:
 
+   void verifyThenWriteRequest()
+   {
+      try
+      {
+         Error error;
+         if (!verifyConnectedPeer(&error))
+         {
+            handleConnectionError(error);
+            return;
+         }
+         writeRequest();
+      }
+      CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
+   }
+
    virtual void connectAndWriteRequest()
    {
       boost::shared_ptr<TcpIpAsyncConnector> pAsyncConnector(
@@ -81,7 +96,7 @@ private:
             connectAddress,
             connectPort,
             boost::asio::bind_executor(*pStrand_,
-                 boost::bind(&TcpIpAsyncClient::writeRequest,
+                 boost::bind(&TcpIpAsyncClient::verifyThenWriteRequest,
                              TcpIpAsyncClient::sharedFromThis())),
             boost::asio::bind_executor(*pStrand_,
                  boost::bind(&TcpIpAsyncClient::handleConnectionError,

@@ -19,6 +19,8 @@
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClientSsl.hpp>
 
+#include <server_core/SocketOwnership.hpp>
+
 namespace rstudio {
 namespace server_core {
 namespace http {
@@ -66,7 +68,36 @@ public:
    {
    }
 
+   // When set (default: no check), verifyConnectedPeer() enforces that the
+   // established peer socket is owned by expectedPeerUid (rstudio-pro#11470).
+   void setExpectedPeerUid(uid_t uid) { expectedPeerUid_ = uid; }
+
 private:
+   uid_t expectedPeerUid_ = static_cast<uid_t>(-1);
+
+   virtual bool verifyConnectedPeer(core::Error* pError)
+   {
+      if (expectedPeerUid_ == static_cast<uid_t>(-1))
+         return true; // no ownership check requested for this client
+      if (!server_core::socket_utils::probeSockDiagAvailable())
+         return true; // capability absent (logged once at probe) -> degrade to
+                      // no-enforcement rather than break proxying (Decision 2)
+      bool ipv6 = socket().remote_endpoint().address().is_v6();
+      int appPort = socket().remote_endpoint().port();       // target/listen port
+      int ephemeralPort = socket().local_endpoint().port();  // our client port
+      // First draft of a pure async peer verification check in 662c4fc3a046409df03667d89a4604ec001173fc
+      core::Error error = server_core::socket_utils::verifyPeerUid(
+                             ipv6, appPort, ephemeralPort, expectedPeerUid_);
+      if (error)
+      {
+         LOG_WARNING_MESSAGE("Refusing localhost proxy to port " +
+            std::to_string(appPort) + ": " + error.getSummary());
+         *pError = error;
+         return false;
+      }
+      return true;
+   }
+
    virtual bool stopReadingAndRespond()
    {
       return stopReadingAndRespondImpl(response_, chunkedEncoding_);
@@ -94,7 +125,35 @@ public:
    {
    }
 
+   // When set (default: no check), verifyConnectedPeer() enforces that the
+   // established peer socket is owned by expectedPeerUid (rstudio-pro#11470).
+   void setExpectedPeerUid(uid_t uid) { expectedPeerUid_ = uid; }
+
 private:
+   uid_t expectedPeerUid_ = static_cast<uid_t>(-1);
+
+   virtual bool verifyConnectedPeer(core::Error* pError)
+   {
+      if (expectedPeerUid_ == static_cast<uid_t>(-1))
+         return true; // no ownership check requested for this client
+      if (!server_core::socket_utils::probeSockDiagAvailable())
+         return true; // capability absent (logged once at probe) -> degrade to
+                      // no-enforcement rather than break proxying (Decision 2)
+      bool ipv6 = socket().next_layer().remote_endpoint().address().is_v6();
+      int appPort = socket().next_layer().remote_endpoint().port();
+      int ephemeralPort = socket().next_layer().local_endpoint().port();
+      core::Error error = server_core::socket_utils::verifyPeerUid(
+                             ipv6, appPort, ephemeralPort, expectedPeerUid_);
+      if (error)
+      {
+         LOG_WARNING_MESSAGE("Refusing localhost proxy to port " +
+            std::to_string(appPort) + ": " + error.getSummary());
+         *pError = error;
+         return false;
+      }
+      return true;
+   }
+
    virtual bool stopReadingAndRespond()
    {
       return stopReadingAndRespondImpl(response_, chunkedEncoding_);
