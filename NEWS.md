@@ -43,4 +43,4 @@
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)
 - Copilot Language Server 1.520.0
-- Electron 42.7.0
+- Electron 42.7.1
