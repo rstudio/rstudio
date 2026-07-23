@@ -1,3 +1,4 @@
+import Database from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -123,11 +124,9 @@ export function isPositAiAuthenticated(): boolean {
   return findAuthenticatedStore(path.join(sandbox, 'user-home')) !== null;
 }
 
-// The global seed kill-switch: when set, copy mode and Copilot's
-// host-copy in sandbox-setup.ts are both suppressed. The sign-in flow itself
-// is unaffected -- it copies nothing from the host. Shared by sandbox-setup.ts
-// (Copilot) and auth.setup.ts (Posit AI) so the "what counts as on" rule lives
-// in one place.
+// The global seed kill-switch: when set, both providers' host-copy modes in
+// auth.setup.ts are suppressed. The sign-in flows are unaffected -- they copy
+// nothing from the host.
 export function noSeedCredentials(): boolean {
   return ['1', 'true'].includes(
     (process.env.PW_SANDBOX_NO_SEED_CREDENTIALS ?? '').toLowerCase(),
@@ -135,10 +134,11 @@ export function noSeedCredentials(): boolean {
 }
 
 // Strict provisioning: when set, the auth.setup project fails the run instead
-// of returning normally when it ends without Posit AI credentials (outcome
-// 'unavailable' or 'login-failed'). For runs that expect credentials to be
-// present (e.g. CI once secrets are wired in), so a broken credential source
-// turns the run red instead of green-with-skips.
+// of returning normally when a provider ends up without credentials (outcome
+// 'unavailable' or 'login-failed'). Applies to both Posit AI and Copilot. For
+// runs that expect credentials to be present (e.g. CI once secrets are wired
+// in), so a broken credential source turns the run red instead of
+// green-with-skips.
 export function strictAiAuth(): boolean {
   return ['1', 'true'].includes(
     (process.env.PW_AI_AUTH_STRICT ?? '').toLowerCase(),
@@ -146,14 +146,69 @@ export function strictAiAuth(): boolean {
 }
 
 // GitHub Copilot's credential directory inside a given home dir. Platform-
-// dependent, and the single definition of where sandbox-setup.ts seeds Copilot
-// creds to and where scrubCredentials removes them from, so the two can't
-// drift. (The host-side source path is computed separately in sandbox-setup.ts:
-// on Windows it honors %LOCALAPPDATA%, which need not equal AppData/Local.)
+// dependent, and the single definition of where the auth.setup project copies
+// Copilot creds to and where scrubCredentials removes them from, so the two
+// can't drift. (The host-side source path is computed separately in
+// tests/auth.setup.ts: on Windows it honors %LOCALAPPDATA%, which need not
+// equal AppData/Local.)
 export function copilotConfigDir(homeDir: string): string {
   return process.platform === 'win32'
     ? path.join(homeDir, 'AppData', 'Local', 'github-copilot')
     : path.join(homeDir, '.config', 'github-copilot');
+}
+
+// The Copilot credential store inside a config dir: a SQLite database owned
+// by the copilot-language-server (schema: oauth_tokens, active_sessions,
+// editor_signout, metadata). The agent writes it plaintext because the
+// harness sets GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false everywhere it
+// spawns one (desktop.fixture.ts for the IDE, copilot-agent.ts for the
+// sign-in flow).
+export function copilotAuthDbPath(homeDir: string): string {
+  return path.join(copilotConfigDir(homeDir), 'auth.db');
+}
+
+// Whether the Copilot store under homeDir holds at least one OAuth token.
+// Mirrors what "signed in" means for the on-disk store: the agent persists a
+// token row on sign-in and deletes it on sign-out. Like the Posit AI gate,
+// this checks the store, not the entitlement -- an account whose Copilot
+// access was revoked server-side still reads as authenticated here.
+//
+// The row count is read with better-sqlite3 (a native npm dependency with
+// cross-platform prebuilds) rather than the sqlite3 CLI, which is absent from
+// PATH on Windows -- the suite's primary desktop target. On any query error we
+// fail closed (return false): the agent creates an empty auth.db on first
+// launch, so "the file is there" does not mean "signed in", and treating a
+// broken or empty store as authenticated would let unprovisioned runs slip
+// past the credential gate.
+export function isCopilotStoreAuthenticated(homeDir: string): boolean {
+  const dbPath = copilotAuthDbPath(homeDir);
+  if (!fs.existsSync(dbPath)) return false;
+  let db: Database.Database | undefined;
+  try {
+    db = new Database(dbPath, { readonly: true, fileMustExist: true });
+    const row = db.prepare('SELECT COUNT(*) AS n FROM oauth_tokens').get() as { n: number };
+    return row.n > 0;
+  } catch (err) {
+    console.warn(
+      `[auth] WARNING: could not query ${dbPath} with better-sqlite3 (${(err as Error).message}); treating the store as not signed in`,
+    );
+    return false;
+  } finally {
+    db?.close();
+  }
+}
+
+// Whether the shared user-home template holds a signed-in Copilot store. The
+// same caveat as isPositAiAuthenticated applies: this reads the template, not
+// any aiAuth-stripped launch variant, so combining
+// test.use({ aiAuth: { copilot: 'none' } }) with
+// requireAiCredentials(test, 'copilot') in one file is contradictory.
+export function isCopilotAuthenticated(): boolean {
+  const sandbox = process.env.PW_SANDBOX;
+  if (!sandbox) {
+    throw new Error('isCopilotAuthenticated called outside the sandbox; PW_SANDBOX is unset');
+  }
+  return isCopilotStoreAuthenticated(path.join(sandbox, 'user-home'));
 }
 
 // The AI providers whose credentials the harness manages. The array is the
@@ -328,11 +383,11 @@ export function userHomeForAuthState(baseHome: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Auth-setup status: a small file the auth.setup project writes into the
-// sandbox recording what it did and why. requireAiCredentials() reads it to
-// build an accurate skip reason. The setup project runs in a separate
-// process, so a file in the sandbox (like the token store itself) is the
-// only channel that reaches the test workers.
+// Auth-setup status: a small per-provider file the auth.setup project writes
+// into the sandbox recording what it did and why. requireAiCredentials()
+// reads it to build an accurate skip reason. The setup project runs in a
+// separate process, so a file in the sandbox (like the token store itself) is
+// the only channel that reaches the test workers.
 
 // Which credential source the auth.setup project used, chosen by
 // auto-detection (not user-selected). The array is the single source of truth
@@ -341,33 +396,37 @@ export function userHomeForAuthState(baseHome: string): string {
 // because source is serialized into the status file below, making it part of
 // the cross-process contract.
 export const AUTH_SOURCES = [
-  'login', // signed in with POSIT_EMAIL/POSIT_PASSWORD
-  'copy',  // copied the local token store
+  'login', // signed in with the provider's credentials (POSIT_EMAIL/POSIT_PASSWORD or COPILOT_USER/COPILOT_PASSWORD)
+  'copy',  // copied the local credential store
   'none',  // no source available; nothing provisioned
 ] as const;
-export type PositAiAuthSource = (typeof AUTH_SOURCES)[number];
+export type AiAuthSource = (typeof AUTH_SOURCES)[number];
 
 // Same single-source-of-truth pattern as AUTH_SOURCES: readAuthStatus
 // validates against the array, so a status file written by a different code
 // version can't launder an unknown outcome string into the union.
 export const AUTH_OUTCOMES = [
-  'success',      // token store written and verified
+  'success',      // credential store written and verified
   'unavailable',  // no credential source (not signed in locally, no creds set, or the seed kill-switch blocked the copy); see reason
   'login-failed', // sign-in attempted but failed (usually transient)
 ] as const;
-export type PositAiAuthOutcome = (typeof AUTH_OUTCOMES)[number];
+export type AiAuthOutcome = (typeof AUTH_OUTCOMES)[number];
 
-export interface PositAiAuthStatus {
-  source: PositAiAuthSource;
-  outcome: PositAiAuthOutcome;
+export interface AiAuthStatus {
+  source: AiAuthSource;
+  outcome: AiAuthOutcome;
   reason: string;
 }
 
-const AUTH_STATUS_FILE = 'positai-auth-status.json';
+// One status file per provider ('positai-auth-status.json',
+// 'copilot-auth-status.json'), keyed by the AIProvider id.
+function authStatusFile(provider: AIProvider): string {
+  return `${provider}-auth-status.json`;
+}
 
-export function writeAuthStatus(sandbox: string, status: PositAiAuthStatus): void {
+export function writeAuthStatus(sandbox: string, provider: AIProvider, status: AiAuthStatus): void {
   fs.writeFileSync(
-    path.join(sandbox, AUTH_STATUS_FILE),
+    path.join(sandbox, authStatusFile(provider)),
     JSON.stringify(status, null, 2),
   );
 }
@@ -377,8 +436,8 @@ export function writeAuthStatus(sandbox: string, status: PositAiAuthStatus): voi
 // normal state and stays silent; everything else warns, mirroring
 // readAuthStore, so a corrupt or version-skewed status file leaves a trace
 // of why the accurate skip reason was unavailable.
-export function readAuthStatus(sandbox: string): PositAiAuthStatus | null {
-  const file = path.join(sandbox, AUTH_STATUS_FILE);
+export function readAuthStatus(sandbox: string, provider: AIProvider): AiAuthStatus | null {
+  const file = path.join(sandbox, authStatusFile(provider));
   let raw: string;
   try {
     raw = fs.readFileSync(file, 'utf-8');
