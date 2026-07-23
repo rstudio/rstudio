@@ -147,7 +147,12 @@ jobs:
       env:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
-    timeout-minutes: 120
+    # 150 to match the Rocky 10 engine (near-identical infrastructure and the
+    # same cold-first-build risk): this engine has no seeded main-branch cache
+    # yet, so rstudio-tools / R-libs / GWT all restore-miss and the build
+    # compiles fully cold. Once main has a seeded cache builds are much faster,
+    # but the higher ceiling stays as headroom rather than re-tightening.
+    timeout-minutes: 150
     env:
       # Redirect the dependency / package scripts' tool root to a
       # workspace-local path so it can be cached without sudo.
@@ -550,23 +555,13 @@ jobs:
           echo "sha256=$SHA"        >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
-      # Cache the daily installer keyed on its resolved filename. Filenames
-      # embed the version + build number on the auto-resolve path so the content
-      # is immutable per name: new daily misses and downloads, same-day re-run
-      # hits and skips (SHA still verified below). Skip caching on the override
-      # path -- a user-supplied URL has no immutability guarantee and its SHA
-      # check is skipped, so a reused basename could otherwise serve stale,
-      # unverified bytes.
-      - name: Cache RStudio Desktop installer
-        if: inputs.build_from_source == false && inputs.rstudio_installer_url == ''
-        id: installer-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.resolve.outputs.filename }}
-          key: rstudio-desktop-installer-${{ steps.resolve.outputs.filename }}
-
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # PRs can't share a cache entry with each other anyway (only with their
+      # base branch), so caching here would just duplicate the same bytes
+      # into the shared 10 GB cache quota without saving meaningful time.
       - name: Download RStudio Desktop .rpm
-        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.installer-cache.outputs.cache-hit != 'true'
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
