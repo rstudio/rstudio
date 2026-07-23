@@ -110,6 +110,9 @@ export class CopilotAgent {
   private pending = new Map<number | string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
   private buffer = Buffer.alloc(0);
   private exited = false;
+  // Last few stderr lines, so a crash rejection can carry the agent's own
+  // diagnostics even in a quiet run (where the gated log() stays silent).
+  private stderrTail: string[] = [];
 
   /**
    * Spawn the agent with HOME redirected to `homeDir`, so its credential store
@@ -146,14 +149,27 @@ export class CopilotAgent {
     this.child.stdout.on('data', (chunk: Buffer) => this.onData(chunk));
     this.child.stderr.on('data', (chunk: Buffer) => {
       const text = chunk.toString().trim();
-      if (text) log(`[stderr] ${text}`);
+      if (text) {
+        log(`[stderr] ${text}`);
+        this.stderrTail.push(text);
+        if (this.stderrTail.length > 20) this.stderrTail.shift();
+      }
     });
     this.child.on('exit', (code, signal) => {
       this.exited = true;
       log(`agent exited (code=${code}, signal=${signal})`);
-      for (const [, p] of this.pending) p.reject(new Error('agent exited before responding'));
+      const tail = this.stderrTail.join('\n');
+      const detail =
+        `agent exited before responding (code=${code}, signal=${signal})`
+        + (tail ? `; stderr: ${tail}` : '');
+      for (const [, p] of this.pending) p.reject(new Error(detail));
       this.pending.clear();
     });
+    // A spawn failure or a write to a dead pipe surfaces as an async 'error'
+    // event; route both into failAll so the caller sees a rejected request
+    // rather than an uncaught exception that crashes the setup worker.
+    this.child.on('error', (err) => this.failAll(new Error(`agent process error: ${err.message}`)));
+    this.child.stdin.on('error', (err) => this.failAll(new Error(`agent stdin error: ${err.message}`)));
   }
 
   // --- LSP framing ---------------------------------------------------------

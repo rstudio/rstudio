@@ -146,10 +146,11 @@ export function strictAiAuth(): boolean {
 }
 
 // GitHub Copilot's credential directory inside a given home dir. Platform-
-// dependent, and the single definition of where sandbox-setup.ts seeds Copilot
-// creds to and where scrubCredentials removes them from, so the two can't
-// drift. (The host-side source path is computed separately in sandbox-setup.ts:
-// on Windows it honors %LOCALAPPDATA%, which need not equal AppData/Local.)
+// dependent, and the single definition of where the auth.setup project copies
+// Copilot creds to and where scrubCredentials removes them from, so the two
+// can't drift. (The host-side source path is computed separately in
+// tests/auth.setup.ts: on Windows it honors %LOCALAPPDATA%, which need not
+// equal AppData/Local.)
 export function copilotConfigDir(homeDir: string): string {
   return process.platform === 'win32'
     ? path.join(homeDir, 'AppData', 'Local', 'github-copilot')

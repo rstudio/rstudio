@@ -21,7 +21,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   // The flow spawns the agent, drives a live GitHub sign-in (including the
-  // authorize-button delay, up to 120s), and waits for the agent's own token
+  // authorize-button delay, up to 60s), and waits for the agent's own token
   // poll; 5 minutes covers all of that with headroom.
   timeout: 300_000,
   retries: 0,

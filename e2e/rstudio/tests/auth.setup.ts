@@ -675,7 +675,7 @@ class CopilotTerminalError extends Error {
 
 setup('authenticate GitHub Copilot', async () => {
   // Same reasoning as the Posit AI block: agent startup, five browser steps,
-  // the authorize-button delay (up to 120s), and the agent's own token poll
+  // the authorize-button delay (up to 60s), and the agent's own token poll
   // can legitimately exceed the global 120s test timeout; the withDeadline
   // race below settles well before this outer limit.
   setup.setTimeout(300_000);
@@ -754,6 +754,9 @@ setup('authenticate GitHub Copilot', async () => {
 
   console.log('[auth-setup] starting GitHub Copilot sign-in...');
   const agent = new CopilotAgent(sandboxUserHome);
+  // Captured from the authorize step so a later failure can name a likely
+  // culprit (e.g. the Authorize button never appeared) in the skip reason.
+  let authorizeNote: string | undefined;
   try {
     const flow = (async () => {
       await agent.initialize();
@@ -766,6 +769,13 @@ setup('authenticate GitHub Copilot', async () => {
         return;
       }
 
+      if (initiate.status === STATUS_NOT_AUTHORIZED) {
+        // The account has no Copilot access -- deterministic, same remedy as
+        // the post-sign-in NotAuthorized case, not a protocol change.
+        throw new CopilotTerminalError(
+          'Copilot sign-in reports the account has no Copilot access (NotAuthorized). Enable Copilot Free at https://github.com/settings/copilot and re-run.',
+        );
+      }
       if (initiate.status !== STATUS_PROMPT_DEVICE_FLOW || !initiate.userCode || !initiate.verificationUri) {
         // An unrecognized signInInitiate shape is a protocol change on the
         // agent, not flake.
@@ -778,7 +788,7 @@ setup('authenticate GitHub Copilot', async () => {
       // The browser half: sign in to GitHub and authorize the agent's device
       // code. The agent polls GitHub itself afterwards, exchanges the code,
       // and persists the token.
-      await authorizeDeviceCode({
+      authorizeNote = await authorizeDeviceCode({
         verificationUri: initiate.verificationUri,
         userCode: initiate.userCode,
         user,
@@ -811,13 +821,13 @@ setup('authenticate GitHub Copilot', async () => {
     writeAuthStatus(sandbox, 'copilot', {
       source: 'login',
       outcome: 'login-failed',
-      reason: `Copilot sign-in flow was attempted but failed: ${msg}`,
+      reason: `Copilot sign-in flow was attempted but failed: ${msg}${authorizeNote ? ` (${authorizeNote})` : ''}`,
     });
     console.warn(
       '[auth-setup] WARNING: GitHub Copilot sign-in flow failed; Copilot tests will be skipped:',
       msg,
     );
-    failIfStrict('GitHub Copilot', `the sign-in flow was attempted but failed: ${msg}`);
+    failIfStrict('GitHub Copilot', `the sign-in flow was attempted but failed: ${msg}${authorizeNote ? ` (${authorizeNote})` : ''}`);
     return;
   } finally {
     // Orderly shutdown before reading the store, so the SQLite WAL is

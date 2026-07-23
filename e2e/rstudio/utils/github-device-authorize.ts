@@ -79,7 +79,11 @@ function base32Decode(input: string): Buffer {
   let bits = '';
   for (const ch of clean) {
     const idx = alphabet.indexOf(ch);
-    if (idx === -1) continue;
+    if (idx === -1) {
+      throw new GitHubLoginError(
+        'COPILOT_TOTP_SECRET contains a character that is not valid base32 (expected A-Z and 2-7); check the secret in .env.local',
+      );
+    }
     bits += idx.toString(2).padStart(5, '0');
   }
   const bytes: number[] = [];
@@ -130,7 +134,7 @@ async function signIn(page: Page, user: string, password: string, totpSecret?: s
   const totpField = page.locator('#app_totp');
   if (await appears(totpField, 5_000)) {
     if (!totpSecret) {
-      throw new Error(
+      throw new GitHubLoginError(
         'GitHub is asking for a 2FA authenticator code, but COPILOT_TOTP_SECRET is not set. '
         + 'Add the account\'s base32 2FA secret to .env.local, or remove 2FA from the account.',
       );
@@ -175,11 +179,20 @@ async function enterUserCode(page: Page, userCode: string): Promise<void> {
   const n = await boxes.count();
   const vals: string[] = [];
   for (let i = 0; i < n; i++) vals.push(await boxes.nth(i).inputValue().catch(() => '?'));
-  log(`user-code boxes (${n}) filled; entry matches expected: ${vals.join('').replace(/-/g, '') === code}`);
+  const entered = vals.join('').replace(/-/g, '');
+  log(`user-code boxes (${n}) filled; entry matches expected: ${entered === code}`);
+  if (entered !== code) {
+    // The comment above documents the dropped-keystroke race; enforce it here
+    // so a misentry fails fast with a clear cause rather than as a generic
+    // 90s waitForSignIn timeout downstream.
+    throw new Error(
+      'user code did not land correctly in the GitHub form (a keystroke was likely dropped); aborting before submit',
+    );
+  }
   await page.getByRole('button', { name: /continue/i }).click();
 }
 
-async function authorize(page: Page): Promise<void> {
+async function authorize(page: Page): Promise<string | undefined> {
   const authorizeBtn = page.locator('.js-oauth-authorize-btn');
 
   // On a re-run the OAuth app may already be authorized, so GitHub can skip
@@ -193,8 +206,12 @@ async function authorize(page: Page): Promise<void> {
   if (!appeared) {
     // The final page capture on close (see auth-debug.ts) records what showed
     // instead; the caller's checkStatus poll decides whether it mattered.
+    // Return a note (page title only -- the URL carries the device code) so a
+    // later sign-in failure can name this likely culprit rather than surfacing
+    // only as a generic waitForSignIn timeout.
+    const title = await page.title().catch(() => '?');
     log('.js-oauth-authorize-btn not found; continuing (the app may already be authorized)');
-    return;
+    return `the Authorize button never appeared (page title: "${title}") -- GitHub may have shown an error page`;
   }
 
   const initiallyDisabled = await authorizeBtn.isDisabled();
@@ -223,6 +240,7 @@ async function authorize(page: Page): Promise<void> {
 
   await authorizeBtn.click();
   log('clicked Authorize (trusted click, no attribute hack)');
+  return undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -236,17 +254,27 @@ async function authorize(page: Page): Promise<void> {
  * confirm the grant registered (for the Copilot agent, by polling checkStatus
  * until it reports OK).
  */
-export async function authorizeDeviceCode(opts: AuthorizeDeviceCodeOptions): Promise<void> {
+export async function authorizeDeviceCode(opts: AuthorizeDeviceCodeOptions): Promise<string | undefined> {
   // The shared launcher owns the browser config and the PW_DEBUG_AUTH_CAPTURE page
   // captures; session.close() takes the final capture (the failure-state
   // record when a step throws) and never itself throws.
-  const session = await launchAuthBrowser('copilot');
+  let session: Awaited<ReturnType<typeof launchAuthBrowser>>;
+  try {
+    session = await launchAuthBrowser('copilot');
+  } catch (err) {
+    // A launch failure is an environment gap, not flake -- the same reasoning
+    // as the Posit AI flow. Fail loud with the remedy rather than skipping
+    // Copilot forever.
+    throw new GitHubLoginError(
+      `could not launch the sign-in browser: ${(err as Error).message} -- if the Playwright browser is not installed, run "npx playwright install" from e2e/rstudio`,
+    );
+  }
   try {
     const page = session.page;
     await page.goto(opts.verificationUri, { waitUntil: 'domcontentloaded' });
     await signIn(page, opts.user, opts.password, opts.totpSecret);
     await enterUserCode(page, opts.userCode);
-    await authorize(page);
+    return await authorize(page);
   } finally {
     await session.close();
   }
