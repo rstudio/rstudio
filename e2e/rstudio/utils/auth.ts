@@ -1,4 +1,4 @@
-import { execFileSync } from 'child_process';
+import Database from 'better-sqlite3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -172,26 +172,28 @@ export function copilotAuthDbPath(homeDir: string): string {
 // this checks the store, not the entitlement -- an account whose Copilot
 // access was revoked server-side still reads as authenticated here.
 //
-// The row count is read with the sqlite3 CLI (present by default on macOS and
-// Linux, and on GitHub-hosted Windows runners) rather than an npm dependency.
-// If the CLI is missing or the query fails, fall back to "auth.db exists" with
-// a warning -- weaker (the agent creates an empty auth.db on first launch,
-// before any sign-in), but still stricter than the config-dir existence check
-// this replaces.
+// The row count is read with better-sqlite3 (a native npm dependency with
+// cross-platform prebuilds) rather than the sqlite3 CLI, which is absent from
+// PATH on Windows -- the suite's primary desktop target. On any query error we
+// fail closed (return false): the agent creates an empty auth.db on first
+// launch, so "the file is there" does not mean "signed in", and treating a
+// broken or empty store as authenticated would let unprovisioned runs slip
+// past the credential gate.
 export function isCopilotStoreAuthenticated(homeDir: string): boolean {
-  const db = copilotAuthDbPath(homeDir);
-  if (!fs.existsSync(db)) return false;
+  const dbPath = copilotAuthDbPath(homeDir);
+  if (!fs.existsSync(dbPath)) return false;
+  let db: Database.Database | undefined;
   try {
-    const count = execFileSync('sqlite3', [db, 'SELECT COUNT(*) FROM oauth_tokens;'], {
-      encoding: 'utf8',
-      timeout: 10_000,
-    }).trim();
-    return Number(count) > 0;
+    db = new Database(dbPath, { readonly: true, fileMustExist: true });
+    const row = db.prepare('SELECT COUNT(*) AS n FROM oauth_tokens').get() as { n: number };
+    return row.n > 0;
   } catch (err) {
     console.warn(
-      `[auth] WARNING: could not query ${db} with sqlite3 (${(err as Error).message}); falling back to an existence-only check`,
+      `[auth] WARNING: could not query ${dbPath} with better-sqlite3 (${(err as Error).message}); treating the store as not signed in`,
     );
-    return true;
+    return false;
+  } finally {
+    db?.close();
   }
 }
 
