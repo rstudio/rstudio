@@ -3267,6 +3267,27 @@ void handlePreviewUrl(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handleCheckForUpdates(core::system::ProcessOperations& ops,
+                           const json::Value& requestId)
+{
+   DLOG("Handling ui/checkForUpdates request");
+
+   // This handler is a thin trigger: it does not perform the check itself. It
+   // fires a client event that runs the frontend "Check for Posit Assistant
+   // updates" command flow, which drives the check via the chat_check_for_updates
+   // RPC (whose manifest download and version comparison run in C++, elsewhere in
+   // this file) and shows the result dialogs. Advertised via rstudioCapabilities()
+   // so Posit Assistant can decide whether to surface this option.
+   ClientEvent event(client_events::kChatCheckForUpdates);
+   module_context::enqueClientEvent(event);
+
+   // success here means the request was accepted and the event enqueued, not
+   // that the check has run.
+   json::Object result;
+   result["success"] = true;
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleGetProtocolVersion(core::system::ProcessOperations& ops,
                                const json::Value& requestId,
                                const json::Object& params)
@@ -3415,6 +3436,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "ui/previewUrl")
    {
       handlePreviewUrl(ops, requestId, params);
+   }
+   else if (method == "ui/checkForUpdates")
+   {
+      handleCheckForUpdates(ops, requestId);
    }
    else
    {

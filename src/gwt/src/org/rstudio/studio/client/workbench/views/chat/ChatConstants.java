@@ -75,6 +75,17 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatCopyFailed();
     String chatReadlineWaiting();
 
+    // Check for updates command (modal result dialogs)
+    String chatCheckingForUpdates();
+    String chatCheckForUpdatesCaption();
+    String chatNoUpdateAvailableMessage();
+    String chatUpdateAvailableConfirmMessage(String currentVersion, String newVersion);
+    String chatInstallAvailableConfirmMessage(String version);
+    String chatUnsupportedVersionUpdateConfirmMessage(String currentVersion, String newVersion);
+    String chatUnsupportedVersionDowngradeConfirmMessage(String currentVersion, String newVersion);
+    String chatCheckFailedMessage();
+    String chatCancelButton();
+
     // Uninstall
     String uninstallPositAssistantCaption();
     String uninstallPositAssistantMessage();

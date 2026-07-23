@@ -152,6 +152,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEv
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatCheckForUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
@@ -1238,6 +1239,10 @@ public class ClientEventDispatcher
          {
             ChatBackendExitEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ChatBackendExitEvent(data.getExitCode(), data.getCrashed()));
+         }
+         else if (type == ClientEvent.ChatCheckForUpdates)
+         {
+            eventBus_.dispatchEvent(new ChatCheckForUpdatesEvent());
          }
          else if (type == ClientEvent.NotebookRenderCompleted)
          {
