@@ -32,6 +32,7 @@ import { DesktopActivation } from './activation-overlay';
 import { appState } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { buildInfo } from './build-info';
+import { detectRosetta } from './detect-rosetta';
 import { PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
@@ -663,6 +664,12 @@ export class SessionLauncher {
         logger().logDebug(`R is arm64; using ${this.sessionPath}`);
       } else {
         logger().logDebug(`R is x86_64; using ${this.sessionPath}`);
+
+        // an x86_64 build of R uses the x86_64 rsession, which requires
+        // Rosetta 2 to run on Apple Silicon; warn if it is not installed
+        if (ElectronDesktopOptions().checkForRosetta()) {
+          detectRosetta();
+        }
       }
     }
 

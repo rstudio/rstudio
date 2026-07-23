@@ -24,11 +24,10 @@ import { t } from 'i18next';
  * Checks if Rosetta is installed and running on Apple Silicon. Warns user to install Rosetta
  * if it is not installed.
  *
- * Despite having a "Universal" Mac build, we currently still ship with Intel components.
- * As a result, users on Mac M1/M2 (aka: arm64, aarch64) will need to have Rosetta 2 to avoid
- * running into issues with Intel-only components.
- *
- * See https://github.com/rstudio/rstudio/issues/12572 regarding Intel-only components.
+ * RStudio's own components are all native arm64, so RStudio itself does not require Rosetta 2.
+ * It is still needed to run an x86_64 (Intel) build of R, because the session process must
+ * match R's architecture and runs as x86_64 under Rosetta in that case. Accordingly this is
+ * called from the session launcher only when the selected R is x86_64 -- not at startup.
  *
  * @returns true if Rosetta is installed and running, false if Rosetta is not installed,
  *          and undefined if not on Apple Silicon.

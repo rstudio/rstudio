@@ -56,8 +56,8 @@
     "checkFailedMessage": "Something went wrong while detecting your Rosetta installation.",
     "checkFailedDetail": "Please reopen RStudio to try again.",
     "installWarningTitle": "Rosetta is not Installed",
-    "installWarningMessage": "Rosetta is not installed on your machine. You may experience issues running RStudio.",
-    "installWarningDetail": "To avoid these issues, please install Rosetta and reopen RStudio.",
+    "installWarningMessage": "You are using an Intel (x86_64) build of R, which requires Rosetta 2 to run on Apple Silicon, but Rosetta 2 is not installed.",
+    "installWarningDetail": "Install Rosetta 2, or switch to an arm64 build of R, then reopen RStudio.",
     "installWarningMoreInfo": "More Information",
     "installWarningRemindLater": "Remind Me Later",
     "installWarningDoNotRemind": "Don't Remind Me Again"
