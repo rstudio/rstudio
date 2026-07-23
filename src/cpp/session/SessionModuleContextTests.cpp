@@ -720,6 +720,55 @@ bool createWindowsShortcut(const core::FilePath& targetPath,
    return SUCCEEDED(hr);
 }
 
+// read the target path exactly as the .lnk stores it (IShellLink::GetPath,
+// no normalization), so a test can verify which form Save actually persisted
+bool readStoredShortcutTarget(const core::FilePath& shortcutPath,
+                              std::wstring* pStoredTarget)
+{
+   IShellLinkW* pShellLink = nullptr;
+   HRESULT hr = ::CoCreateInstance(CLSID_ShellLink,
+                                   nullptr,
+                                   CLSCTX_INPROC_SERVER,
+                                   IID_IShellLinkW,
+                                   (void**) &pShellLink);
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "CoCreateInstance(CLSID_ShellLink) failed, hr=0x"
+                    << std::hex << hr;
+      return false;
+   }
+
+   IPersistFile* pPersistFile = nullptr;
+   hr = pShellLink->QueryInterface(IID_IPersistFile, (void**) &pPersistFile);
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "QueryInterface(IID_IPersistFile) failed, hr=0x"
+                    << std::hex << hr;
+      pShellLink->Release();
+      return false;
+   }
+
+   std::wstring shortcut = toNativeSeparators(shortcutPath.getAbsolutePathW());
+   hr = pPersistFile->Load(shortcut.c_str(), STGM_READ);
+   if (SUCCEEDED(hr))
+   {
+      wchar_t targetPath[MAX_PATH];
+      hr = pShellLink->GetPath(targetPath, MAX_PATH, nullptr, 0);
+      if (hr == S_OK)
+         pStoredTarget->assign(targetPath);
+      else
+         ADD_FAILURE() << "IShellLinkW::GetPath failed, hr=0x" << std::hex << hr;
+   }
+   else
+   {
+      ADD_FAILURE() << "IPersistFile::Load failed, hr=0x" << std::hex << hr;
+   }
+
+   pPersistFile->Release();
+   pShellLink->Release();
+   return hr == S_OK;
+}
+
 } // anonymous namespace
 
 class WindowsShortcutTest : public ::testing::Test
@@ -897,6 +946,49 @@ TEST_F(WindowsShortcutTest, ResolveReturnsStoredPathWhenTargetDeleted)
    EXPECT_FALSE(error) << error.asString();
    EXPECT_EQ(doomed.getAbsolutePath(), target.getAbsolutePath());
    EXPECT_FALSE(target.exists());
+   EXPECT_FALSE(targetIsDir);
+}
+
+TEST_F(WindowsShortcutTest, ResolvesStoredShortPathToLongForm)
+{
+   // home aliasing (createAliasedPath) and the client's duplicate-document
+   // detection are literal string comparisons, so a target reported in 8.3
+   // short form (C:\Users\RUNNER~1\...) fails to alias even when it lives
+   // under the home directory. Resolution must return the canonical long
+   // form regardless of the form the link stores. (The shell itself often
+   // canonicalizes at SetPath/Save time; the GetLongPathName call in
+   // resolveWindowsShortcut covers links where it did not.)
+   core::FilePath target = baseDir_.completeChildPath("long-target-name.txt");
+   core::Error error = target.ensureFile();
+   ASSERT_FALSE(error) << error.asString();
+
+   std::wstring wideTarget = toNativeSeparators(target.getAbsolutePathW());
+   wchar_t shortBuf[MAX_PATH];
+   DWORD length = ::GetShortPathNameW(wideTarget.c_str(), shortBuf, MAX_PATH);
+   ASSERT_GT(length, 0u) << "GetShortPathName failed";
+   ASSERT_LT(length, static_cast<DWORD>(MAX_PATH));
+
+   std::wstring shortForm(shortBuf, length);
+   if (shortForm == wideTarget)
+      GTEST_SKIP() << "8.3 short names are unavailable on this volume";
+
+   core::FilePath shortcut =
+         makeShortcut(core::FilePath(shortForm), "short-form-shortcut.lnk");
+
+   // when the shell canonicalized the target at SetPath/Save time, the
+   // stored form is already long and the assertion below would pass even
+   // without the GetLongPathName normalization; skip so a pass always
+   // means the short-to-long seam was actually exercised
+   std::wstring storedTarget;
+   ASSERT_TRUE(readStoredShortcutTarget(shortcut, &storedTarget));
+   if (storedTarget != shortForm)
+      GTEST_SKIP() << "shell canonicalized the stored target at Save time";
+
+   core::FilePath resolved;
+   bool targetIsDir = true;
+   error = resolveWindowsShortcut(shortcut, &resolved, &targetIsDir);
+   EXPECT_FALSE(error) << error.asString();
+   EXPECT_EQ(target.getAbsolutePath(), resolved.getAbsolutePath());
    EXPECT_FALSE(targetIsDir);
 }
 
