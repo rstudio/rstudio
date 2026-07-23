@@ -83,42 +83,42 @@ bool detectSetupDbMode(int argc, const char* const argv[])
 
 bool detectShowPassword(int argc, const char* const argv[])
 {
-   return argHasFlag(argc, argv, "show-password");
+   return argHasFlag(argc, argv, "setup-db-show-password");
 }
 
 bool detectPrintOnly(int argc, const char* const argv[])
 {
-   return argHasFlag(argc, argv, "print-only");
+   return argHasFlag(argc, argv, "setup-db-print-only");
 }
 
 std::string extractMasterPasswordFile(int argc, const char* const argv[])
 {
-   return extractFlagValue(argc, argv, "master-password-file");
+   return extractFlagValue(argc, argv, "setup-db-master-password-file");
 }
 
 std::string extractHost(int argc, const char* const argv[])
 {
-   return extractFlagValue(argc, argv, "host");
+   return extractFlagValue(argc, argv, "setup-db-host");
 }
 
 std::string extractPort(int argc, const char* const argv[])
 {
-   return extractFlagValue(argc, argv, "port");
+   return extractFlagValue(argc, argv, "setup-db-port");
 }
 
 std::string extractMasterUsername(int argc, const char* const argv[])
 {
-   return extractFlagValue(argc, argv, "master-username");
+   return extractFlagValue(argc, argv, "setup-db-master-username");
 }
 
 std::string extractDatabaseName(int argc, const char* const argv[])
 {
-   return extractFlagValue(argc, argv, "database-name");
+   return extractFlagValue(argc, argv, "setup-db-database-name");
 }
 
 std::string extractDatabaseUser(int argc, const char* const argv[])
 {
-   return extractFlagValue(argc, argv, "database-user");
+   return extractFlagValue(argc, argv, "setup-db-database-user");
 }
 
 namespace {
@@ -344,14 +344,14 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          ("test-config", "deprecated alias for --check-config")
          ("check-config", "validate the configuration file and report all unrecognized options in a single pass")
          ("setup-db", "create the product database, service user, and grants on a PostgreSQL server")
-         ("master-password-file", value<std::string>(), "path to a file whose first line is the --setup-db master database password")
-         ("show-password", "print the generated service-user password to stdout when running --setup-db")
-         ("print-only", "write --setup-db credentials to a standalone file instead of the product config file")
-         ("host", value<std::string>(), "PostgreSQL host for --setup-db (skips the interactive prompt when set)")
-         ("port", value<std::string>(), "PostgreSQL port for --setup-db (skips the interactive prompt when set)")
-         ("master-username", value<std::string>(), "PostgreSQL master username for --setup-db (skips the interactive prompt when set)")
-         ("database-name", value<std::string>(), "database name for --setup-db (skips the interactive prompt when set)")
-         ("database-user", value<std::string>(), "database user for --setup-db (skips the interactive prompt when set)")
+         ("setup-db-master-password-file", value<std::string>(), "path to a file whose first line is the --setup-db master database password")
+         ("setup-db-show-password", "print the generated service-user password to stdout when running --setup-db")
+         ("setup-db-print-only", "write --setup-db credentials to a standalone file instead of the product config file")
+         ("setup-db-host", value<std::string>(), "PostgreSQL host for --setup-db (skips the interactive prompt when set)")
+         ("setup-db-port", value<std::string>(), "PostgreSQL port for --setup-db (skips the interactive prompt when set)")
+         ("setup-db-master-username", value<std::string>(), "PostgreSQL master username for --setup-db (skips the interactive prompt when set)")
+         ("setup-db-database-name", value<std::string>(), "database name for --setup-db (skips the interactive prompt when set)")
+         ("setup-db-database-user", value<std::string>(), "database user for --setup-db (skips the interactive prompt when set)")
          ("config-file",
            value<std::string>(&configFile)->default_value(
                                     optionsDescription.defaultConfigFilePath),
