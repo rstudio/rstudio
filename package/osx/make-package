@@ -260,6 +260,14 @@ set-version ${RSTUDIO_VERSION_FULL}
 case "${arch}" in *arm64*)  build_arm64=1  ;; esac
 case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
 
+# a universal build produces both architectures; only then may the x86_64
+# primary build merge the arm64 slices of diagnostics/rpostback. lipo cannot
+# combine two same-architecture inputs, so single-arch builds must skip it.
+universal_build=0
+if [ -n "${build_x86_64}" ] && [ -n "${build_arm64}" ]; then
+   universal_build=1
+fi
+
 # determine the primary build directory: whichever architecture is built
 # first and owns the install/package targets
 if [ -n "${build_x86_64}" ]; then
@@ -341,6 +349,7 @@ if [ -n "${build_x86_64}" ]; then
       -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"                \
       -DRSTUDIO_TARGET=${rstudio_target}                     \
       -DRSTUDIO_PACKAGE_BUILD=1                              \
+      -DRSTUDIO_UNIVERSAL_BUILD=${universal_build}           \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../x86_64" \
       -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${use_creds}"      \
       -DRSTUDIO_CODESIGN_KEYCHAIN_PATH="${KEYCHAIN_PATH}"    \

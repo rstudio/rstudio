@@ -143,3 +143,68 @@ execute_process(
       "${RSESSION_BINARY_DIR}"
       "@executable_path/../Frameworks"
       "diagnostics rpostback rsession")
+
+# Combine the x86_64 and arm64 builds of diagnostics and rpostback into
+# universal binaries. This runs only for universal builds: the primary build is
+# x86_64 (so the binaries already installed under bin/ are the x86_64 slices)
+# and a separate arm64 build has been produced. lipo cannot merge two inputs of
+# the same architecture, so single-architecture builds must not reach here --
+# hence gating on RSTUDIO_UNIVERSAL_BUILD, not on file existence alone.
+if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")
+
+   set(LIPO_STAGING_DIR "${CMAKE_INSTALL_PREFIX}/.arm64-lipo-staging")
+   file(MAKE_DIRECTORY "${LIPO_STAGING_DIR}")
+
+   foreach(TOOL diagnostics rpostback)
+
+      if("${TOOL}" STREQUAL "diagnostics")
+         set(ARM64_SOURCE "@DIAGNOSTICS_ARM64_PATH@")
+      else()
+         set(ARM64_SOURCE "@RPOSTBACK_ARM64_PATH@")
+      endif()
+
+      set(X64_BINARY "${RSESSION_BINARY_DIR}/${TOOL}")
+
+      # A universal build promises both slices. A missing input means the
+      # x86_64 or arm64 build did not produce the tool; fail fast rather than
+      # silently ship a thin binary that would still require Rosetta.
+      if(NOT EXISTS "${X64_BINARY}")
+         message(FATAL_ERROR "Universal build: missing x86_64 '${TOOL}' at '${X64_BINARY}'")
+      endif()
+
+      if(NOT EXISTS "${ARM64_SOURCE}")
+         message(FATAL_ERROR "Universal build: missing arm64 '${TOOL}' at '${ARM64_SOURCE}'")
+      endif()
+
+      echo("Creating universal '${TOOL}' binary")
+
+      # stage the arm64 build and point it at the arm64 Frameworks directory
+      file(COPY "${ARM64_SOURCE}" DESTINATION "${LIPO_STAGING_DIR}")
+      execute_process(
+         COMMAND
+            "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
+            "${LIPO_STAGING_DIR}"
+            "@executable_path/../Frameworks/arm64"
+            "${TOOL}")
+
+      # fuse the (already path-fixed) x86_64 slice with the arm64 slice
+      execute_process(
+         COMMAND
+            lipo -create
+               "${X64_BINARY}"
+               "${LIPO_STAGING_DIR}/${TOOL}"
+            -output "${X64_BINARY}.universal"
+         RESULT_VARIABLE LIPO_RESULT)
+
+      if(NOT LIPO_RESULT EQUAL 0)
+         message(FATAL_ERROR "lipo failed for '${TOOL}' (exit ${LIPO_RESULT})")
+      endif()
+
+      file(RENAME "${X64_BINARY}.universal" "${X64_BINARY}")
+
+   endforeach()
+
+   # remove staging artifacts so they are not packaged or signed
+   file(REMOVE_RECURSE "${LIPO_STAGING_DIR}")
+
+endif()
