@@ -113,20 +113,17 @@ test.describe('RMarkdown', () => {
     // having to time the restart or watch the interrupt button.
     await consoleActions.clearConsole();
 
-    // Run all chunks via restart R. In server mode the restart suspends the
-    // session, the client's get_events long-poll errors while it is down, and
-    // the GWT event stream then backs off for up to ~60s before polling
-    // again. DeferredInitCompletedEvent -- the client-side trigger that
-    // actually runs the queued chunks -- is delivered over that stream, so
-    // the chunks may only start once the backoff expires. 150s covers
-    // restart + worst-case backoff + chunk run (observed 57s of event-stream
-    // silence on CI with the old 60s budget).
-    test.setTimeout(240000);
+    // Run all chunks via restart R. 60s covers the worst-case restart +
+    // chunk run window. Keep this budget tight: the chunks only run once
+    // DeferredInitCompletedEvent reaches the client, so this wait doubles
+    // as the regression canary for the event-stream revival fix (#18340) --
+    // a client left deaf after the restart fails here rather than being
+    // masked by a generous timeout.
     await executeCommand(page, 'restartRRunAllChunks');
     const consoleOutput = consoleActions.consolePane.consoleOutput;
     await expect(consoleOutput).toContainText(
       'full of sound and fury, signifying nothing',
-      { timeout: 150000 },
+      { timeout: 60000 },
     );
 
     // Verify no variables in global env

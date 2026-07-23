@@ -72,15 +72,12 @@ export async function restartSessionWithSentinel(page: Page): Promise<void> {
 
   // window.rstudio.ready flips to true on DeferredInitCompletedEvent, which
   // is GWT's signal that the new session has finished its deferred init
-  // (workspace + search-path restore, modules sourced). The budget must
-  // cover more than the restart itself: in server mode the client's
-  // get_events long-poll errors while the session is down and the event
-  // stream then backs off for up to ~60s, delaying delivery of
-  // DeferredInitCompletedEvent well past the actual restart.
+  // (workspace + search-path restore, modules sourced). 60s covers the
+  // full restart + package restore on a slow worker.
   await page.waitForFunction(
     () => window.rstudio?.ready === true,
     null,
-    { timeout: 150000, polling: 50 },
+    { timeout: 60000, polling: 50 },
   );
 
   // The ready flag tells us GWT's workbench is wired up, but the console-
