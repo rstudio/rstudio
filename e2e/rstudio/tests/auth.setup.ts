@@ -61,6 +61,12 @@ const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
+// Whether this run targets RStudio Server. In server mode the rsession reads the
+// logged-in user's real home directory (from the passwd db), not the sandbox this
+// setup writes to, so the completion messages below warn that the sandbox
+// credentials won't reach the session.
+const IS_SERVER = (process.env.PW_RSTUDIO_MODE ?? 'desktop').toLowerCase() === 'server';
+
 // Copy a single file, first creating the destination's parent directory.
 function copyFile(src: string, dest: string): void {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -629,7 +635,11 @@ setup('authenticate Posit AI', async () => {
     outcome: 'success',
     reason: 'sign-in flow completed',
   });
-  console.log('[auth-setup] Posit AI sign-in complete; tokens written to sandbox');
+  console.log(
+    IS_SERVER
+      ? '[auth-setup] WARNING: Posit AI sign-in complete, but these sandbox credentials will not reach an RStudio Server rsession, which reads the logged-in user\'s real home directory instead'
+      : '[auth-setup] Posit AI sign-in complete; credentials are in place for RStudio Desktop',
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -828,5 +838,9 @@ setup('authenticate GitHub Copilot', async () => {
     outcome: 'success',
     reason: 'agent-driven sign-in flow completed',
   });
-  console.log('[auth-setup] GitHub Copilot sign-in complete; credential store written to sandbox');
+  console.log(
+    IS_SERVER
+      ? '[auth-setup] WARNING: Copilot sign-in complete, but these sandbox credentials will not reach an RStudio Server rsession, which reads the logged-in user\'s real home directory instead'
+      : '[auth-setup] Copilot sign-in complete; credentials are in place for RStudio Desktop',
+  );
 });
