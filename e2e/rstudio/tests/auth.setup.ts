@@ -536,7 +536,7 @@ setup('authenticate Posit AI', async () => {
     return;
   }
 
-  // Source 1: credentials set -> OAuth sign-in. Chosen whenever
+  // Source 1: credentials set -> OAuth device-flow sign-in. Chosen whenever
   // POSIT_EMAIL/POSIT_PASSWORD are set, even on a machine already signed in
   // locally: setting the credentials is the deliberate way to exercise the
   // sign-in flow. The seed kill-switch never affects it (it copies nothing from
@@ -636,7 +636,7 @@ setup('authenticate Posit AI', async () => {
 // GitHub Copilot. Same auto-detect shape as Posit AI above, different
 // mechanics: the sign-in flow spawns the copilot-language-server itself
 // (utils/copilot-agent.ts) with HOME pointed at the sandbox user-home, lets it
-// run GitHub's OAuth device flow, and completes the browser half
+// run GitHub's OAuth device-flow sign-in, and completes the browser half
 // (utils/github-device-authorize.ts). The agent writes its own credential
 // store (auth.db), so the sandbox ends up with exactly what a real sign-in
 // through the IDE would produce. The copy mode replicates the host's
