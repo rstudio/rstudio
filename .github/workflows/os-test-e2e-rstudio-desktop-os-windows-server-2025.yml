@@ -97,6 +97,9 @@ on:
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
+      AWS_SCCACHE_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
+        required: false
 
 permissions:
   contents: read
@@ -127,7 +130,9 @@ jobs:
       # make-package.bat, and CMake.
       RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}\rstudio-tools
       SCCACHE_ENABLED: '1'
-      SCCACHE_GHA_ENABLED: 'true'
+      # Backend selection happens in the "Select sccache backend" step below:
+      # S3 when the OIDC role + bucket are configured, GHA cache otherwise.
+      SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
       NPM_CONFIG_LOGLEVEL: error
       NPM_CONFIG_AUDIT: 'false'
       # Compile GWT with readable (PRETTY) symbol names rather than the default
@@ -138,6 +143,14 @@ jobs:
       # NSIS version installed via choco and folded into the NSIS cache key
       # below. Pinned so the cached tree and a fresh choco install can't drift.
       NSIS_VERSION: '3.12.0'
+      # CI-only CMake overrides, appended to the configure line by
+      # make-package.bat (official builds don't set this).
+      # CPACK_NSIS_COMPRESSOR=zlib: CPack's default solid-LZMA spends ~11
+      # minutes compressing an installer that lives for 7 days and is
+      # consumed exactly once by the e2e job below; zlib takes ~4 minutes
+      # at the cost of a larger artifact.
+      RSTUDIO_CMAKE_EXTRA_ARGS: >-
+        -DCPACK_NSIS_COMPRESSOR=zlib
 
     steps:
       - uses: actions/checkout@v4
@@ -160,26 +173,41 @@ jobs:
 
       # Windows runners have ~14GB free. RStudio's C++ build + MSVC + all
       # downloaded deps can push that limit. Remove pre-installed components
-      # we don't need to free ~6-8GB before the build starts.
-      - name: Free disk space
+      # we don't need to free ~6-8GB before the build starts. The removal
+      # takes ~4-5 minutes, so it runs as a detached process and overlaps the
+      # cache restores and dependency install below; the freed space is only
+      # needed by the build itself, which waits on the done-marker first.
+      - name: Free disk space (background)
         run: |
+          $ErrorActionPreference = 'Stop'
           $before = Get-PSDrive -Name C
           Write-Host "Disk space before cleanup: $([math]::Round($before.Free / 1GB, 1)) GB free"
-          $dirs = @(
-            'C:\Program Files\dotnet',
-            'C:\Program Files (x86)\Android',
-            'C:\Program Files\Microsoft SQL Server',
-            'C:\Program Files\Azure Cosmos DB Emulator',
-            'C:\Program Files (x86)\Microsoft SDKs\Azure',
-            'C:\Android'
+
+          # Built from a line array rather than a here-string: a here-string's
+          # closing '@ must sit at column 0, which would terminate this YAML
+          # block scalar.
+          $lines = @(
+            '$dirs = @(',
+            "  'C:\Program Files\dotnet',",
+            "  'C:\Program Files (x86)\Android',",
+            "  'C:\Program Files\Microsoft SQL Server',",
+            "  'C:\Program Files\Azure Cosmos DB Emulator',",
+            "  'C:\Program Files (x86)\Microsoft SDKs\Azure',",
+            "  'C:\Android'",
+            ')',
+            'foreach ($d in $dirs) {',
+            '  if (Test-Path $d) { Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue }',
+            '}',
+            'New-Item -ItemType File -Force -Path (Join-Path $env:RUNNER_TEMP ''free-disk-space.done'') | Out-Null'
           )
-          foreach ($d in $dirs) {
-            if (Test-Path $d) { Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue }
-          }
-          $after  = Get-PSDrive -Name C
-          $freed  = [math]::Round(($after.Free - $before.Free) / 1GB, 1)
-          $freeGB = [math]::Round($after.Free / 1GB, 1)
-          Write-Host "Disk space after cleanup:  $freeGB GB free (freed ~$freed GB)"
+          $script = Join-Path $env:RUNNER_TEMP 'free-disk-space.ps1'
+          Set-Content -Path $script -Value ($lines -join "`n") -Encoding utf8
+
+          Start-Process pwsh -WindowStyle Hidden `
+            -ArgumentList '-NoProfile', '-File', $script `
+            -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'free-disk-space.out') `
+            -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'free-disk-space.err')
+          Write-Host "Disk cleanup started in the background."
 
       # Downloaded build deps (Boost, SOCI, GWT, Node, pandoc, quarto, etc.)
       # land in RSTUDIO_TOOLS_ROOT\dependencies, outside any directory that
@@ -316,6 +344,49 @@ jobs:
           # registry entry. Put makensis on PATH (the other place cpack
           # looks) so packaging works on both paths.
           Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files (x86)\NSIS'
+
+      # Prefer the S3 sccache backend when the infra is configured (the
+      # AWS_SCCACHE_ROLE_ARN secret plus the AWS_SCCACHE_BUCKET repo
+      # variable). The GHA cache backend writes per-object entries into each
+      # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
+      # (6000+ of its entries were sccache objects) and LRU-evicting the
+      # main-scoped copies the seed maintains -- PR builds then compile at a
+      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
+      # writes one shared cache.
+      - name: Configure AWS credentials for sccache
+        id: sccache-aws
+        if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
+        # A failed OIDC exchange degrades to the GHA backend below rather
+        # than failing the build.
+        continue-on-error: true
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
+          aws-region: us-east-1
+          # Cold builds can run past the default 1-hour session; the role
+          # must be created with a max session duration of at least 2 hours.
+          role-duration-seconds: 7200
+
+      # Falls back to the GHA cache backend when the secret/variable are
+      # unset (e.g. fork PRs) or the credential exchange failed, preserving
+      # today's behavior. Must run before the sccache-action below: that
+      # action only exports the Actions cache URL/token the GHA backend
+      # needs when SCCACHE_GHA_ENABLED is already set as it runs.
+      - name: Select sccache backend
+        env:
+          SCCACHE_S3_BUCKET: ${{ vars.AWS_SCCACHE_BUCKET }}
+          SCCACHE_AWS_OUTCOME: ${{ steps.sccache-aws.outcome }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:SCCACHE_AWS_OUTCOME -eq 'success') {
+            Write-Host "sccache backend: S3 ($env:SCCACHE_S3_BUCKET)"
+            "SCCACHE_BUCKET=$env:SCCACHE_S3_BUCKET" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            "SCCACHE_REGION=us-east-1" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            "SCCACHE_S3_KEY_PREFIX=win64" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          } else {
+            Write-Host "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
+            "SCCACHE_GHA_ENABLED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          }
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696  # v0.0.10
@@ -486,6 +557,41 @@ jobs:
           }
           Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion with nested deps"
 
+      # The setup steps above only need the runner's initial headroom; the
+      # build below is what needs the space the background cleanup frees.
+      # Gate on free space, not just the done-marker: detached, the cleanup
+      # competes with the dependency installs for I/O and can take far longer
+      # than its ~4-minute synchronous baseline (one run still hadn't written
+      # the marker after 17 minutes, despite having already freed 13 GB), and
+      # free space is what the build actually needs. Warn-and-continue on
+      # timeout: if the space really is missing, the build fails with a
+      # clearer disk-full error.
+      - name: Wait for background disk cleanup
+        run: |
+          $marker = Join-Path $env:RUNNER_TEMP 'free-disk-space.done'
+          $minFreeGB = 20
+          $deadline = (Get-Date).AddMinutes(10)
+          while ((Get-Date) -lt $deadline) {
+            $free = [math]::Round((Get-PSDrive -Name C).Free / 1GB, 1)
+            if ((Test-Path $marker) -or ($free -ge $minFreeGB)) {
+              break
+            }
+            Start-Sleep -Seconds 5
+          }
+
+          $free = [math]::Round((Get-PSDrive -Name C).Free / 1GB, 1)
+          if (-not (Test-Path $marker) -and $free -lt $minFreeGB) {
+            Write-Host "::warning::Disk cleanup still running and only $free GB free after 10 minutes; continuing anyway."
+            foreach ($f in @('free-disk-space.out', 'free-disk-space.err')) {
+              $path = Join-Path $env:RUNNER_TEMP $f
+              if ((Test-Path $path) -and (Get-Item $path).Length -gt 0) {
+                Write-Host "--- $f ---"
+                Get-Content $path | Write-Host
+              }
+            }
+          }
+          Write-Host "Disk space before build: $free GB free"
+
       # Use nogwt when the GWT cache was restored -- skips the Ant compilation
       # step and reuses the compiled JS/CSS already in src/gwt/www. On a cache
       # miss (first run, or after GWT source changes) a full GWT build runs and
@@ -594,7 +700,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        # 4 shards: per-shard setup is only ~5 minutes against a ~35 minute
+        # (at 2 shards) test step, so extra shards still convert nearly 1:1
+        # into wall-clock savings.
+        shard: [1, 2, 3, 4]
     runs-on: windows-2025
     timeout-minutes: 120
     defaults:
@@ -993,4 +1102,4 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>4 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
