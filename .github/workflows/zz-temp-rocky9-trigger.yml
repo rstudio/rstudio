@@ -1,0 +1,29 @@
+name: "zz-temp Rocky 9 trigger (DELETE before merge)"
+
+# TEMPORARY pre-merge validation trigger for the Rocky 9 x86_64 E2E engine.
+# A brand-new engine that isn't on the default branch yet can't be reached by
+# workflow_dispatch/schedule, but a push trigger runs from the branch's own
+# files. This fires the engine on push to the feature branch so it can be
+# validated pre-merge. DELETE THIS FILE before the PR merges.
+
+on:
+  push:
+    branches:
+      - test/ron/rocky-9-e2e-engine-workflow
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  rocky9:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-9-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      r_version: "release"
+      test_selector: "smoke/startup.test.ts"
