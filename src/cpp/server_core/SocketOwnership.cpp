@@ -15,6 +15,15 @@
 
 #include <server_core/SocketOwnership.hpp>
 
+#include <core/BoostErrors.hpp>
+#include <core/Log.hpp>
+
+// NETLINK_SOCK_DIAG is Linux-specific; there is no portable equivalent for
+// looking up the owning uid of an established loopback socket. rserver is
+// dev-only on non-Linux platforms, so this degrades to "enforcement
+// unavailable" there rather than failing to build (rstudio-pro#11470).
+#ifdef __linux__
+
 #include <cstring>
 #include <functional>
 #include <string>
@@ -28,14 +37,15 @@
 #include <linux/inet_diag.h>
 #include <unistd.h>
 
-#include <core/BoostErrors.hpp>
-#include <core/Log.hpp>
+#endif // __linux__
 
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace server_core {
 namespace socket_utils {
+
+#ifdef __linux__
 
 namespace {
 
@@ -301,6 +311,30 @@ bool probeSockDiagAvailable()
 
    return available;
 }
+
+#else // !__linux__
+
+Error lookupEstablishedSocketUid(bool, int, int, uid_t*)
+{
+   return systemError(boost::system::errc::not_supported,
+                      "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux",
+                      ERROR_LOCATION);
+}
+
+Error verifyPeerUid(bool ipv6, int appPort, int ephemeralPort, uid_t /*expectedUid*/)
+{
+   uid_t ownerUid = 0;
+   Error error = lookupEstablishedSocketUid(ipv6, appPort, ephemeralPort, &ownerUid);
+   error.addProperty(kPortOwnershipRejectedProperty, "1");
+   return error;
+}
+
+bool probeSockDiagAvailable()
+{
+   return false;
+}
+
+#endif // __linux__
 
 } // namespace socket_utils
 } // namespace server_core
