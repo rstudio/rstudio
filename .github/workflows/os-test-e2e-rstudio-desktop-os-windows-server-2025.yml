@@ -144,20 +144,13 @@ jobs:
       # below. Pinned so the cached tree and a fresh choco install can't drift.
       NSIS_VERSION: '3.12.0'
       # CI-only CMake overrides, appended to the configure line by
-      # make-package.bat (official builds don't set this):
-      # - CPACK_NSIS_COMPRESSOR=zlib: CPack's default solid-LZMA spends ~11
-      #   minutes compressing an installer that lives for 7 days and is
-      #   consumed exactly once by the e2e job below; zlib takes ~1-2 minutes
-      #   at the cost of a larger artifact.
-      # - CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded (/Z7 instead of /Zi):
-      #   sccache cannot cache /Zi compiles (~200 objects fell through the
-      #   cache on every run); /Z7 embeds the debug info in the .obj, which
-      #   caches fine, and the linker still emits final PDBs. CMP0141 must be
-      #   forced NEW because the top-level cmake_minimum_required predates it.
+      # make-package.bat (official builds don't set this).
+      # CPACK_NSIS_COMPRESSOR=zlib: CPack's default solid-LZMA spends ~11
+      # minutes compressing an installer that lives for 7 days and is
+      # consumed exactly once by the e2e job below; zlib takes ~4 minutes
+      # at the cost of a larger artifact.
       RSTUDIO_CMAKE_EXTRA_ARGS: >-
         -DCPACK_NSIS_COMPRESSOR=zlib
-        -DCMAKE_POLICY_DEFAULT_CMP0141=NEW
-        -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
 
     steps:
       - uses: actions/checkout@v4
@@ -210,7 +203,10 @@ jobs:
           $script = Join-Path $env:RUNNER_TEMP 'free-disk-space.ps1'
           Set-Content -Path $script -Value ($lines -join "`n") -Encoding utf8
 
-          Start-Process pwsh -WindowStyle Hidden -ArgumentList '-NoProfile', '-File', $script
+          Start-Process pwsh -WindowStyle Hidden `
+            -ArgumentList '-NoProfile', '-File', $script `
+            -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'free-disk-space.out') `
+            -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'free-disk-space.err')
           Write-Host "Disk cleanup started in the background."
 
       # Downloaded build deps (Boost, SOCI, GWT, Node, pandoc, quarto, etc.)
@@ -561,23 +557,39 @@ jobs:
           }
           Write-Host "Bundled node-gyp at $bundledGypDir is now version $finalVersion with nested deps"
 
-      # The setup steps above only need the runner's initial ~14GB headroom;
-      # the build below is what needs the space the background cleanup frees.
-      # In practice the cleanup (~4-5 min) finishes long before the ~6 min of
-      # cache restores and dependency installs above, so this is normally an
-      # instant pass-through. Warn-and-continue on timeout: if the space
-      # really is missing, the build fails with a clearer disk-full error.
+      # The setup steps above only need the runner's initial headroom; the
+      # build below is what needs the space the background cleanup frees.
+      # Gate on free space, not just the done-marker: detached, the cleanup
+      # competes with the dependency installs for I/O and can take far longer
+      # than its ~4-minute synchronous baseline (one run still hadn't written
+      # the marker after 17 minutes, despite having already freed 13 GB), and
+      # free space is what the build actually needs. Warn-and-continue on
+      # timeout: if the space really is missing, the build fails with a
+      # clearer disk-full error.
       - name: Wait for background disk cleanup
         run: |
           $marker = Join-Path $env:RUNNER_TEMP 'free-disk-space.done'
-          $deadline = (Get-Date).AddMinutes(15)
-          while (-not (Test-Path $marker) -and (Get-Date) -lt $deadline) {
+          $minFreeGB = 20
+          $deadline = (Get-Date).AddMinutes(10)
+          while ((Get-Date) -lt $deadline) {
+            $free = [math]::Round((Get-PSDrive -Name C).Free / 1GB, 1)
+            if ((Test-Path $marker) -or ($free -ge $minFreeGB)) {
+              break
+            }
             Start-Sleep -Seconds 5
           }
-          if (-not (Test-Path $marker)) {
-            Write-Host "::warning::Background disk cleanup did not finish within 15 minutes; continuing anyway."
-          }
+
           $free = [math]::Round((Get-PSDrive -Name C).Free / 1GB, 1)
+          if (-not (Test-Path $marker) -and $free -lt $minFreeGB) {
+            Write-Host "::warning::Disk cleanup still running and only $free GB free after 10 minutes; continuing anyway."
+            foreach ($f in @('free-disk-space.out', 'free-disk-space.err')) {
+              $path = Join-Path $env:RUNNER_TEMP $f
+              if ((Test-Path $path) -and (Get-Item $path).Length -gt 0) {
+                Write-Host "--- $f ---"
+                Get-Content $path | Write-Host
+              }
+            }
+          }
           Write-Host "Disk space before build: $free GB free"
 
       # Use nogwt when the GWT cache was restored -- skips the Ant compilation
