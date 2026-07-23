@@ -9,7 +9,7 @@ import { authStepsEnabled, launchAuthBrowser } from './auth-debug';
  * code, and click Authorize with a genuine trusted interaction.
  *
  * Every step here was proven live against github.com (see
- * prototypes/copilot-authorize.spec.ts for the original standalone flow).
+ * prototypes/copilot-agent-signin.spec.ts for the standalone smoke test).
  * The key finding: GitHub's anti-clickjacking gate renders the Authorize
  * button disabled and arms it only after a trusted scroll/wheel event;
  * page.mouse.wheel() (a real CDP event) satisfies it, including in headless
@@ -210,7 +210,7 @@ async function authorize(page: Page): Promise<void> {
   await page.mouse.wheel(0, 300);
 
   const t0 = Date.now();
-  const deadline = t0 + 120_000;
+  const deadline = t0 + 60_000;
   while (Date.now() < deadline) {
     if (await authorizeBtn.isEnabled()) break;
     await page.waitForTimeout(3000);
@@ -218,7 +218,7 @@ async function authorize(page: Page): Promise<void> {
   const enabled = await authorizeBtn.isEnabled();
   log(`after ${Math.round((Date.now() - t0) / 1000)}s the Authorize button is ${enabled ? 'ENABLED' : 'still DISABLED'}`);
   if (!enabled) {
-    throw new Error('Authorize button never enabled within 120s');
+    throw new Error('Authorize button never enabled within 60s');
   }
 
   await authorizeBtn.click();

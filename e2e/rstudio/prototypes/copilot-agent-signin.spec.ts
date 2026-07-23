@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { isCopilotStoreAuthenticated } from '../utils/auth';
 import { authorizeDeviceCode } from '../utils/github-device-authorize';
 import {
   CopilotAgent,
@@ -108,14 +108,10 @@ test('copilot-language-server signs in via device flow and writes auth.db', asyn
     await agent.shutdown();
     agent = undefined;
 
-    const authDb = path.join(homeDir, '.config', 'github-copilot', 'auth.db');
-    expect(fs.existsSync(authDb), `expected ${authDb} to exist`).toBe(true);
-
-    const rowCount = execFileSync('sqlite3', [authDb, 'SELECT COUNT(*) FROM oauth_tokens;'], {
-      encoding: 'utf8',
-    }).trim();
-    log(`oauth_tokens rows in ${authDb}: ${rowCount}`);
-    expect(Number(rowCount), 'auth.db should hold at least one oauth token').toBeGreaterThan(0);
+    expect(
+      isCopilotStoreAuthenticated(homeDir),
+      'auth.db should hold at least one oauth token',
+    ).toBe(true);
 
     log('SUCCESS: agent-driven sign-in produced a usable credential store from scratch');
   } finally {
