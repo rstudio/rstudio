@@ -21,6 +21,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
@@ -218,18 +219,20 @@ class RemoteServerEventListener
       start();
    }
 
-   // schedule a slow-cadence attempt to revive a listener that stopped due
-   // to errors. without this the listener can remain permanently stopped
-   // after a session restart: the error-retry budget above is typically
-   // exhausted while the session is still down, and nothing else restarts
-   // the listener when the session comes back up (successful RPCs only call
-   // ensureEvents() when their response reports events pending), leaving
-   // the client deaf to events until some later RPC happens to do so.
-   // the timer is cancelled by stop(), so deliberate stops (e.g. hidden
-   // multi-session tabs, window close) are not overridden.
-   private void scheduleRevival()
+   // schedule an attempt to revive a listener that stopped due to errors:
+   // quick (500ms) retries while the error budget lasts, then a slow
+   // (kRevivalIntervalMs) cadence thereafter. without the slow cadence the
+   // listener could remain permanently stopped after a session restart: the
+   // quick-retry budget is typically exhausted while the session is still
+   // down, and the other revival paths (ensureListening on RPC sends,
+   // ensureEvents on responses reporting pending events) only run when the
+   // client is actively making requests, leaving an idle client deaf to
+   // events until the user's next action. the timer is cancelled by stop(),
+   // so deliberate stops (e.g. hidden multi-session tabs, window close) are
+   // not overridden.
+   private void scheduleRevival(int delayMs)
    {
-      revivalTimer_.schedule(kRevivalIntervalMs);
+      revivalTimer_.schedule(delayMs);
    }
    
    private void listen()
@@ -271,6 +274,12 @@ class RemoteServerEventListener
          {
             // keep watchdog appraised of successful receipt of events
             watchdog_.cancel();
+
+            // a successful poll ends any error streak; reset the error
+            // count so the next incident gets the full quick-retry budget
+            // (rather than consuming a single budget over the lifetime of
+            // the page)
+            listenErrorCount_ = 0;
 
             // if we were cancelled (such as if we called stop), do not attempt to process the events
             // and do not attempt to start listening again (until an explicit call to start is made)
@@ -321,7 +330,7 @@ class RemoteServerEventListener
             {
                ServerUnavailableEvent event = new ServerUnavailableEvent();
                server_.getEventBus().fireEvent(event);
-               scheduleRevival();
+               scheduleRevival(kRevivalIntervalMs);
                return;
             }
 
@@ -331,24 +340,14 @@ class RemoteServerEventListener
             // result in our server getting hammered with requests)
             if (listenErrorCount_++ <= 5)
             {
-               Timer startTimer = new Timer() {
-                  @Override
-                  public void run()
-                  {
-                     // only start again if we haven't been started
-                     // by some other means (e.g. ensureListening, etc)
-                     if (!isListening_)
-                        start();
-                  }
-               };
-               startTimer.schedule(500);
+               scheduleRevival(500);
             }
             // otherwise reset the listen error count and fall back to the
             // slow revival cadence
             else
             {
                listenErrorCount_ = 0;
-               scheduleRevival();
+               scheduleRevival(kRevivalIntervalMs);
             }
          }
       };
@@ -496,7 +495,11 @@ class RemoteServerEventListener
          // only revive if we haven't been started by some other means
          // (e.g. ensureListening) and reviving still makes sense
          if (!isListening_ && !sessionWasQuit_ && !server_.isDisconnected())
+         {
+            // leave a breadcrumb for diagnosing event delivery gaps
+            Debug.log("Event listener stopped due to errors; attempting revival");
             start();
+         }
       }
    };
        
