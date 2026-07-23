@@ -720,6 +720,55 @@ bool createWindowsShortcut(const core::FilePath& targetPath,
    return SUCCEEDED(hr);
 }
 
+// read the target path exactly as the .lnk stores it (IShellLink::GetPath,
+// no normalization), so a test can verify which form Save actually persisted
+bool readStoredShortcutTarget(const core::FilePath& shortcutPath,
+                              std::wstring* pStoredTarget)
+{
+   IShellLinkW* pShellLink = nullptr;
+   HRESULT hr = ::CoCreateInstance(CLSID_ShellLink,
+                                   nullptr,
+                                   CLSCTX_INPROC_SERVER,
+                                   IID_IShellLinkW,
+                                   (void**) &pShellLink);
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "CoCreateInstance(CLSID_ShellLink) failed, hr=0x"
+                    << std::hex << hr;
+      return false;
+   }
+
+   IPersistFile* pPersistFile = nullptr;
+   hr = pShellLink->QueryInterface(IID_IPersistFile, (void**) &pPersistFile);
+   if (FAILED(hr))
+   {
+      ADD_FAILURE() << "QueryInterface(IID_IPersistFile) failed, hr=0x"
+                    << std::hex << hr;
+      pShellLink->Release();
+      return false;
+   }
+
+   std::wstring shortcut = toNativeSeparators(shortcutPath.getAbsolutePathW());
+   hr = pPersistFile->Load(shortcut.c_str(), STGM_READ);
+   if (SUCCEEDED(hr))
+   {
+      wchar_t targetPath[MAX_PATH];
+      hr = pShellLink->GetPath(targetPath, MAX_PATH, nullptr, 0);
+      if (hr == S_OK)
+         pStoredTarget->assign(targetPath);
+      else
+         ADD_FAILURE() << "IShellLinkW::GetPath failed, hr=0x" << std::hex << hr;
+   }
+   else
+   {
+      ADD_FAILURE() << "IPersistFile::Load failed, hr=0x" << std::hex << hr;
+   }
+
+   pPersistFile->Release();
+   pShellLink->Release();
+   return hr == S_OK;
+}
+
 } // anonymous namespace
 
 class WindowsShortcutTest : public ::testing::Test
@@ -925,6 +974,15 @@ TEST_F(WindowsShortcutTest, ResolvesStoredShortPathToLongForm)
 
    core::FilePath shortcut =
          makeShortcut(core::FilePath(shortForm), "short-form-shortcut.lnk");
+
+   // when the shell canonicalized the target at SetPath/Save time, the
+   // stored form is already long and the assertion below would pass even
+   // without the GetLongPathName normalization; skip so a pass always
+   // means the short-to-long seam was actually exercised
+   std::wstring storedTarget;
+   ASSERT_TRUE(readStoredShortcutTarget(shortcut, &storedTarget));
+   if (storedTarget != shortForm)
+      GTEST_SKIP() << "shell canonicalized the stored target at Save time";
 
    core::FilePath resolved;
    bool targetIsDir = true;

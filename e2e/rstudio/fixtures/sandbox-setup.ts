@@ -106,6 +106,17 @@ export default async function globalSetup(config: FullConfig) {
   // resolved .lnk targets in the Files pane being the known casualty
   // (files_shortcuts.test.ts).
   const sandbox = fs.realpathSync.native(fs.mkdtempSync(path.join(parent, 'pw_sandbox_')));
+
+  // Self-guard for the canonicalization above: if the resolved path still
+  // contains an 8.3 short-name component (e.g. RUNNER~1), fail setup with a
+  // labeled error instead of letting the mismatch surface as a confusing
+  // visibility timeout deep in files_shortcuts.test.ts.
+  if (process.platform === 'win32' && sandbox.split(path.sep).some((c) => /~\d+($|\.)/.test(c))) {
+    throw new Error(
+      `[sandbox] resolved sandbox path still contains an 8.3 short-name component: ${sandbox}`,
+    );
+  }
+
   fs.mkdirSync(path.join(sandbox, 'data-home'), { recursive: true });
 
   // Seed a locally built Posit Assistant into the sandbox data-home so tests

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include <core/system/System.hpp>
 
@@ -158,10 +159,11 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
    // Home aliasing (createAliasedPath) and the client's duplicate-document
    // detection are literal string comparisons, so a non-canonical form
    // defeats both even when the target is under the home directory.
-   // Normalize local targets to the canonical long form. UNC and remote
-   // targets are skipped (the lookup would touch the network, violating
-   // the no-target-I/O contract above), and a failed lookup (e.g. a
-   // deleted target) keeps the stored form.
+   // Normalize local targets to the canonical long form. This reads the
+   // local filesystem (each path component), which is accepted during
+   // listings; UNC and remote targets are skipped because the same lookup
+   // would incur network I/O. A failed lookup (e.g. a deleted target)
+   // keeps the stored form.
    std::wstring storedPath(targetPath);
    if (storedPath.rfind(L"\\\\", 0) != 0 &&
        !core::system::isRemotePath(FilePath(storedPath)))
@@ -169,7 +171,20 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
       wchar_t longPath[MAX_PATH];
       DWORD length = ::GetLongPathNameW(storedPath.c_str(), longPath, MAX_PATH);
       if (length > 0 && length < MAX_PATH)
+      {
          storedPath.assign(longPath, length);
+      }
+      else if (length >= MAX_PATH)
+      {
+         // the long form is larger than the stack buffer (the stored form
+         // fit the MAX_PATH GetPath buffer above, but 8.3 components can
+         // hide a long form that does not); the return value is the
+         // required size, so retry on the heap
+         std::vector<wchar_t> buffer(length);
+         length = ::GetLongPathNameW(storedPath.c_str(), &buffer[0], length);
+         if (length > 0 && length < buffer.size())
+            storedPath.assign(&buffer[0], length);
+      }
    }
 
    *pTargetPath = FilePath(storedPath);
