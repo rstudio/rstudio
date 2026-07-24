@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -173,29 +173,46 @@ export function copilotAuthDbPath(homeDir: string): string {
 // this checks the store, not the entitlement -- an account whose Copilot
 // access was revoked server-side still reads as authenticated here.
 //
-// The row count is read with better-sqlite3 (a native npm dependency with
-// cross-platform prebuilds) rather than the sqlite3 CLI, which is absent from
-// PATH on Windows -- the suite's primary desktop target. On any query error we
-// fail closed (return false): the agent creates an empty auth.db on first
-// launch, so "the file is there" does not mean "signed in", and treating a
-// broken or empty store as authenticated would let unprovisioned runs slip
-// past the credential gate.
-export function isCopilotStoreAuthenticated(homeDir: string): boolean {
+// The row count is read via better-sqlite3, but in a short-lived child process
+// (utils/copilot-store-check.js) rather than in the Playwright worker: that
+// binding's native .node addon intermittently segfaulted the worker during
+// N-API registration on CI (macOS arm64, Windows). Running it in a disposable
+// child means such a crash kills only the child -- we retry -- instead of the
+// worker. better-sqlite3 (unlike a pure-WASM reader) applies the -wal sidecar,
+// which matters because the copilot-language-server leaves the oauth_tokens
+// table and token in an uncheckpointed WAL. The sqlite3 CLI is avoided because
+// it is absent from PATH on Windows, the suite's primary desktop target.
+//
+// Fail closed (return false) on a persistent failure: the agent creates an
+// empty auth.db on first launch, so "the file is there" does not mean "signed
+// in", and treating a broken store as authenticated would let unprovisioned
+// runs slip past the credential gate. The child prints "1"/"0" and exits 0 even
+// on a logical read error (it prints "0"); only a native crash exits via signal
+// with no output, which we retry a few times before giving up.
+export async function isCopilotStoreAuthenticated(homeDir: string): Promise<boolean> {
   const dbPath = copilotAuthDbPath(homeDir);
   if (!fs.existsSync(dbPath)) return false;
-  let db: Database.Database | undefined;
-  try {
-    db = new Database(dbPath, { readonly: true, fileMustExist: true });
-    const row = db.prepare('SELECT COUNT(*) AS n FROM oauth_tokens').get() as { n: number };
-    return row.n > 0;
-  } catch (err) {
+  const script = path.join(__dirname, 'copilot-store-check.js');
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const res = spawnSync(process.execPath, [script, dbPath], { encoding: 'utf8', timeout: 15_000 });
+    if (res.signal) {
+      // Native addon crashed (or the read hung and was killed) -- the crash is
+      // intermittent, so retry before giving up.
+      continue;
+    }
+    if (res.status === 0 && (res.stdout === '0' || res.stdout === '1')) {
+      return res.stdout === '1';
+    }
     console.warn(
-      `[auth] WARNING: could not query ${dbPath} with better-sqlite3 (${(err as Error).message}); treating the store as not signed in`,
+      `[auth] WARNING: copilot store check for ${dbPath} exited status=${res.status} signal=${res.signal}`
+      + `${res.stderr ? ` (${res.stderr.trim()})` : ''}; treating the store as not signed in`,
     );
     return false;
-  } finally {
-    db?.close();
   }
+  console.warn(
+    `[auth] WARNING: copilot store check for ${dbPath} crashed on every attempt; treating the store as not signed in`,
+  );
+  return false;
 }
 
 // Whether the shared user-home template holds a signed-in Copilot store. The
@@ -203,7 +220,7 @@ export function isCopilotStoreAuthenticated(homeDir: string): boolean {
 // any aiAuth-stripped launch variant, so combining
 // test.use({ aiAuth: { copilot: 'none' } }) with
 // requireAiCredentials(test, 'copilot') in one file is contradictory.
-export function isCopilotAuthenticated(): boolean {
+export async function isCopilotAuthenticated(): Promise<boolean> {
   const sandbox = process.env.PW_SANDBOX;
   if (!sandbox) {
     throw new Error('isCopilotAuthenticated called outside the sandbox; PW_SANDBOX is unset');

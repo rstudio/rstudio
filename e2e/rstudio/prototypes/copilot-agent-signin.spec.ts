@@ -109,7 +109,7 @@ test('copilot-language-server signs in via device flow and writes auth.db', asyn
     agent = undefined;
 
     expect(
-      isCopilotStoreAuthenticated(homeDir),
+      await isCopilotStoreAuthenticated(homeDir),
       'auth.db should hold at least one oauth token',
     ).toBe(true);
 

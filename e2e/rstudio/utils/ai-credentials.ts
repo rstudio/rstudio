@@ -52,10 +52,11 @@ function skipReason(provider: AIProvider, label: string, fallback: string): stri
  * don't see hooks registered on the base, and vice versa). Pass the
  * imported `test` from the file's fixture import.
  *
- * Call at the top of any `test.describe(..., { tag: ['@ai'] }, () => { ... })`
- * that drives an AI provider. The skip-vs-fail distinction matters: a missing
- * credential is a setup gap, not a product bug, and the test output should
- * reflect that.
+ * Call this inside any describe (or before its tests) that drives an AI
+ * provider, so a missing credential skips cleanly instead of hitting the
+ * feature's own timeout. The gate keys off the on-disk credential store. The
+ * skip-vs-fail distinction matters: a missing credential is a setup gap, not a
+ * product bug, and the test output should reflect that.
  */
 // Playwright's TestType is parameterized by per-test and per-worker fixture
 // argument types. The helper only ever calls beforeEach / skip, which don't
@@ -66,7 +67,7 @@ export function requireAiCredentials(
   test: TestType<{}, {}>,
   provider: AIProvider,
 ): void {
-  test.beforeEach(() => {
+  test.beforeEach(async () => {
     switch (provider) {
       case 'positai':
         if (!isPositAiAuthenticated()) {
@@ -80,7 +81,7 @@ export function requireAiCredentials(
         }
         return;
       case 'copilot':
-        if (!isCopilotAuthenticated()) {
+        if (!(await isCopilotAuthenticated())) {
           test.skip(true, skipReason(
             'copilot',
             'GitHub Copilot',

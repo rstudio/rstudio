@@ -723,7 +723,7 @@ setup('authenticate GitHub Copilot', async () => {
     fs.cpSync(hostDir, copilotConfigDir(sandboxUserHome), { recursive: true });
     // A config dir can exist without a signed-in token (the agent creates one
     // on first launch); a copy of that must not read as provisioned.
-    if (!isCopilotStoreAuthenticated(sandboxUserHome)) {
+    if (!(await isCopilotStoreAuthenticated(sandboxUserHome))) {
       writeAuthStatus(sandbox, 'copilot', {
         source: 'copy',
         outcome: 'unavailable',
@@ -838,7 +838,7 @@ setup('authenticate GitHub Copilot', async () => {
 
   // Past this point sign-in demonstrably succeeded, so a store the gate can't
   // read back is a contract violation, not flake.
-  if (!isCopilotStoreAuthenticated(sandboxUserHome)) {
+  if (!(await isCopilotStoreAuthenticated(sandboxUserHome))) {
     throw new Error(
       '[auth-setup] Copilot sign-in reported success, but the sandbox credential store holds no token row afterwards',
     );
