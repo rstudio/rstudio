@@ -1,0 +1,52 @@
+name: "zz-temp Ubuntu 26 + Fedora trigger (DELETE before merge)"
+
+# TEMPORARY pre-merge validation trigger for the Ubuntu 26 engine's new sibling
+# conventions (heartbeat watchdog, PW_PROJECT_LABEL, defer_merge, S3 publish)
+# and the Fedora 43/44 report-publish fix (role-arn/label instead of the stale
+# connect-api-key/title). A push trigger runs from the branch's own files, so
+# these engine changes are exercised pre-merge. DELETE THIS FILE before the PR
+# merges.
+
+on:
+  push:
+    branches:
+      - test/ron/ubuntu26-fedora-engine-conventions-workflow
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  ubuntu26:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-26-amd64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      r_version: "release"
+      test_selector: "tests/panes/editor/code_suggestions.test.ts tests/panes/misc/autocomplete.test.ts"
+
+  fedora43:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-43-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      r_version: "release"
+      test_selector: "tests/panes/editor/code_suggestions.test.ts tests/panes/misc/autocomplete.test.ts"
+
+  fedora44:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-44-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      r_version: "release"
+      test_selector: "tests/panes/editor/code_suggestions.test.ts tests/panes/misc/autocomplete.test.ts"
