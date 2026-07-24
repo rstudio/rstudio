@@ -20,7 +20,7 @@ import { restore, saveAndClear } from '../unit-utils';
 import { FilePath } from '../../../src/core/file-path';
 import { getenv } from '../../../src/core/environment';
 
-import { launchFailedDetail, SessionLauncher } from '../../../src/main/session-launcher';
+import { launchFailedDetail, rSessionArchFromLibraryInfo, SessionLauncher } from '../../../src/main/session-launcher';
 import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
@@ -87,5 +87,16 @@ describe('SessionLauncher', () => {
     await launcher.buildLaunchContext(false);
     const newPort = appState().port;
     assert.isAbove(newPort, 0);
+  });
+  describe('rSessionArchFromLibraryInfo', () => {
+    it('selects arm64 when libR reports arm64', () => {
+      assert.equal(rSessionArchFromLibraryInfo('libR.dylib: Mach-O 64-bit dynamically linked shared library arm64'), 'arm64');
+    });
+    it('selects x86_64 when libR reports only x86_64', () => {
+      assert.equal(rSessionArchFromLibraryInfo('libR.dylib: Mach-O 64-bit dynamically linked shared library x86_64'), 'x86_64');
+    });
+    it('prefers arm64 for a universal libR', () => {
+      assert.equal(rSessionArchFromLibraryInfo('libR.dylib: Mach-O universal binary with 2 architectures: [x86_64] [arm64]'), 'arm64');
+    });
   });
 });

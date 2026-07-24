@@ -32,7 +32,7 @@ import { DesktopActivation } from './activation-overlay';
 import { appState } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { buildInfo } from './build-info';
-import { detectRosetta } from './detect-rosetta';
+import { ensureRosettaForIntelR } from './detect-rosetta';
 import { PendingQuit } from './gwt-callback';
 import LogOptions from './log-options';
 import { closeAllSatellites, MainWindow } from './main-window';
@@ -140,6 +140,14 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
 
 function abendLogPath(): FilePath {
   return userLogPath().completePath('rsession_abort_msg.log');
+}
+
+/**
+ * Determine R's architecture from the output of `file` run against libR.dylib.
+ * Used on Apple Silicon to choose between the arm64 and x86_64 rsession binaries.
+ */
+export function rSessionArchFromLibraryInfo(fileInfo: string): 'arm64' | 'x86_64' {
+  return fileInfo.includes('arm64') ? 'arm64' : 'x86_64';
 }
 
 /**
@@ -659,16 +667,21 @@ export class SessionLauncher {
       logger().logDebug(`$ /usr/bin/file "${rLibPath}"`);
       const fileInfo = execSync(`/usr/bin/file "${rLibPath}"`, { encoding: 'utf-8' });
       logger().logDebug(fileInfo);
-      if (fileInfo.indexOf('arm64') !== -1) {
+      if (rSessionArchFromLibraryInfo(fileInfo) === 'arm64') {
         this.sessionPath = this.sessionPath.getParent().completeChildPath('rsession-arm64');
         logger().logDebug(`R is arm64; using ${this.sessionPath}`);
       } else {
         logger().logDebug(`R is x86_64; using ${this.sessionPath}`);
 
-        // an x86_64 build of R uses the x86_64 rsession, which requires
-        // Rosetta 2 to run on Apple Silicon; warn if it is not installed
-        if (ElectronDesktopOptions().checkForRosetta()) {
-          detectRosetta();
+        // an x86_64 build of R runs the x86_64 rsession, which requires Rosetta 2
+        // on Apple Silicon. Without it the session cannot start, so abort with
+        // clear guidance rather than spawning a process that fails to exec.
+        if (!ensureRosettaForIntelR()) {
+          // app.exit terminates the process immediately (the user has already
+          // been shown actionable guidance); the throw only types this branch as
+          // not returning a session process, in case exit is ever deferred.
+          app.exit(EXIT_FAILURE);
+          throw new Error('Rosetta 2 is required to run the selected Intel (x86_64) build of R');
         }
       }
     }

@@ -16,16 +16,16 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { detectRosetta } from '../../../src/main/detect-rosetta';
+import { ensureRosettaForIntelR } from '../../../src/main/detect-rosetta';
 
-describe('Detect Rosetta', () => {
-  it('Only checks for Rosetta installation on Apple silicon', async () => {
-    const isRosettaInstalled = detectRosetta();
+describe('ensureRosettaForIntelR', () => {
+  it('permits launch on platforms that never need Rosetta 2', () => {
     const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
-    if (isAppleSilicon) {
-      assert.isBoolean(isRosettaInstalled);
-    } else {
-      assert.isUndefined(isRosettaInstalled);
+    // Off Apple Silicon there is no Rosetta consideration, so the launch always
+    // proceeds. On Apple Silicon the result depends on the local Rosetta state
+    // and may show a blocking dialog, so that path is not exercised here.
+    if (!isAppleSilicon) {
+      assert.isTrue(ensureRosettaForIntelR());
     }
   });
 });

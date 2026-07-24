@@ -1144,7 +1144,6 @@ export class GwtCallback extends EventEmitter {
         parent: this.mainWindow.window,
       });
     });
-
   }
 
   addMacOSVersionError(): void {

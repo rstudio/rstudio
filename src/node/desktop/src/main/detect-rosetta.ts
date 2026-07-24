@@ -14,103 +14,86 @@
  */
 
 import { execSync } from 'child_process';
-import { logger } from '../core/logger';
-import { dialog, MessageBoxOptions, shell } from 'electron';
-import { appState } from './app-state';
-import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { dialog, shell } from 'electron';
 import { t } from 'i18next';
+import { logger } from '../core/logger';
+
+// Instructions shown when an Intel build of R is selected on Apple Silicon
+// without Rosetta 2 available.
+const kRosettaInstallUrl =
+  'https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2';
 
 /**
- * Checks if Rosetta is installed and running on Apple Silicon. Warns user to install Rosetta
- * if it is not installed.
+ * Ensures Rosetta 2 is available before launching an x86_64 (Intel) build of R
+ * on Apple Silicon.
  *
- * RStudio's own components are all native arm64, so RStudio itself does not require Rosetta 2.
- * It is still needed to run an x86_64 (Intel) build of R, because the session process must
- * match R's architecture and runs as x86_64 under Rosetta in that case. Accordingly this is
- * called from the session launcher only when the selected R is x86_64 -- not at startup.
+ * RStudio's own components are all native arm64, so RStudio itself never needs
+ * Rosetta 2. It is required only to run an Intel build of R, because the session
+ * process must match R's architecture and runs as x86_64 under Rosetta in that
+ * case. When Rosetta is missing that session cannot start at all, so this shows
+ * a blocking error with install guidance instead of letting the launch fail with
+ * an opaque "Bad CPU type in executable" crash. Only call this once the selected
+ * R has been determined to be x86_64.
  *
- * @returns true if Rosetta is installed and running, false if Rosetta is not installed,
- *          and undefined if not on Apple Silicon.
+ * @returns true if the launch may proceed (Rosetta present, not Apple Silicon,
+ *          or the check could not be performed); false if the caller must abort
+ *          the launch because Rosetta is required but not installed.
  */
-export function detectRosetta(): boolean | undefined {
+export function ensureRosettaForIntelR(): boolean {
   const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
-  if (!isAppleSilicon) return undefined;
-
-  const isRosettaInstalled = isRosettaRunning();
-  if (!isRosettaInstalled) {
-    logger().logDebug('Rosetta 2 is not running. Warning user to install Rosetta to avoid issues.');
-    const dialogOptions: MessageBoxOptions = {
-      type: 'warning',
-      buttons: [
-        t('detectRosetta.installWarningMoreInfo'),
-        t('detectRosetta.installWarningRemindLater'),
-        t('detectRosetta.installWarningDoNotRemind'),
-      ],
-      defaultId: 0,
-      title: t('detectRosetta.installWarningTitle'),
-      message: t('detectRosetta.installWarningMessage'),
-      detail: t('detectRosetta.installWarningDetail'),
-    };
-    void appState().modalTracker.trackElectronModalSync(async () =>
-      dialog.showMessageBox(dialogOptions).then((retVal) => {
-        switch (retVal.response) {
-          case 0:
-            // Selected 'More Information' button. Open link to Rosetta installation instructions.
-            void shell.openExternal(
-              'https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2',
-            );
-            break;
-          case 1:
-            // Selected 'Remind Me Later' button. Set ElectronDesktopOptions to check for Rosetta on next startup.
-            ElectronDesktopOptions().setCheckForRosetta(true);
-            break;
-          case 2:
-            // Selected 'Don't Remind Me Again' button. Set ElectronDesktopOptions to not check for Rosetta.
-            ElectronDesktopOptions().setCheckForRosetta(false);
-            break;
-          default:
-            break;
-        }
-      }),
-    );
+  if (!isAppleSilicon) {
+    return true;
   }
-  return isRosettaInstalled;
+
+  if (isRosettaInstalled()) {
+    return true;
+  }
+
+  logger().logDebug('Selected R is Intel (x86_64) but Rosetta 2 is not installed; cannot start session.');
+  const response = dialog.showMessageBoxSync({
+    type: 'error',
+    buttons: [t('detectRosetta.installButton'), t('detectRosetta.quitButton')],
+    defaultId: 0,
+    cancelId: 1,
+    title: t('detectRosetta.requiredTitle'),
+    message: t('detectRosetta.requiredMessage'),
+    detail: t('detectRosetta.requiredDetail'),
+  });
+
+  if (response === 0) {
+    void shell.openExternal(kRosettaInstallUrl);
+  }
+
+  return false;
 }
 
 /**
- * Runs a command to check if Rosetta is running.
- * Internally on Mac, Rosetta 2 is referred to as OAH and its running service is called 'oahd'.
- * We check that the process id of 'oahd' is returned to determine if Rosetta 2 is running.
- * @returns true if Rosetta is running, false otherwise.
+ * Detects whether Rosetta 2 is installed on this Apple Silicon Mac.
+ *
+ * On macOS, Rosetta 2 is internally referred to as OAH and its daemon is 'oahd',
+ * which runs whenever Rosetta is installed; we treat a running 'oahd' as
+ * installed. If the probe fails unexpectedly we cannot tell, so we assume it is
+ * present and let the launch proceed rather than wrongly block a working setup.
+ *
+ * @returns true if Rosetta 2 appears installed, false if it is definitively not.
  */
-function isRosettaRunning(): boolean {
+function isRosettaInstalled(): boolean {
   try {
     logger().logDebug('$ /usr/bin/pgrep oahd');
     const pgrepOutput = execSync('/usr/bin/pgrep oahd', { encoding: 'utf-8' });
-    logger().logDebug(pgrepOutput);
     return pgrepOutput.trim().length > 0;
   } catch (error: unknown) {
-    // The command will return exit code 1 with empty stderr if the process is not found.
-    // If the process is not found, then we can assume Rosetta is not running.
+    // pgrep exits 1 with empty stderr when 'oahd' is not found: Rosetta absent.
     if (error instanceof Object && 'status' in error && 'stderr' in error) {
       if (error.status === 1 && (error.stderr as string).trim().length === 0) {
-        logger().logDebug('Command returned exit code 1 with empty stderr. Rosetta is not running.');
         return false;
       }
     }
 
-    // Otherwise, something went wrong while running the command.
-    logger().logErrorMessage('Failed to verify if rosetta is installed.');
+    // Something else went wrong; we can't determine the state, so assume Rosetta
+    // is present and let the launch proceed rather than block it.
+    logger().logErrorMessage('Failed to check for a Rosetta 2 installation; assuming it is present.');
     logger().logErrorMessage(JSON.stringify(error));
-    const dialogOptions: MessageBoxOptions = {
-      type: 'error',
-      buttons: [t('common.buttonOk')],
-      defaultId: 0,
-      title: t('detectRosetta.checkFailedTitle'),
-      message: t('detectRosetta.checkFailedMessage'),
-      detail: t('detectRosetta.checkFailedDetail'),
-    };
-    void appState().modalTracker.trackElectronModalSync(async () => dialog.showMessageBox(dialogOptions));
-    throw error;
+    return true;
   }
 }
