@@ -40,6 +40,7 @@
 - ([#18305](https://github.com/rstudio/rstudio/issues/18305)): The first run of a new RStudio build now always checks for Posit Assistant updates, instead of the check being suppressed for up to the update-check interval (two hours by default) when the previous build had checked recently.
 - ([#18326](https://github.com/rstudio/rstudio/issues/18326)): Fixed an issue where "Restart R and Run All Chunks" (and "Restart R and Clear Output") could intermittently restart R without then running the chunks (or clearing the output).
 - ([#18315](https://github.com/rstudio/rstudio/issues/18315)): Fixed the GitHub Copilot section of the Assistant preferences showing a mislabeled "Display account and billing messages from Posit Assistant" checkbox that had no effect. It is now correctly labeled for GitHub Copilot and controls whether Copilot's account and billing messages are shown.
+- ([#18350](https://github.com/rstudio/rstudio/issues/18350)): Fixed an issue where selecting a Posit Assistant code assistant or chat provider and confirming Global Options before its install/update check finished could leave the provider selected but never installed, with completions silently unavailable. The dialog's OK button now waits for the check to finish, so the install prompt is not skipped.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)

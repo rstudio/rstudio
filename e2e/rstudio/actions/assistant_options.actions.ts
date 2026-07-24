@@ -16,11 +16,10 @@ export class AssistantOptionsActions {
     this.consolePaneActions = consolePaneActions;
   }
 
-  /** Accept the "Update Posit Assistant" dialog if it appears, then dismiss "Installation Complete" */
+  /** Accept the "Update Posit Assistant" dialog if it is showing, then dismiss "Installation Complete" */
   private async acceptUpdateDialog(): Promise<void> {
-    // Caller already settled (selectOption + sleep), so an Update dialog --
-    // if it's going to appear -- is rendered by now. isVisible() snapshot
-    // returns instantly when absent.
+    // Snapshot: acts only if the prompt is already rendered. Callers that need
+    // to wait for it to appear use settleInstallPrompt().
     const updateBtn = this.page.locator('#rstudio_dlg_yes');
     if (!(await updateBtn.isVisible())) {
       return;
@@ -35,6 +34,50 @@ export class AssistantOptionsActions {
     await installOkBtn.click({ timeout: 30000 });
     console.log('Dismissed Installation Complete dialog');
     await sleep(500);
+  }
+
+  /**
+   * Wait for the Posit Assistant install/update prompt to appear and complete
+   * the install. Selecting a Posit provider kicks off an async check that pops
+   * this prompt; the check can take several seconds (a network manifest fetch).
+   * If the addon is already installed and current, no prompt appears and the
+   * wait expires -- that's expected, so we just return. Settling the install
+   * here keeps the prompt's modal from intercepting later configuration clicks.
+   */
+  private async settleInstallPrompt(): Promise<void> {
+    const updateBtn = this.page.locator('#rstudio_dlg_yes');
+    try {
+      await updateBtn.waitFor({ state: 'visible', timeout: 30000 });
+    } catch {
+      return;
+    }
+    await this.acceptUpdateDialog();
+  }
+
+  /**
+   * Confirm (OK) the Options dialog, retrying until it actually closes. While a
+   * Posit Assistant install/update check is in flight, OK is blocked and pops a
+   * "Checking for Updates" warning instead of closing (issue #18350); accept a
+   * late-appearing install prompt and dismiss that warning, then retry.
+   */
+  private async confirmOptions(): Promise<void> {
+    await expect(async () => {
+      // A blocked OK leaves a "Checking for Updates" warning whose OK button is
+      // #rstudio_dlg_ok. Dismiss it before accepting any install prompt, so it
+      // cannot coexist with the install-complete dialog (same id).
+      const warningOk = this.page.locator('#rstudio_dlg_ok');
+      if (await warningOk.isVisible()) {
+        await warningOk.click();
+      }
+
+      await this.acceptUpdateDialog();
+
+      if (await this.assistantOptions.optionsOkButton.isVisible()) {
+        await this.assistantOptions.optionsOkButton.click();
+      }
+
+      await expect(this.assistantOptions.optionsOkButton).toBeHidden({ timeout: 2000 });
+    }).toPass({ timeout: 60000 });
   }
 
   async setupAssistantOptions(provider: string): Promise<void> {
@@ -61,7 +104,13 @@ export class AssistantOptionsActions {
     }
     await this.assistantOptions.codeAssistantSelect.selectOption({ label: matchedLabel });
     await sleep(1000);
-    await this.acceptUpdateDialog();
+
+    // Only Posit providers trigger the addon install/update check. Settle its
+    // prompt before configuring the rest, so the modal can't block the controls
+    // below (issue #18350).
+    if (provider.startsWith('Posit')) {
+      await this.settleInstallPrompt();
+    }
 
     await this.assistantOptions.showCodeSuggestionsSelect.selectOption({ label: 'Automatically' });
     await sleep(1000);
@@ -71,9 +120,7 @@ export class AssistantOptionsActions {
     }
     await sleep(1000);
 
-    await sleep(1000);
-    await this.assistantOptions.optionsOkButton.click();
-    await expect(this.assistantOptions.optionsOkButton).toBeHidden({ timeout: 15000 });
+    await this.confirmOptions();
   }
 
   async setChatProvider(provider: string): Promise<void> {
@@ -88,15 +135,13 @@ export class AssistantOptionsActions {
     console.log(`Setting chat provider: ${provider}`);
     await this.assistantOptions.chatProviderSelect.selectOption({ label: provider });
     await sleep(1000);
-    await this.acceptUpdateDialog();
 
-    // Update dialog may have closed Options; only click OK if still visible.
-    // Snapshot isVisible() -- absence (Options already closed) is the common
-    // case and we shouldn't burn extra time waiting for an element that's gone.
-    if (await this.assistantOptions.optionsOkButton.isVisible()) {
-      await this.assistantOptions.optionsOkButton.click();
-      await expect(this.assistantOptions.optionsOkButton).toBeHidden({ timeout: 15000 });
+    // A Posit chat provider triggers the addon install/update check; settle its
+    // prompt before confirming so OK is not blocked (issue #18350).
+    if (provider.startsWith('Posit')) {
+      await this.settleInstallPrompt();
     }
+    await this.confirmOptions();
 
     // Toggle sidebar twice to refresh a potentially stale chat pane
     await executeCommand(this.page, 'toggleSidebar');
@@ -114,12 +159,10 @@ export class AssistantOptionsActions {
     await this.assistantOptions.assistantTab.click();
     await expect(this.assistantOptions.assistantPanel).toBeVisible();
     await sleep(1000);
-    await this.acceptUpdateDialog();
 
     const value = await this.assistantOptions.chatProviderSelect.inputValue();
 
-    await this.assistantOptions.optionsOkButton.click();
-    await expect(this.assistantOptions.optionsOkButton).toBeHidden({ timeout: 15000 });
+    await this.confirmOptions();
 
     return value;
   }

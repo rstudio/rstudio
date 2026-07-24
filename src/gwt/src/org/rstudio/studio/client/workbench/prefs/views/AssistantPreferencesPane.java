@@ -128,6 +128,20 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
+      // Block applying while an asynchronous Posit Assistant install/update
+      // check is still in flight. Applying now would persist the assistant
+      // selection before the install prompt has appeared, leaving the addon
+      // uninstalled with no feedback (issue #18350). The check clears this flag
+      // when it resolves, at which point the user can apply.
+      if (positAiCheckInProgress_)
+      {
+         globalDisplay_.showMessage(
+            GlobalDisplay.MSG_WARNING,
+            constants_.positAssistantCheckInProgressCaption(),
+            constants_.positAssistantCheckInProgressMessage());
+         return false;
+      }
+
       // The completions-delay field is only shown -- and only relevant -- when
       // an assistant is selected and completions are triggered automatically.
       // Validate it only while it is displayed, so a hidden value cannot block
@@ -1005,6 +1019,25 @@ public class AssistantPreferencesPane extends PreferencesPane
    }
 
    /**
+    * Marks the start of an asynchronous Posit Assistant install/update check.
+    * While one is in progress, validate() blocks applying the dialog so the
+    * assistant selection is not persisted before the install prompt appears.
+    */
+   private void beginPositAiCheck()
+   {
+      positAiCheckInProgress_ = true;
+   }
+
+   /**
+    * Marks the end of a Posit Assistant install/update check, re-enabling the
+    * dialog's OK/Apply. Called from every terminal branch of the check.
+    */
+   private void endPositAiCheck()
+   {
+      positAiCheckInProgress_ = false;
+   }
+
+   /**
     * Checks if Posit Assistant needs to be installed and prompts the user to install it.
     *
     * @param forAssistant True if this check is for the assistant (completions) preference,
@@ -1012,6 +1045,11 @@ public class AssistantPreferencesPane extends PreferencesPane
     */
    private void checkPositAssistantInstallation(boolean forAssistant)
    {
+      // Mark the check in progress so the dialog cannot be applied -- and the
+      // selection persisted -- until it resolves. Every UpdateCheckCallback
+      // branch below clears the flag, so it can never stay stuck.
+      beginPositAiCheck();
+
       // Remember the previous value so we can revert if user declines
       final String previousAssistantValue = forAssistant ?
          prefs_.assistant().getGlobalValue() : null;
@@ -1023,6 +1061,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onNoUpdateAvailable()
          {
+            endPositAiCheck();
+
             // Posit Assistant is already installed and up-to-date
             if (forAssistant)
             {
@@ -1035,6 +1075,8 @@ public class AssistantPreferencesPane extends PreferencesPane
                                        boolean isInitialInstall, boolean isDowngrade,
                                        boolean additionalProvidersAvailable)
          {
+            endPositAiCheck();
+
             // additionalProvidersAvailable only varies the chat pane's not-installed
             // view; the preferences install prompt does not show that description.
             showInstallUpdatePrompt(newVersion, isInitialInstall, isDowngrade,
@@ -1044,6 +1086,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onIncompatibleVersion()
          {
+            endPositAiCheck();
+
             // No compatible version available - show error and revert
             globalDisplay_.showErrorMessage(
                constants_.positAssistantIncompatibleTitle(),
@@ -1057,6 +1101,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onUnsupportedVersionUpgradeRequired(
              String currentVersion, String newVersion, boolean isDowngrade)
          {
+            endPositAiCheck();
+
             // Unsupported version with a required install. Can still be a downgrade
             // if the installed copy is unsupported (e.g. protocol mismatch) and the
             // recommended package is older than what's installed.
@@ -1067,6 +1113,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onUnsupportedVersionNoUpdate(String currentVersion)
          {
+            endPositAiCheck();
+
             // Unsupported version with no update - show error and revert
             globalDisplay_.showErrorMessage(
                constants_.positAssistantUnsupportedVersionTitle(),
@@ -1079,6 +1127,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onUnsupportedProtocol()
          {
+            endPositAiCheck();
+
             // Protocol unsupported - RStudio itself needs updating
             globalDisplay_.showErrorMessage(
                constants_.positAssistantUnsupportedProtocolTitle(),
@@ -1091,6 +1141,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onManifestUnavailable(String errorMessage)
          {
+            endPositAiCheck();
+
             // Manifest unavailable - can't verify compatibility
             globalDisplay_.showErrorMessage(
                constants_.positAssistantManifestUnavailableTitle(),
@@ -1103,6 +1155,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onCheckFailed(String errorMessage)
          {
+            endPositAiCheck();
+
             // Check failed - this often happens when calling from Preferences pane
             // before the preference is saved. Since we know Posit Assistant isn't installed
             // (we got here because assistantVerifyInstalled returned false, or user
@@ -1520,6 +1574,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
    private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
+   private boolean positAiCheckInProgress_ = false; // is an async Posit Assistant install/update check pending? blocks apply
    private ChangeHandler assistantChangedHandler_; // swaps the displayed assistant panel; created in initDisplay
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
