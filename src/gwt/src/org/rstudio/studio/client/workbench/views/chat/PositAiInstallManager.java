@@ -169,12 +169,37 @@ public class PositAiInstallManager
          @Override
          public void onResponseReceived(JsObject result)
          {
-            // Every flag is read null-safely (see readFlag): the backend may
-            // omit newer fields (e.g. an older rsession), and a null or
-            // malformed payload must not throw here -- an exception would skip
-            // every UpdateCheckCallback branch and leave a caller's pending
-            // state (such as the preferences dialog's apply guard) unresolved.
-            boolean manifestUnavailable = readFlag(result, "manifestUnavailable");
+            // A well-formed check always carries these discriminator flags. If
+            // the payload is null or any is missing/non-boolean (a malformed or
+            // badly version-skewed response), report a check failure -- which
+            // offers to install -- rather than defaulting them to false and
+            // treating the addon as up to date, which would let the preferences
+            // dialog persist Posit Assistant without a confirmed install
+            // (#18350). Dispatching a callback here (rather than unboxing a null
+            // and throwing) also guarantees exactly one callback fires, so a
+            // caller's pending state is never stranded.
+            Boolean manifestUnavailable = flag(result, "manifestUnavailable");
+            Boolean unsupportedProtocol = flag(result, "unsupportedProtocol");
+            Boolean noCompatibleVersion = flag(result, "noCompatibleVersion");
+            Boolean unsupportedVersion = flag(result, "unsupportedInstalledVersion");
+            Boolean updateAvailable = flag(result, "updateAvailable");
+            Boolean isInitialInstall = flag(result, "isInitialInstall");
+            if (manifestUnavailable == null || unsupportedProtocol == null ||
+                noCompatibleVersion == null || unsupportedVersion == null ||
+                updateAvailable == null || isInitialInstall == null)
+            {
+               callback.onCheckFailed("Malformed update-check response");
+               return;
+            }
+
+            // Newer fields default to false when an older rsession omits them.
+            Boolean isDowngradeFlag = flag(result, "isDowngrade");
+            boolean isDowngrade = isDowngradeFlag != null && isDowngradeFlag;
+            Boolean additionalProvidersFlag =
+               flag(result, "additionalProvidersAvailable");
+            boolean additionalProvidersAvailable =
+               additionalProvidersFlag != null && additionalProvidersFlag;
+
             if (manifestUnavailable)
             {
                String errorMessage = result.getString("errorMessage");
@@ -183,26 +208,17 @@ public class PositAiInstallManager
                return;
             }
 
-            boolean unsupportedProtocol = readFlag(result, "unsupportedProtocol");
             if (unsupportedProtocol)
             {
                callback.onUnsupportedProtocol();
                return;
             }
 
-            boolean noCompatibleVersion = readFlag(result, "noCompatibleVersion");
             if (noCompatibleVersion)
             {
                callback.onIncompatibleVersion();
                return;
             }
-
-            boolean unsupportedVersion = readFlag(result, "unsupportedInstalledVersion");
-            boolean updateAvailable = readFlag(result, "updateAvailable");
-            boolean isInitialInstall = readFlag(result, "isInitialInstall");
-            boolean isDowngrade = readFlag(result, "isDowngrade");
-            boolean additionalProvidersAvailable =
-               readFlag(result, "additionalProvidersAvailable");
 
             // unsupportedVersion is only true when an actual package is installed
             // (isVersionUnsupported returns false for "0.0.0"/not-installed)
@@ -245,18 +261,19 @@ public class PositAiInstallManager
    }
 
    /**
-    * Reads a boolean flag from an update-check result, treating an absent, null,
-    * or non-boolean field as false. This keeps checkForUpdates' contract -- that
-    * it invokes exactly one UpdateCheckCallback method -- intact even for a
-    * malformed or version-skewed payload, so a caller's pending state is never
-    * stranded by an unboxing exception.
+    * Reads a boolean flag from an update-check result, or null when the result
+    * is null or the field is absent/non-boolean. Returning null (rather than
+    * throwing on an unboxed null) lets checkForUpdates guarantee it invokes
+    * exactly one UpdateCheckCallback method -- so a caller's pending state is
+    * never stranded -- and lets it tell a missing *required* flag (malformed
+    * payload, routed to onCheckFailed) from a genuinely optional one (defaulted
+    * to false).
     */
-   private static boolean readFlag(JsObject result, String key)
+   private static Boolean flag(JsObject result, String key)
    {
       if (result == null)
-         return false;
-      Boolean value = result.getBoolean(key);
-      return value != null && value;
+         return null;
+      return result.getBoolean(key);
    }
 
    /**
