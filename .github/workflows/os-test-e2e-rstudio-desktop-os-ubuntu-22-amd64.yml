@@ -190,6 +190,19 @@ jobs:
           # downloads directly from the release CDN with no API call.
           version: "v0.16.0"
 
+      # The ubuntu-22.04 runner image ships pkgconf, which declares
+      # "Breaks: pkg-config" -- and install-dependencies-jammy (below) asks apt
+      # to install pkg-config, so apt refuses with "held broken packages" and
+      # the whole dependency install aborts. Both packages provide
+      # /usr/bin/pkg-config. Swap pkgconf out for pkg-config in one apt
+      # transaction (the trailing "-" on pkgconf removes it) so the dependency
+      # script's install succeeds. A real jammy box without pkgconf preinstalled
+      # never hits this, which is why the shared script does not handle it.
+      - name: Reconcile pkg-config/pkgconf on the jammy runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config pkgconf-
+
       # install-dependencies-jammy: apt-get installs system packages (with sudo
       # internally), then calls install-common which downloads Boost, SOCI,
       # pandoc, quarto, node, panmirror, sccache, GWT jar, etc. into
