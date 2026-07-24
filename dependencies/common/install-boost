@@ -40,12 +40,11 @@ fi
 
 # set up compiler flags
 if is-darwin; then
-   # Force the target architecture explicitly. Under `arch -x86_64` on Apple
-   # Silicon, Boost's b2 lets Apple clang default to the native arm64 CPU and
-   # builds arm64 objects, which then land in the x86_64 tools tree and break
-   # the universal build's x86_64 link. `uname -m` reflects the (possibly
-   # Rosetta-emulated) machine, so it matches the RSTUDIO_TOOLS_ROOT arch that
-   # this pass installs into.
+   # Force the target architecture explicitly. Without this, under `arch -x86_64`
+   # on Apple Silicon, Boost's b2 produced arm64 objects anyway -- which then
+   # land in the x86_64 tools tree and break the universal build's x86_64 link.
+   # `uname -m` reflects the (possibly Rosetta-emulated) machine, so it matches
+   # the RSTUDIO_TOOLS_ROOT arch that this pass installs into.
    BOOST_ARCH="$(uname -m)"
    CFLAGS="-fPIC -arch ${BOOST_ARCH} -mmacos-version-min=${MACOSX_DEPLOYMENT_TARGET}"
    CXXFLAGS="-fPIC -arch ${BOOST_ARCH} -mmacos-version-min=${MACOSX_DEPLOYMENT_TARGET}"
