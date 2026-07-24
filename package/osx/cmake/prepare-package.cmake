@@ -199,9 +199,19 @@ if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")
       # libraries on an end-user machine. lipo succeeding does not catch this.
       execute_process(
          COMMAND otool -L "${LIPO_STAGING_DIR}/${TOOL}"
-         OUTPUT_VARIABLE FIXED_TOOL_LIBS)
+         OUTPUT_VARIABLE FIXED_TOOL_LIBS
+         RESULT_VARIABLE OTOOL_RESULT)
 
-      if(FIXED_TOOL_LIBS MATCHES "/opt/homebrew|/usr/local")
+      if(NOT OTOOL_RESULT EQUAL 0)
+         message(FATAL_ERROR "otool failed on arm64 '${TOOL}' (exit ${OTOOL_RESULT})")
+      endif()
+
+      # drop otool's first line (the binary's own path) before matching, so a
+      # build tree located under /opt/homebrew or /usr/local can't false-match;
+      # only the dependency lines should be inspected
+      string(REGEX REPLACE "^[^\n]*\n" "" FIXED_TOOL_DEPS "${FIXED_TOOL_LIBS}")
+
+      if(FIXED_TOOL_DEPS MATCHES "/opt/homebrew|/usr/local")
          message(FATAL_ERROR "arm64 '${TOOL}' still references absolute Homebrew paths after fixing library paths:\n${FIXED_TOOL_LIBS}")
       endif()
 
