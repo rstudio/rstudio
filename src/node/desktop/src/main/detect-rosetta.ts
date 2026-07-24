@@ -13,8 +13,8 @@
  *
  */
 
-import { execSync } from 'child_process';
-import { dialog, shell } from 'electron';
+import { execFileSync, execSync } from 'child_process';
+import { dialog } from 'electron';
 import { t } from 'i18next';
 import { logger } from '../core/logger';
 
@@ -61,7 +61,15 @@ export function ensureRosettaForIntelR(): boolean {
   });
 
   if (response === 0) {
-    void shell.openExternal(kRosettaInstallUrl);
+    // Open the instructions synchronously via `open` so the browser launch is
+    // handed off to the OS before the caller exits the app; shell.openExternal
+    // is asynchronous and could be cut off by app.exit().
+    try {
+      execFileSync('/usr/bin/open', [kRosettaInstallUrl]);
+    } catch (error: unknown) {
+      logger().logErrorMessage('Failed to open Rosetta 2 install instructions.');
+      logger().logErrorMessage(JSON.stringify(error));
+    }
   }
 
   return false;
