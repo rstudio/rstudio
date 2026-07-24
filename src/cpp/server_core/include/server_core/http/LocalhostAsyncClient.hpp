@@ -84,7 +84,7 @@ private:
                       // no-enforcement rather than break proxying (Decision 2)
       int appPort = socket().remote_endpoint().port();       // target/listen port
       int ephemeralPort = socket().local_endpoint().port();  // our client port
-      // First draft of a pure async peer verification check in 662c4fc3a046409df03667d89a4604ec001173fc
+      // First draft of a pure async peer verification check in rstudio-pro 662c4fc3a046409df03667d89a4604ec001173fc
       core::Error error = server_core::socket_utils::verifyPeerUid(
                              socket().local_endpoint().address(),
                              socket().remote_endpoint().address(),

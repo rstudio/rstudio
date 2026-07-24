@@ -31,6 +31,7 @@
 #include <boost/asio/ip/address_v4.hpp>
 
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 #include <linux/netlink.h>
@@ -55,6 +56,26 @@ namespace {
 // inet_diag_msg record (idiag_ext is left at 0, so no extended attributes are
 // requested), unlike the old NLM_F_DUMP path which could return many.
 constexpr size_t kNetlinkRecvBufferSize = 512;
+
+// This query runs synchronously on every proxied request; SO_RCVTIMEO bounds
+// how long a stalled/unresponsive kernel reply can block that request before
+// we fail closed rather than hang indefinitely.
+constexpr int kNetlinkRecvTimeoutSeconds = 3;
+
+// Sets SO_RCVTIMEO on fd so a subsequent recvmsg() cannot block longer than
+// kNetlinkRecvTimeoutSeconds -- this applies generically to any socket family
+// (handled by the kernel's common sock_setsockopt(), not netlink-specific
+// code) and is honored by netlink_recvmsg() via the same sock_rcvtimeo()
+// datagram-wait path used by other socket types.
+Error setRecvTimeout(int fd)
+{
+   timeval tv;
+   tv.tv_sec = kNetlinkRecvTimeoutSeconds;
+   tv.tv_usec = 0;
+   if (::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
+      return systemError(errno, "setsockopt(NETLINK_SOCK_DIAG, SO_RCVTIMEO)", ERROR_LOCATION);
+   return Success();
+}
 
 struct DiagRequest
 {
@@ -182,7 +203,17 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
 
    if (received < 0)
    {
-      *pError = systemError(errno, "recvmsg(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+      if (errno == EAGAIN) // == EWOULDBLOCK on Linux; SO_RCVTIMEO expiring surfaces as this
+      {
+         *pError = systemError(boost::system::errc::timed_out,
+                               "recvmsg(NETLINK_SOCK_DIAG) timed out after " +
+                                  std::to_string(kNetlinkRecvTimeoutSeconds) + "s",
+                               ERROR_LOCATION);
+      }
+      else
+      {
+         *pError = systemError(errno, "recvmsg(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+      }
       return DiagLookupResult::Error;
    }
    if (received == 0)
@@ -261,6 +292,18 @@ Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
    if (fd < 0)
       return systemError(errno, "socket(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
 
+   Error timeoutError = setRecvTimeout(fd);
+   if (timeoutError)
+   {
+      // Non-fatal: proceed without a receive timeout rather than fail closed
+      // over what is expected to be an untaken code path (SO_RCVTIMEO is a
+      // universally-supported SOL_SOCKET option) -- worst case we're back to
+      // the unbounded-wait behavior this timeout is meant to improve upon.
+      LOG_WARNING_MESSAGE(
+         "Failed to set NETLINK_SOCK_DIAG receive timeout (" + timeoutError.getSummary() +
+         "); proceeding without a receive timeout for this query (rstudio-pro#11470).");
+   }
+
    // The server-side (application) socket has source port == appPort, dest
    // port == ephemeralPort -- the reverse of our own connect()'d socket. This
    // single exact-match query also finds a dual-stack (IPV6_V6ONLY=0)
@@ -337,6 +380,16 @@ bool probeSockDiagAvailable()
             "(rstudio-pro#11470). Cross-user /p/ and /p6/ isolation will not be "
             "enforced in this environment.");
          return false;
+      }
+
+      Error timeoutError = setRecvTimeout(fd);
+      if (timeoutError)
+      {
+         // Non-fatal, matching lookupEstablishedSocketUid(): proceed with the
+         // probe (and thus with enforcement) even without a receive timeout.
+         LOG_WARNING_MESSAGE(
+            "Failed to set NETLINK_SOCK_DIAG receive timeout (" + timeoutError.getSummary() +
+            "); proceeding without a receive timeout for this query (rstudio-pro#11470).");
       }
 
       // Probe with a deliberately absent 4-tuple, exercising the same
