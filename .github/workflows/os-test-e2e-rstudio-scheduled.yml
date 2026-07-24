@@ -41,7 +41,7 @@ permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
   # Most engines' e2e-merge jobs assume the S3 report-upload role via OIDC
-  # (fedora43, fedora44, and ubuntu26 don't upload); a reusable workflow's id-token grant
+  # (ubuntu26 doesn't upload); a reusable workflow's id-token grant
   # is capped by its caller's.
   id-token: write
 
@@ -59,7 +59,7 @@ jobs:
           # cron (Mon-Fri) runs a fixed slate per day (two or three engines).
           # Each engine runs once a week except macos26, windows2025, and
           # ubuntu24s, which run twice.
-          ALL='["fedora43","fedora44","ubuntu26","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15"]'
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
           else
@@ -67,8 +67,8 @@ jobs:
               1) SEL='["ubuntu24d","macos26","rocky9"]' ;;
               2) SEL='["ubuntu24s","windows2025","rocky10"]' ;;
               3) SEL='["ubuntu26","fedora44","macos15"]' ;;
-              4) SEL='["fedora43","debian13","windows2025"]' ;;
-              5) SEL='["ubuntu24s","macos26"]' ;;
+              4) SEL='["fedora43","ubuntu22","windows2025"]' ;;
+              5) SEL='["ubuntu24s","macos26","debian13"]' ;;
               # Only reachable by re-running a weekday run on Sat/Sun, or if the
               # Sunday cron above changed without updating the check above.
               # Fail loudly rather than silently selecting nothing.
@@ -90,6 +90,7 @@ jobs:
       windows:      ${{ steps.resolve.outputs.windows }}
       noble_arm64:  ${{ steps.resolve.outputs.noble_arm64 }}
       rocky:        ${{ steps.resolve.outputs.rocky }}
+      jammy_amd64:  ${{ steps.resolve.outputs.jammy_amd64 }}
     steps:
       - id: resolve
         name: Build per-platform installer URLs for a specific version
@@ -112,6 +113,7 @@ jobs:
               echo "windows="
               echo "noble_arm64="
               echo "rocky="
+              echo "jammy_amd64="
             } >> "$GITHUB_OUTPUT"
             echo "No installer URLs to resolve (building from source or using the latest daily)."
             exit 0
@@ -146,6 +148,7 @@ jobs:
           WIN=$(emit electron windows) || exit 1
           NARM=$(emit electron noble-arm64) || exit 1
           ROCKY=$(emit electron rhel10-arm64) || exit 1
+          JAMMY=$(emit electron jammy-amd64) || exit 1
           {
             echo "rhel=$RHEL"
             echo "rhel9=$RHEL9"
@@ -155,6 +158,7 @@ jobs:
             echo "windows=$WIN"
             echo "noble_arm64=$NARM"
             echo "rocky=$ROCKY"
+            echo "jammy_amd64=$JAMMY"
           } >> "$GITHUB_OUTPUT"
           echo "Resolved URLs for version $VERSION."
 
@@ -198,6 +202,21 @@ jobs:
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
+
+  ubuntu22:
+    name: Ubuntu 22 amd64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu22') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-22-amd64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      build_from_source: ${{ inputs.build_from_source || false }}
+      # Ubuntu 22 has its own jammy-amd64 daily .deb; the engine installs it.
+      rstudio_installer_url: ${{ needs.resolve.outputs.jammy_amd64 }}
 
   ubuntu24d:
     name: Ubuntu 24 Desktop
