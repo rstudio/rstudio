@@ -51,13 +51,6 @@
     "rLaunchFailedTitle": "Error Loading R",
     "rLaunchFailedMessage": "An error occurred while attempting to load the selected version of R. Please select a different R installation."
   },
-  "detectRosetta": {
-    "requiredTitle": "Rosetta 2 Required",
-    "requiredMessage": "RStudio can't start an R session. The R installation you selected is built for Intel (x86_64) and requires Rosetta 2 to run on this Apple Silicon Mac, but Rosetta 2 is not installed.",
-    "requiredDetail": "Install Rosetta 2 and reopen RStudio, or choose an arm64 (Apple Silicon) build of R.",
-    "installButton": "Install Rosetta 2…",
-    "quitButton": "Quit"
-  },
   "uiFolder": {
     "chooseRExecutable": "Choose R Executable",
     "rExecutable": "R Executable",
