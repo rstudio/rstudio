@@ -726,11 +726,15 @@ if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
    endif()
 endif()
 
+# rpostback must exist as an arm64 slice for the universal diagnostics/rpostback
+# packaging step, so build it in the alternate (arm64) build too. The supporting
+# resources, R scripts, and install rules below remain in the primary build only.
+if(NOT RSTUDIO_SESSION_WIN32)
+   add_subdirectory(postback)
+endif()
+
 # include resources, R scripts and binaries if this isn't a session 32-bit build
 if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
-
-   # postback
-   add_subdirectory(postback)
 
    # HTML resources
    file(GLOB HTML_RESOURCE_FILES "resources/*.html")
