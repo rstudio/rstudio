@@ -41,7 +41,7 @@ permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
   # Most engines' e2e-merge jobs assume the S3 report-upload role via OIDC
-  # (fedora43, fedora44, and ubuntu26 don't upload); a reusable workflow's id-token grant
+  # (ubuntu26 doesn't upload); a reusable workflow's id-token grant
   # is capped by its caller's.
   id-token: write
 
@@ -210,6 +210,7 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-22-amd64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
