@@ -1053,10 +1053,10 @@ public class AssistantPreferencesPane extends PreferencesPane
    }
 
    /**
-    * Marks the end of a Posit Assistant install/update check, re-enabling the
-    * dialog's OK/Apply once no checks remain. Called from every terminal branch
-    * of the check (each update-check callback, and the verify call's failure or
-    * stale-result paths).
+    * Marks the end of a Posit Assistant install/update check. Once no checks
+    * remain, validate() stops blocking OK/Apply. Called from every terminal
+    * branch of the check (each update-check callback, and the verify call's
+    * failure or stale-result paths).
     */
    private void endPositAiCheck()
    {
@@ -1072,8 +1072,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void checkPositAssistantInstallation(boolean forAssistant)
    {
       // The caller has already called beginPositAiCheck() to block apply while
-      // this check runs; every UpdateCheckCallback branch below ends it, so the
-      // count returns to zero once the check resolves.
+      // this check runs; every UpdateCheckCallback branch below calls
+      // endPositAiCheck() exactly once, removing this check's contribution to
+      // the count (which reaches zero only once no other check is in flight).
 
       // Remember the previous value so we can revert if user declines
       final String previousAssistantValue = forAssistant ?

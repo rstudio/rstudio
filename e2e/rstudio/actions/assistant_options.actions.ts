@@ -16,7 +16,7 @@ export class AssistantOptionsActions {
     this.consolePaneActions = consolePaneActions;
   }
 
-  /** Accept the "Update Posit Assistant" dialog if it is showing, then dismiss "Installation Complete" */
+  /** Accept the Posit Assistant install/update prompt if it is showing, then dismiss "Installation Complete" */
   private async acceptUpdateDialog(): Promise<void> {
     // Snapshot: acts only if the prompt is already rendered. Callers that need
     // to wait for it to appear use settleInstallPrompt().

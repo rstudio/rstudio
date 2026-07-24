@@ -169,7 +169,12 @@ public class PositAiInstallManager
          @Override
          public void onResponseReceived(JsObject result)
          {
-            boolean manifestUnavailable = result.getBoolean("manifestUnavailable");
+            // Every flag is read null-safely (see readFlag): the backend may
+            // omit newer fields (e.g. an older rsession), and a null or
+            // malformed payload must not throw here -- an exception would skip
+            // every UpdateCheckCallback branch and leave a caller's pending
+            // state (such as the preferences dialog's apply guard) unresolved.
+            boolean manifestUnavailable = readFlag(result, "manifestUnavailable");
             if (manifestUnavailable)
             {
                String errorMessage = result.getString("errorMessage");
@@ -178,34 +183,26 @@ public class PositAiInstallManager
                return;
             }
 
-            boolean unsupportedProtocol = result.getBoolean("unsupportedProtocol");
+            boolean unsupportedProtocol = readFlag(result, "unsupportedProtocol");
             if (unsupportedProtocol)
             {
                callback.onUnsupportedProtocol();
                return;
             }
 
-            boolean noCompatibleVersion = result.getBoolean("noCompatibleVersion");
+            boolean noCompatibleVersion = readFlag(result, "noCompatibleVersion");
             if (noCompatibleVersion)
             {
                callback.onIncompatibleVersion();
                return;
             }
 
-            boolean unsupportedVersion = result.getBoolean("unsupportedInstalledVersion");
-            boolean updateAvailable = result.getBoolean("updateAvailable");
-            boolean isInitialInstall = result.getBoolean("isInitialInstall");
-            // Default to false if the server omits isDowngrade -- newer than the
-            // other fields, so likelier to be missing from an older rsession.
-            Boolean isDowngradeBoxed = result.getBoolean("isDowngrade");
-            boolean isDowngrade = isDowngradeBoxed != null && isDowngradeBoxed;
-
-            // getBoolean returns null when the field is absent (e.g. an older
-            // rsession); treat that as false. The backend owns what makes it true.
-            Boolean additionalProvidersBoxed =
-               result.getBoolean("additionalProvidersAvailable");
+            boolean unsupportedVersion = readFlag(result, "unsupportedInstalledVersion");
+            boolean updateAvailable = readFlag(result, "updateAvailable");
+            boolean isInitialInstall = readFlag(result, "isInitialInstall");
+            boolean isDowngrade = readFlag(result, "isDowngrade");
             boolean additionalProvidersAvailable =
-               additionalProvidersBoxed != null && additionalProvidersBoxed;
+               readFlag(result, "additionalProvidersAvailable");
 
             // unsupportedVersion is only true when an actual package is installed
             // (isVersionUnsupported returns false for "0.0.0"/not-installed)
@@ -245,6 +242,21 @@ public class PositAiInstallManager
             callback.onCheckFailed(error.getMessage());
          }
       });
+   }
+
+   /**
+    * Reads a boolean flag from an update-check result, treating an absent, null,
+    * or non-boolean field as false. This keeps checkForUpdates' contract -- that
+    * it invokes exactly one UpdateCheckCallback method -- intact even for a
+    * malformed or version-skewed payload, so a caller's pending state is never
+    * stranded by an unboxing exception.
+    */
+   private static boolean readFlag(JsObject result, String key)
+   {
+      if (result == null)
+         return false;
+      Boolean value = result.getBoolean(key);
+      return value != null && value;
    }
 
    /**
