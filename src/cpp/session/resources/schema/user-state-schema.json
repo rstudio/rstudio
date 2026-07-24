@@ -111,16 +111,6 @@
                         "rBinDir": { "type": "string" },
                         "preferR64": { "type": "boolean" }
                     }
-                },
-                "macos": {
-                    "type": "object",
-                    "properties": {
-                        "checkForRosetta": {
-                            "type": "boolean",
-                            "default": true,
-                            "description": "Whether to check for a Rosetta 2 installation on Apple Silicon Macs."
-                        }
-                    }
                 }
             },
             "default": {
@@ -130,10 +120,7 @@
                     "rBinDir": "",
                     "preferR64": true,
                     "rExecutablePath": ""
-                  },
-                "macos": {
-                    "checkForRosetta": true
-                }
+                  }
             }
         },
         "context_id": {
