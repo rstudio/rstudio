@@ -4,6 +4,11 @@ Read this when working on tests in `tests/panes/editor/code_suggestions.test.ts`
 `tests/panes/editor/edit_suggestions.test.ts`, or anything that exercises ghost
 text, inline suggestions, or next-edit suggestions.
 
+Any test that exercises Copilot or Posit AI must gate on
+`requireAiCredentials(test, provider)` (`@utils/ai-credentials`) at the top of
+its `describe` block. Without it, a sandbox with no credentials for that
+provider hits the feature's own timeout instead of skipping cleanly.
+
 ## Copilot ghost text
 
 Ghost text renders as multiple DOM elements. Use `.first()` for visibility and
