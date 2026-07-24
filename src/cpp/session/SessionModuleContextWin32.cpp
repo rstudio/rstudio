@@ -22,6 +22,9 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <vector>
+
+#include <core/system/System.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -151,7 +154,40 @@ Error resolveWindowsShortcut(const core::FilePath& shortcutPath,
       return shortcutError(boost::system::errc::no_such_file_or_directory,
                            hr, shortcutPath, ERROR_LOCATION);
 
-   *pTargetPath = FilePath(std::wstring(targetPath));
+   // The stored target may be in a non-canonical form: 8.3 short-name
+   // components (e.g. C:\Users\RUNNER~1\...) or stale character case.
+   // Home aliasing (createAliasedPath) and the client's duplicate-document
+   // detection are literal string comparisons, so a non-canonical form
+   // defeats both even when the target is under the home directory.
+   // Normalize local targets to the canonical long form. This reads the
+   // local filesystem (each path component), which is accepted during
+   // listings; UNC and remote targets are skipped because the same lookup
+   // would incur network I/O. A failed lookup (e.g. a deleted target)
+   // keeps the stored form.
+   std::wstring storedPath(targetPath);
+   if (storedPath.rfind(L"\\\\", 0) != 0 &&
+       !core::system::isRemotePath(FilePath(storedPath)))
+   {
+      wchar_t longPath[MAX_PATH];
+      DWORD length = ::GetLongPathNameW(storedPath.c_str(), longPath, MAX_PATH);
+      if (length > 0 && length < MAX_PATH)
+      {
+         storedPath.assign(longPath, length);
+      }
+      else if (length >= MAX_PATH)
+      {
+         // the long form is larger than the stack buffer (the stored form
+         // fit the MAX_PATH GetPath buffer above, but 8.3 components can
+         // hide a long form that does not); the return value is the
+         // required size, so retry on the heap
+         std::vector<wchar_t> buffer(length);
+         length = ::GetLongPathNameW(storedPath.c_str(), &buffer[0], length);
+         if (length > 0 && length < buffer.size())
+            storedPath.assign(&buffer[0], length);
+      }
+   }
+
+   *pTargetPath = FilePath(storedPath);
    *pTargetIsDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
    return Success();
 }

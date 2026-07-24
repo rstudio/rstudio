@@ -131,6 +131,7 @@
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/system/User.hpp>
 
 #include <core/RegexUtils.hpp>
@@ -332,10 +333,11 @@ Error findProgramOnPath(const std::string& program,
    return fileNotFoundError(program, ERROR_LOCATION);
 }
 
-// statics defined in System.cpp
-extern boost::shared_ptr<log::LogOptions> s_logOptions;
-extern boost::recursive_mutex s_loggingMutex;
-extern std::string s_programIdentity;
+// statics defined in System.cpp (references to intentionally-leaked objects;
+// the declared types here must stay in sync with the definitions)
+extern boost::shared_ptr<log::LogOptions>& s_logOptions;
+extern boost::recursive_mutex& s_loggingMutex;
+extern std::string& s_programIdentity;
 
 Error initializeSystemLog(const std::string& programIdentity,
                           log::LogLevel logLevel,
@@ -360,7 +362,10 @@ Error initializeSystemLog(const std::string& programIdentity,
    return Success();
 }
 
-boost::function<void()> s_sighupHandler;
+// read by the detached SIGHUP config-reload thread below; intentionally
+// leaked so a SIGHUP arriving while the process exits never finds it
+// destroyed during static teardown (#18318)
+boost::function<void()>& s_sighupHandler = make_leaked<boost::function<void()>>();
 
 namespace {
 

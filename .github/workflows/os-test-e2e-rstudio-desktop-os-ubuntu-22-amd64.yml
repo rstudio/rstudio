@@ -1,18 +1,18 @@
-name: "Test: E2E Playwright RStudio (Desktop, Fedora 43 x86_64, Open Source)"
+name: "Test: E2E Playwright RStudio (Desktop, Ubuntu 22 AMD64, Open Source)"
 
 on:
   workflow_dispatch:
     inputs:
       build_from_source:
-        description: "Build RStudio Desktop (Electron) from this branch's source. When false, downloads the latest daily .rpm installer."
+        description: "Build RStudio Desktop (Electron) from this branch's source. When false, downloads the latest daily .deb installer."
         type: boolean
         default: true
       rstudio_installer_url:
-        description: "Optional .rpm URL to test against (e.g. a specific daily from dailies.rstudio.com). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
+        description: "Optional .deb URL to test against (e.g. a specific daily from dailies.rstudio.com). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
         type: string
         default: ""
       r_version:
-        description: "Ignored on Fedora: R is installed from Fedora's own repos (dnf), so this always uses the distro's R regardless of value. Kept for interface parity with the other platform workflows."
+        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
         type: string
         default: "release"
       project:
@@ -36,7 +36,7 @@ on:
         type: string
         default: ""
       rstudio_extra_args:
-        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS. Set to '--no-sandbox' if the in-container Chromium sandbox won't initialize (see the container options below)."
+        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
         default: ""
       build_only:
@@ -106,21 +106,13 @@ permissions:
   id-token: write
 
 jobs:
-  # Builds RStudio Desktop (Electron) from this PR's source inside a Fedora 43
-  # container (GitHub has no Fedora-hosted runner), then uploads the .rpm as an
-  # artifact for the e2e job to consume. This is the same kind of Electron
-  # .rpm the RHEL build produces -- there is no Fedora-specific SKU. Skipped when
-  # build_from_source is false, in which case the e2e job downloads the daily
-  # .rpm (or rstudio_installer_url) instead.
+  # Builds RStudio Desktop (Electron) from this PR's source on the same runner
+  # image as the e2e job below, then uploads the .deb as an artifact for the
+  # e2e job to consume. Skipped when build_from_source is false, in which case
+  # the e2e job downloads the daily .deb (or rstudio_installer_url) instead.
   build:
     if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-    runs-on: ubuntu-latest
-    # SYS_ADMIN + an unconfined seccomp profile let a later Chromium/Electron
-    # sandbox initialize inside the container (the host sysctl the Ubuntu jobs
-    # flip isn't reachable here -- /proc/sys is read-only in the container).
-    container:
-      image: fedora:43
-      options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
+    runs-on: ubuntu-22.04
     timeout-minutes: 90
     env:
       # Redirect the dependency / package scripts' tool root to a
@@ -147,68 +139,59 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
 
     steps:
-      # The Fedora base image is minimal and the job runs as root. Install the
-      # tools the checkout action, the dependency scripts, and the build need up
-      # front. sudo is required because install-dependencies-yum calls it
-      # internally (root's sudo is a straight passthrough). Unlike RHEL's UBI,
-      # Fedora's base repos already carry the build -devel packages, so no EPEL /
-      # CodeReady Builder enablement step is needed.
-      - name: Prepare Fedora container
-        run: |
-          dnf -y install sudo git tar gzip xz jq which findutils diffutils procps-ng
-
       - uses: actions/checkout@v4
 
       # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
       # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
+      # Keyed with "jammy" so these older-glibc (Ubuntu 22) build artifacts stay
+      # isolated from the noble (Ubuntu 24) and resolute (Ubuntu 26) tool caches:
+      # a binary compiled against newer glibc can fail to load on jammy.
       # Restore-only; the matching Save steps after "Install build
-      # dependencies" run only from main-scoped runs. Fedora-scoped key so the
-      # fedora43 tools tree never collides with the Ubuntu (noble), RHEL, or
-      # Fedora 44 ones.
+      # dependencies" run only from main-scoped runs.
       - name: Restore rstudio-tools deps
         id: tools-cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-linux-fedora43-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          key: rstudio-tools-linux-jammy-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
           restore-keys: |
-            rstudio-tools-linux-fedora43-x86_64-
+            rstudio-tools-linux-jammy-x86_64-
 
-      # install-common (called by install-dependencies-yum) installs R packages
-      # (via install-packages) into R_LIBS_USER. Cache the whole R-libs tree --
-      # R's %p/%v subpaths keep different versions isolated.
+      # install-common (called by install-dependencies-jammy) installs R
+      # packages (via install-packages) into R_LIBS_USER. Cache the whole
+      # R-libs tree -- R's %p/%v subpaths keep different versions isolated.
       - name: Restore build-time R packages
         id: rlibs-cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/R-libs
-          key: rstudio-build-rlibs-linux-fedora43-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
+          key: rstudio-build-rlibs-linux-jammy-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
           restore-keys: |
-            rstudio-build-rlibs-linux-fedora43-x86_64-
+            rstudio-build-rlibs-linux-jammy-x86_64-
 
-      # Cache compiled GWT output (package/linux/build-Electron-RPM/gwt). GWT
-      # compilation is the single most expensive JS step (~15-30 min). When
+      # Cache compiled GWT output (package/linux/build-Electron-DEB/gwt/{bin,www,extras}).
+      # GWT compilation is the single most expensive JS step (~15-30 min). When
       # GWT Java sources / build scripts haven't changed, make-electron-package
-      # can skip the recompile entirely via the NO_REBUILD env var (sets
-      # GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake) -- see the
-      # NO_REBUILD/GWT_BUILD handling in package/linux/make-package. GWT output
-      # is Java-to-JS and platform-independent, but the key is fedora43-scoped
-      # for per-distro cache isolation (matching the tools/rlibs keys); the RPM
-      # build dir also differs from the DEB dir, so the path can't collide either.
+      # can skip the recompile entirely via the NO_REBUILD environment variable
+      # (sets GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake) -- see the
+      # NO_REBUILD/GWT_BUILD handling in package/linux/make-package. The
+      # Electron build dir differs from the Server build dir, so this uses a
+      # desktop-specific key rather than sharing the Server GWT cache.
       # Restore-only here; the matching Save step runs after the build with a
       # success gate so a failed mid-compile run can't poison the cache.
       - name: Restore GWT output
         id: gwt-cache
         uses: actions/cache/restore@v4
         with:
-          path: package/linux/build-Electron-RPM/gwt
-          key: rstudio-gwt-linux-desktop-fedora43-x86_64-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          path: package/linux/build-Electron-DEB/gwt
+          key: rstudio-gwt-linux-desktop-jammy-x86_64-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
-            rstudio-gwt-linux-desktop-fedora43-x86_64-${{ env.GWT_STYLE }}-v1-
+            rstudio-gwt-linux-desktop-jammy-x86_64-${{ env.GWT_STYLE }}-v1-
 
       # GHA-backed sccache. Installs sccache on PATH and starts the sccache
       # server with the GH Actions cache API as the storage backend. Object-level
-      # cache hits, no per-SHA tarball, no AWS credentials.
+      # cache hits, no per-SHA tarball, no AWS credentials. Repo-scoped, so the
+      # object cache is shared with the Linux Server build and inherited by PRs.
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
         with:
@@ -217,7 +200,20 @@ jobs:
           # downloads directly from the release CDN with no API call.
           version: "v0.16.0"
 
-      # install-dependencies-yum: dnf installs system packages (with sudo
+      # The ubuntu-22.04 runner image ships pkgconf, which declares
+      # "Breaks: pkg-config" -- and install-dependencies-jammy (below) asks apt
+      # to install pkg-config, so apt refuses with "held broken packages" and
+      # the whole dependency install aborts. Both packages provide
+      # /usr/bin/pkg-config. Swap pkgconf out for pkg-config in one apt
+      # transaction (the trailing "-" on pkgconf removes it) so the dependency
+      # script's install succeeds. A real jammy box without pkgconf preinstalled
+      # never hits this, which is why the shared script does not handle it.
+      - name: Reconcile pkg-config/pkgconf on the jammy runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config pkgconf-
+
+      # install-dependencies-jammy: apt-get installs system packages (with sudo
       # internally), then calls install-common which downloads Boost, SOCI,
       # pandoc, quarto, node, panmirror, sccache, GWT jar, etc. into
       # RSTUDIO_TOOLS_ROOT. The scripts are idempotent, so a cache hit on
@@ -225,7 +221,7 @@ jobs:
       # skipped and the cached tools are reused.
       - name: Install build dependencies
         working-directory: dependencies/linux
-        run: ./install-dependencies-yum
+        run: ./install-dependencies-jammy
 
       # Save the tools / R-libs caches only from main-scoped runs (scheduled
       # or dispatched on main), and only on a key miss. A cache saved from a
@@ -247,10 +243,22 @@ jobs:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
 
+      # The ubuntu-22.04 runner image presets JAVA_HOME to an older JDK, and
+      # the GWT ant build targets Java 17 ("invalid target release: 17").
+      # Point JAVA_HOME and PATH at the image's Temurin 17 (falling back to
+      # the apt-installed openjdk-17 from install-dependencies-jammy). The
+      # 24.04/26.04 images already default to a new-enough JDK, so the
+      # sibling engines don't need this.
+      - name: Select Java 17
+        run: |
+          J17="${JAVA_HOME_17_X64:-/usr/lib/jvm/java-17-openjdk-amd64}"
+          echo "JAVA_HOME=$J17" >> "$GITHUB_ENV"
+          echo "$J17/bin" >> "$GITHUB_PATH"
+
       - name: Zero sccache stats
         run: sccache --zero-stats || true
 
-      - name: Build RStudio Desktop RPM
+      - name: Build RStudio Desktop DEB
         id: build
         working-directory: package/linux
         env:
@@ -261,14 +269,14 @@ jobs:
         run: |
           # NO_REBUILD=1 (see package/linux/make-package) tells the script to
           # set GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake, so the
-          # cached GWT bin/www/extras under build-Electron-RPM/gwt are reused
+          # cached GWT bin/www/extras under build-Electron-DEB/gwt are reused
           # instead of recompiled (~15-30 min saved when sources unchanged).
           if [ "${{ steps.gwt-cache.outputs.cache-hit }}" = "true" ]; then
             echo "GWT cache hit -- skipping GWT compile"
-            NO_REBUILD=1 ./make-electron-package RPM
+            NO_REBUILD=1 ./make-electron-package DEB
           else
             echo "GWT cache miss -- compiling GWT from scratch"
-            ./make-electron-package RPM
+            ./make-electron-package DEB
           fi
 
       - name: Show sccache stats
@@ -278,43 +286,40 @@ jobs:
       # Save GWT output only when the build succeeded. A failed mid-compile run
       # could otherwise write partial GWT output to the cache, and every future
       # restore would silently ship a broken frontend until the hashFiles key
-      # rotates. Skip on an exact restore hit: re-saving would just duplicate
-      # the entry into this run's ref scope. PR runs that changed GWT sources
-      # still save, so re-pushes to the same PR skip the recompile.
+      # rotates. Save only from main-scoped runs, and only on a key miss: a
+      # cache saved from a PR run lands in that PR's merge-ref scope, which no
+      # other branch can restore -- each copy is pure pressure on the repo's
+      # 10 GB Actions cache quota, and that pressure is what evicts main's
+      # copy and sends every PR build cold in the first place.
       - name: Save GWT output
-        if: steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
+        if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: package/linux/build-Electron-RPM/gwt
+          path: package/linux/build-Electron-DEB/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
 
       # Skipped in build_only (seed) runs: no e2e job consumes the artifact,
-      # so packaging and uploading it would be pure waste. CPack writes the
-      # shippable .rpm to the TOP LEVEL of build-Electron-RPM (no
-      # CPACK_PACKAGE_DIRECTORY is set and cpack runs from inside that dir),
-      # exactly like the .deb sibling -- so -maxdepth 1 is correct and
-      # deterministic. _CPack_Packages/.../RPM holds only rpmbuild staging
-      # copies and the xcopy tarball, which we must not pick up.
-      - name: Package RStudio Desktop .rpm
+      # so packaging and uploading it would be pure waste.
+      - name: Package RStudio Desktop .deb
         if: inputs.build_only != true
         run: |
-          RPM=$(find package/linux/build-Electron-RPM -maxdepth 1 -name '*.rpm' | head -1)
-          if [ -z "$RPM" ]; then
-            echo "::error::No .rpm found in package/linux/build-Electron-RPM"
+          DEB=$(find package/linux/build-Electron-DEB -maxdepth 1 -name '*.deb' | head -1)
+          if [ -z "$DEB" ]; then
+            echo "::error::No .deb found in package/linux/build-Electron-DEB"
             exit 1
           fi
-          cp "$RPM" "${{ github.workspace }}/rstudio-desktop.rpm"
-          echo "Packaged: $RPM"
+          cp "$DEB" "${{ github.workspace }}/rstudio-desktop.deb"
+          echo "Packaged: $DEB"
 
-      - name: Upload RStudio Desktop .rpm artifact
+      - name: Upload RStudio Desktop .deb artifact
         if: inputs.build_only != true
         uses: actions/upload-artifact@v4
         with:
-          name: rstudio-desktop-rpm-fedora43-x86_64
-          path: rstudio-desktop.rpm
+          name: rstudio-desktop-deb-ubuntu-22
+          path: rstudio-desktop.deb
           retention-days: 7
 
-  e2e-desktop-fedora43:
+  e2e-desktop-ubuntu:
     needs: build
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too (needs.build.result == 'skipped' on the daily-download
@@ -327,16 +332,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:43
-      # SYS_ADMIN + unconfined seccomp let Chromium/Electron's namespace sandbox
-      # initialize inside the container. The Ubuntu jobs instead flip a host
-      # sysctl (kernel.apparmor_restrict_unprivileged_userns=0), which isn't
-      # reachable from an unprivileged container -- /proc/sys is read-only. If
-      # the sandbox still refuses to come up here, pass --no-sandbox via
-      # rstudio_extra_args (PW_RSTUDIO_EXTRA_ARGS) rather than changing these.
-      options: --cap-add=SYS_ADMIN --security-opt seccomp=unconfined
+    runs-on: ubuntu-22.04
     timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
@@ -344,13 +340,6 @@ jobs:
       PW_SANDBOX_ROOT_CREATE: '1'
 
     steps:
-      # The Fedora base image is minimal and the job runs as root. Install what
-      # checkout, node, and the .rpm install need. sudo is kept for parity with
-      # the shared scripts.
-      - name: Prepare Fedora container
-        run: |
-          dnf -y install sudo git tar gzip xz jq which findutils
-
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
@@ -361,88 +350,59 @@ jobs:
 
       - name: Install OS dependencies
         run: |
-          # Xvfb (virtual display for the Electron app / Playwright) plus the
-          # runtime libraries Chromium/Electron and the Playwright-managed
-          # chromium need on Fedora. This list is load-bearing, not redundant:
-          # the RStudio Electron RPM is built with CPACK_RPM_PACKAGE_AUTOREQPROV
-          # off (see package/linux/CMakeLists.txt) and declares only
-          # libxkbcommon-x11 and sqlite, so dnf does NOT auto-pull the
-          # GUI/Chromium libs on install -- they must come from here. The last
-          # row mirrors the font/text libs some test R packages load:
-          # freetype/fontconfig (ragg, systemfonts), harfbuzz/fribidi
-          # (textshaping).
-          # lsof: the desktop fixture uses it to reclaim an orphaned RStudio on
-          # the worker's fixed CDP port (a leftover from a prior interrupted
-          # run). Ubuntu/macOS ship it; the minimal Fedora image doesn't, so
-          # install it -- otherwise the reclaim and port-free wait silently
-          # degrade (the "lsof: command not found" spam in the logs).
-          dnf -y install \
-            xorg-x11-server-Xvfb lsof \
-            nss nspr atk at-spi2-atk at-spi2-core cups-libs \
-            libdrm mesa-libgbm libxkbcommon \
-            libX11 libXcomposite libXdamage libXext libXfixes libXrandr libXScrnSaver libXtst libxcb \
-            gtk3 pango cairo alsa-lib \
-            freetype fontconfig harfbuzz fribidi
+          sudo apt-get update
+          # xvfb + jq: virtual display for the Electron app / Playwright, JSON
+          # parsing. The RStudio Desktop .deb pulls its own GUI runtime deps
+          # (libnss3, libgbm1, libgtk-3-0, ...) via apt's dependency resolution
+          # on install. Several R packages used in tests also have system-library
+          # dependencies: libfreetype6 / libfontconfig1 (ragg, systemfonts),
+          # libharfbuzz0b / libfribidi0 (textshaping). Install the runtime libs
+          # (not the -dev variants) so rsession's R can load them without a
+          # source compile.
+          sudo apt-get install -y xvfb jq \
+            libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0
 
-      - name: Install R build toolchain and headers
-        run: |
-          # Fedora has no prebuilt CRAN binaries (PPM serves none), so the e2e R
-          # packages (tidyverse, shiny, rmarkdown, roxygen2, ...) are compiled
-          # from source by pak. That needs a compiler stack (gcc/g++/gfortran +
-          # make) plus the -devel headers their compiled dependencies link
-          # against: libcurl/openssl/libxml2 (curl, openssl, xml2), the font/text
-          # stack (systemfonts, textshaping, ragg), the image libs (ragg), zlib
-          # (data.table and others), and ICU (stringi). zlib ships as zlib-ng on
-          # Fedora, so the headers come from zlib-ng-compat-devel.
-          dnf -y install \
-            gcc gcc-c++ gcc-gfortran make \
-            libcurl-devel openssl-devel libxml2-devel \
-            fontconfig-devel freetype-devel harfbuzz-devel fribidi-devel \
-            libpng-devel libjpeg-turbo-devel libtiff-devel \
-            zlib-ng-compat-devel libicu-devel cairo-devel
+      # No "Allow unprivileged user namespaces" step here (unlike the Ubuntu 24
+      # and Ubuntu 26 engines): the kernel.apparmor_restrict_unprivileged_userns
+      # AppArmor restriction that blocks Chromium's sandbox was introduced in
+      # Ubuntu 23.10 / 24.04. Jammy (22.04) has no such setting and allows
+      # unprivileged user namespaces by default, so Chromium's sandbox works
+      # unmodified -- and running "sysctl -w" on the missing key would error.
+      # The e2e job runs on a bare runner as the non-root "runner" user, so
+      # there is no need for --no-sandbox either.
 
-      # Fedora is not a supported platform for rig / r-builds (Fedora R 404s on
-      # the rversions service) or for PPM binaries, so install R from Fedora's
-      # own repos and let pak compile CRAN packages from source (see
-      # os-e2e-deps and the toolchain step above). The r_version input is
-      # ignored on Fedora -- dnf provides whatever R the distro ships.
-      - name: Install R (Fedora native)
+      - name: Install rig
+        uses: ./.github/actions/os-install-rig-unix
+
+      - name: Install R via rig
+        env:
+          R_VERSION: ${{ inputs.r_version }}
         run: |
-          # Clear tsflags for this transaction so R's documentation tree is
-          # installed. Fedora container images ship /etc/dnf/dnf.conf with
-          # tsflags=nodocs (a space-saving default), which makes dnf skip
-          # /usr/share/doc/R. RStudio's R discovery (r/session/RDiscovery.cpp)
-          # requires R_DOC_DIR to exist and aborts the session otherwise, so a
-          # docless R install starts but never reaches window.rstudio.ready.
-          dnf -y install --setopt=tsflags='' R-core R-core-devel
-          R --version
-          # Diagnostics: the doc dir R reports, and confirm it now exists.
-          Rscript -e 'cat("doc=", R.home("doc"), " R_DOC_DIR=", Sys.getenv("R_DOC_DIR"), "\n", sep="")'
-          ls -ld /usr/share/doc/R || echo "MISSING /usr/share/doc/R"
+          rig add "$R_VERSION"
+          rig default "$R_VERSION"
+          rig ls
           mkdir -p "$R_LIBS_USER"
 
-      # Build-from-source path: extract the .rpm artifact produced by the build
-      # job above and install it. The RPM declares only minimal deps (AUTOREQPROV
-      # is off), so the GUI/Chromium runtime libs come from the "Install OS
-      # dependencies" step above, not from the RPM's own resolution.
-      - name: Download RStudio Desktop .rpm artifact
+      # Build-from-source path: extract the .deb artifact produced by the build
+      # job above and install it.
+      - name: Download RStudio Desktop .deb artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         uses: actions/download-artifact@v4
         with:
-          name: rstudio-desktop-rpm-fedora43-x86_64
+          name: rstudio-desktop-deb-ubuntu-22
           path: ${{ github.workspace }}
 
       - name: Install RStudio Desktop from artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         run: |
-          dnf -y install "$GITHUB_WORKSPACE/rstudio-desktop.rpm"
+          sudo apt-get install -y "${{ github.workspace }}/rstudio-desktop.deb"
           ls -la /usr/bin/rstudio
 
-      # Daily-download path: resolve and install the latest (or specified) .rpm.
+      # Daily-download path: resolve and install the latest (or specified) .deb.
       # Runs when build_from_source is false (auto-resolve the daily via
       # dailies.rstudio.com/rstudio/latest/index.json) or when an explicit
       # rstudio_installer_url is provided (use that URL verbatim).
-      - name: Resolve RStudio Desktop .rpm URL
+      - name: Resolve RStudio Desktop .deb URL
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         id: resolve
         env:
@@ -453,17 +413,17 @@ jobs:
           FILENAME=""
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
-            # There is no separate Fedora daily: the Electron .rpm keyed
-            # "rhel10-x86_64" under the electron product is the RPM the Fedora
-            # tests run against (the same build RHEL uses).
-            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["rhel10-x86_64"].link // empty')
-            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["rhel10-x86_64"].sha256 // empty')
-            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["rhel10-x86_64"].filename // empty')
+            # Ubuntu 22 has its own daily: the Linux Desktop build ships as an
+            # Electron .deb keyed "jammy-amd64" under the electron product in
+            # the daily manifest.
+            URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["jammy-amd64"].link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["jammy-amd64"].sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["jammy-amd64"].filename // empty')
             if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
               echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
               exit 1
             fi
-            echo "Auto-resolved latest rhel10-x86_64 desktop daily:"
+            echo "Auto-resolved latest jammy-amd64 (Ubuntu 22) desktop daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
@@ -479,24 +439,13 @@ jobs:
           echo "sha256=$SHA"        >> "$GITHUB_OUTPUT"
           echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
 
-      # Cache the daily installer keyed on its resolved filename. Filenames
-      # embed the version + build number on the auto-resolve path so the content
-      # is immutable per name: new daily misses and downloads, same-day re-run
-      # hits and skips (SHA still verified below). Skip caching on the override
-      # path -- a user-supplied URL has no immutability guarantee and its SHA
-      # check is skipped, so a reused basename could otherwise serve stale,
-      # unverified bytes. This is the same rhel10-x86_64 .rpm the Fedora 44
-      # engine downloads, so a cache hit here is shared with that workflow too.
-      - name: Cache RStudio Desktop installer
-        if: inputs.build_from_source == false && inputs.rstudio_installer_url == ''
-        id: installer-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.resolve.outputs.filename }}
-          key: rstudio-desktop-installer-${{ steps.resolve.outputs.filename }}
-
-      - name: Download RStudio Desktop .rpm
-        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.installer-cache.outputs.cache-hit != 'true'
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # PRs can't share a cache entry with each other anyway (only with their
+      # base branch), so caching here would just duplicate the same bytes
+      # into the shared 10 GB cache quota without saving meaningful time.
+      - name: Download RStudio Desktop .deb
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
           DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
           DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
@@ -513,42 +462,24 @@ jobs:
         run: |
           echo "$EXPECTED_SHA256  $DOWNLOAD_FILENAME" | sha256sum -c -
 
-      - name: Install RStudio Desktop from .rpm
+      - name: Install RStudio Desktop from .deb
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         env:
           INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
         run: |
-          dnf -y install "./$INSTALLER_FILENAME"
+          sudo apt-get install -y "./$INSTALLER_FILENAME"
           ls -la /usr/bin/rstudio
 
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
-          # Isolate the R-library / pak caches from the Ubuntu, RHEL, and
-          # Fedora 44 workflows: they all share runner.os == Linux, and an
-          # R library compiled under a different distro/version is ABI-
-          # incompatible with Fedora 43's R. See os-e2e-deps cache-scope.
-          cache-scope: fedora43-x86_64
-          # Fedora has no CRAN binaries, so pre-install the harness's full
-          # REQUIRED_PACKAGES set into the cached R library here. Otherwise the
-          # Playwright globalSetup source-compiles that set at test time, which
-          # is what PW_HEARTBEAT_TIMEOUT_SECONDS below was papering over.
-          install-required-packages: 'true'
-
-      # Run the tests as a non-root user, matching the bare-runner siblings
-      # (Ubuntu/macOS/Windows all execute as a non-root user). GHA container
-      # jobs default to root, and RStudio-as-root diverges from real usage:
-      # Chromium refuses its sandbox as root, the terminal gets a root shell,
-      # and rsession warns. All the setup above needs root (dnf, the .rpm
-      # install, cache writes), so only the test step drops down -- create the
-      # user here and hand it ownership of everything the run writes under the
-      # workspace (R-libs and its per-worker clones, ms-playwright, pw-sandbox,
-      # the pak cache, and the report dirs under e2e/rstudio).
-      - name: Create non-root test user
-        run: |
-          useradd -m -s /bin/bash rstudio-tester
-          chown -R rstudio-tester:rstudio-tester "$GITHUB_WORKSPACE"
+          # Isolate the R-library / pak caches from the other Linux workflows:
+          # they all share runner.os == Linux, and jammy's older glibc (Ubuntu
+          # 22) cannot safely load the noble-/resolute-compiled binary packages
+          # that would be restored from the shared Linux cache. See the
+          # cache-scope docs in .github/actions/os-e2e-deps/action.yml.
+          cache-scope: jammy-amd64
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
@@ -557,20 +488,12 @@ jobs:
           # Platform-labelled project name; playwright.config.ts uses it both as
           # the project name in reports (so a cross-platform merged report can
           # distinguish these results) and to derive the platform+shard-unique
-          # blob report file name. Distinct from the Fedora 44 engine's
-          # "-linux-fedora" label so the two versions never conflate results.
-          PW_PROJECT_LABEL: ${{ inputs.project }}-linux-fedora43
+          # blob report file name.
+          PW_PROJECT_LABEL: ${{ inputs.project }}-linux-ubuntu22-x86_64
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
-          # No --no-sandbox: the test step runs as a non-root user (see the
-          # "Create non-root test user" step and the setpriv drop below), so
-          # Chromium no longer refuses to start, and the container's SYS_ADMIN +
-          # unconfined seccomp let its namespace sandbox initialize -- matching
-          # how the bare-runner siblings run (sandbox on). If a future runner
-          # kernel forbids unprivileged user namespaces and the sandbox can't
-          # come up, set rstudio_extra_args to '--no-sandbox' as a fallback.
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
@@ -578,24 +501,10 @@ jobs:
           # CONNECT_API_KEY is empty on fork PRs; the reporter still runs but its
           # uploads fail with warnings (never fails the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-          SHARD_NAME: desktop-linux-fedora43-${{ matrix.shard }}
+          SHARD_NAME: desktop-linux-ubuntu22-x86_64-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows which
           # phase exceeded the deadline.
           PW_DEBUG_LAUNCH: '1'
-          # Point the Playwright harness's own R-libs provisioner
-          # (fixtures/r-libs-setup.ts, run in globalSetup) at the same library
-          # os-e2e-deps populated, instead of its default per-host cache. Because
-          # os-e2e-deps ran with install-required-packages, that library holds
-          # both the e2e DESCRIPTION deps and the full REQUIRED_PACKAGES set, so
-          # globalSetup finds everything present and installs nothing.
-          PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
-          # Defensive fallback. With install-required-packages above, globalSetup
-          # normally compiles nothing at test time. But if a package slipped
-          # through and had to be source-compiled here (Fedora has no PPM/CRAN
-          # binaries), that is a long silent stretch the default 300s heartbeat
-          # idle-timeout would kill (exit 124); the higher ceiling lets it finish
-          # rather than failing the run outright.
-          PW_HEARTBEAT_TIMEOUT_SECONDS: '2400'
         run: |
           ARGS=()
           if [ -n "$PW_TEST_SELECTOR" ]; then
@@ -633,29 +542,13 @@ jobs:
             cat /tmp/xvfb.log || true
             exit 1
           fi
-          # Drop to the non-root user for the run itself. setpriv execs in
-          # place (no fork), so a job-cancellation SIGTERM still reaches node
-          # directly and the watchdog's SIGINT->SIGKILL path is preserved --
-          # runuser/su would fork and swallow the signal. --init-groups adopts
-          # the user's groups; the environment is left intact (DISPLAY, PW_*,
-          # PATH, R_LIBS_USER all carry through), and we only override HOME,
-          # since the step's HOME is root-owned and node/Playwright write into
-          # it. Xvfb keeps running as root above; -ac lets the non-root Chromium
-          # attach to :99 without an auth cookie.
-          exec setpriv --reuid=rstudio-tester --regid=rstudio-tester --init-groups \
-            env HOME=/home/rstudio-tester \
-            node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
+          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
-      # Platform-prefixed artifact name keeps this Fedora 43 platform's shard
-      # reports separate from the other platforms (mac / win / linux-desktop /
-      # linux-server / Fedora 44) if this workflow is ever run alongside them
-      # in the same overall run (e.g. the scheduled rotation's all-engines
-      # dispatch), so each merge job downloads only its own.
       - name: Upload blob report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-blob-report-linux-desktop-fedora43-${{ matrix.shard }}
+          name: playwright-blob-report-linux-desktop-ubuntu-22-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
           if-no-files-found: warn
           retention-days: 1
@@ -664,7 +557,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-linux-desktop-fedora43-${{ matrix.shard }}
+          name: test-results-linux-desktop-ubuntu-22-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
           if-no-files-found: ignore
 
@@ -674,17 +567,16 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: pw-sandbox-linux-desktop-fedora43-${{ matrix.shard }}
+          name: pw-sandbox-linux-desktop-ubuntu-22-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
           if-no-files-found: ignore
 
   # Merge per-shard blob reports into a single HTML report, parse aggregated
   # counts, and post a sticky PR comment with pass/fail/skip totals
-  # (when post_pr_comment is set). Runs on a plain hosted runner -- merging only
-  # needs node + `playwright merge-reports`, no Fedora container.
+  # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-desktop-fedora43]
-    if: always() && inputs.defer_merge != true && needs.e2e-desktop-fedora43.result != 'skipped' && needs.e2e-desktop-fedora43.result != 'cancelled'
+    needs: [e2e-desktop-ubuntu]
+    if: always() && inputs.defer_merge != true && needs.e2e-desktop-ubuntu.result != 'skipped' && needs.e2e-desktop-ubuntu.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -712,7 +604,7 @@ jobs:
       - name: Download shard blob reports
         uses: actions/download-artifact@v4
         with:
-          pattern: playwright-blob-report-linux-desktop-fedora43-*
+          pattern: playwright-blob-report-linux-desktop-ubuntu-22-*
           path: e2e/rstudio/all-blob-reports
           merge-multiple: true
 
@@ -738,7 +630,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-linux-desktop-fedora43
+          name: playwright-report-linux-desktop-ubuntu-22
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
@@ -752,7 +644,7 @@ jobs:
         uses: ./.github/actions/os-publish-e2e-report
         with:
           role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-          label: linux-desktop-fedora43
+          label: linux-desktop-ubuntu-22
 
       - name: Post E2E results to PR
         if: |
@@ -762,12 +654,12 @@ jobs:
           (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
         uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
-          header: e2e-desktop-fedora43-results
+          header: e2e-desktop-ubuntu22-results
           GITHUB_TOKEN: ${{ github.token }}
           message: |
-            ## 🎩 Linux Desktop E2E · Fedora 43
+            ## 🐧 Linux Desktop E2E · Ubuntu 22
 
-            ${{ needs.e2e-desktop-fedora43.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+            ${{ needs.e2e-desktop-ubuntu.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
 
             `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
 
@@ -787,4 +679,4 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · fedora:43 container · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>2 shards · ubuntu-22.04 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
