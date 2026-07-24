@@ -38,8 +38,8 @@ export function authCaptureEnabled(): boolean {
 }
 
 // PW_DEBUG_AUTH_STEPS: emit the sign-in flows' step-level console output --
-// the browser narration ([gh-authorize]: which page, which field, button
-// state) and the Copilot agent's raw diagnostics ([copilot-agent]: LSP
+// the browser narration ([authorize-github], [authorize-posit]: which page,
+// which field, button state) and the Copilot agent's raw diagnostics ([copilot-agent]: LSP
 // notifications, spawn/exit, checkStatus polling). Off by default, so a normal
 // run shows only the [auth-setup] outcome milestones; this detail is opt-in
 // for troubleshooting a flow. Independent of authCaptureEnabled -- this output
@@ -47,6 +47,19 @@ export function authCaptureEnabled(): boolean {
 // include unredacted page content, so the lower-risk detail has its own switch.
 export function authStepsEnabled(): boolean {
   return ['1', 'true'].includes((process.env.PW_DEBUG_AUTH_STEPS ?? '').toLowerCase());
+}
+
+// The step-narration logger for a provider's sign-in flow: gated on
+// PW_DEBUG_AUTH_STEPS and prefixed [authorize-<provider>], so every flow's
+// narration shares one switch and one naming scheme by construction. New
+// providers (browser-based or not) should get their logger here rather than
+// hand-rolling the gating and prefix. Keep the lines free of account
+// identifiers (no username, password, or device code) -- that authored-text
+// guarantee is what lets this flag stay lower-risk than PW_DEBUG_AUTH_CAPTURE.
+export function authStepLogger(provider: string): (msg: string) => void {
+  return (msg) => {
+    if (authStepsEnabled()) console.log(`[authorize-${provider}] ${msg}`);
+  };
 }
 
 // One shared user agent: a plain desktop Chrome, so the login pages serve

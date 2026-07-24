@@ -22,7 +22,7 @@ import {
   STATUS_PROMPT_DEVICE_FLOW,
 } from '../utils/copilot-agent';
 import { authorizeDeviceCode, GitHubLoginError } from '../utils/github-device-authorize';
-import { launchAuthBrowser } from '../utils/auth-debug';
+import { authStepLogger, launchAuthBrowser } from '../utils/auth-debug';
 
 /**
  * Authenticate the AI providers (Posit AI and GitHub Copilot) for the
@@ -293,7 +293,16 @@ async function pollForToken(
   );
 }
 
+// Per-step narration, off unless PW_DEBUG_AUTH_STEPS is set (see
+// auth-debug.ts) -- the Posit AI counterpart of the GitHub flow's
+// [authorize-github] lines. Step names are literal strings with no account
+// identifiers, per the flag's contract.
+const logStep = authStepLogger('posit');
+
 async function step<T>(page: Page, name: string, fn: () => Promise<T>, fatal = false): Promise<T> {
+  // Logged at step start so a hung step is still visible: its line is the
+  // last one printed.
+  logStep(name);
   try {
     return await fn();
   } catch (err) {
@@ -308,7 +317,7 @@ async function step<T>(page: Page, name: string, fn: () => Promise<T>, fatal = f
     } catch {
       // keep 'unknown'
     }
-    const wrapped = `[automate-login: ${name}] ${msg} (page: ${url})`;
+    const wrapped = `[authorize-posit] ${name} failed: ${msg} (page: ${url})`;
     // Failures at credential/authorization steps are fatal (LoginAutomationError);
     // non-credential steps stay transient so a flaky page load lets the Posit AI
     // tests skip rather than failing the whole run. Note this classifies by
@@ -346,7 +355,7 @@ async function automateLogin(
   const verificationUri = verificationUriComplete.split('?')[0];
   let session: Awaited<ReturnType<typeof launchAuthBrowser>>;
   try {
-    session = await launchAuthBrowser('positai');
+    session = await launchAuthBrowser('posit');
   } catch (err) {
     // A launch failure is an environment gap, not flake: desktop runs connect
     // to RStudio's Electron over CDP and never otherwise need Playwright's

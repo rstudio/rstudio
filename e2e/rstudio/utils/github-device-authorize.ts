@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import crypto from 'crypto';
-import { authStepsEnabled, launchAuthBrowser } from './auth-debug';
+import { authStepLogger, launchAuthBrowser } from './auth-debug';
 
 /**
  * The browser half of the GitHub Copilot device-flow sign-in: given a
@@ -38,9 +38,7 @@ export interface AuthorizeDeviceCodeOptions {
 // are the opt-in detail for troubleshooting the GitHub flow. Failures don't
 // rely on this -- they throw (GitHubLoginError and friends) and surface
 // regardless.
-function log(msg: string): void {
-  if (authStepsEnabled()) console.log(`[gh-authorize] ${msg}`);
-}
+const log = authStepLogger('github');
 
 // A deterministic GitHub-side login rejection (wrong username/password). The
 // caller (auth.setup.ts) treats this as fatal, matching how a wrong
@@ -260,7 +258,7 @@ export async function authorizeDeviceCode(opts: AuthorizeDeviceCodeOptions): Pro
   // record when a step throws) and never itself throws.
   let session: Awaited<ReturnType<typeof launchAuthBrowser>>;
   try {
-    session = await launchAuthBrowser('copilot');
+    session = await launchAuthBrowser('github');
   } catch (err) {
     // A launch failure is an environment gap, not flake -- the same reasoning
     // as the Posit AI flow. Fail loud with the remedy rather than skipping
