@@ -131,9 +131,9 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Block applying while an asynchronous Posit Assistant install/update
       // check is still in flight. Applying now would persist the assistant
       // selection before the install prompt has appeared, leaving the addon
-      // uninstalled with no feedback (issue #18350). The check clears this flag
+      // uninstalled with no feedback (issue #18350). Each check clears itself
       // when it resolves, at which point the user can apply.
-      if (positAiCheckInProgress_)
+      if (positAiCheckCount_ > 0)
       {
          globalDisplay_.showMessage(
             GlobalDisplay.MSG_WARNING,
@@ -402,7 +402,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          String value = selChatProvider_.getValue();
          if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          {
-            // Check for install/update/unsupported status
+            // Block apply until the install/update check resolves (#18350).
+            beginPositAiCheck();
             checkPositAssistantInstallation(/* forAssistant= */ false);
          }
       });
@@ -507,6 +508,16 @@ public class AssistantPreferencesPane extends PreferencesPane
                   // account is not shown during the async install/status checks
                   reset();
 
+                  // A user-driven selection leads to an install/update check;
+                  // block apply now, before the verify round-trip, so an
+                  // immediate OK cannot close the dialog before the check starts.
+                  // A programmatic refresh (event == null) shows no prompt, so it
+                  // does not block. This begin is balanced by exactly one end
+                  // below: the stale/error paths, or the update check that
+                  // checkPositAssistantInstallation starts.
+                  if (event != null)
+                     beginPositAiCheck();
+
                   // Check if Posit Assistant is installed
                   server_.assistantVerifyInstalled(
                      UserPrefsAccessor.ASSISTANT_POSIT,
@@ -518,7 +529,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                            // Ignore the result if the user switched away while
                            // the verify call was in flight
                            if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
+                           {
+                              if (event != null)
+                                 endPositAiCheck();
                               return;
+                           }
 
                            if (event == null)
                            {
@@ -527,8 +542,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                            }
                            else
                            {
-                              // User changed the selection -- check for
-                              // install, update, or unsupported status
+                              // User changed the selection -- check for install,
+                              // update, or unsupported status. The check inherits
+                              // the pending count started above and ends it.
                               checkPositAssistantInstallation(/* forAssistant= */ true);
                            }
                         }
@@ -536,6 +552,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onError(ServerError error)
                         {
+                           if (event != null)
+                              endPositAiCheck();
+
                            if (isStaleStatusResult(UserPrefsAccessor.ASSISTANT_POSIT))
                               return;
 
@@ -867,6 +886,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
+            // Block apply until the install/update check resolves (#18350).
+            beginPositAiCheck();
             checkPositAssistantInstallation(/* forAssistant= */ true);
          }
       });
@@ -1020,21 +1041,26 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    /**
     * Marks the start of an asynchronous Posit Assistant install/update check.
-    * While one is in progress, validate() blocks applying the dialog so the
-    * assistant selection is not persisted before the install prompt appears.
+    * While any check is in progress, validate() blocks applying the dialog so
+    * the assistant selection is not persisted before the install prompt appears.
+    * Each start is paired with exactly one {@link #endPositAiCheck()}, so a
+    * count (rather than a boolean) keeps overlapping checks -- e.g. the chat and
+    * assistant selectors both changed -- from unblocking apply too early.
     */
    private void beginPositAiCheck()
    {
-      positAiCheckInProgress_ = true;
+      positAiCheckCount_++;
    }
 
    /**
     * Marks the end of a Posit Assistant install/update check, re-enabling the
-    * dialog's OK/Apply. Called from every terminal branch of the check.
+    * dialog's OK/Apply once no checks remain. Called from every terminal branch
+    * of the check (each update-check callback, and the verify call's failure or
+    * stale-result paths).
     */
    private void endPositAiCheck()
    {
-      positAiCheckInProgress_ = false;
+      positAiCheckCount_ = Math.max(0, positAiCheckCount_ - 1);
    }
 
    /**
@@ -1045,10 +1071,9 @@ public class AssistantPreferencesPane extends PreferencesPane
     */
    private void checkPositAssistantInstallation(boolean forAssistant)
    {
-      // Mark the check in progress so the dialog cannot be applied -- and the
-      // selection persisted -- until it resolves. Every UpdateCheckCallback
-      // branch below clears the flag, so it can never stay stuck.
-      beginPositAiCheck();
+      // The caller has already called beginPositAiCheck() to block apply while
+      // this check runs; every UpdateCheckCallback branch below ends it, so the
+      // count returns to zero once the check resolves.
 
       // Remember the previous value so we can revert if user declines
       final String previousAssistantValue = forAssistant ?
@@ -1574,7 +1599,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
    private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
-   private boolean positAiCheckInProgress_ = false; // is an async Posit Assistant install/update check pending? blocks apply
+   private int positAiCheckCount_ = 0; // number of in-flight Posit Assistant install/update checks; blocks apply while > 0
    private ChangeHandler assistantChangedHandler_; // swaps the displayed assistant panel; created in initDisplay
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
