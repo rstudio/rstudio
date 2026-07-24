@@ -192,8 +192,12 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
+        # --ignore-scripts so native deps (e.g. better-sqlite3) load from their
+        # bundled prebuilds instead of compiling via node-gyp, which needs a C++
+        # toolchain the runners (notably Windows) lack. Playwright browsers are
+        # installed separately below, so no npm lifecycle script is needed here.
         for i in 1 2 3; do
-          npm ci && break
+          npm ci --ignore-scripts && break
           if [ "$i" -eq 3 ]; then
             echo "npm ci failed after 3 attempts"
             exit 1
