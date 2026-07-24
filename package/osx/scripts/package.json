@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@electron/universal": "3.0.4"
+    "@electron/universal": "3.0.6"
   }
 }

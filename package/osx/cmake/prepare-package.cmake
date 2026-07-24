@@ -143,3 +143,96 @@ execute_process(
       "${RSESSION_BINARY_DIR}"
       "@executable_path/../Frameworks"
       "diagnostics rpostback rsession")
+
+# Combine the x86_64 and arm64 builds of diagnostics and rpostback into
+# universal binaries. This runs only for universal builds: the primary build is
+# x86_64 (so the binaries already installed under bin/ are the x86_64 slices)
+# and a separate arm64 build has been produced. lipo cannot merge two inputs of
+# the same architecture, so single-architecture builds must not reach here --
+# hence gating on RSTUDIO_UNIVERSAL_BUILD, not on file existence alone.
+if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")
+
+   # stage arm64 slices outside CMAKE_INSTALL_PREFIX so a leftover can never be
+   # packaged into the DMG or signed
+   set(LIPO_STAGING_DIR "@CMAKE_CURRENT_BINARY_DIR@/arm64-lipo-staging")
+   file(MAKE_DIRECTORY "${LIPO_STAGING_DIR}")
+
+   foreach(TOOL diagnostics rpostback)
+
+      if("${TOOL}" STREQUAL "diagnostics")
+         set(ARM64_SOURCE "@DIAGNOSTICS_ARM64_PATH@")
+      else()
+         set(ARM64_SOURCE "@RPOSTBACK_ARM64_PATH@")
+      endif()
+
+      set(X64_BINARY "${RSESSION_BINARY_DIR}/${TOOL}")
+
+      # A universal build promises both slices. A missing input means the
+      # x86_64 or arm64 build did not produce the tool; fail fast rather than
+      # silently ship a thin binary that would still require Rosetta.
+      if(NOT EXISTS "${X64_BINARY}")
+         message(FATAL_ERROR "Universal build: missing x86_64 '${TOOL}' at '${X64_BINARY}'")
+      endif()
+
+      if(NOT EXISTS "${ARM64_SOURCE}")
+         message(FATAL_ERROR "Universal build: missing arm64 '${TOOL}' at '${ARM64_SOURCE}'")
+      endif()
+
+      echo("Creating universal '${TOOL}' binary")
+
+      # stage the arm64 build and point it at the arm64 Frameworks directory
+      file(COPY "${ARM64_SOURCE}" DESTINATION "${LIPO_STAGING_DIR}")
+      execute_process(
+         COMMAND
+            "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
+            "${LIPO_STAGING_DIR}"
+            "@executable_path/../Frameworks/arm64"
+            "${TOOL}"
+         RESULT_VARIABLE FIX_PATHS_RESULT)
+
+      if(NOT FIX_PATHS_RESULT EQUAL 0)
+         message(FATAL_ERROR "Failed to fix arm64 library paths for '${TOOL}' (exit ${FIX_PATHS_RESULT})")
+      endif()
+
+      # verify the rewrite took: no absolute Homebrew/local dylib paths may
+      # remain, or the shipped arm64 slice would fail to load its bundled
+      # libraries on an end-user machine. lipo succeeding does not catch this.
+      execute_process(
+         COMMAND otool -L "${LIPO_STAGING_DIR}/${TOOL}"
+         OUTPUT_VARIABLE FIXED_TOOL_LIBS
+         RESULT_VARIABLE OTOOL_RESULT)
+
+      if(NOT OTOOL_RESULT EQUAL 0)
+         message(FATAL_ERROR "otool failed on arm64 '${TOOL}' (exit ${OTOOL_RESULT})")
+      endif()
+
+      # drop otool's first line (the binary's own path) before matching, so a
+      # build tree located under /opt/homebrew or /usr/local can't false-match;
+      # only the dependency lines should be inspected
+      string(REGEX REPLACE "^[^\n]*\n" "" FIXED_TOOL_DEPS "${FIXED_TOOL_LIBS}")
+
+      if(FIXED_TOOL_DEPS MATCHES "/opt/homebrew|/usr/local")
+         message(FATAL_ERROR "arm64 '${TOOL}' still references absolute Homebrew paths after fixing library paths:\n${FIXED_TOOL_LIBS}")
+      endif()
+
+      # fuse the (already path-fixed) x86_64 slice with the arm64 slice
+      execute_process(
+         COMMAND
+            lipo -create
+               "${X64_BINARY}"
+               "${LIPO_STAGING_DIR}/${TOOL}"
+            -output "${X64_BINARY}.universal"
+         RESULT_VARIABLE LIPO_RESULT)
+
+      if(NOT LIPO_RESULT EQUAL 0)
+         message(FATAL_ERROR "lipo failed for '${TOOL}' (exit ${LIPO_RESULT})")
+      endif()
+
+      file(RENAME "${X64_BINARY}.universal" "${X64_BINARY}")
+
+   endforeach()
+
+   # remove staging artifacts so they are not packaged or signed
+   file(REMOVE_RECURSE "${LIPO_STAGING_DIR}")
+
+endif()
