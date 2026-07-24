@@ -678,8 +678,10 @@ export class SessionLauncher {
         // clear guidance rather than spawning a process that fails to exec.
         if (!ensureRosettaForIntelR()) {
           // app.exit terminates the process immediately (the user has already
-          // been shown actionable guidance); the throw only types this branch as
-          // not returning a session process, in case exit is ever deferred.
+          // been shown actionable guidance). The throw is a functional guard: if
+          // exit is ever deferred, it prevents falling through to spawn the
+          // doomed x86_64 session -- launchFirst catches it and surfaces a launch
+          // error rather than a "Bad CPU type" crash.
           app.exit(EXIT_FAILURE);
           throw new Error('Rosetta 2 is required to run the selected Intel (x86_64) build of R');
         }

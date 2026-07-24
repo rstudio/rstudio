@@ -27,8 +27,8 @@ const kRosettaInstallUrl =
  * Ensures Rosetta 2 is available before launching an x86_64 (Intel) build of R
  * on Apple Silicon.
  *
- * RStudio's own components are all native arm64, so RStudio itself never needs
- * Rosetta 2. It is required only to run an Intel build of R, because the session
+ * RStudio's own components all have native arm64 builds, so RStudio itself never
+ * needs Rosetta 2. It is required only to run an Intel build of R, because the session
  * process must match R's architecture and runs as x86_64 under Rosetta in that
  * case. When Rosetta is missing that session cannot start at all, so this shows
  * a blocking error with install guidance instead of letting the launch fail with
@@ -68,7 +68,7 @@ export function ensureRosettaForIntelR(): boolean {
       execFileSync('/usr/bin/open', [kRosettaInstallUrl]);
     } catch (error: unknown) {
       logger().logErrorMessage('Failed to open Rosetta 2 install instructions.');
-      logger().logErrorMessage(JSON.stringify(error));
+      logger().logError(error);
     }
   }
 
@@ -79,9 +79,10 @@ export function ensureRosettaForIntelR(): boolean {
  * Detects whether Rosetta 2 is installed on this Apple Silicon Mac.
  *
  * On macOS, Rosetta 2 is internally referred to as OAH and its daemon is 'oahd',
- * which runs whenever Rosetta is installed; we treat a running 'oahd' as
- * installed. If the probe fails unexpectedly we cannot tell, so we assume it is
- * present and let the launch proceed rather than wrongly block a working setup.
+ * which is expected to be running whenever Rosetta is installed; we treat a
+ * running 'oahd' as installed. If the probe fails unexpectedly we cannot tell, so
+ * we assume it is present and let the launch proceed rather than wrongly block a
+ * working setup.
  *
  * @returns true if Rosetta 2 appears installed, false if it is definitively not.
  */
@@ -101,7 +102,7 @@ function isRosettaInstalled(): boolean {
     // Something else went wrong; we can't determine the state, so assume Rosetta
     // is present and let the launch proceed rather than block it.
     logger().logErrorMessage('Failed to check for a Rosetta 2 installation; assuming it is present.');
-    logger().logErrorMessage(JSON.stringify(error));
+    logger().logError(error);
     return true;
   }
 }
