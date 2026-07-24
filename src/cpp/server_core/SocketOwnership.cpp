@@ -406,18 +406,33 @@ bool probeSockDiagAvailable()
                                          0,
                                          &unusedUid,
                                          &probeError);
-      bool ok = (result == DiagLookupResult::Found || result == DiagLookupResult::NotFound);
 
       ::close(fd);
 
-      if (!ok)
+      if (result == DiagLookupResult::Found || result == DiagLookupResult::NotFound)
+         return true;
+
+      if (probeError.getCode() == boost::system::errc::timed_out)
       {
+         // A timeout here reflects a transient hiccup (kernel/scheduling
+         // delay), not a capability/permission problem -- unlike an
+         // EPERM/EOPNOTSUPP rejection, it says nothing about whether future
+         // queries will succeed. Since this result is cached for the process
+         // lifetime, treat it as inconclusive rather than permanently
+         // disabling enforcement over what should be a one-off: assume the
+         // capability is available and let per-request timeouts (which do
+         // fail closed) handle any recurrence.
          LOG_WARNING_MESSAGE(
-            "NETLINK_SOCK_DIAG query rejected; port-proxy ownership enforcement is "
-            "DISABLED for this process (rstudio-pro#11470).");
+            "NETLINK_SOCK_DIAG probe timed out; assuming the capability is available "
+            "(rstudio-pro#11470). If per-request queries error or time out, localhost "
+            "proxy requests will fail.");
+         return true;
       }
 
-      return ok;
+      LOG_WARNING_MESSAGE(
+         "NETLINK_SOCK_DIAG query rejected; port-proxy ownership enforcement is "
+         "DISABLED for this process (rstudio-pro#11470).");
+      return false;
    }();
 
    return available;
