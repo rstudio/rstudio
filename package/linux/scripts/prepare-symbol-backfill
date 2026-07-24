@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+
+#
+# prepare-symbol-backfill
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+set -e
+
+PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "${PKG_DIR}/../.." && pwd)"
+
+usage () {
+
+	cat <<- EOF
+
+	Usage: $0 <version>
+
+	Prepare a branch that rebuilds a released version in order to
+	regenerate its debug symbols, e.g. because the symbols uploaded
+	for that release were lost or overwritten.
+
+	<version> is the full released version, e.g. "2026.05.0+218.pro1".
+	The release tag "v<version>" must exist (locally or on origin).
+
+	The prepared branch is the release tag plus:
+
+	  1. The OS-aware upload-debug-symbols script (backported if the
+	     tag predates it), so the rebuilt symbols upload under their
+	     own key and cannot overwrite existing archives.
+
+	  2. A pinned docker/jenkins/rstudio-version.sh that echoes the
+	     released version verbatim. The version string is compiled
+	     into the binaries, so an unpinned rebuild computes a
+	     different version and shifts code layout, producing symbols
+	     that do not line up with the shipped build. Pinning also
+	     places the upload in the release's S3 version directory.
+
+	The branch name starts with 'rel-' because Jenkins multibranch
+	discovery only indexes 'main' and 'rel-*'. The branch must never
+	be merged; delete it after the backfill build completes.
+
+	This script does not push. It prints the push command and the
+	Jenkins runbook to follow.
+
+	EOF
+
+}
+
+if [ "$1" = "" ] || [ "$1" = "--help" ]; then
+	usage
+	exit 1
+fi
+
+version="$1"
+tag="v${version}"
+
+# Resolve the release tag, fetching it if necessary
+if ! git -C "${ROOT_DIR}" rev-parse --quiet --verify "refs/tags/${tag}" >/dev/null; then
+	echo "-- Tag ${tag} not found locally; fetching from origin"
+	git -C "${ROOT_DIR}" fetch origin "refs/tags/${tag}:refs/tags/${tag}"
+fi
+
+# Branch names keep the version recognizable; '+' is legal in git refs
+# but awkward in URLs, so substitute it
+branch="rel-symbols-backfill-$(echo "${version}" | tr '+' '-')"
+
+if git -C "${ROOT_DIR}" rev-parse --quiet --verify "refs/heads/${branch}" >/dev/null; then
+	echo "ERROR: branch ${branch} already exists; delete it first"
+	exit 1
+fi
+
+# Do all work in a disposable worktree so the current checkout is untouched
+worktree="$(mktemp -d)/${branch##*/}"
+echo "-- Preparing worktree at ${worktree}"
+git -C "${ROOT_DIR}" worktree add -b "${branch}" "${worktree}" "${tag}" >/dev/null
+
+# Backport the OS-aware uploader if the tag predates it. Without this,
+# the rebuild would upload to the legacy format-based key and overwrite
+# the release's surviving symbols for other OSes.
+uploader="${worktree}/package/linux/scripts/upload-debug-symbols"
+if ! grep -q 'flavor="\$2"' "${uploader}"; then
+
+	echo "-- Backporting OS-aware upload-debug-symbols"
+	cp "${PKG_DIR}/scripts/upload-debug-symbols" "${uploader}"
+
+	# Update the Jenkinsfile invocation to the five-argument form
+	jenkinsfile="${worktree}/jenkins/Jenkinsfile.linux"
+	OLD='upload-debug-symbols ${FLAVOR} ${ext_map[env.OS].toUpperCase()} ${ARCH}' \
+	NEW='upload-debug-symbols ${PRODUCT} ${FLAVOR} ${ext_map[env.OS].toUpperCase()} ${env.OS} ${ARCH}' \
+	awk '{
+		i = index($0, ENVIRON["OLD"])
+		if (i)
+			$0 = substr($0, 1, i - 1) ENVIRON["NEW"] substr($0, i + length(ENVIRON["OLD"]))
+		print
+	}' "${jenkinsfile}" > "${jenkinsfile}.tmp"
+	mv "${jenkinsfile}.tmp" "${jenkinsfile}"
+
+	if ! grep -q 'upload-debug-symbols ${PRODUCT} ${FLAVOR}' "${jenkinsfile}"; then
+		echo "ERROR: could not update the upload-debug-symbols invocation in"
+		echo "  ${jenkinsfile}"
+		echo "The invocation on this tag does not match the expected form;"
+		echo "backport the fix manually, then commit and push the branch."
+		exit 1
+	fi
+
+fi
+
+# Pin the version. Everything downstream (compile-time version defines,
+# the S3 upload directory) flows from this script's output.
+echo "-- Pinning rstudio-version.sh to ${version}"
+cat > "${worktree}/docker/jenkins/rstudio-version.sh" <<- EOF
+	#!/usr/bin/env bash
+	# Pinned by prepare-symbol-backfill: this branch rebuilds a released
+	# version to regenerate its debug symbols. Do not merge this branch.
+	echo "${version}"
+EOF
+chmod +x "${worktree}/docker/jenkins/rstudio-version.sh"
+
+git -C "${worktree}" add -A
+git -C "${worktree}" commit --quiet -m "prepare symbol backfill for ${version}"
+
+cat <<- EOF
+
+	Backfill branch prepared: ${branch}
+
+	Next steps:
+
+	1. Push the branch:
+
+	     git -C "${worktree}" push -u origin "${branch}"
+
+	2. Wait for Jenkins to index the branch under the linux-pipeline
+	   multibranch job (or click 'Scan Multibranch Pipeline Now').
+
+	3. A freshly indexed branch job only offers 'Build Now' because
+	   parameters register on first run: click 'Build Now', abort the
+	   build immediately, and refresh to get 'Build with Parameters'.
+
+	4. Build with parameters:
+	     OS_FILTER             = <os to rebuild, e.g. rhel9>
+	     ARCH_FILTER           = <arch, e.g. x86_64>
+	     FLAVOR_FILTER         = Server (or Electron)
+	     FORCE_BUILD_BINARIES  = true
+	     DAILY / PUBLISH       = false
+
+	5. The symbols upload to:
+	     s3://rstudio-debug-symbols/${version}/<product>-<os>-<arch>.tar.xz
+
+	6. Verify against the released binary (the rebuilt build ID always
+	   differs; what matters is that sections and symbols align):
+
+	     package/linux/scripts/verify-debug-symbols <released-binary> <rserver.debug>
+
+	   Load into gdb with 'symbol-file <rserver.debug>', since the
+	   build ID mismatch prevents automatic pairing.
+
+	7. Clean up: delete the remote branch so release automation does
+	   not pick it up, and remove the worktree:
+
+	     git push origin --delete "${branch}"
+	     git -C "${ROOT_DIR}" worktree remove "${worktree}"
+	     git -C "${ROOT_DIR}" branch -D "${branch}"
+
+	EOF
