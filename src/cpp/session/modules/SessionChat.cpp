@@ -46,6 +46,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/weak_ptr.hpp>
 
+#include <shared_core/Memory.hpp>
+
 #include <core/AnsiEscapes.hpp>
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
@@ -327,9 +329,16 @@ SEXP rs_chatNormalizePath(SEXP pathSEXP)
 // ============================================================================
 // R is single-threaded, so only one execution can be active at a time,
 // but we need to track canceled IDs to handle pre-cancellation of queued requests
-boost::mutex s_executionTrackingMutex;
-std::string s_currentTrackingId;  // Empty string when not executing
-std::set<std::string> s_canceledTrackingIds;  // TrackingIds that have been canceled
+//
+// this state (and the other mutex-guarded chat state below) is intentionally
+// leaked. current callers stay on the main thread (the backend process sets
+// callbacksRequireMainThread, and the manifest completion marshals through
+// executeOnMainThread), but the mutex-guarded design anticipates cross-thread
+// access; leaking is free and guarantees a late-running background thread can
+// never find these statics destroyed during static teardown (#18318)
+boost::mutex& s_executionTrackingMutex = make_leaked<boost::mutex>();
+std::string& s_currentTrackingId = make_leaked<std::string>();  // Empty string when not executing
+std::set<std::string>& s_canceledTrackingIds = make_leaked<std::set<std::string>>();  // TrackingIds that have been canceled
 
 // ============================================================================
 // Streaming Output Notification Queue with Lifecycle Management
@@ -358,10 +367,10 @@ struct PendingNotification
    }
 };
 
-// Global state (all protected by mutex)
-static boost::mutex s_notificationQueueMutex;
-static std::queue<PendingNotification> s_notificationQueue;
-static std::set<std::string> s_activeTrackingIds;  // Active executions
+// Global state (all protected by mutex); intentionally leaked (see above)
+static boost::mutex& s_notificationQueueMutex = make_leaked<boost::mutex>();
+static std::queue<PendingNotification>& s_notificationQueue = make_leaked<std::queue<PendingNotification>>();
+static std::set<std::string>& s_activeTrackingIds = make_leaked<std::set<std::string>>();  // Active executions
 
 // ============================================================================
 // Deferred Code Execution Queue
@@ -385,8 +394,9 @@ struct PendingExecutionRequest
    std::chrono::steady_clock::time_point queuedTime = std::chrono::steady_clock::now();
 };
 
-static boost::mutex s_pendingExecutionMutex;
-static std::queue<PendingExecutionRequest> s_pendingExecutionQueue;
+// intentionally leaked (see above)
+static boost::mutex& s_pendingExecutionMutex = make_leaked<boost::mutex>();
+static std::queue<PendingExecutionRequest>& s_pendingExecutionQueue = make_leaked<std::queue<PendingExecutionRequest>>();
 static bool s_executionScheduled = false;
 
 // Forward declaration
@@ -3711,9 +3721,11 @@ struct UpdateState
    }
 };
 
-// Global update state
-UpdateState s_updateState;
-boost::mutex s_updateStateMutex;
+// Global update state; mutex-guarded for cross-thread reads. Intentionally
+// leaked, defensively -- see the note above the execution-tracking state
+// (#18318)
+UpdateState& s_updateState = make_leaked<UpdateState>();
+boost::mutex& s_updateStateMutex = make_leaked<boost::mutex>();
 
 // Posit Assistant manifest endpoints (prod + opt-in test manifest).
 const char* const kManifestUrl     = "https://cdn.posit.co/posit-ai/manifest.json";
@@ -3774,8 +3786,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 // responses as status 0 in dev-mode Electron, so an in-rsession override
 // is the only path that actually reaches ChatPresenter's blocking-state
 // callbacks.
-boost::optional<json::Object> s_updateCheckOverride;
-boost::mutex s_updateCheckOverrideMutex;
+// intentionally leaked (see s_updateState above)
+boost::optional<json::Object>& s_updateCheckOverride = make_leaked<boost::optional<json::Object>>();
+boost::mutex& s_updateCheckOverrideMutex = make_leaked<boost::mutex>();
 
 // Validate that a URL uses HTTPS protocol
 bool isHttpsUrl(const std::string& url)
