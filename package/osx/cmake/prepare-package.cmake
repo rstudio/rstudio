@@ -152,7 +152,9 @@ execute_process(
 # hence gating on RSTUDIO_UNIVERSAL_BUILD, not on file existence alone.
 if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")
 
-   set(LIPO_STAGING_DIR "${CMAKE_INSTALL_PREFIX}/.arm64-lipo-staging")
+   # stage arm64 slices outside CMAKE_INSTALL_PREFIX so a leftover can never be
+   # packaged into the DMG or signed
+   set(LIPO_STAGING_DIR "@CMAKE_CURRENT_BINARY_DIR@/arm64-lipo-staging")
    file(MAKE_DIRECTORY "${LIPO_STAGING_DIR}")
 
    foreach(TOOL diagnostics rpostback)
@@ -185,7 +187,23 @@ if("@RSTUDIO_UNIVERSAL_BUILD@" STREQUAL "1")
             "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
             "${LIPO_STAGING_DIR}"
             "@executable_path/../Frameworks/arm64"
-            "${TOOL}")
+            "${TOOL}"
+         RESULT_VARIABLE FIX_PATHS_RESULT)
+
+      if(NOT FIX_PATHS_RESULT EQUAL 0)
+         message(FATAL_ERROR "Failed to fix arm64 library paths for '${TOOL}' (exit ${FIX_PATHS_RESULT})")
+      endif()
+
+      # verify the rewrite took: no absolute Homebrew/local dylib paths may
+      # remain, or the shipped arm64 slice would fail to load its bundled
+      # libraries on an end-user machine. lipo succeeding does not catch this.
+      execute_process(
+         COMMAND otool -L "${LIPO_STAGING_DIR}/${TOOL}"
+         OUTPUT_VARIABLE FIXED_TOOL_LIBS)
+
+      if(FIXED_TOOL_LIBS MATCHES "/opt/homebrew|/usr/local")
+         message(FATAL_ERROR "arm64 '${TOOL}' still references absolute Homebrew paths after fixing library paths:\n${FIXED_TOOL_LIBS}")
+      endif()
 
       # fuse the (already path-fixed) x86_64 slice with the arm64 slice
       execute_process(
