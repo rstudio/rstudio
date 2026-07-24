@@ -25,9 +25,10 @@
 #ifdef __linux__
 
 #include <cstring>
-#include <functional>
 #include <string>
 #include <vector>
+
+#include <boost/asio/ip/address_v4.hpp>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -49,36 +50,82 @@ namespace socket_utils {
 
 namespace {
 
-// Large enough to hold a batch of inet_diag_msg dump records. If a single
-// recvmsg() call returns MSG_TRUNC (the kernel's batch exceeded this buffer),
-// runDumpLoop() treats it as an explicit error rather than silently
-// continuing with a partial batch.
-constexpr size_t kNetlinkRecvBufferSize = 8192;
+// nlmsghdr + inet_diag_req_v2/inet_diag_msg + a small margin for the kernel's
+// NLMSG_ALIGN padding -- an exact-match reply carries at most one
+// inet_diag_msg record (idiag_ext is left at 0, so no extended attributes are
+// requested), unlike the old NLM_F_DUMP path which could return many.
+constexpr size_t kNetlinkRecvBufferSize = 512;
 
-struct DiagDumpRequest
+struct DiagRequest
 {
    nlmsghdr nlh;
    inet_diag_req_v2 req;
 };
 
-// Sends a NETLINK_SOCK_DIAG NLM_F_DUMP request for TCP sockets in the
-// TCPF_ESTABLISHED state, for the given address family.
-Error sendDumpRequest(int fd, bool ipv6)
+// Builds the exact-match inet_diag_sockid for the *server-side* (application)
+// end of the proxy hop: source port == appPort (the app's listening port),
+// dest port == ephemeralPort (our own outbound connect's local port), with
+// srcAddr/dstAddr in the corresponding positions. srcAddr and dstAddr must
+// already be the same family (both v4, or both v6/v4-mapped-v6); family is
+// taken from srcAddr.
+void fillSockId(inet_diag_sockid* pId,
+                const boost::asio::ip::address& srcAddr,
+                const boost::asio::ip::address& dstAddr,
+                uint16_t sport,
+                uint16_t dport)
 {
-   DiagDumpRequest request;
+   std::memset(pId, 0, sizeof(*pId));
+   pId->idiag_sport = htons(sport);
+   pId->idiag_dport = htons(dport);
+   pId->idiag_if = 0; // loopback sockets are not bound to a specific device
+
+   // INET_DIAG_NOCOOKIE: match by tuple alone, ignore the socket cookie.
+   pId->idiag_cookie[0] = 0xFFFFFFFF;
+   pId->idiag_cookie[1] = 0xFFFFFFFF;
+
+   if (srcAddr.is_v4())
+   {
+      auto srcBytes = srcAddr.to_v4().to_bytes();
+      auto dstBytes = dstAddr.to_v4().to_bytes();
+      std::memcpy(&pId->idiag_src[0], srcBytes.data(), srcBytes.size());
+      std::memcpy(&pId->idiag_dst[0], dstBytes.data(), dstBytes.size());
+   }
+   else
+   {
+      auto srcBytes = srcAddr.to_v6().to_bytes();
+      auto dstBytes = dstAddr.to_v6().to_bytes();
+      std::memcpy(&pId->idiag_src[0], srcBytes.data(), srcBytes.size());
+      std::memcpy(&pId->idiag_dst[0], dstBytes.data(), dstBytes.size());
+   }
+}
+
+// Sends a non-dump (exact-match) NETLINK_SOCK_DIAG request for the single
+// established TCP socket identified by (srcAddr, sport) <-> (dstAddr, dport).
+// Without NLM_F_DUMP, the kernel performs a direct hash-table lookup for this
+// 4-tuple rather than dumping and filtering every established socket on the
+// host -- this is the performance-critical difference from the old
+// dump-based implementation, since this runs on every proxied request.
+Error sendExactMatchRequest(int fd,
+                            const boost::asio::ip::address& srcAddr,
+                            const boost::asio::ip::address& dstAddr,
+                            uint16_t sport,
+                            uint16_t dport)
+{
+   DiagRequest request;
    std::memset(&request, 0, sizeof(request));
 
    request.nlh.nlmsg_len = sizeof(request);
    request.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
-   request.nlh.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+   request.nlh.nlmsg_flags = NLM_F_REQUEST;
    request.nlh.nlmsg_seq = 1;
    request.nlh.nlmsg_pid = 0;
 
-   request.req.sdiag_family = ipv6 ? AF_INET6 : AF_INET;
+   request.req.sdiag_family = srcAddr.is_v4() ? AF_INET : AF_INET6;
    request.req.sdiag_protocol = IPPROTO_TCP;
    request.req.idiag_ext = 0;
    request.req.pad = 0;
    request.req.idiag_states = (1u << TCP_ESTABLISHED);
+   fillSockId(&request.req.id, srcAddr, dstAddr, sport, dport);
 
    sockaddr_nl dest;
    std::memset(&dest, 0, sizeof(dest));
@@ -93,148 +140,151 @@ Error sendDumpRequest(int fd, bool ipv6)
                             reinterpret_cast<sockaddr*>(&dest),
                             sizeof(dest));
    if (sent < 0)
-      return systemError(errno, "sendto(NETLINK_SOCK_DIAG dump request)", ERROR_LOCATION);
+      return systemError(errno, "sendto(NETLINK_SOCK_DIAG exact-match request)", ERROR_LOCATION);
    if (static_cast<size_t>(sent) != sizeof(request))
-      return systemError(EIO, "short write sending NETLINK_SOCK_DIAG dump request", ERROR_LOCATION);
+      return systemError(EIO, "short write sending NETLINK_SOCK_DIAG exact-match request", ERROR_LOCATION);
 
    return Success();
 }
 
-// Reads and parses the NETLINK_SOCK_DIAG dump reply, invoking onDiagMsg for each
-// inet_diag_msg record encountered. Loops recvmsg() until NLMSG_DONE is seen (or
-// onDiagMsg returns true to stop early). Returns an error for a genuine kernel
-// NLMSG_ERROR (e.g. EPERM/EOPNOTSUPP from a restrictive profile), a recvmsg()
-// failure, or a truncated dump message (MSG_TRUNC) -- the latter is treated as
-// an explicit failure rather than silently truncating record parsing, since it
-// would otherwise be indistinguishable from "socket not found".
-Error runDumpLoop(int fd, const std::function<bool(const inet_diag_msg*)>& onDiagMsg)
+enum class DiagLookupResult
+{
+   Found,
+   NotFound,
+   Error
+};
+
+// Reads the single-message reply to an exact-match request (see
+// sendExactMatchRequest): either one SOCK_DIAG_BY_FAMILY/inet_diag_msg record
+// (Found, *pUid set), one NLMSG_ERROR with -ENOENT (NotFound -- no socket
+// matches this exact 4-tuple, a normal outcome, not a transport failure), or
+// any other NLMSG_ERROR / recvmsg() failure (Error, *pError set). Unlike the
+// old dump reply, there is no NLMSG_DONE framing to loop for -- a single
+// recvmsg() always suffices.
+DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
 {
    std::vector<char> buffer(kNetlinkRecvBufferSize);
-   bool done = false;
 
-   while (!done)
+   iovec iov;
+   iov.iov_base = buffer.data();
+   iov.iov_len = buffer.size();
+
+   msghdr msg;
+   std::memset(&msg, 0, sizeof(msg));
+   msg.msg_iov = &iov;
+   msg.msg_iovlen = 1;
+
+   ssize_t received;
+   do
    {
-      iovec iov;
-      iov.iov_base = buffer.data();
-      iov.iov_len = buffer.size();
+      received = ::recvmsg(fd, &msg, 0);
+   } while (received < 0 && errno == EINTR);
 
-      msghdr msg;
-      std::memset(&msg, 0, sizeof(msg));
-      msg.msg_iov = &iov;
-      msg.msg_iovlen = 1;
-
-      ssize_t received = ::recvmsg(fd, &msg, 0);
-      if (received < 0)
-      {
-         if (errno == EINTR)
-            continue;
-         return systemError(errno, "recvmsg(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
-      }
-      if (received == 0)
-         return systemError(EIO, "NETLINK_SOCK_DIAG socket closed unexpectedly", ERROR_LOCATION);
-      if (msg.msg_flags & MSG_TRUNC)
-      {
-         // The kernel's dump batch exceeded our buffer; the trailing record(s)
-         // in this datagram were silently discarded by the kernel. Treat this as
-         // an explicit error rather than letting NLMSG_OK/NLMSG_NEXT parsing stop
-         // early and be indistinguishable from "socket not found" (fail closed).
-         return systemError(EMSGSIZE,
-                            "NETLINK_SOCK_DIAG dump message truncated (buffer too small)",
+   if (received < 0)
+   {
+      *pError = systemError(errno, "recvmsg(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+   if (received == 0)
+   {
+      *pError = systemError(EIO, "NETLINK_SOCK_DIAG socket closed unexpectedly", ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+   if (msg.msg_flags & MSG_TRUNC)
+   {
+      *pError = systemError(EMSGSIZE,
+                            "NETLINK_SOCK_DIAG reply truncated (buffer too small)",
                             ERROR_LOCATION);
-      }
-
-      auto* nlh = reinterpret_cast<nlmsghdr*>(buffer.data());
-      auto remaining = static_cast<size_t>(received);
-
-      while (NLMSG_OK(nlh, remaining))
-      {
-         if (nlh->nlmsg_type == NLMSG_DONE)
-         {
-            done = true;
-            break;
-         }
-         else if (nlh->nlmsg_type == NLMSG_ERROR)
-         {
-            auto* err = reinterpret_cast<nlmsgerr*>(NLMSG_DATA(nlh));
-            done = true;
-            if (err->error != 0)
-            {
-               return systemError(-err->error,
-                                  "NETLINK_SOCK_DIAG dump rejected by kernel",
-                                  ERROR_LOCATION);
-            }
-            break;
-         }
-         else if (nlh->nlmsg_type == SOCK_DIAG_BY_FAMILY)
-         {
-            auto* diag = reinterpret_cast<inet_diag_msg*>(NLMSG_DATA(nlh));
-            if (onDiagMsg(diag))
-            {
-               done = true;
-               break;
-            }
-         }
-
-         nlh = NLMSG_NEXT(nlh, remaining);
-      }
+      return DiagLookupResult::Error;
    }
 
-   return Success();
+   auto* nlh = reinterpret_cast<nlmsghdr*>(buffer.data());
+   auto remaining = static_cast<size_t>(received);
+
+   if (!NLMSG_OK(nlh, remaining))
+   {
+      *pError = systemError(EIO, "malformed NETLINK_SOCK_DIAG reply", ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+
+   if (nlh->nlmsg_type == NLMSG_ERROR)
+   {
+      auto* err = reinterpret_cast<nlmsgerr*>(NLMSG_DATA(nlh));
+      if (err->error == -ENOENT)
+         return DiagLookupResult::NotFound;
+
+      *pError = systemError(-err->error,
+                            "NETLINK_SOCK_DIAG exact-match query rejected by kernel",
+                            ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+
+   if (nlh->nlmsg_type == SOCK_DIAG_BY_FAMILY)
+   {
+      auto* diag = reinterpret_cast<inet_diag_msg*>(NLMSG_DATA(nlh));
+      *pUid = diag->idiag_uid; // populated unconditionally (research Q8)
+      return DiagLookupResult::Found;
+   }
+
+   *pError = systemError(EIO, "unexpected NETLINK_SOCK_DIAG reply message type", ERROR_LOCATION);
+   return DiagLookupResult::Error;
 }
 
-// Returns true if the given inet_diag_sockid address field (idiag_src or
-// idiag_dst, a __be32[4] in network byte order) represents a loopback address
-// for the given address family. For IPv4 this is 127.0.0.0/8 (checked against
-// the first 4 bytes, which hold the IPv4 address per inet_diag conventions);
-// for IPv6 this is exactly ::1.
-bool isLoopbackDiagAddr(bool ipv6, const __be32 addr[4])
+// Issues one exact-match query/reply round trip on fd and reports the result.
+DiagLookupResult queryOnce(int fd,
+                          const boost::asio::ip::address& srcAddr,
+                          const boost::asio::ip::address& dstAddr,
+                          uint16_t sport,
+                          uint16_t dport,
+                          uid_t* pUid,
+                          Error* pError)
 {
-   if (!ipv6)
+   Error sendError = sendExactMatchRequest(fd, srcAddr, dstAddr, sport, dport);
+   if (sendError)
    {
-      return (ntohl(addr[0]) >> 24) == 127;
+      *pError = sendError;
+      return DiagLookupResult::Error;
    }
 
-   static const unsigned char kLoopbackV6[16] =
-      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
-   return std::memcmp(addr, kLoopbackV6, sizeof(kLoopbackV6)) == 0;
+   return readSingleDiagReply(fd, pUid, pError);
 }
 
 } // anonymous namespace
 
-Error lookupEstablishedSocketUid(bool ipv6, int appPort, int ephemeralPort, uid_t* pUid)
+Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
+                                 const boost::asio::ip::address& remoteAddress,
+                                 int appPort,
+                                 int ephemeralPort,
+                                 uid_t* pUid)
 {
    int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
    if (fd < 0)
       return systemError(errno, "socket(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
 
-   Error error = sendDumpRequest(fd, ipv6);
-   if (error)
-   {
-      ::close(fd);
-      return error;
-   }
-
-   bool found = false;
-   error = runDumpLoop(fd, [&](const inet_diag_msg* diag) -> bool {
-      const inet_diag_sockid& id = diag->id;
-      if (ntohs(id.idiag_sport) == static_cast<uint16_t>(appPort) &&
-          ntohs(id.idiag_dport) == static_cast<uint16_t>(ephemeralPort) &&
-          isLoopbackDiagAddr(ipv6, id.idiag_src) &&
-          isLoopbackDiagAddr(ipv6, id.idiag_dst))
-      {
-         *pUid = diag->idiag_uid; // populated unconditionally (research Q8)
-         found = true;
-         return true; // stop the dump loop, we found our 4-tuple
-      }
-      return false;
-   });
+   // The server-side (application) socket has source port == appPort, dest
+   // port == ephemeralPort -- the reverse of our own connect()'d socket. This
+   // single exact-match query also finds a dual-stack (IPV6_V6ONLY=0)
+   // listener's accepted socket despite being dialed via plain IPv4: the
+   // kernel's established-socket comparator (inet_match()) never checks
+   // sk_family, and such a socket is hashed under its IPv4-mapped address
+   // using the same v4-style hash as a plain AF_INET socket -- only the
+   // NLM_F_DUMP path filters strictly by sk_family, and this query doesn't
+   // use it.
+   Error error;
+   DiagLookupResult result = queryOnce(fd,
+                                      remoteAddress,
+                                      localAddress,
+                                      static_cast<uint16_t>(appPort),
+                                      static_cast<uint16_t>(ephemeralPort),
+                                      pUid,
+                                      &error);
 
    ::close(fd);
 
-   if (error)
+   if (result == DiagLookupResult::Error)
       return error;
 
-   if (!found)
+   if (result == DiagLookupResult::NotFound)
    {
       return systemError(boost::system::errc::no_such_file_or_directory,
                          "No established socket for requested 4-tuple",
@@ -244,10 +294,14 @@ Error lookupEstablishedSocketUid(bool ipv6, int appPort, int ephemeralPort, uid_
    return Success();
 }
 
-Error verifyPeerUid(bool ipv6, int appPort, int ephemeralPort, uid_t expectedUid)
+Error verifyPeerUid(const boost::asio::ip::address& localAddress,
+                    const boost::asio::ip::address& remoteAddress,
+                    int appPort,
+                    int ephemeralPort,
+                    uid_t expectedUid)
 {
    uid_t ownerUid = 0;
-   Error error = lookupEstablishedSocketUid(ipv6, appPort, ephemeralPort, &ownerUid);
+   Error error = lookupEstablishedSocketUid(localAddress, remoteAddress, appPort, ephemeralPort, &ownerUid);
    if (error)
    {
       // could not verify -> caller rejects; tag so the HTTP layer can map this
@@ -285,17 +339,21 @@ bool probeSockDiagAvailable()
          return false;
       }
 
-      Error sendError = sendDumpRequest(fd, false /* AF_INET */);
-      bool ok = false;
-      if (!sendError)
-      {
-         // A single recv() is sufficient to distinguish "the kernel accepted and
-         // answered the query" (NLMSG_DONE or an inet_diag_msg record) from a
-         // rejection (NLMSG_ERROR with EPERM/EOPNOTSUPP/etc from a restrictive
-         // seccomp/capability profile) or a transport failure.
-         Error dumpError = runDumpLoop(fd, [](const inet_diag_msg*) { return true; });
-         ok = !dumpError;
-      }
+      // Probe with a deliberately absent 4-tuple, exercising the same
+      // exact-match code path production traffic uses. Either a Found or
+      // NotFound (-ENOENT) reply means the kernel accepted and answered the
+      // query -- the mechanism works. Anything else (e.g. EPERM/EOPNOTSUPP
+      // from a restrictive seccomp/capability profile) means it doesn't.
+      uid_t unusedUid = 0;
+      Error probeError;
+      DiagLookupResult result = queryOnce(fd,
+                                         boost::asio::ip::address_v4::loopback(),
+                                         boost::asio::ip::address_v4::loopback(),
+                                         0,
+                                         0,
+                                         &unusedUid,
+                                         &probeError);
+      bool ok = (result == DiagLookupResult::Found || result == DiagLookupResult::NotFound);
 
       ::close(fd);
 
@@ -314,17 +372,25 @@ bool probeSockDiagAvailable()
 
 #else // !__linux__
 
-Error lookupEstablishedSocketUid(bool, int, int, uid_t*)
+Error lookupEstablishedSocketUid(const boost::asio::ip::address&,
+                                 const boost::asio::ip::address&,
+                                 int,
+                                 int,
+                                 uid_t*)
 {
    return systemError(boost::system::errc::not_supported,
                       "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux",
                       ERROR_LOCATION);
 }
 
-Error verifyPeerUid(bool ipv6, int appPort, int ephemeralPort, uid_t /*expectedUid*/)
+Error verifyPeerUid(const boost::asio::ip::address& localAddress,
+                    const boost::asio::ip::address& remoteAddress,
+                    int appPort,
+                    int ephemeralPort,
+                    uid_t /*expectedUid*/)
 {
    uid_t ownerUid = 0;
-   Error error = lookupEstablishedSocketUid(ipv6, appPort, ephemeralPort, &ownerUid);
+   Error error = lookupEstablishedSocketUid(localAddress, remoteAddress, appPort, ephemeralPort, &ownerUid);
    error.addProperty(kPortOwnershipRejectedProperty, "1");
    return error;
 }

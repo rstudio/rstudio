@@ -17,6 +17,7 @@
 #define SERVER_CORE_SOCKET_OWNERSHIP_HPP
 
 #include <sys/types.h>
+#include <boost/asio/ip/address.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
@@ -36,18 +37,28 @@ constexpr const char* kPortOwnershipRejectedProperty = "port-ownership-rejected"
 // Look up the UID owning the *established*, server-side TCP socket for a loopback
 // connection identified by its reversed 4-tuple: the server-side socket has
 // source port == appPort (the listening/target port) and dest port ==
-// ephemeralPort (our client's local port from getsockname()). Both endpoints are
-// loopback. Queries NETLINK_SOCK_DIAG restricted to TCPF_ESTABLISHED.
+// ephemeralPort (our client's local port from getsockname()). localAddress and
+// remoteAddress are our own connected socket's local/remote endpoint addresses
+// (i.e. from the caller's point of view, not the server-side socket's) -- they
+// seed an exact-match NETLINK_SOCK_DIAG query for the reversed 4-tuple. This
+// also correctly finds a dual-stack (IPV6_V6ONLY=0) listener's accepted socket
+// even when dialed via plain IPv4: although such a socket's sk_family is
+// AF_INET6, the kernel hashes it (and matches lookups against it) using its
+// IPv4-mapped address in the same v4-style hash used for plain AF_INET
+// sockets, and the established-socket comparator never checks sk_family --
+// only the dump path filters by family, which this exact-match query avoids.
 // Returns Success and sets *pUid on an exact match; returns an error if the query
 // fails or no matching ESTABLISHED socket exists (caller must fail closed).
-core::Error lookupEstablishedSocketUid(bool ipv6,
+core::Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
+                                       const boost::asio::ip::address& remoteAddress,
                                        int appPort,
                                        int ephemeralPort,
                                        uid_t* pUid);
 
 // Verify the peer of a just-established localhost proxy hop is owned by
 // expectedUid. Returns Success only when the owning UID equals expectedUid.
-core::Error verifyPeerUid(bool ipv6,
+core::Error verifyPeerUid(const boost::asio::ip::address& localAddress,
+                          const boost::asio::ip::address& remoteAddress,
                           int appPort,
                           int ephemeralPort,
                           uid_t expectedUid);

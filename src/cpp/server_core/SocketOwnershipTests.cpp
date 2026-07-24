@@ -99,14 +99,17 @@ TEST(SocketOwnershipTest, LooksUpUidOfEstablishedLoopbackSocket)
    int ephemeralPort = client.local_endpoint().port();
 
    uid_t uid = 0;
-   core::Error error = lookupEstablishedSocketUid(false, appPort, ephemeralPort, &uid);
+   core::Error error = lookupEstablishedSocketUid(
+      client.local_endpoint().address(), client.remote_endpoint().address(), appPort, ephemeralPort, &uid);
    EXPECT_FALSE(error);
    EXPECT_EQ(::getuid(), uid);
 
    // wrong expected uid is rejected (verifyPeerUid returns a truthy Error on mismatch)
-   EXPECT_TRUE(verifyPeerUid(false, appPort, ephemeralPort, ::getuid() + 1));
+   EXPECT_TRUE(verifyPeerUid(client.local_endpoint().address(), client.remote_endpoint().address(),
+                            appPort, ephemeralPort, ::getuid() + 1));
    // correct expected uid passes (falsy Error)
-   EXPECT_FALSE(verifyPeerUid(false, appPort, ephemeralPort, ::getuid()));
+   EXPECT_FALSE(verifyPeerUid(client.local_endpoint().address(), client.remote_endpoint().address(),
+                             appPort, ephemeralPort, ::getuid()));
 }
 
 TEST(SocketOwnershipTest, LooksUpUidOfEstablishedIPv6LoopbackSocket)
@@ -115,8 +118,8 @@ TEST(SocketOwnershipTest, LooksUpUidOfEstablishedIPv6LoopbackSocket)
    using boost::asio::ip::tcp;
 
    // listener on ::1:0 -- exercises the AF_INET6 sdiag_family branch, which
-   // differs from AF_INET and is otherwise only covered by e2e (eval P3). Some
-   // CI/dev environments lack an IPv6 loopback; skip rather than fail there,
+   // differs from AF_INET. 
+   // Some CI/dev environments lack an IPv6 loopback; skip rather than fail there,
    // mirroring the environment-dependent GTEST_SKIP() guards used elsewhere in
    // this project (e.g. PosixSystemTests.cpp).
    boost::system::error_code ec;
@@ -139,10 +142,55 @@ TEST(SocketOwnershipTest, LooksUpUidOfEstablishedIPv6LoopbackSocket)
    int ephemeralPort = client.local_endpoint().port();
 
    uid_t uid = 0;
-   core::Error error = lookupEstablishedSocketUid(true, appPort, ephemeralPort, &uid);
+   core::Error error = lookupEstablishedSocketUid(
+      client.local_endpoint().address(), client.remote_endpoint().address(), appPort, ephemeralPort, &uid);
    EXPECT_FALSE(error);
    EXPECT_EQ(::getuid(), uid);
-   EXPECT_FALSE(verifyPeerUid(true, appPort, ephemeralPort, ::getuid()));
+   EXPECT_FALSE(verifyPeerUid(client.local_endpoint().address(), client.remote_endpoint().address(),
+                             appPort, ephemeralPort, ::getuid()));
+}
+
+TEST(SocketOwnershipTest, LooksUpUidOfEstablishedDualStackLoopbackSocket)
+{
+   boost::asio::io_context io;
+   using boost::asio::ip::tcp;
+
+   // Dual-stack (IPV6_V6ONLY=0) listener on ::, dialed via plain IPv4 -- the
+   // app's accepted socket has sk_family == AF_INET6 even though we connect
+   // via 127.0.0.1. Confirms the AF_INET exact-match query still finds it:
+   // the kernel hashes/matches such sockets via their IPv4-mapped address
+   // using the same v4-style path as a plain AF_INET socket, regardless of
+   // sk_family (verified against net/ipv4/inet_hashtables.c's sk_ehashfn()
+   // and inet_match()) -- unlike the NLM_F_DUMP path, which does filter
+   // strictly by sk_family and would miss this socket entirely.
+   boost::system::error_code ec;
+   tcp::acceptor acceptor(io);
+   acceptor.open(tcp::v6(), ec);
+   if (!ec)
+      acceptor.set_option(boost::asio::ip::v6_only(false), ec);
+   if (!ec)
+      acceptor.bind(tcp::endpoint(boost::asio::ip::make_address("::"), 0), ec);
+   if (ec)
+   {
+      GTEST_SKIP() << "Dual-stack IPv6 loopback listener is not available in this environment: "
+                   << ec.message();
+   }
+   acceptor.listen();
+
+   int appPort = acceptor.local_endpoint().port();
+   tcp::socket client(io);
+   client.connect(tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), appPort));
+   tcp::socket server(io);
+   acceptor.accept(server);
+   int ephemeralPort = client.local_endpoint().port();
+
+   uid_t uid = 0;
+   core::Error error = lookupEstablishedSocketUid(
+      client.local_endpoint().address(), client.remote_endpoint().address(), appPort, ephemeralPort, &uid);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(::getuid(), uid);
+   EXPECT_FALSE(verifyPeerUid(client.local_endpoint().address(), client.remote_endpoint().address(),
+                             appPort, ephemeralPort, ::getuid()));
 }
 
 TEST(SocketOwnershipTest, ProbeSockDiagAvailableReportsTrueInTestEnvironment)
