@@ -17,11 +17,12 @@ permissions:
 
 jobs:
   run-desktop-ubuntu24:
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-linux.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
+      os: ubuntu-24
       project: desktop
       r_version: "release"

@@ -9,6 +9,11 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 #     build (the "version" input) or built from source (the "build_from_source"
 #     input).
 #
+# The Linux Desktop engines all run through the consolidated
+# os-test-e2e-rstudio-desktop-linux.yml workflow as a matrix (one entry per
+# engine, built dynamically from the pick job's selection); macOS, Windows,
+# and Linux Server keep their own reusable workflows.
+#
 # Binary selection: scheduled runs test the daily build (build_from_source
 # false). With no version, each engine self-resolves the latest daily (keeping
 # its SHA-256 check); a specific version builds each platform's download URL by
@@ -51,6 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       selected: ${{ steps.pick.outputs.selected }}
+      linux_matrix: ${{ steps.pick.outputs.linux_matrix }}
     steps:
       - id: pick
         name: Select engines for this run
@@ -77,6 +83,28 @@ jobs:
           fi
           echo "selected=$SEL" >> "$GITHUB_OUTPUT"
           echo "::notice::Selected engines: $SEL"
+
+          # Map the selected Linux Desktop engines onto the consolidated
+          # workflow's matrix: os names the .github/e2e-linux config, url_key
+          # names the resolve job's output holding that engine's
+          # version-specific installer URL (empty on latest-daily /
+          # build-from-source runs). Engines without their own daily reuse
+          # the nearest build (Fedora -> rhel10-x86_64, Debian ->
+          # noble-arm64, Ubuntu 26 -> noble-amd64); see the engine configs.
+          TABLE='[
+            {"key":"fedora43","os":"fedora-43","name":"Fedora 43 x86_64","url_key":"rhel"},
+            {"key":"fedora44","os":"fedora-44","name":"Fedora 44 x86_64","url_key":"rhel"},
+            {"key":"ubuntu26","os":"ubuntu-26","name":"Ubuntu 26 amd64","url_key":"noble_amd64"},
+            {"key":"ubuntu22","os":"ubuntu-22","name":"Ubuntu 22 amd64","url_key":"jammy_amd64"},
+            {"key":"ubuntu24d","os":"ubuntu-24","name":"Ubuntu 24 Desktop","url_key":"noble_amd64"},
+            {"key":"debian13","os":"debian-13","name":"Debian 13 arm64","url_key":"noble_arm64"},
+            {"key":"rocky10","os":"rocky-10","name":"Rocky 10 arm64","url_key":"rocky"},
+            {"key":"rocky9","os":"rocky-9","name":"Rocky 9 x86_64","url_key":"rhel9"}
+          ]'
+          LINUX=$(jq -cn --argjson table "$TABLE" --argjson sel "$SEL" \
+            '[$table[] | select(.key as $k | $sel | index($k))]')
+          echo "linux_matrix=$LINUX" >> "$GITHUB_OUTPUT"
+          echo "::notice::Linux Desktop matrix: $LINUX"
 
   resolve:
     name: Resolve installer URLs
@@ -162,82 +190,29 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Resolved URLs for version $VERSION."
 
-  fedora43:
-    name: Fedora 43 x86_64
+  # Every selected Linux Desktop engine, one matrix entry each, through the
+  # consolidated Linux workflow. The matrix is built (already filtered to the
+  # selection) by the pick job; the guard skips the job entirely when no
+  # Linux engine is selected, since an empty matrix is an error.
+  linux-desktop:
+    name: ${{ matrix.name }}
     needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora43') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-43-x86_64.yml
+    if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.pick.outputs.linux_matrix) }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-linux.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
+      os: ${{ matrix.os }}
       project: desktop
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
-      # Same rhel10-x86_64 .rpm the Fedora 44 engine tests -- there is no
-      # separate Fedora 43 daily either.
-      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
-
-  fedora44:
-    name: Fedora 44 x86_64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora44') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-44-x86_64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
-
-  ubuntu26:
-    name: Ubuntu 26 amd64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu26') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-26-amd64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
-
-  ubuntu22:
-    name: Ubuntu 22 amd64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu22') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-22-amd64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      # Ubuntu 22 has its own jammy-amd64 daily .deb; the engine installs it.
-      rstudio_installer_url: ${{ needs.resolve.outputs.jammy_amd64 }}
-
-  ubuntu24d:
-    name: Ubuntu 24 Desktop
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu24d') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
+      rstudio_installer_url: ${{ needs.resolve.outputs[matrix.url_key] }}
 
   ubuntu24s:
     name: Ubuntu 24 Server
@@ -300,51 +275,3 @@ jobs:
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.windows }}
-
-  debian13:
-    name: Debian 13 arm64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'debian13') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-debian-13-arm64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.noble_arm64 }}
-
-  rocky10:
-    name: Rocky 10 arm64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'rocky10') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-10-arm64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      # RHEL/Rocky 10 arm64 daily .rpm (served from rhel9/arm64 as an
-      # aarch64.rpm); the Rocky engine installs the same package.
-      rstudio_installer_url: ${{ needs.resolve.outputs.rocky }}
-
-  rocky9:
-    name: Rocky 9 x86_64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'rocky9') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-9-x86_64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      # RHEL/Rocky 9 x86_64 daily .rpm; the Rocky 9 engine installs the same
-      # package.
-      rstudio_installer_url: ${{ needs.resolve.outputs.rhel9 }}
