@@ -10,6 +10,7 @@
 - ([#7350](https://github.com/rstudio/rstudio/issues/7350)): RStudio can now load custom Vim key mappings from `~/.rstudio-vimrc` (or `~/.vimrc`) when Vim editor keybindings are in use. Enable the new preference under Tools > Global Options > Code > Editing; key mapping commands (`map`, `noremap`, `unmap`, and friends) and `set` commands supported by the editor's Vim emulation are applied, and other vimrc content is ignored.
 - ([#18060](https://github.com/rstudio/rstudio/issues/18060)): The installed-package scan used to track package load and attach events now runs on a background thread, so session startup (and package installation) no longer blocks while enumerating library paths on slow or remote filesystems.
 - ([#18248](https://github.com/rstudio/rstudio/issues/18248)): RStudio can now be built without Posit Assistant support (including its chat pane and Posit AI Next Edit Suggestions) via the new `RSTUDIO_ENABLE_POSIT_ASSISTANT` CMake option; GitHub Copilot, including Copilot-provided suggestions, remains available. A new `RSTUDIO_ENABLE_AI_FEATURES` master option removes all AI features (GitHub Copilot and Posit Assistant) from the build when disabled.
+- ([#18253](https://github.com/rstudio/rstudio/issues/18253)): Added a "Check for Posit Assistant updates" command to the Help menu. It always reports its result in a dialog -- whether Posit Assistant is up to date, an update is available (with the option to install it), or a newer Posit Assistant requires a newer version of RStudio.
 
 ### Fixed
 - ([#18152](https://github.com/rstudio/rstudio/issues/18152)): Fixed a compilation error when building RStudio Server against SOCI 4.1.4 or newer.
@@ -39,8 +40,10 @@
 - ([#18305](https://github.com/rstudio/rstudio/issues/18305)): The first run of a new RStudio build now always checks for Posit Assistant updates, instead of the check being suppressed for up to the update-check interval (two hours by default) when the previous build had checked recently.
 - ([#18326](https://github.com/rstudio/rstudio/issues/18326)): Fixed an issue where "Restart R and Run All Chunks" (and "Restart R and Clear Output") could intermittently restart R without then running the chunks (or clearing the output).
 - ([#18315](https://github.com/rstudio/rstudio/issues/18315)): Fixed the GitHub Copilot section of the Assistant preferences showing a mislabeled "Display account and billing messages from Posit Assistant" checkbox that had no effect. It is now correctly labeled for GitHub Copilot and controls whether Copilot's account and billing messages are shown.
+- ([#18340](https://github.com/rstudio/rstudio/issues/18340)): Fixed an issue in RStudio Server where the IDE could stop receiving updates from the session after an R session restart until the user's next interaction -- most visibly, "Restart R and Run All Chunks" restarting R but appearing to hang before running the chunks, and console output after a suspended session resumed not appearing until the user did something else.
+- ([#12572](https://github.com/rstudio/rstudio/issues/12572)): The macOS `diagnostics` and `rpostback` helper binaries are now universal (Apple Silicon + Intel). RStudio no longer prompts to install Rosetta 2 at startup on Apple Silicon.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)
 - Copilot Language Server 1.520.0
-- Electron 42.7.0
+- Electron 42.7.1

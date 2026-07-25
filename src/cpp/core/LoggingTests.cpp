@@ -993,6 +993,12 @@ TEST(LoggingTest, FileLogsAreCreatedWithCorrectPermissions)
 TEST(LoggingTest, FileLogFallsBackToStderrWhenDirectoryNotWritable)
 {
    // https://github.com/rstudio/rstudio/issues/18179
+   // Root bypasses directory write permissions, so the read-only directory below
+   // stays writable and the stderr fallback is never exercised. Some projects run
+   // these unit tests as root; skip there.
+   if (core::system::effectiveUserIsRoot())
+      GTEST_SKIP() << "Root bypasses directory permissions; stderr fallback not exercised";
+
    FilePath tmpPath;
    ASSERT_FALSE(FilePath::tempFilePath(tmpPath));
    ASSERT_FALSE(tmpPath.ensureDirectory());

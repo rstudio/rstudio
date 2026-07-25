@@ -551,6 +551,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="showAboutDialog"/>
          <cmd refid="showLicenseDialog"/>
          <cmd refid="checkForUpdates"/>
+         <cmd refid="checkForPositAssistantUpdates"/>
          <cmd refid="showReleaseNotes"/>
          <cmd refid="whatsNewRStudio"/>
          <separator/>
@@ -3442,7 +3443,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="checkForUpdates"
         label="Check for RStudio Updates"
-        menuLabel="Check for _Updates"
+        menuLabel="Check for RStudio _Updates"
         windowMode="main"
         visible="false"/>
 
@@ -4442,6 +4443,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Uninstall Posit Assistant"
         menuLabel="Uninsta_ll Posit Assistant..."
         rebindable="false"
+        windowMode="main"/>
+
+   <cmd id="checkForPositAssistantUpdates"
+        label="Check for Posit Assistant Updates"
+        menuLabel="_Check for Posit Assistant Updates..."
         windowMode="main"/>
 
    <cmd id="showReleaseNotes"

@@ -779,6 +779,7 @@ public abstract class
    public abstract AppCommand popOutChat();
    public abstract AppCommand returnChatToMain();
    public abstract AppCommand uninstallPositAssistant();
+   public abstract AppCommand checkForPositAssistantUpdates();
 
    // Internal
    public abstract AppCommand showDomElements();

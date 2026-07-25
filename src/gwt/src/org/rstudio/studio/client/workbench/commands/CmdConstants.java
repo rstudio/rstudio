@@ -3067,7 +3067,7 @@ public interface CmdConstants extends Constants {
     // checkForUpdates
     @DefaultStringValue("Check for RStudio Updates") // $NON-NLS-1$
     String checkForUpdatesLabel();
-    @DefaultStringValue("Check for _Updates") // $NON-NLS-1$
+    @DefaultStringValue("Check for RStudio _Updates") // $NON-NLS-1$
     String checkForUpdatesMenuLabel();
     
     // helpUsingRStudio
@@ -4205,6 +4205,12 @@ public interface CmdConstants extends Constants {
     String uninstallPositAssistantLabel();
     @DefaultStringValue("Uninsta_ll Posit Assistant...") // $NON-NLS-1$
     String uninstallPositAssistantMenuLabel();
+    
+    // checkForPositAssistantUpdates
+    @DefaultStringValue("Check for Posit Assistant Updates") // $NON-NLS-1$
+    String checkForPositAssistantUpdatesLabel();
+    @DefaultStringValue("_Check for Posit Assistant Updates...") // $NON-NLS-1$
+    String checkForPositAssistantUpdatesMenuLabel();
     
     // showReleaseNotes
     @DefaultStringValue("R_elease Notes") // $NON-NLS-1$

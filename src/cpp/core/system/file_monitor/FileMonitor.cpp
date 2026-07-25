@@ -23,6 +23,7 @@
 
 #include <core/Log.hpp>
 #include <shared_core/Error.hpp>
+#include <shared_core/Memory.hpp>
 #include <core/Thread.hpp>
 #include <core/PeriodicCommand.hpp>
 
@@ -472,18 +473,23 @@ private:
    Handle handle_;
 };
 
+// the command and callback queues are used by the file monitor thread, which
+// stop() can abandon (detach) if it fails to join in time -- and some exit
+// paths don't stop it at all. the queues are therefore intentionally leaked
+// so an abandoned thread never finds them destroyed during static teardown
+// (#18318)
 typedef core::thread::ThreadsafeQueue<RegistrationCommand>
                                                       RegistrationCommandQueue;
 RegistrationCommandQueue& registrationCommandQueue()
 {
-   static core::thread::ThreadsafeQueue<RegistrationCommand> instance;
+   static RegistrationCommandQueue& instance = make_leaked<RegistrationCommandQueue>();
    return instance;
 }
 
 typedef core::thread::ThreadsafeQueue<boost::function<void()> > CallbackQueue;
 CallbackQueue& callbackQueue()
 {
-   static core::thread::ThreadsafeQueue<boost::function<void()> > instance;
+   static CallbackQueue& instance = make_leaked<CallbackQueue>();
    return instance;
 }
 

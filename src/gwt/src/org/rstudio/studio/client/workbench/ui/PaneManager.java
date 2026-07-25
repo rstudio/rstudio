@@ -2844,6 +2844,7 @@ public class PaneManager
       // Posit Assistant can still be removed.
       commands_.popOutChat().setVisible(paiEnabled);
       commands_.returnChatToMain().setVisible(paiEnabled);
+      commands_.checkForPositAssistantUpdates().setVisible(paiEnabled);
    }
 
    private boolean isTabHidden(Tab tab)

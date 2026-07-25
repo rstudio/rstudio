@@ -81,7 +81,7 @@ debuginfo-download () {
 	aws s3 cp "${src}" "${tgt}"
 
 	# Unpack debug symbols here
-	echo "-- Unpacking ${prefix.tar.xz}"
+	echo "-- Unpacking ${prefix}.tar.xz"
 	tar xf "${prefix}.tar.xz"
 
 }

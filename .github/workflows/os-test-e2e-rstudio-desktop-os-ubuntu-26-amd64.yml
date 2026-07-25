@@ -82,9 +82,16 @@ on:
       post_pr_comment:
         type: boolean
         default: false
+      defer_merge:
+        description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
+        type: boolean
+        default: false
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
+      AWS_E2E_REPORTS_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
       AWS_SCCACHE_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
@@ -97,7 +104,9 @@ permissions:
   # permissions in a reusable workflow at call time, so this must be declared
   # at the top level even though only e2e-merge uses it.
   pull-requests: write
-  # Lets the build job mint an OIDC token for the S3 sccache backend.
+  # Lets the build job mint an OIDC token for the S3 sccache backend, and the
+  # e2e-merge job mint one to assume the S3 report-upload role (see
+  # .github/actions/os-publish-e2e-report).
   id-token: write
 
 jobs:
@@ -484,7 +493,11 @@ jobs:
         working-directory: e2e/rstudio
         env:
           PW_RSTUDIO_MODE: desktop
-          PW_PROJECT_NAME: ${{ inputs.project }}
+          # Platform-labelled project name; playwright.config.ts uses it both as
+          # the project name in reports (so a cross-platform merged report can
+          # distinguish these results) and to derive the platform+shard-unique
+          # blob report file name.
+          PW_PROJECT_LABEL: ${{ inputs.project }}-linux-ubuntu26-x86_64
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
@@ -496,7 +509,7 @@ jobs:
           # CONNECT_API_KEY is empty on fork PRs; the reporter still runs but its
           # uploads fail with warnings (never fails the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-          SHARD_NAME: desktop-linux-ubuntu-26-${{ matrix.shard }}
+          SHARD_NAME: desktop-linux-ubuntu26-x86_64-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows which
           # phase exceeded the deadline.
           PW_DEBUG_LAUNCH: '1'
@@ -507,7 +520,6 @@ jobs:
             ARGS+=($PW_TEST_SELECTOR)
             set +f
           fi
-          ARGS+=(--project "$PW_PROJECT_NAME")
           if [ -n "$PW_GREP" ]; then
             ARGS+=(--grep "$PW_GREP")
           fi
@@ -515,9 +527,11 @@ jobs:
             ARGS+=(--grep-invert "$PW_GREP_INVERT")
           fi
           ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
-          # Run Playwright under our own Xvfb and exec it as the step's main
-          # process, so a job cancellation's SIGTERM reaches Playwright
-          # directly. xvfb-run is a shell wrapper that does not forward signals
+          # Run Playwright under our own Xvfb and exec the watchdog as the step's
+          # main process, so a job cancellation's SIGTERM reaches the watchdog
+          # (which forwards it to Playwright's process group as SIGINT -- its
+          # cancellation signal -- then escalates to SIGKILL if the run doesn't
+          # wind down). xvfb-run is a shell wrapper that does not forward signals
           # to its child, which left cancelled Linux e2e jobs running until
           # their timeout-minutes instead of stopping. -ac disables X access
           # control so Chromium connects without an auth cookie; -nolisten tcp
@@ -536,7 +550,7 @@ jobs:
             cat /tmp/xvfb.log || true
             exit 1
           fi
-          exec npx playwright test "${ARGS[@]}"
+          exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
 
       - name: Upload blob report
         if: always()
@@ -570,12 +584,14 @@ jobs:
   # (when post_pr_comment is set).
   e2e-merge:
     needs: [e2e-desktop-ubuntu]
-    if: always() && needs.e2e-desktop-ubuntu.result != 'skipped' && needs.e2e-desktop-ubuntu.result != 'cancelled'
+    if: always() && inputs.defer_merge != true && needs.e2e-desktop-ubuntu.result != 'skipped' && needs.e2e-desktop-ubuntu.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
+      # OIDC token for the S3 report upload (os-publish-e2e-report).
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -627,6 +643,17 @@ jobs:
           retention-days: 15
           if-no-files-found: ignore
 
+      # Publish a browsable copy of the report to S3 on failure only, so
+      # reviewers can inspect it without downloading the zip. Best-effort: it
+      # does nothing on fork PRs (no secret) and never fails the job.
+      - name: Publish report to S3
+        id: publish-report
+        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        uses: ./.github/actions/os-publish-e2e-report
+        with:
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          label: linux-desktop-ubuntu-26
+
       - name: Post E2E results to PR
         if: |
           always() &&
@@ -650,8 +677,10 @@ jobs:
 
             <details>
             <summary>📥 Download Playwright report</summary>
-
-            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
+            ${{ steps.publish-report.outputs.url != '' && format('
+            **[🌐 View report online]({0})**: opens in the browser, no download needed. Available for 14 days.
+            ', steps.publish-report.outputs.url) || '' }}
+            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})**: extract and open `index.html`
 
             > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
 
