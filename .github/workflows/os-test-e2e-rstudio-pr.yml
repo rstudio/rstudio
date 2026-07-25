@@ -152,6 +152,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.windows_build_from_source) }}
       project: desktop
@@ -166,6 +167,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.macos_build_from_source) }}
       project: desktop
@@ -180,6 +182,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_desktop_build_from_source) }}
       project: desktop
@@ -194,6 +197,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_server_build_from_source) }}
       project: server
