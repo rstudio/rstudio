@@ -25,10 +25,21 @@ usage () {
 
 	cat <<- EOF
 
-	Usage: $0 <product> <os> <arch>
+	Usage: $0 <product> <flavor> <package> <os> <arch>
 
 	Automatically discover all debug symbols within a particular
 	build directory, and then upload those symbols to AWS S3.
+
+	<product> is the product name (e.g. "workbench"), <flavor> is the
+	build flavor (e.g. "Server"), <package> is the package format
+	(e.g. "RPM"), <os> is the OS identifier (e.g. "rhel9"), and
+	<arch> is the architecture (e.g. "x86_64").
+
+	The archive is uploaded as <product>-<os>-<arch>.tar.xz, matching
+	the path expected by the 'debuginfo' script installed with the
+	product. The OS must be part of the archive name: multiple OSes
+	can share the same product, package format, and architecture, and
+	would otherwise overwrite each other's symbols.
 
 	Required environment variables:
 		RSTUDIO_VERSION_MAJOR
@@ -42,19 +53,21 @@ usage () {
 
 }
 
-if [ "$3" = "" ] || [ "$1" = "--help" ] || [[ -z "$RSTUDIO_VERSION_MAJOR" ]] || [[ -z "$RSTUDIO_VERSION_MINOR" ]] || [[ -z "$RSTUDIO_VERSION_PATCH" ]]; then
+if [ "$5" = "" ] || [ "$1" = "--help" ] || [[ -z "$RSTUDIO_VERSION_MAJOR" ]] || [[ -z "$RSTUDIO_VERSION_MINOR" ]] || [[ -z "$RSTUDIO_VERSION_PATCH" ]]; then
 	usage
 	exit 1
 fi
 
 # Read params into named variables
 product="$1"
-os="$2"
-arch="$3"
+flavor="$2"
+package="$3"
+os="$4"
+arch="$5"
 
 PACKAGE_DIR=`pwd`
-RSTUDIO_TARGET="$product"
-PACKAGE_TARGET="$os"
+RSTUDIO_TARGET="$flavor"
+PACKAGE_TARGET="$package"
 
 # This script populates BUILD_DIR and RSTUDIO_VERSION_FULL
 source "${PKG_DIR}/scripts/vars.sh"

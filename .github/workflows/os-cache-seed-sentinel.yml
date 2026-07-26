@@ -25,6 +25,8 @@ permissions:
   # Needed both to list caches / workflow runs and to dispatch the seed
   # workflows via `gh workflow run`.
   actions: write
+  # Needed to open an alert issue when a seed workflow's latest run failed.
+  issues: write
 
 jobs:
   check:
@@ -97,5 +99,38 @@ jobs:
           done <<EOF
           $CHECKS
           EOF
+
+          # The cache checks above only notice a failing seed once its caches
+          # have actually been evicted, and some failure modes are invisible
+          # to the seed workflow itself (startup_failure never runs any job
+          # that could report it -- the Windows seed startup-failed silently
+          # on two consecutive weekends). Check each seed's latest completed
+          # run directly and open an alert issue when it did not succeed.
+          for SEED in $(printf '%s\n' "$CHECKS" | sed -n 's/^[[:space:]]*\([^=]*\)=.*/\1/p'); do
+            RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$SEED/runs?status=completed&per_page=1" \
+              --jq '.workflow_runs[0] | "\(.conclusion) \(.html_url)"')
+            CONCLUSION="${RUN%% *}"
+            RUN_URL="${RUN#* }"
+
+            # No completed runs yet (new seed) counts as healthy.
+            if [ -z "$CONCLUSION" ] || [ "$CONCLUSION" = "success" ] || [ "$CONCLUSION" = "null" ]; then
+              continue
+            fi
+            echo "Seed $SEED latest completed run: $CONCLUSION"
+
+            # One open issue per seed; skip if the previous alert is still open.
+            TITLE="cache seed workflow failing: $SEED"
+            EXISTING=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq 'length')
+            if [ "$EXISTING" -gt 0 ]; then
+              echo "Alert issue already open for $SEED"
+              continue
+            fi
+
+            BODY=$(printf '%s\n\n%s\n\n%s' \
+              "The latest completed run of \`$SEED\` finished with conclusion \`$CONCLUSION\`: $RUN_URL" \
+              "Until this seed succeeds again, its build caches on main can go stale or evicted, and PR builds for that platform run cold." \
+              "(Opened automatically by the cache-seed sentinel; it skips re-alerting while this issue stays open.)")
+            gh issue create --title "$TITLE" --body "$BODY" || FAILED=1
+          done
 
           exit $FAILED

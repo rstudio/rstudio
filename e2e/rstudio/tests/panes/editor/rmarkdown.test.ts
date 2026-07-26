@@ -114,7 +114,11 @@ test.describe('RMarkdown', () => {
     await consoleActions.clearConsole();
 
     // Run all chunks via restart R. 60s covers the worst-case restart +
-    // chunk run window.
+    // chunk run window. Keep this budget tight: the chunks only run once
+    // DeferredInitCompletedEvent reaches the client, so this wait doubles
+    // as the regression canary for the event-stream revival fix (#18340) --
+    // a client left deaf after the restart fails here rather than being
+    // masked by a generous timeout.
     await executeCommand(page, 'restartRRunAllChunks');
     const consoleOutput = consoleActions.consolePane.consoleOutput;
     await expect(consoleOutput).toContainText(
