@@ -65,9 +65,13 @@ std::string findOnPath(const std::string& exe,
    // do the search
    //
    // NOTE: native (backslash) separators here, matching what PathFindOnPath used to
-   // hand back -- this feeds CreateProcessW's lpApplicationName
-   FilePath exePath = findProgramOnPath(resolvedExe);
-   return exePath.isEmpty() ? std::string() : exePath.getAbsolutePathNative();
+   // hand back; this feeds CreateProcessW's lpApplicationName
+   FilePath exePath;
+   Error error = findProgramOnPath(resolvedExe, &exePath);
+   if (error)
+      return std::string();
+
+   return exePath.getAbsolutePathNative();
 }
 
 // resolve the passed command and arguments to the form required for a

@@ -5,10 +5,11 @@
       type="win32"/>
    <description>rpostback</description>
    <!--
-      Opt out of the MAX_PATH (260 character) limit. rpostback is handed paths
-      by rsession (e.g. the file to edit for editfile postbacks), so it needs
-      to accept anything a long-path-aware session can produce. Also requires
-      the machine's HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
+      Opt out of the MAX_PATH (260 character) limit, so that the log directory
+      resolved from xdg::userLogDir() can be written when it sits below a long
+      path. Note that the postback argument itself is only forwarded to rsession
+      as a string, so its length is not constrained here. Also requires the
+      machine's HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
       registry value to be set.
    -->
    <application>

@@ -5,10 +5,11 @@
       type="win32"/>
    <description>consoleio</description>
    <!--
-      Opt out of the MAX_PATH (260 character) limit, so that paths handed to us
-      by rsession are not rejected here. Also requires the machine's
-      HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
-      registry value to be set.
+      Declared for consistency with the other executables we ship. This process
+      is currently all ANSI (narrow argv, CreateProcess and CreateFile), and the
+      ANSI entry points keep the MAX_PATH limit regardless, so nothing changes
+      here today; the declaration is what makes it take effect if this code is
+      ever widened.
    -->
    <application>
       <windowsSettings>

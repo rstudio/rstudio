@@ -30,6 +30,7 @@
 #include <windows.h>
 
 #include <atomic>
+#include <iomanip>
 #include <sstream>
 
 #include <boost/iostreams/stream.hpp>
@@ -1521,8 +1522,11 @@ Error FilePath::isWriteable(bool &out_writeable) const
    //
    // Instead, to cover all bases, try to create and delete a temporary file in the folder.
    //
-   // NOTE: we name the probe file ourselves rather than calling GetTempFileNameW, which requires
-   // the folder to fit within MAX_PATH and so reports any deeper folder as read-only.
+   // NOTE: we name the probe file ourselves rather than calling GetTempFileNameW, whose
+   // lpPathName is documented to fail above MAX_PATH-14 (246) characters, so it reported
+   // any deeper folder as read-only. The probe name is deliberately kept to 11 characters
+   // -- the same length GetTempFileNameW generated ("TMP" + 4 hex + ".tmp") -- so that when
+   // MAX_PATH is still in force the folder limit is 247 rather than a shorter one.
 
    static std::atomic<unsigned int> s_probeCounter(0);
 
@@ -1536,21 +1540,24 @@ Error FilePath::isWriteable(bool &out_writeable) const
    if (folder.back() != L'\\' && folder.back() != L'/')
       folder.push_back(L'\\');
 
-   // a name collision just means another probe is in flight, so retry with a fresh name
+   // Mix the pid into the name so concurrent sessions rarely collide; a collision is
+   // still correct, since CREATE_NEW detects it and we retry with a fresh name.
+   unsigned int probeId = ::GetCurrentProcessId();
+
+   DWORD lastError = ERROR_SUCCESS;
    for (int i = 0; i < 10; i++)
    {
       std::wostringstream probePath;
       probePath << folder
-                << L"rstudio-write-probe-"
-                << ::GetCurrentProcessId()
-                << L'-'
-                << s_probeCounter++
+                << L"rs-"
+                << std::hex << std::setw(4) << std::setfill(L'0')
+                << ((probeId + s_probeCounter++) & 0xFFFF)
                 << L".tmp";
 
       // FILE_FLAG_DELETE_ON_CLOSE saves us a separate DeleteFileW, and still cleans up
       // if we're killed between creating the file and closing the handle
       HANDLE hFile = ::CreateFileW(probePath.str().c_str(),
-                                   GENERIC_WRITE,
+                                   GENERIC_WRITE | DELETE,
                                    0,
                                    nullptr,
                                    CREATE_NEW,
@@ -1564,13 +1571,23 @@ Error FilePath::isWriteable(bool &out_writeable) const
          return Success();
       }
 
-      if (::GetLastError() != ERROR_FILE_EXISTS)
+      lastError = ::GetLastError();
+      if (lastError != ERROR_FILE_EXISTS)
          break;
    }
 
-   // assume any failure means "not writeable"
-   out_writeable = false;
-   return Success();
+   // Only a genuine permission answer sets out_writeable; anything else (a disconnected
+   // network drive, a full disk, a missing path, or exhausting our retries) is a failure
+   // to determine writeability, which the contract says to report as an error.
+   if (lastError == ERROR_ACCESS_DENIED || lastError == ERROR_WRITE_PROTECT)
+   {
+      out_writeable = false;
+      return Success();
+   }
+
+   Error error = systemError(lastError, ERROR_LOCATION);
+   error.addProperty("path", getAbsolutePath());
+   return error;
 }
 
 #endif // _WIN32

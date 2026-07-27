@@ -62,6 +62,10 @@ bool realPathsEqual(const FilePath& a, const FilePath& b);
 
 void addToSystemPath(const FilePath& path, bool prepend = false);
 
+// Searches for a program by name. When the name has no extension, the Windows
+// implementation also probes .exe/.com/.bat/.cmd. Searches the directories on
+// PATH and, on Windows, the system directories; note that it does not search the
+// current directory.
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath);
 
@@ -126,11 +130,6 @@ void ensureLongPath(FilePath* pFilePath);
 Error expandEnvironmentVariables(std::string value, std::string* pResult);
 FilePath expandComSpec();
 
-// Searches for a program by name, returning an empty FilePath if it isn't found.
-// Searches the directories on PATH, then the system directories -- matching what
-// PathFindOnPath documents, but without its MAX_PATH limit on the result.
-FilePath findProgramOnPath(const std::string& program);
-
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)
 Error closeHandle(HANDLE* pHandle, const ErrorLocation& location);
@@ -153,7 +152,8 @@ private:
 // set $HOME to $USERPROFILE
 void setHomeToUserProfile(core::system::Options* pChildEnv);
 
-// Folder for per-machine configuration data
+// Folder for per-machine configuration data.
+// NOTE: no callers in this repository; retained for RStudio Pro.
 FilePath systemSettingsPath(const std::string& appName, bool create);
 
 #endif // WIN32

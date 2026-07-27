@@ -315,31 +315,53 @@ TEST(SharedCoreTest, EmptyFilePathTests)
 
 }
 
-TEST(SharedCoreTest, LongDirectoryIsWriteable)
+TEST(SharedCoreTest, DeepDirectoryIsWriteable)
 {
-   // A directory whose path exceeds MAX_PATH (260 characters) used to report as
-   // read-only on Windows, because isWriteable() probed it with GetTempFileNameW --
-   // which requires the folder to fit within MAX_PATH. See #12806.
+   // A deep directory used to report as read-only on Windows, because isWriteable()
+   // probed it with GetTempFileNameW, whose lpPathName is documented to fail above
+   // MAX_PATH-14 (246) characters. See #12806.
+   //
+   // The target length matters. CreateDirectoryW accepts up to 248 characters without
+   // any OS opt-in, while GetTempFileNameW gives up at 247 -- so a directory in that
+   // window reproduces the original bug on a stock Windows machine, with neither the
+   // longPathAware manifest (which these test binaries do not carry) nor the
+   // LongPathsEnabled registry value. Going past 260 instead would only ever skip.
+   const size_t kTargetLength = 247;
+
    FilePath tempDir;
    Error error = FilePath::tempFilePath(tempDir);
    ASSERT_FALSE(error);
 
-   // nest until we're comfortably past MAX_PATH
-   FilePath longDir = tempDir;
-   while (longDir.getAbsolutePath().length() < 400)
-      longDir = longDir.completeChildPath("0123456789012345678901234567890123456789");
+   // nest in small steps so we can land just under the limit rather than overshoot it
+   FilePath deepDir = tempDir;
+   while (true)
+   {
+      FilePath nextDir = deepDir.completeChildPath("0123456789");
+      if (nextDir.getAbsolutePath().length() > kTargetLength)
+         break;
 
-   error = longDir.ensureDirectory();
+      deepDir = nextDir;
+   }
+
+   // pad the leaf out to land as close to the limit as we can
+   size_t remaining = kTargetLength - deepDir.getAbsolutePath().length();
+   if (remaining > 1)
+      deepDir = deepDir.completeChildPath(std::string(remaining - 1, 'x'));
+
+   ASSERT_GT(deepDir.getAbsolutePath().length(), 246u);
+
+   error = deepDir.ensureDirectory();
    if (error)
    {
-      // creating a path this long requires an OS opt-in (on Windows, the
-      // LongPathsEnabled registry value); there's nothing to test without it
+      // Some platforms cap a single component or the whole path lower than this;
+      // there is nothing to test if the directory cannot be created at all.
       tempDir.remove();
-      GTEST_SKIP() << "unable to create a directory longer than MAX_PATH";
+      GTEST_SKIP() << "unable to create a directory of "
+                   << kTargetLength << " characters";
    }
 
    bool writeable = false;
-   error = longDir.isWriteable(writeable);
+   error = deepDir.isWriteable(writeable);
    EXPECT_FALSE(error);
    EXPECT_TRUE(writeable);
 

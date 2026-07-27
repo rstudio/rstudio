@@ -356,8 +356,9 @@ void runSvnAsync(const ShellArgs& args,
 #ifdef _WIN32
 bool detectSvnExeOnPath(FilePath* pPath)
 {
-   FilePath svnExePath = core::system::findProgramOnPath("svn.exe");
-   if (svnExePath.isEmpty())
+   FilePath svnExePath;
+   Error error = core::system::findProgramOnPath("svn.exe", &svnExePath);
+   if (error)
       return false;
 
    *pPath = svnExePath;

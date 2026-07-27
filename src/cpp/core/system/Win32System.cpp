@@ -102,6 +102,37 @@ Error knownFolderPath(REFKNOWNFOLDERID folderId,
    return Success();
 }
 
+// Resolves a Windows system directory. GetSystemDirectoryW and
+// GetWindowsDirectoryW return the length copied on success, or the size
+// required (including the null terminator) when the buffer was too small.
+FilePath win32Directory(UINT (WINAPI* getDirectory)(LPWSTR, UINT))
+{
+   std::vector<wchar_t> buffer(MAX_PATH);
+   for (;;)
+   {
+      UINT length = getDirectory(&buffer[0], static_cast<UINT>(buffer.size()));
+      if (length == 0)
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+         return FilePath();
+      }
+
+      if (length < buffer.size())
+         return FilePath(std::wstring(&buffer[0], length));
+
+      if (buffer.size() > kMaxPathLength)
+      {
+         LOG_ERROR_MESSAGE("System directory path exceeds " +
+                           safe_convert::numberToString(kMaxPathLength) + " characters");
+         return FilePath();
+      }
+
+      // a too-small buffer reports the size it needs, including the null, so this is
+      // strictly larger than the current size and the loop makes progress
+      buffer.resize(std::min(static_cast<std::size_t>(length), kMaxPathLength + 1));
+   }
+}
+
 Error initJobObject(bool* detachFromJob)
 {
    /*
@@ -232,8 +263,33 @@ void initializeLogConfigReload()
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
+   // A path-qualified name isn't a PATH search; resolve it directly, as the Posix
+   // implementation effectively does via fstatat. ':' counts here because a
+   // drive-relative name like "C:git.exe" is rooted as far as FilePath is
+   // concerned, and completeChildPath would reject (and log) it below.
+   if (program.find_first_of("/\\:") != std::string::npos)
+   {
+      FilePath programPath(program);
+      if (!programPath.isRegularFile())
+         return fileNotFoundError(program, ERROR_LOCATION);
+
+      *pProgramPath = programPath;
+      return Success();
+   }
+
    std::string path = core::system::getenv("PATH");
    auto paths = core::algorithm::split(path, ";");
+
+   // Also search the Windows system directories. These are normally on PATH, but
+   // this used to be reached via PathFindOnPath (which searches them itself) and
+   // we no longer use that API -- it writes at most MAX_PATH characters no matter
+   // how large a buffer it's given, so it cannot see a program under a long path.
+   for (auto&& systemDirectory : { win32Directory(&::GetSystemDirectoryW),
+                                   win32Directory(&::GetWindowsDirectoryW) })
+   {
+      if (!systemDirectory.isEmpty())
+         paths.push_back(systemDirectory.getAbsolutePath());
+   }
 
    // if the program supplied already has an extension,
    // then we'll skip searching any custom extensions
@@ -245,19 +301,24 @@ Error findProgramOnPath(const std::string& program,
 
    for (auto&& path : paths)
    {
-      if (path.empty())
+      // PATH entries are sometimes quoted, and a quote is never part of the path
+      std::string directory = boost::algorithm::trim_copy(path);
+      boost::algorithm::trim_if(directory, boost::algorithm::is_any_of("\""));
+      if (directory.empty())
          continue;
 
       // Skip non-existent directories to avoid logging errors, matching the behavior of the
       // Posix implementation
-      FilePath pathDir(path);
+      FilePath pathDir(directory);
       if (!pathDir.exists())
          continue;
 
       for (auto&& ext : exts)
       {
+         // isRegularFile rather than exists, so a directory named e.g. "git.exe"
+         // sitting on PATH isn't mistaken for the program
          FilePath programPath = pathDir.completeChildPath(program + ext);
-         if (!programPath.exists())
+         if (!programPath.isRegularFile())
             continue;
 
          *pProgramPath = programPath;
@@ -405,7 +466,9 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
 
    // NOTE: we used to create the appName subdirectory via SHGetFolderPathAndSubDirW,
    // but that writes into a caller-supplied MAX_PATH buffer, so the combined path
-   // could overrun it
+   // could overrun it. One behavioral difference for callers: the shell API applied
+   // the folder's predefined default ACLs, whereas ensureDirectory() gets whatever
+   // is inherited. Under C:\ProgramData these normally coincide.
    if (create)
    {
       error = completePath.ensureDirectory();
@@ -605,7 +668,7 @@ Error executablePath(const char *argv0,
    // by returning the buffer size it was given, so a MAX_PATH buffer silently
    // yields a truncated path when the install lives below a long path
    std::vector<wchar_t> buffer(MAX_PATH);
-   while (buffer.size() <= kMaxPathLength)
+   for (;;)
    {
       DWORD length = ::GetModuleFileNameW(nullptr,
                                           &buffer[0],
@@ -619,10 +682,20 @@ Error executablePath(const char *argv0,
          return Success();
       }
 
-      buffer.resize(buffer.size() * 2);
-   }
+      // the buffer already held the longest path Windows can express, so a further
+      // grow would be pointless
+      if (buffer.size() > kMaxPathLength)
+      {
+         return systemError(boost::system::errc::filename_too_long,
+                            "executable path exceeds " +
+                               safe_convert::numberToString(kMaxPathLength) + " characters",
+                            ERROR_LOCATION);
+      }
 
-   return systemError(boost::system::errc::filename_too_long, ERROR_LOCATION);
+      // clamp, so the final attempt is exactly that longest path rather than
+      // overshooting it and rejecting paths that are actually reachable
+      buffer.resize(std::min(buffer.size() * 2, kMaxPathLength + 1));
+   }
 }
 
 // installation path
@@ -868,79 +941,6 @@ void ensureLongPath(FilePath* pFilePath)
    std::string longPath = file_utils::longPathName(path);
    if (longPath != path)
       *pFilePath = FilePath(longPath);
-}
-
-namespace {
-
-// GetSystemDirectoryW and GetWindowsDirectoryW return the length copied on
-// success, or the size required (including the null terminator) when the buffer
-// was too small
-FilePath win32Directory(UINT (WINAPI* getDirectory)(LPWSTR, UINT))
-{
-   std::vector<wchar_t> buffer(MAX_PATH);
-   while (buffer.size() <= kMaxPathLength)
-   {
-      UINT length = getDirectory(&buffer[0], static_cast<UINT>(buffer.size()));
-      if (length == 0)
-         return FilePath();
-
-      if (length < buffer.size())
-         return FilePath(std::wstring(&buffer[0], length));
-
-      buffer.resize(length);
-   }
-
-   return FilePath();
-}
-
-} // anonymous namespace
-
-FilePath findProgramOnPath(const std::string& program)
-{
-   if (program.empty())
-      return FilePath();
-
-   // a path-qualified program isn't a PATH search; ':' counts because a
-   // drive-relative name like "C:git.exe" is rooted as far as FilePath is
-   // concerned, and completeChildPath would reject (and log) it below
-   if (program.find_first_of("/\\:") != std::string::npos)
-   {
-      FilePath programPath(program);
-      return programPath.exists() ? programPath : FilePath();
-   }
-
-   std::vector<std::string> directories;
-   boost::algorithm::split(directories,
-                           core::system::getenv("PATH"),
-                           boost::algorithm::is_any_of(";"));
-
-   // PathFindOnPath searched the system directories as well as PATH, so keep
-   // them as a fallback for the unusual case where they're absent from PATH
-   FilePath systemDirectories[] = {
-      win32Directory(&::GetSystemDirectoryW),
-      win32Directory(&::GetWindowsDirectoryW)
-   };
-
-   for (const FilePath& systemDirectory : systemDirectories)
-   {
-      if (!systemDirectory.isEmpty())
-         directories.push_back(systemDirectory.getAbsolutePath());
-   }
-
-   for (std::string directory : directories)
-   {
-      // PATH entries are sometimes quoted, and quotes aren't legal in a path
-      boost::algorithm::trim(directory);
-      boost::algorithm::trim_if(directory, boost::algorithm::is_any_of("\""));
-      if (directory.empty())
-         continue;
-
-      FilePath candidate = FilePath(directory).completeChildPath(program);
-      if (candidate.exists())
-         return candidate;
-   }
-
-   return FilePath();
 }
 
 Error expandEnvironmentVariables(std::string value, std::string* pResult)

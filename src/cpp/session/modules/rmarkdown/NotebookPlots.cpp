@@ -165,9 +165,13 @@ void PlotCapture::saveSnapshot()
    if (error)
       LOG_ERROR(error);
 
-   // this name is transient -- the snapshot is renamed to its ordinal form when
-   // the chunk is committed, and nothing outside this file parses it -- so use a
-   // shortened id to leave more room under the Windows MAX_PATH limit (see #12806)
+   // This name is transient: the snapshot is renamed to its ordinal form when the
+   // chunk is committed, and nothing outside this file parses it. Use a short id to
+   // leave more room under the Windows MAX_PATH limit (see #12806).
+   //
+   // NOTE: generateShortenedUuid() is not a truncated UUID -- it is a CRC-32 of one,
+   // so 8 hex characters over a 2^32 space. That is ample for the handful of
+   // snapshots in a single plot folder, which is also cleared between runs.
    FilePath outputFile = plotFolder_.completePath(
       core::system::generateShortenedUuid() + kDisplayListExt);
 

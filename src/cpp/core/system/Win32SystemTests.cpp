@@ -16,6 +16,7 @@
 #ifdef _WIN32
 
 #include <core/FileUtils.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -111,39 +112,89 @@ TEST(Win32SystemTest, ComSpec)
 
 TEST(Win32SystemTest, ExecutablePathIsResolved)
 {
-   // guards against the MAX_PATH truncation that GetModuleFileNameW reports by
-   // returning the buffer size it was given (#12806)
+   // a smoke test only: the test binary's own path is far short of MAX_PATH, so
+   // the grow-and-retry loop never iterates here
    FilePath exePath;
    Error err = executablePath(nullptr, &exePath);
    ASSERT_FALSE(err);
    ASSERT_FALSE(exePath.isEmpty());
-   ASSERT_TRUE(exePath.exists());
+   ASSERT_TRUE(exePath.isRegularFile());
 }
 
 TEST(Win32SystemTest, FindProgramOnPath)
 {
-   // cmd.exe lives in System32, which is both on PATH and among the system
-   // directories we fall back to
-   FilePath cmdPath = findProgramOnPath("cmd.exe");
-   ASSERT_FALSE(cmdPath.isEmpty());
-   ASSERT_TRUE(cmdPath.exists());
+   FilePath cmdPath;
+   Error err = findProgramOnPath("cmd.exe", &cmdPath);
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(cmdPath.isRegularFile());
+   ASSERT_TRUE(boost::algorithm::iequals(cmdPath.getFilename(), "cmd.exe"));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathProbesExtensions)
+{
+   // no extension supplied, so .exe should be probed
+   FilePath cmdPath;
+   Error err = findProgramOnPath("cmd", &cmdPath);
+   ASSERT_FALSE(err);
    ASSERT_TRUE(boost::algorithm::iequals(cmdPath.getFilename(), "cmd.exe"));
 }
 
 TEST(Win32SystemTest, FindProgramOnPathMissing)
 {
-   ASSERT_TRUE(findProgramOnPath("oncetherewasafakeprogram374732.exe").isEmpty());
-   ASSERT_TRUE(findProgramOnPath("").isEmpty());
+   FilePath programPath;
+   ASSERT_TRUE(findProgramOnPath("oncetherewasafakeprogram374732.exe", &programPath));
+   ASSERT_TRUE(findProgramOnPath("", &programPath));
 }
 
 TEST(Win32SystemTest, FindProgramOnPathQualified)
 {
-   // an already-qualified program isn't a PATH search, but should still resolve
-   FilePath cmdPath = findProgramOnPath("cmd.exe");
-   ASSERT_FALSE(cmdPath.isEmpty());
+   FilePath cmdPath;
+   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
 
-   ASSERT_TRUE(findProgramOnPath(cmdPath.getAbsolutePath()) == cmdPath);
-   ASSERT_TRUE(findProgramOnPath(cmdPath.getAbsolutePath() + "-nope").isEmpty());
+   // an already-qualified program isn't a PATH search, but should still resolve
+   FilePath qualified;
+   ASSERT_FALSE(findProgramOnPath(cmdPath.getAbsolutePath(), &qualified));
+   ASSERT_TRUE(qualified == cmdPath);
+
+   ASSERT_TRUE(findProgramOnPath(cmdPath.getAbsolutePath() + "-nope", &qualified));
+
+   // a drive-relative name is rooted as far as FilePath is concerned; it must not
+   // be joined onto each PATH entry
+   ASSERT_TRUE(findProgramOnPath("C:oncetherewasafakeprogram374732.exe", &qualified));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathSearchesSystemDirectories)
+{
+   // clear PATH so the only way to resolve cmd.exe is the system-directory
+   // fallback, which is otherwise shadowed because System32 is always on PATH
+   std::string savedPath = getenv("PATH");
+   setenv("PATH", "");
+
+   FilePath cmdPath;
+   Error err = findProgramOnPath("cmd.exe", &cmdPath);
+
+   setenv("PATH", savedPath);
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(cmdPath.isRegularFile());
+}
+
+TEST(Win32SystemTest, FindProgramOnPathTrimsQuotedEntries)
+{
+   FilePath cmdPath;
+   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
+   std::string system32 = cmdPath.getParent().getAbsolutePathNative();
+
+   std::string savedPath = getenv("PATH");
+   setenv("PATH", "  \"" + system32 + "\"  ");
+
+   FilePath quotedPath;
+   Error err = findProgramOnPath("cmd.exe", &quotedPath);
+
+   setenv("PATH", savedPath);
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(quotedPath.isRegularFile());
 }
 
 TEST(Win32SystemTest, LongPathNameRoundTrip)
@@ -173,8 +224,10 @@ TEST(Win32SystemTest, LongPathNameRoundTrip)
 
 TEST(Win32SystemTest, LongPathNamePassesThroughMissingPaths)
 {
-   // GetLongPathNameW fails for paths that don't exist; we return the input rather
-   // than the uninitialized buffer the old fixed-size implementation could yield
+   // GetLongPathNameW returns 0 for a path that doesn't exist, and we hand back the
+   // input. Note this does not cover the buffer-too-small case (a non-zero return with
+   // the buffer left unwritten), which is what the old fixed-size code misread as
+   // success; reproducing that needs a path longer than its 520-byte buffer.
    std::string missing = "C:\\oncetherewasafakedirectory374732\\nope.txt";
    ASSERT_EQ(missing, file_utils::longPathName(missing));
 }

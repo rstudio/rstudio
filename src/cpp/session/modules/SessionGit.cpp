@@ -2761,8 +2761,9 @@ private:
 
 bool detectGitExeDirOnPath(FilePath* pPath)
 {
-   FilePath filePath = core::system::findProgramOnPath("git.exe");
-   if (filePath.isEmpty())
+   FilePath filePath;
+   Error error = core::system::findProgramOnPath("git.exe", &filePath);
+   if (error)
       return false;
 
    // As of version 20120710 of msysgit, the cmd directory contains a
@@ -2784,16 +2785,16 @@ bool isGitExeOnPath()
 
 bool detectGitBinDirFromPath(FilePath* pPath)
 {
-   FilePath gitCmdPath = core::system::findProgramOnPath("git.cmd");
-   if (!gitCmdPath.isEmpty())
+   FilePath gitCmdPath;
+   if (!core::system::findProgramOnPath("git.cmd", &gitCmdPath))
    {
       *pPath = gitCmdPath.getParent().getParent().completeChildPath("bin");
       return true;
    }
 
    // Look for cmd/git.exe and redirect to bin/
-   FilePath gitExePath = core::system::findProgramOnPath("git.exe");
-   if (!gitExePath.isEmpty())
+   FilePath gitExePath;
+   if (!core::system::findProgramOnPath("git.exe", &gitExePath))
    {
       *pPath = gitExePath.getParent().getParent().completeChildPath("bin");
       return true;
@@ -2975,8 +2976,12 @@ Error discoverGitBinDir(FilePath* pPath)
    if (detectGitBinDirFromStandardLocation(pPath))
       return Success();
 
-   return systemError(boost::system::errc::no_such_file_or_directory,
-                      ERROR_LOCATION);
+   Error error = systemError(boost::system::errc::no_such_file_or_directory,
+                             ERROR_LOCATION);
+   error.addProperty("description",
+                     "Git installation not found on PATH, via the Start Menu "
+                     "shortcut, or in a standard install location");
+   return error;
 }
 
 Error detectAndSaveGitExePath()
@@ -3335,7 +3340,11 @@ bool initGitBin()
 #ifdef _WIN32
       error = detectAndSaveGitExePath();
       if (error)
+      {
+         // log it: otherwise Git support simply disappears with nothing to go on
+         LOG_ERROR(error);
          return false; // no Git install detected
+      }
 #else
       FilePath gitExeFilePath = whichGitExe();
       if (gitExeFilePath.isEmpty())
