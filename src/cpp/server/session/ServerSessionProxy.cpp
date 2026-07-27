@@ -1323,6 +1323,25 @@ void proxyLocalhostRequest(
    // the client's request instead of deep-copying them
    pClient->request().assign(std::move(*pRequest));
 
+   // Stream the response to the browser by default (this path carries the large
+   // port-proxied downloads the issue is about, and handleLocalhostResponse has
+   // no non-chunked side effects to preserve). ChunkProxy preserves a known
+   // Content-Length end-to-end (progress bars) and falls back to chunked only
+   // when the upstream length is unknown. Force full buffering only for the
+   // header-observable cases handleLocalhostResponse must handle with the entire
+   // response: SparkUI root-path link fixups (Server: Jetty; see
+   // isSparkUIResponse), redirects (Location/Refresh), and websocket upgrades.
+   pClient->setStreamNonChunkedResponses(true);
+   pClient->setBufferPredicate([](const http::Response& response) {
+      return response.statusCode() == http::status::SwitchingProtocols ||
+             !response.headerValue("Location").empty() ||
+             !response.headerValue("Refresh").empty() ||
+             boost::algorithm::contains(response.headerValue("Server"), "Jetty");
+   });
+
+   boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
+   chunkProxy->proxy(pClient);
+
    // execute request
    pClient->execute(
             boost::bind(handleLocalhostResponse, ptrConnection, pClient, username, port, address, ipv6, _1),
