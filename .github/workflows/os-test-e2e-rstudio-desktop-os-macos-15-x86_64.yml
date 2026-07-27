@@ -476,6 +476,11 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # runner.os is just "macOS" for both the arm64 (macos26) and x86_64
+          # (macos15) engines, so without a scope they share one R-library cache
+          # and each restores the other's wrong-arch binaries (pak/cli .so fail
+          # to dyn.load). Scope by OS and arch to isolate the two.
+          cache-scope: macos15-x86_64
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
