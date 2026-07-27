@@ -31,6 +31,8 @@ export class ChatPane extends FramePageObject {
   public newConversationBtn: Locator;
   public historyBtn: Locator;
   public conversationList: Locator;
+  public pendingQuestions: Locator;
+  public submitAnswersBtn: Locator;
 
   // Blocking state elements (inside the chat iframe)
   public retryManifestBtn: Locator;
@@ -78,6 +80,12 @@ export class ChatPane extends FramePageObject {
     this.newConversationBtn = this.frame.getByRole('button', { name: 'New conversation' });
     this.historyBtn = this.frame.getByRole('button', { name: 'Conversation history' });
     this.conversationList = this.frame.locator("[class*='conversation']");
+    // PAI 0.7.x AskUser elicitation: the assistant can pause mid-turn and render
+    // a question form instead of acting. The turn stays active (stop button
+    // showing, composer in "queue" mode) until the form is submitted or
+    // cancelled, so any wait keyed on streaming completion hangs until answered.
+    this.pendingQuestions = this.frame.getByRole('tablist', { name: 'Pending questions' });
+    this.submitAnswersBtn = this.frame.getByRole('button', { name: 'Submit Answers' });
 
     // Blocking state elements
     this.retryManifestBtn = this.frame.locator('#retry-manifest-btn');
@@ -103,6 +111,10 @@ export class ChatPane extends FramePageObject {
 
   async isAllowDropdownVisible(): Promise<boolean> {
     return await this.allowDropdownTrigger.isVisible().catch(() => false);
+  }
+
+  async isPendingQuestionVisible(): Promise<boolean> {
+    return await this.pendingQuestions.isVisible().catch(() => false);
   }
 
   /**
