@@ -36,13 +36,42 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@seri
     const initialCount = await chatPane.getMessageCount();
     await chatActions.sendChatMessage(PROMPT);
 
-    // Handle Allow dialogs until readline notification appears.
+    // Handle Allow dialogs until the readline notification appears.
     // The assistant will generate and run code that calls readline(),
     // which blocks R waiting for console input.
+    //
+    // The notification only appears if the assistant actually ran blocking
+    // readline() code. If its executeCode tool fails (e.g. the r.getLogger
+    // outage, assistant #1893), the code never runs, R never blocks, and the
+    // assistant just finishes its turn with a normal reply. Detect that
+    // terminal state and fail with an attributable message instead of hanging
+    // until the 120s test timeout. Require the "finished + no notification"
+    // condition to hold across one short re-check so a transient Stop-button
+    // gap between the assistant's intermediate tool steps doesn't produce a
+    // false failure. The poll budget stays below the per-test timeout so this
+    // assertion, not the test timeout, reports the failure.
+    let finishedWithoutNotification = 0;
     await chatActions.pollWithAllowDialogs(async () => {
-      const visible = await chatPane.readlineNotification.isVisible().catch(() => false);
-      return visible;
-    });
+      if (await chatPane.readlineNotification.isVisible().catch(() => false)) {
+        return true;
+      }
+      if (await chatPane.isStopButtonVisible()) {
+        // Still processing -- only consecutive finished checks trip the failure.
+        finishedWithoutNotification = 0;
+        return false;
+      }
+      // Turn fully finished (no Stop button) but no notification => readline
+      // never blocked; the assistant likely couldn't execute the code.
+      finishedWithoutNotification += 1;
+      if (finishedWithoutNotification >= 2) {
+        throw new Error(
+          'Assistant turn finished without blocking on readline -- executeCode may ' +
+          'have failed ("r.getLogger is not a function", assistant #1893). ' +
+          'readline notification never appeared.',
+        );
+      }
+      return false;
+    }, 90000);
 
     // --- Step 4: Assert notification is visible ---
     await expect(chatPane.readlineNotification).toBeVisible({ timeout: 5000 });
