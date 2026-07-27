@@ -82,10 +82,12 @@ FilePath knownFolderHomePath(DWORD flags)
       return FilePath();
    }
 
-   FilePath result(std::wstring(homePath));
+   // NOTE: copy before freeing; also keep the wstring in its own variable, since
+   // FilePath result(std::wstring(homePath)) would parse as a function declaration
+   std::wstring resultPath(homePath);
    ::CoTaskMemFree(homePath);
 
-   return result;
+   return FilePath(resultPath);
 }
 
 FilePath currentCSIDLPersonalHomePath()
