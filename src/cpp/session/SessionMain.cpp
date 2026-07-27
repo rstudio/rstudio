@@ -928,6 +928,23 @@ void rInitComplete()
    module_context::events().onInitComplete();
 }
 
+// Set during startup when the initial working directory is too long for Windows to
+// launch child processes from (see #12806). The console isn't up yet at that point,
+// so the warning is held here and reported once the session is initialized -- the
+// failures it causes otherwise look entirely unrelated to their cause.
+std::string s_workingDirWarning;
+
+void notifyIfWorkingDirectoryTooLong()
+{
+   if (s_workingDirWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_workingDirWarning,
+      console_output::OutputTypeWarning);
+}
+
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -963,6 +980,9 @@ void rSessionInitHook(bool newSession)
 
    // notify the user if the R version has changed
    notifyIfRVersionChanged();
+
+   // notify the user if the working directory is too long to launch children from
+   notifyIfWorkingDirectoryTooLong();
 
    // synchronize session info
    json::Object dataJson;
@@ -2629,14 +2649,16 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // damage shows up later with no obvious cause, so say so up front. See #12806.
       if (workingDir.getAbsolutePath().length() >= MAX_PATH)
       {
-         LOG_WARNING_MESSAGE(
+         s_workingDirWarning =
             "Working directory is " +
             safe_convert::numberToString(workingDir.getAbsolutePath().length()) +
             " characters, which exceeds the Windows limit of " +
             safe_convert::numberToString(MAX_PATH) + " for a process working "
             "directory; launching child processes (Git, terminals, builds) will "
             "fail. Move the project to a shorter path. Path: " +
-            workingDir.getAbsolutePath());
+            workingDir.getAbsolutePath();
+
+         LOG_WARNING_MESSAGE(s_workingDirWarning);
       }
 #endif
 

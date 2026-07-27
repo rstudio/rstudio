@@ -63,9 +63,12 @@ bool realPathsEqual(const FilePath& a, const FilePath& b);
 void addToSystemPath(const FilePath& path, bool prepend = false);
 
 // Searches for a program by name. When the name has no extension, the Windows
-// implementation also probes .exe/.com/.bat/.cmd. Searches the directories on
-// PATH and, on Windows, the system directories; note that it does not search the
-// current directory.
+// implementation also probes .exe/.com/.bat/.cmd. Searches the Windows system
+// directories (on Windows) and then the directories on PATH; note that it does
+// not search the current directory.
+//
+// A name that is already path-qualified is resolved directly rather than searched
+// for, but is still subject to the same extension probing.
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath);
 
@@ -153,7 +156,8 @@ private:
 void setHomeToUserProfile(core::system::Options* pChildEnv);
 
 // Folder for per-machine configuration data.
-// NOTE: no callers in this repository; retained for RStudio Pro.
+// NOTE: no callers in this repository; retained for RStudio Pro, which uses it for
+// the license manager's verify config directory under C:\ProgramData.
 FilePath systemSettingsPath(const std::string& appName, bool create);
 
 #endif // WIN32

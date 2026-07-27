@@ -156,10 +156,13 @@ void ensureLongFilePath(FilePath* pFilePath)
    std::string filename = pFilePath->getFilename();
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
-      // longPathName() returns its input unchanged when the path can't be expanded,
-      // so only reassign when we actually learned something -- the monitor's tree is
-      // keyed on these absolute paths
-      std::string path = pFilePath->getAbsolutePath();
+      // Compare in native form: GetLongPathNameW hands back backslash separators,
+      // while getAbsolutePath() is generic (forward slashes), so comparing those two
+      // would always differ and the guard below would never fire. longPathName()
+      // returns its input unchanged when the path can't be expanded, so this only
+      // reassigns when we actually learned something -- the monitor's tree is keyed
+      // on these absolute paths.
+      std::string path = pFilePath->getAbsolutePathNative();
       std::string longPath = file_utils::longPathName(path);
       if (longPath != path)
          *pFilePath = FilePath(longPath);

@@ -263,34 +263,6 @@ void initializeLogConfigReload()
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
-   // A path-qualified name isn't a PATH search; resolve it directly, as the Posix
-   // implementation effectively does via fstatat. ':' counts here because a
-   // drive-relative name like "C:git.exe" is rooted as far as FilePath is
-   // concerned, and completeChildPath would reject (and log) it below.
-   if (program.find_first_of("/\\:") != std::string::npos)
-   {
-      FilePath programPath(program);
-      if (!programPath.isRegularFile())
-         return fileNotFoundError(program, ERROR_LOCATION);
-
-      *pProgramPath = programPath;
-      return Success();
-   }
-
-   std::string path = core::system::getenv("PATH");
-   auto paths = core::algorithm::split(path, ";");
-
-   // Also search the Windows system directories. These are normally on PATH, but
-   // this used to be reached via PathFindOnPath (which searches them itself) and
-   // we no longer use that API -- it writes at most MAX_PATH characters no matter
-   // how large a buffer it's given, so it cannot see a program under a long path.
-   for (auto&& systemDirectory : { win32Directory(&::GetSystemDirectoryW),
-                                   win32Directory(&::GetWindowsDirectoryW) })
-   {
-      if (!systemDirectory.isEmpty())
-         paths.push_back(systemDirectory.getAbsolutePath());
-   }
-
    // if the program supplied already has an extension,
    // then we'll skip searching any custom extensions
    auto programExt = core::string_utils::getExtension(program);
@@ -298,6 +270,52 @@ Error findProgramOnPath(const std::string& program,
    auto defaultExts = { ".exe", ".com", ".bat", ".cmd" };
    auto noExts = { "" };
    auto exts = programExt.empty() ? defaultExts : noExts;
+
+   // A path-qualified name isn't a PATH search; resolve it directly. It still gets the
+   // extension probing a bare name would, so that "C:/tools/git" finds git.exe rather
+   // than only an extensionless file of that exact name. ':' counts here because a
+   // drive-relative name like "C:git.exe" is rooted as far as FilePath is concerned,
+   // and completeChildPath would reject (and log) it below.
+   if (program.find_first_of("/\\:") != std::string::npos)
+   {
+      // the name exactly as given first, then the extensions a bare name would get
+      std::vector<std::string> candidateExts = { std::string() };
+      if (programExt.empty())
+         candidateExts.insert(candidateExts.end(), defaultExts.begin(), defaultExts.end());
+
+      for (auto&& ext : candidateExts)
+      {
+         FilePath programPath(program + ext);
+         if (!programPath.isRegularFile())
+            continue;
+
+         *pProgramPath = programPath;
+         return Success();
+      }
+
+      return fileNotFoundError(program, ERROR_LOCATION);
+   }
+
+   // Search the Windows system directories ahead of PATH. PathFindOnPath, which this
+   // replaces, searched them itself and in that order (it follows SearchPath: the
+   // application directory, the current directory, the system directories, then PATH).
+   // Keeping system directories first means a stray cmd.exe earlier on PATH cannot
+   // shadow the one in System32, which is how we launch batch files.
+   //
+   // We can no longer delegate to PathFindOnPath because it writes at most MAX_PATH
+   // characters no matter how large a buffer it's given, so it cannot see a program
+   // under a long path.
+   std::vector<std::string> paths;
+   for (auto&& systemDirectory : { win32Directory(&::GetSystemDirectoryW),
+                                   win32Directory(&::GetWindowsDirectoryW) })
+   {
+      if (!systemDirectory.isEmpty())
+         paths.push_back(systemDirectory.getAbsolutePath());
+   }
+
+   std::string pathEnv = core::system::getenv("PATH");
+   auto pathEntries = core::algorithm::split(pathEnv, ";");
+   paths.insert(paths.end(), pathEntries.begin(), pathEntries.end());
 
    for (auto&& path : paths)
    {
@@ -466,9 +484,10 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
 
    // NOTE: we used to create the appName subdirectory via SHGetFolderPathAndSubDirW,
    // but that writes into a caller-supplied MAX_PATH buffer, so the combined path
-   // could overrun it. One behavioral difference for callers: the shell API applied
-   // the folder's predefined default ACLs, whereas ensureDirectory() gets whatever
-   // is inherited. Under C:\ProgramData these normally coincide.
+   // could overrun it. The ACLs are unaffected by the switch: a known folder's
+   // predefined security descriptor applies to the known folder itself (ProgramData,
+   // which already exists), while a caller-named subdirectory under it is created
+   // with inherited attributes either way.
    if (create)
    {
       error = completePath.ensureDirectory();
@@ -935,9 +954,12 @@ Error copyMetafileToClipboard(const FilePath& path)
 
 void ensureLongPath(FilePath* pFilePath)
 {
-   // longPathName() returns its input unchanged when the path can't be expanded,
-   // so only reassign when we actually learned something
-   std::string path = pFilePath->getAbsolutePath();
+   // Compare in native form: GetLongPathNameW hands back backslash separators, while
+   // getAbsolutePath() is generic (forward slashes), so comparing those two would
+   // always differ and the guard below would never fire. longPathName() returns its
+   // input unchanged when the path can't be expanded, so this only reassigns when we
+   // actually learned something.
+   std::string path = pFilePath->getAbsolutePathNative();
    std::string longPath = file_utils::longPathName(path);
    if (longPath != path)
       *pFilePath = FilePath(longPath);

@@ -17,7 +17,6 @@
 #include "Win32ConPty.hpp"
 
 #include <windows.h>
-#include <Shlwapi.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 

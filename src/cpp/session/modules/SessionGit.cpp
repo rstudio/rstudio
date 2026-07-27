@@ -2786,7 +2786,8 @@ bool isGitExeOnPath()
 bool detectGitBinDirFromPath(FilePath* pPath)
 {
    FilePath gitCmdPath;
-   if (!core::system::findProgramOnPath("git.cmd", &gitCmdPath))
+   Error error = core::system::findProgramOnPath("git.cmd", &gitCmdPath);
+   if (!error)
    {
       *pPath = gitCmdPath.getParent().getParent().completeChildPath("bin");
       return true;
@@ -2794,7 +2795,8 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 
    // Look for cmd/git.exe and redirect to bin/
    FilePath gitExePath;
-   if (!core::system::findProgramOnPath("git.exe", &gitExePath))
+   error = core::system::findProgramOnPath("git.exe", &gitExePath);
+   if (!error)
    {
       *pPath = gitExePath.getParent().getParent().completeChildPath("bin");
       return true;

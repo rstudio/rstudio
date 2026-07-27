@@ -291,6 +291,24 @@ void initHook()
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
+   // A path-qualified name isn't a PATH search; resolve it directly. Without this,
+   // the rooted name falls through to completeChildPath() below, which rejects it
+   // and leaves an empty path behind while still reporting success. Matches the
+   // Windows implementation.
+   if (program.find('/') != std::string::npos)
+   {
+      FilePath programPath(program);
+      if (!programPath.isRegularFile())
+         return fileNotFoundError(program, ERROR_LOCATION);
+
+      // as below, AT_EACCESS so the check uses the effective user id
+      if (::faccessat(AT_FDCWD, program.c_str(), X_OK, AT_EACCESS) == -1)
+         return fileNotFoundError(program, ERROR_LOCATION);
+
+      *pProgramPath = programPath;
+      return Success();
+   }
+
    std::string path = core::system::getenv("PATH");
    auto paths = core::algorithm::split(path, ":");
 

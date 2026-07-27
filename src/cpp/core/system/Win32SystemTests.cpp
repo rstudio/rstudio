@@ -163,10 +163,23 @@ TEST(Win32SystemTest, FindProgramOnPathQualified)
    ASSERT_TRUE(findProgramOnPath("C:oncetherewasafakeprogram374732.exe", &qualified));
 }
 
+TEST(Win32SystemTest, FindProgramOnPathQualifiedProbesExtensions)
+{
+   FilePath cmdPath;
+   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
+
+   // a qualified name without an extension gets the same probing a bare name does,
+   // so dropping the ".exe" here should still resolve
+   std::string withoutExt = cmdPath.getParent().completeChildPath("cmd").getAbsolutePath();
+
+   FilePath qualified;
+   ASSERT_FALSE(findProgramOnPath(withoutExt, &qualified));
+   ASSERT_TRUE(boost::algorithm::iequals(qualified.getFilename(), "cmd.exe"));
+}
+
 TEST(Win32SystemTest, FindProgramOnPathSearchesSystemDirectories)
 {
-   // clear PATH so the only way to resolve cmd.exe is the system-directory
-   // fallback, which is otherwise shadowed because System32 is always on PATH
+   // clear PATH so the system directories are the only place cmd.exe can come from
    std::string savedPath = getenv("PATH");
    setenv("PATH", "");
 
@@ -177,6 +190,32 @@ TEST(Win32SystemTest, FindProgramOnPathSearchesSystemDirectories)
 
    ASSERT_FALSE(err);
    ASSERT_TRUE(cmdPath.isRegularFile());
+}
+
+TEST(Win32SystemTest, FindProgramOnPathPrefersSystemDirectories)
+{
+   FilePath cmdPath;
+   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
+
+   // A decoy cmd.exe at the front of PATH must not shadow the one in System32.
+   // PathFindOnPath, which this replaced, searched the system directories before
+   // PATH, and resolving cmd.exe is how we launch batch files.
+   FilePath decoyDir;
+   ASSERT_FALSE(FilePath::tempFilePath(decoyDir));
+   ASSERT_FALSE(decoyDir.ensureDirectory());
+   ASSERT_FALSE(decoyDir.completeChildPath("cmd.exe").ensureFile());
+
+   std::string savedPath = getenv("PATH");
+   setenv("PATH", decoyDir.getAbsolutePathNative() + ";" + savedPath);
+
+   FilePath resolved;
+   Error err = findProgramOnPath("cmd.exe", &resolved);
+
+   setenv("PATH", savedPath);
+   decoyDir.remove();
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(resolved == cmdPath);
 }
 
 TEST(Win32SystemTest, FindProgramOnPathTrimsQuotedEntries)

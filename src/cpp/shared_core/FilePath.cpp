@@ -1544,34 +1544,58 @@ Error FilePath::isWriteable(bool &out_writeable) const
    // still correct, since CREATE_NEW detects it and we retry with a fresh name.
    unsigned int probeId = ::GetCurrentProcessId();
 
+   bool requestDelete = true;
    DWORD lastError = ERROR_SUCCESS;
+
    for (int i = 0; i < 10; i++)
    {
-      std::wostringstream probePath;
-      probePath << folder
-                << L"rs-"
-                << std::hex << std::setw(4) << std::setfill(L'0')
-                << ((probeId + s_probeCounter++) & 0xFFFF)
-                << L".tmp";
+      std::wostringstream probeStream;
+      probeStream << folder
+                  << L"rs-"
+                  << std::hex << std::setw(4) << std::setfill(L'0')
+                  << ((probeId + s_probeCounter++) & 0xFFFF)
+                  << L".tmp";
+
+      std::wstring probePath = probeStream.str();
 
       // FILE_FLAG_DELETE_ON_CLOSE saves us a separate DeleteFileW, and still cleans up
       // if we're killed between creating the file and closing the handle
-      HANDLE hFile = ::CreateFileW(probePath.str().c_str(),
-                                   GENERIC_WRITE | DELETE,
+      DWORD access = requestDelete ? (GENERIC_WRITE | DELETE) : GENERIC_WRITE;
+      DWORD flags = requestDelete
+         ? (FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE)
+         : FILE_ATTRIBUTE_TEMPORARY;
+
+      HANDLE hFile = ::CreateFileW(probePath.c_str(),
+                                   access,
                                    0,
                                    nullptr,
                                    CREATE_NEW,
-                                   FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+                                   flags,
                                    nullptr);
 
       if (hFile != INVALID_HANDLE_VALUE)
       {
          ::CloseHandle(hFile);
+
+         if (!requestDelete)
+            ::DeleteFileW(probePath.c_str());
+
          out_writeable = true;
          return Success();
       }
 
       lastError = ::GetLastError();
+
+      // A folder can grant create-but-not-delete, via an inheritable ACE that denies
+      // DELETE on its children; some locked-down shares are configured exactly that
+      // way. Give up the DELETE right once and retry before calling such a folder
+      // read-only, cleaning up explicitly if the second probe succeeds.
+      if (lastError == ERROR_ACCESS_DENIED && requestDelete)
+      {
+         requestDelete = false;
+         continue;
+      }
+
       if (lastError != ERROR_FILE_EXISTS)
          break;
    }
