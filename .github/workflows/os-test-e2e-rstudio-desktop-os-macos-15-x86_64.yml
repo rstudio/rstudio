@@ -475,6 +475,11 @@ jobs:
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
+          # RUNNER_OS is just "macOS" for every Mac runner regardless of arch,
+          # so without a scope the arm64 and x86_64 macOS engines share one
+          # os-e2e-deps cache key and restore each other's incompatible R
+          # library / pak / Playwright-browser binaries. Scope by arch+version.
+          cache-scope: macos15-x86_64
           r-libs-user: ${{ env.R_LIBS_USER }}
 
       - name: Run Playwright tests
