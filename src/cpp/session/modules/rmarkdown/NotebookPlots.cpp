@@ -35,7 +35,12 @@
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 
-#define kPlotPrefix "_rs_chunk_plot_"
+// Prefix for the plots the notebook graphics device renders. These names are
+// transient -- they only exist between the device writing a page and the chunk
+// being committed, at which point they're renamed to their ordinal form -- and
+// nothing outside this file matches on them, so the prefix is kept short to
+// leave more room under the Windows MAX_PATH limit (see #12806).
+#define kPlotPrefix "_rsp_"
 #define kGoldenRatio 1.618
 
 using namespace rstudio::core;
@@ -160,8 +165,11 @@ void PlotCapture::saveSnapshot()
    if (error)
       LOG_ERROR(error);
 
+   // this name is transient -- the snapshot is renamed to its ordinal form when
+   // the chunk is committed, and nothing outside this file parses it -- so use a
+   // shortened id to leave more room under the Windows MAX_PATH limit (see #12806)
    FilePath outputFile = plotFolder_.completePath(
-      core::system::generateUuid(false) + kDisplayListExt);
+      core::system::generateShortenedUuid() + kDisplayListExt);
 
    error = r::exec::RFunction(
          ".rs.saveNotebookGraphics",

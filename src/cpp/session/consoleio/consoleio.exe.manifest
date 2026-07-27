@@ -4,6 +4,17 @@
       name="consoleio"
       type="win32"/>
    <description>consoleio</description>
+   <!--
+      Opt out of the MAX_PATH (260 character) limit, so that paths handed to us
+      by rsession are not rejected here. Also requires the machine's
+      HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
+      registry value to be set.
+   -->
+   <application>
+      <windowsSettings>
+         <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+      </windowsSettings>
+   </application>
    <!-- Identify the application security requirements. -->
    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
       <security>

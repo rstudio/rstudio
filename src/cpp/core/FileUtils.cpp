@@ -88,6 +88,33 @@ std::string shortPathName(const std::string& path)
 
 }
 
+// NOTE: Assumes that the path string is UTF-8 encoded.
+std::string longPathName(const std::string& path)
+{
+#ifdef _WIN32
+
+   // size the buffer from the API rather than assuming MAX_PATH; when the
+   // buffer is too small GetLongPathNameW returns the required size and
+   // writes nothing, which is indistinguishable from success if we only
+   // test for a non-zero return
+   std::wstring widePath = string_utils::utf8ToWide(path);
+   DWORD length = ::GetLongPathNameW(widePath.c_str(), nullptr, 0);
+   if (length == 0)
+      return path;
+
+   std::vector<WCHAR> buffer(length, 0);
+   DWORD result = ::GetLongPathNameW(widePath.c_str(), &buffer[0], length);
+   if (result == 0 || result >= length)
+      return path;
+
+   return string_utils::wideToUtf8(std::wstring(&buffer[0], result));
+
+#else
+   return path;
+#endif
+
+}
+
 FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix, const std::string& extension)
 {
    // try up to 100 times then fallback to a uuid

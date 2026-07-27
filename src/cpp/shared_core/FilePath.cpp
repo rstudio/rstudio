@@ -29,6 +29,9 @@
 #ifdef _WIN32
 #include <windows.h>
 
+#include <atomic>
+#include <sstream>
+
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/system/windows_error.hpp>
@@ -1517,21 +1520,56 @@ Error FilePath::isWriteable(bool &out_writeable) const
    // on other filesystems such as FAT32; ditto for some networked file systems.
    //
    // Instead, to cover all bases, try to create and delete a temporary file in the folder.
+   //
+   // NOTE: we name the probe file ourselves rather than calling GetTempFileNameW, which requires
+   // the folder to fit within MAX_PATH and so reports any deeper folder as read-only.
 
-   LPCWSTR folder = m_impl->Path.wstring().c_str();
+   static std::atomic<unsigned int> s_probeCounter(0);
 
-   // create a unique temporary filename
-   WCHAR tempFileName[MAX_PATH+1];
-   UINT uRetVal = GetTempFileNameW(folder, L"TMP", 0, tempFileName);
-   if (uRetVal == 0) {
-      // assume any failure means "not writeable"
+   std::wstring folder = m_impl->Path.wstring();
+   if (folder.empty())
+   {
       out_writeable = false;
       return Success();
    }
 
-   out_writeable = true;
-   DeleteFileW(tempFileName);
+   if (folder.back() != L'\\' && folder.back() != L'/')
+      folder.push_back(L'\\');
 
+   // a name collision just means another probe is in flight, so retry with a fresh name
+   for (int i = 0; i < 10; i++)
+   {
+      std::wostringstream probePath;
+      probePath << folder
+                << L"rstudio-write-probe-"
+                << ::GetCurrentProcessId()
+                << L'-'
+                << s_probeCounter++
+                << L".tmp";
+
+      // FILE_FLAG_DELETE_ON_CLOSE saves us a separate DeleteFileW, and still cleans up
+      // if we're killed between creating the file and closing the handle
+      HANDLE hFile = ::CreateFileW(probePath.str().c_str(),
+                                   GENERIC_WRITE,
+                                   0,
+                                   nullptr,
+                                   CREATE_NEW,
+                                   FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+                                   nullptr);
+
+      if (hFile != INVALID_HANDLE_VALUE)
+      {
+         ::CloseHandle(hFile);
+         out_writeable = true;
+         return Success();
+      }
+
+      if (::GetLastError() != ERROR_FILE_EXISTS)
+         break;
+   }
+
+   // assume any failure means "not writeable"
+   out_writeable = false;
    return Success();
 }
 

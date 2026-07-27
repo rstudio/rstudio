@@ -30,6 +30,22 @@ include_directories(
    ${SESSION_SOURCE_DIR}/include
 )
 
+if(WIN32)
+
+   list(
+      APPEND POSTBACK_SOURCE_FILES
+      "${CMAKE_CURRENT_BINARY_DIR}/rpostback.rc")
+
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rpostback.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/rpostback.rc)
+
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rpostback.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/rpostback.exe.manifest COPYONLY)
+
+endif()
+
 # define executable
 add_stripped_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FILES})
 

@@ -2618,6 +2618,14 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION);
 
       // set working directory
+      //
+      // NOTE: on Windows this is the one path that long path awareness (see the
+      // longPathAware entry in rsession.exe.manifest) does not buy us. A current
+      // directory longer than MAX_PATH makes every subsequent CreateProcessW call
+      // fail, which would take out git, terminals, builds and R CMD -- so a project
+      // whose own directory exceeds MAX_PATH is not supported, even though files
+      // *below* a shorter project directory may now exceed it freely. See #12806
+      // and the SetCurrentDirectory documentation.
       FilePath workingDir = dirs::getInitialWorkingDirectory();
       error = workingDir.makeCurrentPath();
       if (error)

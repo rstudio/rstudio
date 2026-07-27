@@ -15,6 +15,7 @@
 
 #ifdef _WIN32
 
+#include <core/FileUtils.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -106,6 +107,76 @@ TEST(Win32SystemTest, ComSpec)
    FilePath command = expandComSpec();
    ASSERT_FALSE(command.isEmpty());
    ASSERT_TRUE(command.exists());
+}
+
+TEST(Win32SystemTest, ExecutablePathIsResolved)
+{
+   // guards against the MAX_PATH truncation that GetModuleFileNameW reports by
+   // returning the buffer size it was given (#12806)
+   FilePath exePath;
+   Error err = executablePath(nullptr, &exePath);
+   ASSERT_FALSE(err);
+   ASSERT_FALSE(exePath.isEmpty());
+   ASSERT_TRUE(exePath.exists());
+}
+
+TEST(Win32SystemTest, FindProgramOnPath)
+{
+   // cmd.exe lives in System32, which is both on PATH and among the system
+   // directories we fall back to
+   FilePath cmdPath = findProgramOnPath("cmd.exe");
+   ASSERT_FALSE(cmdPath.isEmpty());
+   ASSERT_TRUE(cmdPath.exists());
+   ASSERT_TRUE(boost::algorithm::iequals(cmdPath.getFilename(), "cmd.exe"));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathMissing)
+{
+   ASSERT_TRUE(findProgramOnPath("oncetherewasafakeprogram374732.exe").isEmpty());
+   ASSERT_TRUE(findProgramOnPath("").isEmpty());
+}
+
+TEST(Win32SystemTest, FindProgramOnPathQualified)
+{
+   // an already-qualified program isn't a PATH search, but should still resolve
+   FilePath cmdPath = findProgramOnPath("cmd.exe");
+   ASSERT_FALSE(cmdPath.isEmpty());
+
+   ASSERT_TRUE(findProgramOnPath(cmdPath.getAbsolutePath()) == cmdPath);
+   ASSERT_TRUE(findProgramOnPath(cmdPath.getAbsolutePath() + "-nope").isEmpty());
+}
+
+TEST(Win32SystemTest, LongPathNameRoundTrip)
+{
+   FilePath tempDir;
+   Error err = FilePath::tempFilePath(tempDir);
+   ASSERT_FALSE(err);
+
+   err = tempDir.ensureDirectory();
+   ASSERT_FALSE(err);
+
+   std::string longPath = tempDir.getAbsolutePath();
+   std::string shortPath = file_utils::shortPathName(longPath);
+   if (shortPath == longPath)
+   {
+      // 8.3 name generation can be disabled per-volume, in which case there's no
+      // short name to expand back
+      tempDir.remove();
+      GTEST_SKIP() << "no 8.3 short name available for the temporary directory";
+   }
+
+   // expanding the short form should recover the long form
+   ASSERT_TRUE(boost::algorithm::iequals(file_utils::longPathName(shortPath), longPath));
+
+   tempDir.remove();
+}
+
+TEST(Win32SystemTest, LongPathNamePassesThroughMissingPaths)
+{
+   // GetLongPathNameW fails for paths that don't exist; we return the input rather
+   // than the uninitialized buffer the old fixed-size implementation could yield
+   std::string missing = "C:\\oncetherewasafakedirectory374732\\nope.txt";
+   ASSERT_EQ(missing, file_utils::longPathName(missing));
 }
 
 TEST(Win32SystemTest, WindowsArchitectureBitnessAssumptions)

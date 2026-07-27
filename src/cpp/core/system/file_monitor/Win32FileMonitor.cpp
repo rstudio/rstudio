@@ -25,6 +25,7 @@
 
 #include <shared_core/FilePath.hpp>
 
+#include <core/FileUtils.hpp>
 #include <core/Thread.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
@@ -155,14 +156,13 @@ void ensureLongFilePath(FilePath* pFilePath)
    std::string filename = pFilePath->getFilename();
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
-      const std::size_t kBuffSize = (MAX_PATH*2) + 1;
-      char buffer[kBuffSize];
-      if (::GetLongPathName(pFilePath->getAbsolutePath().c_str(),
-                            buffer,
-                            kBuffSize) > 0)
-      {
-         *pFilePath = FilePath(buffer);
-      }
+      // longPathName() returns its input unchanged when the path can't be expanded,
+      // so only reassign when we actually learned something -- the monitor's tree is
+      // keyed on these absolute paths
+      std::string path = pFilePath->getAbsolutePath();
+      std::string longPath = file_utils::longPathName(path);
+      if (longPath != path)
+         *pFilePath = FilePath(longPath);
    }
 }
 

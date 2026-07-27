@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-
-   <assemblyIdentity version="1.0.0.0" name="rsession" type="win32"/>
-
-   <description>rsession</description>
-
+   <assemblyIdentity version="1.0.0.0"
+      name="rpostback"
+      type="win32"/>
+   <description>rpostback</description>
    <!--
-      Opt out of the MAX_PATH (260 character) limit. R declares long path
-      awareness on its own front-ends, but a manifest applies to the process,
-      and we host R.dll ourselves -- so R's declaration never takes effect
-      under RStudio unless we declare it here too. Also requires the machine's
-      HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
+      Opt out of the MAX_PATH (260 character) limit. rpostback is handed paths
+      by rsession (e.g. the file to edit for editfile postbacks), so it needs
+      to accept anything a long-path-aware session can produce. Also requires
+      the machine's HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
       registry value to be set.
    -->
    <application>
@@ -18,7 +16,6 @@
          <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
       </windowsSettings>
    </application>
-
    <!-- Identify the application security requirements. -->
    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
       <security>
@@ -27,8 +24,6 @@
          </requestedPrivileges>
       </security>
    </trustInfo>
-
-   <!-- Declare compatibility with different versions of Windows. -->
    <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
       <application>
          <!-- Windows 10 -->
@@ -43,5 +38,4 @@
          <supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>
       </application>
    </compatibility>
-
 </assembly>

@@ -315,6 +315,37 @@ TEST(SharedCoreTest, EmptyFilePathTests)
 
 }
 
+TEST(SharedCoreTest, LongDirectoryIsWriteable)
+{
+   // A directory whose path exceeds MAX_PATH (260 characters) used to report as
+   // read-only on Windows, because isWriteable() probed it with GetTempFileNameW --
+   // which requires the folder to fit within MAX_PATH. See #12806.
+   FilePath tempDir;
+   Error error = FilePath::tempFilePath(tempDir);
+   ASSERT_FALSE(error);
+
+   // nest until we're comfortably past MAX_PATH
+   FilePath longDir = tempDir;
+   while (longDir.getAbsolutePath().length() < 400)
+      longDir = longDir.completeChildPath("0123456789012345678901234567890123456789");
+
+   error = longDir.ensureDirectory();
+   if (error)
+   {
+      // creating a path this long requires an OS opt-in (on Windows, the
+      // LongPathsEnabled registry value); there's nothing to test without it
+      tempDir.remove();
+      GTEST_SKIP() << "unable to create a directory longer than MAX_PATH";
+   }
+
+   bool writeable = false;
+   error = longDir.isWriteable(writeable);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(writeable);
+
+   tempDir.remove();
+}
+
 #ifndef _WIN32
 
 TEST(SharedCoreTest, GetFileOwnerTest)

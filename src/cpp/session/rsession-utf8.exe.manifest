@@ -5,10 +5,20 @@
 
    <description>rsession-utf8</description>
 
-   <!-- Support UTF-8 code page with R 4.2.0 and newer. -->
+   <!--
+      Support UTF-8 code page with R 4.2.0 and newer.
+
+      longPathAware opts out of the MAX_PATH (260 character) limit. R declares
+      long path awareness on its own front-ends, but a manifest applies to the
+      process, and we host R.dll ourselves -- so R's declaration never takes
+      effect under RStudio unless we declare it here too. Also requires the
+      machine's HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
+      registry value to be set.
+   -->
    <application>
      <windowsSettings>
        <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>
+       <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
      </windowsSettings>
   </application>
 

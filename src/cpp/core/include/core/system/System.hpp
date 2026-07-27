@@ -126,6 +126,11 @@ void ensureLongPath(FilePath* pFilePath);
 Error expandEnvironmentVariables(std::string value, std::string* pResult);
 FilePath expandComSpec();
 
+// Searches for a program by name, returning an empty FilePath if it isn't found.
+// Searches the directories on PATH, then the system directories -- matching what
+// PathFindOnPath documents, but without its MAX_PATH limit on the result.
+FilePath findProgramOnPath(const std::string& program);
+
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)
 Error closeHandle(HANDLE* pHandle, const ErrorLocation& location);
