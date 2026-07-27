@@ -107,21 +107,52 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   test('Create and run R Shiny tip calculator', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `Missing packages: ${missingPackages.join(', ')}`);
 
+    // The poll budget below is 300s; the test body must outlast it (cold Shiny
+    // launch + assistant round-trips) or the 120s config default caps it and
+    // the poll's own, more informative timeout is unreachable.
+    test.setTimeout(360000);
+
     // Start a fresh conversation
     await chatActions.startNewConversation();
 
     // Send the deterministic prompt
     await chatActions.sendChatMessage(PROMPT);
 
-    // Poll until the assistant completes. Handle Allow dialogs for each tool type.
+    // Poll until the assistant completes. Handle Allow dialogs for each tool
+    // type. Fail fast if the turn finishes without the success marker -- e.g.
+    // the r.getLogger executeCode outage (assistant #1893) makes write succeed
+    // but every executeCode fail, so the app never runs and the marker never
+    // arrives. Require the "finished + no marker" condition to hold across one
+    // short re-check so a transient Stop-button gap between the assistant's
+    // many tool steps (write + bash + several executeCode) doesn't produce a
+    // false failure.
+    let finishedWithoutMarker = 0;
     await chatActions.pollWithAllowDialogs(async () => {
-      const isStillProcessing = await chatPane.isStopButtonVisible();
-      const messageCount = await chatPane.getMessageCount();
-      if (!isStillProcessing && messageCount >= 2) {
-        const lastText = await chatPane.messageItem.last().innerText().catch(() => '');
-        if (lastText.includes('Wacky Tip Calculator for R has started') && !lastText.includes('Create a Shiny for R')) {
-          return true;
-        }
+      if (await chatPane.isStopButtonVisible()) {
+        // Still processing -- only consecutive finished checks trip the failure.
+        finishedWithoutMarker = 0;
+        return false;
+      }
+      if ((await chatPane.getMessageCount()) < 2) return false;
+
+      const lastText = await chatPane.messageItem.last().innerText().catch(() => '');
+      // Keep the prompt-text guard so the user's own message is never mistaken
+      // for the assistant's success marker.
+      if (lastText.includes('Wacky Tip Calculator for R has started') &&
+          !lastText.includes('Create a Shiny for R')) {
+        return true;
+      }
+
+      // Turn finished (no Stop button) but the success marker never came -- the
+      // assistant gave up. Confirm across one re-check, then fail fast with its
+      // reply instead of polling to the timeout.
+      finishedWithoutMarker += 1;
+      if (finishedWithoutMarker >= 2) {
+        throw new Error(
+          `Assistant finished without launching the Shiny app -- executeCode may ` +
+          `have failed ("r.getLogger is not a function", assistant #1893). ` +
+          `Last reply: ${lastText.slice(0, 500)}`,
+        );
       }
       return false;
     }, 300000);
