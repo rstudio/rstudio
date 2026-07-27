@@ -1,0 +1,25 @@
+# TEMPORARY -- validates the new macOS 14 x86_64 engine on this branch.
+# macOS 14 is not part of the PR test matrix, so this push-triggered caller
+# runs the engine directly. build_from_source: true exercises the build job on
+# the macos-14-large runner (the biggest unknown for a new engine: does the
+# runner label resolve and does RStudio compile on macOS 14 Intel), then a
+# smoke selector keeps the e2e portion short.
+# DELETE this file in this same PR before merge.
+name: "zz-temp validate macOS 14 engine"
+
+on:
+  push:
+    branches: [test/ron/e2e-macos-14-intel-engine]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  validate:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-x86_64.yml
+    secrets: inherit
+    with:
+      build_from_source: true
+      test_selector: tests/smoke/startup.test.ts
