@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.prefs.model.PrefsTests;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponseTests;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManagerTests;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
+import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManagerTests;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItemTests;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumnTests;
 import org.rstudio.studio.client.workbench.views.source.editors.text.VimrcLoaderTests;
@@ -79,6 +80,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
       suite.addTestSuite(LintItemTests.class);
+      suite.addTestSuite(PositAiInstallManagerTests.class);
       suite.addTestSuite(PackageLinkColumnTests.class);
       suite.addTestSuite(SourceMarkerItemCodecTests.class);
       suite.addTestSuite(TestMocks.class);
