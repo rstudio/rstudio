@@ -303,6 +303,11 @@ struct StreamingOutcome
    std::string responseBody; // populated only if responseHandlerCalled
    int statusCode = 0;
    bool timedOut = false;
+   // Content-Length header value observed on the `response` argument passed to
+   // the ChunkHandler for the first delivered piece -- confirms AsyncClient
+   // relays the upstream Content-Length through to the chunk handler (so
+   // ChunkProxy can choose Content-Length framing downstream).
+   std::string contentLengthHeaderOnFirstChunk;
 };
 
 // Drives a client opted into setStreamNonChunkedResponses(true), with an
@@ -358,6 +363,9 @@ StreamingOutcome runStreamingScenario(
          pTimer->cancel();
          return true;
       }
+
+      if (outcome.contentLengthHeaderOnFirstChunk.empty() && chunkIndex == 0)
+         outcome.contentLengthHeaderOnFirstChunk = response.headerValue("Content-Length");
 
       bool pauseHere = (chunkIndex == pauseOnChunkIndex);
       chunkIndex++;
@@ -546,6 +554,11 @@ TEST(AsyncClientContentLength, StreamsNonChunkedBodyPieceWiseWhenOptedIn)
    for (const std::string& chunk : outcome.chunks)
       assembled += chunk;
    EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
+
+   // the response handed to the chunk handler must still carry the upstream
+   // Content-Length header so ChunkProxy can choose Content-Length framing.
+   EXPECT_EQ(outcome.contentLengthHeaderOnFirstChunk,
+             std::to_string(std::string("{\"name\":\"jsonlite\"}\n").size()));
 }
 
 // A header-observable buffer predicate (e.g. simulating the SparkUI/Jetty
@@ -637,6 +650,56 @@ TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffer
    EXPECT_TRUE(responseHandlerCalled);
    EXPECT_EQ(responseBody, "{\"name\":\"jsonlite\"}\n");
    EXPECT_FALSE(chunkHandlerCalled);
+}
+
+// --- Step 4 coverage: filling gaps left by Step 1's early test additions ---
+
+// The eval-P1 regression guard, specifically for backpressure landing on the
+// *final* piece (as opposed to BackpressurePauseAndResumeCompletesStreamedBody
+// above, which pauses on an interior piece): a single-write Content-Length
+// response over a kept-alive upstream is delivered to the chunk handler as
+// exactly one data chunk, which is therefore also the final data chunk before
+// the empty completion signal. Pausing there and resuming must still route to
+// closeAndRespond() (completion) rather than another readSomeContent() -- the
+// `complete` flag must have threaded through chunkState_ across the pause.
+TEST(AsyncClientContentLength, BackpressureOnFinalPieceCompletesOverKeptAliveConnection)
+{
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::ContentLength, /*closeAfterResponse=*/false,
+      /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
+      /*bufferPredicate=*/boost::function<bool(const http::Response&)>(),
+      /*pauseOnChunkIndex=*/0);
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_FALSE(outcome.responseHandlerCalled);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
+}
+
+// Regression guard for Step 1's useChunkHandler()/deliverChunks() refactor: a
+// chunked-encoding upstream, with a real ChunkHandler set and streaming opted
+// in, must still be delivered piece-wise via the pre-existing chunked path
+// (processChunks()) exactly as before this change -- streamNonChunkedResponses_
+// only gates the *non-chunked* delivery decision (streamResponse_ requires
+// `!chunkedEncoding_`), so chunked responses are unaffected by the flag.
+TEST(AsyncClientContentLength, ChunkedUnchangedWithChunkHandlerWhenStreamingOptedIn)
+{
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::Chunked, /*closeAfterResponse=*/false,
+      /*responseBody=*/"{\"name\":\"jsonlite\"}\n");
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_FALSE(outcome.responseHandlerCalled);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
 }
 
 } // namespace tests
