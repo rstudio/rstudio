@@ -670,4 +670,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String positAssistantInstallCompleteMessage();
     String positAssistantInstallFailedTitle();
     String positAssistantInstallFailedMessage(String error);
+    String positAssistantCheckInProgressCaption();
+    String positAssistantCheckInProgressMessage();
 }
