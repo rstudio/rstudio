@@ -114,6 +114,21 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] 
       return lastReply.includes(PLOT_DONE_MARKER);
     }, 150000);
 
+    // The assistant emits PLOT_DONE_E2E because the prompt tells it to "after
+    // the plot has been drawn" -- it will say so even if its executeCode tool
+    // failed and no plot exists. Gate on real plot history (clearPlots only
+    // enables when the Plots pane has a plot) so a dead executeCode tool fails
+    // here with a clear message instead of masquerading as an #18037 regression.
+    await expect
+      .poll(() => isCommandEnabled(page, 'clearPlots'), {
+        timeout: 15000,
+        message:
+          'Assistant reported PLOT_DONE_E2E but no plot was drawn -- executeCode ' +
+          'likely errored ("r.getLogger is not a function", assistant #1893). ' +
+          'Cannot exercise #18037.',
+      })
+      .toBe(true);
+
     // The regression: the assistant drew a plot, so the Plots pane must be
     // brought to the front, exactly as a console plot would.
     await expect
