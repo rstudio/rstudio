@@ -41,7 +41,7 @@ const OUTSIDE_FILE = `guardrail_outside_${TS}.txt`;
 const RENAME_SRC = `guardrail_rename_${TS}.txt`;
 const READ_FILE = `guardrail_read_${TS}.R`;
 
-test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@serial'] }, () => {
+test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
   const sandbox = useSuiteSandbox();

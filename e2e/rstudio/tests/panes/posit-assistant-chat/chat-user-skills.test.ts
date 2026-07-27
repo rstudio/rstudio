@@ -84,7 +84,7 @@ async function createSkillFile(
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe.serial('User-Added Skills', { tag: ['@ai', '@serial'] }, () => {
+test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
   const sandbox = useSuiteSandbox();

@@ -7,6 +7,10 @@
  * read/write path can be covered deterministically. The R-side mechanism
  * is the same; this just removes the assistant from the loop.
  *
+ * That is also why this file is tagged @chat but not @ai: it is part of the
+ * Posit Assistant feature area, but it drives no AI provider and needs no
+ * credentials, so it still runs under --grep-invert @ai.
+ *
  * Tests are grouped by category (read denials, read allows, write
  * denials, write allows, connection denials, error message structure,
  * system file denials, path traversal).
@@ -52,7 +56,7 @@ const GUARDRAILS_MARKER_RE = /__GUARDRAILS_[\d.]+_\d+__/;
 // stop()ed). Sentinel is printed by the error branch.
 const GUARDRAILS_ERR_RE = /__ERR__\s+__GUARDRAILS_[\d.]+_\d+__/;
 
-test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@serial'] }, () => {
+test.describe.serial('Filesystem Guardrails: paths (#17122)', { tag: ['@chat', '@serial'] }, () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   // Forward-slash sandbox path for safe interpolation into R double-quoted strings.
