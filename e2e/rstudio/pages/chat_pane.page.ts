@@ -110,8 +110,19 @@ export class ChatPane extends FramePageObject {
    * its editable state via the contenteditable attribute (toggled by
    * editor.setEditable), so we check that rather than isEnabled() -- a
    * contenteditable <div> is not a form control and always reports "enabled".
+   *
+   * A visible Sign-In / "connect a provider" affordance means no AI provider is
+   * connected: the composer is still editable in that state, but the assistant
+   * can't run anything, so we do not report ready. waitForChatReady then keeps
+   * polling (tolerating a brief credential-load flash of the Sign-In button)
+   * and, if it persists, raises its actionable sign-in error in beforeAll --
+   * instead of the disconnected state slipping through setup and resurfacing
+   * downstream as a misleading per-test failure.
    */
   async isChatInputReady(): Promise<boolean> {
+    if (await this.signInBtn.first().isVisible().catch(() => false)) {
+      return false;
+    }
     if (!(await this.chatInput.isVisible().catch(() => false))) {
       return false;
     }
