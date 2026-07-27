@@ -8,7 +8,7 @@
    <ui:style>
       .container {
          margin-top: 8px;
-         border: 1px solid #c1c3c5;
+         border: 1px solid rgba(128, 128, 128, 0.4);
       }
    </ui:style>
 

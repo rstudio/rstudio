@@ -57,8 +57,18 @@ public class VCSApplicationWindow extends SatelliteWindow
    }
    
    
+   // Opt in to full theming (the default for satellites is none at all). The
+   // changelist and diff panes follow the editor theme, just as the Git pane
+   // does in the main window, so the surrounding chrome needs to follow the
+   // flat theme rather than staying light.
    @Override
-   protected void onInitialize(LayoutPanel mainPanel, 
+   public boolean supportsThemes()
+   {
+      return true;
+   }
+
+   @Override
+   protected void onInitialize(LayoutPanel mainPanel,
                                JavaScriptObject params)
    {
       // set our window title

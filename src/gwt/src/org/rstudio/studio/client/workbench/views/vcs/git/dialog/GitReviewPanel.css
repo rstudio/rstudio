@@ -4,10 +4,16 @@
 @external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+@external rstudio-themes-dark;
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
 
 /** BEGIN SHARED BETWEEN HISTORY AND REVIEW PANELS **/
 
@@ -19,10 +25,6 @@
 }
 @sprite .splitPanelCommit .gwt-SplitLayoutPanel-HDragger {
    gwt-image: 'splitterTileH';
-}
-
-.whitebg {
-   background-color: white;
 }
 
 .toolbar {
@@ -88,6 +90,20 @@
    border-color: THEME_ALTERNATE_BORDER;
 }
 
+/* Dark theme (#9026). Only the chrome is styled here: the changelist and the
+   diff pane carry the ace_editor_theme class, so they take their colors from
+   the active editor theme like the Git pane does in the main window. */
+
+.rstudio-themes-dark .splitPanel,
+.rstudio-themes-dark .splitPanelCommit {
+   background-color: THEME_DARKGREY_BODY_BACKGROUND;
+   color: #eee;
+}
+
+.rstudio-themes-dark .toolbarWrapper {
+   background: THEME_DARKGREY_BACKGROUND;
+}
+
 /** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/
 
 
@@ -144,4 +160,36 @@
 
 .ignoreWhitespace label {
    margin-left: 4px;
+}
+
+/* Dark theme styling for the commit controls, matching the palette used by
+   theme-aware modal dialogs. */
+
+.rstudio-themes-dark .commitMessage {
+   background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   color-scheme: dark;
+}
+
+.rstudio-themes-dark .toolbarWrapper select {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark .toolbarWrapper select option {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   color: #eee;
+}
+
+.rstudio-themes-dark .commitButton > table:first-child {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   box-shadow: none;
+}
+
+.rstudio-themes-dark .commitButton:active > table:first-child {
+   background: THEME_DARKGREY_INACTIVE;
 }

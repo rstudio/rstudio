@@ -1,6 +1,10 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external editor_dark;
+
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
 
 @def selectionBorderWidth 1px;
 .cellTableWidget {
@@ -135,4 +139,82 @@
    padding: 1px 0 0 0;
    margin-bottom: -5px; /* Prevent selected line from changing height on Ubuntu */
    overflow: visible;
+}
+
+/* Dark theme (#9026). The diff sits in a container carrying the
+   ace_editor_theme class, so unchanged lines simply show the editor theme's
+   own background and foreground. Changed lines tint that background with a
+   translucent overlay rather than a fixed color, so the diff stays legible
+   whatever the editor theme is. */
+
+.editor_dark .cellTableWidget {
+   color: inherit;
+}
+
+.editor_dark .header {
+   background-color: rgba(255, 255, 255, 0.10);
+   color: inherit;
+}
+.editor_dark .header > td {
+   border-top-color: rgba(255, 255, 255, 0.20) !important;
+   border-bottom-color: rgba(255, 255, 255, 0.20) !important;
+}
+
+.editor_dark .insertion {
+   background-color: rgba(87, 214, 106, 0.18);
+   color: inherit;
+}
+.editor_dark .insertion.start > td {
+   border-top-color: rgba(87, 214, 106, 0.45) !important;
+}
+.editor_dark .insertion.end > td {
+   border-bottom-color: rgba(87, 214, 106, 0.45) !important;
+}
+
+.editor_dark .deletion {
+   background-color: rgba(248, 81, 73, 0.18);
+   color: inherit;
+}
+.editor_dark .deletion.start > td {
+   border-top-color: rgba(248, 81, 73, 0.45) !important;
+}
+.editor_dark .deletion.end > td {
+   border-bottom-color: rgba(248, 81, 73, 0.45) !important;
+}
+
+.editor_dark .comment {
+   background-color: rgba(255, 255, 255, 0.06);
+   color: inherit;
+}
+
+.editor_dark .info {
+   background-color: rgba(230, 195, 100, 0.18);
+   color: inherit;
+}
+.editor_dark .info.start > td {
+   border-top-color: rgba(230, 195, 100, 0.45) !important;
+}
+.editor_dark .info.end > td {
+   border-bottom-color: rgba(230, 195, 100, 0.45) !important;
+}
+
+.editor_dark .cellTableWidget > tbody > tr.same .lineNumber {
+   background-color: rgba(255, 255, 255, 0.05);
+}
+.editor_dark .cellTableWidget > tbody > tr .lineNumber.lastLineNumber {
+   border-right-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.editor_dark .cellTableWidget > tbody > tr > td {
+   border-right-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.editor_dark .cellTableSelectedRow,
+.editor_dark .cellTableSelectedRowCell {
+   background: THEME_DARK_ROW_SELECTED !important;
+}
+
+.editor_dark .cellTableWidget:focus .cellTableSelectedRow,
+.editor_dark .cellTableWidget:focus .cellTableSelectedRowCell {
+   background: THEME_DARK_ROW_FOCUSED !important;
 }

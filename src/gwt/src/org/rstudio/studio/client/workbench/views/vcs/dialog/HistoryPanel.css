@@ -1,20 +1,38 @@
+@external rstudio-themes-dark;
+
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
+
 .splitPanel {}
 .toolbarWrapper {}
-.whitebg {}
 .toolbar {}
 
 .commitDetail {
    border: 12px solid transparent;
 }
 
-.commitTableScrollPanel {
-   background-color: white;
+.commitTableScrollPanel {}
+
+/* Dark theme (#9026); the commit list and the commit detail carry the
+   ace_editor_theme class and follow the editor theme, so only the chrome
+   around them is styled here. */
+
+.rstudio-themes-dark .splitPanel {
+   background-color: THEME_DARKGREY_BODY_BACKGROUND;
+   color: #eee;
+}
+
+.rstudio-themes-dark .toolbarWrapper {
+   background: THEME_DARKGREY_BACKGROUND;
 }
 
 .ref, .tag {
    font-size: 80%;
    border-radius: 8px;
    background-color: green;
+   /* the ref colors below are all pale, so pin the text dark rather than
+      letting it inherit a light color from a dark theme */
+   color: #1a1a1a;
    padding: 0 6px;
    margin-right: 4px;
 }

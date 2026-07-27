@@ -15,7 +15,8 @@
                </g:SimplePanel>
             </g:north>
             <g:center>
-               <g:ScrollPanel styleName="{res.styles.commitTableScrollPanel}">
+               <g:ScrollPanel styleName="{res.styles.commitTableScrollPanel}"
+                              addStyleNames="ace_editor_theme">
                   <vcs_dialog:CommitListTable ui:field="commitTable_" width="100%" />
                </g:ScrollPanel>
             </g:center>
@@ -27,7 +28,7 @@
          </g:DockLayoutPanel>
       </g:north>
       <g:center>
-         <g:ScrollPanel ui:field="detailScrollPanel_">
+         <g:ScrollPanel ui:field="detailScrollPanel_" addStyleNames="ace_editor_theme">
             <vcs_dialog:CommitDetail styleName="{res.styles.commitDetail}"
                                      ui:field="commitDetail_" />
          </g:ScrollPanel>

@@ -1,6 +1,15 @@
+@external editor_dark;
+
 @sprite .header {
    gwt-image: 'diffHeaderTile';
    position: relative;
+}
+
+/* The header tile is a light gradient; in dark themes drop it in favor of a
+   translucent tint over the editor theme background (#9026). */
+.editor_dark .header {
+   background-image: none;
+   background-color: rgba(255, 255, 255, 0.10);
 }
 
 .header img, .fileIcon {
@@ -32,4 +41,10 @@
 .viewFileHyperlink {
    font-size: 11px;
    margin-top: 6px;
+}
+
+/* rstudio-HyperlinkLabel is a dark blue that all but disappears against a
+   dark theme; use the same light blue the dark dialogs use (#9026). */
+.editor_dark .viewFileHyperlink {
+   color: #abc;
 }
