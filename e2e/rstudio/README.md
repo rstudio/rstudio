@@ -491,10 +491,6 @@ npx playwright test --grep-invert @ai
 npx playwright test --grep @chat
 ```
 
-The auth setup project needs no tag of its own: Playwright does not apply
-`--grep` to a project's dependencies, so `--grep @chat` still runs
-`auth.setup.ts` and the Assistant tests start with credentials in place.
-
 You can also exclude tests by file path with `PW_TEST_IGNORE` (whitespace-separated globs):
 
 ```bash
