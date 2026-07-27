@@ -27,7 +27,7 @@ async function ensureChatPaneVisible(page: Page, chatActions: ChatPaneActions): 
   await sleep(2000);
 }
 
-test.describe.serial('Chat pane persistence', { tag: ['@ai'] }, () => {
+test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let consoleActions: ConsolePaneActions;

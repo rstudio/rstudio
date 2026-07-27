@@ -451,6 +451,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 | `@pro_only` | Test requires RStudio Pro |
 | `@os_only` | Test only applies to open-source RStudio |
 | `@ai` | Test exercises an AI feature (Copilot ghost text / NES, Posit Assistant chat). Useful for skipping AI-dependent suites in offline or no-credential runs. |
+| `@chat` | Test covers the Posit Assistant chat pane (everything under `tests/panes/posit-assistant-chat/`). A narrower selector than `@ai`: use it to run the Assistant suite without the Copilot/NES code-suggestion tests. Most `@chat` tests are also `@ai`; the exception is `chat-guardrails-paths.test.ts`, which exercises the guardrails from the R console with no AI provider in the loop. |
 | `@smoke` | Long, low-information liveness check. Excluded by default (redundant alongside the full suite); opt in with `PW_RUN_SMOKE=1`. |
 
 ### Filtering by Tag
@@ -485,7 +486,14 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 
 # Skip AI-dependent tests (Copilot/NES + Posit Assistant chat)
 npx playwright test --grep-invert @ai
+
+# Run only the Posit Assistant chat tests (skips Copilot/NES)
+npx playwright test --grep @chat
 ```
+
+The auth setup project needs no tag of its own: Playwright does not apply
+`--grep` to a project's dependencies, so `--grep @chat` still runs
+`auth.setup.ts` and the Assistant tests start with credentials in place.
 
 You can also exclude tests by file path with `PW_TEST_IGNORE` (whitespace-separated globs):
 

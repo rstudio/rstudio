@@ -54,7 +54,7 @@ const DEFAULT_CHECK_RESPONSE = {
   isInitialInstall: false,
 };
 
-test.describe.serial('Check for Posit Assistant updates -- #18253', { tag: ['@ai', '@serial'] }, () => {
+test.describe.serial('Check for Posit Assistant updates -- #18253', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let versions: EnvironmentVersions;
