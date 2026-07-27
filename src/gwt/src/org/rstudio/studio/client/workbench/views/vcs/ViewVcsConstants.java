@@ -47,6 +47,7 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String lineSuffix(String emptyString);
     String chunkSuffix(String emptyString);
     String noCommitSelectedParentheses();
+    String noChangesParentheses();
     String allCommitsParentheses();
     String filterByFileEllipses();
     String chooseFileCapitalized();

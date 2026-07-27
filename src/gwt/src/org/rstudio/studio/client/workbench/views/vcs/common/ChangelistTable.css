@@ -2,3 +2,12 @@
 .infoBar {
    border-bottom: 1px solid #bcc1c5;
 }
+
+/* shown in place of the table when there is nothing to review; muted so it
+   reads as an empty state rather than content */
+.emptyMessage {
+   width: 100%;
+   padding: 12px 0;
+   text-align: center;
+   color: #8a8a8a;
+}

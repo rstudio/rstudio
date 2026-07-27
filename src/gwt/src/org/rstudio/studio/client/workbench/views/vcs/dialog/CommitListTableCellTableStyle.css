@@ -22,6 +22,21 @@
    height: 24px;
 }
 
+/* Match the changelist's header treatment: the base style draws a light
+   top and left border on every header cell, which reads as a heavy outline
+   around each one. Keep only the separators (bottom, and right between
+   columns), and inset the label from the cell edge. */
+
+.cellTableHeader {
+   border-top: none;
+   border-left: none;
+   padding-left: 5px;
+}
+
+.cellTableHeader:last-child {
+   border-right: none;
+}
+
 /* Dark theme (#9026). The base style gives header cells a light background and
    selects rows with an opaque light grey, both unreadable once the table
    follows a dark editor theme. The changelist gets the same treatment in

@@ -231,6 +231,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       commitButton_.addStyleName(RES.styles().commitButton());
 
       changelist_ = changelist.getView();
+      changelist_.setEmptyMessage(constants_.noChangesParentheses());
       lines_ = diffPane;
       lines_.getElement().setTabIndex(-1);
 

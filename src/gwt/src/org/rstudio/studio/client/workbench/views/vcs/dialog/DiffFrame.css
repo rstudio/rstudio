@@ -5,11 +5,12 @@
    position: relative;
 }
 
-/* The header tile is a light gradient; in dark themes drop it in favor of a
-   translucent tint over the editor theme background (#9026). */
+/* The header tile is a light gradient; in dark themes drop it and let the
+   tint on the header row (DiffFrame.ui.xml) show through instead, so the
+   whole row is one shade (#9026). */
 .editor_dark .header {
    background-image: none;
-   background-color: rgba(255, 255, 255, 0.10);
+   background-color: transparent;
 }
 
 .header img, .fileIcon {

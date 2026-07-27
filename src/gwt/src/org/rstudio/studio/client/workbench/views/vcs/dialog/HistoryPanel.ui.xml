@@ -21,7 +21,7 @@
                </g:ScrollPanel>
             </g:center>
             <g:south size="28">
-               <g:FlowPanel>
+               <g:FlowPanel styleName="{res.styles.pagerPanel}">
                   <v:AbstractPager ui:field="pager_"/>
                </g:FlowPanel>
             </g:south>

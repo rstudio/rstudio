@@ -209,6 +209,33 @@
    border-right-color: rgba(255, 255, 255, 0.15) !important;
 }
 
+/* The chunk and line action buttons are three-slice sprite pills (a light
+   blue one for Stage, a light grey one for the rest -- see
+   LineActionButtonRenderer). Both bundles share one stylesheet, so the two
+   variants are told apart here by their data-action attribute; drop the
+   sprites and draw a flat translucent pill instead. */
+
+.editor_dark .actions div[data-action] {
+   background-color: rgba(255, 255, 255, 0.16);
+   border-radius: 8px;
+}
+
+.editor_dark .actions div[data-action]:hover {
+   background-color: rgba(255, 255, 255, 0.24);
+}
+
+.editor_dark .actions div[data-action='Stage'] {
+   background-color: rgba(120, 170, 235, 0.35);
+}
+
+.editor_dark .actions div[data-action='Stage']:hover {
+   background-color: rgba(120, 170, 235, 0.5);
+}
+
+.editor_dark .actions div[data-action] > div {
+   background-image: none;
+}
+
 .editor_dark .cellTableSelectedRow,
 .editor_dark .cellTableSelectedRowCell {
    background: THEME_DARK_ROW_SELECTED !important;

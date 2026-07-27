@@ -9,7 +9,6 @@
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
 
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
-@eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
 @eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
 
 @external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
@@ -84,13 +83,10 @@
 
 /* Dark theme (#9026); see the matching block in GitReviewPanel.css. */
 
-.rstudio-themes-dark .splitPanel {
-   background-color: THEME_DARKGREY_BODY_BACKGROUND;
-   color: #eee;
-}
-
+.rstudio-themes-dark .splitPanel,
 .rstudio-themes-dark .toolbarWrapper {
    background: THEME_DARKGREY_BACKGROUND;
+   color: #eee;
 }
 
 .rstudio-themes-dark .toolbarWrapper select {

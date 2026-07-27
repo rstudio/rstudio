@@ -29,6 +29,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
@@ -76,6 +77,7 @@ public abstract class ChangelistTable extends Composite
    interface Styles extends CssResource
    {
       String infoBar();
+      String emptyMessage();
    }
 
    public static void ensureStylesInjected()
@@ -177,6 +179,18 @@ public abstract class ChangelistTable extends Composite
    public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)
    {
       selectFirstItemByDefault_ = selectFirstItemByDefault;
+   }
+
+   /**
+    * Show a message in place of the table while it has no rows. Used by the
+    * Review Changes window, where the table owns a large pane and reads as
+    * broken when it is simply blank; the Git and SVN panes leave it unset.
+    */
+   public void setEmptyMessage(String message)
+   {
+      Label label = new Label(message);
+      label.addStyleName(resources_.styles().emptyMessage());
+      table_.setEmptyTableWidget(label);
    }
 
    public void moveSelectionDown()

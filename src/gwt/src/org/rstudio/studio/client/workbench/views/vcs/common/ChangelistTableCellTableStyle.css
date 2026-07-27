@@ -47,6 +47,10 @@ span.status img:first-child {
    padding-left: 13px !important;
 }
 
+.cellTableHeader {
+   padding-left: 5px;
+}
+
 .cellTableSortableHeader {
    border-top: none;
    border-left: none;

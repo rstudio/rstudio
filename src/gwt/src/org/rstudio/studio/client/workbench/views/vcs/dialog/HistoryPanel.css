@@ -1,7 +1,6 @@
 @external rstudio-themes-dark;
 
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
-@eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
 
 .splitPanel {}
 .toolbarWrapper {}
@@ -11,19 +10,21 @@
    border: 12px solid transparent;
 }
 
+/* the pager buttons sit tight against the commit table above them */
+.pagerPanel {
+   padding-top: 2px;
+}
+
 .commitTableScrollPanel {}
 
 /* Dark theme (#9026); the commit list and the commit detail carry the
    ace_editor_theme class and follow the editor theme, so only the chrome
    around them is styled here. */
 
-.rstudio-themes-dark .splitPanel {
-   background-color: THEME_DARKGREY_BODY_BACKGROUND;
-   color: #eee;
-}
-
+.rstudio-themes-dark .splitPanel,
 .rstudio-themes-dark .toolbarWrapper {
    background: THEME_DARKGREY_BACKGROUND;
+   color: #eee;
 }
 
 .ref, .tag {

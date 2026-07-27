@@ -11,9 +11,9 @@
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
 
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
-@eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
 @eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
 @eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
 
 /** BEGIN SHARED BETWEEN HISTORY AND REVIEW PANELS **/
 
@@ -92,16 +92,17 @@
 
 /* Dark theme (#9026). Only the chrome is styled here: the changelist and the
    diff pane carry the ace_editor_theme class, so they take their colors from
-   the active editor theme like the Git pane does in the main window. */
+   the active editor theme like the Git pane does in the main window.
+
+   The panels and the toolbars share one background so the commit area reads
+   as part of the same surface; the split draggers keep the body background
+   (themeStyles.css) and remain visible as seams. */
 
 .rstudio-themes-dark .splitPanel,
-.rstudio-themes-dark .splitPanelCommit {
-   background-color: THEME_DARKGREY_BODY_BACKGROUND;
-   color: #eee;
-}
-
+.rstudio-themes-dark .splitPanelCommit,
 .rstudio-themes-dark .toolbarWrapper {
    background: THEME_DARKGREY_BACKGROUND;
+   color: #eee;
 }
 
 /** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/
@@ -165,8 +166,10 @@
 /* Dark theme styling for the commit controls, matching the palette used by
    theme-aware modal dialogs. */
 
+/* the message box is a well rather than a control, so it sits darker than
+   the surrounding panel instead of matching the buttons and selects */
 .rstudio-themes-dark .commitMessage {
-   background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
    color-scheme: dark;
