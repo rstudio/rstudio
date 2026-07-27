@@ -372,6 +372,14 @@ export class ChatPaneActions {
     // Press Enter to confirm the rename
     await nameInput.press('Enter');
 
+    // Assert the rename is actually reflected before returning, so a
+    // persistence failure surfaces here (naming the conversation) instead of
+    // as a downstream click timeout several steps removed from the cause. The
+    // history list is still open, so the renamed item should be present if the
+    // rename persisted. Observable-state assertion, not a settle sleep.
+    await expect(this.chatPane.getConversationItemByName(name).first())
+      .toBeVisible({ timeout: 5000 });
+
     console.log(`Renamed conversation to "${name}"`);
   }
 
