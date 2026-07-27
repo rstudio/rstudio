@@ -86,6 +86,29 @@ public:
                         const ErrorHandler& errorHandler,
                         const ChunkHandler& chunkHandler = ChunkHandler()) = 0;
    virtual void setChunkHandler(const ChunkHandler& chunkHandler) = 0;
+
+   // Opt in to streaming non-chunked (Content-Length/EOF-delimited) response
+   // bodies piece-wise to the ChunkHandler instead of accumulating them in
+   // memory and delivering via the ResponseHandler. Default is false, so a
+   // wiring site that only calls setChunkHandler() (as /s/ and the launcher do)
+   // keeps its legacy behavior: non-chunked responses buffer and run the
+   // ResponseHandler; chunked responses still stream. Only wiring sites that can
+   // tolerate their non-chunked ResponseHandler side effects being skipped
+   // (currently just the /p/ localhost path) should opt in. The client-facing
+   // framing (Content-Length vs chunked) is chosen downstream by ChunkProxy from
+   // the upstream response's Content-Length; AsyncClient only relays bytes.
+   virtual void setStreamNonChunkedResponses(bool stream) = 0;
+
+   // Optional predicate, evaluated once response headers are parsed, that forces
+   // the full response body to be buffered in memory and delivered via the
+   // ResponseHandler (legacy behavior) instead of streamed. Used for handlers
+   // that must examine/rewrite the whole body (e.g. the SparkUI root-path link
+   // fixup). Applies to both chunked and non-chunked responses (a Jetty/SparkUI
+   // page can be chunked). When unset, streaming is governed solely by the
+   // setStreamNonChunkedResponses flag and the chunked-encoding detection.
+   virtual void setBufferPredicate(
+      const boost::function<bool(const http::Response&)>& predicate) = 0;
+
    virtual void setConnectHandler(const ConnectHandler& connectHandler) = 0;
    virtual void resumeChunkProcessing() = 0;
    virtual void disableHandlers() = 0;
@@ -233,6 +256,17 @@ public:
    virtual void setChunkHandler(const ChunkHandler& chunkHandler)
    {
       chunkHandler_ = chunkHandler;
+   }
+
+   virtual void setStreamNonChunkedResponses(bool stream)
+   {
+      streamNonChunkedResponses_ = stream;
+   }
+
+   virtual void setBufferPredicate(
+      const boost::function<bool(const http::Response&)>& predicate)
+   {
+      bufferPredicate_ = predicate;
    }
 
    virtual void resumeChunkProcessing()
@@ -648,6 +682,71 @@ private:
       return response_.body().size() >= *contentLength;
    }
 
+   // True when body data should be handed to the ChunkHandler (streamed to the
+   // browser) rather than accumulated into response_ for the ResponseHandler.
+   bool useChunkHandler() const
+   {
+      return chunkHandler_ && !bufferFullResponse_;
+   }
+
+   // Streaming analog of responseBodyComplete(): in streaming mode response_.body()
+   // is never populated, so we compare the count of bytes handed to the chunk
+   // handler against the declared Content-Length instead. Returns false when there
+   // is no valid Content-Length header (EOF-delimited body): completion is then
+   // signalled by the upstream connection close in handleReadContent's EOF branch.
+   // Mirrors responseBodyComplete()'s explicit parse so an absent/malformed value
+   // falls back to read-until-EOF rather than short-circuiting.
+   bool streamedBodyComplete() const
+   {
+      boost::optional<uintmax_t> contentLength =
+         safe_convert::stringTo<uintmax_t>(response_.headerValue("Content-Length"));
+      if (!contentLength)
+         return false;
+      return contentLengthStreamed_ >= *contentLength;
+   }
+
+   // Deliver the raw bytes currently in responseBuffer_ to the chunk handler as
+   // one or more <=1MB pieces, reusing the chunked-path delivery/backpressure.
+   // The non-chunked analog of processChunks(): the bytes are the decoded body
+   // only -- ChunkProxy decides the client-facing framing. Detects completion via
+   // the byte counter (not response_.body(), which streaming never fills), passes
+   // the computed `complete` through deliverChunks() into chunkState_, and drives
+   // read-more / close-and-respond itself.
+   void deliverContentAsChunk()
+   {
+      auto buffer = responseBuffer_.data();
+      std::size_t n = buffer.size();
+      auto piece = boost::make_shared<std::string>(
+         static_cast<const char*>(buffer.data()), n);
+      responseBuffer_.consume(responseBuffer_.size());
+
+      // account the bytes we're relaying so we can detect Content-Length
+      // completion without accumulating the body in memory.
+      contentLengthStreamed_ += n;
+      bool complete = streamedBodyComplete();
+
+      std::deque<boost::shared_ptr<std::string>> chunks;
+      if (n > 0)
+         chunks.push_back(piece); // never deliver an empty piece mid-stream:
+                                  // ChunkProxy treats an empty chunk as the final
+                                  // completion signal (sent via closeAndRespond).
+      breakChunks(chunks);
+
+      // deliverChunks stashes chunkState_ (carrying this same `complete`) and
+      // returns false if the consumer paused; resumeChunkProcessing() then routes
+      // the resume to closeAndRespond() when complete, or readSomeContent()
+      // otherwise -- so a pause on the final piece still completes correctly.
+      bool chunksHandled = deliverChunks(chunks, complete);
+
+      if (!chunksHandled)
+         return; // paused; resumeChunkProcessing() will continue
+
+      if (complete)
+         closeAndRespond();  // sends chunkHandler_(response_, "") completion signal
+      else
+         readSomeContent();
+   }
+
    void handleReadHeaders(const boost::system::error_code& ec)
    {
       try
@@ -656,6 +755,10 @@ private:
          {
             // parse headers
             ResponseParser::parseHeaders(&responseBuffer_, &response_);
+
+            // decide, from headers alone, whether a downstream handler needs the
+            // entire body buffered (legacy path) or whether we can stream it.
+            bufferFullResponse_ = bufferPredicate_ && bufferPredicate_(response_);
 
             // if this is chunked encoding, start processing chunks
             if (response_.headerValue(kTransferEncoding) == kChunkedTransferEncoding &&
@@ -675,6 +778,24 @@ private:
                   readSomeContent();
                   return;
                }
+            }
+
+            // a non-chunked body streams piece-wise to the chunk handler only if
+            // this wiring site opted in AND no handler needs the whole body
+            // buffered. Sites that did not opt in keep buffering non-chunked
+            // responses (legacy responseHandler_ path) -- see Step 3 / Background.
+            streamResponse_ = streamNonChunkedResponses_ &&
+                              useChunkHandler() && !chunkedEncoding_;
+
+            // Streaming path: hand the decoded body to the chunk handler and let
+            // deliverContentAsChunk() drive completion/read-more (analog of the
+            // chunked branch's processChunks()/readSomeContent() above). Do NOT
+            // fall through to responseBodyComplete() below -- it counts
+            // response_.body(), which streaming never populates.
+            if (streamResponse_)
+            {
+               deliverContentAsChunk(); // handles empty buffer, completion, backpressure
+               return;
             }
 
             // append any lefover buffer contents to the body
@@ -711,6 +832,17 @@ private:
             if (chunkedEncoding_)
             {
                processChunks();
+               return;
+            }
+
+            if (streamResponse_)
+            {
+               // deliver this read piece-wise to the chunk handler.
+               // deliverContentAsChunk() tracks bytes-vs-Content-Length for its
+               // own completion, closes/responds or reads more as appropriate,
+               // and pauses (saving chunkState_) under backpressure -- mirroring
+               // the processChunks() delegation used for chunked encoding above.
+               deliverContentAsChunk();
                return;
             }
 
@@ -814,7 +946,7 @@ private:
       {
          boost::shared_ptr<std::string> chunk = *iter;
 
-         if (chunkHandler_)
+         if (useChunkHandler())
          {
             bool keepGoing = chunkHandler_(response_, *chunk);
 
@@ -856,10 +988,10 @@ private:
       if (!keepConnectionAlive())
          close();
 
-      if (responseHandler_ && (!chunkedEncoding_ || !chunkHandler_))
+      if (responseHandler_ && !(useChunkHandler() && (chunkedEncoding_ || streamResponse_)))
          responseHandler_(response_);
-      else if (chunkHandler_)
-         chunkHandler_(response_, ""); // completion of chunks signified by empty chunk
+      else if (useChunkHandler())
+         chunkHandler_(response_, ""); // completion signified by empty chunk
 
       // free handlers in case they keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -989,6 +1121,18 @@ private:
    boost::asio::streambuf responseBuffer_;
    boost::shared_ptr<ChunkParser> chunkParser_;
    ChunkHandler chunkHandler_;
+   boost::function<bool(const http::Response&)> bufferPredicate_;
+   bool streamNonChunkedResponses_ = false; // opt-in, set by wiring site
+   bool bufferFullResponse_ = false; // decided at header time
+   bool streamResponse_ = false;     // the final streaming decision for this
+                                     // response, computed once at header time
+                                     // from streamNonChunkedResponses_,
+                                     // bufferFullResponse_ (the predicate
+                                     // result), and whether the body is
+                                     // already chunked (always streamed)
+   uintmax_t contentLengthStreamed_ = 0; // bytes handed to chunkHandler_ so far
+                                         // (response_.body() stays empty when
+                                         // streaming, so we count completion here)
 
    boost::shared_ptr<ChunkState> chunkState_;
 

@@ -292,6 +292,111 @@ Outcome runScenario(ResponseMode mode,
    return outcome;
 }
 
+// Streaming outcome: records the pieces delivered to a ChunkHandler (as opposed
+// to the whole-body ResponseHandler used by runScenario above), plus whether
+// each of the two handlers fired.
+struct StreamingOutcome
+{
+   bool responseHandlerCalled = false;
+   bool chunkHandlerSawFinal = false;
+   std::vector<std::string> chunks; // does not include the final empty chunk
+   std::string responseBody; // populated only if responseHandlerCalled
+   int statusCode = 0;
+   bool timedOut = false;
+};
+
+// Drives a client opted into setStreamNonChunkedResponses(true), with an
+// optional buffer predicate and an optional hook to simulate the chunk
+// handler applying backpressure (returning false) on a given 0-based chunk
+// index, requiring the test to call resumeChunkProcessing() to continue.
+StreamingOutcome runStreamingScenario(
+   ResponseMode mode,
+   bool closeAfterResponse,
+   const std::string& responseBody,
+   const boost::function<bool(const http::Response&)>& bufferPredicate =
+      boost::function<bool(const http::Response&)>(),
+   int pauseOnChunkIndex = -1)
+{
+   LocalServer server(mode, closeAfterResponse, responseBody);
+   server.start();
+
+   boost::asio::io_context ioc;
+
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+   if (bufferPredicate)
+      pClient->setBufferPredicate(bufferPredicate);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   StreamingOutcome outcome;
+   int chunkIndex = 0;
+
+   boost::shared_ptr<boost::asio::system_timer> pTimer =
+      boost::make_shared<boost::asio::system_timer>(ioc, std::chrono::seconds(4));
+   pTimer->async_wait([&](const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+      outcome.timedOut = true;
+      pClient->close();
+   });
+
+   ChunkHandler chunkHandler = [&](const http::Response& response, const std::string& chunk) -> bool
+   {
+      outcome.statusCode = response.statusCode();
+
+      if (chunk.empty())
+      {
+         outcome.chunkHandlerSawFinal = true;
+         pTimer->cancel();
+         return true;
+      }
+
+      bool pauseHere = (chunkIndex == pauseOnChunkIndex);
+      chunkIndex++;
+
+      if (pauseHere)
+      {
+         // simulate backpressure: signal "not consumed" without recording the
+         // chunk. AsyncClient retains this same (unconsumed) chunk in
+         // chunkState_ and will redeliver it via resumeChunkProcessing() below
+         // -- that redelivery is what actually records it (chunkIndex will no
+         // longer match pauseOnChunkIndex, so the chunk is accepted then).
+         boost::asio::post(ioc, [&]() {
+            pClient->resumeChunkProcessing();
+         });
+         return false;
+      }
+
+      outcome.chunks.push_back(chunk);
+      return true;
+   };
+
+   pClient->execute(
+      [&](const http::Response& response) {
+         outcome.responseHandlerCalled = true;
+         outcome.responseBody = response.body();
+         outcome.statusCode = response.statusCode();
+         pTimer->cancel();
+      },
+      [&](const core::Error& error) {
+         pTimer->cancel();
+      },
+      chunkHandler);
+
+   ioc.run();
+
+   server.stop();
+   return outcome;
+}
+
 } // anonymous namespace
 
 // Baseline: a server that closes after the response delivers it via EOF.
@@ -408,6 +513,130 @@ TEST(AsyncClientContentLength, CompletesPromptlyWhenDeadlineSetAndServerResponds
    EXPECT_FALSE(outcome.gotError);
    EXPECT_FALSE(outcome.timedOut);
    EXPECT_LT(outcome.elapsedSeconds, 1.0);
+}
+
+// --- Step 1 coverage: streaming non-chunked bodies through chunkHandler_ ---
+//
+// Regression coverage for the rstudio-pro-11740 streaming change: when a
+// wiring site opts in via setStreamNonChunkedResponses(true), a non-chunked
+// (Content-Length) body must be delivered piece-wise to the ChunkHandler
+// (with the empty-chunk completion signal), rather than accumulated and
+// delivered whole via the ResponseHandler. A header-time buffer predicate
+// must still force the legacy whole-body path when set. Backpressure
+// (chunkHandler_ returning false) must be respected and resumeChunkProcessing()
+// must correctly complete a paused final piece -- the eval-P1 fix.
+
+// The core streaming behavior: a Content-Length body split across multiple
+// reads, on a socket the server keeps open (so only the Content-Length byte
+// count -- not EOF -- can signal completion, exercising the P1 fix), is
+// delivered piece-wise to the chunk handler and completes with the empty
+// final chunk. The ResponseHandler must not fire.
+TEST(AsyncClientContentLength, StreamsNonChunkedBodyPieceWiseWhenOptedIn)
+{
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::ContentLengthSplit, /*closeAfterResponse=*/false,
+      /*responseBody=*/"{\"name\":\"jsonlite\"}\n");
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_FALSE(outcome.responseHandlerCalled);
+   EXPECT_EQ(outcome.statusCode, 200);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
+}
+
+// A header-observable buffer predicate (e.g. simulating the SparkUI/Jetty
+// gate) must force the legacy full-buffering path even when the wiring site
+// opted into streaming: the ResponseHandler fires with the whole body, and
+// the ChunkHandler is never invoked (not even with the completion signal).
+TEST(AsyncClientContentLength, BufferPredicateForcesFullBufferingWhenStreamingOptedIn)
+{
+   auto alwaysBuffer = [](const http::Response&) { return true; };
+
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::ContentLength, /*closeAfterResponse=*/true,
+      /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
+      /*bufferPredicate=*/alwaysBuffer);
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.responseHandlerCalled);
+   EXPECT_EQ(outcome.responseBody, "{\"name\":\"jsonlite\"}\n");
+   EXPECT_FALSE(outcome.chunkHandlerSawFinal);
+   EXPECT_TRUE(outcome.chunks.empty());
+}
+
+// Backpressure: the chunk handler returning false on an interior piece must
+// pause delivery; resumeChunkProcessing() must resume and, on the final
+// piece, the paused response must still route to completion (the empty
+// chunk) rather than another read -- confirming `complete` correctly threads
+// through chunkState_ across a pause/resume cycle.
+TEST(AsyncClientContentLength, BackpressurePauseAndResumeCompletesStreamedBody)
+{
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::ContentLengthSplit, /*closeAfterResponse=*/false,
+      /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
+      /*bufferPredicate=*/boost::function<bool(const http::Response&)>(),
+      /*pauseOnChunkIndex=*/0);
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_FALSE(outcome.responseHandlerCalled);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
+}
+
+// Opt-out sites (the default): setting a ChunkHandler without opting into
+// setStreamNonChunkedResponses must preserve legacy behavior for a
+// non-chunked response -- it buffers fully and is delivered via the
+// ResponseHandler; the ChunkHandler is never invoked.
+TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffering)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/true,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   // note: setStreamNonChunkedResponses is deliberately NOT called here --
+   // this reproduces the /s/ and launcher wiring, which only calls
+   // setChunkHandler()/passes a chunkHandler to execute().
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool responseHandlerCalled = false;
+   bool chunkHandlerCalled = false;
+   std::string responseBody;
+
+   pClient->execute(
+      [&](const http::Response& response) {
+         responseHandlerCalled = true;
+         responseBody = response.body();
+      },
+      [&](const core::Error& error) {},
+      [&](const http::Response&, const std::string&) {
+         chunkHandlerCalled = true;
+         return true;
+      });
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_TRUE(responseHandlerCalled);
+   EXPECT_EQ(responseBody, "{\"name\":\"jsonlite\"}\n");
+   EXPECT_FALSE(chunkHandlerCalled);
 }
 
 } // namespace tests
