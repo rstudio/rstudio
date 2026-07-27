@@ -208,7 +208,6 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       splitPanel_ = new SplitLayoutPanel(4);
 
       changelist_ = changelist.getView();
-      changelist_.setEmptyMessage(constants_.noChangesParentheses());
       lines_ = diffPane;
       lines_.getElement().setTabIndex(-1);
       lines_.hideStageCommands();

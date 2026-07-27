@@ -134,6 +134,12 @@ public abstract class ChangelistTable extends Composite
    {
       table_ = new MultiSelectCellTable<>(100, resources_);
 
+      // a bare table reads as broken rather than empty, especially in the
+      // Review Changes window where it owns a whole pane
+      Label emptyLabel = new Label(constants_.noChangesParentheses());
+      emptyLabel.addStyleName(resources_.styles().emptyMessage());
+      table_.setEmptyTableWidget(emptyLabel);
+
       dataProvider_ = new ListDataProvider<>();
       sortHandler_ = new ColumnSortEvent.ListHandler<>(dataProvider_.getList());
       table_.addColumnSortHandler(sortHandler_);
@@ -179,18 +185,6 @@ public abstract class ChangelistTable extends Composite
    public void setSelectFirstItemByDefault(boolean selectFirstItemByDefault)
    {
       selectFirstItemByDefault_ = selectFirstItemByDefault;
-   }
-
-   /**
-    * Show a message in place of the table while it has no rows. Used by the
-    * Review Changes window, where the table owns a large pane and reads as
-    * broken when it is simply blank; the Git and SVN panes leave it unset.
-    */
-   public void setEmptyMessage(String message)
-   {
-      Label label = new Label(message);
-      label.addStyleName(resources_.styles().emptyMessage());
-      table_.setEmptyTableWidget(label);
    }
 
    public void moveSelectionDown()
