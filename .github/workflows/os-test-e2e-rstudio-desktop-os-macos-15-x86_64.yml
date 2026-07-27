@@ -112,7 +112,11 @@ jobs:
   build:
     if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     runs-on: macos-15-intel
-    timeout-minutes: 90
+    # macos-15-intel is the slowest bare-metal builder in the fleet; a cold
+    # sccache (e.g. after eviction) can push a from-scratch compile past the
+    # 90 minutes that suffices for the faster runners (see windows-2025, which
+    # gets the same 180 for the same reason).
+    timeout-minutes: 180
     env:
       # The dependency / package scripts default RSTUDIO_TOOLS_ROOT to /opt,
       # which isn't writable on hosted runners without sudo. Redirect to a
