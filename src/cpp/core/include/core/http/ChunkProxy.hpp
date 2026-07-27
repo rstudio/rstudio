@@ -39,6 +39,8 @@ public:
 private:
    static constexpr uint64_t defaultMaxBufferSize = 1024*1024; // 1MB
 
+   enum class Framing { Undecided, ContentLength, Chunked };
+
    bool queueChunk(const Response& response,
                    const std::string& chunk);
    void onHeadersWrote(const boost::system::error_code& ec);
@@ -56,6 +58,8 @@ private:
    std::queue<std::string> writeBuffer_;
    uint64_t currentBufferSize_;
    bool bufferFull_;
+   Framing framing_ = Framing::Undecided; // decided at first queueChunk
+   bool receivedFinal_ = false;           // upstream signaled completion
 };
 
 } // namespace http

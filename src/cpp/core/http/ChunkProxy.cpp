@@ -13,6 +13,8 @@
  *
  */
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/http/ChunkProxy.hpp>
 #include <core/http/Util.hpp>
 
@@ -22,14 +24,6 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-namespace {
-
-bool isLastChunk(const std::string& chunk)
-{
-   return chunk == "0\r\n\r\n";
-}
-
-} // anonymous namespace
 ChunkProxy::ChunkProxy(const boost::shared_ptr<AsyncConnection>& pClientConnection,
                        uint64_t maxBufferSize) :
    pClientConnection_(pClientConnection),
@@ -53,7 +47,38 @@ bool ChunkProxy::queueChunk(const http::Response& response,
 {
    LOCK_MUTEX(mutex_)
    {
-      if (currentBufferSize_ + chunk.size() > maxBufferSize_)
+      // Decide the client-facing framing once, from the upstream response.
+      // Content-Length framing preserves a known upstream length end-to-end
+      // (progress bars; HTTP/1.1 forbids CL + chunked together). Chunked is the
+      // fallback when the upstream length is unknown (upstream was chunked or
+      // EOF-delimited).
+      if (framing_ == Framing::Undecided)
+      {
+         bool upstreamChunked =
+            response.headerValue(kTransferEncoding) == kChunkedTransferEncoding;
+         framing_ = (response.containsHeader("Content-Length") && !upstreamChunked)
+                       ? Framing::ContentLength
+                       : Framing::Chunked;
+      }
+
+      // The empty chunk is AsyncClient's completion signal. In Content-Length
+      // framing there is no terminator to write; in chunked framing we still must
+      // emit the 0\r\n\r\n terminator, so fall through and enqueue it below.
+      bool isFinal = chunk.empty();
+      if (isFinal)
+         receivedFinal_ = true;
+
+      // Format the outbound bytes for this piece: raw for Content-Length, or a
+      // size-prefixed HTTP chunk for chunked framing.
+      std::string formatted =
+         (framing_ == Framing::Chunked)
+            ? http::util::formatMessageAsHttpChunk(chunk)
+            : chunk; // Content-Length: write body bytes verbatim
+
+      // Account against the *formatted* (enveloped) size we actually enqueue, so
+      // currentBufferSize_ stays consistent with what onChunkWrote() subtracts
+      // (writeBuffer_.front().size()) in both framings.
+      if (currentBufferSize_ + formatted.size() > maxBufferSize_)
       {
          bufferFull_ = true;
 
@@ -64,16 +89,53 @@ bool ChunkProxy::queueChunk(const http::Response& response,
          return false;
       }
 
-      // queue the chunk
-      std::string formattedChunk = http::util::formatMessageAsHttpChunk(chunk);
-      currentBufferSize_ += formattedChunk.size();
-      writeBuffer_.emplace(std::move(formattedChunk));
+      if (!formatted.empty())
+      {
+         currentBufferSize_ += formatted.size();
+         writeBuffer_.emplace(std::move(formatted));
+      }
 
       if (!wroteHeaders_)
       {
          // write the response headers and first chunk
          http::Response& resp = pClientConnection_->response();
-         resp.assign(response);
+
+         // preserve headers already stamped on the outgoing response (e.g.
+         // refreshed auth cookies set before the proxy request executed), which
+         // assign() would otherwise clobber. Set-Cookie is multi-valued.
+         //
+         // TODO(rstudio-pro-11740 follow-on): if the /s/ path is later opted into
+         // streaming (see plan Resolved Questions, "Streaming /s/ and launcher"),
+         // its auth-cookie stamping (getAuthCookies(), ServerSessionProxy.cpp:267,
+         // 1003) will need to move from handleProxyResponse's single post-completion
+         // writeResponse(response, true, authCookies) call into *this* header-write
+         // path — headers are flushed here, at the first queueChunk, before any
+         // body bytes are streamed, so cookies can no longer be added at response
+         // completion time the way the buffered path does today. The `preserved`
+         // mechanism below (copying Set-Cookie already present on
+         // pClientConnection_->response()) is the intended seam: the future
+         // streaming-enabled /s/ wiring should stamp refreshed auth cookies onto
+         // that response object *before* the first ChunkProxy::queueChunk() call
+         // (i.e. at header-received time in AsyncClient, not at completion time).
+         http::Headers preserved;
+         for (const http::Header& h : resp.headers())
+         {
+            if (boost::iequals(h.name, "Set-Cookie"))
+               preserved.push_back(h);
+         }
+
+         resp.assign(response, preserved);
+
+         // Transfer-Encoding is hop-by-hop: never forward the upstream framing
+         // verbatim (matches Go removeHopByHopHeaders). Then set the client
+         // framing headers per the decision above.
+         resp.removeHeader(kTransferEncoding);
+         if (framing_ == Framing::Chunked)
+         {
+            resp.removeHeader("Content-Length");
+            resp.setHeader(kTransferEncoding, kChunkedTransferEncoding);
+         }
+         // Content-Length framing: keep the upstream Content-Length as-is.
 
          pClientConnection_->writeResponseHeaders(boost::bind(&ChunkProxy::onHeadersWrote,
                                                               shared_from_this(),
@@ -82,10 +144,16 @@ bool ChunkProxy::queueChunk(const http::Response& response,
       }
       else
       {
-         if (writeBuffer_.size() == 1)
+         if (!writeBuffer_.empty() && writeBuffer_.size() == 1)
          {
             // we're the only chunk in the buffer, so we need to initiate a write
             writeChunk();
+         }
+         else if (writeBuffer_.empty() && receivedFinal_)
+         {
+            // Content-Length final with nothing left to write: close now.
+            pClientConnection_->close();
+            pServerConnection_->close();
          }
       }
    }
@@ -118,6 +186,15 @@ void ChunkProxy::writeChunk()
          bufferFull_ = false;
          pServerConnection_->resumeChunkProcessing();
       }
+      else if (receivedFinal_)
+      {
+         // the final chunk arrived but produced no outbound bytes to flush
+         // (e.g. the empty final chunk of a Content-Length: 0 / 204 response,
+         // where headers were just written and no body chunk was ever
+         // enqueued) - nothing left to write, close now.
+         pClientConnection_->close();
+         pServerConnection_->close();
+      }
 
       return;
    }
@@ -138,14 +215,13 @@ void ChunkProxy::onChunkWrote(const boost::system::error_code& ec)
 
    LOCK_MUTEX(mutex_)
    {
-      const std::string& chunk = writeBuffer_.front();
-      bool lastChunk = isLastChunk(chunk);
       currentBufferSize_ -= writeBuffer_.front().size();
       writeBuffer_.pop();
 
-      if (lastChunk)
+      if (receivedFinal_ && writeBuffer_.empty())
       {
-         // we wrote the last chunk - close connections
+         // we wrote the last outbound bytes (chunked terminator or final body
+         // bytes) - close connections
          pClientConnection_->close();
          pServerConnection_->close();
          return;
