@@ -45,23 +45,30 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@seri
     // outage, assistant #1893), the code never runs, R never blocks, and the
     // assistant just finishes its turn with a normal reply. Detect that
     // terminal state and fail with an attributable message instead of hanging
-    // until the 120s test timeout. Require the "finished + no notification"
-    // condition to hold across one short re-check so a transient Stop-button
-    // gap between the assistant's intermediate tool steps doesn't produce a
-    // false failure. The poll budget stays below the per-test timeout so this
-    // assertion, not the test timeout, reports the failure.
+    // until the 120s test timeout. The poll budget stays below the per-test
+    // timeout so this assertion, not the test timeout, reports the failure.
     let finishedWithoutNotification = 0;
     await chatActions.pollWithAllowDialogs(async () => {
       if (await chatPane.readlineNotification.isVisible().catch(() => false)) {
         return true;
       }
-      if (await chatPane.isStopButtonVisible()) {
-        // Still processing -- only consecutive finished checks trip the failure.
+      // Only conclude the assistant gave up once the turn has truly ended: it
+      // produced a reply and the composer is editable again (idle, ready for
+      // input). A bare missing Stop button is not a reliable terminal signal --
+      // it is also absent right after sending and during tool-step transitions,
+      // which would otherwise fail before the assistant even runs the code. The
+      // composer stays disabled for the whole turn (including a real readline
+      // block, per Step 5 below), so its being editable means the turn is done.
+      const turnEnded =
+        (await chatPane.assistantMessageItem.count()) > 0 &&
+        (await chatPane.isChatInputReady());
+      if (!turnEnded) {
         finishedWithoutNotification = 0;
         return false;
       }
-      // Turn fully finished (no Stop button) but no notification => readline
-      // never blocked; the assistant likely couldn't execute the code.
+      // Turn ended (composer editable) but no notification => readline never
+      // blocked; the assistant likely couldn't execute the code. Confirm the
+      // terminal state across one re-check before failing.
       finishedWithoutNotification += 1;
       if (finishedWithoutNotification >= 2) {
         throw new Error(
