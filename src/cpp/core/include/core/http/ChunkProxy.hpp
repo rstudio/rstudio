@@ -60,6 +60,8 @@ private:
    bool bufferFull_;
    Framing framing_ = Framing::Undecided; // decided at first queueChunk
    bool receivedFinal_ = false;           // upstream signaled completion
+   bool clientWriteInProgress_ = false;   // an asyncWrite/writeResponseHeaders
+                                           // is outstanding on pClientConnection_
 };
 
 } // namespace http

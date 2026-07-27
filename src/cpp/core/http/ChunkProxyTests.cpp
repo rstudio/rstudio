@@ -311,6 +311,44 @@ TEST(ChunkProxy, ClosesConnectionsForEmptyContentLengthZeroResponse)
    EXPECT_TRUE(fixture.pServerConnection->closed_);
 }
 
+TEST(ChunkProxy, DoesNotDuplicateWriteWhenFinalSignalArrivesBeforeHeaderWriteCompletes)
+{
+   // Regression test for a race: in Content-Length framing the empty final
+   // completion signal enqueues no new bytes (nothing to terminate), so if it
+   // arrives before the *header write's* completion handler (onHeadersWrote)
+   // has run, writeBuffer_ still shows exactly the one body chunk queued by
+   // the first call. Without an explicit "write in progress" guard, ChunkProxy
+   // would treat that as "the only chunk in the buffer, kick off a write" and
+   // call writeChunk() a second time on the same still-unpopped front() entry
+   // once onHeadersWrote() also calls writeChunk() -- duplicating the write
+   // and eventually running onChunkWrote() against an already-emptied queue.
+   //
+   // Unlike Fixture::deliver(), which polls the io_context to completion after
+   // every chunk (serializing header-write completion before the next chunk
+   // is delivered), this test invokes the chunk handler twice back-to-back
+   // *before* draining anything, to reproduce the interleaving.
+   Fixture fixture;
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   bool result1 = fixture.pServerConnection->chunkHandler_(upstream, body);
+   bool result2 = fixture.pServerConnection->chunkHandler_(upstream, ""); // completion signal, before header write completes
+   EXPECT_TRUE(result1);
+   EXPECT_TRUE(result2);
+
+   boost::asio::io_context& ioc = fixture.pClientConnection->ioContext();
+   ioc.restart();
+   ioc.poll();
+
+   EXPECT_TRUE(fixture.pClientConnection->headersWritten_);
+   // The body must be written exactly once -- not duplicated by a second,
+   // concurrent asyncWrite of the same buffered chunk.
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, body);
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
 TEST(ChunkProxy, AccountsBufferSizeAgainstFormattedNotRawBytesInChunkedMode)
 {
    // "hello" is 5 raw bytes but its chunked envelope ("5\r\nhello\r\n") is 10

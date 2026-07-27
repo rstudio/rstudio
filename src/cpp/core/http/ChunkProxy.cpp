@@ -137,6 +137,7 @@ bool ChunkProxy::queueChunk(const http::Response& response,
          }
          // Content-Length framing: keep the upstream Content-Length as-is.
 
+         clientWriteInProgress_ = true;
          pClientConnection_->writeResponseHeaders(boost::bind(&ChunkProxy::onHeadersWrote,
                                                               shared_from_this(),
                                                               boost::asio::placeholders::error));
@@ -144,12 +145,22 @@ bool ChunkProxy::queueChunk(const http::Response& response,
       }
       else
       {
-         if (!writeBuffer_.empty() && writeBuffer_.size() == 1)
+         // Guard against a write already outstanding (headers or a prior
+         // chunk): writeBuffer_.size() == 1 alone doesn't imply nothing is
+         // in flight -- e.g. the Content-Length final completion signal
+         // enqueues nothing, so the buffer can still show exactly the one
+         // chunk queued by an earlier call whose header write hasn't
+         // completed (onHeadersWrote hasn't run) yet. Kicking off writeChunk()
+         // here in that window would race a second asyncWrite of the same
+         // still-unpopped front() entry against the one onHeadersWrote will
+         // issue once it runs. When a write is already in flight, its own
+         // completion handler (onHeadersWrote/onChunkWrote) will call
+         // writeChunk() again once it's safe to do so.
+         if (!writeBuffer_.empty() && !clientWriteInProgress_)
          {
-            // we're the only chunk in the buffer, so we need to initiate a write
             writeChunk();
          }
-         else if (writeBuffer_.empty() && receivedFinal_)
+         else if (writeBuffer_.empty() && receivedFinal_ && !clientWriteInProgress_)
          {
             // Content-Length final with nothing left to write: close now.
             pClientConnection_->close();
@@ -169,6 +180,10 @@ void ChunkProxy::onHeadersWrote(const boost::system::error_code& ec)
 
    LOCK_MUTEX(mutex_)
    {
+      // the header write completed; no write is outstanding until writeChunk()
+      // below (re-)initiates one
+      clientWriteInProgress_ = false;
+
       // write the first chunk
       writeChunk();
    }
@@ -201,6 +216,7 @@ void ChunkProxy::writeChunk()
 
    const std::string& chunk = writeBuffer_.front();
 
+   clientWriteInProgress_ = true;
    boost::asio::const_buffer buffer(chunk.c_str(), chunk.size());
    pClientConnection_->asyncWrite(buffer,
                                   boost::bind(&ChunkProxy::onChunkWrote,
@@ -215,6 +231,10 @@ void ChunkProxy::onChunkWrote(const boost::system::error_code& ec)
 
    LOCK_MUTEX(mutex_)
    {
+      // the write that was outstanding completed; no write is outstanding
+      // until writeChunk() below (re-)initiates one
+      clientWriteInProgress_ = false;
+
       currentBufferSize_ -= writeBuffer_.front().size();
       writeBuffer_.pop();
 
