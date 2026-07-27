@@ -107,12 +107,16 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   test('Create and run R Shiny tip calculator', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `Missing packages: ${missingPackages.join(', ')}`);
 
-    // Budget the whole test body: the completion poll below is 300s, and the
-    // trailing Viewer-pane assertions can wait up to ~90s more, plus pre-poll
-    // setup. The test timeout must exceed that sum (cold Shiny launch +
-    // assistant round-trips) or it caps the poll and the poll's own, more
-    // informative timeout is unreachable.
-    test.setTimeout(420000);
+    // Budget the whole test body above the sum of its explicit waits, so a slow
+    // but successful run is never preempted -- preemption would cap the
+    // completion poll and hide its more informative timeout. The explicit waits
+    // are ~45s of composer setup (startNewConversation + sendChatMessage's three
+    // 15s visibility/editable waits) + the 300s completion poll + up to ~90s of
+    // trailing Viewer-pane assertions, ~435s in total, so budget 540s to clear
+    // it with margin. The fail-fast path below still surfaces a broken
+    // executeCode in seconds, so this large ceiling only applies to a genuinely
+    // slow cold Shiny launch.
+    test.setTimeout(540000);
 
     // Start a fresh conversation
     await chatActions.startNewConversation();
