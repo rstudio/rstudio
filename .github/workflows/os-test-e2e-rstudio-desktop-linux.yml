@@ -9,9 +9,11 @@ name: "Test: E2E Playwright RStudio (Desktop, Linux, Open Source)"
 # engine.
 #
 # Engine shapes this covers:
-#   - Bare GitHub-hosted runners (Ubuntu 22/24/26): build and test directly
-#     on the runner image, Chromium sandbox enabled via a host sysctl where
-#     the distro restricts unprivileged user namespaces.
+#   - Bare GitHub-hosted runners (Ubuntu 22/24/26, x86_64 and arm64): build
+#     and test directly on the runner image, Chromium sandbox enabled via a
+#     host sysctl where the distro restricts unprivileged user namespaces.
+#     Each arch is its own engine (ubuntu-24-x86_64 / ubuntu-24-arm64) so no
+#     two share a cache key; see .github/e2e-linux/README.md.
 #   - Container engines (Debian, Fedora, Rocky): GitHub has no hosted runner
 #     for these, so the jobs run in a distro container on an ubuntu host.
 #     SYS_ADMIN + an unconfined seccomp profile let the Chromium/Electron
@@ -27,18 +29,19 @@ on:
   workflow_dispatch:
     inputs:
       os:
-        description: "Linux engine to run (selects .github/e2e-linux/<os>.json)."
+        description: "Linux engine to run (selects .github/e2e-linux/<os>.json). Every engine name ends in its architecture."
         type: choice
         options:
-          - ubuntu-24
-          - ubuntu-26
-          - ubuntu-22
-          - debian-13
-          - fedora-43
-          - fedora-44
-          - rocky-9
-          - rocky-10
-        default: ubuntu-24
+          - ubuntu-24-x86_64
+          - ubuntu-24-arm64
+          - ubuntu-26-x86_64
+          - ubuntu-22-x86_64
+          - debian-13-arm64
+          - fedora-43-x86_64
+          - fedora-44-x86_64
+          - rocky-9-x86_64
+          - rocky-10-arm64
+        default: ubuntu-24-x86_64
       arch:
         description: "Architecture the selected engine is expected to run on. 'auto' takes it from the engine config; naming it explicitly asserts it (the run fails on mismatch)."
         type: choice
@@ -329,7 +332,7 @@ jobs:
       # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
       # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
       # Keys are per-distro/arch (compiled native artifacts don't transfer);
-      # the ubuntu-24 keys are deliberately shared with the Linux Server build
+      # the ubuntu-24-x86_64 keys are deliberately shared with the Linux Server
       # so a single cache (and the cache-seed job) warms both. Restore-only;
       # the matching Save steps after "Install build dependencies" run only
       # from main-scoped runs.

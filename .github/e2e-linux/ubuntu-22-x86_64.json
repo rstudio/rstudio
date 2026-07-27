@@ -1,5 +1,5 @@
 {
-  "pretty_name": "Ubuntu 22",
+  "pretty_name": "Ubuntu 22 (x86_64)",
   "emoji": "🐧",
   "runner_note": "ubuntu-22.04",
   "package_format": "DEB",

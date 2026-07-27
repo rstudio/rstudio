@@ -7,8 +7,8 @@ directory plus, where needed, a small set of shell hooks under
 `<script_dir>/`:
 
     .github/e2e-linux/
-    ├── <os>.json          # scalar knobs: runner, image, cache keys, slugs, ...
-    └── <script_dir>/      # distro-specific setup hooks (script_dir key)
+    ├── <distro>-<ver>-<arch>.json   # scalar knobs: runner, image, cache keys, ...
+    └── <script_dir>/                # distro-specific setup hooks (script_dir key)
         ├── build-setup.sh    # after checkout, before the dependency install
         ├── e2e-setup.sh      # runtime packages, repos, sysctls, locale
         ├── install-r.sh      # replaces the rig install (r_install: "distro")
@@ -18,10 +18,17 @@ All hooks are optional; the workflow skips any that don't exist. Hooks that
 need to persist environment variables for later steps write to `$GITHUB_ENV` /
 `$GITHUB_PATH` as usual.
 
+Every engine name ends in its architecture (`ubuntu-24-x86_64`,
+`rocky-10-arm64`), so the arch is visible everywhere the name surfaces: the
+dispatch picker, job names, artifact names, and the Playwright project label.
+Hook directories are *not* arch-suffixed -- they're shared by whichever engines
+need the same distro setup (`script_dir`).
+
 ## Adding a new engine
 
-1. Copy the closest existing `<os>.json` (Ubuntu-family: `ubuntu-24.json`,
-   RHEL-family: `rocky-9.json`) and adjust the knobs.
+1. Copy the closest existing config (Ubuntu-family: `ubuntu-24-x86_64.json`,
+   RHEL-family: `rocky-9-x86_64.json`) and adjust the knobs. Name it
+   `<distro>-<ver>-<arch>.json`.
 2. Add setup hooks under a new script dir if the distro needs packages or
    quirks the shared dirs don't cover; otherwise point `script_dir` at an
    existing one (e.g. `fedora-43` and `fedora-44` share `fedora/`).
@@ -40,9 +47,32 @@ labels, all three build cache keys, `sccache_key_prefix`, `installer_artifact`,
 literal in each of those (rather than templating it in) is what stops two
 engines of different arch from ever sharing a cache entry or an artifact name.
 
-To run an existing distro on a second architecture, add a *new* engine whose
-name carries the arch (`ubuntu-24-arm64.json` alongside `ubuntu-24.json`) and
-give every key above an arch-distinct value. No workflow changes are needed.
+To run an existing distro on a second architecture, add a *new* engine and give
+every key above an arch-distinct value; the only workflow change is adding it to
+the `os` choice list for hand dispatches. `ubuntu-24-arm64.json` is the worked
+example: same bare-runner shape as `ubuntu-24-x86_64.json`, on
+`ubuntu-24.04-arm`.
+
+Because every name ends in its arch, no engine name is a prefix of another --
+which matters beyond readability: the merge job collects shard blobs with the
+glob `playwright-blob-report-linux-desktop-<os>-*`, so a bare `ubuntu-24` would
+also match `ubuntu-24-arm64`'s blobs and silently merge foreign results into the
+x86_64 report.
+
+`ubuntu-24-arm64` does share `tools_cache_key` / `rlibs_cache_key` /
+`gwt_cache_key` with `debian-13-arm64`, which is not an oversight -- that engine
+also *builds* bare on `ubuntu-24.04-arm` with `install-dependencies-noble` (only
+its tests run in a container), so the cached artifacts are ABI-identical and the
+new engine starts warm. What must stay arch-distinct is anything that would
+otherwise collide with the x86_64 Ubuntu 24 engine: `sccache_key_prefix`,
+`installer_artifact`, `pw_label`, and especially `e2e_deps_cache_scope` -- an
+empty scope means
+`runner.os` alone (`Linux`), which the x86_64 engines already use, so leaving
+it empty on an arm64 engine would hand it an x86_64 R library.
+
+`ubuntu-24-arm64` is dispatch-only for now: it's in the `workflow_dispatch`
+choice list but not in the scheduled rotation's engine table, so it costs no
+nightly runner time until it's proven.
 
 Callers pass an `arch` input naming the architecture they expect the engine to
 run on; the workflow compares it against the config's `tools_arch` and fails
@@ -64,7 +94,7 @@ arch-bearing cache keys behind.
 | `build_timeout_minutes` | build job timeout (engines with no seeded cache build fully cold) |
 | `tools_arch` | RSTUDIO_TOOLS_ROOT subdirectory (`x86_64` / `arm64`) |
 | `dependency_script` | script under `dependencies/linux` to run |
-| `tools_cache_key`, `rlibs_cache_key`, `gwt_cache_key` | Actions cache key prefixes; per-distro/arch isolation, and the ubuntu-24 keys are deliberately shared with the Linux Server build and its cache seed |
+| `tools_cache_key`, `rlibs_cache_key`, `gwt_cache_key` | Actions cache key prefixes; per-distro/arch isolation, and the ubuntu-24-x86_64 keys are deliberately shared with the Linux Server build and its cache seed |
 | `sccache_key_prefix` | S3 key prefix for the shared sccache bucket |
 | `installer_artifact` | name of the built installer artifact passed from build to e2e |
 | `daily_platform_key` | key under `products.electron.platforms` in the dailies manifest |
