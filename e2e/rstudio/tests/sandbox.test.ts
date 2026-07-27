@@ -1,5 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { rStringLiteral } from '@utils/r';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -98,5 +100,28 @@ test.describe('sandbox layout', { tag: ['@server_only'] }, () => {
     expect(fs.existsSync(dataHome)).toBe(true);
     const dataHomeEntries = fs.readdirSync(dataHome);
     expect(dataHomeEntries.length).toBe(0);
+  });
+
+  test('spawned server rsession HOME is redirected into the sandbox', async ({ rstudioPage: page }) => {
+    // Only the spawned in-tree server redirects the rsession HOME (via the
+    // --rsession-path wrapper in fixtures/server.fixture.ts, #18348); an
+    // external server's rsession uses the logged-in account's real home.
+    test.skip(
+      !!process.env.PW_RSTUDIO_SERVER_URL,
+      'External server: the harness does not control the rsession HOME',
+    );
+
+    // Guards the whole delivery chain -- wrapper generation, rserver exec'ing
+    // it, and the exports surviving into the session. If this fails, sandbox
+    // AI credentials (and dotfile isolation) are silently broken in server
+    // mode even though the credential gate reads them as present.
+    const consoleActions = new ConsolePaneActions(page);
+    const inSandbox = await consoleActions.evalRLogical(
+      `startsWith(Sys.getenv("HOME"), ${rStringLiteral(SANDBOX!)})`,
+    );
+    expect(
+      inSandbox,
+      'expected the rsession HOME to be under PW_SANDBOX (rsession-wrapper delivery chain broken?)',
+    ).toBe(true);
   });
 });

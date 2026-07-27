@@ -93,7 +93,9 @@ npx playwright test --project=server
 npx playwright test tests/panes/posit-assistant-chat/ --project=server
 ```
 
-To skip the spawn and target an external server (e.g. CI, or a remote box), set `PW_RSTUDIO_SERVER_URL`. Credentials are required only when the external server presents a login form; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set.
+The spawned server launches its rsessions through a fixture-generated wrapper script (passed as `--rsession-path`), which redirects each rsession's `HOME` into the sandbox. That is what delivers the sandbox-provisioned AI credentials (and dotfile isolation) to server-mode sessions -- `rserver` otherwise builds every rsession's environment from scratch with `HOME` from the passwd db (#18348).
+
+To skip the spawn and target an external server (e.g. CI, or a remote box), set `PW_RSTUDIO_SERVER_URL`. Credentials are required only when the external server presents a login form; `PW_RSTUDIO_SERVER_PORT` overrides the port in the URL when set. Note that an external server's rsessions read the logged-in account's real home directory, which the harness does not control: sandbox-provisioned AI credentials do not reach them, and AI feature tests there reflect whatever sign-in state that account already has (#18348 tracks provisioning through the session).
 
 **Prerequisite for external servers**: the rsession processes the target server spawns must run with `--automation-agent`, otherwise `window.rstudio` is never installed and the very first step of `launchServer()` (which calls `setPref()` through the bridge) will time out. The in-tree spawn handles this by passing `--automation-agent=1` to `rserver-dev`, which forwards the flag to every rsession it launches. External servers have to be configured explicitly -- either start `rserver` with `--automation-agent=1`, or add `automation-agent=1` to `rserver.conf`. Servers that aren't dedicated test instances will not have this set by default.
 
@@ -243,7 +245,7 @@ The `tsconfig.json` defines path aliases so imports stay clean:
 The unified fixture (`rstudio.fixture.ts`) reads the per-project `mode` option (set in `playwright.config.ts`) and delegates to the appropriate launcher. It provides a shared `rstudioPage` (a Playwright `Page`) scoped to the worker, so all tests in a file share one RStudio session.
 
 - **Desktop**: Kills any process still *listening* on this worker's CDP port (a leftover RStudio from a prior interrupted run), spawns RStudio with `--remote-debugging-port` and `--automation-agent`, connects via `chromium.connectOverCDP()`, waits for the console to be ready.
-- **Server**: When `PW_RSTUDIO_SERVER_URL` is unset, spawns a private in-tree `rserver-dev` per worker with sandboxed env (`--auth-none`, `--automation-agent`, isolated `HOME` / config / data dirs). Otherwise connects to the configured external URL. Either way, launches a headed Chromium, navigates to the server, and -- only if a login form is presented -- fills in `PW_RSTUDIO_SERVER_USER` / `_PASSWORD` before waiting for the IDE to load.
+- **Server**: When `PW_RSTUDIO_SERVER_URL` is unset, spawns a private in-tree `rserver-dev` per worker with sandboxed env (`--auth-none`, `--automation-agent`, isolated `HOME` / config / data dirs) and points `--rsession-path` at a generated wrapper script that carries the sandbox `HOME` (and the Copilot plaintext-store flag) into each rsession. Otherwise connects to the configured external URL. Either way, launches a headed Chromium, navigates to the server, and -- only if a login form is presented -- fills in `PW_RSTUDIO_SERVER_USER` / `_PASSWORD` before waiting for the IDE to load.
 
 Both fixtures dismiss leftover save dialogs from previous runs.
 

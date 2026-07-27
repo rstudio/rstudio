@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
-import { spawn, type ChildProcess } from 'child_process';
+import { execFileSync, spawn, type ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { createServer } from 'net';
 import * as fs from 'fs';
@@ -66,6 +66,93 @@ interface SpawnedServer {
 }
 
 /**
+ * Resolve the real rsession binary the spawned rserver would launch, from the
+ * rsession-path setting in the conf in use. rserver-dev.conf carries an
+ * absolute path into the build tree; installed confs may omit it or use the
+ * default relative form ("rsession", resolved against the installation
+ * layout), so relative values are tried against the rserver binary's own
+ * directory and its parent. Fails loud when nothing resolves -- a wrapper
+ * exec'ing a missing binary would otherwise surface as an opaque
+ * session-launch failure.
+ */
+function resolveRsessionPath(rserverBin: string, rserverConf: string): string {
+  const conf = fs.readFileSync(rserverConf, 'utf-8');
+  const match = conf.match(/^\s*rsession-path=(.+)$/m);
+  const configured = match ? match[1].trim() : 'rsession';
+  const candidates = path.isAbsolute(configured)
+    ? [configured]
+    : [
+        path.resolve(path.dirname(rserverBin), configured),
+        path.resolve(path.dirname(path.dirname(rserverBin)), configured),
+      ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  throw new Error(
+    `Cannot resolve the rsession binary for the session-env wrapper: ` +
+      `rsession-path=${configured} (from ${rserverConf}) resolved to none of: ${candidates.join(', ')}`,
+  );
+}
+
+/**
+ * On macOS, rserver injects DYLD_INSERT_LIBRARIES=<R_HOME>/lib/libR.dylib
+ * into every rsession's environment (ServerSessionManager.cpp,
+ * launchAndTrackSession). SIP strips DYLD_* variables across the exec of a
+ * protected interpreter like /bin/sh, so the wrapper script must re-export
+ * it itself. Compute R_HOME the same way rserver does: from the conf's
+ * rsession-which-r (falling back to `R` on PATH).
+ */
+function macosLibRPath(rserverConf: string): string {
+  const conf = fs.readFileSync(rserverConf, 'utf-8');
+  const match = conf.match(/^\s*rsession-which-r=(.+)$/m);
+  const rBinary = match ? match[1].trim() : 'R';
+  const rHome = execFileSync(rBinary, ['RHOME'], { encoding: 'utf-8' }).trim();
+  return path.join(rHome, 'lib', 'libR.dylib');
+}
+
+/** Shell-quote a path for the generated wrapper script. */
+function shQuote(value: string): string {
+  return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
+/**
+ * Generate the per-worker rsession wrapper script that delivers the sandbox
+ * environment to the rsession (and thus to the AI backends it spawns).
+ * rserver builds each rsession's environment from scratch (runProcess in
+ * core/system/PosixSystem.cpp) with HOME taken from the passwd db, so env
+ * vars set on the rserver process never reach the session (#18348). The
+ * wrapper runs as the session user after that environment is built, so its
+ * exports win:
+ *  - HOME: the sandbox user-home (honoring aiAuth-stripped variants), where
+ *    auth.setup provisioned the Posit AI token store and Copilot's auth.db.
+ *  - GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false: the sandbox auth.db is
+ *    written plaintext (#18205; matches desktop.fixture.ts), and under the
+ *    redirected HOME macOS has no login keychain.
+ *  - XDG_CONFIG_HOME unset: rserver's xdg filter forwards a developer-shell
+ *    value to the session, and the copilot-language-server resolves its
+ *    config dir from XDG_CONFIG_HOME before HOME -- unset, it falls back to
+ *    $HOME/.config/github-copilot, inside the sandbox.
+ */
+function writeRsessionWrapper(serverRoot: string, userHome: string, rserverBin: string, rserverConf: string): string {
+  const rsessionBin = resolveRsessionPath(rserverBin, rserverConf);
+  const lines = [
+    '#!/bin/sh',
+    `export HOME=${shQuote(userHome)}`,
+    'export GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false',
+    'unset XDG_CONFIG_HOME',
+  ];
+  if (process.platform === 'darwin') {
+    lines.push(`export DYLD_INSERT_LIBRARIES=${shQuote(macosLibRPath(rserverConf))}`);
+  }
+  lines.push(`exec ${shQuote(rsessionBin)} "$@"`, '');
+  const wrapperPath = path.join(serverRoot, 'rsession-wrapper.sh');
+  fs.writeFileSync(wrapperPath, lines.join('\n'), { mode: 0o755 });
+  return wrapperPath;
+}
+
+/**
  * Spawn a private rserver-dev process with sandboxed env so each worker gets
  * its own server data dir, R config home, and HOME pointing into PW_SANDBOX.
  * Mirrors the Desktop fixture's per-worker isolation.
@@ -105,6 +192,15 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   // per server_core/http/SecureCookie.cpp ensureKeyStrength().
   fs.writeFileSync(secureCookieKey, randomBytes(32).toString('hex'), { mode: 0o600 });
 
+  // Deliver the sandbox environment to each rsession through a wrapper
+  // script passed as --rsession-path (#18348). Vars set on the rserver
+  // process below do NOT reach its rsessions -- rserver rebuilds their
+  // environment from scratch (runProcess in core/system/PosixSystem.cpp),
+  // with HOME from the passwd db -- so the wrapper is what redirects the
+  // rsession (and the AI backends it spawns) into the sandbox. See
+  // writeRsessionWrapper for the vars it carries.
+  const rsessionWrapper = writeRsessionWrapper(serverRoot, userHome, rserverBin, rserverConf);
+
   const env = {
     ...process.env,
     HOME: userHome,
@@ -117,14 +213,15 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
     RSTUDIO_CONFIG_HOME: configHome,
     RSTUDIO_DATA_HOME: dataHome,
-    // No GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION here, unlike desktop.fixture.ts
-    // (#18205): rserver builds each rsession's environment from scratch
-    // (runProcess in core/system/PosixSystem.cpp), so arbitrary vars set here
-    // never reach the rsession that hosts the Copilot language server. The
-    // macOS "Keychain Not Found" modal also cannot occur in server mode --
-    // rsession's HOME comes from the passwd db, not this redirect, so the
-    // real login keychain is always found.
   };
+  // Keep developer-shell XDG dirs out of the picture entirely: rserver's xdg
+  // filter forwards XDG_* to every rsession, where XDG_CONFIG_HOME would win
+  // over the wrapper's HOME for the Copilot config dir and point it outside
+  // the sandbox. The wrapper also unsets XDG_CONFIG_HOME session-side; this
+  // covers the rserver process itself and the rest of the XDG family.
+  for (const v of ['XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME']) {
+    delete (env as Record<string, string | undefined>)[v];
+  }
 
   const args = [
     `--server-user=${os.userInfo().username}`,
@@ -139,6 +236,9 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     // @utils/commands. Matches what desktop.fixture.ts does directly to its
     // single rsession.
     `--automation-agent=1`,
+    // Launch rsessions through the sandbox-env wrapper. CLI args override
+    // conf-file values (as --auth-none above already relies on).
+    `--rsession-path=${rsessionWrapper}`,
   ];
 
   console.log(`[server] spawning ${path.basename(rserverBin)} on port ${port}`);

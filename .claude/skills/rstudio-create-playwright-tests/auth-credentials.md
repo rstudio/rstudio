@@ -79,11 +79,24 @@ default.
 - 2FA uses a TOTP code generated from `COPILOT_TOTP_SECRET` (base32). A missing
   or malformed secret fails loud (`GitHubLoginError`), not a skip.
 
-## Server mode: sandbox credentials do not reach the rsession
+## Server mode: how sandbox credentials reach the rsession
 
-Both providers' credentials are written to the sandbox home, which the IDE
-reads on Desktop. On Server, `rserver` takes the rsession's `HOME` from the
-passwd db (`getpwnam` -> `pw_dir`), not the sandbox, so sandbox credentials
-never reach it and the gate is a false positive there. A green Server run can
-be the OS user's own local sign-in, not the provisioning. Pre-existing, both
-providers, tracked in issue #18348.
+`rserver` builds each rsession's environment from scratch and takes `HOME`
+from the passwd db (`getpwnam` -> `pw_dir`), so environment variables set on
+the rserver process never reach its rsessions. For the spawned in-tree
+server, the fixture bridges this with a wrapper script passed as
+`--rsession-path` (`writeRsessionWrapper` in `fixtures/server.fixture.ts`):
+it exports the sandbox `HOME` (and
+`GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false`, unsets `XDG_CONFIG_HOME`,
+re-exports `DYLD_INSERT_LIBRARIES` on macOS where SIP strips it across the
+`/bin/sh` exec) and execs the real rsession. Keep the wrapper's variable list
+in sync with what Desktop sets on its child process. The `@server_only`
+smoke test in `tests/sandbox.test.ts` asserts the rsession `HOME` lands under
+the sandbox -- if the delivery chain breaks, that test is the tripwire.
+
+**External servers** (`PW_RSTUDIO_SERVER_URL`) still have the gap: the
+harness cannot control that server's rsession environment, sandbox
+credentials never reach it, and the gate is a false positive there. A green
+external run can be the remote account's own sign-in, not the provisioning.
+Tracked in issue #18348 (through-the-session provisioning is the planned
+fix).

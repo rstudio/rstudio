@@ -61,11 +61,15 @@ const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
-// Whether this run targets RStudio Server. In server mode the rsession reads the
-// logged-in user's real home directory (from the passwd db), not the sandbox this
-// setup writes to, so the completion messages below warn that the sandbox
-// credentials won't reach the session.
+// Whether this run targets RStudio Server, and specifically an external one
+// (PW_RSTUDIO_SERVER_URL). A spawned in-tree server delivers the sandbox
+// credentials to its rsessions via the --rsession-path wrapper
+// (fixtures/server.fixture.ts, #18348), so only the external case still has
+// the gap: that server's rsessions read the logged-in account's real home
+// directory, which this setup cannot reach, so the completion messages below
+// warn that the sandbox credentials won't reach the session there.
 const IS_SERVER = (process.env.PW_RSTUDIO_MODE ?? 'desktop').toLowerCase() === 'server';
+const IS_EXTERNAL_SERVER = IS_SERVER && !!process.env.PW_RSTUDIO_SERVER_URL;
 
 // Copy a single file, first creating the destination's parent directory.
 function copyFile(src: string, dest: string): void {
@@ -645,9 +649,9 @@ setup('authenticate Posit AI', async () => {
     reason: 'sign-in flow completed',
   });
   console.log(
-    IS_SERVER
-      ? '[auth-setup] WARNING: Posit AI sign-in complete, but these sandbox credentials will not reach an RStudio Server rsession, which reads the logged-in user\'s real home directory instead'
-      : '[auth-setup] Posit AI sign-in complete; credentials are in place for RStudio Desktop',
+    IS_EXTERNAL_SERVER
+      ? '[auth-setup] WARNING: Posit AI sign-in complete, but these sandbox credentials will not reach an rsession on the external server at PW_RSTUDIO_SERVER_URL, which reads the logged-in account\'s real home directory instead'
+      : '[auth-setup] Posit AI sign-in complete; credentials are in place',
   );
 });
 
@@ -858,8 +862,8 @@ setup('authenticate GitHub Copilot', async () => {
     reason: 'agent-driven sign-in flow completed',
   });
   console.log(
-    IS_SERVER
-      ? '[auth-setup] WARNING: Copilot sign-in complete, but these sandbox credentials will not reach an RStudio Server rsession, which reads the logged-in user\'s real home directory instead'
-      : '[auth-setup] Copilot sign-in complete; credentials are in place for RStudio Desktop',
+    IS_EXTERNAL_SERVER
+      ? '[auth-setup] WARNING: Copilot sign-in complete, but these sandbox credentials will not reach an rsession on the external server at PW_RSTUDIO_SERVER_URL, which reads the logged-in account\'s real home directory instead'
+      : '[auth-setup] Copilot sign-in complete; credentials are in place',
   );
 });
