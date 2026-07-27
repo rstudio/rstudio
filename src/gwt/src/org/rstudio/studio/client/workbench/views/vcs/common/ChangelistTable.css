@@ -1,13 +1,18 @@
 
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+
 .infoBar {
    border-bottom: 1px solid #bcc1c5;
 }
 
-/* shown in place of the table when there is nothing to review; muted so it
-   reads as an empty state rather than content */
+/* Shown in place of the table when there is nothing to review. Styled to
+   match the Environment pane's "Environment is empty" message (see
+   EnvironmentObjects.css): centered, proportional, 90%, and inheriting the
+   theme's foreground rather than picking its own color. */
 .emptyMessage {
    width: 100%;
-   padding: 12px 0;
+   padding: 24px 0;
+   font-family: proportionalFont;
+   font-size: 90%;
    text-align: center;
-   color: #8a8a8a;
 }

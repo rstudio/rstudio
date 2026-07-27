@@ -136,7 +136,7 @@ public abstract class ChangelistTable extends Composite
 
       // a bare table reads as broken rather than empty, especially in the
       // Review Changes window where it owns a whole pane
-      Label emptyLabel = new Label(constants_.noChangesParentheses());
+      Label emptyLabel = new Label(constants_.noChanges());
       emptyLabel.addStyleName(resources_.styles().emptyMessage());
       table_.setEmptyTableWidget(emptyLabel);
 
