@@ -100,10 +100,12 @@ on:
         type: string
         required: true
       # Architecture the caller believes `os` runs on, cross-checked against
-      # the engine config's tools_arch. 'auto' (or empty) skips the check.
+      # the engine config's tools_arch. Required (rather than defaulting to
+      # 'auto') so a caller can't omit the assertion by accident; pass 'auto'
+      # to opt out deliberately.
       arch:
         type: string
-        default: auto
+        required: true
       build_from_source:
         type: boolean
         default: true
@@ -242,11 +244,44 @@ jobs:
             echo "::error::Engine config '$FILE' is missing tools_arch."
             exit 1
           fi
-          if [ -n "$ARCH" ] && [ "$ARCH" != "auto" ] && [ "$ARCH" != "$CONFIG_ARCH" ]; then
+
+          # An empty arch is a caller bug, not a request to skip the check:
+          # `required: true` on the workflow_call input only rejects an absent
+          # key, so a caller passing an unset expression (a matrix entry with
+          # no "arch", say) would otherwise sail through with the assertion
+          # quietly disabled. 'auto' is the one way to opt out.
+          if [ -z "$ARCH" ]; then
+            echo "::error::The arch input is empty. Pass the engine's architecture (or 'auto' to take it from the config); a caller expression -- a matrix entry's arch key, say -- probably resolved to nothing."
+            exit 1
+          fi
+          if [ "$ARCH" != "auto" ] && [ "$ARCH" != "$CONFIG_ARCH" ]; then
             echo "::error::Engine '$OS' is $CONFIG_ARCH, but the caller requested arch '$ARCH'. Fix the caller, or update .github/e2e-linux/$OS.json (including its cache keys) if the engine really moved."
             exit 1
           fi
+
+          # The engine name must end in its arch. This is not just naming
+          # hygiene: the merge job collects shard blobs with the glob
+          # playwright-blob-report-linux-desktop-<os>-*, which is only
+          # collision-free while no engine name is a prefix of another. A bare
+          # "ubuntu-24" would also match "ubuntu-24-arm64"'s blobs and merge
+          # another engine's results into this engine's report.
+          case "$OS" in
+            *-"$CONFIG_ARCH") ;;
+            *)
+              echo "::error::Engine name '$OS' must end in '-$CONFIG_ARCH' (its tools_arch). Rename the config; see .github/e2e-linux/README.md."
+              exit 1
+              ;;
+          esac
           echo "::notice::Engine $OS ($CONFIG_ARCH)"
+
+          # Values go to GITHUB_OUTPUT as plain key=value, which a newline in
+          # any value would corrupt (turning the rest of a value into forged
+          # output keys). Every value is a short scalar today; fail loudly
+          # rather than silently if that ever stops being true.
+          if ! jq -e 'all(.[]; type == "string" and (test("[\\r\\n]") | not))' "$FILE" >/dev/null; then
+            echo "::error::Engine config '$FILE' has a non-string or multi-line value; the setup job can only republish single-line strings."
+            exit 1
+          fi
 
           jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" | tee -a "$GITHUB_OUTPUT"
 
@@ -619,9 +654,19 @@ jobs:
       # Engines that can't use rig (r_install: "distro") install R through
       # their own hook instead (e.g. Fedora's dnf R-core, which also has to
       # defeat the container image's tsflags=nodocs default).
+      # Unlike the optional hooks above, this one is required when the config
+      # asks for it: silently skipping it would leave the engine with no R at
+      # all, failing much later and less legibly.
       - name: Install R (distro)
         if: needs.setup.outputs.r_install == 'distro'
-        run: bash ".github/e2e-linux/${{ needs.setup.outputs.script_dir }}/install-r.sh"
+        env:
+          SCRIPT: .github/e2e-linux/${{ needs.setup.outputs.script_dir }}/install-r.sh
+        run: |
+          if [ ! -f "$SCRIPT" ]; then
+            echo "::error::${{ inputs.os }} sets r_install: distro but $SCRIPT does not exist."
+            exit 1
+          fi
+          bash "$SCRIPT"
 
       # Post-R, pre-R-package hook (e.g. Debian's PPM codename rewrite, which
       # must run after rig has seen the real distro).

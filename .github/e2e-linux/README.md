@@ -81,6 +81,17 @@ dispatch default) accepts whatever the config declares. The point is that
 re-pointing an engine at a different runner can't silently leave the
 arch-bearing cache keys behind.
 
+`arch` is a required `workflow_call` input, and an empty value is an error
+rather than a skip: `required: true` alone only rejects an absent key, so a
+caller passing an expression that resolves to nothing (a matrix entry with no
+`arch`) would otherwise disable the assertion without saying so. Pass `auto` to
+opt out on purpose.
+
+The setup job also enforces the two conventions the rest of the workflow relies
+on: the engine name must end in `-<tools_arch>` (see the blob-glob note above),
+and every config value must be a single-line string, since they are republished
+as `key=value` job outputs.
+
 ## Config keys
 
 | Key | Meaning |
