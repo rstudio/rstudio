@@ -86,7 +86,12 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] 
   });
 
   test('generating a plot brings the Plots pane to the front', async ({ rstudioPage: page }) => {
-    test.setTimeout(180000);
+    // Budget above the summed worst-case waits below -- the 150s completion
+    // poll plus the 15s plot-history and 15s activation polls total 180s, which
+    // would otherwise exactly match the test timeout and leave no room for the
+    // pre-poll setup, letting a slow run hit Playwright's generic timeout before
+    // the diagnostic or activation assertion could report.
+    test.setTimeout(210000);
 
     await chatActions.startNewConversation();
 
