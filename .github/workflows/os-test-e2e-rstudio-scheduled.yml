@@ -85,21 +85,23 @@ jobs:
           echo "::notice::Selected engines: $SEL"
 
           # Map the selected Linux Desktop engines onto the consolidated
-          # workflow's matrix: os names the .github/e2e-linux config, url_key
-          # names the resolve job's output holding that engine's
-          # version-specific installer URL (empty on latest-daily /
-          # build-from-source runs). Engines without their own daily reuse
-          # the nearest build (Fedora -> rhel10-x86_64, Debian ->
-          # noble-arm64, Ubuntu 26 -> noble-amd64); see the engine configs.
+          # workflow's matrix: os names the .github/e2e-linux config, arch is
+          # the architecture that config is expected to run on (the called
+          # workflow fails the run if the two disagree), and url_key names the
+          # resolve job's output holding that engine's version-specific
+          # installer URL (empty on latest-daily / build-from-source runs).
+          # Engines without their own daily reuse the nearest build (Fedora ->
+          # rhel10-x86_64, Debian -> noble-arm64, Ubuntu 26 -> noble-amd64);
+          # see the engine configs.
           TABLE='[
-            {"key":"fedora43","os":"fedora-43","name":"Fedora 43 x86_64","url_key":"rhel"},
-            {"key":"fedora44","os":"fedora-44","name":"Fedora 44 x86_64","url_key":"rhel"},
-            {"key":"ubuntu26","os":"ubuntu-26","name":"Ubuntu 26 amd64","url_key":"noble_amd64"},
-            {"key":"ubuntu22","os":"ubuntu-22","name":"Ubuntu 22 amd64","url_key":"jammy_amd64"},
-            {"key":"ubuntu24d","os":"ubuntu-24","name":"Ubuntu 24 Desktop","url_key":"noble_amd64"},
-            {"key":"debian13","os":"debian-13","name":"Debian 13 arm64","url_key":"noble_arm64"},
-            {"key":"rocky10","os":"rocky-10","name":"Rocky 10 arm64","url_key":"rocky"},
-            {"key":"rocky9","os":"rocky-9","name":"Rocky 9 x86_64","url_key":"rhel9"}
+            {"key":"fedora43","os":"fedora-43","arch":"x86_64","name":"Fedora 43 x86_64","url_key":"rhel"},
+            {"key":"fedora44","os":"fedora-44","arch":"x86_64","name":"Fedora 44 x86_64","url_key":"rhel"},
+            {"key":"ubuntu26","os":"ubuntu-26","arch":"x86_64","name":"Ubuntu 26 amd64","url_key":"noble_amd64"},
+            {"key":"ubuntu22","os":"ubuntu-22","arch":"x86_64","name":"Ubuntu 22 amd64","url_key":"jammy_amd64"},
+            {"key":"ubuntu24d","os":"ubuntu-24","arch":"x86_64","name":"Ubuntu 24 Desktop","url_key":"noble_amd64"},
+            {"key":"debian13","os":"debian-13","arch":"arm64","name":"Debian 13 arm64","url_key":"noble_arm64"},
+            {"key":"rocky10","os":"rocky-10","arch":"arm64","name":"Rocky 10 arm64","url_key":"rocky"},
+            {"key":"rocky9","os":"rocky-9","arch":"x86_64","name":"Rocky 9 x86_64","url_key":"rhel9"}
           ]'
           LINUX=$(jq -cn --argjson table "$TABLE" --argjson sel "$SEL" \
             '[$table[] | select(.key as $k | $sel | index($k))]')
@@ -209,6 +211,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       os: ${{ matrix.os }}
+      arch: ${{ matrix.arch }}
       project: desktop
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}

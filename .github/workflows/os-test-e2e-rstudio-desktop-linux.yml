@@ -39,6 +39,14 @@ on:
           - rocky-9
           - rocky-10
         default: ubuntu-24
+      arch:
+        description: "Architecture the selected engine is expected to run on. 'auto' takes it from the engine config; naming it explicitly asserts it (the run fails on mismatch)."
+        type: choice
+        options:
+          - auto
+          - x86_64
+          - arm64
+        default: auto
       build_from_source:
         description: "Build RStudio Desktop (Electron) from this branch's source. When false, downloads the latest daily installer."
         type: boolean
@@ -88,6 +96,11 @@ on:
       os:
         type: string
         required: true
+      # Architecture the caller believes `os` runs on, cross-checked against
+      # the engine config's tools_arch. 'auto' (or empty) skips the check.
+      arch:
+        type: string
+        default: auto
       build_from_source:
         type: boolean
         default: true
@@ -204,6 +217,7 @@ jobs:
         id: config
         env:
           OS: ${{ inputs.os }}
+          ARCH: ${{ inputs.arch }}
         run: |
           FILE=".github/e2e-linux/$OS.json"
           if [ ! -f "$FILE" ]; then
@@ -211,6 +225,26 @@ jobs:
             echo "::error::Unknown os '$OS'. Available engines: $AVAILABLE"
             exit 1
           fi
+
+          # Every engine is single-arch, so `arch` is an assertion rather than
+          # a second selection axis: callers name the arch they think they're
+          # scheduling, and this fails the run if the config disagrees. That
+          # catches an engine being re-pointed at a different runner (or a new
+          # config copied from the other arch) without its arch-bearing cache
+          # keys, installer artifact, and daily platform key being updated to
+          # match -- the class of silent cross-arch cache reuse that #18362
+          # fixed on macOS.
+          CONFIG_ARCH=$(jq -r '.tools_arch // empty' "$FILE")
+          if [ -z "$CONFIG_ARCH" ]; then
+            echo "::error::Engine config '$FILE' is missing tools_arch."
+            exit 1
+          fi
+          if [ -n "$ARCH" ] && [ "$ARCH" != "auto" ] && [ "$ARCH" != "$CONFIG_ARCH" ]; then
+            echo "::error::Engine '$OS' is $CONFIG_ARCH, but the caller requested arch '$ARCH'. Fix the caller, or update .github/e2e-linux/$OS.json (including its cache keys) if the engine really moved."
+            exit 1
+          fi
+          echo "::notice::Engine $OS ($CONFIG_ARCH)"
+
           jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" | tee -a "$GITHUB_OUTPUT"
 
   # Builds RStudio Desktop (Electron) from this branch's source and uploads

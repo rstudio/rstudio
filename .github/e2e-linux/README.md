@@ -28,6 +28,28 @@ need to persist environment variables for later steps write to `$GITHUB_ENV` /
 3. Wire the engine into the callers you want: the scheduled rotation
    (`os-test-e2e-rstudio-scheduled.yml` -- add it to the engine table and a
    weekday slate) and/or the PR run (`os-test-e2e-rstudio-pr.yml`).
+4. Add it to the `os` choice list in the workflow's `workflow_dispatch`
+   inputs, so it can be run by hand.
+
+## Architecture
+
+Architecture is not a second selection axis: every engine config is
+single-arch, and the arch it runs on is spelled out in `tools_arch`, the runner
+labels, all three build cache keys, `sccache_key_prefix`, `installer_artifact`,
+`daily_platform_key`, `e2e_deps_cache_scope`, and `pw_label`. Keeping the arch
+literal in each of those (rather than templating it in) is what stops two
+engines of different arch from ever sharing a cache entry or an artifact name.
+
+To run an existing distro on a second architecture, add a *new* engine whose
+name carries the arch (`ubuntu-24-arm64.json` alongside `ubuntu-24.json`) and
+give every key above an arch-distinct value. No workflow changes are needed.
+
+Callers pass an `arch` input naming the architecture they expect the engine to
+run on; the workflow compares it against the config's `tools_arch` and fails
+the run on a mismatch. It's an assertion, not a selector -- `auto` (the
+dispatch default) accepts whatever the config declares. The point is that
+re-pointing an engine at a different runner can't silently leave the
+arch-bearing cache keys behind.
 
 ## Config keys
 

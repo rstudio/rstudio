@@ -186,6 +186,7 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       os: ubuntu-24
+      arch: x86_64
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_desktop_build_from_source) }}
       project: desktop
       r_version: "4.5.3"

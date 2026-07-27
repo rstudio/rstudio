@@ -24,5 +24,6 @@ jobs:
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       os: ubuntu-24
+      arch: x86_64
       project: desktop
       r_version: "release"
