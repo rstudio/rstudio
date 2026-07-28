@@ -3,7 +3,7 @@
 # Compares two ways of handing op:// references to load-secrets-action:
 #
 #   env-file: references live in e2e/rstudio/.env.op, pointed at by OP_ENV_FILE
-#   inline:   references live in the step's own env: block (PR #17980's shape)
+#   inline:   references live in the step's own env: block
 #
 # Both consume the resolved values as step outputs rather than export-env, so the
 # credentials reach only the step that needs them. The point of the spike is to
@@ -44,7 +44,7 @@ jobs:
       - name: Load secrets from OP
         id: op
         if: steps.op_token_check.outputs.present == 'true'
-        uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           OP_ENV_FILE: ./e2e/rstudio/.env.op
@@ -99,7 +99,7 @@ jobs:
         id: op
         if: steps.op_token_check.outputs.present == 'true'
         continue-on-error: true
-        uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           BOGUS_FIELD: "op://RStudio OSS GitHub Actions/Login/nosuchfield"
@@ -146,7 +146,7 @@ jobs:
       - name: Load secrets from OP
         id: op
         if: steps.op_token_check.outputs.present == 'true'
-        uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           POSIT_EMAIL: "op://RStudio OSS GitHub Actions/Login/username"
