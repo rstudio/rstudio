@@ -47,10 +47,6 @@ span.status img:first-child {
    padding-left: 13px !important;
 }
 
-.cellTableHeader {
-   padding-left: 5px;
-}
-
 .cellTableSortableHeader {
    border-top: none;
    border-left: none;
@@ -73,6 +69,15 @@ span.status img:first-child {
 .rstudio-themes-alternate .cellTableSortableHeader {
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+/* The table follows its ace_editor_theme container for every editor theme, not
+   just dark ones: the base paints it a hard-coded white, so a light-but-not-
+   white theme (say Solarized Light) would otherwise leave a white table inside
+   a cream pane. Row colors below stay dark-only -- the light defaults already
+   suit a light theme. */
+.ace_editor_theme .cellTableWidget {
+   background-color: inherit;
 }
 
 .editor_dark .ace_editor_theme .cellTableSelectedRow {

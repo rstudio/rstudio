@@ -1,53 +1,46 @@
 // Regression test for issue #9026: the Review Changes (git commit) window is a
 // satellite, and satellites opt out of theming by default -- so the window
 // always rendered light, however dark the editor theme was. VCSApplicationWindow
-// now opts in (supportsThemes), which puts the flat-theme classes on the
+// now opts in (supportsThemes), which puts the global theme classes on the
 // satellite's container and injects the editor theme CSS there; the changelist
 // and diff panes carry ace_editor_theme and follow the editor theme, as they do
 // in the Git pane in the main window.
 import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
 import { executeInConsole } from '@pages/console_pane.page';
-import { executeCommand, openProject } from '@utils/commands';
+import { executeCommand, getPref, openProject, setPref } from '@utils/commands';
 import { closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral } from '@utils/r';
+import {
+  DARK_THEME,
+  DARK_THEME_HREF,
+  LIGHT_THEME,
+  LIGHT_THEME_HREF,
+  THEME_CONTAINER,
+  expectThemeStylesheet,
+  getThemeStylesheetHref,
+  luminance,
+} from '@utils/theme';
 
-// 'Cobalt' ships with RStudio and is dark; its stylesheet href always contains
-// "cobalt" when active. 'Textmate (default)' is the light default.
-const DARK_THEME = 'Cobalt';
-const LIGHT_THEME = 'Textmate (default)';
-
-// id on the <link> element AceThemes.java injects to apply the theme CSS; the
-// satellite gets its own copy once the window opts in to theming
-const ACE_THEME_LINK = '#rstudio-acethemes-linkelement';
-
-// RStudioThemes.initializeThemes() assigns this id to the themed container and
-// adds rstudio-themes-dark to it for dark themes
-const THEME_CONTAINER = '#rstudio_container';
-
-// The changelist and the diff pane are the two panes that follow the editor
-// theme. Neither has a stable element id, but both carry this (external, so
-// un-obfuscated) class precisely because they are editor-themed.
+// The changelist, the diff pane, and (in the History view) the commit list and
+// commit detail all follow the editor theme. None has a stable element id, but
+// each carries this (external, so un-obfuscated) class precisely because it is
+// editor-themed.
 const EDITOR_THEMED_PANE = '.ace_editor_theme';
 
+// The diff's own CSS lives in a bundle whose class names GWT obfuscates, so the
+// chunk action pills are reached the same way that CSS reaches them: by their
+// data-action attribute. All three actions are always rendered; the patch mode
+// decides which are display:none, so this needs the visible one. The window
+// opens on Unstaged, where Stage is shown.
+const ACTION_PILL = "div[data-action='Stage']";
+
+// Both the changelist and the diff render a cell table inside an editor-themed
+// pane; the base stylesheet paints those tables an opaque white.
+const THEMED_TABLE = `${EDITOR_THEMED_PANE} table`;
+
 const PROJECT_NAME = 'GitReviewTheme';
-
-/** Relative luminance (0 = black, 255 = white) of a CSS rgb()/rgba() color. */
-function luminance(cssColor: string): number {
-  const match = cssColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-  if (!match)
-    throw new Error(`unexpected color format: ${cssColor}`);
-
-  // a fully transparent background means nothing was actually painted; return
-  // NaN so both the light and the dark comparison fail rather than letting
-  // rgba(0, 0, 0, 0) read as black
-  if (match[4] !== undefined && Number(match[4]) === 0)
-    return Number.NaN;
-
-  const [r, g, b] = [Number(match[1]), Number(match[2]), Number(match[3])];
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
 
 /**
  * Luminance of each editor-themed pane the window is currently showing.
@@ -55,36 +48,48 @@ function luminance(cssColor: string): number {
  * The window hosts both the Changes and the History view and keeps the
  * inactive one in the DOM but not rendered; a non-rendered element reports no
  * background color at all, so restrict this to the panes actually on screen.
+ *
+ * Returns [NaN] rather than [] when nothing matches, so that a caller reducing
+ * with Math.min/Math.max cannot be handed the vacuously passing Infinity.
  */
 async function paneLuminances(satellite: Page): Promise<number[]> {
-  const colors = await satellite.locator(EDITOR_THEMED_PANE).evaluateAll((els) =>
-    els
-      .filter((el) => el.getClientRects().length > 0)
-      .map((el) => getComputedStyle(el).backgroundColor),
+  const colors = await visibleStyles(satellite, EDITOR_THEMED_PANE, 'backgroundColor');
+  return colors.length === 0 ? [Number.NaN] : colors.map(luminance);
+}
+
+/** One computed style property, for each element matching `selector` on screen. */
+async function visibleStyles(
+  satellite: Page,
+  selector: string,
+  property: 'backgroundColor' | 'backgroundImage',
+): Promise<string[]> {
+  return satellite.locator(selector).evaluateAll(
+    (els, prop) =>
+      els
+        .filter((el) => el.getClientRects().length > 0)
+        .map((el) => getComputedStyle(el)[prop as 'backgroundColor']),
+    property,
   );
-  return colors.map(luminance);
 }
 
 test.describe.serial('Review Changes window theming (#9026)', () => {
   const sandbox = useSuiteSandbox();
   let satellitePage: Page | undefined;
 
+  // Captured runner-side: an R global would not survive the session restart
+  // openProject() performs below.
+  let originalTheme: string | null = null;
+
   test.beforeAll(async ({ rstudioPage: page }) => {
     await closeProjectIfOpen(page);
-    await executeInConsole(page, '.rstudio.e2e.vcsThemeOrig <- .rs.api.getThemeInfo()$editor', {
-      wait: true,
-    });
+    originalTheme = (await getPref(page, 'editor_theme')) as string | null;
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
     await satellitePage?.close().catch(() => undefined);
 
     try {
-      await executeInConsole(
-        page,
-        `if (exists(".rstudio.e2e.vcsThemeOrig")) .rs.api.applyTheme(.rstudio.e2e.vcsThemeOrig) else .rs.api.applyTheme(${JSON.stringify(LIGHT_THEME)})`,
-        { wait: true },
-      );
+      await setPref(page, 'editor_theme', originalTheme ?? LIGHT_THEME);
       await closeProjectIfOpen(page);
     } catch (err) {
       console.warn(`[review_changes_theme] cleanup failed: ${(err as Error).message}`);
@@ -137,11 +142,7 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
     await executeInConsole(page, `.rs.api.applyTheme(${JSON.stringify(DARK_THEME)})`, {
       wait: true,
     });
-    await expect
-      .poll(async () =>
-        page.evaluate((id) => document.querySelector(id)?.getAttribute('href') ?? '', ACE_THEME_LINK),
-      )
-      .toContain('cobalt');
+    await expectThemeStylesheet(page, DARK_THEME_HREF);
 
     const satellitePromise = page.context().waitForEvent('page', { timeout: 60000 });
     await executeCommand(page, 'vcsCommit');
@@ -149,30 +150,53 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
     await satellitePage.waitForLoadState('domcontentloaded');
     expect(satellitePage.url()).toContain('view=review_changes');
 
-    // the flat theme classes reach the satellite's container...
+    // the global theme classes reach the satellite's container...
     await expect(satellitePage.locator(`${THEME_CONTAINER}.rstudio-themes-dark`)).toBeAttached({
       timeout: 60000,
     });
 
     // ...the editor theme CSS is injected into the satellite document...
     await expect
-      .poll(
-        () =>
-          satellitePage!.evaluate(
-            (id) => document.querySelector(id)?.getAttribute('href') ?? '',
-            ACE_THEME_LINK,
-          ),
-        { timeout: 30000 },
-      )
-      .toContain('cobalt');
+      .poll(() => getThemeStylesheetHref(satellitePage!), { timeout: 30000 })
+      .toContain(DARK_THEME_HREF);
 
-    // ...and both editor-themed panes (changelist, diff) actually paint dark
+    // ...and every editor-themed pane on screen actually paints dark
     await expect
       .poll(async () => (await paneLuminances(satellitePage!)).length, { timeout: 30000 })
       .toBeGreaterThanOrEqual(2);
     await expect
       .poll(async () => Math.max(...(await paneLuminances(satellitePage!))), { timeout: 30000 })
       .toBeLessThan(128);
+
+    // The pane backgrounds above come from the editor theme's own stylesheet, so
+    // they would still pass if every rule this PR adds stopped matching (an
+    // @external declaration dropped from one of these CssResources is enough --
+    // GWT would obfuscate the class and the rule would silently go dead). The
+    // rest of this test asserts things only the new CSS produces.
+
+    // The tables inside those panes are painted an opaque white by the base
+    // stylesheet, and have to go transparent for the theme behind them to show.
+    await expect
+      .poll(async () => visibleStyles(satellitePage!, THEMED_TABLE, 'backgroundColor'), {
+        timeout: 30000,
+      })
+      .toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
+
+    // Chunk action pills are drawn for a modified file's diff, but not for the
+    // whole-file diff of an untracked one -- which is what the changelist selects
+    // by default here, .gitignore sorting ahead of the R file.
+    await satellitePage.getByText('script.R', { exact: true }).click();
+    const actionPill = satellitePage.locator(ACTION_PILL).filter({ visible: true }).first();
+    await expect(actionPill).toBeVisible({ timeout: 30000 });
+
+    // the base draws each pill as a three-slice sprite over no background of its
+    // own; the dark rules flatten it to a translucent fill with no image
+    const pill = await actionPill.evaluate((el) => ({
+      background: getComputedStyle(el).backgroundColor,
+      sliceImage: getComputedStyle(el.firstElementChild!).backgroundImage,
+    }));
+    expect(pill.background).toMatch(/^rgba\([\d\s,]+0?\.\d+\)$/);
+    expect(pill.sliceImage).toBe('none');
   });
 
   test('re-themes an open window when the editor theme changes', async ({ rstudioPage: page }) => {
@@ -181,16 +205,19 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
     await executeInConsole(page, `.rs.api.applyTheme(${JSON.stringify(LIGHT_THEME)})`, {
       wait: true,
     });
-    await expect
-      .poll(async () =>
-        page.evaluate((id) => document.querySelector(id)?.getAttribute('href') ?? '', ACE_THEME_LINK),
-      )
-      .toContain('textmate');
+    await expectThemeStylesheet(page, LIGHT_THEME_HREF);
 
-    // the already-open window drops the dark class and repaints light
-    await expect(satellitePage!.locator(`${THEME_CONTAINER}.rstudio-themes-dark`)).toHaveCount(0, {
-      timeout: 30000,
-    });
+    // the already-open window drops the dark class and repaints light. Assert
+    // the container is still there as well, so this cannot pass by the window
+    // having gone away.
+    await expect(satellitePage!.locator(THEME_CONTAINER)).toBeAttached({ timeout: 30000 });
+    await expect(
+      satellitePage!.locator(`${THEME_CONTAINER}.rstudio-themes-dark`),
+    ).toHaveCount(0, { timeout: 30000 });
+
+    await expect
+      .poll(async () => (await paneLuminances(satellitePage!)).length, { timeout: 30000 })
+      .toBeGreaterThanOrEqual(2);
     await expect
       .poll(async () => Math.min(...(await paneLuminances(satellitePage!))), { timeout: 30000 })
       .toBeGreaterThan(128);

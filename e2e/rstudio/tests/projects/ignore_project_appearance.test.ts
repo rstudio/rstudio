@@ -10,6 +10,7 @@ import {
 import { createAndOpenProject, closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Locator, Page } from 'playwright';
+import { ACE_THEME_LINK, THEME_POLL } from '@utils/theme';
 
 // "Ignore project-specific appearance settings" (Global Options > Appearance)
 // makes RStudio apply the global editor theme even when the active project sets
@@ -49,9 +50,6 @@ const PROJECT_IGNORED_NOTE = 'Project appearance settings are currently ignored'
 const PROJECT_THEME = 'Cobalt';
 const GLOBAL_THEME = 'Textmate (default)';
 
-// ID on the <link> AceThemes.java injects to apply the active editor theme CSS.
-const ACE_THEME_LINK = '#rstudio-acethemes-linkelement';
-const THEME_POLL = { timeout: 15000, intervals: [200, 500, 1000] };
 
 // -- Helpers ------------------------------------------------------------------
 

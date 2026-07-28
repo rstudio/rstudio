@@ -37,19 +37,33 @@
    border-right: none;
 }
 
-/* Dark theme (#9026). The base style gives header cells a light background and
-   selects rows with an opaque light grey, both unreadable once the table
-   follows a dark editor theme. The changelist gets the same treatment in
-   ChangelistTableCellTableStyle.css. */
+/* Theming (#9026). The base style paints the table white and gives header cells
+   a light background, and selects rows with an opaque light grey -- all of which
+   fight the editor theme once the commit list follows it.
 
+   The table itself is made transparent for *every* editor theme, not just dark
+   ones: the base is a hard-coded white, so a light-but-not-white theme (say
+   Solarized Light) would otherwise leave a white table inside a cream pane. The
+   selection and header colors are dark-only, since the light defaults already
+   suit a light theme. */
+
+.ace_editor_theme .cellTableWidget {
+   background-color: inherit;
+}
+
+/* the changelist's counterpart is .rstudio-themes-dark .cellTableSortableHeader
+   in ChangelistTableCellTableStyle.css -- equivalent only because every
+   changelist column happens to be sortable, whereas none of these are */
 .rstudio-themes-dark .cellTableHeader {
    background-color: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
 }
 
-.editor_dark .ace_editor_theme .cellTableSelectedRow,
-.editor_dark .ace_editor_theme .cellTableSelectedRowCell {
+/* the row carries the selection; the base .cellTableSelectedRowCell rule is
+   empty, so leaving the cell alone avoids stacking two translucent tints (which
+   would both darken the selection and swallow most of the focus delta) */
+.editor_dark .ace_editor_theme .cellTableSelectedRow {
    background: THEME_DARK_ROW_SELECTED;
 }
 

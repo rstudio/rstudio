@@ -31,11 +31,17 @@
    font-size: 80%;
    border-radius: 8px;
    background-color: green;
-   /* the ref colors below are all pale, so pin the text dark rather than
-      letting it inherit a light color from a dark theme */
-   color: #1a1a1a;
    padding: 0 6px;
    margin-right: 4px;
+}
+
+/* These four backgrounds are pale, so pin the text dark rather than letting it
+   inherit a light color from a dark theme. A ref that matches none of them
+   keeps the green background above and does inherit -- most commonly the
+   checked-out branch, whose first decoration under "git log --decorate=full"
+   is "HEAD -> refs/heads/<branch>". */
+.head, .branch, .remote, .tag {
+   color: #1a1a1a;
 }
 
 .head {

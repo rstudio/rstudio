@@ -134,12 +134,6 @@ public abstract class ChangelistTable extends Composite
    {
       table_ = new MultiSelectCellTable<>(100, resources_);
 
-      // a bare table reads as broken rather than empty, especially in the
-      // Review Changes window where it owns a whole pane
-      Label emptyLabel = new Label(constants_.noChanges());
-      emptyLabel.addStyleName(resources_.styles().emptyMessage());
-      table_.setEmptyTableWidget(emptyLabel);
-
       dataProvider_ = new ListDataProvider<>();
       sortHandler_ = new ColumnSortEvent.ListHandler<>(dataProvider_.getList());
       table_.addColumnSortHandler(sortHandler_);
@@ -300,6 +294,22 @@ public abstract class ChangelistTable extends Composite
    public void setItems(ArrayList<StatusAndPath> items)
    {
       setProgress(false);
+
+      // A bare table reads as broken rather than empty, especially in the
+      // Review Changes window where it owns a whole pane. Install the message
+      // only once the first status has landed: an empty ListDataProvider
+      // reports a row count of zero *exactly*, so a placeholder set in the
+      // constructor would assert "No changes" while the first refresh is still
+      // in flight. (showProgress() is not a substitute -- progressPanel_ is a
+      // transparent overlay, and its spinner is delayed besides.)
+      if (!emptyMessageInstalled_)
+      {
+         Label emptyLabel = new Label(constants_.noChanges());
+         emptyLabel.addStyleName(resources_.styles().emptyMessage());
+         table_.setEmptyTableWidget(emptyLabel);
+         emptyMessageInstalled_ = true;
+      }
+
       items = (items == null) ? new ArrayList<>() : items;
       table_.setPageSize(items.size());
       dataProvider_.getList().clear();
@@ -440,6 +450,7 @@ public abstract class ChangelistTable extends Composite
    private ScrollPanel scrollPanel_;
    private ChangelistInfoBar infoBar_;
    private boolean selectFirstItemByDefault_;
+   private boolean emptyMessageInstalled_;
    private static final ChangelistTableCellTableResources resources_ = GWT.<ChangelistTableCellTableResources>create(ChangelistTableCellTableResources.class);
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

@@ -10,7 +10,14 @@
 
       .container {
          margin-top: 8px;
-         border: 1px solid rgba(128, 128, 128, 0.4);
+         border: 1px solid #c1c3c5;
+      }
+
+      /* a translucent grey so the border tracks the editor theme; scoped to
+         dark themes because over white it composites to a fainter grey than
+         the #c1c3c5 above (#9026) */
+      .editor_dark .container {
+         border-color: rgba(128, 128, 128, 0.4);
       }
 
       /* the file name and the "view file" link live in separate layers of the

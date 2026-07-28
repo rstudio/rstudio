@@ -1,7 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external editor_dark;
+@external editor_dark, ace_editor_theme;
 
 @eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
 @eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
@@ -141,11 +141,23 @@
    overflow: visible;
 }
 
-/* Dark theme (#9026). The diff sits in a container carrying the
-   ace_editor_theme class, so unchanged lines simply show the editor theme's
-   own background and foreground. Changed lines tint that background with a
-   translucent overlay rather than a fixed color, so the diff stays legible
-   whatever the editor theme is. */
+/* Theming (#9026). The diff sits in a container carrying the ace_editor_theme
+   class, and these two rules are what make unchanged lines pick up that
+   container's colors -- without them the table keeps the hard-coded white of
+   RStudioCellTableStyle.css and the #888 above. Neither is redundant.
+
+   The background follows every editor theme, since a light-but-not-white theme
+   (say Solarized Light) would otherwise show a white table inside a cream pane.
+   The foreground is dark-only on purpose: #888 deliberately de-emphasizes
+   unchanged lines, and that reads fine on any light theme.
+
+   Changed lines, below, likewise only need the dark treatment: they tint the
+   background with a translucent overlay rather than a fixed color, so the diff
+   stays legible whatever the dark editor theme is. */
+
+.ace_editor_theme .cellTableWidget {
+   background-color: inherit;
+}
 
 .editor_dark .cellTableWidget {
    color: inherit;
@@ -209,11 +221,12 @@
    border-right-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-/* The chunk and line action buttons are three-slice sprite pills (a light
-   blue one for Stage, a light grey one for the rest -- see
-   LineActionButtonRenderer). Both bundles share one stylesheet, so the two
-   variants are told apart here by their data-action attribute; drop the
-   sprites and draw a flat translucent pill instead. */
+/* The chunk and line action buttons are three-slice sprite pills (a light blue
+   one for Stage, a light grey one for the rest -- see LineActionButtonRenderer).
+   Their class names live in a different CssResource bundle than this file, and
+   BlueStyles and GrayStyles are separate types over one CSS source, so GWT
+   obfuscates two copies and neither name is reachable from here. Hence the
+   data-action attribute: drop the sprites and draw a flat translucent pill. */
 
 .editor_dark .actions div[data-action] {
    background-color: rgba(255, 255, 255, 0.16);
