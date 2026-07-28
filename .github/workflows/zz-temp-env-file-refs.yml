@@ -75,6 +75,57 @@ jobs:
           done
           exit $status
 
+  negative-control:
+    name: Negative control -- a bad reference must not pass silently
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check for OP token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Deliberately references a field that doesn't exist. continue-on-error
+      # lets the next step run either way, so we can tell which way the action
+      # behaves: hard error, or a quietly empty value.
+      - name: Load secrets from OP (bad reference)
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        continue-on-error: true
+        uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          BOGUS_FIELD: "op://RStudio OSS GitHub Actions/Login/nosuchfield"
+
+      - name: Assert the bad reference was caught
+        env:
+          TOKEN_PRESENT: ${{ steps.op_token_check.outputs.present }}
+          LOAD_OUTCOME: ${{ steps.op.outcome }}
+          BOGUS_FIELD: ${{ steps.op.outputs.BOGUS_FIELD }}
+        run: |
+          if [ "$TOKEN_PRESENT" != "true" ]; then
+            echo "::error::OP_SERVICE_ACCOUNT_TOKEN not available to this run"
+            exit 1
+          fi
+          echo "load step outcome: $LOAD_OUTCOME"
+          if [ "$LOAD_OUTCOME" != "success" ]; then
+            echo "Bad reference surfaced as a step failure -- the action fails loudly."
+            exit 0
+          fi
+          if [ -z "$BOGUS_FIELD" ]; then
+            echo "Bad reference resolved to empty -- the emptiness check is what catches it."
+            exit 0
+          fi
+          echo "::error::Bad reference produced a non-empty value (length ${#BOGUS_FIELD}); neither guard would catch this"
+          exit 1
+
   inline:
     name: B -- references inline in the step env
     runs-on: ubuntu-latest
