@@ -79,7 +79,7 @@ test.describe.serial('Conversation History', { tag: ['@ai', '@chat'] }, () => {
     // Click Delete from the context menu
     await chatPane.getDeleteMenuItem().click();
 
-    // Confirm deletion by clicking the red "Delete this conversation" button
+    // Confirm deletion by clicking the red "Delete conversation" button
     const deleteButton = chatPane.getDeleteConfirmButton();
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
     await deleteButton.click();
