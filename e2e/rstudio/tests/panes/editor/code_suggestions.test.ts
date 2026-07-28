@@ -213,26 +213,42 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourcePane.aceTextInput.pressSequentially('final_score');
       await sleep(5000);
 
+      const occurrences = ['print', 'cat', 'summary', 'message'];
+      const stillOldName = async () => {
+        const content = await sourceActions.getEditorContent();
+        return occurrences.filter((fn) => !content.includes(`${fn}(final_score)`));
+      };
+
+      // How many suggestions it takes to rename every call site is the
+      // provider's choice: one per site, or several batched into a single
+      // accept (a multi-edit preview accepted with one keypress). So loop on
+      // the document state, not on a count of accepts -- once nothing is left
+      // to rename, no further suggestion is offered, and asking for one more
+      // round just waits out acceptNesRename's timeout on a suggestion that
+      // will never come.
       let accepted = 0;
       const maxAcceptances = 4;
       while (accepted < maxAcceptances) {
+        const remaining = await stillOldName();
+        if (remaining.length === 0) break;
+
+        accepted++;
+        console.log(`Accepting NES rename ${accepted} (still old: ${remaining.join(', ')})...`);
         try {
-          await expect(
-            sourcePane.nesApply
-              .or(sourcePane.ghostText)
-              .or(sourcePane.nesInsertionPreview)
-              .first()
-          ).toBeVisible({ timeout: 10000 });
-        } catch {
+          // acceptNesRename does its own wait for the suggestion; a guard wait
+          // here would only open a stale window between the two checks, where
+          // a preview seen by the guard is torn down before the accept runs.
+          await sourceActions.acceptNesRename();
+        } catch (err) {
+          // Stop hunting and let the occurrence assertions below report what
+          // is actually missing -- a more useful failure than this helper's
+          // combined-locator timeout.
+          console.log(`  No further NES suggestion: ${(err as Error).message.split('\n')[0]}`);
           break;
         }
-        accepted++;
-        console.log(`Accepting NES rename ${accepted}...`);
-        await sourceActions.acceptNesRename();
       }
       console.log(`Accepted ${accepted} NES suggestion(s)`);
 
-      const occurrences = ['print', 'cat', 'summary', 'message'];
       for (const fn of occurrences) {
         await expect(sourcePane.contentPane).toContainText(`${fn}(final_score)`, { timeout: 5000 });
       }
