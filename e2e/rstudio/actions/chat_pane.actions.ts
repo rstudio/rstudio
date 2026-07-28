@@ -199,10 +199,28 @@ export class ChatPaneActions {
   /**
    * Answer a pending AskUser question: select the first option whose
    * accessible name matches `option`, then submit.
+   *
+   * An option's accessible name is its label followed by its description, and
+   * the option set is written by the model, so a loose matcher can land on the
+   * wrong choice -- picking "No, don't proceed" for a matcher meant to accept.
+   * Anchor `option` to the start of the label. Matching nothing is a loud
+   * failure here (with the options listed) precisely so it can't degrade into
+   * silently answering the opposite of what the caller intended.
    */
   async answerPendingQuestion(option: RegExp | string): Promise<void> {
-    const choice = this.chatPane.frame.getByRole('radio', { name: option }).first();
-    await choice.click({ timeout: 5000 });
+    const allChoices = this.chatPane.frame.getByRole('radio');
+    await expect(allChoices.first()).toBeVisible({ timeout: 10000 });
+
+    const choices = this.chatPane.frame.getByRole('radio', { name: option });
+    if ((await choices.count()) === 0) {
+      throw new Error(
+        `No pending-question option matched ${option}. The assistant offered: ` +
+        `${JSON.stringify(await allChoices.allInnerTexts())}. Widen the matcher ` +
+        'if one of these is the intended answer.'
+      );
+    }
+
+    await choices.first().click({ timeout: 5000 });
     // Submit stays disabled until an option is selected, so this also
     // confirms the click registered on the radio.
     await expect(this.chatPane.submitAnswersBtn).toBeEnabled({ timeout: 5000 });
