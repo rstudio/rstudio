@@ -1,6 +1,7 @@
 import type { TestType } from '@playwright/test';
 import {
   isCopilotAuthenticated,
+  isExternalServerRun,
   isPositAiAuthenticated,
   readAuthStatus,
   type AIProvider,
@@ -29,6 +30,21 @@ function skipReason(provider: AIProvider, label: string, fallback: string): stri
       + 'now missing or invalid -- the credential may have expired or been removed mid-run.';
   }
   return `No ${label} credentials in the sandbox: ${status.reason}`;
+}
+
+// External-server runs only: the sandbox store never reaches the remote
+// rsession (#18348), so a valid sandbox store is necessary but not
+// sufficient -- the provisioning step (auth.setup.ts, via
+// utils/remote-provision.ts) must also have confirmed the credentials are in
+// place in the remote home, recorded as remoteProvisioned in the status
+// file. Returns a skip reason when it hasn't, null when the gate passes.
+function externalServerSkipReason(provider: AIProvider, label: string): string | null {
+  if (!isExternalServerRun()) return null;
+  const status = readAuthStatus(process.env.PW_SANDBOX!, provider);
+  if (status?.remoteProvisioned === true) return null;
+  return `${label} credentials are in the sandbox, but were not provisioned to the external `
+    + `server at PW_RSTUDIO_SERVER_URL (whose rsession reads the logged-in account's own home `
+    + `directory, not the sandbox)${status ? `: ${status.reason}` : ''}`;
 }
 
 /**
@@ -79,7 +95,7 @@ export function requireAiCredentials(
               + 'POSIT_EMAIL/POSIT_PASSWORD for the sign-in flow.',
           ));
         }
-        return;
+        break;
       case 'copilot':
         if (!(await isCopilotAuthenticated())) {
           test.skip(true, skipReason(
@@ -90,11 +106,21 @@ export function requireAiCredentials(
               + 'set COPILOT_USER/COPILOT_PASSWORD for the sign-in flow.',
           ));
         }
-        return;
+        break;
       default:
         // Exhaustiveness: a new AIProvider member must be given its own gate
         // here, not silently fall through.
         provider satisfies never;
+        return;
+    }
+    // Sandbox store present -- on external-server runs, additionally require
+    // that it actually reached the remote home (see externalServerSkipReason).
+    const externalReason = externalServerSkipReason(
+      provider,
+      provider === 'positai' ? 'Posit AI' : 'GitHub Copilot',
+    );
+    if (externalReason !== null) {
+      test.skip(true, externalReason);
     }
   });
 }

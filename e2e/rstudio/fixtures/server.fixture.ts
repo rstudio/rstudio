@@ -299,6 +299,55 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
 }
 
 /**
+ * The external server URL this run targets (PW_RSTUDIO_SERVER_URL, with
+ * PW_RSTUDIO_SERVER_PORT applied and any trailing slash removed), or null
+ * when the run spawns its own in-tree rserver. Shared by launchServer and
+ * the remote-provisioning flows (utils/remote-provision.ts) so both resolve
+ * the same server.
+ */
+export function externalServerUrl(): string | null {
+  const externalUrl = process.env.PW_RSTUDIO_SERVER_URL;
+  if (!externalUrl) return null;
+  const url = new URL(externalUrl);
+  if (process.env.PW_RSTUDIO_SERVER_PORT) {
+    url.port = process.env.PW_RSTUDIO_SERVER_PORT;
+  }
+  return url.toString().replace(/\/$/, '');
+}
+
+/**
+ * Complete the RStudio Server login on `page` (already navigated to the
+ * server) and wait until the R console is ready. Fills the login form when
+ * one is presented (PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD);
+ * servers running with --auth-none (e.g. our spawn) skip straight to the
+ * IDE, so credentials are only required when the form appears. Shared by
+ * launchServer and the remote-provisioning flows.
+ */
+export async function signInToServer(page: Page): Promise<void> {
+  const username = process.env.PW_RSTUDIO_SERVER_USER || '';
+  const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
+
+  const usernameField = page.locator('#username');
+  if (await usernameField.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (!username || !password) {
+      throw new Error(
+        'Server presented a login form but PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD are not set',
+      );
+    }
+    await usernameField.fill(username);
+    await page.locator('#password').fill(password);
+    await page.locator('#signinbutton').click();
+    console.log(`Logged in as ${username}`);
+  } else {
+    console.log('No login form detected (auth-none mode)');
+  }
+
+  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
+  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
+  console.log('RStudio console is ready');
+}
+
+/**
  * Connect to RStudio Server, log in, and return a ready session. When
  * PW_RSTUDIO_SERVER_URL is unset, a private rserver-dev is spawned per
  * worker with sandboxed env so HOME / data dirs / config dirs are isolated
@@ -306,9 +355,7 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
  * to point at an external server (e.g. CI) to skip the spawn.
  */
 export async function launchServer(): Promise<ServerSession> {
-  const externalUrl = process.env.PW_RSTUDIO_SERVER_URL;
-  const username = process.env.PW_RSTUDIO_SERVER_USER || '';
-  const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
+  const externalUrl = externalServerUrl();
 
   let rserverProcess: ChildProcess | undefined;
   let rserverCleanupDirs: string[] | undefined;
@@ -324,11 +371,7 @@ export async function launchServer(): Promise<ServerSession> {
         `test.use({ aiAuth }) requests signing out of ${stripped.join(', ')}, but PW_RSTUDIO_SERVER_URL points at an external server whose credentials the harness cannot control. Unset PW_RSTUDIO_SERVER_URL to use a spawned server, or remove the aiAuth declaration.`,
       );
     }
-    const url = new URL(externalUrl);
-    if (process.env.PW_RSTUDIO_SERVER_PORT) {
-      url.port = process.env.PW_RSTUDIO_SERVER_PORT;
-    }
-    serverUrl = url.toString().replace(/\/$/, '');
+    serverUrl = externalUrl;
     console.log(`[server] using external URL ${serverUrl}`);
   } else {
     const spawned = await spawnSandboxedRserver();
@@ -352,28 +395,7 @@ export async function launchServer(): Promise<ServerSession> {
   const page = await context.newPage();
 
   await page.goto(serverUrl, { waitUntil: 'domcontentloaded' });
-
-  // Log in if a login form is presented. Servers running with --auth-none
-  // (e.g. local rserver-dev, our spawn) skip straight to the IDE, so
-  // credentials are only required when the form appears.
-  const usernameField = page.locator('#username');
-  if (await usernameField.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    if (!username || !password) {
-      throw new Error(
-        'Server presented a login form but PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD are not set',
-      );
-    }
-    await usernameField.fill(username);
-    await page.locator('#password').fill(password);
-    await page.locator('#signinbutton').click();
-    console.log(`Logged in as ${username}`);
-  } else {
-    console.log('No login form detected (auth-none mode)');
-  }
-
-  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
-  console.log('RStudio console is ready');
+  await signInToServer(page);
 
   // Dismiss any "save changes" modal from a previous interrupted run.
   // Use isVisible() (snapshot, no wait) to gate the click -- click({ timeout })

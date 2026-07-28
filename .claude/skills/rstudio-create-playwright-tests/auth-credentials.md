@@ -94,9 +94,25 @@ in sync with what Desktop sets on its child process. The `@server_only`
 smoke test in `tests/sandbox.test.ts` asserts the rsession `HOME` lands under
 the sandbox -- if the delivery chain breaks, that test is the tripwire.
 
-**External servers** (`PW_RSTUDIO_SERVER_URL`) still have the gap: the
-harness cannot control that server's rsession environment, sandbox
-credentials never reach it, and the gate is a false positive there. A green
-external run can be the remote account's own sign-in, not the provisioning.
-Tracked in issue #18348 (through-the-session provisioning is the planned
-fix).
+**External servers** (`PW_RSTUDIO_SERVER_URL`): the harness cannot control
+that server's rsession environment, so a final auth-setup step provisions
+the stores through the session instead (`utils/remote-provision.ts`): log
+in, push each sandbox store into the remote home via the R console
+(text via `writeLines(sep="", useBytes=TRUE)`, binary via hex-chunked
+`writeBin`), verify sizes, end the session so tests get a fresh rsession.
+Key rules baked into that step:
+
+- A store already on the remote account is used as-is -- never overwritten,
+  never scrubbed. Only paths provisioning created go into the manifest
+  (`<sandbox>/remote-provision-manifest.json`), which the `auth-teardown`
+  project scrubs after the run.
+- `requireAiCredentials` additionally requires `remoteProvisioned` in the
+  provider's status file on external runs, so a sandbox-only store can't
+  false-pass the gate (the remote account's own sign-in state is what the
+  session actually sees).
+- Console-pushed token bytes land in the account's RStudio console history;
+  history files provisioning created are scrubbed, pre-existing ones are
+  not. Use a dedicated test account.
+- The spike for #18348 confirmed the copilot-language-server reads a
+  plaintext `auth.db` without `GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION` set, so
+  no remote `~/.Renviron` edit is needed.

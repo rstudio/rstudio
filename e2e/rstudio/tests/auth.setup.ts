@@ -5,15 +5,32 @@ import * as path from 'path';
 import {
   AUTH_STORAGE_KEY,
   PositAiOAuthEntry,
+  copilotAuthDbPath,
   copilotConfigDir,
   findAuthenticatedStore,
   isCopilotStoreAuthenticated,
+  isExternalServerRun,
   isStoreFileAuthenticated,
   noSeedCredentials,
+  readAuthStatus,
   storeFileCandidates,
   strictAiAuth,
   writeAuthStatus,
+  type AIProvider,
 } from '../utils/auth';
+import {
+  REMOTE_COPILOT_DIR,
+  REMOTE_HISTORY_FILES,
+  REMOTE_POSITAI_STORE,
+  closeExternalSession,
+  connectExternalSession,
+  evalRemoteLogical,
+  remotePathExists,
+  writeManifest,
+  writeRemoteBinary,
+  writeRemoteText,
+} from '../utils/remote-provision';
+import { externalServerUrl } from '../fixtures/server.fixture';
 import {
   CopilotAgent,
   STATUS_ALREADY_SIGNED_IN,
@@ -61,15 +78,13 @@ const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
-// Whether this run targets RStudio Server, and specifically an external one
-// (PW_RSTUDIO_SERVER_URL). A spawned in-tree server delivers the sandbox
-// credentials to its rsessions via the --rsession-path wrapper
-// (fixtures/server.fixture.ts, #18348), so only the external case still has
-// the gap: that server's rsessions read the logged-in account's real home
-// directory, which this setup cannot reach, so the completion messages below
-// warn that the sandbox credentials won't reach the session there.
-const IS_SERVER = (process.env.PW_RSTUDIO_MODE ?? 'desktop').toLowerCase() === 'server';
-const IS_EXTERNAL_SERVER = IS_SERVER && !!process.env.PW_RSTUDIO_SERVER_URL;
+// Whether this run targets an external RStudio Server (PW_RSTUDIO_SERVER_URL).
+// A spawned in-tree server delivers the sandbox credentials to its rsessions
+// via the --rsession-path wrapper (fixtures/server.fixture.ts, #18348); on an
+// external server that server's rsessions read the logged-in account's real
+// home directory instead, so the final setup step below pushes the sandbox
+// stores into that home through the session (utils/remote-provision.ts).
+const IS_EXTERNAL_SERVER = isExternalServerRun();
 
 // Copy a single file, first creating the destination's parent directory.
 function copyFile(src: string, dest: string): void {
@@ -650,7 +665,7 @@ setup('authenticate Posit AI', async () => {
   });
   console.log(
     IS_EXTERNAL_SERVER
-      ? '[auth-setup] WARNING: Posit AI sign-in complete, but these sandbox credentials will not reach an rsession on the external server at PW_RSTUDIO_SERVER_URL, which reads the logged-in account\'s real home directory instead'
+      ? '[auth-setup] Posit AI sign-in complete; the provisioning step below will push the credentials to the external server'
       : '[auth-setup] Posit AI sign-in complete; credentials are in place',
   );
 });
@@ -863,7 +878,160 @@ setup('authenticate GitHub Copilot', async () => {
   });
   console.log(
     IS_EXTERNAL_SERVER
-      ? '[auth-setup] WARNING: Copilot sign-in complete, but these sandbox credentials will not reach an rsession on the external server at PW_RSTUDIO_SERVER_URL, which reads the logged-in account\'s real home directory instead'
+      ? '[auth-setup] Copilot sign-in complete; the provisioning step below will push the credentials to the external server'
       : '[auth-setup] Copilot sign-in complete; credentials are in place',
   );
+});
+
+// ---------------------------------------------------------------------------
+// External-server provisioning (#18348, part 2). The two steps above leave the
+// credential stores in the SANDBOX user-home; on desktop and spawned-server
+// runs the launch fixtures deliver that home to the session, but an external
+// server's rsessions read the logged-in account's real home directory, which
+// this process cannot write directly. It can, however, drive that account's
+// R console once logged in -- so this final step connects, pushes each
+// provisioned store into the remote home through the console, records what it
+// created in a manifest (<sandbox>/remote-provision-manifest.json) for the
+// auth-teardown project to scrub, marks each provider's status file with
+// remoteProvisioned (which requireAiCredentials requires on external runs),
+// and ends the remote R session so tests attach to a fresh one that reads the
+// new stores.
+//
+// A store already present on the remote account is used as-is: never
+// overwritten, never added to the scrub manifest -- the teardown must not
+// delete credentials this run didn't write.
+
+// A deterministic external-server misconfiguration that a retry can't heal.
+// Fails the run (mirroring OAuthTerminalError above) rather than skipping.
+class RemoteProvisionConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RemoteProvisionConfigError';
+  }
+}
+
+// Mark `provider`'s status file remoteProvisioned. The status file must exist
+// (both success paths above write one); warn rather than fabricate one if not.
+function markRemoteProvisioned(sandbox: string, provider: AIProvider, note: string): void {
+  const status = readAuthStatus(sandbox, provider);
+  if (status === null) {
+    console.warn(
+      `[auth-setup] WARNING: no readable ${provider} status file to mark remoteProvisioned; its tests will skip`,
+    );
+    return;
+  }
+  writeAuthStatus(sandbox, provider, {
+    ...status,
+    remoteProvisioned: true,
+    reason: `${status.reason}; ${note}`,
+  });
+}
+
+setup('provision external server credentials', async () => {
+  setup.skip(!IS_EXTERNAL_SERVER, 'remote provisioning applies only to external-server runs (PW_RSTUDIO_SERVER_URL)');
+  // Headroom for a full login plus chunked binary pushes over a possibly
+  // remote link; sized like the sign-in steps above.
+  setup.setTimeout(240_000);
+
+  const sandbox = process.env.PW_SANDBOX;
+  if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
+  const sandboxUserHome = path.join(sandbox, 'user-home');
+
+  // Which providers actually have sandbox credentials to push. Reading the
+  // stores (not the status files) keeps this step's input identical to what
+  // the in-sandbox gates read.
+  const positaiStore = findAuthenticatedStore(sandboxUserHome);
+  const copilotProvisioned = await isCopilotStoreAuthenticated(sandboxUserHome);
+  if (positaiStore === null && !copilotProvisioned) {
+    console.log('[auth-setup] no provider has sandbox credentials; nothing to provision remotely');
+    return;
+  }
+
+  const session = await connectExternalSession();
+  const { page } = session;
+  const createdPaths: string[] = [];
+  try {
+    // A remote XDG_CONFIG_HOME would make the copilot-language-server resolve
+    // its store outside ~/.config, where this step writes it. Fail loud: this
+    // is a server configuration the harness can't reconcile from here.
+    const xdgSet = await evalRemoteLogical(page, 'nzchar(Sys.getenv("XDG_CONFIG_HOME"))');
+    if (xdgSet !== false) {
+      throw new RemoteProvisionConfigError(
+        '[auth-setup] the external server\'s rsession has XDG_CONFIG_HOME set (or the probe failed), '
+          + 'so the Copilot store location would not match where provisioning writes it; '
+          + 'unset it in the server\'s session environment and re-run',
+      );
+    }
+
+    // Console commands below carry token bytes and land in the account's
+    // RStudio console history. History files this run effectively creates are
+    // scrubbed alongside the stores; pre-existing ones are the account's own
+    // and are never deleted -- warn that token material can persist there.
+    const preexistingHistory: string[] = [];
+    for (const historyFile of REMOTE_HISTORY_FILES) {
+      if ((await remotePathExists(page, historyFile)) === false) {
+        createdPaths.push(historyFile);
+      } else {
+        preexistingHistory.push(historyFile);
+      }
+    }
+    if (preexistingHistory.length > 0) {
+      console.warn(
+        `[auth-setup] WARNING: ${preexistingHistory.join(', ')} already exist(s) on the remote account; `
+          + 'provisioning commands (which carry token material) will be appended to it and are NOT scrubbed. '
+          + 'Use a dedicated test account for external-server AI runs.',
+      );
+    }
+
+    if (positaiStore !== null) {
+      if ((await remotePathExists(page, REMOTE_POSITAI_STORE)) === true) {
+        console.log(`[auth-setup] ${REMOTE_POSITAI_STORE} already exists on the remote account; using it as-is`);
+        markRemoteProvisioned(sandbox, 'positai', 'remote store pre-existing; left untouched');
+      } else {
+        await writeRemoteText(page, REMOTE_POSITAI_STORE, fs.readFileSync(positaiStore, 'utf-8'));
+        createdPaths.push(REMOTE_POSITAI_STORE);
+        console.log(`[auth-setup] pushed the Posit AI token store to ${REMOTE_POSITAI_STORE}`);
+        markRemoteProvisioned(sandbox, 'positai', 'pushed to the external server through the session');
+      }
+    }
+
+    if (copilotProvisioned) {
+      const remoteDb = `${REMOTE_COPILOT_DIR}/auth.db`;
+      if ((await remotePathExists(page, remoteDb)) === true) {
+        console.log(`[auth-setup] ${remoteDb} already exists on the remote account; using it as-is`);
+        markRemoteProvisioned(sandbox, 'copilot', 'remote store pre-existing; left untouched');
+      } else {
+        // auth.db plus any SQLite sidecars: the sign-in agent can leave the
+        // token row in an uncheckpointed -wal, so the sidecars are part of
+        // the store's on-disk truth (see isCopilotStoreAuthenticated).
+        const localDb = copilotAuthDbPath(sandboxUserHome);
+        for (const suffix of ['', '-wal', '-shm']) {
+          const local = `${localDb}${suffix}`;
+          if (!fs.existsSync(local)) continue;
+          const remote = `${remoteDb}${suffix}`;
+          await writeRemoteBinary(page, remote, fs.readFileSync(local));
+          createdPaths.push(remote);
+        }
+        console.log(`[auth-setup] pushed the Copilot credential store to ${remoteDb}`);
+        markRemoteProvisioned(sandbox, 'copilot', 'pushed to the external server through the session');
+      }
+    }
+  } catch (err) {
+    // A deterministic misconfiguration fails the run; everything else (a
+    // dropped connection, a failed write verification) leaves the affected
+    // providers without remoteProvisioned, so their tests skip with the
+    // status-file reason -- unless strict mode escalates it.
+    if (err instanceof RemoteProvisionConfigError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(
+      '[auth-setup] WARNING: remote provisioning failed; unprovisioned AI tests will skip:',
+      msg,
+    );
+    failIfStrict('external-server AI credentials', `remote provisioning failed: ${msg}`);
+  } finally {
+    // The manifest is written even after a partial failure, so the teardown
+    // scrubs whatever DID land on the remote host.
+    writeManifest(sandbox, { serverUrl: externalServerUrl()!, createdPaths });
+    await closeExternalSession(session);
+  }
 });
