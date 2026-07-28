@@ -1,0 +1,126 @@
+# TEMPORARY -- validation spike, DELETE THIS FILE ON THIS SAME PR BEFORE MERGE.
+#
+# Compares two ways of handing op:// references to load-secrets-action:
+#
+#   env-file: references live in e2e/rstudio/.env.op, pointed at by OP_ENV_FILE
+#   inline:   references live in the step's own env: block (PR #17980's shape)
+#
+# Both consume the resolved values as step outputs rather than export-env, so the
+# credentials reach only the step that needs them. The point of the spike is to
+# learn whether the env-file path resolves at all and whether its values surface
+# as step outputs -- OP documents OP_ENV_FILE but ships no example of the file
+# format, so this is unverified territory. If env-file fails and inline passes,
+# we wire up the inline shape instead.
+name: zz-temp env-file refs spike
+
+on:
+  push:
+    branches:
+      - test/ron/e2e-workflow-env-file-refs
+
+permissions:
+  contents: read
+
+jobs:
+  env-file:
+    name: C -- references from .env.op via OP_ENV_FILE
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # The secrets context can't be used in a step-level if:, so surface a
+      # plain boolean instead of the value.
+      - name: Check for OP token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Load secrets from OP
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: ./e2e/rstudio/.env.op
+
+      - name: Assert secrets resolved
+        env:
+          TOKEN_PRESENT: ${{ steps.op_token_check.outputs.present }}
+          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
+          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
+          CONNECT_API_KEY: ${{ steps.op.outputs.CONNECT_API_KEY }}
+        run: |
+          if [ "$TOKEN_PRESENT" != "true" ]; then
+            echo "::error::OP_SERVICE_ACCOUNT_TOKEN not available to this run"
+            exit 1
+          fi
+          # Values are masked in logs, so assert non-empty and print lengths:
+          # a reference that fails to resolve comes back empty rather than
+          # erroring, which would otherwise look like success.
+          status=0
+          for name in POSIT_EMAIL POSIT_PASSWORD CONNECT_API_KEY; do
+            eval "value=\$$name"
+            if [ -z "$value" ]; then
+              echo "::error::$name did not resolve (empty)"
+              status=1
+            else
+              echo "$name resolved, length ${#value}"
+            fi
+          done
+          exit $status
+
+  inline:
+    name: B -- references inline in the step env
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check for OP token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Load secrets from OP
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@dafbe7cb03502b260e2b2893c753c352eee545bf # v3.2.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          POSIT_EMAIL: "op://RStudio OSS GitHub Actions/Login/username"
+          POSIT_PASSWORD: "op://RStudio OSS GitHub Actions/Login/password"
+          CONNECT_API_KEY: "op://RStudio OSS GitHub Actions/CONNECT_API_KEY/credential"
+
+      - name: Assert secrets resolved
+        env:
+          TOKEN_PRESENT: ${{ steps.op_token_check.outputs.present }}
+          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
+          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
+          CONNECT_API_KEY: ${{ steps.op.outputs.CONNECT_API_KEY }}
+        run: |
+          if [ "$TOKEN_PRESENT" != "true" ]; then
+            echo "::error::OP_SERVICE_ACCOUNT_TOKEN not available to this run"
+            exit 1
+          fi
+          status=0
+          for name in POSIT_EMAIL POSIT_PASSWORD CONNECT_API_KEY; do
+            eval "value=\$$name"
+            if [ -z "$value" ]; then
+              echo "::error::$name did not resolve (empty)"
+              status=1
+            else
+              echo "$name resolved, length ${#value}"
+            fi
+          done
+          exit $status
