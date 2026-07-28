@@ -1,4 +1,4 @@
-name: "Test: E2E Playwright RStudio (Desktop, macOS 14 x86_64, Open Source)"
+name: "Test: E2E Playwright RStudio (Desktop, macOS 14 ARM64, Open Source)"
 
 on:
   workflow_dispatch:
@@ -111,20 +111,21 @@ jobs:
   # the e2e job downloads the daily .dmg (or rstudio_installer_url) instead.
   build:
     if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-    runs-on: macos-14-large
-    # Intel macOS runners are the slowest bare-metal builders in the fleet; a
-    # cold sccache (e.g. after eviction) can push a from-scratch compile past
-    # the 90 minutes that suffices for the faster runners (see macos-15-intel
-    # and windows-2025, which get the same 180 for the same reason).
-    timeout-minutes: 180
+    # Bare "macos-14" is the free arm64 standard runner. Do NOT change this to
+    # macos-14-large or macos-14-xlarge: those are larger runners, which GitHub
+    # bills even on public repos, and macos-14-large is Intel besides.
+    runs-on: macos-14
+    # Apple-silicon runners compile fast enough that 90 minutes covers a cold
+    # sccache; only the Intel and Windows engines need the 180 they carry.
+    timeout-minutes: 90
     env:
       # The dependency / package scripts default RSTUDIO_TOOLS_ROOT to /opt,
       # which isn't writable on hosted runners without sudo. Redirect to a
       # workspace-local path that we can also cache.
-      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/x86_64
+      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/arm64
       # Pin R's user library to a workspace-local path so we can cache it.
       # R expands %p/%v at startup to the platform triple and major.minor
-      # version (e.g. x86_64-apple-darwin20/4.5), which keeps libraries
+      # version (e.g. aarch64-apple-darwin20/4.5), which keeps libraries
       # built for different R versions / platforms in separate subtrees.
       R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
       SCCACHE_ENABLED: '1'
@@ -152,9 +153,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
-          key: rstudio-tools-macos14-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          key: rstudio-tools-macos14-arm64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
           restore-keys: |
-            rstudio-tools-macos14-x86_64-
+            rstudio-tools-macos14-arm64-
 
       # The "Install build dependencies" step below calls install-packages,
       # which renv::install()s digest/purrr/rmarkdown/testthat/xml2/yaml into
@@ -165,15 +166,15 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/R-libs
-          key: rstudio-build-rlibs-macos14-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
+          key: rstudio-build-rlibs-macos14-arm64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
           restore-keys: |
-            rstudio-build-rlibs-macos14-x86_64-
+            rstudio-build-rlibs-macos14-arm64-
 
-      # Cache compiled GWT output (package/osx/build/gwt/{bin,www,extras}).
-      # NB: the x86_64 build directory is plain "build", not "build-x86_64" --
-      # make-package only suffixes the arm64 one (BUILD_DIR_X86_64/ARM64 in
-      # package/osx/make-package). Pointing this at build-x86_64 silently
-      # disables the cache: the save step does nothing but emit a
+      # Cache compiled GWT output (package/osx/build-arm64/gwt/{bin,www,extras}).
+      # NB: arm64 builds into "build-arm64", but the x86_64 siblings use plain
+      # "build" -- make-package only suffixes the arm64 directory
+      # (BUILD_DIR_X86_64/ARM64 in package/osx/make-package). Getting this path
+      # wrong silently disables the cache: the save step does nothing but emit a
       # path-validation warning, so the key never lands, every run recompiles
       # GWT, and the seed sentinel re-dispatches this build forever chasing a
       # prefix that can never appear.
@@ -187,14 +188,14 @@ jobs:
         id: gwt-cache
         uses: actions/cache/restore@v4
         with:
-          path: package/osx/build/gwt
-          key: rstudio-gwt-macos14-x86_64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          path: package/osx/build-arm64/gwt
+          key: rstudio-gwt-macos14-arm64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
-            rstudio-gwt-macos14-x86_64-${{ env.GWT_STYLE }}-v2-
-      # install-dependencies-osx (the entry-point script) adds dual-arch
-      # handling (needed on arm64, not here) and local-dev extras (PAM
-      # profile, i18n venv) we don't need in CI. Call the per-arch script
-      # directly to install only x86_64 brew formulae; that script also
+            rstudio-gwt-macos14-arm64-${{ env.GWT_STYLE }}-v2-
+      # install-dependencies-osx (the entry-point script) builds both arm64 and
+      # x86_64 dependencies on an Apple-silicon Mac, and adds local-dev extras
+      # (PAM profile, i18n venv) we don't need in CI. Call the per-arch script
+      # directly to install only arm64 brew formulae; that script also
       # chains into dependencies/common/install-common at the end, so this
       # single step covers brew formulae + Boost + SOCI + GWT + node +
       # pandoc/quarto + panmirror + copilot-language-server + sccache +
@@ -260,7 +261,7 @@ jobs:
             {
               echo "SCCACHE_BUCKET=$SCCACHE_S3_BUCKET"
               echo "SCCACHE_REGION=us-east-1"
-              echo "SCCACHE_S3_KEY_PREFIX=macos14-x86_64"
+              echo "SCCACHE_S3_KEY_PREFIX=macos14-arm64"
             } >> "$GITHUB_ENV"
           else
             echo "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
@@ -275,7 +276,7 @@ jobs:
           # downloads directly from the release CDN with no API call.
           version: "v0.16.0"
 
-      - name: Build RStudio Desktop (x86_64)
+      - name: Build RStudio Desktop (arm64)
         id: build
         working-directory: package/osx
         env:
@@ -285,9 +286,9 @@ jobs:
           RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
         run: |
           if [ "${{ steps.gwt-cache.outputs.cache-hit }}" = "true" ]; then
-            ./make-package --arch=x86_64 --build-dmg=0 --use-creds=0 --build-gwt=0
+            ./make-package --arch=arm64 --build-dmg=0 --use-creds=0 --build-gwt=0
           else
-            ./make-package --arch=x86_64 --build-dmg=0 --use-creds=0
+            ./make-package --arch=arm64 --build-dmg=0 --use-creds=0
           fi
 
       # Save only from main-scoped runs, and only on a key miss. A cache saved
@@ -299,7 +300,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: package/osx/build/gwt
+          path: package/osx/build-arm64/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
 
       # tar (not zip) to preserve symlinks and executable permissions in the
@@ -318,7 +319,7 @@ jobs:
         if: inputs.build_only != true
         uses: actions/upload-artifact@v4
         with:
-          name: rstudio-app-macos14-x86_64
+          name: rstudio-app-macos14-arm64
           path: RStudio.app.tar.gz
           retention-days: 7
 
@@ -336,7 +337,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
-    runs-on: macos-14-large
+    runs-on: macos-14
     timeout-minutes: 120
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
@@ -364,7 +365,7 @@ jobs:
           R_VERSION: ${{ inputs.r_version }}
         run: |
           rig add "$R_VERSION"
-          # rig names installs with arch/major.minor on macOS (e.g. "4.4-x86_64"),
+          # rig names installs with arch/major.minor on macOS (e.g. "4.4-arm64"),
           # not the requested patch or alias. Query rig for the just-installed
           # name so `rig default` works regardless of input form.
           INSTALLED_NAME=$(rig list --json | jq -r '.[-1].name')
@@ -375,11 +376,10 @@ jobs:
             echo "::error::rig list returned no installed R versions"
             exit 1
           fi
-          # `rig add` installs R root-owned under /Library/Frameworks, and on the
-          # Intel macOS runner it skips the "fix permissions" pass that the arm64
-          # runner performs. Switching the default therefore needs root to rewrite
-          # the system symlinks; without sudo it fails with "Permission denied".
-          sudo rig default "$INSTALLED_NAME"
+          # No sudo needed here: on the arm64 runners `rig add` runs its "fix
+          # permissions" pass, so the current user can rewrite the system
+          # symlinks. The Intel engines have to prefix this with sudo.
+          rig default "$INSTALLED_NAME"
           rig ls
           mkdir -p "$R_LIBS_USER"
 
@@ -389,7 +389,7 @@ jobs:
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         uses: actions/download-artifact@v4
         with:
-          name: rstudio-app-macos14-x86_64
+          name: rstudio-app-macos14-arm64
           path: ${{ github.workspace }}
 
       - name: Install RStudio from artifact
@@ -486,11 +486,14 @@ jobs:
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
-          # RUNNER_OS is just "macOS" for every Mac runner regardless of arch,
-          # so without a scope the arm64 and x86_64 macOS engines share one
+          # RUNNER_OS is just "macOS" for every Mac runner regardless of arch OR
+          # OS version, so without a scope all four macOS engines share one
           # os-e2e-deps cache key and restore each other's incompatible R
-          # library / pak / Playwright-browser binaries. Scope by arch+version.
-          cache-scope: macos14-x86_64
+          # library / pak / Playwright-browser binaries. Both axes matter here:
+          # arch (an x86_64 restore fails to dyn.load on arm64) and version
+          # (macos-26 is arm64 too, but builds against a different SDK). Scope
+          # by both.
+          cache-scope: macos14-arm64
           r-libs-user: ${{ env.R_LIBS_USER }}
 
       - name: Run Playwright tests
@@ -660,7 +663,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           header: e2e-macos14-results
           message: |
-            ## 🍎 macOS 14 Desktop E2E · x86_64
+            ## 🍎 macOS 14 Desktop E2E · ARM64
 
             ${{ needs.e2e-desktop-macos14.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
 
@@ -682,4 +685,4 @@ jobs:
             </details>
 
             ---
-            <sub>2 shards · macos-14-large · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>2 shards · macos-14 ARM64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

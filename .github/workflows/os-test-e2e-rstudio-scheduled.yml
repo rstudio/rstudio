@@ -287,10 +287,10 @@ jobs:
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
   macos14:
-    name: macOS 14 x86_64
+    name: macOS 14 arm64
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos14') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-x86_64.yml
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
@@ -299,8 +299,6 @@ jobs:
       project: desktop
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
-      # Same universal macOS .dmg the arm64 and macOS 15 engines test; the
-      # daily manifest ships one "macos" installer for all architectures.
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
   windows2025:
