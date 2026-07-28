@@ -17,6 +17,7 @@
 
 #include <core/FileUtils.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -234,6 +235,21 @@ TEST(Win32SystemTest, FindProgramOnPathTrimsQuotedEntries)
 
    ASSERT_FALSE(err);
    ASSERT_TRUE(quotedPath.isRegularFile());
+}
+
+TEST(Win32SystemTest, RunCommandReachesTheShell)
+{
+   // runCommand() resolves cmd.exe through findProgramOnPath() and then builds the
+   // CreateProcessW command line by hand. cmd parses that line itself and stops
+   // scanning an unquoted program name at the first '/', so a forward-slash path to
+   // cmd.exe leaves it reading "/Windows/..." as switches: the shell starts, prints a
+   // usage complaint and exits, and the command never runs. That failure is silent at
+   // every layer above -- runCommand() succeeds, only the exit status says otherwise.
+   ProcessResult result;
+   Error err = runCommand("echo rstudio-shell-probe", ProcessOptions(), &result);
+   ASSERT_FALSE(err);
+   ASSERT_EQ(0, result.exitStatus);
+   ASSERT_TRUE(boost::algorithm::contains(result.stdOut, "rstudio-shell-probe"));
 }
 
 TEST(Win32SystemTest, LongPathNameRoundTrip)

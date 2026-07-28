@@ -18,6 +18,8 @@
 
 #include <windows.h>
 
+#include <algorithm>
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -62,15 +64,24 @@ std::string findOnPath(const std::string& exe,
    }
 
    // do the search
-   //
-   // NOTE: native (backslash) separators here, matching what PathFindOnPath used to
-   // hand back; this feeds CreateProcessW's lpApplicationName
    FilePath exePath;
    Error error = findProgramOnPath(resolvedExe, &exePath);
    if (error)
       return std::string();
 
-   return exePath.getAbsolutePathNative();
+   // Hand back backslash separators, as PathFindOnPath used to. This is not cosmetic:
+   // the result also becomes the first token of the CreateProcessW command line, and
+   // when the program is cmd.exe (which is how runCommand() invokes a shell command)
+   // cmd parses that line itself and stops scanning an unquoted program name at the
+   // first '/'. A forward-slash path therefore leaves cmd reading "/Windows/..." as
+   // switches, and the command silently never runs.
+   //
+   // getAbsolutePathNative() is not sufficient on its own: FilePath keeps whatever
+   // separators it was constructed from, and findProgramOnPath() composes its result
+   // out of generic (forward slash) paths.
+   std::string exeString = exePath.getAbsolutePathNative();
+   std::replace(exeString.begin(), exeString.end(), '/', '\\');
+   return exeString;
 }
 
 // resolve the passed command and arguments to the form required for a
