@@ -264,8 +264,18 @@ Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
    // if the program supplied already has an extension,
-   // then we'll skip searching any custom extensions
-   auto programExt = core::string_utils::getExtension(program);
+   // then we'll skip searching any custom extensions.
+   //
+   // getExtension() is a bare rfind('.') with no separator awareness, so take the last
+   // path component first. Otherwise a dotted *directory* reads as an extension and the
+   // probing below is skipped for a name that has none -- and dotted directories are the
+   // norm on Windows ("C:/R/R-4.4.1/bin/x64/R", "C:/Users/first.last/miktex/bin/pdflatex").
+   std::string::size_type nameStart = program.find_last_of("/\\:");
+   std::string programName = nameStart == std::string::npos
+      ? program
+      : program.substr(nameStart + 1);
+
+   auto programExt = core::string_utils::getExtension(programName);
 
    auto defaultExts = { ".exe", ".com", ".bat", ".cmd" };
    auto noExts = { "" };
@@ -297,10 +307,12 @@ Error findProgramOnPath(const std::string& program,
    }
 
    // Search the Windows system directories ahead of PATH. PathFindOnPath, which this
-   // replaces, searched them itself and in that order (it follows SearchPath: the
-   // application directory, the current directory, the system directories, then PATH).
-   // Keeping system directories first means a stray cmd.exe earlier on PATH cannot
-   // shadow the one in System32, which is how we launch batch files.
+   // replaces, is documented to search "standard directories such as System32 and the
+   // directories specified in the PATH environment variable", so keeping the system
+   // directories first preserves the part of its behavior we depend on: a stray cmd.exe
+   // earlier on PATH cannot shadow the one in System32, which is how we launch batch
+   // files. We do not search the current directory -- that is a deliberate hardening
+   // against binary planting, not a continuation of the old behavior.
    //
    // We can no longer delegate to PathFindOnPath because it writes at most MAX_PATH
    // characters no matter how large a buffer it's given, so it cannot see a program
@@ -958,12 +970,15 @@ Error copyMetafileToClipboard(const FilePath& path)
 
 void ensureLongPath(FilePath* pFilePath)
 {
-   // Compare in backslash form: GetLongPathNameW hands back backslash separators, so
-   // comparing against a generic (forward slash) path would always differ and the
-   // guard below would never fire. getAbsolutePathNative() alone isn't enough for
-   // that -- FilePath keeps whatever separators it was constructed from -- so
-   // normalize explicitly. longPathName() returns its input unchanged when the path
-   // can't be expanded, so this only reassigns when we actually learned something.
+   // Compare in backslash form. FilePath keeps whatever separators it was constructed
+   // from, and most of ours round-trip through generic (forward slash) strings, so
+   // getAbsolutePathNative() is not on its own a guarantee of native separators --
+   // normalize explicitly. That makes the guard below a comparison of long-vs-short
+   // rather than of separator style, whichever separators GetLongPathNameW hands back.
+   // longPathName() returns its input unchanged when the path can't be expanded, so
+   // this only reassigns when we actually learned something.
+   //
+   // Keep this in sync with ensureLongFilePath() in Win32FileMonitor.cpp.
    std::string path = pFilePath->getAbsolutePathNative();
    std::replace(path.begin(), path.end(), '/', '\\');
 

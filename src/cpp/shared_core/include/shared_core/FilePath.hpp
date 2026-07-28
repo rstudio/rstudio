@@ -733,10 +733,17 @@ public:
    /**
     * @brief Checks whether this file path is writeable.
     *
+    * On Windows this is implemented by creating and removing a probe file inside the path,
+    * so the path must be a directory; passing a regular file returns an error. On POSIX
+    * either a file or a directory is accepted.
+    *
     * @param out_writeable      True if this file path is writeable by the current effective user; false if it is not.
     *                           Invalid if this method returns an error.
     *
-    * @return Success if the writeability of this file could be checked; Error otherwise. (e.g. EACCES).
+    * @return Success if writeability could be determined -- including when the answer is
+    *         "no", i.e. access was denied or the volume is write protected. Error if it
+    *         could not be determined at all: the path does not exist, the volume is
+    *         disconnected or full, or (Windows) the path is not a directory.
     */
    Error isWriteable(bool& out_writeable) const;
 

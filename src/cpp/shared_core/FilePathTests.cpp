@@ -328,27 +328,30 @@ TEST(SharedCoreTest, DeepDirectoryIsWriteable)
    // LongPathsEnabled registry value. Going past 260 instead would only ever skip.
    const size_t kTargetLength = 247;
 
+   // Each nesting step below adds 11 characters (separator + a 10-character name), and
+   // the final leaf is padded to land exactly on kTargetLength. Stopping one step early
+   // keeps that pad in 11..21 characters, so it is never empty -- padding by a computed
+   // amount that can come out zero or negative is how this kind of loop usually breaks,
+   // and it would break as a function of how long TEMP happens to be on the machine.
+   const size_t kStep = 11;
+
    FilePath tempDir;
    Error error = FilePath::tempFilePath(tempDir);
    ASSERT_FALSE(error);
 
-   // nest in small steps so we can land just under the limit rather than overshoot it
+   ASSERT_LT(tempDir.getAbsolutePath().length() + 2 * kStep, kTargetLength)
+      << "temporary directory is too deep to build a " << kTargetLength
+      << " character path below it";
+
    FilePath deepDir = tempDir;
-   while (true)
-   {
-      FilePath nextDir = deepDir.completeChildPath("0123456789");
-      if (nextDir.getAbsolutePath().length() > kTargetLength)
-         break;
+   while (deepDir.getAbsolutePath().length() + 2 * kStep <= kTargetLength)
+      deepDir = deepDir.completeChildPath("0123456789");
 
-      deepDir = nextDir;
-   }
-
-   // pad the leaf out to land as close to the limit as we can
+   // pad the leaf out so the path lands exactly on the target length
    size_t remaining = kTargetLength - deepDir.getAbsolutePath().length();
-   if (remaining > 1)
-      deepDir = deepDir.completeChildPath(std::string(remaining - 1, 'x'));
+   deepDir = deepDir.completeChildPath(std::string(remaining - 1, 'x'));
 
-   ASSERT_GT(deepDir.getAbsolutePath().length(), 246u);
+   ASSERT_EQ(kTargetLength, deepDir.getAbsolutePath().length());
 
    error = deepDir.ensureDirectory();
    if (error)

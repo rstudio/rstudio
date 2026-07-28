@@ -178,6 +178,38 @@ TEST(Win32SystemTest, FindProgramOnPathQualifiedProbesExtensions)
    ASSERT_TRUE(boost::algorithm::iequals(qualified.getFilename(), "cmd.exe"));
 }
 
+TEST(Win32SystemTest, FindProgramOnPathProbesExtensionsUnderDottedDirectories)
+{
+   // The extension of a qualified name has to be read from its last component. Taken over
+   // the whole path, a dotted *directory* reads as an extension and suppresses the probing
+   // above for a name that has none -- and dotted directories are the norm on Windows
+   // ("C:/R/R-4.4.1/bin", "C:/Users/first.last"). The System32 case cannot catch this,
+   // because none of its components contain a dot.
+   const std::string kProbeProgram = "rs-probe-374732";
+
+   FilePath probeDir;
+   ASSERT_FALSE(FilePath::tempFilePath(probeDir));
+
+   FilePath dottedDir = probeDir.completeChildPath("R-4.4.1").completeChildPath("bin");
+   ASSERT_FALSE(dottedDir.ensureDirectory());
+   ASSERT_FALSE(dottedDir.completeChildPath(kProbeProgram + ".exe").ensureFile());
+
+   FilePath qualified;
+   Error err = findProgramOnPath(
+      dottedDir.completeChildPath(kProbeProgram).getAbsolutePath(),
+      &qualified);
+
+   // evaluate before cleanup, so a failure doesn't leave the temp directory behind
+   bool foundProbe = !err &&
+                     qualified.isRegularFile() &&
+                     qualified.getFilename() == kProbeProgram + ".exe";
+
+   probeDir.remove();
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(foundProbe);
+}
+
 TEST(Win32SystemTest, FindProgramOnPathSearchesSystemDirectories)
 {
    // clear PATH so the system directories are the only place cmd.exe can come from
@@ -221,20 +253,33 @@ TEST(Win32SystemTest, FindProgramOnPathPrefersSystemDirectories)
 
 TEST(Win32SystemTest, FindProgramOnPathTrimsQuotedEntries)
 {
-   FilePath cmdPath;
-   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
-   std::string system32 = cmdPath.getParent().getAbsolutePathNative();
+   // The program has to be one the system directories cannot supply. Those are searched
+   // ahead of PATH, so probing for something like cmd.exe would resolve from System32
+   // and return before the quoted PATH entry was ever examined -- leaving the trimming
+   // this test exists to cover unexercised.
+   const std::string kProbeProgram = "rs-probe-374732.exe";
+
+   FilePath probeDir;
+   ASSERT_FALSE(FilePath::tempFilePath(probeDir));
+   ASSERT_FALSE(probeDir.ensureDirectory());
+   ASSERT_FALSE(probeDir.completeChildPath(kProbeProgram).ensureFile());
 
    std::string savedPath = getenv("PATH");
-   setenv("PATH", "  \"" + system32 + "\"  ");
+   setenv("PATH", "  \"" + probeDir.getAbsolutePathNative() + "\"  ");
 
    FilePath quotedPath;
-   Error err = findProgramOnPath("cmd.exe", &quotedPath);
+   Error err = findProgramOnPath(kProbeProgram, &quotedPath);
+
+   // evaluate before cleanup, so a failure doesn't leave the environment or temp dir behind
+   bool foundProbe = !err &&
+                     quotedPath.isRegularFile() &&
+                     quotedPath.getFilename() == kProbeProgram;
 
    setenv("PATH", savedPath);
+   probeDir.remove();
 
    ASSERT_FALSE(err);
-   ASSERT_TRUE(quotedPath.isRegularFile());
+   ASSERT_TRUE(foundProbe);
 }
 
 TEST(Win32SystemTest, RunCommandReachesTheShell)

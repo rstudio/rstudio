@@ -2647,11 +2647,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // fail", which would take out git, terminals, builds and R CMD. Before we
       // declared long path awareness this call simply failed; now it succeeds and the
       // damage shows up later with no obvious cause, so say so up front. See #12806.
-      if (workingDir.getAbsolutePath().length() >= MAX_PATH)
+      //
+      // Measure in UTF-16 units, which is what MAX_PATH counts and what the wide APIs
+      // are bounded by. getAbsolutePath() is UTF-8 bytes, so measuring it would inflate
+      // any non-Latin path (3x for CJK, 2x for Cyrillic) and warn about a directory that
+      // is perfectly fine -- and this warning goes to the console on every session start.
+      size_t workingDirLength = workingDir.getAbsolutePathW().length();
+      if (workingDirLength >= MAX_PATH)
       {
          s_workingDirWarning =
             "Working directory is " +
-            safe_convert::numberToString(workingDir.getAbsolutePath().length()) +
+            safe_convert::numberToString(workingDirLength) +
             " characters, which exceeds the Windows limit of " +
             safe_convert::numberToString(MAX_PATH) + " for a process working "
             "directory; launching child processes (Git, terminals, builds) will "

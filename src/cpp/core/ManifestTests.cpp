@@ -80,6 +80,13 @@ TEST(ManifestTest, ManifestCommentsHaveNoDoubleHyphen)
             << relativePath << ": XML comments cannot contain a double hyphen; "
             << "use a single hyphen or a comma instead. Comment body: " << body;
 
+         // A body ending in '-' is equally forbidden, and slips past the check above:
+         // in "<!-- foo --->" the search for "-->" lands on the last three characters,
+         // leaving a body of " foo -" with no double hyphen in it.
+         EXPECT_TRUE(body.empty() || body.back() != '-')
+            << relativePath << ": an XML comment body cannot end with a hyphen. "
+            << "Comment body: " << body;
+
          commentStart = contents.find("<!--", commentEnd + 3);
       }
    }
@@ -94,9 +101,18 @@ TEST(ManifestTest, ManifestsDeclareLongPathAwareness)
       FilePath path = manifestPath(relativePath);
       ASSERT_TRUE(path.exists()) << relativePath << " not found at " << path.getAbsolutePath();
 
+      // Assert the whole element, not just the opening tag: a value of "false", or the
+      // right value under the wrong xmlns, is how this is most likely to get broken while
+      // still appearing to be declared. All of our manifests use this exact spelling.
+      const std::string kLongPathAware =
+         "<longPathAware xmlns=\"http://schemas.microsoft.com/SMI/2016/WindowsSettings\">"
+         "true"
+         "</longPathAware>";
+
       std::string contents = file_utils::readFile(path);
-      EXPECT_NE(contents.find("<longPathAware"), std::string::npos)
-         << relativePath << ": missing a longPathAware declaration";
+      EXPECT_NE(contents.find(kLongPathAware), std::string::npos)
+         << relativePath << ": missing a longPathAware declaration; expected exactly "
+         << kLongPathAware;
    }
 }
 

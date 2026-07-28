@@ -62,13 +62,24 @@ bool realPathsEqual(const FilePath& a, const FilePath& b);
 
 void addToSystemPath(const FilePath& path, bool prepend = false);
 
-// Searches for a program by name. When the name has no extension, the Windows
-// implementation also probes .exe/.com/.bat/.cmd. Searches the Windows system
-// directories (on Windows) and then the directories on PATH; note that it does
-// not search the current directory.
+// Searches for a program by name and returns its path.
 //
-// A name that is already path-qualified is resolved directly rather than searched
-// for, but is still subject to the same extension probing.
+// A bare name is searched for: on Windows, in the system directories and then the
+// directories on PATH; on POSIX, in the directories on PATH. Neither searches the
+// current directory.
+//
+// A name that is already path-qualified is resolved directly rather than searched for.
+// "Qualified" means containing '/' on POSIX, or any of '/', '\' or ':' on Windows. As
+// with any path, a relative qualified name resolves against the current directory --
+// that is execvp's rule, and is distinct from searching the current directory for a
+// bare name.
+//
+// Two behaviors differ by platform and are not smoothed over here:
+//
+//  - Extension probing is Windows-only. There, a name with no extension is also probed
+//    with .exe/.com/.bat/.cmd, for qualified and bare names alike. POSIX probes nothing.
+//  - POSIX requires the result to be executable by the effective user (X_OK); Windows
+//    requires only that it be a regular file, so it can return a file that is not.
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath);
 

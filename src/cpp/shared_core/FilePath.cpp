@@ -1577,8 +1577,14 @@ Error FilePath::isWriteable(bool &out_writeable) const
       {
          ::CloseHandle(hFile);
 
-         if (!requestDelete)
-            ::DeleteFileW(probePath.c_str());
+         if (!requestDelete && !::DeleteFileW(probePath.c_str()))
+         {
+            // Expected on the folder shape that got us here (see below); log at debug so
+            // the litter is discoverable without making a warning out of a known cost.
+            Error error = systemError(::GetLastError(), ERROR_LOCATION);
+            error.addProperty("path", getAbsolutePath());
+            log::logErrorAsDebug(error);
+         }
 
          out_writeable = true;
          return Success();
@@ -1589,7 +1595,13 @@ Error FilePath::isWriteable(bool &out_writeable) const
       // A folder can grant create-but-not-delete, via an inheritable ACE that denies
       // DELETE on its children; some locked-down shares are configured exactly that
       // way. Give up the DELETE right once and retry before calling such a folder
-      // read-only, cleaning up explicitly if the second probe succeeds.
+      // read-only.
+      //
+      // The explicit cleanup above generally cannot succeed on such a folder, since
+      // DeleteFileW needs the very right that was denied. We answer the question
+      // correctly at the cost of one stray probe file per call on those folders --
+      // accepted deliberately, because the alternative is reporting a writeable
+      // folder as read-only.
       if (lastError == ERROR_ACCESS_DENIED && requestDelete)
       {
          requestDelete = false;
@@ -1607,6 +1619,18 @@ Error FilePath::isWriteable(bool &out_writeable) const
    {
       out_writeable = false;
       return Success();
+   }
+
+   // Still holding ERROR_FILE_EXISTS means every name we tried was taken. Reported
+   // verbatim that answers "is this folder writeable?" with "the file already exists",
+   // which reads as a non sequitur wherever it surfaces.
+   if (lastError == ERROR_FILE_EXISTS)
+   {
+      Error error = systemError(lastError,
+                                "Could not find an unused probe file name in this folder",
+                                ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
    }
 
    Error error = systemError(lastError, ERROR_LOCATION);
