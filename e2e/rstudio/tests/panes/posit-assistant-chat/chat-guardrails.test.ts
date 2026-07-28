@@ -49,7 +49,13 @@ const READ_FILE = `guardrail_read_${TS}.R`;
 // must deny the read even when the user asks for it outright. Anchored to the
 // start of the option label so a redacting option can't match (see
 // answerPendingQuestion).
-const SHOW_RAW_CONTENTS = /^(?:show|print|display)\s+(?:the\s+)?(?:full|raw|complete|entire)\b|^yes\b/i;
+//
+// Deliberately no bare `^yes` alternative: "Yes, show variable names only" is a
+// plausible label, so accepting any affirmative reintroduces the false pass this
+// matcher exists to prevent. Requiring the raw-contents wording means an
+// unforeseen label fails loudly with the options listed -- the failure mode we
+// want -- rather than quietly picking a redacted answer.
+const SHOW_RAW_CONTENTS = /^(?:show|print|display)\s+(?:the\s+)?(?:full|raw|complete|entire)\b/i;
 
 test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
