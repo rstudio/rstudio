@@ -92,8 +92,14 @@ FilePath knownFolderHomePath(DWORD flags)
 
 FilePath currentCSIDLPersonalHomePath()
 {
-   // query for My Documents directory
-   return knownFolderHomePath(0);
+   // Query for My Documents directory.
+   //
+   // KF_FLAG_DONT_VERIFY matches the SHGetFolderPathW(SHGFP_TYPE_CURRENT) call this
+   // replaces, which returned the registered path without checking that it exists.
+   // Without the flag SHGetKnownFolderPath verifies existence and fails, which turns
+   // the "Documents does not exist" case from a silent miss (getUserHomePath just
+   // moves on to the next source) into a logged failure.
+   return knownFolderHomePath(KF_FLAG_DONT_VERIFY);
 }
 
 FilePath defaultCSIDLPersonalHomePath()
