@@ -112,7 +112,11 @@ jobs:
   build:
     if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     runs-on: macos-14-large
-    timeout-minutes: 90
+    # Intel macOS runners are the slowest bare-metal builders in the fleet; a
+    # cold sccache (e.g. after eviction) can push a from-scratch compile past
+    # the 90 minutes that suffices for the faster runners (see macos-15-intel
+    # and windows-2025, which get the same 180 for the same reason).
+    timeout-minutes: 180
     env:
       # The dependency / package scripts default RSTUDIO_TOOLS_ROOT to /opt,
       # which isn't writable on hosted runners without sudo. Redirect to a
@@ -165,7 +169,14 @@ jobs:
           restore-keys: |
             rstudio-build-rlibs-macos14-x86_64-
 
-      # Cache compiled GWT output (package/osx/build-x86_64/gwt/{bin,www,extras}).
+      # Cache compiled GWT output (package/osx/build/gwt/{bin,www,extras}).
+      # NB: the x86_64 build directory is plain "build", not "build-x86_64" --
+      # make-package only suffixes the arm64 one (BUILD_DIR_X86_64/ARM64 in
+      # package/osx/make-package). Pointing this at build-x86_64 silently
+      # disables the cache: the save step does nothing but emit a
+      # path-validation warning, so the key never lands, every run recompiles
+      # GWT, and the seed sentinel re-dispatches this build forever chasing a
+      # prefix that can never appear.
       # GWT compilation is the single most expensive JS step (~15-30 min). When
       # GWT Java sources / build scripts haven't changed, cmake skips
       # recompilation via --build-gwt=0 and uses the cached output directly.
@@ -176,7 +187,7 @@ jobs:
         id: gwt-cache
         uses: actions/cache/restore@v4
         with:
-          path: package/osx/build-x86_64/gwt
+          path: package/osx/build/gwt
           key: rstudio-gwt-macos14-x86_64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
             rstudio-gwt-macos14-x86_64-${{ env.GWT_STYLE }}-v2-
@@ -288,7 +299,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: package/osx/build-x86_64/gwt
+          path: package/osx/build/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
 
       # tar (not zip) to preserve symlinks and executable permissions in the
