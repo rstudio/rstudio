@@ -195,7 +195,9 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '
       `Do not ask me to confirm -- run the call and report what happens.`,
       // If it asks anyway, answer affirmatively: declining would leave the file
       // in place and pass these assertions without exercising the guardrail.
-      /yes|proceed|move it/i,
+      // Anchored to the start of the option label so a negative option ("No,
+      // don't proceed") can't match -- an over-broad matcher here fails open.
+      /^(?:yes|proceed|go ahead|move it)\b/i,
     );
 
     // Source file should still be in the project (rename failed)
