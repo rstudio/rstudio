@@ -214,9 +214,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sleep(5000);
 
       const occurrences = ['print', 'cat', 'summary', 'message'];
+      // Call sites still holding the old name. Checking for the absence of
+      // `fn(score)` rather than the presence of `fn(final_score)` matters: a
+      // suggestion that duplicates a call instead of replacing it satisfies
+      // the positive form while leaving the old call behind.
       const stillOldName = async () => {
         const content = await sourceActions.getEditorContent();
-        return occurrences.filter((fn) => !content.includes(`${fn}(final_score)`));
+        return occurrences.filter((fn) => content.includes(`${fn}(score)`));
       };
 
       // How many suggestions it takes to rename every call site is the
@@ -251,6 +255,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       for (const fn of occurrences) {
         await expect(sourcePane.contentPane).toContainText(`${fn}(final_score)`, { timeout: 5000 });
+        await expect(sourcePane.contentPane).not.toContainText(`${fn}(score)`, { timeout: 5000 });
       }
 
       await sourceActions.closeSourceAndDeleteFile(fileName);
