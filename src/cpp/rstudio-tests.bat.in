@@ -5,8 +5,7 @@ REM ===========================================================================
 REM RStudio C++/R unit test runner (Windows).
 REM
 REM Mirrors the --scope / --filter interface of the Unix rstudio-tests script
-REM (rstudio-tests.in) so the same test categories can be invoked in CI, and
-REM additionally accepts more than one scope per invocation.
+REM (rstudio-tests.in) so the same test categories can be invoked in CI.
 REM
 REM The Unix-only diagnostics (watchdog timeout, libSegFault, gdb backtraces,
 REM sudo/DropPriv handling) have no Windows equivalent and are not ported.
