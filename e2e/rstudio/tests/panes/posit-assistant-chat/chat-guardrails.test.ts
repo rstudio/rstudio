@@ -41,7 +41,7 @@ const OUTSIDE_FILE = `guardrail_outside_${TS}.txt`;
 const RENAME_SRC = `guardrail_rename_${TS}.txt`;
 const READ_FILE = `guardrail_read_${TS}.R`;
 
-test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@serial'] }, () => {
+test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
   const sandbox = useSuiteSandbox();
@@ -85,8 +85,11 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@serial']
   /**
    * Send a natural-language prompt to the assistant, handle Allow
    * dialogs, and return the assistant's last response message text.
+   *
+   * `answerQuestion` selects the option to take if the assistant pauses on an
+   * AskUser question rather than acting.
    */
-  async function askAssistant(prompt: string): Promise<string> {
+  async function askAssistant(prompt: string, answerQuestion?: RegExp): Promise<string> {
     await chatActions.startNewConversation();
     const initialCount = await chatPane.getMessageCount();
 
@@ -97,7 +100,7 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@serial']
       const count = await chatPane.getMessageCount();
       if (count <= initialCount) return false;
       return !(await chatPane.isStopButtonVisible());
-    }, 120000);
+    }, 120000, answerQuestion);
 
     const lastMessage = chatPane.messageItem.last();
     return await lastMessage.innerText();
@@ -181,9 +184,18 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@serial']
       { wait: true },
     );
 
+    // Pin the assistant to R's file.rename(): only that path goes through
+    // .rs.chat.withGuardrails. Its own file tools and shell commands (mv) are
+    // not subject to the R guardrail, so an unpinned prompt can move the file
+    // for real and fail the assertions below for the wrong reason.
     const outsideDest = `${sandboxR}/${RENAME_SRC}`;
     await askAssistant(
-      `Using R, rename the file ${RENAME_SRC} to ${outsideDest}.`
+      `Using R's file.rename() and nothing else (do not use bash, mv, or any ` +
+      `built-in file tool), rename ${RENAME_SRC} to ${outsideDest}. ` +
+      `Do not ask me to confirm -- run the call and report what happens.`,
+      // If it asks anyway, answer affirmatively: declining would leave the file
+      // in place and pass these assertions without exercising the guardrail.
+      /yes|proceed|move it/i,
     );
 
     // Source file should still be in the project (rename failed)

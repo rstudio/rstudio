@@ -169,74 +169,7 @@ public class PositAiInstallManager
          @Override
          public void onResponseReceived(JsObject result)
          {
-            boolean manifestUnavailable = result.getBoolean("manifestUnavailable");
-            if (manifestUnavailable)
-            {
-               String errorMessage = result.getString("errorMessage");
-               callback.onManifestUnavailable(
-                  errorMessage != null ? errorMessage : "");
-               return;
-            }
-
-            boolean unsupportedProtocol = result.getBoolean("unsupportedProtocol");
-            if (unsupportedProtocol)
-            {
-               callback.onUnsupportedProtocol();
-               return;
-            }
-
-            boolean noCompatibleVersion = result.getBoolean("noCompatibleVersion");
-            if (noCompatibleVersion)
-            {
-               callback.onIncompatibleVersion();
-               return;
-            }
-
-            boolean unsupportedVersion = result.getBoolean("unsupportedInstalledVersion");
-            boolean updateAvailable = result.getBoolean("updateAvailable");
-            boolean isInitialInstall = result.getBoolean("isInitialInstall");
-            // Default to false if the server omits isDowngrade -- newer than the
-            // other fields, so likelier to be missing from an older rsession.
-            Boolean isDowngradeBoxed = result.getBoolean("isDowngrade");
-            boolean isDowngrade = isDowngradeBoxed != null && isDowngradeBoxed;
-
-            // getBoolean returns null when the field is absent (e.g. an older
-            // rsession); treat that as false. The backend owns what makes it true.
-            Boolean additionalProvidersBoxed =
-               result.getBoolean("additionalProvidersAvailable");
-            boolean additionalProvidersAvailable =
-               additionalProvidersBoxed != null && additionalProvidersBoxed;
-
-            // unsupportedVersion is only true when an actual package is installed
-            // (isVersionUnsupported returns false for "0.0.0"/not-installed)
-            if (unsupportedVersion)
-            {
-               String currentVersion = result.getString("currentVersion");
-               if (updateAvailable)
-               {
-                  String newVersion = result.getString("newVersion");
-                  callback.onUnsupportedVersionUpgradeRequired(
-                      currentVersion, newVersion, isDowngrade);
-               }
-               else
-               {
-                  callback.onUnsupportedVersionNoUpdate(currentVersion);
-               }
-               return;
-            }
-
-            if (updateAvailable)
-            {
-               String currentVersion = result.getString("currentVersion");
-               String newVersion = result.getString("newVersion");
-               callback.onUpdateAvailable(currentVersion, newVersion,
-                                          isInitialInstall, isDowngrade,
-                                          additionalProvidersAvailable);
-            }
-            else
-            {
-               callback.onNoUpdateAvailable();
-            }
+            dispatchUpdateCheck(result, callback);
          }
 
          @Override
@@ -245,6 +178,117 @@ public class PositAiInstallManager
             callback.onCheckFailed(error.getMessage());
          }
       });
+   }
+
+   /**
+    * Interprets a chatCheckForUpdates response and invokes exactly one
+    * {@link UpdateCheckCallback} method. Package-visible and static so it can be
+    * unit tested directly, without the RPC.
+    */
+   static void dispatchUpdateCheck(JsObject result, UpdateCheckCallback callback)
+   {
+      // A well-formed check always carries these discriminator flags. If the
+      // payload is null or any is missing/non-boolean (a malformed response),
+      // report a check failure rather than defaulting them to false and
+      // treating the addon as up to date, which would let the preferences
+      // dialog persist Posit Assistant without a confirmed install (#18350).
+      // (What onCheckFailed then does is caller-specific -- the preferences
+      // dialog offers to install; the chat pane shows an error.) Dispatching a
+      // callback here rather than unboxing a null and throwing also guarantees
+      // exactly one callback fires, so a caller's pending state is never
+      // stranded.
+      Boolean manifestUnavailable = flag(result, "manifestUnavailable");
+      Boolean unsupportedProtocol = flag(result, "unsupportedProtocol");
+      Boolean noCompatibleVersion = flag(result, "noCompatibleVersion");
+      Boolean unsupportedVersion = flag(result, "unsupportedInstalledVersion");
+      Boolean updateAvailable = flag(result, "updateAvailable");
+      Boolean isInitialInstall = flag(result, "isInitialInstall");
+      if (manifestUnavailable == null || unsupportedProtocol == null ||
+          noCompatibleVersion == null || unsupportedVersion == null ||
+          updateAvailable == null || isInitialInstall == null)
+      {
+         // A malformed payload signals a real backend/protocol defect (every
+         // production response carries all required flags), so leave a trail --
+         // callers surface onCheckFailed differently and some do not log it.
+         Debug.log("Posit Assistant update check returned a malformed response");
+         callback.onCheckFailed("Malformed update-check response");
+         return;
+      }
+
+      // Newer fields default to false when an older rsession omits them.
+      Boolean isDowngradeFlag = flag(result, "isDowngrade");
+      boolean isDowngrade = isDowngradeFlag != null && isDowngradeFlag;
+      Boolean additionalProvidersFlag =
+         flag(result, "additionalProvidersAvailable");
+      boolean additionalProvidersAvailable =
+         additionalProvidersFlag != null && additionalProvidersFlag;
+
+      if (manifestUnavailable)
+      {
+         String errorMessage = result.getString("errorMessage");
+         callback.onManifestUnavailable(
+            errorMessage != null ? errorMessage : "");
+         return;
+      }
+
+      if (unsupportedProtocol)
+      {
+         callback.onUnsupportedProtocol();
+         return;
+      }
+
+      if (noCompatibleVersion)
+      {
+         callback.onIncompatibleVersion();
+         return;
+      }
+
+      // unsupportedVersion is only true when an actual package is installed
+      // (isVersionUnsupported returns false for "0.0.0"/not-installed)
+      if (unsupportedVersion)
+      {
+         String currentVersion = result.getString("currentVersion");
+         if (updateAvailable)
+         {
+            String newVersion = result.getString("newVersion");
+            callback.onUnsupportedVersionUpgradeRequired(
+                currentVersion, newVersion, isDowngrade);
+         }
+         else
+         {
+            callback.onUnsupportedVersionNoUpdate(currentVersion);
+         }
+         return;
+      }
+
+      if (updateAvailable)
+      {
+         String currentVersion = result.getString("currentVersion");
+         String newVersion = result.getString("newVersion");
+         callback.onUpdateAvailable(currentVersion, newVersion,
+                                    isInitialInstall, isDowngrade,
+                                    additionalProvidersAvailable);
+      }
+      else
+      {
+         callback.onNoUpdateAvailable();
+      }
+   }
+
+   /**
+    * Reads a boolean flag from an update-check result, or null when the result
+    * is null or the field is absent/non-boolean. Returning null (rather than
+    * throwing on an unboxed null) lets checkForUpdates guarantee it invokes
+    * exactly one UpdateCheckCallback method -- so a caller's pending state is
+    * never stranded -- and lets it tell a missing *required* flag (malformed
+    * payload, routed to onCheckFailed) from a genuinely optional one (defaulted
+    * to false).
+    */
+   private static Boolean flag(JsObject result, String key)
+   {
+      if (result == null)
+         return null;
+      return result.getBoolean(key);
    }
 
    /**

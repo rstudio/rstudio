@@ -12,7 +12,7 @@ const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 // Satellite pop-out on Server hits the Chrome window.open() reload path,
 // which is a separate concern from the command wiring this test covers.
 // detachable-sidebar.test.ts is @desktop_only for the same reason.
-test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@desktop_only'] }, () => {
+test.describe.serial('Chat satellite -- commands', { tag: ['@ai', '@chat', '@desktop_only'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let consoleActions: ConsolePaneActions;

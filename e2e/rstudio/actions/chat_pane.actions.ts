@@ -197,16 +197,52 @@ export class ChatPaneActions {
   }
 
   /**
+   * Answer a pending AskUser question: select the first option whose
+   * accessible name matches `option`, then submit.
+   */
+  async answerPendingQuestion(option: RegExp | string): Promise<void> {
+    const choice = this.chatPane.frame.getByRole('radio', { name: option }).first();
+    await choice.click({ timeout: 5000 });
+    // Submit stays disabled until an option is selected, so this also
+    // confirms the click registered on the radio.
+    await expect(this.chatPane.submitAnswersBtn).toBeEnabled({ timeout: 5000 });
+    await this.chatPane.submitAnswersBtn.click();
+    // The form unmounts once the answer lands and the turn resumes; waiting
+    // here keeps the caller's poll from re-entering a half-torn-down form.
+    await expect(this.chatPane.pendingQuestions).toBeHidden({ timeout: 15000 });
+    console.log(`Answered pending assistant question with "${option}"`);
+  }
+
+  /**
    * Poll in a loop, handling Allow dialogs (session-level then fallback),
    * until the provided condition returns true or the timeout expires.
+   *
+   * `answerQuestion` matches the option to pick if the assistant pauses on an
+   * AskUser question. Without it, an unanswered question is a hard error
+   * rather than a spin to the timeout: the turn cannot finish on its own, so
+   * the caller must either answer or reword the prompt.
    */
   async pollWithAllowDialogs(
     isDone: () => Promise<boolean>,
-    timeout: number = 120000
+    timeout: number = 120000,
+    answerQuestion?: RegExp | string
   ): Promise<void> {
     const deadline = Date.now() + timeout;
 
     while (Date.now() < deadline) {
+      if (await this.chatPane.isPendingQuestionVisible()) {
+        if (!answerQuestion) {
+          throw new Error(
+            'Posit Assistant paused on a question and no answer was configured: ' +
+            `"${await this.chatPane.pendingQuestions.innerText()}". ` +
+            'Pass answerQuestion, or reword the prompt so the assistant acts ' +
+            'without asking.'
+          );
+        }
+        await this.answerPendingQuestion(answerQuestion);
+        continue;
+      }
+
       // Grant session-level permission if the dropdown is available
       if (await this.chatPane.isAllowDropdownVisible()) {
         await sleep(500);

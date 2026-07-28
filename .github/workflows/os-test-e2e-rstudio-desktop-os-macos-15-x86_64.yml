@@ -112,7 +112,11 @@ jobs:
   build:
     if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     runs-on: macos-15-intel
-    timeout-minutes: 90
+    # macos-15-intel is the slowest bare-metal builder in the fleet; a cold
+    # sccache (e.g. after eviction) can push a from-scratch compile past the
+    # 90 minutes that suffices for the faster runners (see windows-2025, which
+    # gets the same 180 for the same reason).
+    timeout-minutes: 180
     env:
       # The dependency / package scripts default RSTUDIO_TOOLS_ROOT to /opt,
       # which isn't writable on hosted runners without sudo. Redirect to a
@@ -165,7 +169,12 @@ jobs:
           restore-keys: |
             rstudio-build-rlibs-x86_64-
 
-      # Cache compiled GWT output (package/osx/build-x86_64/gwt/{bin,www,extras}).
+      # Cache compiled GWT output (package/osx/build/gwt/{bin,www,extras}).
+      # NB: the x86_64 build directory is plain "build", not "build-x86_64" --
+      # make-package only suffixes the arm64 one (BUILD_DIR_X86_64/ARM64 in
+      # package/osx/make-package). Pointing this at build-x86_64 silently
+      # disables the cache: the save step no-ops with a path-validation
+      # warning, so the key never lands and every run recompiles GWT.
       # GWT compilation is the single most expensive JS step (~15-30 min). When
       # GWT Java sources / build scripts haven't changed, cmake skips
       # recompilation via --build-gwt=0 and uses the cached output directly.
@@ -176,7 +185,7 @@ jobs:
         id: gwt-cache
         uses: actions/cache/restore@v4
         with:
-          path: package/osx/build-x86_64/gwt
+          path: package/osx/build/gwt
           key: rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
           restore-keys: |
             rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-
@@ -288,7 +297,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: package/osx/build-x86_64/gwt
+          path: package/osx/build/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
 
       # tar (not zip) to preserve symlinks and executable permissions in the
@@ -481,6 +490,11 @@ jobs:
           # library / pak / Playwright-browser binaries. Scope by arch+version.
           cache-scope: macos15-x86_64
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # runner.os is just "macOS" for both the arm64 (macos26) and x86_64
+          # (macos15) engines, so without a scope they share one R-library cache
+          # and each restores the other's wrong-arch binaries (pak/cli .so fail
+          # to dyn.load). Scope by OS and arch to isolate the two.
+          cache-scope: macos15-x86_64
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

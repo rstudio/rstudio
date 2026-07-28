@@ -468,6 +468,10 @@ jobs:
           # library / pak / Playwright-browser binaries. Scope by arch+version.
           cache-scope: macos26-arm64
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # See the macos15 sibling: runner.os is only "macOS" on both engines,
+          # so scope by OS and arch to keep the arm64 and x86_64 R-library
+          # caches from colliding.
+          cache-scope: macos26-arm64
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

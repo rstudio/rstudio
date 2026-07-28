@@ -113,24 +113,55 @@ jobs:
             CONCLUSION="${RUN%% *}"
             RUN_URL="${RUN#* }"
 
+            TITLE="cache seed workflow failing: $SEED"
+            ISSUE=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+
             # No completed runs yet (new seed) counts as healthy.
-            if [ -z "$CONCLUSION" ] || [ "$CONCLUSION" = "success" ] || [ "$CONCLUSION" = "null" ]; then
+            if [ -z "$CONCLUSION" ] || [ "$CONCLUSION" = "null" ]; then
+              continue
+            fi
+
+            # Recovered: retire the alert from the earlier failure, so a
+            # transient flake doesn't leave an issue for someone to close by
+            # hand (and doesn't suppress alerting on the next real breakage).
+            if [ "$CONCLUSION" = "success" ]; then
+              if [ -n "$ISSUE" ]; then
+                echo "Seed $SEED recovered; closing #$ISSUE"
+                COMMENT=$(printf '%s\n\n%s' \
+                  "The latest completed run of \`$SEED\` succeeded: $RUN_URL" \
+                  "(Closed automatically by the cache-seed sentinel.)")
+                gh issue close "$ISSUE" --reason completed --comment "$COMMENT" || FAILED=1
+              fi
               continue
             fi
             echo "Seed $SEED latest completed run: $CONCLUSION"
 
             # One open issue per seed; skip if the previous alert is still open.
-            TITLE="cache seed workflow failing: $SEED"
-            EXISTING=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq 'length')
-            if [ "$EXISTING" -gt 0 ]; then
-              echo "Alert issue already open for $SEED"
+            if [ -n "$ISSUE" ]; then
+              echo "Alert issue already open for $SEED (#$ISSUE)"
+              continue
+            fi
+
+            # A failing conclusion is stale the moment a newer run is queued or
+            # running -- including one this job dispatched above, since that
+            # dispatch happens before this check. Let the retry settle before
+            # calling the seed broken; transient infrastructure faults (DNS,
+            # runner loss) clear on their own and would otherwise file an issue
+            # that is already obsolete when it is opened.
+            PENDING=0
+            for STATUS in queued in_progress; do
+              N=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$SEED/runs?status=$STATUS&per_page=1" --jq .total_count)
+              PENDING=$((PENDING + N))
+            done
+            if [ "$PENDING" -gt 0 ]; then
+              echo "Seed $SEED has a newer run in flight; deferring alert."
               continue
             fi
 
             BODY=$(printf '%s\n\n%s\n\n%s' \
               "The latest completed run of \`$SEED\` finished with conclusion \`$CONCLUSION\`: $RUN_URL" \
               "Until this seed succeeds again, its build caches on main can go stale or evicted, and PR builds for that platform run cold." \
-              "(Opened automatically by the cache-seed sentinel; it skips re-alerting while this issue stays open.)")
+              "(Opened automatically by the cache-seed sentinel; it skips re-alerting while this issue stays open, and closes it once the seed succeeds again.)")
             gh issue create --title "$TITLE" --body "$BODY" || FAILED=1
           done
 

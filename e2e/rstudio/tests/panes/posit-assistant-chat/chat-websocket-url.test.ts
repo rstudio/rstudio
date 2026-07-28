@@ -8,7 +8,7 @@ import type { EnvironmentVersions } from '@pages/console_pane.page';
 import type { Response } from 'playwright';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe('Chat WebSocket URL', { tag: ['@ai'] }, () => {
+test.describe('Chat WebSocket URL', { tag: ['@ai', '@chat'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let consoleActions: ConsolePaneActions;

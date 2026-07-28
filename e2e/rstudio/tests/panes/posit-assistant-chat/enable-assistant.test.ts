@@ -8,7 +8,7 @@ import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { executeCommand } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe.serial('Enable Posit Assistant', { tag: ['@ai'] }, () => {
+test.describe.serial('Enable Posit Assistant', { tag: ['@ai', '@chat'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let consoleActions: ConsolePaneActions;

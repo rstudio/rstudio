@@ -51,7 +51,7 @@ async function invokeUninstallViaPalette(page: Page): Promise<void> {
   await sleep(500);
 }
 
-base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@serial', '@desktop_only'] }, () => {
+base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@chat', '@serial', '@desktop_only'] }, () => {
   requireAiCredentials(base, 'positai');
 
   let session: DesktopSession;
