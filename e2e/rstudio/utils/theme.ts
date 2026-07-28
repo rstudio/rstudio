@@ -10,8 +10,11 @@ import { expect, type Page } from '@playwright/test';
 
 /**
  * 'Cobalt' ships with RStudio and is dark; 'Textmate (default)' is the light
- * default. Each theme's stylesheet href always contains its lowercased name
- * while the theme is active, which is what {@link expectThemeStylesheet} keys on.
+ * default. A theme's stylesheet href contains a lowercased, underscored slug of
+ * its name rather than the name itself -- 'Textmate (default)' is served as
+ * textmate.rstheme, 'Crimson Editor' as crimson_editor.rstheme -- so the marker
+ * below is written out per theme rather than derived, and
+ * {@link expectThemeStylesheet} matches on it as a substring.
  */
 export const DARK_THEME = 'Cobalt';
 export const LIGHT_THEME = 'Textmate (default)';

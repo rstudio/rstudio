@@ -72,10 +72,12 @@ span.status img:first-child {
 }
 
 /* The table follows its ace_editor_theme container for every editor theme, not
-   just dark ones: the base paints it a hard-coded white, so a light-but-not-
+   just dark ones: the base paints it white unconditionally, so a light-but-not-
    white theme (say Solarized Light) would otherwise leave a white table inside
-   a cream pane. Row colors below stay dark-only -- the light defaults already
-   suit a light theme. */
+   a cream pane. (Under a dark theme this duplicates .editor_dark
+   .cellTableWidget in RStudioCellTableStyle.css -- same declaration, same
+   specificity; the light themes are what it is here for.) Row colors below stay
+   dark-only -- the light defaults already suit a light theme. */
 .ace_editor_theme .cellTableWidget {
    background-color: inherit;
 }

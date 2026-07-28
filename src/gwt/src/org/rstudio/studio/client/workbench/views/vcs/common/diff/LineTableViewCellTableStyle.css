@@ -143,13 +143,15 @@
 
 /* Theming (#9026). The diff sits in a container carrying the ace_editor_theme
    class, and these two rules are what make unchanged lines pick up that
-   container's colors -- without them the table keeps the hard-coded white of
-   RStudioCellTableStyle.css and the #888 above. Neither is redundant.
+   container's colors.
 
    The background follows every editor theme, since a light-but-not-white theme
    (say Solarized Light) would otherwise show a white table inside a cream pane.
-   The foreground is dark-only on purpose: #888 deliberately de-emphasizes
-   unchanged lines, and that reads fine on any light theme.
+   Under a dark theme it duplicates .editor_dark .cellTableWidget in
+   RStudioCellTableStyle.css (same declaration, same specificity); the light
+   themes are what it is here for. The foreground rule has no such base
+   counterpart: #888 deliberately de-emphasizes unchanged lines, which reads
+   fine on any light theme but not against a dark one.
 
    Changed lines, below, likewise only need the dark treatment: they tint the
    background with a translucent overlay rather than a fixed color, so the diff
@@ -249,12 +251,25 @@
    background-image: none;
 }
 
-.editor_dark .cellTableSelectedRow,
-.editor_dark .cellTableSelectedRowCell {
+/* The row carries the selection. The cell rules cannot simply be dropped --
+   the base paints .cellTableSelectedRowCell an opaque #CCC !important, which
+   would sit on top of the row tint -- but they clear it rather than repeating
+   it: tinting both the tr and every td would composite 0.15 over 0.15 to
+   roughly 0.28, leaving the diff's selection about twice as bright as the
+   changelist's and the commit list's. */
+
+.editor_dark .cellTableSelectedRow {
    background: THEME_DARK_ROW_SELECTED !important;
 }
 
-.editor_dark .cellTableWidget:focus .cellTableSelectedRow,
-.editor_dark .cellTableWidget:focus .cellTableSelectedRowCell {
+.editor_dark .cellTableSelectedRowCell {
+   background: transparent !important;
+}
+
+.editor_dark .cellTableWidget:focus .cellTableSelectedRow {
    background: THEME_DARK_ROW_FOCUSED !important;
+}
+
+.editor_dark .cellTableWidget:focus .cellTableSelectedRowCell {
+   background: transparent !important;
 }

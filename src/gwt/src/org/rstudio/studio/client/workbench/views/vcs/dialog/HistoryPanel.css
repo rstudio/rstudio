@@ -15,6 +15,8 @@
    padding-top: 2px;
 }
 
+/* empty, but required: HistoryPanel.Styles declares the accessor, and GWT
+   fails the build if the class has no rule to obfuscate */
 .commitTableScrollPanel {}
 
 /* Dark theme (#9026); the commit list and the commit detail carry the

@@ -297,12 +297,20 @@ public abstract class ChangelistTable extends Composite
 
       // A bare table reads as broken rather than empty, especially in the
       // Review Changes window where it owns a whole pane. Install the message
-      // only once the first status has landed: an empty ListDataProvider
+      // only once a status has actually landed: an empty ListDataProvider
       // reports a row count of zero *exactly*, so a placeholder set in the
       // constructor would assert "No changes" while the first refresh is still
       // in flight. (showProgress() is not a substitute -- progressPanel_ is a
       // transparent overlay, and its spinner is delayed besides.)
-      if (!emptyMessageInstalled_)
+      //
+      // A null status means unknown, not clean, and is not the same thing as an
+      // empty one: GitState.refresh() leaves status_ null when gitAllStatus
+      // fails, and refreshMinimal() fires VcsRefreshEvent without ever setting
+      // it. Both reach us through GitChangelistTablePresenter, and GitState is
+      // initialized off branches_ rather than status_, so either can arrive
+      // first. Leave the table bare in that case rather than claiming the
+      // working tree is clean.
+      if (!emptyMessageInstalled_ && items != null)
       {
          Label emptyLabel = new Label(constants_.noChanges());
          emptyLabel.addStyleName(resources_.styles().emptyMessage());

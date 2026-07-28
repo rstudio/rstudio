@@ -22,9 +22,6 @@
 
       /* the file name and the "view file" link live in separate layers of the
          header row, so tint the row itself rather than either layer (#9026) */
-      .headerRow {
-      }
-
       .editor_dark .headerRow {
          background-color: rgba(255, 255, 255, 0.10);
       }
