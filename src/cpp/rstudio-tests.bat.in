@@ -55,6 +55,9 @@ REM gather the values of a --scope flag; unreachable by fallthrough because the
 REM unknown-argument case above always jumps away.
 :scope_values
 if "%~1" == "" goto :parse
+REM the help forms that aren't '-' prefixed would otherwise read as scope names
+if /I "%~1" == "help" goto :parse
+if    "%~1" == "/?"   goto :parse
 set "SCOPE_VALUE=%~1"
 if "!SCOPE_VALUE:~0,1!" == "-" goto :parse
 set "TEST_SCOPE_ARGS=!TEST_SCOPE_ARGS!,%~1"
