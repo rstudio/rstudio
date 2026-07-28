@@ -770,7 +770,15 @@ export async function relaunchAfterRestart(session: DesktopSession): Promise<Des
   return launchRStudio(configRoot);
 }
 
-/** Get all RStudio PIDs currently running. */
+/**
+ * Get all RStudio PIDs currently running.
+ *
+ * Matched case-insensitively (-i): the executable is `RStudio` on macOS but
+ * `rstudio` on Linux, and a case-sensitive `pgrep -x rstudio` silently matched
+ * nothing on macOS -- the `|| true` turns pgrep's no-match exit 1 into empty
+ * output, so relaunchAfterRestart saw an empty before/after diff and left the
+ * post-restart instance running for the rest of the run.
+ */
 function getRStudioPids(): Set<number> {
   try {
     if (process.platform === 'win32') {
@@ -780,7 +788,7 @@ function getRStudioPids(): Set<number> {
       ).trim();
       return new Set(output ? output.split(',').map(Number) : []);
     } else {
-      const output = execSync('pgrep -x rstudio 2>/dev/null || true', { encoding: 'utf-8' }).trim();
+      const output = execSync('pgrep -ix rstudio 2>/dev/null || true', { encoding: 'utf-8' }).trim();
       return new Set(output ? output.split('\n').map(Number).filter(n => Number.isInteger(n) && n > 0) : []);
     }
   } catch (err) {
