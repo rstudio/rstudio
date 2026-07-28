@@ -8,7 +8,7 @@
    <!--
       Opt out of the MAX_PATH (260 character) limit. R declares long path
       awareness on its own front-ends, but a manifest applies to the process,
-      and we host R.dll ourselves -- so R's declaration never takes effect
+      and we host R.dll ourselves, so R's declaration never takes effect
       under RStudio unless we declare it here too. Also requires the machine's
       HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
       registry value to be set.
