@@ -469,9 +469,13 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
 
 FilePath systemSettingsPath(const std::string& appName, bool create)
 {
+   // KF_FLAG_DONT_VERIFY matches the SHGetFolderPathW(SHGFP_TYPE_CURRENT) call this
+   // replaces, which returned the registered path without checking that it exists.
+   // Only relevant when we aren't creating: KF_FLAG_CREATE makes the folder, so
+   // there is nothing left to verify. Same trap as knownFolderHomePath().
    FilePath settingsPath;
    Error error = knownFolderPath(FOLDERID_ProgramData,
-                                 create ? KF_FLAG_CREATE : 0,
+                                 create ? KF_FLAG_CREATE : KF_FLAG_DONT_VERIFY,
                                  "unable to retrieve per machine configuration path",
                                  &settingsPath);
    if (error)
