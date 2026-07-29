@@ -66,9 +66,10 @@ its tests run in a container), so the cached artifacts are ABI-identical and the
 new engine starts warm. What must stay arch-distinct is anything that would
 otherwise collide with the x86_64 Ubuntu 24 engine: `sccache_key_prefix`,
 `installer_artifact`, `pw_label`, and especially `e2e_deps_cache_scope` -- an
-empty scope means
-`runner.os` alone (`Linux`), which the x86_64 engines already use, so leaving
-it empty on an arm64 engine would hand it an x86_64 R library.
+empty scope means `runner.os` alone (`Linux`), so any two engines that left it
+empty would hand each other ABI-incompatible R libraries. Every engine sets an
+explicit scope; this matters more now that the cached library carries the full
+compiled REQUIRED_PACKAGES set, not just pak's DESCRIPTION deps.
 
 `ubuntu-24-arm64` is dispatch-only for now: it's in the `workflow_dispatch`
 choice list but not in the scheduled rotation's engine table, so it costs no
@@ -114,6 +115,6 @@ as `key=value` job outputs.
 | `run_as_user` | non-root user the test run drops to via setpriv (container engines); empty = run as the step user |
 | `display_server` | `xvfb` or `cage` (RHEL 10 dropped X.Org, so Xwayland-under-Cage provides the display) |
 | `e2e_deps_cache_scope` | os-e2e-deps cache isolation scope (R libraries are ABI-bound to the distro/arch) |
-| `preinstall_r_packages` | `true` to pre-install the harness's full REQUIRED_PACKAGES set (engines without PPM binary coverage) and point globalSetup at that library |
+| `preinstall_r_packages` | `true` to pre-install the harness's full REQUIRED_PACKAGES set into the cached R library and point globalSetup at it. Every engine sets it: an engine that leaves it empty pays globalSetup's install into an uncached library on every run |
 | `heartbeat_timeout_seconds` | PW heartbeat idle ceiling; raised where R packages may source-compile at test time |
 | `pw_label` | suffix for PW_PROJECT_LABEL / SHARD_NAME (report + dashboard continuity; do not rename casually) |
