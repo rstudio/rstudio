@@ -100,9 +100,9 @@ pipeline {
     // Build on windows agent
     stage('Build Windows') {
       environment {
-        // Map the year-suffixed credentials onto the exact env var names the
-        // DigiCert tools read; SM_CLIENT_CERT_FILE is set after decoding the
-        // base64 certificate in the Prepare Client Certificate stage
+        // Map the year-suffixed credentials onto the env var names the DigiCert
+        // tools and signing steps read; SM_CLIENT_CERT_FILE is set after decoding
+        // the base64 certificate in the Prepare Client Certificate stage
         SM_HOST = credentials('SM_HOST_2026')
         SM_API_KEY = credentials('SM_API_KEY_2026')
         SM_CLIENT_CERT_PASSWORD = credentials('SM_CLIENT_CERT_PASSWORD_2026')
@@ -138,7 +138,11 @@ pipeline {
             // Signing requires the mTLS host; any other value fails only at the
             // moment of signing, so catch it before the build instead
             bat 'if not "%SM_HOST%"=="https://clientauth.one.digicert.com" (echo SM_HOST must be the clientauth mTLS host; check the SM_HOST_2026 credential & exit /b 1)'
-            powershell '[IO.File]::WriteAllBytes("$env:WORKSPACE\\sm_client_cert.p12", [Convert]::FromBase64String($env:SM_CLIENT_CERT_B64))'
+            powershell '''
+              $bytes = [Convert]::FromBase64String($env:SM_CLIENT_CERT_B64)
+              if ($bytes.Length -eq 0) { throw 'SM_CLIENT_CERT_FILE_B64_2026 decoded to zero bytes; the credential value is empty or whitespace' }
+              [IO.File]::WriteAllBytes("$env:WORKSPACE\\sm_client_cert.p12", $bytes)
+            '''
             script {
               env.SM_CLIENT_CERT_FILE = "${env.WORKSPACE}\\sm_client_cert.p12"
             }
@@ -177,8 +181,8 @@ pipeline {
               curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"
               msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log
               type smtools-windows-x64.log
-              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" healthcheck
-              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" keypair ls
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" healthcheck || exit /b 1
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" keypair ls || exit /b 1
               C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
               "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync
               if exist cert.pem del /f /q cert.pem
@@ -191,7 +195,7 @@ pipeline {
             failure {
               // Client-side tools wrap server rejections in opaque errors; the
               // real HTTP status and message land in the signingmanager logs
-              bat 'if exist "%USERPROFILE%\\.signingmanager\\logs" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
+              bat 'if exist "%USERPROFILE%\\.signingmanager\\logs\\*.log" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
             }
           }
         }
@@ -246,7 +250,7 @@ pipeline {
 
               post {
                 failure {
-                  bat 'if exist "%USERPROFILE%\\.signingmanager\\logs" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
+                  bat 'if exist "%USERPROFILE%\\.signingmanager\\logs\\*.log" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
                 }
               }
 
@@ -332,6 +336,7 @@ pipeline {
           bat '''
             if exist "%WORKSPACE%\\sm_client_cert.p12" del /f /q "%WORKSPACE%\\sm_client_cert.p12"
             if exist "%WORKSPACE%\\cert.pem" del /f /q "%WORKSPACE%\\cert.pem"
+            if exist "%WORKSPACE%\\sm_client_cert.p12" (echo ERROR: could not remove sm_client_cert.p12 from the reused workspace & exit /b 1)
           '''
         }
       }
