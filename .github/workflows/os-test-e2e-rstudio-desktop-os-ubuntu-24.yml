@@ -90,6 +90,9 @@ on:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
         required: false
+      OP_SERVICE_ACCOUNT_TOKEN:
+        description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
+        required: false
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
@@ -360,6 +363,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The secrets context isn't available in a step-level if:, so read the
+      # token into this step's own env and publish only a present/absent flag.
+      # Fork PRs and any caller that doesn't pass the token land on present=false,
+      # which skips the resolve step below; the auth setup project then falls back
+      # to its no-credentials path instead of failing the run.
+      - name: Check for OP service account token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -489,6 +508,20 @@ jobs:
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
 
+      # Resolves the op:// references in e2e/rstudio/.env.op into step outputs.
+      # OP_ENV_FILE is read by the action's bundled OP CLI and its path is
+      # relative to the workspace root, not the Playwright working-directory.
+      # Deliberately not using export-env: that would publish the resolved
+      # credentials to every later step in the job; step outputs keep them
+      # scoped to the one step that needs them.
+      - name: Resolve test credentials from OP
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: ./e2e/rstudio/.env.op
+
       - name: Run Playwright tests
         working-directory: e2e/rstudio
         env:
@@ -509,6 +542,11 @@ jobs:
           # CONNECT_API_KEY is empty on fork PRs; the reporter still runs but its
           # uploads fail with warnings (never fails the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          # Test-account credentials for the Playwright auth setup project. Empty
+          # when the resolve step was skipped, which the setup project treats as
+          # "no credentials supplied" rather than a failure.
+          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
+          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
           SHARD_NAME: desktop-linux-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows which
           # phase exceeded the deadline.
