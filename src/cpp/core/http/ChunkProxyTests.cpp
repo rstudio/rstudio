@@ -145,6 +145,7 @@ public:
    void setChunkHandler(const ChunkHandler& chunkHandler) override { chunkHandler_ = chunkHandler; }
    void setStreamNonChunkedResponses(bool) override {}
    void setBufferPredicate(const boost::function<bool(const http::Response&)>&) override {}
+   void setChunkHandlerSupportsPause(bool supportsPause) override { chunkHandlerSupportsPause_ = supportsPause; }
    void setConnectHandler(const ConnectHandler&) override {}
    void resumeChunkProcessing() override { resumed_ = true; }
    void disableHandlers() override {}
@@ -159,6 +160,7 @@ public:
    ChunkHandler chunkHandler_;
    bool resumed_ = false;
    bool closed_ = false;
+   bool chunkHandlerSupportsPause_ = false;
 
 private:
    http::Request request_;
@@ -212,6 +214,18 @@ void makeChunkedResponse(http::Response* pResponse)
 }
 
 } // anonymous namespace
+
+// ChunkProxy::proxy() must opt the connection into pause-aware completion
+// handling (AsyncClient::closeAndRespond() otherwise discards a declined
+// completion signal -- see completionPending_/setChunkHandlerSupportsPause()
+// in AsyncClient.hpp for the full rationale). Without this, a completion
+// signal declined while ChunkProxy's own buffer is exactly full would never
+// be retried, leaving both connections open indefinitely.
+TEST(ChunkProxy, ProxyOptsIntoChunkHandlerPauseSupport)
+{
+   Fixture fixture;
+   EXPECT_TRUE(fixture.pServerConnection->chunkHandlerSupportsPause_);
+}
 
 TEST(ChunkProxy, UsesContentLengthFramingWhenUpstreamLengthKnown)
 {

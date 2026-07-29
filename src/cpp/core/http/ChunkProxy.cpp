@@ -40,6 +40,12 @@ void ChunkProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection)
    pServerConnection_->setChunkHandler(boost::bind(&ChunkProxy::queueChunk,
                                                    shared_from_this(),
                                                    _1, _2));
+
+   // queueChunk() may decline (return false) under backpressure while
+   // leaving the connection open, expecting to be resumed once writeChunk()
+   // drains -- see setChunkHandlerSupportsPause()'s declaration for why this
+   // must be opted into rather than assumed for every ChunkHandler consumer.
+   pServerConnection_->setChunkHandlerSupportsPause(true);
 }
 
 bool ChunkProxy::queueChunk(const http::Response& response,

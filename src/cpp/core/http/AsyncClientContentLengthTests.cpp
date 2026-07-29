@@ -337,6 +337,10 @@ StreamingOutcome runStreamingScenario(
          boost::posix_time::seconds(5));
 
    pClient->setStreamNonChunkedResponses(true);
+   // production wiring (ChunkProxy::proxy()) always sets both flags together;
+   // this scenario simulates that consumer's pause/resume contract, so the
+   // completion signal's `false` return here means backpressure, not "done".
+   pClient->setChunkHandlerSupportsPause(true);
    if (bufferPredicate)
       pClient->setBufferPredicate(bufferPredicate);
 
@@ -755,6 +759,74 @@ TEST(AsyncClientContentLength, BackpressureOnCompletionSignalStillCompletes)
    for (const std::string& chunk : outcome.chunks)
       assembled += chunk;
    EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
+}
+
+// Guards against a second bug the completionPending_ fix above could have
+// introduced: a `false` return from the completion (empty) chunk is
+// overloaded across ChunkHandler consumers. ChunkProxy returns false to mean
+// "temporary backpressure, resume me later" and leaves the connection open.
+// But RPC-style streaming consumers elsewhere in the codebase -- e.g.
+// LauncherClient::chunkHandler and sendMethodToSession's onChunk wrapper in
+// SessionPidToContext.hpp -- also return false on the empty chunk, but to
+// mean "the stream is done," and they close the connection themselves,
+// synchronously, as part of that very call. Those consumers never call
+// resumeChunkProcessing() (there is no ChunkProxy in that path to do so), so
+// if closeAndRespond() treated their "done" the same as ChunkProxy's "pause,"
+// completionPending_ would be set and never cleared, permanently skipping
+// disableHandlers() on every ordinary completion of this kind of streaming
+// RPC call. The fix requires opting in via setChunkHandlerSupportsPause()
+// (which only ChunkProxy::proxy() does) rather than inferring intent from
+// connection state -- a `false` return is otherwise discarded exactly as it
+// was before this fix, which is what this test exercises: no call to
+// setChunkHandlerSupportsPause() here, deliberately, to reproduce the
+// RPC-style consumer's wiring (close() from within the handler, then return
+// false). Confirms disableHandlers() still runs promptly -- observed via a
+// sentinel captured alongside the chunk handler lambda, whose reference
+// count should drop back to 1 once chunkHandler_ is cleared, rather than
+// lingering for as long as pClient itself stays alive.
+TEST(AsyncClientContentLength, CompletionSignalDeclinedWithoutPauseSupportStillReleasesHandlers)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/false,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+   // deliberately NOT calling setChunkHandlerSupportsPause(true) -- this
+   // reproduces LauncherClient/sendMethodToSession's wiring, which only ever
+   // calls setChunkHandler()
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   boost::shared_ptr<int> pSentinel = boost::make_shared<int>(0);
+
+   pClient->execute(
+      [&](const http::Response&) {},
+      [&](const core::Error&) {},
+      [&pClient, pSentinel](const http::Response&, const std::string& chunk) -> bool
+      {
+         if (chunk.empty())
+         {
+            // mirrors LauncherClient::chunkHandler / sendMethodToSession's
+            // onChunk wrapper: close synchronously, then signal "done".
+            pClient->close();
+            return false;
+         }
+         return true;
+      });
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_EQ(pSentinel.use_count(), 1);
 }
 
 } // namespace tests

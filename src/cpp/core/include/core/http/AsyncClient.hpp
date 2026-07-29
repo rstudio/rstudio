@@ -114,6 +114,22 @@ public:
    virtual void disableHandlers() = 0;
    virtual void close() = 0;
    virtual void setStrand(boost::asio::io_context::strand* pStrand) = 0;
+
+   // Opt in to treating a `false` return from the ChunkHandler's completion
+   // call (the empty chunk sent by closeAndRespond()) as "temporary
+   // backpressure, resume me later" rather than discarding it. Only
+   // ChunkProxy's contract works this way -- it declines under backpressure
+   // while leaving the connection open, and calls resumeChunkProcessing()
+   // once its outbound buffer drains. Other ChunkHandler consumers (e.g.
+   // LauncherClient, sendMethodToSession's onChunk wrapper) return false on
+   // the empty chunk to mean "stream is done" and close the connection
+   // themselves, synchronously, within that same call -- they never call
+   // resumeChunkProcessing(), so treating their "done" as a pause would leave
+   // completion permanently unretried and disableHandlers() permanently
+   // skipped. Default is false (discard the return value, matching every
+   // consumer's existing behavior); ChunkProxy sets this to true when it
+   // wires setChunkHandler().
+   virtual void setChunkHandlerSupportsPause(bool supportsPause) = 0;
 };
 
 template <typename SocketService>
@@ -267,6 +283,11 @@ public:
       const boost::function<bool(const http::Response&)>& predicate)
    {
       bufferPredicate_ = predicate;
+   }
+
+   virtual void setChunkHandlerSupportsPause(bool supportsPause)
+   {
+      chunkHandlerSupportsPause_ = supportsPause;
    }
 
    virtual void resumeChunkProcessing()
@@ -1019,10 +1040,22 @@ private:
          // completionPending_), since ChunkProxy's writeChunk() prioritizes a
          // pending buffer-full condition over its "received final, nothing
          // left to write" close.
-         if (!chunkHandler_(response_, ""))
+         //
+         // Only do this when chunkHandlerSupportsPause_ is set (ChunkProxy's
+         // contract) -- see that flag's declaration for why a `false` return
+         // here is overloaded across ChunkHandler consumers, and why treating
+         // every consumer's `false` as a pause would break the others.
+         if (chunkHandlerSupportsPause_)
          {
-            completionPending_ = true;
-            return; // resumeChunkProcessing() will retry via closeAndRespond()
+            if (!chunkHandler_(response_, ""))
+            {
+               completionPending_ = true;
+               return; // resumeChunkProcessing() will retry via closeAndRespond()
+            }
+         }
+         else
+         {
+            chunkHandler_(response_, "");
          }
       }
 
@@ -1156,6 +1189,7 @@ private:
    ChunkHandler chunkHandler_;
    boost::function<bool(const http::Response&)> bufferPredicate_;
    bool streamNonChunkedResponses_ = false; // opt-in, set by wiring site
+   bool chunkHandlerSupportsPause_ = false; // opt-in, set by ChunkProxy::proxy()
    bool bufferFullResponse_ = false; // decided at header time
    bool streamResponse_ = false;     // the final streaming decision for this
                                      // response, computed once at header time
@@ -1170,18 +1204,25 @@ private:
    boost::shared_ptr<ChunkState> chunkState_;
 
    // True when closeAndRespond()'s completion signal (chunkHandler_(response_,
-   // "")) was rejected by the chunk handler (e.g. ChunkProxy is buffer-full at
+   // "")) was declined by the chunk handler (e.g. ChunkProxy is buffer-full at
    // the exact moment the body finishes) and has not yet been redelivered.
    // The completion signal is the one chunk delivery that does not flow
    // through deliverChunks()/chunkState_ (see closeAndRespond()), so without
-   // this flag a "please pause" (false) return from the handler on that call
-   // would be silently dropped: nothing would remember that completion still
-   // needs to be sent, and ChunkProxy's writeChunk() prioritizes a pending
-   // buffer-full condition over its "received final, nothing left to write"
-   // close -- so both connections would stay open forever. resumeChunkProcessing()
-   // checks this before chunkState_ and retries closeAndRespond() itself,
-   // keeping the retry logic separate from real-content redelivery so the
-   // completion signal is never sent twice.
+   // this flag a genuine "please pause" here would be silently dropped:
+   // nothing would remember that completion still needs to be sent, and
+   // ChunkProxy's writeChunk() prioritizes a pending buffer-full condition
+   // over its "received final, nothing left to write" close -- so both
+   // connections would stay open forever. resumeChunkProcessing() checks this
+   // before chunkState_ and retries closeAndRespond() itself, keeping the
+   // retry logic separate from real-content redelivery so the completion
+   // signal is never sent twice.
+   //
+   // Only ever set when chunkHandlerSupportsPause_ is true (see its
+   // declaration): a `false` return from the completion call is overloaded
+   // across ChunkHandler consumers, and only ChunkProxy's contract treats it
+   // as "pause, resume me later." Gating on that flag -- rather than trying
+   // to infer intent from connection state -- keeps this correct without
+   // affecting any other consumer's existing behavior.
    bool completionPending_ = false;
 
    // optional overall request deadline (connect + handshake + read); unset by
