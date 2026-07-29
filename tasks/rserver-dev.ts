@@ -12,6 +12,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import * as fs from 'node:fs';
+import { isIPv4, isIPv6 } from 'node:net';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import {
@@ -78,6 +79,44 @@ Options:
   --help                    Show this message
 `.trim();
 
+/**
+ * Validate --www-address and return a canonical copy. Only 'localhost' and
+ * literal IP addresses make sense for a bind address, and rebuilding the value
+ * from parsed numeric groups keeps the command-line string itself out of the
+ * rserver spawn below, which the Snyk Code scan otherwise reports as command
+ * injection (see rebuildFromDirectoryListings in common.ts).
+ */
+function canonicalizeAddress(raw: string): string {
+  if (raw === 'localhost') {
+    return 'localhost';
+  }
+
+  const rebuildIPv4 = (address: string): string => address.split('.').map(Number).join('.');
+
+  if (isIPv4(raw)) {
+    return rebuildIPv4(raw);
+  }
+
+  if (isIPv6(raw)) {
+    // A group is empty (the '::' shorthand), an IPv4 dotted quad (mapped
+    // addresses like ::ffff:127.0.0.1), or plain hex.
+    return raw
+      .split(':')
+      .map((group) => {
+        if (group === '') {
+          return '';
+        }
+        if (isIPv4(group)) {
+          return rebuildIPv4(group);
+        }
+        return parseInt(group, 16).toString(16);
+      })
+      .join(':');
+  }
+
+  fail(TAG, `--www-address must be 'localhost' or a literal IP address (got ${raw})`);
+}
+
 function parseGwtMode(raw: string | boolean | undefined): GwtMode {
   if (raw === undefined) {
     return 'devmode';
@@ -110,6 +149,28 @@ function writeSecureCookieKey(checkout: string): string {
   const file = path.join(stateDir(checkout), 'secure-cookie-key');
   fs.writeFileSync(file, randomBytes(32).toString('hex'), { mode: 0o600 });
   return file;
+}
+
+/**
+ * Fail fast if a non-default code server port was chosen but the checkout's
+ * build.xml predates the codeserver.port property. Such a build.xml ignores
+ * the -Dcodeserver.port override, DevMode starts on 9876 regardless, and the
+ * readiness wait below would poll a dead port for its full 15-minute timeout.
+ */
+function requireCodeServerPortPlumbing(checkout: string, port: number): void {
+  if (port === 9876) {
+    return;
+  }
+
+  const buildXml = path.join(checkout, 'src', 'gwt', 'build.xml');
+  if (!fs.readFileSync(buildXml, 'utf8').includes('codeserver.port')) {
+    fail(
+      TAG,
+      `code server port ${port} was requested, but ${buildXml} predates the
+       codeserver.port property and DevMode would start on 9876 regardless.
+       Update that checkout, or free port 9876 so the default can be used.`,
+    );
+  }
 }
 
 /**
@@ -195,7 +256,7 @@ async function main(): Promise<void> {
   const checkout = resolveCheckout(TAG, typeof pathFlag === 'string' ? pathFlag : args.positional[0]);
   const gwtMode = parseGwtMode(args.flags.get('gwt'));
   const wwwAddressFlag = args.flags.get('www-address');
-  const wwwAddress = typeof wwwAddressFlag === 'string' ? wwwAddressFlag : '127.0.0.1';
+  const wwwAddress = typeof wwwAddressFlag === 'string' ? canonicalizeAddress(wwwAddressFlag) : '127.0.0.1';
   const shouldBuild = args.flags.get('build') !== false;
   const shouldWait = args.flags.get('wait') !== false;
   const gwtTimeoutMs = (flagNumber(TAG, args, 'gwt-timeout') ?? 900) * 1000;
@@ -274,6 +335,7 @@ async function main(): Promise<void> {
       codeServerFlag !== undefined
         ? await requirePortFree(TAG, codeServerFlag, '127.0.0.1', 'code server')
         : await findFreePort(TAG, 9876, '127.0.0.1');
+    requireCodeServerPortPlumbing(checkout, codeServerPort);
   }
 
   const dataDir = makeDataDir();
