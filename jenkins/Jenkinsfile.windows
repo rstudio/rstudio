@@ -107,7 +107,7 @@ pipeline {
         SM_API_KEY = credentials('SM_API_KEY_2026')
         SM_CLIENT_CERT_PASSWORD = credentials('SM_CLIENT_CERT_PASSWORD_2026')
         SM_CLIENT_CERT_B64 = credentials('SM_CLIENT_CERT_FILE_B64_2026')
-        KEYPAIR_ALIAS = credentials('SM_KEYPAIR_2026')
+        KEYPAIR_ALIAS = credentials('SM_KEYPAIR_ALIAS_2026')
       }
       agent {
         docker {
