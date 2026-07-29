@@ -171,8 +171,8 @@ jobs:
             rstudio-build-rlibs-macos14-arm64-
 
       # Cache compiled GWT output (package/osx/build-arm64/gwt/{bin,www,extras}).
-      # NB: arm64 builds into "build-arm64", but the x86_64 siblings use plain
-      # "build" -- make-package only suffixes the arm64 directory
+      # NB: arm64 builds into "build-arm64", but the macOS 15 x86_64 sibling
+      # uses plain "build" -- make-package only suffixes the arm64 directory
       # (BUILD_DIR_X86_64/ARM64 in package/osx/make-package). Getting this path
       # wrong silently disables the cache: the save step does nothing but emit a
       # path-validation warning, so the key never lands, every run recompiles
@@ -207,9 +207,11 @@ jobs:
       # Save the tools / R-libs caches only from main-scoped runs (the seed
       # and scheduled workflows), and only on a key miss. A cache saved from a
       # PR run lands in that PR's merge-ref scope, which no other branch can
-      # restore; each copy is pure pressure on the repo's 10 GB Actions
-      # cache quota, and that pressure is what evicts main's copies and sends
-      # every PR build cold in the first place.
+      # restore; each copy is pure pressure on the repo's 10 GB Actions cache
+      # quota, and that pressure is what evicts main's copies. This engine is
+      # not in the PR orchestrator (os-test-e2e-rstudio-pr.yml), so the win
+      # here is keeping the scheduled and dispatch runs warm without spending
+      # quota that the PR-facing engines depend on.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -294,8 +296,8 @@ jobs:
       # Save only from main-scoped runs, and only on a key miss. A cache saved
       # from a PR run lands in that PR's merge-ref scope, which no other
       # branch can restore; each copy is pure pressure on the repo's 10 GB
-      # Actions cache quota, and that pressure is what evicts main's copy and
-      # sends every PR build cold in the first place.
+      # Actions cache quota, and that pressure is what evicts main's copy (see
+      # the tools / R-libs save steps above for why that matters here).
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -376,9 +378,10 @@ jobs:
             echo "::error::rig list returned no installed R versions"
             exit 1
           fi
-          # No sudo needed here: on the arm64 runners `rig add` runs its "fix
-          # permissions" pass, so the current user can rewrite the system
-          # symlinks. The Intel engines have to prefix this with sudo.
+          # No sudo needed here, matching the macOS 26 arm64 sibling: on that
+          # runner `rig add` runs its "fix permissions" pass, so the current
+          # user can rewrite the system symlinks. The macOS 15 Intel engine
+          # has to prefix this with sudo.
           rig default "$INSTALLED_NAME"
           rig ls
           mkdir -p "$R_LIBS_USER"
@@ -487,8 +490,8 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           # RUNNER_OS is just "macOS" for every Mac runner regardless of arch OR
-          # OS version, so without a scope all four macOS engines share one
-          # os-e2e-deps cache key and restore each other's incompatible R
+          # OS version, so without a scope every macOS engine shares one
+          # os-e2e-deps cache key and restores the others' incompatible R
           # library / pak / Playwright-browser binaries. Both axes matter here:
           # arch (an x86_64 restore fails to dyn.load on arm64) and version
           # (macos-26 is arm64 too, but builds against a different SDK). Scope

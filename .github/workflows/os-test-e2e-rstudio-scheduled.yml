@@ -2,8 +2,7 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 
 # One workflow that drives the reusable per-OS E2E "engines" three ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday, so every engine runs
-#     at least once a week without running the
-#     whole matrix daily. No weekday pairs two deb-based engines.
+#     at least once a week without running the whole matrix daily.
 #   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
 #   - Manual dispatch: every engine at once, optionally against a specific daily
 #     build (the "version" input) or built from source (the "build_from_source"
