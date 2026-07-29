@@ -119,8 +119,14 @@ Error checkConfig(const Options& options, std::ostream& out, bool* pPassed);
 // hard failure to run the check itself; individual sub-check failures are
 // reported via *pPassed. Reuses the master connection ServerMain's
 // --setup-db dispatch already opened (via server::connectAsMaster) so the
-// master password is only prompted for once per invocation.
-Error setupDb(boost::shared_ptr<core::database::IConnection> pMasterConnection,
+// master password is only prompted for once per invocation. Receives the
+// same SetupDbFlags the base server::setupDb() call already has, so an
+// overlay implementation can honor flags.printOnly and flags.showPassword
+// for the audit database exactly as the base command does for the main
+// database -- the whole command should behave consistently regardless of
+// how many databases end up provisioned.
+Error setupDb(const SetupDbFlags& flags,
+              boost::shared_ptr<core::database::IConnection> pMasterConnection,
               const core::database::PostgresqlConnectionOptions& masterConnectionOptions,
               std::ostream& out,
               bool* pPassed);
@@ -849,7 +855,7 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
 
          bool overlayPassed = true;
-         Error overlayError = overlay::setupDb(pMasterConnection, masterOptions, std::cout, &overlayPassed);
+         Error overlayError = overlay::setupDb(flags, pMasterConnection, masterOptions, std::cout, &overlayPassed);
          if (overlayError)
             return core::system::exitFailure(overlayError, ERROR_LOCATION);
 

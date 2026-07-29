@@ -24,6 +24,8 @@
 
 #include <server/ServerOptions.hpp>
 
+#include "ServerSetupDb.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -83,7 +85,8 @@ Error checkConfig(const Options& /*options*/, std::ostream& /*out*/, bool* pPass
 // OSS no-op stub for the extended --setup-db overlay hook.
 // Pro builds override this to set up the audit database, reusing the master
 // connection ServerMain's --setup-db dispatch already opened.
-Error setupDb(boost::shared_ptr<core::database::IConnection> /*pMasterConnection*/,
+Error setupDb(const SetupDbFlags& /*flags*/,
+              boost::shared_ptr<core::database::IConnection> /*pMasterConnection*/,
               const core::database::PostgresqlConnectionOptions& /*masterConnectionOptions*/,
               std::ostream& /*out*/,
               bool* pPassed)
