@@ -320,6 +320,14 @@ pipeline {
           }
         }
       }
+
+      post {
+        // the custom workspace is reused across builds, so don't leave the
+        // decoded client auth certificate behind
+        always {
+          bat 'if exist "%WORKSPACE%\\sm_client_cert.p12" del /q "%WORKSPACE%\\sm_client_cert.p12"'
+        }
+      }
     } // Build Windows Stage
 
     // Run on linux agent
