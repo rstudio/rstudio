@@ -5,7 +5,7 @@ import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 
-test.describe.serial('Chat Messaging', { tag: ['@ai'] }, () => {
+test.describe.serial('Chat Messaging', { tag: ['@ai', '@chat'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let chatPane: ChatPane;

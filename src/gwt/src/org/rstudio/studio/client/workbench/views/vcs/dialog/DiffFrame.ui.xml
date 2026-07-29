@@ -6,14 +6,29 @@
             type="org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame.Resources"/>
 
    <ui:style>
+      @external editor_dark;
+
       .container {
          margin-top: 8px;
          border: 1px solid #c1c3c5;
       }
+
+      /* a translucent grey so the border tracks the editor theme; scoped to
+         dark themes because over white it composites to a fainter grey than
+         the #c1c3c5 above (#9026) */
+      .editor_dark .container {
+         border-color: rgba(128, 128, 128, 0.4);
+      }
+
+      /* the file name and the "view file" link live in separate layers of the
+         header row, so tint the row itself rather than either layer (#9026) */
+      .editor_dark .headerRow {
+         background-color: rgba(255, 255, 255, 0.10);
+      }
    </ui:style>
 
    <g:FlowPanel ui:field="container_" styleName="{style.container}">
-      <g:LayoutPanel width='100%' height='27px'>
+      <g:LayoutPanel width='100%' height='27px' styleName="{style.headerRow}">
          <g:layer left='0px' right='175px'>
             <g:FlowPanel styleName="{res.styles.header}">
                <g:Image styleName="{res.styles.fileIcon}" ui:field="fileIcon_"/>

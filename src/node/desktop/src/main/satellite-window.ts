@@ -64,7 +64,7 @@ export class SatelliteWindow extends GwtWindow {
             `if (window.unregisterDesktopChildWindow)
                window.unregisterDesktopChildWindow(${JSON.stringify(name)});`,
           )
-          .catch(logger().logError);
+          .catch((error: unknown) => logger().logError(error));
       }
     });
 
@@ -74,14 +74,14 @@ export class SatelliteWindow extends GwtWindow {
   onActivated(): void {
     this.executeJavaScript(
       'if (window.notifyRStudioSatelliteReactivated) ' + '  window.notifyRStudioSatelliteReactivated(null);',
-    ).catch(logger().logError);
+    ).catch((error: unknown) => logger().logError(error));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   closeSatellite(event: Electron.Event): void {
     this.executeJavaScript(
       'if (window.notifyRStudioSatelliteClosing) ' + '  window.notifyRStudioSatelliteClosing();',
-    ).catch(logger().logError);
+    ).catch((error: unknown) => logger().logError(error));
   }
 
   closeEvent(event: Electron.Event): void {
@@ -108,10 +108,10 @@ export class SatelliteWindow extends GwtWindow {
           } else {
             // not ready to close, revert close stage and take care of business
             this.closeStage = 'CloseStageOpen';
-            this.executeJavaScript('window.rstudioCloseSourceWindow()').catch(logger().logError);
+            this.executeJavaScript('window.rstudioCloseSourceWindow()').catch((error: unknown) => logger().logError(error));
           }
         })
-        .catch(logger().logError);
+        .catch((error: unknown) => logger().logError(error));
     } else {
       // not a  source window, just close it
       this.closeSatellite(event);

@@ -451,6 +451,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 | `@pro_only` | Test requires RStudio Pro |
 | `@os_only` | Test only applies to open-source RStudio |
 | `@ai` | Test exercises an AI feature (Copilot ghost text / NES, Posit Assistant chat). Useful for skipping AI-dependent suites in offline or no-credential runs. |
+| `@chat` | Test covers the Posit Assistant chat pane (everything under `tests/panes/posit-assistant-chat/`). A narrower selector than `@ai`: use it to run the Assistant suite without the Copilot/NES code-suggestion tests. Most `@chat` tests are also `@ai`; the exception is `chat-guardrails-paths.test.ts`, which exercises the guardrails from the R console with no AI provider in the loop. |
 | `@smoke` | Long, low-information liveness check. Excluded by default (redundant alongside the full suite); opt in with `PW_RUN_SMOKE=1`. |
 
 ### Filtering by Tag
@@ -485,6 +486,9 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 
 # Skip AI-dependent tests (Copilot/NES + Posit Assistant chat)
 npx playwright test --grep-invert @ai
+
+# Run only the Posit Assistant chat tests (skips Copilot/NES)
+npx playwright test --grep @chat
 ```
 
 You can also exclude tests by file path with `PW_TEST_IGNORE` (whitespace-separated globs):
@@ -541,7 +545,7 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `RSTUDIO_COPILOT_JS_FOLDER` | Both | No | Overrides where the Copilot sign-in flow looks for `language-server.js` (the copilot-language-server agent it spawns for the live sign-in). Same variable the IDE itself honors for the same purpose. Defaults to the folder bundled with the installed RStudio; set this if the agent lives elsewhere (e.g. a dev checkout). |
 | `PW_SANDBOX_NO_SEED_CREDENTIALS` | Both | No | Global seed kill-switch. Set to `true`/`1` to block copying real credentials from the local machine into the sandbox: it suppresses both the GitHub Copilot config-dir copy and the Posit AI local token-store copy (so an otherwise-unconfigured run skips its AI tests). It does **not** affect the sign-in flows, which copy nothing from the local machine. Default (unset): host-copy allowed. Privacy: copied tokens live inside the sandbox during the run; teardown scrubs them whenever the sandbox is left on disk (and warns loudly if it can't). Set this opt-out to avoid copying them at all on machines that aren't dedicated test accounts. |
 | `PW_AI_AUTH_STRICT` | Both | No | Set to `true`/`1` to make the `setup` project fail the run when a provider ends up without credentials (outcome `unavailable` or `login-failed`), instead of letting that provider's tests skip. Applies to both Posit AI and GitHub Copilot. For runs that expect credentials to be present (e.g. CI once secrets are wired in): a broken credential source turns the run red instead of green-with-skips. Default (unset): the affected tests skip with a reason. |
-| `PW_RSTUDIO_R_LIBS_USER` | Both | No | Override the R user-library template path (passed to rsession as `R_LIBS_USER`). Defaults to `~/.cache/rstudio-playwright/r-libs/%p/%v` on macOS/Linux and `%LOCALAPPDATA%\rstudio-playwright\r-libs\%p\%v` on Windows. R expands `%p` (platform) and `%v` (R x.y) at startup. The library lives outside the per-run sandbox so packages persist between runs. |
+| `PW_RSTUDIO_R_LIBS_USER` | Both | No | Override the R user-library template path (passed to rsession as `R_LIBS_USER`). Defaults to `~/.cache/rstudio-playwright/r-libs/%p/%v` on macOS/Linux and `%LOCALAPPDATA%\rstudio-playwright\r-libs\%p\%v` on Windows. R expands `%p` (platform) and `%v` (R x.y) at startup. The library lives outside the per-run sandbox so packages persist between runs. An empty value is treated as unset (i.e. the default applies), so a workflow can pass this conditionally -- a GitHub Actions `env:` value of `''` is exported as a defined empty string, not as an absent variable. The prep log names the library it resolved and where that came from (`[r-libs] user library: <path> [harness default]`). |
 | `PW_RSTUDIO_R_LIBS_SKIP_PREP` | Both | No | Set to `true`/`1` to skip globalSetup's pre-population of the user library. Useful when running against an R install that already has everything, or to reproduce the empty-library popup behavior on purpose. |
 | `PW_WARMUP_LAUNCH` | Desktop | No | `1`/`true` to force a warmup launch in globalSetup; `0`/`false` to skip it. Default: on under CI, off locally. Skipped entirely in Server mode. |
 | `PW_LAUNCH_ATTEMPTS` | Desktop | No | Number of attempts the in-fixture launch retry will make before giving up (default: `2`, i.e. one retry). |

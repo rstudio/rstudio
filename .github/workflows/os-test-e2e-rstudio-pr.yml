@@ -14,8 +14,9 @@ on:
       - ".github/workflows/os-test-e2e-rstudio-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
-      - ".github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-linux.yml"
       - ".github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml"
+      - ".github/e2e-linux/**"
 
 concurrency:
   group: pw-pr-${{ github.event.pull_request.number }}
@@ -178,12 +179,14 @@ jobs:
 
   linux-desktop:
     needs: detect-changes
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-linux.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
+      os: ubuntu-24-x86_64
+      arch: x86_64
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_desktop_build_from_source) }}
       project: desktop
       r_version: "4.5.3"

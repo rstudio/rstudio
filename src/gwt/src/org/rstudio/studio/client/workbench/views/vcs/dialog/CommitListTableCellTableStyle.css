@@ -1,3 +1,11 @@
+@external editor_dark, ace_editor_theme;
+@external rstudio-themes-dark;
+
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
 .cellTableWidget {
    table-layout: fixed;
    width: 100%;
@@ -12,4 +20,60 @@
    padding-top: 0;
    padding-bottom: 0;
    height: 24px;
+}
+
+/* Match the changelist's header treatment: the base style draws a light
+   top and left border on every header cell, which reads as a heavy outline
+   around each one. Keep only the separators (bottom, and right between
+   columns), and inset the label from the cell edge. */
+
+.cellTableHeader {
+   border-top: none;
+   border-left: none;
+   padding-left: 5px;
+}
+
+.cellTableHeader:last-child {
+   border-right: none;
+}
+
+/* Theming (#9026). The base style paints the table white and gives header cells
+   a light background, and selects rows with an opaque light grey -- all of which
+   fight the editor theme once the commit list follows it.
+
+   The table itself is made transparent for *every* editor theme, not just dark
+   ones: the base paints it white unconditionally, so a light-but-not-white
+   theme (say Solarized Light) would otherwise leave a white table inside a
+   cream pane. (Under a dark theme this duplicates
+   .editor_dark .cellTableWidget in RStudioCellTableStyle.css -- same
+   declaration, same specificity; the light themes are what it is here for.)
+   The selection and header colors are dark-only, since the light defaults
+   already suit a light theme. */
+
+.ace_editor_theme .cellTableWidget {
+   background-color: inherit;
+}
+
+/* The changelist styles its headers through .cellTableSortableHeader rather
+   than .cellTableHeader, because every changelist column happens to be sortable
+   and none of these are. It splits the work differently too: color comes from
+   .rstudio-themes-dark, while background and border come from three separate
+   flat-theme rules (.rstudio-themes-default / -dark-grey / -alternate). The
+   commit list needs the dark treatment only, so one rule covers all three
+   properties here. */
+.rstudio-themes-dark .cellTableHeader {
+   background-color: THEME_DARKGREY_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+/* the row carries the selection; the base .cellTableSelectedRowCell rule is
+   empty, so leaving the cell alone avoids stacking two translucent tints (which
+   would both darken the selection and swallow most of the focus delta) */
+.editor_dark .ace_editor_theme .cellTableSelectedRow {
+   background: THEME_DARK_ROW_SELECTED;
+}
+
+.editor_dark .ace_editor_theme .cellTableWidget:focus .cellTableSelectedRow {
+   background: THEME_DARK_ROW_FOCUSED;
 }

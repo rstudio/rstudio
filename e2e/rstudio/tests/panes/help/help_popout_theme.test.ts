@@ -1,6 +1,15 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeCommand } from '@utils/commands';
+import {
+  ACE_THEME_LINK,
+  DARK_THEME,
+  DARK_THEME_HREF,
+  LIGHT_THEME,
+  LIGHT_THEME_HREF,
+  expectThemeStylesheet,
+  luminance,
+} from '@utils/theme';
 import type { Page } from '@playwright/test';
 
 // Regression test for issue #8345: the Help pane's "Show Help in New Window"
@@ -9,15 +18,6 @@ import type { Page } from '@playwright/test';
 // light palette. The popout now opens a satellite window hosting the help
 // page in an RStudioThemedFrame, which themes the content like the Help pane
 // and re-themes it live when the editor theme changes.
-
-// 'Cobalt' ships with RStudio and is a dark theme; its stylesheet href always
-// contains "cobalt" when active. 'Textmate (default)' is the light default.
-const DARK_THEME = 'Cobalt';
-const LIGHT_THEME = 'Textmate (default)';
-
-// ID on the <link> element AceThemes.java injects to apply the theme CSS,
-// both in top-level windows and (via RStudioThemedFrame) in themed iframes.
-const ACE_THEME_LINK = '#rstudio-acethemes-linkelement';
 
 // The satellite hosts the help page in an RStudioThemedFrame with a stable
 // element id (assigned in HelpPopoutPanel.java); select on that rather than
@@ -30,22 +30,6 @@ async function applyEditorTheme(theme: string) {
   await consoleActions.executeInConsole(`.rs.api.applyTheme(${JSON.stringify(theme)})`, {
     wait: true,
   });
-}
-
-/** Relative luminance (0 = black, 255 = white) of a CSS rgb()/rgba() color. */
-function luminance(cssColor: string): number {
-  const match = cssColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-  if (!match)
-    throw new Error(`unexpected color format: ${cssColor}`);
-
-  // a fully transparent background means no background was actually painted;
-  // return NaN so both light and dark luminance comparisons fail rather than
-  // letting rgba(0, 0, 0, 0) read as black
-  if (match[4] !== undefined && Number(match[4]) === 0)
-    return Number.NaN;
-
-  const [r, g, b] = [Number(match[1]), Number(match[2]), Number(match[3])];
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
 test.describe.serial('Help popout window theming', () => {
@@ -88,11 +72,7 @@ test.describe.serial('Help popout window theming', () => {
 
   test('popped-out help page follows the editor theme', async ({ rstudioPage: page }) => {
     await applyEditorTheme(DARK_THEME);
-    await expect
-      .poll(async () =>
-        page.evaluate((id) => document.querySelector(id)?.getAttribute('href') ?? '', ACE_THEME_LINK),
-      )
-      .toContain('cobalt');
+    await expectThemeStylesheet(page, DARK_THEME_HREF);
 
     // open a help topic in the Help pane
     await consoleActions.executeInConsole('help("print")', { wait: true });
@@ -115,7 +95,7 @@ test.describe.serial('Help popout window theming', () => {
         () => helpFrame.locator(ACE_THEME_LINK).getAttribute('href').catch(() => ''),
         { timeout: 15000 },
       )
-      .toContain('cobalt');
+      .toContain(DARK_THEME_HREF);
     await expect(helpFrame.locator('body.ace_editor_theme')).toBeVisible({ timeout: 15000 });
     await expect
       .poll(async () => {
@@ -133,11 +113,7 @@ test.describe.serial('Help popout window theming', () => {
     // switch back to a light theme in the main window; the satellite listens
     // for the change and should re-theme the already-loaded help page
     await applyEditorTheme(LIGHT_THEME);
-    await expect
-      .poll(async () =>
-        page.evaluate((id) => document.querySelector(id)?.getAttribute('href') ?? '', ACE_THEME_LINK),
-      )
-      .toContain('textmate');
+    await expectThemeStylesheet(page, LIGHT_THEME_HREF);
 
     const helpFrame = satellitePage!.frameLocator(POPOUT_HELP_FRAME);
     await expect
@@ -156,11 +132,7 @@ test.describe.serial('Help popout window theming', () => {
     // re-theming them can render the content illegible (#11022); the popout
     // must preserve that opt-out
     await applyEditorTheme(DARK_THEME);
-    await expect
-      .poll(async () =>
-        page.evaluate((id) => document.querySelector(id)?.getAttribute('href') ?? '', ACE_THEME_LINK),
-      )
-      .toContain('cobalt');
+    await expectThemeStylesheet(page, DARK_THEME_HREF);
 
     // fabricate a minimal installed package whose doc directory contains an
     // <article>-style vignette page, served by R's help server
@@ -204,7 +176,7 @@ test.describe.serial('Help popout window theming', () => {
           ),
         { timeout: 30000 },
       )
-      .toContain('cobalt');
+      .toContain(DARK_THEME_HREF);
     const helpFrame = vignettePage.frameLocator(POPOUT_HELP_FRAME);
     await expect(helpFrame.locator('body')).toContainText('fake vignette content', {
       timeout: 30000,

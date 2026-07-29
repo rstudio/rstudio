@@ -10,6 +10,7 @@ import {
 import { createAndOpenProject, closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Locator, Page } from 'playwright';
+import { ACE_THEME_LINK, DARK_THEME, LIGHT_THEME, THEME_POLL } from '@utils/theme';
 
 // "Ignore project-specific appearance settings" (Global Options > Appearance)
 // makes RStudio apply the global editor theme even when the active project sets
@@ -42,16 +43,10 @@ const IGNORE_CHECKBOX_LABEL = 'Ignore project-specific appearance settings';
 // (StudioClientProjectConstants.appearanceIgnoredByGlobalText).
 const PROJECT_IGNORED_NOTE = 'Project appearance settings are currently ignored';
 
-// The 'Cobalt' theme ships with RStudio; its stylesheet href is
-// "theme/default/cobalt.rstheme". 'Textmate (default)' is the out-of-the-box
-// global theme and its href contains "textmate". Pinning the global theme to
-// Textmate makes the "reverted to the global theme" assertion meaningful.
-const PROJECT_THEME = 'Cobalt';
-const GLOBAL_THEME = 'Textmate (default)';
-
-// ID on the <link> AceThemes.java injects to apply the active editor theme CSS.
-const ACE_THEME_LINK = '#rstudio-acethemes-linkelement';
-const THEME_POLL = { timeout: 15000, intervals: [200, 500, 1000] };
+// Reuse the shared theme constants: the project layer gets the dark theme, the
+// global layer the light one, so "reverted to the global theme" is observable.
+const PROJECT_THEME = DARK_THEME;
+const GLOBAL_THEME = LIGHT_THEME;
 
 // -- Helpers ------------------------------------------------------------------
 
