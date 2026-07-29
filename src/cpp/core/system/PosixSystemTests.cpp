@@ -98,8 +98,8 @@ TEST(PosixTests, FindProgramResolvesQualifiedNames)
    ASSERT_FALSE(error);
 
    // an already-qualified name isn't a PATH search, but should still resolve. this
-   // used to report success while handing back an empty path, because the rooted
-   // name was passed to completeChildPath(), which rejects it. See #12806.
+   // used to report success while handing back the PATH entry directory, because the
+   // rooted name was passed to completeChildPath(), which rejects it. See #12806.
    FilePath qualified;
    error = findProgramOnPath(whichPath.getAbsolutePath(), &qualified);
    EXPECT_FALSE(error);

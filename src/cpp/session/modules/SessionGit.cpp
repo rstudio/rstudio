@@ -2809,8 +2809,12 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
 {
    using namespace boost;
 
-   CoInitialize(nullptr);
-
+   // NOTE: rsession initializes COM (STA) eagerly on the main thread at startup
+   // (SessionMain.cpp), and every caller of discoverGitBinDir() runs there, so no
+   // CoInitialize is needed here -- and one added here without a matching
+   // CoUninitialize on each return path would leak an apartment reference per
+   // discovery, since this runs again whenever user settings change.
+   //
    // Step 1. Find the Git Bash shortcut on the Start menu
    //
    // NOTE: SHGetKnownFolderPath allocates its result, so unlike the deprecated

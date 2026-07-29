@@ -68,6 +68,13 @@ void addToSystemPath(const FilePath& path, bool prepend = false);
 // directories on PATH; on POSIX, in the directories on PATH. Neither searches the
 // current directory.
 //
+// The Windows order means PATH cannot override a program that ships in System32 or
+// the Windows directory. That is deliberate for cmd.exe (see the rationale in
+// Win32System.cpp), but it applies to every name: Windows also ships curl.exe,
+// tar.exe, find.exe, sort.exe and more.exe there, and its bash.exe is the WSL
+// launcher. Looking up any of those here resolves the system copy no matter what
+// PATH says.
+//
 // A name that is already path-qualified is resolved directly rather than searched for.
 // "Qualified" means containing '/' on POSIX, or any of '/', '\' or ':' on Windows. As
 // with any path, a relative qualified name resolves against the current directory --

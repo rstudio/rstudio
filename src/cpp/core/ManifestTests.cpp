@@ -21,6 +21,7 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/FileUtils.hpp>
+#include <core/rapidxml/rapidxml.hpp>
 
 // These tests run on every platform even though the manifests are only consumed on
 // Windows, because the files are checked in and a developer on any platform can
@@ -58,8 +59,8 @@ TEST(ManifestTest, ManifestCommentsHaveNoDoubleHyphen)
 {
    // XML forbids "--" inside a comment body. This is easy to introduce, because our
    // house style uses "--" where prose wants an em dash, and lenient parsers (including
-   // rapidxml, which we vendor) skip to "-->" without noticing -- so a targeted check
-   // catches strictly more than parsing would.
+   // rapidxml, which we vendor) skip to "-->" without noticing -- so this catches what
+   // the well-formedness test below cannot.
    for (const std::string& relativePath : manifestRelativePaths())
    {
       FilePath path = manifestPath(relativePath);
@@ -88,6 +89,35 @@ TEST(ManifestTest, ManifestCommentsHaveNoDoubleHyphen)
             << "Comment body: " << body;
 
          commentStart = contents.find("<!--", commentEnd + 3);
+      }
+   }
+}
+
+TEST(ManifestTest, ManifestsAreWellFormedXml)
+{
+   // The side-by-side loader is the first thing to parse these, so a structural break
+   // (an unclosed tag, an unquoted attribute value, a mismatched closing tag) shows up
+   // as an executable that won't start rather than as a build failure.
+   for (const std::string& relativePath : manifestRelativePaths())
+   {
+      FilePath path = manifestPath(relativePath);
+      ASSERT_TRUE(path.exists()) << relativePath << " not found at " << path.getAbsolutePath();
+
+      // rapidxml parses in place, so give it a mutable, null-terminated copy
+      std::string contents = file_utils::readFile(path);
+      std::vector<char> buffer(contents.begin(), contents.end());
+      buffer.push_back('\0');
+
+      rapidxml::xml_document<> doc;
+      try
+      {
+         // closing tag names are only checked when asked for
+         doc.parse<rapidxml::parse_validate_closing_tags>(&buffer[0]);
+      }
+      catch (const rapidxml::parse_error& e)
+      {
+         ADD_FAILURE() << relativePath << ": " << e.what() << " at offset "
+                       << (e.where<char>() - &buffer[0]);
       }
    }
 }

@@ -17,7 +17,6 @@
 
 #include <windows.h>
 
-#include <algorithm>
 #include <memory>
 
 #include <boost/algorithm/string.hpp>
@@ -26,7 +25,6 @@
 
 #include <shared_core/FilePath.hpp>
 
-#include <core/FileUtils.hpp>
 #include <core/Thread.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
@@ -157,22 +155,9 @@ void ensureLongFilePath(FilePath* pFilePath)
    std::string filename = pFilePath->getFilename();
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
-      // Compare in backslash form. FilePath keeps whatever separators it was constructed
-      // from, and most of ours round-trip through generic (forward slash) strings, so
-      // getAbsolutePathNative() is not on its own a guarantee of native separators --
-      // normalize explicitly. That makes the guard below a comparison of long-vs-short
-      // rather than of separator style, whichever separators GetLongPathNameW hands back.
-      // longPathName() returns its input unchanged when the path can't be expanded, so
-      // this only reassigns when we actually learned something -- the monitor's tree is
-      // keyed on these absolute paths.
-      //
-      // Keep this in sync with ensureLongPath() in Win32System.cpp.
-      std::string path = pFilePath->getAbsolutePathNative();
-      std::replace(path.begin(), path.end(), '/', '\\');
-
-      std::string longPath = file_utils::longPathName(path);
-      if (longPath != path)
-         *pFilePath = FilePath(longPath);
+      // only reassigns when the path could actually be expanded, which matters
+      // here because the monitor's tree is keyed on these absolute paths
+      ensureLongPath(pFilePath);
    }
 }
 

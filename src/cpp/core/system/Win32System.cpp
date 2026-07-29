@@ -127,9 +127,13 @@ FilePath win32Directory(UINT (WINAPI* getDirectory)(LPWSTR, UINT))
          return FilePath();
       }
 
-      // a too-small buffer reports the size it needs, including the null, so this is
-      // strictly larger than the current size and the loop makes progress
-      buffer.resize(std::min(static_cast<std::size_t>(length), kMaxPathLength + 1));
+      // a too-small buffer reports the size it needs, including the null, so length is
+      // already larger than the current size -- but don't lean on the API for
+      // termination: grow by at least one element, then clamp to the longest path
+      // Windows can express. The size check above turns the clamped attempt into the
+      // last one, so the loop always ends.
+      std::size_t required = std::max(static_cast<std::size_t>(length), buffer.size() + 1);
+      buffer.resize(std::min(required, kMaxPathLength + 1));
    }
 }
 
@@ -977,8 +981,6 @@ void ensureLongPath(FilePath* pFilePath)
    // rather than of separator style, whichever separators GetLongPathNameW hands back.
    // longPathName() returns its input unchanged when the path can't be expanded, so
    // this only reassigns when we actually learned something.
-   //
-   // Keep this in sync with ensureLongFilePath() in Win32FileMonitor.cpp.
    std::string path = pFilePath->getAbsolutePathNative();
    std::replace(path.begin(), path.end(), '/', '\\');
 
