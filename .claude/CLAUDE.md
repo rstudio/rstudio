@@ -298,6 +298,10 @@ expression matched against the test file name after its `test-` prefix and
 tests and ignores the testthat files. Rebuild first so the staged R copies
 under `build/src/cpp/session/modules/R/` are current.
 
+On Windows the runner is `rstudio-tests.bat` (from `src/cpp/rstudio-tests.bat.in`),
+where `--scope` takes more than one scope -- `--scope core,rsession` -- and
+`rserver` is a no-op because those tests aren't built there.
+
 
 ### GWT Tests
 

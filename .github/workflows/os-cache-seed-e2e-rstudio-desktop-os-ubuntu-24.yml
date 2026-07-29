@@ -26,7 +26,15 @@ on:
     branches: [main]
     paths:
       - "dependencies/**"
-      - ".github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml"
+      - ".github/workflows/os-test-e2e-rstudio-desktop-linux.yml"
+      - ".github/e2e-linux/ubuntu-24-x86_64.json"
+      # The seeded engine's build-time hook. It doesn't exist today (the
+      # ubuntu script dir has only an e2e hook, which this build_only seed
+      # never runs), but listing it now means a future build hook re-seeds
+      # instead of leaving the caches keyed to pre-hook output. Deliberately
+      # not the whole script dir: e2e-only hook edits can't affect these
+      # caches, so watching them would just burn seed runs.
+      - ".github/e2e-linux/ubuntu/build-setup.sh"
       - ".github/workflows/os-cache-seed-e2e-rstudio-desktop-os-ubuntu-24.yml"
   # Nightly re-seed keeps the GHA sccache object cache recent on main so PR
   # builds get a high compile-cache hit rate. GitHub evicts cache entries that
@@ -58,11 +66,13 @@ permissions:
 
 jobs:
   seed:
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-linux.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       # The seed is the main writer of the shared S3 sccache; without this
       # it would fall back to the quota-constrained GHA cache backend.
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
+      os: ubuntu-24-x86_64
+      arch: x86_64
       build_only: true
