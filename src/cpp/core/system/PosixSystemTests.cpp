@@ -91,6 +91,34 @@ TEST(PosixTests, FindProgramFindsWhich)
    EXPECT_TRUE(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
 }
 
+TEST(PosixTests, FindProgramResolvesQualifiedNames)
+{
+   FilePath whichPath;
+   Error error = findProgramOnPath("which", &whichPath);
+   ASSERT_FALSE(error);
+
+   // an already-qualified name isn't a PATH search, but should still resolve. this
+   // used to report success while handing back the PATH entry directory, because the
+   // rooted name was passed to completeChildPath(), which rejects it. See #12806.
+   FilePath qualified;
+   error = findProgramOnPath(whichPath.getAbsolutePath(), &qualified);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(qualified == whichPath);
+
+   // a qualified name that doesn't exist has to fail
+   EXPECT_TRUE(findProgramOnPath(whichPath.getAbsolutePath() + "-nope", &qualified));
+
+   // ...as does a directory, or a file that isn't executable
+   EXPECT_TRUE(findProgramOnPath("/usr/bin", &qualified));
+   EXPECT_TRUE(findProgramOnPath("/etc/hosts", &qualified));
+}
+
+TEST(PosixTests, FindProgramRejectsEmptyName)
+{
+   FilePath programPath;
+   EXPECT_TRUE(findProgramOnPath("", &programPath));
+}
+
 TEST(PosixTests, NoSubprocessesViaPgrep)
 {
    pid_t pid = fork();
