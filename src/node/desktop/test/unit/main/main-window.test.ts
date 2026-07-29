@@ -19,6 +19,7 @@ import sinon from 'sinon';
 
 import { ChildProcess } from 'child_process';
 
+import { NullLogger, setLogger } from '../../../src/core/logger';
 import { MainWindow } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
 
@@ -75,4 +76,51 @@ describe('MainWindow', () => {
       }
     });
   });
+
+  describe('closeEvent', () => {
+    let nullLogger: NullLogger;
+    let logSpy: sinon.SinonSpy;
+
+    beforeEach(() => {
+      nullLogger = new NullLogger();
+      logSpy = sinon.spy(nullLogger, 'logErrorAtLevel');
+      setLogger(nullLogger);
+    });
+
+    afterEach(() => {
+      sinon.restore();
+      setLogger(new NullLogger());
+    });
+
+    // simulates the close-during-crashed-renderer path from #18391: the
+    // window is closing while a session is still attached, and the renderer
+    // can no longer run the '!!window.desktopHooks' probe
+    function closeEventWithRejectingRenderer(error: Error) {
+      const fake = {
+        geometrySaved: true,
+        quitConfirmed: false,
+        sessionProcess: { exitCode: null },
+        window: {},
+        executeJavaScript: sinon.stub().rejects(error),
+        quit: sinon.stub(),
+      };
+      const event = { preventDefault: sinon.stub() } as unknown as Electron.Event;
+      MainWindow.prototype.closeEvent.call(fake as unknown as MainWindow, event);
+      return fake;
+    }
+
+    it('logs the original error when the desktopHooks probe rejects', async () => {
+      const boom = new Error('render frame was disposed');
+      closeEventWithRejectingRenderer(boom);
+      await new Promise(setImmediate);
+      assert.isTrue(logSpy.calledWith('error', boom));
+    });
+
+    it('quits instead of leaving a headless process when the desktopHooks probe rejects', async () => {
+      const fake = closeEventWithRejectingRenderer(new Error('render frame was disposed'));
+      await new Promise(setImmediate);
+      assert.isTrue(fake.quit.calledOnce);
+    });
+  });
+
 });
