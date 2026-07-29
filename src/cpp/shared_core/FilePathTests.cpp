@@ -315,6 +315,23 @@ TEST(SharedCoreTest, EmptyFilePathTests)
 
 }
 
+namespace {
+
+// The MAX_PATH-family limits count UTF-16 units, which equals UTF-8 byte length
+// only for pure-ASCII paths. Measure the way the OS does, so that a non-ASCII
+// temporary directory cannot make a computed target land short of the boundary
+// a test means to hit.
+size_t nativePathLength(const FilePath& filePath)
+{
+#ifdef _WIN32
+   return filePath.getAbsolutePathW().length();
+#else
+   return filePath.getAbsolutePath().length();
+#endif
+}
+
+} // anonymous namespace
+
 TEST(SharedCoreTest, DeepDirectoryIsWriteable)
 {
    // A deep directory used to report as read-only on Windows, because isWriteable()
@@ -339,19 +356,20 @@ TEST(SharedCoreTest, DeepDirectoryIsWriteable)
    Error error = FilePath::tempFilePath(tempDir);
    ASSERT_FALSE(error);
 
-   ASSERT_LT(tempDir.getAbsolutePath().length() + 2 * kStep, kTargetLength)
+   ASSERT_LT(nativePathLength(tempDir) + 2 * kStep, kTargetLength)
       << "temporary directory is too deep to build a " << kTargetLength
       << " character path below it";
 
    FilePath deepDir = tempDir;
-   while (deepDir.getAbsolutePath().length() + 2 * kStep <= kTargetLength)
+   while (nativePathLength(deepDir) + 2 * kStep <= kTargetLength)
       deepDir = deepDir.completeChildPath("0123456789");
 
-   // pad the leaf out so the path lands exactly on the target length
-   size_t remaining = kTargetLength - deepDir.getAbsolutePath().length();
+   // pad the leaf out so the path lands exactly on the target length; the pad is
+   // ASCII, so counting it in UTF-16 units is exact
+   size_t remaining = kTargetLength - nativePathLength(deepDir);
    deepDir = deepDir.completeChildPath(std::string(remaining - 1, 'x'));
 
-   ASSERT_EQ(kTargetLength, deepDir.getAbsolutePath().length());
+   ASSERT_EQ(kTargetLength, nativePathLength(deepDir));
 
    error = deepDir.ensureDirectory();
    if (error)

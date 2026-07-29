@@ -291,6 +291,10 @@ void initHook()
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
+   // nothing to search for; bail before opening every PATH entry
+   if (program.empty())
+      return fileNotFoundError(program, ERROR_LOCATION);
+
    // A path-qualified name isn't a PATH search; resolve it directly. Without this,
    // the rooted name falls through to completeChildPath() below, which rejects it
    // and hands back the PATH entry itself -- a directory, reported as success, that

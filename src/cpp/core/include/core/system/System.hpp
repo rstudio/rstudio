@@ -66,7 +66,9 @@ void addToSystemPath(const FilePath& path, bool prepend = false);
 //
 // A bare name is searched for: on Windows, in the system directories and then the
 // directories on PATH; on POSIX, in the directories on PATH. Neither searches the
-// current directory.
+// current directory, and the Windows search also omits the executable's own
+// directory -- PathFindOnPath, which the Windows implementation replaced, searched
+// both.
 //
 // The Windows order means PATH cannot override a program that ships in System32 or
 // the Windows directory. That is deliberate for cmd.exe (see the rationale in

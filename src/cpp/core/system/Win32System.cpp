@@ -267,6 +267,11 @@ void initializeLogConfigReload()
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
+   // nothing to search for; bail before probing extensions of "" against every
+   // search directory
+   if (program.empty())
+      return fileNotFoundError(program, ERROR_LOCATION);
+
    // if the program supplied already has an extension,
    // then we'll skip searching any custom extensions.
    //

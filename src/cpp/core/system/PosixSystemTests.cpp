@@ -113,6 +113,12 @@ TEST(PosixTests, FindProgramResolvesQualifiedNames)
    EXPECT_TRUE(findProgramOnPath("/etc/hosts", &qualified));
 }
 
+TEST(PosixTests, FindProgramRejectsEmptyName)
+{
+   FilePath programPath;
+   EXPECT_TRUE(findProgramOnPath("", &programPath));
+}
+
 TEST(PosixTests, NoSubprocessesViaPgrep)
 {
    pid_t pid = fork();
