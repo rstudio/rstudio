@@ -26,8 +26,15 @@ namespace {
 // Match ANSI escape codes copied from https://github.com/chalk/ansi-regex
 const char* kAnsiMatch = "[\\x1b\\x9b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><@]";
 
-// Match xterm title sequence (followed by text, ended by BEL)
-const char* kXTermTitleMatch = "\\x1b]0;.*?\\x07";
+// Match string-type sequences: OSC (ESC ]), DCS (ESC P), SOS (ESC X),
+// PM (ESC ^), APC (ESC _). These carry a free-form payload terminated by
+// BEL or ST (ESC \) -- e.g. window titles, hyperlinks, or the OSC 3008
+// context metadata (machine id, user, cwd, ...) that systemd >= 258 emits
+// around every shell prompt -- so the payload must be stripped along with
+// the sequence itself. The payload excludes newlines so an unterminated
+// sequence cannot swallow subsequent lines, and the terminator is optional
+// so a sequence truncated at end of line is still removed.
+const char* kStringSequenceMatch = "\\x1b[\\]PX^_][^\\x07\\x1b\\r\\n]*(?:\\x07|\\x1b\\\\)?";
 
 // Match simple ESC + letter sequences with optional numeric parameters
 // e.g., ESC G, ESC H1;, ESC g (used by RStudio for clickable error links)
@@ -42,11 +49,16 @@ void stripAnsiCodes(std::string* pStr)
       return;
 
    std::string replacement;
-   // Strip simple ESC sequences first (they include params like "1;")
+
+   // Strip string-type sequences first: kSimpleEscapeMatch and kAnsiMatch
+   // would otherwise consume just their introducers (e.g. ESC P), leaving
+   // the payload behind as visible text
+   *pStr = boost::regex_replace(*pStr, boost::regex(kStringSequenceMatch), replacement);
+
+   // Strip simple ESC sequences next (they include params like "1;")
    // before kAnsiMatch which would only match "ESC G" without the params
    *pStr = boost::regex_replace(*pStr, boost::regex(kSimpleEscapeMatch), replacement);
    *pStr = boost::regex_replace(*pStr, boost::regex(kAnsiMatch), replacement);
-   *pStr = boost::regex_replace(*pStr, boost::regex(kXTermTitleMatch), replacement);
 }
 
 } // namespace text
