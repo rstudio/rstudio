@@ -82,9 +82,32 @@ function defaultRLibsUserTemplate(): string {
  * PW_RSTUDIO_R_LIBS_USER or the per-platform default. Returns the *unexpanded*
  * template (still contains %p / %v / etc.) -- those tokens are interpreted by
  * R itself at startup.
+ *
+ * An empty override counts as "not set", not as "use an empty library path".
+ * A GitHub Actions `env:` value of '' is exported as a defined empty string, so
+ * a workflow saying `FOO: ${{ cond && path || '' }}` reaches us as '' rather
+ * than absent; with `??` that silently won the fallback and pointed the suite
+ * at R's own HOME-relative default library, which the redirected-HOME session
+ * then resolved somewhere else entirely (empty). See rLibsUserSource().
  */
 export function rLibsUserTemplate(): string {
-  return process.env[RSTUDIO_R_LIBS_USER_ENV] ?? defaultRLibsUserTemplate();
+  return process.env[RSTUDIO_R_LIBS_USER_ENV] || defaultRLibsUserTemplate();
+}
+
+/**
+ * Where rLibsUserTemplate() got its value, for the prep log. A library path
+ * that came from the default when the caller meant to override it (or vice
+ * versa) is otherwise invisible until some test can't find a package.
+ */
+function rLibsUserSource(): string {
+  const override = process.env[RSTUDIO_R_LIBS_USER_ENV];
+  if (override) {
+    return `${RSTUDIO_R_LIBS_USER_ENV}=${override}`;
+  }
+
+  return override === undefined
+    ? 'harness default'
+    : `harness default (${RSTUDIO_R_LIBS_USER_ENV} set but empty)`;
 }
 
 interface RscriptResult {
@@ -199,7 +222,7 @@ export async function prepareRLibs(): Promise<string | null> {
   }
 
   fs.mkdirSync(expanded, { recursive: true });
-  console.log(`[r-libs] user library: ${expanded}`);
+  console.log(`[r-libs] user library: ${expanded} [${rLibsUserSource()}]`);
 
   const repos = packageRepo();
   console.log(`[r-libs] package repo: ${repos}`);
