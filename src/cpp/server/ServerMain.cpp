@@ -116,16 +116,25 @@ Error checkConfig(const Options& options, std::ostream& out, bool* pPassed);
 
 // Extended --setup-db hook for pro builds (audit-database setup). The OSS
 // stub sets *pPassed = true and prints nothing. Returns an Error only on a
-// hard failure to run the check itself; individual sub-check failures are
+// hard failure to run the setup itself; individual step failures are
 // reported via *pPassed. Reuses the master connection ServerMain's
 // --setup-db dispatch already opened (via server::connectAsMaster) so the
-// master password is only prompted for once per invocation. Receives the
-// same SetupDbFlags the base server::setupDb() call already has, so an
-// overlay implementation can honor flags.printOnly and flags.showPassword
-// for the audit database exactly as the base command does for the main
-// database -- the whole command should behave consistently regardless of
-// how many databases end up provisioned.
-Error setupDb(const SetupDbFlags& flags,
+// master password is only prompted for once per invocation.
+//
+// printOnly and showPassword carry --setup-db-print-only and
+// --setup-db-show-password so an overlay applies them consistently with the
+// base command, which only consults them on the run that actually generates
+// a service-user password -- see server::setupDb()'s userCreated handling,
+// which an overlay provisioning its own database needs to mirror rather than
+// treating either flag as an unconditional switch.
+//
+// Only these two flags carry over: the connection details an overlay needs
+// are in masterConnectionOptions, which holds the resolved values actually
+// used to connect. The raw --setup-db-host/--setup-db-port arguments are
+// empty when the admin was prompted instead, and the remaining --setup-db-*
+// arguments name the main database rather than anything an overlay creates.
+Error setupDb(bool printOnly,
+              bool showPassword,
               boost::shared_ptr<core::database::IConnection> pMasterConnection,
               const core::database::PostgresqlConnectionOptions& masterConnectionOptions,
               std::ostream& out,
@@ -855,9 +864,13 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
 
          bool overlayPassed = true;
-         Error overlayError = overlay::setupDb(flags, pMasterConnection, masterOptions, std::cout, &overlayPassed);
+         Error overlayError = overlay::setupDb(flags.printOnly, flags.showPassword, pMasterConnection,
+                                               masterOptions, std::cout, &overlayPassed);
          if (overlayError)
+         {
+            std::cout << "[FAIL] overlay setup-db: " << overlayError.getSummary() << std::endl;
             return core::system::exitFailure(overlayError, ERROR_LOCATION);
+         }
 
          return (passed && overlayPassed) ? EXIT_SUCCESS : EXIT_FAILURE;
       }
