@@ -19,7 +19,9 @@ import { heredoc } from '../utils/heredoc';
  * in TypeScript. R expands them at rsession startup; we expand them once here
  * via Rscript for the pre-create / pre-install step.
  *
- * Env var: PW_RSTUDIO_R_LIBS_USER overrides the default template entirely.
+ * Env var: PW_RSTUDIO_R_LIBS_USER replaces the default template. An empty value
+ * counts as unset (see rLibsUserTemplate), so a workflow can pass one
+ * conditionally without having to omit the variable.
  */
 
 const RSTUDIO_R_LIBS_USER_ENV = 'PW_RSTUDIO_R_LIBS_USER';
@@ -40,8 +42,8 @@ const TOTAL_WORKERS_ENV = 'PW_TOTAL_WORKERS';
  * globalSetup means tests start with the dependencies they expect.
  *
  * The list lives in ../required-packages.txt as the single source of truth, so
- * the os-e2e-deps action (bash) can install the identical set into the cached
- * R library on distros without CRAN binaries (Fedora) -- if the two lists ever
+ * the os-e2e-deps action can install the identical set into the cached R
+ * library on distros without CRAN binaries (Fedora) -- if the two lists ever
  * drifted, globalSetup would source-compile the difference at test time. One
  * package per line; blank lines and #-comments are ignored. Adding a package
  * is cheap; trim only when it's genuinely unused by any test in the suite.
@@ -49,7 +51,11 @@ const TOTAL_WORKERS_ENV = 'PW_TOTAL_WORKERS';
 const requiredPackagesFile = path.join(__dirname, '..', 'required-packages.txt');
 export const REQUIRED_PACKAGES: readonly string[] = fs
   .readFileSync(requiredPackagesFile, 'utf8')
-  .split('\n')
+  // Split on CRLF too: a Windows checkout (core.autocrlf=true on the GHA
+  // runners) leaves a trailing \r on every line, and \r is a line terminator
+  // for JS regex -- `.` won't cross it and `$` anchors past it, so /#.*$/
+  // matched nothing and every comment line was taken as a package name.
+  .split(/\r?\n/)
   .map((line) => line.replace(/#.*$/, '').trim()) // strip comments + whitespace
   .filter((line) => line.length > 0);
 // Guard against an empty/all-comment manifest: without this the list would be
@@ -133,18 +139,28 @@ function runRscript(code: string, env: NodeJS.ProcessEnv = process.env): Rscript
   };
 }
 
+// Marker the R fallback below writes to stderr, so a silently-degraded
+// expansion shows up in the prep log instead of only when a token is wrong.
+const EXPAND_FALLBACK_MARKER = '[r-libs] expand-fallback';
+
 /**
  * Expand the R_LIBS_USER template into a concrete filesystem path by asking R
- * what `tools:::.expand_R_libs_env_var` returns for it. We must set the env
- * var explicitly on the child so R sees our template even if the caller's
+ * what `base:::.expand_R_libs_env_var` returns for it. We must set the env var
+ * explicitly on the child so R sees our template even if the caller's
  * environment defines something else.
+ *
+ * The hand-rolled gsub fallback covers only the tokens our own templates use;
+ * it does not implement %U / %S or %%-escaping, so it is a degraded path rather
+ * than an equivalent one. (It ran unconditionally until this was corrected from
+ * `tools:::` -- the symbol lives in base, so the lookup itself errored.)
  */
 function expandRLibsUserTemplate(template: string): string | null {
   const env = { ...process.env, R_LIBS_USER: template };
   const code = heredoc`
     tryCatch({
-      cat(tools:::.expand_R_libs_env_var(Sys.getenv("R_LIBS_USER")))
+      cat(base:::.expand_R_libs_env_var(Sys.getenv("R_LIBS_USER")))
     }, error = function(e) {
+      message(${JSON.stringify(EXPAND_FALLBACK_MARKER)}, ": ", conditionMessage(e))
       t <- Sys.getenv("R_LIBS_USER")
       t <- gsub("%V", paste0(R.version$major, ".", R.version$minor), t, fixed = TRUE)
       t <- gsub("%v", paste0(R.version$major, ".", strsplit(R.version$minor, ".", fixed = TRUE)[[1]][1]), t, fixed = TRUE)
@@ -156,6 +172,11 @@ function expandRLibsUserTemplate(template: string): string | null {
   `;
 
   const res = runRscript(code, env);
+  if (res.stderr.includes(EXPAND_FALLBACK_MARKER)) {
+    console.warn(
+      `[r-libs] WARNING: base:::.expand_R_libs_env_var was unavailable; expanded "${template}" with the reduced gsub fallback (%U / %S / %% unsupported). ${res.stderr.trim()}`,
+    );
+  }
   if (res.status !== 0) return null;
   const expanded = res.stdout.trim();
   return expanded.length > 0 ? expanded : null;
@@ -204,6 +225,12 @@ function packageRepo(): string {
  * debug the redirected-empty-lib behavior on purpose.
  */
 export async function prepareRLibs(): Promise<string | null> {
+  // Log the template and where it came from before any early return: a
+  // skip-prep run is the configuration most likely to be pointed at the wrong
+  // library, and it is also the one that never reaches the resolved-path line.
+  const template = rLibsUserTemplate();
+  console.log(`[r-libs] user library template: ${template} [${rLibsUserSource()}]`);
+
   const skip = ['1', 'true'].includes(
     (process.env[RSTUDIO_R_LIBS_SKIP_PREP_ENV] ?? '').toLowerCase(),
   );
@@ -212,7 +239,6 @@ export async function prepareRLibs(): Promise<string | null> {
     return null;
   }
 
-  const template = rLibsUserTemplate();
   const expanded = expandRLibsUserTemplate(template);
   if (!expanded) {
     console.warn(
