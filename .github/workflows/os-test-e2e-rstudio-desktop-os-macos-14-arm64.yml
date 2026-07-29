@@ -100,8 +100,10 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  # Lets the e2e-merge job mint an OIDC token to assume the S3 report-upload
-  # role (see .github/actions/os-publish-e2e-report).
+  # Lets the build job mint an OIDC token to assume the S3 sccache role. The
+  # e2e-merge job needs one too, for the S3 report upload (see
+  # .github/actions/os-publish-e2e-report), but it re-declares its own
+  # permissions block, which replaces this one for that job.
   id-token: write
 
 jobs:
@@ -117,6 +119,13 @@ jobs:
     # Bare "macos-14" is the free arm64 standard runner. Do NOT change this to
     # macos-14-large or macos-14-xlarge: those are larger runners, which GitHub
     # bills even on public repos, and macos-14-large is Intel besides.
+    #
+    # This image is deprecated. GitHub removes it on 2026-11-02, after which
+    # every run here fails on the unknown label (actions/runner-images#13518).
+    # October 2026 also brings eight brownout windows, 14:00-00:00 UTC, during
+    # which the label already fails; the rotation runs this engine on a Monday
+    # afternoon so four of those windows land on it as early warning. Retire
+    # this engine, and its entry in the scheduled rotation, by that date.
     runs-on: macos-14
     # Apple-silicon runners compile fast enough that 90 minutes covers a cold
     # sccache; only the Intel and Windows engines need the 180 they carry.
@@ -215,8 +224,8 @@ jobs:
       # main's copies -- the ones the PR-facing engines depend on.
       #
       # This engine has no cache seed, matching the rotation-only Linux configs
-      # (fedora*, rocky*, debian*): its routine runs install the daily .dmg, so
-      # the build job is skipped and these caches are never read. They populate
+      # (e.g. fedora*, rocky*, debian*): its routine runs install the daily
+      # .dmg, so the build job is skipped and these caches are never read. They populate
       # only on a from-source run dispatched from main, which is rare enough
       # that a nightly seed would spend quota and a 90-minute build for nothing.
       - name: Save rstudio-tools deps
