@@ -51,7 +51,6 @@ jobs:
           os-cache-seed-e2e-rstudio-server-os-ubuntu-24.yml=rstudio-gwt-linux-x86_64-
           os-cache-seed-e2e-macos-26-arm64.yml=rstudio-tools-arm64- rstudio-build-rlibs-arm64- rstudio-gwt-arm64-
           os-cache-seed-e2e-macos-15-x86_64.yml=rstudio-tools-x86_64- rstudio-build-rlibs-x86_64- rstudio-gwt-x86_64-
-          os-cache-seed-e2e-macos-14-arm64.yml=rstudio-tools-macos14-arm64- rstudio-build-rlibs-macos14-arm64- rstudio-gwt-macos14-arm64-
           os-cache-seed-e2e-rstudio-desktop-os-windows-server-2025.yml=rstudio-tools-win64- rstudio-gwt-win64-
           '
 

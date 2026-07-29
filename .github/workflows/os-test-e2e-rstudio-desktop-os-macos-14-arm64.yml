@@ -105,10 +105,13 @@ permissions:
   id-token: write
 
 jobs:
-  # Builds RStudio Desktop from this PR's source on the same runner image as
-  # the e2e job below, then uploads RStudio.app as an artifact for the e2e
-  # job to consume. Skipped when build_from_source is false, in which case
-  # the e2e job downloads the daily .dmg (or rstudio_installer_url) instead.
+  # Builds RStudio Desktop from this branch's source on the same runner image as
+  # the e2e job below, then uploads RStudio.app as an artifact for the e2e job
+  # to consume. Skipped when build_from_source is false OR when an
+  # rstudio_installer_url was supplied (a non-empty URL wins even if
+  # build_from_source is true); in either case the e2e job installs that .dmg
+  # instead. The scheduled rotation always takes that path, so this job runs
+  # only on a from-source dispatch.
   build:
     if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     # Bare "macos-14" is the free arm64 standard runner. Do NOT change this to
@@ -175,9 +178,10 @@ jobs:
       # uses plain "build" -- make-package only suffixes the arm64 directory
       # (BUILD_DIR_X86_64/ARM64 in package/osx/make-package). Getting this path
       # wrong silently disables the cache: the save step does nothing but emit a
-      # path-validation warning, so the key never lands, every run recompiles
-      # GWT, and the seed sentinel re-dispatches this build forever chasing a
-      # prefix that can never appear.
+      # path-validation warning, so the key never lands and every run recompiles
+      # GWT. Engines that are registered with the cache-seed sentinel compound
+      # this into an endless re-dispatch loop chasing a prefix that can never
+      # appear; this engine has no seed, so the cost here is just a cold build.
       # GWT compilation is the single most expensive JS step (~15-30 min). When
       # GWT Java sources / build scripts haven't changed, cmake skips
       # recompilation via --build-gwt=0 and uses the cached output directly.
@@ -204,14 +208,17 @@ jobs:
         working-directory: dependencies/osx
         run: ./install-dependencies-osx-arch
 
-      # Save the tools / R-libs caches only from main-scoped runs (the seed
-      # and scheduled workflows), and only on a key miss. A cache saved from a
-      # PR run lands in that PR's merge-ref scope, which no other branch can
-      # restore; each copy is pure pressure on the repo's 10 GB Actions cache
-      # quota, and that pressure is what evicts main's copies. This engine is
-      # not in the PR orchestrator (os-test-e2e-rstudio-pr.yml), so the win
-      # here is keeping the scheduled and dispatch runs warm without spending
-      # quota that the PR-facing engines depend on.
+      # Save the tools / R-libs caches only from main-scoped runs, and only on a
+      # key miss. A cache saved from a PR run lands in that PR's merge-ref
+      # scope, which no other branch can restore; each copy is pure pressure on
+      # the repo's 10 GB Actions cache quota, and that pressure is what evicts
+      # main's copies -- the ones the PR-facing engines depend on.
+      #
+      # This engine has no cache seed, matching the rotation-only Linux configs
+      # (fedora*, rocky*, debian*): its routine runs install the daily .dmg, so
+      # the build job is skipped and these caches are never read. They populate
+      # only on a from-source run dispatched from main, which is rare enough
+      # that a nightly seed would spend quota and a 90-minute build for nothing.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -231,9 +238,9 @@ jobs:
       # variable). The GHA cache backend writes per-object entries into each
       # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
       # (6000+ of its entries were sccache objects) and LRU-evicting the
-      # main-scoped copies the seed maintains -- PR builds then compile at a
-      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
-      # writes one shared cache.
+      # main-scoped copies the seeded engines maintain -- PR builds elsewhere in
+      # the fleet then compile at a ~0% hit rate. S3 has no quota or ref
+      # scoping, so every run reads and writes one shared cache.
       - name: Configure AWS credentials for sccache
         id: sccache-aws
         if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
@@ -309,9 +316,8 @@ jobs:
       # bundle. upload-artifact would otherwise zip the directory tree itself
       # and break codesigned binaries on the way back out.
       #
-      # Skipped in build_only (seed) runs: no e2e job consumes the artifact
-      # there, so packaging and uploading it would be pure waste (a large
-      # artifact produced and retained on every nightly seed for nothing).
+      # Skipped in build_only runs: no e2e job consumes the artifact there, so
+      # packaging and uploading it would be pure waste.
       - name: Package RStudio.app
         if: inputs.build_only != true
         working-directory: package/osx/install
