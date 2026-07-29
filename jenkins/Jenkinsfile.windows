@@ -181,7 +181,8 @@ pipeline {
               "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" keypair ls
               C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
               "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync
-              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" certificate download --keypair-alias="%KEYPAIR_ALIAS%" --format=pem --name=cert.pem --out=.
+              if exist cert.pem del /f /q cert.pem
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" certificate download --keypair-alias="%KEYPAIR_ALIAS%" --format=pem --name=cert.pem --out=. || exit /b 1
               signtool.exe sign /csp "DigiCert Signing Manager KSP" /kc "%KEYPAIR_ALIAS%" /f cert.pem /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 %EXECUTABLES%
               signtool.exe verify /v /pa %EXECUTABLES%
             '''
@@ -232,6 +233,8 @@ pipeline {
             stage('Sign Installer') {
 
               steps {
+                // signs with the cert.pem downloaded during Sign Executables; it's
+                // the public code signing certificate, not a credential
                 bat '''
                   call "C:\\Program Files\\Microsoft Visual Studio\\2026\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
                   C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
@@ -322,10 +325,14 @@ pipeline {
       }
 
       post {
-        // the custom workspace is reused across builds, so don't leave the
-        // decoded client auth certificate behind
+        // the custom workspace is reused across builds: don't leave the decoded
+        // client auth certificate behind, and remove cert.pem so a failed
+        // download in a later build can never fall back to a stale certificate
         always {
-          bat 'if exist "%WORKSPACE%\\sm_client_cert.p12" del /q "%WORKSPACE%\\sm_client_cert.p12"'
+          bat '''
+            if exist "%WORKSPACE%\\sm_client_cert.p12" del /f /q "%WORKSPACE%\\sm_client_cert.p12"
+            if exist "%WORKSPACE%\\cert.pem" del /f /q "%WORKSPACE%\\cert.pem"
+          '''
         }
       }
     } // Build Windows Stage
