@@ -1,6 +1,6 @@
 # Path-specific review ownership for the E2E test suite.
 #
-# No owners are assigned yet. The rule below is inactive until the reviewing
-# team is confirmed, so this file asserts nothing as written.
-#
-# /e2e/rstudio/.env.op     @rstudio/spirit-team
+# Temporary owner while the reviewing team is confirmed. Replace with the
+# team handle once it's known.
+
+/e2e/rstudio/.env.op     @ronblum
