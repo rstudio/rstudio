@@ -9,6 +9,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import type { Page } from '@playwright/test';
 import { CONSOLE_OUTPUT, executeInConsole } from '@pages/console_pane.page';
 import { executeCommand, getPref, openProject } from '@utils/commands';
+import { heredoc } from '@utils/heredoc';
 import { closeProjectIfOpen } from '@utils/project';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rPathLiteral } from '@utils/r';
@@ -41,6 +42,42 @@ const ACTION_PILL = "div[data-action='Stage']";
 // PR's `.ace_editor_theme .cellTableWidget { background-color: inherit }` rules
 // are what let the pane behind them show through.
 const THEMED_TABLE = `${EDITOR_THEMED_PANE} table`;
+
+// Header cells of those tables; the commit list's are what
+// CommitListTableCellTableStyle.css repaints for dark themes.
+const THEMED_TABLE_HEADER = `${EDITOR_THEMED_PANE} th`;
+
+// The Changes/History toggle in the window's top toolbar. LeftRightToggleButton
+// gives each half a class id derived from its label (ClassIds.idSafeString
+// lowercases and underscores it), which -- unlike a CssResource class -- GWT
+// does not obfuscate. Each view carries its own copy of the toggle, so these
+// match twice over and the caller has to take the visible one.
+const HISTORY_TOGGLE = '.rstudio_right_tg_btn_history';
+const CHANGES_TOGGLE = '.rstudio_left_tg_btn_changes';
+
+// DiffFrame's "View file @ <sha>" hyperlink is a GWT Label, not an anchor, so
+// it is matched by text; the commit TOC entries above it are real anchors, and
+// the only ones inside an editor-themed pane.
+const VIEW_FILE_LINK = /^View file @ /;
+const TOC_ANCHOR = `${EDITOR_THEMED_PANE} a`;
+
+// ThemeColors.darkGreyBackground, which both HistoryPanel.css and
+// CommitListTableCellTableStyle.css pull in by @eval for their dark chrome.
+const CHROME_DARK = 'rgb(78, 92, 104)';
+
+// #abc -- the light blue the theme-aware dialogs use, which the commit TOC
+// anchors and the "View file @ ..." link both adopt under a dark editor theme.
+const DARK_LINK = 'rgb(170, 187, 204)';
+
+const TRANSPARENT = 'rgba(0, 0, 0, 0)';
+
+// The Git pane in the main window, which shares the ChangelistTable widget --
+// and so the "No changes" placeholder -- with the Review Changes window.
+const GIT_PANEL = '#rstudio_workbench_panel_git';
+// GWT CellTable marks each data row with __gwt_row; headers are not marked.
+const GIT_ROWS = `${GIT_PANEL} tr[__gwt_row]`;
+// Matched on its text: emptyMessage is a CssResource class, so it is obfuscated.
+const NO_CHANGES = 'No changes';
 
 const PROJECT_NAME = 'GitReviewTheme';
 
@@ -95,7 +132,7 @@ async function executeInConsoleChecked(
 async function visibleStyles(
   satellite: Page,
   selector: string,
-  property: 'backgroundColor' | 'backgroundImage',
+  property: 'backgroundColor' | 'backgroundImage' | 'color',
 ): Promise<string[]> {
   return satellite.locator(selector).evaluateAll(
     (els, prop) =>
@@ -104,6 +141,30 @@ async function visibleStyles(
         .map((el) => getComputedStyle(el)[prop as 'backgroundColor']),
     property,
   );
+}
+
+/**
+ * Background color of the first on-screen `selector` match and of each of its
+ * ancestors, innermost first.
+ *
+ * HistoryPanel.css paints the History chrome through .splitPanel and
+ * .toolbarWrapper, both obfuscated CssResource classes with no stable hook of
+ * their own. Rather than depend on an obfuscated name, assert the rule by its
+ * effect: start from a pane that *is* reachable and check the chrome color
+ * turns up somewhere above it.
+ */
+async function ancestorBackgrounds(satellite: Page, selector: string): Promise<string[]> {
+  return satellite.locator(selector).evaluateAll((els) => {
+    const colors: string[] = [];
+
+    let el: Element | null = els.find((candidate) => candidate.getClientRects().length > 0) ?? null;
+    while (el !== null) {
+      colors.push(getComputedStyle(el).backgroundColor);
+      el = el.parentElement;
+    }
+
+    return colors;
+  });
 }
 
 test.describe.serial('Review Changes window theming (#9026)', () => {
@@ -158,22 +219,44 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
     // the rsession may not share a filesystem with the test runner. --
     await executeInConsoleChecked(
       page,
-      `{ stopifnot(dir.create(${rPathLiteral(projectDir)}, recursive = TRUE)); ` +
-        `writeLines("Version: 1.0", ${rPathLiteral(rprojPath)}); ` +
-        `writeLines("x <- 1", ${rPathLiteral(sourcePath)}) }`,
+      heredoc`
+        {
+          stopifnot(dir.create(${rPathLiteral(projectDir)}, recursive = TRUE))
+          writeLines("Version: 1.0", ${rPathLiteral(rprojPath)})
+          writeLines("x <- 1", ${rPathLiteral(sourcePath)})
+        }
+      `,
     );
 
     // CI runners have no global git config, hence the inline -c identity
     const gitC = `"-C", shQuote(${rPathLiteral(projectDir)})`;
+    const gitWho = `"-c", "user.name=rstudio-e2e", "-c", "user.email=rstudio-e2e@posit.co"`;
     await executeInConsoleChecked(
       page,
-      `{ s <- c(system2("git", c(${gitC}, "init", "--quiet")), ` +
-        `system2("git", c(${gitC}, "add", "-A")), ` +
-        `system2("git", c(${gitC}, "-c", "user.name=rstudio-e2e", ` +
-        `"-c", "user.email=rstudio-e2e@posit.co", ` +
-        `"commit", "-m", "seed", "--quiet"))); ` +
-        `if (any(s != 0)) stop("git seed failed (exit status: ", ` +
-        `paste(s, collapse = "/"), ")") }`,
+      heredoc`
+        {
+          s <- c(
+            system2("git", c(${gitC}, "init", "--quiet")),
+            system2("git", c(${gitC}, "add", "-A")),
+            system2("git", c(${gitC}, ${gitWho}, "commit", "-m", "seed", "--quiet"))
+          )
+
+          # A second commit, so the newest one has a parent. RStudio renders a
+          # commit's diff as "git diff <rev>^ <rev>", which cannot resolve for a
+          # root commit -- the History view would then show the commit's metadata
+          # with no file diffs at all, and nothing for the DiffFrame and commit
+          # TOC assertions to measure.
+          writeLines(c("x <- 1", "z <- 3"), ${rPathLiteral(sourcePath)})
+          s <- c(
+            s,
+            system2("git", c(${gitC}, "add", "-A")),
+            system2("git", c(${gitC}, ${gitWho}, "commit", "-m", "second", "--quiet"))
+          )
+
+          if (any(s != 0))
+            stop("git seed failed (exit status: ", paste(s, collapse = "/"), ")")
+        }
+      `,
       { timeout: 60000 },
     );
 
@@ -253,6 +336,81 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
     expect(pill.sliceImages).toEqual(pill.sliceImages.map(() => 'none'));
   });
 
+  test('themes the History view as well as the Changes view', async () => {
+    // Deliberately ahead of the light-theme test below: almost everything the
+    // History view gains is dark-only -- HistoryPanel.css's chrome, the commit
+    // list header in CommitListTableCellTableStyle.css, the DiffFrame and
+    // commit-TOC link colors -- so it has to run while Cobalt is still applied.
+    expect(satellitePage, 'Review Changes window was never opened').toBeDefined();
+    const satellite = satellitePage!;
+
+    await satellite.locator(HISTORY_TOGGLE).filter({ visible: true }).click();
+
+    // VCSPopup keeps the inactive view in the DOM (display:none), so both views'
+    // tables match THEMED_TABLE and the row has to be picked by visibility.
+    // Waiting for it is also what waits for the view swap -- which is what makes
+    // the probes below measure History's panes rather than the Changes view's.
+    const commitRow = satellite
+      .locator(`${THEMED_TABLE} tr[__gwt_row]`)
+      .filter({ visible: true })
+      .first();
+    // newest first, so this is the second commit -- the one with a parent
+    await expect(commitRow).toContainText('second', { timeout: 30000 });
+
+    // selecting the commit renders its detail; waiting for the detail's link
+    // means the DiffFrames and TOC rows exist before anything is measured
+    await commitRow.click();
+    const viewFileLinks = satellite.getByText(VIEW_FILE_LINK);
+    await expect(viewFileLinks.first()).toBeVisible({ timeout: 30000 });
+
+    // both History panes (commit list, commit detail) paint dark
+    await expect
+      .poll(async () => (await paneLuminances(satellite)).length, { timeout: 30000 })
+      .toBeGreaterThanOrEqual(2);
+    await expect
+      .poll(async () => Math.max(...(await paneLuminances(satellite))), { timeout: 30000 })
+      .toBeLessThan(128);
+
+    // HistoryPanel.css: the chrome behind those panes is the flat dark theme's,
+    // not the white the panel used to hard-code.
+    expect(await ancestorBackgrounds(satellite, EDITOR_THEMED_PANE)).toContain(CHROME_DARK);
+
+    // CommitListTableCellTableStyle.css: the commit list goes transparent so the
+    // pane shows through, while its header cells take the chrome color. The
+    // commit list is joined here by one diff table per file in the commit, so
+    // this asserts over however many are on screen rather than a fixed count.
+    const tableBackgrounds = await visibleStyles(satellite, THEMED_TABLE, 'backgroundColor');
+    expect(tableBackgrounds.length).toBeGreaterThanOrEqual(2);
+    expect(tableBackgrounds).toEqual(tableBackgrounds.map(() => TRANSPARENT));
+
+    const headerBackgrounds = await visibleStyles(satellite, THEMED_TABLE_HEADER, 'backgroundColor');
+    expect(headerBackgrounds.length).toBeGreaterThan(0);
+    expect(headerBackgrounds).toEqual(headerBackgrounds.map(() => CHROME_DARK));
+
+    // DiffFrame.css and CommitTocRow.ui.xml: both link colors move off the base
+    // dark blue, which is all but invisible against a dark theme. The commit
+    // TOC rows are the only anchors inside the detail pane.
+    const tocColors = await visibleStyles(satellite, TOC_ANCHOR, 'color');
+    expect(tocColors.length).toBeGreaterThan(0);
+    expect(tocColors).toEqual(tocColors.map(() => DARK_LINK));
+
+    const viewFileColors = await viewFileLinks.evaluateAll((els) =>
+      els.map((el) => getComputedStyle(el).color),
+    );
+    expect(viewFileColors.length).toBeGreaterThan(0);
+    expect(viewFileColors).toEqual(viewFileColors.map(() => DARK_LINK));
+
+    // Back to Changes, and settled, before the next test measures it: that test
+    // expects the Changes view's two tables, and switching views re-runs the
+    // review presenter's onShow().
+    await satellite.locator(CHANGES_TOGGLE).filter({ visible: true }).click();
+    await expect
+      .poll(async () => (await visibleStyles(satellite, THEMED_TABLE, 'backgroundColor')).length, {
+        timeout: 30000,
+      })
+      .toBe(2);
+  });
+
   test('re-themes an open window when the editor theme changes', async ({ rstudioPage: page }) => {
     // Not test.skip(): describe.serial already skips this test if the one above
     // failed, so the only way to arrive here without a window is a bug in the
@@ -282,9 +440,9 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
     // the base paints them white unconditionally and scopes its only override to
     // .editor_dark, so under a light theme nothing but this PR's
     // `.ace_editor_theme .cellTableWidget` rules can make them transparent.
-    // That also covers the unconditional rules shipped alongside them (header
-    // borders and padding, the dropped .whitebg and commitTableScrollPanel
-    // backgrounds), which change light rendering too.
+    // That also covers the other unconditional rules shipped alongside them --
+    // the dropped .whitebg and commitTableScrollPanel backgrounds -- which
+    // change light rendering too.
 
     // AceThemes swaps editor_dark for editor_light on the satellite's own body,
     // and that lags the pane repaint above by a frame or two. Wait for it: while
@@ -299,6 +457,54 @@ test.describe.serial('Review Changes window theming (#9026)', () => {
       .poll(async () => visibleStyles(satellitePage!, THEMED_TABLE, 'backgroundColor'), {
         timeout: 30000,
       })
-      .toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
+      .toEqual([TRANSPARENT, TRANSPARENT]);
+  });
+
+  test('shows the "No changes" placeholder once the working tree is clean', async ({
+    rstudioPage: page,
+  }) => {
+    // Asserted in the main window's Git pane rather than in the satellite: the
+    // placeholder comes from ChangelistTable.setItems, which both share, and
+    // only the main window has the automation bridge -- so vcsRefresh can make
+    // the transition deterministic instead of waiting on a file-monitor tick.
+    //
+    // Runs last in the suite because it commits everything, which empties the
+    // changelist the tests above measure.
+    const projectDir = `${sandbox.dir}/${PROJECT_NAME}`.replace(/\\/g, '/');
+    const gitC = `"-C", shQuote(${rPathLiteral(projectDir)})`;
+    const gitWho = `"-c", "user.name=rstudio-e2e", "-c", "user.email=rstudio-e2e@posit.co"`;
+
+    await executeCommand(page, 'activateVcs');
+    await expect(page.locator(GIT_PANEL)).toBeVisible({ timeout: 30000 });
+
+    // With changes pending the table has rows and the placeholder is not shown.
+    // Asserted on visibility, not on the pane's text: setEmptyTableWidget leaves
+    // the widget in the DOM whether or not the table is empty, so a text match
+    // finds it either way. This does not cover the "wait for the first status"
+    // guard -- that window is a frame or two wide and cannot be sampled from out
+    // here -- but it does pin that the message tracks emptiness rather than
+    // being permanently on screen.
+    const noChanges = page.locator(GIT_PANEL).getByText(NO_CHANGES, { exact: true });
+    await expect.poll(() => page.locator(GIT_ROWS).count(), { timeout: 60000 }).toBeGreaterThan(0);
+    await expect(noChanges).toBeHidden();
+
+    await executeInConsoleChecked(
+      page,
+      heredoc`
+        {
+          s <- c(
+            system2("git", c(${gitC}, "add", "-A")),
+            system2("git", c(${gitC}, ${gitWho}, "commit", "-m", "clean", "--quiet"))
+          )
+          if (any(s != 0))
+            stop("git commit failed (exit status: ", paste(s, collapse = "/"), ")")
+        }
+      `,
+      { timeout: 60000 },
+    );
+
+    await executeCommand(page, 'vcsRefresh');
+    await expect.poll(() => page.locator(GIT_ROWS).count(), { timeout: 60000 }).toBe(0);
+    await expect(noChanges).toBeVisible({ timeout: 30000 });
   });
 });
