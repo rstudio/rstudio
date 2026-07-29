@@ -130,7 +130,7 @@
         GWT's own: 9876 is what SuperDevListener picks when -codeServerPort is
         left unset, and 8787 is rserver's default www-port. Overriding them
         (see tasks/rserver-dev.ts) lets several checkouts run a dev server
-        concurrently -- the code server port is baked into the bootstrap
+        concurrently: the code server port is baked into the bootstrap
         written to ${www.dir}, so each one needs its own. -->
    <property name="codeserver.port" value="9876"/>
    <property name="server.port" value="8787"/>
