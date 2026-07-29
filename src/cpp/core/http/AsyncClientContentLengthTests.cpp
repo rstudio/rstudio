@@ -314,13 +314,17 @@ struct StreamingOutcome
 // optional buffer predicate and an optional hook to simulate the chunk
 // handler applying backpressure (returning false) on a given 0-based chunk
 // index, requiring the test to call resumeChunkProcessing() to continue.
+// pauseOnFinalSignal additionally simulates backpressure landing on the
+// completion signal itself (the empty chunk) rather than on any data chunk --
+// see BackpressureOnCompletionSignalStillCompletes below.
 StreamingOutcome runStreamingScenario(
    ResponseMode mode,
    bool closeAfterResponse,
    const std::string& responseBody,
    const boost::function<bool(const http::Response&)>& bufferPredicate =
       boost::function<bool(const http::Response&)>(),
-   int pauseOnChunkIndex = -1)
+   int pauseOnChunkIndex = -1,
+   bool pauseOnFinalSignal = false)
 {
    LocalServer server(mode, closeAfterResponse, responseBody);
    server.start();
@@ -353,12 +357,28 @@ StreamingOutcome runStreamingScenario(
       pClient->close();
    });
 
+   bool finalSignalPaused = false;
    ChunkHandler chunkHandler = [&](const http::Response& response, const std::string& chunk) -> bool
    {
       outcome.statusCode = response.statusCode();
 
       if (chunk.empty())
       {
+         if (pauseOnFinalSignal && !finalSignalPaused)
+         {
+            // simulate ChunkProxy's outbound buffer being exactly full at the
+            // instant the completion signal arrives: this call bypasses
+            // deliverChunks()/chunkState_ entirely (see closeAndRespond()),
+            // so declining it here exercises AsyncClient's own
+            // completionPending_ tracking rather than the ordinary
+            // chunkState_ pause/resume path already covered above.
+            finalSignalPaused = true;
+            boost::asio::post(ioc, [&]() {
+               pClient->resumeChunkProcessing();
+            });
+            return false;
+         }
+
          outcome.chunkHandlerSawFinal = true;
          pTimer->cancel();
          return true;
@@ -691,6 +711,41 @@ TEST(AsyncClientContentLength, ChunkedUnchangedWithChunkHandlerWhenStreamingOpte
    StreamingOutcome outcome = runStreamingScenario(
       ResponseMode::Chunked, /*closeAfterResponse=*/false,
       /*responseBody=*/"{\"name\":\"jsonlite\"}\n");
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_FALSE(outcome.responseHandlerCalled);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
+}
+
+// Regression guard for the completionPending_ fix (rstudio-pro-11740
+// follow-up): closeAndRespond()'s completion signal (chunkHandler_(response_,
+// "")) is the one chunk delivery that bypasses deliverChunks()/chunkState_,
+// calling the handler directly and, before this fix, discarding its return
+// value. If the consumer (ChunkProxy, in production) declines that call under
+// backpressure -- e.g. its outbound buffer happens to be exactly full at the
+// instant the body finishes -- the pause request was previously dropped on
+// the floor: nothing recorded that completion still needed to be sent, so a
+// later resumeChunkProcessing() call had no saved state to act on and the
+// response never completed, leaving both proxied connections open forever.
+// This test simulates exactly that: the chunk handler declines only the
+// empty completion chunk (accepting all real data normally), then signals
+// "drained" via resumeChunkProcessing() as ChunkProxy would once its write
+// buffer empties. Before the fix, this hangs until the test's own timeout
+// fires (outcome.timedOut) with chunkHandlerSawFinal still false; after the
+// fix, the completion signal is retried and delivered exactly once.
+TEST(AsyncClientContentLength, BackpressureOnCompletionSignalStillCompletes)
+{
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::ContentLength, /*closeAfterResponse=*/false,
+      /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
+      /*bufferPredicate=*/boost::function<bool(const http::Response&)>(),
+      /*pauseOnChunkIndex=*/-1,
+      /*pauseOnFinalSignal=*/true);
 
    EXPECT_FALSE(outcome.timedOut);
    EXPECT_TRUE(outcome.chunkHandlerSawFinal);

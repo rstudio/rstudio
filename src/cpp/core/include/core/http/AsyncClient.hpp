@@ -271,6 +271,21 @@ public:
 
    virtual void resumeChunkProcessing()
    {
+      // A rejected completion signal is tracked separately from chunkState_
+      // (see completionPending_'s declaration) and checked first: retrying it
+      // re-enters closeAndRespond() itself rather than deliverChunks(), so
+      // completion is never sent twice regardless of what chunkState_ holds.
+      if (completionPending_)
+      {
+         auto self = AsyncClient<SocketService>::shared_from_this();
+         boost::asio::post(ioContext_, [this, self]()
+         {
+            completionPending_ = false;
+            closeAndRespond(); // may set completionPending_ again if still full
+         });
+         return;
+      }
+
       if (!chunkState_)
       {
          // no saved chunk state so this was an errant call and we should not do anything
@@ -989,9 +1004,27 @@ private:
          close();
 
       if (responseHandler_ && !(useChunkHandler() && (chunkedEncoding_ || streamResponse_)))
+      {
          responseHandler_(response_);
+      }
       else if (useChunkHandler())
-         chunkHandler_(response_, ""); // completion signified by empty chunk
+      {
+         // The empty chunk is the completion signal for the chunk handler,
+         // and -- like any other chunk delivery -- the consumer (ChunkProxy)
+         // may decline it under backpressure (e.g. its outbound buffer is
+         // exactly full at the moment the body finishes). Unlike every other
+         // chunk delivery, this call bypasses deliverChunks()/chunkState_, so
+         // its return value must be checked explicitly: silently discarding a
+         // "please pause" here would leave completion permanently unsent (see
+         // completionPending_), since ChunkProxy's writeChunk() prioritizes a
+         // pending buffer-full condition over its "received final, nothing
+         // left to write" close.
+         if (!chunkHandler_(response_, ""))
+         {
+            completionPending_ = true;
+            return; // resumeChunkProcessing() will retry via closeAndRespond()
+         }
+      }
 
       // free handlers in case they keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -1135,6 +1168,21 @@ private:
                                          // streaming, so we count completion here)
 
    boost::shared_ptr<ChunkState> chunkState_;
+
+   // True when closeAndRespond()'s completion signal (chunkHandler_(response_,
+   // "")) was rejected by the chunk handler (e.g. ChunkProxy is buffer-full at
+   // the exact moment the body finishes) and has not yet been redelivered.
+   // The completion signal is the one chunk delivery that does not flow
+   // through deliverChunks()/chunkState_ (see closeAndRespond()), so without
+   // this flag a "please pause" (false) return from the handler on that call
+   // would be silently dropped: nothing would remember that completion still
+   // needs to be sent, and ChunkProxy's writeChunk() prioritizes a pending
+   // buffer-full condition over its "received final, nothing left to write"
+   // close -- so both connections would stay open forever. resumeChunkProcessing()
+   // checks this before chunkState_ and retries closeAndRespond() itself,
+   // keeping the retry logic separate from real-content redelivery so the
+   // completion signal is never sent twice.
+   bool completionPending_ = false;
 
    // optional overall request deadline (connect + handshake + read); unset by
    // default, configured via setRequestTimeout and armed in execute()
