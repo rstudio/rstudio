@@ -1,0 +1,27 @@
+# TEMPORARY -- validates the arm64 macOS 14 engine on this branch. The two
+# prior validation runs (a68724c, d81bbc6) were on the old x86_64 engine and
+# used a @smoke-tagged selector, which the config's default grep-invert
+# filters out -- both runs asserted zero tests. This selector picks two real,
+# untagged test files instead, so a passing run actually proves something.
+#
+# First round: build_from_source: false, no installer URL, so the engine
+# self-resolves the latest daily .dmg -- the path every rotation run takes.
+# DELETE this file in this same PR before merge.
+name: "zz-temp validate macOS 14 arm64 engine"
+
+on:
+  push:
+    branches: [test/ron/e2e-macos-14-intel-engine]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  validate:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
+    secrets: inherit
+    with:
+      build_from_source: false
+      test_selector: "tests/harness/ tests/menus/"
