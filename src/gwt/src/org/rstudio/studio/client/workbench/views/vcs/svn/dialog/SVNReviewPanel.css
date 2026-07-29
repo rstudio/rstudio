@@ -2,10 +2,14 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+@external rstudio-themes-dark;
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
 
 @external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
 
@@ -16,10 +20,6 @@
 }
 @sprite .splitPanel .gwt-SplitLayoutPanel-VDragger {
    gwt-image: 'splitterTileV';
-}
-
-.whitebg {
-   background-color: white;
 }
 
 .toolbar {
@@ -79,6 +79,25 @@
 .rstudio-themes-alternate .toolbarWrapper,
 .rstudio-themes-alternate .splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+/* Dark theme (#9026); see the matching block in GitReviewPanel.css. */
+
+.rstudio-themes-dark .splitPanel,
+.rstudio-themes-dark .toolbarWrapper {
+   background: THEME_DARKGREY_BACKGROUND;
+   color: #eee;
+}
+
+.rstudio-themes-dark .toolbarWrapper select {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark .toolbarWrapper select option {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   color: #eee;
 }
 
 /** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/

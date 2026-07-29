@@ -100,12 +100,14 @@ pipeline {
     // Build on windows agent
     stage('Build Windows') {
       environment {
-        SM_HOST = credentials('SM_HOST')
-        SM_API_KEY = credentials('SM_API_KEY')
-        SM_CLIENT_CERT_FILE = credentials('SM_CLIENT_CERT_FILE')
-        SM_CLIENT_CERT_PASSWORD = credentials('SM_CLIENT_CERT_PASSWORD')
-        DIGICERT_KEYPAIR_ALIAS = credentials('DIGICERT_KEYPAIR_ALIAS')
-        DIGICERT_CERTIFICATE_FINGERPRINT = credentials('DIGICERT_CERTIFICATE_FINGERPRINT')
+        // Map the year-suffixed credentials onto the env var names the DigiCert
+        // tools and signing steps read; SM_CLIENT_CERT_FILE is set after decoding
+        // the base64 certificate in the Prepare Client Certificate stage
+        SM_HOST = credentials('SM_HOST_2026')
+        SM_API_KEY = credentials('SM_API_KEY_2026')
+        SM_CLIENT_CERT_PASSWORD = credentials('SM_CLIENT_CERT_PASSWORD_2026')
+        SM_CLIENT_CERT_B64 = credentials('SM_CLIENT_CERT_FILE_B64_2026')
+        KEYPAIR_ALIAS = credentials('SM_KEYPAIR_2026')
       }
       agent {
         docker {
@@ -128,6 +130,22 @@ pipeline {
               branches: [[name: params.COMMIT_HASH]],
               extensions: [],
               userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
+          }
+        }
+
+        stage('Prepare Client Certificate') {
+          steps {
+            // Signing requires the mTLS host; any other value fails only at the
+            // moment of signing, so catch it before the build instead
+            bat 'if not "%SM_HOST%"=="https://clientauth.one.digicert.com" (echo SM_HOST must be the clientauth mTLS host; check the SM_HOST_2026 credential & exit /b 1)'
+            powershell '''
+              $bytes = [Convert]::FromBase64String($env:SM_CLIENT_CERT_B64)
+              if ($bytes.Length -eq 0) { throw 'SM_CLIENT_CERT_FILE_B64_2026 decoded to zero bytes; the credential value is empty or whitespace' }
+              [IO.File]::WriteAllBytes("$env:WORKSPACE\\sm_client_cert.p12", $bytes)
+            '''
+            script {
+              env.SM_CLIENT_CERT_FILE = "${env.WORKSPACE}\\sm_client_cert.p12"
+            }
           }
         }
 
@@ -163,11 +181,22 @@ pipeline {
               curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"
               msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log
               type smtools-windows-x64.log
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" healthcheck || exit /b 1
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" keypair ls || exit /b 1
               C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
               "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync
-              signtool.exe sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 %EXECUTABLES%
+              if exist cert.pem del /f /q cert.pem
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" certificate download --keypair-alias="%KEYPAIR_ALIAS%" --format=pem --name=cert.pem --out=. || exit /b 1
+              signtool.exe sign /csp "DigiCert Signing Manager KSP" /kc "%KEYPAIR_ALIAS%" /f cert.pem /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 %EXECUTABLES%
               signtool.exe verify /v /pa %EXECUTABLES%
             '''
+          }
+          post {
+            failure {
+              // Client-side tools wrap server rejections in opaque errors; the
+              // real HTTP status and message land in the signingmanager logs
+              bat 'if exist "%USERPROFILE%\\.signingmanager\\logs\\*.log" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
+            }
           }
         }
 
@@ -208,13 +237,21 @@ pipeline {
             stage('Sign Installer') {
 
               steps {
+                // signs with the cert.pem downloaded during Sign Executables; it's
+                // the public code signing certificate, not a credential
                 bat '''
                   call "C:\\Program Files\\Microsoft Visual Studio\\2026\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
                   C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
                   "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync
-                  signtool.exe sign /tr http://timestamp.digicert.com /sha1 %DIGICERT_CERTIFICATE_FINGERPRINT% /td SHA256 /fd SHA256 %LONG_PACKAGE_PATH%
+                  signtool.exe sign /csp "DigiCert Signing Manager KSP" /kc "%KEYPAIR_ALIAS%" /f cert.pem /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 %LONG_PACKAGE_PATH%
                   signtool.exe verify /v /pa %LONG_PACKAGE_PATH%
                 '''
+              }
+
+              post {
+                failure {
+                  bat 'if exist "%USERPROFILE%\\.signingmanager\\logs\\*.log" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
+                }
               }
 
             }
@@ -288,6 +325,19 @@ pipeline {
               }
             }
           }
+        }
+      }
+
+      post {
+        // the custom workspace is reused across builds: don't leave the decoded
+        // client auth certificate behind, and remove cert.pem so a failed
+        // download in a later build can never fall back to a stale certificate
+        always {
+          bat '''
+            if exist "%WORKSPACE%\\sm_client_cert.p12" del /f /q "%WORKSPACE%\\sm_client_cert.p12"
+            if exist "%WORKSPACE%\\cert.pem" del /f /q "%WORKSPACE%\\cert.pem"
+            if exist "%WORKSPACE%\\sm_client_cert.p12" (echo ERROR: could not remove sm_client_cert.p12 from the reused workspace & exit /b 1)
+          '''
         }
       }
     } // Build Windows Stage
