@@ -52,6 +52,7 @@ public class HistoryPanel extends Composite implements Display
    {
       String commitDetail();
       String commitTableScrollPanel();
+      String pagerPanel();
 
       String ref();
       String head();
