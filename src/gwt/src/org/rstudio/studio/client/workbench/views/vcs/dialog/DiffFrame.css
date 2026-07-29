@@ -1,6 +1,16 @@
+@external editor_dark;
+
 @sprite .header {
    gwt-image: 'diffHeaderTile';
    position: relative;
+}
+
+/* The header tile is a light gradient; in dark themes drop it and let the
+   tint on the header row (DiffFrame.ui.xml) show through instead, so the
+   whole row is one shade (#9026). */
+.editor_dark .header {
+   background-image: none;
+   background-color: transparent;
 }
 
 .header img, .fileIcon {
@@ -32,4 +42,10 @@
 .viewFileHyperlink {
    font-size: 11px;
    margin-top: 6px;
+}
+
+/* rstudio-HyperlinkLabel is a dark blue that all but disappears against a
+   dark theme; use the same light blue the dark dialogs use (#9026). */
+.editor_dark .viewFileHyperlink {
+   color: #abc;
 }

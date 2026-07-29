@@ -1,14 +1,32 @@
+@external rstudio-themes-dark;
+
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+
 .splitPanel {}
 .toolbarWrapper {}
-.whitebg {}
 .toolbar {}
 
 .commitDetail {
    border: 12px solid transparent;
 }
 
-.commitTableScrollPanel {
-   background-color: white;
+/* the pager buttons sit tight against the commit table above them */
+.pagerPanel {
+   padding-top: 2px;
+}
+
+/* empty, but required: HistoryPanel.Styles declares the accessor, and GWT
+   fails the build if the class has no rule to obfuscate */
+.commitTableScrollPanel {}
+
+/* Dark theme (#9026); the commit list and the commit detail carry the
+   ace_editor_theme class and follow the editor theme, so only the chrome
+   around them is styled here. */
+
+.rstudio-themes-dark .splitPanel,
+.rstudio-themes-dark .toolbarWrapper {
+   background: THEME_DARKGREY_BACKGROUND;
+   color: #eee;
 }
 
 .ref, .tag {
@@ -17,6 +35,15 @@
    background-color: green;
    padding: 0 6px;
    margin-right: 4px;
+}
+
+/* These four backgrounds are pale, so pin the text dark rather than letting it
+   inherit a light color from a dark theme. A ref that matches none of them
+   keeps the green background above and does inherit -- most commonly the
+   checked-out branch, whose first decoration under "git log --decorate=full"
+   is "HEAD -> refs/heads/<branch>". */
+.head, .branch, .remote, .tag {
+   color: #1a1a1a;
 }
 
 .head {

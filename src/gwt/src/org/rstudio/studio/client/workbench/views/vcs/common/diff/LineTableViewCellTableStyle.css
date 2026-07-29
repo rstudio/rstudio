@@ -1,6 +1,10 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@external editor_dark, ace_editor_theme;
+
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
 
 @def selectionBorderWidth 1px;
 .cellTableWidget {
@@ -135,4 +139,137 @@
    padding: 1px 0 0 0;
    margin-bottom: -5px; /* Prevent selected line from changing height on Ubuntu */
    overflow: visible;
+}
+
+/* Theming (#9026). The diff sits in a container carrying the ace_editor_theme
+   class, and these two rules are what make unchanged lines pick up that
+   container's colors.
+
+   The background follows every editor theme, since a light-but-not-white theme
+   (say Solarized Light) would otherwise show a white table inside a cream pane.
+   Under a dark theme it duplicates .editor_dark .cellTableWidget in
+   RStudioCellTableStyle.css (same declaration, same specificity); the light
+   themes are what it is here for. The foreground rule has no such base
+   counterpart: #888 deliberately de-emphasizes unchanged lines, which reads
+   fine on any light theme but not against a dark one.
+
+   Changed lines, below, likewise only need the dark treatment: they tint the
+   background with a translucent overlay rather than a fixed color, so the diff
+   stays legible whatever the dark editor theme is. */
+
+.ace_editor_theme .cellTableWidget {
+   background-color: inherit;
+}
+
+.editor_dark .cellTableWidget {
+   color: inherit;
+}
+
+.editor_dark .header {
+   background-color: rgba(255, 255, 255, 0.10);
+   color: inherit;
+}
+.editor_dark .header > td {
+   border-top-color: rgba(255, 255, 255, 0.20) !important;
+   border-bottom-color: rgba(255, 255, 255, 0.20) !important;
+}
+
+.editor_dark .insertion {
+   background-color: rgba(87, 214, 106, 0.18);
+   color: inherit;
+}
+.editor_dark .insertion.start > td {
+   border-top-color: rgba(87, 214, 106, 0.45) !important;
+}
+.editor_dark .insertion.end > td {
+   border-bottom-color: rgba(87, 214, 106, 0.45) !important;
+}
+
+.editor_dark .deletion {
+   background-color: rgba(248, 81, 73, 0.18);
+   color: inherit;
+}
+.editor_dark .deletion.start > td {
+   border-top-color: rgba(248, 81, 73, 0.45) !important;
+}
+.editor_dark .deletion.end > td {
+   border-bottom-color: rgba(248, 81, 73, 0.45) !important;
+}
+
+.editor_dark .comment {
+   background-color: rgba(255, 255, 255, 0.06);
+   color: inherit;
+}
+
+.editor_dark .info {
+   background-color: rgba(230, 195, 100, 0.18);
+   color: inherit;
+}
+.editor_dark .info.start > td {
+   border-top-color: rgba(230, 195, 100, 0.45) !important;
+}
+.editor_dark .info.end > td {
+   border-bottom-color: rgba(230, 195, 100, 0.45) !important;
+}
+
+.editor_dark .cellTableWidget > tbody > tr.same .lineNumber {
+   background-color: rgba(255, 255, 255, 0.05);
+}
+.editor_dark .cellTableWidget > tbody > tr .lineNumber.lastLineNumber {
+   border-right-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.editor_dark .cellTableWidget > tbody > tr > td {
+   border-right-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* The chunk and line action buttons are three-slice sprite pills (a light blue
+   one for Stage, a light grey one for the rest -- see LineActionButtonRenderer).
+   Their class names live in a different CssResource bundle than this file, and
+   BlueStyles and GrayStyles are separate types over one CSS source, so GWT
+   obfuscates two copies and neither name is reachable from here. Hence the
+   data-action attribute: drop the sprites and draw a flat translucent pill. */
+
+.editor_dark .actions div[data-action] {
+   background-color: rgba(255, 255, 255, 0.16);
+   border-radius: 8px;
+}
+
+.editor_dark .actions div[data-action]:hover {
+   background-color: rgba(255, 255, 255, 0.24);
+}
+
+.editor_dark .actions div[data-action='Stage'] {
+   background-color: rgba(120, 170, 235, 0.35);
+}
+
+.editor_dark .actions div[data-action='Stage']:hover {
+   background-color: rgba(120, 170, 235, 0.5);
+}
+
+.editor_dark .actions div[data-action] > div {
+   background-image: none;
+}
+
+/* The row carries the selection. The cell rules cannot simply be dropped --
+   the base paints .cellTableSelectedRowCell an opaque #CCC !important, which
+   would sit on top of the row tint -- but they clear it rather than repeating
+   it: tinting both the tr and every td would composite 0.15 over 0.15 to
+   roughly 0.28, leaving the diff's selection about twice as bright as the
+   changelist's and the commit list's. */
+
+.editor_dark .cellTableSelectedRow {
+   background: THEME_DARK_ROW_SELECTED !important;
+}
+
+.editor_dark .cellTableSelectedRowCell {
+   background: transparent !important;
+}
+
+.editor_dark .cellTableWidget:focus .cellTableSelectedRow {
+   background: THEME_DARK_ROW_FOCUSED !important;
+}
+
+.editor_dark .cellTableWidget:focus .cellTableSelectedRowCell {
+   background: transparent !important;
 }

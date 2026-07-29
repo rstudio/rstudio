@@ -179,7 +179,8 @@ export class ChatPane extends FramePageObject {
    * Get the delete confirmation button
    */
   getDeleteConfirmButton(): Locator {
-    return this.frame.locator('button:has-text("Delete this conversation")');
+    // Exact match: the dialog title is also "Delete conversation"
+    return this.frame.getByRole('button', { name: 'Delete conversation', exact: true });
   }
 }
 
