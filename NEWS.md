@@ -13,6 +13,7 @@
 - ([#18253](https://github.com/rstudio/rstudio/issues/18253)): Added a "Check for Posit Assistant updates" command to the Help menu. It always reports its result in a dialog -- whether Posit Assistant is up to date, an update is available (with the option to install it), or a newer Posit Assistant requires a newer version of RStudio.
 
 ### Fixed
+- ([#18391](https://github.com/rstudio/rstudio/issues/18391)): Fixed RStudio Desktop error logging that reported `TypeError: Cannot read properties of undefined (reading 'logErrorAtLevel')` in place of the actual error when a background operation failed. Closing the main window after its renderer has crashed now also exits RStudio instead of leaving a headless process running.
 - ([#18152](https://github.com/rstudio/rstudio/issues/18152)): Fixed a compilation error when building RStudio Server against SOCI 4.1.4 or newer.
 - ([#18287](https://github.com/rstudio/rstudio/issues/18287)): Fixed another compilation error when building RStudio against system SOCI packages (4.1 or newer), which no longer expose the SQLite C API through their headers.
 - ([#18174](https://github.com/rstudio/rstudio/issues/18174)): Fixed an error when viewing an object from the Object Explorer with the French user interface language enabled.
