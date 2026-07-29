@@ -4,8 +4,13 @@
 # filters out -- both runs asserted zero tests. This selector picks two real,
 # untagged test files instead, so a passing run actually proves something.
 #
-# First round: build_from_source: false, no installer URL, so the engine
-# self-resolves the latest daily .dmg -- the path every rotation run takes.
+# First round (passed, 7/7): build_from_source: false, no installer URL, so
+# the engine self-resolved the latest daily .dmg -- the path every rotation
+# run takes.
+#
+# Second round: build_from_source: true, to exercise the from-source build
+# path that has never run on arm64 -- the build-arm64 output directory, the
+# arm64 brew/rig install steps, and `rig default` without sudo.
 # DELETE this file in this same PR before merge.
 name: "zz-temp validate macOS 14 arm64 engine"
 
@@ -23,5 +28,5 @@ jobs:
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
     secrets: inherit
     with:
-      build_from_source: false
+      build_from_source: true
       test_selector: "tests/harness/ tests/menus/"
