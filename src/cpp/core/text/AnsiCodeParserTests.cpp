@@ -52,8 +52,9 @@ TEST(AnsiCodeParserTest, StripSimpleEscapeSequences)
 
 TEST(AnsiCodeParserTest, StripSimpleEscapeSequencesWithParams)
 {
-   // ESC + letter + numeric params (e.g., ESC G1; ESC H2;)
-   // Used by RStudio for clickable error links
+   // RStudio's private output grouping / highlighting markers (ESC G<n>;
+   // ESC H<n>;, per AnsiEscapes.hpp) keep their numeric params attached:
+   // a pattern stopping at the letter final would leave "1;" behind
    std::string withEsc = "\x1b" "G1;\x1b" "H1;Error\x1b" "h: not found\x1b" "g";
    std::string expect = "Error: not found";
 
@@ -61,13 +62,13 @@ TEST(AnsiCodeParserTest, StripSimpleEscapeSequencesWithParams)
    EXPECT_EQ(expect, withEsc);
 }
 
-TEST(AnsiCodeParserTest, StripSimpleEscapeBeforeAnsiMatch)
+TEST(AnsiCodeParserTest, PreservesDigitsAfterTwoByteEscapes)
 {
-   // ESC G1; must be stripped as a unit: a pattern stopping at the letter
-   // final would leave "1;" behind, so kSimpleEscapeMatch keeps trailing
-   // params attached to letter escapes
-   std::string withEsc = "\x1b" "G1;Error";
-   std::string expect = "Error";
+   // the numeric parameter tail belongs only to RStudio's ESC G / ESC H
+   // markers; after standard two-byte escapes (here NEL, ESC E) digits
+   // are visible text
+   std::string withEsc = "line1\x1b" "E2024 results";
+   std::string expect = "line12024 results";
 
    stripAnsiCodes(&withEsc);
    EXPECT_EQ(expect, withEsc);
@@ -95,6 +96,22 @@ TEST(AnsiCodeParserTest, StripCsiWithIntermediateBytes)
    EXPECT_EQ(expect, withCsi);
 }
 
+TEST(AnsiCodeParserTest, StripCsiWithNonLetterFinals)
+{
+   // shells enable bracketed paste (ESC[?2004h) and wrap every pasted
+   // command in ESC[200~ ... ESC[201~; CSI final bytes span the full
+   // 0x40-0x7e range, not just letters
+   std::string withCsi =
+      "\x1b[?2004h"
+      "\x1b[200~"
+      "ls -l\x1b[201~"
+      "\x1b[?2004l";
+   std::string expect = "ls -l";
+
+   stripAnsiCodes(&withCsi);
+   EXPECT_EQ(expect, withCsi);
+}
+
 TEST(AnsiCodeParserTest, StripNonCsiEscapeForms)
 {
    // nF charset designation (ESC ( B) and keypad modes (ESC =, ESC >)
@@ -107,6 +124,49 @@ TEST(AnsiCodeParserTest, StripNonCsiEscapeForms)
 
    stripAnsiCodes(&withEsc);
    EXPECT_EQ(expect, withEsc);
+}
+
+TEST(AnsiCodeParserTest, StripTwoByteEscapesWithHighFinals)
+{
+   // two-byte sequences with finals past 0x3f -- a bare ST (ESC \),
+   // ESC @, ESC {, ESC ~ -- previously leaked a raw ESC byte
+   std::string withEsc =
+      "a\x1b\\"
+      "b\x1b@"
+      "c\x1b{"
+      "d\x1b~"
+      "e";
+   std::string expect = "abcde";
+
+   stripAnsiCodes(&withEsc);
+   EXPECT_EQ(expect, withEsc);
+}
+
+TEST(AnsiCodeParserTest, StripOrphanAndTruncatedEscapes)
+{
+   // an ESC that cannot complete a sequence (followed by a newline, or
+   // truncated at end of input) must still be removed
+   std::string withEsc = "abc\x1b\ndef\x1b[";
+   std::string expect = "abc\ndef";
+
+   stripAnsiCodes(&withEsc);
+   EXPECT_EQ(expect, withEsc);
+}
+
+TEST(AnsiCodeParserTest, DoubledEscapeKeepsFollowingText)
+{
+   // tmux and screen DCS passthrough double ESC bytes; stripping one
+   // sequence must not pair the leftover ESC with the visible text that
+   // follows (a multi-pass strip would delete the 9 and the 7 here)
+   std::string withOsc = "\x1b\x1b]0;t\x07" "9 files";
+   std::string expectOsc = "9 files";
+   stripAnsiCodes(&withOsc);
+   EXPECT_EQ(expectOsc, withOsc);
+
+   std::string withCsi = "\x1b\x1b[31m" "7 items";
+   std::string expectCsi = "7 items";
+   stripAnsiCodes(&withCsi);
+   EXPECT_EQ(expectCsi, withCsi);
 }
 
 TEST(AnsiCodeParserTest, PreservesUtf8ContinuationBytes)
@@ -164,6 +224,20 @@ TEST(AnsiCodeParserTest, StripOscHyperlinks)
    EXPECT_EQ(expect, withOsc);
 }
 
+TEST(AnsiCodeParserTest, StripOscHyperlinksBelTerminated)
+{
+   // RStudio's own ANSI_HYPERLINK form (AnsiEscapes.hpp) terminates with
+   // BEL rather than ST; this is the form on the console-actions path
+   std::string withOsc =
+      "See \x1b]8;;ide:help:base::print\x07"
+      "print\x1b]8;;\x07"
+      " for details";
+   std::string expect = "See print for details";
+
+   stripAnsiCodes(&withOsc);
+   EXPECT_EQ(expect, withOsc);
+}
+
 TEST(AnsiCodeParserTest, StripDcsSequences)
 {
    std::string withDcs =
@@ -175,10 +249,50 @@ TEST(AnsiCodeParserTest, StripDcsSequences)
    EXPECT_EQ(expect, withDcs);
 }
 
+TEST(AnsiCodeParserTest, StripSosPmApcSequences)
+{
+   // SOS (ESC X), PM (ESC ^), APC (ESC _) carry string payloads, like OSC
+   std::string withSeqs =
+      "a\x1bXsos-payload\x1b\\"
+      "b\x1b^pm-payload\x07"
+      "c\x1b_apc-payload\x1b\\"
+      "d";
+   std::string expect = "abcd";
+
+   stripAnsiCodes(&withSeqs);
+   EXPECT_EQ(expect, withSeqs);
+}
+
+TEST(AnsiCodeParserTest, StripScreenWindowTitleSequences)
+{
+   // GNU screen and tmux set the window title with ESC k <title> ST; the
+   // title is a string payload, so it must go with the sequence rather
+   // than glue onto the following text
+   std::string withTitle =
+      "\x1bk~/projects\x1b\\"
+      "$ make";
+   std::string expect = "$ make";
+
+   stripAnsiCodes(&withTitle);
+   EXPECT_EQ(expect, withTitle);
+}
+
 TEST(AnsiCodeParserTest, UnterminatedOscConfinedToLine)
 {
    // an OSC sequence missing its terminator must not swallow following lines
    std::string withOsc = "\x1b]0;truncated title\nnext line";
+   std::string expect = "\nnext line";
+
+   stripAnsiCodes(&withOsc);
+   EXPECT_EQ(expect, withOsc);
+}
+
+TEST(AnsiCodeParserTest, UnterminatedOscConsumesRestOfLine)
+{
+   // the flip side of the confinement above: with no terminator the
+   // payload match runs to end of line, taking that line's visible text
+   // with it -- accepted so a truncated sequence can never leak
+   std::string withOsc = "\x1b]0;title README.md  src\nnext line";
    std::string expect = "\nnext line";
 
    stripAnsiCodes(&withOsc);
