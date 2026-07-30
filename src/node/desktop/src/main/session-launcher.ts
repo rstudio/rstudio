@@ -512,6 +512,16 @@ export class SessionLauncher {
     // to do more work directly here to disconnect events, etc?
     this.sessionProcess = undefined;
 
+    // A reload replaces the whole workbench, so clear the init flag the same
+    // way MainWindow.launchSession does (it is set again once the new session
+    // initializes the workbench). Without this, a next session that dies
+    // during startup still sees the PREVIOUS session's workbenchInitialized,
+    // is misread as a crash of a running workbench, and the launch error page
+    // is never shown -- the window just hangs on the old, dead frame (#18394).
+    if (reload && this.mainWindow) {
+      this.mainWindow.workbenchInitialized = false;
+    }
+
     // build a new launch context -- re-use the same port if we aren't reloading
     const launchContext = await this.buildLaunchContext(!reload);
 
