@@ -463,10 +463,11 @@ public class XTermWidget extends Widget
          boolean success = terminal_.loadWebGLAddon();
          if (success)
          {
-            // The addon cannot recover from WebGL context loss (GPU crash,
-            // driver reset, or the browser reclaiming a context); it fires
-            // onContextLoss and expects the consumer to dispose it. Fall
-            // back to the DOM renderer so the terminal keeps rendering.
+            // If a lost WebGL context (GPU crash, driver reset, the browser
+            // reclaiming a context) is not restored by the browser within
+            // the addon's ~3s grace window, the addon fires onContextLoss
+            // and cannot recover; dispose it and fall back to the DOM
+            // renderer so the terminal keeps rendering.
             terminal_.onWebGLContextLoss(() -> {
                Debug.log("Terminal WebGL context lost; falling back to DOM renderer");
                disableWebGL();

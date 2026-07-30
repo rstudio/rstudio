@@ -219,10 +219,11 @@ public class XTermNative extends JavaScriptObject
 
    /**
     * Install a handler for WebGL context loss on the loaded WebGL addon.
-    * The addon cannot recover the context on its own; the handler is
-    * expected to dispose the addon, reverting to the DOM renderer.
-    * At most one handler is installed per loaded addon; the registration
-    * is disposed along with the addon.
+    * The handler fires once the addon has given up waiting for the browser
+    * to restore a lost context (browser-restored losses recover silently
+    * inside the addon); it is expected to dispose the addon, reverting to
+    * the DOM renderer. At most one handler is installed per loaded addon;
+    * the registration is disposed along with the addon.
     * @param command handler to execute when the WebGL context is lost
     */
    public final native void onWebGLContextLoss(Command command) /*-{
