@@ -33,8 +33,10 @@
 #include <boost/system/windows_error.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -47,6 +49,7 @@
 #include <core/Log.hpp>
 #include <core/FileInfo.hpp>
 #include <core/DateTime.hpp>
+#include <core/FileUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 
@@ -64,6 +67,75 @@ namespace core {
 namespace system {
 
 namespace {
+
+// Upper bound on a Windows path once the MAX_PATH limit is lifted (see the
+// longPathAware entry in our exe manifests). Used to bound grow-and-retry
+// loops around Win32 APIs that report the buffer size they need.
+const std::size_t kMaxPathLength = 32767;
+
+// SHGetKnownFolderPath allocates its result, so unlike the deprecated
+// MAX_PATH-bound SHGetFolderPathW it imposes no path length limit. The cost is
+// that the buffer has to be released with CoTaskMemFree.
+Error knownFolderPath(REFKNOWNFOLDERID folderId,
+                      DWORD flags,
+                      const std::string& description,
+                      FilePath* pPath)
+{
+   wchar_t* path = nullptr;
+   HRESULT hr = ::SHGetKnownFolderPath(folderId, flags, nullptr, &path);
+
+   if (FAILED(hr) || path == nullptr)
+   {
+      if (path != nullptr)
+         ::CoTaskMemFree(path);
+
+      Error error = systemError(boost::system::errc::no_such_file_or_directory,
+                                description,
+                                ERROR_LOCATION);
+      error.addProperty("error-code", safe_convert::numberToHexString(hr));
+      return error;
+   }
+
+   *pPath = FilePath(std::wstring(path));
+   ::CoTaskMemFree(path);
+
+   return Success();
+}
+
+// Resolves a Windows system directory. GetSystemDirectoryW and
+// GetWindowsDirectoryW return the length copied on success, or the size
+// required (including the null terminator) when the buffer was too small.
+FilePath win32Directory(UINT (WINAPI* getDirectory)(LPWSTR, UINT))
+{
+   std::vector<wchar_t> buffer(MAX_PATH);
+   for (;;)
+   {
+      UINT length = getDirectory(&buffer[0], static_cast<UINT>(buffer.size()));
+      if (length == 0)
+      {
+         LOG_ERROR(LAST_SYSTEM_ERROR());
+         return FilePath();
+      }
+
+      if (length < buffer.size())
+         return FilePath(std::wstring(&buffer[0], length));
+
+      if (buffer.size() > kMaxPathLength)
+      {
+         LOG_ERROR_MESSAGE("System directory path exceeds " +
+                           safe_convert::numberToString(kMaxPathLength) + " characters");
+         return FilePath();
+      }
+
+      // a too-small buffer reports the size it needs, including the null, so length is
+      // already larger than the current size -- but don't lean on the API for
+      // termination: grow by at least one element, then clamp to the longest path
+      // Windows can express. The size check above turns the clamped attempt into the
+      // last one, so the loop always ends.
+      std::size_t required = std::max(static_cast<std::size_t>(length), buffer.size() + 1);
+      buffer.resize(std::min(required, kMaxPathLength + 1));
+   }
+}
 
 Error initJobObject(bool* detachFromJob)
 {
@@ -144,9 +216,9 @@ void initHook()
    if (!detachFromJob)
       return;
 
-   TCHAR path[MAX_PATH];
-   if (!::GetModuleFileName(nullptr, path, MAX_PATH))
-      return;  // Couldn't get the path of the current .exe
+   // NOTE: we used to fetch our own module path here as a sanity check, but the
+   // relaunch below re-uses GetCommandLine() and never consumed it -- so it was
+   // only a MAX_PATH buffer waiting to truncate under a long install path
 
    STARTUPINFO startupInfo;
    memset(&startupInfo, 0, sizeof(startupInfo));
@@ -195,32 +267,97 @@ void initializeLogConfigReload()
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
-   std::string path = core::system::getenv("PATH");
-   auto paths = core::algorithm::split(path, ";");
+   // nothing to search for; bail before probing extensions of "" against every
+   // search directory
+   if (program.empty())
+      return fileNotFoundError(program, ERROR_LOCATION);
 
    // if the program supplied already has an extension,
-   // then we'll skip searching any custom extensions
-   auto programExt = core::string_utils::getExtension(program);
+   // then we'll skip searching any custom extensions.
+   //
+   // getExtension() is a bare rfind('.') with no separator awareness, so take the last
+   // path component first. Otherwise a dotted *directory* reads as an extension and the
+   // probing below is skipped for a name that has none -- and dotted directories are the
+   // norm on Windows ("C:/R/R-4.4.1/bin/x64/R", "C:/Users/first.last/miktex/bin/pdflatex").
+   std::string::size_type nameStart = program.find_last_of("/\\:");
+   std::string programName = nameStart == std::string::npos
+      ? program
+      : program.substr(nameStart + 1);
+
+   auto programExt = core::string_utils::getExtension(programName);
 
    auto defaultExts = { ".exe", ".com", ".bat", ".cmd" };
    auto noExts = { "" };
    auto exts = programExt.empty() ? defaultExts : noExts;
 
+   // A path-qualified name isn't a PATH search; resolve it directly. It still gets the
+   // extension probing a bare name would, so that "C:/tools/git" finds git.exe rather
+   // than only an extensionless file of that exact name. ':' counts here because a
+   // drive-relative name like "C:git.exe" is rooted as far as FilePath is concerned,
+   // and completeChildPath would reject (and log) it below.
+   if (program.find_first_of("/\\:") != std::string::npos)
+   {
+      // the name exactly as given first, then the extensions a bare name would get
+      std::vector<std::string> candidateExts = { std::string() };
+      if (programExt.empty())
+         candidateExts.insert(candidateExts.end(), defaultExts.begin(), defaultExts.end());
+
+      for (auto&& ext : candidateExts)
+      {
+         FilePath programPath(program + ext);
+         if (!programPath.isRegularFile())
+            continue;
+
+         *pProgramPath = programPath;
+         return Success();
+      }
+
+      return fileNotFoundError(program, ERROR_LOCATION);
+   }
+
+   // Search the Windows system directories ahead of PATH. PathFindOnPath, which this
+   // replaces, is documented to search "standard directories such as System32 and the
+   // directories specified in the PATH environment variable", so keeping the system
+   // directories first preserves the part of its behavior we depend on: a stray cmd.exe
+   // earlier on PATH cannot shadow the one in System32, which is how we launch batch
+   // files. We do not search the current directory -- that is a deliberate hardening
+   // against binary planting, not a continuation of the old behavior.
+   //
+   // We can no longer delegate to PathFindOnPath because it writes at most MAX_PATH
+   // characters no matter how large a buffer it's given, so it cannot see a program
+   // under a long path.
+   std::vector<std::string> paths;
+   for (auto&& systemDirectory : { win32Directory(&::GetSystemDirectoryW),
+                                   win32Directory(&::GetWindowsDirectoryW) })
+   {
+      if (!systemDirectory.isEmpty())
+         paths.push_back(systemDirectory.getAbsolutePath());
+   }
+
+   std::string pathEnv = core::system::getenv("PATH");
+   auto pathEntries = core::algorithm::split(pathEnv, ";");
+   paths.insert(paths.end(), pathEntries.begin(), pathEntries.end());
+
    for (auto&& path : paths)
    {
-      if (path.empty())
+      // PATH entries are sometimes quoted, and a quote is never part of the path
+      std::string directory = boost::algorithm::trim_copy(path);
+      boost::algorithm::trim_if(directory, boost::algorithm::is_any_of("\""));
+      if (directory.empty())
          continue;
 
       // Skip non-existent directories to avoid logging errors, matching the behavior of the
       // Posix implementation
-      FilePath pathDir(path);
+      FilePath pathDir(directory);
       if (!pathDir.exists())
          continue;
 
       for (auto&& ext : exts)
       {
+         // isRegularFile rather than exists, so a directory named e.g. "git.exe"
+         // sitting on PATH isn't mistaken for the program
          FilePath programPath = pathDir.completeChildPath(program + ext);
-         if (!programPath.exists())
+         if (!programPath.isRegularFile())
             continue;
 
          *pProgramPath = programPath;
@@ -329,25 +466,21 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName,
                           bool ensureDirectory)
 {
-   wchar_t* path = nullptr;
-   HRESULT result = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &path);
-   if (result != S_OK || path == nullptr)
+   FilePath localAppData;
+   Error error = knownFolderPath(FOLDERID_LocalAppData,
+                                 0,
+                                 "unable to compute user settings (LocalAppData) path",
+                                 &localAppData);
+   if (error)
    {
-      Error error = systemError(
-          boost::system::errc::no_such_file_or_directory,
-          "unable to compute user settings (LocalAppData) path",
-          ERROR_LOCATION);
-
-      error.addProperty("error-code", core::safe_convert::numberToHexString(result));
       LOG_ERROR(error);
       return FilePath();
    }
 
-   FilePath localAppData = FilePath(std::wstring(path));
    FilePath settingsPath = localAppData.completeChildPath(appName);
    if (ensureDirectory)
    {
-      Error error = settingsPath.ensureDirectory();
+      error = settingsPath.ensureDirectory();
       if (error)
          LOG_ERROR(error);
    }
@@ -357,34 +490,39 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
 
 FilePath systemSettingsPath(const std::string& appName, bool create)
 {
-   int nFolder = CSIDL_COMMON_APPDATA;
-   if (create)
-      nFolder |= CSIDL_FLAG_CREATE;
-
-   wchar_t path[MAX_PATH + 1];
-   HRESULT hr = ::SHGetFolderPathW(nullptr, nFolder, nullptr, SHGFP_TYPE_CURRENT, path);
-   if (hr != S_OK)
+   // KF_FLAG_DONT_VERIFY matches the SHGetFolderPathW(SHGFP_TYPE_CURRENT) call this
+   // replaces, which returned the registered path without checking that it exists.
+   // Only relevant when we aren't creating: KF_FLAG_CREATE makes the folder, so
+   // there is nothing left to verify. Same trap as knownFolderHomePath().
+   FilePath settingsPath;
+   Error error = knownFolderPath(FOLDERID_ProgramData,
+                                 create ? KF_FLAG_CREATE : KF_FLAG_DONT_VERIFY,
+                                 "unable to retrieve per machine configuration path",
+                                 &settingsPath);
+   if (error)
    {
-      LOG_ERROR_MESSAGE("Unable to retrieve per machine configuration path. HRESULT:  " +
-                        safe_convert::numberToHexString(hr));
+      LOG_ERROR(error);
       return FilePath();
    }
 
-   FilePath settingsPath = FilePath(std::wstring(path));
    FilePath completePath = settingsPath.completePath(appName);
 
+   // NOTE: we used to create the appName subdirectory via SHGetFolderPathAndSubDirW,
+   // but that writes into a caller-supplied MAX_PATH buffer, so the combined path
+   // could overrun it. The ACLs are unaffected by the switch: a known folder's
+   // predefined security descriptor applies to the known folder itself (ProgramData,
+   // which already exists), while a caller-named subdirectory under it is created
+   // with inherited attributes either way.
    if (create)
    {
-      std::wstring appNameWide = core::string_utils::utf8ToWide(appName);
-      hr = ::SHGetFolderPathAndSubDirW(nullptr, CSIDL_COMMON_APPDATA|CSIDL_FLAG_CREATE, nullptr,
-                                       SHGFP_TYPE_CURRENT, appNameWide.c_str(), path);
-      if (hr != S_OK)
+      error = completePath.ensureDirectory();
+      if (error)
       {
-         LOG_ERROR_MESSAGE("Cannot create folder under per machine configuration path. HRESULT:  " +
-                           safe_convert::numberToHexString(hr));
+         LOG_ERROR(error);
          return FilePath();
       }
    }
+
    return completePath;
 }
 
@@ -570,15 +708,38 @@ PidType currentProcessId()
 Error executablePath(const char *argv0,
                      FilePath* pExecutablePath)
 {
-   wchar_t exePath[MAX_PATH];
-   if (!GetModuleFileNameW(nullptr, exePath, MAX_PATH))
+   // grow the buffer until the path fits. GetModuleFileNameW signals truncation
+   // by returning the buffer size it was given, so a MAX_PATH buffer silently
+   // yields a truncated path when the install lives below a long path
+   std::vector<wchar_t> buffer(MAX_PATH);
+   for (;;)
    {
-      auto lastErr = ::GetLastError();
-      return systemError(lastErr, ERROR_LOCATION);
+      DWORD length = ::GetModuleFileNameW(nullptr,
+                                          &buffer[0],
+                                          static_cast<DWORD>(buffer.size()));
+      if (length == 0)
+         return LAST_SYSTEM_ERROR();
+
+      if (length < buffer.size())
+      {
+         *pExecutablePath = FilePath(std::wstring(&buffer[0], length));
+         return Success();
+      }
+
+      // the buffer already held the longest path Windows can express, so a further
+      // grow would be pointless
+      if (buffer.size() > kMaxPathLength)
+      {
+         return systemError(boost::system::errc::filename_too_long,
+                            "executable path exceeds " +
+                               safe_convert::numberToString(kMaxPathLength) + " characters",
+                            ERROR_LOCATION);
+      }
+
+      // clamp, so the final attempt is exactly that longest path rather than
+      // overshooting it and rejecting paths that are actually reachable
+      buffer.resize(std::min(buffer.size() * 2, kMaxPathLength + 1));
    }
-   std::wstring wzPath(exePath);
-   *pExecutablePath = FilePath(wzPath);
-   return Success();
 }
 
 // installation path
@@ -818,16 +979,21 @@ Error copyMetafileToClipboard(const FilePath& path)
 
 void ensureLongPath(FilePath* pFilePath)
 {
-   const std::size_t kBuffSize = (MAX_PATH*2) + 1;
-   char buffer[kBuffSize];
-   std::string path = string_utils::utf8ToSystem(pFilePath->getAbsolutePath());
-   if (::GetLongPathName(path.c_str(),
-                         buffer,
-                         kBuffSize) > 0)
-   {
-      *pFilePath = FilePath(string_utils::systemToUtf8(buffer));
-   }
+   // Compare in backslash form. FilePath keeps whatever separators it was constructed
+   // from, and most of ours round-trip through generic (forward slash) strings, so
+   // getAbsolutePathNative() is not on its own a guarantee of native separators --
+   // normalize explicitly. That makes the guard below a comparison of long-vs-short
+   // rather than of separator style, whichever separators GetLongPathNameW hands back.
+   // longPathName() returns its input unchanged when the path can't be expanded, so
+   // this only reassigns when we actually learned something.
+   std::string path = pFilePath->getAbsolutePathNative();
+   std::replace(path.begin(), path.end(), '/', '\\');
+
+   std::string longPath = file_utils::longPathName(path);
+   if (longPath != path)
+      *pFilePath = FilePath(longPath);
 }
+
 Error expandEnvironmentVariables(std::string value, std::string* pResult)
 {
    if (value.empty())

@@ -8,7 +8,6 @@
 // values and column names.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
-import * as os from 'os';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
@@ -1310,28 +1309,21 @@ test.describe('Data Viewer', () => {
   });
 
   // https://github.com/rstudio/rstudio/issues/17958
+  // https://github.com/rstudio/rstudio/issues/18378
   //
-  // Two regressions from the vanilla-JS grid rewrite: (1) End/Ctrl+End jumped
-  // to the last *column* (Excel semantics) instead of scrolling to the bottom
-  // of the current column like the pre-rewrite viewer; (2) the bottom-edge
-  // math in ensureActiveCellVisible used the raw viewport clientHeight,
-  // ignoring the sticky header inside it, so the jump landed a header-height
-  // short and the target row stayed hidden below the fold.
+  // Three regressions from the vanilla-JS grid rewrite: (1) End/Ctrl+End
+  // jumped to the last *column* (Excel semantics) instead of scrolling to the
+  // bottom of the current column like the pre-rewrite viewer; (2) the
+  // bottom-edge math in ensureActiveCellVisible used the raw viewport
+  // clientHeight, ignoring the sticky header inside it, so the jump landed a
+  // header-height short and the target row stayed hidden below the fold;
+  // (3) on platforms whose UI font has an 11px line box taller than 14px
+  // (Segoe UI on Windows, Noto Sans on Fedora / RHEL 10+), rendered rows grew
+  // past the 23px ROW_HEIGHT the scroll math assumes -- td height is only a
+  // minimum -- so the jump stopped a pixel short per rendered row, ~24px in
+  // this layout. Fixed by pinning the td line-height (#18378); this test was
+  // previously test.fixme'd on Windows CI because of that shortfall.
   test('End scrolls to the last row of the current column, fully visible (#17958)', async ({ rstudioPage: page }) => {
-    // Windows CI: the bottom-edge assertion below reliably fails on
-    // windows-2025 -- cellBox.y + cellBox.height lands ~24px below the
-    // viewport's bottom (observed 332.25 vs 308.5) even though
-    // visibleBodyHeight subtracts the 10px custom horizontal scrollbar
-    // overlay. The 24px overshoot matches neither headerH nor the 10px
-    // scrollbar height, so the gap is most likely a row-height or
-    // viewport-clientHeight delta on Windows Chromium/Electron that the
-    // ensureActiveCellVisible math (DataViewer.js: rowBottom - bodyHeight)
-    // doesn't account for. The product fix in #17961 was developed on
-    // macOS with overlay scrollbars; Windows needs a follow-up to
-    // visibleBodyHeight (or the test's tolerance) once someone with a
-    // Windows box can repro and tune the subtraction.
-    test.fixme(os.platform() === 'win32' && !!process.env.CI, 'visibleBodyHeight undersubtracts on Windows -- see #17958 / #17961');
-
     // 500 rows forces vertical virtual scrolling; 30 columns force horizontal
     // overflow so a wrong jump-to-last-column would visibly move scrollLeft.
     await consoleActions.executeInConsole(

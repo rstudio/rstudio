@@ -928,6 +928,23 @@ void rInitComplete()
    module_context::events().onInitComplete();
 }
 
+// Set during startup when the initial working directory is too long for Windows to
+// launch child processes from (see #12806). The console isn't up yet at that point,
+// so the warning is held here and reported once the session is initialized -- the
+// failures it causes otherwise look entirely unrelated to their cause.
+std::string s_workingDirWarning;
+
+void notifyIfWorkingDirectoryTooLong()
+{
+   if (s_workingDirWarning.empty())
+      return;
+
+   console_output::writeLine(
+      console_output::OutputStreamStderr,
+      s_workingDirWarning,
+      console_output::OutputTypeWarning);
+}
+
 void notifyIfRVersionChanged()
 {
    using namespace rstudio::r::session::state;
@@ -963,6 +980,9 @@ void rSessionInitHook(bool newSession)
 
    // notify the user if the R version has changed
    notifyIfRVersionChanged();
+
+   // notify the user if the working directory is too long to launch children from
+   notifyIfWorkingDirectoryTooLong();
 
    // synchronize session info
    json::Object dataJson;
@@ -2619,6 +2639,35 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
 
       // set working directory
       FilePath workingDir = dirs::getInitialWorkingDirectory();
+
+#ifdef _WIN32
+      // Long path awareness (see the longPathAware entry in rsession.exe.manifest)
+      // does not extend to the current directory: per the SetCurrentDirectory docs,
+      // "Setting a current directory longer than MAX_PATH causes CreateProcessW to
+      // fail", which would take out git, terminals, builds and R CMD. Before we
+      // declared long path awareness this call simply failed; now it succeeds and the
+      // damage shows up later with no obvious cause, so say so up front. See #12806.
+      //
+      // Measure in UTF-16 units, which is what MAX_PATH counts and what the wide APIs
+      // are bounded by. getAbsolutePath() is UTF-8 bytes, so measuring it would inflate
+      // any non-Latin path (3x for CJK, 2x for Cyrillic) and warn about a directory that
+      // is perfectly fine -- and this warning goes to the console on every session start.
+      size_t workingDirLength = workingDir.getAbsolutePathW().length();
+      if (workingDirLength >= MAX_PATH)
+      {
+         s_workingDirWarning =
+            "Working directory is " +
+            safe_convert::numberToString(workingDirLength) +
+            " characters, which exceeds the Windows limit of " +
+            safe_convert::numberToString(MAX_PATH) + " for a process working "
+            "directory; launching child processes (Git, terminals, builds) will "
+            "fail. Move the project to a shorter path. Path: " +
+            workingDir.getAbsolutePath();
+
+         LOG_WARNING_MESSAGE(s_workingDirWarning);
+      }
+#endif
+
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);

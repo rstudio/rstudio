@@ -1,0 +1,4 @@
+{
+  "//": "Scopes ESM to tasks/ only. Without this, node would have to reparse each task as an ES module (with a warning), and adding \"type\": \"module\" to the repo-root package.json would instead reinterpret every stray .js file in the tree that has no nearer package.json.",
+  "type": "module"
+}

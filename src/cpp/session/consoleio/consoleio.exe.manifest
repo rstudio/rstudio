@@ -4,6 +4,18 @@
       name="consoleio"
       type="win32"/>
    <description>consoleio</description>
+   <!--
+      Declared for consistency with the other executables we ship. This process
+      is currently all ANSI (narrow argv, CreateProcess and CreateFile), and the
+      ANSI entry points keep the MAX_PATH limit regardless, so nothing changes
+      here today; the declaration is what makes it take effect if this code is
+      ever widened.
+   -->
+   <application>
+      <windowsSettings>
+         <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+      </windowsSettings>
+   </application>
    <!-- Identify the application security requirements. -->
    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
       <security>

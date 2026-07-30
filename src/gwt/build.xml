@@ -126,6 +126,15 @@
    <!-- Configure code server -->
    <property name="bind.address" value="127.0.0.1"/>
 
+   <!-- Ports used by the devmode/desktop code server. The defaults reproduce
+        GWT's own: 9876 is what SuperDevListener picks when -codeServerPort is
+        left unset, and 8787 is rserver's default www-port. Overriding them
+        (see tasks/rserver-dev.ts) lets several checkouts run a dev server
+        concurrently: the code server port is baked into the bootstrap
+        written to ${www.dir}, so each one needs its own. -->
+   <property name="codeserver.port" value="9876"/>
+   <property name="server.port" value="8787"/>
+
    <!-- Task for compiling JavaScript support sources -->
    <taskdef name="jscomp"
             classname="com.google.javascript.jscomp.ant.CompileTask"
@@ -431,8 +440,10 @@
          <arg value="-war"/>
          <arg value="${www.dir}"/>
          <arg value="-noserver"/>
+         <arg value="-codeServerPort"/>
+         <arg value="${codeserver.port}"/>
          <arg value="-startupUrl"/>
-         <arg value="http://localhost:8787"/>
+         <arg value="http://localhost:${server.port}"/>
          <arg line="-bindAddress ${bind.address}"/>
          <arg value="-generateJsInteropExports"/>
          <arg value="${gwt.main.module}"/>

@@ -77,10 +77,41 @@ std::string shortPathName(const std::string& path)
 
    std::vector<WCHAR> buffer(length, 0);
    DWORD result = ::GetShortPathNameW(widePath.c_str(), &buffer[0], length);
-   if (result == 0)
+
+   // a result at or above the size we asked for means the path grew between the two
+   // calls and the buffer wasn't filled, so there's nothing to return
+   if (result == 0 || result >= length)
       return path;
 
-   return string_utils::wideToUtf8(std::wstring(&buffer[0]));
+   return string_utils::wideToUtf8(std::wstring(&buffer[0], result));
+
+#else
+   return path;
+#endif
+
+}
+
+// NOTE: Assumes that the path string is UTF-8 encoded.
+std::string longPathName(const std::string& path)
+{
+#ifdef _WIN32
+
+   // size the buffer from the API rather than assuming MAX_PATH
+   std::wstring widePath = string_utils::utf8ToWide(path);
+   DWORD length = ::GetLongPathNameW(widePath.c_str(), nullptr, 0);
+   if (length == 0)
+      return path;
+
+   std::vector<WCHAR> buffer(length, 0);
+   DWORD result = ::GetLongPathNameW(widePath.c_str(), &buffer[0], length);
+
+   // a result at or above the size we asked for means the buffer was too small (the
+   // path grew between the two calls), so it holds nothing we can use -- which is
+   // indistinguishable from success if only a non-zero return is tested
+   if (result == 0 || result >= length)
+      return path;
+
+   return string_utils::wideToUtf8(std::wstring(&buffer[0], result));
 
 #else
    return path;

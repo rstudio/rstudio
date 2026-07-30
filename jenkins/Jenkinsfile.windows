@@ -106,8 +106,8 @@ pipeline {
         SM_HOST = credentials('SM_HOST_2026')
         SM_API_KEY = credentials('SM_API_KEY_2026')
         SM_CLIENT_CERT_PASSWORD = credentials('SM_CLIENT_CERT_PASSWORD_2026')
-        SM_CLIENT_CERT_B64 = credentials('SM_CLIENT_CERT_FILE_B64_2026')
-        KEYPAIR_ALIAS = credentials('SM_KEYPAIR_2026')
+        SM_CLIENT_CERT_B64 = credentials('SM_CLIENT_CERT_FILE_2026')
+        KEYPAIR_ALIAS = credentials('SM_KEYPAIR_ALIAS_2026')
       }
       agent {
         docker {
@@ -139,8 +139,9 @@ pipeline {
             // moment of signing, so catch it before the build instead
             bat 'if not "%SM_HOST%"=="https://clientauth.one.digicert.com" (echo SM_HOST must be the clientauth mTLS host; check the SM_HOST_2026 credential & exit /b 1)'
             powershell '''
+              if (Test-Path -LiteralPath $env:SM_CLIENT_CERT_B64) { throw 'SM_CLIENT_CERT_FILE_2026 is a secret file credential (its value is a file path); bind it directly to SM_CLIENT_CERT_FILE instead of base64-decoding it' }
               $bytes = [Convert]::FromBase64String($env:SM_CLIENT_CERT_B64)
-              if ($bytes.Length -eq 0) { throw 'SM_CLIENT_CERT_FILE_B64_2026 decoded to zero bytes; the credential value is empty or whitespace' }
+              if ($bytes.Length -eq 0) { throw 'SM_CLIENT_CERT_FILE_2026 decoded to zero bytes; the credential value is empty or whitespace' }
               [IO.File]::WriteAllBytes("$env:WORKSPACE\\sm_client_cert.p12", $bytes)
             '''
             script {
