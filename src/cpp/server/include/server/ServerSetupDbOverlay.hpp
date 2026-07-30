@@ -29,7 +29,15 @@ namespace server {
 // Grouping the two flags in a struct rather than passing them as adjacent
 // bools is deliberate: parameter names are not part of a C++ signature, so a
 // transposed pair of bools would link cleanly and silently invert both
-// behaviors.
+// behaviors. Assign the fields by name for the same reason -- positional
+// aggregate initialization such as SetupDbOverlayFlags{true, false} is still
+// order-dependent and reintroduces exactly that hazard.
+//
+// What an overlay must actually DO with these flags -- and the rest of the
+// hook's contract, including the requirement to write a [FAIL] line before
+// reporting failure -- is documented on the overlay::setupDb declaration in
+// ServerMain.cpp. That declaration is the single source of truth; this header
+// only defines the data it carries.
 struct SetupDbOverlayFlags
 {
    bool showPassword = false;   // --setup-db-show-password

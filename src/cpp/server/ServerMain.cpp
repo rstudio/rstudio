@@ -64,6 +64,7 @@
 #include <server/ServerScheduler.hpp>
 #include <server/ServerProcessSupervisor.hpp>
 #include <server/ServerPaths.hpp>
+#include <server/ServerSetupDbOverlay.hpp>
 
 #include <server/session/ServerSessionProxy.hpp>
 #include <server/session/ServerSessionManager.hpp>
@@ -84,8 +85,6 @@
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
-#include <server/ServerSetupDbOverlay.hpp>
-
 #include "ServerSetupDb.hpp"
 #include "ServerXdgVars.hpp"
 #include "ServerLogVars.hpp"
@@ -134,11 +133,11 @@ Error checkConfig(const Options& options, std::ostream& out, bool* pPassed);
 // either way, then printOnly redirects the resulting credentials to a
 // standalone file instead of database.conf, and showPassword echoes the
 // generated password to out. The base only consults them on the run that
-// actually created the service user -- createDatabaseAndUser()'s
-// pUserCreated, a narrower gate than "no password was generated" -- since
-// that is the only case in which it holds a password really applied to the
-// role. An overlay provisioning its own database needs to mirror that rather
-// than treat either flag as an unconditional switch.
+// actually created the service user -- gate on createDatabaseAndUser()'s
+// pUserCreated rather than on having decided to generate a password, since
+// that decision precedes the CREATE USER attempt while pUserCreated confirms
+// it succeeded. An overlay provisioning its own database needs to mirror that
+// rather than treat either flag as an unconditional switch.
 //
 // Everything else an overlay needs is in masterConnectionOptions, which holds
 // the resolved values actually used to connect, unlike the raw --setup-db-host
@@ -898,6 +897,13 @@ int main(int argc, char * const argv[])
             std::cout << "[FAIL] overlay setup-db: " << overlayError.getSummary() << std::endl;
             return core::system::exitFailure(overlayError, ERROR_LOCATION);
          }
+
+         // Overlays are expected to explain their own failures, but this repo
+         // cannot verify that a downstream implementation does. Without this
+         // the admin would get a run of [PASS] lines and a bare exit 1, since
+         // nothing on this path is logged either.
+         if (!overlayPassed)
+            std::cout << "[FAIL] overlay setup-db reported failure" << std::endl;
 
          return (passed && overlayPassed) ? EXIT_SUCCESS : EXIT_FAILURE;
       }
