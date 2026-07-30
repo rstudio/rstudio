@@ -1271,8 +1271,12 @@ void proxyLocalhostRequest(
    }
    pRequest->setHost(http::URL::formatHostPort(address, port));
 
+   boost::shared_ptr<server_core::http::LocalhostAsyncClient> pLocalhost(
+      new server_core::http::LocalhostAsyncClient(ptrConnection->ioContext(), address, port));
+
    // resolve the requesting user's uid so LocalhostAsyncClient can verify the
-   // destination port is actually owned by them before proxying (rstudio-pro#11470).
+   // destination port is actually owned by them before proxying (rstudio-pro#11470),
+   // unless the admin has disabled this via www-proxy-localhost-verify-port-owner.
    //
    // Unlike the local-stream uid validation above (which validates a target that is
    // already scoped to context.username by construction -- the stream path is derived
@@ -1284,17 +1288,18 @@ void proxyLocalhostRequest(
    // (permission_denied) -- a leftover-cache/NSS-lookup failure or a not-yet-provisioned
    // account must not silently disable ownership enforcement for a request whose
    // destination the caller fully controls.
-   boost::shared_ptr<server_core::http::LocalhostAsyncClient> pLocalhost(
-      new server_core::http::LocalhostAsyncClient(ptrConnection->ioContext(), address, port));
-   UidType uid;
-   Error userError = userIdForUsername(context.username, &uid);
-   if (userError)
+   if (server::options().wwwProxyLocalhostVerifyPortOwner())
    {
-      LOG_ERROR(userError);
-      ptrConnection->response().setNotFoundError(*pRequest);
-      return;
+      UidType uid;
+      Error userError = userIdForUsername(context.username, &uid);
+      if (userError)
+      {
+         LOG_ERROR(userError);
+         ptrConnection->response().setNotFoundError(*pRequest);
+         return;
+      }
+      pLocalhost->setExpectedPeerUid(uid);
    }
-   pLocalhost->setExpectedPeerUid(uid);
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient = pLocalhost;
