@@ -24,6 +24,7 @@
 
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
 #include <core/text/AnsiCodeParser.hpp>
 
@@ -74,6 +75,21 @@ void ConsoleActions::setCapacity(int capacity)
    END_LOCK_MUTEX
 }
 
+void ConsoleActions::pushAction(int type, std::string data)
+{
+   // NOTE: helper method assumes mutex is already locked
+
+   // ensure the action data is valid UTF-8, as console actions are
+   // round-tripped through JSON when session state is suspended and
+   // resumed, and the JSON parser rejects invalid UTF-8 on restore
+   string_utils::utf8Clean(data.begin(), data.end(), '?');
+
+   ConsoleAction action;
+   action.type = type;
+   action.data = std::move(data);
+   actions_.push_back(action);
+}
+
 void ConsoleActions::flush()
 {
    // NOTE: helper method assumes mutex is already locked
@@ -83,26 +99,22 @@ void ConsoleActions::flush()
    std::size_t rhs = buffer_.data.find('\n');
    while (rhs != std::string::npos)
    {
-      // consume this line of data in chunks
-      for (; lhs + kChunkSize < rhs; lhs += kChunkSize)
+      // consume this line of data in chunks, taking care not to
+      // split multi-byte UTF-8 sequences across chunk boundaries
+      while (lhs + kChunkSize < rhs)
       {
-         // consume a chunk of data
-         ConsoleAction action;
-         action.type = buffer_.type;
-         action.data = buffer_.data.substr(lhs, kChunkSize);
-         actions_.push_back(action);
+         std::string data = buffer_.data.substr(lhs, kChunkSize);
+         data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
+
+         lhs += data.size();
+         pushAction(buffer_.type, std::move(data));
       }
 
       // consume any remaining data on this line
       // (include the newline character)
       if (lhs <= rhs)
-      {
-         ConsoleAction action;
-         action.type = buffer_.type;
-         action.data = buffer_.data.substr(lhs, rhs - lhs + 1);
-         actions_.push_back(action);
-      }
-      
+         pushAction(buffer_.type, buffer_.data.substr(lhs, rhs - lhs + 1));
+
       // advance to next line
       lhs = rhs + 1;
       rhs = buffer_.data.find('\n', lhs);
@@ -110,12 +122,7 @@ void ConsoleActions::flush()
 
    // push any remaining partial line
    if (lhs < buffer_.data.size())
-   {
-      ConsoleAction action;
-      action.type = buffer_.type;
-      action.data = buffer_.data.substr(lhs);
-      actions_.push_back(action);
-   }
+      pushAction(buffer_.type, buffer_.data.substr(lhs));
 
    // clear buffer to finish
    buffer_.data.clear();
@@ -228,34 +235,50 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
       if (contents.empty())
          return Success();
       
-      // parse JSON
+      // parse JSON; note that console actions saved by older versions of
+      // RStudio could contain invalid UTF-8, which the JSON parser rejects.
+      // console actions are merely a replay of prior console output, so
+      // treat unusable files as empty rather than failing session restore
       json::Object value;
       error = value.parse(contents);
       if (error)
-         return error;
-      
+      {
+         WLOGF("Discarding unparseable console actions file '{}': {}",
+               filePath.getAbsolutePath(),
+               error.getSummary());
+         return Success();
+      }
+
       // read type + data fields
       json::Value typeJson = value.getObject()[kActionType];
-      if (!typeJson.isArray())
-         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      
       json::Value dataJson = value.getObject()[kActionData];
-      if (!dataJson.isArray())
-         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      
+      if (!typeJson.isArray() || !dataJson.isArray())
+      {
+         WLOGF("Discarding malformed console actions file '{}'",
+               filePath.getAbsolutePath());
+         return Success();
+      }
+
       json::Array typeArray = typeJson.getArray();
       json::Array dataArray = dataJson.getArray();
       if (typeArray.getSize() != dataArray.getSize())
-         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      
+      {
+         WLOGF("Discarding malformed console actions file '{}'",
+               filePath.getAbsolutePath());
+         return Success();
+      }
+
       for (std::size_t i = 0, n = typeArray.getSize(); i < n; i++)
       {
+         if (!typeArray[i].isInt() || !dataArray[i].isString())
+            continue;
+
          ConsoleAction action;
          action.type = typeArray[i].getInt();
          action.data = dataArray[i].getString();
          actions_.push_back(action);
       }
-      
+
    }
    END_LOCK_MUTEX
    
