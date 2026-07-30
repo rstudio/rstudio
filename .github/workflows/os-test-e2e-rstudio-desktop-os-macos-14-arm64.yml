@@ -111,9 +111,12 @@ jobs:
   # the e2e job below, then uploads RStudio.app as an artifact for the e2e job
   # to consume. Skipped when build_from_source is false OR when an
   # rstudio_installer_url was supplied (a non-empty URL wins even if
-  # build_from_source is true); in either case the e2e job installs that .dmg
-  # instead. The scheduled rotation always takes that path, so this job runs
-  # only on a from-source dispatch.
+  # build_from_source is true); in either case the e2e job installs a .dmg
+  # instead -- the supplied rstudio_installer_url, or, when none was given,
+  # the latest daily it resolves itself (keeping its SHA-256 check). That
+  # second path is what every cron rotation run takes, since the rotation's
+  # resolve job emits empty URLs unless a specific version was requested, so
+  # this build job runs only on a from-source dispatch.
   build:
     if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
     # Bare "macos-14" is the free arm64 standard runner. Do NOT change this to
