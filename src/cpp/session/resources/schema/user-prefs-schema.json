@@ -1925,12 +1925,6 @@
             "description": "When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.",
             "fallback": "copilot_nes_autoshow"
         },
-        "assistant_show_messages": {
-            "type": "boolean",
-            "default": true,
-            "title": "Display account and billing messages from Posit Assistant",
-            "description": "When enabled, RStudio will show messages from the Posit Assistant in a message box."
-        },
         "assistant_toolbar_button_visible": {
             "type": "boolean",
             "default": true,

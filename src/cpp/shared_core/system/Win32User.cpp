@@ -64,49 +64,49 @@ FilePath environmentHomePath(std::string envVariables)
    return FilePath();
 }
 
-FilePath currentCSIDLPersonalHomePath()
+// Resolves a known folder. SHGetKnownFolderPath allocates its result, so unlike
+// the deprecated MAX_PATH-bound SHGetFolderPathW it imposes no path length limit;
+// in exchange the buffer has to be released with CoTaskMemFree.
+FilePath knownFolderHomePath(DWORD flags)
 {
-   // query for My Documents directory
-   const DWORD SHGFP_TYPE_CURRENT = 0;
-   wchar_t homePath[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPathW(nullptr,
-                                   CSIDL_PERSONAL,
-                                   nullptr,
-                                   SHGFP_TYPE_CURRENT,
-                                   homePath);
-   if (SUCCEEDED(hr))
+   wchar_t* homePath = nullptr;
+   HRESULT hr = ::SHGetKnownFolderPath(FOLDERID_Documents, flags, nullptr, &homePath);
+
+   if (FAILED(hr) || homePath == nullptr)
    {
-      return FilePath(homePath);
-   }
-   else
-   {
+      if (homePath != nullptr)
+         ::CoTaskMemFree(homePath);
+
       log::logWarningMessage("Unable to retrieve user home path. HRESULT:  " +
                           safe_convert::numberToHexString(hr));
       return FilePath();
    }
+
+   // NOTE: copy before freeing; also keep the wstring in its own variable, since
+   // FilePath result(std::wstring(homePath)) would parse as a function declaration
+   std::wstring resultPath(homePath);
+   ::CoTaskMemFree(homePath);
+
+   return FilePath(resultPath);
+}
+
+FilePath currentCSIDLPersonalHomePath()
+{
+   // Query for My Documents directory.
+   //
+   // KF_FLAG_DONT_VERIFY matches the SHGetFolderPathW(SHGFP_TYPE_CURRENT) call this
+   // replaces, which returned the registered path without checking that it exists.
+   // Without the flag SHGetKnownFolderPath verifies existence and fails, which turns
+   // the "Documents does not exist" case from a silent miss (getUserHomePath just
+   // moves on to the next source) into a logged failure.
+   return knownFolderHomePath(KF_FLAG_DONT_VERIFY);
 }
 
 FilePath defaultCSIDLPersonalHomePath()
 {
    // query for default and force creation (works around situations
    // where redirected path is not available)
-   const DWORD SHGFP_TYPE_DEFAULT = 1;
-   wchar_t homePath[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPathW(nullptr,
-                                   CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
-                                   nullptr,
-                                   SHGFP_TYPE_DEFAULT,
-                                   homePath);
-   if (SUCCEEDED(hr))
-   {
-      return FilePath(homePath);
-   }
-   else
-   {
-      log::logWarningMessage("Unable to retrieve user home path. HRESULT:  " +
-                          safe_convert::numberToHexString(hr));
-      return FilePath();
-   }
+   return knownFolderHomePath(KF_FLAG_DEFAULT_PATH | KF_FLAG_CREATE);
 }
 
 FilePath homepathHomePath()

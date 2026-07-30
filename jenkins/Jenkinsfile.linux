@@ -219,7 +219,7 @@ pipeline {
                 steps {
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./scripts/upload-debug-symbols ${FLAVOR} ${ext_map[env.OS].toUpperCase()} ${ARCH}"
+                      sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./scripts/upload-debug-symbols ${PRODUCT} ${FLAVOR} ${ext_map[env.OS].toUpperCase()} ${env.OS} ${ARCH}"
                     }
                   }
                 }

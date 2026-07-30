@@ -19,6 +19,7 @@
 // the fix -- pre-fix this host defaulted show_summary to true and the sidebar
 // was expanded.
 
+import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { COMPLETION_POPUP } from '@actions/autocomplete.actions';
@@ -28,6 +29,18 @@ import { TIMEOUTS } from '@utils/constants';
 // is unambiguously the help-popup preview.
 const GRID_FRAME = 'iframe[src*="grid_resource/gridviewer.html"]';
 const LIST_NAME = 'list_17735_preview';
+
+// Automation-only override: force the completion popup to render even when a
+// request returns a single result. The list under test has one member (`df`),
+// so completing `<list>$` yields exactly one completion; RCompletionManager
+// auto-accepts a lone result without ever showing the popup, which the
+// Ctrl+Space fallback below would otherwise trigger. Mirrors the convention in
+// autocomplete.actions.ts; no-op on builds that predate the knob.
+async function setAlwaysShowCompletionPopup(page: Page, force: boolean): Promise<void> {
+  await page.evaluate((f) => {
+    window.rstudio?.completions?.setAlwaysShowPopup(f);
+  }, force);
+}
 
 test.describe('Help popup data preview - #17735', () => {
   let consoleActions: ConsolePaneActions;
@@ -50,29 +63,37 @@ test.describe('Help popup data preview - #17735', () => {
     // to the DATAFRAME help path (getHelpDataFrame) that embeds the preview.
     await consoleActions.executeInConsole(`${LIST_NAME} <- list(df = head(mtcars))`, { wait: true });
 
-    // Type up to the `$` and trigger member completion. The selected member's
-    // help (the data preview) renders alongside the completion popup.
-    await consoleActions.typeInConsole(`${LIST_NAME}$`);
-    if (!(await page.locator(COMPLETION_POPUP).isVisible())) {
-      await page.keyboard.press('Control+Space');
+    // Force the popup so the lone `df` completion is listed instead of being
+    // auto-accepted by the Ctrl+Space fallback below (see the helper comment).
+    // Set before typing so the `$` auto-trigger is covered too.
+    await setAlwaysShowCompletionPopup(page, true);
+    try {
+      // Type up to the `$` and trigger member completion. The selected member's
+      // help (the data preview) renders alongside the completion popup.
+      await consoleActions.typeInConsole(`${LIST_NAME}$`);
+      if (!(await page.locator(COMPLETION_POPUP).isVisible())) {
+        await page.keyboard.press('Control+Space');
+      }
+      await expect(page.locator(COMPLETION_POPUP)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // The preview iframe is the shared grid viewer in server mode (env/obj).
+      const previewFrame = page.frameLocator(GRID_FRAME);
+
+      // Wait for the grid to bootstrap (first data column header). initSidebar
+      // runs during bootstrap, so the sidebar's collapsed/expanded state is
+      // settled once the header is visible.
+      await expect(previewFrame.locator('th[data-col-idx="1"]'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+      // The fix: the summary sidebar is collapsed in this host.
+      await expect(previewFrame.locator('#sidebarPanel')).not.toHaveClass(/\bexpanded\b/);
+      await expect(previewFrame.locator('#sidebarToggle')).toHaveAttribute('aria-expanded', 'false');
+
+      // Dismiss the completion + help popups.
+      await page.keyboard.press('Escape');
+      await page.keyboard.press('Escape');
+    } finally {
+      await setAlwaysShowCompletionPopup(page, false);
     }
-    await expect(page.locator(COMPLETION_POPUP)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
-
-    // The preview iframe is the shared grid viewer in server mode (env/obj).
-    const previewFrame = page.frameLocator(GRID_FRAME);
-
-    // Wait for the grid to bootstrap (first data column header). initSidebar
-    // runs during bootstrap, so the sidebar's collapsed/expanded state is
-    // settled once the header is visible.
-    await expect(previewFrame.locator('th[data-col-idx="1"]'))
-      .toBeVisible({ timeout: TIMEOUTS.fileOpen });
-
-    // The fix: the summary sidebar is collapsed in this host.
-    await expect(previewFrame.locator('#sidebarPanel')).not.toHaveClass(/\bexpanded\b/);
-    await expect(previewFrame.locator('#sidebarToggle')).toHaveAttribute('aria-expanded', 'false');
-
-    // Dismiss the completion + help popups.
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
   });
 });

@@ -54,3 +54,11 @@ CDP context.
   import { setPref } from '@utils/commands';
   await setPref(page, 'chat_provider', 'posit');
   ```
+
+- **Assistant UI labels drift.** The chat UI ships from the assistant repo and
+  its labels change independently of this repo's tests. Match old and new
+  labels with a role-based regex instead of exact text or XPath:
+
+  ```typescript
+  frame.getByRole('menuitem', { name: /Configure (LLM providers|Posit AI)/i });
+  ```

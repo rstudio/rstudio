@@ -28,6 +28,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Hash.hpp>
+#include <shared_core/Memory.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
@@ -872,14 +873,19 @@ namespace {
 
 typedef std::vector<boost::shared_ptr<ScheduledCommand> >
                                                       ScheduledCommands;
-ScheduledCommands s_scheduledCommands;
-ScheduledCommands s_idleScheduledCommands;
+
+// the scheduled-command lists and their mutex are reached from background
+// threads (via executeOnMainThread and friends), so they are intentionally
+// leaked: rsession exits through ::exit() (or exit() within libR), which
+// runs static destructors, and a background thread that unblocks during
+// teardown must not find them destroyed (#18318)
+ScheduledCommands& s_scheduledCommands = make_leaked<ScheduledCommands>();
+ScheduledCommands& s_idleScheduledCommands = make_leaked<ScheduledCommands>();
 
 // guards the scheduled command lists: commands are scheduled from background
-// threads (via executeOnMainThread and friends) while the main thread
-// executes them. command execution itself always happens on the main thread,
-// outside the mutex.
-boost::mutex s_scheduledCommandsMutex;
+// threads while the main thread executes them. command execution itself
+// always happens on the main thread, outside the mutex.
+boost::mutex& s_scheduledCommandsMutex = make_leaked<boost::mutex>();
 
 void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCommand,
                          bool idleOnly)

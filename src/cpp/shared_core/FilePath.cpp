@@ -29,6 +29,10 @@
 #ifdef _WIN32
 #include <windows.h>
 
+#include <atomic>
+#include <iomanip>
+#include <sstream>
+
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/system/windows_error.hpp>
@@ -1517,22 +1521,121 @@ Error FilePath::isWriteable(bool &out_writeable) const
    // on other filesystems such as FAT32; ditto for some networked file systems.
    //
    // Instead, to cover all bases, try to create and delete a temporary file in the folder.
+   //
+   // NOTE: we name the probe file ourselves rather than calling GetTempFileNameW, whose
+   // lpPathName is documented to fail above MAX_PATH-14 (246) characters, so it reported
+   // any deeper folder as read-only. The probe name is deliberately kept to 11 characters
+   // -- the same length GetTempFileNameW generated ("TMP" + 4 hex + ".tmp") -- so that when
+   // MAX_PATH is still in force the folder limit is 247 rather than a shorter one.
 
-   LPCWSTR folder = m_impl->Path.wstring().c_str();
+   static std::atomic<unsigned int> s_probeCounter(0);
 
-   // create a unique temporary filename
-   WCHAR tempFileName[MAX_PATH+1];
-   UINT uRetVal = GetTempFileNameW(folder, L"TMP", 0, tempFileName);
-   if (uRetVal == 0) {
-      // assume any failure means "not writeable"
+   std::wstring folder = m_impl->Path.wstring();
+   if (folder.empty())
+   {
       out_writeable = false;
       return Success();
    }
 
-   out_writeable = true;
-   DeleteFileW(tempFileName);
+   if (folder.back() != L'\\' && folder.back() != L'/')
+      folder.push_back(L'\\');
 
-   return Success();
+   // Mix the pid into the name so concurrent sessions rarely collide; a collision is
+   // still correct, since CREATE_NEW detects it and we retry with a fresh name.
+   unsigned int probeId = ::GetCurrentProcessId();
+
+   bool requestDelete = true;
+   DWORD lastError = ERROR_SUCCESS;
+
+   for (int i = 0; i < 10; i++)
+   {
+      std::wostringstream probeStream;
+      probeStream << folder
+                  << L"rs-"
+                  << std::hex << std::setw(4) << std::setfill(L'0')
+                  << ((probeId + s_probeCounter++) & 0xFFFF)
+                  << L".tmp";
+
+      std::wstring probePath = probeStream.str();
+
+      // FILE_FLAG_DELETE_ON_CLOSE saves us a separate DeleteFileW, and still cleans up
+      // if we're killed between creating the file and closing the handle
+      DWORD access = requestDelete ? (GENERIC_WRITE | DELETE) : GENERIC_WRITE;
+      DWORD flags = requestDelete
+         ? (FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE)
+         : FILE_ATTRIBUTE_TEMPORARY;
+
+      HANDLE hFile = ::CreateFileW(probePath.c_str(),
+                                   access,
+                                   0,
+                                   nullptr,
+                                   CREATE_NEW,
+                                   flags,
+                                   nullptr);
+
+      if (hFile != INVALID_HANDLE_VALUE)
+      {
+         ::CloseHandle(hFile);
+
+         if (!requestDelete && !::DeleteFileW(probePath.c_str()))
+         {
+            // Expected on the folder shape that got us here (see below); log at debug so
+            // the litter is discoverable without making a warning out of a known cost.
+            Error error = systemError(::GetLastError(), ERROR_LOCATION);
+            error.addProperty("path", getAbsolutePath());
+            log::logErrorAsDebug(error);
+         }
+
+         out_writeable = true;
+         return Success();
+      }
+
+      lastError = ::GetLastError();
+
+      // A folder can grant create-but-not-delete, via an inheritable ACE that denies
+      // DELETE on its children; some locked-down shares are configured exactly that
+      // way. Give up the DELETE right once and retry before calling such a folder
+      // read-only.
+      //
+      // The explicit cleanup above generally cannot succeed on such a folder, since
+      // DeleteFileW needs the very right that was denied. We answer the question
+      // correctly at the cost of one stray probe file per call on those folders --
+      // accepted deliberately, because the alternative is reporting a writeable
+      // folder as read-only.
+      if (lastError == ERROR_ACCESS_DENIED && requestDelete)
+      {
+         requestDelete = false;
+         continue;
+      }
+
+      if (lastError != ERROR_FILE_EXISTS)
+         break;
+   }
+
+   // Only a genuine permission answer sets out_writeable; anything else (a disconnected
+   // network drive, a full disk, a missing path, or exhausting our retries) is a failure
+   // to determine writeability, which the contract says to report as an error.
+   if (lastError == ERROR_ACCESS_DENIED || lastError == ERROR_WRITE_PROTECT)
+   {
+      out_writeable = false;
+      return Success();
+   }
+
+   // Still holding ERROR_FILE_EXISTS means every name we tried was taken. Reported
+   // verbatim that answers "is this folder writeable?" with "the file already exists",
+   // which reads as a non sequitur wherever it surfaces.
+   if (lastError == ERROR_FILE_EXISTS)
+   {
+      Error error = systemError(lastError,
+                                "Could not find an unused probe file name in this folder",
+                                ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
+   Error error = systemError(lastError, ERROR_LOCATION);
+   error.addProperty("path", getAbsolutePath());
+   return error;
 }
 
 #endif // _WIN32

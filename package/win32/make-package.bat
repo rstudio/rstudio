@@ -192,7 +192,8 @@ REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.t
 set PKG_TEMP_DIR=C:\rsbuild
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
-REM Configure the main build.
+REM Configure the main build. RSTUDIO_CMAKE_EXTRA_ARGS may hold additional
+REM -D definitions from the environment (used by CI; empty otherwise).
 call vcvarsall.bat amd64
 cmake -G Ninja ^
     -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
@@ -202,7 +203,7 @@ cmake -G Ninja ^
     -DRSTUDIO_PACKAGE_BUILD=1 ^
     -DLIBR_HOME=C:\R\R-3.6.3 ^
     -DGWT_BUILD=%BUILD_GWT% ^
-    %RSTUDIO_PROJECT_ROOT% || (
+    %RSTUDIO_CMAKE_EXTRA_ARGS% %RSTUDIO_PROJECT_ROOT% || (
         echo.!! ERROR: configure failed
         exit /b 1
     )

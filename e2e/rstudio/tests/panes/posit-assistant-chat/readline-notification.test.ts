@@ -10,7 +10,7 @@ import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 //   https://github.com/rstudio/rstudio/issues/17172
 //   https://github.com/rstudio/rstudio/issues/16957
 
-test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@serial'] }, () => {
+test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let chatPane: ChatPane;

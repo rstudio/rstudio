@@ -170,13 +170,15 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
 def optionalPublishToDailies(String packageFile, String destinationPath, String urlPath = '', String product = '') {
   // Define OS mappings for republishing compatible binaries
   def osRepublishMappings = [
-    'jammy': 'noble',  // Noble and Jammy use the same binaries
-    'rhel9': 'rhel10'  // RHEL 10 and RHEL 9 use the same binaries
+    'jammy': ['noble', 'resolute'],  // Noble and Resolute use the same binaries as Jammy
+    'rhel9': ['rhel10']              // RHEL 10 uses the same binaries as RHEL 9
   ]
-  
+
   def currentOs = env.OS
   if (osRepublishMappings.containsKey(currentOs)) {
-    republishForCompatibleOs(packageFile, destinationPath, urlPath, product, osRepublishMappings[currentOs])
+    osRepublishMappings[currentOs].each { targetOs ->
+      republishForCompatibleOs(packageFile, destinationPath, urlPath, product, targetOs)
+    }
   }
 }
 
@@ -212,7 +214,7 @@ def urlExists(String url) {
  * noarch -> all    on Debian
  */
 def getArchForOs(String os, String arch) {
-  def debianLikeOS = ["focal", "jammy", "noble"]
+  def debianLikeOS = ["focal", "jammy", "noble", "resolute"]
   def isDebianLike = debianLikeOS.contains(os)
 
   if ((arch == "noarch") && isDebianLike) {

@@ -23,6 +23,9 @@ type ProjectType = {
   wizardPageId: string;
   dirInputId: string;
   expectedFile: string | null;
+  // Extra budget for waitForSessionRestart, for types whose creation shells
+  // out to slow external tooling before the restart begins.
+  restartTimeout?: number;
 };
 
 const NEW_PROJECT: ProjectType = {
@@ -48,11 +51,18 @@ const SHINY_APP: ProjectType = {
   expectedFile: 'app.R',
 };
 
+// Quarto project creation shells out to `quarto create-project`, and the
+// session restart into the new project only begins once that process exits.
+// On a cold Windows CI runner the first quarto invocation has been observed
+// taking 70+ seconds (first-run scanning), so these types carry an extended
+// restart budget (the beforeAll pre-warm below usually pays that cost, this
+// is the backstop).
 const QUARTO_PROJECT: ProjectType = {
   name: 'quarto_project_test_project',
   wizardPageId: '#rstudio_label_quarto_project_wizard_page',
   dirInputId: '#rstudio_quarto_project_directory_name',
   expectedFile: 'quarto_project_test_project.qmd',
+  restartTimeout: TIMEOUTS.sessionRestart * 5,
 };
 
 const QUARTO_WEBSITE: ProjectType = {
@@ -60,6 +70,7 @@ const QUARTO_WEBSITE: ProjectType = {
   wizardPageId: '#rstudio_label_quarto_website_wizard_page',
   dirInputId: '#rstudio_quarto_website_directory_name',
   expectedFile: 'index.qmd',
+  restartTimeout: TIMEOUTS.sessionRestart * 5,
 };
 
 const ALL_TYPES = [NEW_PROJECT, R_PACKAGE, SHINY_APP, QUARTO_PROJECT, QUARTO_WEBSITE];
@@ -103,7 +114,10 @@ async function captureResult(page: Page, rExpression: string): Promise<string> {
   return match![1].trim();
 }
 
-async function waitForSessionRestart(page: Page): Promise<void> {
+async function waitForSessionRestart(
+  page: Page,
+  restartTimeout: number = TIMEOUTS.sessionRestart * 2,
+): Promise<void> {
   // Server navigates on project open/close; Desktop reloads in place, so
   // waitForLoadState never fires there -- intentional catch.
   await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
@@ -123,12 +137,14 @@ async function waitForSessionRestart(page: Page): Promise<void> {
   // attempt's inner waitForConsoleIdle (default sessionRestart timeout) could
   // consume the whole budget, leaving room for only a couple of retries.
   //
-  // 2x sessionRestart covers the full restart + workspace/search-path restore
-  // on a slow CI worker.
+  // The default 2x sessionRestart covers the full restart +
+  // workspace/search-path restore on a slow CI worker; project types that
+  // run slow external tooling before the restart begins pass a larger
+  // budget.
   await page.waitForFunction(
     () => window.rstudio?.ready === true,
     null,
-    { timeout: TIMEOUTS.sessionRestart * 2, polling: 100 },
+    { timeout: restartTimeout, polling: 100 },
   );
 
   // ready=true means GWT's workbench is wired up, but the console input may
@@ -155,7 +171,11 @@ async function openNewProjectWizard(page: Page): Promise<void> {
   await expect(item).toBeVisible({ timeout: 5000 });
   await item.click();
 
-  await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 15000 });
+  // The wizard shows only after the get_new_project_context RPC returns,
+  // and that call probes the build toolchain (canBuildCpp/packrat); on a
+  // cold Windows CI runner it has been observed taking ~57s, so give it a
+  // generous budget.
+  await expect(page.locator(WIZARD_DIALOG)).toBeVisible({ timeout: 90000 });
 }
 
 async function createProjectInNewDir(
@@ -220,7 +240,7 @@ async function createProjectInNewDir(
   // likely failed validation (e.g. invalid R package name).
   await expect(page.locator(WIZARD_DIALOG)).not.toBeVisible({ timeout: 15000 });
 
-  await waitForSessionRestart(page);
+  await waitForSessionRestart(page, type.restartTimeout);
 
   // R Package creation may prompt to install build-tools (devtools/roxygen2).
   await installDepIfPrompted(page, 3000);
@@ -268,6 +288,10 @@ test.describe.serial('Create Projects in New Directory', () => {
   });
 
   test.beforeAll(async ({ rstudioPage: page }) => {
+    // The quarto pre-warm below can take over a minute on a cold CI runner;
+    // give the hook the headroom it needs.
+    test.setTimeout(300000);
+
     // Dismiss any leftover dialog from a prior failed run. Wait briefly after
     // each Escape for the overlay to detach -- a long wait per loop would
     // just waste time in the common no-dialog case.
@@ -298,6 +322,20 @@ test.describe.serial('Create Projects in New Directory', () => {
 
     const escaped = sandbox.dir.replace(/\\/g, '/');
     await setPref(page, 'default_project_location', escaped);
+
+    // Pre-warm quarto: the wizard's quarto pages block on quarto_capabilities
+    // and quarto project creation shells out to `quarto create-project`; the
+    // first quarto invocation on a cold Windows CI runner has been observed
+    // taking 70+ seconds (first-run scanning), which blows per-step timeouts
+    // mid-test. A throwaway --version run pays that cost here instead.
+    // Best-effort: quarto may legitimately be absent from a test host.
+    await executeInConsole(
+      page,
+      'invisible(try(suppressWarnings(' +
+        'system2("quarto", "--version", stdout = TRUE, stderr = TRUE)' +
+        '), silent = TRUE))',
+      { wait: true, timeout: 180000 },
+    );
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {

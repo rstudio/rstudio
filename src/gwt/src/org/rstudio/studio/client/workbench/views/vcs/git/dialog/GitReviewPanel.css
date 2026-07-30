@@ -4,10 +4,16 @@
 @external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
+@external rstudio-themes-dark;
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 @eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
 
 /** BEGIN SHARED BETWEEN HISTORY AND REVIEW PANELS **/
 
@@ -19,10 +25,6 @@
 }
 @sprite .splitPanelCommit .gwt-SplitLayoutPanel-HDragger {
    gwt-image: 'splitterTileH';
-}
-
-.whitebg {
-   background-color: white;
 }
 
 .toolbar {
@@ -88,6 +90,21 @@
    border-color: THEME_ALTERNATE_BORDER;
 }
 
+/* Dark theme (#9026). Only the chrome is styled here: the changelist and the
+   diff pane carry the ace_editor_theme class, so they take their colors from
+   the active editor theme like the Git pane does in the main window.
+
+   The panels and the toolbars share one background so the commit area reads
+   as part of the same surface; the split draggers keep the body background
+   (themeStyles.css) and remain visible as seams. */
+
+.rstudio-themes-dark .splitPanel,
+.rstudio-themes-dark .splitPanelCommit,
+.rstudio-themes-dark .toolbarWrapper {
+   background: THEME_DARKGREY_BACKGROUND;
+   color: #eee;
+}
+
 /** END SHARED BETWEEN HISTORY AND REVIEW PANELS **/
 
 
@@ -144,4 +161,38 @@
 
 .ignoreWhitespace label {
    margin-left: 4px;
+}
+
+/* Dark theme styling for the commit controls, matching the palette used by
+   theme-aware modal dialogs. */
+
+/* the message box is a well rather than a control, so it sits darker than
+   the surrounding panel instead of matching the buttons and selects */
+.rstudio-themes-dark .commitMessage {
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   color-scheme: dark;
+}
+
+.rstudio-themes-dark .toolbarWrapper select {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark .toolbarWrapper select option {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   color: #eee;
+}
+
+.rstudio-themes-dark .commitButton > table:first-child {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   box-shadow: none;
+}
+
+.rstudio-themes-dark .commitButton:active > table:first-child {
+   background: THEME_DARKGREY_INACTIVE;
 }

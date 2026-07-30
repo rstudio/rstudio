@@ -16,13 +16,18 @@
 #ifndef _WIN32
 
 #include <core/system/PosixSystem.hpp>
-#include <core/system/PosixGroup.hpp>
+
+#include <grp.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <grp.h>
+
+#include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
+
 #include <gtest/gtest.h>
+
+#include <core/system/PosixGroup.hpp>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
 
@@ -84,6 +89,34 @@ TEST(PosixTests, FindProgramFindsWhich)
    
    std::string resolvedPath = whichPath.getAbsolutePath();
    EXPECT_TRUE(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
+}
+
+TEST(PosixTests, FindProgramResolvesQualifiedNames)
+{
+   FilePath whichPath;
+   Error error = findProgramOnPath("which", &whichPath);
+   ASSERT_FALSE(error);
+
+   // an already-qualified name isn't a PATH search, but should still resolve. this
+   // used to report success while handing back the PATH entry directory, because the
+   // rooted name was passed to completeChildPath(), which rejects it. See #12806.
+   FilePath qualified;
+   error = findProgramOnPath(whichPath.getAbsolutePath(), &qualified);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(qualified == whichPath);
+
+   // a qualified name that doesn't exist has to fail
+   EXPECT_TRUE(findProgramOnPath(whichPath.getAbsolutePath() + "-nope", &qualified));
+
+   // ...as does a directory, or a file that isn't executable
+   EXPECT_TRUE(findProgramOnPath("/usr/bin", &qualified));
+   EXPECT_TRUE(findProgramOnPath("/etc/hosts", &qualified));
+}
+
+TEST(PosixTests, FindProgramRejectsEmptyName)
+{
+   FilePath programPath;
+   EXPECT_TRUE(findProgramOnPath("", &programPath));
 }
 
 TEST(PosixTests, NoSubprocessesViaPgrep)
@@ -430,6 +463,8 @@ TEST(PosixTests, WorkingDirProcFs)
    }
 }
 
+#endif // !__APPLE__
+
 TEST(PosixTests, ResolveBindAddressPassesThroughSpecificAddresses)
 {
    EXPECT_EQ(resolveBindAddress("127.0.0.1"), std::string("127.0.0.1"));
@@ -440,14 +475,24 @@ TEST(PosixTests, ResolveBindAddressPassesThroughSpecificAddresses)
 
 TEST(PosixTests, ResolveBindAddressHandlesIpv4Wildcard)
 {
-   std::string result = resolveBindAddress("0.0.0.0");
-   EXPECT_TRUE(result == "0.0.0.0" || result == "::");
+   // resolution may pick either family depending on the host's interfaces,
+   // so just require some wildcard address back
+   boost::system::error_code ec;
+   boost::asio::ip::address addr =
+      boost::asio::ip::make_address(resolveBindAddress("0.0.0.0"), ec);
+
+   ASSERT_FALSE(ec);
+   EXPECT_TRUE(addr.is_unspecified());
 }
 
 TEST(PosixTests, ResolveBindAddressHandlesIpv6Wildcard)
 {
-   std::string result = resolveBindAddress("::");
-   EXPECT_TRUE(result == "::" || result == "0.0.0.0");
+   boost::system::error_code ec;
+   boost::asio::ip::address addr =
+      boost::asio::ip::make_address(resolveBindAddress("::"), ec);
+
+   ASSERT_FALSE(ec);
+   EXPECT_TRUE(addr.is_unspecified());
 }
 
 TEST(PosixTests, ResolveBindAddressPrefersIpv6WhenOnlyIpv6Available)
@@ -550,7 +595,28 @@ TEST(PosixTests, ResolveBindAddressFallsBackToIpv4WithoutIpv6)
    EXPECT_EQ(detail::resolveBindAddressForAddresses("::", addrs), std::string("0.0.0.0"));
 }
 
-#endif // !__APPLE__
+TEST(PosixTests, ResolveBindAddressPassesThroughHostNames)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("localhost", addrs), std::string("localhost"));
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("", addrs), std::string(""));
+}
+
+TEST(PosixTests, ResolveBindAddressTreatsAlternateWildcardSpellingsAsWildcard)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10")
+   };
+
+   // alternate spellings of the IPv6 wildcard resolve like "::" itself
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("::0", addrs), std::string("0.0.0.0"));
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0:0:0:0:0:0:0:0", addrs), std::string("0.0.0.0"));
+}
 
 // Test fixture for privilege tests with user and group handling
 class PosixTestsRequiresPrivilege : public rstudio::tests::fixtures::RequiresPrivilegeTestFixture

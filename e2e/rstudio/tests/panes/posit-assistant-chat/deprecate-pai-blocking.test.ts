@@ -58,7 +58,7 @@ const DEFAULT_CHECK_RESPONSE = {
 // Tests
 // ---------------------------------------------------------------------------
 
-test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '@serial'] }, () => {
+test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let consoleActions: ConsolePaneActions;

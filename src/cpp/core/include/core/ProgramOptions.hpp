@@ -116,37 +116,37 @@ bool detectCheckConfigMode(int argc, const char* const argv[]);
 // Returns true if --setup-db is present in argv.
 bool detectSetupDbMode(int argc, const char* const argv[]);
 
-// Returns true if --show-password is present in argv. Used by --setup-db.
+// Returns true if --setup-db-show-password is present in argv. Used by --setup-db.
 bool detectShowPassword(int argc, const char* const argv[]);
 
-// Returns true if --print-only is present in argv. Used by --setup-db.
+// Returns true if --setup-db-print-only is present in argv. Used by --setup-db.
 bool detectPrintOnly(int argc, const char* const argv[]);
 
-// Returns the value of --master-password-file <path> (or --master-password-file=<path>)
+// Returns the value of --setup-db-master-password-file <path> (or --setup-db-master-password-file=<path>)
 // if present in argv, or an empty string otherwise. Used by --setup-db.
 std::string extractMasterPasswordFile(int argc, const char* const argv[]);
 
-// Returns the value of --host <host> (or --host=<host>) if present in argv,
+// Returns the value of --setup-db-host <host> (or --setup-db-host=<host>) if present in argv,
 // or an empty string otherwise. Used by --setup-db to skip the interactive
 // PostgreSQL host prompt when supplied.
 std::string extractHost(int argc, const char* const argv[]);
 
-// Returns the value of --port <port> (or --port=<port>) if present in argv,
+// Returns the value of --setup-db-port <port> (or --setup-db-port=<port>) if present in argv,
 // or an empty string otherwise. Used by --setup-db to skip the interactive
 // PostgreSQL port prompt when supplied.
 std::string extractPort(int argc, const char* const argv[]);
 
-// Returns the value of --master-username <user> (or --master-username=<user>)
+// Returns the value of --setup-db-master-username <user> (or --setup-db-master-username=<user>)
 // if present in argv, or an empty string otherwise. Used by --setup-db to
 // skip the interactive master username prompt when supplied.
 std::string extractMasterUsername(int argc, const char* const argv[]);
 
-// Returns the value of --database-name <name> (or --database-name=<name>) if
+// Returns the value of --setup-db-database-name <name> (or --setup-db-database-name=<name>) if
 // present in argv, or an empty string otherwise. Used by --setup-db to skip
 // the interactive database name prompt when supplied.
 std::string extractDatabaseName(int argc, const char* const argv[]);
 
-// Returns the value of --database-user <user> (or --database-user=<user>) if
+// Returns the value of --setup-db-database-user <user> (or --setup-db-database-user=<user>) if
 // present in argv, or an empty string otherwise. Used by --setup-db to skip
 // the interactive database user prompt when supplied.
 std::string extractDatabaseUser(int argc, const char* const argv[]);

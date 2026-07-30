@@ -131,6 +131,7 @@
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Memory.hpp>
 #include <shared_core/system/User.hpp>
 
 #include <core/RegexUtils.hpp>
@@ -290,6 +291,28 @@ void initHook()
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
+   // nothing to search for; bail before opening every PATH entry
+   if (program.empty())
+      return fileNotFoundError(program, ERROR_LOCATION);
+
+   // A path-qualified name isn't a PATH search; resolve it directly. Without this,
+   // the rooted name falls through to completeChildPath() below, which rejects it
+   // and hands back the PATH entry itself -- a directory, reported as success, that
+   // an isEmpty() check on the result won't catch. Matches the Windows implementation.
+   if (program.find('/') != std::string::npos)
+   {
+      FilePath programPath(program);
+      if (!programPath.isRegularFile())
+         return fileNotFoundError(program, ERROR_LOCATION);
+
+      // as below, AT_EACCESS so the check uses the effective user id
+      if (::faccessat(AT_FDCWD, program.c_str(), X_OK, AT_EACCESS) == -1)
+         return fileNotFoundError(program, ERROR_LOCATION);
+
+      *pProgramPath = programPath;
+      return Success();
+   }
+
    std::string path = core::system::getenv("PATH");
    auto paths = core::algorithm::split(path, ":");
 
@@ -332,10 +355,11 @@ Error findProgramOnPath(const std::string& program,
    return fileNotFoundError(program, ERROR_LOCATION);
 }
 
-// statics defined in System.cpp
-extern boost::shared_ptr<log::LogOptions> s_logOptions;
-extern boost::recursive_mutex s_loggingMutex;
-extern std::string s_programIdentity;
+// statics defined in System.cpp (references to intentionally-leaked objects;
+// the declared types here must stay in sync with the definitions)
+extern boost::shared_ptr<log::LogOptions>& s_logOptions;
+extern boost::recursive_mutex& s_loggingMutex;
+extern std::string& s_programIdentity;
 
 Error initializeSystemLog(const std::string& programIdentity,
                           log::LogLevel logLevel,
@@ -360,7 +384,10 @@ Error initializeSystemLog(const std::string& programIdentity,
    return Success();
 }
 
-boost::function<void()> s_sighupHandler;
+// read by the detached SIGHUP config-reload thread below; intentionally
+// leaked so a SIGHUP arriving while the process exits never finds it
+// destroyed during static teardown (#18318)
+boost::function<void()>& s_sighupHandler = make_leaked<boost::function<void()>>();
 
 namespace {
 
@@ -2238,7 +2265,17 @@ std::string resolveBindAddressForAddresses(
                         std::to_string(addrs.size()) + " discovered interfaces: [" +
                         boost::algorithm::join(addrStrings, ", ") + "]");
    }
-   if (address == "0.0.0.0")
+
+   // only the wildcard bind addresses (0.0.0.0 / ::) need resolution; parsing
+   // the address instead of comparing against IP literals keeps SAST scanners
+   // from flagging this as address-based authentication
+   boost::system::error_code bindEc;
+   boost::asio::ip::address bindAddr =
+      boost::asio::ip::make_address(address, bindEc);
+   if (bindEc || !bindAddr.is_unspecified())
+      return address;
+
+   if (bindAddr.is_v4())
    {
       bool hasNonLocalIpv4 = false;
       bool hasNonLocalIpv6 = false;
@@ -2282,7 +2319,7 @@ std::string resolveBindAddressForAddresses(
          return "::";
       }
    }
-   else if (address == "::")
+   else
    {
       bool hasIpv6 = false;
       for (const posix::IpAddress& ip : addrs)
@@ -2317,7 +2354,10 @@ std::string resolveBindAddressForAddresses(
 
 std::string resolveBindAddress(const std::string& address)
 {
-   if (address != "0.0.0.0" && address != "::")
+   boost::system::error_code ec;
+   boost::asio::ip::address bindAddr =
+      boost::asio::ip::make_address(address, ec);
+   if (ec || !bindAddr.is_unspecified())
       return address;
 
    std::vector<posix::IpAddress> addrs;

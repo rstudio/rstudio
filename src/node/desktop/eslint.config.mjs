@@ -80,6 +80,10 @@ export default defineConfig([globalIgnores([
 
         "@/no-throw-literal": ["error"],
         "@typescript-eslint/no-unnecessary-condition": ["error"],
+
+        // detached method references lose their `this` and blow up when
+        // invoked, e.g. `.catch(logger().logError)` (rstudio#18391)
+        "@typescript-eslint/unbound-method": ["error"],
         "@typescript-eslint/promise-function-async": ["warn"],
         "@typescript-eslint/require-array-sort-compare": ["error"],
         "@typescript-eslint/return-await": ["warn"],
@@ -98,5 +102,13 @@ export default defineConfig([globalIgnores([
             allowNullableString: true,
             allowNullableNumber: true,
         }],
+    },
+}, {
+    // sinon assertions take stub method references (e.g.
+    // `sandbox.assert.calledOnce(stub.setSize)`), which trips unbound-method
+    files: ["test/**/*.ts"],
+
+    rules: {
+        "@typescript-eslint/unbound-method": "off",
     },
 }]);

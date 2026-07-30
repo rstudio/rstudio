@@ -33,13 +33,13 @@ On pre-1.61 Playwright, remove the override after upgrading to 1.61 or later.
 
 - **Desktop mode**: RStudio Desktop installed at the default path for your OS
 - **Server mode**: By default, an in-tree `rserver-dev` built at `build/src/cpp/server/rserver` (run `cmake --build build` first). To target an external server instead, set `PW_RSTUDIO_SERVER_URL`; credentials are needed only if that server presents a login form.
-- **Authentication**: Posit AI credentials are automated by the `setup` project (`tests/auth.setup.ts`), which auto-detects how to provision them: if `POSIT_EMAIL`/`POSIT_PASSWORD` are set it runs the OAuth sign-in flow, otherwise it copies the local Posit AI token store (sign in to Posit AI locally first). See Environment Variables. GitHub Copilot sign-in is not automated -- its credentials are copied from the local machine, so sign in to Copilot locally first. Tests missing either credential skip cleanly rather than fail.
+- **Authentication**: AI credentials are automated by the `setup` project (`tests/auth.setup.ts`), which auto-detects how to provision each provider: if the provider's credentials are set (`POSIT_EMAIL`/`POSIT_PASSWORD` for Posit AI, `COPILOT_USER`/`COPILOT_PASSWORD` for GitHub Copilot) it runs that provider's live sign-in flow, otherwise it copies the local credential store (sign in locally first). See Environment Variables. Tests missing a credential skip cleanly rather than fail.
 
 ## Running Tests
 
 ### Pick a mode
 
-The suite has two selectable Playwright projects: `desktop` (default) and `server`. Both depend on a third project, `setup`, which runs first to provision Posit AI credentials in the sandbox (see the Posit AI authentication section below). Each selectable project filters tests automatically by edition (via `PW_RSTUDIO_EDITION`, default `os`) and by OS -- `desktop` from the host's `os.platform()`, `server` always against Linux.
+The suite has two selectable Playwright projects: `desktop` (default) and `server`. Both depend on a third project, `setup`, which runs first to provision AI credentials (Posit AI and GitHub Copilot) in the sandbox (see the AI authentication section below). Each selectable project filters tests automatically by edition (via `PW_RSTUDIO_EDITION`, default `os`) and by OS -- `desktop` from the host's `os.platform()`, `server` always against Linux.
 
 ### Desktop Mode (Default)
 
@@ -78,6 +78,8 @@ PW_RSTUDIO_DEV=1 npx playwright test tests/panes/misc/autocomplete.test.ts
 ```
 
 Assumes the rest of the product (gwt, the C++ session, etc.) is already built such that `npm run start` in `src/node/desktop` would launch a working IDE. The CDP-wait deadline is extended to 3 minutes on this path to accommodate the first-run webpack compile; subsequent starts are faster. Tests that exercise the doRestart() flow (e.g. uninstall Posit Assistant) aren't fully supported in dev mode because the Electron relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
+
+**Running from a git worktree:** don't point `RSTUDIO_CPP_BUILD_OUTPUT` at the main checkout's `build/src/cpp` -- its `rdesktop-dev.conf` serves the main checkout's `src/gwt/www`, which after `ant devmode`/`ant draft` is a Super Dev Mode stub redirecting to `localhost:9876`. Without that code server, RStudio dies at startup ("code server not available"). `scripts/bootstrap-worktree.sh` (repo root) builds `<worktree>/build-dev-shim` (linking the main build's `session/`, with `conf` rewritten to the worktree's own `www`) and prints the `npm run test:desktop-dev` command to run -- the wrapper detects the shim automatically when the worktree has no configured `build/`.
 
 ### Server Mode
 
@@ -128,6 +130,20 @@ the most recent run, which is what `show-report` opens by default. The runners
 print the full path to both on exit. All of these are gitignored; prune old
 ones with `rm -rf playwright-report-*` (and `rm -rf test-results/*` for traces
 and screenshots).
+
+### Failure diagnostics
+
+When a test fails, the per-test fixture (`fixtures/rstudio.fixture.ts`)
+attaches two diagnostics to the report so symptoms that never reach a failed
+assertion are still recoverable: `browser-console.log` (buffered
+`console.error`/`console.warning` plus uncaught `pageerror`s captured during
+the test body) and, on Desktop, the slice of each rsession log file
+(`RSTUDIO_DATA_HOME/log/*.log`) written while the test ran. Both are scoped
+to the single test -- the console buffer is cleared and the log byte-offsets
+are snapshotted at test start. This is separate from the fixture failing a
+test on uncaught client exceptions (see `window.rstudio.errors` in
+`CLAUDE.md`): the exception itself fails the test; the attachments add the
+surrounding browser-console and backend-log context.
 
 ### Profiling a slow test
 
@@ -192,6 +208,7 @@ e2e/rstudio/
 ├── actions/                # Higher-level actions (multi-step operations)
 ├── utils/                  # Shared utilities (timeouts, constants, helpers)
 ├── tests/                  # Test specs, organized by feature area
+├── prototypes/             # Standalone specs with their own config (e.g. a Copilot sign-in smoke test)
 ├── scripts/                # Dev wrappers for the in-tree dev build (test:desktop-dev, test:server-dev)
 ├── docs/                   # Supplementary documentation
 ├── DESCRIPTION             # R-style package metadata (lets RStudio treat this dir as a project)
@@ -255,13 +272,13 @@ Because each Desktop launch has its own `--user-data-dir`, RStudio's single-inst
 Running in parallel: the suite defaults to `workers: 1` (see `playwright.config.ts`), but you can raise it (`npm run test:desktop-dev -- --workers=4`). `fullyParallel` stays off, so parallelism is at the file level -- each worker owns whole spec files and runs them serially. The per-worker CDP / dev-server / logger ports are already derived to avoid collisions; the two shared writers are partitioned per worker only when `workers > 1` (resolved into `PW_TOTAL_WORKERS` by `globalSetup`):
 
 - `HOME` / `USERPROFILE` get a per-worker copy of the seeded template home (`user-home-<parallelIndex>`), so RStudio user state, command history, and seeded AI credentials don't collide.
-- `R_LIBS_USER` becomes a per-worker *hermetic* hardlink clone of the prebuilt template library (not layered with it). Each worker can install or remove packages independently -- including the uninstall/reinstall tests -- without racing on a shared library or leaking changes across workers. Clones persist beside the template (`<template>-w<N>`); delete them to force a refresh after changing `REQUIRED_PACKAGES`.
+- `R_LIBS_USER` becomes a per-worker *hermetic* hardlink clone of the prebuilt template library (not layered with it). Each worker can install or remove packages independently -- including the uninstall/reinstall tests -- without racing on a shared library or leaking changes across workers. Clones persist beside the template (`<template>-w<N>`); delete them to force a refresh after changing `required-packages.txt`.
 
 `RSTUDIO_DATA_HOME` and `RSTUDIO_CONFIG_*` are already per-spec, and the sandbox `data-home/pai` is only ever read (symlinked into each spec), so those need no further partitioning. Each worker is a full Electron IDE + R session, so the practical worker ceiling is roughly half the host's cores before contention erodes the gains.
 
 `PW_SANDBOX` resolves to a runner-side path. When the rsession runs on the same host as the test runner (Desktop, or Server pointed at `localhost`), the R workdir is created inside `PW_SANDBOX`, so `globalTeardown` removes it as part of the umbrella cleanup. When the rsession runs on a remote host (Server pointed at a non-`localhost` URL), `PW_SANDBOX` doesn't exist on the rsession filesystem, so the R workdir is created under R's own `dirname(tempdir())` instead. That keeps Server tests working against remote rsession, with one caveat: remote R-side workdirs aren't covered by `globalTeardown` and will accumulate on the rsession host across runs.
 
-`HOME` / `USERPROFILE` point at a sandboxed `user-home/`. By default nothing is seeded there, so user dotfiles (`~/.Rprofile`, `~/.Renviron`, `~/.R/`, `~/.gitconfig`, `~/.ssh/`, etc.) are absent for tests. AI provider credentials are the exception, and the two providers are provisioned differently. **Posit AI** is handled by the `setup` project (`tests/auth.setup.ts`), which auto-detects the credential source: if `POSIT_EMAIL`/`POSIT_PASSWORD` are set it runs the OAuth sign-in flow and writes a fresh token store; otherwise, if you're signed in to Posit AI locally and the seed kill-switch is unset, it copies only the local token store (`~/.posit/ai/auth/data.json`) into the sandbox -- no skills, workspaces, or other state; if neither applies it provisions nothing and the Posit AI tests skip. Its tests gate on the on-disk token store (not an env flag) via `requireAiCredentials()`, so an unsigned-in sandbox skips cleanly. `PW_AI_AUTH_STRICT=1` upgrades that skip to a run failure: the `setup` project fails when it ends without credentials, for runs that expect credentials to be present (e.g. CI once secrets are wired in), so a broken credential source turns the run red instead of green-with-skips. (It governs Posit AI only for now; a missing Copilot credential still skips.) **GitHub Copilot** is still copied from the local machine by `globalSetup` when the config directory exists (`~/.config/github-copilot`, or `%LOCALAPPDATA%\github-copilot` on Windows); its tests gate on the `PW_AI_SEEDED_COPILOT` flag set after a successful copy. Either way, a missing credential surfaces as "skipped: no credentials" rather than a test timeout. `PW_SANDBOX_NO_SEED_CREDENTIALS=1` is the global seed kill-switch: it blocks the Copilot copy and the Posit AI local token-store copy (the sign-in flow is unaffected, since it copies nothing from the local machine). A live sign-in against `login.posit.cloud` happens only when `POSIT_EMAIL`/`POSIT_PASSWORD` are set -- the `setup` project runs unconditionally, even when no Posit AI test is selected. Mind the cost of leaving the credentials set (e.g. in `.env.local`): every subsequent run then pays a live sign-in before any test, even a run selecting a single non-AI test. For fast local iteration while already signed in to Posit AI locally, no configuration is needed; set `POSIT_EMAIL`/`POSIT_PASSWORD` to exercise the live sign-in flow instead (and unset them afterward). Whenever the sandbox is left on disk (a test failure, `PW_SANDBOX_SKIP_CLEANUP`, or a failed delete), teardown scrubs the copied tokens first (and warns loudly if any could not be removed), so a preserved sandbox should hold no credentials. A cancelled run (SIGTERM to the runner) scrubs them too; a hard kill, a crash, or a failed scrub can still leave tokens behind, in which case delete the sandbox by hand.
+`HOME` / `USERPROFILE` point at a sandboxed `user-home/`. By default nothing is seeded there, so user dotfiles (`~/.Rprofile`, `~/.Renviron`, `~/.R/`, `~/.gitconfig`, `~/.ssh/`, etc.) are absent for tests. AI provider credentials are the exception. Both providers are handled by the `setup` project (`tests/auth.setup.ts`), which auto-detects each provider's credential source independently. **Posit AI**: if `POSIT_EMAIL`/`POSIT_PASSWORD` are set it runs the OAuth device-flow sign-in against `login.posit.cloud` and writes a fresh token store; otherwise, if you're signed in to Posit AI locally and the seed kill-switch is unset, it copies only the local token store (`~/.posit/ai/auth/data.json`) into the sandbox -- no skills, workspaces, or other state; if neither applies it provisions nothing and the Posit AI tests skip. **GitHub Copilot**: if `COPILOT_USER`/`COPILOT_PASSWORD` are set (use a dedicated test account; `COPILOT_TOTP_SECRET` additionally if it has 2FA), the setup spawns the copilot-language-server against the sandbox user-home, completes GitHub's OAuth device-flow sign-in in a headless browser, and lets the agent write its own credential store (`auth.db`) -- exactly what a real sign-in through the IDE produces; otherwise, if the local Copilot config dir exists (`~/.config/github-copilot`, or `%LOCALAPPDATA%\github-copilot` on Windows) and the seed kill-switch is unset, it copies that into the sandbox; if neither applies the Copilot tests skip. Tests gate on the on-disk stores (not env flags) via `requireAiCredentials()`, with skip reasons drawn from the per-provider status files the setup writes, so a missing credential surfaces as "skipped: no credentials" rather than a test timeout. A deterministic problem with credentials that were deliberately set -- a rejected GitHub login, a Posit AI password that fails, an account with no Copilot access -- fails the whole run outright, independent of strict mode: setting credentials is an intentional signal that the sign-in flow should be exercised, so a failure there is a real problem, not something to skip past. `PW_AI_AUTH_STRICT=1` upgrades those skips to a run failure: the `setup` project fails when a provider ends up without credentials, for runs that expect credentials to be present (e.g. CI once secrets are wired in), so a broken credential source turns the run red instead of green-with-skips. `PW_SANDBOX_NO_SEED_CREDENTIALS=1` is the global seed kill-switch: it blocks both providers' local-store copies (the sign-in flows are unaffected, since they copy nothing from the local machine). The live sign-ins happen only when the respective credentials are set -- the `setup` project runs unconditionally, even when no AI test is selected. Mind the cost of leaving credentials set (e.g. in `.env.local`): every subsequent run then pays the live sign-ins before any test, even a run selecting a single non-AI test. For fast local iteration while already signed in locally, no configuration is needed; set the credentials to exercise the sign-in flows instead (and unset them afterward). Whenever the sandbox is left on disk (a test failure, `PW_SANDBOX_SKIP_CLEANUP`, or a failed delete), teardown scrubs the tokens first (and warns loudly if any could not be removed), so a preserved sandbox should hold no credentials. A cancelled run (SIGTERM to the runner) scrubs them too; a hard kill, a crash, or a failed scrub can still leave tokens behind, in which case delete the sandbox by hand.
 
 Quick reference (the setup auto-detects the source; "signed in locally" means a valid local Posit AI token store exists; setting exactly one of `POSIT_EMAIL`/`POSIT_PASSWORD` is an error that fails the run):
 
@@ -269,6 +286,15 @@ Quick reference (the setup auto-detects the source; "signed in locally" means a 
 |---|---|---|---|---|
 | set | either | either | Run (sign-in) | Fresh token store written after sign-in; nothing copied from the local machine |
 | unset | yes | unset | Run (copy) | Local token store copied in; no skills, workspaces, or other state |
+| unset | either | set | Skipped (copy suppressed) | Not provisioned |
+| unset | no | unset | Skipped (not signed in locally) | Not provisioned |
+
+GitHub Copilot follows the same shape (setting exactly one of `COPILOT_USER`/`COPILOT_PASSWORD` is likewise a run-failing error; "signed in locally" means the local Copilot config dir holds a signed-in `auth.db`):
+
+| `COPILOT_USER`/`COPILOT_PASSWORD` | Signed in locally | `PW_SANDBOX_NO_SEED_CREDENTIALS` | Copilot Tests | Sandbox credential store |
+|---|---|---|---|---|
+| set | either | either | Run (agent sign-in) | Fresh `auth.db` written by the copilot-language-server; nothing copied from the local machine |
+| unset | yes | unset | Run (copy) | Local config dir copied in |
 | unset | either | set | Skipped (copy suppressed) | Not provisioned |
 | unset | no | unset | Skipped (not signed in locally) | Not provisioned |
 
@@ -383,7 +409,7 @@ PW_RSTUDIO_PREFS_OVERRIDE=/path/to/my-prefs.json npx playwright test ...
 
 ### Package Dependencies
 
-`globalSetup` pre-installs a baseline manifest of CRAN packages into the shared `R_LIBS_USER` cache (see *R package pre-population* under Environment Variables). For tests using a package that's already in `REQUIRED_PACKAGES`, no extra setup is required.
+`globalSetup` pre-installs a baseline manifest of CRAN packages into the shared `R_LIBS_USER` cache (see *R package pre-population* under Environment Variables). For tests using a package that's already in the manifest (`required-packages.txt`), no extra setup is required.
 
 For tests using a package outside the manifest, add it via `ensurePackages` in `beforeAll`. The helper installs into the same cache, so subsequent runs are no-ops:
 
@@ -400,7 +426,7 @@ test.describe('Tests needing packages', () => {
 });
 ```
 
-If you find yourself adding the same package to many tests, promote it into `REQUIRED_PACKAGES` so it gets pre-installed once at setup time.
+If you find yourself adding the same package to many tests, promote it into `required-packages.txt` so it gets pre-installed once at setup time.
 
 ## Tags
 
@@ -425,6 +451,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 | `@pro_only` | Test requires RStudio Pro |
 | `@os_only` | Test only applies to open-source RStudio |
 | `@ai` | Test exercises an AI feature (Copilot ghost text / NES, Posit Assistant chat). Useful for skipping AI-dependent suites in offline or no-credential runs. |
+| `@chat` | Test covers the Posit Assistant chat pane (everything under `tests/panes/posit-assistant-chat/`). A narrower selector than `@ai`: use it to run the Assistant suite without the Copilot/NES code-suggestion tests. Most `@chat` tests are also `@ai`; the exception is `chat-guardrails-paths.test.ts`, which exercises the guardrails from the R console with no AI provider in the loop. |
 | `@smoke` | Long, low-information liveness check. Excluded by default (redundant alongside the full suite); opt in with `PW_RUN_SMOKE=1`. |
 
 ### Filtering by Tag
@@ -459,6 +486,9 @@ npx playwright test --grep-invert "@pro_only|@server_only"
 
 # Skip AI-dependent tests (Copilot/NES + Posit Assistant chat)
 npx playwright test --grep-invert @ai
+
+# Run only the Posit Assistant chat tests (skips Copilot/NES)
+npx playwright test --grep @chat
 ```
 
 You can also exclude tests by file path with `PW_TEST_IGNORE` (whitespace-separated globs):
@@ -507,17 +537,23 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_SANDBOX_ROOT_CREATE` | Both | No | Set to `true`/`1` to auto-create `PW_SANDBOX_ROOT` if missing. Default `false` -- fails loud on typos. |
 | `PW_SANDBOX_SKIP_CLEANUP` | Both | No | Set to `true`/`1` to preserve the sandbox at end of run regardless of pass/fail. |
 | `PW_SEED_PAI` | Both | No | Path to a locally built Posit Assistant install directory (e.g. `~/.local/share/rstudio/pai`, as produced by the assistant repo's `npm run deploy:rstudio`). `globalSetup` copies it into the sandbox `data-home/pai`, so tests exercise that local build instead of downloading the official package. Fails loud if the path doesn't contain `bin/package.json`. The seeded build's `package.json` version and `protocol.json` must satisfy the IDE under test, or it will be treated as needing an update. |
-| `POSIT_EMAIL` | Both | Conditional | Posit account email. Setting `POSIT_EMAIL` **and** `POSIT_PASSWORD` makes the `setup` project run the OAuth sign-in flow instead of copying the local token store; setting them is the way to exercise sign-in. If both are unset, the setup copies the local token store when signed in to Posit AI locally, else the Posit AI tests skip. Setting exactly one of the two is a configuration error: the run fails loud rather than silently falling back to the copy. |
+| `POSIT_EMAIL` | Both | Conditional | Posit account email. Setting `POSIT_EMAIL` **and** `POSIT_PASSWORD` makes the `setup` project run the OAuth device-flow sign-in instead of copying the local token store; setting them is the way to exercise sign-in. If both are unset, the setup copies the local token store when signed in to Posit AI locally, else the Posit AI tests skip. Setting exactly one of the two is a configuration error: the run fails loud rather than silently falling back to the copy. |
 | `POSIT_PASSWORD` | Both | Conditional | Posit account password. Paired with `POSIT_EMAIL`; see above. |
-| `PW_SANDBOX_NO_SEED_CREDENTIALS` | Both | No | Global seed kill-switch. Set to `true`/`1` to block copying real credentials from the local machine into the sandbox: it suppresses the GitHub Copilot copy and the Posit AI local token-store copy (so an otherwise-unconfigured run skips its Posit AI tests). It does **not** affect the sign-in flow, which copies nothing from the local machine. Default (unset): host-copy allowed. Privacy: copied tokens live inside the sandbox during the run; teardown scrubs them whenever the sandbox is left on disk (and warns loudly if it can't). Set this opt-out to avoid copying them at all on machines that aren't dedicated test accounts. |
-| `PW_AI_AUTH_STRICT` | Both | No | Set to `true`/`1` to make the `setup` project fail the run when it ends without Posit AI credentials (outcome `unavailable` or `login-failed`), instead of letting the Posit AI tests skip. For runs that expect credentials to be present (e.g. CI once secrets are wired in): a broken credential source turns the run red instead of green-with-skips. Governs Posit AI only for now (a missing Copilot credential still skips). Default (unset): the Posit AI tests skip with a reason. |
-| `PW_RSTUDIO_R_LIBS_USER` | Both | No | Override the R user-library template path (passed to rsession as `R_LIBS_USER`). Defaults to `~/.cache/rstudio-playwright/r-libs/%p/%v` on macOS/Linux and `%LOCALAPPDATA%\rstudio-playwright\r-libs\%p\%v` on Windows. R expands `%p` (platform) and `%v` (R x.y) at startup. The library lives outside the per-run sandbox so packages persist between runs. |
+| `COPILOT_USER` | Both | Conditional | GitHub login (username, not email) of a dedicated Copilot test account. Setting `COPILOT_USER` **and** `COPILOT_PASSWORD` makes the `setup` project run the agent-driven Copilot device-flow sign-in (via the copilot-language-server, completed in a headless browser) instead of copying the local config dir. The account must have Copilot access (e.g. Copilot Free enabled). If both are unset, the setup copies the local Copilot config dir when present, else the Copilot tests skip. Setting exactly one of the two fails the run loud. |
+| `COPILOT_PASSWORD` | Both | Conditional | That account's password. Paired with `COPILOT_USER`; see above. |
+| `COPILOT_TOTP_SECRET` | Both | No | Base32 2FA secret for the Copilot test account, only needed if the account has an authenticator app enrolled. The sign-in flow generates the TOTP code from it. |
+| `RSTUDIO_COPILOT_JS_FOLDER` | Both | No | Overrides where the Copilot sign-in flow looks for `language-server.js` (the copilot-language-server agent it spawns for the live sign-in). Same variable the IDE itself honors for the same purpose. Defaults to the folder bundled with the installed RStudio; set this if the agent lives elsewhere (e.g. a dev checkout). |
+| `PW_SANDBOX_NO_SEED_CREDENTIALS` | Both | No | Global seed kill-switch. Set to `true`/`1` to block copying real credentials from the local machine into the sandbox: it suppresses both the GitHub Copilot config-dir copy and the Posit AI local token-store copy (so an otherwise-unconfigured run skips its AI tests). It does **not** affect the sign-in flows, which copy nothing from the local machine. Default (unset): host-copy allowed. Privacy: copied tokens live inside the sandbox during the run; teardown scrubs them whenever the sandbox is left on disk (and warns loudly if it can't). Set this opt-out to avoid copying them at all on machines that aren't dedicated test accounts. |
+| `PW_AI_AUTH_STRICT` | Both | No | Set to `true`/`1` to make the `setup` project fail the run when a provider ends up without credentials (outcome `unavailable` or `login-failed`), instead of letting that provider's tests skip. Applies to both Posit AI and GitHub Copilot. For runs that expect credentials to be present (e.g. CI once secrets are wired in): a broken credential source turns the run red instead of green-with-skips. Default (unset): the affected tests skip with a reason. |
+| `PW_RSTUDIO_R_LIBS_USER` | Both | No | Override the R user-library template path (passed to rsession as `R_LIBS_USER`). Defaults to `~/.cache/rstudio-playwright/r-libs/%p/%v` on macOS/Linux and `%LOCALAPPDATA%\rstudio-playwright\r-libs\%p\%v` on Windows. R expands `%p` (platform) and `%v` (R x.y) at startup. The library lives outside the per-run sandbox so packages persist between runs. An empty value is treated as unset (i.e. the default applies), so a workflow can pass this conditionally -- a GitHub Actions `env:` value of `''` is exported as a defined empty string, not as an absent variable. The prep log names the library it resolved and where that came from (`[r-libs] user library: <path> [harness default]`). |
 | `PW_RSTUDIO_R_LIBS_SKIP_PREP` | Both | No | Set to `true`/`1` to skip globalSetup's pre-population of the user library. Useful when running against an R install that already has everything, or to reproduce the empty-library popup behavior on purpose. |
 | `PW_WARMUP_LAUNCH` | Desktop | No | `1`/`true` to force a warmup launch in globalSetup; `0`/`false` to skip it. Default: on under CI, off locally. Skipped entirely in Server mode. |
 | `PW_LAUNCH_ATTEMPTS` | Desktop | No | Number of attempts the in-fixture launch retry will make before giving up (default: `2`, i.e. one retry). |
 | `PW_GWT_READY_TIMEOUT_MS` | Desktop | No | Override how long the fixture waits for `window.rstudio.ready === true` after CDP connects. Default: `60000` on CI, `30000` locally. |
 | `PW_DEBUG_LAUNCH` | Desktop | No | Set to `1`/`true` to emit `[launch-timing]` traces (post-CDP wait steps) during startup. Diagnostic only; enabled on CI so launch failures show which phase exceeded the deadline. |
 | `PW_DEBUG_PAGES` | Desktop | No | Set to `1`/`true` to emit `[debug-launch]` page-lifecycle traces (page created/navigated/load/close, console errors) for every page for the whole run, including popups like plot zoom. Diagnostic only. |
+| `PW_DEBUG_AUTH_CAPTURE` | Both | No | Set to `1`/`true` to make the AI sign-in flows (Posit AI, GitHub Copilot, and any future provider login) write a numbered full-page screenshot and the page HTML into `test-results/` on every page load, plus a final capture before the browser closes (the failure-state record when a flow throws). Wired into the shared sign-in browser (`utils/auth-debug.ts`), so it applies to every flow automatically. For debugging provider login-page changes. Off by default: the setup project keeps Playwright artifacts off because credentials are typed into those pages, and the captures can include the username (passwords stay masked/unserialized). The page path (query string stripped) and title are logged under `PW_DEBUG_AUTH_STEPS`, not this flag. |
+| `PW_DEBUG_AUTH_STEPS` | Both | No | Set to `1`/`true` to emit the sign-in flows' step-level console output: the browser narration (`[authorize-github]`, `[authorize-posit]`: which page is showing, which field is being filled, button state) and the Copilot agent's raw diagnostics (`[copilot-agent]`: LSP notifications, spawn/exit, `checkStatus` polling), and the final page line. Off by default, so a normal run reports only the `[auth-setup]` outcome milestones (started, complete, skipped, failed); the detail is opt-in for troubleshooting a flow. The output is authored text kept free of account identifiers (no username or device code), which is why it's a separate switch from `PW_DEBUG_AUTH_CAPTURE`. |
 | `PW_ENV_FILE` | Both | No | Path (relative to `e2e/rstudio/`) to a dotenv file loaded by `playwright.config.ts` before any env reads. Default: `.env.local`. Setting this to a missing file is a hard error (so typos surface immediately). See *`.env.local` (dotenv)* below. |
 | `PW_RUN_SMOKE` | Both | No | Set to `1`/`true` to include `@smoke` tests, which are excluded by default (they idle long enough to be flaky under parallel load). |
 | `PW_TRACE` | Both | No | Playwright trace mode (`on`, `off`, `retain-on-failure`, etc.). Default: `retain-on-failure`. Validated against an allow-list so a typo fails loud instead of silently disabling capture. |
@@ -530,11 +566,11 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_PROJECT_LABEL` | Both | No | Label for this run in report/blob file names (e.g. `desktop-macos`, `server-linux`). Defaults to the resolved mode. |
 | `PW_PROJECT` | Both | No | **Deprecated.** No longer used; it logs a warning and is ignored. Use `--project=desktop\|server` or `PW_RSTUDIO_MODE` instead. |
 
-`PW_SANDBOX` itself is internal: it's set by `globalSetup` to the absolute path of the auto-created sandbox subtree and is read by workers, the R workdir helper, and `globalTeardown`. Don't set it manually. `PW_AI_SEEDED_COPILOT` is also internal: `globalSetup` sets it to `1` when GitHub Copilot credentials were successfully copied, and `requireAiCredentials()` reads it to decide whether to skip a Copilot test. Posit AI has no such flag -- its gate reads the on-disk token store that the `setup` project writes. Don't set `PW_AI_SEEDED_COPILOT` manually either.
+`PW_SANDBOX` itself is internal: it's set by `globalSetup` to the absolute path of the auto-created sandbox subtree and is read by workers, the R workdir helper, and `globalTeardown`. Don't set it manually. Neither AI provider uses an env flag for its credential gate: `requireAiCredentials()` reads the on-disk stores that the `setup` project writes (the Posit AI token store, the Copilot `auth.db`).
 
 ### R package pre-population
 
-Because the Desktop and Server fixtures redirect `HOME` / `USERPROFILE` into the per-run sandbox, R computes an empty default user library and won't see the host user's installed packages. `globalSetup` works around this by pointing `R_LIBS_USER` at a stable per-host cache (see `PW_RSTUDIO_R_LIBS_USER` above) and pre-installing a manifest of packages that tests use -- the list lives in `REQUIRED_PACKAGES` inside `fixtures/r-libs-setup.ts`. The check is idempotent (`installed.packages()` then `setdiff`), so a warm cache adds almost no startup time; the first run installs ~23 packages from CRAN (or PPM on Linux) and may take a few minutes.
+Because the Desktop and Server fixtures redirect `HOME` / `USERPROFILE` into the per-run sandbox, R computes an empty default user library and won't see the host user's installed packages. `globalSetup` works around this by pointing `R_LIBS_USER` at a stable per-host cache (see `PW_RSTUDIO_R_LIBS_USER` above) and pre-installing a manifest of packages that tests use -- the list lives in `required-packages.txt` (read at load by `fixtures/r-libs-setup.ts`). The check is idempotent (`installed.packages()` then `setdiff`), so a warm cache adds almost no startup time; the first run installs ~23 packages from CRAN (or PPM on Linux) and may take a few minutes.
 
 ## Variable Helpers
 

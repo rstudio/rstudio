@@ -3664,19 +3664,6 @@ core::Error UserPrefValues::setAssistantNesAutoshow(bool val)
 }
 
 /**
- * When enabled, RStudio will show messages from the Posit Assistant in a message box.
- */
-bool UserPrefValues::assistantShowMessages()
-{
-   return readPref<bool>("assistant_show_messages");
-}
-
-core::Error UserPrefValues::setAssistantShowMessages(bool val)
-{
-   return writePref("assistant_show_messages", val);
-}
-
-/**
  * When enabled, the Posit Assistant button is displayed in the main toolbar.
  */
 bool UserPrefValues::assistantToolbarButtonVisible()
@@ -4258,7 +4245,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantIndexingEnabled,
       kAssistantNesEnabled,
       kAssistantNesAutoshow,
-      kAssistantShowMessages,
       kAssistantToolbarButtonVisible,
       kAssistantUseSystemCa,
       kPositAssistantTestManifest,
