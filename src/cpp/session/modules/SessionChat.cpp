@@ -26,6 +26,10 @@
 #include "chat/ChatStaticFiles.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
 
+#ifndef _WIN32
+# include <csignal>
+#endif
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -6380,22 +6384,27 @@ void onShutdown(bool terminatedNormally)
          requestBackendShutdown(*backendOps, "close", SHUTDOWN_GRACE_PERIOD_MS);
          DLOG("Sent graceful shutdown request, waiting up to {}ms", SHUTDOWN_GRACE_PERIOD_MS);
 
-         // Poll for backend exit with short intervals
-         // This allows event processing while still waiting for graceful shutdown
+         // Poll for backend exit with short intervals. Pump only the process
+         // supervisor while waiting: it flushes the shutdown request queued
+         // above and reaps the backend (firing onBackendExit), which is all
+         // this wait needs. The full background-processing pass plus
+         // processEvents() would dispatch every module's background handlers,
+         // scheduled commands, and arbitrary R callbacks mid-teardown, and any
+         // one of them blocking would wedge the session's exit permanently --
+         // and with it the desktop/server relaunch waiting on it (#18394).
          const int POLL_INTERVAL_MS = 50;
          int elapsed = 0;
 
          while (s_chatBackendPid != -1 && elapsed < SHUTDOWN_GRACE_PERIOD_MS)
          {
-            module_context::onBackgroundProcessing(false);
-            r::session::event_loop::processEvents();
+            module_context::processSupervisor().poll();
             boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_INTERVAL_MS));
             elapsed += POLL_INTERVAL_MS;
          }
 
          if (s_chatBackendPid != -1)
          {
-            DLOG("Backend did not exit within grace period, force terminating");
+            WLOG("Chat backend did not exit within its shutdown grace period; force terminating");
          }
          else
          {
@@ -6414,6 +6423,29 @@ void onShutdown(bool terminatedNormally)
          Error error = core::system::terminateProcess(s_chatBackendPid);
          if (error)
             LOG_ERROR(error);
+
+#ifndef _WIN32
+         // terminateProcess() is SIGTERM to the single pid; give the backend a
+         // brief window to honor it, then SIGKILL its process group. It runs
+         // detached (its own session), so nothing else reaps or kills it once
+         // this process exits, and an orphan must not outlive the session
+         // (#18394). EPERM/ESRCH just mean some or all of the group is
+         // already gone. On Windows, terminateProcess() is already
+         // TerminateProcess(), and the session's kill-on-close job object
+         // reaps stragglers.
+         for (int i = 0; i < 10 && s_chatBackendPid != -1; i++)
+         {
+            module_context::processSupervisor().poll();
+            boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+         }
+
+         if (s_chatBackendPid != -1)
+         {
+            WLOG("Chat backend process {} did not exit at session shutdown; sending SIGKILL.",
+                 s_chatBackendPid);
+            ::kill(-s_chatBackendPid, SIGKILL);
+         }
+#endif
       }
 
       s_chatBackendPid = -1;

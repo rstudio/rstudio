@@ -19,6 +19,10 @@
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
+#ifndef _WIN32
+# include <csignal>
+#endif
+
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -620,8 +624,23 @@ bool waitFor(F&& callback)
       if (ready)
          return true;
 
-      module_context::onBackgroundProcessing(false);
-      r::session::event_loop::processEvents();
+      // During session shutdown, pump only the process supervisor. The full
+      // background-processing pass runs every module's background handler plus
+      // any scheduled commands, and processEvents() runs arbitrary R callbacks;
+      // dispatching those mid-teardown means any one of them that blocks wedges
+      // the session's exit permanently, which in turn wedges the desktop /
+      // server relaunch that is waiting on it (#18394). The supervisor poll
+      // alone is enough to reap the agent and fire its exit callback.
+      if (s_isSessionShuttingDown)
+      {
+         module_context::processSupervisor().poll();
+      }
+      else
+      {
+         module_context::onBackgroundProcessing(false);
+         r::session::event_loop::processEvents();
+      }
+
       boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
    }
 
@@ -2243,8 +2262,25 @@ void onShutdown(bool)
    // Note that we're about to shut down.
    s_isSessionShuttingDown = true;
 
-   // Shut down the agent.
-   stopAgentSync();
+   // Shut down the agent. The s_agentPid recheck matters: the reap can land
+   // on stopAgentSync's final poll, after its last callback check -- and
+   // negating the -1 sentinel would aim the SIGKILL at pid 1.
+   if (!stopAgentSync() && s_agentPid != -1)
+   {
+#ifndef _WIN32
+      // The agent survived SIGTERM plus the reap wait. It must not outlive the
+      // session: it runs detached (its own session and process group), so
+      // nothing reaps or kills it once we exit (#18394). Escalate with SIGKILL
+      // to its process group; EPERM/ESRCH just mean some or all of the group
+      // is already gone.
+      WLOG("Agent process {} did not exit at session shutdown; sending SIGKILL.", s_agentPid);
+      ::kill(-s_agentPid, SIGKILL);
+#else
+      // On Windows, terminateProcess() is already TerminateProcess(), and the
+      // session's kill-on-close job object reaps stragglers.
+      WLOG("Agent process {} did not exit at session shutdown.", s_agentPid);
+#endif
+   }
 }
 
 // Primarily intended for debugging / exploration.
