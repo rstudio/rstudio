@@ -62,6 +62,11 @@ constexpr size_t kNetlinkRecvBufferSize = 512;
 // we fail closed rather than hang indefinitely.
 constexpr int kNetlinkRecvTimeoutSeconds = 3;
 
+// Fixed sequence number stamped on each exact-match request; replies must
+// echo it back (see readSingleDiagReply). Each query uses a fresh netlink
+// socket for a single request/reply exchange, so a constant suffices.
+constexpr uint32_t kNetlinkRequestSeq = 1;
+
 // Sets SO_RCVTIMEO on fd so a subsequent recvmsg() cannot block longer than
 // kNetlinkRecvTimeoutSeconds -- this applies generically to any socket family
 // (handled by the kernel's common sock_setsockopt(), not netlink-specific
@@ -138,7 +143,7 @@ Error sendExactMatchRequest(int fd,
    request.nlh.nlmsg_len = sizeof(request);
    request.nlh.nlmsg_type = SOCK_DIAG_BY_FAMILY;
    request.nlh.nlmsg_flags = NLM_F_REQUEST;
-   request.nlh.nlmsg_seq = 1;
+   request.nlh.nlmsg_seq = kNetlinkRequestSeq;
    request.nlh.nlmsg_pid = 0;
 
    request.req.sdiag_family = srcAddr.is_v4() ? AF_INET : AF_INET6;
@@ -190,8 +195,13 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
    iov.iov_base = buffer.data();
    iov.iov_len = buffer.size();
 
+   sockaddr_nl sender;
+   std::memset(&sender, 0, sizeof(sender));
+
    msghdr msg;
    std::memset(&msg, 0, sizeof(msg));
+   msg.msg_name = &sender;
+   msg.msg_namelen = sizeof(sender);
    msg.msg_iov = &iov;
    msg.msg_iovlen = 1;
 
@@ -229,12 +239,30 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
       return DiagLookupResult::Error;
    }
 
+   // Defense-in-depth for enforcement code: only trust replies sent by the
+   // kernel (nl_pid == 0) that echo our request's sequence number. Unicasting
+   // to another socket's netlink portid already requires CAP_NET_ADMIN, so a
+   // spoofed reply shouldn't be possible in practice, but the check is cheap.
+   if (msg.msg_namelen != sizeof(sender) ||
+       sender.nl_family != AF_NETLINK ||
+       sender.nl_pid != 0)
+   {
+      *pError = systemError(EIO, "NETLINK_SOCK_DIAG reply from unexpected sender", ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+
    auto* nlh = reinterpret_cast<nlmsghdr*>(buffer.data());
    auto remaining = static_cast<size_t>(received);
 
    if (!NLMSG_OK(nlh, remaining))
    {
       *pError = systemError(EIO, "malformed NETLINK_SOCK_DIAG reply", ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+
+   if (nlh->nlmsg_seq != kNetlinkRequestSeq)
+   {
+      *pError = systemError(EIO, "NETLINK_SOCK_DIAG reply sequence mismatch", ERROR_LOCATION);
       return DiagLookupResult::Error;
    }
 
@@ -253,7 +281,7 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
    if (nlh->nlmsg_type == SOCK_DIAG_BY_FAMILY)
    {
       auto* diag = reinterpret_cast<inet_diag_msg*>(NLMSG_DATA(nlh));
-      *pUid = diag->idiag_uid; // populated unconditionally (research Q8)
+      *pUid = diag->idiag_uid; // always populated by the kernel, independent of idiag_ext
       return DiagLookupResult::Found;
    }
 
@@ -299,9 +327,9 @@ Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
       // over what is expected to be an untaken code path (SO_RCVTIMEO is a
       // universally-supported SOL_SOCKET option) -- worst case we're back to
       // the unbounded-wait behavior this timeout is meant to improve upon.
-      LOG_WARNING_MESSAGE(
-         "Failed to set NETLINK_SOCK_DIAG receive timeout (" + timeoutError.getSummary() +
-         "); proceeding without a receive timeout for this query (rstudio-pro#11470).");
+      WLOGF("Failed to set NETLINK_SOCK_DIAG receive timeout ({}); proceeding "
+            "without a receive timeout for this query (rstudio-pro#11470).",
+            timeoutError.getSummary());
    }
 
    // The server-side (application) socket has source port == appPort, dest
@@ -374,11 +402,11 @@ bool probeSockDiagAvailable()
       int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
       if (fd < 0)
       {
-         LOG_WARNING_MESSAGE(
-            "NETLINK_SOCK_DIAG unavailable (" + std::string(::strerror(errno)) +
-            "); port-proxy ownership enforcement is DISABLED for this process "
-            "(rstudio-pro#11470). Cross-user /p/ and /p6/ isolation will not be "
-            "enforced in this environment.");
+         WLOGF("NETLINK_SOCK_DIAG unavailable ({}); port-proxy ownership "
+               "enforcement is DISABLED for this process (rstudio-pro#11470). "
+               "Cross-user /p/ and /p6/ isolation will not be enforced in this "
+               "environment.",
+               ::strerror(errno));
          return false;
       }
 
@@ -387,9 +415,9 @@ bool probeSockDiagAvailable()
       {
          // Non-fatal, matching lookupEstablishedSocketUid(): proceed with the
          // probe (and thus with enforcement) even without a receive timeout.
-         LOG_WARNING_MESSAGE(
-            "Failed to set NETLINK_SOCK_DIAG receive timeout (" + timeoutError.getSummary() +
-            "); proceeding without a receive timeout for this query (rstudio-pro#11470).");
+         WLOGF("Failed to set NETLINK_SOCK_DIAG receive timeout ({}); proceeding "
+               "without a receive timeout for this query (rstudio-pro#11470).",
+               timeoutError.getSummary());
       }
 
       // Probe with a deliberately absent 4-tuple, exercising the same

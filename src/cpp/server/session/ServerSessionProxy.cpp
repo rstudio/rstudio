@@ -60,6 +60,7 @@
 
 #include <server_core/http/LocalhostAsyncClient.hpp>
 #include <server_core/sessions/SessionLocalStreams.hpp>
+#include <server_core/SocketOwnership.hpp>
 #include <server_core/UrlPorts.hpp>
 
 #include <session/SessionConstants.hpp>
@@ -502,26 +503,30 @@ void handleLocalhostError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const Error& error)
 {
-   // if this request required a session then return a standard 503
-   if (http::isConnectionUnavailableError(error) &&
-       requiresSession(ptrConnection->request()))
-   {
-      http::Response& response = ptrConnection->response();
-      response.setStatusCode(http::status::ServiceUnavailable);
-      ptrConnection->writeResponse();
-      return;
-   }
-
    // the localhost port-ownership check (rstudio-pro#11470) rejected this
    // request -- return 403 (an accurate status for "declined by an
    // authorization check") rather than falling through to the generic 500
    // that writeError() would otherwise produce for any connection error.
+   // this must stay ahead of the connection-unavailable mapping below: the
+   // "no established socket" rejection carries a code that
+   // isConnectionUnavailableError() also matches, and the property tag is
+   // definitive.
    if (!error.getProperty(server_core::socket_utils::kPortOwnershipRejectedProperty).empty())
    {
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::Forbidden);
       response.setContentType("text/plain");
       response.setBodyUnencoded("Not authorized to access the requested port");
+      ptrConnection->writeResponse();
+      return;
+   }
+
+   // if this request required a session then return a standard 503
+   if (http::isConnectionUnavailableError(error) &&
+       requiresSession(ptrConnection->request()))
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
       ptrConnection->writeResponse();
       return;
    }

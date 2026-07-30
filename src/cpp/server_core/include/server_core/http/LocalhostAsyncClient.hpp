@@ -16,6 +16,8 @@
 #ifndef SERVER_CORE_LOCALHOST_ASYNC_CLIENT_HPP
 #define SERVER_CORE_LOCALHOST_ASYNC_CLIENT_HPP
 
+#include <core/Log.hpp>
+
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClientSsl.hpp>
 
@@ -54,6 +56,36 @@ bool keepConnectionAliveImpl(const core::http::Response& response)
    return response.statusCode() == core::http::status::SwitchingProtocols;
 }
 
+// shared post-connect ownership check for the plain and SSL localhost client
+// variants below; socket is the underlying TCP-layer socket (next_layer() for
+// the SSL client). returns true to allow the request write to proceed.
+bool verifyConnectedPeerImpl(boost::asio::ip::tcp::socket& socket,
+                             uid_t expectedPeerUid,
+                             core::Error* pError)
+{
+   if (expectedPeerUid == static_cast<uid_t>(-1))
+      return true; // no ownership check requested for this client
+
+   if (!server_core::socket_utils::probeSockDiagAvailable())
+      return true; // capability absent (logged once at probe) -> degrade to
+                   // no-enforcement rather than break proxying
+
+   int appPort = socket.remote_endpoint().port();       // target/listen port
+   int ephemeralPort = socket.local_endpoint().port();  // our client port
+   core::Error error = server_core::socket_utils::verifyPeerUid(
+                          socket.local_endpoint().address(),
+                          socket.remote_endpoint().address(),
+                          appPort, ephemeralPort, expectedPeerUid);
+   if (error)
+   {
+      WLOGF("Refusing localhost proxy to port {}: {}", appPort, error.getSummary());
+      *pError = error;
+      return false;
+   }
+
+   return true;
+}
+
 } // anonymous namespace
 
 class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
@@ -77,26 +109,7 @@ private:
 
    virtual bool verifyConnectedPeer(core::Error* pError)
    {
-      if (expectedPeerUid_ == static_cast<uid_t>(-1))
-         return true; // no ownership check requested for this client
-      if (!server_core::socket_utils::probeSockDiagAvailable())
-         return true; // capability absent (logged once at probe) -> degrade to
-                      // no-enforcement rather than break proxying (Decision 2)
-      int appPort = socket().remote_endpoint().port();       // target/listen port
-      int ephemeralPort = socket().local_endpoint().port();  // our client port
-      // First draft of a pure async peer verification check in rstudio-pro 662c4fc3a046409df03667d89a4604ec001173fc
-      core::Error error = server_core::socket_utils::verifyPeerUid(
-                             socket().local_endpoint().address(),
-                             socket().remote_endpoint().address(),
-                             appPort, ephemeralPort, expectedPeerUid_);
-      if (error)
-      {
-         LOG_WARNING_MESSAGE("Refusing localhost proxy to port " +
-            std::to_string(appPort) + ": " + error.getSummary());
-         *pError = error;
-         return false;
-      }
-      return true;
+      return verifyConnectedPeerImpl(socket(), expectedPeerUid_, pError);
    }
 
    virtual bool stopReadingAndRespond()
@@ -135,25 +148,7 @@ private:
 
    virtual bool verifyConnectedPeer(core::Error* pError)
    {
-      if (expectedPeerUid_ == static_cast<uid_t>(-1))
-         return true; // no ownership check requested for this client
-      if (!server_core::socket_utils::probeSockDiagAvailable())
-         return true; // capability absent (logged once at probe) -> degrade to
-                      // no-enforcement rather than break proxying (Decision 2)
-      int appPort = socket().next_layer().remote_endpoint().port();
-      int ephemeralPort = socket().next_layer().local_endpoint().port();
-      core::Error error = server_core::socket_utils::verifyPeerUid(
-                             socket().next_layer().local_endpoint().address(),
-                             socket().next_layer().remote_endpoint().address(),
-                             appPort, ephemeralPort, expectedPeerUid_);
-      if (error)
-      {
-         LOG_WARNING_MESSAGE("Refusing localhost proxy to port " +
-            std::to_string(appPort) + ": " + error.getSummary());
-         *pError = error;
-         return false;
-      }
-      return true;
+      return verifyConnectedPeerImpl(socket().next_layer(), expectedPeerUid_, pError);
    }
 
    virtual bool stopReadingAndRespond()

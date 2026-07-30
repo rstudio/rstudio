@@ -84,6 +84,10 @@ private:
 
 TEST(SocketOwnershipTest, LooksUpUidOfEstablishedLoopbackSocket)
 {
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
    boost::asio::io_context io;
    using boost::asio::ip::tcp;
 
@@ -114,11 +118,15 @@ TEST(SocketOwnershipTest, LooksUpUidOfEstablishedLoopbackSocket)
 
 TEST(SocketOwnershipTest, LooksUpUidOfEstablishedIPv6LoopbackSocket)
 {
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
    boost::asio::io_context io;
    using boost::asio::ip::tcp;
 
    // listener on ::1:0 -- exercises the AF_INET6 sdiag_family branch, which
-   // differs from AF_INET. 
+   // differs from AF_INET.
    // Some CI/dev environments lack an IPv6 loopback; skip rather than fail there,
    // mirroring the environment-dependent GTEST_SKIP() guards used elsewhere in
    // this project (e.g. PosixSystemTests.cpp).
@@ -152,6 +160,10 @@ TEST(SocketOwnershipTest, LooksUpUidOfEstablishedIPv6LoopbackSocket)
 
 TEST(SocketOwnershipTest, LooksUpUidOfEstablishedDualStackLoopbackSocket)
 {
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
    boost::asio::io_context io;
    using boost::asio::ip::tcp;
 
@@ -288,14 +300,13 @@ TEST(SocketOwnershipTest, LocalhostAsyncClientAllowsPeerWithMatchingUid)
    EXPECT_EQ(200, statusCode);
 }
 
-// Note: LocalhostAsyncClientSsl::verifyConnectedPeer() duplicates the same
-// logic via socket().next_layer() (see LocalhostAsyncClient.hpp), but adding
-// an SSL-variant positive/reject test here would require a certificate/TLS
-// test fixture that this codebase does not already have a lightweight
-// pattern for. Deferred as disproportionate to this Low-severity coverage
-// gap; the plaintext tests above exercise the shared verifyConnectedPeer()
-// wiring end-to-end, and Step 6's e2e coverage exercises both variants
-// operationally.
+// Note: LocalhostAsyncClientSsl shares the same verifyConnectedPeer() logic
+// via socket().next_layer() (see verifyConnectedPeerImpl in
+// LocalhostAsyncClient.hpp), but adding an SSL-variant positive/reject test
+// here would require a certificate/TLS test fixture that this codebase does
+// not already have a lightweight pattern for. Deferred as disproportionate;
+// the plaintext tests above exercise the shared verifyConnectedPeer() wiring
+// end-to-end.
 
 } // namespace socket_utils
 } // namespace server_core
