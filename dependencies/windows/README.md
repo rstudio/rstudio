@@ -71,4 +71,8 @@ In a non-administrator command prompt:
 - `cd rstudio\package\win32`
 - `make-package.bat`
 
-When done, the setup is `rstudio\package\build\RStudio-99.9.9.exe`.
+When done, the setup is `rstudio\package\win32\build\RStudio-99.9.9-dev-999-RelWithDebInfo.exe`.
+The version and build type in that name come from the `RSTUDIO_VERSION_*`
+environment variables and `CMAKE_BUILD_TYPE`; see
+[package/README.md](../../package/README.md) for details and for the other
+supported package builds.
