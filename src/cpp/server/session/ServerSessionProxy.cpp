@@ -60,6 +60,7 @@
 
 #include <server_core/http/LocalhostAsyncClient.hpp>
 #include <server_core/sessions/SessionLocalStreams.hpp>
+#include <server_core/SocketOwnership.hpp>
 #include <server_core/UrlPorts.hpp>
 
 #include <session/SessionConstants.hpp>
@@ -502,6 +503,24 @@ void handleLocalhostError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const Error& error)
 {
+   // the localhost port-ownership check (rstudio-pro#11470) rejected this
+   // request -- return 403 (an accurate status for "declined by an
+   // authorization check") rather than falling through to the generic 500
+   // that writeError() would otherwise produce for any connection error.
+   // this must stay ahead of the connection-unavailable mapping below: the
+   // "no established socket" rejection carries a code that
+   // isConnectionUnavailableError() also matches, and the property tag is
+   // definitive.
+   if (!error.getProperty(server_core::socket_utils::kPortOwnershipRejectedProperty).empty())
+   {
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::Forbidden);
+      response.setContentType("text/plain");
+      response.setBodyUnencoded("Not authorized to access the requested port");
+      ptrConnection->writeResponse();
+      return;
+   }
+
    // if this request required a session then return a standard 503
    if (http::isConnectionUnavailableError(error) &&
        requiresSession(ptrConnection->request()))
@@ -892,6 +911,26 @@ bool shouldRefreshCredentials(const http::Request& request)
 
 } // anonymous namespace
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+// Test-only forwarding hook for the anonymous-namespace userIdForUsername()
+// helper above. That helper has internal linkage (it's defined inside this
+// TU's anonymous namespace) so a separate test TU can't call it directly;
+// this exported hook can, because unqualified lookup of userIdForUsername
+// from this (enclosing) namespace scope still finds it via the implicit
+// using-directive the compiler generates for the anonymous namespace --
+// the same way proxyLocalhostRequest() below calls it.
+//
+// It exists solely so unit tests can exercise the resolve-success /
+// resolve-failure decision inputs that proxyLocalhostRequest() branches on
+// when enforcing localhost-proxy destination-port ownership
+// (rstudio-pro#11470): success => setExpectedPeerUid(uid); any error => fail
+// closed via setNotFoundError(). It's a passthrough, not a reimplementation.
+Error userIdForUsernameForTest(const std::string& username, UidType* pUID)
+{
+   return userIdForUsername(username, pUID);
+}
+#endif
+
 bool applyProxyFilter(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<core::http::Request> pRequest,
@@ -1232,9 +1271,38 @@ void proxyLocalhostRequest(
    }
    pRequest->setHost(http::URL::formatHostPort(address, port));
 
-   // create async tcp/ip client and assign request
-   boost::shared_ptr<http::IAsyncClient> pClient(
+   boost::shared_ptr<server_core::http::LocalhostAsyncClient> pLocalhost(
       new server_core::http::LocalhostAsyncClient(ptrConnection->ioContext(), address, port));
+
+   // resolve the requesting user's uid so LocalhostAsyncClient can verify the
+   // destination port is actually owned by them before proxying (rstudio-pro#11470),
+   // unless the admin has disabled this via www-proxy-localhost-verify-port-owner.
+   //
+   // Unlike the local-stream uid validation above (which validates a target that is
+   // already scoped to context.username by construction -- the stream path is derived
+   // from the caller's own session context, so a resolution failure there can only
+   // affect the caller's own access), the target port here is attacker-controlled:
+   // it comes from decoding a client-supplied token and may name *any* user's port.
+   // The uid check is therefore the sole access-control boundary on this path, and we
+   // must fail closed on *any* resolution error, including "user not found"
+   // (permission_denied) -- a leftover-cache/NSS-lookup failure or a not-yet-provisioned
+   // account must not silently disable ownership enforcement for a request whose
+   // destination the caller fully controls.
+   if (server::options().wwwProxyLocalhostVerifyPortOwner())
+   {
+      UidType uid;
+      Error userError = userIdForUsername(context.username, &uid);
+      if (userError)
+      {
+         LOG_ERROR(userError);
+         ptrConnection->response().setNotFoundError(*pRequest);
+         return;
+      }
+      pLocalhost->setExpectedPeerUid(uid);
+   }
+
+   // create async tcp/ip client and assign request
+   boost::shared_ptr<http::IAsyncClient> pClient = pLocalhost;
    // Ensure async operations on both the browser->rserver and rserver->backend run on the same thread.
    pClient->setStrand(&ptrConnection->getStrand());
    // pRequest is not used again after this point, so move its contents into

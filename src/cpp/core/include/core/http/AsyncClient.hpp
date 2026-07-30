@@ -292,6 +292,13 @@ protected:
 
    virtual SocketService& socket() = 0;
 
+   // Verification hook invoked by connecting subclasses after the connection
+   // (and any TLS handshake) succeeds but BEFORE any request bytes are written.
+   // Default: no verification. Overridden by LocalhostAsyncClient[Ssl] to enforce
+   // destination-port ownership (rstudio-pro#11470). Return true to proceed with
+   // the write; set *pError and return false to reject (fail closed).
+   virtual bool verifyConnectedPeer(Error* /*pError*/) { return true; }
+
    void handleConnectionError(const Error& connectionError)
    {
       // retry if necessary, otherwise just forward the error to
