@@ -48,6 +48,9 @@ void standardStreamCaptureThread(
 {
    try
    {
+      bool skipEchoWrite = false;
+      bool loggedReadError = false;
+
       while(true)
       {
          const int kBufferSize = 512;
@@ -59,27 +62,44 @@ void standardStreamCaptureThread(
             {
                outputHandler(std::string(buffer, bytesRead));
 
-               if (hOrigStdHandle)
+               if (hOrigStdHandle && !skipEchoWrite)
                {
-                  bool result = false;
+                  DWORD writeError = ERROR_SUCCESS;
                   LOCK_MUTEX(s_mutex)
                   {
-                     result = ::WriteFile(hOrigStdHandle, buffer, bytesRead, nullptr, nullptr);
+                     if (!::WriteFile(hOrigStdHandle, buffer, bytesRead, nullptr, nullptr))
+                        writeError = ::GetLastError();
                   }
                   END_LOCK_MUTEX
 
-                  if (!result)
+                  if (writeError != ERROR_SUCCESS)
                   {
-                     LOG_ERROR(LAST_SYSTEM_ERROR());
+                     // deliberately give up on the echo after the first failure and
+                     // log only once: with a stderr log destination, a logged error
+                     // is itself captured and read back by this thread, so logging
+                     // every failure spins forever (#18414)
+                     skipEchoWrite = true;
+
+                     LOG_ERROR(systemError(
+                                  writeError,
+                                  "Console is no longer writable. Output will no longer be echoed to the console.",
+                                  ERROR_LOCATION));
                   }
                }
             }
          }
          else
          {
-            // we don't expect errors to ever occur (since the standard
-            // streams are never closed) so log any that do and continue
-            LOG_ERROR(LAST_SYSTEM_ERROR());
+            // we don't expect read errors here (the write end of the pipe is our
+            // own stdout / stderr and is never closed), so log only the first and
+            // back off rather than spinning if one proves persistent (#18414)
+            if (!loggedReadError)
+            {
+               loggedReadError = true;
+               LOG_ERROR(LAST_SYSTEM_ERROR());
+            }
+
+            ::Sleep(100);
          }
       }
    }
