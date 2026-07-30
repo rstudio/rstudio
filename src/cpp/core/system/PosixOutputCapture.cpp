@@ -84,21 +84,23 @@ void standardStreamCaptureThread(
        {
           if (::write(dupFd, output.c_str(), output.size()) == -1)
           {
-             if (errno == EPIPE || errno == EBADF)
+             if (errno != EAGAIN && errno != EINTR)
              {
-                // the std stream was closed somehow, meaning this write call will never succeed again
-                // mark that we should skip the write, and only log this error once
+                // the write failed for a non-transient reason (e.g. EPIPE or EBADF
+                // because the stream was closed, or EIO because the attached
+                // terminal went away), so it is unlikely to ever succeed again --
+                // mark that we should skip the write, and only log this error once.
+                // logging on every failure can otherwise spin forever: with a
+                // stderr log destination, the logged error is itself captured
+                // and echoed right back here (#18398)
                 *pSkipWrite = true;
 
-                std::string cause = errno == EBADF ? " closed" : "'s pipe read end closed";
                 std::string description =
                       descriptorType + " descriptor " + core::safe_convert::numberToString(dupFd) +
-                      cause + ". Output will no longer be redirected.";
+                      " is no longer writable. Output will no longer be redirected.";
 
                 LOG_ERROR(systemError(errno, description, ERROR_LOCATION));
              }
-             else if (errno != EAGAIN && errno != EINTR)
-                LOG_ERROR(systemError(errno, ERROR_LOCATION));
           }
        }
     };
