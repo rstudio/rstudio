@@ -5,7 +5,7 @@ import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 import { launchServer, shutdownServer } from './server.fixture';
 import { setAuthStateEnv, type AiAuthOption } from '../utils/auth';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
-import { drainClientExceptions } from '../utils/commands';
+import { drainClientExceptions, getPref, setPref } from '../utils/commands';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 
@@ -32,6 +32,45 @@ interface SessionContext {
   page: Page;
   consoleBuffer: ConsoleLine[];
   logDir?: string;
+}
+
+/** Tags whose tests intentionally run with an AI assistant active. */
+const ASSISTANT_TEST_TAGS = ['@ai', '@chat'];
+
+/**
+ * Set the AI assistant provider prefs back to "none" if a previous suite left
+ * them on.
+ *
+ * The `assistant` and `chat_provider` prefs default to "posit", so once the
+ * Posit Assistant backend is present in a worker's data home (installed by a
+ * @chat suite settling the install prompt, or seeded via PW_SEED_PAI), every
+ * later session start in that worker launches the chat backend + NES agent,
+ * and every project open/close/restart shuts them down again seconds later.
+ * That churn is the window for the session-shutdown wedge that kills whole CI
+ * shards (#18394), and it adds agent start/stop overhead to restart-heavy
+ * suites. base-prefs.jsonc starts desktop workers with both prefs at "none";
+ * this guard restores that state after an @ai/@chat suite has run.
+ *
+ * Desktop only: server mode shares one config/data home across all workers,
+ * so flipping the pref here would race a @chat suite running concurrently in
+ * another worker. (Server-mode restarts with an active agent remain exposed
+ * to #18394 until the product-side shutdown hardening lands.)
+ */
+async function disableLeakedAssistant(page: Page): Promise<void> {
+  const [assistant, chatProvider] = await Promise.all([
+    getPref(page, 'assistant'),
+    getPref(page, 'chat_provider'),
+  ]);
+
+  const leakedOn = (value: unknown) => value != null && value !== 'none';
+  if (!leakedOn(assistant) && !leakedOn(chatProvider)) return;
+
+  console.log(
+    '[test-reset] disabling AI assistant left on by a previous suite ' +
+      `(assistant=${assistant}, chat_provider=${chatProvider})`,
+  );
+  if (leakedOn(assistant)) await setPref(page, 'assistant', 'none');
+  if (leakedOn(chatProvider)) await setPref(page, 'chat_provider', 'none');
 }
 
 /** Capture R/RStudio versions once per worker and log them. */
@@ -219,7 +258,7 @@ export const test = base.extend<
   // hid the Environment tab (#17952). Auto fixtures are part of the test type
   // itself, so they run for every test in every file regardless of module
   // caching.
-  perTestReset: [async ({ rstudioSession }, use, testInfo) => {
+  perTestReset: [async ({ rstudioSession, mode }, use, testInfo) => {
     const page = rstudioSession.page;
 
     // Drain exceptions that arrived BEFORE this test (a previous test's
@@ -239,6 +278,12 @@ export const test = base.extend<
     const logBaseline = snapshotLogSizes(rstudioSession.logDir);
 
     await resetForNextTest(page);
+
+    // Keep the AI assistant off for tests that don't opt in via @ai/@chat --
+    // see disableLeakedAssistant. Runs after resetForNextTest so the bridge
+    // readiness gate has already been cleared.
+    if (mode === 'desktop' && !testInfo.tags.some((tag) => ASSISTANT_TEST_TAGS.includes(tag)))
+      await disableLeakedAssistant(page);
 
     // Debug-only: park the test (IDE clean and idle) so a human can arm
     // DevTools before the test body drives its scenario. Prompts in the
