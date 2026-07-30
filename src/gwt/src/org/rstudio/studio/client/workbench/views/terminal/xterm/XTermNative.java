@@ -218,6 +218,23 @@ public class XTermNative extends JavaScriptObject
    }-*/;
 
    /**
+    * Install a handler for WebGL context loss on the loaded WebGL addon.
+    * The addon cannot recover the context on its own; the handler is
+    * expected to dispose the addon, reverting to the DOM renderer.
+    * At most one handler is installed per loaded addon; the registration
+    * is disposed along with the addon.
+    * @param command handler to execute when the WebGL context is lost
+    */
+   public final native void onWebGLContextLoss(Command command) /*-{
+      if (this.rstudioWebGLAddon_ && !this.rstudioWebGLContextLossHandler_) {
+         this.rstudioWebGLContextLossHandler_ = this.rstudioWebGLAddon_.onContextLoss(
+            $entry(function() {
+               command.@com.google.gwt.user.client.Command::execute()();
+            }));
+      }
+   }-*/;
+
+   /**
     * Unload the WebGL addon, reverting to DOM rendering.
     */
    public final native void unloadWebGLAddon() /*-{
@@ -228,6 +245,7 @@ public class XTermNative extends JavaScriptObject
             console.error("Error disposing WebglAddon: " + error);
          }
          this.rstudioWebGLAddon_ = null;
+         this.rstudioWebGLContextLossHandler_ = null;
       }
    }-*/;
 

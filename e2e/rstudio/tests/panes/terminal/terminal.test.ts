@@ -4,7 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { rStringLiteral } from '@utils/r';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, setPref } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
 import type { Page } from 'playwright';
 
@@ -200,6 +200,75 @@ test.describe.serial('Terminal pane', () => {
       ),
       { timeout: TIMEOUTS.consoleReady },
     ).toBe('TRUE');
+  });
+
+  test('terminal keeps rendering after WebGL context loss', async ({ rstudioPage: page }) => {
+    await killAllTerminals(page);
+
+    // The "canvas" renderer preference (the default) maps to the xterm.js
+    // WebGL addon. Set it explicitly so this test doesn't depend on pref
+    // drift from earlier tests.
+    await setPref(page, 'terminal_renderer', 'canvas');
+    await openTerminal(page);
+
+    // The WebGL addon appends canvases to the xterm screen element (the
+    // webgl2 render canvas plus a 2D link layer); the DOM renderer uses no
+    // canvas. The addon loads asynchronously after the widget appears, so
+    // allow a grace period. If WebGL is unavailable in this environment, the
+    // addon load fails and the terminal is DOM-rendered from the start --
+    // context loss can't occur, so there is nothing to test.
+    await page
+      .locator('.xterm-screen canvas')
+      .first()
+      .waitFor({ state: 'attached', timeout: 5000 })
+      .catch(() => {});
+
+    // Force a WebGL context loss on the addon's render canvas -- the one
+    // whose context is webgl2, not the 2D link layer. Calling getContext
+    // with the type a canvas already has returns its existing context, and
+    // returns null for a mismatched type, so this cannot create a context
+    // on the wrong canvas. On loss the addon waits 3s for the browser to
+    // restore the context (WEBGL_lose_context never does without an explicit
+    // restoreContext()), then fires onContextLoss; RStudio must dispose the
+    // addon and fall back to the DOM renderer or the terminal stops
+    // painting (#18393).
+    const lost = await page.evaluate(() => {
+      const canvases = document.querySelectorAll<HTMLCanvasElement>('.xterm-screen canvas');
+      for (const el of canvases) {
+        const gl = el.getContext('webgl2');
+        if (gl) {
+          const ext = gl.getExtension('WEBGL_lose_context');
+          if (!ext) throw new Error('WEBGL_lose_context extension unavailable');
+          ext.loseContext();
+          return true;
+        }
+      }
+      return false;
+    });
+    test.skip(!lost, 'WebGL renderer not active in this environment');
+
+    // Type a command whose *output* contains a marker that the echoed command
+    // line does not (the quotes split it), so the assertion can only match
+    // real rendered output. Assert on the terminal's DOM rows, not
+    // rstudioapi::terminalBuffer(): the server-side buffer still receives
+    // output when client rendering is broken, which is exactly the bug.
+    await page.keyboard.type('echo "pw_ctx""loss_ok"');
+    await page.keyboard.press('Enter');
+
+    await expect
+      .poll(
+        async () => {
+          const text = await page
+            .locator('.xterm-rows')
+            .innerText()
+            .catch(() => '');
+          // Strip whitespace and U+00B7 wrap markers; xterm may hard-wrap
+          // anywhere depending on prompt width.
+          return text.replace(/[\s\u00B7]+/g, '').includes('pw_ctxloss_ok');
+        },
+        { timeout: TIMEOUTS.consoleReady },
+      )
+      .toBe(true);
   });
 
   test(
