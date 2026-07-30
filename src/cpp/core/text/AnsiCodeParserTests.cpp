@@ -63,15 +63,62 @@ TEST(AnsiCodeParserTest, StripSimpleEscapeSequencesWithParams)
 
 TEST(AnsiCodeParserTest, StripSimpleEscapeBeforeAnsiMatch)
 {
-   // This test verifies the order of regex application matters.
-   // ESC G and ESC H are in the kAnsiMatch character range (A-PR),
-   // so if kAnsiMatch runs first, it would strip just "ESC G" and leave "1;" behind.
-   // By running kSimpleEscapeMatch first, we strip "ESC G1;" entirely.
+   // ESC G1; must be stripped as a unit: a pattern stopping at the letter
+   // final would leave "1;" behind, so kSimpleEscapeMatch keeps trailing
+   // params attached to letter escapes
    std::string withEsc = "\x1b" "G1;Error";
    std::string expect = "Error";
 
    stripAnsiCodes(&withEsc);
    EXPECT_EQ(expect, withEsc);
+}
+
+TEST(AnsiCodeParserTest, StripCsiWithColonParameters)
+{
+   // colon-separated SGR parameters (ITU T.416 form, e.g. from newer tools)
+   std::string withCsi =
+      "\x1b[38:5:196m"
+      "red\x1b[0m";
+   std::string expect = "red";
+
+   stripAnsiCodes(&withCsi);
+   EXPECT_EQ(expect, withCsi);
+}
+
+TEST(AnsiCodeParserTest, StripCsiWithIntermediateBytes)
+{
+   // DECSCUSR (cursor style) has a space intermediate before the final byte
+   std::string withCsi = "a\x1b[1 qb";
+   std::string expect = "ab";
+
+   stripAnsiCodes(&withCsi);
+   EXPECT_EQ(expect, withCsi);
+}
+
+TEST(AnsiCodeParserTest, StripNonCsiEscapeForms)
+{
+   // nF charset designation (ESC ( B) and keypad modes (ESC =, ESC >)
+   std::string withEsc =
+      "\x1b(B"
+      "abc\x1b="
+      "def\x1b>"
+      "ghi";
+   std::string expect = "abcdefghi";
+
+   stripAnsiCodes(&withEsc);
+   EXPECT_EQ(expect, withEsc);
+}
+
+TEST(AnsiCodeParserTest, PreservesUtf8ContinuationBytes)
+{
+   // 0x9b is the 8-bit CSI introducer in single-byte encodings, but in
+   // UTF-8 it appears as a continuation byte (e.g. U+011B, 0xc4 0x9b);
+   // it must not be treated as an escape introducer
+   std::string text = "d\xc4\x9bm";
+   std::string expect = text;
+
+   stripAnsiCodes(&text);
+   EXPECT_EQ(expect, text);
 }
 
 TEST(AnsiCodeParserTest, StripOscSequencesWithStTerminator)

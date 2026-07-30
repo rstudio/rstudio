@@ -23,8 +23,19 @@ namespace text {
 
 namespace {
 
-// Match ANSI escape codes copied from https://github.com/chalk/ansi-regex
-const char* kAnsiMatch = "[\\x1b\\x9b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><@]";
+// Match CSI sequences following the ECMA-48 grammar: parameter bytes
+// (0x30-0x3f, which admits the colon-separated SGR form, e.g. ESC[38:5:196m),
+// then intermediate bytes (0x20-0x2f, e.g. the space in DECSCUSR ESC[1 q),
+// then one final byte (0x40-0x7e). The 8-bit CSI introducer 0x9b is
+// deliberately not matched: this operates on UTF-8 bytes, where 0x9b is a
+// valid continuation byte, so matching it would corrupt multibyte text.
+const char* kCsiMatch = "\\x1b\\[[0-?]*[ -/]*[@-~]";
+
+// Match the remaining ESC forms: nF sequences (intermediate bytes then a
+// final byte, e.g. the charset designation ESC ( B, or ESC # 8) and
+// two-character sequences with a non-letter final (e.g. ESC 7, ESC 8,
+// ESC =, ESC >)
+const char* kEscMatch = "\\x1b(?:[ -/]+[0-~]|[0-?])";
 
 // Match string-type sequences: OSC (ESC ]), DCS (ESC P), SOS (ESC X),
 // PM (ESC ^), APC (ESC _). These carry a free-form payload terminated by
@@ -50,15 +61,16 @@ void stripAnsiCodes(std::string* pStr)
 
    std::string replacement;
 
-   // Strip string-type sequences first: kSimpleEscapeMatch and kAnsiMatch
-   // would otherwise consume just their introducers (e.g. ESC P), leaving
-   // the payload behind as visible text
+   // Strip string-type sequences first: the patterns below would otherwise
+   // consume just their introducers (e.g. ESC P), leaving the payload
+   // behind as visible text
    *pStr = boost::regex_replace(*pStr, boost::regex(kStringSequenceMatch), replacement);
 
-   // Strip simple ESC sequences next (they include params like "1;")
-   // before kAnsiMatch which would only match "ESC G" without the params
+   // Strip simple ESC sequences (letter finals keep their trailing
+   // params attached, e.g. ESC G1;), then CSI, then the remaining ESC forms
    *pStr = boost::regex_replace(*pStr, boost::regex(kSimpleEscapeMatch), replacement);
-   *pStr = boost::regex_replace(*pStr, boost::regex(kAnsiMatch), replacement);
+   *pStr = boost::regex_replace(*pStr, boost::regex(kCsiMatch), replacement);
+   *pStr = boost::regex_replace(*pStr, boost::regex(kEscMatch), replacement);
 }
 
 } // namespace text
