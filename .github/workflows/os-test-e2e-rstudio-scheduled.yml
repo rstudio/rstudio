@@ -48,9 +48,12 @@ concurrency:
   # the brownout window it is timed to land in. Every other trigger keeps the
   # shared group, which caps the fleet at one full rotation at a time.
   #
-  # The trade-off: with separate groups the macOS 14 run may now overlap a
+  # Two trade-offs come with the split. The macOS 14 run may now overlap a
   # weekday slate, contending for the shared macOS runner pool if a morning
-  # slate is still going at 16:00.
+  # slate is still going at 16:00. And because macos14 is in ALL below, a
+  # run-everything dispatch (group "main") can now run the macOS 14 engine at
+  # the same time as this cron does, which a single shared group used to make
+  # impossible.
   group: pw-scheduled-e2e-${{ github.event.schedule == '0 16 * * 1' && 'macos14' || 'main' }}
   cancel-in-progress: false
 
@@ -76,8 +79,9 @@ jobs:
           # workflow_dispatch and the Sunday cron run every engine; the weekday
           # cron (Mon-Fri) runs a fixed slate per day; the Monday afternoon cron
           # runs macOS 14 alone.
-          # Each engine runs once a week except macos26, windows2025, and
-          # ubuntu24s, which run twice.
+          # Each engine appears once a week in the weekday slates below, except
+          # macos26, windows2025, and ubuntu24s (twice) and macos14, which is in
+          # no slate at all -- its weekly run is the Monday 16:00 cron.
           ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15","macos14"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
@@ -88,9 +92,12 @@ jobs:
             # 5, 12, 19 and 26; the 08:00 slates miss all eight windows by six
             # hours). Those failures are the point -- early warning that the
             # image is fully retired on 2026-11-02. No brownout window falls on
-            # a Sunday, so the full-matrix run is unaffected before that date;
-            # after it, this run, the Sunday run, and any dispatch all fail
-            # until macos14 is removed from this workflow and from ALL above.
+            # a Sunday, so the full-matrix cron is unaffected before that date,
+            # but a dispatch launched inside any of the eight windows (they open
+            # on four Mondays, three Fridays and one Thursday) will hit one.
+            # After the retirement date this run, the Sunday run, and every
+            # dispatch fail until macos14 is removed from this workflow and from
+            # ALL above.
             SEL='["macos14"]'
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
