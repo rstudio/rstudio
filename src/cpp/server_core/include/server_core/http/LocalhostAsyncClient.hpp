@@ -16,8 +16,12 @@
 #ifndef SERVER_CORE_LOCALHOST_ASYNC_CLIENT_HPP
 #define SERVER_CORE_LOCALHOST_ASYNC_CLIENT_HPP
 
+#include <core/Log.hpp>
+
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClientSsl.hpp>
+
+#include <server_core/SocketOwnership.hpp>
 
 namespace rstudio {
 namespace server_core {
@@ -52,6 +56,36 @@ bool keepConnectionAliveImpl(const core::http::Response& response)
    return response.statusCode() == core::http::status::SwitchingProtocols;
 }
 
+// shared post-connect ownership check for the plain and SSL localhost client
+// variants below; socket is the underlying TCP-layer socket (next_layer() for
+// the SSL client). returns true to allow the request write to proceed.
+bool verifyConnectedPeerImpl(boost::asio::ip::tcp::socket& socket,
+                             uid_t expectedPeerUid,
+                             core::Error* pError)
+{
+   if (expectedPeerUid == static_cast<uid_t>(-1))
+      return true; // no ownership check requested for this client
+
+   if (!server_core::socket_utils::probeSockDiagAvailable())
+      return true; // capability absent (logged once at probe) -> degrade to
+                   // no-enforcement rather than break proxying
+
+   int appPort = socket.remote_endpoint().port();       // target/listen port
+   int ephemeralPort = socket.local_endpoint().port();  // our client port
+   core::Error error = server_core::socket_utils::verifyPeerUid(
+                          socket.local_endpoint().address(),
+                          socket.remote_endpoint().address(),
+                          appPort, ephemeralPort, expectedPeerUid);
+   if (error)
+   {
+      WLOGF("Refusing localhost proxy to port {}: {}", appPort, error.getSummary());
+      *pError = error;
+      return false;
+   }
+
+   return true;
+}
+
 } // anonymous namespace
 
 class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
@@ -66,7 +100,18 @@ public:
    {
    }
 
+   // When set (default: no check), verifyConnectedPeer() enforces that the
+   // established peer socket is owned by expectedPeerUid (rstudio-pro#11470).
+   void setExpectedPeerUid(uid_t uid) { expectedPeerUid_ = uid; }
+
 private:
+   uid_t expectedPeerUid_ = static_cast<uid_t>(-1);
+
+   virtual bool verifyConnectedPeer(core::Error* pError)
+   {
+      return verifyConnectedPeerImpl(socket(), expectedPeerUid_, pError);
+   }
+
    virtual bool stopReadingAndRespond()
    {
       return stopReadingAndRespondImpl(response_, chunkedEncoding_);
@@ -94,7 +139,18 @@ public:
    {
    }
 
+   // When set (default: no check), verifyConnectedPeer() enforces that the
+   // established peer socket is owned by expectedPeerUid (rstudio-pro#11470).
+   void setExpectedPeerUid(uid_t uid) { expectedPeerUid_ = uid; }
+
 private:
+   uid_t expectedPeerUid_ = static_cast<uid_t>(-1);
+
+   virtual bool verifyConnectedPeer(core::Error* pError)
+   {
+      return verifyConnectedPeerImpl(socket().next_layer(), expectedPeerUid_, pError);
+   }
+
    virtual bool stopReadingAndRespond()
    {
       return stopReadingAndRespondImpl(response_, chunkedEncoding_);

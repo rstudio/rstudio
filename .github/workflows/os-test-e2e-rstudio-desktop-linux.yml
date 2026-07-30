@@ -782,11 +782,15 @@ jobs:
           esac
           ls -la /usr/bin/rstudio
 
-      # install-required-packages (engines without PPM binary coverage, where
-      # the in-test harness would otherwise source-compile at test time)
-      # pre-installs the harness's full REQUIRED_PACKAGES set into the cached
-      # R library; PW_RSTUDIO_R_LIBS_USER below then points globalSetup at
-      # that same library so it finds everything present and installs nothing.
+      # install-required-packages pre-installs the harness's full
+      # REQUIRED_PACKAGES set into the cached R library;
+      # PW_RSTUDIO_R_LIBS_USER below then points globalSetup at that same
+      # library so it finds everything present and installs nothing. Every
+      # Linux engine sets it: the harness-default library
+      # (~/.cache/rstudio-playwright) is not in any workflow cache, so an
+      # engine that leaves it off pays the full 23-package install on every
+      # run -- a few minutes of PPM binary downloads on Ubuntu/Debian, a full
+      # source compile on engines without PPM binaries (Fedora).
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
@@ -848,8 +852,12 @@ jobs:
           PW_DEBUG_LAUNCH: '1'
           # Point the harness's R-libs provisioner (fixtures/r-libs-setup.ts,
           # run in globalSetup) at the library os-e2e-deps pre-populated, so
-          # globalSetup installs nothing at test time. Empty (the harness
-          # default) on engines with PPM binary coverage.
+          # globalSetup installs nothing at test time. All engines currently
+          # set preinstall_r_packages; the conditional keeps the degraded mode
+          # working (empty means the harness default -- treated as unset since
+          # the empty-override fix in r-libs-setup.ts, which this expression
+          # relies on: an Actions env value of '' is exported as a defined
+          # empty string, not an absent variable).
           PW_RSTUDIO_R_LIBS_USER: ${{ needs.setup.outputs.preinstall_r_packages == 'true' && format('{0}/R-libs', github.workspace) || '' }}
           # Defensive ceiling on engines where a straggler R package may
           # source-compile at test time: that is a long silent stretch the

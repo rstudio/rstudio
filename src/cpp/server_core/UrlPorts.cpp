@@ -56,6 +56,11 @@
  * making them user-specific and difficult to predict without prior knowledge. Any web service
  * running on the same host as RStudio Server should implement best practices for cross-site request
  * forgery (CSRF).
+ *
+ * NOTE (rstudio-pro#11470): the obfuscation below is NOT the access-control boundary for
+ * portmapped requests. Ownership of the destination port is enforced separately, at proxy time,
+ * by a kernel-UID check on the established localhost connection (see server_core::socket_utils
+ * and LocalhostAsyncClient). A decodable token no longer implies authorization to reach a port.
  */
 
 #define TRANSFORM_PORT(x)   ((x * 8854)  % 65535)

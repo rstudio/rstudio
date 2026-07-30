@@ -24,7 +24,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
-#include <shlwapi.h>
 #endif
 
 #ifndef _WIN32
@@ -2762,24 +2761,19 @@ private:
 
 bool detectGitExeDirOnPath(FilePath* pPath)
 {
-   std::vector<wchar_t> path(MAX_PATH+2);
-   wcscpy(&(path[0]), L"git.exe");
-   if (::PathFindOnPathW(&(path[0]), nullptr))
-   {
-      // As of version 20120710 of msysgit, the cmd directory contains a
-      // git.exe wrapper that, if used by us, causes console windows to
-      // flash
-      FilePath filePath(&(path[0]));
-      if (filePath.getParent().getFilename() == "cmd")
-        return false;
-
-      *pPath = filePath.getParent();
-      return true;
-   }
-   else
-   {
+   FilePath filePath;
+   Error error = core::system::findProgramOnPath("git.exe", &filePath);
+   if (error)
       return false;
-   }
+
+   // As of version 20120710 of msysgit, the cmd directory contains a
+   // git.exe wrapper that, if used by us, causes console windows to
+   // flash
+   if (filePath.getParent().getFilename() == "cmd")
+      return false;
+
+   *pPath = filePath.getParent();
+   return true;
 }
 
 bool isGitExeOnPath()
@@ -2791,21 +2785,20 @@ bool isGitExeOnPath()
 
 bool detectGitBinDirFromPath(FilePath* pPath)
 {
-   std::vector<wchar_t> path(MAX_PATH+2);
-   wcscpy(&(path[0]), L"git.cmd");
-
-   if (::PathFindOnPathW(&(path[0]), nullptr))
+   FilePath gitCmdPath;
+   Error error = core::system::findProgramOnPath("git.cmd", &gitCmdPath);
+   if (!error)
    {
-      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
+      *pPath = gitCmdPath.getParent().getParent().completeChildPath("bin");
       return true;
    }
 
    // Look for cmd/git.exe and redirect to bin/
-   wcscpy(&(path[0]), L"git.exe");
-
-   if (::PathFindOnPathW(&(path[0]), nullptr))
+   FilePath gitExePath;
+   error = core::system::findProgramOnPath("git.exe", &gitExePath);
+   if (!error)
    {
-      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
+      *pPath = gitExePath.getParent().getParent().completeChildPath("bin");
       return true;
    }
 
@@ -2816,26 +2809,35 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
 {
    using namespace boost;
 
-   CoInitialize(nullptr);
-
+   // NOTE: rsession initializes COM (STA) eagerly on the main thread at startup
+   // (SessionMain.cpp), and every caller of discoverGitBinDir() runs there, so no
+   // CoInitialize is needed here -- and one added here without a matching
+   // CoUninitialize on each return path would leak an apartment reference per
+   // discovery, since this runs again whenever user settings change.
+   //
    // Step 1. Find the Git Bash shortcut on the Start menu
-   std::vector<wchar_t> data(MAX_PATH+2);
-   HRESULT hr = ::SHGetFolderPathW(nullptr,
-                                   CSIDL_COMMON_PROGRAMS,
-                                   nullptr,
-                                   SHGFP_TYPE_CURRENT,
-                                   &(data[0]));
-   if (FAILED(hr))
-      return hr;
+   //
+   // NOTE: SHGetKnownFolderPath allocates its result, so unlike the deprecated
+   // SHGetFolderPathW it isn't bounded by MAX_PATH
+   wchar_t* commonPrograms = nullptr;
+   HRESULT hr = ::SHGetKnownFolderPath(FOLDERID_CommonPrograms, 0, nullptr, &commonPrograms);
+   if (FAILED(hr) || commonPrograms == nullptr)
+   {
+      if (commonPrograms != nullptr)
+         ::CoTaskMemFree(commonPrograms);
+
+      return FAILED(hr) ? hr : E_FAIL;
+   }
+
+   std::wstring commonProgramsPath(commonPrograms);
+   ::CoTaskMemFree(commonPrograms);
 
    // look for Git Bash or Git GUI link
-   std::wstring path(&(data[0]));
-   path.append(L"\\Git\\Git Bash.lnk");
+   std::wstring path = commonProgramsPath + L"\\Git\\Git Bash.lnk";
    if (::GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES)
    {
       // try for Git GUI
-      path = std::wstring(&(data[0]));
-      path.append(L"\\Git\\Git GUI.lnk");
+      path = commonProgramsPath + L"\\Git\\Git GUI.lnk";
       if (::GetFileAttributesW(path.c_str()) == INVALID_FILE_ATTRIBUTES)
          return E_FAIL;
    }
@@ -2980,8 +2982,12 @@ Error discoverGitBinDir(FilePath* pPath)
    if (detectGitBinDirFromStandardLocation(pPath))
       return Success();
 
-   return systemError(boost::system::errc::no_such_file_or_directory,
-                      ERROR_LOCATION);
+   Error error = systemError(boost::system::errc::no_such_file_or_directory,
+                             ERROR_LOCATION);
+   error.addProperty("description",
+                     "Git installation not found on PATH, via the Start Menu "
+                     "shortcut, or in a standard install location");
+   return error;
 }
 
 Error detectAndSaveGitExePath()
@@ -3340,7 +3346,11 @@ bool initGitBin()
 #ifdef _WIN32
       error = detectAndSaveGitExePath();
       if (error)
+      {
+         // log it: otherwise Git support simply disappears with nothing to go on
+         LOG_ERROR(error);
          return false; // no Git install detected
+      }
 #else
       FilePath gitExeFilePath = whichGitExe();
       if (gitExeFilePath.isEmpty())

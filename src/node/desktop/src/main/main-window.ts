@@ -349,10 +349,15 @@ export class MainWindow extends GwtWindow {
         } else {
           this.executeJavaScript('window.desktopHooks.quitR()')
             .then(() => (this.quitConfirmed = true))
-            .catch(logger().logError);
+            .catch((error: unknown) => logger().logError(error));
         }
       })
-      .catch(logger().logError);
+      .catch((error: unknown) => {
+        // the desktopHooks probe could not run at all (e.g. the renderer
+        // crashed), so exit rather than leave a headless process behind
+        logger().logError(error);
+        quit();
+      });
   }
 
   collectPendingQuitRequest(): PendingQuit {
@@ -368,7 +373,7 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.options.baseUrl ?? '').catch(logger().logError);
+    this.loadUrl(this.options.baseUrl ?? '').catch((error: unknown) => logger().logError(error));
   }
 
   onLoadFinished(ok: boolean): void {
@@ -382,7 +387,7 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
-        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY, false).catch(logger().logError);
+        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY, false).catch((error: unknown) => logger().logError(error));
         waitForUrlWithTimeout(this.options.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
@@ -410,7 +415,7 @@ export class MainWindow extends GwtWindow {
     const vars = new Map<string, string>();
     vars.set('retry_url', this.options.baseUrl ?? '');
     appState().gwtCallback?.setErrorPageInfo(vars);
-    this.loadUrl(CONNECT_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
+    this.loadUrl(CONNECT_WINDOW_WEBPACK_ENTRY).catch((error: unknown) => logger().logError(error));
   }
 
   setErrorDisplayed(): void {

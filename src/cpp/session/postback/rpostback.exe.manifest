@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
    <assemblyIdentity version="1.0.0.0"
-      name="diagnostics"
+      name="rpostback"
       type="win32"/>
-   <description>diagnostics</description>
+   <description>rpostback</description>
    <!--
-      Opt out of the MAX_PATH (260 character) limit, so that diagnostics can
-      report on the same paths a long-path-aware session can use. Also requires
-      the machine's HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
+      Opt out of the MAX_PATH (260 character) limit, so that the log directory
+      resolved from xdg::userLogDir() can be written when it sits below a long
+      path. Note that the postback argument itself is only forwarded to rsession
+      as a string, so its length is not constrained here. Also requires the
+      machine's HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
       registry value to be set.
    -->
    <application>

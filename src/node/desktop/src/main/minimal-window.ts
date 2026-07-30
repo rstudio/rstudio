@@ -49,7 +49,6 @@ class MinimalWindow extends DesktopBrowserWindow {
     });
 
     // ensure this window closes when the creating window closes
-    this.parentWindowDestroyed = this.parentWindowDestroyed.bind(this);
     this.options.parent?.on(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
 
     this.window.on('close', () => {
@@ -58,7 +57,9 @@ class MinimalWindow extends DesktopBrowserWindow {
     });
   }
 
-  parentWindowDestroyed(): void {
+  // arrow function so it stays bound to this window when passed to
+  // the parent's event emitter above
+  parentWindowDestroyed = (): void => {
     // The parent listener is removed on this window's 'close' event, but a
     // shutdown-ordering race can fire WINDOW_DESTROYED after this window's
     // BrowserWindow is already destroyed. Guard against closing a dead window
@@ -66,7 +67,7 @@ class MinimalWindow extends DesktopBrowserWindow {
     if (!this.window.isDestroyed()) {
       this.window.close();
     }
-  }
+  };
 }
 
 export function openMinimalWindow(

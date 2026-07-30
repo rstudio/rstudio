@@ -224,6 +224,12 @@ private:
          if (!ec)
          {
             // finished handshake, commence with request
+            Error error;
+            if (!verifyConnectedPeer(&error))
+            {
+               handleConnectionError(error);
+               return;
+            }
             writeRequest();
          }
          else

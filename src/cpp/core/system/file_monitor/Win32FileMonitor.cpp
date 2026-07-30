@@ -155,14 +155,9 @@ void ensureLongFilePath(FilePath* pFilePath)
    std::string filename = pFilePath->getFilename();
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
-      const std::size_t kBuffSize = (MAX_PATH*2) + 1;
-      char buffer[kBuffSize];
-      if (::GetLongPathName(pFilePath->getAbsolutePath().c_str(),
-                            buffer,
-                            kBuffSize) > 0)
-      {
-         *pFilePath = FilePath(buffer);
-      }
+      // only reassigns when the path could actually be expanded, which matters
+      // here because the monitor's tree is keyed on these absolute paths
+      ensureLongPath(pFilePath);
    }
 }
 
