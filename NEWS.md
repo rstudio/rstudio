@@ -45,6 +45,7 @@
 - ([#18340](https://github.com/rstudio/rstudio/issues/18340)): Fixed an issue in RStudio Server where the IDE could stop receiving updates from the session after an R session restart until the user's next interaction -- most visibly, "Restart R and Run All Chunks" restarting R but appearing to hang before running the chunks, and console output after a suspended session resumed not appearing until the user did something else.
 - ([#12572](https://github.com/rstudio/rstudio/issues/12572)): The macOS `diagnostics` and `rpostback` helper binaries are now universal (Apple Silicon + Intel). RStudio no longer prompts to install Rosetta 2 at startup on Apple Silicon.
 - ([#9026](https://github.com/rstudio/rstudio/issues/9026)): The Review Changes window (Git and SVN commit and history) now follows the active theme, instead of always rendering with a light palette. The changelist and diff panes use the editor theme, as they do in the Git pane. The file lists in the Review Changes window and in the Git and SVN panes also show a "No changes" placeholder when there is nothing to review, instead of appearing blank.
+- ([#18378](https://github.com/rstudio/rstudio/issues/18378)): Fixed an issue in the Data Viewer where jumping to the bottom with End or Ctrl+End stopped short, leaving the last row partly hidden below the bottom edge, on platforms whose user-interface font renders taller than expected (Windows, and Linux distributions such as Fedora and RHEL 10 that default to Noto Sans).
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)
