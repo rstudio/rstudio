@@ -84,6 +84,8 @@
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
+#include <server/ServerSetupDbOverlay.hpp>
+
 #include "ServerSetupDb.hpp"
 #include "ServerXdgVars.hpp"
 #include "ServerLogVars.hpp"
@@ -121,20 +123,30 @@ Error checkConfig(const Options& options, std::ostream& out, bool* pPassed);
 // --setup-db dispatch already opened (via server::connectAsMaster) so the
 // master password is only prompted for once per invocation.
 //
-// printOnly and showPassword carry --setup-db-print-only and
-// --setup-db-show-password so an overlay applies them consistently with the
-// base command, which only consults them on the run that actually generates
-// a service-user password -- see server::setupDb()'s userCreated handling,
-// which an overlay provisioning its own database needs to mirror rather than
-// treating either flag as an unconditional switch.
+// An overlay reporting *pPassed = false MUST first write a "[FAIL] <reason>"
+// line to out. ServerMain only folds *pPassed into the exit code and adds no
+// message of its own, and unlike the Error path this one is never logged, so
+// a silent false leaves the admin a run of [PASS] lines and a bare exit 1.
 //
-// Only these two flags carry over: the connection details an overlay needs
-// are in masterConnectionOptions, which holds the resolved values actually
-// used to connect. The raw --setup-db-host/--setup-db-port arguments are
-// empty when the admin was prompted instead, and the remaining --setup-db-*
-// arguments name the main database rather than anything an overlay creates.
-Error setupDb(bool printOnly,
-              bool showPassword,
+// flags carries --setup-db-show-password and --setup-db-print-only so an
+// overlay applies them consistently with the base command. Neither flag
+// suppresses provisioning: server::setupDb() creates its database and role
+// either way, then printOnly redirects the resulting credentials to a
+// standalone file instead of database.conf, and showPassword echoes the
+// generated password to out. The base only consults them on the run that
+// actually created the service user -- createDatabaseAndUser()'s
+// pUserCreated, a narrower gate than "no password was generated" -- since
+// that is the only case in which it holds a password really applied to the
+// role. An overlay provisioning its own database needs to mirror that rather
+// than treat either flag as an unconditional switch.
+//
+// Everything else an overlay needs is in masterConnectionOptions, which holds
+// the resolved values actually used to connect, unlike the raw --setup-db-host
+// and --setup-db-port arguments, which are empty when the admin was prompted
+// instead. Note its .database is the "postgres" maintenance database, so an
+// overlay must copy and override that field the way createDatabaseAndUser()
+// does before connecting to anything it creates.
+Error setupDb(const SetupDbOverlayFlags& flags,
               boost::shared_ptr<core::database::IConnection> pMasterConnection,
               const core::database::PostgresqlConnectionOptions& masterConnectionOptions,
               std::ostream& out,
@@ -850,10 +862,18 @@ int main(int argc, char * const argv[])
          boost::shared_ptr<core::database::IConnection> pMasterConnection;
          core::database::PostgresqlConnectionOptions masterOptions;
          bool connectPassed = true;
+         // --setup-db returns before daemonize(), so these errors would
+         // otherwise reach only the file logger -- an admin at a prompt has no
+         // reason to tail the server log to learn why the command they just
+         // typed exited non-zero. Report them the way every other failure in
+         // this command is reported.
          Error error = server::connectAsMaster(flags, std::cin, std::cout, &pMasterConnection,
                                                &masterOptions, &connectPassed);
          if (error)
+         {
+            std::cout << "[FAIL] setup-db: " << error.getSummary() << std::endl;
             return core::system::exitFailure(error, ERROR_LOCATION);
+         }
          if (!connectPassed)
             return EXIT_FAILURE;
 
@@ -861,11 +881,18 @@ int main(int argc, char * const argv[])
          error = server::setupDb(options, flags, pMasterConnection, masterOptions,
                                  std::cin, std::cout, &passed);
          if (error)
+         {
+            std::cout << "[FAIL] setup-db: " << error.getSummary() << std::endl;
             return core::system::exitFailure(error, ERROR_LOCATION);
+         }
+
+         SetupDbOverlayFlags overlayFlags;
+         overlayFlags.showPassword = flags.showPassword;
+         overlayFlags.printOnly = flags.printOnly;
 
          bool overlayPassed = true;
-         Error overlayError = overlay::setupDb(flags.printOnly, flags.showPassword, pMasterConnection,
-                                               masterOptions, std::cout, &overlayPassed);
+         Error overlayError = overlay::setupDb(overlayFlags, pMasterConnection, masterOptions,
+                                               std::cout, &overlayPassed);
          if (overlayError)
          {
             std::cout << "[FAIL] overlay setup-db: " << overlayError.getSummary() << std::endl;
