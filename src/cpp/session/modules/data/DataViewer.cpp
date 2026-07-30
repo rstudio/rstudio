@@ -1309,14 +1309,11 @@ void onDetectChanges(module_context::ChangeSource source)
       
       // create a new frame object to capture the new state of the frame
       CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
-         
-      // clear working data for the object
-      r::exec::RFunction(".rs.removeWorkingData", i->first).call();
-         
+
       // check for changes in the SEXP itself
       SEXP observedSEXP = i->second.observedSEXP.get();
       bool sexpChanged = sexp != observedSEXP;
-      
+
       // it's possible that the object was mutated in place;
       // attempt to detect this as well
       bool typeChanged = false;
@@ -1333,7 +1330,19 @@ void onDetectChanges(module_context::ChangeSource source)
             i->second.ncol != newFrame.ncol ||
             i->second.colNames != newFrame.colNames;
 
-      if (sexpChanged || typeChanged || structureChanged)
+      bool changed = sexpChanged || typeChanged || structureChanged;
+
+      // clear working data (the cached sort/filter/search copy) for the
+      // object, but only when a change was actually observed: clearing it on
+      // every REPL evaluation forced the first grid request after any console
+      // command to re-sort and re-filter the entire frame (#17806).
+      // Reference-semantics objects (e.g. data.table) can be modified in
+      // place without any of the checks above observing a change, so their
+      // working copy is still conservatively discarded on every evaluation.
+      if (changed || Rf_inherits(sexp, "data.table"))
+         r::exec::RFunction(".rs.removeWorkingData", i->first).call();
+
+      if (changed)
       {
          // replace cached copy
          r::exec::RFunction(".rs.assignCachedData")

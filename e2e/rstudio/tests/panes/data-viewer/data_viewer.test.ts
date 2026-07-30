@@ -7,6 +7,7 @@
 // across a refresh, and HTML-special-character escaping in both cell
 // values and column names.
 
+import type { Request } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
@@ -432,6 +433,76 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.sidebar_filt_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17806
+  // With the Summary panel hidden, search/filter changes must not issue the
+  // filtered-summary describe (show=cols&filtered=1): it recomputes summary
+  // statistics for every column of the fetched window on the R main thread,
+  // and before the fix every search keystroke paid that cost even though
+  // nothing displayed the result. The refresh is deferred until the panel is
+  // reopened, at which point the summaries must reflect the active filter.
+  test('hidden summary panel defers filtered summaries until reopened (#17806)', async ({ rstudioPage: page }) => {
+    // Same shape as the filtered-summary test above: searching "alpha" keeps
+    // rows whose num range (1..4) differs visibly from the whole frame's.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_defer_df <- data.frame(' +
+        'grp = rep(c("alpha", "beta"), each = 4), ' +
+        'num = c(1, 2, 3, 4, 50, 60, NA, 80)); View(.rs.sidebar_defer_df) }',
+    );
+    // Record every filtered-summary request the grid issues. gridDataFetch
+    // sends URL-encoded bodies, so the "filtered=1" marker is a stable
+    // substring; the JSON quotes trick for event names doesn't apply here.
+    const filteredRequests: string[] = [];
+    const onRequest = (req: Request) => {
+      if (req.url().includes('grid_data') && (req.postData() ?? '').includes('filtered=1'))
+        filteredRequests.push(req.postData() ?? '');
+    };
+    page.on('request', onRequest);
+    try {
+      await waitForViewer(dataViewer);
+
+      // Collapse the Summary panel via the host toolbar's latching button.
+      // (The in-grid #sidebarToggle collapses fine but cannot be clicked to
+      // reopen: the collapsed #sidebarPanel is width:0, so the toggle has no
+      // hit target -- see 'the in-grid Summary toggle still works after a
+      // data refresh' for the gory details.)
+      const summaryButton = page.locator('#data_editing_toolbar')
+        .getByText('Summary', { exact: true });
+      const panel = dataViewer.frame.locator('#sidebarPanel');
+      await expect(panel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+      await summaryButton.click();
+      await expect(panel).not.toHaveClass(/\bexpanded\b/);
+
+      // Search down to the alpha rows; the grid itself still filters.
+      const search = page.locator('#data_editing_toolbar').getByLabel('Search data table');
+      await search.click();
+      await page.keyboard.type('alpha');
+      await expect(dataViewer.gridInfo)
+        .toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+
+      // No filtered-summary describe was issued for the hidden panel. The
+      // pre-fix code fired it from the same debounced apply that issued the
+      // row fetch whose response just rendered the info bar, so its request
+      // event would already have been observed by now.
+      expect(filteredRequests).toHaveLength(0);
+
+      // Reopen the panel: the deferred refresh fires now, and the summaries
+      // describe the filtered rows (num range 1..4, "(filtered)" tag shown).
+      await summaryButton.click();
+      await expect(panel).toHaveClass(/\bexpanded\b/);
+      await expect.poll(() => filteredRequests.length, { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(0);
+      await expect(dataViewer.frame.locator('.sidebar-toggle-filtered'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-col-summary'))
+        .toHaveText('[1, 4]', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      page.off('request', onRequest);
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_defer_df", envir = .GlobalEnv)',
       );
     }
   });

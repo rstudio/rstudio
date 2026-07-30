@@ -676,6 +676,13 @@ var filteredSummaries = null;
 // racing the row fetch that updates filteredRows.
 var filteredSummariesRowCount = 0;
 
+// True when a search/filter change happened while the Summary sidebar was
+// hidden. refreshSidebarSummaries skips its work for a hidden panel (the
+// filtered describe is a full per-column stats pass over the fetched window,
+// far too expensive to pay for a panel nothing displays); this flag tells
+// toggleSidebar to run the deferred refresh when the panel is next opened.
+var sidebarSummariesStale = false;
+
 // Complete per-column identity (col_name/col_type/col_class/col_index) for
 // EVERY column, backing the sidebar's full column list (show=column_index).
 // null until loaded, when the sidebar falls back to the fetched grid window.
@@ -748,14 +755,29 @@ var fetchFilteredSummaries = function(callback) {
 
    appendTransformParams(params);
 
+   // Supersede any in-flight filtered-summary request: only the latest filter
+   // state matters, so rapid typing shouldn't pile up connections each waiting
+   // on a full per-column describe. Registered in pendingFetches (under a key
+   // no row fetch's "start-length" can produce) so invalidateCache aborts it
+   // together with the row fetches.
+   var key = "filtered-summaries";
+   var prior = pendingFetches.get(key);
+   if (prior)
+      prior.abort();
+   var controller = new AbortController();
+   pendingFetches.set(key, controller);
+
    // callback(map, rowCount, ok): ok is false only on a hard failure (the fetch
    // rejected, or the server reported an error). An empty-but-successful result
    // is reported as ok with a null map -- the caller treats that as "no filtered
    // summaries to show" rather than a failure. Note a filter matching zero rows
    // still returns one entry per column (with total_rows 0), so it lands in the
-   // success branch below, not the empty branch.
-   gridDataFetch(buildFormData(params))
+   // success branch below, not the empty branch. An aborted (superseded)
+   // request invokes no callback at all: a newer refresh owns the sidebar.
+   gridDataFetch(buildFormData(params), controller.signal)
       .then(function(result) {
+         if (pendingFetches.get(key) === controller)
+            pendingFetches.delete(key);
          if (result && result.error) {
             console.warn("fetchFilteredSummaries failed:", result.error);
             callback(null, 0, false);
@@ -778,6 +800,10 @@ var fetchFilteredSummaries = function(callback) {
          callback(map, rowCount, true);
       })
       .catch(function(err) {
+         if (pendingFetches.get(key) === controller)
+            pendingFetches.delete(key);
+         if (err && err.name === "AbortError")
+            return;
          console.warn("fetchFilteredSummaries failed:", err);
          callback(null, 0, false);
       });
@@ -810,6 +836,22 @@ var refreshSidebarSummaries = function() {
    sidebarLazySummaries = {};
    sidebarInflight = {};
    sidebarFailed = {};
+
+   // A hidden panel doesn't pay for its summaries: skip both the (expensive,
+   // whole-window) filtered describe and the rebuild, deferring them to
+   // toggleSidebar when the panel is reopened. Without this gate every search
+   // keystroke and filter change recomputes per-column stats that nothing
+   // displays. The map is still cleared when the last filter went away so
+   // indicator code consulting it while hidden can't read stale entries.
+   if (!sidebarVisible) {
+      if (!hasActiveRowFilter()) {
+         filteredSummaries = null;
+         filteredSummariesRowCount = 0;
+      }
+      sidebarSummariesStale = true;
+      return;
+   }
+   sidebarSummariesStale = false;
 
    if (!hasActiveRowFilter()) {
       filteredSummaries = null;
@@ -3977,11 +4019,19 @@ var onPinnedScroll = function() {
 
 // The frozen pane has no horizontal scroll of its own (its table is exactly the
 // pane width), but a horizontal wheel/trackpad gesture over it should still pan
-// the unpinned columns. Intercept clearly-horizontal gestures (and shift+wheel)
-// and apply them to the master pane's scrollLeft; leave vertical gestures to
-// the pane's native (smooth) scroll, which syncs via onPinnedScroll. Only the
-// horizontal-dominant case is consumed so a mostly-vertical gesture with slight
-// horizontal drift still scrolls vertically and smoothly.
+// the unpinned columns. Route clearly-horizontal gestures (and shift+wheel) to
+// the master pane's scrollLeft; leave vertical gestures to the pane's native
+// (smooth) scroll, which syncs via onPinnedScroll.
+//
+// Registered PASSIVE deliberately: a non-passive wheel listener forces the
+// compositor to wait for the main thread before scrolling anything under the
+// pointer, so wheel input over the frozen pane stalled whenever the main
+// thread was busy (a big contributor to #17806, especially with discrete
+// wheel notches on Windows). No preventDefault is needed in its place: the
+// pane can't scroll horizontally (overflow-x: hidden) and its CSS
+// overscroll-behavior: none stops the unconsumed horizontal delta from
+// chaining to ancestors, so applying it to the master pane here is the only
+// horizontal effect.
 var onPinnedWheel = function(evt) {
    if (!domViewport) return;
    var dx = evt.deltaX;
@@ -3993,7 +4043,10 @@ var onPinnedWheel = function(evt) {
       horizontal = dx || dy;
    } else if (Math.abs(dx) > Math.abs(dy)) {
       // A clearly-horizontal trackpad gesture. (A vertical scroll with slight
-      // horizontal drift stays vertical and scrolls the pane natively/smoothly.)
+      // horizontal drift stays vertical and scrolls the pane natively/smoothly.
+      // A horizontal-dominant gesture's slight vertical drift likewise keeps
+      // scrolling the pane natively, matching wheel behavior over the master
+      // pane now that this handler no longer consumes the whole event.)
       horizontal = dx;
    }
    if (horizontal === 0) return;
@@ -4002,7 +4055,6 @@ var onPinnedWheel = function(evt) {
    var scale = evt.deltaMode === 1 ? ROW_HEIGHT
              : evt.deltaMode === 2 ? domViewport.clientWidth : 1;
    domViewport.scrollLeft += horizontal * scale;
-   evt.preventDefault();
 };
 
 // ----- Middle-click autoscroll over the frozen pane -----
@@ -4159,13 +4211,15 @@ onScroll.cancel = function() {
    }
 };
 
-// Update custom scrollbar thumb position; coalesce to one per frame.
+// Update custom scrollbar thumb position; coalesce to one per frame. Only the
+// grid bars are updated here -- see updateGridScrollbars; the full update
+// (sidebar bar + overflow state) runs on scrollend and layout changes.
 var onScrollbarUpdate = function() {
    showScrollbars();
    if (!pendingScrollbarRaf) {
       pendingScrollbarRaf = requestAnimationFrame(function() {
          pendingScrollbarRaf = 0;
-         updateCustomScrollbars();
+         updateGridScrollbars();
       });
    }
 };
@@ -5744,6 +5798,11 @@ var toggleSidebar = function() {
       panel.classList.add("expanded");
       // Draw deferred sparklines the first time the panel is opened.
       renderPendingSparklines();
+      // Search/filter changes made while the panel was hidden skipped their
+      // summary refresh (see refreshSidebarSummaries); run it now. Async, so
+      // the panel opens immediately and the summaries land when computed.
+      if (sidebarSummariesStale)
+         refreshSidebarSummaries();
    } else {
       panel.classList.remove("expanded");
    }
@@ -6578,6 +6637,16 @@ var updateCustomScrollbars = function() {
    updateColumnOverflowState();
 };
 
+// Per-scroll-frame variant: only the grid bars track grid scrolling. The
+// sidebar bar's update() forces a layout of the (unmoved) sidebar panel, and
+// the column-overflow state depends only on widths scrolling can't change, so
+// both are left to updateCustomScrollbars (resize, toggles, column-layout
+// changes, scrollend) rather than paid on every frame of a scroll gesture.
+var updateGridScrollbars = function() {
+   if (gridScrollbarV_) gridScrollbarV_.update();
+   if (gridScrollbarH_) gridScrollbarH_.update();
+};
+
 // Last column-overflow state pushed to the host (null = not yet pushed).
 // The host shows its "Go to Column..." button whenever the frame's columns
 // overflow the viewport -- which can change on resize, sidebar toggle,
@@ -6793,10 +6862,11 @@ var initGrid = function(resCols, data) {
    }
    // Forward wheel / middle-click scrolling done over the frozen pane onto the
    // master pane (idempotent on the same function reference). The wheel handler
-   // is non-passive so it can preventDefault to consume horizontal gestures.
+   // is passive so the compositor never blocks on the main thread to scroll;
+   // see onPinnedWheel for why preventDefault isn't needed.
    if (domPinnedPane) {
       domPinnedPane.addEventListener("scroll", onPinnedScroll);
-      domPinnedPane.addEventListener("wheel", onPinnedWheel, { passive: false });
+      domPinnedPane.addEventListener("wheel", onPinnedWheel, { passive: true });
       // Middle-click autoscroll (custom, so it can pan horizontally too).
       domPinnedPane.addEventListener("mousedown", onPinnedMouseDown);
    }
@@ -6967,6 +7037,7 @@ var resetGridState = function() {
    // rebuild; start clean so a stale map can't drive the fresh sidebar.
    filteredSummaries = null;
    filteredSummariesRowCount = 0;
+   sidebarSummariesStale = false;
 
    // Complete-index sidebar state: the column set and any lazily-fetched
    // summaries belong to the previous frame; drop them so the rebuilt sidebar
