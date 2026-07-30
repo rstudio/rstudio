@@ -10,9 +10,6 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 #     build (the "version" input) or built from source (the "build_from_source"
 #     input).
 #
-# The Sunday and dispatch paths cover every engine except macOS 14, which runs
-# only on its own Monday cron (see the pick job).
-#
 # The Linux Desktop engines all run through the consolidated
 # os-test-e2e-rstudio-desktop-linux.yml workflow as a matrix (one entry per
 # engine, built dynamically from the pick job's selection); macOS, Windows,
@@ -31,7 +28,7 @@ on:
   schedule:
     - cron: '0 8 * * 1-5'   # Mon-Fri 08:00 UTC (4 AM EDT) -- fixed slate per weekday
     - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- all engines (this string must match the check in the pick job)
-    - cron: '0 16 * * 1'    # Monday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job)
+    - cron: '0 16 * * 1'    # Monday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
   workflow_dispatch:
     inputs:
       version:
@@ -50,6 +47,10 @@ concurrency:
   # than queueing behind it). Either outcome can push the macOS 14 run out of
   # the brownout window it is timed to land in. Every other trigger keeps the
   # shared group, which caps the fleet at one full rotation at a time.
+  #
+  # The trade-off: with separate groups the macOS 14 run may now overlap a
+  # weekday slate, contending for the shared macOS runner pool if a morning
+  # slate is still going at 16:00.
   group: pw-scheduled-e2e-${{ github.event.schedule == '0 16 * * 1' && 'macos14' || 'main' }}
   cancel-in-progress: false
 
@@ -77,11 +78,7 @@ jobs:
           # runs macOS 14 alone.
           # Each engine runs once a week except macos26, windows2025, and
           # ubuntu24s, which run twice.
-          # macos14 is deliberately absent from ALL: it runs only on its own
-          # Monday-afternoon cron below, so a failure on that deprecated runner
-          # never reddens the Sunday full-matrix snapshot or a run-everything
-          # dispatch. Reach it directly through the engine's workflow_dispatch.
-          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15"]'
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15","macos14"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
           elif [ "${{ github.event.schedule }}" = "0 16 * * 1" ]; then
@@ -90,11 +87,10 @@ jobs:
             # windows for the deprecated macos-14 image (14:00-00:00 UTC on Oct
             # 5, 12, 19 and 26; the 08:00 slates miss all eight windows by six
             # hours). Those failures are the point -- early warning that the
-            # image is fully retired on 2026-11-02, after which this run fails
-            # every week until macos14 is removed from this workflow. This cron
-            # is macOS 14's only scheduled path (it is not in ALL above), so
-            # those failures stay off every run other engines depend on for
-            # signal.
+            # image is fully retired on 2026-11-02. No brownout window falls on
+            # a Sunday, so the full-matrix run is unaffected before that date;
+            # after it, this run, the Sunday run, and any dispatch all fail
+            # until macos14 is removed from this workflow and from ALL above.
             SEL='["macos14"]'
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
