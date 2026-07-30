@@ -84,22 +84,28 @@ void standardStreamCaptureThread(
        {
           if (::write(dupFd, output.c_str(), output.size()) == -1)
           {
-             if (errno != EAGAIN && errno != EINTR)
+             // capture errno before building the log message below; the
+             // string operations there are allowed to clobber it
+             int errorNumber = errno;
+
+             if (errorNumber != EAGAIN && errorNumber != EINTR)
              {
-                // the write failed for a non-transient reason (e.g. EPIPE or EBADF
-                // because the stream was closed, or EIO because the attached
-                // terminal went away), so it is unlikely to ever succeed again --
-                // mark that we should skip the write, and only log this error once.
-                // logging on every failure can otherwise spin forever: with a
-                // stderr log destination, the logged error is itself captured
-                // and echoed right back here (#18398)
+                // dupFd is our saved dup() of the original descriptor; the
+                // process's own stdout / stderr point at the capture pipe and
+                // stay writable, so only the echo to the original descriptor
+                // is affected. on any persistent failure (e.g. EPIPE, EBADF,
+                // or EIO after the attached terminal goes away) we deliberately
+                // give up on the echo for the rest of the session and log just
+                // once: with a stderr log destination, a logged error is itself
+                // captured and read back by this thread, so logging every
+                // failure spins forever (#18398)
                 *pSkipWrite = true;
 
                 std::string description =
                       descriptorType + " descriptor " + core::safe_convert::numberToString(dupFd) +
-                      " is no longer writable. Output will no longer be redirected.";
+                      " is no longer writable. Output will no longer be echoed to the original descriptor.";
 
-                LOG_ERROR(systemError(errno, description, ERROR_LOCATION));
+                LOG_ERROR(systemError(errorNumber, description, ERROR_LOCATION));
              }
           }
        }
