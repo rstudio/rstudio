@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { ConsolePaneActions } from '../actions/console_pane.actions';
 import { executeInConsole } from '../pages/console_pane.page';
 import { externalServerUrl, signInToServer } from '../fixtures/server.fixture';
+import { AUTH_STORAGE_KEY } from './auth';
 import { rStringLiteral } from './r';
 
 /**
@@ -161,9 +162,72 @@ export async function remotePathExists(page: Page, remotePath: string): Promise<
 }
 
 /**
+ * Poll for `remotePath` to exist, up to `timeoutMs`. Returns immediately when
+ * it already does; false when the deadline passes without it appearing. Used
+ * to let a remote-side writer with variable timing (the AI client's startup
+ * stub, see remotePositAiStoreAuthenticated) finish before this side writes
+ * the same path, instead of racing it.
+ */
+export async function waitForRemotePath(page: Page, remotePath: string, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    if ((await remotePathExists(page, remotePath)) === true) return true;
+    if (Date.now() >= deadline) return false;
+    await page.waitForTimeout(500);
+  }
+}
+
+/**
+ * Whether the remote Posit AI store holds a real sign-in. The rsession's AI
+ * client writes an unauthenticated stub data.json at session startup --
+ * including the login this provisioning session just performed -- so bare
+ * existence cannot distinguish "this account is signed in" from "a session
+ * started here once". Probe the content instead: the auth entry key plus an
+ * access-token marker, mirroring what isStoreFileAuthenticated checks locally,
+ * minus token expiry (no JSON parser is assumed on the remote host). The
+ * probe reads back a single logical; none of the file's content is echoed to
+ * the console. Returns null when the result couldn't be read (including a
+ * readLines failure), which callers treat as "don't touch the file".
+ */
+export async function remotePositAiStoreAuthenticated(page: Page): Promise<boolean | null> {
+  const p = rStringLiteral(REMOTE_POSITAI_STORE);
+  return evalRemoteLogical(
+    page,
+    `local({ txt <- paste(readLines(${p}, warn = FALSE), collapse = ""); `
+      + `grepl(${rStringLiteral(AUTH_STORAGE_KEY)}, txt, fixed = TRUE) && `
+      + `grepl(${rStringLiteral('"accessToken"')}, txt, fixed = TRUE) })`,
+  );
+}
+
+/**
+ * Whether the remote Copilot store holds a sign-in. Existence is as
+ * misleading as for the Posit AI store: any session that enables Copilot
+ * spawns the copilot-language-server, which creates an empty auth.db on
+ * startup -- gate-skipped tests included -- so a bare "auth.db exists" can
+ * mean nothing more than "Copilot was once switched on here". auth.db is
+ * SQLite, which base R can't query, but a real sign-in leaves a GitHub OAuth
+ * token (its "gho_" prefix in cleartext, since the store is written
+ * unencrypted) somewhere in the database bytes -- the main file or its -wal
+ * sidecar, where an uncheckpointed token row lives. grepRaw over both is
+ * crude but decisive: an empty shell contains no token marker. As with the
+ * Posit AI probe only a logical is read back, and null means "couldn't
+ * tell", which callers treat as "don't touch the file".
+ */
+export async function remoteCopilotStoreAuthenticated(page: Page): Promise<boolean | null> {
+  const db = `${REMOTE_COPILOT_DIR}/auth.db`;
+  const holdsToken = (f: string) => {
+    const p = rStringLiteral(f);
+    return `(file.exists(${p}) && length(grepRaw("gho_", readBin(${p}, "raw", file.size(${p})), fixed = TRUE)) > 0)`;
+  };
+  return evalRemoteLogical(page, `${holdsToken(db)} || ${holdsToken(`${db}-wal`)}`);
+}
+
+/**
  * Write a text file on the remote host at `remotePath` (a "~/" path), creating
- * parent directories, then chmod it to `mode`. Byte-identical delivery via the
- * writeLines(sep="", useBytes=TRUE) pattern proven in utils/files.ts. Verifies
+ * parent directories, then chmod it to `mode`. Delivered through the chunked
+ * binary writer: a single writeLines command carrying the whole content would
+ * hit R's console line-length limit (see BINARY_CHUNK_BYTES) once the content
+ * grows past a few KiB, and the byte-for-byte result is identical. Verifies
  * the write by size; throws on mismatch.
  */
 export async function writeRemoteText(
@@ -172,23 +236,14 @@ export async function writeRemoteText(
   content: string,
   mode = '0600',
 ): Promise<void> {
-  const p = rStringLiteral(remotePath);
-  await executeInConsole(page, `dir.create(dirname(path.expand(${p})), recursive = TRUE, showWarnings = FALSE)`);
-  await executeInConsole(page, `writeLines(${rStringLiteral(content)}, ${p}, sep = "", useBytes = TRUE)`);
-  await executeInConsole(page, `Sys.chmod(path.expand(${p}), ${rStringLiteral(mode)})`);
-  const expected = Buffer.byteLength(content, 'utf-8');
-  const ok = await evalRemoteLogical(page, `file.size(${p}) == ${expected}`);
-  if (ok !== true) {
-    throw new Error(
-      `[remote-provision] remote write verification failed for ${remotePath}: expected ${expected} bytes`,
-    );
-  }
+  await writeRemoteBinary(page, remotePath, Buffer.from(content, 'utf-8'), mode);
 }
 
-// Hex payload per console command. 8 KiB of file becomes 16 KiB of hex, well
-// within what the console input accepts in one submission while keeping the
-// number of round trips low for the store sizes involved (tens of KiB).
-const BINARY_CHUNK_BYTES = 8192;
+// Hex payload per console command. R caps a console input line at about 4095
+// bytes -- a longer command is cut off mid-string and nothing lands -- so the
+// payload must keep each command safely under that. 1536 file bytes become
+// 3072 hex characters, leaving ample room for the .pwWriteHex call around it.
+const BINARY_CHUNK_BYTES = 1536;
 
 /**
  * Write a binary file on the remote host at `remotePath` (a "~/" path) from a
@@ -216,24 +271,33 @@ export async function writeRemoteBinary(
       + 'invisible(NULL) }',
   );
   try {
-    for (let offset = 0; offset < data.length; offset += BINARY_CHUNK_BYTES) {
-      const hex = data.subarray(offset, offset + BINARY_CHUNK_BYTES).toString('hex');
-      const append = offset > 0 ? 'TRUE' : 'FALSE';
-      await executeInConsole(page, `.pwWriteHex(${p}, "${hex}", ${append})`);
+    // Two attempts: a concurrent remote-side writer (the AI client's startup
+    // stub, a straggler past the waitForRemotePath window) can land on top of
+    // a fresh write, and the first chunk's append=FALSE truncates, so a
+    // rewrite starts clean.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      for (let offset = 0; offset < data.length; offset += BINARY_CHUNK_BYTES) {
+        const hex = data.subarray(offset, offset + BINARY_CHUNK_BYTES).toString('hex');
+        const append = offset > 0 ? 'TRUE' : 'FALSE';
+        await executeInConsole(page, `.pwWriteHex(${p}, "${hex}", ${append})`);
+      }
+      // A zero-byte source still needs the file created (truncated).
+      if (data.length === 0) {
+        await executeInConsole(page, `.pwWriteHex(${p}, "", FALSE)`);
+      }
+      await executeInConsole(page, `Sys.chmod(path.expand(${p}), ${rStringLiteral(mode)})`);
+      if ((await evalRemoteLogical(page, `file.size(${p}) == ${data.length}`)) === true) return;
+      if (attempt === 1) {
+        console.warn(
+          `[remote-provision] WARNING: remote write verification failed for ${remotePath}; retrying once`,
+        );
+      }
     }
-    // A zero-byte source still needs the file created (truncated).
-    if (data.length === 0) {
-      await executeInConsole(page, `.pwWriteHex(${p}, "", FALSE)`);
-    }
+    throw new Error(
+      `[remote-provision] remote write verification failed for ${remotePath} after retry: expected ${data.length} bytes`,
+    );
   } finally {
     await executeInConsole(page, 'rm(.pwWriteHex)');
-  }
-  await executeInConsole(page, `Sys.chmod(path.expand(${p}), ${rStringLiteral(mode)})`);
-  const ok = await evalRemoteLogical(page, `file.size(${p}) == ${data.length}`);
-  if (ok !== true) {
-    throw new Error(
-      `[remote-provision] remote write verification failed for ${remotePath}: expected ${data.length} bytes`,
-    );
   }
 }
 
