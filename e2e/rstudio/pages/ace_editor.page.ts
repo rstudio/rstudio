@@ -230,4 +230,55 @@ export class AceEditor extends PageObject {
       return renderer?.$ghostText != null;
     });
   }
+
+  /** Execute a built-in Ace editor command by name (e.g. 'addCursorBelow'). */
+  async execCommand(name: string): Promise<void> {
+    await this.run((editor, cmd: string) => editor.execCommand(cmd), name);
+  }
+
+  /**
+   * Snapshot of the editor's multi-select bookkeeping, for asserting on
+   * recovery from the corrupt states behind #13605. 'tempSelectionInstalled'
+   * reports whether the throwaway Selection that forEachSelection swaps in
+   * mid-iteration is still installed -- a sign the operation was aborted by
+   * an exception and never restored its state.
+   */
+  async getMultiSelectState(): Promise<{
+    editorInMultiSelectMode: boolean;
+    selectionInMultiSelectMode: boolean;
+    inVirtualSelectionMode: boolean;
+    tempSelectionInstalled: boolean;
+    rangeCount: number;
+  }> {
+    return this.run((editor) => {
+      const session = editor.session;
+      const selection = session.selection;
+      return {
+        editorInMultiSelectMode: !!editor.inMultiSelectMode,
+        selectionInMultiSelectMode: !!selection.inMultiSelectMode,
+        inVirtualSelectionMode: !!editor.inVirtualSelectionMode,
+        tempSelectionInstalled:
+          selection.index !== undefined ||
+          (session.multiSelect != null && selection !== session.multiSelect),
+        rangeCount: selection.rangeCount ?? 0,
+      };
+    });
+  }
+
+  /**
+   * Fault injection for exception-safety tests: installs a one-shot document
+   * 'change' listener that throws `message`, simulating a client exception
+   * escaping into Ace's change dispatch mid-operation (#13605). The listener
+   * removes itself before throwing, so only the next change is affected.
+   */
+  async injectThrowingChangeListener(message: string): Promise<void> {
+    await this.run((editor, msg: string) => {
+      const doc = editor.session.getDocument();
+      const listener = () => {
+        doc.off('change', listener);
+        throw new Error(msg);
+      };
+      doc.on('change', listener);
+    }, message);
+  }
 }

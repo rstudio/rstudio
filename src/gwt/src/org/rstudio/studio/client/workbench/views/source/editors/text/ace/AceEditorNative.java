@@ -215,10 +215,10 @@ public class AceEditorNative extends JavaScriptObject
    public native final <T> void setHandler(String eventName, CommandWithArg<T> handler)
    /*-{
       var defaultHandler = this._defaultHandlers[eventName] || function(evt) {};
-      this.setDefaultHandler(eventName, function(event) {
+      this.setDefaultHandler(eventName, $entry(function(event) {
          event.defaultHandler = defaultHandler;
          handler.@org.rstudio.core.client.CommandWithArg::execute(*)(event);
-      });
+      }));
    }-*/;
    
    public native final <T> void onGutterMouseDown(CommandWithArg<T> command) /*-{
@@ -662,6 +662,112 @@ public class AceEditorNative extends JavaScriptObject
       }
 
       return false;
+   }-*/;
+
+   /**
+    * Returns true if the editor's multi-select state appears to be corrupt.
+    * This can happen if an exception interrupts one of Ace's multi-select
+    * operations (e.g. forEachSelection), which mutate selection state and
+    * restore it without exception protection.
+    * See: https://github.com/rstudio/rstudio/issues/13605
+    */
+   public final native boolean isMultiSelectStateCorrupt()
+   /*-{
+      var session = this.session;
+      if (!session || !session.selection)
+         return false;
+
+      var selection = session.selection;
+
+      // A temporary selection from an interrupted forEachSelection is still
+      // installed. ('session.multiSelect' always refers to the session's real
+      // selection object; only temporary selections carry an 'index'.)
+      if (selection.index !== undefined)
+         return true;
+      if (session.multiSelect && selection !== session.multiSelect)
+         return true;
+
+      // The editor and selection disagree about multi-select mode, meaning a
+      // 'multiSelect' or 'singleSelect' notification was lost.
+      if (!!this.inMultiSelectMode != !!selection.inMultiSelectMode)
+         return true;
+
+      if (selection.inMultiSelectMode) {
+
+         // Multi-select mode with no ranges to operate on.
+         if (!selection.rangeCount)
+            return true;
+
+         // The selection's range bookkeeping arrays have fallen out of sync.
+         if (selection.ranges == null || selection.rangeList == null)
+            return true;
+         if (selection.ranges.length !== selection.rangeList.ranges.length)
+            return true;
+
+         // The range list must be attached to track document edits.
+         if (selection.rangeList.session == null)
+            return true;
+      }
+
+      return false;
+   }-*/;
+
+   /**
+    * Resets the editor's multi-select state, dropping any extra cursors and
+    * returning cleanly to single-selection mode.
+    * See: https://github.com/rstudio/rstudio/issues/13605
+    */
+   public final native void resetMultiSelectState()
+   /*-{
+      try {
+         var session = this.session;
+         if (!session || !session.selection)
+            return;
+
+         // Restore the session's real selection object if a temporary
+         // selection from an interrupted operation is still installed.
+         var multiSelect = session.multiSelect;
+         if (multiSelect && session.selection !== multiSelect) {
+            var tmpSel = session.selection;
+            if (tmpSel && typeof tmpSel.detach === "function") {
+               try { tmpSel.detach(); } catch (e) { }
+            }
+            this.selection = session.selection = multiSelect;
+         }
+
+         var selection = session.selection;
+
+         // Clear any stuck virtual selection state.
+         this.inVirtualSelectionMode = false;
+
+         // Remove any leftover selection markers.
+         if (session.$selectionMarkers && session.$selectionMarkers.length) {
+            try { this.removeSelectionMarkers(session.$selectionMarkers.slice()); } catch (e) { }
+         }
+
+         // Drop all extra ranges and restore single-select bookkeeping.
+         if (selection.rangeList) {
+            if (selection.rangeList.session) {
+               try { selection.rangeList.detach(); } catch (e) { }
+            }
+            selection.rangeList.ranges.length = 0;
+         }
+
+         if (selection.ranges)
+            selection.ranges.length = 0;
+
+         selection.rangeCount = 0;
+         selection.inMultiSelectMode = false;
+
+         // Tear down editor-side multi-select mode: the multi-select keyboard
+         // handler, the 'exec' default handler, and the cursor style.
+         if (this.inMultiSelectMode && this.$onSingleSelect) {
+            try { this.$onSingleSelect(); } catch (e) { }
+         }
+         this.inMultiSelectMode = false;
+      } catch (e) {
+         // Recovery must never throw.
+      }
    }-*/;
 
    public final native JsMap<Position> getMarks() /*-{

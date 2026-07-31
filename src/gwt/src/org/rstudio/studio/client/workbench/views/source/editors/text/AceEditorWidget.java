@@ -169,6 +169,12 @@ public class AceEditorWidget extends Composite
       editor_.setIndentedSoftWrap(false);
       editor_.setTheme(themes_.getCurrentTheme());
       editor_.delegateEventsTo(AceEditorWidget.this);
+
+      // Check for corrupt editor state whenever the editor regains focus.
+      // Deferred, so that a focus event dispatched from within an in-progress
+      // Ace operation doesn't trigger recovery on transient state.
+      addFocusHandler(event ->
+         Scheduler.get().scheduleDeferred(() -> checkForCorruptEditorState()));
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
          public void execute(AceDocumentChangeEventNative event)
@@ -729,19 +735,36 @@ public class AceEditorWidget extends Composite
    {
       if (editor_ != null)
       {
-         // Check for and recover from corrupt mouse handler state.
-         // This can happen if an exception occurs during mouse event handling.
-         // See: https://github.com/rstudio/rstudio/issues/13436
-         if (editor_.isMouseHandlerStateCorrupt())
-         {
-            Debug.log("Recovering from corrupt Ace mouse handler state");
-            editor_.resetMouseHandlerState();
-         }
+         checkForCorruptEditorState();
 
          if (BrowseCap.INSTANCE.aceVerticalScrollBarIssue())
             editor_.getRenderer().forceScrollbarUpdate();
          editor_.getRenderer().updateFontSize();
          editor_.getRenderer().forceImmediateRender();
+      }
+   }
+
+   private void checkForCorruptEditorState()
+   {
+      if (editor_ == null)
+         return;
+
+      // Check for and recover from corrupt mouse handler state.
+      // This can happen if an exception occurs during mouse event handling.
+      // See: https://github.com/rstudio/rstudio/issues/13436
+      if (editor_.isMouseHandlerStateCorrupt())
+      {
+         Debug.log("Recovering from corrupt Ace mouse handler state");
+         editor_.resetMouseHandlerState();
+      }
+
+      // Check for and recover from corrupt multi-select state. This can
+      // happen if an exception interrupts one of Ace's multi-select
+      // operations. See: https://github.com/rstudio/rstudio/issues/13605
+      if (editor_.isMultiSelectStateCorrupt())
+      {
+         Debug.log("Recovering from corrupt Ace multi-select state");
+         editor_.resetMultiSelectState();
       }
    }
    

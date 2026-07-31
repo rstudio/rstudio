@@ -1206,6 +1206,13 @@ public class AceEditor implements DocDisplay
 
       final AceEditorNative ed = widget_.getEditor();
 
+      // Replacing the document while extra cursors are active can leave the
+      // selection's multi-select bookkeeping referencing stale ranges; drop
+      // back to a single selection first.
+      // See: https://github.com/rstudio/rstudio/issues/13605
+      if (ed.inMultiSelectMode())
+         ed.exitMultiSelectMode();
+
       if (preserveCursorPosition)
       {
          withPreservedCursorPosition(() -> {
@@ -1316,6 +1323,13 @@ public class AceEditor implements DocDisplay
       // at the beginning of the file
       if (changes.length == 1 && changes[0].type == TextChange.Type.Equal)
          return;
+
+      // this runs from async contexts (e.g. canonicalizing a document on
+      // save) and drives Ace commands that are routed through multi-select
+      // handling when extra cursors are active; exit multi-select mode first
+      // so the command stream operates on a single, stable selection
+      if (widget_.getEditor().inMultiSelectMode())
+         widget_.getEditor().exitMultiSelectMode();
 
       // application of changes (will run this below either with or w/o
       // preserving the cursor position)
@@ -1517,6 +1531,13 @@ public class AceEditor implements DocDisplay
 
    public void focus()
    {
+      // Update the last-focused editor eagerly. The DOM focus event doesn't
+      // re-fire if this editor already has focus, and command routing via
+      // AceEditorCommandEvent depends on this field being current; a stale
+      // value routes editor commands into a previously-focused tab.
+      // See: https://github.com/rstudio/rstudio/issues/13605
+      s_lastFocusedEditor = this;
+
       widget_.getEditor().focus();
    }
 
