@@ -42,6 +42,7 @@ namespace {
 boost::mutex s_mutex;
 
 void standardStreamCaptureThread(
+       const std::string& streamName,
        HANDLE hReadPipe,
        HANDLE hOrigStdHandle,
        const boost::function<void(const std::string&)>& outputHandler)
@@ -67,7 +68,11 @@ void standardStreamCaptureThread(
                   DWORD writeError = ERROR_SUCCESS;
                   LOCK_MUTEX(s_mutex)
                   {
-                     if (!::WriteFile(hOrigStdHandle, buffer, bytesRead, nullptr, nullptr))
+                     // the byte-count out-param is required for synchronous
+                     // handles; a short write is deliberately ignored, as the
+                     // echo is best-effort
+                     DWORD bytesWritten = 0;
+                     if (!::WriteFile(hOrigStdHandle, buffer, bytesRead, &bytesWritten, nullptr))
                         writeError = ::GetLastError();
                   }
                   END_LOCK_MUTEX
@@ -75,14 +80,20 @@ void standardStreamCaptureThread(
                   if (writeError != ERROR_SUCCESS)
                   {
                      // deliberately give up on the echo after the first failure and
-                     // log only once: with a stderr log destination, a logged error
-                     // is itself captured and read back by this thread, so logging
-                     // every failure spins forever (#18414)
+                     // log only once: a stderr log destination writes to the
+                     // redirected stderr, so a logged error is read back by the
+                     // stderr capture thread, and logging every failure spins
+                     // forever. the same option gates both this echo and stderr
+                     // logging, so that feedback loop is guaranteed, not a rare
+                     // configuration (#18414). unlike the Posix twin (#18398),
+                     // no error code is treated as transient here: the console
+                     // handle is opened once at startup and never reopened, so
+                     // the failures targeted here are permanent.
                      skipEchoWrite = true;
 
                      LOG_ERROR(systemError(
                                   writeError,
-                                  "Console is no longer writable. Output will no longer be echoed to the console.",
+                                  streamName + " echo to the attached console failed. Output will no longer be echoed to the console.",
                                   ERROR_LOCATION));
                   }
                }
@@ -90,13 +101,33 @@ void standardStreamCaptureThread(
          }
          else
          {
-            // we don't expect read errors here (the write end of the pipe is our
-            // own stdout / stderr and is never closed), so log only the first and
-            // back off rather than spinning if one proves persistent (#18414)
+            // capture the error code before any other call can clobber it
+            DWORD readError = ::GetLastError();
+
+            // a broken pipe or invalid handle can never recover, and both imply
+            // the pipe no longer accepts writes, so exit instead of polling
+            // forever; logging here is bounded because the thread exits
+            if (readError == ERROR_BROKEN_PIPE || readError == ERROR_INVALID_HANDLE)
+            {
+               LOG_ERROR(systemError(
+                            readError,
+                            streamName + " capture pipe is no longer readable. Output capture stopped.",
+                            ERROR_LOCATION));
+               return;
+            }
+
+            // we don't expect other read errors here (the write end of the pipe
+            // is our own stdout / stderr and is never closed), so log only the
+            // first -- with a stderr log destination, every logged error lands
+            // back in a capture pipe -- and retry at a modest interval rather
+            // than spinning (#18414)
             if (!loggedReadError)
             {
                loggedReadError = true;
-               LOG_ERROR(LAST_SYSTEM_ERROR());
+               LOG_ERROR(systemError(
+                            readError,
+                            streamName + " capture pipe read failed.",
+                            ERROR_LOCATION));
             }
 
             ::Sleep(100);
@@ -247,6 +278,7 @@ Error captureStandardStreams(
 
          // capture stdout
          boost::thread stdoutThread(boost::bind(standardStreamCaptureThread,
+                                                std::string("Stdout"),
                                                 hReadStdoutPipe,
                                                 hOrigStdoutHandle,
                                                 stdoutHandler));
@@ -276,6 +308,7 @@ Error captureStandardStreams(
 
          // capture stderr
          boost::thread stderrThread(boost::bind(standardStreamCaptureThread,
+                                                std::string("Stderr"),
                                                 hReadStderrPipe,
                                                 hOrigStderrHandle,
                                                 stderrHandler));
