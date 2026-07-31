@@ -6,6 +6,7 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { YES_BTN, NO_BTN } from '@pages/modals.page';
 import { requireAiCredentials } from '@utils/ai-credentials';
+import { setPref } from '@utils/commands';
 import type { Page } from 'playwright';
 
 /**
@@ -64,6 +65,11 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@chat
     page = session.page;
     consoleActions = new ConsolePaneActions(page);
     chatActions = new ChatPaneActions(page, consoleActions);
+
+    // The e2e base prefs keep the chat provider at "none" so unrelated suites
+    // don't run the assistant (#18394); select it explicitly before opening
+    // the pane -- with no provider the chat input never becomes editable.
+    await setPref(page, 'chat_provider', 'posit');
 
     // Ensure PAI is installed before the suite
     await chatActions.openChatPane();

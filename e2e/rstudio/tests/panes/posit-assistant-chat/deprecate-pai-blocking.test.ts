@@ -5,7 +5,7 @@ import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { annotateVersions } from './_chat-setup';
-import { getChatState, setChatUpdateCheckOverride } from '@utils/commands';
+import { getChatState, setChatUpdateCheckOverride, setPref } from '@utils/commands';
 
 /**
  * Deprecate old Posit AI builds -- rstudio/rstudio#17145
@@ -72,6 +72,11 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
+
+    // The e2e base prefs keep the chat provider at "none" so unrelated suites
+    // don't run the assistant (#18394); select it explicitly before opening
+    // the pane -- with no provider the chat input never becomes editable.
+    await setPref(page, 'chat_provider', 'posit');
 
     // Let Posit Assistant load normally first
     await chatActions.openChatPane();
