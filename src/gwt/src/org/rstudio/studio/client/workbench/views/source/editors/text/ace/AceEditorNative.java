@@ -709,6 +709,14 @@ public class AceEditorNative extends JavaScriptObject
             return true;
       }
 
+      // A stuck 'inVirtualSelectionMode' is deliberately not checked here:
+      // Ace's add/block mouse selection paths legitimately keep that flag set
+      // from mousedown until mouseup, across event loop ticks, and this check
+      // can run mid-drag (the mousedown that begins a drag also focuses the
+      // editor, scheduling the deferred focus-time check). Treating the flag
+      // alone as corruption would reset an in-progress drag selection. An
+      // aborted forEachSelection or $moveLines strands other state alongside
+      // it, which the checks above do catch.
       return false;
    }-*/;
 
@@ -766,7 +774,11 @@ public class AceEditorNative extends JavaScriptObject
          }
          this.inMultiSelectMode = false;
       } catch (e) {
-         // Recovery must never throw.
+         // Recovery must never throw, but a failure here means the editor may
+         // still be corrupt; log it so the recovery attempt in the logs isn't
+         // mistaken for a successful reset.
+         @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
+            "Error while resetting Ace multi-select state: " + e);
       }
    }-*/;
 
