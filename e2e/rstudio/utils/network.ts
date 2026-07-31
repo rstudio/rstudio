@@ -20,6 +20,8 @@ export const CITATION_SERVICE_HOSTS = {
   pubmed: 'https://eutils.ncbi.nlm.nih.gov',
 } as const;
 
+import * as net from 'net';
+
 const probeCache = new Map<string, Promise<boolean>>();
 
 /**
@@ -39,4 +41,26 @@ export function isServiceReachable(url: string, timeoutMs = 10000): Promise<bool
     probeCache.set(url, probe);
   }
   return probe;
+}
+
+/**
+ * Whether a raw TCP port accepts connections, for services that don't speak
+ * HTTP (e.g. a database). Deliberately uncached: the databases the
+ * Connections tests talk to are started and stopped within a run, so a
+ * cached answer could be stale in either direction. Note this probes from
+ * the test runner; a database that must be reachable from the rsession
+ * (remote Server mode) needs an in-session probe instead (see
+ * utils/connections.ts).
+ */
+export function isTcpReachable(host: string, port: number, timeoutMs = 5000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = net.connect({ host, port });
+    const done = (result: boolean) => {
+      socket.destroy();
+      resolve(result);
+    };
+    socket.setTimeout(timeoutMs, () => done(false));
+    socket.once('connect', () => done(true));
+    socket.once('error', () => done(false));
+  });
 }

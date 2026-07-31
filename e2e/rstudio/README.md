@@ -428,6 +428,40 @@ test.describe('Tests needing packages', () => {
 
 If you find yourself adding the same package to many tests, promote it into `required-packages.txt` so it gets pre-installed once at setup time.
 
+### Database connections (Connections pane tests)
+
+The specs under `tests/panes/connections/` drive the New Connection wizard
+against a real database. `globalSetup` arranges both halves, with zero
+configuration by default:
+
+- **Driver registration** is sandbox-local: `ODBCSYSINI` points the session
+  at a generated `odbcinst.ini` under the run's sandbox, registering each
+  target driver found on the machine (see `utils/db-targets.ts` for the
+  per-platform library paths). The machine's real ODBC configuration is
+  never read or written. A snippet file is placed beside the driver symlink
+  so the wizard renders labeled parameter fields, the same path the
+  professional drivers take.
+- **The database** is a throwaway server provisioned into the sandbox on a
+  nonstandard port (PostgreSQL: `initdb` on 127.0.0.1:55432, role/database
+  `pwtest`) and stopped and deleted at teardown. Tests seed their own
+  schemas and tables through DBI. If something is already listening on the
+  target port it is reused and left running.
+
+Prerequisites on macOS: `brew install psqlodbc postgresql@14` (any
+`postgresql@N` provides the server binaries). When a driver or database is
+unavailable, or provisioning fails, the affected specs skip with a reason
+naming the missing piece (recorded in `<sandbox>/db/status.json`); a timeout
+still fails.
+
+To point a target at an existing database instead (e.g. one reachable from a
+remote Server's rsession), set the single per-target override and no local
+provisioning happens:
+
+```bash
+PW_DB_POSTGRES="host=db.example.com;port=5432;database=x;user=y;password=z" \
+  npm run test:server ...
+```
+
 ## Tags
 
 Tests use [Playwright tags](https://playwright.dev/docs/test-annotations#tag-tests) to indicate platform, edition, and product tier constraints. Apply tags via the `tag` option on `test()` or `test.describe()`:

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { scrubCredentials } from '../utils/auth';
+import { stopProvisionedDatabases } from '../utils/db-provision';
 
 /**
  * Remove the per-invocation sandbox subtree created by sandbox-setup.
@@ -26,6 +27,11 @@ import { scrubCredentials } from '../utils/auth';
 export default async function globalTeardown() {
   const sandbox = process.env.PW_SANDBOX;
   if (!sandbox) return;
+
+  // Stop any throwaway database servers the suite started, before and
+  // independent of file removal: a preserved sandbox keeps its data
+  // directory for inspection, but never a running server process.
+  stopProvisionedDatabases(sandbox);
 
   const keep = ['1', 'true'].includes(
     (process.env.PW_SANDBOX_SKIP_CLEANUP ?? '').toLowerCase(),

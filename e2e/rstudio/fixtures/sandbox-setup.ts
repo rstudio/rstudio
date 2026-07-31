@@ -5,6 +5,8 @@ import type { FullConfig } from '@playwright/test';
 import { prepareRLibs } from './r-libs-setup';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 import { scrubCredentials } from '../utils/auth';
+import { prepareOdbcSandbox } from '../utils/connections';
+import { provisionDatabases } from '../utils/db-provision';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -203,6 +205,22 @@ export default async function globalSetup(config: FullConfig) {
 
   process.env.PW_SANDBOX = sandbox;
   console.log(`[sandbox] root: ${sandbox}`);
+
+  // Sandbox-local ODBC configuration for the Connections pane tests. The
+  // desktop fixture points ODBCSYSINI at this directory, so the session sees
+  // exactly the drivers registered here (and the machine's real ODBC
+  // configuration is never read or written). Registration is skipped per
+  // target when its driver library isn't installed; the connections specs
+  // then skip with a reason.
+  const odbc = prepareOdbcSandbox(sandbox);
+  if (odbc.odbcDir) {
+    process.env.PW_ODBC_DIR = odbc.odbcDir;
+    console.log(`[sandbox] odbc drivers registered: ${odbc.registered.join(', ')}`);
+  }
+
+  // Throwaway database servers for the same tests. Failure is recorded (and
+  // the specs skip with the reason), never fatal to unrelated suites.
+  await provisionDatabases(sandbox);
 
   // Stable per-host R library, lives outside PW_SANDBOX so it survives across
   // runs. Without this the redirected HOME (set by Desktop/Server fixtures)
