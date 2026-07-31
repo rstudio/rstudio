@@ -274,6 +274,22 @@ To build the Electron application / desktop components, you can use:
     cd src/node/desktop && npm run package
 
 
+### Development Server
+
+To bring up a development RStudio Server for manual testing -- of this checkout
+or of a git worktree -- use the repo-level tasks:
+
+    npm run rserver-dev                          # this checkout
+    npm run rserver-dev -- <path-to-worktree>    # another checkout
+    npm run rserver-status -- --all              # what is running
+    npm run rserver-stop                         # stop it
+
+`rserver-dev` builds the backend, starts `rserver` and `ant devmode` on
+per-instance ports (so several worktrees can serve at once), and prints the
+localhost URL. The processes outlive the task; logs and state land in
+`<checkout>/.rstudio-dev/`. See `tasks/README.md` for the options.
+
+
 ## Writing Automated Tests
 
 End-to-end tests are written in TypeScript with Playwright, under `e2e/rstudio/`. They drive the IDE through a JS automation bridge at `window.rstudio`, documented in `e2e/rstudio/CLAUDE.md`. See `.claude/skills/rstudio-create-playwright-tests/SKILL.md` for detailed guidance on writing Playwright tests, and `.claude/skills/rstudio-run-playwright-tests/SKILL.md` for how to run them.

@@ -135,8 +135,18 @@ pipeline {
             security unlock-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
             security set-keychain-settings "${KEYCHAIN_PATH}"
 
-            # Import the developer ID from Jenkins secrets
+            # Import the developer ID from Jenkins secrets.
+            #
+            # Pass -f explicitly. Without it, `security import` infers the
+            # input format from the file's extension, and the filename of a
+            # Jenkins "Secret file" credential is not a stable contract:
+            # credentials-binding 728 started writing secrets to a random
+            # `fileNNNNN.tmp` rather than the credential's uploaded filename,
+            # which made this step fail with
+            #   security: SecKeychainItemImport: Unknown format in import.
+            # See jenkinsci/credentials-binding-plugin#534.
             security import "${MACOS_DEVELOPER_CERTIFICATE}" \
+              -f pkcs12                                      \
               -k "${KEYCHAIN_PATH}"                          \
               -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}"        \
               -T /usr/bin/codesign

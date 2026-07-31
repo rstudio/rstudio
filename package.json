@@ -1,0 +1,13 @@
+{
+  "name": "rstudio",
+  "private": true,
+  "description": "Developer task runner for the RStudio IDE repository. Not a published package; see tasks/README.md.",
+  "scripts": {
+    "rserver-dev": "node tasks/rserver-dev.ts",
+    "rserver-stop": "node tasks/rserver-stop.ts",
+    "rserver-status": "node tasks/rserver-status.ts"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}
