@@ -293,9 +293,17 @@ std::vector<std::string> ConsoleActions::getConsoleLines(int limit,
       for (const auto& action : actions_)
       {
          allContent.append(action.data);
-         // Add newline after input/output/error if missing (but not prompts)
+
+         // Add newline after input/output/error if missing (but not prompts).
+         // Actions of exactly kChunkSize bytes are also excluded: flush()
+         // splits long lines into kChunkSize chunks, so such an action
+         // continues in the next one -- a synthetic newline here would break
+         // the line apart and could cut an escape sequence in half, defeating
+         // the ANSI stripping below
          if (action.type != kConsoleActionPrompt &&
-             !action.data.empty() && action.data.back() != '\n')
+             !action.data.empty() &&
+             action.data.back() != '\n' &&
+             action.data.size() != kChunkSize)
          {
             allContent.push_back('\n');
          }
