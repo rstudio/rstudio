@@ -44,17 +44,36 @@ std::string consoleData(json::Object& actionsJson)
 
 } // anonymous namespace
 
-TEST(ConsoleActionsTest, ChunkingDoesNotSplitUtf8Sequences)
+// NOTE: these tests drive the process-wide consoleActions() singleton, so
+// state is reset around each test to keep them order-independent
+class ConsoleActionsTest : public ::testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      consoleActions().reset();
+      ASSERT_FALSE(FilePath::tempFilePath(tempFile_));
+   }
+
+   void TearDown() override
+   {
+      consoleActions().reset();
+      tempFile_.removeIfExists();
+   }
+
+   FilePath tempFile_;
+};
+
+TEST_F(ConsoleActionsTest, ChunkingDoesNotSplitUtf8Sequences)
 {
    ConsoleActions& actions = consoleActions();
-   actions.reset();
 
-   // a single long line of 3-byte UTF-8 characters; because the chunk
-   // size is not a multiple of 3, naive chunking would split a character
-   // at every chunk boundary
+   // a single long line cycling 1- to 4-byte UTF-8 characters, so that chunk
+   // boundaries fall at every possible offset within a multi-byte sequence
+   // regardless of the chunk size in use
    std::string line;
-   for (int i = 0; i < 600; i++)
-      line.append("\xE2\x96\x88");
+   for (int i = 0; i < 200; i++)
+      line.append("a\xC3\xA9\xE2\x96\x88\xF0\x9F\x98\x80");
    line.push_back('\n');
 
    actions.add(kConsoleActionOutput, line);
@@ -67,88 +86,148 @@ TEST(ConsoleActionsTest, ChunkingDoesNotSplitUtf8Sequences)
    ASSERT_GT(dataArray.getSize(), 1u);
 
    // every chunk should be individually valid UTF-8
-   std::string all;
    for (std::size_t i = 0, n = dataArray.getSize(); i < n; i++)
    {
       std::string data = dataArray[i].getString();
       std::size_t distance = 0;
       Error error = string_utils::utf8Distance(data.begin(), data.end(), &distance);
       EXPECT_FALSE(error);
-      all.append(data);
    }
 
    // concatenating the chunks should reproduce the original output
-   EXPECT_EQ(line, all);
+   EXPECT_EQ(line, consoleData(actionsJson));
 
+   // the actions should also survive a save / load round trip byte-identically;
+   // this is the layer where issue #18382 lived, as the JSON parser validates
+   // UTF-8 on load
+   ASSERT_FALSE(actions.saveToFile(tempFile_));
    actions.reset();
+   ASSERT_FALSE(actions.loadFromFile(tempFile_));
+
+   json::Object restoredJson;
+   actions.asJson(&restoredJson);
+   EXPECT_EQ(line, consoleData(restoredJson));
 }
 
-TEST(ConsoleActionsTest, InvalidUtf8OutputSurvivesSaveAndLoad)
+TEST_F(ConsoleActionsTest, Utf8SequenceSplitAcrossAddCallsIsRejoined)
 {
    ConsoleActions& actions = consoleActions();
-   actions.reset();
+
+   // pipe reads are arbitrary byte windows over the output stream, so a
+   // multi-byte character can be torn across two add() calls with a flush
+   // in between (e.g. session state serialized just as output arrives)
+   actions.add(kConsoleActionOutput, "abc\xE2\x96");
+
+   // the incomplete suffix should be held back, not sanitized to '?'
+   json::Object firstJson;
+   actions.asJson(&firstJson);
+   EXPECT_EQ("abc", consoleData(firstJson));
+
+   // the continuation byte should rejoin the held-back prefix
+   actions.add(kConsoleActionOutput, "\x88 done\n");
+
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   EXPECT_EQ("abc\xE2\x96\x88 done\n", consoleData(actionsJson));
+}
+
+TEST_F(ConsoleActionsTest, InvalidUtf8IsSanitizedBeforeSaving)
+{
+   ConsoleActions& actions = consoleActions();
 
    // raw bytes that are not valid UTF-8, as produced by e.g. cat("\xff")
    actions.add(kConsoleActionOutput, "before \xFF\xFE after\n");
 
-   FilePath tempFile;
-   ASSERT_FALSE(FilePath::tempFilePath(tempFile));
-   EXPECT_FALSE(actions.saveToFile(tempFile));
+   EXPECT_FALSE(actions.saveToFile(tempFile_));
 
    actions.reset();
-   EXPECT_FALSE(actions.loadFromFile(tempFile));
+   EXPECT_FALSE(actions.loadFromFile(tempFile_));
 
-   // invalid bytes should have been sanitized when the action was captured
+   // invalid bytes are sanitized when the buffer is flushed into an action,
+   // so the file both parses and round-trips
    json::Object actionsJson;
    actions.asJson(&actionsJson);
    EXPECT_EQ("before ?? after\n", consoleData(actionsJson));
-
-   actions.reset();
-   tempFile.removeIfExists();
 }
 
-TEST(ConsoleActionsTest, UnparseableConsoleActionsFileIsDiscarded)
+TEST_F(ConsoleActionsTest, UnserializableActionsAreDiscardedAtSave)
 {
    ConsoleActions& actions = consoleActions();
+
+   // a UTF-16 surrogate half passes the lenient utf8Clean() sanitizer but is
+   // rejected by the JSON parser; saveToFile() should detect this and save an
+   // empty replay rather than a file that would be discarded on restore
+   actions.add(kConsoleActionOutput, "surrogate \xED\xA0\x80\n");
+
+   ASSERT_FALSE(actions.saveToFile(tempFile_));
    actions.reset();
+   EXPECT_FALSE(actions.loadFromFile(tempFile_));
 
-   // simulate a console_actions file written by an older release, with a
-   // multi-byte UTF-8 sequence split across two chunks (see issue #18382);
-   // the invalid UTF-8 within causes a JSON parse error on load
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   EXPECT_EQ(0u, actionsJson["data"].getArray().getSize());
+}
+
+TEST_F(ConsoleActionsTest, UnparseableConsoleActionsFileIsDiscarded)
+{
+   ConsoleActions& actions = consoleActions();
+
+   // simulate a console_actions file with a multi-byte UTF-8 sequence split
+   // across two chunks, as written by any build predating the UTF-8-aware
+   // chunking in flush() (see issue #18382); the invalid UTF-8 within causes
+   // a JSON parse error on load
    std::string contents = "{\"type\": [2, 2], \"data\": [\"output \xE2\x96\", \"\x88\\n\"]}";
-
-   FilePath tempFile;
-   ASSERT_FALSE(FilePath::tempFilePath(tempFile));
-   ASSERT_FALSE(writeStringToFile(tempFile, contents));
+   ASSERT_FALSE(writeStringToFile(tempFile_, contents));
 
    // the corrupt file should be discarded, not reported as an error
-   EXPECT_FALSE(actions.loadFromFile(tempFile));
+   EXPECT_FALSE(actions.loadFromFile(tempFile_));
 
    json::Object actionsJson;
    actions.asJson(&actionsJson);
    EXPECT_EQ(0u, actionsJson["data"].getArray().getSize());
-
-   actions.reset();
-   tempFile.removeIfExists();
 }
 
-TEST(ConsoleActionsTest, MalformedConsoleActionsFileIsDiscarded)
+TEST_F(ConsoleActionsTest, MalformedConsoleActionsFileIsDiscarded)
 {
    ConsoleActions& actions = consoleActions();
-   actions.reset();
 
-   FilePath tempFile;
-   ASSERT_FALSE(FilePath::tempFilePath(tempFile));
-   ASSERT_FALSE(writeStringToFile(tempFile, "{\"type\": 42}"));
+   ASSERT_FALSE(writeStringToFile(tempFile_, "{\"type\": 42}"));
 
-   EXPECT_FALSE(actions.loadFromFile(tempFile));
+   EXPECT_FALSE(actions.loadFromFile(tempFile_));
 
    json::Object actionsJson;
    actions.asJson(&actionsJson);
    EXPECT_EQ(0u, actionsJson["data"].getArray().getSize());
+}
 
-   actions.reset();
-   tempFile.removeIfExists();
+TEST_F(ConsoleActionsTest, MismatchedTypeAndDataArraysAreDiscarded)
+{
+   ConsoleActions& actions = consoleActions();
+
+   ASSERT_FALSE(writeStringToFile(tempFile_, "{\"type\": [2], \"data\": []}"));
+
+   EXPECT_FALSE(actions.loadFromFile(tempFile_));
+
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   EXPECT_EQ(0u, actionsJson["data"].getArray().getSize());
+}
+
+TEST_F(ConsoleActionsTest, MalformedEntriesAreSkippedOnLoad)
+{
+   ConsoleActions& actions = consoleActions();
+
+   ASSERT_FALSE(writeStringToFile(
+      tempFile_,
+      "{\"type\": [2, \"bogus\", 2], \"data\": [\"a\", \"b\", \"c\"]}"));
+
+   EXPECT_FALSE(actions.loadFromFile(tempFile_));
+
+   // the malformed entry is skipped; the well-formed ones still load
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   EXPECT_EQ(2u, actionsJson["data"].getArray().getSize());
+   EXPECT_EQ("ac", consoleData(actionsJson));
 }
 
 } // namespace tests

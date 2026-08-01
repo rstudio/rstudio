@@ -55,10 +55,14 @@ test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => 
 
   test('multi-byte console output is preserved on suspend + resume', async ({ rstudioPage: page }) => {
     // A single output line longer than the 512-byte chunk size used by the
-    // console actions buffer, made of 3-byte UTF-8 characters. Before
-    // rstudio/rstudio#18382 a character was torn at a chunk boundary, and the
-    // saved console actions then failed to parse on resume ("Error restoring
-    // session (console_actions)"), losing the console replay entirely.
+    // console actions buffer (kChunkSize, private to RConsoleActions.cpp, so
+    // nothing catches drift): 400 x U+2588 = 1200 bytes of 3-byte UTF-8
+    // characters. Before rstudio/rstudio#18382 a character was torn at a
+    // chunk boundary, and the saved console actions then failed to parse on
+    // resume ("Error restoring session (console_actions)"), losing the
+    // console replay entirely. The trailing "\n" is load-bearing: the
+    // chunking loop only processes complete lines, so without it the whole
+    // line goes out as a single action and the boundary logic never runs.
     await executeInConsole(page, 'cat(strrep("\\u2588", 400), "\\n")', { wait: true });
 
     await suspendAndResume(page);
@@ -73,19 +77,32 @@ test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => 
       polling: 50,
     });
 
-    // The replayed output contains actual U+2588 block characters; the
-    // command echo only ever contains the R escape sequence, so it cannot
-    // false-pass this assertion.
-    await expect(
-      page.locator(CONSOLE_OUTPUT),
-      'replayed console output should retain the multi-byte line',
-    ).toContainText('█'.repeat(20));
+    // After the reload the console renders either the replayed output or the
+    // restore-error banner (the REprintf in RInit.cpp runs after
+    // restoreSession, so the error itself is captured into the replay). Wait
+    // for one of the two, so the decisive assertions below inspect settled
+    // output rather than burning a retry timeout on a console that has not
+    // rendered yet.
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText(
+      /█{20}|Error restoring session/,
+    );
 
+    // Check the failure mode first: if restore failed, this is the
+    // actionable message, and the missing block characters below are just a
+    // downstream symptom.
     const output = await page.locator(CONSOLE_OUTPUT).innerText();
     expect(
       output,
       'resume should not report a session restore error',
     ).not.toContain('Error restoring session');
+
+    // The replayed output contains actual U+2588 block characters; the
+    // command echo only ever contains the R escape sequence, so it cannot
+    // false-pass this assertion.
+    expect(
+      output,
+      'replayed console output should retain the multi-byte line',
+    ).toContain('█'.repeat(20));
   });
 
   test('attached datasets are preserved on suspend + resume', async ({ rstudioPage: page }) => {
