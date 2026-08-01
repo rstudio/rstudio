@@ -51,16 +51,36 @@ const ASSISTANT_TEST_TAGS = ['@ai', '@chat'];
  * suites. base-prefs.jsonc starts desktop workers with both prefs at "none";
  * this guard restores that state after an @ai/@chat suite has run.
  *
- * Desktop only: server mode shares one config/data home across all workers,
- * so flipping the pref here would race a @chat suite running concurrently in
- * another worker. (Server-mode restarts with an active agent remain exposed
- * to #18394 until the product-side shutdown hardening lands.)
+ * The guard runs with the per-test fixtures, which Playwright orders after a
+ * suite's beforeAll hooks: a non-@ai suite whose beforeAll restarts the
+ * session or opens a project still does that work under any leaked provider
+ * prefs; the guard then normalizes state before its first test runs.
+ *
+ * Desktop only: in server mode prefs live in the server's config home. A
+ * spawned rserver (the CI path) gets a per-worker config home, but an
+ * external PW_RSTUDIO_SERVER_URL server has a single config shared by every
+ * worker, where flipping the pref here would race a @chat suite running
+ * concurrently in another worker. (What server workers always share is the
+ * data home -- the installed backend -- not the prefs.) A leaked-on provider
+ * in server mode costs agent start/stop churn, not a wedge: the shutdown
+ * hardening that landed with #18394 bounds the restarts product-side.
  */
 async function disableLeakedAssistant(page: Page): Promise<void> {
   const [assistant, chatProvider] = await Promise.all([
     getPref(page, 'assistant'),
     getPref(page, 'chat_provider'),
   ]);
+
+  // getPref returns null when the pref entry is missing from the bridge's
+  // map. That should not happen here (the reset fixture has already waited
+  // for readiness), but a protective guard must not fail silent: warn so a
+  // skipped check is visible in the test output.
+  if (assistant == null || chatProvider == null) {
+    console.warn(
+      '[test-reset] assistant prefs unreadable ' +
+        `(assistant=${assistant}, chat_provider=${chatProvider}); leak guard skipped`,
+    );
+  }
 
   const leakedOn = (value: unknown) => value != null && value !== 'none';
   if (!leakedOn(assistant) && !leakedOn(chatProvider)) return;

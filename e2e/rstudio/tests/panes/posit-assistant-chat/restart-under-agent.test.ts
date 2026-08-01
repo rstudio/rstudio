@@ -21,8 +21,10 @@ import { createChatActions } from './_chat-setup';
 // HERE, visibly, instead of killing whatever unrelated shard imports the
 // leaked provider state.
 //
-// Desktop-only: server mode shares one config/data home across workers, so
-// flipping the provider prefs here would race @chat suites in other workers.
+// Desktop-only: the provider prefs this suite flips are per-worker on
+// desktop; in server mode they can be shared (external PW_RSTUDIO_SERVER_URL
+// servers), and the data home always is -- see disableLeakedAssistant in
+// rstudio.fixture.ts.
 test.describe.serial(
   'Session restart with active assistant (#18394)',
   { tag: ['@ai', '@chat', '@desktop_only', '@serial'] },
@@ -37,6 +39,16 @@ test.describe.serial(
       // flow on a cold worker; give the hook the headroom it needs.
       test.setTimeout(300000);
 
+      // Baseline the backend's log BEFORE enabling the provider: the log
+      // directory is the worker's data home, shared with every suite that
+      // ran before this one, so a positai.log from an earlier @chat suite
+      // may already exist. Only growth past this baseline proves the backend
+      // started for US.
+      const logDir = rstudioSession.logDir;
+      expect(logDir, 'desktop session should expose its log directory').toBeTruthy();
+      const backendLog = path.join(logDir!, 'positai.log');
+      const baselineSize = fs.existsSync(backendLog) ? fs.statSync(backendLog).size : -1;
+
       // Select Posit Assistant as the chat provider through the Options
       // dialog. This settles the install/update prompt, so it also guarantees
       // the backend is actually installed in this worker's data home -- the
@@ -46,27 +58,45 @@ test.describe.serial(
 
       // Turn on the code assistant too: the chat provider starts the chat
       // backend, this starts the NES agent. The wedged CI sessions ran both.
+      // (The agent has no bridge-observable startup artifact today, so unlike
+      // the backend below its startup is not independently verified.)
       await setPref(page, 'assistant', 'posit');
 
-      // Guard against silently testing nothing: the chat backend writes
-      // positai.log into the session's log directory as it starts. If it
-      // never appears, the agent isn't running and the loop below would just
-      // exercise plain restarts.
-      const logDir = rstudioSession.logDir;
-      expect(logDir, 'desktop session should expose its log directory').toBeTruthy();
-      const backendLog = path.join(logDir!, 'positai.log');
+      // Guard against silently testing nothing: the chat backend appends to
+      // positai.log in the session's log directory as it starts. If the log
+      // never grows past the baseline, the backend isn't running and the
+      // loop below would just exercise plain restarts.
       await expect
-        .poll(() => fs.existsSync(backendLog), {
-          message: `chat backend never started (no ${backendLog})`,
-          timeout: 60000,
-        })
+        .poll(
+          () => {
+            try {
+              return fs.statSync(backendLog).size > baselineSize;
+            } catch {
+              return false;
+            }
+          },
+          {
+            message: `chat backend never started (${backendLog} did not grow)`,
+            timeout: 60000,
+          },
+        )
         .toBe(true);
     });
 
     test.afterAll(async ({ rstudioPage: page }) => {
-      await closeProjectIfOpen(page).catch(() => {});
-      await setPref(page, 'assistant', 'none');
-      await setPref(page, 'chat_provider', 'none');
+      // On a real wedge any of these steps can fail; keep them independent so
+      // a dead session still gets the provider prefs flipped back where
+      // possible, and log instead of swallowing -- a failure here IS the
+      // signal this suite exists to surface.
+      await closeProjectIfOpen(page).catch((err) => {
+        console.warn(`[restart-under-agent] closeProjectIfOpen failed in afterAll: ${err}`);
+      });
+
+      for (const name of ['assistant', 'chat_provider'] as const) {
+        await setPref(page, name, 'none').catch((err) => {
+          console.warn(`[restart-under-agent] resetting ${name} failed in afterAll: ${err}`);
+        });
+      }
     });
 
     test('project open/close cycles complete with the assistant running', async ({
@@ -78,17 +108,12 @@ test.describe.serial(
       test.setTimeout(120000 * RESTART_CYCLES);
 
       for (let i = 0; i < RESTART_CYCLES; i++) {
-        const projectDir = await createAndOpenProject(page, sandbox.dir, `agent_restart_${i}`);
-        expect(projectDir).toContain(`agent_restart_${i}`);
-
-        // The new project session must come up far enough for the bridge to
-        // report the project active -- this is where the wedged shards died.
-        await expect
-          .poll(() => page.evaluate(() => window.rstudio?.project?.isActive() ?? false), {
-            timeout: 60000,
-          })
-          .toBe(true);
-
+        // Both helpers block through the restart they drive: openProject only
+        // returns once the bridge reports the new project active and the
+        // console idle, throwing a purpose-built diagnostic otherwise. A
+        // wedged restart therefore dies INSIDE one of these calls -- no extra
+        // assertions are needed (or reachable) between them.
+        await createAndOpenProject(page, sandbox.dir, `agent_restart_${i}`);
         await closeProjectIfOpen(page);
       }
     });
