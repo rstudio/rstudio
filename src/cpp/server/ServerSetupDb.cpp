@@ -28,6 +28,7 @@
 
 #include <core/Database.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Result.hpp>
 #include <core/Settings.hpp>
 #include <core/system/Xdg.hpp>
 #include <server_core/DatabaseConstants.hpp>
@@ -114,16 +115,19 @@ std::string promptLine(std::istream& in, std::ostream& out, const std::string& p
    return value;
 }
 
-// Sets *pFound to whether `sql` (expected to be a `SELECT 1 FROM ...`-style
+// Returns whether `sql` (expected to be a `SELECT 1 FROM ...`-style
 // existence check) returned any row. A failed query propagates its Error
-// rather than being folded into *pFound, so callers can distinguish "row
-// absent" from "could not check" -- the latter must not be treated as a
-// green light by an idempotency guard.
-Error rowExists(boost::shared_ptr<IConnection> pConnection, const std::string& sql, bool* pFound)
+// so callers can distinguish "row absent" from "could not check" -- the
+// latter must not be treated as a green light by an idempotency guard.
+Result<bool> rowExists(boost::shared_ptr<IConnection> pConnection, Query& query)
 {
-   *pFound = false;
-   return execAndProcessQuery(pConnection, sql,
-      [pFound](const Row&) { *pFound = true; });
+   Rowset rows;
+   Error error = pConnection->execute(query, rows);
+
+   if (error)
+      return Unexpected(error);
+
+   return !(rows.begin() == rows.end());
 }
 
 // Shared by validateIdentifier() (used to report --setup-db's own
@@ -471,6 +475,7 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
    *pPassed = true;
    *pUserCreated = false;
    *pDatabaseCreated = false;
+   Error error;
 
    // Defense in depth: createDatabaseAndUser is public and shared with the
    // Pro overlay, which also interpolates dbName/dbUser directly into SQL
@@ -489,15 +494,16 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
       return Success();
    }
 
-   bool databaseExists = false;
-   Error error = rowExists(pMasterConnection,
-      "SELECT 1 FROM pg_database WHERE datname = '" + dbName + "'", &databaseExists);
-   if (error)
+   Query query = pMasterConnection->query("SELECT 1 FROM pg_database WHERE datname=:datname");
+   query.withInput(dbName, "datname");
+   Result<bool> result = rowExists(pMasterConnection, query);
+   if (!result)
    {
-      out << "[FAIL] Could not query database catalog: " << error.getSummary() << std::endl;
+      out << "[FAIL] Could not query database catalog: " << result.error().getSummary() << std::endl;
       *pPassed = false;
       return Success();
    }
+   bool databaseExists = *result;
 
    if (databaseExists)
    {
@@ -517,15 +523,16 @@ Error createDatabaseAndUser(boost::shared_ptr<IConnection> pMasterConnection,
       *pDatabaseCreated = true;
    }
 
-   bool userExists = false;
-   error = rowExists(pMasterConnection,
-      "SELECT 1 FROM pg_roles WHERE rolname = '" + dbUser + "'", &userExists);
-   if (error)
+   query = pMasterConnection->query("SELECT 1 FROM pg_roles WHERE rolname=:rolname");
+   query.withInput(dbUser, "rolname");
+   result = rowExists(pMasterConnection, query);
+   if (!result)
    {
-      out << "[FAIL] Could not query database catalog: " << error.getSummary() << std::endl;
+      out << "[FAIL] Could not query database catalog: " << result.error().getSummary() << std::endl;
       *pPassed = false;
       return Success();
    }
+   bool userExists = *result;
 
    if (userExists)
    {
@@ -635,15 +642,16 @@ Error setupDb(const Options& options,
    // idempotent re-run against an already-provisioned database must never
    // write a freshly generated password into database.conf, since that
    // password is never actually applied to the (pre-existing) role.
-   bool userAlreadyExists = false;
-   error = rowExists(pMasterConnection,
-      "SELECT 1 FROM pg_roles WHERE rolname = '" + dbUser + "'", &userAlreadyExists);
-   if (error)
+   Query query = pMasterConnection->query("SELECT 1 FROM pg_roles WHERE rolname=:rolname");
+   query.withInput(dbUser, "rolname");
+   auto result = rowExists(pMasterConnection, query);
+   if (!result)
    {
-      out << "[FAIL] Could not query database catalog: " << error.getSummary() << std::endl;
+      out << "[FAIL] Could not query database catalog: " << result.error().getSummary() << std::endl;
       *pPassed = false;
       return Success();
    }
+   bool userAlreadyExists = *result;
    std::string generatedPassword;
    if (!userAlreadyExists)
    {

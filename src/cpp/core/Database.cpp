@@ -26,6 +26,7 @@
 #include <core/http/Util.hpp>
 #include <core/Log.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/SqlPreprocessor.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 
@@ -159,9 +160,11 @@ static constexpr size_t kTruncatePreviewLength = 16;
 
 // Set of parameter names that should be treated as secrets (not logged in full)
 static std::set<std::string> s_secretParamNames = {"secret_param", "key"};
+static boost::mutex s_secretParamMutex;
 
 void addSecretParamNames(const std::vector<std::string>& paramNames)
 {
+   boost::lock_guard<boost::mutex> lock(s_secretParamMutex);
    for (const auto& name : paramNames)
    {
       s_secretParamNames.insert(name);
@@ -170,6 +173,7 @@ void addSecretParamNames(const std::vector<std::string>& paramNames)
 
 bool isSecretParamName(const std::string& paramName)
 {
+   boost::lock_guard<boost::mutex> lock(s_secretParamMutex);
    return s_secretParamNames.find(paramName) != s_secretParamNames.end();
 }
 
@@ -212,6 +216,320 @@ bool isSqliteTransientLockError(const soci::soci_error& error)
 }
 
 // Database errors =================================================================================================
+
+namespace {
+
+std::string pgEncode(const std::string& str, bool isUrl = true)
+{
+   // ensure we first decode from URL string format
+   std::string val = isUrl ? http::util::urlDecode(str) : str;
+
+   // escape postgres special characters
+   boost::replace_all(val, "\\", "\\\\");
+   boost::replace_all(val, "'", "\\'");
+
+   return val;
+}
+
+Error getPostgresqlPassword(const PostgresqlConnectionOptions& options,
+                            std::string& password)
+{
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
+   // override password from the input with the one from options if any
+   if (!options.password.empty())
+      password = options.password;
+
+   // Somewhat convoluted due to need to handle several cases (Pro-only):
+   //
+   // (1) password without embedded encryption key; this could be a plain-text
+   //     password or an encrypted password generated before we added such
+   //     embedding, but we can't be sure without trying to decrypt and treating
+   //     as plain text if that fails
+   // (2) an encrypted password with embedded key hash; if it won't decrypt,
+   // this is an error
+   //     and we don't want to treat as plain text
+   //
+   // In a future release we could simplify by assuming a password without
+   // embedded key must be plain text. Tracked in
+   // https://github.com/rstudio/rstudio-pro/issues/2446
+   //
+   bool assumeEncrypted =
+       core::system::crypto::passwordContainsKeyHash(password);
+
+   Error error = core::system::crypto::decryptPassword(
+       options.secureKey, options.secureKeyHash, password);
+   if (error)
+   {
+      // Only warn about plaintext passwords when we're reading them from the
+      // configuration file. Passwords from environment variables are
+      // probably managed by an external secret manager with its own
+      // encryption story.
+      static bool warnOnce =
+          system::getenv("WORKBENCH_POSTGRES_PASSWORD").empty() &&
+          system::getenv("WORKBENCH_POSTGRES_PASSWORD_FILE").empty();
+
+      if (assumeEncrypted)
+      {
+         error.addProperty(
+             "key-files",
+             "/var/lib/rstudio-server/secure-cookie-key (managed), "
+             "/etc/rstudio/secure-cookie-key (manual using XDG_CONFIG_DIRS)");
+         return error;
+      }
+
+      // decrypt failed, we'll just use the password as-is
+      if (warnOnce)
+      {
+         warnOnce = false;
+         LOG_DEBUG_MESSAGE(error.asString());
+         LOG_WARNING_MESSAGE("Either an encrypted PostgreSQL password could "
+                             "not be decrypted, or the PostgreSQL password "
+                             "is being stored in plain text in the "
+                             "configuration file. See the Posit Workbench "
+                             "Administration Guide for documentation on how "
+                             "to encrypt PostgreSQL passwords.");
+      }
+   }
+   return Success();
+#else
+   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+#endif
+}
+
+Error parseConnectionUri(const std::string& uri,
+                         std::string& password,
+                         std::string* pConnectionStr)
+{
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
+   boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)",
+                   boost::regex::icase);
+   boost::cmatch matches;
+
+   std::string host, path;
+   if (regex_utils::match(uri.c_str(), matches, re))
+   {
+      host = matches[2];
+      path = matches[3];
+   }
+   else
+   {
+      return systemError(
+          boost::system::errc::invalid_argument,
+          "connection-uri specified is not a valid PostgreSQL connection URI",
+          ERROR_LOCATION);
+   }
+
+   // extract user and password information
+   std::string user;
+   std::vector<std::string> hostParts;
+   boost::split(hostParts, host, boost::is_any_of("@"));
+
+   if (hostParts.size() == 2)
+   {
+      // user information included
+      std::vector<std::string> userParts;
+      boost::split(userParts, hostParts.at(0), boost::is_any_of(":"));
+
+      if (userParts.size() == 2)
+      {
+         user = userParts.at(0);
+         password = userParts.at(1);
+      }
+      else if (userParts.size() == 1)
+      {
+         user = userParts.at(0);
+      }
+      else
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "connection-uri specified is not a valid "
+                            "PostgreSQL connection URI - "
+                            "too many user : password specifications",
+                            ERROR_LOCATION);
+      }
+
+      host = hostParts.at(1);
+   }
+   else if (hostParts.size() > 2)
+   {
+      return systemError(
+          boost::system::errc::invalid_argument,
+          "connection-uri specified is not a valid PostgreSQL connection URI - "
+          "too many user @ host specifications",
+          ERROR_LOCATION);
+   }
+
+   // extract host and port information
+   std::string port;
+   hostParts.clear();
+
+   size_t squareBegin = host.find('[');
+   if (squareBegin != std::string::npos)
+   {
+      size_t squareEnd = host.find(']');
+      if (squareEnd == std::string::npos)
+      {
+         return systemError(
+             boost::system::errc::invalid_argument,
+             "connection-uri specified is not a valid PostgreSQL connection "
+             "URI - "
+             "specified IPv6 address has no matching end bracket ']'",
+             ERROR_LOCATION);
+      }
+
+      std::string ip6Host = host.substr(0, squareEnd + 1);
+      size_t colonPos = host.find(':', squareEnd + 1);
+      if (colonPos != std::string::npos)
+      {
+         port = host.substr(colonPos + 1);
+      }
+      host = ip6Host;
+   }
+   else
+   {
+      boost::split(hostParts, host, boost::is_any_of(":"));
+
+      if (hostParts.size() == 2)
+      {
+         host = hostParts.at(0);
+         port = hostParts.at(1);
+      }
+      else if (hostParts.size() > 2)
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "connection-uri specified is not a valid "
+                            "PostgreSQL connection URI - "
+                            "too many host : port specifications",
+                            ERROR_LOCATION);
+      }
+   }
+
+   // extract database name and params
+   std::string database;
+   std::vector<std::string> parameters;
+   size_t paramStart = path.find("?");
+   if (paramStart != std::string::npos)
+   {
+      std::string params = path.substr(paramStart + 1);
+      std::vector<std::string> paramParts;
+      boost::split(paramParts, params, boost::is_any_of("&"));
+
+      for (const std::string& param : paramParts)
+      {
+         parameters.push_back(param);
+      }
+
+      // skip over / in the path
+      database = path.substr(1, paramStart - 1);
+   }
+   else
+   {
+      // skip over / in the path
+      database = path.empty() ? path : path.substr(1);
+   }
+
+   // write out connection string
+   *pConnectionStr += "host='" + pgEncode(host) + "'";
+   if (!port.empty())
+      *pConnectionStr += " port='" + pgEncode(port) + "'";
+   if (!user.empty())
+      *pConnectionStr += " user='" + pgEncode(user) + "'";
+   if (!database.empty())
+      *pConnectionStr += " dbname='" + pgEncode(database) + "'";
+
+   for (const std::string& param : parameters)
+   {
+      size_t equalPos = param.find('=');
+      if (equalPos != std::string::npos)
+      {
+         std::string paramName = param.substr(0, equalPos);
+         std::string paramValue = param.substr(equalPos + 1);
+         *pConnectionStr += " " + paramName + "='" + pgEncode(paramValue) + "'";
+      }
+      else
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "connection-uri specified is not a valid "
+                            "PostgreSQL connection URI - "
+                            "no parameter value specified for parameter " +
+                                param,
+                            ERROR_LOCATION);
+      }
+   }
+
+   return Success();
+#else
+   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+#endif
+}
+
+} // anonymous namespace
+
+Error parsePostgresqlConnectionOptions(
+    const PostgresqlConnectionOptions& options,
+    std::string* pConnectionStr,
+    std::string* pPassword)
+{
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
+   // prefer connection-uri
+   if (!options.connectionUri.empty())
+   {
+      Error error = parseConnectionUri(
+            options.connectionUri, *pPassword, pConnectionStr);
+      if (error)
+         return error;
+   }
+   else
+   {
+      boost::format fmt("host='%1%' port='%2%' dbname='%3%' user='%4%' "
+                        "connect_timeout='%5%'");
+      *pConnectionStr = boost::str(fmt % options.host % options.port %
+                                 options.database % options.username %
+                                 safe_convert::numberToString(
+                                       options.connectionTimeoutSeconds, "0"));
+   }
+
+   Error error = getPostgresqlPassword(options, *pPassword);
+   if (error)
+      return error;
+
+   if(pPassword->empty())
+   {
+      // When a password isn't specified, we authenticate using SSL
+      // certificates. This requires that the connection string contain
+      // sslcert and sslkey parameters and that sslmode=verify-ca.
+      if (!boost::algorithm::contains(*pConnectionStr, "sslcert") ||
+            !boost::algorithm::contains(*pConnectionStr, "sslkey") ||
+            !boost::algorithm::contains(*pConnectionStr, "sslrootcert"))
+      {
+         // Return invalid configuration error
+         return systemError(
+               boost::system::errc::invalid_argument,
+               "Because a password has not been specified in database.conf,"
+               " the Postgres connection must be configured to use SSL "
+               "authentication."
+               " This requires including the path to sslcert, sslkey, and "
+               "sslrootcert in the connection URI."
+               " Update database.conf to add these values to the connection "
+               "URI or add a password."
+               " For more information about PostgreSQL SSL Authentication see "
+               "https://www.postgresql.org/docs/current/auth-cert.html",
+               ERROR_LOCATION);
+      }
+      else if (!boost::algorithm::contains(*pConnectionStr,
+                                             "sslmode=verify-ca"))
+      {
+         *pConnectionStr += " sslmode=verify-ca";
+      }
+   } else {
+      pgEncode(*pPassword, false);
+   }
+
+   return Success();
+#else
+   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+#endif
+}
 
 class ConnectVisitor : public boost::static_visitor<Error>
 {
@@ -289,30 +607,13 @@ public:
    Error operator()(const PostgresqlConnectionOptions& options) const
    {
 #ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
-      std::string connectionStr;
       try
       {
-         // prefer connection-uri
-         std::string password;
-         if (!options.connectionUri.empty())
-         {
-            Error error = parseConnectionUri(options.connectionUri, password, &connectionStr);
-            if (error)
-               return error;
-         }
-         else
-         {
-            boost::format fmt("host='%1%' port='%2%' dbname='%3%' user='%4%' connect_timeout='%5%'");
-            connectionStr =
-                  boost::str(fmt %
-                             options.host %
-                             options.port %
-                             options.database %
-                             options.username %
-                             safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
-         }
-
-         Error error = getPassword(options, password);
+         std::string connectionStr, password;
+         const auto error = parsePostgresqlConnectionOptions(
+             options, &connectionStr, &password);
+         if (error)
+            return error;
 
          if (!password.empty())
          {
@@ -321,33 +622,10 @@ public:
             if (!pPassword_)
             {
                // unencrypted password
-               password = pgEncode(password, false);
                connectionStr += " password='" + password + "'";
             }
             else
                *pPassword_ = password;
-         }
-         else
-         {
-            // When a password isn't specified, we authenticate using SSL certificates.
-            // This requires that the connection string contain sslcert and sslkey parameters and that sslmode=verify-ca.
-            if (!boost::algorithm::contains(connectionStr, "sslcert") || 
-                !boost::algorithm::contains(connectionStr, "sslkey") ||
-                !boost::algorithm::contains(connectionStr, "sslrootcert"))
-            {
-               // Return invalid configuration error
-               return systemError(boost::system::errc::invalid_argument,
-                                  "Because a password has not been specified in database.conf,"
-                                  " the Postgres connection must be configured to use SSL authentication."
-                                  " This requires including the path to sslcert, sslkey, and sslrootcert in the connection URI."
-                                  " Update database.conf to add these values to the connection URI or add a password."
-                                  " For more information about PostgreSQL SSL Authentication see https://www.postgresql.org/docs/current/auth-cert.html",
-                                  ERROR_LOCATION);
-            }
-            else if (!boost::algorithm::contains(connectionStr, "sslmode=verify-ca")) 
-            {
-               connectionStr += " sslmode=verify-ca";
-            }
          }
 
          if (pConnectionStr_)
@@ -356,7 +634,8 @@ public:
          if (validateOnly_)
             return Success();
 
-         boost::shared_ptr<IConnection> pConnection(new Connection(soci::postgresql, connectionStr));
+         boost::shared_ptr<IConnection> pConnection(
+             new Connection(soci::postgresql, connectionStr));
          *pPtrConnection_ = pConnection;
          return Success();
       }
@@ -365,7 +644,7 @@ public:
          return DatabaseError(error);
       }
 #else
-      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
 #endif
    }
 
@@ -375,222 +654,6 @@ public:
       return systemError(boost::system::errc::invalid_argument,
                          "No database connection options specified",
                          ERROR_LOCATION);
-   }
-
-   Error parseConnectionUri(const std::string& uri,
-                            std::string& password,
-                            std::string* pConnectionStr) const
-   {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
-      boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)", boost::regex::icase);
-      boost::cmatch matches;
-
-      std::string host, path;
-      if (regex_utils::match(uri.c_str(), matches, re))
-      {
-         host = matches[2];
-         path = matches[3];
-      }
-      else
-      {
-         return systemError(boost::system::errc::invalid_argument,
-                            "connection-uri specified is not a valid PostgreSQL connection URI",
-                            ERROR_LOCATION);
-      }
-
-      // extract user and password information
-      std::string user;
-      std::vector<std::string> hostParts;
-      boost::split(hostParts, host, boost::is_any_of("@"));
-
-      if (hostParts.size() == 2)
-      {
-         // user information included
-         std::vector<std::string> userParts;
-         boost::split(userParts, hostParts.at(0), boost::is_any_of(":"));
-
-         if (userParts.size() == 2)
-         {
-            user = userParts.at(0);
-            password = userParts.at(1);
-         }
-         else if (userParts.size() == 1)
-         {
-            user = userParts.at(0);
-         }
-         else
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "too many user : password specifications",
-                               ERROR_LOCATION);
-         }
-
-         host = hostParts.at(1);
-      }
-      else if (hostParts.size() > 2)
-      {
-         return systemError(boost::system::errc::invalid_argument,
-                            "connection-uri specified is not a valid PostgreSQL connection URI - "
-                               "too many user @ host specifications",
-                            ERROR_LOCATION);
-      }
-
-      // extract host and port information
-      std::string port;
-      hostParts.clear();
-
-      size_t squareBegin = host.find('[');
-      if (squareBegin != std::string::npos)
-      {
-         size_t squareEnd = host.find(']');
-         if (squareEnd == std::string::npos)
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "specified IPv6 address has no matching end bracket ']'",
-                               ERROR_LOCATION);
-         }
-
-         std::string ip6Host = host.substr(0, squareEnd + 1);
-         size_t colonPos = host.find(':', squareEnd + 1);
-         if (colonPos != std::string::npos)
-         {
-            port = host.substr(colonPos + 1);
-         }
-         host = ip6Host;
-      }
-      else
-      {
-         boost::split(hostParts, host, boost::is_any_of(":"));
-
-         if (hostParts.size() == 2)
-         {
-            host = hostParts.at(0);
-            port = hostParts.at(1);
-         }
-         else if (hostParts.size() > 2)
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "too many host : port specifications",
-                               ERROR_LOCATION);
-         }
-      }
-
-      // extract database name and params
-      std::string database;
-      std::vector<std::string> parameters;
-      size_t paramStart = path.find("?");
-      if (paramStart != std::string::npos)
-      {
-         std::string params = path.substr(paramStart + 1);
-         std::vector<std::string> paramParts;
-         boost::split(paramParts, params, boost::is_any_of("&"));
-
-         for (const std::string& param : paramParts)
-         {
-            parameters.push_back(param);
-         }
-
-         // skip over / in the path
-         database = path.substr(1, paramStart - 1);
-      }
-      else
-      {
-         // skip over / in the path
-         database = path.empty() ? path : path.substr(1);
-      }
-
-      // write out connection string
-      *pConnectionStr += "host='" + pgEncode(host) + "'";
-      if (!port.empty())
-         *pConnectionStr += " port='" + pgEncode(port) + "'";
-      if (!user.empty())
-         *pConnectionStr += " user='" + pgEncode(user) + "'";
-      if (!database.empty())
-         *pConnectionStr += " dbname='" + pgEncode(database) + "'";
-
-      for (const std::string& param : parameters)
-      {
-         size_t equalPos = param.find('=');
-         if (equalPos != std::string::npos)
-         {
-            std::string paramName = param.substr(0, equalPos);
-            std::string paramValue = param.substr(equalPos + 1);
-            *pConnectionStr += " " +  paramName + "='" + pgEncode(paramValue) + "'";
-         }
-         else
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "no parameter value specified for parameter " + param,
-                               ERROR_LOCATION);
-         }
-      }
-
-      return Success();
-#else
-      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
-   }
-
-   Error getPassword(const PostgresqlConnectionOptions& options, std::string& password) const
-   {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
-      // override password from the input with the one from options if any
-      if (!options.password.empty())
-         password = options.password;
-
-      // Somewhat convoluted due to need to handle several cases (Pro-only):
-      //
-      // (1) password without embedded encryption key; this could be a plain-text
-      //     password or an encrypted password generated before we added such embedding, but
-      //     we can't be sure without trying to decrypt and treating as plain text if that fails
-      // (2) an encrypted password with embedded key hash; if it won't decrypt, this is an error
-      //     and we don't want to treat as plain text
-      //
-      // In a future release we could simplify by assuming a password without embedded key must
-      // be plain text. Tracked in https://github.com/rstudio/rstudio-pro/issues/2446
-      // 
-      bool assumeEncrypted = core::system::crypto::passwordContainsKeyHash(password);
-
-      Error error = core::system::crypto::decryptPassword(options.secureKey, options.secureKeyHash, password);
-      if (error)
-      {
-         static bool warnOnce = false;
-
-         if (assumeEncrypted)
-         {
-            error.addProperty("key-files", "/var/lib/rstudio-server/secure-cookie-key (managed), /etc/rstudio/secure-cookie-key (manual using XDG_CONFIG_DIRS)");
-            return error;
-         }
-
-         // decrypt failed, we'll just use the password as-is
-         if (!warnOnce)
-         {
-            warnOnce = true;
-            LOG_DEBUG_MESSAGE(error.asString());
-            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password, or an encrypted password could not be decrypted. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
-         }
-      }
-      return Success();
-#else
-      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
-   }
-
-   std::string pgEncode(const std::string& str,
-                        bool isUrl = true) const
-   {
-      // ensure we first decode from URL string format
-      std::string val = isUrl ? http::util::urlDecode(str) : str;
-
-      // escape postgres special characters
-      boost::replace_all(val, "\\", "\\\\");
-      boost::replace_all(val, "'", "\\'");
-
-      return val;
    }
 
 private:
@@ -899,7 +962,7 @@ core::Error Rowset::getBoolStrValue(RowsetIterator & row, const std::string& col
    }
 
    // Conversion failed
-   return core::Error(boost::system::errc::invalid_argument, 
+   return core::Error(boost::system::errc::invalid_argument,
       "Could not convert field " + columnName + " from string to bool", ERROR_LOCATION);
 }
 
@@ -941,7 +1004,7 @@ core::Error Rowset::getUIntIntValue(RowsetIterator & row, const std::string& col
    if( !result->has_value() )
    {
       // Conversion failed
-      return core::Error(boost::system::errc::invalid_argument, 
+      return core::Error(boost::system::errc::invalid_argument,
          "Could not convert field " + columnName + " from integral to unsigned", ERROR_LOCATION);
    }
 
@@ -990,7 +1053,7 @@ core::Error Rowset::getMillisecondSinceEpochStrValue(RowsetIterator &row, const 
    }
 
    // Could not convert the DB value to a valid timestamp
-   return core::Error(boost::system::errc::invalid_argument, 
+   return core::Error(boost::system::errc::invalid_argument,
       "Could not convert field " + columnName + " from milliseconds since epoc string to ptime - value is: " + timestampAsOptionalString.value(), ERROR_LOCATION);
 }
 
@@ -1463,7 +1526,7 @@ ConnectionPool::ConnectionPool(const ConnectionOptions& options) :
 }
 
 // Skip the health check if the connection was used recently (within this many seconds)
-static constexpr int kHealthCheckIdleThresholdSeconds = 30;
+static constexpr int kHealthCheckIdleThresholdSeconds = 10;
 
 bool ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
 {
@@ -1473,16 +1536,20 @@ bool ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
    if (connection->driver() == Driver::Sqlite)
       return true;
 
-   // Skip the health check if the connection was recently used. Under load, connections are
-   // returned and re-checked out quickly, so stale connections are unlikely. This avoids an
-   // extra SELECT 1 round trip on every getConnection() call.
-   boost::posix_time::ptime lastReturned = connection->lastReturnedTime();
-   if (!lastReturned.is_not_a_date_time())
+   // Skip the health check if the connection was recently used and is not flagged as
+   // broken. Under load, connections are returned and re-checked out quickly, so stale
+   // connections are unlikely. This avoids an extra SELECT 1 round trip on every
+   // getConnection() call.
+   if (!connection->needsHealthCheck())
    {
-      boost::posix_time::time_duration idle =
-         boost::posix_time::microsec_clock::universal_time() - lastReturned;
-      if (idle.total_seconds() < kHealthCheckIdleThresholdSeconds)
-         return true;
+      boost::posix_time::ptime lastReturned = connection->lastReturnedTime();
+      if (!lastReturned.is_not_a_date_time())
+      {
+         boost::posix_time::time_duration idle =
+            boost::posix_time::microsec_clock::universal_time() - lastReturned;
+         if (idle.total_seconds() < kHealthCheckIdleThresholdSeconds)
+            return true;
+      }
    }
 
    // it is possible for connections to go stale (such as if the upstream connection is closed)
@@ -1490,7 +1557,10 @@ bool ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
    // and checking to make sure that no error has occurred
    Error error = connection->executeStr("SELECT 1");
    if (!error)
+   {
+      connection->setNeedsHealthCheck(false);
       return true;
+   }
 
    LOG_DEBUG_MESSAGE("Replacing stale db connection in pool - check query returned: " + error.asString() + ")");
 
@@ -1504,6 +1574,12 @@ bool ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
       // future attempts to use this connection will be responsible for further attempts
       error.addProperty("description", "Could not re-establish database connection");
       LOG_ERROR(error);
+
+      // Flag the connection so future getConnection() calls retest it even if the
+      // idle-skip window would otherwise apply. Without this, under load the returned
+      // timestamp is refreshed by returnConnection() on every round trip and the stale
+      // pool would never get re-tested.
+      connection->setNeedsHealthCheck(true);
       return false;
    }
 
@@ -1801,7 +1877,7 @@ bool SchemaVersion::operator==(const SchemaVersion& other) const
    if (Date == other.Date)
    {
       // check version map to see if the flowers different but equivalent strings
-      // this allows us to properly handle typos :) 
+      // this allows us to properly handle typos :)
       const auto& versions = versionMap();
       int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : versions.size();
       int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : versions.size();
@@ -1841,6 +1917,9 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
             versions["Cucumberleaf Sunflower"] = 13;
             versions["Apple Blossom"] = 14;
             versions["Globemaster Allium"] = 15;
+            versions["Golden Wattle"] = 16;
+            versions["Blue Plumbago"] = 17;
+            versions["Yellow Yarrow"] = 18;
          }
       }
       END_LOCK_MUTEX
@@ -1944,7 +2023,7 @@ Error SchemaUpdater::getSchemaTableColumnCount(std::size_t* pColumnCount)
    Error error;
    if (connection_->driverName() == SQLITE_DRIVER)
    {
-      // This query is explicitly a SELECT * because we use the # of columns to determine if 
+      // This query is explicitly a SELECT * because we use the # of columns to determine if
       // we're pre- or post- GhostOrchid
       Query query = connection_->query(std::string("SELECT * FROM ") + SCHEMA_TABLE);
       Rowset rows;
@@ -1962,7 +2041,7 @@ Error SchemaUpdater::getSchemaTableColumnCount(std::size_t* pColumnCount)
    if (error)
    {
       error.addProperty("query", connection_->session().get_last_query());
-      return error;   
+      return error;
    }
 
    *pColumnCount = columnCount;
@@ -2049,7 +2128,7 @@ Error SchemaUpdater::isUpToDate(bool* pUpToDate)
 Error SchemaUpdater::update()
 {
    LOG_INFO_MESSAGE("Updating database schema version using migration path: " + migrationsPath_.getAbsolutePath());
-   
+
    bool schemaPresent = false;
    Error error = isSchemaVersionPresent(&schemaPresent);
    if (error)
@@ -2100,7 +2179,7 @@ Error SchemaUpdater::createSchema()
    if (error || !createTablesFile.exists())
    {
       if (connection_->driverName() == POSTGRESQL_DRIVER)
-      { 
+      {
          error = migrationsPath_.completeChildPath(std::string(CREATE_TABLES_STEM) + std::string(POSTGRESQL_EXTENSION), createTablesFile);
          if (error)
             return error;
@@ -2200,7 +2279,11 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
       if (error)
          return error;
 
-      error = connection_->executeStr(fileContents);
+      auto processedFile = preprocessSchemaFile(connection_, fileContents);
+      if (!processedFile)
+         return processedFile.error();
+
+      error = connection_->executeStr(*processedFile);
       if (error)
          return error;
 
@@ -2250,26 +2333,13 @@ Error createConnectionPool(size_t poolSize,
    return Success();
 }
 
-Error execAndProcessQuery(boost::shared_ptr<database::IConnection> pConnection,
-                          const std::string& sql,
-                          const boost::function<void(const database::Row&)>& rowHandler)
+void forEachRow(Rowset& rows, const boost::function<void(const Row&)>& rowHandler)
 {
-   Rowset rows;
-   Query query = pConnection->query(sql);
-   Error error = pConnection->execute(query, rows);
-   if (error)
-      return error;
-
-   if (!rowHandler.empty())
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
    {
-      for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
-      {
-         const Row& row = *it;
-         rowHandler(row);
-      }
+      const Row& row = *it;
+      rowHandler(row);
    }
-
-   return Success();
 }
 
 std::string getRowStringValue(const Row& row, const std::string& column)

@@ -393,8 +393,13 @@ Error initialize(bool isLoadBalanced, const FilePath& secureKeyFile)
             LOG_ERROR_MESSAGE("Unable to connect to database to retrieve load-balanced secure-cookie-key");
             return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
          }
-         Error error = database::execAndProcessQuery(pConnection,
-            "SELECT secure_cookie_key FROM cluster",
+         database::Query keyQuery = pConnection->query("SELECT secure_cookie_key FROM cluster");
+         database::Rowset keyRows;
+         Error error = pConnection->execute(keyQuery, keyRows);
+         if (error)
+            return error;
+         auto errors = database::mapRows<Error>(
+            keyRows,
             [=](const database::Row& row) -> Error
             {
                std::string secureCookieKey = database::getRowStringValue(row, "secure_cookie_key");
@@ -410,8 +415,10 @@ Error initialize(bool isLoadBalanced, const FilePath& secureKeyFile)
                }
                return Success();
             });
-         if (error)
-            return error;
+         for (const Error& error : errors) {
+            if (error)
+               return error;
+         }
       }
 #endif
       if (s_secureCookieKey.empty())
@@ -437,8 +444,9 @@ Error initialize(const std::string& secureKey, const FilePath& secureKeyFile)
    if (error)
       return error;
 
-   s_secureCookieKey = secureKey;
-   s_secureCookieKeyPath = secureKeyFile.getAbsolutePath();
+   error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey, &s_secureCookieKeyHash, &s_secureCookieKeyPath);
+   if (error)
+      return error;
 
    return ensureKeyStrength(s_secureCookieKey);
 }
