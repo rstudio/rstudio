@@ -1330,19 +1330,35 @@ void onDetectChanges(module_context::ChangeSource source)
             i->second.ncol != newFrame.ncol ||
             i->second.colNames != newFrame.colNames;
 
-      bool changed = sexpChanged || typeChanged || structureChanged;
+      bool frameChanged = sexpChanged || typeChanged || structureChanged;
 
       // clear working data (the cached sort/filter/search copy) for the
       // object, but only when a change was actually observed: clearing it on
       // every REPL evaluation forced the first grid request after any console
       // command to re-sort and re-filter the entire frame (#17806).
-      // Reference-semantics objects (e.g. data.table) can be modified in
-      // place without any of the checks above observing a change, so their
-      // working copy is still conservatively discarded on every evaluation.
-      if (changed || Rf_inherits(sexp, "data.table"))
-         r::exec::RFunction(".rs.removeWorkingData", i->first).call();
+      //
+      // Retention is only safe where the checks above are trustworthy: the
+      // copy-on-modify classes whose row count we track (data.frame / matrix,
+      // mirroring CachedFrame). data.table is excluded because an in-place
+      // value update (DT[i, x := v]) changes none of the SEXP, class, dims,
+      // or names. Anything else -- e.g. remote tables, whose nrow is
+      // deliberately never queried -- keeps the conservative per-prompt
+      // wipe: slower, but never silently stale.
+      bool changeDetectionReliable =
+            (Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix")) &&
+            !Rf_inherits(sexp, "data.table");
 
-      if (changed)
+      if (frameChanged || !changeDetectionReliable)
+      {
+         // now that this no longer runs on every evaluation, a dropped
+         // failure would leave the stale copy in place for the life of the
+         // viewer (applyViewTransform matches on parameters only), so log it
+         Error error = r::exec::RFunction(".rs.removeWorkingData", i->first).call();
+         if (error)
+            LOG_ERROR(error);
+      }
+
+      if (frameChanged)
       {
          // replace cached copy
          r::exec::RFunction(".rs.assignCachedData")

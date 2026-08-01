@@ -454,7 +454,7 @@ test.describe('Data Viewer', () => {
     );
     // Record every filtered-summary request the grid issues. gridDataFetch
     // sends URL-encoded bodies, so the "filtered=1" marker is a stable
-    // substring; the JSON quotes trick for event names doesn't apply here.
+    // substring to sniff for.
     const filteredRequests: string[] = [];
     const onRequest = (req: Request) => {
       if (req.url().includes('grid_data') && (req.postData() ?? '').includes('filtered=1'))
@@ -469,8 +469,7 @@ test.describe('Data Viewer', () => {
       // reopen: the collapsed #sidebarPanel is width:0, so the toggle has no
       // hit target -- see 'the in-grid Summary toggle still works after a
       // data refresh' for the gory details.)
-      const summaryButton = page.locator('#data_editing_toolbar')
-        .getByText('Summary', { exact: true });
+      const summaryButton = page.locator('#data_editing_toolbar .rstudio_dt_sidebar_toggle');
       const panel = dataViewer.frame.locator('#sidebarPanel');
       await expect(panel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
       await summaryButton.click();
@@ -485,8 +484,13 @@ test.describe('Data Viewer', () => {
 
       // No filtered-summary describe was issued for the hidden panel. The
       // pre-fix code fired it from the same debounced apply that issued the
-      // row fetch whose response just rendered the info bar, so its request
-      // event would already have been observed by now.
+      // row fetch whose response just rendered the info bar (debouncedSearch
+      // dispatches both in one synchronous tick), so its request event would
+      // already have been observed by now. Caveats: that guarantee is coupled
+      // to debouncedSearch's call order (moving refreshSidebarSummaries into
+      // the fetchRows callback would make this racy), and it assumes the CDP
+      // request event is delivered before the DOM poll above observed the
+      // response -- a violation would make this a false pass, not a failure.
       expect(filteredRequests).toHaveLength(0);
 
       // Reopen the panel: the deferred refresh fires now, and the summaries
@@ -499,10 +503,72 @@ test.describe('Data Viewer', () => {
         .toBeVisible({ timeout: TIMEOUTS.fileOpen });
       await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-col-summary'))
         .toHaveText('[1, 4]', { timeout: TIMEOUTS.fileOpen });
+
+      // Collapse again and clear the search while hidden: the hidden-panel
+      // gate must drop the retained filtered map (it describes the old search
+      // state), so reopening paints whole-frame stats with no "(filtered)"
+      // tag -- and the cleared filter state needs no filtered describe at all.
+      const requestsBeforeClear = filteredRequests.length;
+      await summaryButton.click();
+      await expect(panel).not.toHaveClass(/\bexpanded\b/);
+      await search.click();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.press('Backspace');
+      await expect(dataViewer.gridInfo)
+        .not.toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+      await summaryButton.click();
+      await expect(panel).toHaveClass(/\bexpanded\b/);
+      await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-col-summary'))
+        .toHaveText('[1, 80]', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('.sidebar-toggle-filtered')).toHaveCount(0);
+      expect(filteredRequests.length).toBe(requestsBeforeClear);
     } finally {
       page.off('request', onRequest);
       await consoleActions.executeInConsole(
         'rm(".rs.sidebar_defer_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17806
+  // The backend keeps the sort/filter working copy across console commands,
+  // discarding it only when the viewed object is untrusted or observed to
+  // change. data.table's := mutates in place -- same SEXP, class, dimensions,
+  // and names -- which the change detection cannot observe, so data.tables
+  // keep the conservative per-prompt wipe. Rows fetched after the := must be
+  // recomputed from the mutated object, not served from a stale working copy.
+  test('sorted data.table view serves fresh values after := mutation (#17806)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.dt_wc <- data.table::data.table(v = 1:2000); View(.rs.dt_wc) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Sort descending (two clicks); the reversed first row is the signal
+      // that the sorted re-fetch landed, i.e. the server-side working copy
+      // for these sort parameters has been materialized.
+      const header = dataViewer.frame.locator('th[data-col-idx="1"]');
+      await header.click();
+      await header.click();
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'))
+        .toHaveText('2000', { timeout: TIMEOUTS.fileOpen });
+
+      // Mutate in place at the console. Nothing the change detection checks
+      // (SEXP pointer, class, dims, names) is altered by this; only the
+      // per-prompt working-copy wipe keeps the sorted view honest.
+      await consoleActions.executeInConsole('.rs.dt_wc[, v := v + 100000L]');
+
+      // Scroll to a block that was not fetched before the mutation; serving
+      // it resolves the same sort parameters on the server, which on the
+      // pre-carve-out code would exact-match the stale working copy. Row
+      // index 1304 (0-based) holds 2000 - 1304 = 696 descending, so the
+      // mutated value is 100696.
+      await dataViewer.viewport.evaluate((el: HTMLElement) => { el.scrollTop = 30000; });
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="1304"] td[data-col-pos="1"]'))
+        .toHaveText('100696', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.dt_wc", envir = .GlobalEnv)',
       );
     }
   });

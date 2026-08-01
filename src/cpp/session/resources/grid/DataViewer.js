@@ -181,8 +181,10 @@ var drawCounter = 0;
 var colsSig = "";
 var blockColsSig = new Map();
 
-// In-flight fetch requests
-var pendingFetches = new Map(); // key: "start-length" -> AbortController
+// In-flight fetch requests. Keys are "start-length" for row fetches, plus
+// the fixed "filtered-summaries" key for the sidebar's filtered describe;
+// all are aborted together by invalidateCache.
+var pendingFetches = new Map(); // key -> AbortController
 
 // Current render window
 var renderStart = 0;
@@ -676,10 +678,12 @@ var filteredSummaries = null;
 // racing the row fetch that updates filteredRows.
 var filteredSummariesRowCount = 0;
 
-// True when a search/filter change happened while the Summary sidebar was
-// hidden. refreshSidebarSummaries skips its work for a hidden panel (the
-// filtered describe is a full per-column stats pass over the fetched window,
-// far too expensive to pay for a panel nothing displays); this flag tells
+// True while a summary refresh is owed but has not completed -- set on entry
+// to refreshSidebarSummaries and cleared only when a refresh finishes (the
+// hidden-panel skip, an aborted fetch, and a failed fetch all leave it set).
+// refreshSidebarSummaries skips its work for a hidden panel (the filtered
+// describe is a full per-column stats pass over the fetched window, far too
+// expensive to pay for a panel nothing displays); this flag tells
 // toggleSidebar to run the deferred refresh when the panel is next opened.
 var sidebarSummariesStale = false;
 
@@ -837,32 +841,40 @@ var refreshSidebarSummaries = function() {
    sidebarInflight = {};
    sidebarFailed = {};
 
+   // Mark the summaries stale until a refresh actually completes: the flag is
+   // cleared in the synchronous no-filter path and in the fetch success
+   // callback below, NOT at dispatch time. An aborted or failed fetch must
+   // leave it set so the next toggleSidebar reopen retries, instead of the
+   // panel silently presenting whole-frame numbers as the filtered view.
+   sidebarSummariesStale = true;
+
    // A hidden panel doesn't pay for its summaries: skip both the (expensive,
    // whole-window) filtered describe and the rebuild, deferring them to
    // toggleSidebar when the panel is reopened. Without this gate every search
    // keystroke and filter change recomputes per-column stats that nothing
-   // displays. The map is still cleared when the last filter went away so
-   // indicator code consulting it while hidden can't read stale entries.
+   // displays. Any retained filtered map describes the PREVIOUS filter state
+   // (this function only runs because that state changed), so drop it
+   // unconditionally: reopening then paints untagged whole-frame stats until
+   // the deferred refresh lands, rather than presenting the old filter's
+   // numbers -- tagged "(filtered)" -- as the new filter's.
    if (!sidebarVisible) {
-      if (!hasActiveRowFilter()) {
-         filteredSummaries = null;
-         filteredSummariesRowCount = 0;
-      }
-      sidebarSummariesStale = true;
+      filteredSummaries = null;
+      filteredSummariesRowCount = 0;
       return;
    }
-   sidebarSummariesStale = false;
 
    if (!hasActiveRowFilter()) {
       filteredSummaries = null;
       filteredSummariesRowCount = 0;
+      sidebarSummariesStale = false;
       rebuildSidebarPreservingScroll();
       return;
    }
 
    var startToken = drawCounter;
    fetchFilteredSummaries(function(map, rowCount, ok) {
-      // Drop a response superseded by a newer filter/search/refresh.
+      // Drop a response superseded by a newer filter/search/refresh (which
+      // re-set the stale flag on entry and owns clearing it).
       if (startToken !== drawCounter)
          return;
       // On a hard failure, keep whatever summaries we already had rather than
@@ -873,6 +885,7 @@ var refreshSidebarSummaries = function() {
          return;
       filteredSummaries = map;
       filteredSummariesRowCount = rowCount;
+      sidebarSummariesStale = false;
       rebuildSidebarPreservingScroll();
    });
 };
@@ -4028,10 +4041,12 @@ var onPinnedScroll = function() {
 // pointer, so wheel input over the frozen pane stalled whenever the main
 // thread was busy (a big contributor to #17806, especially with discrete
 // wheel notches on Windows). No preventDefault is needed in its place: the
-// pane can't scroll horizontally (overflow-x: hidden) and its CSS
-// overscroll-behavior: none stops the unconsumed horizontal delta from
-// chaining to ancestors, so applying it to the master pane here is the only
-// horizontal effect.
+// pane can't scroll horizontally (overflow-x: hidden), and the unconsumed
+// horizontal delta can't chain out of the iframe because the document root
+// declares overscroll-behavior: none (the pane's own declaration only helps
+// for gestures that latch onto it, which a horizontal gesture over a pane
+// with no horizontal overflow may not) -- so applying the delta to the
+// master pane here is the only horizontal effect.
 var onPinnedWheel = function(evt) {
    if (!domViewport) return;
    var dx = evt.deltaX;
@@ -6639,9 +6654,11 @@ var updateCustomScrollbars = function() {
 
 // Per-scroll-frame variant: only the grid bars track grid scrolling. The
 // sidebar bar's update() forces a layout of the (unmoved) sidebar panel, and
-// the column-overflow state depends only on widths scrolling can't change, so
-// both are left to updateCustomScrollbars (resize, toggles, column-layout
-// changes, scrollend) rather than paid on every frame of a scroll gesture.
+// the column-overflow state only changes when column widths change -- during
+// a scroll that happens only via a column-window slide's async autoSize,
+// whose fetch callback pushes the overflow state itself -- so both are left
+// to updateCustomScrollbars (resize, toggles, column-layout changes,
+// scrollend) rather than paid on every frame of a scroll gesture.
 var updateGridScrollbars = function() {
    if (gridScrollbarV_) gridScrollbarV_.update();
    if (gridScrollbarH_) gridScrollbarH_.update();
@@ -6837,6 +6854,10 @@ var initGrid = function(resCols, data) {
       fetchRows(0, FETCH_SIZE, function() {
          autoSizeColumns();
          applyPinnedColumns();
+         // The widths only exist after the autoSize above; push the overflow
+         // state so the host's "Go to Column" affordance reflects the initial
+         // layout without waiting for a scrollend/resize.
+         updateColumnOverflowState();
          restoreScrollAfterRefresh();
          // Saved state may have restored filters/search; the sidebar built
          // above shows whole-frame stats, so refresh it to the filtered view.
@@ -7677,6 +7698,11 @@ var applyColumnWindowUpdate = function(resCols, options) {
    fetchRows(blockStart, FETCH_SIZE, function() {
       autoSizeColumns();
       applyPinnedColumns();
+      // The autoSize can change the total content width after the synchronous
+      // updateCustomScrollbars below has already run; push the (possibly
+      // changed) overflow state now rather than leaving it stale until the
+      // next scrollend/resize.
+      updateColumnOverflowState();
    });
 
    renderVisibleRows(true);
