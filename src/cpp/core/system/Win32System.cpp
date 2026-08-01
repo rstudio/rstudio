@@ -170,10 +170,11 @@ Error initJobObject(bool* detachFromJob)
    // KILL_ON_JOB_CLOSE reaps nothing on exit, and one without BREAKAWAY_OK
    // would prevent children (like Chrome) from breaking away, so joining a
    // half-configured job would be worse than running without one
-   if (!::SetInformationJobObject(hJob,
-                                  JobObjectExtendedLimitInformation,
-                                  &jeli,
-                                  sizeof(jeli)))
+   BOOL configured = ::SetInformationJobObject(hJob,
+                                               JobObjectExtendedLimitInformation,
+                                               &jeli,
+                                               sizeof(jeli));
+   if (!configured)
    {
       Error error = LAST_SYSTEM_ERROR();
       ::CloseHandle(hJob);
@@ -181,7 +182,8 @@ Error initJobObject(bool* detachFromJob)
    }
 
    // AssignProcessToJobObject returns nonzero on success
-   if (!::AssignProcessToJobObject(hJob, ::GetCurrentProcess()))
+   BOOL assigned = ::AssignProcessToJobObject(hJob, ::GetCurrentProcess());
+   if (!assigned)
    {
       auto lastErr = ::GetLastError();
 
