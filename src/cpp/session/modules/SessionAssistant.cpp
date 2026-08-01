@@ -20,7 +20,8 @@
 #include "SessionNodeTools.hpp"
 
 #ifndef _WIN32
-# include <csignal>
+# include <cerrno>
+# include <signal.h>
 #endif
 
 #include <boost/current_function.hpp>
@@ -630,7 +631,11 @@ bool waitFor(F&& callback)
       // dispatching those mid-teardown means any one of them that blocks wedges
       // the session's exit permanently, which in turn wedges the desktop /
       // server relaunch that is waiting on it (#18394). The supervisor poll
-      // alone is enough to reap the agent and fire its exit callback.
+      // alone is enough to reap the agent and fire its exit callback. (This
+      // assumes the wait was entered at top level: poll() is a no-op when
+      // re-entered from within another supervisor poll -- see
+      // requestAgentStop -- in which case this wait degrades to a bounded
+      // sleep.)
       if (s_isSessionShuttingDown)
       {
          module_context::processSupervisor().poll();
@@ -2262,23 +2267,31 @@ void onShutdown(bool)
    // Note that we're about to shut down.
    s_isSessionShuttingDown = true;
 
-   // Shut down the agent. The s_agentPid recheck matters: the reap can land
-   // on stopAgentSync's final poll, after its last callback check -- and
-   // negating the -1 sentinel would aim the SIGKILL at pid 1.
-   if (!stopAgentSync() && s_agentPid != -1)
+   // Shut down the agent. Snapshot the pid before deciding to escalate: the
+   // reap can land on stopAgentSync's final poll, after its last callback
+   // check -- and negating the -1 sentinel would aim the SIGKILL at pid 1.
+   bool stopped = stopAgentSync();
+
+   PidType agentPid = s_agentPid;
+   if (!stopped && agentPid > 1)
    {
 #ifndef _WIN32
-      // The agent survived SIGTERM plus the reap wait. It must not outlive the
-      // session: it runs detached (its own session and process group), so
-      // nothing reaps or kills it once we exit (#18394). Escalate with SIGKILL
-      // to its process group; EPERM/ESRCH just mean some or all of the group
-      // is already gone.
-      WLOG("Agent process {} did not exit at session shutdown; sending SIGKILL.", s_agentPid);
-      ::kill(-s_agentPid, SIGKILL);
+      // The agent survived SIGTERM plus the reap wait. It must not outlive
+      // the session: it runs detached (its own session and process group),
+      // and the only parent-death guard it has is exitWithParent --
+      // PR_SET_PDEATHSIG with SIGTERM, the same signal it just ignored, and
+      // compiled out on macOS -- so without this escalation a surviving
+      // agent would outlive the session forever (#18394). Escalate with
+      // SIGKILL to its process group. ESRCH means the group is already gone;
+      // anything else (e.g. EPERM, a live process we could not signal)
+      // leaves an orphan behind, and this log is the only artifact of that.
+      WLOG("Agent process {} did not exit at session shutdown; sending SIGKILL.", agentPid);
+      if (::kill(-agentPid, SIGKILL) == -1 && errno != ESRCH)
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
 #else
       // On Windows, terminateProcess() is already TerminateProcess(), and the
-      // session's kill-on-close job object reaps stragglers.
-      WLOG("Agent process {} did not exit at session shutdown.", s_agentPid);
+      // session's kill-on-close job object kills stragglers.
+      WLOG("Agent process {} did not exit at session shutdown.", agentPid);
 #endif
    }
 }

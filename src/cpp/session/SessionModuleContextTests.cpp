@@ -375,11 +375,13 @@ TEST_F(FileDownloadGrantTest, TrackingEnabledAuditsRenderableType)
 //
 // The assistant/chat shutdown waits pump ONLY processSupervisor().poll()
 // instead of the full onBackgroundProcessing() pass, on the theory that the
-// poll alone reaps exited children and fires their exit callbacks, while
-// dispatching no other module's work (whose blocking mid-teardown is what
-// wedged session exit). These tests pin both halves of that contract, so a
-// supervisor or scheduling refactor that invalidates either assumption fails
-// here rather than resurfacing as a silent CI shard hang.
+// poll alone reaps exited children and fires their exit callbacks, without
+// dispatching scheduled commands, background handlers, or R events. (It does
+// still fire I/O and exit callbacks for other supervised children -- the
+// claim is narrower than "no other module's code runs".) These tests pin
+// both halves of that contract, so a supervisor or scheduling refactor that
+// invalidates either assumption fails here rather than resurfacing as a
+// silent CI shard hang.
 
 TEST(SupervisorShutdownPumpTest, PollAloneReapsChildAndFiresExitCallback)
 {
@@ -389,7 +391,13 @@ TEST(SupervisorShutdownPumpTest, PollAloneReapsChildAndFiresExitCallback)
    auto pExited = boost::make_shared<bool>(false);
    auto pExitStatus = boost::make_shared<int>(-1);
 
+   // Match the production launches this test pins (SessionAssistant /
+   // SessionChat set this explicitly): with the session's main-thread gate
+   // enabled, only main-thread polls -- ours below -- fire these callbacks,
+   // and the pin stays valid even if the ProcessOptions default changes.
    core::system::ProcessOptions options;
+   options.callbacksRequireMainThread = true;
+
    core::system::ProcessCallbacks callbacks;
    callbacks.onExit = [pExited, pExitStatus](int status)
    {
