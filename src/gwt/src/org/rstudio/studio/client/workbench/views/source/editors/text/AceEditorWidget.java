@@ -170,11 +170,19 @@ public class AceEditorWidget extends Composite
       editor_.setTheme(themes_.getCurrentTheme());
       editor_.delegateEventsTo(AceEditorWidget.this);
 
-      // Check for corrupt editor state whenever the editor regains focus.
-      // Deferred, so that a focus event dispatched from within an in-progress
-      // Ace operation doesn't trigger recovery on transient state.
+      // Check for corrupt multi-select state whenever the editor regains
+      // focus. Deferred, so that a focus event dispatched from within an
+      // in-progress Ace operation doesn't trigger recovery on transient
+      // state. The mouse-handler check is deliberately not run here: an
+      // Alt+drag block selection stops its mousedown event before the
+      // default capture handler runs, so 'isMousePressed' stays false while
+      // 'inVirtualSelectionMode' is set for the whole drag -- and when that
+      // mousedown is also what focuses the editor, the deferred check runs
+      // mid-drag and would reset the drag's state. Tab activation can't race
+      // a drag like that, so the mouse-handler check runs only from
+      // onActivate().
       addFocusHandler(event ->
-         Scheduler.get().scheduleDeferred(() -> checkForCorruptEditorState()));
+         Scheduler.get().scheduleDeferred(() -> checkForCorruptMultiSelectState()));
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
          public void execute(AceDocumentChangeEventNative event)
@@ -758,12 +766,21 @@ public class AceEditorWidget extends Composite
          editor_.resetMouseHandlerState();
       }
 
+      checkForCorruptMultiSelectState();
+   }
+
+   private void checkForCorruptMultiSelectState()
+   {
+      if (editor_ == null)
+         return;
+
       // Check for and recover from corrupt multi-select state. This can
       // happen if an exception interrupts one of Ace's multi-select
       // operations. See: https://github.com/rstudio/rstudio/issues/13605
-      if (editor_.isMultiSelectStateCorrupt())
+      String reason = editor_.getMultiSelectCorruptionReason();
+      if (reason != null)
       {
-         Debug.log("Recovering from corrupt Ace multi-select state");
+         Debug.log("Recovering from corrupt Ace multi-select state (" + reason + ")");
          editor_.resetMultiSelectState();
       }
    }

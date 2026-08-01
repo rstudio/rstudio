@@ -15,22 +15,30 @@
 
 // Exception-safety guards for Ace's multi-select support.
 //
-// Ace's Editor.forEachSelection() and Editor.$moveLines() temporarily mutate
-// selection state -- swapping in a temporary Selection object, silencing the
-// selection's event registry, setting 'inVirtualSelectionMode', detaching the
-// range list -- and restore it only on the way out, with no exception
-// protection. If a document or selection listener throws mid-operation, that
-// state is left permanently corrupted: mouse selection stops working, typed
-// input is silently discarded, and multi-select mode can never be exited.
-// Only reloading the IDE recovers. See:
+// Two of Ace's multi-select operations temporarily mutate selection state
+// and restore it only on the way out, with no exception protection:
+//
+// - Editor.forEachSelection() swaps a temporary Selection object in as the
+//   session's selection, silences the real selection's event registry, and
+//   sets 'inVirtualSelectionMode';
+// - Editor.$moveLines() detaches the selection's range list and sets
+//   'inVirtualSelectionMode'.
+//
+// If a document or selection listener throws mid-operation, that state is
+// left permanently corrupted: mouse selection stops working, typed input is
+// silently discarded, and multi-select mode can never be exited. Only
+// reloading the IDE recovers. See:
 //
 //   https://github.com/rstudio/rstudio/issues/13605
 //
 // The wrappers below snapshot the at-risk state before delegating to Ace,
-// and restore anything the wrapped implementation failed to clean up. They
-// intentionally know nothing about what the wrapped functions do in between,
-// so they should remain valid across Ace updates. Exceptions still propagate;
-// only the state cleanup is made unconditional.
+// and restore anything the wrapped implementation failed to clean up.
+// Exceptions still propagate; only the state cleanup is made unconditional.
+// The wrappers don't care what the wrapped functions compute, but they do
+// depend on a small set of Ace internals -- the 'session.selection'
+// reassignment, 'Selection.detach()', the private '_eventRegistry' field,
+// and the private 'rangeList.session' field -- which should be re-verified
+// when updating Ace.
 
 define("mixins/multi_select_guard", ["require", "exports", "module"], function(require, exports, module) {
 
@@ -38,6 +46,17 @@ var Editor = require("ace/editor").Editor;
 
 // Ensure ace/multi_select has augmented Editor.prototype before we wrap.
 require("ace/multi_select");
+
+// Log through the IDE's debug bridge when available (absent in the
+// standalone test pages). The wrappers only observe stranded state at the
+// moment it is repaired, so these messages are the one record of which
+// state an aborted operation left behind; the propagating exception alone
+// doesn't say.
+function log(message)
+{
+   if (typeof window !== "undefined" && window.$Debug)
+      window.$Debug.log("multi_select_guard: " + message);
+}
 
 (function() {
 
@@ -63,16 +82,27 @@ require("ace/multi_select");
             var tmpSel = session.selection;
             if (tmpSel && typeof tmpSel.detach === "function")
             {
-               try { tmpSel.detach(); } catch (e) { }
+               // Best-effort: rethrowing here would mask the exception that
+               // aborted the operation. A partial detach can leak a document
+               // listener, so at least leave a record of it.
+               try { tmpSel.detach(); } catch (e) { log("forEachSelection: error detaching temporary selection: " + e); }
             }
             this.selection = session.selection = selection;
+            log("forEachSelection: restored selection after aborted iteration");
          }
 
          // Restore the selection's silenced event registry.
          if (selection && eventRegistry && selection._eventRegistry !== eventRegistry)
+         {
             selection._eventRegistry = eventRegistry;
+            log("forEachSelection: restored silenced event registry");
+         }
 
-         this.inVirtualSelectionMode = virtualMode;
+         if (!!this.inVirtualSelectionMode !== !!virtualMode)
+         {
+            this.inVirtualSelectionMode = virtualMode;
+            log("forEachSelection: restored inVirtualSelectionMode");
+         }
       }
    };
 
@@ -89,7 +119,11 @@ require("ace/multi_select");
       }
       finally
       {
-         this.inVirtualSelectionMode = virtualMode;
+         if (!!this.inVirtualSelectionMode !== !!virtualMode)
+         {
+            this.inVirtualSelectionMode = virtualMode;
+            log("$moveLines: restored inVirtualSelectionMode");
+         }
 
          // The multi-select branch detaches the range list while moving
          // lines; re-attach it if an exception skipped that step.
@@ -99,6 +133,7 @@ require("ace/multi_select");
              selection.rangeList.session == null)
          {
             selection.rangeList.attach(session);
+            log("$moveLines: re-attached range list after aborted move");
          }
       }
    };

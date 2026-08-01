@@ -249,6 +249,7 @@ export class AceEditor extends PageObject {
     inVirtualSelectionMode: boolean;
     tempSelectionInstalled: boolean;
     rangeCount: number;
+    rangeListAttached: boolean;
   }> {
     return this.run((editor) => {
       const session = editor.session;
@@ -261,6 +262,7 @@ export class AceEditor extends PageObject {
           selection.index !== undefined ||
           (session.multiSelect != null && selection !== session.multiSelect),
         rangeCount: selection.rangeCount ?? 0,
+        rangeListAttached: selection.rangeList != null && selection.rangeList.session != null,
       };
     });
   }
@@ -269,16 +271,37 @@ export class AceEditor extends PageObject {
    * Fault injection for exception-safety tests: installs a one-shot document
    * 'change' listener that throws `message`, simulating a client exception
    * escaping into Ace's change dispatch mid-operation (#13605). The listener
-   * removes itself before throwing, so only the next change is affected.
+   * removes itself and sets a window sentinel (see throwingChangeListenerFired)
+   * before throwing, so only the next change is affected and tests can prove
+   * the injection fired without depending on how the exception is routed.
    */
   async injectThrowingChangeListener(message: string): Promise<void> {
     await this.run((editor, msg: string) => {
+      (window as { __throwingChangeListenerFired?: boolean }).__throwingChangeListenerFired = false;
       const doc = editor.session.getDocument();
       const listener = () => {
         doc.off('change', listener);
+        (window as { __throwingChangeListenerFired?: boolean }).__throwingChangeListenerFired = true;
         throw new Error(msg);
       };
       doc.on('change', listener);
     }, message);
+  }
+
+  /** Whether the listener installed by injectThrowingChangeListener has thrown. */
+  async throwingChangeListenerFired(): Promise<boolean> {
+    return this.page.evaluate(
+      () => !!(window as { __throwingChangeListenerFired?: boolean }).__throwingChangeListenerFired
+    );
+  }
+
+  /**
+   * Corrupt a live multi-select the way an aborted operation does: detach
+   * the selection's range list so it stops tracking document edits (the
+   * "range list detached" corruption branch of
+   * AceEditorNative.getMultiSelectCorruptionReason).
+   */
+  async detachRangeList(): Promise<void> {
+    await this.run((editor) => editor.session.selection.rangeList.detach());
   }
 }

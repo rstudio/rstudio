@@ -665,48 +665,53 @@ public class AceEditorNative extends JavaScriptObject
    }-*/;
 
    /**
-    * Returns true if the editor's multi-select state appears to be corrupt.
-    * This can happen if an exception interrupts one of Ace's multi-select
-    * operations (e.g. forEachSelection), which mutate selection state and
-    * restore it without exception protection.
+    * Returns the reason the editor's multi-select state appears to be
+    * corrupt, or null if it looks healthy. Corruption can arise when an
+    * exception interrupts one of Ace's multi-select operations, which mutate
+    * selection state and restore it on the way out. forEachSelection and
+    * $moveLines are exception-protected by the mixins/multi_select_guard
+    * wrapper, but other paths (addRange, toSingleRange, $onRemoveRange) can
+    * still strand state, as can corruption predating the guard.
     * See: https://github.com/rstudio/rstudio/issues/13605
     */
-   public final native boolean isMultiSelectStateCorrupt()
+   public final native String getMultiSelectCorruptionReason()
    /*-{
       var session = this.session;
       if (!session || !session.selection)
-         return false;
+         return null;
 
       var selection = session.selection;
 
       // A temporary selection from an interrupted forEachSelection is still
-      // installed. ('session.multiSelect' always refers to the session's real
-      // selection object; only temporary selections carry an 'index'.)
+      // installed. ('session.multiSelect' is the session's real selection
+      // object once the session has been attached to an editor, and only
+      // forEachSelection's temporary selections carry an 'index'; both are
+      // invariants of the vendored Ace bundle, to be re-checked on updates.)
       if (selection.index !== undefined)
-         return true;
+         return "temporary selection still installed";
       if (session.multiSelect && selection !== session.multiSelect)
-         return true;
+         return "session selection is not the real selection";
 
       // The editor and selection disagree about multi-select mode, meaning a
       // 'multiSelect' or 'singleSelect' notification was lost.
       if (!!this.inMultiSelectMode != !!selection.inMultiSelectMode)
-         return true;
+         return "editor/selection multi-select flags disagree";
 
       if (selection.inMultiSelectMode) {
 
          // Multi-select mode with no ranges to operate on.
          if (!selection.rangeCount)
-            return true;
+            return "multi-select mode with no ranges";
 
          // The selection's range bookkeeping arrays have fallen out of sync.
          if (selection.ranges == null || selection.rangeList == null)
-            return true;
+            return "range bookkeeping arrays missing";
          if (selection.ranges.length !== selection.rangeList.ranges.length)
-            return true;
+            return "range bookkeeping arrays out of sync";
 
          // The range list must be attached to track document edits.
          if (selection.rangeList.session == null)
-            return true;
+            return "range list detached";
       }
 
       // A stuck 'inVirtualSelectionMode' is deliberately not checked here:
@@ -717,7 +722,7 @@ public class AceEditorNative extends JavaScriptObject
       // alone as corruption would reset an in-progress drag selection. An
       // aborted forEachSelection or $moveLines strands other state alongside
       // it, which the checks above do catch.
-      return false;
+      return null;
    }-*/;
 
    /**
@@ -727,6 +732,13 @@ public class AceEditorNative extends JavaScriptObject
     */
    public final native void resetMultiSelectState()
    /*-{
+      // A failure in any individual recovery step is worth surfacing: a
+      // silent partial reset would be mistaken for a successful one.
+      var log = function(step, e) {
+         @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
+            "Error while resetting Ace multi-select state (" + step + "): " + e);
+      };
+
       try {
          var session = this.session;
          if (!session || !session.selection)
@@ -738,7 +750,7 @@ public class AceEditorNative extends JavaScriptObject
          if (multiSelect && session.selection !== multiSelect) {
             var tmpSel = session.selection;
             if (tmpSel && typeof tmpSel.detach === "function") {
-               try { tmpSel.detach(); } catch (e) { }
+               try { tmpSel.detach(); } catch (e) { log("detaching temporary selection", e); }
             }
             this.selection = session.selection = multiSelect;
          }
@@ -750,13 +762,20 @@ public class AceEditorNative extends JavaScriptObject
 
          // Remove any leftover selection markers.
          if (session.$selectionMarkers && session.$selectionMarkers.length) {
-            try { this.removeSelectionMarkers(session.$selectionMarkers.slice()); } catch (e) { }
+            try {
+               this.removeSelectionMarkers(session.$selectionMarkers.slice());
+            } catch (e) {
+               log("removing selection markers", e);
+            }
+
+            // A mid-loop failure above leaves the marker count stale.
+            session.selectionMarkerCount = session.$selectionMarkers.length;
          }
 
          // Drop all extra ranges and restore single-select bookkeeping.
          if (selection.rangeList) {
             if (selection.rangeList.session) {
-               try { selection.rangeList.detach(); } catch (e) { }
+               try { selection.rangeList.detach(); } catch (e) { log("detaching range list", e); }
             }
             selection.rangeList.ranges.length = 0;
          }
@@ -767,18 +786,36 @@ public class AceEditorNative extends JavaScriptObject
          selection.rangeCount = 0;
          selection.inMultiSelectMode = false;
 
+         // Entering multi-select mode disables selection restoration on undo
+         // (Selection.addRange sets 'session.$undoSelect' to false); Ace
+         // normally re-enables it in $onRemoveRange, which this reset
+         // bypasses.
+         session.$undoSelect = true;
+
          // Tear down editor-side multi-select mode: the multi-select keyboard
-         // handler, the 'exec' default handler, and the cursor style.
+         // handler, the 'exec' default handler, the 'ace_multiselect' style
+         // class, and the cursor/marker rendering.
          if (this.inMultiSelectMode && this.$onSingleSelect) {
-            try { this.$onSingleSelect(); } catch (e) { }
+            try {
+               this.$onSingleSelect();
+            } catch (e) {
+               // $onSingleSelect tears down in steps, ending with the 'exec'
+               // default handler that reroutes every command through
+               // multi-select dispatch; make sure that handler is gone even
+               // when an earlier step threw. Restore 'inMultiSelectMode' (the
+               // teardown clears it first) so the corruption detector keeps
+               // flagging this editor and the reset is retried.
+               try { this.commands.removeDefaultHandler("exec", this.$onMultiSelectExec); } catch (e2) { }
+               log("exiting editor multi-select mode", e);
+               this.inMultiSelectMode = true;
+               return;
+            }
          }
          this.inMultiSelectMode = false;
       } catch (e) {
-         // Recovery must never throw, but a failure here means the editor may
-         // still be corrupt; log it so the recovery attempt in the logs isn't
-         // mistaken for a successful reset.
-         @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
-            "Error while resetting Ace multi-select state: " + e);
+         // Backstop only; the recovery steps above catch and log their own
+         // failures. Recovery must never throw.
+         log("unexpected", e);
       }
    }-*/;
 

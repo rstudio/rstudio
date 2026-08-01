@@ -21,7 +21,7 @@ export namespace Ace {
 
   export interface Selection {
     setRange(range: Range): void;
-    rangeList: { ranges: Range[]; session?: unknown | null };
+    rangeList: { ranges: Range[]; session?: unknown | null; detach(): void };
     // Multi-select bookkeeping (see Ace's multi_select.js). 'index' is set
     // only on the temporary Selection that forEachSelection installs while
     // iterating, so its presence on session.selection indicates an aborted
@@ -53,8 +53,8 @@ export namespace Ace {
     getDocument(): Document;
     selection: Selection;
     // The session's real Selection object; session.selection may briefly
-    // point elsewhere during multi-select operations (see Ace's
-    // multi_select.js onSessionChange).
+    // point at a temporary Selection during multi-select operations (see
+    // Ace's Editor.forEachSelection).
     multiSelect?: Selection;
   }
 
