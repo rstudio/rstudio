@@ -51,6 +51,7 @@
 - ([#18393](https://github.com/rstudio/rstudio/issues/18393)): Fixed an issue where a Terminal tab stopped displaying typed input and shell output for the rest of its life after losing its WebGL context (for example, after a GPU crash, a graphics driver reset, or too many open WebGL-rendered terminals). The terminal now falls back to the DOM renderer and keeps rendering.
 - ([#18378](https://github.com/rstudio/rstudio/issues/18378)): Fixed an issue in the Data Viewer where jumping to the bottom with End or Ctrl+End stopped short, leaving the last row partly hidden below the bottom edge, on platforms whose user-interface font renders taller than expected (Windows, and Linux distributions such as Fedora and RHEL 10 that default to Noto Sans).
 - ([#18414](https://github.com/rstudio/rstudio/issues/18414)): Fixed an issue on Windows where an R session launched with a console attached and stderr logging enabled could flood its logs at full CPU speed if the console later became unwritable; console echo failures and output-capture read errors are now logged once instead of unboundedly.
+- ([#18430](https://github.com/rstudio/rstudio/issues/18430)): Fixed an inverted error check in the Windows job-object setup: a failure to add an RStudio process to the kill-on-close job object that cleans up its child processes at exit was silently reported as success, and the intended recovery for processes started inside another job -- relaunching detached from it -- could never run.
 
 ### Dependencies
 - MathJax 4.1.3 (inline LaTeX / math previews)

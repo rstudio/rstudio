@@ -166,14 +166,25 @@ Error initJobObject(bool* detachFromJob)
          JOB_OBJECT_LIMIT_BREAKAWAY_OK |
          JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION;
 
-   ::SetInformationJobObject(hJob,
-                             JobObjectExtendedLimitInformation,
-                             &jeli,
-                             sizeof(jeli));
+   // apply the limits before assigning ourselves: a job without
+   // KILL_ON_JOB_CLOSE reaps nothing on exit, and one without BREAKAWAY_OK
+   // would prevent children (like Chrome) from breaking away, so joining a
+   // half-configured job would be worse than running without one
+   if (!::SetInformationJobObject(hJob,
+                                  JobObjectExtendedLimitInformation,
+                                  &jeli,
+                                  sizeof(jeli)))
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      ::CloseHandle(hJob);
+      return error;
+   }
 
-   if (::AssignProcessToJobObject(hJob, ::GetCurrentProcess()))
+   // AssignProcessToJobObject returns nonzero on success
+   if (!::AssignProcessToJobObject(hJob, ::GetCurrentProcess()))
    {
       auto lastErr = ::GetLastError();
+
       if (lastErr == ERROR_ACCESS_DENIED)
       {
          // Use an environment variable to prevent us from somehow
@@ -188,9 +199,15 @@ Error initJobObject(bool* detachFromJob)
             *detachFromJob = true;
          }
       }
+
+      // the job never gained a member, so this just destroys it
+      ::CloseHandle(hJob);
       return systemError(lastErr, ERROR_LOCATION);
    }
 
+   // NOTE: hJob is deliberately left open. This process must hold the only
+   // handle to the job for its whole lifetime so that KILL_ON_JOB_CLOSE
+   // fires (via the handle closing) when the process exits.
    return Success();
 }
 
