@@ -6323,12 +6323,18 @@ void stopChatBackendForSessionExit(const std::string& reason, int gracePeriodMs)
    // Release ProcessOperations reference before force termination
    s_chatBackendOps.reset();
 
-   // Force terminate if still running after the grace period. On Windows,
-   // terminateProcess() is already TerminateProcess(), and the session's
-   // kill-on-close job object kills stragglers, so no escalation is needed.
+   // Force terminate if still running after the grace period. Prefer
+   // terminate() through the retained process handle: the backend is a
+   // detached child, so that signals its whole process group and any
+   // children it spawned get the SIGTERM too, where terminateProcess()
+   // reaches only the single pid. On Windows both are TerminateProcess(),
+   // and the session's kill-on-close job object kills stragglers, so no
+   // escalation is needed there.
    if (s_chatBackendPid != -1)
    {
-      Error error = core::system::terminateProcess(s_chatBackendPid);
+      Error error = backendOps
+            ? backendOps->terminate()
+            : core::system::terminateProcess(s_chatBackendPid);
       if (error)
          LOG_ERROR(error);
 

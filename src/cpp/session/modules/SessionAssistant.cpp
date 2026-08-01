@@ -616,10 +616,12 @@ bool isAssistantEnabled(const std::string& assistantType = "")
    return true;
 }
 
+// Wait until the callback reports ready, polling in 100ms steps up to
+// maxIterations (so the default bound is 10 seconds).
 template <typename F>
-bool waitFor(F&& callback)
+bool waitFor(F&& callback, int maxIterations = 100)
 {
-   for (int i = 0; i < 100; i++)
+   for (int i = 0; i < maxIterations; i++)
    {
       bool ready = callback();
       if (ready)
@@ -1274,13 +1276,13 @@ void stopAgent()
       LOG_ERROR(error);
 }
 
-bool stopAgentSync()
+bool stopAgentSync(int maxIterations = 100)
 {
    if (s_agentPid == -1)
       return true;
 
    stopAgent();
-   return waitFor([]() { return s_agentPid == -1; });
+   return waitFor([]() { return s_agentPid == -1; }, maxIterations);
 }
 
 // Forward declaration; defined after docOpened()
@@ -2267,10 +2269,15 @@ void onShutdown(bool)
    // Note that we're about to shut down.
    s_isSessionShuttingDown = true;
 
-   // Shut down the agent. Snapshot the pid before deciding to escalate: the
-   // reap can land on stopAgentSync's final poll, after its last callback
-   // check -- and negating the -1 sentinel would aim the SIGKILL at pid 1.
-   bool stopped = stopAgentSync();
+   // Shut down the agent with a reap wait tightened from the default 10s to
+   // 2s: session exit should stay fast even when the agent ignores SIGTERM,
+   // and the SIGKILL below is the backstop (#18394). A healthy agent exits
+   // well within this; the patient default remains for the non-exit callers
+   // (provider changes, updates). Snapshot the pid before deciding to
+   // escalate: the reap can land on stopAgentSync's final poll, after its
+   // last callback check -- and negating the -1 sentinel would aim the
+   // SIGKILL at pid 1.
+   bool stopped = stopAgentSync(20);
 
    PidType agentPid = s_agentPid;
    if (!stopped && agentPid > 1)
