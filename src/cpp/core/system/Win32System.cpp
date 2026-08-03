@@ -166,10 +166,10 @@ Error initJobObject(bool* detachFromJob)
          JOB_OBJECT_LIMIT_BREAKAWAY_OK |
          JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION;
 
-   // apply the limits before assigning ourselves: a job without
-   // KILL_ON_JOB_CLOSE reaps nothing on exit, and one without BREAKAWAY_OK
-   // would prevent children (like Chrome) from breaking away, so joining a
-   // half-configured job would be worse than running without one
+   // apply the limits before assigning ourselves: if this fails the job has
+   // no limits at all, so KILL_ON_JOB_CLOSE would kill nothing on exit and
+   // children that must break away (like Chrome) would be trapped, making
+   // an unconfigured job worse than no job
    BOOL configured = ::SetInformationJobObject(hJob,
                                                JobObjectExtendedLimitInformation,
                                                &jeli,
@@ -181,7 +181,6 @@ Error initJobObject(bool* detachFromJob)
       return error;
    }
 
-   // AssignProcessToJobObject returns nonzero on success
    BOOL assigned = ::AssignProcessToJobObject(hJob, ::GetCurrentProcess());
    if (!assigned)
    {
@@ -207,9 +206,11 @@ Error initJobObject(bool* detachFromJob)
       return systemError(lastErr, ERROR_LOCATION);
    }
 
-   // NOTE: hJob is deliberately left open. This process must hold the only
-   // handle to the job for its whole lifetime so that KILL_ON_JOB_CLOSE
-   // fires (via the handle closing) when the process exits.
+   // NOTE: hJob is deliberately left open. KILL_ON_JOB_CLOSE fires when the
+   // last handle to the job closes, and this unnamed, non-inheritable handle
+   // is the only one -- it closes when this process exits, killing surviving
+   // children. Do not close it earlier: this process is now a member of the
+   // job, so an early close would terminate it (and its children) on the spot.
    return Success();
 }
 
@@ -226,14 +227,15 @@ bool isHiddenFile(const std::string& path)
 
 } // anonymous namespace
 
-void initHook()
+Error initHook()
 {
-   // Logging will NOT work in this function!!
+   // Logging will NOT work in this function!! Errors are returned so the
+   // caller can log them once logging has been initialized.
 
-   bool detachFromJob;
+   bool detachFromJob = false;
    Error error = initJobObject(&detachFromJob);
    if (!detachFromJob)
-      return;
+      return error;
 
    // NOTE: we used to fetch our own module path here as a sanity check, but the
    // relaunch below re-uses GetCommandLine() and never consumed it -- so it was
@@ -256,15 +258,23 @@ void initHook()
                         &startupInfo,
                         &procInfo))
    {
-      return;  // Couldn't execute
+      // couldn't relaunch -- most plausibly because the confining job also
+      // denies CREATE_BREAKAWAY_FROM_JOB -- so continue as this process,
+      // inside that job and without one of our own; drop the loop guard
+      // since no relaunched child will consume it
+      Error relaunchError = LAST_SYSTEM_ERROR();
+      unsetenv("_RSTUDIO_LEVEL");
+      return relaunchError;
    }
 
    ::AllowSetForegroundWindow(procInfo.dwProcessId);
-   ::WaitForSingleObject(procInfo.hProcess, INFINITE);
 
-   DWORD exitCode;
-   if (!::GetExitCodeProcess(procInfo.hProcess, &exitCode))
-      exitCode = ::GetLastError();
+   // relay the child's exit code; if it cannot be determined, report plain
+   // failure rather than whatever GetLastError() happens to hold (it can
+   // legitimately be 0, which would read as success)
+   DWORD exitCode = EXIT_FAILURE;
+   if (::WaitForSingleObject(procInfo.hProcess, INFINITE) == WAIT_OBJECT_0)
+      ::GetExitCodeProcess(procInfo.hProcess, &exitCode);
 
    ::CloseHandle(procInfo.hProcess);
    ::CloseHandle(procInfo.hThread);
