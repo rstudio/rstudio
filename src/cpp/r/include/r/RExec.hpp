@@ -28,7 +28,7 @@
 
 #include <core/system/System.hpp>
 
-#include <r/RSexp.hpp> 
+#include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 
 
@@ -133,6 +133,11 @@ core::Error executeCallUnsafe(SEXP callSEXP,
                               SEXP* pResultSEXP,
                               sexp::Protect* pProtect);
 
+// returns true when on the main thread; otherwise logs an error (with the
+// supplied reason) and returns false. the R runtime is not thread-safe, so
+// all R API usage must be gated on this.
+bool ensureMainThread(const std::string& reason);
+
 // call R functions
 class RFunction : boost::noncopyable
 {
@@ -171,14 +176,22 @@ public:
    
    RFunction& addParam(const std::string& name, SEXP paramSEXP)
    {
+      // no-op off the main thread; the R runtime is not thread-safe
+      if (!ensureMainThread("Adding parameter to R function: " + functionName_))
+         return *this;
+
       preserver_.add(paramSEXP);
       params_.push_back(Param(name, paramSEXP));
       return *this;
    }
-                        
+
    template <typename T>
    RFunction& addParam(const std::string& name, const T& param)
    {
+      // no-op off the main thread; the R runtime is not thread-safe
+      if (!ensureMainThread("Adding parameter to R function: " + functionName_))
+         return *this;
+
       r::sexp::Protect protect;
       SEXP paramSEXP = sexp::create(param, &protect);
       preserver_.add(paramSEXP);
@@ -195,6 +208,10 @@ public:
    template <typename T>
    RFunction& addUtf8Param(const std::string& name, const T& param)
    {
+      // no-op off the main thread; the R runtime is not thread-safe
+      if (!ensureMainThread("Adding parameter to R function: " + functionName_))
+         return *this;
+
       r::sexp::Protect protect;
       SEXP paramSEXP = sexp::createUtf8(param, &protect);
       preserver_.add(paramSEXP);

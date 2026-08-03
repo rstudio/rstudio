@@ -17,6 +17,8 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <core/Thread.hpp>
+
 #include <core/system/Interrupts.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -257,6 +259,14 @@ bool AsyncRProcess::onContinue()
    // check for request requiring a response
    if (ipcRequests_.exists())
    {
+      // rstudioapi requests are processed with R, so must run on the main
+      // thread. when polled from a background thread (e.g. the offline
+      // service while R is busy), leave the request for the next main-thread
+      // poll rather than touching the R runtime -- previously this raced the
+      // R interpreter and then terminated the child when the call failed
+      if (!core::thread::isMainThread())
+         return true;
+
       core::Error error = r::exec::RFunction(".rs.rstudioapi.processRequest")
             .addParam(ipcRequests_.getAbsolutePathNative())
             .addParam(ipcResponse_.getAbsolutePathNative())

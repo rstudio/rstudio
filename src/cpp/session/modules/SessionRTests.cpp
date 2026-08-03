@@ -15,6 +15,9 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <thread>
+
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
@@ -36,6 +39,39 @@ TEST(SessionRTest, RFunctionErrorsDontSetResultToNull) {
    EXPECT_NE(Success(), error);
    EXPECT_NE(nullptr, result);
    EXPECT_EQ(R_NilValue, result);
+}
+
+TEST(SessionRTest, RFunctionRefusesNonMainThread) {
+   // the R runtime is single-threaded; RFunction must refuse to touch it
+   // from other threads rather than race code running on the main thread
+
+   // a full construct-and-call chain off the main thread errors cleanly
+   Error error;
+   std::thread([&error]()
+   {
+      error = r::exec::RFunction("identity")
+            .addParam("x")
+            .call();
+   }).join();
+   EXPECT_TRUE(error);
+
+   // a function constructed off the main thread must not have resolved its
+   // symbol, so it stays unusable even when called from the main thread
+   std::unique_ptr<r::exec::RFunction> pFunction;
+   std::thread([&pFunction]()
+   {
+      pFunction.reset(new r::exec::RFunction("identity"));
+   }).join();
+   error = pFunction->call();
+   EXPECT_TRUE(error);
+
+   // the same call made entirely on the main thread succeeds
+   std::string result;
+   error = r::exec::RFunction("identity")
+         .addParam("x")
+         .call(&result);
+   EXPECT_FALSE(error);
+   EXPECT_EQ("x", result);
 }
 
 TEST(SessionRTest, RActiveBindingDetection) {
