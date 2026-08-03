@@ -302,54 +302,7 @@ function pollForSignin() {
    xhr.send(null);
 }
 
-async function clearVSCodeDb() {
-  if (localStorage.getItem("clear-vscode-db-on-logout") === "true" && !dbDeleteInProgress) {
-    dbDeleteInProgress = true;
-    try {
-      const databases = Array.from(await indexedDB.databases()).filter(
-        db => db.name && db.name.startsWith('vscode-web'));
-      if (databases.length === 0) {
-        return;
-      }
-      const promises = [];
-      for (const db of databases) {
-        promises.push(clearIndexedDB(db.name));
-      }
-      await Promise.allSettled(promises);
-    } catch (error) {
-      console.error('Error accessing IndexedDB: ', error);
-    }
-    localStorage.removeItem("vscodeDataLoaded");
-    dbDeleteInProgress = false;
-  }
-}
-
-function clearIndexedDB(name) {
-  return new Promise((resolve) => {
-    // iterate over each object store in the database
-    const openRequest = indexedDB.open(name);
-
-    openRequest.onsuccess = (event) => {
-      const db = openRequest.result;
-      const objectStoreNames = db.objectStoreNames;
-      for (let i = 0; i < objectStoreNames.length; i++) {
-        const objectStoreName = objectStoreNames[i];
-        const objectStore = db.transaction([objectStoreName], 'readwrite').objectStore(objectStoreName);
-        objectStore.clear();
-      }
-      db.close();
-      resolve();
-    };
-    openRequest.onerror = function (event) {
-      console.error('Error clearing IndexedDB: ', event);
-      db.close();
-      resolve();
-    };
-  });
-}
-
 window.addEventListener("load", function() {
-   clearVSCodeDb();
    // Is this sign-in form interactive? (i.e., must you enter a username?)
    var userEle = document.getElementById('username');
 
