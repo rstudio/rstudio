@@ -26,6 +26,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 
+#include <core/MainThread.hpp>
 #include <core/system/System.hpp>
 
 #include <r/RSexp.hpp>
@@ -133,11 +134,6 @@ core::Error executeCallUnsafe(SEXP callSEXP,
                               SEXP* pResultSEXP,
                               sexp::Protect* pProtect);
 
-// returns true when on the main thread; otherwise logs an error (with the
-// supplied reason) and returns false. the R runtime is not thread-safe, so
-// all R API usage must be gated on this.
-bool ensureMainThread(const std::string& reason);
-
 // call R functions
 class RFunction : boost::noncopyable
 {
@@ -152,9 +148,12 @@ public:
    }
    
    explicit RFunction(SEXP functionSEXP);
-   
+
+   // NOTE: an RFunction holding R objects must also be destroyed on the main
+   // thread, as releasing them touches the R runtime; SEXPPreserver
+   // deliberately leaks (with a logged error) when destroyed elsewhere
    ~RFunction();
-   
+
    // COPYING: boost::noncopyable
    
    RFunction& addParam(SEXP paramSEXP)
@@ -177,7 +176,7 @@ public:
    RFunction& addParam(const std::string& name, SEXP paramSEXP)
    {
       // no-op off the main thread; the R runtime is not thread-safe
-      if (!ensureMainThread("Adding parameter to R function: " + functionName_))
+      if (!REQUIRE_MAIN_THREAD())
          return *this;
 
       preserver_.add(paramSEXP);
@@ -189,7 +188,7 @@ public:
    RFunction& addParam(const std::string& name, const T& param)
    {
       // no-op off the main thread; the R runtime is not thread-safe
-      if (!ensureMainThread("Adding parameter to R function: " + functionName_))
+      if (!REQUIRE_MAIN_THREAD())
          return *this;
 
       r::sexp::Protect protect;
@@ -209,7 +208,7 @@ public:
    RFunction& addUtf8Param(const std::string& name, const T& param)
    {
       // no-op off the main thread; the R runtime is not thread-safe
-      if (!ensureMainThread("Adding parameter to R function: " + functionName_))
+      if (!REQUIRE_MAIN_THREAD())
          return *this;
 
       r::sexp::Protect protect;
@@ -262,7 +261,14 @@ public:
    
 private:
    void commonInit(const std::string& functionName);
-   
+
+   // returns true when on the main thread. otherwise, logs an error against
+   // the supplied method and location (normally provided via
+   // REQUIRE_MAIN_THREAD()) and poisons this object so that call() fails
+   // cleanly -- even if invoked from the main thread later -- rather than
+   // executing with missing state. the R runtime is not thread-safe.
+   bool requireMainThread(const char* method, const core::ErrorLocation& location);
+
    void initParams()
    {
    }
@@ -278,9 +284,13 @@ private:
    // preserve SEXPs
    r::sexp::SEXPPreserver preserver_;
    
-   // function 
+   // function
    SEXP functionSEXP_;
-   
+
+   // set when any method was invoked from a non-main thread; forces call()
+   // to fail rather than execute with partially-initialized state
+   bool offMainThreadUse_ = false;
+
    // function name (optional)
    std::string functionName_;
 

@@ -53,17 +53,43 @@ TEST(SessionRTest, RFunctionRefusesNonMainThread) {
             .addParam("x")
             .call();
    }).join();
-   EXPECT_TRUE(error);
+   EXPECT_TRUE(error == r::errc::CodeExecutionError);
 
-   // a function constructed off the main thread must not have resolved its
-   // symbol, so it stays unusable even when called from the main thread
+   // a function constructed off the main thread is poisoned, so it stays
+   // unusable even when called from the main thread
    std::unique_ptr<r::exec::RFunction> pFunction;
    std::thread([&pFunction]()
    {
       pFunction.reset(new r::exec::RFunction("identity"));
    }).join();
    error = pFunction->call();
-   EXPECT_TRUE(error);
+   EXPECT_TRUE(error == r::errc::CodeExecutionError);
+
+   // the same holds for a function wrapping an already-resolved SEXP
+   SEXP functionSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   error = r::exec::evaluateString("base::identity", &functionSEXP, &protect);
+   EXPECT_FALSE(error);
+
+   std::unique_ptr<r::exec::RFunction> pSexpFunction;
+   std::thread([&pSexpFunction, functionSEXP]()
+   {
+      pSexpFunction.reset(new r::exec::RFunction(functionSEXP));
+   }).join();
+   error = pSexpFunction->call();
+   EXPECT_TRUE(error == r::errc::CodeExecutionError);
+
+   // parameters added from a background thread are refused and poison the
+   // function: a later main-thread call must fail rather than execute with
+   // missing parameters (list() would otherwise succeed with no arguments)
+   r::exec::RFunction listFunction("list");
+   std::thread([&listFunction]()
+   {
+      listFunction.addParam("x");
+      listFunction.addUtf8Param("y");
+   }).join();
+   error = listFunction.call();
+   EXPECT_TRUE(error == r::errc::CodeExecutionError);
 
    // the same call made entirely on the main thread succeeds
    std::string result;

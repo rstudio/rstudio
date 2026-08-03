@@ -287,18 +287,22 @@ private:
       Error error = r::sexp::getNamedListSEXP(callbacks_.get(), event, &callback);
       if (error)
          return;
-      
-      r::exec::RFunction(callback).addParam(output).call();
+
+      error = r::exec::RFunction(callback).addParam(output).call();
+      if (error)
+         LOG_ERROR(error);
    }
-   
+
    void invokeCallback(const std::string& event)
    {
       SEXP callback = R_NilValue;
       Error error = r::sexp::getNamedListSEXP(callbacks_.get(), event, &callback);
       if (error)
          return;
-      
-      r::exec::RFunction(callback).call();
+
+      error = r::exec::RFunction(callback).call();
+      if (error)
+         LOG_ERROR(error);
    }
    
    r::sexp::PreservedSEXP callbacks_;

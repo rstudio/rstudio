@@ -401,20 +401,30 @@ bool atTopLevelContext()
    return session::isAtTopLevel();
 }
 
-bool ensureMainThread(const std::string& reason)
+bool RFunction::requireMainThread(const char* method, const core::ErrorLocation& location)
 {
-   return ASSERT_MAIN_THREAD(reason);
+   if (core::thread::isMainThread())
+      return true;
+
+   // build the diagnostic only on this (cold) failure path
+   std::string reason = "R function '" +
+         (functionName_.empty() ? std::string("<unknown>") : functionName_) + "'";
+   core::thread::assertMainThread(reason, method, location);
+
+   // poison this object so that a later call(), even one made from the
+   // main thread, fails cleanly instead of executing with missing state
+   functionSEXP_ = nullptr;
+   offMainThreadUse_ = true;
+
+   return false;
 }
 
 RFunction::RFunction(SEXP functionSEXP)
 {
    // the R runtime is not thread-safe; leave the function unset so that
    // call() fails cleanly instead of racing code running on the main thread
-   if (!ASSERT_MAIN_THREAD("Creating R function"))
-   {
-      functionSEXP_ = nullptr;
+   if (!REQUIRE_MAIN_THREAD())
       return;
-   }
 
    functionSEXP_ = functionSEXP;
    preserver_.add(functionSEXP_);
@@ -431,9 +441,8 @@ RFunction& RFunction::addQuotedParam(SEXP paramSEXP)
 
 RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
 {
-   // the R runtime is not thread-safe; do nothing rather than racing code
-   // running on the main thread
-   if (!ASSERT_MAIN_THREAD("Adding parameter to R function: " + functionName_))
+   // no-op off the main thread; the R runtime is not thread-safe
+   if (!REQUIRE_MAIN_THREAD())
       return *this;
 
    static SEXP s_quote = Rf_install("quote");
@@ -457,11 +466,8 @@ void RFunction::commonInit(const std::string& functionName)
 
    // the R runtime is not thread-safe; leave the function unresolved so that
    // call() fails cleanly instead of racing code running on the main thread
-   if (!ASSERT_MAIN_THREAD("Resolving R function: " + functionName))
-   {
-      functionSEXP_ = nullptr;
+   if (!REQUIRE_MAIN_THREAD())
       return;
-   }
 
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
@@ -510,13 +516,14 @@ Error RFunction::call(SEXP evalNS,
                       SEXP* pResultSEXP,
                       sexp::Protect* pProtect)
 {
-   // make sure we're on the main thread; this must come before anything
+   // make sure we're on the main thread, and that this function wasn't
+   // previously touched from another thread; this must come before anything
    // below touches the R runtime (including the function-exists evaluation)
-   std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
-   if (!ASSERT_MAIN_THREAD("Executing function: " + functionName))
+   if (!REQUIRE_MAIN_THREAD() || offMainThreadUse_)
    {
+      std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
       return rCodeExecutionError(
-               "Attempted to execute R function '" + functionName + "' on non-main thread",
+               "R function '" + functionName + "' was used from a non-main thread",
                ERROR_LOCATION);
    }
 

@@ -1769,6 +1769,18 @@ SEXP SEXPPreserver::add(SEXP dataSEXP)
 
 SEXPPreserver::~SEXPPreserver()
 {
+   if (preservedSEXPs_.empty())
+      return;
+
+   // R_ReleaseObject mutates R's precious list, which is not thread-safe;
+   // deliberately leak the preserved objects rather than corrupting the R
+   // heap when destroyed on a non-main thread
+   if (!core::thread::isMainThread())
+   {
+      ASSERT_MAIN_THREAD("Releasing preserved R objects");
+      return;
+   }
+
    for (std::size_t i = 0, n = preservedSEXPs_.size(); i < n; ++i)
       ::R_ReleaseObject(preservedSEXPs_[n - i - 1]);
 }
