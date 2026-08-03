@@ -19,6 +19,33 @@ var responseURL = "";
 // Global variable; tracks whether an active sign-in is in progress
 var activeSignIn = false;
 
+var dbDeleteInProgress = false;
+
+// Interval (ms) between background polls that detect a sign-in from another tab.
+var POLL_INTERVAL_MS = 3000;
+
+// Handle for the pending poll timer, so we can cancel/replace it (e.g. when the
+// tab becomes visible again) without spawning overlapping poll chains.
+var pollTimer = null;
+
+// Whether a poll request is currently in flight; guards against issuing a second
+// overlapping request if a visibility change fires mid-request.
+var pollInFlight = false;
+
+/**
+ * Schedules the next sign-in poll, replacing any already-pending poll so we
+ * never end up with more than one poll chain running at a time.
+ */
+function schedulePoll(delayMs) {
+   if (pollTimer !== null) {
+      clearTimeout(pollTimer);
+   }
+   pollTimer = setTimeout(function() {
+      pollTimer = null;
+      pollForSignin();
+   }, delayMs);
+}
+
 /**
  * Ensure error region is spoken by a screen reader.
  */
@@ -215,30 +242,56 @@ function pollForSignin() {
   if (activeSignIn)
      return;
 
+  // Don't poll while the tab is hidden - there's no point checking for a
+  // sign-in the user can't see, and it wastes requests. The visibilitychange
+  // handler resumes polling immediately when the tab becomes visible again.
+  if (document.hidden)
+     return;
+
+  // Guard against overlapping requests (e.g. if the tab is made visible while a
+  // poll is already in flight).
+  if (pollInFlight)
+     return;
+  pollInFlight = true;
+
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", "./", true);
+  // Cache-bust the poll: without this a "./" response cached from a previous
+  // (signed-in) session can be replayed by the browser, and a stale/cached
+  // response can also come back with an empty responseURL - either of which
+  // used to be misread as "signed in elsewhere" and spuriously showed the
+  // "Signed Out" dialog on a fresh sign-in page.
+  xhr.open("GET", "./?rs-signin-poll=" + Date.now(), true);
+  xhr.setRequestHeader("Cache-Control", "no-cache");
   xhr.onreadystatechange = function() {
      if (activeSignIn)
        return;
      try {
         if (xhr.readyState === 4) {
-           setTimeout(pollForSignin, 3000);
+           pollInFlight = false;
+           // Only queue the next poll if the tab is still visible; otherwise the
+           // visibilitychange handler will resume polling when it reappears.
+           if (!document.hidden)
+              schedulePoll(POLL_INTERVAL_MS);
            if (xhr.status === 200) {
-              var isSignIn = false;
               var url = xhr.responseURL.split('?')[0];
               var href = location.href.split('?')[0];
-              var isSignIn = url === href;
               var controls = document.getElementById("controls");
               var goback = document.getElementById("goback");
-              if (isSignIn) {
-                 // This is the sign-in page; no external sign-in has occurred
-                 controls.classList.remove('signinhidden');
-                 goback.classList.add('signinhidden');
-              } else {
-                 // This is a different page; the user has signed in via another tab.
+              // Only conclude the user signed in elsewhere on a positive signal:
+              // a non-empty responseURL that is genuinely a different page than
+              // this sign-in page. An empty responseURL means we can't tell (some
+              // browsers leave it empty for cached/opaque responses), so we treat
+              // it as "still on the sign-in page" rather than falsely reporting a
+              // sign-in.
+              if (url && url !== href) {
+                 // A different page - the user has signed in via another tab.
                  responseURL = url;
                  controls.classList.add('signinhidden');
                  goback.classList.remove('signinhidden');
+              } else {
+                 // Still the sign-in page (or indeterminate); keep showing controls.
+                 controls.classList.remove('signinhidden');
+                 goback.classList.add('signinhidden');
               }
            }
         }
@@ -249,7 +302,54 @@ function pollForSignin() {
    xhr.send(null);
 }
 
+async function clearVSCodeDb() {
+  if (localStorage.getItem("clear-vscode-db-on-logout") === "true" && !dbDeleteInProgress) {
+    dbDeleteInProgress = true;
+    try {
+      const databases = Array.from(await indexedDB.databases()).filter(
+        db => db.name && db.name.startsWith('vscode-web'));
+      if (databases.length === 0) {
+        return;
+      }
+      const promises = [];
+      for (const db of databases) {
+        promises.push(clearIndexedDB(db.name));
+      }
+      await Promise.allSettled(promises);
+    } catch (error) {
+      console.error('Error accessing IndexedDB: ', error);
+    }
+    localStorage.removeItem("vscodeDataLoaded");
+    dbDeleteInProgress = false;
+  }
+}
+
+function clearIndexedDB(name) {
+  return new Promise((resolve) => {
+    // iterate over each object store in the database
+    const openRequest = indexedDB.open(name);
+
+    openRequest.onsuccess = (event) => {
+      const db = openRequest.result;
+      const objectStoreNames = db.objectStoreNames;
+      for (let i = 0; i < objectStoreNames.length; i++) {
+        const objectStoreName = objectStoreNames[i];
+        const objectStore = db.transaction([objectStoreName], 'readwrite').objectStore(objectStoreName);
+        objectStore.clear();
+      }
+      db.close();
+      resolve();
+    };
+    openRequest.onerror = function (event) {
+      console.error('Error clearing IndexedDB: ', event);
+      db.close();
+      resolve();
+    };
+  });
+}
+
 window.addEventListener("load", function() {
+   clearVSCodeDb();
    // Is this sign-in form interactive? (i.e., must you enter a username?)
    var userEle = document.getElementById('username');
 
@@ -264,7 +364,15 @@ window.addEventListener("load", function() {
       userEle.focus();
 
       // Begin polling for sign-ins from other tabs (we only do this for interactive forms)
-      setTimeout(pollForSignin, 3000);
+      schedulePoll(POLL_INTERVAL_MS);
+
+      // Pause polling while the tab is hidden and resume immediately when it
+      // becomes visible again, so a background tab isn't polling needlessly.
+      document.addEventListener("visibilitychange", function() {
+         if (!document.hidden && !activeSignIn) {
+            schedulePoll(0);
+         }
+      });
    }
 
 
