@@ -216,6 +216,27 @@ pipeline {
           }
         }
 
+        stage('Upload Debug Symbols') {
+
+          when { expression { return params.PUBLISH } }
+
+          environment {
+            PRODUCT = "${utils.getProductName()}"
+            VERSION = "${RSTUDIO_VERSION}"
+          }
+
+          steps {
+            // same role the linux builds use to publish to rstudio-debug-symbols;
+            // as with the package upload below, the windows docker container cannot
+            // reach the instance-metadata endpoint, so supply credentials here
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID, region: 'us-east-1') {
+              retry(5) {
+                powershell '.\\package\\win32\\scripts\\upload-debug-symbols.ps1 -product ${env:PRODUCT} -version ${env:VERSION}'
+              }
+            }
+          }
+        }
+
         stage('Sign, Upload, and Publish') {
 
           when { expression { return params.PUBLISH } }
