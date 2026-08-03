@@ -98,14 +98,14 @@ the sandbox -- if the delivery chain breaks, that test is the tripwire.
 that server's rsession environment, so a final auth-setup step provisions
 the stores through the session instead (`utils/remote-provision.ts`): log
 in, push each sandbox store into the remote home via the R console
-(text via `writeLines(sep="", useBytes=TRUE)`, binary via hex-chunked
-`writeBin`), verify sizes, end the session so tests get a fresh rsession.
+(hex-chunked `writeBin`, for text and binary alike), verify sizes, end the
+session so tests get a fresh rsession.
 Key rules baked into that step:
 
-- A store already on the remote account is used as-is -- never overwritten,
-  never scrubbed. Only paths provisioning created go into the manifest
-  (`<sandbox>/remote-provision-manifest.json`), which the `auth-teardown`
-  project scrubs after the run.
+- A store on the remote account counts as pre-existing only when it holds a
+  sign-in, since sessions create empty stubs on their own. Only paths
+  provisioning created go into the manifest
+  (`<sandbox>/remote-provision-manifest.json`), which `auth-teardown` scrubs.
 - `requireAiCredentials` additionally requires `remoteProvisioned` in the
   provider's status file on external runs, so a sandbox-only store can't
   false-pass the gate (the remote account's own sign-in state is what the
