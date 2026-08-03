@@ -35,12 +35,19 @@ on:
           - ubuntu-24-x86_64
           - ubuntu-24-arm64
           - ubuntu-26-x86_64
+          - ubuntu-26-arm64
           - ubuntu-22-x86_64
+          - ubuntu-22-arm64
           - debian-13-arm64
+          - debian-13-x86_64
           - fedora-43-x86_64
+          - fedora-43-arm64
           - fedora-44-x86_64
+          - fedora-44-arm64
           - rocky-9-x86_64
+          - rocky-9-arm64
           - rocky-10-arm64
+          - rocky-10-x86_64
         default: ubuntu-24-x86_64
       arch:
         description: "Architecture the selected engine is expected to run on. 'auto' takes it from the engine config; naming it explicitly asserts it (the run fails on mismatch)."
