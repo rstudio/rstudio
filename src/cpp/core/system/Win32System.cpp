@@ -267,6 +267,11 @@ Error initHook()
       return relaunchError;
    }
 
+   // NOTE: from here on, this process is just a relay for the child that
+   // actually runs the session. The desktop frontend keeps tracking this
+   // process's PID, not the child's, so PID-scoped integrations (such as
+   // the dialog watcher from #18270) do not see the real session process.
+   // Accepted for this rare path; the relay preserves exit-code semantics.
    ::AllowSetForegroundWindow(procInfo.dwProcessId);
 
    // relay the child's exit code; if it cannot be determined, report plain
