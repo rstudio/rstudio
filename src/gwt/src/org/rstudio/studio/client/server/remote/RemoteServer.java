@@ -427,6 +427,11 @@ public class RemoteServer implements Server
       authWatcher_.start();
    }
 
+   public void checkAuthNow()
+   {
+      authWatcher_.checkNow();
+   }
+
    public void disconnect()
    {
       disconnected_ = true;
@@ -2588,7 +2593,7 @@ public class RemoteServer implements Server
             .add(path)
             .add(code)
             .get();
-
+      
       sendRequest(RPC_SCOPE, FORMAT_CODE, params, requestCallback);
    }
 

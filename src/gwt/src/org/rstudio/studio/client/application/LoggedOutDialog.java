@@ -76,6 +76,7 @@ public class LoggedOutDialog extends ModalDialogBase
    {
       setText(isWorkbench() ? constants_.workbenchLoginRequired() : constants_.serverLoginRequired());
       addActionButton(createLoginButton());
+      addActionButton(createTryAgainButton());
 
       HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
@@ -109,7 +110,16 @@ public class LoggedOutDialog extends ModalDialogBase
       return loginButton;
    }
 
-   private void doSetUnauthorized() 
+   // Lets the user force an immediate re-authorization check rather than
+   // waiting for the next background poll (useful when they've just signed
+   // back in via the login tab and want to resume right away).
+   private ThemedButton createTryAgainButton()
+   {
+      return new ThemedButton(constants_.tryAgainButton(), clickEvent ->
+         RStudioGinjector.INSTANCE.getServer().checkAuthNow());
+   }
+
+   private void doSetUnauthorized()
    {
       if (!visible_) {
          visible_ = true;
