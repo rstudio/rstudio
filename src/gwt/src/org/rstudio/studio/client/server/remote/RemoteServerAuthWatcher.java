@@ -43,10 +43,17 @@ public class RemoteServerAuthWatcher
          @Override
          public void run()
          {
-            authStatusChecker_.checkAuthStatus();
-
-            // schedule the next (backed-off) poll
-            scheduleNextPoll();
+            try
+            {
+               authStatusChecker_.checkAuthStatus();
+            }
+            finally
+            {
+               // schedule the next (backed-off) poll -- in a finally because
+               // start() won't restart an already-listening watcher, so a
+               // failure here would otherwise end polling for good
+               scheduleNextPoll();
+            }
          };
       };
 
@@ -59,7 +66,7 @@ public class RemoteServerAuthWatcher
    public void start()
    {
       if (isListening_)
-         stop();
+         return;
 
       isListening_ = true;
       nextInterval_ = MIN_POLL_INTERVAL_MS;

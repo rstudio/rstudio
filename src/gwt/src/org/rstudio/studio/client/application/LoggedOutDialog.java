@@ -75,8 +75,8 @@ public class LoggedOutDialog extends ModalDialogBase
    protected Widget createMainWidget() 
    {
       setText(isWorkbench() ? constants_.workbenchLoginRequired() : constants_.serverLoginRequired());
-      addActionButton(createLoginButton());
       addActionButton(createTryAgainButton());
+      addActionButton(createLoginButton());
 
       HorizontalPanel horizontalPanel = new HorizontalPanel();
       horizontalPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
