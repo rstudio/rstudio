@@ -13,6 +13,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { SourcePane } from '@pages/source_pane.page';
+import { clearPref, setPref } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { typeSlowly } from '@utils/constants';
@@ -28,6 +29,10 @@ const FILES = {
   offscreenAbove:  `${FILE_PREFIX}offscreen_above.R`,
   offscreenBelow:  `${FILE_PREFIX}offscreen_below.R`,
   offscreenClick:  `${FILE_PREFIX}offscreen_click.R`,
+  wordDiff:        `${FILE_PREFIX}word_diff.R`,
+  mixedDiff:       `${FILE_PREFIX}mixed_diff.R`,
+  charDiff:        `${FILE_PREFIX}char_diff.R`,
+  suffixDiff:      `${FILE_PREFIX}suffix_diff.R`,
 } as const;
 
 // A file long enough that the editor must scroll: the suggestion target line
@@ -213,6 +218,123 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
     await editor.gotoLine(3);
     await expect(sourcePane.ghostText).toHaveCount(0);
     expect(await editor.getLine(0)).toBe('# abc');
+  });
+
+  // --- Diff granularity (#18437) ---
+  //
+  // Edit-suggestion previews diff the original against the replacement text
+  // to decide what to highlight. The default is a word-level diff, so a
+  // variable rename previews as whole-word deletion/insertion pairs rather
+  // than interleaved character fragments; the edit_suggestion_diff_granularity
+  // preference restores the old character-level behavior.
+
+  test('single-word renames preview as whole-word replacements', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILES.wordDiff, 'count <- 1');
+    await consoleActions.executeInConsole(
+      '.rs.api.showEditSuggestion(c(1, 1, 1, 11), "total <- 1")',
+    );
+
+    const editor = new AceEditor(page, 'count');
+
+    // The rename previews in-document as one whole inserted word ("total").
+    // A character-level diff of the same edit fragments into several
+    // deletion/insertion pairs, which cannot render as a replacement at all
+    // and would fall back to the inline diff view.
+    await expect.poll(async () => {
+      const tokens = await editor.getTokens(0);
+      return tokens.filter((t) => t.type === 'insertion_preview').map((t) => t.value);
+    }).toEqual(['total']);
+
+    // The deletion highlight likewise covers the whole word being replaced.
+    const deletions = (await editor.getMarkers())
+      .filter((m) => m.clazz === 'ace_next-edit-suggestion-deletion')
+      .map((m) => [m.range?.start.column, m.range?.end.column]);
+    expect(deletions).toEqual([[0, 5]]);
+  });
+
+  test('the inline diff view highlights whole words', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILES.mixedDiff, 'count <- count + 1');
+    await consoleActions.executeInConsole(
+      '.rs.api.showEditSuggestion(c(1, 1, 1, 19), "total <- total + 1")',
+    );
+
+    // Two renames on one line render as the inline diff view, whose embedded
+    // editor shows the merged text with deletion/insertion markers. The word
+    // diff marks each whole word, not interleaved character fragments.
+    const diffEditor = new AceEditor(page, 'counttotal');
+    await expect.poll(async () => {
+      try {
+        const markers = await diffEditor.getMarkers();
+        return markers
+          .filter((m) => m.clazz.startsWith('ace_diff-'))
+          .map((m) => [m.clazz, m.range?.start.column, m.range?.end.column])
+          .sort((a, b) => (a[1] as number) - (b[1] as number));
+      } catch {
+        return null; // diff view not attached yet
+      }
+    }).toEqual([
+      ['ace_diff-removed', 0, 5],   // count
+      ['ace_diff-added', 5, 10],    // total
+      ['ace_diff-removed', 14, 19], // count
+      ['ace_diff-added', 19, 24],   // total
+    ]);
+  });
+
+  test('word extensions still preview as pure insertions', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, FILES.suffixDiff, 'x <- foo');
+    await consoleActions.executeInConsole(
+      '.rs.api.showEditSuggestion(c(1, 1, 1, 9), "x <- foobar")',
+    );
+
+    const editor = new AceEditor(page, 'x <- foo');
+
+    // 'foo' -> 'foobar' is a word replacement to the word diff, but the
+    // refinement pass reduces it to an insertion of 'bar', so nothing is
+    // struck out.
+    await expect.poll(async () => {
+      const tokens = await editor.getTokens(0);
+      return tokens.filter((t) => t.type === 'insertion_preview').map((t) => t.value);
+    }).toEqual(['bar']);
+
+    const deletions = (await editor.getMarkers())
+      .filter((m) => m.clazz === 'ace_next-edit-suggestion-deletion');
+    expect(deletions).toEqual([]);
+  });
+
+  test('character-level previews can be restored via preference', async ({ rstudioPage: page }) => {
+    try {
+      await setPref(page, 'edit_suggestion_diff_granularity', 'character');
+
+      await writeAndOpenFile(page, sandbox.dir, FILES.charDiff, 'count <- 1');
+      await consoleActions.executeInConsole(
+        '.rs.api.showEditSuggestion(c(1, 1, 1, 11), "total <- 1")',
+      );
+
+      // The character-level diff of count -> total keeps the shared 'o'/'t'
+      // characters, fragmenting the rename into several edits; the suggestion
+      // therefore renders in the inline diff view (merged text "ctountal"),
+      // with the fragments highlighted, rather than as a whole-word
+      // replacement in the document.
+      const diffEditor = new AceEditor(page, 'ctountal');
+      await expect.poll(async () => {
+        try {
+          const markers = await diffEditor.getMarkers();
+          return markers
+            .filter((m) => m.clazz.startsWith('ace_diff-'))
+            .map((m) => [m.clazz, m.range?.start.column, m.range?.end.column])
+            .sort((a, b) => (a[1] as number) - (b[1] as number));
+        } catch {
+          return null; // diff view not attached yet
+        }
+      }).toEqual([
+        ['ace_diff-removed', 0, 1], // c
+        ['ace_diff-added', 1, 2],   // t
+        ['ace_diff-removed', 3, 5], // un
+        ['ace_diff-added', 6, 8],   // al
+      ]);
+    } finally {
+      await clearPref(page, 'edit_suggestion_diff_granularity');
+    }
   });
 
   // --- Off-screen suggestion handling (#17147) ---

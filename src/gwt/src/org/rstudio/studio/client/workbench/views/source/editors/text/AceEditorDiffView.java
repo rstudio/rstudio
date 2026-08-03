@@ -18,10 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.diff.JsDiff;
+import org.rstudio.core.client.diff.DiffUtils;
 import org.rstudio.core.client.diff.JsDiff.Delta;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
@@ -34,8 +36,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-
-import jsinterop.base.JsArrayLike;
 
 public abstract class AceEditorDiffView
 {
@@ -126,14 +126,17 @@ public abstract class AceEditorDiffView
    private void computeDeltas(String originalText, String replacementText)
    {
       // Compute diffs.
-      JsArrayLike<Delta> deltas = JsDiff.diffChars(originalText, replacementText);
+      String granularity =
+            RStudioGinjector.INSTANCE.getUserPrefs().editSuggestionDiffGranularity().getValue();
+      boolean wordDiff =
+            StringUtil.equals(granularity, UserPrefsAccessor.EDIT_SUGGESTION_DIFF_GRANULARITY_WORD);
+      List<Delta> deltas = DiffUtils.computeDeltas(originalText, replacementText, wordDiff);
       StringBuilder builder = new StringBuilder();
 
       // Iterate through the diffs, and build ranges for additions and deletions.
-      for (int i = 0, n = deltas.getLength(); i < n; i++)
+      for (Delta delta : deltas)
       {
          // If this was an addition or a removal, create a range and add a marker.
-         Delta delta = deltas.getAt(i);
          if (delta.added || delta.removed)
          {
             // Compute the range in the replacement text. Do this by computing the

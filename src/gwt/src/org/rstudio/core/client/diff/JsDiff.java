@@ -23,6 +23,8 @@ public class JsDiff
 {
    public static final native JsArrayLike<Delta> diffChars(String lhs, String rhs);
 
+   public static final native JsArrayLike<Delta> diffWordsWithSpace(String lhs, String rhs);
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class Delta
    {
