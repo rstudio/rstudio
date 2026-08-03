@@ -23,7 +23,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeCommand } from '@utils/commands';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { POSTGRES } from '@utils/db-targets';
+import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
 import {
   dbAvailability,
   dbReachableFromSession,
@@ -66,33 +66,51 @@ test.describe('Connections pane', () => {
     },
   );
 
-  test(
-    'registered driver is visible to the session',
-    { tag: ['@desktop_only'] },
-    async ({ rstudioPage: page }) => {
-      test.skip(
-        !process.env.PW_ODBC_DIR,
-        'no sandbox ODBC dir (no registered driver library on this machine)',
-      );
-      // Belongs to required-packages.txt, so normally preinstalled by
-      // globalSetup; a hard failure here means the library seeding broke.
-      const failed = await consoleActions.ensurePackages(['odbc']);
-      expect(failed, 'odbc R package must be installable').toEqual([]);
-      expect(
-        await driverVisibleInSession(page, POSTGRES),
-        `odbcListDrivers() should list "${POSTGRES.driverName}"`,
-      ).toBe(true);
-    },
-  );
-
-  test('provisioned database accepts connections from the session', async ({
-    rstudioPage: page,
-  }) => {
-    const avail = dbAvailability(POSTGRES);
-    test.skip(!avail.ok, avail.reason);
-    expect(
-      await dbReachableFromSession(page, POSTGRES),
-      `session should reach ${POSTGRES.id} (status: ${avail.reason})`,
-    ).toBe(true);
-  });
 });
+
+// Per-target probes: one describe per database engine the suite knows.
+for (const base of ALL_DB_TARGETS) {
+  const target = effectiveTarget(base);
+
+  test.describe(`Connections pane probes (${target.id})`, () => {
+    let consoleActions: ConsolePaneActions;
+
+    test.beforeAll(async ({ rstudioPage: page }) => {
+      consoleActions = new ConsolePaneActions(page);
+    });
+
+    test.beforeEach(async ({ rstudioPage: page }) => {
+      await executeCommand(page, 'activateConnections');
+    });
+
+    test(
+      'registered driver is visible to the session',
+      { tag: ['@desktop_only'] },
+      async ({ rstudioPage: page }) => {
+        test.skip(
+          !process.env.PW_ODBC_DIR,
+          'no sandbox ODBC dir (no registered driver library on this machine)',
+        );
+        // Belongs to required-packages.txt, so normally preinstalled by
+        // globalSetup; a hard failure here means the library seeding broke.
+        const failed = await consoleActions.ensurePackages(['odbc']);
+        expect(failed, 'odbc R package must be installable').toEqual([]);
+        expect(
+          await driverVisibleInSession(page, target),
+          `odbcListDrivers() should list "${target.driverName}"`,
+        ).toBe(true);
+      },
+    );
+
+    test('provisioned database accepts connections from the session', async ({
+      rstudioPage: page,
+    }) => {
+      const avail = dbAvailability(target);
+      test.skip(!avail.ok, avail.reason);
+      expect(
+        await dbReachableFromSession(page, target),
+        `session should reach ${target.id} (status: ${avail.reason})`,
+      ).toBe(true);
+    });
+  });
+}

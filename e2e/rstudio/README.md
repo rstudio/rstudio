@@ -441,21 +441,28 @@ configuration by default:
   never read or written. A snippet file is placed beside the driver symlink
   so the wizard renders labeled parameter fields, the same path the
   professional drivers take.
-- **The database** is a throwaway server provisioned into the sandbox on a
-  nonstandard port (PostgreSQL: `initdb` on 127.0.0.1:55432, role/database
-  `pwtest`) and stopped and deleted at teardown. Tests seed their own
-  schemas and tables through DBI. If something is already listening on the
-  target port it is reused and left running.
+- **The databases** are throwaway servers provisioned into the sandbox on
+  nonstandard ports (PostgreSQL on 127.0.0.1:55432, MySQL on
+  127.0.0.1:53306, role/database `pwtest`) and stopped and deleted at
+  teardown. Tests seed their own schemas and tables through DBI. If
+  something is already listening on a target port it is reused and left
+  running.
 
-Prerequisites on macOS: `brew install psqlodbc postgresql@14` (any
-`postgresql@N` provides the server binaries). When a driver or database is
-unavailable, or provisioning fails, the affected specs skip with a reason
-naming the missing piece (recorded in `<sandbox>/db/status.json`); a timeout
-still fails.
+The specs iterate over every engine in `ALL_DB_TARGETS`
+(`utils/db-targets.ts`); an engine whose driver or server is absent skips
+with a reason rather than failing. Adding an engine is a new descriptor
+plus a `scripts/db/<engine>/<os>.sh` provisioning script.
+
+Prerequisites on macOS: `brew install psqlodbc postgresql@14` for
+PostgreSQL (any `postgresql@N` provides the server binaries), and
+`brew install mariadb-connector-odbc mysql` for MySQL. When a driver or
+database is unavailable, or provisioning fails, the affected specs skip
+with a reason naming the missing piece (recorded in
+`<sandbox>/db/status.json`); a timeout still fails.
 
 To point a target at an existing database instead (e.g. one reachable from a
-remote Server's rsession), set the single per-target override and no local
-provisioning happens:
+remote Server's rsession), set the single per-target override
+(`PW_DB_<ID>`) and no local provisioning happens for that engine:
 
 ```bash
 PW_DB_POSTGRES="host=db.example.com;port=5432;database=x;user=y;password=z" \

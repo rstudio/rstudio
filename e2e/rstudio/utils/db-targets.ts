@@ -59,6 +59,13 @@ export interface DbTarget {
   seedSql: string[];
 
   /**
+   * R expressions evaluated over the wizard-opened connection `con`, each
+   * yielding a single TRUE when the seeded data queries correctly. Engine
+   * SQL (catalog views, dialect) lives here, keeping the specs engine-blind.
+   */
+  verifyQueriesR: string[];
+
+  /**
    * Whether the explorer tree's root node is the catalog (the connected
    * database itself), as with PostgreSQL. When true, drilling prepends the
    * effective database name to explorerPath.
@@ -121,12 +128,75 @@ export const POSTGRES: DbTarget = {
     'TRUNCATE hr.employees',
     "INSERT INTO hr.employees VALUES (1, 'Dora', '2024-01-15')",
   ],
+  // Counts come back from the odbc driver as integer64: compare through
+  // as.numeric(), never print raw (a bare cat() of an integer64 emits its
+  // bit pattern).
+  verifyQueriesR: [
+    'identical(as.numeric(DBI::dbGetQuery(con, "SELECT count(*) AS n FROM sales.orders")$n), 3)',
+    'all(c("customers", "orders") %in% DBI::dbGetQuery(con,' +
+      ' "SELECT tablename FROM pg_tables WHERE schemaname = \'sales\'")$tablename)',
+    'identical(as.numeric(DBI::dbGetQuery(con, "SELECT sum(amount) AS s FROM sales.orders")$s), 149.75)',
+  ],
   explorerRootIsCatalog: true,
   explorerPath: ['sales', 'orders'],
   tableColumns: ['id', 'customer', 'amount'],
 };
 
-export const ALL_DB_TARGETS: DbTarget[] = [POSTGRES];
+export const MYSQL: DbTarget = {
+  id: 'mysql',
+  // The MariaDB ODBC connector drives MySQL servers; it is the one packaged
+  // everywhere (Oracle's connector is not in Homebrew), and it speaks MySQL
+  // 9's caching_sha2_password authentication (verified: connector 3.2.9
+  // against MySQL 9.7).
+  driverName: 'MySQL',
+  driverLibraries: {
+    darwin: [
+      '/opt/homebrew/lib/mariadb/libmaodbc.dylib', // Homebrew, Apple Silicon
+      '/usr/local/lib/mariadb/libmaodbc.dylib', // Homebrew, Intel
+    ],
+    linux: [
+      '/usr/lib/x86_64-linux-gnu/odbc/libmaodbc.so', // Debian/Ubuntu (odbc-mariadb)
+      '/usr/lib/aarch64-linux-gnu/odbc/libmaodbc.so',
+      '/usr/lib64/libmaodbc.so', // Fedora/Rocky (mariadb-connector-odbc)
+    ],
+  },
+  host: '127.0.0.1',
+  port: 53306,
+  database: 'pwtest',
+  user: 'pwtest',
+  password: 'pwtest',
+  wizardFields: {
+    Database: 'pwtest',
+    User: 'pwtest',
+    Password: 'pwtest',
+  },
+  // MySQL has no separate schema level (a "schema" IS a database), so the
+  // seeded tables live directly in the connected database.
+  seedSql: [
+    'CREATE TABLE IF NOT EXISTS orders (id int PRIMARY KEY, customer text, amount numeric(10,2))',
+    'TRUNCATE orders',
+    "INSERT INTO orders VALUES (1, 'Alfa', 100.50), (2, 'Bravo', 42.00), (3, 'Charlie', 7.25)",
+    'CREATE TABLE IF NOT EXISTS customers (id int PRIMARY KEY, name text)',
+    'TRUNCATE customers',
+    "INSERT INTO customers VALUES (1, 'Alfa'), (2, 'Bravo')",
+    'CREATE TABLE IF NOT EXISTS employees (id int PRIMARY KEY, name text, hired date)',
+    'TRUNCATE employees',
+    "INSERT INTO employees VALUES (1, 'Dora', '2024-01-15')",
+  ],
+  // Aliased column names below: MySQL returns information_schema columns
+  // uppercased unless aliased.
+  verifyQueriesR: [
+    'identical(as.numeric(DBI::dbGetQuery(con, "SELECT count(*) AS n FROM orders")$n), 3)',
+    'all(c("customers", "orders") %in% DBI::dbGetQuery(con,' +
+      ' "SELECT table_name AS tn FROM information_schema.tables WHERE table_schema = \'pwtest\'")$tn)',
+    'identical(as.numeric(DBI::dbGetQuery(con, "SELECT sum(amount) AS s FROM orders")$s), 149.75)',
+  ],
+  explorerRootIsCatalog: true,
+  explorerPath: ['orders'],
+  tableColumns: ['id', 'customer', 'amount'],
+};
+
+export const ALL_DB_TARGETS: DbTarget[] = [POSTGRES, MYSQL];
 
 /**
  * The wizard snippet registered next to the driver symlink

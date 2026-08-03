@@ -57,9 +57,17 @@ export class NewConnectionWizard extends PageObject {
     this.testResultsDialog = page.locator(TEST_RESULTS_DIALOG);
   }
 
-  /** A connection type's entry in the wizard's first-page list. */
+  /**
+   * A connection type's entry in the wizard's first-page list. The
+   * deterministic entry id alone can collide: id derivation lowercases, so
+   * two catalog entries differing only in case (e.g. a registered "MySQL"
+   * driver beside the professional-driver catalog's "Mysql" installer)
+   * share one id. Intersect the id with the exact visible name.
+   */
   typeEntry(connectionName: string): Locator {
-    return this.dialog.locator(wizardPageId(connectionName));
+    return this.dialog
+      .getByRole('button', { name: connectionName, exact: true })
+      .and(this.dialog.locator(wizardPageId(connectionName)));
   }
 
   /**

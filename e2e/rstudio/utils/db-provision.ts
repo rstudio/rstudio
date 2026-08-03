@@ -142,9 +142,22 @@ export function stopProvisionedDatabases(sandbox: string): void {
   const status = readDbStatus(sandbox);
   for (const [id, s] of Object.entries(status)) {
     if (s.outcome !== 'provisioned' || !s.script || !s.dataDir) continue;
+    // Some engines' stop paths need the connection parameters too (MySQL
+    // shuts down over TCP), so pass the same environment as start.
+    const base = ALL_DB_TARGETS.find((t) => t.id === id);
+    const target = base ? effectiveTarget(base) : null;
     const run = spawnSync('bash', [s.script, 'stop', s.dataDir], {
       encoding: 'utf8',
       timeout: 30_000,
+      env: target
+        ? {
+            ...process.env,
+            PW_DBP_PORT: String(target.port),
+            PW_DBP_DATABASE: target.database,
+            PW_DBP_USER: target.user,
+            PW_DBP_PASSWORD: target.password,
+          }
+        : process.env,
     });
     if (run.status === 0) {
       console.log(`[db] ${id}: stopped`);
