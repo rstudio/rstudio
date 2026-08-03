@@ -72,5 +72,32 @@ for (const base of ALL_DB_TARGETS) {
       await actions.disconnect();
       await expect(actions.pane.disconnectBtn).not.toBeVisible();
     });
+
+    test('reconnects a previously disconnected connection from its list entry', async () => {
+      // Start from a clean list: engines connecting to the same database
+      // share a display name, so leftover entries from other specs (or the
+      // sibling engine) would make row selection ambiguous.
+      await actions.removeMatchingConnections(target.database);
+
+      // Create a connection and disconnect it; its entry stays listed.
+      await actions.openWizard();
+      await actions.fillWizardForTarget(target);
+      await actions.confirmWizardAndWaitConnected();
+      await actions.disconnect();
+      await expect(actions.pane.connectionRow(target.database).first()).toBeVisible();
+
+      // Reconnect through the entry's stored code rather than the wizard:
+      // explore the disconnected entry, then Connect from its toolbar.
+      await actions.exploreConnection(target.database);
+      await actions.reconnectExplored();
+
+      // The reconnected connection is live again, and disconnects cleanly.
+      await expect(actions.pane.refreshConnectionBtn).toBeVisible();
+      await actions.disconnect();
+
+      // Remove the entry, leaving the list clean for the next iteration.
+      await actions.removeMatchingConnections(target.database);
+      await expect(actions.pane.connectionRow(target.database)).not.toBeVisible();
+    });
   });
 }

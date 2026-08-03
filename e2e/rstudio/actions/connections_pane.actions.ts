@@ -122,6 +122,48 @@ export class ConnectionsPaneActions {
     await this.pane.newConnectionBtn.waitFor({ state: 'visible', timeout: 10000 });
   }
 
+  /** Open the explorer for a listed connection row. */
+  async exploreConnection(rowText: string): Promise<void> {
+    await this.pane.exploreButton(rowText).first().click();
+    await this.pane.backToConnectionsBtn.waitFor({ state: 'visible', timeout: 10000 });
+  }
+
+  /**
+   * Reconnect the currently explored (disconnected) connection by running
+   * its stored code from the explorer toolbar's Connect menu.
+   */
+  async reconnectExplored(): Promise<void> {
+    await this.pane.connectMenuButton.click();
+    await this.page.getByRole('menuitem', { name: 'R Console' }).click();
+    await this.pane.disconnectBtn.waitFor({ state: 'visible', timeout: 30000 });
+  }
+
+  /**
+   * Remove the currently explored, disconnected connection (Remove is only
+   * offered in that state), answering the confirmation; lands back on the
+   * connection list.
+   */
+  async removeExploredConnection(): Promise<void> {
+    await this.pane.removeConnectionBtn.click();
+    const yes = this.page.locator(YES_BTN);
+    await yes.waitFor({ state: 'visible', timeout: 10000 });
+    await yes.click();
+    await this.pane.newConnectionBtn.waitFor({ state: 'visible', timeout: 15000 });
+  }
+
+  /**
+   * Remove every listed connection whose row matches the text. Connections
+   * from different engines to the same database share a display name
+   * ("pwtest - pwtest@127.0.0.1"), so tests that must select a specific
+   * row start from a clean list instead of guessing.
+   */
+  async removeMatchingConnections(rowText: string): Promise<void> {
+    while (await this.pane.exploreButton(rowText).count()) {
+      await this.exploreConnection(rowText);
+      await this.removeExploredConnection();
+    }
+  }
+
   /**
    * Expand object-tree containers from the explorer root down to the
    * target's seeded table, waiting for each next level to render before

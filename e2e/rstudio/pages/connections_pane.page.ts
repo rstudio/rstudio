@@ -40,6 +40,19 @@ export class ConnectionsPane extends PageObject {
   public filterConnections: Locator;
   /** Search box filtering the explorer's object tree. */
   public filterObjects: Locator;
+  /**
+   * Explorer-toolbar menu button reconnecting a disconnected connection via
+   * its stored code (only shown while the explored connection is not
+   * connected). Scoped to the explorer toolbar: "Connect" also occurs as
+   * ordinary text elsewhere in the pane.
+   */
+  public connectMenuButton: Locator;
+  /**
+   * The odbc connection's data-driven "SQL" explorer-toolbar action, which
+   * opens a new SQL script pre-wired to the live connection (only shown
+   * while connected).
+   */
+  public sqlActionButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -52,11 +65,25 @@ export class ConnectionsPane extends PageObject {
     this.backToConnectionsBtn = this.panel.locator('[title="View all connections"]');
     this.filterConnections = page.getByLabel('Filter by connection');
     this.filterObjects = page.getByLabel('Filter by object');
+    // The pane reuses one main toolbar for both views (removeAllWidgets +
+    // reinstall), so the Connect button lives in the "Connections Tab"
+    // toolbar, not the secondary "... Connection" header toolbar.
+    this.connectMenuButton = page
+      .locator('[role="toolbar"][aria-label="Connections Tab"]')
+      .getByText('Connect', { exact: true });
+    this.sqlActionButton = page
+      .locator('[role="toolbar"][aria-label="Connections Tab"]')
+      .getByText('SQL', { exact: true });
   }
 
-  /** A row of the connection list containing the given text. */
+  /**
+   * A row of the connection list containing the given text. Visible rows
+   * only: the hidden half of the list/explorer slider stays in the DOM, and
+   * the explorer's tree rows are also <tr>s whose text can include the same
+   * database name.
+   */
   connectionRow(text: string): Locator {
-    return this.panel.locator('tr', { hasText: text });
+    return this.panel.locator('tr:visible', { hasText: text });
   }
 
   /** The row's explore button (ImageButtonColumn renders a titled span). */
@@ -76,10 +103,17 @@ export class ConnectionsPane extends PageObject {
     );
   }
 
-  /** The "view table" zoom icon beside a table node in the object tree. */
+  /**
+   * The "view table" zoom icon beside a table node in the object tree: the
+   * first such icon following the node's text in document order. Row-based
+   * anchors don't work here -- the CellTree nests, so the text's enclosing
+   * rows also wrap sibling tables, whose icons then match first. A sibling
+   * that precedes this table contributes icons only BEFORE this node's
+   * text, so the first following icon is this table's own.
+   */
   viewTableIcon(tableText: string): Locator {
-    return this.panel
-      .locator('tr', { hasText: tableText })
-      .locator('img[title="View table (up to 1,000 records)"]');
+    return this.panel.locator(
+      `xpath=(//*[text() = '${tableText}']/following::img[contains(@title, 'View table')])[1]`,
+    );
   }
 }

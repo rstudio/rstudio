@@ -70,9 +70,13 @@ for (const base of ALL_DB_TARGETS) {
       // Clear the filter before using the tree again.
       await actions.pane.filterObjects.fill('');
 
-      // View table opens the data viewer on up to 1,000 records.
+      // View table opens the data viewer on up to 1,000 records, showing
+      // the table's actual contents ("Charlie" is seeded only into this
+      // table, so its presence pins both the table and the data).
       await actions.pane.viewTableIcon(table).first().click();
       await expect(page.locator('iframe[title="Data Browser"]')).toBeVisible({ timeout: 20000 });
+      const dataBrowser = page.frameLocator('iframe[title="Data Browser"]');
+      await expect(dataBrowser.getByText('Charlie')).toBeVisible({ timeout: 20000 });
 
       await actions.disconnect();
     });
