@@ -9,7 +9,7 @@ import * as path from 'path';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
 import { setPref, documentCloseAllNoSave } from '../utils/commands';
-import { rLibsUserTemplate } from './r-libs-setup';
+import { rLibsUserTemplate, workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
 
@@ -127,6 +127,12 @@ function shQuote(value: string): string {
  * exports win:
  *  - HOME: the sandbox user-home (honoring aiAuth-stripped variants), where
  *    auth.setup provisioned the Posit AI token store and Copilot's auth.db.
+ *  - R_LIBS_USER: under the redirected HOME, R would otherwise compute an
+ *    empty default user library and the session would not see the packages
+ *    globalSetup pre-populated. Resolved with workerRLibsUser() to match
+ *    desktop.fixture.ts -- the shared template on single-worker runs, a
+ *    per-worker hermetic clone when running in parallel. The value keeps R's
+ *    own %p/%v tokens; R expands them itself.
  *  - GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false: the sandbox auth.db is
  *    written plaintext (#18205; matches desktop.fixture.ts), and under the
  *    redirected HOME macOS has no login keychain.
@@ -140,6 +146,7 @@ function writeRsessionWrapper(serverRoot: string, userHome: string, rserverBin: 
   const lines = [
     '#!/bin/sh',
     `export HOME=${shQuote(userHome)}`,
+    `export R_LIBS_USER=${shQuote(workerRLibsUser())}`,
     'export GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false',
     'unset XDG_CONFIG_HOME',
   ];
@@ -205,9 +212,10 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     ...process.env,
     HOME: userHome,
     USERPROFILE: userHome,
-    // Mirror the Desktop fixture -- under the redirected HOME, R would
-    // otherwise compute an empty default user library. globalSetup
-    // pre-creates and pre-populates this same path.
+    // The rserver process's own copy, which does NOT reach its rsessions (see
+    // the comment above). What gives a session its user library is the
+    // wrapper's export, resolved per worker; this one only affects R that
+    // rserver itself runs. globalSetup pre-creates and pre-populates the path.
     R_LIBS_USER: rLibsUserTemplate(),
     RS_DB_MIGRATIONS_PATH: process.env.RS_DB_MIGRATIONS_PATH || DEFAULT_DB_MIGRATIONS,
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
