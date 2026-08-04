@@ -28,6 +28,6 @@
   "display_server": "xvfb",
   "e2e_deps_cache_scope": "jammy-arm64",
   "preinstall_r_packages": "true",
-  "heartbeat_timeout_seconds": "",
+  "heartbeat_timeout_seconds": "2400",
   "pw_label": "linux-ubuntu22-arm64"
 }

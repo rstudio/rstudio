@@ -46,6 +46,11 @@ labels, all three build cache keys, `sccache_key_prefix`, `installer_artifact`,
 `daily_platform_key`, `e2e_deps_cache_scope`, and `pw_label`. Keeping the arch
 literal in each of those (rather than templating it in) is what stops two
 engines of different arch from ever sharing a cache entry or an artifact name.
+(`daily_platform_key` is the exception to the "unique per engine" reading: it is
+a lookup into the dailies manifest, not a cache or artifact name, so engines of
+the same arch correctly share one -- both Fedora engines and `rocky-10-arm64`
+all install `rhel10-arm64`, and both Debian x86_64 and Ubuntu 24 x86_64 install
+`noble-amd64`.)
 
 To run an existing distro on a second architecture, add a *new* engine and give
 every key above an arch-distinct value; the only workflow change is adding it to
@@ -59,21 +64,29 @@ glob `playwright-blob-report-linux-desktop-<os>-*`, so a bare `ubuntu-24` would
 also match `ubuntu-24-arm64`'s blobs and silently merge foreign results into the
 x86_64 report.
 
-`ubuntu-24-arm64` does share `tools_cache_key` / `rlibs_cache_key` /
-`gwt_cache_key` with `debian-13-arm64`, which is not an oversight -- that engine
-also *builds* bare on `ubuntu-24.04-arm` with `install-dependencies-noble` (only
-its tests run in a container), so the cached artifacts are ABI-identical and the
-new engine starts warm. What must stay arch-distinct is anything that would
-otherwise collide with the x86_64 Ubuntu 24 engine: `sccache_key_prefix`,
+Each Debian engine shares `tools_cache_key` / `rlibs_cache_key` /
+`gwt_cache_key` with the Ubuntu 24 engine of the same arch -- `debian-13-arm64`
+with `ubuntu-24-arm64`, `debian-13-x86_64` with `ubuntu-24-x86_64` -- which is
+not an oversight: those engines also *build* bare on the Ubuntu 24 runner with
+`install-dependencies-noble` (only their tests run in a container), so the
+cached artifacts are ABI-identical and the new engine starts warm. On x86_64
+that pool is three deep, because the `ubuntu-24-x86_64` keys are also shared
+with the Linux Server build and its cache seed (see the config-keys table).
+What must stay arch-distinct is anything that would
+otherwise collide with the engine of the other architecture:
+`sccache_key_prefix`,
 `installer_artifact`, `pw_label`, and especially `e2e_deps_cache_scope` -- an
 empty scope means `runner.os` alone (`Linux`), so any two engines that left it
 empty would hand each other ABI-incompatible R libraries. Every engine sets an
 explicit scope; this matters more now that the cached library carries the full
 compiled REQUIRED_PACKAGES set, not just pak's DESCRIPTION deps.
 
-`ubuntu-24-arm64` is dispatch-only for now: it's in the `workflow_dispatch`
-choice list but not in the scheduled rotation's engine table, so it costs no
-nightly runner time until it's proven.
+Several engines are dispatch-only: they're in the `workflow_dispatch` choice
+list but have no row in the scheduled rotation's engine table, so they cost no
+nightly runner time until they're proven. The rotation's `TABLE` in
+`os-test-e2e-rstudio-scheduled.yml` is the authoritative list of what runs on a
+schedule -- consult it rather than assuming an engine is wired up because a
+config exists.
 
 Callers pass an `arch` input naming the architecture they expect the engine to
 run on; the workflow compares it against the config's `tools_arch` and fails

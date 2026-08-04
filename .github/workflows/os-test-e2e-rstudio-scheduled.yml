@@ -121,13 +121,15 @@ jobs:
           # workflow fails the run if the two disagree), and url_key names the
           # resolve job's output holding that engine's version-specific
           # installer URL (empty on latest-daily / build-from-source runs).
-          # Engines without their own daily reuse the nearest build (Fedora ->
-          # rhel10-x86_64, Debian -> noble-arm64, Ubuntu 26 -> noble-amd64);
-          # see the engine configs.
+          # Engines with no daily of their own reuse the nearest build of the
+          # same arch: Fedora -> the RHEL 10 daily (rhel10-x86_64 /
+          # rhel10-arm64), Debian -> the Ubuntu 24 daily (noble-amd64 /
+          # noble-arm64). Every Ubuntu and Rocky engine has a key of its own.
+          # See the engine configs.
           TABLE='[
             {"key":"fedora43","os":"fedora-43-x86_64","arch":"x86_64","name":"Fedora 43 (x86_64)","url_key":"rhel"},
             {"key":"fedora44","os":"fedora-44-x86_64","arch":"x86_64","name":"Fedora 44 (x86_64)","url_key":"rhel"},
-            {"key":"ubuntu26","os":"ubuntu-26-x86_64","arch":"x86_64","name":"Ubuntu 26 (x86_64)","url_key":"noble_amd64"},
+            {"key":"ubuntu26","os":"ubuntu-26-x86_64","arch":"x86_64","name":"Ubuntu 26 (x86_64)","url_key":"resolute_amd64"},
             {"key":"ubuntu22","os":"ubuntu-22-x86_64","arch":"x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
             {"key":"ubuntu24d","os":"ubuntu-24-x86_64","arch":"x86_64","name":"Ubuntu 24 Desktop (x86_64)","url_key":"noble_amd64"},
             {"key":"debian13","os":"debian-13-arm64","arch":"arm64","name":"Debian 13 (arm64)","url_key":"noble_arm64"},
@@ -152,6 +154,7 @@ jobs:
       noble_arm64:  ${{ steps.resolve.outputs.noble_arm64 }}
       rocky:        ${{ steps.resolve.outputs.rocky }}
       jammy_amd64:  ${{ steps.resolve.outputs.jammy_amd64 }}
+      resolute_amd64: ${{ steps.resolve.outputs.resolute_amd64 }}
     steps:
       - id: resolve
         name: Build per-platform installer URLs for a specific version
@@ -175,6 +178,7 @@ jobs:
               echo "noble_arm64="
               echo "rocky="
               echo "jammy_amd64="
+              echo "resolute_amd64="
             } >> "$GITHUB_OUTPUT"
             echo "No installer URLs to resolve (building from source or using the latest daily)."
             exit 0
@@ -210,6 +214,7 @@ jobs:
           NARM=$(emit electron noble-arm64) || exit 1
           ROCKY=$(emit electron rhel10-arm64) || exit 1
           JAMMY=$(emit electron jammy-amd64) || exit 1
+          RESOLUTE=$(emit electron resolute-amd64) || exit 1
           {
             echo "rhel=$RHEL"
             echo "rhel9=$RHEL9"
@@ -220,6 +225,7 @@ jobs:
             echo "noble_arm64=$NARM"
             echo "rocky=$ROCKY"
             echo "jammy_amd64=$JAMMY"
+            echo "resolute_amd64=$RESOLUTE"
           } >> "$GITHUB_OUTPUT"
           echo "Resolved URLs for version $VERSION."
 
