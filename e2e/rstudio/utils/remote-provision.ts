@@ -63,28 +63,33 @@ export interface RemoteProvisionManifest {
 
 export const REMOTE_PROVISION_MANIFEST = 'remote-provision-manifest.json';
 
+/**
+ * The manifest for `sandbox`, or null when there isn't one. A missing file is
+ * the only quiet null: an unreadable or malformed manifest throws. The
+ * teardown reads null as "nothing was provisioned, so nothing to scrub", so
+ * degrading a damaged manifest to null would quietly abandon whatever real
+ * tokens it names on the remote host -- the one outcome this file exists to
+ * prevent.
+ */
 export function readManifest(sandbox: string): RemoteProvisionManifest | null {
   const file = `${sandbox}/${REMOTE_PROVISION_MANIFEST}`;
   let raw: string;
   try {
     raw = fs.readFileSync(file, 'utf-8');
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-      console.warn(`[remote-provision] WARNING: could not read ${file}: ${(err as Error).message}`);
-    }
-    return null;
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw new Error(`[remote-provision] could not read ${file}: ${(err as Error).message}`);
   }
+  let parsed: Partial<RemoteProvisionManifest>;
   try {
-    const parsed = JSON.parse(raw) as Partial<RemoteProvisionManifest>;
-    if (typeof parsed.serverUrl !== 'string' || !Array.isArray(parsed.createdPaths)) {
-      console.warn(`[remote-provision] WARNING: unrecognized manifest shape in ${file}; ignoring it`);
-      return null;
-    }
-    return { serverUrl: parsed.serverUrl, createdPaths: parsed.createdPaths.filter((p): p is string => typeof p === 'string') };
+    parsed = JSON.parse(raw) as Partial<RemoteProvisionManifest>;
   } catch (err) {
-    console.warn(`[remote-provision] WARNING: malformed JSON in ${file}: ${(err as Error).message}`);
-    return null;
+    throw new Error(`[remote-provision] malformed JSON in ${file}: ${(err as Error).message}`);
   }
+  if (typeof parsed.serverUrl !== 'string' || !Array.isArray(parsed.createdPaths)) {
+    throw new Error(`[remote-provision] unrecognized manifest shape in ${file}`);
+  }
+  return { serverUrl: parsed.serverUrl, createdPaths: parsed.createdPaths.filter((p): p is string => typeof p === 'string') };
 }
 
 export function writeManifest(sandbox: string, manifest: RemoteProvisionManifest): void {
@@ -157,16 +162,22 @@ export async function remotePathExists(page: Page, remotePath: string): Promise<
 
 /**
  * Poll for `remotePath` to exist, up to `timeoutMs`. Returns immediately when
- * it already does; false when the deadline passes without it appearing. Used
- * to let a remote-side writer with variable timing (the AI client's startup
- * stub, see remotePositAiStoreAuthenticated) finish before this side writes
- * the same path, instead of racing it.
+ * it already does. Used to let a remote-side writer with variable timing (the
+ * AI client's startup stub, see remotePositAiStoreAuthenticated) finish before
+ * this side writes the same path, instead of racing it.
+ *
+ * Carries the last probe's verdict out on expiry: false when the path is
+ * genuinely absent, null when that final probe could not be read. The
+ * distinction matters to callers -- collapsing an unreadable probe into
+ * "absent" would let provisioning overwrite a store it never managed to look
+ * at, which could be the account's own real sign-in.
  */
-export async function waitForRemotePath(page: Page, remotePath: string, timeoutMs: number): Promise<boolean> {
+export async function waitForRemotePath(page: Page, remotePath: string, timeoutMs: number): Promise<boolean | null> {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    if ((await remotePathExists(page, remotePath)) === true) return true;
-    if (Date.now() >= deadline) return false;
+    const exists = await remotePathExists(page, remotePath);
+    if (exists === true) return true;
+    if (Date.now() >= deadline) return exists;
     await page.waitForTimeout(500);
   }
 }
@@ -176,19 +187,32 @@ export async function waitForRemotePath(page: Page, remotePath: string, timeoutM
  * client writes an unauthenticated stub data.json at session startup --
  * including the login this provisioning session just performed -- so bare
  * existence cannot distinguish "this account is signed in" from "a session
- * started here once". Probe the content instead: the auth entry key plus an
- * access-token marker, mirroring what isStoreFileAuthenticated checks locally,
- * minus token expiry (no JSON parser is assumed on the remote host). The
- * probe reads back a single logical; none of the file's content is echoed to
- * the console. Returns null when the result couldn't be read (including a
+ * started here once". Probe the content instead, mirroring the markers
+ * isStoreFileAuthenticated checks locally: the auth entry key, the
+ * "authenticated": true flag that its isAuthEntry guard requires, and an
+ * access-token marker.
+ *
+ * Two ways this is weaker than the local guard, neither fixable from here. No
+ * JSON parser is assumed on the remote host, so token expiry goes unchecked
+ * and an expired-but-well-formed store reads as authenticated. And the markers
+ * are matched against the whole file rather than within one entry, so a store
+ * carrying them in unrelated places would pass. Both err toward leaving a
+ * remote store alone, which is the safe direction.
+ *
+ * The probe reads back a single logical; none of the file's content is echoed
+ * to the console. Returns null when the result couldn't be read (including a
  * readLines failure), which callers treat as "don't touch the file".
  */
 export async function remotePositAiStoreAuthenticated(page: Page): Promise<boolean | null> {
   const p = rStringLiteral(REMOTE_POSITAI_STORE);
+  // POSIX character classes rather than \s: the pattern crosses into R as a
+  // string literal, where a backslash escape would need doubling to survive.
+  const authenticatedFlag = rStringLiteral('"authenticated"[[:space:]]*:[[:space:]]*true');
   return evalRemoteLogical(
     page,
     `local({ txt <- paste(readLines(${p}, warn = FALSE), collapse = ""); `
       + `grepl(${rStringLiteral(AUTH_STORAGE_KEY)}, txt, fixed = TRUE) && `
+      + `grepl(${authenticatedFlag}, txt) && `
       + `grepl(${rStringLiteral('"accessToken"')}, txt, fixed = TRUE) })`,
   );
 }

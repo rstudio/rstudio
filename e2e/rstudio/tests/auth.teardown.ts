@@ -1,4 +1,5 @@
 import { test as teardown } from '@playwright/test';
+import { externalServerUrl } from '../fixtures/server.fixture';
 import { isExternalServerRun } from '../utils/auth';
 import {
   closeExternalSession,
@@ -34,6 +35,20 @@ teardown('scrub external server credentials', async () => {
     console.log('[auth-teardown] no remote provisioning manifest (or nothing was created); nothing to scrub');
     if (manifest !== null) removeManifest(sandbox);
     return;
+  }
+
+  // The manifest names the host its paths were pushed to. If the run's server
+  // URL has changed since provisioning, connecting now would log into a
+  // different account entirely, where the scrub either finds nothing or deletes
+  // files this run never wrote -- and either way the real tokens stay behind on
+  // the original host. Fail instead, naming the host that still holds them.
+  const serverUrl = externalServerUrl();
+  if (manifest.serverUrl !== serverUrl) {
+    throw new Error(
+      `[auth-teardown] the manifest records credentials pushed to ${manifest.serverUrl}, but this run points at `
+        + `${serverUrl ?? '(no server URL)'} -- refusing to scrub a host the credentials never reached; `
+        + `remove them from ${manifest.serverUrl} by hand (they may hold real tokens)`,
+    );
   }
 
   const session = await connectExternalSession();
