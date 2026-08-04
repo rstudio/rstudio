@@ -19,6 +19,11 @@
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
+#ifndef _WIN32
+# include <cerrno>
+# include <signal.h>
+#endif
+
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -611,17 +616,38 @@ bool isAssistantEnabled(const std::string& assistantType = "")
    return true;
 }
 
+// Wait until the callback reports ready, polling in 100ms steps up to
+// maxIterations (so the default bound is 10 seconds).
 template <typename F>
-bool waitFor(F&& callback)
+bool waitFor(F&& callback, int maxIterations = 100)
 {
-   for (int i = 0; i < 100; i++)
+   for (int i = 0; i < maxIterations; i++)
    {
       bool ready = callback();
       if (ready)
          return true;
 
-      module_context::onBackgroundProcessing(false);
-      r::session::event_loop::processEvents();
+      // During session shutdown, pump only the process supervisor. The full
+      // background-processing pass runs every module's background handler plus
+      // any scheduled commands, and processEvents() runs arbitrary R callbacks;
+      // dispatching those mid-teardown means any one of them that blocks wedges
+      // the session's exit permanently, which in turn wedges the desktop /
+      // server relaunch that is waiting on it (#18394). The supervisor poll
+      // alone is enough to reap the agent and fire its exit callback. (This
+      // assumes the wait was entered at top level: poll() is a no-op when
+      // re-entered from within another supervisor poll -- see
+      // requestAgentStop -- in which case this wait degrades to a bounded
+      // sleep.)
+      if (s_isSessionShuttingDown)
+      {
+         module_context::processSupervisor().poll();
+      }
+      else
+      {
+         module_context::onBackgroundProcessing(false);
+         r::session::event_loop::processEvents();
+      }
+
       boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
    }
 
@@ -1250,13 +1276,13 @@ void stopAgent()
       LOG_ERROR(error);
 }
 
-bool stopAgentSync()
+bool stopAgentSync(int maxIterations = 100)
 {
    if (s_agentPid == -1)
       return true;
 
    stopAgent();
-   return waitFor([]() { return s_agentPid == -1; });
+   return waitFor([]() { return s_agentPid == -1; }, maxIterations);
 }
 
 // Forward declaration; defined after docOpened()
@@ -2243,8 +2269,38 @@ void onShutdown(bool)
    // Note that we're about to shut down.
    s_isSessionShuttingDown = true;
 
-   // Shut down the agent.
-   stopAgentSync();
+   // Shut down the agent with a reap wait tightened from the default 10s to
+   // 2s: session exit should stay fast even when the agent ignores SIGTERM,
+   // and the SIGKILL below is the backstop (#18394). A healthy agent exits
+   // well within this; the patient default remains for the non-exit callers
+   // (provider changes, updates). Snapshot the pid before deciding to
+   // escalate: the reap can land on stopAgentSync's final poll, after its
+   // last callback check -- and negating the -1 sentinel would aim the
+   // SIGKILL at pid 1.
+   bool stopped = stopAgentSync(20);
+
+   PidType agentPid = s_agentPid;
+   if (!stopped && agentPid > 1)
+   {
+#ifndef _WIN32
+      // The agent survived SIGTERM plus the reap wait. It must not outlive
+      // the session: it runs detached (its own session and process group),
+      // and the only parent-death guard it has is exitWithParent --
+      // PR_SET_PDEATHSIG with SIGTERM, the same signal it just ignored, and
+      // compiled out on macOS -- so without this escalation a surviving
+      // agent would outlive the session forever (#18394). Escalate with
+      // SIGKILL to its process group. ESRCH means the group is already gone;
+      // anything else (e.g. EPERM, a live process we could not signal)
+      // leaves an orphan behind, and this log is the only artifact of that.
+      WLOG("Agent process {} did not exit at session shutdown; sending SIGKILL.", agentPid);
+      if (::kill(-agentPid, SIGKILL) == -1 && errno != ESRCH)
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+#else
+      // On Windows, terminateProcess() is already TerminateProcess(), and the
+      // session's kill-on-close job object kills stragglers.
+      WLOG("Agent process {} did not exit at session shutdown.", agentPid);
+#endif
+   }
 }
 
 // Primarily intended for debugging / exploration.
