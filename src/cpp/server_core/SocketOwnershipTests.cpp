@@ -224,6 +224,38 @@ TEST(SocketOwnershipTest, LooksUpUidOfListeningSocket)
    EXPECT_EQ(::getuid(), uid);
 }
 
+TEST(SocketOwnershipTest, LooksUpUidOfWildcardBoundListenerQueriedViaIpv4)
+{
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
+   boost::asio::io_context io;
+   using boost::asio::ip::tcp;
+
+   // A plain AF_INET listener bound to 0.0.0.0 (not a specific address) --
+   // the default bind address for many frameworks (Shiny, Flask, Streamlit),
+   // especially in containers -- looked up as if dialed via 127.0.0.1, the
+   // address callers actually have on hand (verifyPeerUid() passes the
+   // address it dialed, not the listener's own bind address, which it has no
+   // way to know). Unlike the dual-stack (IPV6_V6ONLY=0) case covered by
+   // LooksUpUidOfListeningDualStackSocketQueriedViaIpv4 below, this listener
+   // is registered under AF_INET, same as the query -- no cross-family retry
+   // is involved. The kernel's own listener lookup (__inet_lookup_listener())
+   // implements exact-address-then-ANY-bound fallback internally (the same
+   // mechanism that lets such a socket accept connections addressed to any
+   // local IP over the wire), so an exact-match diag query for the concrete
+   // address should still find it.
+   tcp::acceptor acceptor(io, tcp::endpoint(boost::asio::ip::address_v4::any(), 0));
+   int listenPort = acceptor.local_endpoint().port();
+
+   uid_t uid = 0;
+   core::Error error = lookupListeningSocketUid(
+      boost::asio::ip::make_address("127.0.0.1"), listenPort, &uid);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(::getuid(), uid);
+}
+
 TEST(SocketOwnershipTest, LooksUpUidOfListeningIPv6Socket)
 {
 #ifndef __linux__
