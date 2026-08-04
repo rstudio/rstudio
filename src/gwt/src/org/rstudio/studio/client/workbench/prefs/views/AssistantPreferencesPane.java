@@ -339,7 +339,10 @@ public class AssistantPreferencesPane extends PreferencesPane
             true,
             false);
 
-      selEditSuggestionDiffGranularity_.setValue(prefs_.editSuggestionDiffGranularity().getGlobalValue());
+      // Fall back to the first entry (word, the schema default) if the stored
+      // value isn't one of the known options.
+      if (!selEditSuggestionDiffGranularity_.setValue(prefs_.editSuggestionDiffGranularity().getGlobalValue()))
+         selEditSuggestionDiffGranularity_.getListBox().setSelectedIndex(0);
 
       // Create chat provider selector - conditionally include Posit Assistant option
       String[] chatProviderLabels;

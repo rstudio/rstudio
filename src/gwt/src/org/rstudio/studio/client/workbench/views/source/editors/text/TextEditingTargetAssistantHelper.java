@@ -564,8 +564,9 @@ public class TextEditingTargetAssistantHelper
          }
       }
 
-      // For single-line deltas, use mixed in-document rendering;
-      // for multiline deltas, fall back to the inline diff view.
+      // Single-line and multiline deltas both render via the inline diff
+      // view when shown (renderEditSuggestion() routes MIXED there too);
+      // the distinction determines the gutter icon used while pending.
       if (deltas.isSingleLineDeltas())
       {
          setEditSuggestion(normalized, SuggestionType.MIXED, deltas);
@@ -592,8 +593,10 @@ public class TextEditingTargetAssistantHelper
 
    private boolean useWordDiff()
    {
+      // Compare against 'character' rather than 'word' so an unrecognized
+      // pref value degrades to the schema default (word-level).
       String granularity = prefs_.editSuggestionDiffGranularity().getValue();
-      return StringUtil.equals(granularity, UserPrefsAccessor.EDIT_SUGGESTION_DIFF_GRANULARITY_WORD);
+      return !StringUtil.equals(granularity, UserPrefsAccessor.EDIT_SUGGESTION_DIFF_GRANULARITY_CHARACTER);
    }
 
    private void showDiffViewEditSuggestion()
@@ -628,7 +631,7 @@ public class TextEditingTargetAssistantHelper
       final AssistantCompletionCommand command = editSuggestion_.command;
 
       // Create the diff view widget
-      diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType())
+      diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType(), useWordDiff())
       {
          @Override
          protected void apply()
