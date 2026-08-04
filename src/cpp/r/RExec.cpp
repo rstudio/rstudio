@@ -406,21 +406,21 @@ bool RFunction::requireMainThread(const char* method, const core::ErrorLocation&
    if (core::thread::isMainThread())
       return true;
 
-   // log only the first offense per object; subsequent uses of an
-   // already-poisoned object would just repeat the same diagnostic (and,
+   // poison this object so that a later call(), even one made from the
+   // main thread, fails cleanly instead of executing with missing state
+   functionSEXP_ = nullptr;
+
+   // the exchange also latches logging, so only the first offense per object
+   // logs -- even when two threads race to poison the same object; repeated
+   // uses of a poisoned object would just repeat the same diagnostic (and,
    // in developer builds, the same backtrace)
-   if (!offMainThreadUse_)
+   if (!offMainThreadUse_.exchange(true))
    {
       // build the diagnostic only on this (cold) failure path
       std::string reason = "R function '" +
             (functionName_.empty() ? std::string("<unknown>") : functionName_) + "'";
       core::thread::assertMainThread(reason, method, location);
    }
-
-   // poison this object so that a later call(), even one made from the
-   // main thread, fails cleanly instead of executing with missing state
-   functionSEXP_ = nullptr;
-   offMainThreadUse_ = true;
 
    return false;
 }
