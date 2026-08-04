@@ -27,6 +27,14 @@ Error validate(const std::string& name)
    // that might be incurred by std::string::operator[]
    const char* cstr = name.c_str();
    int len = name.size();
+   if (!len)
+   {
+      return Error(
+         "SQL identifiers cannot be empty",
+         boost::system::errc::invalid_argument,
+         ERROR_LOCATION
+      );
+   }
    for (int i = 0; i < len; i++)
    {
       char ch = cstr[i];
@@ -39,7 +47,7 @@ Error validate(const std::string& name)
       if (ch == '_')
          continue;
       return Error(
-         std::string("Illegal character ") + ch + " in column name \"" + name + "\"",
+         std::string("Illegal character ") + ch + " in SQL identifier \"" + name + "\"",
          boost::system::errc::invalid_argument,
          ERROR_LOCATION
       );

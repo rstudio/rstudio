@@ -1234,6 +1234,63 @@ TEST_F(DatabaseTestsFixture, CompoundWhereExpressions)
    ASSERT_FALSE(unexpected) << "unexpected results in WHERE AND test";
 }
 
+TEST_F(DatabaseTestsFixture, RawBuilderWorks)
+{
+   SqlIdentifier iCol("i_val"), fCol("f_val"), bCol("b_val"), tCol("t_val");
+   RawQueryBuilder raw1(sqliteConnection);
+   raw1 << "CREATE TABLE BuilderTest ("
+      << iCol << " INTEGER, "
+      << fCol << " REAL, "
+      << bCol << " BIGINT, "
+      << tCol << " TEXT)";
+   EXPECT_EQ(raw1.toSQL(), "CREATE TABLE BuilderTest (i_val INTEGER, f_val REAL, b_val BIGINT, t_val TEXT)");
+   Query query = raw1.build();
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create BuilderTest table: " << error.getMessage();
+
+   RawQueryBuilder raw2(sqliteConnection);
+   long long bVal = 3LL;
+   std::string tVal = "foo";
+   raw2 << "INSERT INTO BuilderTest (" << iCol << ", " << fCol << ", " << bCol << ", " << tCol
+      << ") VALUES (" << 1 << ", " << SECRET(2.2) << ", " << bVal << ", " << tVal << ")";
+   EXPECT_EQ(raw2.toSQL(), "INSERT INTO BuilderTest (i_val, f_val, b_val, t_val) VALUES (:bind0, :secret_param1, :bind2, :bind3)");
+   query = raw2.build();
+   error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to insert values into BuilderTest: " << error.getMessage();
+
+   SelectBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("i_val").add("f_val").add("b_val").add("t_val");
+   query = builder.build();
+
+   Rowset rows;
+   error = sqliteConnection->execute(query, rows);
+   ASSERT_FALSE(error) << "Failed to select values from BuilderTest: " << error.getMessage();
+
+   int i = 0;
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it, ++i)
+   {
+      ASSERT_EQ(i, 0) << "too many rows returned";
+
+      int i_val;
+      double f_val;
+      long long b_val;
+      std::string t_val;
+
+      error = rows.getValue(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val, 1);
+      error = rows.getValue(it, "f_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val, 2.2);
+      error = rows.getValue(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val, 3);
+      error = rows.getValue(it, "t_val", &t_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(t_val, "foo");
+   }
+   ASSERT_EQ(i, 1) << "not enough rows returned";
+}
 
 class ConnectionPoolTestsFixture : public ::testing::Test
 {
