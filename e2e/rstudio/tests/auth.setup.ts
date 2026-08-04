@@ -20,7 +20,6 @@ import {
 } from '../utils/auth';
 import {
   REMOTE_COPILOT_DIR,
-  REMOTE_HISTORY_FILES,
   REMOTE_POSITAI_STORE,
   closeExternalSession,
   connectExternalSession,
@@ -892,14 +891,15 @@ setup('authenticate GitHub Copilot', async () => {
 // credential stores in the SANDBOX user-home; on desktop and spawned-server
 // runs the launch fixtures deliver that home to the session, but an external
 // server's rsessions read the logged-in account's real home directory, which
-// this process cannot write directly. It can, however, drive that account's
-// R console once logged in -- so this final step connects, pushes each
-// provisioned store into the remote home through the console, records what it
-// created in a manifest (<sandbox>/remote-provision-manifest.json) for the
-// auth-teardown project to scrub, marks each provider's status file with
-// remoteProvisioned (which requireAiCredentials requires on external runs),
-// and ends the remote R session so tests attach to a fresh one that reads the
-// new stores.
+// this process cannot write directly. It can, however, act as that account once
+// logged in -- so this final step connects, uploads each provisioned store into
+// the remote home (over HTTP, with the console moving it into place; see
+// utils/remote-provision.ts for why the bytes stay out of console commands),
+// records what it created in a manifest
+// (<sandbox>/remote-provision-manifest.json) for the auth-teardown project to
+// scrub, marks each provider's status file with remoteProvisioned (which
+// requireAiCredentials requires on external runs), and ends the remote R
+// session so tests attach to a fresh one that reads the new stores.
 //
 // A store already present on the remote account is used as-is: never
 // overwritten, never added to the scrub manifest -- the teardown must not
@@ -945,8 +945,8 @@ function markRemoteProvisioned(sandbox: string, provider: AIProvider, note: stri
 
 setup('provision external server credentials', async () => {
   setup.skip(!IS_EXTERNAL_SERVER, 'remote provisioning applies only to external-server runs (PW_RSTUDIO_SERVER_URL)');
-  // Headroom for a full login plus chunked binary pushes over a possibly
-  // remote link; sized like the sign-in steps above.
+  // Headroom for a full login plus the store uploads over a possibly remote
+  // link; sized like the sign-in steps above.
   setup.setTimeout(240_000);
 
   const sandbox = process.env.PW_SANDBOX;
@@ -966,6 +966,13 @@ setup('provision external server credentials', async () => {
   const session = await connectExternalSession();
   const { page } = session;
   const createdPaths: string[] = [];
+  // Each store is uploaded to a server-chosen temp file before the console moves
+  // it into place. That temp file briefly holds real token bytes, so it joins the
+  // scrub list the moment it exists: a run that dies between the upload and the
+  // move must not leave it sitting in the remote home.
+  const recordTempFile = (tempPath: string): void => {
+    createdPaths.push(tempPath);
+  };
   // Per-provider push failures, collected so one provider's bad luck doesn't
   // strand the other unprovisioned, and escalated (failIfStrict) only after
   // the session is closed and the manifest written.
@@ -980,26 +987,6 @@ setup('provision external server credentials', async () => {
         '[auth-setup] the external server\'s rsession has XDG_CONFIG_HOME set (or the probe failed), '
           + 'so the Copilot store location would not match where provisioning writes it; '
           + 'unset it in the server\'s session environment and re-run',
-      );
-    }
-
-    // Console commands below carry token bytes and land in the account's
-    // RStudio console history. History files this run effectively creates are
-    // scrubbed alongside the stores; pre-existing ones are the account's own
-    // and are never deleted -- warn that token material can persist there.
-    const preexistingHistory: string[] = [];
-    for (const historyFile of REMOTE_HISTORY_FILES) {
-      if ((await remotePathExists(page, historyFile)) === false) {
-        createdPaths.push(historyFile);
-      } else {
-        preexistingHistory.push(historyFile);
-      }
-    }
-    if (preexistingHistory.length > 0) {
-      console.warn(
-        `[auth-setup] WARNING: ${preexistingHistory.join(', ')} already exist(s) on the remote account; `
-          + 'provisioning commands (which carry token material) will be appended to it and are NOT scrubbed. '
-          + 'Use a dedicated test account for external-server AI runs.',
       );
     }
 
@@ -1034,7 +1021,13 @@ setup('provision external server credentials', async () => {
           // Recorded before the write so a partial push still gets scrubbed
           // (and cannot pose as a pre-existing store on a later run).
           createdPaths.push(REMOTE_POSITAI_STORE);
-          await writeRemoteText(page, REMOTE_POSITAI_STORE, fs.readFileSync(positaiStore, 'utf-8'));
+          await writeRemoteText(
+            page,
+            REMOTE_POSITAI_STORE,
+            fs.readFileSync(positaiStore, 'utf-8'),
+            undefined,
+            recordTempFile,
+          );
           console.log(
             remoteExists
               ? `[auth-setup] replaced the unauthenticated stub at ${REMOTE_POSITAI_STORE} with the sandbox token store`
@@ -1086,7 +1079,7 @@ setup('provision external server credentials', async () => {
             // Recorded before the write so a partial push still gets scrubbed
             // (and cannot pose as a pre-existing store on a later run).
             createdPaths.push(remote);
-            await writeRemoteBinary(page, remote, fs.readFileSync(local));
+            await writeRemoteBinary(page, remote, fs.readFileSync(local), undefined, recordTempFile);
           }
           console.log(
             remoteExists

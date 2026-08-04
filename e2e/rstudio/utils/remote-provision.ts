@@ -15,24 +15,24 @@ import { rStringLiteral } from './r';
  * via the --rsession-path wrapper (fixtures/server.fixture.ts). An external
  * server is outside the harness's reach: its rsessions read the logged-in
  * account's real home directory, whose environment the harness cannot set.
- * What the harness does hold, once logged in, is a live R console running as
- * that account -- so the sandbox credential stores are pushed through it into
- * the remote home. The writers below execute R code with the rsession's uid,
- * the same trick utils/files.ts uses for cross-uid sandbox writes.
+ * What the harness does hold, once logged in, is a session running as that
+ * account -- so the sandbox credential stores are delivered through it into the
+ * remote home.
+ *
+ * The credential bytes travel over HTTP, through the same /upload endpoint the
+ * Files pane posts to (see uploadRemoteFile). The R console is used only to
+ * move the uploaded file into place, so every console command here carries file
+ * paths and nothing else. That distinction is the whole design: RStudio records
+ * each submitted console command in the account's history database, so a command
+ * carrying a store's contents would leave a recoverable copy of a live token
+ * there -- one this run could not clean up if the history file predated it.
+ * Keep it that way; never put file contents into a console command in this file.
  *
  * Everything here is driven from the auth.setup project (provisioning) and
  * the auth-teardown project (scrubbing); see tests/auth.setup.ts and
  * tests/auth.teardown.ts. Both projects run with Playwright artifacts off,
- * because the console commands carry real token material -- a trace or video
- * would capture it into the report.
- *
- * Known limitation, documented in README.md: commands submitted through the
- * console land in the remote account's RStudio console history, so the token
- * bytes also end up in the history database. Provisioning records whether the
- * history files existed beforehand; ones it effectively created are scrubbed
- * with the credential stores, but a pre-existing history database is never
- * deleted (it holds the account's own history), so on such an account token
- * material can persist there -- use a dedicated test account.
+ * because they drive a real login form -- a trace, video, or screenshot would
+ * capture PW_RSTUDIO_SERVER_PASSWORD into the report.
  */
 
 /** A logged-in browser session against the external server. */
@@ -48,12 +48,6 @@ export interface ExternalSession {
  */
 export const REMOTE_POSITAI_STORE = '~/.posit/ai/auth/data.json';
 export const REMOTE_COPILOT_DIR = '~/.config/github-copilot';
-// RStudio appends every submitted console command to these; see the module
-// comment for how provisioning handles them.
-export const REMOTE_HISTORY_FILES = [
-  '~/.local/share/rstudio/history_database',
-  '~/.Rhistory',
-] as const;
 
 /**
  * The provisioning record the setup step writes into the sandbox
@@ -224,81 +218,167 @@ export async function remoteCopilotStoreAuthenticated(page: Page): Promise<boole
 
 /**
  * Write a text file on the remote host at `remotePath` (a "~/" path), creating
- * parent directories, then chmod it to `mode`. Delivered through the chunked
- * binary writer: a single writeLines command carrying the whole content would
- * hit R's console line-length limit (see BINARY_CHUNK_BYTES) once the content
- * grows past a few KiB, and the byte-for-byte result is identical. Verifies
- * the write by size; throws on mismatch.
+ * parent directories, with final mode `mode`. Delegates to the binary writer so
+ * text and binary take one code path; the remote file holds exactly the bytes of
+ * `content`, with no trailing newline added. Verifies the result; throws on
+ * mismatch.
  */
 export async function writeRemoteText(
   page: Page,
   remotePath: string,
   content: string,
   mode = '0600',
+  recordTempFile?: (tempPath: string) => void,
 ): Promise<void> {
-  await writeRemoteBinary(page, remotePath, Buffer.from(content, 'utf-8'), mode);
+  await writeRemoteBinary(page, remotePath, Buffer.from(content, 'utf-8'), mode, recordTempFile);
 }
 
-// Hex payload per console command. R caps a console input line at about 4095
-// bytes -- a longer command is cut off mid-string and nothing lands -- so the
-// payload must keep each command safely under that. 1536 file bytes become
-// 3072 hex characters, leaving ample room for the .pwWriteHex call around it.
-const BINARY_CHUNK_BYTES = 1536;
+/**
+ * Upload `data` to the remote host over HTTP and return the absolute path of the
+ * server-side temporary file now holding it.
+ *
+ * This is how credential bytes reach the remote host without ever appearing in a
+ * console command, and therefore without landing in the account's console
+ * history. The endpoint is the one the Files pane's upload dialog posts to. It
+ * requires no CSRF header: its real client is a hidden iframe form, which cannot
+ * set custom headers, so the handler is registered outside the JSON-RPC dispatch
+ * path that enforces CSRF (registerUploadHandler in
+ * src/cpp/session/modules/SessionFiles.cpp).
+ *
+ * Two details of the form are load-bearing, both verified against the server's
+ * parser:
+ *  - The file part must come FIRST and targetDirectory LAST. The server recovers
+ *    targetDirectory by searching backwards from the closing multipart boundary,
+ *    so the reverse order fails with "Parameter value invalid".
+ *  - The file field is named "File".
+ *
+ * targetDirectory is always "~". The server echoes it back but nothing here uses
+ * it, because the caller moves the temp file into place itself -- so pointing it
+ * at a directory certain to exist keeps this independent of whether the endpoint
+ * would accept a path that doesn't yet.
+ */
+async function uploadRemoteFile(page: Page, data: Buffer, filename: string): Promise<string> {
+  const serverUrl = externalServerUrl();
+  if (!serverUrl) {
+    throw new Error('uploadRemoteFile called without PW_RSTUDIO_SERVER_URL set');
+  }
+  // externalServerUrl() has already stripped any trailing slash.
+  const response = await page.request.post(`${serverUrl}/upload`, {
+    multipart: {
+      File: { name: filename, mimeType: 'application/octet-stream', buffer: data },
+      targetDirectory: '~',
+    },
+  });
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new Error(
+      `[remote-provision] upload of ${filename} returned a non-JSON response (HTTP ${response.status()})`,
+    );
+  }
+  // Shape: { result: { token: { uploadedTempFile, ... } } } on success,
+  // { error: { message } } otherwise -- e.g. a limit-file-upload-size-mb
+  // rejection. Neither carries file content, so quoting it back is safe.
+  const token = (body as { result?: { token?: { uploadedTempFile?: unknown } } })?.result?.token;
+  const tempFile = token?.uploadedTempFile;
+  if (typeof tempFile !== 'string' || tempFile.length === 0) {
+    const detail = (body as { error?: { message?: string } })?.error?.message ?? JSON.stringify(body);
+    throw new Error(
+      `[remote-provision] upload of ${filename} did not yield a temp file (HTTP ${response.status()}): ${detail}`,
+    );
+  }
+  return tempFile;
+}
+
+/**
+ * Whether a file just written on the remote host has the expected size AND
+ * mode. Mode is part of the check because the credential stores must land 0600
+ * and Sys.chmod reports failure by returning FALSE rather than erroring, so an
+ * unapplied chmod would otherwise be invisible. file.info on a missing path
+ * yields NA, hence the is.na guard -- the whole expression is then FALSE, not an
+ * error.
+ */
+async function verifyRemoteFile(
+  page: Page,
+  remotePath: string,
+  expectedBytes: number,
+  mode: string,
+): Promise<boolean | null> {
+  const p = rStringLiteral(remotePath);
+  // as.character() on file.info()$mode (an octmode) yields "600", not "0600".
+  const expectedMode = rStringLiteral(mode.replace(/^0+(?=\d{3}$)/, ''));
+  return evalRemoteLogical(
+    page,
+    `local({ i <- file.info(path.expand(${p})); `
+      + `!is.na(i$size) && i$size == ${expectedBytes} && `
+      + `identical(as.character(i$mode), ${expectedMode}) })`,
+  );
+}
 
 /**
  * Write a binary file on the remote host at `remotePath` (a "~/" path) from a
- * local Buffer, creating parent directories, then chmod it to `mode`. The
- * bytes travel hex-encoded in chunks, decoded and appended remotely with
- * base-R writeBin -- no remote packages assumed. Verifies the final size;
- * throws on mismatch.
+ * local Buffer, creating parent directories, with final mode `mode`. The bytes
+ * are uploaded over HTTP; only the two paths involved cross the R console. When
+ * `recordTempFile` is given it is called with the server-side temp path as soon
+ * as the upload lands, so a caller tracking what to clean up learns about the
+ * file while it still exists. Verifies size and mode; throws on mismatch.
  */
 export async function writeRemoteBinary(
   page: Page,
   remotePath: string,
   data: Buffer,
   mode = '0600',
+  recordTempFile?: (tempPath: string) => void,
 ): Promise<void> {
   const p = rStringLiteral(remotePath);
+  const m = rStringLiteral(mode);
   await executeInConsole(page, `dir.create(dirname(path.expand(${p})), recursive = TRUE, showWarnings = FALSE)`);
-  // A temporary decoder in the remote global env keeps the per-chunk commands
-  // short; removed below once the file is written.
-  await executeInConsole(
-    page,
-    '.pwWriteHex <- function(path, hex, append) { '
-      + 'con <- file(path, if (append) "ab" else "wb"); on.exit(close(con)); '
-      + 'n <- nchar(hex); '
-      + 'writeBin(as.raw(strtoi(substring(hex, seq(1L, n, 2L), seq(2L, n, 2L)), 16L)), con); '
-      + 'invisible(NULL) }',
-  );
-  try {
-    // Two attempts: a concurrent remote-side writer (the AI client's startup
-    // stub, a straggler past the waitForRemotePath window) can land on top of
-    // a fresh write, and the first chunk's append=FALSE truncates, so a
-    // rewrite starts clean.
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      for (let offset = 0; offset < data.length; offset += BINARY_CHUNK_BYTES) {
-        const hex = data.subarray(offset, offset + BINARY_CHUNK_BYTES).toString('hex');
-        const append = offset > 0 ? 'TRUE' : 'FALSE';
-        await executeInConsole(page, `.pwWriteHex(${p}, "${hex}", ${append})`);
-      }
-      // A zero-byte source still needs the file created (truncated).
-      if (data.length === 0) {
-        await executeInConsole(page, `.pwWriteHex(${p}, "", FALSE)`);
-      }
-      await executeInConsole(page, `Sys.chmod(path.expand(${p}), ${rStringLiteral(mode)})`);
-      if ((await evalRemoteLogical(page, `file.size(${p}) == ${data.length}`)) === true) return;
-      if (attempt === 1) {
-        console.warn(
-          `[remote-provision] WARNING: remote write verification failed for ${remotePath}; retrying once`,
-        );
-      }
-    }
-    throw new Error(
-      `[remote-provision] remote write verification failed for ${remotePath} after retry: expected ${data.length} bytes`,
+
+  // A zero-byte source -- an empty SQLite -shm sidecar is the common case -- has
+  // no bytes to upload, so create the file directly rather than posting an empty
+  // form part and depending on how the server's parser handles one.
+  if (data.length === 0) {
+    await executeInConsole(
+      page,
+      `file.create(path.expand(${p})); Sys.chmod(path.expand(${p}), ${m})`,
     );
-  } finally {
-    await executeInConsole(page, 'rm(.pwWriteHex)');
+    if ((await verifyRemoteFile(page, remotePath, 0, mode)) !== true) {
+      throw new Error(
+        `[remote-provision] remote write verification failed for ${remotePath}: expected an empty file with mode ${mode}`,
+      );
+    }
+    return;
   }
+
+  // Two attempts: a concurrent remote-side writer (the AI client's startup stub,
+  // a straggler past the waitForRemotePath window) can land on top of a fresh
+  // write. Each attempt re-uploads, since the move below consumes the temp file.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const tempFile = await uploadRemoteFile(page, data, remotePath.split('/').pop() || 'upload.bin');
+    recordTempFile?.(tempFile);
+    const t = rStringLiteral(tempFile);
+    // Paths only -- never the file's contents (see the module comment). The temp
+    // file is chmod'ed before the copy, and copy.mode carries that across, so
+    // the destination never exists at umask permissions while holding a token.
+    await executeInConsole(
+      page,
+      `Sys.chmod(${t}, ${m}); `
+        + `file.copy(${t}, path.expand(${p}), overwrite = TRUE, copy.mode = TRUE); `
+        + `Sys.chmod(path.expand(${p}), ${m}); `
+        + `unlink(${t})`,
+    );
+    if ((await verifyRemoteFile(page, remotePath, data.length, mode)) === true) return;
+    if (attempt === 1) {
+      console.warn(
+        `[remote-provision] WARNING: remote write verification failed for ${remotePath}; retrying once`,
+      );
+    }
+  }
+  throw new Error(
+    `[remote-provision] remote write verification failed for ${remotePath} after retry: `
+      + `expected ${data.length} bytes with mode ${mode}`,
+  );
 }
 
 /**
