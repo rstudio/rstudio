@@ -31,13 +31,15 @@
       BOOST_CURRENT_FUNCTION,                                                  \
       ERROR_LOCATION))
 
-// like ASSERT_MAIN_THREAD, but performs no work (in particular, builds no
-// diagnostic string) on the main-thread fast path. resolves via unqualified
-// lookup, so a class may supply a requireMainThread member with custom
+// like ASSERT_MAIN_THREAD, but performs no work at all on the main-thread
+// fast path: the thread check short-circuits before the ErrorLocation (which
+// heap-allocates) or any diagnostic string is built. requireMainThread
+// resolves via unqualified lookup, so a class may supply a member with custom
 // failure handling (see r::exec::RFunction); elsewhere, bring the default
 // below into scope with 'using namespace rstudio::core::thread'.
 #define REQUIRE_MAIN_THREAD()                                                  \
-   requireMainThread(BOOST_CURRENT_FUNCTION, ERROR_LOCATION)
+   (::rstudio::core::thread::isMainThread() ||                                 \
+      requireMainThread(BOOST_CURRENT_FUNCTION, ERROR_LOCATION))
 
 namespace rstudio {
 namespace core {

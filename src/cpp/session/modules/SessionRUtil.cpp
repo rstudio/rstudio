@@ -257,7 +257,12 @@ protected:
       bool ok = AsyncRProcess::onContinue();
       if (!ok)
          return false;
-      
+
+      // the continue callback runs R code, so defer it to the next
+      // main-thread poll, as the base class does for rstudioapi requests
+      if (!core::thread::isMainThread())
+         return true;
+
       invokeCallback("continue");
       return true;
    }
@@ -290,7 +295,10 @@ private:
 
       error = r::exec::RFunction(callback).addParam(output).call();
       if (error)
+      {
+         error.addProperty("event", event);
          LOG_ERROR(error);
+      }
    }
 
    void invokeCallback(const std::string& event)
@@ -302,7 +310,10 @@ private:
 
       error = r::exec::RFunction(callback).call();
       if (error)
+      {
+         error.addProperty("event", event);
          LOG_ERROR(error);
+      }
    }
    
    r::sexp::PreservedSEXP callbacks_;

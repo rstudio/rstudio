@@ -260,10 +260,12 @@ bool AsyncRProcess::onContinue()
    if (ipcRequests_.exists())
    {
       // rstudioapi requests are processed with R, so must run on the main
-      // thread. when polled from a background thread (e.g. the offline
-      // service while R is busy), leave the request for the next main-thread
-      // poll rather than touching the R runtime -- previously this raced the
-      // R interpreter and then terminated the child when the call failed
+      // thread. in practice this callback should never fire off the main
+      // thread -- AsyncChildProcess::poll() skips callbacks entirely when
+      // off the main thread with callbacksRequireMainThread set, as it is
+      // for all AsyncRProcess children -- but guard anyway in case a caller
+      // ever opts out of that: leave the request pending for the next
+      // main-thread poll rather than touching the R runtime
       if (!core::thread::isMainThread())
          return true;
 

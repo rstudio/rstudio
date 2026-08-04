@@ -16,6 +16,7 @@
 #ifndef R_R_EXEC_HPP
 #define R_R_EXEC_HPP
 
+#include <atomic>
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -288,8 +289,10 @@ private:
    SEXP functionSEXP_;
 
    // set when any method was invoked from a non-main thread; forces call()
-   // to fail rather than execute with partially-initialized state
-   bool offMainThreadUse_ = false;
+   // to fail rather than execute with partially-initialized state. atomic
+   // because it is written from the offending thread and read from the main
+   // thread; the store also orders the poisoning write to functionSEXP_
+   std::atomic<bool> offMainThreadUse_ { false };
 
    // function name (optional)
    std::string functionName_;

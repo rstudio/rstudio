@@ -1759,11 +1759,19 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
    
 SEXP SEXPPreserver::add(SEXP dataSEXP)
 {
-   if (dataSEXP != R_NilValue)
+   if (dataSEXP == R_NilValue)
+      return dataSEXP;
+
+   // R_PreserveObject mutates R's precious list, which is not thread-safe;
+   // refuse rather than corrupt the R heap (see also the destructor below)
+   if (!core::thread::isMainThread())
    {
-      ::R_PreserveObject(dataSEXP);
-      preservedSEXPs_.push_back(dataSEXP);
+      ASSERT_MAIN_THREAD("Preserving R objects");
+      return dataSEXP;
    }
+
+   ::R_PreserveObject(dataSEXP);
+   preservedSEXPs_.push_back(dataSEXP);
    return dataSEXP;
 }
 

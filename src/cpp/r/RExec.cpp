@@ -406,10 +406,16 @@ bool RFunction::requireMainThread(const char* method, const core::ErrorLocation&
    if (core::thread::isMainThread())
       return true;
 
-   // build the diagnostic only on this (cold) failure path
-   std::string reason = "R function '" +
-         (functionName_.empty() ? std::string("<unknown>") : functionName_) + "'";
-   core::thread::assertMainThread(reason, method, location);
+   // log only the first offense per object; subsequent uses of an
+   // already-poisoned object would just repeat the same diagnostic (and,
+   // in developer builds, the same backtrace)
+   if (!offMainThreadUse_)
+   {
+      // build the diagnostic only on this (cold) failure path
+      std::string reason = "R function '" +
+            (functionName_.empty() ? std::string("<unknown>") : functionName_) + "'";
+      core::thread::assertMainThread(reason, method, location);
+   }
 
    // poison this object so that a later call(), even one made from the
    // main thread, fails cleanly instead of executing with missing state
@@ -456,21 +462,22 @@ void RFunction::commonInit(const std::string& functionName)
 {
    // record functionName (used later for diagnostics)
    functionName_ = functionName;
+   functionSEXP_ = nullptr;
 
-   // handle empty function names up front
-   if (functionName.empty())
-   {
-      functionSEXP_ = nullptr;
-      return;
-   }
-
-   // the R runtime is not thread-safe; leave the function unresolved so that
-   // call() fails cleanly instead of racing code running on the main thread
+   // the R runtime is not thread-safe; leave the function unresolved (and
+   // this object poisoned) so that call() fails cleanly instead of racing
+   // code running on the main thread. this must precede everything below,
+   // including the empty-name early return, so that off-thread construction
+   // is always poisoned
    if (!REQUIRE_MAIN_THREAD())
       return;
 
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
+
+   // handle empty function names up front
+   if (functionName.empty())
+      return;
 
    // otherwise, build call to function
    // check for namespace qualifier and handle that if set
@@ -522,9 +529,12 @@ Error RFunction::call(SEXP evalNS,
    if (!REQUIRE_MAIN_THREAD() || offMainThreadUse_)
    {
       std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
-      return rCodeExecutionError(
+      Error error = rCodeExecutionError(
                "R function '" + functionName + "' was used from a non-main thread",
                ERROR_LOCATION);
+      if (!functionName_.empty())
+         error.addProperty("symbol", functionName_);
+      return error;
    }
 
    // note that we're executing R code in this scope
