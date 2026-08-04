@@ -27,7 +27,7 @@
   "run_as_user": "rstudio-tester",
   "display_server": "xvfb",
   "e2e_deps_cache_scope": "debian13-arm64",
-  "preinstall_r_packages": "",
+  "preinstall_r_packages": "true",
   "heartbeat_timeout_seconds": "",
   "pw_label": "linux-debian-arm64"
 }

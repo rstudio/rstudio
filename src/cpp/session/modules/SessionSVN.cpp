@@ -20,7 +20,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
-#include <shlwapi.h>
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -34,6 +33,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/system/System.hpp>
 #include <core/Exec.hpp>
 #include <core/http/Header.hpp>
 
@@ -356,17 +356,13 @@ void runSvnAsync(const ShellArgs& args,
 #ifdef _WIN32
 bool detectSvnExeOnPath(FilePath* pPath)
 {
-   std::vector<wchar_t> path(MAX_PATH+2);
-   wcscpy(&(path[0]), L"svn.exe");
-   if (::PathFindOnPathW(&(path[0]), nullptr))
-   {
-      *pPath = FilePath(&(path[0]));
-      return true;
-   }
-   else
-   {
+   FilePath svnExePath;
+   Error error = core::system::findProgramOnPath("svn.exe", &svnExePath);
+   if (error)
       return false;
-   }
+
+   *pPath = svnExePath;
+   return true;
 }
 #endif
 

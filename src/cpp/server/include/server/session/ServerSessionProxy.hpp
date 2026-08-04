@@ -25,6 +25,10 @@
 
 #include "ServerSessionManager.hpp"
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+#include <core/system/System.hpp>
+#endif
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -125,6 +129,13 @@ bool applyProxyFilter(
       boost::shared_ptr<core::http::Request> pRequest,
       const core::r_util::SessionContext& context,
       const ClientHandler& clientHandler = ClientHandler());
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+// Test-only hook -- see definition in ServerSessionProxy.cpp for rationale.
+// Exposes the uid-resolution decision inputs used to enforce localhost-proxy
+// destination-port ownership (rstudio-pro#11470).
+core::Error userIdForUsernameForTest(const std::string& username, UidType* pUID);
+#endif
 
 } // namespace session_proxy
 } // namespace server

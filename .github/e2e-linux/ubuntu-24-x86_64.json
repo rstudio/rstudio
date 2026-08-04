@@ -26,8 +26,8 @@
   "r_install": "rig",
   "run_as_user": "",
   "display_server": "xvfb",
-  "e2e_deps_cache_scope": "",
-  "preinstall_r_packages": "",
+  "e2e_deps_cache_scope": "noble-amd64",
+  "preinstall_r_packages": "true",
   "heartbeat_timeout_seconds": "",
   "pw_label": "linux"
 }

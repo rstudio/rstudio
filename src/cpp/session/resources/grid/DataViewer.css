@@ -239,6 +239,14 @@ td {
    font-size: 11px;
    background-color: var(--grid-bg);
    height: var(--row-height);
+   /* height on a table cell is only a minimum, so the line box must be pinned
+      for rows to actually measure --row-height: 14px line + 8px padding + 1px
+      border = 23px. With line-height left normal, fonts whose 11px line box is
+      15px (Segoe UI on Windows, Noto Sans on Fedora / RHEL 10+) grew every
+      rendered row to 24px, breaking the uniform-ROW_HEIGHT assumption the
+      virtual-scroll math depends on -- Ctrl+End then stopped a pixel short of
+      the bottom for each rendered row (#18378). */
+   line-height: 14px;
    overflow: hidden;
 }
 

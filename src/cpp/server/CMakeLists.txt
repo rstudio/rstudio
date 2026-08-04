@@ -304,6 +304,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
      ServerEnvVarsTests.cpp
      ServerFormatUtilsTests.cpp
      ServerSessionManagerTests.cpp
+     session/ServerSessionProxyTests.cpp
      ServerSetupDbTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})

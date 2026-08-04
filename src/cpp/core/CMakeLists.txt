@@ -396,8 +396,16 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       target_link_libraries(rstudio-core-tests rstudio-zlib)
    endif()
 
+   # normalize before baking these in, so the compiled-in strings don't carry a
+   # literal "core/.." segment into FilePath comparisons and error messages
+   get_filename_component(RSTUDIO_DB_SCHEMA_DIR_ABS
+      "${CMAKE_CURRENT_SOURCE_DIR}/../server/db" ABSOLUTE)
+   get_filename_component(RSTUDIO_CPP_SOURCE_DIR_ABS
+      "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+
    target_compile_definitions(rstudio-core-tests PRIVATE
-      RSTUDIO_DB_SCHEMA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../server/db"
+      RSTUDIO_DB_SCHEMA_DIR="${RSTUDIO_DB_SCHEMA_DIR_ABS}"
+      RSTUDIO_CPP_SOURCE_DIR="${RSTUDIO_CPP_SOURCE_DIR_ABS}"
    )
 
    enable_testing()
