@@ -1759,16 +1759,36 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
    
 SEXP SEXPPreserver::add(SEXP dataSEXP)
 {
-   if (dataSEXP != R_NilValue)
+   if (dataSEXP == R_NilValue)
+      return dataSEXP;
+
+   // R_PreserveObject mutates R's precious list, which is not thread-safe;
+   // refuse rather than corrupt the R heap (see also the destructor below)
+   if (!core::thread::isMainThread())
    {
-      ::R_PreserveObject(dataSEXP);
-      preservedSEXPs_.push_back(dataSEXP);
+      ASSERT_MAIN_THREAD("Preserving R objects");
+      return dataSEXP;
    }
+
+   ::R_PreserveObject(dataSEXP);
+   preservedSEXPs_.push_back(dataSEXP);
    return dataSEXP;
 }
 
 SEXPPreserver::~SEXPPreserver()
 {
+   if (preservedSEXPs_.empty())
+      return;
+
+   // R_ReleaseObject mutates R's precious list, which is not thread-safe;
+   // deliberately leak the preserved objects rather than corrupting the R
+   // heap when destroyed on a non-main thread
+   if (!core::thread::isMainThread())
+   {
+      ASSERT_MAIN_THREAD("Releasing preserved R objects");
+      return;
+   }
+
    for (std::size_t i = 0, n = preservedSEXPs_.size(); i < n; ++i)
       ::R_ReleaseObject(preservedSEXPs_[n - i - 1]);
 }
