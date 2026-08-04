@@ -133,34 +133,74 @@ export async function provisionDatabases(sandbox: string): Promise<DbStatusFile>
 }
 
 /**
+ * Ask the engine how many client connections to the test database are still
+ * open, or null when the probe could not answer (no engine support, server
+ * already gone, unparseable output). Called with the IDE shut down, so a
+ * non-zero answer means the tests left a session behind on the server.
+ */
+function countOpenSessions(
+  script: string,
+  dataDir: string,
+  env: NodeJS.ProcessEnv,
+): number | null {
+  const run = spawnSync('bash', [script, 'sessions', dataDir], {
+    encoding: 'utf8',
+    timeout: 30_000,
+    env,
+  });
+  if (run.status !== 0) return null;
+  const count = Number((run.stdout ?? '').trim());
+  return Number.isInteger(count) ? count : null;
+}
+
+/**
  * Stop every server the suite provisioned. Runs unconditionally in
  * globalTeardown, before (and independent of) sandbox file removal: a
  * preserved sandbox keeps its data directory for inspection, but never a
  * running server process.
+ *
+ * Each server is asked for its open-connection count first. Nothing should
+ * be attached by now: the specs disconnect what they connect, and
+ * resetConnectionState closes every DBI connection before restarting R. A
+ * leftover session means one of those paths let a connection escape --
+ * invisible on a throwaway server about to be deleted, but the same mistake
+ * against a shared database leaves hung sessions behind. Warn rather than
+ * fail: teardown must still stop the server.
  */
 export function stopProvisionedDatabases(sandbox: string): void {
   const status = readDbStatus(sandbox);
   for (const [id, s] of Object.entries(status)) {
     if (s.outcome !== 'provisioned' || !s.script || !s.dataDir) continue;
-    // Some engines' stop paths need the connection parameters too (MySQL
-    // shuts down over TCP), so pass the same environment as start.
+    // Some engines need the connection parameters after start too (MySQL
+    // shuts down over TCP, and both engines' session probes connect), so
+    // pass the same environment as start.
     const base = ALL_DB_TARGETS.find((t) => t.id === id);
     const target = base ? effectiveTarget(base) : null;
+    const env: NodeJS.ProcessEnv = target
+      ? {
+          ...process.env,
+          PW_DBP_PORT: String(target.port),
+          PW_DBP_DATABASE: target.database,
+          PW_DBP_USER: target.user,
+          PW_DBP_PASSWORD: target.password,
+        }
+      : process.env;
+
+    const open = countOpenSessions(s.script, s.dataDir, env);
+    if (open !== null && open > 0) {
+      console.warn(
+        `[db] ${id}: ${open} connection(s) to ${target?.database ?? id} still open at teardown; ` +
+          'a test left a database session behind (close connections before restarting R)',
+      );
+    }
+
     const run = spawnSync('bash', [s.script, 'stop', s.dataDir], {
       encoding: 'utf8',
       timeout: 30_000,
-      env: target
-        ? {
-            ...process.env,
-            PW_DBP_PORT: String(target.port),
-            PW_DBP_DATABASE: target.database,
-            PW_DBP_USER: target.user,
-            PW_DBP_PASSWORD: target.password,
-          }
-        : process.env,
+      env,
     });
     if (run.status === 0) {
-      console.log(`[db] ${id}: stopped`);
+      console.log(`[db] ${id}: stopped${open === null ? '' : ` (${open} session(s) left open)`}`);
     } else {
       console.warn(
         `[db] ${id}: stop script exited ${run.status}; a server process may remain:\n${`${run.stdout ?? ''}${run.stderr ?? ''}`.trim()}`,

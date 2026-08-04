@@ -19,6 +19,7 @@ import { ConsolePaneActions } from '../actions/console_pane.actions';
 import {
   ALL_DB_TARGETS,
   DbTarget,
+  connectionHostId,
   effectiveTarget,
   resolveDriverLibrary,
   wizardSnippet,
@@ -142,6 +143,81 @@ export async function drainKnownExplorerException(page: Page): Promise<string[]>
   const known = /reading 'object_types'/;
   const exceptions = await drainClientExceptions(page);
   return exceptions.filter((e) => !known.test(e.message)).map((e) => e.message);
+}
+
+/** R that yields the names of every DBIConnection bound in globalenv. */
+const LIVE_CONNECTIONS_R =
+  'Filter(function(nm) isTRUE(try(methods::is(get(nm, envir = globalenv()), ' +
+  '"DBIConnection"), silent = TRUE)), ls(envir = globalenv()))';
+
+/**
+ * Clear all connection state for a target: close every live connection,
+ * drop the `con` binding the wizard's R Console destination creates, and
+ * remove the target's entry from the pane's connection history.
+ *
+ * Specs share one RStudio session, so without this each test inherits the
+ * previous one's connections and history entries, making anything that reads
+ * the pane's list order-dependent. Driven through the session's own RPCs
+ * rather than the UI: the list re-renders on every connection event, which
+ * detaches rows mid-click.
+ *
+ * Callers restart R immediately after this, so closing comes first and is
+ * verified: restarting with a connection still open orphans a session on the
+ * database server, and rm()ing the binding does not close anything. The
+ * sweep covers connections bound under any name, since one session can hold
+ * several.
+ *
+ * Each step is checked separately so a failure says which one broke rather
+ * than leaving the caller to guess.
+ */
+export async function resetConnectionState(page: Page, target: DbTarget): Promise<void> {
+  const t = effectiveTarget(target);
+  const type = rStringLiteral(t.connectionType);
+  const host = rStringLiteral(connectionHostId(t));
+  const console_ = new ConsolePaneActions(page);
+  const where = `type=${t.connectionType} host=${connectionHostId(t)}`;
+
+  // 1. Close and unbind every live connection, then confirm none survives.
+  const closed = await console_.evalRLogical(
+    'local({ ' +
+      `for (nm in ${LIVE_CONNECTIONS_R}) { ` +
+      '  try(DBI::dbDisconnect(get(nm, envir = globalenv())), silent = TRUE); ' +
+      '  try(rm(list = nm, envir = globalenv()), silent = TRUE); ' +
+      // The semicolon is required: R does not accept a new expression
+      // directly after a block's closing brace on the same line.
+      '}; ' +
+      `length(${LIVE_CONNECTIONS_R}) == 0 })`,
+  );
+  if (closed !== true) {
+    throw new Error(
+      `resetConnectionState (${where}): a live DBI connection survived the sweep, so ` +
+        'restarting R now would orphan a session on the database server ' +
+        `(probe returned ${closed})`,
+    );
+  }
+
+  // 2. Tell the pane the connection is gone. Expected to fail when nothing
+  // is connected (the RPC also wants finder/disconnectCode, which only a
+  // live connection has), so this one is best-effort.
+  await console_.evalRLogical(
+    `!inherits(try(.rs.invokeRpc("connection_disconnect", list(type = ${type}, ` +
+      `host = ${host})), silent = TRUE), "try-error")`,
+  );
+
+  // 3. Drop the history entry. Identity is (type, host) and history is keyed
+  // by it, so one removal clears it outright -- there are never duplicates.
+  // A silent failure here leaves the entry in place and every list-reading
+  // test order-dependent again, so it is checked.
+  const removed = await console_.evalRLogical(
+    `!inherits(try(.rs.invokeRpc("remove_connection", list(type = ${type}, ` +
+      `host = ${host})), silent = TRUE), "try-error")`,
+  );
+  if (removed !== true) {
+    throw new Error(
+      `resetConnectionState (${where}): the remove_connection RPC errored, so the pane ` +
+        `still lists this connection (probe returned ${removed})`,
+    );
+  }
 }
 
 /** Whether the session under test sees the target's ODBC driver. */

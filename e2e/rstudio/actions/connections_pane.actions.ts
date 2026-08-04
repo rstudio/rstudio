@@ -43,17 +43,70 @@ export class ConnectionsPaneActions {
   }
 
   /**
-   * Pick a connection type and fill its labeled parameter fields.
-   * pressSequentially, not fill: the wizard's GWT text boxes update the
-   * snippet preview through per-keystroke handlers.
+   * Pick a connection type and fill its labeled parameter fields, then verify
+   * every field ended up holding what was asked for.
+   *
+   * fill(), not pressSequentially: the parameter grid is rebuilt whenever a
+   * field commits (NewConnectionSnippetHost registers a ChangeHandler that
+   * calls updateCodePanel), and a rebuild between resolving a field and
+   * writing to it sends the text somewhere else. fill() is one write per
+   * field instead of one per character, so it hits that window far less
+   * often -- and nothing needs per-keystroke input, since the handler is on
+   * the DOM change event, which fill() dispatches.
+   *
+   * The verification pass is the part that matters. Losing this race does not
+   * throw: characters silently land in the wrong box, and the wizard happily
+   * connects to whatever that produced (a stray "pwpostgresql" split into
+   * Server "127.0.0.1wpostgresql" and Database "p", for instance). Reading
+   * every value back afterwards turns that into an immediate, named failure
+   * instead of a puzzling connection error several steps later.
+   *
+   * Server and Port are verified too even though nothing writes to them: the
+   * snippet prefills them, and they are exactly what a misdirected write
+   * corrupts. Checking only the fields written would miss that.
+   *
+   * A mismatch retries the whole fill from scratch rather than failing
+   * outright: the corrupting write coincides with some async task the wizard
+   * runs after the type is selected, and retries a few milliseconds apart
+   * (no pause) reliably reproduced the same corruption instead of clearing
+   * it, so a pause is what actually gives the next attempt a clean window.
+   * fill() clears a field before setting it, so redoing an already-correct
+   * one is harmless. Only exhausting every attempt is a real failure.
    */
-  async fillWizardForTarget(target: EffectiveDbTarget): Promise<void> {
+  async fillWizardForTarget(
+    target: EffectiveDbTarget,
+    overrides: Record<string, string> = {},
+  ): Promise<void> {
     await this.wizard.typeEntry(target.driverName).click();
-    for (const [key, value] of Object.entries(target.wizardFields)) {
-      const field = this.wizard.field(key);
-      await field.waitFor({ state: 'visible', timeout: 10000 });
-      await field.pressSequentially(value);
+    const written = { ...target.wizardFields, ...overrides };
+    const expected = {
+      Server: target.host,
+      Port: String(target.port),
+      ...written,
+    };
+
+    const maxAttempts = 3;
+    let wrong: string[] = [];
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (attempt > 1) await this.page.waitForTimeout(500);
+      for (const [key, value] of Object.entries(written)) {
+        const field = this.wizard.field(key);
+        await field.waitFor({ state: 'visible', timeout: 10000 });
+        await field.fill(value);
+      }
+
+      wrong = [];
+      for (const [key, value] of Object.entries(expected)) {
+        const actual = await this.wizard.field(key).inputValue();
+        if (actual !== value) wrong.push(`${key}: expected "${value}", got "${actual}"`);
+      }
+      if (wrong.length === 0) return;
     }
+
+    throw new Error(
+      `New Connection wizard fields did not take the values written to them, after ` +
+        `${maxAttempts} attempts (the parameter grid was rebuilt mid-write): ${wrong.join('; ')}`,
+    );
   }
 
   /**
@@ -149,19 +202,6 @@ export class ConnectionsPaneActions {
     await yes.waitFor({ state: 'visible', timeout: 10000 });
     await yes.click();
     await this.pane.newConnectionBtn.waitFor({ state: 'visible', timeout: 15000 });
-  }
-
-  /**
-   * Remove every listed connection whose row matches the text. Connections
-   * from different engines to the same database share a display name
-   * ("pwtest - pwtest@127.0.0.1"), so tests that must select a specific
-   * row start from a clean list instead of guessing.
-   */
-  async removeMatchingConnections(rowText: string): Promise<void> {
-    while (await this.pane.exploreButton(rowText).count()) {
-      await this.exploreConnection(rowText);
-      await this.removeExploredConnection();
-    }
   }
 
   /**

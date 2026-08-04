@@ -442,11 +442,11 @@ configuration by default:
   so the wizard renders labeled parameter fields, the same path the
   professional drivers take.
 - **The databases** are throwaway servers provisioned into the sandbox on
-  nonstandard ports (PostgreSQL on 127.0.0.1:55432, MySQL on
-  127.0.0.1:53306, role/database `pwtest`) and stopped and deleted at
-  teardown. Tests seed their own schemas and tables through DBI. If
-  something is already listening on a target port it is reused and left
-  running.
+  nonstandard ports (PostgreSQL on 127.0.0.1:55432 with database
+  `pwpostgresql`, MySQL on 127.0.0.1:53306 with database `pwmysql`, both
+  with role `pwtest`) and stopped and deleted at teardown. Tests seed their
+  own schemas and tables through DBI. If something is already listening on a
+  target port it is reused and left running.
 
 The specs iterate over every engine in `ALL_DB_TARGETS`
 (`utils/db-targets.ts`); an engine whose driver or server is absent skips

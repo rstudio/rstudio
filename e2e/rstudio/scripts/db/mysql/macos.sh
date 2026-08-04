@@ -3,10 +3,12 @@
 # Throwaway MySQL server for the Connections pane tests (macOS).
 #
 # Contract (identical for every engine/OS script under scripts/db/):
-#   start <dataDir>   initialize and start a server on PW_DBP_PORT with role
-#                     PW_DBP_USER / password PW_DBP_PASSWORD and database
-#                     PW_DBP_DATABASE granted to that role
-#   stop  <dataDir>   stop the server; the caller deletes the files
+#   start    <dataDir>   initialize and start a server on PW_DBP_PORT with role
+#                        PW_DBP_USER / password PW_DBP_PASSWORD and database
+#                        PW_DBP_DATABASE granted to that role
+#   stop     <dataDir>   stop the server; the caller deletes the files
+#   sessions <dataDir>   print the number of client connections to
+#                        PW_DBP_DATABASE, excluding the probe's own
 #
 # The four PW_DBP_* environment variables are supplied by the dispatcher
 # (utils/db-provision.ts) from the target descriptor. Tests seed their own
@@ -19,7 +21,7 @@
 
 set -euo pipefail
 
-usage() { echo "usage: $0 start|stop <dataDir>" >&2; exit 2; }
+usage() { echo "usage: $0 start|stop|sessions <dataDir>" >&2; exit 2; }
 
 [ $# -eq 2 ] || usage
 ACTION=$1
@@ -51,7 +53,34 @@ case "$ACTION" in
   stop)
     if [ -d "$MYSQLDATA" ] && [ -n "${PW_DBP_PORT:-}" ]; then
       "$BIN/mysqladmin" --protocol=tcp -h 127.0.0.1 -P "$PW_DBP_PORT" -u root shutdown
+      # mysqladmin returns once the server ACCEPTS the shutdown, not once it
+      # has exited. The caller deletes this directory immediately after, so
+      # returning early leaves mysqld still writing into it and the delete
+      # fails with ENOTEMPTY -- stranding the whole sandbox on disk. Wait for
+      # the pid file to disappear, which mysqld removes on clean exit.
+      for _ in $(seq 1 60); do
+        if ! ls "$MYSQLDATA"/*.pid >/dev/null 2>&1; then
+          exit 0
+        fi
+        sleep 0.5
+      done
+      echo "WARNING: mysqld still running 30s after shutdown; data dir may not delete" >&2
     fi
+    exit 0
+    ;;
+  sessions)
+    # Threads still attached to the test database, minus this probe's own.
+    # The caller runs this after the IDE has been shut down, so anything
+    # left is a session the tests orphaned -- e.g. an R restart while a DBI
+    # connection was still open.
+    if [ ! -d "$MYSQLDATA" ] || [ -z "${PW_DBP_PORT:-}" ]; then
+      echo 0
+      exit 0
+    fi
+    "$BIN/mysql" --protocol=tcp -h 127.0.0.1 -P "$PW_DBP_PORT" -u root -N -B \
+      -e "SELECT COUNT(*) FROM information_schema.processlist
+          WHERE db = '${PW_DBP_DATABASE:?PW_DBP_DATABASE not set}'
+            AND id <> CONNECTION_ID();"
     exit 0
     ;;
   start)

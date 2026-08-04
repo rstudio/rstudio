@@ -33,6 +33,14 @@ export interface DbTarget {
   driverName: string;
 
   /**
+   * The connection "type" the pane files this engine under: the driver's
+   * reported DBMS name (`connection@info$dbms.name`), which together with
+   * the host id forms the connection's identity in the pane's history. Both
+   * verified empirically against the real drivers, not derived.
+   */
+  connectionType: string;
+
+  /**
    * Candidate absolute paths for the driver library, per platform; the first
    * one that exists wins. Windows is absent for now: it has its own driver
    * manager (registry-based, no unixODBC), handled in the CI-enablement
@@ -90,6 +98,7 @@ export type EffectiveDbTarget = DbTarget & { overridden: boolean };
 export const POSTGRES: DbTarget = {
   id: 'postgres',
   driverName: 'PostgreSQL Unicode',
+  connectionType: 'PostgreSQL',
   driverLibraries: {
     darwin: [
       '/opt/homebrew/lib/psqlodbcw.so', // Homebrew, Apple Silicon
@@ -105,11 +114,16 @@ export const POSTGRES: DbTarget = {
   // Nonstandard port so the throwaway server can never collide with a
   // developer's own PostgreSQL on 5432.
   port: 55432,
-  database: 'pwtest',
+  // Database names are per-engine ("pw" + engine) while the role is shared.
+  // The pane's display name is built from database, user, and host, so
+  // per-engine databases keep every list entry distinguishable -- and no
+  // name may contain another's, since a substring collision would silently
+  // select the wrong row.
+  database: 'pwpostgresql',
   user: 'pwtest',
   password: 'pwtest',
   wizardFields: {
-    Database: 'pwtest',
+    Database: 'pwpostgresql',
     User: 'pwtest',
     Password: 'pwtest',
   },
@@ -149,6 +163,7 @@ export const MYSQL: DbTarget = {
   // 9's caching_sha2_password authentication (verified: connector 3.2.9
   // against MySQL 9.7).
   driverName: 'MySQL',
+  connectionType: 'MySQL',
   driverLibraries: {
     darwin: [
       '/opt/homebrew/lib/mariadb/libmaodbc.dylib', // Homebrew, Apple Silicon
@@ -162,11 +177,12 @@ export const MYSQL: DbTarget = {
   },
   host: '127.0.0.1',
   port: 53306,
-  database: 'pwtest',
+  // Per-engine database name; see the POSTGRES target for why.
+  database: 'pwmysql',
   user: 'pwtest',
   password: 'pwtest',
   wizardFields: {
-    Database: 'pwtest',
+    Database: 'pwmysql',
     User: 'pwtest',
     Password: 'pwtest',
   },
@@ -188,7 +204,7 @@ export const MYSQL: DbTarget = {
   verifyQueriesR: [
     'identical(as.numeric(DBI::dbGetQuery(con, "SELECT count(*) AS n FROM orders")$n), 3)',
     'all(c("customers", "orders") %in% DBI::dbGetQuery(con,' +
-      ' "SELECT table_name AS tn FROM information_schema.tables WHERE table_schema = \'pwtest\'")$tn)',
+      ' "SELECT table_name AS tn FROM information_schema.tables WHERE table_schema = \'pwmysql\'")$tn)',
     'identical(as.numeric(DBI::dbGetQuery(con, "SELECT sum(amount) AS s FROM orders")$s), 149.75)',
   ],
   explorerRootIsCatalog: true,
@@ -257,6 +273,29 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
     Password: result.password,
   };
   return result;
+}
+
+/**
+ * The connection's display name in the pane's list, as the odbc package
+ * builds it (`computeDisplayName`): "<database> - <user>@<server>".
+ *
+ * Matched exactly, never as a substring. The targets share a role name, so
+ * every display name contains "pwtest" and a loose match selects whichever
+ * row happens to come first -- which fails as a wrong-row success rather
+ * than a missing-element error.
+ */
+export function connectionDisplayName(t: EffectiveDbTarget): string {
+  return `${t.database} - ${t.user}@${t.host}`;
+}
+
+/**
+ * The host half of the connection's identity in the pane's history, as odbc
+ * builds it (`computeHostName`): user, database, and server joined by "_",
+ * with duplicates dropped -- so a database named after its user yields two
+ * parts, not three. Verified against both drivers.
+ */
+export function connectionHostId(t: EffectiveDbTarget): string {
+  return [...new Set([t.user, t.database, t.host])].join('_');
 }
 
 /** First driver library candidate that exists on this machine, or null. */

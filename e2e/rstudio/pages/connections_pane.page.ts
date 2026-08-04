@@ -77,18 +77,20 @@ export class ConnectionsPane extends PageObject {
   }
 
   /**
-   * A row of the connection list containing the given text. Visible rows
-   * only: the hidden half of the list/explorer slider stays in the DOM, and
-   * the explorer's tree rows are also <tr>s whose text can include the same
-   * database name.
+   * The connection list's row for an exact display name. Visible rows only:
+   * the hidden half of the list/explorer slider stays in the DOM, and the
+   * explorer's tree rows are also <tr>s. Exact, because one connection's
+   * display name can contain another's (see connectionDisplayName).
    */
-  connectionRow(text: string): Locator {
-    return this.panel.locator('tr:visible', { hasText: text });
+  connectionRow(displayName: string): Locator {
+    return this.panel.locator('tr:visible').filter({
+      has: this.page.getByText(displayName, { exact: true }),
+    });
   }
 
   /** The row's explore button (ImageButtonColumn renders a titled span). */
-  exploreButton(rowText: string): Locator {
-    return this.connectionRow(rowText).locator('span[title="Explore connection"]');
+  exploreButton(displayName: string): Locator {
+    return this.connectionRow(displayName).locator('span[title="Explore connection"]');
   }
 
   /**

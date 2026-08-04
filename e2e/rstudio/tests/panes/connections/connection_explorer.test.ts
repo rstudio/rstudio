@@ -8,10 +8,12 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConnectionsPaneActions } from '@actions/connections_pane.actions';
 import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
+import { restartSessionWithSentinel } from '@utils/project';
 import {
   dbAvailability,
   drainKnownExplorerException,
   driverVisibleInSession,
+  resetConnectionState,
 } from '@utils/connections';
 
 for (const base of ALL_DB_TARGETS) {
@@ -30,7 +32,7 @@ for (const base of ALL_DB_TARGETS) {
       }
     });
 
-    test.beforeEach(async () => {
+    test.beforeEach(async ({ rstudioPage: page }) => {
       test.skip(
         !driverVisible,
         `session does not see the "${target.driverName}" ODBC driver (sandbox registration unavailable here)`,
@@ -38,6 +40,12 @@ for (const base of ALL_DB_TARGETS) {
       const avail = dbAvailability(target);
       test.skip(!avail.ok, avail.reason);
       test.skip(!seeded, 'seeding the database through DBI failed');
+      // Specs share one session: clear this target's connection and
+      // history entry, then restart R so no live connection or `con`
+      // binding survives from a prior test. The restart costs a couple
+      // of seconds and is what makes these specs deterministic.
+      await resetConnectionState(page, target);
+      await restartSessionWithSentinel(page);
       await actions.activatePane();
     });
 

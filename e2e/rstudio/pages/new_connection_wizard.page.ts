@@ -82,7 +82,12 @@ export class NewConnectionWizard extends PageObject {
     const byCell = this.dialog.locator(
       `xpath=.//td[normalize-space(.) = "${key}:"]/following-sibling::td[1]//input`,
     );
-    return byLabel.or(byCell).first();
+    // Visible only: the dialog also accumulates superseded copies of the
+    // parameter grid (see connectFromDropdown for the same churn), so an
+    // unfiltered first() match can land in a stale grid -- typing then goes
+    // to whichever field occupies that position there, silently corrupting a
+    // different parameter.
+    return byLabel.or(byCell).filter({ visible: true }).first();
   }
 
   /**
