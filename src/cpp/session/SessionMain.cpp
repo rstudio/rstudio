@@ -2201,7 +2201,9 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // longer be part of the same job, but because rsession is not detached from
       // the desktop frontend, it will still be closed if the frontend is closed
 #ifdef _WIN32
-      core::system::initHook();
+      // logging is not initialized yet; the error is logged further below,
+      // once logging is available
+      Error initHookError = core::system::initHook();
 #endif
 
       // set an invalid parameter handler -- we do this to match the behavior of
@@ -2276,6 +2278,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                   core::log::LogLevel::WARN,
                                   core::system::xdg::userLogDir(),
                                   true); // force log dir to be under user's home directory
+
+      // report any failure from initHook(), which ran before logging was up
+#ifdef _WIN32
+      if (initHookError)
+      {
+         initHookError.addProperty(
+                  "description",
+                  "failed to set up the session job object; child processes may not be cleaned up when the session exits");
+         LOG_ERROR(initHookError);
+      }
+#endif
 
       // initialize COM eagerly, so the main thread's apartment state is
       // deterministic rather than depending on which Windows API happens to

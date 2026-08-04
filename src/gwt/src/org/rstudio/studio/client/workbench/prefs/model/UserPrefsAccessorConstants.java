@@ -2348,6 +2348,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantNesAutoshowDescription();
 
    /**
+    * Control the granularity of change highlighting in edit suggestion previews. Word-level highlighting marks whole changed words; character-level highlighting marks individual changed characters.
+    */
+   @DefaultStringValue("Highlight changes in edit suggestions by:")
+   String editSuggestionDiffGranularityTitle();
+   @DefaultStringValue("Control the granularity of change highlighting in edit suggestion previews. Word-level highlighting marks whole changed words; character-level highlighting marks individual changed characters.")
+   String editSuggestionDiffGranularityDescription();
+   @DefaultStringValue("Word")
+   String editSuggestionDiffGranularityEnum_word();
+   @DefaultStringValue("Character")
+   String editSuggestionDiffGranularityEnum_character();
+
+   /**
     * When enabled, the Posit Assistant button is displayed in the main toolbar.
     */
    @DefaultStringValue("Show Posit Assistant button in toolbar")

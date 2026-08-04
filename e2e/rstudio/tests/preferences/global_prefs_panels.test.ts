@@ -60,6 +60,7 @@ import {
   ASSISTANT_COPILOT_OPTION,
   ASSISTANT_NONE_OPTION,
   ASSISTANT_UPDATE_CHECK_INPUT,
+  ASSISTANT_EDIT_SUGGESTION_GRANULARITY_SELECT,
 } from '@pages/global_options.page';
 
 test.describe('Global Options panels', () => {
@@ -246,6 +247,29 @@ test.describe('Global Options panels', () => {
     } finally {
       await clearPref(page, 'assistant_completions_delay');
       await clearPref(page, 'assistant_completions_trigger');
+      await clearPref(page, 'assistant');
+    }
+  });
+
+  // Like the delay-field test above, this guards against a widget being
+  // constructed and wired but never added to the layout (#17929): the
+  // edit-suggestion granularity selector must actually render, showing its
+  // saved value, once a code assistant is selected.
+  test('Assistant edit-suggestion granularity selector renders with its saved value', async ({ rstudioPage: page }) => {
+    await setPref(page, 'assistant', 'copilot');
+    await setPref(page, 'edit_suggestion_diff_granularity', 'character');
+    try {
+      await openGlobalOptions(page);
+      await page.locator(ASSISTANT_TAB).click();
+      await expect(page.locator(ASSISTANT_PANEL)).toBeVisible();
+
+      const granularitySelect = page.locator(ASSISTANT_EDIT_SUGGESTION_GRANULARITY_SELECT);
+      await expect(granularitySelect).toBeVisible();
+      await expect(granularitySelect).toHaveValue('character');
+
+      await closeGlobalOptions(page);
+    } finally {
+      await clearPref(page, 'edit_suggestion_diff_granularity');
       await clearPref(page, 'assistant');
     }
   });

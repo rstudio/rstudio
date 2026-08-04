@@ -9,7 +9,7 @@ import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
-import { setPref } from '@utils/commands';
+import { getPref, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 // ---------------------------------------------------------------------------
@@ -117,20 +117,25 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     versions = await consoleActions.getEnvironmentVersions();
 
     // -----------------------------------------------------------------------
-    // Step 1: Stop any running backend FIRST.
+    // Step 1: Make sure no backend is running FIRST.
     //
-    // The default chat_provider is "posit", so the backend auto-starts when
-    // RStudio launches. We must stop it before creating skill files, because
-    // skills are only discovered during DatabotCore.initialize() (at process
-    // start). Setting the preference to "none" (a valid enum value -- NOT "")
-    // triggers onChatProviderChanged() → stopBackend() on the GWT side.
+    // The e2e base prefs start chat_provider at "none", so normally there is
+    // no backend here -- but an earlier @chat suite in this worker may have
+    // left the provider on (the per-test leak guard skips @chat-tagged
+    // tests), and a running backend must be stopped before creating skill
+    // files: skills are only discovered during DatabotCore.initialize() (at
+    // process start). Setting the preference to "none" (a valid enum value --
+    // NOT "") triggers onChatProviderChanged() → stopBackend() on the GWT
+    // side.
     // -----------------------------------------------------------------------
-    await setPref(page, 'chat_provider', 'none');
-    // Deliberate wait: setPref triggers stopBackend() asynchronously on the
-    // GWT side. There's no bridge-exposed signal for "backend has fully shut
-    // down", so we settle for an observation window long enough for the
-    // child process to terminate before we recreate skill files below.
-    await page.waitForTimeout(5000);
+    if ((await getPref(page, 'chat_provider')) !== 'none') {
+      await setPref(page, 'chat_provider', 'none');
+      // Deliberate wait: setPref triggers stopBackend() asynchronously on the
+      // GWT side. There's no bridge-exposed signal for "backend has fully shut
+      // down", so we settle for an observation window long enough for the
+      // child process to terminate before we recreate skill files below.
+      await page.waitForTimeout(5000);
+    }
 
     // -----------------------------------------------------------------------
     // Step 2: Create a project-level skill (.positai/skills/ in workspace)

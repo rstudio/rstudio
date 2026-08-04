@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.diff.JsDiff;
+import org.rstudio.core.client.diff.DiffUtils;
 import org.rstudio.core.client.diff.JsDiff.Delta;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -34,8 +34,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-
-import jsinterop.base.JsArrayLike;
 
 public abstract class AceEditorDiffView
 {
@@ -58,9 +56,10 @@ public abstract class AceEditorDiffView
 
    public AceEditorDiffView(String originalText,
                             String replacementText,
-                            TextFileType fileType)
+                            TextFileType fileType,
+                            boolean wordDiff)
    {
-      computeDeltas(originalText, replacementText);
+      computeDeltas(originalText, replacementText, wordDiff);
 
       Styles styles = RES.styles();
       styles.ensureInjected();
@@ -123,20 +122,20 @@ public abstract class AceEditorDiffView
       mainPanel_.add(statusBar_);
    }
 
-   private void computeDeltas(String originalText, String replacementText)
+   private void computeDeltas(String originalText, String replacementText, boolean wordDiff)
    {
       // Compute diffs.
-      JsArrayLike<Delta> deltas = JsDiff.diffChars(originalText, replacementText);
+      List<Delta> deltas = DiffUtils.computeDeltas(originalText, replacementText, wordDiff);
       StringBuilder builder = new StringBuilder();
 
       // Iterate through the diffs, and build ranges for additions and deletions.
-      for (int i = 0, n = deltas.getLength(); i < n; i++)
+      for (Delta delta : deltas)
       {
          // If this was an addition or a removal, create a range and add a marker.
-         Delta delta = deltas.getAt(i);
          if (delta.added || delta.removed)
          {
-            // Compute the range in the replacement text. Do this by computing the
+            // Compute the range in the merged text shown in the editor (which
+            // interleaves removed and added values). Do this by computing the
             // start position of the current builder prefix, and the end position
             // after adding the current delta value.
             String prefix  = builder.toString();

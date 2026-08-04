@@ -16,6 +16,8 @@
 #include <gtest/gtest.h>
 
 #include <core/Database.hpp>
+#include <core/SqlPreprocessor.hpp>
+#include <core/QueryBuilder.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/SafeConvert.hpp>
@@ -102,6 +104,148 @@ TEST_F(DatabaseTestsFixture, CanCreateSqliteDatabase)
 
    EXPECT_EQ(id, rowId);
    EXPECT_EQ(text, rowText);
+}
+
+TEST_F(DatabaseTestsFixture, CanPreprocessSql)
+{
+   std::string text = "#if 1\nA1\n#else\nB1\n#endif";
+   auto result = preprocessSchemaFile(sqliteConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+   EXPECT_EQ(*result, "A1\n");
+
+   text = "#if 0\nA2\n#else\nB2\n#endif";
+   result = preprocessSchemaFile(sqliteConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+   EXPECT_EQ(*result, "B2\n");
+
+   text = "#if driver(sqlite3)\nA3\n#else\nB3\n#endif";
+   result = preprocessSchemaFile(sqliteConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+   EXPECT_EQ(*result, "A3\n");
+
+   text = "#if driver(postgresql)\nA4\n#else\nB4\n#endif";
+   result = preprocessSchemaFile(sqliteConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+   EXPECT_EQ(*result, "B4\n");
+
+   text = "#if !1\nA5\n#else\nB5\n#endif";
+   result = preprocessSchemaFile(sqliteConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+   EXPECT_EQ(*result, "B5\n");
+
+   text = "#if (1 || 0) && 1\nA6\n#else\nB6\n#endif";
+   result = preprocessSchemaFile(sqliteConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+   EXPECT_EQ(*result, "A6\n");
+}
+
+void testCanCheckExists(DatabaseConnection dbConnection)
+{
+   Error error = dbConnection->executeStr("CREATE TABLE exist_test (id INTEGER)");
+   ASSERT_FALSE(error) << error.getMessage();
+
+   std::string text = R""(
+#if exists(table, exist_test)
+A
+#endif
+#if exists(table, noexist_test)
+B
+#endif
+#if exists(column, exist_test.id)
+C
+#endif
+#if exists(column, exist_test.bogus)
+D
+#endif
+#if exists(column, noexist_test.id)
+E
+#endif
+)"";
+   auto result = preprocessSchemaFile(dbConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+
+   bool tableTest = result->find("A") != std::string::npos;
+   EXPECT_TRUE(tableTest) << "exists(table) failed to find existing table";
+
+   bool noTableTest = result->find("B") != std::string::npos;
+   EXPECT_FALSE(noTableTest) << "exists(table) failed to reject missing table";
+
+   bool columnTest = result->find("C") != std::string::npos;
+   EXPECT_TRUE(columnTest) << "exists(column) failed to find existing column";
+
+   bool noColumnTest = result->find("D") != std::string::npos;
+   EXPECT_FALSE(noColumnTest) << "exists(column) failed to reject missing column";
+
+   bool noTableColumnTest = result->find("E") != std::string::npos;
+   EXPECT_FALSE(noTableColumnTest) << "exists(column) failed to reject missing table";
+}
+
+TEST_F(DatabaseTestsFixture, CanCheckExistsSqlite)
+{
+   testCanCheckExists(sqliteConnection);
+}
+
+TEST_F(DatabaseTestsFixture, CanCheckExistsPostgres)
+{
+   if (!std::getenv("POSTGRES_ENABLED") || std::string(std::getenv("POSTGRES_ENABLED")) != "1")
+   {
+      GTEST_SKIP() << "Skipping Postgres migration tests as POSTGRES_ENABLED is not set";
+   }
+
+   boost::shared_ptr<IConnection> postgresConnection;
+   Error error = connect(postgresConnectionOptions(), &postgresConnection);
+   ASSERT_FALSE(error) << "Failed to connect to PostgreSQL database for schema update test: " << error.getMessage();
+
+   // Reset the PostgreSQL test database so the test is repeatable.
+   // The SQLite DB is already cleaned up by the fixture (file is deleted in TearDown).
+   error = postgresConnection->executeStr("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+   ASSERT_FALSE(error) << "Failed to reset PostgreSQL test database: " << error.getMessage();
+
+   testCanCheckExists(postgresConnection);
+}
+
+TEST_F(DatabaseTestsFixture, CanNestPreprocessorIf)
+{
+   std::string text = R""(
+#if 1
+A
+#if 1
+B
+#else
+C
+#endif
+#if 0
+D
+#else
+E
+#endif
+#else
+F
+#if 1
+G
+#else
+H
+#endif
+#if 0
+I
+#else
+J
+#endif
+#endif
+)"";
+   auto result = preprocessSchemaFile(sqliteConnection, text);
+   ASSERT_TRUE(result) << result.error().getMessage();
+
+   EXPECT_NE(result->find("A"), std::string::npos);
+   EXPECT_NE(result->find("B"), std::string::npos);
+   EXPECT_EQ(result->find("C"), std::string::npos);
+   EXPECT_EQ(result->find("D"), std::string::npos);
+   EXPECT_NE(result->find("E"), std::string::npos);
+   EXPECT_EQ(result->find("F"), std::string::npos);
+   EXPECT_EQ(result->find("G"), std::string::npos);
+   EXPECT_EQ(result->find("H"), std::string::npos);
+   EXPECT_EQ(result->find("I"), std::string::npos);
+   EXPECT_EQ(result->find("J"), std::string::npos);
 }
 
 TEST(DatabaseTest, CanCreatePostgresqlDatabase)
@@ -300,12 +444,11 @@ TEST(DatabaseTest, CanUseConnectionPool)
    dbPath.removeIfExists();
 }
 
-TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
+static void testCanUpdateSchemas(DatabaseConnection dbConnection)
 {
-   if (!std::getenv("POSTGRES_ENABLED") || std::string(std::getenv("POSTGRES_ENABLED")) != "1")
-   {
-      GTEST_SKIP() << "Skipping Postgres migration tests as POSTGRES_ENABLED is not set";
-   }
+   bool isSqlite = dbConnection->driver() == Driver::Sqlite;
+   std::string ext = isSqlite ? "sqlite" : "postgresql";
+
    Error error;
 
    // Copy the real CreateTables files to a temp directory so we can add test migration
@@ -316,15 +459,10 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
    ASSERT_FALSE(schemaDir.ensureDirectory());
 
    std::string createTablesContent;
-   error = readStringFromFile(dbSchemaDir.completeChildPath("CreateTables.sqlite"), &createTablesContent);
-   ASSERT_FALSE(error) << "Failed to read CreateTables.sqlite from " << dbSchemaDir.getAbsolutePath();
-   error = writeStringToFile(schemaDir.completeChildPath("CreateTables.sqlite"), createTablesContent);
-   ASSERT_FALSE(error) << "Failed to copy CreateTables.sqlite";
-
-   error = readStringFromFile(dbSchemaDir.completeChildPath("CreateTables.postgresql"), &createTablesContent);
-   ASSERT_FALSE(error) << "Failed to read CreateTables.postgresql from " << dbSchemaDir.getAbsolutePath();
-   error = writeStringToFile(schemaDir.completeChildPath("CreateTables.postgresql"), createTablesContent);
-   ASSERT_FALSE(error) << "Failed to copy CreateTables.postgresql";
+   error = readStringFromFile(dbSchemaDir.completeChildPath("CreateTables." + ext), &createTablesContent);
+   ASSERT_FALSE(error) << "Failed to read CreateTables." << ext << " from " << dbSchemaDir.getAbsolutePath();
+   error = writeStringToFile(schemaDir.completeChildPath("CreateTables." + ext), createTablesContent);
+   ASSERT_FALSE(error) << "Failed to copy CreateTables." << ext;
 
    // Test migration files create and modify test-specific tables.
    // Migration filenames use the 3-part convention: {version}_{Release-Name}_{Description}.{ext}
@@ -346,138 +484,118 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
       UPDATE schema_version SET current_version = '99000000000000000000001', release_name = 'Test Release';
       )"";
 
-   // sqlite cannot alter tables very well, so adding constraints necessitates dropping
-   // and re-creating the tables
-   std::string schema2Sqlite =
-      R""(
-      CREATE TABLE TestTable1_Persons_new(
-         id int NOT NULL,
-         first_name varchar(255),
-         last_name varchar(255),
-         email_address varchar(255),
-         PRIMARY KEY (id)
-      );
+   std::string schema2;
+   if (isSqlite)
+   {
+      // sqlite cannot alter tables very well, so adding constraints necessitates dropping
+      // and re-creating the tables
+      schema2 =
+         R""(
+         CREATE TABLE TestTable1_Persons_new(
+            id int NOT NULL,
+            first_name varchar(255),
+            last_name varchar(255),
+            email_address varchar(255),
+            PRIMARY KEY (id)
+         );
 
-      DROP TABLE TestTable1_Persons;
-      ALTER TABLE TestTable1_Persons_new RENAME TO TestTable1_Persons;
+         DROP TABLE TestTable1_Persons;
+         ALTER TABLE TestTable1_Persons_new RENAME TO TestTable1_Persons;
 
-      CREATE TABLE TestTable2_AccountHolders_new(
-         id int,
-         fk_person_id int,
-         PRIMARY KEY (id),
-         FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id)
-      );
+         CREATE TABLE TestTable2_AccountHolders_new(
+            id int,
+            fk_person_id int,
+            PRIMARY KEY (id),
+            FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id)
+         );
 
-      DROP TABLE TestTable2_AccountHolders;
-      ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
+         DROP TABLE TestTable2_AccountHolders;
+         ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
 
-      UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
-      )"";
+         UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
+         )"";
+   }
+   else
+   {
+      // postgresql supports modification of tables
+      schema2 =
+         R""(
+         ALTER TABLE TestTable1_Persons
+         ADD PRIMARY KEY (id);
 
-   // postgresql supports modification of tables
-   std::string schema2Postgresql =
-      R""(
-      ALTER TABLE TestTable1_Persons
-      ADD PRIMARY KEY (id);
+         ALTER TABLE TestTable2_AccountHolders
+         ADD PRIMARY KEY (id);
 
-      ALTER TABLE TestTable2_AccountHolders
-      ADD PRIMARY KEY (id);
+         ALTER TABLE TestTable2_AccountHolders
+         ADD FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id);
 
-      ALTER TABLE TestTable2_AccountHolders
-      ADD FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id);
+         UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
+         )"";
+   }
 
-      UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
-      )"";
+   std::string schema3;
+   if (isSqlite)
+   {
+      schema3 =
+         R""(
+         CREATE TABLE TestTable2_AccountHolders_new(
+            id int,
+            fk_person_id int,
+            creation_time text,
+            PRIMARY KEY (id),
+            FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id)
+         );
 
-   std::string schema3Sqlite =
-      R""(
-      CREATE TABLE TestTable2_AccountHolders_new(
-         id int,
-         fk_person_id int,
-         creation_time text,
-         PRIMARY KEY (id),
-         FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id)
-      );
+         DROP TABLE TestTable2_AccountHolders;
+         ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
 
-      DROP TABLE TestTable2_AccountHolders;
-      ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
+         UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
+         )"";
+   }
+   else
+   {
+      schema3 =
+         R""(
+         ALTER TABLE TestTable2_AccountHolders
+         ADD COLUMN creation_time text;
 
-      UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
-      )"";
-
-   std::string schema3Postgresql =
-      R""(
-      ALTER TABLE TestTable2_AccountHolders
-      ADD COLUMN creation_time text;
-
-      UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
-      )"";
+         UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
+         )"";
+   }
 
    FilePath outFile1 = schemaDir.completeChildPath("99000000000000000000001_Test-Release_InitialTables.sql");
-   FilePath outFile2Sqlite = schemaDir.completeChildPath("99000000000000000000002_Test-Release_AddConstraints.sqlite");
-   FilePath outFile2Postgresql = schemaDir.completeChildPath("99000000000000000000002_Test-Release_AddConstraints.postgresql");
-   FilePath outFile3Sqlite = schemaDir.completeChildPath("99000000000000000000003_Test-Release_AddCreationTime.sqlite");
-   FilePath outFile3Postgresql = schemaDir.completeChildPath("99000000000000000000003_Test-Release_AddCreationTime.postgresql");
+   FilePath outFile2 = schemaDir.completeChildPath("99000000000000000000002_Test-Release_AddConstraints." + ext);
+   FilePath outFile3= schemaDir.completeChildPath("99000000000000000000003_Test-Release_AddCreationTime." + ext);
 
    error = writeStringToFile(outFile1, schema1);
    ASSERT_FALSE(error) << "Failed to write initial test tables schema file: " << error.getMessage();
 
-   error = writeStringToFile(outFile2Sqlite, schema2Sqlite);
-   ASSERT_FALSE(error) << "Failed to write SQLite constraints schema file: " << error.getMessage();
+   error = writeStringToFile(outFile2, schema2);
+   ASSERT_FALSE(error) << "Failed to write " << ext << " constraints schema file: " << error.getMessage();
 
-   error = writeStringToFile(outFile2Postgresql, schema2Postgresql);
-   ASSERT_FALSE(error) << "Failed to write PostgreSQL constraints schema file: " << error.getMessage();
+   error = writeStringToFile(outFile3, schema3);
+   ASSERT_FALSE(error) << "Failed to write " << ext << " account creation schema file: " << error.getMessage();
 
-   error = writeStringToFile(outFile3Sqlite, schema3Sqlite);
-   ASSERT_FALSE(error) << "Failed to write SQLite account creation schema file: " << error.getMessage();
-
-   error = writeStringToFile(outFile3Postgresql, schema3Postgresql);
-   ASSERT_FALSE(error) << "Failed to write PostgreSQL account creation schema file: " << error.getMessage();
-
-   boost::shared_ptr<IConnection> postgresConnection;
-   error = connect(postgresConnectionOptions(), &postgresConnection);
-   ASSERT_FALSE(error) << "Failed to connect to PostgreSQL database for schema update test: " << error.getMessage();
-
-   // Reset the PostgreSQL test database so the test is repeatable.
-   // The SQLite DB is already cleaned up by the fixture (file is deleted in TearDown).
-   error = postgresConnection->executeStr("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
-   ASSERT_FALSE(error) << "Failed to reset PostgreSQL test database: " << error.getMessage();
-
-   SchemaUpdater sqliteUpdater(sqliteConnection, schemaDir);
-   SchemaUpdater postgresUpdater(postgresConnection, schemaDir);
+   SchemaUpdater updater(dbConnection, schemaDir);
 
    // First update: creates schema from the real CreateTables files (production version)
-   error = sqliteUpdater.update();
-   ASSERT_FALSE(error) << "Failed initial SQLite schema creation: " << error.getMessage();
-
-   error = postgresUpdater.update();
-   ASSERT_FALSE(error) << "Failed initial PostgreSQL schema creation: " << error.getMessage();
+   error = updater.update();
+   ASSERT_FALSE(error) << "Failed initial " << ext << " schema creation: " << error.getMessage();
 
    // Second update: applies test migration files (versions higher than production)
-   error = sqliteUpdater.update();
-   ASSERT_FALSE(error) << "Failed to apply SQLite test migrations: " << error.getMessage();
-
-   error = postgresUpdater.update();
-   ASSERT_FALSE(error) << "Failed to apply PostgreSQL test migrations: " << error.getMessage();
+   error = updater.update();
+   ASSERT_FALSE(error) << "Failed to apply " << ext << " test migrations: " << error.getMessage();
 
    SchemaVersion expectedVersion("99000000000000000000003", "Test Release");
 
    SchemaVersion currentSchemaVersion;
-   error = sqliteUpdater.databaseSchemaVersion(&currentSchemaVersion);
-   ASSERT_FALSE(error) << "Failed to get SQLite schema version: " << error.getMessage();
-   ASSERT_EQ(currentSchemaVersion, expectedVersion);
-
-   currentSchemaVersion = SchemaVersion();
-   error = postgresUpdater.databaseSchemaVersion(&currentSchemaVersion);
-   ASSERT_FALSE(error) << "Failed to get PostgreSQL schema version: " << error.getMessage();
+   error = updater.databaseSchemaVersion(&currentSchemaVersion);
+   ASSERT_FALSE(error) << "Failed to get " << ext << " schema version: " << error.getMessage();
    ASSERT_EQ(currentSchemaVersion, expectedVersion);
 
    // ensure repeated calls to update work without error
-   error = sqliteUpdater.update();
-   ASSERT_FALSE(error) << "Failed to update SQLite schema (repeated call): " << error.getMessage();
-
-   error = postgresUpdater.update();
-   ASSERT_FALSE(error) << "Failed to update PostgreSQL schema (repeated call): " << error.getMessage();
+   error = updater.update();
+   ASSERT_FALSE(error) << "Failed to update " << ext << " schema (repeated call): " << error.getMessage();
 
    // ensure we can insert data as expected (given our expected constraints)
    int id = 1;
@@ -487,70 +605,65 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
    std::string creationTime = "03/03/2020 12:00:00";
 
    // create queries - we will be executing them multiple times, so bind input just before execution
-   Query sqliteInsertQuery = sqliteConnection->query("INSERT INTO TestTable1_Persons VALUES (:id, :fname, :lname, :email)");
-   Query postgresInsertQuery = postgresConnection->query("INSERT INTO TestTable1_Persons VALUES (:id, :fname, :lname, :email)");
-   Query sqliteInsertQuery2 = sqliteConnection->query("INSERT INTO TestTable2_AccountHolders VALUES (:id, :pid, :time)");
-   Query postgresInsertQuery2 = postgresConnection->query("INSERT INTO TestTable2_AccountHolders VALUES (:id, :pid, :time)");
+   Query insertQuery = dbConnection->query("INSERT INTO TestTable1_Persons VALUES (:id, :fname, :lname, :email)");
+   Query insertQuery2 = dbConnection->query("INSERT INTO TestTable2_AccountHolders VALUES (:id, :pid, :time)");
 
    // should fail - FK constraint
-   sqliteInsertQuery2
+   insertQuery2
          .withInput(id, "id")
          .withInput(id, "pid")
          .withInput(creationTime, "time");
-   postgresInsertQuery2
-         .withInput(id, "id")
-         .withInput(id, "pid")
-         .withInput(creationTime, "time");
-   EXPECT_TRUE(sqliteConnection->execute(sqliteInsertQuery2));
-   ASSERT_TRUE(postgresConnection->execute(postgresInsertQuery2));
+   EXPECT_TRUE(dbConnection->execute(insertQuery2));
 
    // should succeed - properly ordered
-   sqliteInsertQuery
+   insertQuery
          .withInput(id, "id")
          .withInput(firstName, "fname")
          .withInput(lastName, "lname")
          .withInput(email, "email");
-   EXPECT_FALSE(sqliteConnection->execute(sqliteInsertQuery));
-   sqliteInsertQuery2
+   EXPECT_FALSE(dbConnection->execute(insertQuery));
+   insertQuery2
          .withInput(id, "id")
          .withInput(id, "pid")
          .withInput(creationTime, "time");
-   EXPECT_FALSE(sqliteConnection->execute(sqliteInsertQuery2));
-   postgresInsertQuery
-         .withInput(id, "id")
-         .withInput(firstName, "fname")
-         .withInput(lastName, "lname")
-         .withInput(email, "email");
-   EXPECT_FALSE(postgresConnection->execute(postgresInsertQuery));
-   postgresInsertQuery2
-         .withInput(id, "id")
-         .withInput(id, "pid")
-         .withInput(creationTime, "time");
-   EXPECT_FALSE(postgresConnection->execute(postgresInsertQuery2));
+   EXPECT_FALSE(dbConnection->execute(insertQuery2));
 
    // should fail - PK constraint
-   sqliteInsertQuery
+   insertQuery
          .withInput(id, "id")
          .withInput(firstName, "fname")
          .withInput(lastName, "lname")
          .withInput(email, "email");
-   ASSERT_TRUE(sqliteConnection->execute(sqliteInsertQuery));
-   sqliteInsertQuery2
+   ASSERT_TRUE(dbConnection->execute(insertQuery));
+   insertQuery2
          .withInput(id, "id")
          .withInput(id, "pid")
          .withInput(creationTime, "time");
-   ASSERT_TRUE(sqliteConnection->execute(sqliteInsertQuery2));
-   postgresInsertQuery
-         .withInput(id, "id")
-         .withInput(firstName, "fname")
-         .withInput(lastName, "lname")
-         .withInput(email, "email");
-   ASSERT_TRUE(postgresConnection->execute(postgresInsertQuery));
-   postgresInsertQuery2
-         .withInput(id, "id")
-         .withInput(id, "pid")
-         .withInput(creationTime, "time");
-   ASSERT_TRUE(postgresConnection->execute(postgresInsertQuery2));
+   ASSERT_TRUE(dbConnection->execute(insertQuery2));
+}
+
+TEST_F(DatabaseTestsFixture, CanUpdateSchemasSqlite)
+{
+   testCanUpdateSchemas(sqliteConnection);
+}
+
+TEST_F(DatabaseTestsFixture, CanUpdateSchemasPostgres)
+{
+   if (!std::getenv("POSTGRES_ENABLED") || std::string(std::getenv("POSTGRES_ENABLED")) != "1")
+   {
+      GTEST_SKIP() << "Skipping Postgres migration tests as POSTGRES_ENABLED is not set";
+   }
+
+   boost::shared_ptr<IConnection> postgresConnection;
+   Error error = connect(postgresConnectionOptions(), &postgresConnection);
+   ASSERT_FALSE(error) << "Failed to connect to PostgreSQL database for schema update test: " << error.getMessage();
+
+   // Reset the PostgreSQL test database so the test is repeatable.
+   // The SQLite DB is already cleaned up by the fixture (file is deleted in TearDown).
+   error = postgresConnection->executeStr("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+   ASSERT_FALSE(error) << "Failed to reset PostgreSQL test database: " << error.getMessage();
+
+   testCanUpdateSchemas(postgresConnection);
 }
 
 TEST(DatabaseTest, SchemaVersionComparisonsAreCorrect)
@@ -834,6 +947,294 @@ TEST_F(DatabaseTestsFixture, GetOptionalValueCastsNumericTypes)
    }
 }
 
+TEST(DatabaseTest, SqlIdentifierValidation)
+{
+   auto result = SqlIdentifier::from("valid");
+   EXPECT_TRUE(result) << "unexpected error when creating SqlIdentifier from valid input";
+
+   result = SqlIdentifier::from("invalid!");
+   EXPECT_FALSE(result) << "SqlIdentifier::from allowed invalid input";
+}
+
+TEST_F(DatabaseTestsFixture, InsertBuilderInserts)
+{
+   Query query = sqliteConnection->query("create table BuilderTest(i_val integer, f_val real, b_val bigint, t_val text)");
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create BuilderTest table: " << error.getMessage();
+
+   InsertBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("i_val", 1)
+      .add("f_val", 2.2)
+      .add("b_val", 3)
+      .add("t_val", "foo");
+
+   std::string sql = builder.toSQL();
+   EXPECT_EQ(sql, "INSERT INTO BuilderTest (i_val, f_val, b_val, t_val) VALUES (:i_val, :f_val, :b_val, :t_val)");
+
+   query = builder.build();
+   error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to insert values into BuilderTest: " << error.getMessage();
+
+   Rowset rows;
+   query = sqliteConnection->query("select i_val, f_val, b_val, t_val from BuilderTest");
+   error = sqliteConnection->execute(query, rows);
+   ASSERT_FALSE(error) << "Failed to select values from BuilderTest: " << error.getMessage();
+
+   int i = 0;
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it, ++i)
+   {
+      ASSERT_EQ(i, 0) << "too many rows returned";
+
+      int i_val;
+      double f_val;
+      long long b_val;
+      std::string t_val;
+
+      error = rows.getValue(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val, 1);
+      error = rows.getValue(it, "f_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val, 2.2);
+      error = rows.getValue(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val, 3);
+      error = rows.getValue(it, "t_val", &t_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(t_val, "foo");
+   }
+   ASSERT_EQ(i, 1) << "not enough rows returned";
+}
+
+TEST_F(DatabaseTestsFixture, SelectBuilderSelects)
+{
+   Query query = sqliteConnection->query("create table BuilderTest(i_val integer, f_val real, b_val bigint, t_val text)");
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create BuilderTest table: " << error.getMessage();
+
+   query = sqliteConnection->query("insert into BuilderTest (i_val, f_val, b_val, t_val) VALUES (1, 2.2, 3, :t_val)");
+   std::string foo = "foo";
+   query.withInput(foo);
+   error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to insert values into BuilderTest: " << error.getMessage();
+
+   SelectBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("i_val").add("f_val").add("b_val").add("t_val");
+   builder.where("i_val", 1);
+
+   std::string sql = builder.toSQL();
+   EXPECT_EQ(sql, "SELECT i_val, f_val, b_val, t_val FROM BuilderTest WHERE i_val = :where_i_val");
+
+   query = builder.build();
+
+   Rowset rows;
+   error = sqliteConnection->execute(query, rows);
+   ASSERT_FALSE(error) << "Failed to select values from BuilderTest: " << error.getMessage();
+
+   int i = 0;
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it, ++i)
+   {
+      ASSERT_EQ(i, 0) << "too many rows returned";
+
+      int i_val;
+      double f_val;
+      long long b_val;
+      std::string t_val;
+
+      error = rows.getValue(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val, 1);
+      error = rows.getValue(it, "f_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val, 2.2);
+      error = rows.getValue(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val, 3);
+      error = rows.getValue(it, "t_val", &t_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(t_val, "foo");
+   }
+   ASSERT_EQ(i, 1) << "not enough rows returned";
+}
+
+TEST_F(DatabaseTestsFixture, UpdateBuilderUpdates)
+{
+   Query query = sqliteConnection->query("create table BuilderTest(i_val integer, b_val bigint)");
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create BuilderTest table: " << error.getMessage();
+
+   for (int i = 0; i < 3; i++)
+   {
+      InsertBuilder builder(sqliteConnection, "BuilderTest");
+      builder.add("i_val", i)
+         .add("b_val", i);
+      query = builder.build();
+      error = sqliteConnection->execute(query);
+      ASSERT_FALSE(error) << "Failed to insert values into BuilderTest: " << error.getMessage();
+   }
+
+   UpdateBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("b_val", 999)
+      .where("i_val", 1);
+
+   std::string sql = builder.toSQL();
+   EXPECT_EQ(sql, "UPDATE BuilderTest SET b_val = :b_val WHERE i_val = :where_i_val");
+
+   query = builder.build();
+   error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to update values in BuilderTest: " << error.getMessage();
+
+   Rowset rows;
+   query = sqliteConnection->query("select i_val, b_val from BuilderTest");
+   error = sqliteConnection->execute(query, rows);
+   ASSERT_FALSE(error) << "Failed to select values from BuilderTest: " << error.getMessage();
+
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+   {
+      int i_val;
+      int b_val;
+
+      error = rows.getValue(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      error = rows.getValue(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      if (i_val == 1)
+         EXPECT_EQ(b_val, 999);
+      else
+         EXPECT_EQ(b_val, i_val);
+   }
+}
+
+// Also tests .whereIn()
+TEST_F(DatabaseTestsFixture, DeleteBuilderDeletes)
+{
+   Query query = sqliteConnection->query("create table BuilderTest(i_val integer, b_val bigint)");
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create BuilderTest table: " << error.getMessage();
+
+   for (int i = 0; i < 3; i++)
+   {
+      InsertBuilder builder(sqliteConnection, "BuilderTest");
+      builder.add("i_val", i)
+         .add("b_val", i);
+      query = builder.build();
+      error = sqliteConnection->execute(query);
+      ASSERT_FALSE(error) << "Failed to insert values into BuilderTest: " << error.getMessage();
+   }
+
+   {
+      // Temporary builder just for testing compilation of the container overload
+      DeleteBuilder builder(sqliteConnection, "BuilderTest");
+      builder.whereIn("i_val", std::vector<int>{ 0, 2 });
+   }
+
+   DeleteBuilder builder(sqliteConnection, "BuilderTest");
+   builder.whereIn("i_val", { 0, 2 });
+
+   std::string sql = builder.toSQL();
+   EXPECT_EQ(sql, "DELETE FROM BuilderTest WHERE i_val IN (:where_i_val_0, :where_i_val_1)");
+
+   query = builder.build();
+   error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to update values in BuilderTest: " << error.getMessage();
+
+   Rowset rows;
+   query = sqliteConnection->query("select i_val, b_val from BuilderTest");
+   error = sqliteConnection->execute(query, rows);
+   ASSERT_FALSE(error) << "Failed to select values from BuilderTest: " << error.getMessage();
+
+   int i = 0;
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it, ++i)
+   {
+      ASSERT_EQ(i, 0) << "too many rows returned";
+
+      int i_val;
+      int b_val;
+
+      error = rows.getValue(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val, 1);
+      error = rows.getValue(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val, 1);
+   }
+   ASSERT_EQ(i, 1) << "not enough rows returned";
+}
+
+TEST_F(DatabaseTestsFixture, CompoundWhereExpressions)
+{
+   Query query = sqliteConnection->query("create table BuilderTest(id INTEGER, foo INTEGER, bar INTEGER)");
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create BuilderTest table: " << error.getMessage();
+
+   error = sqliteConnection->executeStr("insert into BuilderTest (id, foo, bar) VALUES (1, 2, 0), (3, 4, 0), (5, 6, 1)");
+   ASSERT_FALSE(error) << "Failed to insert values into BuilderTest: " << error.getMessage();
+
+   SelectBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("id");
+   builder.where(QBWhereOr().where("foo", 2).where("bar", 1));
+
+   std::string sql = builder.toSQL();
+   EXPECT_EQ(sql, "SELECT id FROM BuilderTest WHERE (foo = :where_1_foo OR bar = :where_1_bar)");
+
+   query = builder.build();
+
+   Rowset rows;
+   error = sqliteConnection->execute(query, rows);
+   ASSERT_FALSE(error) << "Failed to select values from BuilderTest: " << error.getMessage();
+
+   std::set<int> expected({ 1, 5 });
+   bool unexpected = false;
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+   {
+      int id;
+      error = rows.getValue(it, "id", &id);
+      EXPECT_FALSE(error);
+      auto found = expected.find(id);
+      if (found != expected.end())
+         expected.erase(found);
+      else
+         unexpected = true;
+   }
+   ASSERT_EQ(expected.size(), 0) << "missing rows in WHERE OR test";
+   ASSERT_FALSE(unexpected) << "unexpected results in WHERE OR test";
+
+   SelectBuilder builder2(sqliteConnection, "BuilderTest");
+   builder2.add("id");
+   builder2.where(QBWhereOr()
+      .where("foo", 6)
+      .where(QBWhereAnd()
+         .where("bar", 0)
+         .where("foo", 2)
+      )
+   );
+
+   sql = builder2.toSQL();
+   EXPECT_EQ(sql, "SELECT id FROM BuilderTest WHERE (foo = :where_1_foo OR (bar = :where_1_1_bar AND foo = :where_1_1_foo))");
+
+   query = builder2.build();
+
+   error = sqliteConnection->execute(query, rows);
+   ASSERT_FALSE(error) << "Failed to select values from BuilderTest: " << error.getMessage();
+
+   expected = std::set<int>({ 1, 5 });
+   unexpected = false;
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+   {
+      int id;
+      error = rows.getValue(it, "id", &id);
+      EXPECT_FALSE(error);
+      auto found = expected.find(id);
+      if (found != expected.end())
+         expected.erase(found);
+      else
+         unexpected = true;
+   }
+   ASSERT_EQ(expected.size(), 0) << "missing rows in WHERE AND test";
+   ASSERT_FALSE(unexpected) << "unexpected results in WHERE AND test";
+}
+
+
 class ConnectionPoolTestsFixture : public ::testing::Test
 {
 protected:
@@ -1013,7 +1414,8 @@ TEST(ConnectionPoolTest, ReturningConnectionCleanlyLeavesAutocommit)
 // snapshot until it is destroyed. A connection that is reused for a write while
 // still carrying such a snapshot - after another connection has committed -
 // fails with SQLITE_BUSY_SNAPSHOT, which busy_timeout cannot clear and retries
-// cannot resolve. This guards that Rowset-lifetime contract.
+// cannot resolve. oauthToken() now scopes its Rowset so the snapshot is released
+// before the write; this guards that Rowset-lifetime contract.
 TEST(ConnectionPoolTest, RowsetReleasesReadSnapshotWhenDestroyed)
 {
    FilePath dbPath;
