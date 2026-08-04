@@ -755,10 +755,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_show_whats_new');
     },
 
-    detectRosetta: () => {
-      ipcRenderer.send('desktop_detect_rosetta');
-    },
-
     consoleLog: (output: string) => {
       ipcRenderer.send('desktop_console_log', output);
     },

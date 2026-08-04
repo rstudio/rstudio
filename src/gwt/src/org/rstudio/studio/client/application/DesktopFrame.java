@@ -252,7 +252,5 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void showWhatsNew();
 
-   void detectRosetta();
-   
    String getPathForFile(File file);
 }

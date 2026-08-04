@@ -100,7 +100,9 @@ Error validateScratchPath(const FilePath& scratchPath)
    }
    else if (!writable)
    {
-      return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+      Error error = systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+      error.addProperty("path", scratchPath.getAbsolutePath());
+      return error;
    }
    
    return Success();

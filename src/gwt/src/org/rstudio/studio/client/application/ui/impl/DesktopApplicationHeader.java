@@ -162,10 +162,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          });
       });
 
-      if (BrowseCap.isMacintoshDesktop() && BrowseCap.isElectron()) {
-         Desktop.getFrame().detectRosetta();
-      }
-
       events.addHandler(ShowFolderEvent.TYPE, new ShowFolderEvent.Handler()
       {
          public void onShowFolder(ShowFolderEvent event)

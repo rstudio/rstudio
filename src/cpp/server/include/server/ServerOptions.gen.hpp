@@ -129,6 +129,9 @@ protected:
       ("www-proxy-localhost",
       value<bool>(&wwwProxyLocalhost_)->default_value(true),
       "Indicates whether or not to proxy requests to localhost ports over the main server port. This should generally be enabled, and is used to proxy HTTP traffic within a session that belongs to code running within the session (e.g. Shiny or Plumber APIs)")
+      ("www-proxy-localhost-verify-port-owner",
+      value<bool>(&wwwProxyLocalhostVerifyPortOwner_)->default_value(true),
+      "Indicates whether or not to verify that a localhost port proxied via www-proxy-localhost is owned by the requesting user before proxying to it. This should generally be enabled, and disabling it removes the only access-control boundary preventing one user from reaching another user's localhost ports.")
       ("www-verify-user-agent",
       value<bool>(&wwwVerifyUserAgent_)->default_value(true),
       "Indicates whether or not to verify connecting browser user agents to ensure they are compatible with RStudio Server.")
@@ -267,6 +270,7 @@ public:
    bool wwwUseEmulatedStack() const { return wwwUseEmulatedStack_; }
    int wwwThreadPoolSize() const { return wwwThreadPoolSize_; }
    bool wwwProxyLocalhost() const { return wwwProxyLocalhost_; }
+   bool wwwProxyLocalhostVerifyPortOwner() const { return wwwProxyLocalhostVerifyPortOwner_; }
    bool wwwVerifyUserAgent() const { return wwwVerifyUserAgent_; }
    rstudio::core::http::Cookie::SameSite wwwSameSite() const { return wwwSameSite_; }
    std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
@@ -320,6 +324,7 @@ protected:
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
+   bool wwwProxyLocalhostVerifyPortOwner_;
    bool wwwVerifyUserAgent_;
    rstudio::core::http::Cookie::SameSite wwwSameSite_;
    std::string wwwFrameOrigin_;

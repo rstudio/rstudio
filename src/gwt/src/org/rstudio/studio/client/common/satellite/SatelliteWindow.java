@@ -105,8 +105,11 @@ public abstract class SatelliteWindow extends Composite
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      // By default, we only apply the flat theme to match other dialogs, then
-      // specific satellites can opt in to full theming using `supportsThemes()`.
+      // By default a satellite is left unthemed, to match other dialogs; the
+      // `rstudio-themes-flat` class every window gets is a compatibility hook
+      // for third-party themes, not styling of our own (see BrowseCap). Specific
+      // satellites opt in to the global theme classes and the editor theme
+      // stylesheet using `supportsThemes()`.
       if (supportsThemes())
       {
          RStudioThemes.initializeThemes(

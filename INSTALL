@@ -7,6 +7,10 @@ distribution. Information on obtaining the RStudio source code can be found
 in the file SOURCE. Note that precompiled binaries are also available for
 Windows, macOS, as well as recent versions of various Linux distributions.
 
+To produce a redistributable installer (a DEB or RPM, a DMG, or a setup EXE)
+rather than installing directly onto the machine that builds it, see section 5
+below and package/README.md.
+
 1) Installing Dependencies
 ----------------------------------------------------------------------------
 
@@ -169,5 +173,44 @@ e) Create /var directories required for RStudio to run. This can be done with:
 
    mkdir -p /var/log/rstudio/rstudio-server
    mkdir -p /var/lib/rstudio-server
+
+
+5) Building Redistributable Packages
+----------------------------------------------------------------------------
+
+The steps above install RStudio onto the machine that built it. If you want an
+installer you can copy elsewhere instead, use the packaging scripts in the
+"package" directory. These build RStudio and then run CPack over the result.
+Note that the RStudio Server DEB and RPM packages perform all of the
+configuration described in section 4 automatically.
+
+Full documentation, including where each artifact is written and how to install
+it, is in package/README.md. The short version:
+
+   Linux, from package/linux:
+
+      ./make-package Server DEB
+      ./make-package Electron RPM
+
+   macOS, from package/osx:
+
+      ./make-package clean
+
+   Windows, from package\win32:
+
+      make-package.bat
+
+Set RSTUDIO_VERSION_MAJOR, RSTUDIO_VERSION_MINOR, RSTUDIO_VERSION_PATCH, and
+RSTUDIO_VERSION_SUFFIX before running any of these. If you don't, the packages
+are named after the current date rather than a version you chose.
+
+RStudio Server can only be built on Linux; the macOS and Windows scripts always
+build the Electron desktop application.
+
+To build Linux packages without installing the build dependencies on your own
+machine -- or to build for a distribution you aren't running -- use
+docker/docker-compile.sh, which performs the build inside a container:
+
+   ./docker/docker-compile.sh jammy server 2026.8.0+1
 
 

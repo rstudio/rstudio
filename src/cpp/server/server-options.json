@@ -178,6 +178,13 @@
             "description": "Indicates whether or not to proxy requests to localhost ports over the main server port. This should generally be enabled, and is used to proxy HTTP traffic within a session that belongs to code running within the session (e.g. Shiny or Plumber APIs)"
          },
          {
+            "name": "www-proxy-localhost-verify-port-owner",
+            "memberName": "wwwProxyLocalhostVerifyPortOwner_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "Indicates whether or not to verify that a localhost port proxied via www-proxy-localhost is owned by the requesting user before proxying to it. This should generally be enabled, and disabling it removes the only access-control boundary preventing one user from reaching another user's localhost ports."
+         },
+         {
             "name": "www-verify-user-agent",
             "memberName": "wwwVerifyUserAgent_",
             "type": "bool",

@@ -1,13 +1,19 @@
 name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source)"
 
-# One workflow that drives the reusable per-OS E2E "engines" three ways:
-#   - Weekday cron (Mon-Fri): a fixed slate per weekday (two or three engines
-#     per day), so every engine runs at least once a week without running the
-#     whole matrix daily. No weekday pairs two deb-based engines.
+# One workflow that drives the reusable per-OS E2E "engines" four ways:
+#   - Weekday cron (Mon-Fri): a fixed slate per weekday, so every engine runs
+#     at least once a week without running the whole matrix daily.
+#   - Monday afternoon cron: macOS 14 alone, timed to land inside the October
+#     2026 brownout windows for the deprecated macos-14 image (see the pick job).
 #   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
 #   - Manual dispatch: every engine at once, optionally against a specific daily
 #     build (the "version" input) or built from source (the "build_from_source"
 #     input).
+#
+# The Linux Desktop engines all run through the consolidated
+# os-test-e2e-rstudio-desktop-linux.yml workflow as a matrix (one entry per
+# engine, built dynamically from the pick job's selection); macOS, Windows,
+# and Linux Server keep their own reusable workflows.
 #
 # Binary selection: scheduled runs test the daily build (build_from_source
 # false). With no version, each engine self-resolves the latest daily (keeping
@@ -20,8 +26,9 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 
 on:
   schedule:
-    - cron: '0 8 * * 1-5'   # Mon-Fri 08:00 UTC (4 AM EDT) -- fixed pair per weekday
+    - cron: '0 8 * * 1-5'   # Mon-Fri 08:00 UTC (4 AM EDT) -- fixed slate per weekday
     - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- all engines (this string must match the check in the pick job)
+    - cron: '0 16 * * 1'    # Monday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
   workflow_dispatch:
     inputs:
       version:
@@ -34,15 +41,28 @@ on:
         default: false
 
 concurrency:
-  group: pw-scheduled-e2e
+  # The Monday 16:00 macOS 14 cron gets its own group: it would otherwise share
+  # the one pending slot with the Monday 08:00 weekday slate, and only one run
+  # per group can be pending (a third trigger cancels the pending one rather
+  # than queueing behind it). Either outcome can push the macOS 14 run out of
+  # the brownout window it is timed to land in. Every other trigger keeps the
+  # shared group, which caps the fleet at one full rotation at a time.
+  #
+  # Two trade-offs come with the split. The macOS 14 run may now overlap a
+  # weekday slate, contending for the shared macOS runner pool if a morning
+  # slate is still going at 16:00. And because macos14 is in ALL below, a
+  # run-everything dispatch (group "main") can now run the macOS 14 engine at
+  # the same time as this cron does, which a single shared group used to make
+  # impossible.
+  group: pw-scheduled-e2e-${{ github.event.schedule == '0 16 * * 1' && 'macos14' || 'main' }}
   cancel-in-progress: false
 
 permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
-  # Most engines' e2e-merge jobs assume the S3 report-upload role via OIDC
-  # (ubuntu26 doesn't upload); a reusable workflow's id-token grant
-  # is capped by its caller's.
+  # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC,
+  # and every engine's build job assumes the S3 sccache role via OIDC; a
+  # reusable workflow's id-token grant is capped by its caller's.
   id-token: write
 
 jobs:
@@ -51,17 +71,34 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       selected: ${{ steps.pick.outputs.selected }}
+      linux_matrix: ${{ steps.pick.outputs.linux_matrix }}
     steps:
       - id: pick
         name: Select engines for this run
         run: |
           # workflow_dispatch and the Sunday cron run every engine; the weekday
-          # cron (Mon-Fri) runs a fixed slate per day (two or three engines).
-          # Each engine runs once a week except macos26, windows2025, and
-          # ubuntu24s, which run twice.
-          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15"]'
+          # cron (Mon-Fri) runs a fixed slate per day; the Monday afternoon cron
+          # runs macOS 14 alone.
+          # Each engine appears once a week in the weekday slates below, except
+          # macos26, windows2025, and ubuntu24s (twice) and macos14, which is in
+          # no slate at all -- its weekly run is the Monday 16:00 cron.
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15","macos14"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
+          elif [ "${{ github.event.schedule }}" = "0 16 * * 1" ]; then
+            # macOS 14 runs on its own Monday-afternoon cron instead of in a
+            # weekday slate, so its runs land inside the October 2026 brownout
+            # windows for the deprecated macos-14 image (14:00-00:00 UTC on Oct
+            # 5, 12, 19 and 26; the 08:00 slates miss all eight windows by six
+            # hours). Those failures are the point -- early warning that the
+            # image is fully retired on 2026-11-02. No brownout window falls on
+            # a Sunday, so the full-matrix cron is unaffected before that date,
+            # but a dispatch launched inside any of the eight windows (they open
+            # on four Mondays, three Fridays and one Thursday) will hit one.
+            # After the retirement date this run, the Sunday run, and every
+            # dispatch fail until macos14 is removed from this workflow and from
+            # ALL above.
+            SEL='["macos14"]'
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
               1) SEL='["ubuntu24d","macos26","rocky9"]' ;;
@@ -77,6 +114,30 @@ jobs:
           fi
           echo "selected=$SEL" >> "$GITHUB_OUTPUT"
           echo "::notice::Selected engines: $SEL"
+
+          # Map the selected Linux Desktop engines onto the consolidated
+          # workflow's matrix: os names the .github/e2e-linux config, arch is
+          # the architecture that config is expected to run on (the called
+          # workflow fails the run if the two disagree), and url_key names the
+          # resolve job's output holding that engine's version-specific
+          # installer URL (empty on latest-daily / build-from-source runs).
+          # Engines without their own daily reuse the nearest build (Fedora ->
+          # rhel10-x86_64, Debian -> noble-arm64, Ubuntu 26 -> noble-amd64);
+          # see the engine configs.
+          TABLE='[
+            {"key":"fedora43","os":"fedora-43-x86_64","arch":"x86_64","name":"Fedora 43 (x86_64)","url_key":"rhel"},
+            {"key":"fedora44","os":"fedora-44-x86_64","arch":"x86_64","name":"Fedora 44 (x86_64)","url_key":"rhel"},
+            {"key":"ubuntu26","os":"ubuntu-26-x86_64","arch":"x86_64","name":"Ubuntu 26 (x86_64)","url_key":"noble_amd64"},
+            {"key":"ubuntu22","os":"ubuntu-22-x86_64","arch":"x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
+            {"key":"ubuntu24d","os":"ubuntu-24-x86_64","arch":"x86_64","name":"Ubuntu 24 Desktop (x86_64)","url_key":"noble_amd64"},
+            {"key":"debian13","os":"debian-13-arm64","arch":"arm64","name":"Debian 13 (arm64)","url_key":"noble_arm64"},
+            {"key":"rocky10","os":"rocky-10-arm64","arch":"arm64","name":"Rocky 10 (arm64)","url_key":"rocky"},
+            {"key":"rocky9","os":"rocky-9-x86_64","arch":"x86_64","name":"Rocky 9 (x86_64)","url_key":"rhel9"}
+          ]'
+          LINUX=$(jq -cn --argjson table "$TABLE" --argjson sel "$SEL" \
+            '[$table[] | select(.key as $k | $sel | index($k))]')
+          echo "linux_matrix=$LINUX" >> "$GITHUB_OUTPUT"
+          echo "::notice::Linux Desktop matrix: $LINUX"
 
   resolve:
     name: Resolve installer URLs
@@ -162,75 +223,30 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Resolved URLs for version $VERSION."
 
-  fedora43:
-    name: Fedora 43 x86_64
+  # Every selected Linux Desktop engine, one matrix entry each, through the
+  # consolidated Linux workflow. The matrix is built (already filtered to the
+  # selection) by the pick job; the guard skips the job entirely when no
+  # Linux engine is selected, since an empty matrix is an error.
+  linux-desktop:
+    name: ${{ matrix.name }}
     needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora43') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-43-x86_64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      # Same rhel10-x86_64 .rpm the Fedora 44 engine tests -- there is no
-      # separate Fedora 43 daily either.
-      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
-
-  fedora44:
-    name: Fedora 44 x86_64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'fedora44') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-fedora-44-x86_64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.rhel }}
-
-  ubuntu26:
-    name: Ubuntu 26 amd64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu26') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-26-amd64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
-
-  ubuntu22:
-    name: Ubuntu 22 amd64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu22') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-22-amd64.yml
+    if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.pick.outputs.linux_matrix) }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-linux.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
+      os: ${{ matrix.os }}
+      arch: ${{ matrix.arch }}
       project: desktop
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
-      # Ubuntu 22 has its own jammy-amd64 daily .deb; the engine installs it.
-      rstudio_installer_url: ${{ needs.resolve.outputs.jammy_amd64 }}
-
-  ubuntu24d:
-    name: Ubuntu 24 Desktop
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu24d') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-ubuntu-24.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.noble_amd64 }}
+      rstudio_installer_url: ${{ needs.resolve.outputs[matrix.url_key] }}
 
   ubuntu24s:
     name: Ubuntu 24 Server
@@ -240,6 +256,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: server
       r_version: "release"
@@ -254,6 +271,7 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
@@ -268,12 +286,28 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
-      # Same universal macOS .dmg the arm64 engine tests; the daily manifest
+      # Same universal macOS .dmg the arm64 engines test; the daily manifest
       # ships one "macos" installer for both architectures.
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
+  macos14:
+    name: macOS 14 arm64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos14') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      project: desktop
+      r_version: "release"
+      build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
   windows2025:
@@ -284,54 +318,9 @@ jobs:
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
     with:
       project: desktop
       r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.windows }}
-
-  debian13:
-    name: Debian 13 arm64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'debian13') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-debian-13-arm64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      rstudio_installer_url: ${{ needs.resolve.outputs.noble_arm64 }}
-
-  rocky10:
-    name: Rocky 10 arm64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'rocky10') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-10-arm64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      # RHEL/Rocky 10 arm64 daily .rpm (served from rhel9/arm64 as an
-      # aarch64.rpm); the Rocky engine installs the same package.
-      rstudio_installer_url: ${{ needs.resolve.outputs.rocky }}
-
-  rocky9:
-    name: Rocky 9 x86_64
-    needs: [pick, resolve]
-    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'rocky9') }}
-    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-rocky-9-x86_64.yml
-    secrets:
-      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
-      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-    with:
-      project: desktop
-      r_version: "release"
-      build_from_source: ${{ inputs.build_from_source || false }}
-      # RHEL/Rocky 9 x86_64 daily .rpm; the Rocky 9 engine installs the same
-      # package.
-      rstudio_installer_url: ${{ needs.resolve.outputs.rhel9 }}

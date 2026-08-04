@@ -36,7 +36,7 @@ async function isPlotsTabSelected(page: Page): Promise<boolean> {
   return (await page.locator(PLOTS_TAB).getAttribute('aria-selected')) === 'true';
 }
 
-test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai'] }, () => {
+test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai', '@chat'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let chatPane: ChatPane;

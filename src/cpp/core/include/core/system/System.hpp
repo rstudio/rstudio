@@ -62,6 +62,33 @@ bool realPathsEqual(const FilePath& a, const FilePath& b);
 
 void addToSystemPath(const FilePath& path, bool prepend = false);
 
+// Searches for a program by name and returns its path.
+//
+// A bare name is searched for: on Windows, in the system directories and then the
+// directories on PATH; on POSIX, in the directories on PATH. Neither searches the
+// current directory, and the Windows search also omits the executable's own
+// directory -- PathFindOnPath, which the Windows implementation replaced, searched
+// both.
+//
+// The Windows order means PATH cannot override a program that ships in System32 or
+// the Windows directory. That is deliberate for cmd.exe (see the rationale in
+// Win32System.cpp), but it applies to every name: Windows also ships curl.exe,
+// tar.exe, find.exe, sort.exe and more.exe there, and its bash.exe is the WSL
+// launcher. Looking up any of those here resolves the system copy no matter what
+// PATH says.
+//
+// A name that is already path-qualified is resolved directly rather than searched for.
+// "Qualified" means containing '/' on POSIX, or any of '/', '\' or ':' on Windows. As
+// with any path, a relative qualified name resolves against the current directory --
+// that is execvp's rule, and is distinct from searching the current directory for a
+// bare name.
+//
+// Two behaviors differ by platform and are not smoothed over here:
+//
+//  - Extension probing is Windows-only. There, a name with no extension is also probed
+//    with .exe/.com/.bat/.cmd, for qualified and bare names alike. POSIX probes nothing.
+//  - POSIX requires the result to be executable by the effective user (X_OK); Windows
+//    requires only that it be a regular file, so it can return a file that is not.
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath);
 
@@ -148,7 +175,9 @@ private:
 // set $HOME to $USERPROFILE
 void setHomeToUserProfile(core::system::Options* pChildEnv);
 
-// Folder for per-machine configuration data
+// Folder for per-machine configuration data.
+// NOTE: no callers in this repository; retained for RStudio Pro, which uses it for
+// the license manager's verify config directory under C:\ProgramData.
 FilePath systemSettingsPath(const std::string& appName, bool create);
 
 #endif // WIN32
@@ -161,7 +190,9 @@ bool isAppleSilicon();
 
 #endif
 
-void initHook();
+// early process initialization; runs before logging is initialized, so any
+// error is returned for the caller to log once logging is available
+Error initHook();
 
 // initialization
 Error initializeSystemLog(const std::string& programIdentity,

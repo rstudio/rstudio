@@ -1,0 +1,1090 @@
+name: "Test: E2E Playwright RStudio (Desktop, Linux, Open Source)"
+
+# One parameterized workflow for every Linux Desktop E2E engine. The `os`
+# input selects a config file under .github/e2e-linux/<os>.json, which
+# supplies the runner, container image, package format (DEB/RPM), cache keys,
+# and per-distro knobs; distro-specific shell steps (runtime packages, repo
+# enablement, sysctls) live as hooks under .github/e2e-linux/<script_dir>/.
+# See .github/e2e-linux/README.md for the config schema and how to add an
+# engine.
+#
+# Engine shapes this covers:
+#   - Bare GitHub-hosted runners (Ubuntu 22/24/26, x86_64 and arm64): build
+#     and test directly on the runner image, Chromium sandbox enabled via a
+#     host sysctl where the distro restricts unprivileged user namespaces.
+#     Each arch is its own engine (ubuntu-24-x86_64 / ubuntu-24-arm64) so no
+#     two share a cache key; see .github/e2e-linux/README.md.
+#   - Container engines (Debian, Fedora, Rocky): GitHub has no hosted runner
+#     for these, so the jobs run in a distro container on an ubuntu host.
+#     SYS_ADMIN + an unconfined seccomp profile let the Chromium/Electron
+#     namespace sandbox initialize (the host sysctl isn't reachable from a
+#     container -- /proc/sys is read-only), and the test run drops to a
+#     non-root user via setpriv so the sandbox stays ON, matching the
+#     bare-runner engines. --shm-size=2g avoids the 64 MB container default
+#     that crashes the Electron renderer mid-suite.
+#   - Rocky/RHEL 10 has no X.Org (and thus no Xvfb): the virtual display
+#     comes from Xwayland running under Cage instead (display_server: cage).
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: "Linux engine to run (selects .github/e2e-linux/<os>.json). Every engine name ends in its architecture."
+        type: choice
+        options:
+          - ubuntu-24-x86_64
+          - ubuntu-24-arm64
+          - ubuntu-26-x86_64
+          - ubuntu-22-x86_64
+          - debian-13-arm64
+          - fedora-43-x86_64
+          - fedora-44-x86_64
+          - rocky-9-x86_64
+          - rocky-10-arm64
+        default: ubuntu-24-x86_64
+      arch:
+        description: "Architecture the selected engine is expected to run on. 'auto' takes it from the engine config; naming it explicitly asserts it (the run fails on mismatch)."
+        type: choice
+        options:
+          - auto
+          - x86_64
+          - arm64
+        default: auto
+      build_from_source:
+        description: "Build RStudio Desktop (Electron) from this branch's source. When false, downloads the latest daily installer."
+        type: boolean
+        default: true
+      rstudio_installer_url:
+        description: "Optional installer URL to test against (e.g. a specific daily from dailies.rstudio.com). Only used when build_from_source is false. Leave empty to auto-resolve the latest daily."
+        type: string
+        default: ""
+      r_version:
+        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1'). Ignored on Fedora, which installs R from the distro's own repos."
+        type: string
+        default: "release"
+      project:
+        description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
+        type: string
+        default: "desktop"
+      grep:
+        description: "Optional Playwright --grep pattern to run only tests whose title matches."
+        type: string
+        default: ""
+      test_selector:
+        description: "Optional test paths/files/directories to run (space-separated). Matched as substrings against test file paths. Examples: 'autocomplete.test.ts', 'tests/panes/misc/'. Leave empty to run all tests."
+        type: string
+        default: ""
+      test_ignore:
+        description: "Optional test paths/files/directories to exclude (space-separated globs). Examples: '**/code_suggestions.test.ts', '**/posit-assistant-chat/**'. Leave empty to exclude nothing."
+        type: string
+        default: ""
+      grep_invert:
+        description: "Optional Playwright --grep-invert pattern to skip tests by title. Empty by default (runs all tests)."
+        type: string
+        default: ""
+      rstudio_extra_args:
+        description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS. Set to '--no-sandbox' if the in-container Chromium sandbox won't initialize."
+        type: string
+        default: ""
+      build_only:
+        description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
+        type: boolean
+        default: false
+      post_pr_comment:
+        description: "Post test results as a sticky comment on the PR. Pass true only from PR-triggered callers."
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        required: true
+      # Architecture the caller believes `os` runs on, cross-checked against
+      # the engine config's tools_arch. Required (rather than defaulting to
+      # 'auto') so a caller can't omit the assertion by accident; pass 'auto'
+      # to opt out deliberately.
+      arch:
+        type: string
+        required: true
+      build_from_source:
+        type: boolean
+        default: true
+      rstudio_installer_url:
+        type: string
+        default: ""
+      r_version:
+        type: string
+        default: "release"
+      project:
+        type: string
+        default: "desktop"
+      grep:
+        type: string
+        default: ""
+      test_selector:
+        type: string
+        default: ""
+      test_ignore:
+        type: string
+        default: ""
+      grep_invert:
+        type: string
+        default: ""
+      rstudio_extra_args:
+        type: string
+        default: ""
+      build_only:
+        type: boolean
+        default: false
+      post_pr_comment:
+        type: boolean
+        default: false
+      defer_merge:
+        description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
+        type: boolean
+        default: false
+    secrets:
+      CONNECT_API_KEY:
+        description: "Posit Connect API key for the E2E Test Insights reporter"
+        required: false
+      AWS_E2E_REPORTS_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
+        required: false
+      AWS_SCCACHE_ROLE_ARN:
+        description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
+        required: false
+
+permissions:
+  contents: read
+  # Required so the e2e-merge job can post sticky PR comments via
+  # marocchino/sticky-pull-request-comment. GitHub validates ALL job-level
+  # permissions in a reusable workflow at call time, so this must be declared
+  # at the top level even though only e2e-merge uses it.
+  pull-requests: write
+  # Lets the build job mint an OIDC token for the S3 sccache backend, and the
+  # e2e-merge job mint one to assume the S3 report-upload role (see
+  # .github/actions/os-publish-e2e-report).
+  id-token: write
+
+defaults:
+  run:
+    # Container jobs default run steps to sh (dash on Debian), and several
+    # scripts here use bash arrays. Every engine image ships bash.
+    shell: bash
+
+jobs:
+  # Reads .github/e2e-linux/<os>.json and republishes every key as a job
+  # output, so the build/e2e jobs below can parameterize job-level fields
+  # (runs-on, container, timeout) that can't read files themselves.
+  setup:
+    name: Load ${{ inputs.os }} config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      pretty_name: ${{ steps.config.outputs.pretty_name }}
+      emoji: ${{ steps.config.outputs.emoji }}
+      runner_note: ${{ steps.config.outputs.runner_note }}
+      package_format: ${{ steps.config.outputs.package_format }}
+      package_ext: ${{ steps.config.outputs.package_ext }}
+      package_manager: ${{ steps.config.outputs.package_manager }}
+      script_dir: ${{ steps.config.outputs.script_dir }}
+      build_runner: ${{ steps.config.outputs.build_runner }}
+      build_image: ${{ steps.config.outputs.build_image }}
+      build_container_options: ${{ steps.config.outputs.build_container_options }}
+      build_bootstrap_packages: ${{ steps.config.outputs.build_bootstrap_packages }}
+      build_timeout_minutes: ${{ steps.config.outputs.build_timeout_minutes }}
+      tools_arch: ${{ steps.config.outputs.tools_arch }}
+      dependency_script: ${{ steps.config.outputs.dependency_script }}
+      tools_cache_key: ${{ steps.config.outputs.tools_cache_key }}
+      rlibs_cache_key: ${{ steps.config.outputs.rlibs_cache_key }}
+      gwt_cache_key: ${{ steps.config.outputs.gwt_cache_key }}
+      sccache_key_prefix: ${{ steps.config.outputs.sccache_key_prefix }}
+      installer_artifact: ${{ steps.config.outputs.installer_artifact }}
+      daily_platform_key: ${{ steps.config.outputs.daily_platform_key }}
+      e2e_runner: ${{ steps.config.outputs.e2e_runner }}
+      e2e_image: ${{ steps.config.outputs.e2e_image }}
+      e2e_container_options: ${{ steps.config.outputs.e2e_container_options }}
+      e2e_bootstrap_packages: ${{ steps.config.outputs.e2e_bootstrap_packages }}
+      r_install: ${{ steps.config.outputs.r_install }}
+      run_as_user: ${{ steps.config.outputs.run_as_user }}
+      display_server: ${{ steps.config.outputs.display_server }}
+      e2e_deps_cache_scope: ${{ steps.config.outputs.e2e_deps_cache_scope }}
+      preinstall_r_packages: ${{ steps.config.outputs.preinstall_r_packages }}
+      heartbeat_timeout_seconds: ${{ steps.config.outputs.heartbeat_timeout_seconds }}
+      pw_label: ${{ steps.config.outputs.pw_label }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/e2e-linux
+          sparse-checkout-cone-mode: false
+
+      - name: Read engine config
+        id: config
+        env:
+          OS: ${{ inputs.os }}
+          ARCH: ${{ inputs.arch }}
+        run: |
+          FILE=".github/e2e-linux/$OS.json"
+          if [ ! -f "$FILE" ]; then
+            AVAILABLE=$(basename -s .json .github/e2e-linux/*.json | tr '\n' ' ')
+            echo "::error::Unknown os '$OS'. Available engines: $AVAILABLE"
+            exit 1
+          fi
+
+          # Every engine is single-arch, so `arch` is an assertion rather than
+          # a second selection axis: callers name the arch they think they're
+          # scheduling, and this fails the run if the config disagrees. That
+          # catches an engine being re-pointed at a different runner (or a new
+          # config copied from the other arch) without its arch-bearing cache
+          # keys, installer artifact, and daily platform key being updated to
+          # match -- the class of silent cross-arch cache reuse that #18362
+          # fixed on macOS.
+          CONFIG_ARCH=$(jq -r '.tools_arch // empty' "$FILE")
+          if [ -z "$CONFIG_ARCH" ]; then
+            echo "::error::Engine config '$FILE' is missing tools_arch."
+            exit 1
+          fi
+
+          # An empty arch is a caller bug, not a request to skip the check:
+          # `required: true` on the workflow_call input only rejects an absent
+          # key, so a caller passing an unset expression (a matrix entry with
+          # no "arch", say) would otherwise sail through with the assertion
+          # quietly disabled. 'auto' is the one way to opt out.
+          if [ -z "$ARCH" ]; then
+            echo "::error::The arch input is empty. Pass the engine's architecture (or 'auto' to take it from the config); a caller expression -- a matrix entry's arch key, say -- probably resolved to nothing."
+            exit 1
+          fi
+          if [ "$ARCH" != "auto" ] && [ "$ARCH" != "$CONFIG_ARCH" ]; then
+            echo "::error::Engine '$OS' is $CONFIG_ARCH, but the caller requested arch '$ARCH'. Fix the caller, or update .github/e2e-linux/$OS.json (including its cache keys) if the engine really moved."
+            exit 1
+          fi
+
+          # The engine name must end in its arch. This is not just naming
+          # hygiene: the merge job collects shard blobs with the glob
+          # playwright-blob-report-linux-desktop-<os>-*, which is only
+          # collision-free while no engine name is a prefix of another. A bare
+          # "ubuntu-24" would also match "ubuntu-24-arm64"'s blobs and merge
+          # another engine's results into this engine's report.
+          case "$OS" in
+            *-"$CONFIG_ARCH") ;;
+            *)
+              echo "::error::Engine name '$OS' must end in '-$CONFIG_ARCH' (its tools_arch). Rename the config; see .github/e2e-linux/README.md."
+              exit 1
+              ;;
+          esac
+          echo "::notice::Engine $OS ($CONFIG_ARCH)"
+
+          # Values go to GITHUB_OUTPUT as plain key=value, which a newline in
+          # any value would corrupt (turning the rest of a value into forged
+          # output keys). Every value is a short scalar today; fail loudly
+          # rather than silently if that ever stops being true.
+          if ! jq -e 'all(.[]; type == "string" and (test("[\\r\\n]") | not))' "$FILE" >/dev/null; then
+            echo "::error::Engine config '$FILE' has a non-string or multi-line value; the setup job can only republish single-line strings."
+            exit 1
+          fi
+
+          jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" | tee -a "$GITHUB_OUTPUT"
+
+  # Builds RStudio Desktop (Electron) from this branch's source and uploads
+  # the installer as an artifact for the e2e job to consume. Runs on the
+  # engine's own runner/container so the binary matches what the e2e job
+  # installs. Skipped when build_from_source is false or an installer URL is
+  # given, in which case the e2e job downloads the daily instead.
+  build:
+    name: Build (${{ inputs.os }})
+    needs: setup
+    if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+    runs-on: ${{ needs.setup.outputs.build_runner }}
+    # An empty image runs the job directly on the runner (bare engines).
+    container:
+      image: ${{ needs.setup.outputs.build_image }}
+      # Some images (rockylinux) define no default PATH in their config, so
+      # once a tool-cache action prepends its bin dir via GITHUB_PATH the
+      # runner rebuilds the container-exec PATH as just that dir and later
+      # run steps can't find sh/dnf ("exec: sh: not found"). An explicit base
+      # PATH makes the prepend additive; images that set PATH themselves get
+      # the same standard value.
+      env:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      options: ${{ needs.setup.outputs.build_container_options }}
+    timeout-minutes: ${{ fromJSON(needs.setup.outputs.build_timeout_minutes) }}
+    env:
+      # Redirect the dependency / package scripts' tool root to a
+      # workspace-local path so it can be cached without sudo.
+      RSTUDIO_TOOLS_ROOT: ${{ github.workspace }}/opt/rstudio-tools/${{ needs.setup.outputs.tools_arch }}
+      # Pin R's user library to a workspace-local path so we can cache it.
+      R_LIBS_USER: ${{ github.workspace }}/R-libs/%p/%v
+      SCCACHE_ENABLED: '1'
+      # Backend selection happens in the "Select sccache backend" step below:
+      # S3 when the OIDC role + bucket are configured, GHA cache otherwise.
+      SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      # Compile GWT with readable (PRETTY) symbol names rather than the default
+      # OBFUSCATED output, so the uncaught client exceptions the e2e automation
+      # agent records (window.rstudio.errors) carry decodable Java stack traces.
+      # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
+      GWT_STYLE: PRETTY
+      # Quiet npm during install-common's panmirror build, the Electron app
+      # build, and any other transitive npm step.
+      NPM_CONFIG_LOGLEVEL: error
+      NPM_CONFIG_AUDIT: 'false'
+
+    steps:
+      # Container images are minimal and the job runs as root there. Install
+      # what the checkout action, the dependency scripts, and the build need
+      # up front. sudo is included because the dependency scripts call it
+      # internally (root's sudo is a straight passthrough).
+      - name: Prepare container
+        if: needs.setup.outputs.build_image != ''
+        env:
+          PM: ${{ needs.setup.outputs.package_manager }}
+          PACKAGES: ${{ needs.setup.outputs.build_bootstrap_packages }}
+        run: |
+          case "$PM" in
+            apt)
+              apt-get update
+              apt-get install -y $PACKAGES
+              update-ca-certificates
+              ;;
+            dnf)
+              dnf -y install $PACKAGES
+              ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      # Distro-specific build prerequisites (repo enablement, runner-image
+      # quirks); no-op for engines without a hook.
+      - name: OS-specific build setup
+        env:
+          SCRIPT: .github/e2e-linux/${{ needs.setup.outputs.script_dir }}/build-setup.sh
+        run: |
+          if [ -f "$SCRIPT" ]; then
+            bash "$SCRIPT"
+          else
+            echo "No build-setup hook for ${{ inputs.os }}; skipping."
+          fi
+
+      # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
+      # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
+      # Keys are per-distro/arch (compiled native artifacts don't transfer);
+      # the ubuntu-24-x86_64 keys are deliberately shared with the Linux Server
+      # so a single cache (and the cache-seed job) warms both. Restore-only;
+      # the matching Save steps after "Install build dependencies" run only
+      # from main-scoped runs.
+      - name: Restore rstudio-tools deps
+        id: tools-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: ${{ needs.setup.outputs.tools_cache_key }}-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
+          restore-keys: |
+            ${{ needs.setup.outputs.tools_cache_key }}-
+
+      # install-common (called by the dependency script) installs R packages
+      # (via install-packages) into R_LIBS_USER. Cache the whole R-libs tree --
+      # R's %p/%v subpaths keep different versions isolated.
+      - name: Restore build-time R packages
+        id: rlibs-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: ${{ needs.setup.outputs.rlibs_cache_key }}-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
+          restore-keys: |
+            ${{ needs.setup.outputs.rlibs_cache_key }}-
+
+      # Cache compiled GWT output (package/linux/build-Electron-<FMT>/gwt).
+      # GWT compilation is the single most expensive JS step (~15-30 min). When
+      # GWT Java sources / build scripts haven't changed, make-electron-package
+      # can skip the recompile entirely via the NO_REBUILD env var (sets
+      # GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake) -- see the
+      # NO_REBUILD/GWT_BUILD handling in package/linux/make-package. GWT output
+      # is Java-to-JS and platform-independent, but the key is engine-scoped
+      # for cache isolation (matching the tools/rlibs keys). Restore-only
+      # here; the matching Save step runs after the build with a success gate
+      # so a failed mid-compile run can't poison the cache.
+      - name: Restore GWT output
+        id: gwt-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: package/linux/build-Electron-${{ needs.setup.outputs.package_format }}/gwt
+          key: ${{ needs.setup.outputs.gwt_cache_key }}-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
+          restore-keys: |
+            ${{ needs.setup.outputs.gwt_cache_key }}-${{ env.GWT_STYLE }}-v1-
+
+      # Prefer the S3 sccache backend when the infra is configured (the
+      # AWS_SCCACHE_ROLE_ARN secret plus the AWS_SCCACHE_BUCKET repo
+      # variable). The GHA cache backend writes per-object entries into each
+      # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
+      # (6000+ of its entries were sccache objects) and LRU-evicting the
+      # main-scoped copies the seed maintains -- PR builds then compile at a
+      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
+      # writes one shared cache.
+      - name: Configure AWS credentials for sccache
+        id: sccache-aws
+        if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
+        # A failed OIDC exchange degrades to the GHA backend below rather
+        # than failing the build.
+        continue-on-error: true
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
+          aws-region: us-east-1
+          # Cold builds can run past the default 1-hour session; the role
+          # must be created with a max session duration of at least 2 hours.
+          role-duration-seconds: 7200
+
+      # Falls back to the GHA cache backend when the secret/variable are
+      # unset (e.g. fork PRs) or the credential exchange failed. Must run
+      # before the sccache-action below: that action only exports the Actions
+      # cache URL/token the GHA backend needs when SCCACHE_GHA_ENABLED is
+      # already set as it runs.
+      - name: Select sccache backend
+        env:
+          SCCACHE_S3_BUCKET: ${{ vars.AWS_SCCACHE_BUCKET }}
+          SCCACHE_AWS_OUTCOME: ${{ steps.sccache-aws.outcome }}
+          SCCACHE_KEY_PREFIX: ${{ needs.setup.outputs.sccache_key_prefix }}
+        run: |
+          if [ "$SCCACHE_AWS_OUTCOME" = "success" ]; then
+            echo "sccache backend: S3 ($SCCACHE_S3_BUCKET)"
+            {
+              echo "SCCACHE_BUCKET=$SCCACHE_S3_BUCKET"
+              echo "SCCACHE_REGION=us-east-1"
+              echo "SCCACHE_S3_KEY_PREFIX=$SCCACHE_KEY_PREFIX"
+            } >> "$GITHUB_ENV"
+          else
+            echo "sccache backend: GitHub Actions cache (S3 role/bucket unavailable)"
+            echo "SCCACHE_GHA_ENABLED=true" >> "$GITHUB_ENV"
+          fi
+
+      # Installs sccache on PATH and starts the sccache server with the
+      # backend chosen by "Select sccache backend" above (S3 when available,
+      # GH Actions cache as the fallback). Object-level cache hits, no per-SHA
+      # tarball; either way the object cache is inherited by PRs.
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+        with:
+          # Pinned: resolving "latest" queries api.github.com at runtime,
+          # which fails during GitHub API incidents (503s). A pinned version
+          # downloads directly from the release CDN with no API call.
+          version: "v0.16.0"
+
+      # The dependency script installs system packages (with sudo internally),
+      # then calls install-common which downloads Boost, SOCI, pandoc, quarto,
+      # node, panmirror, sccache, GWT jar, etc. into RSTUDIO_TOOLS_ROOT. The
+      # scripts are idempotent, so a cache hit on rstudio-tools-deps makes
+      # this a fast pass: the heavy downloads are skipped and the cached
+      # tools are reused.
+      - name: Install build dependencies
+        working-directory: dependencies/linux
+        run: ./${{ needs.setup.outputs.dependency_script }}
+
+      # Save the tools / R-libs caches only from main-scoped runs (the seed
+      # and scheduled workflows, or a dispatch on main), and only on a key
+      # miss. A cache saved from a PR run lands in that PR's merge-ref scope,
+      # which no other branch can restore -- each copy is pure pressure on
+      # the repo's 10 GB Actions cache quota, and that pressure is what
+      # evicts main's copies and sends every PR build cold in the first place.
+      - name: Save rstudio-tools deps
+        if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.RSTUDIO_TOOLS_ROOT }}
+          key: ${{ steps.tools-cache.outputs.cache-primary-key }}
+
+      - name: Save build-time R packages
+        if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/R-libs
+          key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
+
+      - name: Zero sccache stats
+        run: sccache --zero-stats || true
+
+      - name: Build RStudio Desktop ${{ needs.setup.outputs.package_format }}
+        id: build
+        working-directory: package/linux
+        env:
+          RSTUDIO_VERSION_MAJOR: '99'
+          RSTUDIO_VERSION_MINOR: '9'
+          RSTUDIO_VERSION_PATCH: '9'
+          RSTUDIO_VERSION_SUFFIX: "-pr+${{ github.run_number }}"
+          PACKAGE_FORMAT: ${{ needs.setup.outputs.package_format }}
+        run: |
+          # NO_REBUILD=1 (see package/linux/make-package) tells the script to
+          # set GWT_BUILD=no, which becomes -DGWT_BUILD=no to cmake, so the
+          # cached GWT bin/www/extras under build-Electron-$PACKAGE_FORMAT/gwt
+          # are reused instead of recompiled (~15-30 min saved when sources
+          # unchanged).
+          if [ "${{ steps.gwt-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "GWT cache hit -- skipping GWT compile"
+            NO_REBUILD=1 ./make-electron-package "$PACKAGE_FORMAT"
+          else
+            echo "GWT cache miss -- compiling GWT from scratch"
+            ./make-electron-package "$PACKAGE_FORMAT"
+          fi
+
+      - name: Show sccache stats
+        if: always()
+        run: sccache --show-stats || true
+
+      # Save GWT output only when the build succeeded. A failed mid-compile run
+      # could otherwise write partial GWT output to the cache, and every future
+      # restore would silently ship a broken frontend until the hashFiles key
+      # rotates. Save only from main-scoped runs, and only on a key miss (same
+      # cache-quota reasoning as the tools/rlibs Save steps above).
+      - name: Save GWT output
+        if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: package/linux/build-Electron-${{ needs.setup.outputs.package_format }}/gwt
+          key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
+
+      # Skipped in build_only (seed) runs: no e2e job consumes the artifact,
+      # so packaging and uploading it would be pure waste. CPack writes the
+      # shippable installer to the TOP LEVEL of the build dir (no
+      # CPACK_PACKAGE_DIRECTORY is set and cpack runs from inside that dir),
+      # so -maxdepth 1 is correct and deterministic; _CPack_Packages holds
+      # only staging copies, which we must not pick up.
+      - name: Package installer
+        if: inputs.build_only != true
+        env:
+          PACKAGE_FORMAT: ${{ needs.setup.outputs.package_format }}
+          PACKAGE_EXT: ${{ needs.setup.outputs.package_ext }}
+        run: |
+          BUILD_DIR="package/linux/build-Electron-$PACKAGE_FORMAT"
+          PKG=$(find "$BUILD_DIR" -maxdepth 1 -name "*.$PACKAGE_EXT" | head -1)
+          if [ -z "$PKG" ]; then
+            echo "::error::No .$PACKAGE_EXT found in $BUILD_DIR"
+            exit 1
+          fi
+          cp "$PKG" "$GITHUB_WORKSPACE/rstudio-desktop.$PACKAGE_EXT"
+          echo "Packaged: $PKG"
+
+      - name: Upload installer artifact
+        if: inputs.build_only != true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.setup.outputs.installer_artifact }}
+          path: rstudio-desktop.${{ needs.setup.outputs.package_ext }}
+          retention-days: 7
+
+  e2e:
+    name: E2E (${{ inputs.os }})
+    needs: [setup, build]
+    # build is skipped when build_from_source is false; allow this job to run
+    # in that case too (needs.build.result == 'skipped' on the daily-download
+    # path). build_only seeds the build caches without running e2e, so skip.
+    if: |
+      always() &&
+      needs.setup.result == 'success' &&
+      inputs.build_only != true &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    runs-on: ${{ needs.setup.outputs.e2e_runner }}
+    container:
+      image: ${{ needs.setup.outputs.e2e_image }}
+      # See the build job's container PATH note.
+      env:
+        PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+      options: ${{ needs.setup.outputs.e2e_container_options }}
+    timeout-minutes: 120
+    env:
+      R_LIBS_USER: ${{ github.workspace }}/R-libs
+      PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
+      PW_SANDBOX_ROOT_CREATE: '1'
+
+    steps:
+      - name: Prepare container
+        if: needs.setup.outputs.e2e_image != ''
+        env:
+          PM: ${{ needs.setup.outputs.package_manager }}
+          PACKAGES: ${{ needs.setup.outputs.e2e_bootstrap_packages }}
+        run: |
+          case "$PM" in
+            apt)
+              apt-get update
+              apt-get install -y $PACKAGES
+              update-ca-certificates
+              ;;
+            dnf)
+              dnf -y install $PACKAGES
+              ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      # Distro-specific runtime setup: display server / Chromium runtime
+      # packages, repo enablement, sandbox sysctls, locale exports, and the R
+      # source-compile toolchain where PPM has no binaries. Each engine's
+      # hook documents its own package list.
+      - name: OS-specific e2e setup
+        env:
+          SCRIPT: .github/e2e-linux/${{ needs.setup.outputs.script_dir }}/e2e-setup.sh
+        run: |
+          if [ -f "$SCRIPT" ]; then
+            bash "$SCRIPT"
+          else
+            echo "No e2e-setup hook for ${{ inputs.os }}; skipping."
+          fi
+
+      - name: Install rig
+        if: needs.setup.outputs.r_install == 'rig'
+        uses: ./.github/actions/os-install-rig-unix
+
+      - name: Install R via rig
+        if: needs.setup.outputs.r_install == 'rig'
+        env:
+          R_VERSION: ${{ inputs.r_version }}
+        run: |
+          rig add "$R_VERSION"
+          rig default "$R_VERSION"
+          rig ls
+          mkdir -p "$R_LIBS_USER"
+
+      # Engines that can't use rig (r_install: "distro") install R through
+      # their own hook instead (e.g. Fedora's dnf R-core, which also has to
+      # defeat the container image's tsflags=nodocs default).
+      # Unlike the optional hooks above, this one is required when the config
+      # asks for it: silently skipping it would leave the engine with no R at
+      # all, failing much later and less legibly.
+      - name: Install R (distro)
+        if: needs.setup.outputs.r_install == 'distro'
+        env:
+          SCRIPT: .github/e2e-linux/${{ needs.setup.outputs.script_dir }}/install-r.sh
+        run: |
+          if [ ! -f "$SCRIPT" ]; then
+            echo "::error::${{ inputs.os }} sets r_install: distro but $SCRIPT does not exist."
+            exit 1
+          fi
+          bash "$SCRIPT"
+
+      # Post-R, pre-R-package hook (e.g. Debian's PPM codename rewrite, which
+      # must run after rig has seen the real distro).
+      - name: OS-specific post-R setup
+        env:
+          SCRIPT: .github/e2e-linux/${{ needs.setup.outputs.script_dir }}/post-r-setup.sh
+        run: |
+          if [ -f "$SCRIPT" ]; then
+            bash "$SCRIPT"
+          else
+            echo "No post-r-setup hook for ${{ inputs.os }}; skipping."
+          fi
+
+      # Build-from-source path: extract the installer artifact produced by
+      # the build job above and install it. On the RPM/minimal-container
+      # engines the package declares only minimal deps (AUTOREQPROV off), so
+      # the GUI/Chromium runtime libs come from the e2e-setup hook above, not
+      # from the package's own resolution.
+      - name: Download installer artifact
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.setup.outputs.installer_artifact }}
+          path: ${{ github.workspace }}
+
+      - name: Install RStudio Desktop from artifact
+        if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
+        env:
+          PM: ${{ needs.setup.outputs.package_manager }}
+          PACKAGE_EXT: ${{ needs.setup.outputs.package_ext }}
+        run: |
+          case "$PM" in
+            apt) sudo apt-get install -y "$GITHUB_WORKSPACE/rstudio-desktop.$PACKAGE_EXT" ;;
+            dnf) sudo dnf -y install "$GITHUB_WORKSPACE/rstudio-desktop.$PACKAGE_EXT" ;;
+          esac
+          ls -la /usr/bin/rstudio
+
+      # Daily-download path: resolve and install the latest (or specified)
+      # installer. Runs when build_from_source is false (auto-resolve the
+      # daily via dailies.rstudio.com/rstudio/latest/index.json) or when an
+      # explicit rstudio_installer_url is provided (use that URL verbatim).
+      - name: Resolve installer URL
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        id: resolve
+        env:
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+          DAILY_KEY: ${{ needs.setup.outputs.daily_platform_key }}
+        run: |
+          URL="$INSTALLER_URL"
+          SHA=""
+          FILENAME=""
+          if [ -z "$URL" ]; then
+            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+            # daily_platform_key names this engine's installer under the
+            # electron product. Engines without their own daily reuse the
+            # nearest build (Ubuntu 26 -> noble-amd64, Debian -> noble-arm64,
+            # Fedora -> rhel10-x86_64); see the engine config.
+            URL=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].link // empty')
+            SHA=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].sha256 // empty')
+            FILENAME=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].filename // empty')
+            if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
+              echo "::error::Daily manifest is missing expected fields for '$DAILY_KEY' (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              exit 1
+            fi
+            echo "Auto-resolved latest $DAILY_KEY desktop daily:"
+            echo "  URL:      $URL"
+            echo "  SHA-256:  $SHA"
+            echo "  Filename: $FILENAME"
+          else
+            FILENAME=$(basename "${URL%%\?*}")
+            if [ -z "$FILENAME" ]; then
+              echo "::error::Could not derive filename from rstudio_installer_url='$URL'."
+              exit 1
+            fi
+            echo "Using override URL: $URL (SHA-256 verification skipped)"
+          fi
+          echo "url=$URL"           >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA"        >> "$GITHUB_OUTPUT"
+          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
+
+      # Downloaded fresh every run rather than cached: dailies.rstudio.com is
+      # already S3/CDN-backed, and GH Actions cache scoping means concurrent
+      # PRs can't share a cache entry with each other anyway (only with their
+      # base branch), so caching here would just duplicate the same bytes
+      # into the shared 10 GB cache quota without saving meaningful time.
+      - name: Download installer
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        env:
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.url }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          curl -fsSL --retry 3 --retry-delay 5 \
+            -o "$DOWNLOAD_FILENAME" \
+            "$DOWNLOAD_URL"
+
+      - name: Verify SHA-256
+        if: (inputs.build_from_source == false || inputs.rstudio_installer_url != '') && steps.resolve.outputs.sha256 != ''
+        env:
+          EXPECTED_SHA256: ${{ steps.resolve.outputs.sha256 }}
+          DOWNLOAD_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          echo "$EXPECTED_SHA256  $DOWNLOAD_FILENAME" | sha256sum -c -
+
+      - name: Install RStudio Desktop from installer
+        if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
+        env:
+          PM: ${{ needs.setup.outputs.package_manager }}
+          INSTALLER_FILENAME: ${{ steps.resolve.outputs.filename }}
+        run: |
+          case "$PM" in
+            apt) sudo apt-get install -y "./$INSTALLER_FILENAME" ;;
+            dnf) sudo dnf -y install "./$INSTALLER_FILENAME" ;;
+          esac
+          ls -la /usr/bin/rstudio
+
+      # install-required-packages pre-installs the harness's full
+      # REQUIRED_PACKAGES set into the cached R library;
+      # PW_RSTUDIO_R_LIBS_USER below then points globalSetup at that same
+      # library so it finds everything present and installs nothing. Every
+      # Linux engine sets it: the harness-default library
+      # (~/.cache/rstudio-playwright) is not in any workflow cache, so an
+      # engine that leaves it off pays the full 23-package install on every
+      # run -- a few minutes of PPM binary downloads on Ubuntu/Debian, a full
+      # source compile on engines without PPM binaries (Fedora).
+      - name: Install e2e test dependencies
+        uses: ./.github/actions/os-e2e-deps
+        with:
+          r-libs-user: ${{ env.R_LIBS_USER }}
+          # Isolate the R-library / pak caches per engine: they all share
+          # runner.os == Linux, and an R library compiled under a different
+          # distro/version/arch is ABI-incompatible. Empty keeps the engine's
+          # historical default scope.
+          cache-scope: ${{ needs.setup.outputs.e2e_deps_cache_scope }}
+          install-required-packages: ${{ needs.setup.outputs.preinstall_r_packages }}
+
+      # Run the tests as a non-root user on container engines, matching the
+      # bare-runner engines (which execute as the runner user). GHA container
+      # jobs default to root, and RStudio-as-root diverges from real usage:
+      # Chromium refuses its sandbox as root, the terminal gets a root shell,
+      # and rsession warns. All the setup above needs root (package installs,
+      # cache writes), so only the test step drops down -- create the user
+      # here and hand it ownership of everything the run writes under the
+      # workspace (R-libs and its per-worker clones, ms-playwright,
+      # pw-sandbox, the pak cache, and the report dirs under e2e/rstudio).
+      - name: Create non-root test user
+        if: needs.setup.outputs.run_as_user != ''
+        env:
+          RUN_AS_USER: ${{ needs.setup.outputs.run_as_user }}
+        run: |
+          useradd -m -s /bin/bash "$RUN_AS_USER"
+          chown -R "$RUN_AS_USER:$RUN_AS_USER" "$GITHUB_WORKSPACE"
+
+      - name: Run Playwright tests
+        working-directory: e2e/rstudio
+        env:
+          PW_RSTUDIO_MODE: desktop
+          # Platform-labelled project name; playwright.config.ts uses it both as
+          # the project name in reports (so a cross-platform merged report can
+          # distinguish these results) and to derive the platform+shard-unique
+          # blob report file name. Engine-specific so no two engines conflate
+          # results (see pw_label in the engine config).
+          PW_PROJECT_LABEL: ${{ inputs.project }}-${{ needs.setup.outputs.pw_label }}
+          PW_GREP: ${{ inputs.grep }}
+          PW_GREP_INVERT: ${{ inputs.grep_invert }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
+          PW_TEST_IGNORE: ${{ inputs.test_ignore }}
+          # No --no-sandbox by default anywhere: bare engines enable user
+          # namespaces via sysctl, and container engines combine SYS_ADMIN +
+          # unconfined seccomp with the non-root drop below, so Chromium's
+          # real sandbox stays ON. If a future runner kernel forbids
+          # unprivileged user namespaces, pass '--no-sandbox' via
+          # rstudio_extra_args as a fallback rather than changing the flow.
+          PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          # Tells playwright.config.ts to switch to blob reporter for this shard.
+          PW_SHARD: ${{ matrix.shard }}
+          # E2E Test Insights reporter: posts per-shard results to the dashboard.
+          # CONNECT_API_KEY is empty on fork PRs; the reporter still runs but its
+          # uploads fail with warnings (never fails the run).
+          CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          SHARD_NAME: desktop-${{ needs.setup.outputs.pw_label }}-${{ matrix.shard }}
+          # Print the GWT launch timeline so the next launch failure shows which
+          # phase exceeded the deadline.
+          PW_DEBUG_LAUNCH: '1'
+          # Point the harness's R-libs provisioner (fixtures/r-libs-setup.ts,
+          # run in globalSetup) at the library os-e2e-deps pre-populated, so
+          # globalSetup installs nothing at test time. All engines currently
+          # set preinstall_r_packages; the conditional keeps the degraded mode
+          # working (empty means the harness default -- treated as unset since
+          # the empty-override fix in r-libs-setup.ts, which this expression
+          # relies on: an Actions env value of '' is exported as a defined
+          # empty string, not an absent variable).
+          PW_RSTUDIO_R_LIBS_USER: ${{ needs.setup.outputs.preinstall_r_packages == 'true' && format('{0}/R-libs', github.workspace) || '' }}
+          # Defensive ceiling on engines where a straggler R package may
+          # source-compile at test time: that is a long silent stretch the
+          # default 300s heartbeat idle-timeout would kill (exit 124). Empty
+          # keeps the harness default.
+          PW_HEARTBEAT_TIMEOUT_SECONDS: ${{ needs.setup.outputs.heartbeat_timeout_seconds }}
+          DISPLAY_SERVER: ${{ needs.setup.outputs.display_server }}
+          RUN_AS_USER: ${{ needs.setup.outputs.run_as_user }}
+        run: |
+          ARGS=()
+          if [ -n "$PW_TEST_SELECTOR" ]; then
+            set -f
+            ARGS+=($PW_TEST_SELECTOR)
+            set +f
+          fi
+          if [ -n "$PW_GREP" ]; then
+            ARGS+=(--grep "$PW_GREP")
+          fi
+          if [ -n "$PW_GREP_INVERT" ]; then
+            ARGS+=(--grep-invert "$PW_GREP_INVERT")
+          fi
+          ARGS+=(--shard="${{ matrix.shard }}/${{ strategy.job-total }}")
+
+          # Xvfb engines: run Playwright under our own Xvfb (not xvfb-run,
+          # which is a shell wrapper that doesn't forward signals -- cancelled
+          # jobs used to run until timeout-minutes). -ac disables X access
+          # control so Chromium connects without an auth cookie (needed when
+          # the run drops to a non-root user below); -nolisten tcp keeps the
+          # display on the local socket only. Wait for the X socket so we
+          # don't race a cold display, and fail loudly (dumping the Xvfb log)
+          # if it never comes up.
+          if [ "$DISPLAY_SERVER" = "xvfb" ]; then
+            Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp >/tmp/xvfb.log 2>&1 &
+            export DISPLAY=:99
+            for _ in $(seq 1 50); do
+              [ -S /tmp/.X11-unix/X99 ] && break
+              sleep 0.1
+            done
+            if [ ! -S /tmp/.X11-unix/X99 ]; then
+              echo "::error::Xvfb display :99 never came up after 5s; Xvfb log follows."
+              cat /tmp/xvfb.log || true
+              exit 1
+            fi
+          fi
+
+          # exec the watchdog as the step's main process so a job
+          # cancellation's SIGTERM reaches it (it forwards SIGINT to
+          # Playwright's process group, then escalates to SIGKILL). On
+          # container engines, drop to the non-root user via setpriv, which
+          # execs in place (no fork) and so preserves that signal path --
+          # runuser/su would fork and swallow the signal. --init-groups
+          # adopts the user's groups; the environment is left intact
+          # (DISPLAY, PW_*, PATH, R_LIBS_USER all carry through), and only
+          # HOME is overridden, since the step's HOME is root-owned and
+          # node/Playwright write into it. Xvfb keeps running as root above.
+          #
+          # Cage engines (Rocky/RHEL 10, no X.Org): the display comes from a
+          # rootful Xwayland under Cage, a minimal Wayland compositor.
+          # WLR_BACKENDS=headless makes wlroots run with no GPU/DRM device,
+          # WLR_RENDERER=pixman forces software rendering so it never probes
+          # for a DRM device, and WLR_LIBINPUT_NO_DEVICES=1 stops it waiting
+          # for input devices a container doesn't have. Cage starts Xwayland,
+          # exports DISPLAY to its child, and exits when the child exits.
+          # XDG_RUNTIME_DIR must be owned by the test user and mode 0700 for
+          # wlroots to accept it.
+          if [ -z "$RUN_AS_USER" ]; then
+            exec node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
+          elif [ "$DISPLAY_SERVER" = "cage" ]; then
+            export XDG_RUNTIME_DIR="/home/$RUN_AS_USER/xdg"
+            mkdir -p "$XDG_RUNTIME_DIR"
+            chmod 700 "$XDG_RUNTIME_DIR"
+            chown "$RUN_AS_USER:$RUN_AS_USER" "$XDG_RUNTIME_DIR"
+            exec setpriv --reuid="$RUN_AS_USER" --regid="$RUN_AS_USER" --init-groups \
+              env HOME="/home/$RUN_AS_USER" \
+                  XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+                  WLR_BACKENDS=headless \
+                  WLR_LIBINPUT_NO_DEVICES=1 \
+                  WLR_RENDERER=pixman \
+              cage -- node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
+          else
+            exec setpriv --reuid="$RUN_AS_USER" --regid="$RUN_AS_USER" --init-groups \
+              env HOME="/home/$RUN_AS_USER" \
+              node scripts/run-with-heartbeat.mjs -- test "${ARGS[@]}"
+          fi
+
+      # Engine-suffixed artifact names: every engine that can share a parent
+      # run's artifact namespace (the PR orchestrator, the scheduled
+      # rotation's all-engines Sunday run) uploads under its own os slug so
+      # no engine's merge job can sweep in another engine's blobs.
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-blob-report-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
+          path: e2e/rstudio/blob-report/
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
+          path: e2e/rstudio/test-results/
+          if-no-files-found: ignore
+
+      # Preserved per-spec sandbox tree on failure -- includes rsession logs,
+      # the spec's RStudio config / data home, and per-test working dirs.
+      - name: Upload PW sandbox (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pw-sandbox-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
+          path: ${{ github.workspace }}/pw-sandbox/
+          if-no-files-found: ignore
+
+  # Merge per-shard blob reports into a single HTML report, parse aggregated
+  # counts, and post a sticky PR comment with pass/fail/skip totals (when
+  # post_pr_comment is set). Runs on a plain hosted runner -- merging only
+  # needs node + `playwright merge-reports`, no engine container.
+  e2e-merge:
+    name: Merge report (${{ inputs.os }})
+    needs: [setup, e2e]
+    if: always() && inputs.defer_merge != true && needs.setup.result == 'success' && needs.e2e.result != 'skipped' && needs.e2e.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      # OIDC token for the S3 report upload (os-publish-e2e-report).
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: e2e/rstudio/package-lock.json
+
+      - name: Install Playwright
+        working-directory: e2e/rstudio
+        # --ignore-scripts skips the postinstall that downloads browser
+        # binaries; the merge job only invokes `playwright merge-reports`,
+        # which doesn't need Chromium.
+        run: npm ci --ignore-scripts
+
+      - name: Download shard blob reports
+        uses: actions/download-artifact@v4
+        with:
+          # Engine-scoped glob: in a combined parent run the other platforms
+          # and engines also publish blob reports; the os suffix keeps this
+          # merge to our own shards.
+          pattern: playwright-blob-report-linux-desktop-${{ inputs.os }}-*
+          path: e2e/rstudio/all-blob-reports
+          merge-multiple: true
+
+      - name: Merge shard reports
+        working-directory: e2e/rstudio
+        run: |
+          if [ -z "$(ls -A all-blob-reports 2>/dev/null)" ]; then
+            echo "::error::No blob reports found -- both shards failed to produce artifacts"
+            exit 1
+          fi
+          npx playwright merge-reports --config merge.config.ts ./all-blob-reports
+
+      # Shared summarizer (also used by the PR run's e2e-merge-all job) so every
+      # comment computes pass/fail counts and the rate bar from one definition.
+      - name: Parse aggregated results
+        id: summary
+        if: always()
+        working-directory: e2e/rstudio
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+
+      - name: Upload merged Playwright report
+        id: upload-report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-linux-desktop-${{ inputs.os }}
+          path: e2e/rstudio/playwright-report/
+          retention-days: 15
+          if-no-files-found: ignore
+
+      # Publish a browsable copy of the report to S3 on failure only, so
+      # reviewers can inspect it without downloading the zip. Best-effort: a
+      # no-op on fork PRs (no secret) and never fails the job.
+      - name: Publish report to S3
+        id: publish-report
+        if: always() && steps.summary.outputs.failed != '0' && steps.summary.outputs.failed != ''
+        uses: ./.github/actions/os-publish-e2e-report
+        with:
+          role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+          label: linux-desktop-${{ inputs.os }}
+
+      - name: Post E2E results to PR
+        if: |
+          always() &&
+          inputs.post_pr_comment == true &&
+          github.event.pull_request.head.repo.fork == false &&
+          (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: e2e-desktop-${{ inputs.os }}-results
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ## ${{ needs.setup.outputs.emoji }} Linux Desktop E2E · ${{ needs.setup.outputs.pretty_name }}
+
+            ${{ needs.e2e.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+
+            `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
+
+            | ✅ Passed | ❌ Failed | ⚠️ Skipped | 🔁 Flaky |
+            | :---: | :---: | :---: | :---: |
+            | **${{ steps.summary.outputs.passed }}** | **${{ steps.summary.outputs.failed }}** | **${{ steps.summary.outputs.skipped }}** | **${{ steps.summary.outputs.flaky }}** |
+
+            <details>
+            <summary>📥 Download Playwright report</summary>
+            ${{ steps.publish-report.outputs.url != '' && format('
+            **[🌐 View report online]({0})** — opens in the browser, no download needed. Available for 14 days.
+            ', steps.publish-report.outputs.url) || '' }}
+            **[⬇️ playwright-report.zip](${{ steps.upload-report.outputs.artifact-url }})** — extract and open `index.html`
+
+            > Includes screenshots, traces, and step-by-step details for every test. Expires in 15 days.
+
+            </details>
+
+            ---
+            <sub>2 shards · ${{ needs.setup.outputs.runner_note }} · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>

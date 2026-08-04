@@ -4,6 +4,7 @@ import { dismissBlockingModals } from '@pages/modals.page';
 import { waitForSessionRestart } from '@utils/project';
 import { rStringLiteral } from '@utils/r';
 import { executeCommand } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 import type { Page } from 'playwright';
 
 async function captureResult(page: Page, rExpression: string): Promise<string> {
@@ -50,6 +51,58 @@ test.describe.serial('Session suspend/resume', { tag: ['@server_only'] }, () => 
 
     const stillLoaded = await captureResult(page, '"tools" %in% loadedNamespaces()');
     expect(stillLoaded, 'tools should still be loaded after resume').toBe('TRUE');
+  });
+
+  test('multi-byte console output is preserved on suspend + resume', async ({ rstudioPage: page }) => {
+    // A single output line longer than the 512-byte chunk size used by the
+    // console actions buffer (kChunkSize, private to RConsoleActions.cpp, so
+    // nothing catches drift): 400 x U+2588 = 1200 bytes of 3-byte UTF-8
+    // characters. Before rstudio/rstudio#18382 a character was torn at a
+    // chunk boundary, and the saved console actions then failed to parse on
+    // resume ("Error restoring session (console_actions)"), losing the
+    // console replay entirely. The trailing "\n" is load-bearing: the
+    // chunking loop only processes complete lines, so without it the whole
+    // line goes out as a single action and the boundary logic never runs.
+    await executeInConsole(page, 'cat(strrep("\\u2588", 400), "\\n")', { wait: true });
+
+    await suspendAndResume(page);
+
+    // Suspend/resume keeps the browser page (and its console DOM) alive, so
+    // reload: the console is then re-rendered purely from the console actions
+    // restored from the suspended session state, which is the surface this
+    // regression corrupts.
+    await page.reload();
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+      timeout: TIMEOUTS.sessionRestart,
+      polling: 50,
+    });
+
+    // After the reload the console renders either the replayed output or the
+    // restore-error banner (the REprintf in RInit.cpp runs after
+    // restoreSession, so the error itself is captured into the replay). Wait
+    // for one of the two, so the decisive assertions below inspect settled
+    // output rather than burning a retry timeout on a console that has not
+    // rendered yet.
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText(
+      /█{20}|Error restoring session/,
+    );
+
+    // Check the failure mode first: if restore failed, this is the
+    // actionable message, and the missing block characters below are just a
+    // downstream symptom.
+    const output = await page.locator(CONSOLE_OUTPUT).innerText();
+    expect(
+      output,
+      'resume should not report a session restore error',
+    ).not.toContain('Error restoring session');
+
+    // The replayed output contains actual U+2588 block characters; the
+    // command echo only ever contains the R escape sequence, so it cannot
+    // false-pass this assertion.
+    expect(
+      output,
+      'replayed console output should retain the multi-byte line',
+    ).toContain('█'.repeat(20));
   });
 
   test('attached datasets are preserved on suspend + resume', async ({ rstudioPage: page }) => {

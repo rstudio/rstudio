@@ -10,7 +10,7 @@ import { setupPositAssistantChat, annotateVersions } from './_chat-setup';
 // Return button in satellite window (has explicit ElementIds assignment)
 const RETURN_TO_MAIN_BTN = '#rstudio_chat_return_to_main_button';
 
-test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@ai', '@desktop_only'] }, () => {
+test.describe.serial('Detachable Assistant Sidebar - #16937', { tag: ['@ai', '@chat', '@desktop_only'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let chatPane: ChatPane;

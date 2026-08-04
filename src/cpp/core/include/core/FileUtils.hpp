@@ -26,6 +26,10 @@ namespace file_utils {
 
 std::string shortPathName(const std::string& string);
 
+// Expands a path to its long (non-8.3) form. Returns the path unchanged if it
+// does not exist or cannot be expanded, and is a no-op off Windows.
+std::string longPathName(const std::string& path);
+
 FilePath uniqueFilePath(const core::FilePath& parent,
                         const std::string& prefix = "",
                         const std::string& extension = "");

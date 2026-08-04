@@ -29,6 +29,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.*;
@@ -76,6 +77,7 @@ public abstract class ChangelistTable extends Composite
    interface Styles extends CssResource
    {
       String infoBar();
+      String emptyMessage();
    }
 
    public static void ensureStylesInjected()
@@ -292,6 +294,30 @@ public abstract class ChangelistTable extends Composite
    public void setItems(ArrayList<StatusAndPath> items)
    {
       setProgress(false);
+
+      // A bare table reads as broken rather than empty, especially in the
+      // Review Changes window where it owns a whole pane. Install the message
+      // only once a status has actually landed: an empty ListDataProvider
+      // reports a row count of zero *exactly*, so a placeholder set in the
+      // constructor would assert "No changes" while the first refresh is still
+      // in flight. (showProgress() is not a substitute -- progressPanel_ is a
+      // transparent overlay, and its spinner is delayed besides.)
+      //
+      // A null status means unknown, not clean, and is not the same thing as an
+      // empty one: GitState.refresh() leaves status_ null when gitAllStatus
+      // fails, and refreshMinimal() fires VcsRefreshEvent without ever setting
+      // it. Both reach us through GitChangelistTablePresenter, and GitState is
+      // initialized off branches_ rather than status_, so either can arrive
+      // first. Leave the table bare in that case rather than claiming the
+      // working tree is clean.
+      if (!emptyMessageInstalled_ && items != null)
+      {
+         Label emptyLabel = new Label(constants_.noChanges());
+         emptyLabel.addStyleName(resources_.styles().emptyMessage());
+         table_.setEmptyTableWidget(emptyLabel);
+         emptyMessageInstalled_ = true;
+      }
+
       items = (items == null) ? new ArrayList<>() : items;
       table_.setPageSize(items.size());
       dataProvider_.getList().clear();
@@ -432,6 +458,7 @@ public abstract class ChangelistTable extends Composite
    private ScrollPanel scrollPanel_;
    private ChangelistInfoBar infoBar_;
    private boolean selectFirstItemByDefault_;
+   private boolean emptyMessageInstalled_;
    private static final ChangelistTableCellTableResources resources_ = GWT.<ChangelistTableCellTableResources>create(ChangelistTableCellTableResources.class);
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

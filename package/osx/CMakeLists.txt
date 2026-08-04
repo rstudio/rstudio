@@ -31,6 +31,17 @@ set(
    "${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/session/rsession"
    CACHE INTERNAL "")
 
+# help install script find arm64 diagnostics / rpostback for universal binaries
+set(
+   DIAGNOSTICS_ARM64_PATH
+   "${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/diagnostics/diagnostics"
+   CACHE INTERNAL "")
+
+set(
+   RPOSTBACK_ARM64_PATH
+   "${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/session/postback/rpostback"
+   CACHE INTERNAL "")
+
 # developer-id code signing
 if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
 

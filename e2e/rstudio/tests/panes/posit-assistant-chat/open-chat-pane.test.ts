@@ -8,7 +8,7 @@ import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { executeCommand } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
-test.describe('Open Chat Pane', { tag: ['@ai'] }, () => {
+test.describe('Open Chat Pane', { tag: ['@ai', '@chat'] }, () => {
   requireAiCredentials(test, 'positai');
 
   let consoleActions: ConsolePaneActions;

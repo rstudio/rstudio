@@ -1,5 +1,6 @@
 import { test } from '@fixtures/rstudio.fixture';
 import { CHAT_PROVIDERS } from '@utils/constants';
+import { setPref } from '@utils/commands';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -21,6 +22,16 @@ export function createChatActions(page: Page): ChatTestActions {
   const assistantActions = new AssistantOptionsActions(page, consoleActions);
   const chatActions = new ChatPaneActions(page, consoleActions);
   return { consoleActions, assistantActions, chatActions, chatPane: chatActions.chatPane };
+}
+
+// Select Posit Assistant as the chat provider via the pref alone. The e2e
+// base prefs keep the provider at "none" so unrelated suites don't run the
+// assistant (#18394); a suite that opens the chat pane must select the
+// provider first -- with no provider the chat input never becomes editable.
+// Use this over setupPositAssistantChat when the suite drives the pane
+// itself and only needs the provider switched on.
+export async function selectPositChatProvider(page: Page): Promise<void> {
+  await setPref(page, 'chat_provider', 'posit');
 }
 
 // Standard setup for tests that need a working Posit Assistant chat pane:

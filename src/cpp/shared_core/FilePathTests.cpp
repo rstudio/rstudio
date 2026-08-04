@@ -315,6 +315,80 @@ TEST(SharedCoreTest, EmptyFilePathTests)
 
 }
 
+namespace {
+
+// The MAX_PATH-family limits count UTF-16 units, which equals UTF-8 byte length
+// only for pure-ASCII paths. Measure the way the OS does, so that a non-ASCII
+// temporary directory cannot make a computed target land short of the boundary
+// a test means to hit.
+size_t nativePathLength(const FilePath& filePath)
+{
+#ifdef _WIN32
+   return filePath.getAbsolutePathW().length();
+#else
+   return filePath.getAbsolutePath().length();
+#endif
+}
+
+} // anonymous namespace
+
+TEST(SharedCoreTest, DeepDirectoryIsWriteable)
+{
+   // A deep directory used to report as read-only on Windows, because isWriteable()
+   // probed it with GetTempFileNameW, whose lpPathName is documented to fail above
+   // MAX_PATH-14 (246) characters. See #12806.
+   //
+   // The target length matters. CreateDirectoryW accepts up to 248 characters without
+   // any OS opt-in, while GetTempFileNameW gives up at 247 -- so a directory in that
+   // window reproduces the original bug on a stock Windows machine, with neither the
+   // longPathAware manifest (which these test binaries do not carry) nor the
+   // LongPathsEnabled registry value. Going past 260 instead would only ever skip.
+   const size_t kTargetLength = 247;
+
+   // Each nesting step below adds 11 characters (separator + a 10-character name), and
+   // the final leaf is padded to land exactly on kTargetLength. Stopping one step early
+   // keeps that pad in 11..21 characters, so it is never empty -- padding by a computed
+   // amount that can come out zero or negative is how this kind of loop usually breaks,
+   // and it would break as a function of how long TEMP happens to be on the machine.
+   const size_t kStep = 11;
+
+   FilePath tempDir;
+   Error error = FilePath::tempFilePath(tempDir);
+   ASSERT_FALSE(error);
+
+   ASSERT_LT(nativePathLength(tempDir) + 2 * kStep, kTargetLength)
+      << "temporary directory is too deep to build a " << kTargetLength
+      << " character path below it";
+
+   FilePath deepDir = tempDir;
+   while (nativePathLength(deepDir) + 2 * kStep <= kTargetLength)
+      deepDir = deepDir.completeChildPath("0123456789");
+
+   // pad the leaf out so the path lands exactly on the target length; the pad is
+   // ASCII, so counting it in UTF-16 units is exact
+   size_t remaining = kTargetLength - nativePathLength(deepDir);
+   deepDir = deepDir.completeChildPath(std::string(remaining - 1, 'x'));
+
+   ASSERT_EQ(kTargetLength, nativePathLength(deepDir));
+
+   error = deepDir.ensureDirectory();
+   if (error)
+   {
+      // Some platforms cap a single component or the whole path lower than this;
+      // there is nothing to test if the directory cannot be created at all.
+      tempDir.remove();
+      GTEST_SKIP() << "unable to create a directory of "
+                   << kTargetLength << " characters";
+   }
+
+   bool writeable = false;
+   error = deepDir.isWriteable(writeable);
+   EXPECT_FALSE(error);
+   EXPECT_TRUE(writeable);
+
+   tempDir.remove();
+}
+
 #ifndef _WIN32
 
 TEST(SharedCoreTest, GetFileOwnerTest)
