@@ -284,8 +284,9 @@ Error realPath(const std::string& path, FilePath* pRealPath)
    return Success();
 }
      
-void initHook()
+Error initHook()
 {
+   return Success();
 }
 
 Error findProgramOnPath(const std::string& program,

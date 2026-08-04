@@ -85,8 +85,9 @@ public:
 
 private:
 
-   // NOTE: helper method assumes mutex is already locked
+   // NOTE: helper methods assume mutex is already locked
    void flush();
+   void pushAction(int type, std::string data);
 
    // protect data using a mutex because background threads (e.g.
    // console output capture threads) can interact with console actions

@@ -24,6 +24,7 @@
 
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/Thread.hpp>
 #include <core/text/AnsiCodeParser.hpp>
 
@@ -74,6 +75,22 @@ void ConsoleActions::setCapacity(int capacity)
    END_LOCK_MUTEX
 }
 
+void ConsoleActions::pushAction(int type, std::string data)
+{
+   // NOTE: helper method assumes mutex is already locked
+
+   // ensure the action data is valid UTF-8, as console actions are
+   // round-tripped through JSON -- both when session state is suspended
+   // and resumed, and on every client init (sessionInfo's console_actions)
+   // -- and the JSON parser rejects invalid UTF-8 on restore
+   string_utils::utf8Clean(data.begin(), data.end(), '?');
+
+   ConsoleAction action;
+   action.type = type;
+   action.data = std::move(data);
+   actions_.push_back(std::move(action));
+}
+
 void ConsoleActions::flush()
 {
    // NOTE: helper method assumes mutex is already locked
@@ -83,42 +100,43 @@ void ConsoleActions::flush()
    std::size_t rhs = buffer_.data.find('\n');
    while (rhs != std::string::npos)
    {
-      // consume this line of data in chunks
-      for (; lhs + kChunkSize < rhs; lhs += kChunkSize)
+      // consume this line of data in chunks, taking care not to
+      // split multi-byte UTF-8 sequences across chunk boundaries
+      while (lhs + kChunkSize < rhs)
       {
-         // consume a chunk of data
-         ConsoleAction action;
-         action.type = buffer_.type;
-         action.data = buffer_.data.substr(lhs, kChunkSize);
-         actions_.push_back(action);
+         std::string data = buffer_.data.substr(lhs, kChunkSize);
+         data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
+
+         lhs += data.size();
+         pushAction(buffer_.type, std::move(data));
       }
 
       // consume any remaining data on this line
       // (include the newline character)
       if (lhs <= rhs)
-      {
-         ConsoleAction action;
-         action.type = buffer_.type;
-         action.data = buffer_.data.substr(lhs, rhs - lhs + 1);
-         actions_.push_back(action);
-      }
-      
+         pushAction(buffer_.type, buffer_.data.substr(lhs, rhs - lhs + 1));
+
       // advance to next line
       lhs = rhs + 1;
       rhs = buffer_.data.find('\n', lhs);
    }
 
-   // push any remaining partial line
+   // push any remaining partial line, holding back a trailing incomplete
+   // UTF-8 sequence: output reaches add() as arbitrary byte windows over a
+   // pipe, so the rest of the character may still be in flight, and
+   // pushAction() would otherwise sanitize the torn character to '?'
    if (lhs < buffer_.data.size())
    {
-      ConsoleAction action;
-      action.type = buffer_.type;
-      action.data = buffer_.data.substr(lhs);
-      actions_.push_back(action);
+      std::string data = buffer_.data.substr(lhs);
+      data.resize(data.size() - string_utils::utf8IncompleteSuffixLength(data));
+
+      lhs += data.size();
+      if (!data.empty())
+         pushAction(buffer_.type, std::move(data));
    }
 
-   // clear buffer to finish
-   buffer_.data.clear();
+   // remove consumed data, retaining any held-back suffix for the next add()
+   buffer_.data.erase(0, lhs);
 }
 
 void ConsoleActions::add(int type, const std::string& data)
@@ -156,7 +174,13 @@ void ConsoleActions::add(int type, const std::string& data)
       {
          // the output type has changed; flush our buffer
          flush();
-         
+
+         // an incomplete UTF-8 suffix held back by flush() can no longer be
+         // completed once the type changes; push it (sanitized) rather than
+         // gluing it to data of a different type
+         if (!buffer_.data.empty())
+            pushAction(buffer_.type, std::move(buffer_.data));
+
          // update the action with the newly-provided data
          buffer_.type = type;
          buffer_.data = data;
@@ -228,34 +252,67 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
       if (contents.empty())
          return Success();
       
-      // parse JSON
+      // parse JSON; note that the parser validates UTF-8, and a console
+      // actions file can contain invalid UTF-8 -- e.g. one written by a
+      // version predating the UTF-8-aware chunking above, or a file that
+      // was truncated on disk. console actions are merely a replay of prior
+      // console output, so treat unusable files as empty rather than
+      // failing session restore
       json::Object value;
       error = value.parse(contents);
       if (error)
-         return error;
-      
+      {
+         WLOGF("Discarding unparseable console actions file '{}': {}",
+               filePath.getAbsolutePath(),
+               error.getSummary());
+         return Success();
+      }
+
       // read type + data fields
       json::Value typeJson = value.getObject()[kActionType];
-      if (!typeJson.isArray())
-         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      
       json::Value dataJson = value.getObject()[kActionData];
-      if (!dataJson.isArray())
-         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      
+      if (!typeJson.isArray() || !dataJson.isArray())
+      {
+         WLOGF("Discarding console actions file '{}': expected 'type' and 'data' arrays",
+               filePath.getAbsolutePath());
+         return Success();
+      }
+
+      // a length mismatch cannot be produced by asJson(), which fills both
+      // arrays in lockstep, so it implies a broken writer -- log loudly
       json::Array typeArray = typeJson.getArray();
       json::Array dataArray = dataJson.getArray();
       if (typeArray.getSize() != dataArray.getSize())
-         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
-      
+      {
+         ELOGF("Discarding console actions file '{}': 'type' has {} entries but 'data' has {}",
+               filePath.getAbsolutePath(),
+               typeArray.getSize(),
+               dataArray.getSize());
+         return Success();
+      }
+
+      std::size_t skipped = 0;
       for (std::size_t i = 0, n = typeArray.getSize(); i < n; i++)
       {
+         if (!typeArray[i].isInt() || !dataArray[i].isString())
+         {
+            skipped++;
+            continue;
+         }
+
          ConsoleAction action;
          action.type = typeArray[i].getInt();
          action.data = dataArray[i].getString();
-         actions_.push_back(action);
+         actions_.push_back(std::move(action));
       }
-      
+
+      if (skipped != 0)
+      {
+         WLOGF("Skipped {} malformed entries in console actions file '{}'",
+               skipped,
+               filePath.getAbsolutePath());
+      }
+
    }
    END_LOCK_MUTEX
    
@@ -267,11 +324,29 @@ Error ConsoleActions::saveToFile(const core::FilePath& filePath)
    // write actions
    json::Object actionsObject;
    asJson(&actionsObject);
-   std::ostringstream ostr;
-   actionsObject.writeFormatted(ostr);
+   std::string contents = actionsObject.writeFormatted();
+
+   // the sanitization in pushAction() is lenient -- it accepts some byte
+   // sequences (e.g. overlong encodings, UTF-16 surrogate halves) that the
+   // JSON parser rejects -- and the JSON writer does not validate encoding,
+   // so confirm the serialized actions actually parse. otherwise the file
+   // would be silently discarded by loadFromFile() on restore; better to
+   // save an empty replay and log the loss here, while the cause is live
+   json::Object validationObject;
+   Error error = validationObject.parse(contents);
+   if (error)
+   {
+      ELOGF("Console actions did not serialize as valid JSON; discarding console replay: {}",
+            error.getSummary());
+
+      json::Object emptyObject;
+      emptyObject[kActionType] = json::Array();
+      emptyObject[kActionData] = json::Array();
+      contents = emptyObject.writeFormatted();
+   }
 
    // write to file
-   return writeStringToFile(filePath, ostr.str());
+   return writeStringToFile(filePath, contents);
 }
 
 std::vector<std::string> ConsoleActions::getConsoleLines(int limit,

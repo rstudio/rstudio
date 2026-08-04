@@ -26,6 +26,11 @@
 #include "chat/ChatStaticFiles.hpp"
 #include "chat/ChatUpdateThrottle.hpp"
 
+#ifndef _WIN32
+# include <cerrno>
+# include <signal.h>
+#endif
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -866,14 +871,16 @@ void sendStreamingOutput(core::system::ProcessOperations& ops,
    }
 }
 
-void requestBackendShutdown(core::system::ProcessOperations& ops,
+// Returns true if the shutdown request was actually sent; callers that wait
+// for a graceful exit should skip the wait when it was not.
+bool requestBackendShutdown(core::system::ProcessOperations& ops,
                             const std::string& reason,
                             int gracePeriodMs = 5000)
 {
    if (!peerHasCapability("lifecycle/requestShutdown"))
    {
       DLOG("Peer does not support lifecycle/requestShutdown, skipping");
-      return;
+      return false;
    }
 
    json::Object notification;
@@ -902,6 +909,8 @@ void requestBackendShutdown(core::system::ProcessOperations& ops,
    {
       WLOG("Failed to send shutdown request: {}", error.getMessage());
    }
+
+   return true;
 }
 
 void drainNotificationQueueForExecution(core::system::ProcessOperations& ops,
@@ -6255,6 +6264,116 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
 // Module Lifecycle
 // ============================================================================
 
+// Stop the chat backend on a session-exit path. Both legs that reach this --
+// shutdown (rCleanup) and suspend (which runs the suspend handlers and then
+// rCleanup, so this process exits either way) -- must use the same bounded
+// sequence: request a graceful shutdown, wait for the exit pumping ONLY the
+// process supervisor, then escalate to SIGTERM and, if even that is ignored,
+// SIGKILL to the backend's detached process group.
+//
+// The supervisor-only pump matters: the full background-processing pass runs
+// every module's background handlers plus scheduled commands, and
+// processEvents() runs arbitrary R callbacks; any one of them blocking
+// mid-teardown wedges the session's exit permanently -- and with it the
+// desktop/server relaunch waiting on it (#18394). The supervisor poll alone
+// reaps the backend and fires onBackendExit, which is all these waits need.
+// (This assumes we are not already inside a supervisor poll: poll() is a
+// no-op when re-entered -- see its re-entrancy guard -- in which case these
+// waits degrade to bounded sleeps and the WARN below can fire spuriously.)
+void stopChatBackendForSessionExit(const std::string& reason, int gracePeriodMs)
+{
+   if (s_chatBackendPid == -1)
+      return;
+
+   // Mark this as an expected shutdown so onBackendExit() treats the exit as
+   // an expected shutdown (not a crash), however it lands.
+   s_expectedShutdown = true;
+
+   // Capture shared_ptr atomically to avoid race conditions
+   auto backendOps = s_chatBackendOps;
+
+   // Request graceful shutdown if we have ProcessOperations; the wait is only
+   // worthwhile when the request was actually sent (an older backend without
+   // lifecycle/requestShutdown goes straight to SIGTERM below).
+   if (backendOps && requestBackendShutdown(*backendOps, reason, gracePeriodMs))
+   {
+      DLOG("Sent graceful shutdown request, waiting up to {}ms", gracePeriodMs);
+
+      const int POLL_INTERVAL_MS = 50;
+      int elapsed = 0;
+
+      while (s_chatBackendPid != -1 && elapsed < gracePeriodMs)
+      {
+         module_context::processSupervisor().poll();
+         boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+         elapsed += POLL_INTERVAL_MS;
+      }
+
+      if (s_chatBackendPid != -1)
+      {
+         WLOG("Chat backend did not exit within its {}ms shutdown grace period; force terminating",
+              gracePeriodMs);
+      }
+      else
+      {
+         DLOG("Backend exited gracefully after {}ms", elapsed);
+      }
+   }
+
+   // Release ProcessOperations reference before force termination
+   s_chatBackendOps.reset();
+
+   // Force terminate if still running after the grace period. Prefer
+   // terminate() through the retained process handle: the backend is a
+   // detached child, so that signals its whole process group and any
+   // children it spawned get the SIGTERM too, where terminateProcess()
+   // reaches only the single pid. On Windows both are TerminateProcess(),
+   // and the session's kill-on-close job object kills stragglers, so no
+   // escalation is needed there.
+   if (s_chatBackendPid != -1)
+   {
+      Error error = backendOps
+            ? backendOps->terminate()
+            : core::system::terminateProcess(s_chatBackendPid);
+      if (error)
+         LOG_ERROR(error);
+
+#ifndef _WIN32
+      // terminateProcess() is SIGTERM to the single pid; give the backend a
+      // brief window to honor it, then SIGKILL its process group. It runs
+      // detached (its own session and process group), and the only
+      // parent-death guard it has is exitWithParent -- PR_SET_PDEATHSIG with
+      // SIGTERM, the same signal it would be ignoring here, and compiled out
+      // on macOS -- so without this escalation a surviving backend would
+      // outlive the session forever (#18394).
+      for (int i = 0; i < 10 && s_chatBackendPid != -1; i++)
+      {
+         module_context::processSupervisor().poll();
+         boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+      }
+
+      // Snapshot the pid before deciding to escalate: the reap can land on
+      // the loop's final poll, and negating the -1 sentinel would aim the
+      // SIGKILL at pid 1.
+      PidType backendPid = s_chatBackendPid;
+      if (backendPid > 1)
+      {
+         WLOG("Chat backend process {} did not exit at session exit; sending SIGKILL.",
+              backendPid);
+
+         // ESRCH means the group is already gone; anything else (e.g. EPERM,
+         // a live process we could not signal) leaves an orphan behind, and
+         // this log is the only artifact of that.
+         if (::kill(-backendPid, SIGKILL) == -1 && errno != ESRCH)
+            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      }
+#endif
+   }
+
+   s_chatBackendPid = -1;
+   clearChatBackendPort();
+}
+
 void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
 {
    DLOG("Session suspension starting - requesting graceful backend shutdown");
@@ -6273,65 +6392,12 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
    // Reset flag for next cycle
    s_sessionClosing = false;
 
-   // Request graceful shutdown and wait for backend to exit
-   if (wasRunning)
-   {
-      // Capture shared_ptr atomically to avoid race conditions
-      auto backendOps = s_chatBackendOps;
-
-      // Request graceful shutdown if we have ProcessOperations
-      if (backendOps)
-      {
-         // Use shorter grace period for suspend (0.5s instead of 1s)
-         // to be more responsive while still allowing cleanup
-         const int SUSPEND_GRACE_PERIOD_MS = 500;
-
-         // Mark this as an expected shutdown to prevent crash notification
-         s_expectedShutdown = true;
-
-         requestBackendShutdown(*backendOps, "suspend", SUSPEND_GRACE_PERIOD_MS);
-         DLOG("Sent graceful shutdown request, waiting up to {}ms", SUSPEND_GRACE_PERIOD_MS);
-
-         // Poll for backend exit with short intervals
-         // This allows event processing while still waiting for graceful shutdown
-         const int POLL_INTERVAL_MS = 50;
-         int elapsed = 0;
-
-         while (s_chatBackendPid != -1 && elapsed < SUSPEND_GRACE_PERIOD_MS)
-         {
-            module_context::onBackgroundProcessing(false);
-            r::session::event_loop::processEvents();
-            boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_INTERVAL_MS));
-            elapsed += POLL_INTERVAL_MS;
-         }
-
-         if (s_chatBackendPid != -1)
-         {
-            DLOG("Backend did not exit within grace period, force terminating");
-         }
-         else
-         {
-            DLOG("Backend exited gracefully after {}ms", elapsed);
-         }
-      }
-
-      // Release ProcessOperations reference before force termination
-      s_chatBackendOps.reset();
-
-      // Force terminate if still running after grace period
-      // Note: s_expectedShutdown is already set, so onBackendExit() will
-      // correctly treat this as an expected shutdown (not a crash)
-      if (s_chatBackendPid != -1)
-      {
-         Error error = core::system::terminateProcess(s_chatBackendPid);
-         if (error)
-            LOG_ERROR(error);
-      }
-
-      // Clear state (rsession is exiting anyway)
-      s_chatBackendPid = -1;
-      clearChatBackendPort();
-   }
+   // Stop the backend with the same bounded, supervisor-only sequence as
+   // shutdown -- the suspend leg exits this process too (RCleanUp runs right
+   // after the suspend handlers), and it must not wedge or orphan either.
+   // Use a shorter grace period (0.5s instead of 1s) to be more responsive
+   // while still allowing cleanup.
+   stopChatBackendForSessionExit("suspend", 500);
 
    // Clear busy state and JSON-RPC buffer
    s_chatBusy = false;
@@ -6363,61 +6429,9 @@ void onShutdown(bool terminatedNormally)
    s_chatBusy = false;
    s_backendOutputBuffer.clear();
 
-   // Request graceful shutdown and wait for backend to exit
-   if (s_chatBackendPid != -1)
-   {
-      // Capture shared_ptr atomically to avoid race conditions
-      auto backendOps = s_chatBackendOps;
-
-      // Request graceful shutdown if we have ProcessOperations
-      if (backendOps)
-      {
-         const int SHUTDOWN_GRACE_PERIOD_MS = 1000;
-
-         // Mark this as an expected shutdown to prevent crash notification
-         s_expectedShutdown = true;
-
-         requestBackendShutdown(*backendOps, "close", SHUTDOWN_GRACE_PERIOD_MS);
-         DLOG("Sent graceful shutdown request, waiting up to {}ms", SHUTDOWN_GRACE_PERIOD_MS);
-
-         // Poll for backend exit with short intervals
-         // This allows event processing while still waiting for graceful shutdown
-         const int POLL_INTERVAL_MS = 50;
-         int elapsed = 0;
-
-         while (s_chatBackendPid != -1 && elapsed < SHUTDOWN_GRACE_PERIOD_MS)
-         {
-            module_context::onBackgroundProcessing(false);
-            r::session::event_loop::processEvents();
-            boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_INTERVAL_MS));
-            elapsed += POLL_INTERVAL_MS;
-         }
-
-         if (s_chatBackendPid != -1)
-         {
-            DLOG("Backend did not exit within grace period, force terminating");
-         }
-         else
-         {
-            DLOG("Backend exited gracefully after {}ms", elapsed);
-         }
-      }
-
-      // Release ProcessOperations reference before force termination
-      s_chatBackendOps.reset();
-
-      // Force terminate if still running after grace period
-      // Note: s_expectedShutdown is already set, so onBackendExit() will
-      // correctly treat this as an expected shutdown (not a crash)
-      if (s_chatBackendPid != -1)
-      {
-         Error error = core::system::terminateProcess(s_chatBackendPid);
-         if (error)
-            LOG_ERROR(error);
-      }
-
-      s_chatBackendPid = -1;
-   }
+   // Request graceful shutdown, wait, and escalate as needed. On the suspend
+   // leg the suspend handler has already run this and the call is a no-op.
+   stopChatBackendForSessionExit("close", 1000);
 
    // Clear port
    clearChatBackendPort();

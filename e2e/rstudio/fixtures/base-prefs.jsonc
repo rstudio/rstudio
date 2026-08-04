@@ -24,5 +24,18 @@
   // state. No test currently needs real animations; if one does, it can
   // override this per-test with setPref(page, 'reduced_motion', false) and
   // restore it afterward.
-  "reduced_motion": true
+  "reduced_motion": true,
+
+  // Keep the AI assistant off unless a test opts in. Both prefs default to
+  // "posit", so once the Posit Assistant backend is present in this worker's
+  // data home (seeded locally via PW_SEED_PAI, or installed by a @chat suite
+  // settling the install prompt), every session start would launch the NES
+  // agent, every chat pane init would launch the chat backend -- and every
+  // project open/close/restart would then shut them down again seconds
+  // later. That churn is the window for the session-shutdown wedge that
+  // kills whole CI shards (#18394). The @ai/@chat suites select their
+  // provider explicitly and don't rely on the default; the per-test guard in
+  // rstudio.fixture.ts restores "none" after they run.
+  "assistant": "none",
+  "chat_provider": "none"
 }
