@@ -3,7 +3,7 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # One workflow that drives the reusable per-OS E2E "engines" four ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday, so every engine runs
 #     at least once a week without running the whole matrix daily.
-#   - Monday afternoon cron: macOS 14 alone, timed to land inside the October
+#   - Friday afternoon cron: macOS 14 alone, timed to land inside the October
 #     2026 brownout windows for the deprecated macos-14 image (see the pick job).
 #   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
 #   - Manual dispatch: every engine at once, optionally against a specific daily
@@ -28,7 +28,7 @@ on:
   schedule:
     - cron: '0 8 * * 1-5'   # Mon-Fri 08:00 UTC (4 AM EDT) -- fixed slate per weekday
     - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- all engines (this string must match the check in the pick job)
-    - cron: '0 16 * * 1'    # Monday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 16 * * 5'    # Friday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
   workflow_dispatch:
     inputs:
       version:
@@ -41,8 +41,8 @@ on:
         default: false
 
 concurrency:
-  # The Monday 16:00 macOS 14 cron gets its own group: it would otherwise share
-  # the one pending slot with the Monday 08:00 weekday slate, and only one run
+  # The Friday 16:00 macOS 14 cron gets its own group: it would otherwise share
+  # the one pending slot with the Friday 08:00 weekday slate, and only one run
   # per group can be pending (a third trigger cancels the pending one rather
   # than queueing behind it). Either outcome can push the macOS 14 run out of
   # the brownout window it is timed to land in. Every other trigger keeps the
@@ -50,11 +50,12 @@ concurrency:
   #
   # Two trade-offs come with the split. The macOS 14 run may now overlap a
   # weekday slate, contending for the shared macOS runner pool if a morning
-  # slate is still going at 16:00. And because macos14 is in ALL below, a
-  # run-everything dispatch (group "main") can now run the macOS 14 engine at
-  # the same time as this cron does, which a single shared group used to make
-  # impossible.
-  group: pw-scheduled-e2e-${{ github.event.schedule == '0 16 * * 1' && 'macos14' || 'main' }}
+  # slate is still going at 16:00 -- Friday's 08:00 slate contains macos26, so
+  # that contention is live, exactly as it was when this cron ran on Monday.
+  # And because macos14 is in ALL below, a run-everything dispatch (group
+  # "main") can now run the macOS 14 engine at the same time as this cron does,
+  # which a single shared group used to make impossible.
+  group: pw-scheduled-e2e-${{ github.event.schedule == '0 16 * * 5' && 'macos14' || 'main' }}
   cancel-in-progress: false
 
 permissions:
@@ -77,24 +78,27 @@ jobs:
         name: Select engines for this run
         run: |
           # workflow_dispatch and the Sunday cron run every engine; the weekday
-          # cron (Mon-Fri) runs a fixed slate per day; the Monday afternoon cron
+          # cron (Mon-Fri) runs a fixed slate per day; the Friday afternoon cron
           # runs macOS 14 alone.
           # Each engine appears once a week in the weekday slates below, except
           # macos26, windows2025, and ubuntu24s (twice) and macos14, which is in
-          # no slate at all -- its weekly run is the Monday 16:00 cron.
-          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15","macos14"]'
+          # no slate at all -- its weekly run is the Friday 16:00 cron.
+          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24arm","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15","macos14"]'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
             SEL="$ALL"
-          elif [ "${{ github.event.schedule }}" = "0 16 * * 1" ]; then
-            # macOS 14 runs on its own Monday-afternoon cron instead of in a
+          elif [ "${{ github.event.schedule }}" = "0 16 * * 5" ]; then
+            # macOS 14 runs on its own Friday-afternoon cron instead of in a
             # weekday slate, so its runs land inside the October 2026 brownout
-            # windows for the deprecated macos-14 image (14:00-00:00 UTC on Oct
-            # 5, 12, 19 and 26; the 08:00 slates miss all eight windows by six
-            # hours). Those failures are the point -- early warning that the
-            # image is fully retired on 2026-11-02. No brownout window falls on
-            # a Sunday, so the full-matrix cron is unaffected before that date,
-            # but a dispatch launched inside any of the eight windows (they open
-            # on four Mondays, three Fridays and one Thursday) will hit one.
+            # windows for the deprecated macos-14 image. The eight windows all
+            # run 14:00-00:00 UTC, on Oct 5, 12, 19 and 26 (Mondays), Oct 16, 23
+            # and 30 (Fridays) and Oct 29 (Thursday); the 08:00 slates miss all
+            # eight by six hours. A Friday 16:00 run therefore lands inside
+            # three of them -- one fewer than Monday's four, which is the cost of
+            # this slot. Verified against actions/runner-images#13518.
+            # Those failures are the point -- early warning that the image is
+            # fully retired on 2026-11-02. No brownout window falls on a Sunday,
+            # so the full-matrix cron is unaffected before that date, but a
+            # dispatch launched inside any of the eight windows will hit one.
             # After the retirement date this run, the Sunday run, and every
             # dispatch fail until macos14 is removed from this workflow and from
             # ALL above.
@@ -103,8 +107,8 @@ jobs:
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
               1) SEL='["ubuntu24d","macos26","rocky9"]' ;;
               2) SEL='["ubuntu24s","windows2025","rocky10"]' ;;
-              3) SEL='["ubuntu26","fedora44","macos15"]' ;;
-              4) SEL='["fedora43","ubuntu22","windows2025"]' ;;
+              3) SEL='["ubuntu26","fedora44","macos15","ubuntu22"]' ;;
+              4) SEL='["fedora43","ubuntu24arm","windows2025"]' ;;
               5) SEL='["ubuntu24s","macos26","debian13"]' ;;
               # Only reachable by re-running a weekday run on Sat/Sun, or if the
               # Sunday cron above changed without updating the check above.
@@ -132,6 +136,7 @@ jobs:
             {"key":"ubuntu26","os":"ubuntu-26-x86_64","arch":"x86_64","name":"Ubuntu 26 (x86_64)","url_key":"resolute_amd64"},
             {"key":"ubuntu22","os":"ubuntu-22-x86_64","arch":"x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
             {"key":"ubuntu24d","os":"ubuntu-24-x86_64","arch":"x86_64","name":"Ubuntu 24 Desktop (x86_64)","url_key":"noble_amd64"},
+            {"key":"ubuntu24arm","os":"ubuntu-24-arm64","arch":"arm64","name":"Ubuntu 24 Desktop (arm64)","url_key":"noble_arm64"},
             {"key":"debian13","os":"debian-13-arm64","arch":"arm64","name":"Debian 13 (arm64)","url_key":"noble_arm64"},
             {"key":"rocky10","os":"rocky-10-arm64","arch":"arm64","name":"Rocky 10 (arm64)","url_key":"rocky"},
             {"key":"rocky9","os":"rocky-9-x86_64","arch":"x86_64","name":"Rocky 9 (x86_64)","url_key":"rhel9"}
