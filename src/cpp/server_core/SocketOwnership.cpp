@@ -445,13 +445,11 @@ Error lookupListeningSocketUid(const boost::asio::ip::address& listenAddress,
                                       pUid,
                                       &error);
 
-   // A dual-stack (IPV6_V6ONLY=0) listener bound to "::" is registered under
-   // AF_INET6, so a plain AF_INET exact-match query (the case when we dialed
-   // it via 127.0.0.1) can come back NotFound even though the listener
-   // exists -- unlike the established-socket path, where inet_match() is
-   // documented not to check sk_family, listener lookup does dispatch by
-   // sdiag_family. Retry once with the AF_INET6 wildcard address/port to
-   // catch this case (mirrors the dual-stack coverage in
+   // As of this writing, the above query will match dual-stack listeners (IPV6_V6ONLY=0)
+   // due to the exact filtering implementation in the kernel. However, as an intentional
+   // posture decision, we retry a broader query against ipv6 addresses on the listening
+   // port in case of incorrect responses from the first query. This is defensive in case
+   // the kernel filtering changes in future. (mirrors the dual-stack coverage in
    // LooksUpUidOfEstablishedDualStackLoopbackSocket for the established path).
    if ((result == DiagLookupResult::NotFound || result == DiagLookupResult::WrongState) && listenAddress.is_v4())
    {
