@@ -16,6 +16,8 @@
 #include <server/DBActiveSessionStorage.hpp>
 
 #include <core/Database.hpp>
+#include <core/Result.hpp>
+#include <core/QueryBuilder.hpp>
 #include <core/r_util/RActiveSessions.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <server_core/ServerDatabase.hpp>
@@ -23,6 +25,7 @@
 #include <numeric>
 
 using namespace rstudio::core;
+using namespace rstudio::core::database;
 using namespace rstudio::core::r_util;
 using namespace rstudio::server_core::database;
 
@@ -40,69 +43,87 @@ const std::string kUserId = "user_id";
 static const std::string kSuspendSize = "suspend_size";
 
 // Constants for the table and column names
-const std::string kTableName = "active_session_metadata";
-const std::string kSessionIdColumnName = "session_id";
+const SqlIdentifier kTableName = "active_session_metadata";
+const SqlIdentifier kSessionIdColumnName = "session_id";
+const SqlIdentifier kProjectColumnName = "project";
 
-static const std::string kEditorColumnName = "workbench";
-static const std::string kWorkingDirColumnName = "working_directory";
-static const std::string kProjectColumnName = "project";
+static std::map<std::string, SqlIdentifier> kASMColumns;
+static std::map<std::string, std::string> kASMProperties;
 
-inline const std::string& columnName(const std::string& propertyName)
+void populateASMMaps()
 {
-   if (propertyName == ActiveSession::kEditor)
-      return kEditorColumnName;
+   static bool ready = false;
+   if (ready)
+      return;
 
-   if (propertyName == ActiveSession::kProjectId)
-      return kProjectColumnName;
+   kASMColumns[ActiveSession::kEditor] = "workbench";
+   kASMProperties["workbench"] = ActiveSession::kEditor;
 
-   return propertyName;
+   kASMColumns[ActiveSession::kProjectId] = kProjectColumnName;
+   kASMProperties[kProjectColumnName] = ActiveSession::kProjectId;
+
+   std::string keys[] = {
+      ActiveSession::kCreated,
+      ActiveSession::kExecuting,
+      ActiveSession::kInitial,
+      ActiveSession::kLastUsed,
+      ActiveSession::kLabel,
+      ActiveSession::kProject,
+      ActiveSession::kSavePromptRequired,
+      ActiveSession::kRunning,
+      ActiveSession::kRVersion,
+      ActiveSession::kRVersionHome,
+      ActiveSession::kRVersionLabel,
+      ActiveSession::kWorkingDir,
+      ActiveSession::kActivityState,
+      ActiveSession::kLastStateUpdated,
+      ActiveSession::kLastResumed,
+      ActiveSession::kSuspendTimestamp,
+      ActiveSession::kBlockingSuspend,
+      ActiveSession::kLaunchParameters,
+#ifdef RSTUDIO_PRO_BUILD
+      ActiveSession::kSuspendSize,
+#endif
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+      // only used in tests
+      "user_id",
+      "session_id",
+#endif
+   };
+
+   for (const std::string& key : keys) {
+      // Since these are compile-time constants, we know they're already validated.
+      // Skip the validation step by using the const char* constructor.
+      kASMColumns[key] = key.c_str();
+      kASMProperties[key] = key;
+   }
+
+   ready = true;
+};
+
+inline Result<SqlIdentifier> columnName(const std::string& propertyName)
+{
+   populateASMMaps();
+   auto iter = kASMColumns.find(propertyName);
+   if (iter == kASMColumns.end())
+   {
+      return Unexpected(Error("Unknown property " + propertyName, boost::system::errc::invalid_argument, ERROR_LOCATION));
+   }
+
+   return iter->second;
 }
 
-inline const std::string& propertyName(const std::string& columnName)
+inline Result<std::string> propertyName(const std::string& columnName)
 {
-   if (columnName == kEditorColumnName)
-      return ActiveSession::kEditor;
+   populateASMMaps();
 
-   return columnName;
-}
+   auto iter = kASMProperties.find(columnName);
+   if (iter == kASMProperties.end())
+   {
+      return Unexpected(Error("Unknown column " + columnName, boost::system::errc::invalid_argument, ERROR_LOCATION));
+   }
 
-std::string getPropNamesSql(const std::vector<std::string>& propNames)
-{
-   std::string keys = std::accumulate(
-      ++propNames.begin(),
-      propNames.end(),
-      columnName(*(propNames.begin())),
-      [](std::string a, std::string b)
-      {
-         return a + ", " + columnName(b);
-      });
-   return keys;
-}
-
-std::string getVarNamesSql(const std::vector<std::string>& propNames)
-{
-   std::string keys = std::accumulate(
-      ++propNames.begin(),
-      propNames.end(),
-      ":" + columnName((*propNames.begin())),
-      [](std::string a, std::string b)
-      {
-         return a + ", :" + columnName(b);
-      });
-   return keys;
-}
-
-std::string getKeyString(const std::map<std::string, std::string>& sourceMap)
-{
-   std::string keys = std::accumulate(
-      ++sourceMap.begin(),
-      sourceMap.end(),
-      columnName(sourceMap.begin()->first),
-      [](std::string a, std::pair<std::string, std::string> b)
-      {
-         return a + ", " + columnName(b.first);
-      });
-   return keys;
+   return iter->second;
 }
 
 std::string convertTimestampProperty(const std::string& extTime)
@@ -131,48 +152,23 @@ void convertProperty(std::string* pName, std::string* pValue, const core::system
    if (*pName == ActiveSession::kLastResumed || *pName == ActiveSession::kSuspendTimestamp) // suspend_timestamp here?
       *pValue = convertTimestampProperty(*pValue);
 
+   if (*pName == ActiveSession::kProject)
+   {
+      std::string projectId = ProjectId(kProjectNoneId, user.getUserId()).asString();
+
+      *pName = ActiveSession::kProjectId;
+      *pValue = projectId;
+   }
+   if (*pName == ActiveSession::kSuspendSize)
+   {
+      if ((*pValue).empty() || !safe_convert::stringTo<int>(*pValue).has_value())
+         *pValue = "0";
+   }
 }
 
-std::string getUpdateStringAndValues(const std::map<std::string, std::string>& sourceMap,
-                                     const system::User& user,
-                                     std::vector<std::string>* pNames,
-                                     std::vector<std::string>* pValues,
-                                     boost::shared_ptr<database::IConnection> connection)
+bool isProjectNoneId(const std::string& projectId)
 {
-   std::string firstPropName(sourceMap.begin()->first);
-   std::string firstPropValue(sourceMap.begin()->second);
-   convertProperty(&firstPropName, &firstPropValue, user, connection);
-   (*pNames).push_back(firstPropName);
-   (*pValues).push_back(firstPropValue);
-
-   std::string setValuesString = std::accumulate(
-      ++sourceMap.begin(),
-      sourceMap.end(),
-      columnName(firstPropName) + " = :" + columnName(firstPropName) + " ",
-      [pNames, pValues, user, connection](std::string a, std::pair<std::string, std::string> iter)
-      {
-         std::string propName = iter.first;
-         std::string propValue = iter.second;
-
-         convertProperty(&propName, &propValue, user, connection);
-
-         (*pNames).push_back(propName);
-         (*pValues).push_back(propValue);
-         return a + ", " + columnName(iter.first) + " = " + ":" + columnName(iter.first) + " ";
-      });
-   return setValuesString;
-}
-
-std::string getColumnNameList(const std::set<std::string>& colNames)
-{
-   std::string cols = std::accumulate(
-      ++colNames.begin(),
-      colNames.end(),
-      columnName(*(colNames.begin())), [](std::string a, std::string b)
-      {
-         return a + ", " + columnName(b);
-      });
-   return cols;
+   return projectId == kProjectNoneId || ProjectId(projectId).id() == kProjectNoneId;
 }
 
 // Temporary key used to store the raw projectId before resolving to path
@@ -189,10 +185,26 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
       try
       {
          if (key == kUserId || key == kSuspendSize)
+         {
+            // int columns
             pTargetMap->emplace(key, std::to_string(iter->get<int>(key)));
-         // Store the projectId temporarily - it will be resolved to a path after the connection is released
+         }
+         else if (key == kProjectColumnName)
+         {
+            // Store the projectId temporarily - it will be resolved to a path after the connection is released
+            std::string projectId = iter->get<std::string>(key, "");
+            if (projectId.size() == 8)
+               projectId = ProjectId(projectId, user.getUserId()).asString();
+            // Store raw projectId for later resolution
+            pTargetMap->emplace(kTempProjectId, projectId);
+         }
          else
-            pTargetMap->emplace(propertyName(key), iter->get<std::string>(key, ""));
+         {
+            // Unknown columns in the database result should be preserved as-is
+            auto propResult = propertyName(key);
+            std::string propName = propResult ? *propResult : key;
+            pTargetMap->emplace(propName, iter->get<std::string>(key, ""));
+         }
       }
       catch (const std::bad_cast& e)
       {
@@ -205,6 +217,42 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
    }
 }
 
+template <typename CONTAINER>
+Error sessionPropError(const std::string& prefix, const std::string& sessionId, const CONTAINER& properties, const Error& cause, const ErrorLocation& loc)
+{
+   std::ostringstream message;
+   message << prefix << " [ session:" << sessionId;
+   if (!properties.empty())
+      message << " properties:" << algorithm::join(properties, ",",
+         [](const std::string& propName) {
+            auto colName = columnName(propName);
+            return colName ? *colName : ("UNKNOWN:" + propName);
+         }
+      );
+   message << " ]";
+   if (cause)
+      return Error("DatabaseException", errc::DBError, message.str(), cause, loc);
+   return Error("DatabaseException", errc::DBError, message.str(), loc);
+}
+
+Error sessionPropError(const std::string& prefix, const std::string& sessionId, const std::map<std::string, std::string>& properties, const Error& cause, const ErrorLocation& loc)
+{
+   std::vector<std::string> propNames;
+   for (const auto& [propName, value] : properties)
+      propNames.push_back(propName);
+   return sessionPropError(prefix, sessionId, propNames, cause, loc);
+}
+
+Error sessionPropError(const std::string& prefix, const std::string& sessionId, const std::string& propName, const Error& cause, const ErrorLocation& loc)
+{
+   return sessionPropError(prefix, sessionId, std::vector<std::string>({ propName }), cause, loc);
+}
+
+Error sessionPropError(const std::string& prefix, const std::string& sessionId, const Error& cause, const ErrorLocation& loc)
+{
+   return sessionPropError(prefix, sessionId, std::vector<std::string>(), cause, loc);
+}
+
 Error getSessionCount(boost::shared_ptr<database::IConnection> connection, std::string sessionId, int* pCount)
 {
    database::Query query = connection->query("SELECT COUNT(*) FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
@@ -214,14 +262,15 @@ Error getSessionCount(boost::shared_ptr<database::IConnection> connection, std::
    Error error = connection->execute(query);
 
    if (error)
-      return Error("DatabaseException", errc::DBError, "Error while retrieving session count for [ session:" + sessionId + " ]", error, ERROR_LOCATION);
+      return sessionPropError("Error while retrieving session count for", sessionId, error, ERROR_LOCATION);
 
    return Success();
 }
 
 } // anonymous namespace
 
-Error getConn(boost::shared_ptr<database::IConnection>* connection) {
+Error getConn(boost::shared_ptr<database::IConnection>* connection)
+{
    bool success = server_core::database::getConnection(boost::posix_time::milliseconds(500), connection);
 
    if (!success)
@@ -269,35 +318,42 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
    if (error)
       return error;
 
-   std::string columnStr = columnName(name);
+   auto columnStr = columnName(name);
+   if (!columnStr)
+      return columnStr.error();
 
-   std::string queryStr = "SELECT ";
-   queryStr
-      .append(columnStr)
-      .append(" FROM ")
-      .append(kTableName)
-      .append(" WHERE ")
-      .append(kSessionIdColumnName)
-      .append(" = :id");
-
-   database::Query query = connection->query(queryStr)
-      .withInput(sessionId_, "id");
+   SelectBuilder builder(connection, kTableName);
+   builder.add(*columnStr);
+   builder.where(kSessionIdColumnName, sessionId_);
+   database::Query query = builder.build();
 
    database::Rowset rowset;
    error = connection->execute(query, rowset);
 
    if (error)
-      return Error("DatabaseException", errc::DBError, "Database exception during property read [ session:" + sessionId_ + " property:" + name + " ]", error, ERROR_LOCATION);
+      return sessionPropError("Database exception during property read", sessionId_, name, error, ERROR_LOCATION);
 
    auto iter = rowset.begin();
 
    if (iter == rowset.end())
       return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
 
-   if (name != kUserId)
-      *pValue = iter->get<std::string>(0, "");
+   if (name == ActiveSession::kProject)
+   {
+      projectId = iter->get<std::string>(0, "");
+
+      if (projectId.size() == 8)
+         projectId = ProjectId(projectId, user_.getUserId()).asString();
+      if (isProjectNoneId(projectId) || projectId.empty())
+         *pValue = kProjectNone;
+   }
    else
-      *pValue = std::to_string(iter->get<int>(0));
+   {
+      if (name != kUserId)
+         *pValue = iter->get<std::string>(0, "");
+      else
+         *pValue = std::to_string(iter->get<int>(0));
+   }
 
    // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
    int count = 1;
@@ -306,7 +362,6 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
 
    if (count > 1)
       return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
-
 
    return Success();
 }
@@ -323,17 +378,25 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
       if (error)
          return error;
 
-      std::string namesString = getColumnNameList(names);
+      SelectBuilder builder(connection, kTableName);
+      for (const std::string& propName : names) {
+         auto colName = columnName(propName);
+         if (!colName)
+            return colName.error();
+         builder.add(*colName);
+      }
+
       if (names.find(ActiveSession::kProject) != names.end())
-         namesString = namesString + ", project";
-      database::Query query = connection->query("SELECT " + namesString + " FROM " + kTableName + " WHERE " + kSessionIdColumnName + "=:id")
-         .withInput(sessionId_, "id");
+         builder.add("project");
+
+      builder.where(kSessionIdColumnName, sessionId_);
+      database::Query query = builder.build();
 
       database::Rowset rowset;
       error = connection->execute(query, rowset);
 
       if (error)
-         return Error("DatabaseException", errc::DBError, "Database exception during proprerties read [ session:" + sessionId_ + " properties:" + namesString + " ]", error, ERROR_LOCATION);
+         return sessionPropError("Database exception during properties read", sessionId_, std::vector<std::string>(names.begin(), names.end()), error, ERROR_LOCATION);
 
       database::RowsetIterator iter = rowset.begin();
       if (iter == rowset.end())
@@ -355,12 +418,10 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
 
 Error DBActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
 {
-   // Normally we avoid using * in select lists to avoid unexpected names,
-   // or orders of columns. However in this case we explicitly want all columns,
-   // and our readProperties uses the populateMapWithRow which discovers the
-   // column names, so new or unexpected column names will not cause issues.
-
-   std::set<std::string> all{"*"};
+   std::set<std::string> all;
+   for (const auto& [propName, colName] : kASMColumns) {
+      all.insert(propName);
+   }
    return readProperties(all, pValues);
 }
 
@@ -374,15 +435,19 @@ Error DBActiveSessionStorage::writeProperty(const std::string& inputName, const 
 
    std::string name = inputName;
    std::string value = inputValue;
+   convertProperty(&name, &value, user_, connection);
+   auto colName = columnName(name);
+   if (!colName)
+      return colName.error();
 
-   database::Query query = connection->query("UPDATE " + kTableName + " SET " + columnName(name) + " = :value WHERE " + kSessionIdColumnName + " = :id")
-      .withInput(value, "value")
-      .withInput(sessionId_, "id");
-
+   UpdateBuilder builder(connection, kTableName);
+   builder.add(*colName, value);
+   builder.where(kSessionIdColumnName, sessionId_);
+   Query query = builder.build();
    error = connection->execute(query);
 
    if (error)
-      return Error("DatabaseException", errc::DBError, "Database error while updating session metadata [ session: " + sessionId_ + " property: " + name + " ]", error, ERROR_LOCATION);
+      return sessionPropError("Database exception while updating session metadata", sessionId_, name, error, ERROR_LOCATION);
 
    return error;
 }
@@ -406,66 +471,72 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
    if (error)
       return error;
 
-   std::vector<std::string> propNames, propValues;
+   std::vector<std::pair<SqlIdentifier, std::string>> sqlProps;
 
-   std::string queryStr = "UPDATE " + kTableName + " SET " + getUpdateStringAndValues(properties, user_, &propNames, &propValues, connection) + " WHERE session_id = :session_id";
+   Transaction transaction(connection);
 
-   database::Query updateQuery = connection->query(queryStr);
-   for (unsigned int i = 0; i < propValues.size(); i++)
+   UpdateBuilder update(connection, kTableName);
+   for (const auto& prop : properties)
    {
-      updateQuery.withInput(propValues[i], columnName(propNames[i]));
+      // Populate propNames and propValues from the input properties, applying conversions
+      std::string name = prop.first;
+      std::string value = prop.second;
+      convertProperty(&name, &value, user_, connection);
+      auto colName = columnName(name);
+      if (!colName)
+         return colName.error();
+      sqlProps.emplace_back(*colName, value);
+      update.add(*colName, value);
    }
-   updateQuery.withInput(sessionId_, "session_id");
+   update.where(kSessionIdColumnName, sessionId_);
 
+   database::Query updateQuery = update.build();
    error = connection->execute(updateQuery);
-
    if (error)
-      return Error("DatabaseException", errc::DBError, "Error while updating properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
+      return sessionPropError("Error while updating properties", sessionId_, properties, error, ERROR_LOCATION);
 
    if (updateQuery.getAffectedRows() == 0)
    {
-      std::vector<std::string> propNames, propValues;
+      SelectBuilder select(connection, "licensed_users");
+      select
+         .add("id")
+         .where("user_name", user_.getUsername())
+         .where("user_id", user_.getUserId());
 
-      // Populate propNames and propValues from the input properties, applying conversions
-      for (const auto& prop : properties)
+      Query selectQuery = select.build();
+      Rowset rows;
+      error = connection->execute(selectQuery, rows);
+      if (error)
+         return sessionPropError("Error while getting user key", sessionId_, properties, error, ERROR_LOCATION);
+
+      auto iter = rows.begin();
+
+      if (iter == rows.end())
+         return sessionPropError("Could not find user", sessionId_, properties, Error(), ERROR_LOCATION);
+
+      int licensedUserId = iter->get<int>("id");
+
+      ++iter;
+      if (iter != rows.end())
+         return sessionPropError("Found duplicate user", sessionId_, properties, Error(), ERROR_LOCATION);
+
+      InsertBuilder insert(connection, kTableName);
+      insert.add(kSessionIdColumnName, sessionId_);
+      insert.add("user_id", licensedUserId);
+
+      for (const auto& [colName, propValue] : sqlProps)
       {
-         std::string name = prop.first;
-         std::string value = prop.second;
-         convertProperty(&name, &value, user_, connection);
-         propNames.push_back(name);
-         propValues.push_back(value);
+         insert.add(colName, propValue);
       }
 
-      std::string queryStr = "INSERT INTO " +
-            kTableName +
-            " (" +
-            kSessionIdColumnName +
-            ", " +
-            kUserId +
-            ", " +
-            getPropNamesSql(propNames) +
-            ") VALUES (:id, " +
-            "(SELECT id FROM licensed_users WHERE user_name=:user_name AND user_id=:user_id), " +
-            getVarNamesSql(propNames) +
-            ")";
-
-      std::string username = user_.getUsername();
-      int userId = user_.getUserId();
-      database::Query insertQuery = connection->query(queryStr)
-         .withInput(sessionId_, "id")
-         .withInput(username, "user_name")
-         .withInput(userId, "user_id");
-
-      for (unsigned int i = 0; i < propValues.size(); i++)
-      {
-         insertQuery.withInput(propValues[i], columnName(propNames[i]));
-      }
-
+      Query insertQuery = insert.build();
       error = connection->execute(insertQuery);
 
       if (error)
-         return Error("DatabaseException", errc::DBError, "Error while inserting new session with properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
+         return sessionPropError("Error while inserting new session", sessionId_, properties, error, ERROR_LOCATION);
    }
+
+   transaction.commit();
    return Success();
 }
 
@@ -485,7 +556,7 @@ Error DBActiveSessionStorage::destroy()
    error = connection->execute(query);
 
    if (error)
-      return Error("DatabaseException", errc::DBError, "Error while deleting session metadata [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
+      return sessionPropError("Error while deleting session metadata", sessionId_, error, ERROR_LOCATION);
 
    if (!query.getAffectedRows())
       LOG_DEBUG_MESSAGE("Failed to delete active session from database - no rows removed for: " + sessionId_);
