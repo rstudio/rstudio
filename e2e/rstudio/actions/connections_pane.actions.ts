@@ -94,7 +94,17 @@ export class ConnectionsPaneActions {
       for (const [key, value] of Object.entries(written)) {
         const field = this.wizard.field(key);
         await field.waitFor({ state: 'visible', timeout: 10000 });
-        await field.fill(value);
+        // Real per-character key events rather than a value assignment. These
+        // are input.gwt-TextBox fields in a dialog, which is the category the
+        // suite's Playwright guidance says fill() is not enough for: it sets
+        // .value and fires a single input event, so any handler keyed on
+        // keystrokes never runs.
+        //
+        // clear() first because pressSequentially appends to whatever is
+        // already in the field, where fill() replaced it -- and the retry loop
+        // below depends on each attempt starting from empty.
+        await field.clear();
+        await field.pressSequentially(value);
         // Blur so the wizard commits the value into the generated code.
         // fill() sets the value and fires input events, but the code panel
         // regenerates on blur, and filling the *next* field is what used to
@@ -111,7 +121,20 @@ export class ConnectionsPaneActions {
         const actual = await this.wizard.field(key).inputValue();
         if (actual !== value) wrong.push(`${key}: expected "${value}", got "${actual}"`);
       }
-      if (wrong.length === 0) return;
+      // A tripwire for the field-corruption race, which is rare (~2% of fills)
+      // and self-healing on retry, so pass/fail alone hides it entirely. Every
+      // future run is therefore a free sample: if this ever reappears, the log
+      // says so with the corrupted values, rather than the run simply going
+      // green and the problem going unmeasured.
+      if (wrong.length === 0) {
+        if (attempt > 1) {
+          console.warn(`[wizard-fill] ${target.id}: recovered on attempt ${attempt}`);
+        }
+        return;
+      }
+      console.warn(
+        `[wizard-fill] ${target.id}: attempt ${attempt} CORRUPTED -- ${wrong.join('; ')}`,
+      );
     }
 
     throw new Error(
