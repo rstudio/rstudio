@@ -117,7 +117,36 @@ This file covers RStudio-specific gotchas that aren't in the README.
    spuriously idle. Wait for busy first (`waitForConsoleBusy`,
    `pages/console_pane.page.ts`), then for idle.
 
-9. **A stray modal reads as "intercepts pointer events".** Any GWT modal
+9. **A console prompt does not mean R-side change detection has run.** The
+   session enqueues `kConsolePrompt` *before* calling `onDetectChanges`
+   (`SessionConsoleInput.cpp`), so `executeInConsole` -- which resolves on the
+   prompt counter -- returns before any event driven by change detection is even
+   queued: a plot raising the Plots pane, a package-list refresh, files changing.
+   Waiting on the prompt and then measuring makes the assertion pass whether or
+   not the thing under test happened. Wait on the effect itself (e.g. poll the
+   Plots tab's `aria-selected`), and pick a signal that is true on a broken build
+   too, so the gate can't mask the regression it guards.
+
+10. **Client state is pushed on a passive 5s timer.** `persistClientState()`
+   fires `PushClientStateEvent` with `active=false`, so `ClientStateUpdater`
+   reschedules rather than nudging (`PASSIVE_INTERVAL_MILLIS`). A test that
+   changes persisted state and then reloads will usually outrun the save and
+   restore nothing -- passing without exercising the restore at all. Wait for the
+   `set_client_state` RPC carrying your value first:
+   `page.waitForResponse(r => r.url().includes('set_client_state') &&
+   (r.request().postData() ?? '').includes('<YourKey>'))`. All state values ship
+   in one RPC, so this also gates any state written by a different component in
+   the same push.
+
+11. **`window.rstudio.ready`, not a pane selector, gates post-reload state.**
+   Workbench pane elements attach at construction, long before client state is
+   applied, so `waitForSelector('#rstudio_TabSet1_pane')` returns while startup
+   state handling is still pending -- and startup work deferred on a timer (e.g.
+   `PaneManager.ZoomedTabStateValue.onInit`) has not run. Gate on
+   `page.waitForFunction(() => window.rstudio?.ready === true)` and poll the
+   assertion rather than sleeping a fixed margin against a product timer.
+
+12. **A stray modal reads as "intercepts pointer events".** Any GWT modal
    renders a `gwt-PopupPanelGlass` overlay, so an unexpected dialog (e.g.
    "Error Listing Packages" after resume) surfaces as an opaque
    `gwt-PopupPanelGlass intercepts pointer events` timeout at an unrelated
