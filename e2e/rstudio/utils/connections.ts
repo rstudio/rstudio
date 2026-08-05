@@ -51,6 +51,19 @@ export interface OdbcSandbox {
   odbcDir: string | null;
   /** Ids of the targets whose drivers were found and registered. */
   registered: string[];
+  /**
+   * Windows only: directories holding the drivers' dependent DLLs, to be
+   * prepended to the session's PATH. Empty elsewhere. See the note in
+   * prepareOdbcSandboxWindows about why the DLL is copied alone.
+   */
+  driverPaths: string[];
+}
+
+/** Windows directories we must never copy out of, nor add to PATH. */
+function isWindowsSystemDir(dir: string): boolean {
+  const windir = process.env.SystemRoot ?? process.env.windir ?? 'C:\\Windows';
+  const normalized = path.resolve(dir).toLowerCase();
+  return normalized.startsWith(path.resolve(windir).toLowerCase());
 }
 
 /** HKLM key holding one subkey per ODBC driver, plus the enumeration list. */
@@ -219,11 +232,13 @@ function prepareOdbcSandboxUnix(sandbox: string): OdbcSandbox {
     registered.push(target.id);
   }
 
-  if (registered.length === 0) return { odbcDir: null, registered };
+  // driverPaths is Windows-only: the unixODBC ini points at a symlink to the
+  // real library, and the dynamic loader follows it to resolve dependencies.
+  if (registered.length === 0) return { odbcDir: null, registered, driverPaths: [] };
 
   fs.writeFileSync(path.join(odbcDir, 'odbcinst.ini'), stanzas.join('\n'));
   fs.writeFileSync(path.join(odbcDir, 'odbc.ini'), '');
-  return { odbcDir, registered };
+  return { odbcDir, registered, driverPaths: [] };
 }
 
 /**
@@ -234,19 +249,28 @@ function prepareOdbcSandboxUnix(sandbox: string): OdbcSandbox {
  * hive argument, and R defaults to HKEY_LOCAL_MACHINE). That means real
  * machine state, removed again by unregisterWindowsOdbcDrivers at teardown.
  *
- * And the driver's directory is copied into the sandbox rather than symlinked.
- * Two reasons, both about the copy's *location* rather than the DLL itself:
- * the wizard's labeled fields come from a snippets/<driver>.R that RStudio
- * finds by walking up from the registered DLL path, so that path has to be
- * somewhere we own; and Windows resolves a DLL's dependencies from its own
- * directory first, so psqlodbc's bundled libpq and OpenSSL have to come along.
- * A copy of a driver package is a second or so, and unlike a junction it
- * needs no privilege and has no reparse-point behavior to reason about.
+ * And the driver DLL is copied into the sandbox. That is needed because the
+ * wizard's labeled fields come from a snippets/<driver>.R which RStudio finds
+ * by walking up from the *registered* DLL path, so that path has to be inside
+ * a directory we own.
+ *
+ * Only the DLL is copied, never its directory. An earlier version copied the
+ * parent directory so that a driver's bundled dependencies came along with it,
+ * on the assumption that every driver has a directory of its own. sqliteodbc
+ * disproves that: it installs into C:\Windows\system32, so the copy walked
+ * into the entire Windows system directory (it died on a locked file in
+ * catroot2 after a few seconds, having otherwise been prepared to copy
+ * gigabytes). Dependencies are handled instead by putting the DLL's original
+ * directory on the session's PATH, which is uniform across drivers and cannot
+ * run away: psqlODBC's bundled libpq and OpenSSL resolve from its versioned
+ * bin directory, and a driver already living in a system directory needs
+ * nothing added at all.
  */
 function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
   const odbcDir = path.join(sandbox, 'odbc');
   const registered: string[] = [];
   const registeredNames: string[] = [];
+  const driverPaths: string[] = [];
 
   for (const base of ALL_DB_TARGETS) {
     const target = effectiveTarget(base);
@@ -254,15 +278,14 @@ function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
     if (!library) continue;
 
     const driverDir = path.join(odbcDir, 'drivers', target.id);
+    const copiedDll = path.join(driverDir, path.basename(library));
     fs.mkdirSync(path.join(driverDir, 'snippets'), { recursive: true });
-    // The whole directory, not just the DLL, so its siblings resolve.
-    fs.cpSync(path.dirname(library), driverDir, { recursive: true });
+    fs.copyFileSync(library, copiedDll);
     fs.writeFileSync(
       path.join(driverDir, 'snippets', snippetFileName(target.driverName)),
       wizardSnippet(target),
     );
 
-    const copiedDll = path.join(driverDir, path.basename(library));
     const problem = winRegisterDriver(target.driverName, copiedDll);
     if (problem) {
       console.warn(`[odbc] ${target.id}: not registered -- ${problem}`);
@@ -270,6 +293,13 @@ function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
     }
     registered.push(target.id);
     registeredNames.push(target.driverName);
+
+    // A driver installed in a system directory needs nothing on PATH: that
+    // directory is already searched, and adding it would be noise.
+    const origin = path.dirname(library);
+    if (!isWindowsSystemDir(origin) && !driverPaths.includes(origin)) {
+      driverPaths.push(origin);
+    }
   }
 
   // Written even when empty is pointless, but written before returning so a
@@ -280,7 +310,7 @@ function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
   }
 
   // odbcDir stays null: nothing on Windows consumes ODBCSYSINI.
-  return { odbcDir: null, registered };
+  return { odbcDir: null, registered, driverPaths };
 }
 
 /**

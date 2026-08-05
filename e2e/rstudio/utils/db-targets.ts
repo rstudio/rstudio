@@ -27,9 +27,20 @@ interface DbTargetBase {
   id: string;
 
   /**
-   * The odbcinst.ini stanza name we register the driver under. Also the name
-   * the New Connection wizard displays, which makes the wizard list item id
+   * The name we register the driver under (an odbcinst.ini stanza on
+   * macOS/Linux, an HKLM ODBCINST.INI key on Windows). Also the name the New
+   * Connection wizard displays, which makes the wizard list item id
    * deterministic (see wizardPageId in utils/connections.ts).
+   *
+   * Every one of these carries a " (pw)" suffix, and must keep it. Windows has
+   * no ODBCSYSINI to isolate us, so the suite registers into the machine's own
+   * driver list alongside whatever is already installed -- and psqlODBC's
+   * installer registers a bare "PostgreSQL Unicode" (verified on
+   * windows-2025, which also gets ANSI and (x64) variants). Reusing a vendor
+   * name means either clobbering a real driver or refusing to register at all.
+   * The suffix is carried on macOS and Linux too, so one name works
+   * everywhere and the snippet filename and wizard element id stay identical
+   * across platforms.
    */
   driverName: string;
 
@@ -154,7 +165,7 @@ export type EffectiveDbTarget = DbTarget & { overridden: boolean };
 export const POSTGRES: ServerDbTarget = {
   id: 'postgres',
   kind: 'server',
-  driverName: 'PostgreSQL Unicode',
+  driverName: 'PostgreSQL Unicode (pw)',
   connectionType: 'PostgreSQL',
   driverLibraries: {
     darwin: [
@@ -169,9 +180,13 @@ export const POSTGRES: ServerDbTarget = {
     // Windows resolves through the registry instead; see
     // windowsInstalledDriverPattern below.
   },
-  // psqlODBC's installer registers "PostgreSQL Unicode(x64)" (and an ANSI
-  // sibling we do not want). Anchored so it cannot also match our own
-  // "PostgreSQL Unicode" registration.
+  // Verified on windows-2025: psqlODBC's installer registers four names --
+  // "PostgreSQL ANSI", "PostgreSQL ANSI(x64)", "PostgreSQL Unicode" and
+  // "PostgreSQL Unicode(x64)". Match the 64-bit Unicode one specifically: the
+  // "(" excludes the ANSI pair and the suffixless variant, and the runner is
+  // 64-bit. The DLL it points at is podbc35w.dll, in a versioned directory
+  // (C:\Program Files\psqlODBC\1800\bin), which is why this is discovered
+  // rather than hardcoded.
   windowsInstalledDriverPattern: /^PostgreSQL Unicode\(/,
   host: '127.0.0.1',
   // Nonstandard port so the throwaway server can never collide with a
@@ -285,9 +300,11 @@ export const MYSQL: ServerDbTarget = {
 export const SQLITE: FileDbTarget = {
   id: 'sqlite',
   kind: 'file',
-  // The odbcinst.ini stanza name we register. No spaces, so the snippet
-  // lookup is simply sqlite3.R (see snippetFileName in utils/connections.ts).
-  driverName: 'SQLite3',
+  // Suffixed for the same reason as the PostgreSQL target; see driverName on
+  // the interface. sqliteodbc's Windows installer registers "SQLite3 ODBC
+  // Driver", so a bare "SQLite3" would not collide today, but the convention
+  // is uniform so a future installer cannot take it.
+  driverName: 'SQLite3 (pw)',
   connectionType: 'SQLite',
   driverLibraries: {
     darwin: [
@@ -300,8 +317,11 @@ export const SQLITE: FileDbTarget = {
       '/usr/lib64/libsqlite3odbc.so', // Fedora (sqliteodbc); Rocky has no official package
     ],
   },
-  // The Windows installer registers "SQLite3 ODBC Driver". The trailing space
-  // keeps this from matching our own bare "SQLite3" registration.
+  // Verified on windows-2025: the installer registers "SQLite3 ODBC Driver",
+  // and installs the DLL straight into C:\Windows\system32 rather than a
+  // directory of its own -- which is why the sandbox copies the single DLL and
+  // never its parent directory. This pattern also matches our own
+  // "SQLite3 (pw)" name, which winInstalledDriverLibrary excludes explicitly.
   windowsInstalledDriverPattern: /^SQLite3 /,
   // Filled in by effectiveTarget; the sandbox path is a run-time value.
   database: '',

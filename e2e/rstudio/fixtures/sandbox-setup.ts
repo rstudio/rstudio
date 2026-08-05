@@ -219,6 +219,14 @@ export default async function globalSetup(config: FullConfig) {
   // rather than on the presence of a config directory.
   const odbc = prepareOdbcSandbox(sandbox);
   if (odbc.odbcDir) process.env.PW_ODBC_DIR = odbc.odbcDir;
+  // Windows only: the sandbox holds a copy of the driver DLL alone, so the
+  // directory it came from has to be reachable for its dependent DLLs (e.g.
+  // psqlODBC's bundled libpq). The Desktop fixture prepends these to the
+  // session's PATH.
+  if (odbc.driverPaths.length > 0) {
+    process.env.PW_ODBC_DRIVER_PATHS = odbc.driverPaths.join(path.delimiter);
+    console.log(`[sandbox] odbc driver dependency paths: ${odbc.driverPaths.join(', ')}`);
+  }
   if (odbc.registered.length > 0) {
     process.env.PW_ODBC_REGISTERED = odbc.registered.join(',');
     console.log(`[sandbox] odbc drivers registered: ${odbc.registered.join(', ')}`);
