@@ -82,24 +82,35 @@ default.
 ## Server mode: how sandbox credentials reach the rsession
 
 `rserver` builds each rsession's environment from scratch and takes `HOME`
-from the passwd db (`getpwnam` -> `pw_dir`), so environment variables set on
-the rserver process never reach its rsessions. For the spawned in-tree
-server, the fixture bridges this with a wrapper script passed as
-`--rsession-path` (`writeRsessionWrapper` in `fixtures/server.fixture.ts`):
-it exports the sandbox `HOME` (and
-`GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false`, unsets `XDG_CONFIG_HOME`,
-re-exports `DYLD_INSERT_LIBRARIES` on macOS where SIP strips it across the
-`/bin/sh` exec) and execs the real rsession. Keep the wrapper's variable list
-in sync with what Desktop sets on its child process. The `@server_only`
-smoke test in `tests/sandbox.test.ts` asserts the rsession `HOME` lands under
-the sandbox -- if the delivery chain breaks, that test is the tripwire.
+from the passwd db (`getpwnam` -> `pw_dir`). Only a short allow-list survives
+from the rserver process -- `PATH`, `MANPATH`, `LANG`, `SHELL`, the
+`RS_LOG_*` family, and the names `forwardXdgEnvVars` carries
+(`core/system/Xdg.cpp`), which is why setting `RSTUDIO_CONFIG_HOME` on
+rserver does work. `HOME` and `R_LIBS_USER` are not on that list. For the
+spawned in-tree server, the fixture bridges the gap with a wrapper script
+passed as `--rsession-path` (`writeRsessionWrapper` in
+`fixtures/server.fixture.ts`): it exports the sandbox `HOME` and
+`R_LIBS_USER` (plus `GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false`, unsets
+`XDG_CONFIG_HOME`, re-exports `DYLD_INSERT_LIBRARIES` on macOS where SIP
+strips it across the `/bin/sh` exec) and execs the real rsession. Keep the
+wrapper's variable list in sync with what Desktop sets on its child process.
+The `@server_only` tripwire in `tests/sandbox.test.ts` asserts that `HOME` and
+`R_LIBS_USER` arrive with the expected values and that `XDG_CONFIG_HOME` is
+empty -- if the delivery chain breaks, that test is what catches it. Compare
+`R_LIBS_USER` through `base:::.expand_R_libs_env_var`, never against the raw
+template: R's Rprofile expands the `%p` / `%v` tokens at startup, so the
+session never reports back the string the wrapper exported.
 
 **External servers** (`PW_RSTUDIO_SERVER_URL`): the harness cannot control
 that server's rsession environment, so a final auth-setup step provisions
 the stores through the session instead (`utils/remote-provision.ts`): log
-in, push each sandbox store into the remote home via the R console
-(hex-chunked `writeBin`, for text and binary alike), verify sizes, end the
-session so tests get a fresh rsession.
+in, upload each sandbox store over HTTP to the same `/upload` endpoint the
+Files pane posts to, move it into place with a console command carrying
+nothing but file paths, verify size and mode, re-probe the content, then end
+the session so tests get a fresh rsession. Never put file contents into a
+console command here: RStudio records every submitted command in the
+account's history database, so a command carrying a store would leave a
+recoverable copy of a live token there.
 Key rules baked into that step:
 
 - A store on the remote account counts as pre-existing only when it holds a
@@ -110,9 +121,12 @@ Key rules baked into that step:
   provider's status file on external runs, so a sandbox-only store can't
   false-pass the gate (the remote account's own sign-in state is what the
   session actually sees).
-- Console-pushed token bytes land in the account's RStudio console history;
-  history files provisioning created are scrubbed, pre-existing ones are
-  not. Use a dedicated test account.
-- The spike for #18348 confirmed the copilot-language-server reads a
+- An unreadable probe is not an absent store. Where existence or content
+  can't be determined, the store is left alone and that provider's tests
+  skip, rather than pushing over what may be the account's own sign-in.
+- Use a dedicated test account. The upload channel keeps token bytes out of
+  the console history, but the stores still land in a real account's home,
+  and a run that dies before teardown leaves them there.
+- A quick experiment for #18348 confirmed the copilot-language-server reads a
   plaintext `auth.db` without `GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION` set, so
   no remote `~/.Renviron` edit is needed.

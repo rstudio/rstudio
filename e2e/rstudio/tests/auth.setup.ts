@@ -911,10 +911,13 @@ setup('authenticate GitHub Copilot', async () => {
 // they are overwritten and scrubbed like this run's own files.
 
 // How long to wait for the remote session's own stub data.json write before
-// pushing the Posit AI store (see the comment at the call site). The stub has
-// been observed within a few seconds of session startup; this is margin over
-// that, balanced against paying the full wait on accounts that never write
-// one. The write retry in writeRemoteBinary backstops a straggler.
+// pushing the Posit AI store (see the call site). The stub's timing is
+// variable -- observed both before the provisioning step's first probe and
+// several seconds after session startup -- so this is margin over the
+// observed range, weighed against paying the full wait on accounts that never
+// write one at all. Two layers backstop a straggler that outlasts it: the
+// write retry in writeRemoteBinary, and the post-push content re-probe, which
+// refuses to vouch for a store the stub landed on top of.
 const POSITAI_STUB_WAIT_MS = 5_000;
 
 // A deterministic external-server misconfiguration that a retry can't heal.

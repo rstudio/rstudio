@@ -15,7 +15,7 @@ import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
 // before any worker spawns. Resolve lazily so importing this module (for
-// --list, type-checking, etc.) doesn't require the env var -- the assertion
+// --list, type-checking, etc.) doesn't require the environment variable -- the assertion
 // fires only when a test actually launches a session.
 function sandboxRoot(): string {
   const s = process.env.PW_SANDBOX;
@@ -121,8 +121,11 @@ function shQuote(value: string): string {
  * Generate the per-worker rsession wrapper script that delivers the sandbox
  * environment to the rsession (and thus to the AI backends it spawns).
  * rserver builds each rsession's environment from scratch (runProcess in
- * core/system/PosixSystem.cpp) with HOME taken from the passwd db, so env
- * vars set on the rserver process never reach the session (#18348). The
+ * core/system/PosixSystem.cpp) with HOME taken from the passwd db. Only a
+ * short allow-list survives from the rserver process: PATH, MANPATH, LANG,
+ * SHELL, the RS_LOG_* family, and the names forwardXdgEnvVars carries (see
+ * the env block in spawnSandboxedRserver). HOME and R_LIBS_USER are not among
+ * them, so setting those on rserver would accomplish nothing (#18348). The
  * wrapper runs as the session user after that environment is built, so its
  * exports win:
  *  - HOME: the sandbox user-home (honoring aiAuth-stripped variants), where
@@ -200,12 +203,14 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   fs.writeFileSync(secureCookieKey, randomBytes(32).toString('hex'), { mode: 0o600 });
 
   // Deliver the sandbox environment to each rsession through a wrapper
-  // script passed as --rsession-path (#18348). Vars set on the rserver
-  // process below do NOT reach its rsessions -- rserver rebuilds their
-  // environment from scratch (runProcess in core/system/PosixSystem.cpp),
-  // with HOME from the passwd db -- so the wrapper is what redirects the
-  // rsession (and the AI backends it spawns) into the sandbox. See
-  // writeRsessionWrapper for the vars it carries.
+  // script passed as --rsession-path (#18348). Most of what is set on the
+  // rserver process below does NOT reach its rsessions -- rserver rebuilds
+  // their environment from scratch (runProcess in
+  // core/system/PosixSystem.cpp), with HOME from the passwd db, copying over
+  // only PATH, MANPATH, LANG, SHELL, the RS_LOG_* family, and the names the
+  // xdg filter forwards. HOME and R_LIBS_USER are not on that list, so the
+  // wrapper is what redirects the rsession (and the AI backends it spawns)
+  // into the sandbox. See writeRsessionWrapper for what it carries.
   const rsessionWrapper = writeRsessionWrapper(serverRoot, userHome, rserverBin, rserverConf);
 
   const env = {
@@ -219,15 +224,31 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     R_LIBS_USER: rLibsUserTemplate(),
     RS_DB_MIGRATIONS_PATH: process.env.RS_DB_MIGRATIONS_PATH || DEFAULT_DB_MIGRATIONS,
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
+    // These two DO reach the rsessions: the xdg filter forwards them by name
+    // (forwardXdgEnvVars, core/system/Xdg.cpp), which is the whole reason
+    // setting them here works when setting HOME here would not.
     RSTUDIO_CONFIG_HOME: configHome,
     RSTUDIO_DATA_HOME: dataHome,
   };
-  // Keep developer-shell XDG dirs out of the picture entirely: rserver's xdg
-  // filter forwards XDG_* to every rsession, where XDG_CONFIG_HOME would win
-  // over the wrapper's HOME for the Copilot config dir and point it outside
-  // the sandbox. The wrapper also unsets XDG_CONFIG_HOME session-side; this
-  // covers the rserver process itself and the rest of the XDG family.
-  for (const v of ['XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME', 'XDG_STATE_HOME']) {
+  // Keep developer-shell config dirs out of the picture entirely: the xdg
+  // filter forwards each name below to every rsession, where XDG_CONFIG_HOME
+  // would win over the wrapper's HOME for the Copilot config dir and point it
+  // outside the sandbox. The wrapper also unsets XDG_CONFIG_HOME
+  // session-side; this covers the rserver process itself and the rest of the
+  // family.
+  //
+  // The list is everything forwardXdgEnvVars carries (core/system/Xdg.cpp)
+  // except the two names set just above. RSTUDIO_CONFIG_DIR and
+  // RSTUDIO_DATA_DIR are deleted rather than redirected because they name
+  // system-wide dirs with no per-run sandbox equivalent; dropping them falls
+  // back to the built-in defaults, which is the isolation we want. Deleting
+  // an unset name changes nothing, so this is safe on a clean shell.
+  // XDG_CACHE_HOME is absent on purpose: rserver never forwards it, so
+  // deleting it here would imply a relationship that isn't there.
+  for (const v of [
+    'XDG_CONFIG_HOME', 'XDG_CONFIG_DIRS', 'XDG_DATA_HOME', 'XDG_DATA_DIRS', 'XDG_STATE_HOME',
+    'RSTUDIO_CONFIG_DIR', 'RSTUDIO_DATA_DIR',
+  ]) {
     delete (env as Record<string, string | undefined>)[v];
   }
 

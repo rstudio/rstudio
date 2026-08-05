@@ -21,12 +21,14 @@ import { rStringLiteral } from './r';
  *
  * The credential bytes travel over HTTP, through the same /upload endpoint the
  * Files pane posts to (see uploadRemoteFile). The R console is used only to
- * move the uploaded file into place, so every console command here carries file
- * paths and nothing else. That distinction is the whole design: RStudio records
- * each submitted console command in the account's history database, so a command
- * carrying a store's contents would leave a recoverable copy of a live token
- * there -- one this run could not clean up if the history file predated it.
- * Keep it that way; never put file contents into a console command in this file.
+ * move the uploaded file into place and to probe what is already there, so no
+ * console command here ever carries a file's contents -- only paths, and the
+ * fixed patterns the probes match on. That distinction is the whole design:
+ * RStudio records each submitted console command in the account's history
+ * database, so a command carrying a store's contents would leave a recoverable
+ * copy of a live token there -- one this run could not clean up if the history
+ * file predated it. Keep it that way; never put file contents into a console
+ * command in this file.
  *
  * Everything here is driven from the auth.setup project (provisioning) and
  * the auth-teardown project (scrubbing); see tests/auth.setup.ts and
@@ -57,7 +59,12 @@ export const REMOTE_COPILOT_DIR = '~/.config/github-copilot';
  */
 export interface RemoteProvisionManifest {
   serverUrl: string;
-  /** Remote paths (with "~/" prefixes) created by this run. */
+  /**
+   * Remote paths created by this run: the "~/" store paths, plus the absolute
+   * server-side temp file each upload lands in before the console moves it
+   * into place. Both kinds are scrubbed, since a run that dies mid-push can
+   * leave either behind.
+   */
   createdPaths: string[];
 }
 
