@@ -20,8 +20,13 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/thread.hpp>
+
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
+#include <core/system/Process.hpp>
 #include <shared_core/FilePath.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -364,6 +369,88 @@ TEST_F(FileDownloadGrantTest, TrackingEnabledAuditsRenderableType)
 
    enableResourceTracking();
    EXPECT_TRUE(shouldAuditFileDownload(request, file));
+}
+
+// --- Supervisor-only pumping during shutdown (#18394) ------------------------
+//
+// The assistant/chat shutdown waits pump ONLY processSupervisor().poll()
+// instead of the full onBackgroundProcessing() pass, on the theory that the
+// poll alone reaps exited children and fires their exit callbacks, without
+// dispatching scheduled commands, background handlers, or R events. (It does
+// still fire I/O and exit callbacks for other supervised children -- the
+// claim is narrower than "no other module's code runs".) These tests pin
+// both halves of that contract, so a supervisor or scheduling refactor that
+// invalidates either assumption fails here rather than resurfacing as a
+// silent CI shard hang.
+
+TEST(SupervisorShutdownPumpTest, PollAloneReapsChildAndFiresExitCallback)
+{
+   // Shared (not stack-captured by reference): if the test fails and the
+   // supervisor fires the callback after this frame is gone, it must not
+   // write through a dangling reference into the still-running session.
+   auto pExited = boost::make_shared<bool>(false);
+   auto pExitStatus = boost::make_shared<int>(-1);
+
+   // Match the production launches this test pins (SessionAssistant /
+   // SessionChat set this explicitly): with the session's main-thread gate
+   // enabled, only main-thread polls -- ours below -- fire these callbacks,
+   // and the pin stays valid even if the ProcessOptions default changes.
+   core::system::ProcessOptions options;
+   options.callbacksRequireMainThread = true;
+
+   core::system::ProcessCallbacks callbacks;
+   callbacks.onExit = [pExited, pExitStatus](int status)
+   {
+      *pExited = true;
+      *pExitStatus = status;
+   };
+
+   core::Error error = module_context::processSupervisor().runCommand(
+            "exit 0", options, callbacks);
+   ASSERT_FALSE(error) << error.asString();
+
+   // Drive ONLY the supervisor poll -- no onBackgroundProcessing, no R event
+   // processing -- exactly as the shutdown waits do.
+   for (int i = 0; i < 100 && !*pExited; i++)
+   {
+      module_context::processSupervisor().poll();
+      boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+   }
+
+   EXPECT_TRUE(*pExited)
+      << "processSupervisor().poll() alone did not reap the child within 5s; "
+         "the #18394 shutdown waits rely on this";
+   EXPECT_EQ(0, *pExitStatus);
+}
+
+TEST(SupervisorShutdownPumpTest, PollDoesNotDispatchScheduledCommands)
+{
+   // Shared for the same dangling-reference reason as above: a command left
+   // pending by a failure would run during the session's own later pumping.
+   auto pCommandRan = boost::make_shared<bool>(false);
+   module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(1),
+            [pCommandRan]() { *pCommandRan = true; },
+            false /* not idleOnly */);
+
+   // Let the delay elapse, then drive only the supervisor poll: the scheduled
+   // command must NOT run -- this is the isolation the shutdown waits depend
+   // on (a blocking scheduled command must not be dispatched mid-teardown).
+   boost::this_thread::sleep(boost::posix_time::milliseconds(20));
+   for (int i = 0; i < 10; i++)
+   {
+      module_context::processSupervisor().poll();
+      boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+   }
+   EXPECT_FALSE(*pCommandRan)
+      << "processSupervisor().poll() dispatched a scheduled command; the "
+         "#18394 shutdown waits assume it dispatches supervisor work only";
+
+   // Control: the full background-processing pass DOES run it, proving the
+   // command was genuinely pending rather than lost.
+   module_context::onBackgroundProcessing(false);
+   EXPECT_TRUE(*pCommandRan)
+      << "scheduled command never ran even via onBackgroundProcessing(false)";
 }
 
 // --- shouldIgnoreOutputDir --------------------------------------------------

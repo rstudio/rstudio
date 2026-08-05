@@ -7,6 +7,7 @@ import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { YES_BTN, NO_BTN } from '@pages/modals.page';
 import { requireAiCredentials } from '@utils/ai-credentials';
 import { isPositAiAuthenticated } from '@utils/auth';
+import { selectPositChatProvider } from './_chat-setup';
 import type { Page } from 'playwright';
 
 /**
@@ -74,6 +75,8 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@chat
     page = session.page;
     consoleActions = new ConsolePaneActions(page);
     chatActions = new ChatPaneActions(page, consoleActions);
+
+    await selectPositChatProvider(page);
 
     // Ensure PAI is installed before the suite
     await chatActions.openChatPane();

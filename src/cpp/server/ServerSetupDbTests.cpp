@@ -234,6 +234,11 @@ TEST(ServerSetupDbTests, ResolveMasterPasswordFailsOnUnreadableFile)
    std::string password;
    Error error = resolveMasterPassword("/nonexistent/path/that/does/not/exist", in, out, &password);
    EXPECT_TRUE(error);
+   // Nothing is written here: this is a hard Error, and ServerMain's
+   // --setup-db dispatch is what reports it as [FAIL]. Asserted so a future
+   // change that starts writing to out has to decide whether it is
+   // double-reporting.
+   EXPECT_EQ("", out.str());
 }
 
 TEST(ServerSetupDbTests, ConnectAsMasterReportsConnectFailure)

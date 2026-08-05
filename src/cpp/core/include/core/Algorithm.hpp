@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 
+#include <boost/optional.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -270,19 +271,19 @@ template <typename Iterator, typename F>
 inline std::string join(Iterator begin,
                         Iterator end,
                         const std::string& delim,
-                        F&& f)
+                        F&& to_string)
 {
    if (begin >= end)
       return std::string();
 
-   std::string result;
-   result += f(*begin);
-   for (Iterator it = begin + 1; it != end; ++it)
+   std::ostringstream result;
+   result << to_string(*begin);
+   for (Iterator it = ++Iterator(begin); it != end; ++it)
    {
-      result += delim;
-      result += f(*it);
+      result << delim;
+      result << to_string(*it);
    }
-   return result;
+   return result.str();
 
 }
 
@@ -293,6 +294,14 @@ inline std::string join(Iterator begin,
 {
    auto callback = [](const std::string& string) { return string; };
    return join(begin, end, delim, std::move(callback));
+}
+
+template <typename Container, typename F>
+inline std::string join(const Container& container,
+                        const std::string& delim,
+                        F&& to_string)
+{
+   return join(container.begin(), container.end(), delim, std::move(to_string));
 }
 
 template <typename VOID_FUNC>
@@ -308,6 +317,15 @@ struct Defer {
 
    VOID_FUNC func;
 };
+
+template <typename T, typename U>
+boost::optional<T> optional_cast(const boost::optional<U>& v)
+{
+   if (v.has_value()) {
+      return *v;
+   }
+   return boost::optional<T>(boost::none);
+}
 
 } // namespace algorithm
 } // namespace core

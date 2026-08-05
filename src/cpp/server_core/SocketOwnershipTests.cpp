@@ -205,7 +205,156 @@ TEST(SocketOwnershipTest, LooksUpUidOfEstablishedDualStackLoopbackSocket)
                              appPort, ephemeralPort, ::getuid()));
 }
 
-TEST(SocketOwnershipTest, ProbeSockDiagAvailableReportsTrueInTestEnvironment)
+TEST(SocketOwnershipTest, LooksUpUidOfListeningSocket)
+{
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
+   boost::asio::io_context io;
+   using boost::asio::ip::tcp;
+
+   tcp::acceptor acceptor(io, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   int listenPort = acceptor.local_endpoint().port();
+
+   uid_t uid = 0;
+   core::Error error = lookupListeningSocketUid(
+      boost::asio::ip::make_address("127.0.0.1"), listenPort, &uid);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(::getuid(), uid);
+}
+
+TEST(SocketOwnershipTest, LooksUpUidOfWildcardBoundListenerQueriedViaIpv4)
+{
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
+   boost::asio::io_context io;
+   using boost::asio::ip::tcp;
+
+   // A plain AF_INET listener bound to 0.0.0.0 (not a specific address) --
+   // the default bind address for many frameworks (Shiny, Flask, Streamlit),
+   // especially in containers -- looked up as if dialed via 127.0.0.1, the
+   // address callers actually have on hand (verifyPeerUid() passes the
+   // address it dialed, not the listener's own bind address, which it has no
+   // way to know). Unlike the dual-stack (IPV6_V6ONLY=0) case covered by
+   // LooksUpUidOfListeningDualStackSocketQueriedViaIpv4 below, this listener
+   // is registered under AF_INET, same as the query -- no cross-family retry
+   // is involved. The kernel's own listener lookup (__inet_lookup_listener())
+   // implements exact-address-then-ANY-bound fallback internally (the same
+   // mechanism that lets such a socket accept connections addressed to any
+   // local IP over the wire), so an exact-match diag query for the concrete
+   // address should still find it.
+   tcp::acceptor acceptor(io, tcp::endpoint(boost::asio::ip::address_v4::any(), 0));
+   int listenPort = acceptor.local_endpoint().port();
+
+   uid_t uid = 0;
+   core::Error error = lookupListeningSocketUid(
+      boost::asio::ip::make_address("127.0.0.1"), listenPort, &uid);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(::getuid(), uid);
+}
+
+TEST(SocketOwnershipTest, LooksUpUidOfListeningIPv6Socket)
+{
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
+   boost::asio::io_context io;
+   using boost::asio::ip::tcp;
+
+   boost::system::error_code ec;
+   tcp::acceptor acceptor(io);
+   acceptor.open(tcp::v6(), ec);
+   if (!ec)
+      acceptor.bind(tcp::endpoint(boost::asio::ip::make_address("::1"), 0), ec);
+   if (ec)
+   {
+      GTEST_SKIP() << "IPv6 loopback (::1) is not available in this environment: "
+                   << ec.message();
+   }
+   acceptor.listen();
+   int listenPort = acceptor.local_endpoint().port();
+
+   uid_t uid = 0;
+   core::Error error = lookupListeningSocketUid(
+      boost::asio::ip::make_address("::1"), listenPort, &uid);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(::getuid(), uid);
+}
+
+TEST(SocketOwnershipTest, LooksUpUidOfListeningDualStackSocketQueriedViaIpv4)
+{
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+
+   boost::asio::io_context io;
+   using boost::asio::ip::tcp;
+
+   // Dual-stack (IPV6_V6ONLY=0) listener bound to "::" -- registered under
+   // AF_INET6, so looking it up as if it were a plain AF_INET listener (the
+   // address callers actually have on hand when they dialed it via 127.0.0.1)
+   // requires lookupListeningSocketUid()'s AF_INET6-wildcard retry.
+   boost::system::error_code ec;
+   tcp::acceptor acceptor(io);
+   acceptor.open(tcp::v6(), ec);
+   if (!ec)
+      acceptor.set_option(boost::asio::ip::v6_only(false), ec);
+   if (!ec)
+      acceptor.bind(tcp::endpoint(boost::asio::ip::make_address("::"), 0), ec);
+   if (ec)
+   {
+      GTEST_SKIP() << "Dual-stack IPv6 loopback listener is not available in this environment: "
+                   << ec.message();
+   }
+   acceptor.listen();
+   int listenPort = acceptor.local_endpoint().port();
+
+   uid_t uid = 0;
+   core::Error error = lookupListeningSocketUid(
+      boost::asio::ip::make_address("127.0.0.1"), listenPort, &uid);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(::getuid(), uid);
+}
+
+TEST(SocketOwnershipTest, VerifyPeerUidSucceedsAgainstNeverAcceptedConnection)
+{
+#ifndef __linux__
+   GTEST_SKIP() << "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux";
+#endif
+   if (probeOwnershipCheckMode() == OwnershipCheckMode::Disabled)
+   {
+      GTEST_SKIP() << "NETLINK_SOCK_DIAG is not available in this environment";
+   }
+
+   // Cross-kernel regression test for #18439: on kernels lacking
+   // upstream commit c51da3f7a161 ("net: remove sock_i_uid()", first in
+   // v6.17), an ESTABLISHED server-side socket that hasn't been accept()'d
+   // yet reports owner uid 0 via NETLINK_SOCK_DIAG. verifyPeerUid() must
+   // still succeed here regardless of which mode probeOwnershipCheckMode()
+   // selected for this kernel: via the established-socket path on a fixed
+   // kernel, via the Listener mode fallback on a buggy one (either because
+   // the probe already selected Listener, or because verifyPeerUid()'s
+   // own uid-0 listener re-check catches it).
+   boost::asio::io_context io;
+   using boost::asio::ip::tcp;
+
+   tcp::acceptor acceptor(io, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   int appPort = acceptor.local_endpoint().port();
+
+   tcp::socket client(io);
+   client.connect(tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), appPort));
+   // Deliberately never accept() -- see comment above.
+   int ephemeralPort = client.local_endpoint().port();
+
+   EXPECT_FALSE(verifyPeerUid(client.local_endpoint().address(), client.remote_endpoint().address(),
+                              appPort, ephemeralPort, ::getuid()));
+}
+
+TEST(SocketOwnershipTest, ProbeOwnershipCheckModeReportsEnforcingModeInTestEnvironment)
 {
    // Most CI/dev environments allow NETLINK_SOCK_DIAG; this exercises the probe's
    // happy path and asserts it doesn't spuriously disable enforcement there.
@@ -213,7 +362,7 @@ TEST(SocketOwnershipTest, ProbeSockDiagAvailableReportsTrueInTestEnvironment)
    // entirely -- exactly the degraded-capability case the probe exists to detect
    // gracefully -- so skip rather than hard-fail in that case, mirroring the
    // IPv6 loopback test's GTEST_SKIP() guard above.
-   if (!probeSockDiagAvailable())
+   if (probeOwnershipCheckMode() == OwnershipCheckMode::Disabled)
    {
       GTEST_SKIP() << "NETLINK_SOCK_DIAG is not available in this environment";
    }
@@ -222,14 +371,14 @@ TEST(SocketOwnershipTest, ProbeSockDiagAvailableReportsTrueInTestEnvironment)
 TEST(SocketOwnershipTest, LocalhostAsyncClientRejectsPeerWithMismatchedUid)
 {
    // LocalhostAsyncClient::verifyConnectedPeer() degrades to a no-op (returns
-   // true, allowing the write) whenever probeSockDiagAvailable() is false --
+   // true, allowing the write) whenever probeOwnershipCheckMode() is Disabled --
    // exactly the sandboxed/CI scenario the sibling
-   // ProbeSockDiagAvailableReportsTrueInTestEnvironment test above skips for.
-   // If we don't skip here too, the client would proceed to writeRequest()
-   // and then block forever waiting for a response that this test's bare
-   // acceptor (which never calls async_accept) will never send -- a hung
-   // test/CI job rather than a clean failure.
-   if (!probeSockDiagAvailable())
+   // ProbeOwnershipCheckModeReportsEnforcingModeInTestEnvironment test above
+   // skips for. If we don't skip here too, the client would proceed to
+   // writeRequest() and then block forever waiting for a response that this
+   // test's bare acceptor (which never calls async_accept) will never send --
+   // a hung test/CI job rather than a clean failure.
+   if (probeOwnershipCheckMode() == OwnershipCheckMode::Disabled)
    {
       GTEST_SKIP() << "NETLINK_SOCK_DIAG is not available in this environment; "
                       "verifyConnectedPeer() enforcement is disabled, so this "
@@ -271,7 +420,7 @@ TEST(SocketOwnershipTest, LocalhostAsyncClientAllowsPeerWithMatchingUid)
    // acceptor since the success path proceeds all the way to reading a
    // response.
    //
-   // Note: this assertion holds regardless of probeSockDiagAvailable() --
+   // Note: this assertion holds regardless of probeOwnershipCheckMode() --
    // whether enforcement is actively verified or degraded to a no-op, a
    // matching (or unenforced) uid always allows the request through, so no
    // GTEST_SKIP() guard is needed here (contrast the reject-path test above).

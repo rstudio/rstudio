@@ -99,6 +99,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Invert the collapse checkbox to get autoshow value
       prefs.assistantNesAutoshow().setGlobalValue(!cbAssistantNesCollapse_.getValue());
 
+      prefs.editSuggestionDiffGranularity().setGlobalValue(selEditSuggestionDiffGranularity_.getValue());
+
       // Also sync (deprecated) Copilot settings for now
       prefs.copilotEnabled().setGlobalValue(
             selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
@@ -322,6 +324,25 @@ public class AssistantPreferencesPane extends PreferencesPane
       lessSpaced(cbAssistantNesCollapse_);
       cbAssistantNesCollapse_.setValue(!prefs_.assistantNesAutoshow().getGlobalValue());
       cbAssistantNesCollapse_.setTitle(constants_.assistantNesCollapseDescription());
+
+      selEditSuggestionDiffGranularity_ = new SelectWidget(
+            prefsConstants_.editSuggestionDiffGranularityTitle(),
+            new String[] {
+                  prefsConstants_.editSuggestionDiffGranularityEnum_word(),
+                  prefsConstants_.editSuggestionDiffGranularityEnum_character()
+            },
+            new String[] {
+                  UserPrefsAccessor.EDIT_SUGGESTION_DIFF_GRANULARITY_WORD,
+                  UserPrefsAccessor.EDIT_SUGGESTION_DIFF_GRANULARITY_CHARACTER
+            },
+            false,
+            true,
+            false);
+
+      // Fall back to the first entry (word, the schema default) if the stored
+      // value isn't one of the known options.
+      if (!selEditSuggestionDiffGranularity_.setValue(prefs_.editSuggestionDiffGranularity().getGlobalValue()))
+         selEditSuggestionDiffGranularity_.getListBox().setSelectedIndex(0);
 
       // Create chat provider selector - conditionally include Posit Assistant option
       String[] chatProviderLabels;
@@ -696,6 +717,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       panel.add(nvwAssistantCompletionsDelay_);
       panel.add(cbAssistantNesEnabled_);
       panel.add(cbAssistantNesCollapse_);
+      panel.add(spaced(selEditSuggestionDiffGranularity_));
 
       // Match the initial visibility the trigger selector's change handler
       // maintains; the change handler does not fire until the value changes.
@@ -1639,6 +1661,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final NumericValueWidget nvwAssistantUpdateCheckInterval_;
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
+   private final SelectWidget selEditSuggestionDiffGranularity_;
    private final SelectWidget selChatProvider_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
