@@ -20,8 +20,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.events.WindowStateChangeEvent;
-import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.DoubleClickState;
@@ -71,7 +69,7 @@ public class PrimaryWindowFrame extends WindowFrame
             event.stopPropagation();
 
             if (doubleClickState_.checkForDoubleClick(event.getNativeEvent()))
-               fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+               maximize();
          }
       });
       

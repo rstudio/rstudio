@@ -752,6 +752,37 @@ test.describe('Pane and column management', () => {
     expectWidthClose(await getOffsetWidth(page, TABSET2_PANE), initialTabSet2Width, 0.1, 'restored TabSet2');
   });
 
+  // The maximize button is not the only way to maximize a pane: double-clicking
+  // a tabset's tab bar (ModuleTabLayoutPanel) does it too, as does
+  // double-clicking the Console title bar (PrimaryWindowFrame). Every route
+  // must end a zoom the same way, or the ones that don't leave the same stale
+  // bookkeeping behind. Only the tab-bar gesture is covered here: the Console
+  // title bar sits behind the ConsoleTabSet tab list, which intercepts the
+  // click, so that gesture reaches ModuleTabLayoutPanel in practice too.
+  test('Restoring a zoomed tabset by double-clicking its tab ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+
+    await executeCommand(page, 'layoutZoomEnvironment');
+    await expect.poll(
+      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50,
+      { timeout: 5000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomEnvironment'),
+      'precondition: zoom should be tracked after layoutZoomEnvironment',
+    ).toBe(true);
+
+    await page.locator(`${TABSET1_PANE} [role="tab"]`).first().dblclick();
+    await sleep(TIMEOUTS.layoutSettle);
+
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+    expect(
+      await isCommandChecked(page, 'layoutZoomEnvironment'),
+      'a tab double-click must end the zoom, not just restore the quadrant',
+    ).toBe(false);
+    expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
+  });
+
   test('A pane raising itself does not collapse the layout (#18444)', async ({ rstudioPage: page }) => {
     const consoleActions = new ConsolePaneActions(page);
 

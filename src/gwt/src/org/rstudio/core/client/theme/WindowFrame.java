@@ -150,9 +150,13 @@ public class WindowFrame extends Composite
       return name_;
    }
 
-   public void setMaximizeClickHandler(Command handler)
+   /**
+    * Replace what the frame's maximize gesture does. The handler may call
+    * maximizeDefault() to fall back to the built-in behavior.
+    */
+   public void setMaximizeAction(Command action)
    {
-      maximizeButton_.setClickHandler(handler);
+      maximizeAction_ = action;
    }
 
    public void setCloseClickHandler(Command handler)
@@ -180,10 +184,25 @@ public class WindowFrame extends Composite
    }
 
    /**
-    * The default maximize-button action. Public so that a caller which replaces
-    * the click handler via setMaximizeClickHandler can still delegate to it.
+    * The frame's maximize gesture. Every route to it -- the maximize button, a
+    * double-click on the Console header (PrimaryWindowFrame) and a double-click
+    * on a tabset's tab bar (ModuleTabLayoutPanel) -- comes through here, so an
+    * owner that needs to intercept the gesture overrides it in one place via
+    * setMaximizeAction rather than per gesture.
     */
    public void maximize()
+   {
+      if (maximizeAction_ != null)
+         maximizeAction_.execute();
+      else
+         maximizeDefault();
+   }
+
+   /**
+    * The frame's built-in maximize behavior, for a custom maximize action to
+    * delegate to.
+    */
+   public void maximizeDefault()
    {
       fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
    }
@@ -479,6 +498,7 @@ public class WindowFrame extends Composite
    private Widget previousHeader_;
    private final FlowPanel buttonsArea_;
    private WindowState logicalState_ = WindowState.NORMAL;
+   private Command maximizeAction_;
 
    private static final int TOP_SHADOW_WIDTH = 3,
                             LEFT_SHADOW_WIDTH = 3,
