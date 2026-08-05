@@ -151,8 +151,9 @@ public class WindowFrame extends Composite
    }
 
    /**
-    * Replace what the frame's maximize gesture does. The handler may call
-    * maximizeDefault() to fall back to the built-in behavior.
+    * Replace what the frame's maximize gestures do. The action may call
+    * maximizeDefault() to delegate to the built-in behavior; passing null
+    * restores it outright.
     */
    public void setMaximizeAction(Command action)
    {
@@ -184,11 +185,16 @@ public class WindowFrame extends Composite
    }
 
    /**
-    * The frame's maximize gesture. Every route to it -- the maximize button, a
-    * double-click on the Console header (PrimaryWindowFrame) and a double-click
-    * on a tabset's tab bar (ModuleTabLayoutPanel) -- comes through here, so an
-    * owner that needs to intercept the gesture overrides it in one place via
+    * The frame's maximize gesture. Every frame-level gesture routes here -- the
+    * maximize button, a double-click on the Console title bar
+    * (PrimaryWindowFrame) and a double-click on a tabset's tab bar
+    * (ModuleTabLayoutPanel) -- so an owner intercepts them in one place via
     * setMaximizeAction rather than per gesture.
+    *
+    * This is not every way a window reaches WindowState.MAXIMIZE: the minimized
+    * frame's own button (MinimizedWindowFrame) and EnsureHeightEvent.MAXIMIZED
+    * (LogicalWindow.onEnsureHeight) fire at the LogicalWindow and bypass the
+    * frame entirely. See PaneManager.endZoomIfActive.
     */
    public void maximize()
    {

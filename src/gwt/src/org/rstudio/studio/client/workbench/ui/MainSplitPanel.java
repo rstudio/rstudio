@@ -659,6 +659,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    /**
     * Check if the saved state represents a zoomed column layout.
     * We detect this to avoid restoring broken zoom state on restart (issue #16688).
+    *
+    * PaneManager.ZoomedTabStateValue.onInit depends on this: because the zoomed
+    * column widths are never restored, it undoes the persisted zoom rather than
+    * replaying it (issue #18444). Removing this guard would reopen that desync.
     */
    private boolean isZoomedColumnState(State state)
    {

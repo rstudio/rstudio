@@ -157,11 +157,8 @@ public class PaneManager
          // EXCLUSIVE/HIDE state and which would otherwise leave the zoomed
          // pane's sibling quadrant hidden.
          //
-         // Only the zoomed pane's own column is normalized: zooming puts every
-         // other pane in NORMAL first, so any other column's persisted state
-         // (e.g. a deliberately closed Source pane) is genuine and left alone.
-         //
          // Time-out action just to ensure all client state is ready.
+         final String tabName = value.getString(MAXIMIZED_TAB_KEY);
          new Timer()
          {
             @Override
@@ -170,21 +167,32 @@ public class PaneManager
                LogicalWindow window = null;
                try
                {
-                  window = getWindowForTab(
-                        Tab.valueOf(value.getString(MAXIMIZED_TAB_KEY)));
+                  window = getWindowForTab(Tab.valueOf(tabName));
                }
                catch (Exception e)
                {
-                  Debug.log("Ignoring unrecognized persisted zoom state: " +
-                            e.toString());
+                  Debug.logWarning("Could not resolve persisted zoom state " +
+                                   "for tab '" + tabName + "': " + e.toString());
                }
 
+               // The quadrant half of the zoom is already applied by the time we
+               // get here, so it has to be undone even when the tab name didn't
+               // resolve -- otherwise the zoomed pane's sibling is left hidden
+               // with nothing to explain it. Normalizing every pane is the
+               // bounded fallback; it costs a correct-but-minimized empty tabset
+               // nothing, since restorePaneStateToDefault keeps those minimized.
                if (window != null)
                   window.onWindowStateChange(
                         new WindowStateChangeEvent(WindowState.NORMAL, true));
+               else
+                  restorePaneStateToDefault();
 
-               // Clears the bookkeeping and re-enables the splitter, so the
-               // next client-state push drops the persisted zoom as well.
+               // Normalizing quadrants reveals a source window that is hidden
+               // because it holds no documents, so re-assert that rule.
+               syncSourceWindowVisibility();
+
+               // Clears the bookkeeping, so the next client-state push drops the
+               // persisted zoom as well.
                invalidateSavedLayoutState(true);
             }
          }.schedule(200);
@@ -228,13 +236,22 @@ public class PaneManager
 
    }
 
+   /**
+    * The LogicalWindow that owns a tab, or null when the tab has no window.
+    * Callers must handle null: Tab.SourceColumn names a quadrant rather than a
+    * tabset member, so it is never in tabToPanel_, and a tab can also be absent
+    * while its pane is being rebuilt.
+    */
    private LogicalWindow getWindowForTab(Tab tab)
    {
       switch (tab)
       {
       case Console: return getConsoleLogicalWindow();
       case Source:  return getSourceLogicalWindow();
-      default:      return getOwnerTabPanel(tab).getParentWindow();
+      case SourceColumn: return null;
+      default:
+         WorkbenchTabPanel panel = getOwnerTabPanel(tab);
+         return panel == null ? null : panel.getParentWindow();
       }
    }
 
@@ -384,48 +401,7 @@ public class PaneManager
       
       panel_.initialize(leftList_, center_, right_, sidebarWidget, sidebarLocation);
 
-      for (LogicalWindow window : sourceLogicalWindows_)
-      {
-         // count the number of source docs assigned to this window
-         JsArray<SourceDocument> docs =
-            session_.getSessionInfo().getSourceDocuments();
-         String windowId = SourceWindowManager.getSourceWindowId();
-         int numDocs = 0;
-         for (int i = 0; i < docs.length(); i++)
-         {
-            String docWindowId = docs.get(i).getSourceWindowId();
-
-            // Check the SourceColumn of the SourceDocument. If for some reason we cannot find
-            // its column, default to the main source window.
-            SourceColumn column =
-               sourceColumnManager_.getByName(docs.get(i).getSourceDisplayName());
-            boolean mainSourceWindow = (column == null ||
-               StringUtil.equals(column.getName(), SourceColumnManager.MAIN_SOURCE_NAME)) ?
-               true : false;
-
-            LogicalWindow columnWindow = mainSourceWindow ?
-                                         sourceLogicalWindows_.get(0) :
-                                         getParentLogicalWindow(column.asWidget().getElement());
-
-            if (StringUtil.equals(docWindowId, windowId) &&
-                (columnWindow == null && mainSourceWindow ||
-                 window == columnWindow))
-            {
-               numDocs++;
-            }
-         }
-
-         if (numDocs == 0 && window.getState() != WindowState.HIDE)
-         {
-            window.onWindowStateChange(
-                  new WindowStateChangeEvent(WindowState.HIDE));
-         }
-         else if (numDocs > 0 && window.getState() == WindowState.HIDE)
-         {
-            window.onWindowStateChange(
-                  new WindowStateChangeEvent(WindowState.NORMAL));
-         }
-      }
+      syncSourceWindowVisibility();
 
       source_.loadDisplay();
       
@@ -1180,10 +1156,14 @@ public class PaneManager
       boolean visibilityChanging = (showSidebar && sidebar_ == null) ||
                                    (!showSidebar && sidebar_ != null);
 
-      // Showing the sidebar redistributes every column width
-      // (MainSplitPanel.setSidebarWidget), which undraws any active pane zoom.
-      // End the zoom first so the bookkeeping can't outlive it -- a stale zoom
-      // re-zooms whichever pane raises itself next (#18444).
+      // Showing or hiding the sidebar re-lays-out the columns and can undraw an
+      // active zoom: setSidebarWidget resets the other columns to default widths
+      // on a first show, and its deferred center-collapse reclaim can do it on a
+      // restore. Rather than reason about which path fires, clear the zoom
+      // whenever visibility changes so the bookkeeping can't outlive the drawn
+      // zoom -- a stale zoom re-zooms whichever pane raises itself next
+      // (#18444). Note the width restore animates; only the bookkeeping is
+      // cleared synchronously.
       if (visibilityChanging && maximizedWindow_ != null)
          restoreLayout();
 
@@ -1812,6 +1792,59 @@ public class PaneManager
       }
 
       invalidateSavedLayoutState(true);
+   }
+
+   /**
+    * Hide each source window that owns no source documents, and reveal each one
+    * that does. A source window with no documents is HIDE, which is the same
+    * quadrant state a zoom gives the zoomed pane's sibling -- so anything that
+    * normalizes quadrant states has to re-assert this rule afterwards or an
+    * empty Source pane is left on screen (#18444).
+    */
+   private void syncSourceWindowVisibility()
+   {
+      for (LogicalWindow window : sourceLogicalWindows_)
+      {
+         // count the number of source docs assigned to this window
+         JsArray<SourceDocument> docs =
+            session_.getSessionInfo().getSourceDocuments();
+         String windowId = SourceWindowManager.getSourceWindowId();
+         int numDocs = 0;
+         for (int i = 0; i < docs.length(); i++)
+         {
+            String docWindowId = docs.get(i).getSourceWindowId();
+
+            // Check the SourceColumn of the SourceDocument. If for some reason we cannot find
+            // its column, default to the main source window.
+            SourceColumn column =
+               sourceColumnManager_.getByName(docs.get(i).getSourceDisplayName());
+            boolean mainSourceWindow = (column == null ||
+               StringUtil.equals(column.getName(), SourceColumnManager.MAIN_SOURCE_NAME)) ?
+               true : false;
+
+            LogicalWindow columnWindow = mainSourceWindow ?
+                                         sourceLogicalWindows_.get(0) :
+                                         getParentLogicalWindow(column.asWidget().getElement());
+
+            if (StringUtil.equals(docWindowId, windowId) &&
+                (columnWindow == null && mainSourceWindow ||
+                 window == columnWindow))
+            {
+               numDocs++;
+            }
+         }
+
+         if (numDocs == 0 && window.getState() != WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.HIDE));
+         }
+         else if (numDocs > 0 && window.getState() == WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.NORMAL));
+         }
+      }
    }
 
    private void restorePaneStateToDefault()
@@ -2631,6 +2664,10 @@ public class PaneManager
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, accessibleName));
+      // Additional source columns have no maximize gesture at all -- no maximize
+      // button, and neither a PrimaryWindowFrame title bar nor a
+      // ModuleTabLayoutPanel tab bar to double-click -- so there is nothing to
+      // hook for them.
       if (showMinMaxButtons)
          hookPaneMaximize(sourceFrame, sourceWindow);
       sourceWindow.transitionToState(WindowState.NORMAL);
@@ -2650,12 +2687,20 @@ public class PaneManager
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      // Wire sidebar button handlers. The sidebar's maximize gesture already
-      // goes through PaneManager (zoomColumn, whose state is derived from live
-      // column widths); the other tabsets need the pane-zoom hook.
+      // Wire sidebar button handlers. The sidebar maximizes by zooming its
+      // column rather than its quadrant, but it can still be the pane-zoomed
+      // window (Zoom Chat goes through zoomTab -> fullyMaximizeWindow), and
+      // zoomColumn's un-zoom branch does not clear the pane-zoom bookkeeping --
+      // so it needs the same zoom-aware dispatch as the other tabsets (#18444).
       if (isSidebar)
       {
-         frame.setMaximizeAction(() -> commands_.layoutZoomSidebar().execute());
+         frame.setMaximizeAction(() ->
+         {
+            if (equals(logicalWindow, maximizedWindow_))
+               restoreLayout();
+            else
+               commands_.layoutZoomSidebar().execute();
+         });
          frame.setCloseClickHandler(() -> setSidebarPref(false));
       }
       else
