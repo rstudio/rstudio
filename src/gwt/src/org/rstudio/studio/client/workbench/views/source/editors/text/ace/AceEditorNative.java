@@ -555,7 +555,84 @@ public class AceEditorNative extends JavaScriptObject
    /*-{
       return this.commands;
    }-*/;
-   
+
+   /**
+    * Make this editor's line start / line end navigation commands act on
+    * document lines rather than soft-wrapped screen rows.
+    *
+    * By default, Ace treats each visual row of a soft-wrapped line as its own
+    * line, so Home / End (and, on macOS, Ctrl+A / Ctrl+E) stop at the wrap
+    * boundary. That's the right behavior for a text editor, but not for a
+    * console, where the whole wrapped command should behave as a single line
+    * the way it does under readline.
+    *
+    * https://github.com/rstudio/rstudio/issues/18447
+    */
+   public final native void useDocumentLineNavigation()
+   /*-{
+      var commands = this.commands;
+
+      // Ace's default command objects are shared by every editor instance, so
+      // install clones rather than mutating the originals. The command tables
+      // themselves are per-editor, so this only affects this editor.
+      var override = function(name, exec) {
+         var command = commands.commands[name];
+         if (command == null)
+            return;
+
+         var clone = {};
+         for (var key in command)
+         {
+            if (command.hasOwnProperty(key))
+               clone[key] = command[key];
+         }
+
+         clone.exec = exec;
+         commands.addCommand(clone);
+      };
+
+      var lineStart = function(editor) {
+         return { row: editor.getCursorPosition().row, column: 0 };
+      };
+
+      var lineEnd = function(editor) {
+         var row = editor.getCursorPosition().row;
+         return { row: row, column: editor.getSession().getLine(row).length };
+      };
+
+      var navigateToLineStart = function(editor) {
+         var position = lineStart(editor);
+         editor.navigateTo(position.row, position.column);
+      };
+
+      var navigateToLineEnd = function(editor) {
+         var position = lineEnd(editor);
+         editor.navigateTo(position.row, position.column);
+      };
+
+      var selectToLineStart = function(editor) {
+         var position = lineStart(editor);
+         editor.getSelection().selectTo(position.row, position.column);
+      };
+
+      var selectToLineEnd = function(editor) {
+         var position = lineEnd(editor);
+         editor.getSelection().selectTo(position.row, position.column);
+      };
+
+      override("gotolinestart", navigateToLineStart);
+      override("gotolineend", navigateToLineEnd);
+
+      // Ace has two equivalent pairs of selection commands here: 'selectto*'
+      // (Cmd+Shift+Left / Ctrl+Shift+A and friends) and 'select*' (Shift+Home /
+      // Shift+End). Which one a given key reaches varies by platform, so both
+      // have to move in step with the navigation commands above.
+      override("selecttolinestart", selectToLineStart);
+      override("selecttolineend", selectToLineEnd);
+      override("selectlinestart", selectToLineStart);
+      override("selectlineend", selectToLineEnd);
+   }-*/;
+
    public final void tokenizeDocument()
    {
       tokenizeUpToRow(getSession().getLength() - 1);
