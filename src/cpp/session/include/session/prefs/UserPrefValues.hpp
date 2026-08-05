@@ -472,6 +472,9 @@ namespace prefs {
 #define kAssistantIndexingEnabled "assistant_indexing_enabled"
 #define kAssistantNesEnabled "assistant_nes_enabled"
 #define kAssistantNesAutoshow "assistant_nes_autoshow"
+#define kEditSuggestionDiffGranularity "edit_suggestion_diff_granularity"
+#define kEditSuggestionDiffGranularityWord "word"
+#define kEditSuggestionDiffGranularityCharacter "character"
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
 #define kAssistantUseSystemCa "assistant_use_system_ca"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
@@ -2193,6 +2196,12 @@ public:
     */
    bool assistantNesAutoshow();
    core::Error setAssistantNesAutoshow(bool val);
+
+   /**
+    * Control the granularity of change highlighting in edit suggestion previews. Word-level highlighting marks whole changed words; character-level highlighting marks individual changed characters.
+    */
+   std::string editSuggestionDiffGranularity();
+   core::Error setEditSuggestionDiffGranularity(std::string val);
 
    /**
     * When enabled, the Posit Assistant button is displayed in the main toolbar.

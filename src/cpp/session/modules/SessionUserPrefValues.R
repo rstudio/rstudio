@@ -2628,6 +2628,17 @@
    clear = function() { .rs.clearUserPref("assistant_nes_autoshow") }
 )
 
+# Highlight changes in edit suggestions by:
+#
+# Control the granularity of change highlighting in edit suggestion previews.
+# Word-level highlighting marks whole changed words; character-level highlighting
+# marks individual changed characters.
+.rs.uiPrefs$editSuggestionDiffGranularity <- list(
+   get = function() { .rs.getUserPref("edit_suggestion_diff_granularity") },
+   set = function(value) { .rs.setUserPref("edit_suggestion_diff_granularity", value) },
+   clear = function() { .rs.clearUserPref("edit_suggestion_diff_granularity") }
+)
+
 # Show Posit Assistant button in toolbar
 #
 # When enabled, the Posit Assistant button is displayed in the main toolbar.
