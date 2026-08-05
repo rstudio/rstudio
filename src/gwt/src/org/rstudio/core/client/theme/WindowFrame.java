@@ -179,7 +179,11 @@ public class WindowFrame extends Composite
          ((RequiresVisibilityChanged)header_).onVisibilityChanged(visible);
    }
 
-   private void maximize()
+   /**
+    * The default maximize-button action. Public so that a caller which replaces
+    * the click handler via setMaximizeClickHandler can still delegate to it.
+    */
+   public void maximize()
    {
       fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
    }

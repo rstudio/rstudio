@@ -145,23 +145,47 @@ public class PaneManager
          if (value == null)
             return;
 
-         if (!value.hasKey(MAXIMIZED_TAB_KEY) || !value.hasKey(WIDGET_SIZE_KEY))
+         if (!value.hasKey(MAXIMIZED_TAB_KEY))
             return;
 
-         // Time-out action just to ensure all client state is ready
+         // A persisted zoom cannot be restored faithfully: MainSplitPanel
+         // deliberately refuses to restore zoomed column widths (#16688). So
+         // replaying the zoom here left PaneManager tracking a zoom the columns
+         // didn't show, and a stale zoom re-zooms whichever pane raises itself
+         // next (#18444). Undo the zoom instead -- including the quadrant half
+         // of it, which DualWindowLayoutPanel restores from its own persisted
+         // EXCLUSIVE/HIDE state and which would otherwise leave the zoomed
+         // pane's sibling quadrant hidden.
+         //
+         // Only the zoomed pane's own column is normalized: zooming puts every
+         // other pane in NORMAL first, so any other column's persisted state
+         // (e.g. a deliberately closed Source pane) is genuine and left alone.
+         //
+         // Time-out action just to ensure all client state is ready.
          new Timer()
          {
             @Override
             public void run()
             {
-               String tabString = value.getString(MAXIMIZED_TAB_KEY);
-               double widgetSize = value.getDouble(WIDGET_SIZE_KEY);
+               LogicalWindow window = null;
+               try
+               {
+                  window = getWindowForTab(
+                        Tab.valueOf(value.getString(MAXIMIZED_TAB_KEY)));
+               }
+               catch (Exception e)
+               {
+                  Debug.log("Ignoring unrecognized persisted zoom state: " +
+                            e.toString());
+               }
 
-               maximizedTab_ = Tab.valueOf(tabString);
-               maximizedWindow_ = getWindowForTab(maximizedTab_);
-               widgetSizePriorToZoom_ = widgetSize;
-               fullyMaximizeWindow(maximizedWindow_, maximizedTab_);
-               manageLayoutCommands();
+               if (window != null)
+                  window.onWindowStateChange(
+                        new WindowStateChangeEvent(WindowState.NORMAL, true));
+
+               // Clears the bookkeeping and re-enables the splitter, so the
+               // next client-state push drops the persisted zoom as well.
+               invalidateSavedLayoutState(true);
             }
          }.schedule(200);
       }
@@ -188,19 +212,17 @@ public class PaneManager
       @Override
       protected JsObject getValue()
       {
+         // The zoomed tab is recorded so that onInit can undo, at startup, a
+         // zoom that cannot be faithfully restored.
          final JsObject object = JsObject.createJsObject();
          if (maximizedTab_ != null)
             object.setString(MAXIMIZED_TAB_KEY, maximizedTab_.toString());
-
-         if (widgetSizePriorToZoom_ >= 0)
-            object.setDouble(WIDGET_SIZE_KEY, widgetSizePriorToZoom_);
 
          lastValue_ = object;
          return object;
       }
 
       private static final String MAXIMIZED_TAB_KEY = "MaximizedTab";
-      private static final String WIDGET_SIZE_KEY = "WidgetSize";
 
       private JsObject lastValue_ = null;
 
@@ -1155,6 +1177,16 @@ public class PaneManager
 
    public void showSidebar(boolean showSidebar)
    {
+      boolean visibilityChanging = (showSidebar && sidebar_ == null) ||
+                                   (!showSidebar && sidebar_ != null);
+
+      // Showing the sidebar redistributes every column width
+      // (MainSplitPanel.setSidebarWidget), which undraws any active pane zoom.
+      // End the zoom first so the bookkeeping can't outlive it -- a stale zoom
+      // re-zooms whichever pane raises itself next (#18444).
+      if (visibilityChanging && maximizedWindow_ != null)
+         restoreLayout();
+
       if (showSidebar && sidebar_ == null)
       {
          // Create sidebar configuration
@@ -1313,6 +1345,31 @@ public class PaneManager
          // No zoom currently on -- just zoom the selected window + tab.
          fullyMaximizeWindow(window, tab);
       }
+   }
+
+   /**
+    * Wire a pane header's maximize button so that escaping a zoom goes through
+    * the zoom bookkeeping.
+    *
+    * While a pane is zoomed its maximize button reads as "restore", because
+    * LogicalWindow remaps EXCLUSIVE + MAXIMIZE to NORMAL. Left to the frame,
+    * that only drives DualWindowLayoutPanel: the vertical split comes back
+    * while maximizedWindow_ stays set, so the layout looks normal but
+    * PaneManager still believes a pane is zoomed -- and a stale zoom re-zooms
+    * whichever pane raises itself next (#18444). Restore through
+    * restoreLayout() instead, which puts the columns and the bookkeeping back
+    * together.
+    */
+   private void hookPaneMaximizeButton(final WindowFrame frame,
+                                       final LogicalWindow window)
+   {
+      frame.setMaximizeClickHandler(() ->
+      {
+         if (equals(window, maximizedWindow_))
+            restoreLayout();
+         else
+            frame.maximize();
+      });
    }
 
    private void fullyMaximizeWindow(final LogicalWindow window, final Tab tab)
@@ -2541,6 +2598,7 @@ public class PaneManager
 
       LogicalWindow logicalWindow =
             new LogicalWindow(frame, new MinimizedWindowFrame(frameName, frameName));
+      hookPaneMaximizeButton(frame, logicalWindow);
 
       consoleTabPanel_ = new ConsoleTabPanel(
             frame,
@@ -2573,6 +2631,8 @@ public class PaneManager
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, accessibleName));
+      if (showMinMaxButtons)
+         hookPaneMaximizeButton(sourceFrame, sourceWindow);
       sourceWindow.transitionToState(WindowState.NORMAL);
       sourceLogicalWindows_.add(sourceWindow);
       return sourceWindow;
@@ -2590,11 +2650,17 @@ public class PaneManager
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      // Wire sidebar button handlers
+      // Wire sidebar button handlers. The sidebar's maximize button already
+      // goes through PaneManager (zoomColumn, whose state is derived from live
+      // column widths); the other tabsets need the pane-zoom hook.
       if (isSidebar)
       {
          frame.setMaximizeClickHandler(() -> commands_.layoutZoomSidebar().execute());
          frame.setCloseClickHandler(() -> setSidebarPref(false));
+      }
+      else
+      {
+         hookPaneMaximizeButton(frame, logicalWindow);
       }
 
       // Only pass commands to sidebar for the empty state feature
