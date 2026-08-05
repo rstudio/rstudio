@@ -225,24 +225,55 @@ export async function remotePositAiStoreAuthenticated(page: Page): Promise<boole
 }
 
 /**
+ * The marker a signed-in Copilot store leaves in its bytes: one of GitHub's
+ * token prefixes. The family matters -- ghp_ is a personal access token, gho_
+ * an OAuth-app token, ghu_ user-to-server, ghs_ server-to-server, ghr_ a
+ * refresh token. Copilot authenticates as a GitHub *App* (its oauth_client_id
+ * is an "Iv1." App id), so real stores hold ghu_; matching gho_ alone finds
+ * nothing in any genuine sign-in.
+ *
+ * One definition, used by both the remote probe below and the caller deciding
+ * whether the bytes it just pushed carry a marker worth re-probing for. Those
+ * two must agree: a guard armed on evidence the probe never looks at turns a
+ * good push into a reported failure.
+ *
+ * A prefix scan cannot distinguish a live token from an expired one, and it
+ * is deliberately broader than the local gate (isCopilotStoreAuthenticated,
+ * which counts oauth_tokens rows through real SQLite). Erring toward "this
+ * store holds a sign-in" is the safe direction: it leaves a remote store
+ * alone rather than overwriting and later scrubbing what may be someone's
+ * real credentials.
+ */
+const COPILOT_TOKEN_MARKER_PATTERN = 'gh[opusr]_';
+
+/** Whether `bytes` carry a GitHub token marker (see COPILOT_TOKEN_MARKER_PATTERN). */
+export function bytesHoldCopilotToken(bytes: Buffer): boolean {
+  // latin1 maps each byte to one code unit, so a binary SQLite page can be
+  // scanned as text without a decoder dropping or merging bytes.
+  return new RegExp(COPILOT_TOKEN_MARKER_PATTERN).test(bytes.toString('latin1'));
+}
+
+/**
  * Whether the remote Copilot store holds a sign-in. Existence is as
  * misleading as for the Posit AI store: any session that enables Copilot
  * spawns the copilot-language-server, which creates an empty auth.db on
  * startup -- gate-skipped tests included -- so a bare "auth.db exists" can
  * mean nothing more than "Copilot was once switched on here". auth.db is
- * SQLite, which base R can't query, but a real sign-in leaves a GitHub OAuth
- * token (its "gho_" prefix in cleartext, since the store is written
- * unencrypted) somewhere in the database bytes -- the main file or its -wal
- * sidecar, where an uncheckpointed token row lives. grepRaw over both is
- * crude but decisive: an empty shell contains no token marker. As with the
- * Posit AI probe only a logical is read back, and null means "couldn't
- * tell", which callers treat as "don't touch the file".
+ * SQLite, which base R can't query, but a real sign-in leaves a GitHub token
+ * in cleartext (the store is written unencrypted) somewhere in the database
+ * bytes -- the main file or its -wal sidecar, where an uncheckpointed token
+ * row lives. grepRaw over both is crude but decisive: an empty shell contains
+ * no token marker. As with the Posit AI probe only a logical is read back,
+ * and null means "couldn't tell", which callers treat as "don't touch the
+ * file".
  */
 export async function remoteCopilotStoreAuthenticated(page: Page): Promise<boolean | null> {
   const db = `${REMOTE_COPILOT_DIR}/auth.db`;
+  const marker = rStringLiteral(COPILOT_TOKEN_MARKER_PATTERN);
   const holdsToken = (f: string) => {
     const p = rStringLiteral(f);
-    return `(file.exists(${p}) && length(grepRaw("gho_", readBin(${p}, "raw", file.size(${p})), fixed = TRUE)) > 0)`;
+    // fixed = FALSE: the marker is a character class, not a literal.
+    return `(file.exists(${p}) && length(grepRaw(${marker}, readBin(${p}, "raw", file.size(${p})), fixed = FALSE)) > 0)`;
   };
   return evalRemoteLogical(page, `${holdsToken(db)} || ${holdsToken(`${db}-wal`)}`);
 }

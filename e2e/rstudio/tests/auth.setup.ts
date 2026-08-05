@@ -21,6 +21,7 @@ import {
 import {
   REMOTE_COPILOT_DIR,
   REMOTE_POSITAI_STORE,
+  bytesHoldCopilotToken,
   closeExternalSession,
   connectExternalSession,
   evalRemoteLogical,
@@ -1134,19 +1135,27 @@ setup('provision external server credentials', async () => {
             // token row in an uncheckpointed -wal, so the sidecars are part of
             // the store's on-disk truth (see isCopilotStoreAuthenticated).
             const localDb = copilotAuthDbPath(sandboxUserHome);
-            // Whether the bytes actually pushed carry the "gho_" marker that
-            // remoteCopilotStoreAuthenticated searches for. The local gate,
-            // isCopilotStoreAuthenticated, decides by counting oauth_tokens rows
-            // in SQLite instead, so the two can legitimately disagree: a token
-            // that doesn't start "gho_" is a blind spot in the remote probe, not
-            // a failed push, and must not be reported as one.
+            // Whether the bytes actually pushed carry the token marker
+            // remoteCopilotStoreAuthenticated searches for, using that probe's
+            // own definition (bytesHoldCopilotToken) so the two cannot drift.
+            // The local gate, isCopilotStoreAuthenticated, decides by counting
+            // oauth_tokens rows through SQLite instead, so the two can
+            // legitimately disagree -- a store the prefix scan can't see is a
+            // blind spot in the remote probe, not a failed push, and must not
+            // be reported as one.
+            //
+            // Only the main file and -wal count, matching what the probe reads:
+            // -shm is SQLite's WAL index rather than row data, so arming the
+            // check on a marker found only there would fail a good push.
             let pushedTokenMarker = false;
             for (const suffix of ['', '-wal', '-shm']) {
               const local = `${localDb}${suffix}`;
               if (!fs.existsSync(local)) continue;
               const remote = `${remoteDb}${suffix}`;
               const bytes = fs.readFileSync(local);
-              if (bytes.includes('gho_')) pushedTokenMarker = true;
+              if (suffix !== '-shm' && bytesHoldCopilotToken(bytes)) {
+                pushedTokenMarker = true;
+              }
               // Recorded before the write so a partial push still gets scrubbed
               // (and cannot pose as a pre-existing store on a later run).
               recordPath(remote);
