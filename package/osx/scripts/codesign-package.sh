@@ -99,6 +99,11 @@ for executable in rsession rsession-arm64; do
 	fi
 done
 
+for path in "${package}"/Contents/Resources/app/bin/node*/bin/node; do
+	echo "[i] Re-signing ${path} with entitlements -- ${entype}"
+	codesign-binary --entitlements "entitlements/node-${entype}.plist" "${path}"
+done
+
 echo "[i] Re-signing RStudio binary with entitlements -- ${entype}"
 codesign-binary --entitlements "entitlements/rstudio-${entype}.plist" "${package}/Contents/MacOS/RStudio"
 

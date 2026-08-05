@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+  <!-- Match the default entitlements applied to every bundled binary. -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+
+  <!-- Required for ad-hoc signatures. Node.js dlopens native modules bundled with
+       the Copilot language server, and ad-hoc signatures carry no Team ID for
+       library validation to match against. -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+
+</dict>
+</plist>
