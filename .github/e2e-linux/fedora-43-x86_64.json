@@ -10,7 +10,7 @@
   "build_image": "fedora:43",
   "build_container_options": "--cap-add=SYS_ADMIN --security-opt seccomp=unconfined",
   "build_bootstrap_packages": "sudo git tar gzip xz jq which findutils diffutils procps-ng",
-  "build_timeout_minutes": "90",
+  "build_timeout_minutes": "150",
   "tools_arch": "x86_64",
   "dependency_script": "install-dependencies-yum",
   "tools_cache_key": "rstudio-tools-linux-fedora43-x86_64",
