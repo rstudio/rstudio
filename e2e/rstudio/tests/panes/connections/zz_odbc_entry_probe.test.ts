@@ -34,14 +34,8 @@ local({
   } else {
     say("== odbcListDrivers(): unique names ==")
     say(sort(unique(drv$name)))
-    say("== count of attribute=='Driver' rows per name ==")
-    dr <- drv[drv$attribute == "Driver", ]
-    if (nrow(dr) > 0) {
-      tab <- table(dr$name)
-      say(paste0(names(tab), " -> ", as.integer(tab)))
-    } else {
-      say("(no rows with attribute=='Driver')")
-    }
+    say("== distinct attribute values seen ==")
+    say(paste(sort(unique(drv$attribute)), collapse = " | "))
   }
 
   say("== connectionReadWindowsRegistry() ==")
@@ -50,6 +44,31 @@ local({
     say("failed: ", as.character(reg))
   } else {
     say(paste0(reg$name, " -> ", reg$value))
+  }
+
+  # The heart of it: reproduce, per driver name, the exact selection
+  # connectionReadOdbcEntry makes, and report how many values it yields. A
+  # length other than 1 is what makes `if (dir.exists(snippetsDir))` throw
+  # "the condition has length > 1" and get swallowed into a NULL entry.
+  say("== currentDriver length per name (as connectionReadOdbcEntry selects it) ==")
+  combined <- try({
+    d <- odbc::odbcListDrivers()
+    if (.Platform$OS.type == "windows") d <- rbind(d, .rs.connectionReadWindowsRegistry())
+    d
+  }, silent = TRUE)
+  if (inherits(combined, "try-error")) {
+    say("could not build combined table: ", as.character(combined))
+  } else {
+    for (nm in sort(unique(combined$name))) {
+      fromList <- sum(drv$attribute == "Driver" & drv$name == nm, na.rm = TRUE)
+      vals <- combined[combined$attribute == "Driver" & combined$name == nm, ]$value
+      say("  ", nm,
+          "  n=", length(vals),
+          "  (odbcListDrivers Driver rows=", fromList, ")")
+      if (length(vals) != 1) {
+        for (v in vals) say("      value: ", v)
+      }
+    }
   }
 
   say("== connectionReadOdbc(): surviving entries and swallowed warnings ==")
