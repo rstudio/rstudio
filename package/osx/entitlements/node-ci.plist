@@ -3,9 +3,14 @@
 <plist version="1.0">
 <dict>
 
-  <!-- Match the default entitlements applied to every bundled binary. Signed builds
-       don't need library validation disabled: every binary in the package is signed
-       with the same Team ID, so the native modules Node.js dlopens are accepted. -->
+  <!-- Node is always re-signed with entitlements/node-<type>.plist, so this file has to
+       exist for signed builds. It deliberately omits disable-library-validation: every
+       file in the package is re-signed with Posit's Developer ID, so node and the *.node
+       modules it dlopens from inside the package share a Team ID, and library validation
+       passes without it. -->
+
+  <!-- Re-signing replaces the entitlement set wholesale, so the two keys node already
+       received from the package-wide default pass have to be restated here. -->
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
 

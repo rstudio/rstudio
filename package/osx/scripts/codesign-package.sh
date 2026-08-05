@@ -99,10 +99,23 @@ for executable in rsession rsession-arm64; do
 	fi
 done
 
-for path in "${package}"/Contents/Resources/app/bin/node*/bin/node; do
-	echo "[i] Re-signing ${path} with entitlements -- ${entype}"
+# Must precede the Contents/MacOS/RStudio re-sign below: that re-seals the bundle,
+# repairing the resource seal which re-signing a nested binary invalidates.
+#
+# bin/node is installed unconditionally (src/cpp/session/CMakeLists.txt), so sign it
+# with no existence test -- a layout change should fail the build. A skipped re-sign
+# would leave node validly signed with the wrong entitlements, and codesign --strict
+# checks seals, not entitlement content, so nothing downstream would notice.
+echo "[i] Re-signing node with entitlements -- ${entype}"
+codesign-binary --entitlements "entitlements/node-${entype}.plist" \
+	"${package}/Contents/Resources/app/bin/node/bin/node"
+
+# bin/node-arm64 is copied only for universal builds (package/osx/cmake/prepare-package.cmake).
+path="${package}/Contents/Resources/app/bin/node-arm64/bin/node"
+if [ -e "${path}" ]; then
+	echo "[i] Re-signing node-arm64 with entitlements -- ${entype}"
 	codesign-binary --entitlements "entitlements/node-${entype}.plist" "${path}"
-done
+fi
 
 echo "[i] Re-signing RStudio binary with entitlements -- ${entype}"
 codesign-binary --entitlements "entitlements/rstudio-${entype}.plist" "${package}/Contents/MacOS/RStudio"

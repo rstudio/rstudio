@@ -3,16 +3,19 @@
 <plist version="1.0">
 <dict>
 
-  <!-- Match the default entitlements applied to every bundled binary. -->
+  <!-- Re-signing replaces the entitlement set wholesale, so the two keys node already
+       received from the package-wide default pass have to be restated here. Neither was
+       independently verified as required by node; they are carried over so that
+       re-signing does not narrow what node was previously signed with. -->
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
 
   <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
   <true/>
 
-  <!-- Required for ad-hoc signatures. Node.js dlopens native modules bundled with
-       the Copilot language server, and ad-hoc signatures carry no Team ID for
-       library validation to match against. -->
+  <!-- Required for ad-hoc signatures. Node dlopens native (*.node) modules bundled in
+       the package, currently the Copilot language server's, and an ad-hoc signature
+       carries no Team ID for library validation to match against. -->
   <key>com.apple.security.cs.disable-library-validation</key>
   <true/>
 
