@@ -79,11 +79,13 @@ export class ConnectionsPaneActions {
   ): Promise<void> {
     await this.wizard.typeEntry(target.driverName).click();
     const written = { ...target.wizardFields, ...overrides };
-    const expected = {
-      Server: target.host,
-      Port: String(target.port),
-      ...written,
-    };
+    // Server and Port only exist on a server target's snippet. A file
+    // target's grid is the single Database path, so `written` is the whole
+    // set of fields to verify.
+    const expected =
+      target.kind === 'server'
+        ? { Server: target.host, Port: String(target.port), ...written }
+        : { ...written };
 
     const maxAttempts = 3;
     let wrong: string[] = [];
@@ -93,6 +95,15 @@ export class ConnectionsPaneActions {
         const field = this.wizard.field(key);
         await field.waitFor({ state: 'visible', timeout: 10000 });
         await field.fill(value);
+        // Blur so the wizard commits the value into the generated code.
+        // fill() sets the value and fires input events, but the code panel
+        // regenerates on blur, and filling the *next* field is what used to
+        // supply that blur. The last field of a grid therefore never got one:
+        // invisible with the server targets, whose last field is Password and
+        // whose generated code is only ever asserted on Database and UID, but
+        // fatal for a file target, where Database is the only field and so
+        // always the last.
+        await field.blur();
       }
 
       wrong = [];
@@ -142,16 +153,24 @@ export class ConnectionsPaneActions {
    */
   async seedDatabase(target: EffectiveDbTarget): Promise<boolean> {
     const sqlVector = target.seedSql.map((s) => rStringLiteral(s)).join(', ');
+    // The connection arguments mirror the target's own snippet: a server
+    // engine needs endpoint plus credentials, a file engine takes the path
+    // and nothing else.
+    const connectArgs =
+      target.kind === 'server'
+        ? `Server = ${rStringLiteral(target.host)}, ` +
+          `Port = ${target.port}, ` +
+          `Database = ${rStringLiteral(target.database)}, ` +
+          `UID = ${rStringLiteral(target.user)}, ` +
+          `PWD = ${rStringLiteral(target.password)}, `
+        : `Database = ${rStringLiteral(target.database)}, `;
     const expr =
       'local({ ' +
       'op <- options(connectionObserver = NULL); on.exit(options(op), add = TRUE); ' +
       'con <- DBI::dbConnect(odbc::odbc(), ' +
       `Driver = ${rStringLiteral(target.driverName)}, ` +
-      `Server = ${rStringLiteral(target.host)}, ` +
-      `Port = ${target.port}, ` +
-      `Database = ${rStringLiteral(target.database)}, ` +
-      `UID = ${rStringLiteral(target.user)}, ` +
-      `PWD = ${rStringLiteral(target.password)}, timeout = 10); ` +
+      connectArgs +
+      'timeout = 10); ' +
       'on.exit(DBI::dbDisconnect(con), add = TRUE); ' +
       `for (sql in c(${sqlVector})) DBI::dbExecute(con, sql); ` +
       'TRUE })';

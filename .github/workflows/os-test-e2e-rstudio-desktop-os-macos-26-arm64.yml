@@ -467,6 +467,9 @@ jobs:
           # so scope by OS and arch to keep the arm64 and x86_64 R-library
           # caches from colliding.
           cache-scope: macos26-arm64
+          # PostgreSQL server plus the PostgreSQL and SQLite ODBC drivers, for
+          # the Connections pane tests. Without this they all skip.
+          install-database-stack: 'true'
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

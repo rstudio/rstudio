@@ -516,6 +516,9 @@ jobs:
           # by both.
           cache-scope: macos14-arm64
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # PostgreSQL server plus the PostgreSQL and SQLite ODBC drivers, for
+          # the Connections pane tests. Without this they all skip.
+          install-database-stack: 'true'
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

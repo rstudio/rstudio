@@ -12,6 +12,7 @@
  * machine in remote Server mode.
  */
 
+import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from '@playwright/test';
@@ -39,10 +40,140 @@ export function snippetFileName(driverName: string): string {
 }
 
 export interface OdbcSandbox {
-  /** Value for ODBCSYSINI, or null when nothing could be registered. */
+  /**
+   * Value for ODBCSYSINI, or null when there is nothing to point it at.
+   *
+   * Always null on Windows: there is no ODBCSYSINI equivalent, so drivers are
+   * registered in the machine-wide registry instead and `registered` is the
+   * only signal that anything is available. Callers gating on "did the suite
+   * make a driver available" must therefore check `registered`, not this.
+   */
   odbcDir: string | null;
   /** Ids of the targets whose drivers were found and registered. */
   registered: string[];
+}
+
+/** HKLM key holding one subkey per ODBC driver, plus the enumeration list. */
+const WIN_ODBCINST = 'HKLM\\SOFTWARE\\ODBC\\ODBCINST.INI';
+/** Value list the driver manager enumerates; a driver absent here is invisible. */
+const WIN_ODBC_DRIVERS = `${WIN_ODBCINST}\\ODBC Drivers`;
+/** Names this run registered, so teardown removes only what it created. */
+const WIN_MANIFEST = 'registered-windows-drivers.json';
+
+/**
+ * Run reg.exe. Always /reg:64, because the 32-bit view is a separate registry
+ * branch (WOW6432Node) and a 64-bit RStudio reads only the 64-bit one; letting
+ * the process bitness decide would silently register where nothing looks.
+ */
+function reg(args: string[]): { status: number; stdout: string } {
+  const run = spawnSync('reg.exe', [...args, '/reg:64'], { encoding: 'utf8' });
+  return { status: run.status ?? 1, stdout: run.stdout ?? '' };
+}
+
+/** Driver names currently in the enumeration list. */
+function winRegisteredDriverNames(): string[] {
+  const { status, stdout } = reg(['query', WIN_ODBC_DRIVERS]);
+  if (status !== 0) return [];
+  // Value lines look like: "    <name>    REG_SZ    Installed". Names may
+  // contain spaces, so split on the type token rather than on whitespace.
+  return stdout
+    .split(/\r?\n/)
+    .map((line) => /^\s+(.+?)\s+REG_(?:SZ|EXPAND_SZ)\s+/.exec(line))
+    .filter((m): m is RegExpExecArray => m !== null)
+    .map((m) => m[1]);
+}
+
+/** The `Driver` value (DLL path) of one registered driver, or null. */
+function winDriverPath(driverName: string): string | null {
+  const { status, stdout } = reg(['query', `${WIN_ODBCINST}\\${driverName}`, '/v', 'Driver']);
+  if (status !== 0) return null;
+  const m = /^\s+Driver\s+REG_(?:SZ|EXPAND_SZ)\s+(.+?)\s*$/m.exec(stdout);
+  return m ? m[1] : null;
+}
+
+/**
+ * Locate the DLL the vendor's own installer put on this machine, by matching
+ * the target's pattern against the registered driver names. Returns null when
+ * the driver is not installed, which is not an error: the target simply goes
+ * unregistered and its specs skip.
+ */
+function winInstalledDriverLibrary(target: DbTarget): string | null {
+  if (!target.windowsInstalledDriverPattern) return null;
+  for (const name of winRegisteredDriverNames()) {
+    if (name === target.driverName) continue; // our own registration
+    if (!target.windowsInstalledDriverPattern.test(name)) continue;
+    const dll = winDriverPath(name);
+    if (dll && fs.existsSync(dll)) return dll;
+  }
+  return null;
+}
+
+/**
+ * Register one driver under the suite's own name, pointing at the sandbox copy.
+ *
+ * Refuses to overwrite a live registration someone else owns: if the name is
+ * already taken and its DLL exists, this returns a reason instead. A dangling
+ * entry (name present, DLL gone) is treated as a leftover from a run that was
+ * killed before teardown and is reclaimed, so one hard-killed run cannot wedge
+ * every later one.
+ */
+function winRegisterDriver(driverName: string, dllPath: string): string | null {
+  const existing = winRegisteredDriverNames().includes(driverName);
+  if (existing) {
+    const current = winDriverPath(driverName);
+    if (current && fs.existsSync(current)) {
+      return `"${driverName}" is already registered on this machine at ${current}; refusing to overwrite a real driver`;
+    }
+  }
+
+  const key = `${WIN_ODBCINST}\\${driverName}`;
+  for (const value of ['Driver', 'Setup']) {
+    const add = reg(['add', key, '/v', value, '/t', 'REG_SZ', '/d', dllPath, '/f']);
+    if (add.status !== 0) {
+      return `reg add ${key} /v ${value} failed (exit ${add.status}); an HKLM write needs an elevated shell`;
+    }
+  }
+  const list = reg(['add', WIN_ODBC_DRIVERS, '/v', driverName, '/t', 'REG_SZ', '/d', 'Installed', '/f']);
+  if (list.status !== 0) {
+    return `reg add "${WIN_ODBC_DRIVERS}" /v ${driverName} failed (exit ${list.status})`;
+  }
+  return null;
+}
+
+/**
+ * Remove the registrations this run created, named by the sandbox manifest.
+ *
+ * Called from globalTeardown unconditionally and before any file removal, for
+ * the same reason the database servers are stopped there: a preserved sandbox
+ * may keep its files for inspection, but it must never leave machine-wide
+ * registry state behind. Only names in the manifest are touched, so a real
+ * driver that happened to share a name is safe.
+ */
+export function unregisterWindowsOdbcDrivers(sandbox: string): void {
+  if (process.platform !== 'win32') return;
+  const manifest = path.join(sandbox, 'odbc', WIN_MANIFEST);
+  if (!fs.existsSync(manifest)) return;
+
+  let names: string[] = [];
+  try {
+    names = JSON.parse(fs.readFileSync(manifest, 'utf8')) as string[];
+  } catch (err) {
+    console.warn(`[odbc] could not read ${manifest}: ${(err as Error).message}`);
+    return;
+  }
+
+  for (const name of names) {
+    const fromList = reg(['delete', WIN_ODBC_DRIVERS, '/v', name, '/f']);
+    const key = reg(['delete', `${WIN_ODBCINST}\\${name}`, '/f']);
+    if (fromList.status !== 0 || key.status !== 0) {
+      console.warn(
+        `[odbc] could not fully unregister "${name}" (list exit ${fromList.status}, key exit ${key.status}); ` +
+          'it may be left pointing at a removed sandbox path',
+      );
+    } else {
+      console.log(`[odbc] unregistered "${name}"`);
+    }
+  }
 }
 
 /**
@@ -55,10 +186,12 @@ export interface OdbcSandbox {
  * at the symlink rather than the real library location.
  */
 export function prepareOdbcSandbox(sandbox: string): OdbcSandbox {
-  // Windows has its own registry-based driver manager and no ODBCSYSINI;
-  // handled in the CI-enablement phase.
-  if (process.platform === 'win32') return { odbcDir: null, registered: [] };
+  return process.platform === 'win32'
+    ? prepareOdbcSandboxWindows(sandbox)
+    : prepareOdbcSandboxUnix(sandbox);
+}
 
+function prepareOdbcSandboxUnix(sandbox: string): OdbcSandbox {
   const odbcDir = path.join(sandbox, 'odbc');
   const stanzas: string[] = [];
   const registered: string[] = [];
@@ -91,6 +224,63 @@ export function prepareOdbcSandbox(sandbox: string): OdbcSandbox {
   fs.writeFileSync(path.join(odbcDir, 'odbcinst.ini'), stanzas.join('\n'));
   fs.writeFileSync(path.join(odbcDir, 'odbc.ini'), '');
   return { odbcDir, registered };
+}
+
+/**
+ * The Windows equivalent, which has to work differently in two ways.
+ *
+ * There is no ODBCSYSINI, so drivers are registered machine-wide in HKLM (the
+ * only hive RStudio reads: SessionConnections.R calls readRegistry without a
+ * hive argument, and R defaults to HKEY_LOCAL_MACHINE). That means real
+ * machine state, removed again by unregisterWindowsOdbcDrivers at teardown.
+ *
+ * And the driver's directory is copied into the sandbox rather than symlinked.
+ * Two reasons, both about the copy's *location* rather than the DLL itself:
+ * the wizard's labeled fields come from a snippets/<driver>.R that RStudio
+ * finds by walking up from the registered DLL path, so that path has to be
+ * somewhere we own; and Windows resolves a DLL's dependencies from its own
+ * directory first, so psqlodbc's bundled libpq and OpenSSL have to come along.
+ * A copy of a driver package is a second or so, and unlike a junction it
+ * needs no privilege and has no reparse-point behavior to reason about.
+ */
+function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
+  const odbcDir = path.join(sandbox, 'odbc');
+  const registered: string[] = [];
+  const registeredNames: string[] = [];
+
+  for (const base of ALL_DB_TARGETS) {
+    const target = effectiveTarget(base);
+    const library = winInstalledDriverLibrary(target);
+    if (!library) continue;
+
+    const driverDir = path.join(odbcDir, 'drivers', target.id);
+    fs.mkdirSync(path.join(driverDir, 'snippets'), { recursive: true });
+    // The whole directory, not just the DLL, so its siblings resolve.
+    fs.cpSync(path.dirname(library), driverDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(driverDir, 'snippets', snippetFileName(target.driverName)),
+      wizardSnippet(target),
+    );
+
+    const copiedDll = path.join(driverDir, path.basename(library));
+    const problem = winRegisterDriver(target.driverName, copiedDll);
+    if (problem) {
+      console.warn(`[odbc] ${target.id}: not registered -- ${problem}`);
+      continue;
+    }
+    registered.push(target.id);
+    registeredNames.push(target.driverName);
+  }
+
+  // Written even when empty is pointless, but written before returning so a
+  // partially-successful run still records what teardown must undo.
+  if (registeredNames.length > 0) {
+    fs.mkdirSync(odbcDir, { recursive: true });
+    fs.writeFileSync(path.join(odbcDir, WIN_MANIFEST), JSON.stringify(registeredNames, null, 2));
+  }
+
+  // odbcDir stays null: nothing on Windows consumes ODBCSYSINI.
+  return { odbcDir: null, registered };
 }
 
 /**
@@ -229,10 +419,30 @@ export async function driverVisibleInSession(page: Page, target: DbTarget): Prom
   return result === true;
 }
 
-/** Whether the session under test can open a TCP connection to the database. */
+/**
+ * Whether the session under test can actually reach the database.
+ *
+ * For a server target that means opening a TCP connection. For a file target
+ * there is no socket to open, so the equivalent question is whether the
+ * session can create the database file: the directory has to exist and be
+ * writable by the rsession, which in remote Server mode is a different user
+ * on a different filesystem than the test runner. Checked in-session for
+ * exactly that reason.
+ */
 export async function dbReachableFromSession(page: Page, target: DbTarget): Promise<boolean> {
   const t = effectiveTarget(target);
   const console_ = new ConsolePaneActions(page);
+
+  if (t.kind === 'file') {
+    if (!t.database) return false;
+    // file.access mode 2 is write permission; dirname because the file itself
+    // does not exist until the driver creates it on first connect.
+    const expr =
+      `local({ d <- dirname(${rStringLiteral(t.database)}); ` +
+      'dir.exists(d) && file.access(d, 2) == 0 })';
+    return (await console_.evalRLogical(expr)) === true;
+  }
+
   const expr =
     `local({ s <- try(suppressWarnings(socketConnection(${rStringLiteral(t.host)}, ` +
     `${t.port}, open = "r+", timeout = 5)), silent = TRUE); ` +

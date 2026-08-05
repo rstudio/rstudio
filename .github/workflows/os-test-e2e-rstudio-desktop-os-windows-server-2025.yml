@@ -882,6 +882,10 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # PostgreSQL and SQLite ODBC drivers for the Connections pane tests.
+          # The PostgreSQL server itself is already on this image, so only the
+          # drivers get installed. Without this they all skip.
+          install-database-stack: 'true'
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

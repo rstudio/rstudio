@@ -490,6 +490,9 @@ jobs:
           # and each restores the other's wrong-arch binaries (pak/cli .so fail
           # to dyn.load). Scope by OS and arch to isolate the two.
           cache-scope: macos15-x86_64
+          # PostgreSQL server plus the PostgreSQL and SQLite ODBC drivers, for
+          # the Connections pane tests. Without this they all skip.
+          install-database-stack: 'true'
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

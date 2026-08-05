@@ -23,6 +23,18 @@ inputs:
       Leave empty to keep the legacy runner.os-only key (existing callers).
     required: false
     default: ""
+  install-database-stack:
+    description: >
+      When "true", install the database servers and ODBC drivers the
+      Connections pane tests need, via
+      <working-directory>/scripts/db/install-deps/<platform>. Runs before the
+      R packages below, because the R `odbc` package needs unixODBC present to
+      build. Callers that leave this empty install nothing: resolveDriverLibrary
+      finds no driver, no target is registered, and the connections specs skip
+      with a reason naming the missing piece. Developers install the stack on
+      their own machines by hand; only CI needs this.
+    required: false
+    default: ""
   install-required-packages:
     description: >
       When "true", also install the harness's REQUIRED_PACKAGES set (from
@@ -100,6 +112,37 @@ runs:
         key: ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}${{ inputs.install-required-packages == 'true' && format('-req{0}', hashFiles(format('{0}/required-packages.txt', inputs.working-directory))) || '' }}
         restore-keys: |
           ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-
+
+    # Database servers and ODBC drivers for the Connections pane tests.
+    # Deliberately ahead of the R-package install below: required-packages.txt
+    # includes `odbc`, which needs the unixODBC (or Windows) driver manager
+    # already in place. Installing it afterwards turns a clear missing-driver
+    # skip into an opaque package build failure.
+    #
+    # The per-platform scripts sit beside the provisioning scripts they pair
+    # with (scripts/db/<engine>/<platform>), so package names stay next to the
+    # driverLibraries paths in utils/db-targets.ts that they have to match.
+    - name: Install database servers and ODBC drivers
+      if: inputs.install-database-stack == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        case "$RUNNER_OS" in
+          macOS)
+            bash scripts/db/install-deps/macos.sh
+            ;;
+          Linux)
+            bash scripts/db/install-deps/linux.sh
+            ;;
+          Windows)
+            powershell.exe -NoProfile -ExecutionPolicy Bypass \
+              -File scripts/db/install-deps/windows.ps1
+            ;;
+          *)
+            echo "::error::install-database-stack is not implemented for RUNNER_OS=$RUNNER_OS"
+            exit 1
+            ;;
+        esac
 
     - name: Install R packages (DESCRIPTION, plus required set when requested)
       shell: bash

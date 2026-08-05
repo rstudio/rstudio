@@ -49,10 +49,14 @@ for (const base of ALL_DB_TARGETS) {
       await expect(entry).toBeVisible({ timeout: 10000 });
       await entry.click();
 
-      // The snippet's placeholders become labeled fields; Server and Port
-      // carry defaults from the descriptor, the credentials start blank.
-      await expect(actions.wizard.field('Server')).toHaveValue(target.host);
-      await expect(actions.wizard.field('Port')).toHaveValue(String(target.port));
+      // The snippet's placeholders become labeled fields; on a server target
+      // Server and Port carry defaults from the descriptor while the
+      // credentials start blank. A file target's snippet has neither, just the
+      // one blank Database path, so there is nothing prefilled to assert.
+      if (target.kind === 'server') {
+        await expect(actions.wizard.field('Server')).toHaveValue(target.host);
+        await expect(actions.wizard.field('Port')).toHaveValue(String(target.port));
+      }
       for (const key of Object.keys(target.wizardFields)) {
         await expect(actions.wizard.field(key)).toHaveValue('');
       }
@@ -76,7 +80,11 @@ for (const base of ALL_DB_TARGETS) {
 
       const code = await actions.wizard.previewCode();
       expect(code).toContain(`Database = "${target.database}"`);
-      expect(code).toContain(`UID      = "${target.user}"`);
+      // Only a server snippet has a user; a file target's Database line above
+      // is the whole connection.
+      if (target.kind === 'server') {
+        expect(code).toContain(`UID      = "${target.user}"`);
+      }
 
       await actions.wizard.backBtn.click();
       await expect(actions.wizard.typeEntry(target.driverName)).toBeVisible({ timeout: 5000 });

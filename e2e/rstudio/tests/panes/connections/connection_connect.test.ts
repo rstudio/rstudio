@@ -106,6 +106,10 @@ for (const base of ALL_DB_TARGETS) {
     });
 
     test('Test button reports failure for a wrong password', async () => {
+      test.skip(
+        target.kind === 'file',
+        `${target.id} authenticates no one (the driver opens a file), so there is no wrong password to send`,
+      );
       await actions.openWizard();
       await actions.fillWizardForTarget(target, { Password: 'wrong-password' });
       expect(
@@ -116,6 +120,10 @@ for (const base of ALL_DB_TARGETS) {
     });
 
     test('Test button reports failure for an unreachable port', async () => {
+      test.skip(
+        target.kind === 'file',
+        `${target.id} has no server or port to make unreachable`,
+      );
       await actions.openWizard();
       // Port 1 on loopback: nothing listens there, so the driver gets an
       // immediate refusal (no DNS or timeout waits).

@@ -87,9 +87,13 @@ for (const base of ALL_DB_TARGETS) {
       'registered driver is visible to the session',
       { tag: ['@desktop_only'] },
       async ({ rstudioPage: page }) => {
+        // PW_ODBC_REGISTERED, not PW_ODBC_DIR: on Windows the suite registers
+        // drivers in the registry and there is no ODBCSYSINI directory, so
+        // gating on the directory would skip this everywhere on that platform
+        // even though the driver is registered and visible.
         test.skip(
-          !process.env.PW_ODBC_DIR,
-          'no sandbox ODBC dir (no registered driver library on this machine)',
+          !process.env.PW_ODBC_REGISTERED,
+          'no ODBC driver registered by the suite (no driver library on this machine)',
         );
         // Belongs to required-packages.txt, so normally preinstalled by
         // globalSetup; a hard failure here means the library seeding broke.

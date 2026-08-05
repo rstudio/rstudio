@@ -7,6 +7,8 @@
  *   - override:   PW_DB_<ID> is set, so an external server is in charge
  *   - external:   something is already listening on the target port (reuse)
  *   - provisioned: our script started a throwaway server inside the sandbox
+ *   - file:       an embedded engine with no server at all (SQLite); the
+ *                 driver opens the database file directly
  *   - failed:     no script for this platform, or the script errored
  *
  * A failure is deliberately not fatal to the run: suites unrelated to the
@@ -17,7 +19,7 @@
  * provisioning failure downgrades to a skip.
  */
 
-import { spawnSync } from 'child_process';
+import { spawnSync, SpawnSyncReturns } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ALL_DB_TARGETS, effectiveTarget } from './db-targets';
@@ -38,8 +40,38 @@ export type DbStatusFile = Record<string, DbStatus>;
 
 const SCRIPT_PLATFORMS: Partial<Record<NodeJS.Platform, string>> = {
   darwin: 'macos.sh',
-  // linux: 'linux.sh' arrives with the CI-enablement phase.
+  win32: 'windows.ps1',
+  // linux: 'linux.sh' arrives with the Linux phase.
 };
+
+/**
+ * Run one action of a provisioning script.
+ *
+ * The interpreter follows the script's extension rather than the platform, so
+ * a .sh and a .ps1 can coexist and a future platform needs no change here.
+ * Windows ships no bash, and PowerShell needs its own launcher:
+ *
+ *   -ExecutionPolicy Bypass  a developer machine may still be Restricted,
+ *                            which would refuse to run the file at all
+ *   powershell.exe not pwsh  matches fixtures/desktop.fixture.ts, so the
+ *                            suite depends on one Windows shell, not two
+ */
+function runDbScript(
+  script: string,
+  action: string,
+  dataDir: string,
+  env: NodeJS.ProcessEnv,
+  timeout: number,
+): SpawnSyncReturns<string> {
+  const options = { encoding: 'utf8' as const, timeout, env };
+  return script.endsWith('.ps1')
+    ? spawnSync(
+        'powershell.exe',
+        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, action, dataDir],
+        options,
+      )
+    : spawnSync('bash', [script, action, dataDir], options);
+}
 
 function statusPath(sandbox: string): string {
   return path.join(sandbox, 'db', 'status.json');
@@ -57,6 +89,29 @@ export async function provisionDatabases(sandbox: string): Promise<DbStatusFile>
 
   for (const base of ALL_DB_TARGETS) {
     const target = effectiveTarget(base);
+
+    // A file engine has no server: its driver opens the database file itself,
+    // creating it on first connect. All that is owed here is the directory to
+    // put it in, since the driver will not create parent directories. Nothing
+    // is started, so nothing is stopped at teardown either.
+    if (target.kind === 'file') {
+      if (!target.database) {
+        status[target.id] = {
+          ok: false,
+          outcome: 'failed',
+          detail: `no database file path resolved for ${target.id} (PW_SANDBOX not set?)`,
+        };
+        continue;
+      }
+      fs.mkdirSync(path.dirname(target.database), { recursive: true });
+      status[target.id] = {
+        ok: true,
+        outcome: target.overridden ? 'override' : 'file',
+        detail: `${target.id} uses the database file ${target.database} (no server)`,
+      };
+      console.log(`[db] ${target.id}: file-backed at ${target.database}`);
+      continue;
+    }
 
     if (target.overridden) {
       status[target.id] = {
@@ -95,17 +150,13 @@ export async function provisionDatabases(sandbox: string): Promise<DbStatusFile>
 
     const dataDir = path.join(sandbox, 'db', target.id);
     const t0 = Date.now();
-    const run = spawnSync('bash', [script, 'start', dataDir], {
-      encoding: 'utf8',
-      timeout: 120_000,
-      env: {
-        ...process.env,
-        PW_DBP_PORT: String(target.port),
-        PW_DBP_DATABASE: target.database,
-        PW_DBP_USER: target.user,
-        PW_DBP_PASSWORD: target.password,
-      },
-    });
+    const run = runDbScript(script, 'start', dataDir, {
+      ...process.env,
+      PW_DBP_PORT: String(target.port),
+      PW_DBP_DATABASE: target.database,
+      PW_DBP_USER: target.user,
+      PW_DBP_PASSWORD: target.password,
+    }, 120_000);
     const output = `${run.stdout ?? ''}${run.stderr ?? ''}`.trim();
 
     if (run.status === 0) {
@@ -143,11 +194,7 @@ function countOpenSessions(
   dataDir: string,
   env: NodeJS.ProcessEnv,
 ): number | null {
-  const run = spawnSync('bash', [script, 'sessions', dataDir], {
-    encoding: 'utf8',
-    timeout: 30_000,
-    env,
-  });
+  const run = runDbScript(script, 'sessions', dataDir, env, 30_000);
   if (run.status !== 0) return null;
   const count = Number((run.stdout ?? '').trim());
   return Number.isInteger(count) ? count : null;
@@ -175,7 +222,11 @@ export function stopProvisionedDatabases(sandbox: string): void {
     // shuts down over TCP, and both engines' session probes connect), so
     // pass the same environment as start.
     const base = ALL_DB_TARGETS.find((t) => t.id === id);
-    const target = base ? effectiveTarget(base) : null;
+    const found = base ? effectiveTarget(base) : null;
+    // Only a server target ever reaches here (a file target is never
+    // 'provisioned'), but narrow explicitly rather than leaning on that:
+    // the connection parameters below exist only on the server variant.
+    const target = found && found.kind === 'server' ? found : null;
     const env: NodeJS.ProcessEnv = target
       ? {
           ...process.env,
@@ -194,11 +245,7 @@ export function stopProvisionedDatabases(sandbox: string): void {
       );
     }
 
-    const run = spawnSync('bash', [s.script, 'stop', s.dataDir], {
-      encoding: 'utf8',
-      timeout: 30_000,
-      env,
-    });
+    const run = runDbScript(s.script, 'stop', s.dataDir, env, 30_000);
     if (run.status === 0) {
       console.log(`[db] ${id}: stopped${open === null ? '' : ` (${open} session(s) left open)`}`);
     } else {

@@ -20,9 +20,10 @@
  */
 
 import * as fs from 'fs';
+import * as path from 'path';
 
-export interface DbTarget {
-  /** Short engine id: 'postgres', later 'mysql', ... */
+interface DbTargetBase {
+  /** Short engine id: 'postgres', 'sqlite', ... */
   id: string;
 
   /**
@@ -48,12 +49,26 @@ export interface DbTarget {
    */
   driverLibraries: Partial<Record<NodeJS.Platform, string[]>>;
 
-  /** Connection endpoint and credentials (defaults; override replaces them). */
-  host: string;
-  port: number;
+  /**
+   * Windows only: matched against the driver names the vendor's own installer
+   * registered under the machine-wide ODBCINST.INI, to discover where the DLL
+   * actually landed. Windows has no ODBCSYSINI to redirect and no single
+   * predictable install path -- psqlODBC installs under a version-numbered
+   * directory (psqlODBC\1600\bin) -- so a literal candidate list like
+   * driverLibraries would rot on every driver update. Reading the installer's
+   * own registration is authoritative instead of guessing.
+   *
+   * Absent means the target has no Windows support yet.
+   */
+  windowsInstalledDriverPattern?: RegExp;
+
+  /**
+   * What the connection points at. For a 'server' target this is the database
+   * name on that server. For a 'file' target it is the absolute path of the
+   * database file, which only effectiveTarget can fill in: the file lives in
+   * the sandbox, whose path is not known until globalSetup has created it.
+   */
   database: string;
-  user: string;
-  password: string;
 
   /**
    * Values the test types into the wizard's labeled fields, keyed by the
@@ -92,11 +107,53 @@ export interface DbTarget {
   tableColumns: string[];
 }
 
+/**
+ * An engine reached over TCP, on a server the suite provisions (or adopts).
+ * Identity in the pane's history is built from database, user, and host.
+ */
+export interface ServerDbTarget extends DbTargetBase {
+  kind: 'server';
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+}
+
+/**
+ * An embedded engine whose driver opens a database file directly, with no
+ * server, port, or credentials anywhere in the picture (SQLite). Nothing is
+ * provisioned and nothing is torn down; the file is created on first connect
+ * and removed with the sandbox.
+ *
+ * The driver reports the file path as BOTH the connection's host id and its
+ * display name (verified against sqliteodbc), so the path is the whole
+ * identity -- see connectionHostId / connectionDisplayName.
+ */
+export interface FileDbTarget extends DbTargetBase {
+  kind: 'file';
+
+  /**
+   * Basename of the database file. effectiveTarget joins it onto the
+   * sandbox's db/<id>/ directory to produce the absolute path that becomes
+   * `database`.
+   */
+  fileName: string;
+}
+
+/**
+ * Discriminated on `kind` deliberately: it makes the type system refuse any
+ * read of host/port/user/password on a file target, which is what keeps a
+ * server assumption from silently reaching SQLite (e.g. probing a TCP port
+ * that does not exist, and reporting the resulting failure as a skip).
+ */
+export type DbTarget = ServerDbTarget | FileDbTarget;
+
 /** Everything a connection needs, after applying any override. */
 export type EffectiveDbTarget = DbTarget & { overridden: boolean };
 
-export const POSTGRES: DbTarget = {
+export const POSTGRES: ServerDbTarget = {
   id: 'postgres',
+  kind: 'server',
   driverName: 'PostgreSQL Unicode',
   connectionType: 'PostgreSQL',
   driverLibraries: {
@@ -109,7 +166,13 @@ export const POSTGRES: DbTarget = {
       '/usr/lib/aarch64-linux-gnu/odbc/psqlodbcw.so',
       '/usr/lib64/psqlodbcw.so', // Fedora/Rocky (postgresql-odbc)
     ],
+    // Windows resolves through the registry instead; see
+    // windowsInstalledDriverPattern below.
   },
+  // psqlODBC's installer registers "PostgreSQL Unicode(x64)" (and an ANSI
+  // sibling we do not want). Anchored so it cannot also match our own
+  // "PostgreSQL Unicode" registration.
+  windowsInstalledDriverPattern: /^PostgreSQL Unicode\(/,
   host: '127.0.0.1',
   // Nonstandard port so the throwaway server can never collide with a
   // developer's own PostgreSQL on 5432.
@@ -156,8 +219,9 @@ export const POSTGRES: DbTarget = {
   tableColumns: ['id', 'customer', 'amount'],
 };
 
-export const MYSQL: DbTarget = {
+export const MYSQL: ServerDbTarget = {
   id: 'mysql',
+  kind: 'server',
   // The MariaDB ODBC connector drives MySQL servers; it is the one packaged
   // everywhere (Oracle's connector is not in Homebrew), and it speaks MySQL
   // 9's caching_sha2_password authentication (verified: connector 3.2.9
@@ -212,7 +276,79 @@ export const MYSQL: DbTarget = {
   tableColumns: ['id', 'customer', 'amount'],
 };
 
-export const ALL_DB_TARGETS: DbTarget[] = [POSTGRES, MYSQL];
+/**
+ * SQLite through the sqliteodbc driver: the cheapest possible target, since
+ * there is no server to install, start, or stop on any platform. Every value
+ * below that the driver decides was read back from it rather than assumed
+ * (see the FileDbTarget note about the path being the connection identity).
+ */
+export const SQLITE: FileDbTarget = {
+  id: 'sqlite',
+  kind: 'file',
+  // The odbcinst.ini stanza name we register. No spaces, so the snippet
+  // lookup is simply sqlite3.R (see snippetFileName in utils/connections.ts).
+  driverName: 'SQLite3',
+  connectionType: 'SQLite',
+  driverLibraries: {
+    darwin: [
+      '/opt/homebrew/lib/libsqlite3odbc.dylib', // Homebrew, Apple Silicon
+      '/usr/local/lib/libsqlite3odbc.dylib', // Homebrew, Intel
+    ],
+    linux: [
+      '/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so', // Debian/Ubuntu (libsqliteodbc)
+      '/usr/lib/aarch64-linux-gnu/odbc/libsqlite3odbc.so',
+      '/usr/lib64/libsqlite3odbc.so', // Fedora (sqliteodbc); Rocky has no official package
+    ],
+  },
+  // The Windows installer registers "SQLite3 ODBC Driver". The trailing space
+  // keeps this from matching our own bare "SQLite3" registration.
+  windowsInstalledDriverPattern: /^SQLite3 /,
+  // Filled in by effectiveTarget; the sandbox path is a run-time value.
+  database: '',
+  fileName: 'pwsqlite.db',
+  // The only field the snippet leaves blank, and the only one there is: the
+  // driver takes a file path and nothing else.
+  wizardFields: {
+    Database: '',
+  },
+  // SQLite has no schema level and no TRUNCATE. DELETE FROM is the
+  // equivalent, and like the other targets this has to converge on a re-run
+  // rather than error.
+  seedSql: [
+    'CREATE TABLE IF NOT EXISTS orders (id int PRIMARY KEY, customer text, amount numeric)',
+    'DELETE FROM orders',
+    "INSERT INTO orders VALUES (1, 'Alfa', 100.50), (2, 'Bravo', 42.00), (3, 'Charlie', 7.25)",
+    'CREATE TABLE IF NOT EXISTS customers (id int PRIMARY KEY, name text)',
+    'DELETE FROM customers',
+    "INSERT INTO customers VALUES (1, 'Alfa'), (2, 'Bravo')",
+    'CREATE TABLE IF NOT EXISTS employees (id int PRIMARY KEY, name text, hired date)',
+    'DELETE FROM employees',
+    "INSERT INTO employees VALUES (1, 'Dora', '2024-01-15')",
+  ],
+  verifyQueriesR: [
+    'identical(as.numeric(DBI::dbGetQuery(con, "SELECT count(*) AS n FROM orders")$n), 3)',
+    'all(c("customers", "orders") %in% DBI::dbGetQuery(con,' +
+      ' "SELECT name AS tn FROM sqlite_master WHERE type = \'table\'")$tn)',
+    'identical(as.numeric(DBI::dbGetQuery(con, "SELECT sum(amount) AS s FROM orders")$s), 149.75)',
+  ],
+  // Flat hierarchy: odbcListObjects at the root returns the tables directly,
+  // with no catalog or schema container above them (unlike both server
+  // engines). Read off the driver, not assumed.
+  explorerRootIsCatalog: false,
+  explorerPath: ['orders'],
+  tableColumns: ['id', 'customer', 'amount'],
+};
+
+/**
+ * The targets every connections spec iterates.
+ *
+ * MYSQL is deliberately absent: it is the only target needing a server
+ * installed on every platform (no runner image ships one), so it is parked
+ * while the suite goes cross-platform. The descriptor above and
+ * scripts/db/mysql/ stay in place, so re-enabling is this one line plus
+ * uncommenting the two formulae in scripts/db/install-deps/macos.sh.
+ */
+export const ALL_DB_TARGETS: DbTarget[] = [POSTGRES, SQLITE];
 
 /**
  * The wizard snippet registered next to the driver symlink
@@ -227,6 +363,23 @@ export const ALL_DB_TARGETS: DbTarget[] = [POSTGRES, MYSQL];
  * wizard path users see with those drivers.
  */
 export function wizardSnippet(t: EffectiveDbTarget): string {
+  // A file target has one parameter and no defaults to prefill: the driver
+  // wants a path and nothing else, so there is no two-field first row and no
+  // credentials. Database is left blank for the test to type, matching how
+  // the server snippet treats its credential fields.
+  if (t.kind === 'file') {
+    return [
+      'library(DBI)',
+      'con <- dbConnect(',
+      '  odbc::odbc(),',
+      `  Driver   = "${t.driverName}",`,
+      '  Database = "${1:Database}",',
+      '  timeout  = 10',
+      ')',
+      '',
+    ].join('\n');
+  }
+
   return [
     'library(DBI)',
     'con <- dbConnect(',
@@ -249,6 +402,29 @@ export function wizardSnippet(t: EffectiveDbTarget): string {
  */
 export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
   const raw = process.env[`PW_DB_${target.id.toUpperCase()}`];
+
+  // A file target has one meaningful value, the path, so it takes the
+  // override verbatim rather than parsing key=value pairs. Unset, the file
+  // lives in the sandbox beside where a server target's data directory would
+  // (db/<id>/), so it is removed with everything else at teardown. With no
+  // sandbox at all the path stays empty and dbAvailability skips the specs
+  // with that reason, rather than the driver creating a file somewhere
+  // unexpected.
+  if (target.kind === 'file') {
+    const sandbox = process.env.PW_SANDBOX;
+    const database = raw
+      ? raw.trim()
+      : sandbox
+        ? path.join(sandbox, 'db', target.id, target.fileName)
+        : '';
+    return {
+      ...target,
+      overridden: !!raw,
+      database,
+      wizardFields: { Database: database },
+    };
+  }
+
   if (!raw) return { ...target, overridden: false };
 
   const allowed = ['host', 'port', 'database', 'user', 'password'] as const;
@@ -285,6 +461,11 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
  * than a missing-element error.
  */
 export function connectionDisplayName(t: EffectiveDbTarget): string {
+  // A file engine has no user or server to name it by, and the driver reports
+  // the path itself. Verified against sqliteodbc: both the display name and
+  // the host id come back as exactly the string passed as Database, so this
+  // must stay byte-identical to what the wizard was given.
+  if (t.kind === 'file') return t.database;
   return `${t.database} - ${t.user}@${t.host}`;
 }
 
@@ -295,6 +476,9 @@ export function connectionDisplayName(t: EffectiveDbTarget): string {
  * parts, not three. Verified against both drivers.
  */
 export function connectionHostId(t: EffectiveDbTarget): string {
+  // See connectionDisplayName: for a file engine the path is the whole
+  // identity, so the pane's history is keyed by it directly.
+  if (t.kind === 'file') return t.database;
   return [...new Set([t.user, t.database, t.host])].join('_');
 }
 

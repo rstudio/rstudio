@@ -212,10 +212,18 @@ export default async function globalSetup(config: FullConfig) {
   // configuration is never read or written). Registration is skipped per
   // target when its driver library isn't installed; the connections specs
   // then skip with a reason.
+  // PW_ODBC_DIR is the ODBCSYSINI value and exists only where that variable
+  // means anything (macOS, Linux). PW_ODBC_REGISTERED is the platform-neutral
+  // "the suite made these drivers available" signal, which on Windows comes
+  // from a registry write instead, so specs gate driver visibility on it
+  // rather than on the presence of a config directory.
   const odbc = prepareOdbcSandbox(sandbox);
-  if (odbc.odbcDir) {
-    process.env.PW_ODBC_DIR = odbc.odbcDir;
+  if (odbc.odbcDir) process.env.PW_ODBC_DIR = odbc.odbcDir;
+  if (odbc.registered.length > 0) {
+    process.env.PW_ODBC_REGISTERED = odbc.registered.join(',');
     console.log(`[sandbox] odbc drivers registered: ${odbc.registered.join(', ')}`);
+  } else {
+    console.warn('[sandbox] no odbc drivers registered; connections specs will skip');
   }
 
   // Throwaway database servers for the same tests. Failure is recorded (and
