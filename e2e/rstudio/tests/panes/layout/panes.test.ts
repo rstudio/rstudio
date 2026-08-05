@@ -949,6 +949,34 @@ test.describe('Pane and column management', () => {
     expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
   });
 
+  // Same defect as the test above, reached through the menu instead of the
+  // frame: View > Panes > Zoom Sidebar (and its shortcut) calls zoomColumn
+  // directly, bypassing the frame's maximize action entirely.
+  test('Escaping a zoomed sidebar via the Zoom Sidebar command ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+
+    await executeCommand(page, 'layoutZoomChat');
+    await expect.poll(
+      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50,
+      { timeout: 5000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomChat'),
+      'precondition: the sidebar pane zoom should be tracked',
+    ).toBe(true);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+
+    expect(
+      await isCommandChecked(page, 'layoutZoomChat'),
+      'the Zoom Sidebar command must clear a tracked pane zoom, not just the widths',
+    ).toBe(false);
+    expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+  });
+
   // The hide direction is not redundant: refreshSidebar implements the location
   // toggle as showSidebar(false) then showSidebar(true), so the hide branch of
   // the visibilityChanging guard is what carries "move the sidebar while a pane

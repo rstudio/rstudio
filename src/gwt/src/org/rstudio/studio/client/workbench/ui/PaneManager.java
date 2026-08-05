@@ -2314,10 +2314,23 @@ public class PaneManager
 
       if (StringUtil.equals(currentZoomedColumn, columnId))
       {
+         // A column can be zoomed because a pane in it is zoomed -- Zoom Chat
+         // goes through fullyMaximizeWindow, which makes the sidebar fill the
+         // window, so getZoomedColumn() reports it. Un-zooming here would put
+         // the widths back but leave maximizedWindow_ set, and a stale zoom
+         // re-zooms whichever pane raises itself next (#18444). restoreLayout()
+         // restores the same saved widths and clears the bookkeeping with them.
+         if (maximizedWindow_ != null && widgetSizePriorToZoom_ >= 0)
+         {
+            restoreLayout();
+            return;
+         }
+
          if (widgetSizePriorToZoom_ < 0 ||
             (leftWidgetSizePriorToZoom_.size() != additionalSourceCount_))
          {
             // no prior position to restore to, just show defaults
+            // (restoreColumnLayout also clears any zoom bookkeeping)
             restoreColumnLayout();
             return;
          }
