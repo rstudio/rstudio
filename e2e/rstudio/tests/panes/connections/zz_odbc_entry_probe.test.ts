@@ -48,8 +48,9 @@ local({
 
   # The heart of it: reproduce, per driver name, the exact selection
   # connectionReadOdbcEntry makes, and report how many values it yields. A
-  # length other than 1 is what makes `if (dir.exists(snippetsDir))` throw
+  # length other than 1 is what makes the dir.exists() condition throw
   # "the condition has length > 1" and get swallowed into a NULL entry.
+  # (No backticks in here: this whole script is a JS template literal.)
   say("== currentDriver length per name (as connectionReadOdbcEntry selects it) ==")
   combined <- try({
     d <- odbc::odbcListDrivers()
