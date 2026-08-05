@@ -140,10 +140,38 @@ function winRegisterDriver(driverName: string, dllPath: string): string | null {
   }
 
   const key = `${WIN_ODBCINST}\\${driverName}`;
-  for (const value of ['Driver', 'Setup']) {
-    const add = reg(['add', key, '/v', value, '/t', 'REG_SZ', '/d', dllPath, '/f']);
+
+  // The full conventional attribute set, not just Driver and Setup.
+  //
+  // This is load-bearing, and the reason is not obvious. On Windows
+  // odbcListDrivers() reports none of Driver/Setup/Description -- only the
+  // attributes below (verified on windows-2025: APILevel, ConnectFunctions,
+  // CPTimeout, DriverODBCVer, FileUsage, SQLLevel, UsageCount). A driver
+  // carrying none of them therefore yields *no* rows from odbcListDrivers,
+  // and when SessionConnections.R rbinds that with its own registry read the
+  // result gains a row whose attribute is NA. That NA row matches
+  // `attribute == "Driver"`, so currentDriver comes out length 2, and
+  // `if (dir.exists(snippetsDir))` in .rs.connectionReadOdbcEntry throws "the
+  // condition has length > 1". The tryCatch there turns the error into NULL,
+  // and the driver silently vanishes from the New Connection wizard.
+  //
+  // Writing the standard attributes avoids that, and is what a correctly
+  // registered driver should carry anyway -- every real driver on the machine
+  // has them. Values follow psqlODBC's and sqliteodbc's own registrations.
+  const values: Array<[name: string, type: string, data: string]> = [
+    ['Driver', 'REG_SZ', dllPath],
+    ['Setup', 'REG_SZ', dllPath],
+    ['APILevel', 'REG_SZ', '1'],
+    ['ConnectFunctions', 'REG_SZ', 'YYY'],
+    ['DriverODBCVer', 'REG_SZ', '03.51'],
+    ['FileUsage', 'REG_SZ', '0'],
+    ['SQLLevel', 'REG_SZ', '1'],
+    ['UsageCount', 'REG_DWORD', '1'],
+  ];
+  for (const [name, type, data] of values) {
+    const add = reg(['add', key, '/v', name, '/t', type, '/d', data, '/f']);
     if (add.status !== 0) {
-      return `reg add ${key} /v ${value} failed (exit ${add.status}); an HKLM write needs an elevated shell`;
+      return `reg add ${key} /v ${name} failed (exit ${add.status}); an HKLM write needs an elevated shell`;
     }
   }
   const list = reg(['add', WIN_ODBC_DRIVERS, '/v', driverName, '/t', 'REG_SZ', '/d', 'Installed', '/f']);
