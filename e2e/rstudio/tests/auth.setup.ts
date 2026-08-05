@@ -1165,8 +1165,23 @@ setup('provision external server credentials', async () => {
             // mode checks say each piece landed, not that the assembled store
             // still reads as a sign-in. Only decisive when the pushed bytes
             // carried the marker to begin with.
-            if (pushedTokenMarker && (await remoteCopilotStoreAuthenticated(page)) !== true) {
-              throw new Error(`${remoteDb} does not read as signed in after the push`);
+            //
+            // Both outcomes are logged. A check that silently does nothing is
+            // indistinguishable from one that passes, which is how an earlier
+            // marker mismatch (matching only gho_, while Copilot's GitHub App
+            // issues ghu_) went unnoticed: the re-probe never armed and every
+            // run still looked green. If the prefixes change again, the skip
+            // says so in the log instead of quietly dropping the check.
+            if (pushedTokenMarker) {
+              if ((await remoteCopilotStoreAuthenticated(page)) !== true) {
+                throw new Error(`${remoteDb} does not read as signed in after the push`);
+              }
+              console.log('[auth-setup] verified the pushed Copilot store reads as signed in on the remote');
+            } else {
+              console.log(
+                '[auth-setup] WARNING: the pushed Copilot store carries no recognizable GitHub token marker, '
+                  + 'so the post-push verification was skipped (see bytesHoldCopilotToken)',
+              );
             }
             console.log(
               remoteExists
