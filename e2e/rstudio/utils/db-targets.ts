@@ -432,10 +432,18 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
   // unexpected.
   if (target.kind === 'file') {
     const sandbox = process.env.PW_SANDBOX;
+    // Forward slashes, on every platform. This path is typed into the wizard's
+    // Database field, and the wizard interpolates it verbatim into the R code
+    // it generates. A Windows path's backslashes are escape sequences there:
+    // "\a" is a bell, "\r" a carriage return, and "\p" / "\d" / "\s" are
+    // invalid, so the generated dbConnect() call either fails to parse or opens
+    // some other file -- while the code panel still *looks* right, which is why
+    // the wizard specs passed and only the connecting ones failed. R, SQLite
+    // and the ODBC driver all accept forward slashes on Windows.
     const database = raw
       ? raw.trim()
       : sandbox
-        ? path.join(sandbox, 'db', target.id, target.fileName)
+        ? path.join(sandbox, 'db', target.id, target.fileName).split(path.sep).join('/')
         : '';
     return {
       ...target,
