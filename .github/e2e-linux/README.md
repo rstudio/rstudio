@@ -20,7 +20,9 @@ need to persist environment variables for later steps write to `$GITHUB_ENV` /
 
 Every engine name ends in its architecture (`ubuntu-24-x86_64`,
 `rocky-10-arm64`), so the arch is visible everywhere the name surfaces: the
-dispatch picker, job names, artifact names, and the Playwright project label.
+dispatch picker, job names, and artifact names. The Playwright project label is
+not one of those places -- it is built from `pw_label`, not from the engine
+name (see below).
 Hook directories are *not* arch-suffixed -- they're shared by whichever engines
 need the same distro setup (`script_dir`).
 
@@ -43,9 +45,10 @@ need the same distro setup (`script_dir`).
 Architecture is not a second selection axis: every engine config is
 single-arch, and the arch it runs on is spelled out in `tools_arch`, the runner
 labels, all three build cache keys, `sccache_key_prefix`, `installer_artifact`,
-`daily_platform_key`, `e2e_deps_cache_scope`, and `pw_label`. Keeping the arch
-literal in each of those (rather than templating it in) is what stops two
-engines of different arch from ever sharing a cache entry or an artifact name.
+`daily_platform_key`, and `e2e_deps_cache_scope`. Keeping the arch literal in
+each of those (rather than templating it in) is what stops two engines of
+different arch from ever sharing a cache entry or an artifact name. `pw_label`
+follows the same convention on new engines, with older exceptions noted below.
 (`daily_platform_key` is the exception to the "unique per engine" reading: it is
 a lookup into the dailies manifest, not a cache or artifact name, so engines of
 the same arch correctly share one -- both Fedora engines and `rocky-10-arm64`
