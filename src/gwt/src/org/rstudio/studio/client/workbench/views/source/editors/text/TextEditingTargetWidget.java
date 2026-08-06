@@ -53,6 +53,7 @@ import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
@@ -75,10 +76,12 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -225,7 +228,11 @@ public class TextEditingTargetWidget
       setAccessibleName(null);
       adaptToFileType(fileType);
 
-      editor.addFocusHandler(event -> initWidgetSize());
+      editor.addFocusHandler(event ->
+      {
+         splitEditorFocusedLast_ = false;
+         initWidgetSize();
+      });
 
       editor_.setTextInputAriaLabel(constants_.textEditor());
 
@@ -237,16 +244,9 @@ public class TextEditingTargetWidget
             {
                boolean wrap = StringUtil.equals(newval.getValue(), DocUpdateSentinel.PROPERTY_TRUE);
                commands_.toggleSoftWrapMode().setChecked(wrap);
-               editor_.setUseWrapMode(wrap);
-               if (wrap && userPrefs_.marginColumnSoftWrap().getValue())
-               {
-                  int marginColumn = userPrefs_.marginColumn().getValue();
-                  editor_.setWrapLimitRange(marginColumn, marginColumn);
-               }
-               else
-               {
-                  editor_.setWrapLimitRange(null, null);
-               }
+               applyWrapMode(editor_, wrap);
+               if (splitEditor_ != null)
+                  applyWrapMode(splitEditor_, wrap);
             }));
 
       releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
@@ -256,6 +256,8 @@ public class TextEditingTargetWidget
                DocUpdateSentinel.PROPERTY_TRUE);
             commands_.toggleRainbowParens().setChecked(rainbowParens);
             editor_.setRainbowParentheses(rainbowParens);
+            if (splitEditor_ != null)
+               splitEditor_.setRainbowParentheses(rainbowParens);
          }));
 
       releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
@@ -265,6 +267,8 @@ public class TextEditingTargetWidget
                DocUpdateSentinel.PROPERTY_TRUE);
             commands_.toggleRainbowFencedDivs().setChecked(rainbowFencedDivs);
             editor_.setRainbowFencedDivs(rainbowFencedDivs);
+            if (splitEditor_ != null)
+               splitEditor_.setRainbowFencedDivs(rainbowFencedDivs);
          }));
 
       releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
@@ -339,6 +343,183 @@ public class TextEditingTargetWidget
          editorPanel_.setWidgetSize(docOutlineWidget_, 0);
          setDocOutlineLatchState(false);
       }
+   }
+
+   @Override
+   public void setEditorSplit(String type)
+   {
+      manageEditorSplit(type);
+   }
+
+   @Override
+   public String getEditorSplit()
+   {
+      return desiredSplitState_ != null ? desiredSplitState_ : splitState_;
+   }
+
+   // Returns the editor view that last held focus. Use this only where
+   // behavior should follow the user's cursor or selection (executing code,
+   // rstudioapi selection queries, status bar position); everything bound to
+   // the document itself (persistence, markers, line widgets, navigation)
+   // stays on editor_, the primary view. See TextEditingTarget.Display.
+   @Override
+   public DocDisplay getActiveDisplay()
+   {
+      if (splitEditor_ != null && splitEditorFocusedLast_)
+         return splitEditor_;
+
+      return editor_;
+   }
+
+   @Override
+   public void focusOtherEditorSplit()
+   {
+      if (splitEditor_ == null)
+         return;
+
+      if (splitEditorFocusedLast_)
+         editor_.focus();
+      else
+         splitEditor_.focus();
+   }
+
+   private void manageEditorSplit(String type)
+   {
+      if (StringUtil.equals(type, splitState_))
+      {
+         desiredSplitState_ = null;
+         return;
+      }
+
+      // if we haven't been laid out yet, defer; retried from onResize()
+      if (!isAttached() || editorPanel_.getOffsetWidth() <= 0)
+      {
+         desiredSplitState_ = type;
+         return;
+      }
+
+      desiredSplitState_ = null;
+
+      Widget editorWidget = editor_.asWidget();
+      double width = editorWidget.getOffsetWidth();
+      double height = editorWidget.getOffsetHeight();
+
+      // tear down any active split, restoring the editor as the center widget
+      if (splitPanel_ != null)
+      {
+         width = splitPanel_.getOffsetWidth();
+         height = splitPanel_.getOffsetHeight();
+
+         splitPanel_.remove(editorWidget);
+         splitPanel_.remove(splitEditor_.asWidget());
+         editorPanel_.remove(splitPanel_);
+         splitPanel_ = null;
+
+         editorPanel_.add(editorWidget);
+      }
+
+      if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_NONE))
+      {
+         boolean hadFocus = splitEditorFocusedLast_;
+         destroySplitEditor();
+
+         if (hadFocus)
+            editor_.focus();
+      }
+      else
+      {
+         ensureSplitEditor();
+
+         editorPanel_.remove(editorWidget);
+
+         splitPanel_ = new NotifyingSplitLayoutPanel(SPLITTER_SIZE, events_);
+         if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_DOWN))
+            splitPanel_.addNorth(editorWidget, height / 2.0);
+         else
+            splitPanel_.addWest(editorWidget, width / 2.0);
+         splitPanel_.add(splitEditor_.asWidget());
+
+         editorPanel_.add(splitPanel_);
+      }
+
+      splitState_ = type;
+
+      editor_.onResize();
+      if (splitEditor_ != null)
+         splitEditor_.onResize();
+   }
+
+   private void applyWrapMode(DocDisplay display, boolean wrap)
+   {
+      display.setUseWrapMode(wrap);
+      if (wrap && userPrefs_.marginColumnSoftWrap().getValue())
+      {
+         int marginColumn = userPrefs_.marginColumn().getValue();
+         display.setWrapLimitRange(marginColumn, marginColumn);
+      }
+      else
+      {
+         display.setWrapLimitRange(null, null);
+      }
+   }
+
+   private void ensureSplitEditor()
+   {
+      if (splitEditor_ != null)
+         return;
+
+      splitEditor_ = new AceEditor((AceEditor) editor_);
+      splitEditor_.setTextInputAriaLabel(constants_.textEditor());
+
+      // mirror per-document display state the primary editor picked up from
+      // document properties
+      applyWrapMode(splitEditor_, editor_.getUseWrapMode());
+      splitEditor_.setRainbowParentheses(editor_.getRainbowParentheses());
+      splitEditor_.setRainbowFencedDivs(editor_.getRainbowFencedDivs());
+
+      // forward completion contexts from the editing target so completion
+      // behaves the same in either view; contexts must be in place before
+      // setFileType() constructs the completion manager
+      splitEditor_.setRCompletionContext(target_.getRCompletionContext());
+      splitEditor_.setCppCompletionContext(target_.getCppCompletionContext());
+      splitEditor_.setRnwCompletionContext(target_.getRnwCompletionContext());
+      splitEditor_.setFileType(editor_.getFileType(), false);
+
+      // apply current editor preferences, and track subsequent changes
+      TextEditingTargetPrefsHelper.registerPrefs(
+            splitEditorRegistrations_,
+            userPrefs_,
+            docUpdateSentinel_.getDoc().getProjectConfig(),
+            splitEditor_,
+            docUpdateSentinel_.getDoc());
+
+      // route commands to this editing target when the split view is focused
+      splitEditorRegistrations_.add(splitEditor_.addFocusHandler(event ->
+      {
+         splitEditorFocusedLast_ = true;
+         events_.fireEvent(new EditingTargetSelectedEvent(target_));
+         events_.fireEvent(new DocFocusedEvent(target_.getPath(), target_.getId()));
+      }));
+
+      // keep the status bar in sync with the split view's cursor
+      splitEditorRegistrations_.add(splitEditor_.addCursorChangedHandler(event ->
+            target_.splitEditorCursorChanged(event.getPosition())));
+   }
+
+   private void destroySplitEditor()
+   {
+      if (splitEditor_ == null)
+         return;
+
+      for (HandlerRegistration registration : splitEditorRegistrations_)
+         registration.removeHandler();
+      splitEditorRegistrations_.clear();
+
+      splitEditor_.getWidget().getEditor().destroy();
+      splitEditor_ = null;
+      splitEditorFocusedLast_ = false;
+
+      target_.splitEditorRemoved();
    }
 
    public void toggleSoftWrapMode()
@@ -778,6 +959,23 @@ public class TextEditingTargetWidget
          }
       }.schedule(100);
 
+      ToolbarPopupMenu splitEditorMenu = new ToolbarPopupMenu();
+      splitEditorMenu.addItem(mgr.getSourceCommand(commands_.splitEditorRight(), column_).createMenuItem());
+      splitEditorMenu.addItem(mgr.getSourceCommand(commands_.splitEditorDown(), column_).createMenuItem());
+      splitEditorMenu.addSeparator();
+      splitEditorMenu.addItem(mgr.getSourceCommand(commands_.removeEditorSplit(), column_).createMenuItem());
+
+      splitEditorButton_ = new ToolbarMenuButton(
+            ToolbarButton.NoText,
+            commands_.toggleEditorSplit().getTooltip(),
+            new ImageResource2x(StandardIcons.INSTANCE.splitEditor2x()),
+            splitEditorMenu,
+            false);
+      splitEditorButton_.addStyleName("rstudio-themes-inverts");
+
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(splitEditorButton_);
+
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
 
@@ -944,6 +1142,9 @@ public class TextEditingTargetWidget
    public void adaptToFileType(TextFileType fileType)
    {
       editor_.setFileType(fileType);
+      if (splitEditor_ != null)
+         splitEditor_.setFileType(fileType);
+
       boolean canCompilePdf = fileType.canCompilePDF();
       boolean canKnitToHTML = fileType.canKnitToHTML();
       boolean visualRmdMode = isVisualMode();
@@ -1187,6 +1388,11 @@ public class TextEditingTargetWidget
    {
       super.onResize();
       manageToolbarSizes();
+
+      // apply any editor split requested before we were laid out
+      if (desiredSplitState_ != null)
+         manageEditorSplit(desiredSplitState_);
+
       ResizeEvent.fire(this, getOffsetWidth(), getOffsetHeight());
 
    }
@@ -1233,6 +1439,7 @@ public class TextEditingTargetWidget
       
       goToNextButton_.setVisible(commands_.goToNextChunk().isVisible() && width >= 640);
       goToPrevButton_.setVisible(commands_.goToPrevChunk().isVisible() && width >= 640);
+      splitEditorButton_.setVisible(width >= 590);
       toolbar_.invalidateSeparators();
    }
    
@@ -2241,6 +2448,13 @@ public class TextEditingTargetWidget
    private CheckBox sourceOnSave_;
    private TextEditorContainer editorContainer_;
    private DockLayoutPanel editorPanel_;
+   private NotifyingSplitLayoutPanel splitPanel_;
+   private AceEditor splitEditor_;
+   private final ArrayList<HandlerRegistration> splitEditorRegistrations_ = new ArrayList<>();
+   private String splitState_ = TextEditingTarget.EDITOR_SPLIT_NONE;
+   private String desiredSplitState_ = null;
+   private boolean splitEditorFocusedLast_ = false;
+   private static final int SPLITTER_SIZE = 7;
    private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;
    private Toolbar toolbar_;
@@ -2274,6 +2488,7 @@ public class TextEditingTargetWidget
    private ToolbarMenuButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private LatchingToolbarButton toggleVisualModeOutlineButton_;
+   private ToolbarMenuButton splitEditorButton_;
    private CheckBox showWhitespaceCharactersCheckbox_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private ToolbarPopupMenuButton runDocumentMenuButton_;

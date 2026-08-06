@@ -587,6 +587,25 @@ oop.inherits(RStudioRenderer, Renderer);
 
 
 
+// Create a new edit session over an existing session's document, for
+// showing multiple views of one document (split editors). The document
+// and undo history are shared; everything else (selection, scroll
+// position, folds) is per-session state owned by the new session.
+// Breakpoints are deliberately not copied: the primary view owns
+// breakpoint state, and a one-time copy here would just go stale.
+function cloneSession(session) {
+   var clone = new RStudioEditSession(session.getDocument(), session.getMode());
+   clone.setUndoManager(session.getUndoManager());
+   clone.setTabSize(session.getTabSize());
+   clone.setUseSoftTabs(session.getUseSoftTabs());
+   clone.setOverwrite(session.getOverwrite());
+   clone.setUseWrapMode(session.getUseWrapMode());
+   clone.setUseWorker(session.getUseWorker());
+   clone.setWrapLimitRange(session.$wrapLimitRange.min, session.$wrapLimitRange.max);
+   clone.$foldData = session.$cloneFoldData();
+   return clone;
+}
+
 function loadEditor(container) {
    var env = {};
    container.env = env;
@@ -624,4 +643,5 @@ function loadEditor(container) {
 
 exports.RStudioEditor = RStudioEditor;
 exports.loadEditor = loadEditor;
+exports.cloneSession = cloneSession;
 });

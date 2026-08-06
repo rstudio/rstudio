@@ -339,7 +339,15 @@ public class AceEditor implements DocDisplay
    @Inject
    public AceEditor()
    {
-      widget_ = new AceEditorWidget();
+      this((AceEditor) null);
+   }
+
+   // Create an editor acting as a second view of another editor's document.
+   // The document and undo history are shared; selection, scroll position,
+   // and folds are per-view. See TextEditingTargetWidget's split support.
+   public AceEditor(AceEditor attachTo)
+   {
+      widget_ = new AceEditorWidget(true, attachTo == null ? null : attachTo.widget_.getEditor());
       snippets_ = new SnippetHelper(this);
       monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
