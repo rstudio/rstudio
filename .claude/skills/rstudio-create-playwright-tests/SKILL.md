@@ -145,15 +145,16 @@ This file covers RStudio-specific gotchas that aren't in the README.
 11. **`window.rstudio.ready` is the earliest usable post-reload signal, not a
    state-applied gate.** It beats a pane selector -- workbench panes attach at
    construction, so `waitForSelector('#rstudio_TabSet1_pane')` returns while
-   startup state handling is still pending. But on the re-join path a
-   `page.reload()` takes (the R session is still up, so `sessionInfo`'s
-   `deferred_init_completed` is already true and `DeferredInitCompletedEvent`
-   never re-fires), `ready` is set in `initializeAgent()` immediately *before*
-   `initializeWorkbench()` -- see `Application.java`. So `ready === true` can be
-   observed before `PaneManager` is even constructed, let alone before state is
-   applied or timer-deferred startup work (e.g.
-   `PaneManager.ZoomedTabStateValue.onInit`) has run. Gate on it, then make the
-   assertion itself carry the wait (see the next entry).
+   startup state handling is still pending. What it does not tell you is that
+   startup *finished*. On the re-join path a `page.reload()` takes (the R session
+   is still up, so `sessionInfo`'s `deferred_init_completed` is already true and
+   `DeferredInitCompletedEvent` never re-fires), `Application.java` sets `ready`
+   in `initializeAgent()` and calls `initializeWorkbench()` next -- in the same
+   task, so you cannot observe the gap between them, and seeing `ready` does mean
+   the panes exist. But anything startup defers to a *later* task is still
+   outstanding: `Scheduler.scheduleDeferred` work, and timers such as the 200ms
+   one in `PaneManager.ZoomedTabStateValue.onInit`. Gate on `ready`, then make
+   the assertion itself carry the rest of the wait (see the next entry).
 
 12. **`expect.poll` cannot assert that something never happens.** It returns on
    the first passing sample, so when the pre-condition state *is* the passing
