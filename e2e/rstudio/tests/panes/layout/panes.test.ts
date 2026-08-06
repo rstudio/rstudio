@@ -40,9 +40,9 @@ const DIALOG_BOX = '.gwt-DialogBox';
 const RESIZE_MIN_DELTA_PX = 20;
 
 // How long a post-reload layout has to stay un-zoomed to count as not replayed.
-// Must outlast workbench construction plus the 200ms Timer in PaneManager's
-// ZoomedTabStateValue.onInit, both of which run after window.rstudio.ready; 2s
-// leaves room for a draft GWT build on a loaded machine.
+// Must outlast the startup work that runs in tasks after window.rstudio.ready --
+// chiefly the 200ms Timer in PaneManager's ZoomedTabStateValue.onInit; 2s leaves
+// room for a draft GWT build on a loaded machine.
 const RELOAD_ZOOM_REPLAY_WINDOW_MS = 2000;
 
 // ---------------------------------------------------------------------------
@@ -1054,19 +1054,21 @@ test.describe('Pane and column management', () => {
     await page.reload();
     // TABSET1_PANE attaches at workbench construction, long before client state
     // is applied, so it is not a usable gate for the startup zoom handling.
-    // window.rstudio.ready is closer but still not one: on this re-join path
-    // (the R session stays up, so sessionInfo.deferred_init_completed is already
-    // true) Application.java sets it in initializeAgent(), immediately *before*
-    // initializeWorkbench() -- so it can be observed before PaneManager exists.
+    // window.rstudio.ready is the right signal, but it is not a state-applied
+    // gate: on this re-join path (the R session stays up, so
+    // sessionInfo.deferred_init_completed is already true) Application.java sets
+    // it in initializeAgent() and then calls initializeWorkbench() in the same
+    // task, so observing it only proves the panes were built -- not that
+    // startup work deferred to a later task has run.
     await page.waitForFunction(() => window.rstudio?.ready === true, null, {
       timeout: TIMEOUTS.sessionRestart,
     });
 
     // Everything here is a must-not-happen assertion, and the failure it guards
-    // arrives late: a replayed zoom lands ~200ms after client state is applied
-    // (ZoomedTabStateValue.onInit's Timer), which is itself after the ready flag
-    // above. Sampling once -- or polling, which returns on its first passing
-    // sample -- would go green on the pre-replay layout and miss it entirely.
+    // is exactly such deferred work: a replayed zoom lands on the 200ms Timer in
+    // ZoomedTabStateValue.onInit, i.e. after the ready flag above. Sampling once
+    // -- or polling, which returns on its first passing sample -- would go green
+    // on the pre-replay layout and miss it entirely.
     await expectHoldsFor(RELOAD_ZOOM_REPLAY_WINDOW_MS, async () => {
       expect(
         await getOffsetWidth(page, TABSET1_PANE),
