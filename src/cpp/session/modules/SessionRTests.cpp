@@ -15,6 +15,9 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <thread>
+
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
@@ -36,6 +39,78 @@ TEST(SessionRTest, RFunctionErrorsDontSetResultToNull) {
    EXPECT_NE(Success(), error);
    EXPECT_NE(nullptr, result);
    EXPECT_EQ(R_NilValue, result);
+}
+
+// matcher for the guard failure produced by off-main-thread RFunction use;
+// checking the message distinguishes it from unrelated evaluation errors,
+// which share the CodeExecutionError code
+static void expectNonMainThreadError(const Error& error)
+{
+   EXPECT_TRUE(error == r::errc::CodeExecutionError);
+   EXPECT_TRUE(error.getProperty("errormsg").find("non-main thread") != std::string::npos);
+}
+
+TEST(SessionRTest, RFunctionRefusesNonMainThread) {
+   // the R runtime is single-threaded; RFunction must refuse to touch it
+   // from other threads rather than race code running on the main thread.
+   // note that the sub-cases use calls that would succeed if the guards
+   // were absent (identity("x"), getwd(), list()), so a missing guard
+   // yields Success() rather than an unrelated evaluation error
+
+   // a full construct-and-call chain off the main thread errors cleanly
+   Error error;
+   std::thread([&error]()
+   {
+      error = r::exec::RFunction("identity")
+            .addParam("x")
+            .call();
+   }).join();
+   expectNonMainThreadError(error);
+
+   // a function constructed off the main thread is poisoned, so it stays
+   // unusable even when called from the main thread; getwd() succeeds with
+   // no arguments, so only the poisoning can make this fail
+   std::unique_ptr<r::exec::RFunction> pFunction;
+   std::thread([&pFunction]()
+   {
+      pFunction.reset(new r::exec::RFunction("getwd"));
+   }).join();
+   error = pFunction->call();
+   expectNonMainThreadError(error);
+
+   // the same holds for a function wrapping an already-resolved SEXP
+   SEXP functionSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   error = r::exec::evaluateString("base::getwd", &functionSEXP, &protect);
+   ASSERT_FALSE(error);
+
+   std::unique_ptr<r::exec::RFunction> pSexpFunction;
+   std::thread([&pSexpFunction, functionSEXP]()
+   {
+      pSexpFunction.reset(new r::exec::RFunction(functionSEXP));
+   }).join();
+   error = pSexpFunction->call();
+   expectNonMainThreadError(error);
+
+   // parameters added from a background thread are refused and poison the
+   // function: a later main-thread call must fail rather than execute with
+   // missing parameters (list() would otherwise succeed with no arguments)
+   r::exec::RFunction listFunction("list");
+   std::thread([&listFunction]()
+   {
+      listFunction.addParam("x");
+      listFunction.addUtf8Param("y");
+   }).join();
+   error = listFunction.call();
+   expectNonMainThreadError(error);
+
+   // the same call made entirely on the main thread succeeds
+   std::string result;
+   error = r::exec::RFunction("identity")
+         .addParam("x")
+         .call(&result);
+   EXPECT_FALSE(error);
+   EXPECT_EQ("x", result);
 }
 
 TEST(SessionRTest, RActiveBindingDetection) {

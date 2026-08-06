@@ -28,7 +28,10 @@
 #include <string>
 #include <vector>
 
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address_v4.hpp>
+#include <boost/asio/ip/address_v6.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -125,17 +128,23 @@ void fillSockId(inet_diag_sockid* pId,
    }
 }
 
-// Sends a non-dump (exact-match) NETLINK_SOCK_DIAG request for the single
-// established TCP socket identified by (srcAddr, sport) <-> (dstAddr, dport).
-// Without NLM_F_DUMP, the kernel performs a direct hash-table lookup for this
-// 4-tuple rather than dumping and filtering every established socket on the
-// host -- this is the performance-critical difference from the old
-// dump-based implementation, since this runs on every proxied request.
+// Sends a non-dump (exact-match) NETLINK_SOCK_DIAG request for the single TCP
+// socket identified by (srcAddr, sport) <-> (dstAddr, dport). Without
+// NLM_F_DUMP, the kernel performs a direct hash-table lookup for this 4-tuple
+// rather than dumping and filtering every socket on the host -- this is the
+// performance-critical difference from the old dump-based implementation,
+// since this runs on every proxied request. states is an idiag_states bitmask
+// (e.g. 1u << TCP_ESTABLISHED, 1u << TCP_LISTEN) describing the intended
+// target; the kernel's exact-match lookup path does not itself filter by it
+// (whatever socket matches the tuple is returned regardless of state), so
+// queryOnce() re-enforces it client-side against the reply's actual
+// idiag_state (see queryOnce()'s comment for why this matters).
 Error sendExactMatchRequest(int fd,
                             const boost::asio::ip::address& srcAddr,
                             const boost::asio::ip::address& dstAddr,
                             uint16_t sport,
-                            uint16_t dport)
+                            uint16_t dport,
+                            uint32_t states)
 {
    DiagRequest request;
    std::memset(&request, 0, sizeof(request));
@@ -150,7 +159,7 @@ Error sendExactMatchRequest(int fd,
    request.req.sdiag_protocol = IPPROTO_TCP;
    request.req.idiag_ext = 0;
    request.req.pad = 0;
-   request.req.idiag_states = (1u << TCP_ESTABLISHED);
+   request.req.idiag_states = states;
    fillSockId(&request.req.id, srcAddr, dstAddr, sport, dport);
 
    sockaddr_nl dest;
@@ -177,17 +186,22 @@ enum class DiagLookupResult
 {
    Found,
    NotFound,
+   // A socket matched the 4-tuple, but not in one of the requested states
+   // (#18439) -- see queryOnce()'s client-side state check below.
+   // Treated the same as NotFound by callers: there is no matching socket in
+   // the state they asked for, only a decoy.
+   WrongState,
    Error
 };
 
 // Reads the single-message reply to an exact-match request (see
 // sendExactMatchRequest): either one SOCK_DIAG_BY_FAMILY/inet_diag_msg record
-// (Found, *pUid set), one NLMSG_ERROR with -ENOENT (NotFound -- no socket
-// matches this exact 4-tuple, a normal outcome, not a transport failure), or
-// any other NLMSG_ERROR / recvmsg() failure (Error, *pError set). Unlike the
-// old dump reply, there is no NLMSG_DONE framing to loop for -- a single
-// recvmsg() always suffices.
-DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
+// (Found, *pUid and *pState set), one NLMSG_ERROR with -ENOENT (NotFound -- no
+// socket matches this exact 4-tuple, a normal outcome, not a transport
+// failure), or any other NLMSG_ERROR / recvmsg() failure (Error, *pError set).
+// Unlike the old dump reply, there is no NLMSG_DONE framing to loop for -- a
+// single recvmsg() always suffices.
+DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, uint8_t* pState, Error* pError)
 {
    std::vector<char> buffer(kNetlinkRecvBufferSize);
 
@@ -281,7 +295,8 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
    if (nlh->nlmsg_type == SOCK_DIAG_BY_FAMILY)
    {
       auto* diag = reinterpret_cast<inet_diag_msg*>(NLMSG_DATA(nlh));
-      *pUid = diag->idiag_uid; // always populated by the kernel, independent of idiag_ext
+      *pUid = diag->idiag_uid;     // always populated by the kernel, independent of idiag_ext
+      *pState = diag->idiag_state; // the actual state of whatever socket matched the tuple
       return DiagLookupResult::Found;
    }
 
@@ -290,22 +305,51 @@ DiagLookupResult readSingleDiagReply(int fd, uid_t* pUid, Error* pError)
 }
 
 // Issues one exact-match query/reply round trip on fd and reports the result.
+// The kernel's exact-match lookup (tcp_diag_find_one_icsk() -> inet_lookup())
+// returns whatever socket matches the 4-tuple regardless of state -- it does
+// not filter by the request's idiag_states, and the ehash chain it walks can
+// even transiently hold two entries for the same tuple (e.g. a stale
+// TIME_WAIT record not yet unlinked alongside a freshly-inserted ESTABLISHED
+// one: see __inet_check_established()'s insert-before-unlink ordering under
+// the bucket lock, which a lockless RCU reader like this query can observe
+// mid-transition) -- so which one comes back is not guaranteed to be the one
+// we asked for (#18439). Enforce the states filter ourselves here
+// against the reply's actual idiag_state: a match outside the requested
+// states is reported as WrongState rather than Found, so callers don't trust
+// a decoy's uid (a TIME_WAIT/NEW_SYN_RECV socket's idiag_uid is always 0;
+// this generalizes beyond that to also cover a stray hit landing on some
+// other unrelated state).
 DiagLookupResult queryOnce(int fd,
                           const boost::asio::ip::address& srcAddr,
                           const boost::asio::ip::address& dstAddr,
                           uint16_t sport,
                           uint16_t dport,
+                          uint32_t states,
                           uid_t* pUid,
                           Error* pError)
 {
-   Error sendError = sendExactMatchRequest(fd, srcAddr, dstAddr, sport, dport);
+   Error sendError = sendExactMatchRequest(fd, srcAddr, dstAddr, sport, dport, states);
    if (sendError)
    {
       *pError = sendError;
       return DiagLookupResult::Error;
    }
 
-   return readSingleDiagReply(fd, pUid, pError);
+   uint8_t state = 0;
+   DiagLookupResult result = readSingleDiagReply(fd, pUid, &state, pError);
+   if (result == DiagLookupResult::Found && ((1u << state) & states) == 0)
+      return DiagLookupResult::WrongState;
+
+   return result;
+}
+
+// Wildcard address of the same family as addr (0.0.0.0 or ::), for querying a
+// listening socket that has not been bound to any specific dest.
+boost::asio::ip::address wildcardOfSameFamily(const boost::asio::ip::address& addr)
+{
+   if (addr.is_v4())
+      return boost::asio::ip::address_v4::any();
+   return boost::asio::ip::address_v6::any();
 }
 
 } // anonymous namespace
@@ -347,6 +391,7 @@ Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
                                       localAddress,
                                       static_cast<uint16_t>(appPort),
                                       static_cast<uint16_t>(ephemeralPort),
+                                      (1u << TCP_ESTABLISHED),
                                       pUid,
                                       &error);
 
@@ -355,10 +400,84 @@ Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddress,
    if (result == DiagLookupResult::Error)
       return error;
 
-   if (result == DiagLookupResult::NotFound)
+   if (result == DiagLookupResult::NotFound || result == DiagLookupResult::WrongState)
    {
+      // WrongState means the tuple matched something (#18439's TIME_WAIT/
+      // NEW_SYN_RECV decoy, or a transient double-entry race -- see
+      // queryOnce()) that isn't actually the ESTABLISHED socket we asked for;
+      // report it identically to NotFound so verifyPeerUid()'s fallback
+      // treats both as "the established path couldn't confirm this."
       return systemError(boost::system::errc::no_such_file_or_directory,
                          "No established socket for requested 4-tuple",
+                         ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+Error lookupListeningSocketUid(const boost::asio::ip::address& listenAddress,
+                               int listenPort,
+                               uid_t* pUid)
+{
+   int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
+   if (fd < 0)
+      return systemError(errno, "socket(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+
+   Error timeoutError = setRecvTimeout(fd);
+   if (timeoutError)
+   {
+      // Non-fatal, matching lookupEstablishedSocketUid(): proceed without a
+      // receive timeout rather than fail closed over an untaken code path.
+      WLOGF("Failed to set NETLINK_SOCK_DIAG receive timeout ({}); proceeding "
+            "without a receive timeout for this query.",
+            timeoutError.getSummary());
+   }
+
+   // A listening socket is not connected to a peer, so its dest is wildcarded
+   // (address any, port 0) -- this is how the kernel hashes/matches listeners.
+   Error error;
+   DiagLookupResult result = queryOnce(fd,
+                                      listenAddress,
+                                      wildcardOfSameFamily(listenAddress),
+                                      static_cast<uint16_t>(listenPort),
+                                      0,
+                                      (1u << TCP_LISTEN),
+                                      pUid,
+                                      &error);
+
+   // As of this writing, the above query will match dual-stack listeners (IPV6_V6ONLY=0)
+   // due to the exact filtering implementation in the kernel. However, as an intentional
+   // posture decision, we retry a broader query against ipv6 addresses on the listening
+   // port in case of incorrect responses from the first query. This is defensive in case
+   // the kernel filtering changes in future. (mirrors the dual-stack coverage in
+   // LooksUpUidOfEstablishedDualStackLoopbackSocket for the established path).
+   if ((result == DiagLookupResult::NotFound || result == DiagLookupResult::WrongState) && listenAddress.is_v4())
+   {
+      Error retryError;
+      DiagLookupResult retryResult = queryOnce(fd,
+                                              boost::asio::ip::address_v6::any(),
+                                              boost::asio::ip::address_v6::any(),
+                                              static_cast<uint16_t>(listenPort),
+                                              0,
+                                              (1u << TCP_LISTEN),
+                                              pUid,
+                                              &retryError);
+      if (retryResult != DiagLookupResult::Error)
+      {
+         result = retryResult;
+         error = retryError;
+      }
+   }
+
+   ::close(fd);
+
+   if (result == DiagLookupResult::Error)
+      return error;
+
+   if (result == DiagLookupResult::NotFound || result == DiagLookupResult::WrongState)
+   {
+      return systemError(boost::system::errc::no_such_file_or_directory,
+                         "No listening socket for requested address/port",
                          ERROR_LOCATION);
    }
 
@@ -371,8 +490,52 @@ Error verifyPeerUid(const boost::asio::ip::address& localAddress,
                     int ephemeralPort,
                     uid_t expectedUid)
 {
+   // remoteAddress/appPort are, from our own connected socket's point of
+   // view, the address and port we dialed -- i.e. exactly the listening
+   // socket's own address and port, usable directly for a Listener-mode query.
+   OwnershipCheckMode mode = probeOwnershipCheckMode();
+
    uid_t ownerUid = 0;
-   Error error = lookupEstablishedSocketUid(localAddress, remoteAddress, appPort, ephemeralPort, &ownerUid);
+   Error error;
+
+   if (mode == OwnershipCheckMode::Listener)
+   {
+      error = lookupListeningSocketUid(remoteAddress, appPort, &ownerUid);
+   }
+   else
+   {
+      error = lookupEstablishedSocketUid(localAddress, remoteAddress, appPort, ephemeralPort, &ownerUid);
+
+      // lookupEstablishedSocketUid() reports "no confirmed ESTABLISHED match"
+      // (errc::no_such_file_or_directory) both when nothing matched the tuple
+      // at all and when something did but queryOnce() rejected it as
+      // WrongState -- i.e. a TIME_WAIT/NEW_SYN_RECV decoy (idiag_uid always
+      // 0), or -- on a kernel lacking c51da3f7a161 -- a not-yet-accept()'d
+      // socket that IS truly established but misreports uid 0 (exactly the
+      // race probeOwnershipCheckMode() should already have steered this
+      // process away from via Listener mode, but a transient TIME_WAIT hit,
+      // or even a genuine race where the ehash transiently holds both a stale
+      // TIME_WAIT and the new ESTABLISHED entry for the same tuple -- see
+      // queryOnce()'s comment -- is possible even in Established mode).
+      //
+      // A related, kernel-version-independent race lands here too: we're
+      // called as soon as OUR side of the handshake completes (the connect()
+      // completion handler, right after we send the final ACK), which does
+      // not wait for the peer to receive and process that ACK. So the app's
+      // TCP stack may not have finished its own hash-dance yet -- the only
+      // thing that exists there could still be the half-open request socket
+      // (NEW_SYN_RECV), or nothing at all -- even on a kernel where
+      // established-socket uid reporting is otherwise fully reliable. Both
+      // outcomes are WrongState/NotFound here, same as the cases above.
+      //
+      // Re-check the listener (unambiguous on every kernel, and unaffected by
+      // handshake timing since it has existed since well before this
+      // connection attempt) rather than failing closed on an inconclusive
+      // established-path result.
+      if (error && error.getCode() == boost::system::errc::no_such_file_or_directory)
+         error = lookupListeningSocketUid(remoteAddress, appPort, &ownerUid);
+   }
+
    if (error)
    {
       // could not verify -> caller rejects; tag so the HTTP layer can map this
@@ -394,11 +557,62 @@ Error verifyPeerUid(const boost::asio::ip::address& localAddress,
    return Success();
 }
 
-bool probeSockDiagAvailable()
+namespace {
+
+// Deterministic repro of the pre-accept uid-0 race (#18439): binds
+// an ephemeral loopback listener, connects a client to it, and deliberately
+// never accepts the connection -- reproducing, without any timing dependency,
+// the window in which a kernel lacking upstream commit c51da3f7a161 ("net:
+// remove sock_i_uid()", first in v6.17) reports the accepted-side socket's
+// owner as uid 0 instead of the listener's real owner. Returns Found with the
+// (possibly wrong) uid the kernel currently reports for that socket, or Error
+// if the query itself failed.
+DiagLookupResult probeEstablishedUidReporting(uid_t* pUid, Error* pError)
+{
+   boost::system::error_code ec;
+   boost::asio::io_context io;
+   boost::asio::ip::tcp::acceptor acceptor(
+      io, boost::asio::ip::tcp::endpoint(boost::asio::ip::address_v4::loopback(), 0));
+   int listenPort = acceptor.local_endpoint().port();
+
+   boost::asio::ip::tcp::socket client(io);
+   client.connect(boost::asio::ip::tcp::endpoint(boost::asio::ip::address_v4::loopback(), listenPort), ec);
+   if (ec)
+   {
+      *pError = systemError(ec, ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+
+   // Deliberately do not accept() -- the client's socket is now connect()'d
+   // and the server-side child socket is hashed and ESTABLISHED, but not yet
+   // accepted, exactly like the race window this probe exists to detect.
+   int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
+   if (fd < 0)
+   {
+      *pError = systemError(errno, "socket(NETLINK_SOCK_DIAG)", ERROR_LOCATION);
+      return DiagLookupResult::Error;
+   }
+   setRecvTimeout(fd); // best-effort; an unbounded probe query is acceptable at startup
+
+   DiagLookupResult result = queryOnce(fd,
+                                      client.remote_endpoint().address(),
+                                      client.local_endpoint().address(),
+                                      static_cast<uint16_t>(listenPort),
+                                      client.local_endpoint().port(),
+                                      (1u << TCP_ESTABLISHED),
+                                      pUid,
+                                      pError);
+   ::close(fd);
+   return result;
+}
+
+} // anonymous namespace
+
+OwnershipCheckMode probeOwnershipCheckMode()
 {
    // Computed once, cached for the process lifetime. A function-local static
    // initialized from a lambda gives the required thread-safe one-time init.
-   static const bool available = []() -> bool {
+   static const OwnershipCheckMode mode = []() -> OwnershipCheckMode {
       int fd = ::socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_SOCK_DIAG);
       if (fd < 0)
       {
@@ -407,7 +621,7 @@ bool probeSockDiagAvailable()
                "Cross-user /p/ and /p6/ isolation will not be enforced in this "
                "environment.",
                ::strerror(errno));
-         return false;
+         return OwnershipCheckMode::Disabled;
       }
 
       Error timeoutError = setRecvTimeout(fd);
@@ -421,10 +635,11 @@ bool probeSockDiagAvailable()
       }
 
       // Probe with a deliberately absent 4-tuple, exercising the same
-      // exact-match code path production traffic uses. Either a Found or
-      // NotFound (-ENOENT) reply means the kernel accepted and answered the
-      // query -- the mechanism works. Anything else (e.g. EPERM/EOPNOTSUPP
-      // from a restrictive seccomp/capability profile) means it doesn't.
+      // exact-match code path production traffic uses. A Found, NotFound
+      // (-ENOENT), or WrongState reply all mean the kernel accepted and
+      // answered the query -- the mechanism works. Anything else (e.g.
+      // EPERM/EOPNOTSUPP from a restrictive seccomp/capability profile) means
+      // it doesn't.
       uid_t unusedUid = 0;
       Error probeError;
       DiagLookupResult result = queryOnce(fd,
@@ -432,38 +647,126 @@ bool probeSockDiagAvailable()
                                          boost::asio::ip::address_v4::loopback(),
                                          0,
                                          0,
+                                         (1u << TCP_ESTABLISHED),
                                          &unusedUid,
                                          &probeError);
 
       ::close(fd);
 
-      if (result == DiagLookupResult::Found || result == DiagLookupResult::NotFound)
-         return true;
+      bool queryMechanismWorks = (result == DiagLookupResult::Found ||
+                                  result == DiagLookupResult::NotFound ||
+                                  result == DiagLookupResult::WrongState);
+      bool probeTimedOut = false;
 
-      if (probeError.getCode() == boost::system::errc::timed_out)
+      if (!queryMechanismWorks)
       {
-         // A timeout here reflects a transient hiccup (kernel/scheduling
-         // delay), not a capability/permission problem -- unlike an
-         // EPERM/EOPNOTSUPP rejection, it says nothing about whether future
-         // queries will succeed. Since this result is cached for the process
-         // lifetime, treat it as inconclusive rather than permanently
-         // disabling enforcement over what should be a one-off: assume the
-         // capability is available and let per-request timeouts (which do
-         // fail closed) handle any recurrence.
-         LOG_WARNING_MESSAGE(
-            "NETLINK_SOCK_DIAG probe timed out; assuming the capability is available "
-            "(rstudio-pro#11470). If per-request queries error or time out, localhost "
-            "proxy requests will fail.");
-         return true;
+         if (probeError.getCode() == boost::system::errc::timed_out)
+         {
+            // A timeout here reflects a transient hiccup (kernel/scheduling
+            // delay), not a capability/permission problem -- unlike an
+            // EPERM/EOPNOTSUPP rejection, it says nothing about whether
+            // future queries will succeed. Since this result is cached for
+            // the process lifetime, don't permanently disable enforcement
+            // over what should be a one-off. Don't assume Established is
+            // safe either -- fall through to the shared listener-validation
+            // logic below (do NOT return Listener directly here: it must
+            // still be confirmed to actually work before we commit to it,
+            // same as any other route to Listener mode -- otherwise a
+            // persistently timing-out environment would lock enforcement
+            // into a mode whose per-request queries also time out, instead
+            // of correctly degrading to Disabled).
+            LOG_WARNING_MESSAGE(
+               "NETLINK_SOCK_DIAG probe timed out; attempting listener-based "
+               "port-proxy ownership checks (rstudio-pro#11470). If per-request "
+               "queries also time out, localhost proxy requests will fail.");
+            probeTimedOut = true;
+         }
+         else
+         {
+            LOG_WARNING_MESSAGE(
+               "NETLINK_SOCK_DIAG query rejected; port-proxy ownership enforcement is "
+               "DISABLED for this process. Cross-user /p/ and /p6/ isolation will not "
+               "be enforced in this environment (rstudio-pro#11470).");
+            return OwnershipCheckMode::Disabled;
+         }
       }
 
-      LOG_WARNING_MESSAGE(
-         "NETLINK_SOCK_DIAG query rejected; port-proxy ownership enforcement is "
-         "DISABLED for this process (rstudio-pro#11470).");
-      return false;
+      // Now determine whether this kernel reports trustworthy uids for
+      // not-yet-accepted ESTABLISHED sockets (fixed upstream by
+      // c51da3f7a161, first in v6.17), using a deterministic repro rather
+      // than production-traffic timing luck. Skipped entirely if the
+      // capability probe above already timed out -- that query alone was
+      // inconclusive about the mechanism's general health, so there's little
+      // point spending another query attempt that may just time out too;
+      // go straight to the listener-validation fallback below.
+      //
+      // Deliberately geteuid(), not getuid(): the kernel attributes a newly
+      // created socket's ownership to the creating task's effective/fs uid
+      // (sock_i_uid() reads SOCK_INODE(sk->sk_socket)->i_uid, populated from
+      // current_fsuid() at socket() time), not its real uid. rserver itself
+      // is exactly the case where these diverge -- its privilege-separated
+      // main process runs with a real uid of 0 but an effective uid of the
+      // dedicated service account -- so every probe socket created below is
+      // actually owned by that effective uid. Comparing against getuid()
+      // instead would make this self-test spuriously believe its own probe
+      // sockets belong to someone else, permanently disabling enforcement
+      // that Listener mode could otherwise provide (#18439).
+      //
+      // When this process's effective uid is 0, a buggy kernel's uid-0
+      // answer is indistinguishable from a correct one (root-owned listeners
+      // are a real, legitimate uid-0 case) -- so an rserver actually running
+      // with effective uid 0 can never trust this probe to select
+      // Established, and always falls back to Listener.
+      uid_t probeSelfUid = ::geteuid();
+      OwnershipCheckMode establishedOrListener = OwnershipCheckMode::Listener;
+
+      if (!probeTimedOut)
+      {
+         uid_t establishedProbeUid = 0;
+         Error establishedProbeError;
+         DiagLookupResult establishedProbeResult =
+            probeEstablishedUidReporting(&establishedProbeUid, &establishedProbeError);
+
+         if (probeSelfUid != 0 &&
+             establishedProbeResult == DiagLookupResult::Found &&
+             establishedProbeUid == probeSelfUid)
+         {
+            establishedOrListener = OwnershipCheckMode::Established;
+         }
+      }
+
+      // Whichever mode we're about to select (or fell back to above),
+      // validate that a listener query actually works before committing to
+      // Listener -- if it doesn't, there's no safe enforcing mode left.
+      if (establishedOrListener == OwnershipCheckMode::Listener)
+      {
+         boost::asio::io_context io;
+         boost::asio::ip::tcp::acceptor listenerProbe(
+            io, boost::asio::ip::tcp::endpoint(boost::asio::ip::address_v4::loopback(), 0));
+         uid_t listenerProbeUid = 0;
+         Error listenerProbeError = lookupListeningSocketUid(
+            boost::asio::ip::address_v4::loopback(), listenerProbe.local_endpoint().port(), &listenerProbeUid);
+
+         if (listenerProbeError || listenerProbeUid != probeSelfUid)
+         {
+            LOG_WARNING_MESSAGE(
+               "NETLINK_SOCK_DIAG established-socket uid reporting is unreliable on this "
+               "kernel and the listener-socket fallback also failed to verify; port-proxy "
+               "ownership enforcement is DISABLED for this process (rstudio-pro#11470).");
+            return OwnershipCheckMode::Disabled;
+         }
+
+         LOG_WARNING_MESSAGE(
+            "NETLINK_SOCK_DIAG established-socket uid reporting is unreliable on this "
+            "kernel (or this process runs as root); using listener-socket ownership "
+            "checks instead (#18439). See https://github.com/torvalds/linux/"
+            "commit/c51da3f7a161 for the upstream kernel fix (first in v6.17).");
+      }
+
+      return establishedOrListener;
    }();
 
-   return available;
+   return mode;
 }
 
 #else // !__linux__
@@ -473,6 +776,15 @@ Error lookupEstablishedSocketUid(const boost::asio::ip::address&,
                                  int,
                                  int,
                                  uid_t*)
+{
+   return systemError(boost::system::errc::not_supported,
+                      "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux",
+                      ERROR_LOCATION);
+}
+
+Error lookupListeningSocketUid(const boost::asio::ip::address&,
+                               int,
+                               uid_t*)
 {
    return systemError(boost::system::errc::not_supported,
                       "NETLINK_SOCK_DIAG socket ownership lookup is only supported on Linux",
@@ -491,9 +803,9 @@ Error verifyPeerUid(const boost::asio::ip::address& localAddress,
    return error;
 }
 
-bool probeSockDiagAvailable()
+OwnershipCheckMode probeOwnershipCheckMode()
 {
-   return false;
+   return OwnershipCheckMode::Disabled;
 }
 
 #endif // __linux__
