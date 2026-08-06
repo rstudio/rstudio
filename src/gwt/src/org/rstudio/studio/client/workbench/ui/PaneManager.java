@@ -148,14 +148,16 @@ public class PaneManager
          if (!value.hasKey(MAXIMIZED_TAB_KEY))
             return;
 
-         // A persisted zoom cannot be restored faithfully: MainSplitPanel
-         // deliberately refuses to restore zoomed column widths (#16688). So
-         // replaying the zoom here left PaneManager tracking a zoom the columns
-         // didn't show, and a stale zoom re-zooms whichever pane raises itself
-         // next (#18444). Undo the zoom instead -- including the quadrant half
-         // of it, which DualWindowLayoutPanel restores from its own persisted
-         // EXCLUSIVE/HIDE state and which would otherwise leave the zoomed
-         // pane's sibling quadrant hidden.
+         // A persisted zoom cannot come back correctly. MainSplitPanel refuses
+         // to restore zoomed column widths (#16688). Replaying the zoom here
+         // therefore left PaneManager tracking a zoom that the columns did not
+         // show, and a stale zoom re-zooms the next pane that raises itself
+         // (#18444).
+         //
+         // Undo the zoom instead. That includes its quadrant half, which
+         // DualWindowLayoutPanel restores from its own persisted EXCLUSIVE or
+         // HIDE state. Without that step the zoomed pane's sibling quadrant
+         // stays hidden.
          //
          // Time-out action just to ensure all client state is ready.
          final String tabName = value.getString(MAXIMIZED_TAB_KEY);
@@ -175,12 +177,12 @@ public class PaneManager
                                    "for tab '" + tabName + "': " + e.toString());
                }
 
-               // The quadrant half of the zoom is already applied by the time we
-               // get here, so it has to be undone even when the tab name didn't
-               // resolve -- otherwise the zoomed pane's sibling is left hidden
-               // with nothing to explain it. Normalizing every pane is the
-               // bounded fallback; it costs a correct-but-minimized empty tabset
-               // nothing, since restorePaneStateToDefault keeps those minimized.
+               // The quadrant half of the zoom is applied before we get here, so
+               // it must be undone even when the tab name did not resolve.
+               // Otherwise the zoomed pane's sibling stays hidden for no visible
+               // reason. Normalizing every pane is the bounded fallback. It
+               // costs a minimized empty tabset nothing, because
+               // restorePaneStateToDefault keeps those minimized.
                if (window != null)
                   window.onWindowStateChange(
                         new WindowStateChangeEvent(WindowState.NORMAL, true));
@@ -188,11 +190,11 @@ public class PaneManager
                   restorePaneStateToDefault();
 
                // Normalizing quadrants reveals a source window that is hidden
-               // because it holds no documents, so re-assert that rule.
+               // because it holds no documents. Re-assert that rule.
                syncSourceWindowVisibility();
 
-               // Clears the bookkeeping, so the next client-state push drops the
-               // persisted zoom as well.
+               // Clear the bookkeeping, so the next client-state push also drops
+               // the persisted zoom.
                invalidateSavedLayoutState(true);
             }
          }.schedule(200);
@@ -220,8 +222,8 @@ public class PaneManager
       @Override
       protected JsObject getValue()
       {
-         // The zoomed tab is recorded so that onInit can undo, at startup, a
-         // zoom that cannot be faithfully restored.
+         // Record the zoomed tab so that onInit can undo it at startup. Such a
+         // zoom cannot come back correctly.
          final JsObject object = JsObject.createJsObject();
          if (maximizedTab_ != null)
             object.setString(MAXIMIZED_TAB_KEY, maximizedTab_.toString());
@@ -238,9 +240,9 @@ public class PaneManager
 
    /**
     * The LogicalWindow that owns a tab, or null when the tab has no window.
-    * Callers must handle null: Tab.SourceColumn names a quadrant rather than a
-    * tabset member, so it is never in tabToPanel_, and a tab can also be absent
-    * while its pane is being rebuilt.
+    * Callers must handle null. Tab.SourceColumn names a quadrant, not a tabset
+    * member, so it is never in tabToPanel_. A tab can also be absent while its
+    * pane is rebuilt.
     */
    private LogicalWindow getWindowForTab(Tab tab)
    {
@@ -1156,14 +1158,14 @@ public class PaneManager
       boolean visibilityChanging = (showSidebar && sidebar_ == null) ||
                                    (!showSidebar && sidebar_ != null);
 
-      // Showing or hiding the sidebar re-lays-out the columns and can undraw an
-      // active zoom: setSidebarWidget resets the other columns to default widths
-      // on a first show, and its deferred center-collapse reclaim can do it on a
-      // restore. Rather than reason about which path fires, clear the zoom
-      // whenever visibility changes so the bookkeeping can't outlive the drawn
-      // zoom -- a stale zoom re-zooms whichever pane raises itself next
-      // (#18444). Note the width restore animates; only the bookkeeping is
-      // cleared synchronously.
+      // A sidebar show or hide lays out the columns again, which can undraw an
+      // active zoom. On a first show, setSidebarWidget resets the other columns
+      // to default widths. On a restore, its deferred center-collapse reclaim
+      // can do the same. Clear the zoom whenever visibility changes, instead of
+      // working out which path fired: the bookkeeping must not outlive the drawn
+      // zoom, because a stale zoom re-zooms the next pane that raises itself
+      // (#18444). The width restore animates. Only the bookkeeping is cleared
+      // at once.
       if (visibilityChanging && maximizedWindow_ != null)
          restoreLayout();
 
@@ -1328,17 +1330,16 @@ public class PaneManager
    }
 
    /**
-    * Wire a pane's maximize gesture so that escaping a zoom goes through the
-    * zoom bookkeeping.
+    * Wire a pane's maximize gesture so that an escape from a zoom goes through
+    * the zoom bookkeeping.
     *
-    * While a pane is zoomed, maximizing it means "restore", because
-    * LogicalWindow remaps EXCLUSIVE + MAXIMIZE to NORMAL. Left to the frame,
-    * that only drives DualWindowLayoutPanel: the vertical split comes back
-    * while maximizedWindow_ stays set, so the layout looks normal but
-    * PaneManager still believes a pane is zoomed -- and a stale zoom re-zooms
-    * whichever pane raises itself next (#18444). Restore through
-    * restoreLayout() instead, which puts the columns and the bookkeeping back
-    * together.
+    * While a pane is zoomed, a maximize means "restore", because LogicalWindow
+    * remaps EXCLUSIVE + MAXIMIZE to NORMAL. Left to the frame, that drives only
+    * DualWindowLayoutPanel. The vertical split comes back while
+    * maximizedWindow_ stays set, so the layout looks normal but PaneManager
+    * still holds a zoom, and a stale zoom re-zooms the next pane that raises
+    * itself (#18444). Restore with restoreLayout() instead. It puts the columns
+    * and the bookkeeping back together.
     */
    private void hookPaneMaximize(final WindowFrame frame,
                                  final LogicalWindow window)
@@ -1795,11 +1796,11 @@ public class PaneManager
    }
 
    /**
-    * Hide each source window that owns no source documents, and reveal each one
-    * that does. A source window with no documents is HIDE, which is the same
-    * quadrant state a zoom gives the zoomed pane's sibling -- so anything that
-    * normalizes quadrant states has to re-assert this rule afterwards or an
-    * empty Source pane is left on screen (#18444).
+    * Hide each source window that owns no source documents, and show each one
+    * that does. A source window with no documents is HIDE. That is also the
+    * quadrant state a zoom gives the zoomed pane's sibling, so any code that
+    * normalizes quadrant states must re-assert this rule afterwards. If it does
+    * not, an empty Source pane stays on screen (#18444).
     */
    private void syncSourceWindowVisibility()
    {
@@ -2314,11 +2315,11 @@ public class PaneManager
 
       if (StringUtil.equals(currentZoomedColumn, columnId))
       {
-         // A column can be zoomed because a pane in it is zoomed -- Zoom Chat
-         // goes through fullyMaximizeWindow, which makes the sidebar fill the
-         // window, so getZoomedColumn() reports it. Un-zooming here would put
-         // the widths back but leave maximizedWindow_ set, and a stale zoom
-         // re-zooms whichever pane raises itself next (#18444). restoreLayout()
+         // A column can read as zoomed because a pane inside it is zoomed. Zoom
+         // Chat goes through fullyMaximizeWindow, which makes the sidebar fill
+         // the window, so getZoomedColumn() reports it. An un-zoom here puts the
+         // widths back but leaves maximizedWindow_ set, and a stale zoom
+         // re-zooms the next pane that raises itself (#18444). restoreLayout()
          // restores the same saved widths and clears the bookkeeping with them.
          if (maximizedWindow_ != null && widgetSizePriorToZoom_ >= 0)
          {
@@ -2677,9 +2678,9 @@ public class PaneManager
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, accessibleName));
-      // Additional source columns have no maximize gesture at all -- no maximize
-      // button, and neither a PrimaryWindowFrame title bar nor a
-      // ModuleTabLayoutPanel tab bar to double-click -- so there is nothing to
+      // Additional source columns have no maximize gesture. They have no
+      // maximize button, no PrimaryWindowFrame title bar, and no
+      // ModuleTabLayoutPanel tab bar to double-click. So there is nothing to
       // hook for them.
       if (showMinMaxButtons)
          hookPaneMaximize(sourceFrame, sourceWindow);
@@ -2700,11 +2701,12 @@ public class PaneManager
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      // Wire sidebar button handlers. The sidebar maximizes by zooming its
-      // column rather than its quadrant, but it can still be the pane-zoomed
-      // window (Zoom Chat goes through zoomTab -> fullyMaximizeWindow), and
-      // zoomColumn's un-zoom branch does not clear the pane-zoom bookkeeping --
-      // so it needs the same zoom-aware dispatch as the other tabsets (#18444).
+      // Wire sidebar button handlers. The sidebar maximizes by a zoom of its
+      // column, not its quadrant. But it can still be the pane-zoomed window,
+      // because Zoom Chat goes through zoomTab and fullyMaximizeWindow. The
+      // un-zoom branch of zoomColumn does not clear the pane-zoom bookkeeping,
+      // so the sidebar needs the same zoom-aware dispatch as the other tabsets
+      // (#18444).
       if (isSidebar)
       {
          frame.setMaximizeAction(() ->

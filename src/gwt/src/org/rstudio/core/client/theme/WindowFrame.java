@@ -151,9 +151,8 @@ public class WindowFrame extends Composite
    }
 
    /**
-    * Replace what the frame's maximize gestures do. The action may call
-    * maximizeDefault() to delegate to the built-in behavior; passing null
-    * restores it outright.
+    * Replace what the frame's maximize gestures do. The action can call
+    * maximizeDefault() to get the built-in behavior. Pass null to restore it.
     */
    public void setMaximizeAction(Command action)
    {
@@ -185,16 +184,19 @@ public class WindowFrame extends Composite
    }
 
    /**
-    * The frame's maximize gesture. Every frame-level gesture routes here -- the
-    * maximize button, a double-click on the Console title bar
-    * (PrimaryWindowFrame) and a double-click on a tabset's tab bar
-    * (ModuleTabLayoutPanel) -- so an owner intercepts them in one place via
-    * setMaximizeAction rather than per gesture.
+    * The frame's maximize gesture. Three gestures come here:
     *
-    * This is not every way a window reaches WindowState.MAXIMIZE: the minimized
-    * frame's own button (MinimizedWindowFrame) and EnsureHeightEvent.MAXIMIZED
-    * (LogicalWindow.onEnsureHeight) fire at the LogicalWindow and bypass the
-    * frame entirely. See PaneManager.endZoomIfActive.
+    *  - the maximize button
+    *  - a double-click on the Console title bar (PrimaryWindowFrame)
+    *  - a double-click on a tabset's tab bar (ModuleTabLayoutPanel)
+    *
+    * So an owner intercepts all three in one place with setMaximizeAction,
+    * instead of one gesture at a time.
+    *
+    * Two other paths reach WindowState.MAXIMIZE without the frame: the button
+    * on MinimizedWindowFrame, and EnsureHeightEvent.MAXIMIZED in
+    * LogicalWindow.onEnsureHeight. Both fire at the LogicalWindow. See
+    * PaneManager.endZoomIfActive.
     */
    public void maximize()
    {
@@ -205,8 +207,7 @@ public class WindowFrame extends Composite
    }
 
    /**
-    * The frame's built-in maximize behavior, for a custom maximize action to
-    * delegate to.
+    * The built-in maximize behavior. A custom maximize action can call this.
     */
    public void maximizeDefault()
    {
