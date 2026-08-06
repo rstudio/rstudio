@@ -39,6 +39,12 @@ const DIALOG_BOX = '.gwt-DialogBox';
 // otherwise the preservation tests degenerate to no-op cycles.
 const RESIZE_MIN_DELTA_PX = 20;
 
+// How long a post-reload layout has to stay un-zoomed to count as not replayed.
+// Must outlast workbench construction plus the 200ms Timer in PaneManager's
+// ZoomedTabStateValue.onInit, both of which run after window.rstudio.ready; 2s
+// leaves room for a draft GWT build on a loaded machine.
+const RELOAD_ZOOM_REPLAY_WINDOW_MS = 2000;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -78,6 +84,22 @@ async function waitForStableWidth(
     { timeout, intervals: [50, 100, 150] },
   ).toBe(true);
   return prev;
+}
+
+// Re-runs `assertions` on every sample across `durationMs`, so a failure at any
+// point in the window fails the test. expect.poll cannot express "this must not
+// happen": it returns on its first passing sample, so when the state under test
+// starts out good and only goes bad later -- work deferred on a product timer,
+// say -- the poll is green before the bad state ever arrives. The deferred work
+// has to be outlasted instead.
+async function expectHoldsFor(durationMs: number, assertions: () => Promise<void>): Promise<void> {
+  const deadline = Date.now() + durationMs;
+  for (;;) {
+    await assertions();
+    if (Date.now() >= deadline)
+      return;
+    await sleep(50);
+  }
 }
 
 async function elementExists(page: Page, selector: string): Promise<boolean> {
@@ -1011,7 +1033,17 @@ test.describe('Pane and column management', () => {
       { timeout: 15000 },
     );
     await zoomConsolePane(page);
-    await zoomPersisted;
+    const persistResponse = await zoomPersisted;
+    // A rejected RPC still comes back HTTP 200 with an error member
+    // (HttpConnection::sendJsonRpcError sends via the ordinary
+    // sendJsonRpcResponse path), so ok() alone would not prove the zoom was
+    // stored -- and an unstored zoom is nothing for the reload to replay, which
+    // would make everything below pass vacuously.
+    expect(persistResponse.ok(), 'the set_client_state carrying the zoom must succeed').toBe(true);
+    expect(
+      await persistResponse.text(),
+      'the set_client_state carrying the zoom must not be rejected',
+    ).not.toContain('"error"');
 
     // MainSplitPanel.isZoomedColumnState deliberately discards zoomed column
     // widths on restore (#16688), so the zoom's other half -- the persisted
@@ -1022,37 +1054,38 @@ test.describe('Pane and column management', () => {
     await page.reload();
     // TABSET1_PANE attaches at workbench construction, long before client state
     // is applied, so it is not a usable gate for the startup zoom handling.
-    // window.rstudio.ready is; the polled assertions below then absorb the
-    // remaining 200ms timer in PaneManager's ZoomedTabStateValue.onInit.
+    // window.rstudio.ready is closer but still not one: on this re-join path
+    // (the R session stays up, so sessionInfo.deferred_init_completed is already
+    // true) Application.java sets it in initializeAgent(), immediately *before*
+    // initializeWorkbench() -- so it can be observed before PaneManager exists.
     await page.waitForFunction(() => window.rstudio?.ready === true, null, {
       timeout: TIMEOUTS.sessionRestart,
     });
-    await sleep(TIMEOUTS.layoutSettle);
 
-    await expect.poll(
-      async () => getOffsetWidth(page, TABSET1_PANE),
-      {
-        message: 'the zoom must not be replayed after a reload that discarded its column widths',
-        timeout: 5000,
-        intervals: [50, 100, 150],
-      },
-    ).toBeGreaterThan(50);
-    await expect.poll(
-      () => isCommandChecked(page, 'layoutZoomConsole'),
-      {
-        message: 'a zoom whose column widths were not restored must not stay tracked',
-        timeout: 5000,
-      },
-    ).toBe(false);
-    expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
-    // The quadrant half of the zoom is persisted separately, by
-    // DualWindowLayoutPanel. Zooming Console puts its sibling (Source) in HIDE,
-    // so a reload that only skips the column half would still come back with
-    // Source hidden.
-    expect(
-      await getOffsetHeight(page, SOURCE_PANE),
-      'the zoomed pane\'s sibling quadrant must not come back hidden',
-    ).toBeGreaterThan(50);
+    // Everything here is a must-not-happen assertion, and the failure it guards
+    // arrives late: a replayed zoom lands ~200ms after client state is applied
+    // (ZoomedTabStateValue.onInit's Timer), which is itself after the ready flag
+    // above. Sampling once -- or polling, which returns on its first passing
+    // sample -- would go green on the pre-replay layout and miss it entirely.
+    await expectHoldsFor(RELOAD_ZOOM_REPLAY_WINDOW_MS, async () => {
+      expect(
+        await getOffsetWidth(page, TABSET1_PANE),
+        'the zoom must not be replayed after a reload that discarded its column widths',
+      ).toBeGreaterThan(50);
+      expect(
+        await isCommandChecked(page, 'layoutZoomConsole'),
+        'a zoom whose column widths were not restored must not stay tracked',
+      ).toBe(false);
+      expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+      // The quadrant half of the zoom is persisted separately, by
+      // DualWindowLayoutPanel. Zooming Console puts its sibling (Source) in
+      // HIDE, so a reload that only skips the column half would still come back
+      // with Source hidden.
+      expect(
+        await getOffsetHeight(page, SOURCE_PANE),
+        'the zoomed pane\'s sibling quadrant must not come back hidden',
+      ).toBeGreaterThan(50);
+    });
   });
 
   // -------------------------------------------------------------------------
