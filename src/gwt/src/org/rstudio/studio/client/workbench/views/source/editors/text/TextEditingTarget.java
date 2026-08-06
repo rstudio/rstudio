@@ -380,6 +380,7 @@ public class TextEditingTarget implements
       void setEditorSplit(String type);
       String getEditorSplit();
       void focusOtherEditorSplit();
+      boolean isEditorViewFocused();
       DocDisplay getActiveDisplay();
 
       void setNotebookUIVisible(boolean visible);
@@ -4028,6 +4029,25 @@ public class TextEditingTarget implements
    void onFocusOtherEditorSplit()
    {
       view_.focusOtherEditorSplit();
+   }
+
+   // If an editor split is active and one of this editor's views currently
+   // holds focus, move focus to the other view and return true. Used by
+   // activateSource (Ctrl+1), so that repeated presses toggle between the
+   // views of a split editor instead of doing nothing.
+   public boolean focusOtherEditorSplitIfFocused()
+   {
+      if (isVisualModeActivated())
+         return false;
+
+      if (StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_NONE))
+         return false;
+
+      if (!view_.isEditorViewFocused())
+         return false;
+
+      view_.focusOtherEditorSplit();
+      return true;
    }
 
    private void applyEditorSplit(String type)

@@ -120,6 +120,13 @@ test.describe('Split editor', () => {
     await expect.poll(() => split.hasFocus()).toBe(false);
     await executeCommand(page, 'focusOtherEditorSplit');
     await expect.poll(() => split.hasFocus()).toBe(true);
+
+    // activateSource (Ctrl+1) toggles between the views too, when a source
+    // editor already holds focus.
+    await executeCommand(page, 'activateSource');
+    await expect.poll(() => split.hasFocus()).toBe(false);
+    await executeCommand(page, 'activateSource');
+    await expect.poll(() => split.hasFocus()).toBe(true);
   });
 
   test('running code follows the focused view', async ({ rstudioPage: page }) => {

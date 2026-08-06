@@ -383,6 +383,13 @@ public class TextEditingTargetWidget
          splitEditor_.focus();
    }
 
+   @Override
+   public boolean isEditorViewFocused()
+   {
+      return editor_.isFocused() ||
+             (splitEditor_ != null && splitEditor_.isFocused());
+   }
+
    private void manageEditorSplit(String type)
    {
       if (StringUtil.equals(type, splitState_))
