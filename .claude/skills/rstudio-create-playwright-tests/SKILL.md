@@ -118,14 +118,16 @@ This file covers RStudio-specific gotchas that aren't in the README.
    `pages/console_pane.page.ts`), then for idle.
 
 9. **A console prompt does not mean R-side change detection has run.** The
-   session queues `kConsolePrompt` before it calls `onDetectChanges`
-   (`SessionConsoleInput.cpp`). `executeInConsole` resolves on the prompt counter,
-   so it returns before change detection has queued anything. A plot that raises
-   the Plots pane, a package-list refresh, and a file change all arrive later. If
-   you wait on the prompt and then measure, the assertion passes whether or not
-   the effect happened. Wait on the effect itself, for example the
-   `aria-selected` value of the Plots tab. Pick a signal that reads differently on
-   a broken build.
+   session queues `kConsolePrompt`, wakes the waiting `get_events` poller
+   (`ClientEventQueue::add` ends in `notify_all`), and calls `onDetectChanges`
+   only after that (`SessionConsoleInput.cpp`). So the prompt is ordered ahead of
+   every change-detection event, and it can reach the client first.
+   `executeInConsole` resolves on the prompt counter. At that moment a plot that
+   raises the Plots pane, a package-list refresh, or a file change can be
+   unqueued, undelivered, or not yet rendered. If you wait on the prompt and then
+   measure, the assertion passes whether or not the effect happened. Wait on the
+   effect itself, for example the `aria-selected` value of the Plots tab. Pick a
+   signal that reads differently on a broken build.
 
 10. **Client state reaches the server on a passive 5s timer.**
    `persistClientState()` fires `PushClientStateEvent` with `active=false`, so
