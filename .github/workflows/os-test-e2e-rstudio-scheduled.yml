@@ -210,6 +210,12 @@ jobs:
             fi
             printf '%s' "$out"
           }
+          # Every emit is fatal on purpose. A missing key yields an empty
+          # output, and an empty rstudio_installer_url means "self-resolve the
+          # latest daily" to the engines below -- so a non-fatal emit would let
+          # a version-pinned dispatch quietly test the latest daily instead of
+          # the version asked for. Failing the job is the only way a pin can't
+          # be silently ignored.
           RHEL=$(emit electron rhel10-x86_64) || exit 1
           RHEL9=$(emit electron rhel9-x86_64) || exit 1
           NOBLE=$(emit electron noble-amd64) || exit 1
