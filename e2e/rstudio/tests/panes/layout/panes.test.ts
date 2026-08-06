@@ -92,13 +92,20 @@ async function waitForStableWidth(
 // starts out good and only goes bad later -- work deferred on a product timer,
 // say -- the poll is green before the bad state ever arrives. The deferred work
 // has to be outlasted instead.
+//
+// The window is measured from the end of the first sample, not from entry: that
+// first sample is what establishes the state is good to begin with, and it can
+// take arbitrarily long (a locator waiting on an element that has not attached
+// yet). Starting the clock earlier would let a slow first sample consume the
+// whole budget and return having checked the state exactly once.
 async function expectHoldsFor(durationMs: number, assertions: () => Promise<void>): Promise<void> {
+  await assertions();
   const deadline = Date.now() + durationMs;
   for (;;) {
-    await assertions();
     if (Date.now() >= deadline)
       return;
     await sleep(50);
+    await assertions();
   }
 }
 
