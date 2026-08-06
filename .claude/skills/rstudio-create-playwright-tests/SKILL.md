@@ -150,11 +150,15 @@ This file covers RStudio-specific gotchas that aren't in the README.
    is still up, so `sessionInfo`'s `deferred_init_completed` is already true and
    `DeferredInitCompletedEvent` never re-fires), `Application.java` sets `ready`
    in `initializeAgent()` and calls `initializeWorkbench()` next -- in the same
-   task, so you cannot observe the gap between them, and seeing `ready` does mean
-   the panes exist. But anything startup defers to a *later* task is still
-   outstanding: `Scheduler.scheduleDeferred` work, and timers such as the 200ms
-   one in `PaneManager.ZoomedTabStateValue.onInit`. Gate on `ready`, then make
-   the assertion itself carry the rest of the wait (see the next entry).
+   task, so you cannot catch it between the two. What is still outstanding when
+   it flips is anything startup defers to a *later* task:
+   `Scheduler.scheduleDeferred` work, and timers such as the 200ms one in
+   `PaneManager.ZoomedTabStateValue.onInit`. Nor does `ready` imply the panes
+   exist at all -- `initializeWorkbench()` bails out early with a `ReloadEvent`
+   when the UI-language cookie or (on Electron) the web-dialogs cookie disagrees
+   with the pref, returning before it builds the workbench and leaving `ready`
+   true across a delayed reload. So gate on `ready`, but let the assertion carry
+   both the element wait and the rest of the timing (see the next entry).
 
 12. **`expect.poll` cannot assert that something never happens.** It returns on
    the first passing sample, so when the pre-condition state *is* the passing
