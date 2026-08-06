@@ -35,8 +35,9 @@ need the same distro setup (`script_dir`).
    quirks the shared dirs don't cover; otherwise point `script_dir` at an
    existing one (e.g. `fedora-43` and `fedora-44` share `fedora/`).
 3. Wire the engine into the callers you want: the scheduled rotation
-   (`os-test-e2e-rstudio-scheduled.yml` -- add it to the engine table and a
-   weekday slate) and/or the PR run (`os-test-e2e-rstudio-pr.yml`).
+   (`os-test-e2e-rstudio-scheduled.yml` -- add it to the `ENGINES` array, which
+   puts it in its architecture's Sunday run, and optionally to a weekday slate)
+   and/or the PR run (`os-test-e2e-rstudio-pr.yml`).
 4. Add it to the `os` choice list in the workflow's `workflow_dispatch`
    inputs, so it can be run by hand.
 
@@ -100,12 +101,13 @@ empty would hand each other ABI-incompatible R libraries. Every engine sets an
 explicit scope; this matters more now that the cached library carries the full
 compiled REQUIRED_PACKAGES set, not just pak's DESCRIPTION deps.
 
-Several engines are dispatch-only: they're in the `workflow_dispatch` choice
-list but have no row in the scheduled rotation's engine table, so they cost no
-nightly runner time until they're proven. The rotation's `TABLE` in
-`os-test-e2e-rstudio-scheduled.yml` is the authoritative list of what runs on a
-schedule -- consult it rather than assuming an engine is wired up because a
-config exists.
+Every engine config is wired into the scheduled rotation, and the `ENGINES`
+array in `os-test-e2e-rstudio-scheduled.yml` is the authoritative list of what
+runs on a schedule. It names all 21 engines, each tagged with the architecture
+it runs on, and the two Sunday crons run every engine of one architecture
+apiece -- so adding a config to `ENGINES` is what puts it on a schedule at all.
+The weekday slates reach only a subset, so consult `ENGINES` rather than
+assuming an engine runs on a given day because a config exists.
 
 Callers pass an `arch` input naming the architecture they expect the engine to
 run on; the workflow compares it against the config's `tools_arch` and fails
