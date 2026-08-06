@@ -1007,13 +1007,20 @@ setup('provision external server credentials', async () => {
       // A remote XDG_CONFIG_HOME would make the copilot-language-server resolve
       // its store outside ~/.config, where this step writes it. Fail loud: this
       // is a server configuration the harness can't reconcile from here.
-      const xdgSet = await evalRemoteLogical(page, 'nzchar(Sys.getenv("XDG_CONFIG_HOME"))');
-      if (xdgSet !== false) {
-        throw new RemoteProvisionConfigError(
-          '[auth-setup] the external server\'s rsession has XDG_CONFIG_HOME set (or the probe failed), '
-            + 'so the Copilot store location would not match where provisioning writes it; '
-            + 'unset it in the server\'s session environment and re-run',
-        );
+      //
+      // Copilot-only concern, so gate it on there being a Copilot store to
+      // push. Posit AI resolves its store from HOME, not the XDG dirs, and
+      // failing a Posit-only run over a variable that cannot affect it would
+      // block provisioning for no reason.
+      if (copilotProvisioned) {
+        const xdgSet = await evalRemoteLogical(page, 'nzchar(Sys.getenv("XDG_CONFIG_HOME"))');
+        if (xdgSet !== false) {
+          throw new RemoteProvisionConfigError(
+            '[auth-setup] the external server\'s rsession has XDG_CONFIG_HOME set (or the probe failed), '
+              + 'so the Copilot store location would not match where provisioning writes it; '
+              + 'unset it in the server\'s session environment and re-run',
+          );
+        }
       }
 
       if (positaiStore !== null) {
@@ -1120,7 +1127,10 @@ setup('provision external server credentials', async () => {
             if (remoteExists) {
               // Replacing an empty shell: clear the whole main/-wal/-shm trio
               // first, so a stale sidecar from the shell can't be paired with
-              // the pushed main file (SQLite treats them as one store).
+              // the pushed main file (SQLite treats them as one store). The
+              // -shm is cleared even though the push below never writes one:
+              // leaving the old index beside a new database is exactly the
+              // mismatch this is guarding against.
               const survivors = await scrubRemote(page, ['', '-wal', '-shm'].map((s) => `${remoteDb}${s}`));
               if (survivors.length > 0) {
                 // Pushing anyway is exactly how a signed-in main file ends up
@@ -1144,18 +1154,24 @@ setup('provision external server credentials', async () => {
             // blind spot in the remote probe, not a failed push, and must not
             // be reported as one.
             //
-            // Only the main file and -wal count, matching what the probe reads:
-            // -shm is SQLite's WAL index rather than row data, so arming the
-            // check on a marker found only there would fail a good push.
-            let pushedTokenMarker = false;
-            for (const suffix of ['', '-wal', '-shm']) {
-              const local = `${localDb}${suffix}`;
-              if (!fs.existsSync(local)) continue;
+            // The main database and its -wal only. -shm is SQLite's WAL index:
+            // regenerable, holding no row data (and, checked here, no token
+            // marker), so pushing it would add a file of credential-adjacent
+            // state to a real account for no benefit. A remote reader rebuilds
+            // it from the -wal.
+            //
+            // Read every file before pushing any. The source store is live --
+            // the local copilot-language-server may rewrite it on a token
+            // refresh -- and each push takes seconds, so reading inside the
+            // loop could capture the database and its -wal from either side of
+            // such a write and land a torn pair on the remote.
+            const localFiles = ['', '-wal']
+              .map((suffix) => ({ suffix, local: `${localDb}${suffix}` }))
+              .filter(({ local }) => fs.existsSync(local))
+              .map(({ suffix, local }) => ({ suffix, bytes: fs.readFileSync(local) }));
+            const pushedTokenMarker = localFiles.some(({ bytes }) => bytesHoldCopilotToken(bytes));
+            for (const { suffix, bytes } of localFiles) {
               const remote = `${remoteDb}${suffix}`;
-              const bytes = fs.readFileSync(local);
-              if (suffix !== '-shm' && bytesHoldCopilotToken(bytes)) {
-                pushedTokenMarker = true;
-              }
               // Recorded before the write so a partial push still gets scrubbed
               // (and cannot pose as a pre-existing store on a later run).
               recordPath(remote);

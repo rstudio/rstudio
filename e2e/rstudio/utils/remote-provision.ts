@@ -1,5 +1,7 @@
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
+import { expect } from '@playwright/test';
+import { randomBytes } from 'crypto';
 import * as fs from 'fs';
 import { ConsolePaneActions } from '../actions/console_pane.actions';
 import { executeInConsole } from '../pages/console_pane.page';
@@ -96,7 +98,17 @@ export function readManifest(sandbox: string): RemoteProvisionManifest | null {
   if (typeof parsed.serverUrl !== 'string' || !Array.isArray(parsed.createdPaths)) {
     throw new Error(`[remote-provision] unrecognized manifest shape in ${file}`);
   }
-  return { serverUrl: parsed.serverUrl, createdPaths: parsed.createdPaths.filter((p): p is string => typeof p === 'string') };
+  // Every entry must be a string. Filtering the bad ones out instead would
+  // silently drop a scrub target -- a path this run created, now unnamed and
+  // left on the remote host, which is precisely what this manifest exists to
+  // prevent. A damaged manifest is a stop-and-look, not something to salvage.
+  if (!parsed.createdPaths.every((p): p is string => typeof p === 'string')) {
+    throw new Error(
+      `[remote-provision] ${file} lists a non-string path; it may name credentials this run left behind, `
+        + 'so check the remote host by hand rather than trusting the scrub',
+    );
+  }
+  return { serverUrl: parsed.serverUrl, createdPaths: parsed.createdPaths };
 }
 
 export function writeManifest(sandbox: string, manifest: RemoteProvisionManifest): void {
@@ -153,11 +165,39 @@ export async function closeExternalSession(session: ExternalSession): Promise<vo
 
 /**
  * Evaluate an R expression yielding a single logical on the remote session.
- * Thin wrapper over ConsolePaneActions.evalRLogical to keep call sites here
- * uniform. Returns null when the result couldn't be read back.
+ * Returns true, false, or null when the result couldn't be read back.
+ *
+ * Deliberately not ConsolePaneActions.evalRLogical, which clears the console
+ * and then matches the first `[1] TRUE/FALSE` anywhere in the pane. The clear
+ * is a Ctrl+L keystroke followed by a fixed sleep, with no confirmation that
+ * it landed -- and every probe here runs right after a write command that
+ * prints `[1] TRUE` itself (Sys.chmod, file.copy). A clear that silently fails
+ * would let a verification probe match the write's own output and report
+ * success for a push that never happened. That is the one direction these
+ * probes must never fail in: a false negative wastes a run, a false positive
+ * vouches for credentials that aren't there.
+ *
+ * So the answer carries a per-call nonce and is matched only in that form. A
+ * stale line cannot satisfy it, because the nonce did not exist when that line
+ * was printed. Output is emitted through a single cat() rather than R's
+ * auto-printing, so the value and its tag cannot be split across renders.
  */
 export async function evalRemoteLogical(page: Page, expr: string): Promise<boolean | null> {
-  return new ConsolePaneActions(page).evalRLogical(expr);
+  const nonce = `pw${randomBytes(6).toString('hex')}`;
+  // Build the tag from parts at run time: a literal in the command would also
+  // appear in the console's echo of the command itself, which the poll below
+  // reads -- the same self-match trap the tag exists to close.
+  const marker = `paste0("[", "${nonce}", ":", if (isTRUE(v)) "T" else if (isFALSE(v)) "F" else "NA", "]")`;
+  await executeInConsole(page, `local({ v <- (${expr}); cat(${marker}, "\\n", sep = "") })`);
+  const pane = new ConsolePaneActions(page).consolePane.consoleOutput;
+  const re = new RegExp(`\\[${nonce}:(T|F|NA)\\]`);
+  try {
+    await expect.poll(async () => re.test(await pane.innerText()), { timeout: 15_000 }).toBe(true);
+  } catch {
+    return null;
+  }
+  const m = (await pane.innerText()).match(re);
+  return m === null || m[1] === 'NA' ? null : m[1] === 'T';
 }
 
 /**
