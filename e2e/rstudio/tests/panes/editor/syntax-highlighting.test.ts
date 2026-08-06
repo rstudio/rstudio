@@ -76,16 +76,65 @@ Goodbye, world!
         { type: 'fenced_div_text_0', value: ' {.callout 0}' },
       ]);
 
-      // Second callout block (row 4): tokens cycle to fenced_div_1
+      // Second callout block (row 4): same nesting depth, so same color
       await expect.poll(async () => {
         const tokens = await editor.getTokens(4);
         return tokens.map((t) => ({ type: t.type, value: t.value }));
       }).toEqual([
-        { type: 'fenced_div_1', value: ':::' },
-        { type: 'fenced_div_text_1', value: ' {.callout 1}' },
+        { type: 'fenced_div_0', value: ':::' },
+        { type: 'fenced_div_text_0', value: ' {.callout 1}' },
       ]);
 
       expect(await editor.getState(5)).toBe('start');
+    } finally {
+      await setPref(page, 'rainbow_fenced_divs', false);
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18464
+  test('nested fenced divs are colored by nesting depth', async ({ rstudioPage: page }) => {
+    const content = `:::::: {#1}
+something
+
+::::: {#1.1}
+something
+
+::: {#1.1.1}
+something
+:::
+
+::: {#1.1.2}
+something
+:::
+:::::
+::::::
+`;
+
+    await setPref(page, 'rainbow_fenced_divs', true);
+    try {
+      await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.qmd', content);
+
+      const editor = new AceEditor(page, '{#1.1.2}');
+      await expect.poll(() => editor.getValue()).toContain('::::::');
+
+      // opening and closing fences at the same nesting depth share a color
+      const expectedFenceColors = [
+        [0, 0],   // :::::: {#1}
+        [3, 1],   // ::::: {#1.1}
+        [6, 2],   // ::: {#1.1.1}
+        [8, 2],   // :::
+        [10, 2],  // ::: {#1.1.2}
+        [12, 2],  // :::
+        [13, 1],  // :::::
+        [14, 0],  // ::::::
+      ] as const;
+
+      for (const [row, color] of expectedFenceColors) {
+        await expect.poll(async () => {
+          const tokens = await editor.getTokens(row);
+          return tokens[0]?.type;
+        }, { message: `fence color at row ${row}` }).toBe(`fenced_div_${color}`);
+      }
     } finally {
       await setPref(page, 'rainbow_fenced_divs', false);
     }

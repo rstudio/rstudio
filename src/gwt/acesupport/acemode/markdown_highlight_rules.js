@@ -210,13 +210,20 @@ var MarkdownHighlightRules = function () {
                return "keyword.operator";
             }
 
-            var color = (context.fences || 0) % $numFencedDivsColors;
+            // color fences by nesting depth, like rainbow parentheses;
+            // 'context.fences' tracks the current nesting depth
+            var depth = context.fences || 0;
             var close = /^[:]{3,}\s*$/.test(val);
 
             if (close) {
-               context.fences = color + 1;
+               depth = Math.max(0, depth - 1);
+               context.fences = depth;
+               var color = depth % $numFencedDivsColors;
                return "fenced_div_" + color;
             } else {
+               var color = depth % $numFencedDivsColors;
+               context.fences = depth + 1;
+
                // separating the fence (:::) from the follow up text
                // in case we want to style them differently
                var rx = /^([:]{3,})(.*)$/;
