@@ -314,7 +314,9 @@ export const SQLITE: FileDbTarget = {
     linux: [
       '/usr/lib/x86_64-linux-gnu/odbc/libsqlite3odbc.so', // Debian/Ubuntu (libsqliteodbc)
       '/usr/lib/aarch64-linux-gnu/odbc/libsqlite3odbc.so',
-      '/usr/lib64/libsqlite3odbc.so', // Fedora (sqliteodbc); Rocky has no official package
+      // Fedora's sqliteodbc package, and on RHEL/Rocky (which package none)
+      // the same path is where install-deps/linux.sh installs its source build.
+      '/usr/lib64/libsqlite3odbc.so',
     ],
   },
   // Verified on windows-2025: the installer registers "SQLite3 ODBC Driver",

@@ -41,7 +41,7 @@ export type DbStatusFile = Record<string, DbStatus>;
 const SCRIPT_PLATFORMS: Partial<Record<NodeJS.Platform, string>> = {
   darwin: 'macos.sh',
   win32: 'windows.ps1',
-  // linux: 'linux.sh' arrives with the Linux phase.
+  linux: 'linux.sh',
 };
 
 /**

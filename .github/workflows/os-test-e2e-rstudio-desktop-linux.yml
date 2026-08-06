@@ -210,6 +210,7 @@ jobs:
       display_server: ${{ steps.config.outputs.display_server }}
       e2e_deps_cache_scope: ${{ steps.config.outputs.e2e_deps_cache_scope }}
       preinstall_r_packages: ${{ steps.config.outputs.preinstall_r_packages }}
+      install_database_stack: ${{ steps.config.outputs.install_database_stack }}
       heartbeat_timeout_seconds: ${{ steps.config.outputs.heartbeat_timeout_seconds }}
       pw_label: ${{ steps.config.outputs.pw_label }}
     steps:
@@ -801,6 +802,14 @@ jobs:
           # historical default scope.
           cache-scope: ${{ needs.setup.outputs.e2e_deps_cache_scope }}
           install-required-packages: ${{ needs.setup.outputs.preinstall_r_packages }}
+          # PostgreSQL and the ODBC drivers for the Connections pane tests.
+          # Per-engine rather than on for all nine: the package families differ
+          # (see scripts/db/install-deps/linux.sh) and each is enabled only once
+          # it has had a real validation run. A config without the key leaves
+          # this empty, the install step is skipped, and those specs skip with a
+          # reason -- the same degraded mode as a developer machine without the
+          # drivers.
+          install-database-stack: ${{ needs.setup.outputs.install_database_stack }}
 
       # Run the tests as a non-root user on container engines, matching the
       # bare-runner engines (which execute as the runner user). GHA container
