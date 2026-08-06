@@ -136,17 +136,36 @@ This file covers RStudio-specific gotchas that aren't in the README.
    `page.waitForResponse(r => r.url().includes('set_client_state') &&
    (r.request().postData() ?? '').includes('<YourKey>'))`. All state values ship
    in one RPC, so this also gates any state written by a different component in
-   the same push.
+   the same push. `waitForResponse` resolves on *any* response, including a
+   rejected one, so assert the response too -- and note that a failed RPC still
+   comes back HTTP 200 with an `error` member (`HttpConnection::sendJsonRpcError`
+   sends through the ordinary `sendJsonRpcResponse` path), so `response.ok()`
+   alone does not prove the state was stored; check the body for `"error"`.
 
-11. **`window.rstudio.ready`, not a pane selector, gates post-reload state.**
-   Workbench pane elements attach at construction, long before client state is
-   applied, so `waitForSelector('#rstudio_TabSet1_pane')` returns while startup
-   state handling is still pending -- and startup work deferred on a timer (e.g.
-   `PaneManager.ZoomedTabStateValue.onInit`) has not run. Gate on
-   `page.waitForFunction(() => window.rstudio?.ready === true)` and poll the
-   assertion rather than sleeping a fixed margin against a product timer.
+11. **`window.rstudio.ready` is the earliest usable post-reload signal, not a
+   state-applied gate.** It beats a pane selector -- workbench panes attach at
+   construction, so `waitForSelector('#rstudio_TabSet1_pane')` returns while
+   startup state handling is still pending. But on the re-join path a
+   `page.reload()` takes (the R session is still up, so `sessionInfo`'s
+   `deferred_init_completed` is already true and `DeferredInitCompletedEvent`
+   never re-fires), `ready` is set in `initializeAgent()` immediately *before*
+   `initializeWorkbench()` -- see `Application.java`. So `ready === true` can be
+   observed before `PaneManager` is even constructed, let alone before state is
+   applied or timer-deferred startup work (e.g.
+   `PaneManager.ZoomedTabStateValue.onInit`) has run. Gate on it, then make the
+   assertion itself carry the wait (see the next entry).
 
-12. **A stray modal reads as "intercepts pointer events".** Any GWT modal
+12. **`expect.poll` cannot assert that something never happens.** It returns on
+   the first passing sample, so when the pre-condition state *is* the passing
+   state -- "the pane is not zoomed", "no dialog appeared" -- the poll satisfies
+   immediately and the test is green before the bad state can arrive. Its
+   `timeout` buys nothing in that direction. Pairing it with a fixed `sleep` only
+   races the product timer. For a must-not-happen assertion, sample the predicate
+   *continuously* over a window that outlasts the deferred work and fail on the
+   first violation. Same trap in the other direction as entry 9: pick the signal
+   by asking what a broken build would do, not what a good one does.
+
+13. **A stray modal reads as "intercepts pointer events".** Any GWT modal
    renders a `gwt-PopupPanelGlass` overlay, so an unexpected dialog (e.g.
    "Error Listing Packages" after resume) surfaces as an opaque
    `gwt-PopupPanelGlass intercepts pointer events` timeout at an unrelated
