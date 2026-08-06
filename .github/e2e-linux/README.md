@@ -52,6 +52,22 @@ the same arch correctly share one -- both Fedora engines and `rocky-10-arm64`
 all install `rhel10-arm64`, and both Debian x86_64 and Ubuntu 24 x86_64 install
 `noble-amd64`.)
 
+New engines spell `pw_label` as `linux-<distro><version>-<arch>`. Five older
+values predate that convention and are deliberately left alone:
+
+| Config | `pw_label` | Missing |
+|---|---|---|
+| `ubuntu-24-x86_64` | `linux` | version and arch |
+| `fedora-44-x86_64` | `linux-fedora` | version and arch |
+| `fedora-43-x86_64` | `linux-fedora43` | arch |
+| `debian-13-arm64` | `linux-debian-arm64` | version |
+| `rocky-10-arm64` | `linux-rocky-arm64` | version |
+
+The label is the only per-engine discriminator that reaches the Test Insights
+dashboard, so renaming one breaks the continuity of its series there -- which is
+why the inconsistency with their newer siblings is a deliberate freeze rather
+than an oversight, and why normalising them belongs in a change of its own.
+
 To run an existing distro on a second architecture, add a *new* engine and give
 every key above an arch-distinct value; the only workflow change is adding it to
 the `os` choice list for hand dispatches. `ubuntu-24-arm64.json` is the worked
