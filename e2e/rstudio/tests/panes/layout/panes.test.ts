@@ -801,7 +801,7 @@ test.describe('Pane and column management', () => {
   // The maximize button is not the only way to maximize a pane. A double-click
   // on a tabset's tab bar (ModuleTabLayoutPanel) does it too, and so does a
   // double-click on the Console title bar (PrimaryWindowFrame). Every route must
-  // end a zoom the same way. Any route that does not leaves the same stale
+  // end a zoom the same way. A route that does not do so leaves the same stale
   // bookkeeping behind.
   //
   // Only the tab-bar gesture is covered here. RStudio does not render the
