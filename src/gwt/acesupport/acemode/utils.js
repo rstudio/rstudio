@@ -113,17 +113,26 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
          regex: reEnd,
          onMatch: function(value, state, stack, line, context) {
 
+            // If we have no chunk information -- most likely because this
+            // line was tokenized without a context -- assume this fence
+            // closes the chunk, rather than crashing below.
+            var chunk = context.chunk;
+            if (chunk == null) {
+               this.next = endState;
+               return "support.function.codeend";
+            }
+
             // Check whether the width of this chunk tail matches
             // the width of the chunk header that started this chunk.
             var match = /^\s*((?:`|-|\.)+)/.exec(value);
             var width = match[1].length;
-            if (context.chunk.width !== width) {
+            if (chunk.width !== width) {
                this.next = state;
                return "text";
             }
 
             // Update the next state and return the matched token.
-            this.next = context.chunk.state || "start";
+            this.next = chunk.state || endState;
             delete context.chunk;
             return "support.function.codeend";
          }
@@ -137,17 +146,19 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
                // Check whether we're already within a chunk. If so,
                // skip this chunk header -- assume that it's embedded
                // within another active chunk.
-               context.chunk = context.chunk || {};
-               if (context.chunk.state != null) {
+               var chunk = context.chunk;
+               if (chunk != null && chunk.state != null) {
                   this.next = state;
                   return "text";
                }
 
                // A chunk header was found; record the state we entered
-               // from, and also the width of the chunk header.
+               // from, and also the width of the chunk header. Use a fresh
+               // object: the tokenizer's per-row contexts are shallow copies,
+               // so mutating an inherited object would corrupt the contexts
+               // saved for previously-tokenized rows.
                var match = /^\s*((?:`|-|\.)+)/.exec(value);
-               context.chunk.width = match[1].length;
-               context.chunk.state = state;
+               context.chunk = { width: match[1].length, state: state };
 
                // Update the next state and return the matched token.
                this.next = prefix + "-start";
@@ -304,8 +315,9 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
                regex: "^\\s*#[|]",
                next: prefix + "start",
                onMatch: function(value, state, stack, line, context) {
-                  context.quarto = context.quarto || {};
-                  context.quarto.state = state;
+                  // use a fresh object; mutating an inherited one would
+                  // corrupt the contexts saved for previously-tokenized rows
+                  context.quarto = { state: state };
                   return this.token;
                }
             });
@@ -326,7 +338,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
                token: "whitespace",
                regex: "^\\s*(?!#)",
                onMatch: function(value, state, stack, line, context) {
-                  this.next = context.quarto.state;
+                  this.next = (context.quarto || {}).state || "start";
                   return this.token;
                }
             });
@@ -338,7 +350,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
             token: "text",
             regex: "^\\s*(?!#)",
             onMatch: function(value, state, stack, line, context) {
-               this.next = context.quarto.state;
+               this.next = (context.quarto || {}).state || "start";
                return this.token;
             }
          });
@@ -359,8 +371,9 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
                   // was used to start the multiline string, then
                   // exit multiline string state
                   var indent = tokens[2].length;
-                  if (context.yaml.indent >= indent) {
-                     this.next = context.yaml.state;
+                  var yaml = context.yaml;
+                  if (yaml == null || yaml.indent >= indent) {
+                     this.next = (yaml && yaml.state) || "start";
                   } else {
                      this.next = state + "-rest";
                   }

@@ -450,17 +450,19 @@ var MarkdownHighlightRules = function () {
             // Check whether we're already within a chunk. If so,
             // skip this chunk header -- assume that it's embedded
             // within another active chunk.
-            context.chunk = context.chunk || {};
-            if (context.chunk.state != null) {
+            var chunk = context.chunk;
+            if (chunk != null && chunk.state != null) {
                this.next = state;
                return this.token;
             }
 
             // A chunk header was found; record the state we entered
-            // from, and also the width of the chunk header.
+            // from, and also the width of the chunk header. Use a fresh
+            // object: the tokenizer's per-row contexts are shallow copies,
+            // so mutating an inherited object would corrupt the contexts
+            // saved for previously-tokenized rows.
             var match = /^\s*((?:`|-)+)/.exec(value);
-            context.chunk.width = match[1].length;
-            context.chunk.state = state;
+            context.chunk = { width: match[1].length, state: state };
 
             // Update the next state and return the matched token.
             this.next = `github-block-${context.chunk.width}`;
@@ -474,17 +476,26 @@ var MarkdownHighlightRules = function () {
          token: "support.function",
          regex: "^\\s*`{3,16}(?!`)",
          onMatch: function (value, state, stack, line, context) {
+            // If we have no chunk information -- most likely because this
+            // line was tokenized without a context -- assume this fence
+            // closes the chunk, rather than crashing below.
+            var chunk = context.chunk;
+            if (chunk == null) {
+               this.next = "start";
+               return this.token;
+            }
+
             // Check whether the width of this chunk tail matches
             // the width of the chunk header that started this chunk.
             var match = /^\s*((?:`|-)+)/.exec(value);
             var width = match[1].length;
-            if (context.chunk.width !== width) {
+            if (chunk.width !== width) {
                this.next = state;
                return this.token;
             }
 
             // Update the next state and return the matched token.
-            this.next = context.chunk.state || "start";
+            this.next = chunk.state || "start";
             delete context.chunk;
             return this.token;
          }

@@ -191,10 +191,11 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
                var match = /^(?:#[|])?(\s*)/.exec(line);
                var indent = match[1];
 
-               // save prior state + indent length
-               context.yaml = context.yaml || {};
-               context.yaml.state = state;
-               context.yaml.indent = indent.length;
+               // save prior state + indent length; use a fresh object, as
+               // the tokenizer's per-row contexts are shallow copies, and
+               // mutating an inherited object would corrupt the contexts
+               // saved for previously-tokenized rows
+               context.yaml = { state: state, indent: indent.length };
 
                // return token
                this.next = state.replace(/start$/, "multiline-string");
@@ -350,8 +351,9 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
                // if the indent has decreased relative to what
                // was used to start the multiline string, then
                // exit multiline string state
-               if (context.yaml.indent >= value.length) {
-                  this.next = context.yaml.state;
+               var yaml = context.yaml;
+               if (yaml == null || yaml.indent >= value.length) {
+                  this.next = (yaml && yaml.state) || "start";
                } else {
                   this.next = state + "-rest";
                }
