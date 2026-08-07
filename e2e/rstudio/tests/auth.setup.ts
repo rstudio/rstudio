@@ -5,15 +5,36 @@ import * as path from 'path';
 import {
   AUTH_STORAGE_KEY,
   PositAiOAuthEntry,
+  copilotAuthDbPath,
   copilotConfigDir,
   findAuthenticatedStore,
   isCopilotStoreAuthenticated,
+  isExternalServerRun,
   isStoreFileAuthenticated,
   noSeedCredentials,
+  readAuthStatus,
   storeFileCandidates,
   strictAiAuth,
   writeAuthStatus,
+  type AIProvider,
 } from '../utils/auth';
+import {
+  REMOTE_COPILOT_DIR,
+  REMOTE_POSITAI_STORE,
+  bytesHoldCopilotToken,
+  closeExternalSession,
+  connectExternalSession,
+  evalRemoteLogical,
+  remoteCopilotStoreAuthenticated,
+  remotePathExists,
+  remotePositAiStoreAuthenticated,
+  scrubRemote,
+  waitForRemotePath,
+  writeManifest,
+  writeRemoteBinary,
+  writeRemoteText,
+} from '../utils/remote-provision';
+import { externalServerUrl } from '../fixtures/server.fixture';
 import {
   CopilotAgent,
   STATUS_ALREADY_SIGNED_IN,
@@ -61,11 +82,13 @@ const AUTH_HOST = 'login.posit.cloud';
 const CLIENT_ID = 'rstudio-ide';
 const SCOPE = 'prism';
 
-// Whether this run targets RStudio Server. In server mode the rsession reads the
-// logged-in user's real home directory (from the passwd db), not the sandbox this
-// setup writes to, so the completion messages below warn that the sandbox
-// credentials won't reach the session.
-const IS_SERVER = (process.env.PW_RSTUDIO_MODE ?? 'desktop').toLowerCase() === 'server';
+// Whether this run targets an external RStudio Server (PW_RSTUDIO_SERVER_URL).
+// A spawned in-tree server delivers the sandbox credentials to its rsessions
+// via the --rsession-path wrapper (fixtures/server.fixture.ts, #18348); on an
+// external server that server's rsessions read the logged-in account's real
+// home directory instead, so the final setup step below pushes the sandbox
+// stores into that home through the session (utils/remote-provision.ts).
+const IS_EXTERNAL_SERVER = isExternalServerRun();
 
 // Copy a single file, first creating the destination's parent directory.
 function copyFile(src: string, dest: string): void {
@@ -645,9 +668,9 @@ setup('authenticate Posit AI', async () => {
     reason: 'sign-in flow completed',
   });
   console.log(
-    IS_SERVER
-      ? '[auth-setup] WARNING: Posit AI sign-in complete, but these sandbox credentials will not reach an RStudio Server rsession, which reads the logged-in user\'s real home directory instead'
-      : '[auth-setup] Posit AI sign-in complete; credentials are in place for RStudio Desktop',
+    IS_EXTERNAL_SERVER
+      ? '[auth-setup] Posit AI sign-in complete; the provisioning step below will push the credentials to the external server'
+      : '[auth-setup] Posit AI sign-in complete; credentials are in place',
   );
 });
 
@@ -858,8 +881,378 @@ setup('authenticate GitHub Copilot', async () => {
     reason: 'agent-driven sign-in flow completed',
   });
   console.log(
-    IS_SERVER
-      ? '[auth-setup] WARNING: Copilot sign-in complete, but these sandbox credentials will not reach an RStudio Server rsession, which reads the logged-in user\'s real home directory instead'
-      : '[auth-setup] Copilot sign-in complete; credentials are in place for RStudio Desktop',
+    IS_EXTERNAL_SERVER
+      ? '[auth-setup] Copilot sign-in complete; the provisioning step below will push the credentials to the external server'
+      : '[auth-setup] Copilot sign-in complete; credentials are in place',
   );
+});
+
+// ---------------------------------------------------------------------------
+// External-server provisioning (#18348, part 2). The two steps above leave the
+// credential stores in the SANDBOX user-home; on desktop and spawned-server
+// runs the launch fixtures deliver that home to the session, but an external
+// server's rsessions read the logged-in account's real home directory, which
+// this process cannot write directly. It can, however, act as that account once
+// logged in -- so this final step connects, uploads each provisioned store into
+// the remote home (over HTTP, with the console moving it into place; see
+// utils/remote-provision.ts for why the bytes stay out of console commands),
+// records what it created in a manifest
+// (<sandbox>/remote-provision-manifest.json) for the auth-teardown project to
+// scrub, marks each provider's status file with remoteProvisioned (which
+// requireAiCredentials requires on external runs), and ends the remote R
+// session so tests attach to a fresh one that reads the new stores.
+//
+// A store already present on the remote account is used as-is: never
+// overwritten, never added to the scrub manifest -- the teardown must not
+// delete credentials this run didn't write. For both providers "present"
+// means "holds a sign-in", probed by content: the rsession writes an
+// unauthenticated stub data.json at every session startup (including this
+// step's own login), and any session that enables Copilot leaves an empty
+// auth.db behind. Such stubs are machine-written state, not user data --
+// they are overwritten and scrubbed like this run's own files.
+
+// How long to wait for the remote session's own stub data.json write before
+// pushing the Posit AI store (see the call site). The stub's timing is
+// variable -- observed both before the provisioning step's first probe and
+// several seconds after session startup -- so this is margin over the
+// observed range, weighed against paying the full wait on accounts that never
+// write one at all. Two layers backstop a straggler that outlasts it: the
+// write retry in writeRemoteBinary, and the post-push content re-probe, which
+// refuses to vouch for a store the stub landed on top of.
+const POSITAI_STUB_WAIT_MS = 5_000;
+
+// A deterministic external-server misconfiguration that a retry can't heal.
+// Fails the run (mirroring OAuthTerminalError above) rather than skipping.
+class RemoteProvisionConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RemoteProvisionConfigError';
+  }
+}
+
+// Mark `provider`'s status file remoteProvisioned. The status file must exist
+// (both success paths above write one); warn rather than fabricate one if not.
+function markRemoteProvisioned(sandbox: string, provider: AIProvider, note: string): void {
+  const status = readAuthStatus(sandbox, provider);
+  if (status === null) {
+    console.warn(
+      `[auth-setup] WARNING: no readable ${provider} status file to mark remoteProvisioned; its tests will skip`,
+    );
+    return;
+  }
+  writeAuthStatus(sandbox, provider, {
+    ...status,
+    remoteProvisioned: true,
+    reason: `${status.reason}; ${note}`,
+  });
+}
+
+setup('provision external server credentials', async () => {
+  setup.skip(!IS_EXTERNAL_SERVER, 'remote provisioning applies only to external-server runs (PW_RSTUDIO_SERVER_URL)');
+  // Headroom for a full login plus the store uploads over a possibly remote
+  // link; sized like the sign-in steps above.
+  setup.setTimeout(240_000);
+
+  const sandbox = process.env.PW_SANDBOX;
+  if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
+  const sandboxUserHome = path.join(sandbox, 'user-home');
+
+  // Which providers actually have sandbox credentials to push. Reading the
+  // stores (not the status files) keeps this step's input identical to what
+  // the in-sandbox gates read.
+  const positaiStore = findAuthenticatedStore(sandboxUserHome);
+  const copilotProvisioned = await isCopilotStoreAuthenticated(sandboxUserHome);
+  if (positaiStore === null && !copilotProvisioned) {
+    console.log('[auth-setup] no provider has sandbox credentials; nothing to provision remotely');
+    return;
+  }
+
+  const session = await connectExternalSession();
+  const { page } = session;
+  const createdPaths: string[] = [];
+  // Every remote path this run creates is recorded here AND persisted to the
+  // manifest the moment it exists -- including the server-chosen temp file each
+  // upload lands in before the console moves it into place, which briefly holds
+  // real token bytes. Persisting on each append rather than once at the end is
+  // what makes the teardown's cleanup survivable: a run killed between an upload
+  // and the finally block below (a CI cancel's SIGTERM, the harness timeout)
+  // would otherwise leave tokens in the remote home with nothing on disk naming
+  // them for the scrub.
+  const recordPath = (remotePath: string): void => {
+    createdPaths.push(remotePath);
+    try {
+      writeManifest(sandbox, { serverUrl: externalServerUrl()!, createdPaths });
+    } catch (err) {
+      // A manifest that won't write is a cleanup problem, not a reason to
+      // abandon a push already in flight. The finally block tries again.
+      console.warn(
+        `[auth-setup] WARNING: could not update the provisioning manifest after ${remotePath}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  };
+  // Per-provider push failures, collected so one provider's bad luck doesn't
+  // strand the other unprovisioned, and escalated (failIfStrict) only after
+  // the session is closed and the manifest written.
+  const provisionFailures: string[] = [];
+  try {
+    // Bound the provisioning work inside the test timeout set above, with
+    // headroom for the login that already ran outside this try and so is not
+    // covered here: 180s of work against a 240s timeout. A hang that reached
+    // the harness timeout instead would bypass the finally block entirely,
+    // leaking the browser and skipping the backstop manifest write; failing
+    // through here keeps cleanup on the path. As with the sign-in steps, the
+    // underlying work is not cancelled, only outrun.
+    await withDeadline((async () => {
+      // A remote XDG_CONFIG_HOME would make the copilot-language-server resolve
+      // its store outside ~/.config, where this step writes it. Fail loud: this
+      // is a server configuration the harness can't reconcile from here.
+      //
+      // Copilot-only concern, so gate it on there being a Copilot store to
+      // push. Posit AI resolves its store from HOME, not the XDG dirs, and
+      // failing a Posit-only run over a variable that cannot affect it would
+      // block provisioning for no reason.
+      if (copilotProvisioned) {
+        const xdgSet = await evalRemoteLogical(page, 'nzchar(Sys.getenv("XDG_CONFIG_HOME"))');
+        if (xdgSet !== false) {
+          throw new RemoteProvisionConfigError(
+            '[auth-setup] the external server\'s rsession has XDG_CONFIG_HOME set (or the probe failed), '
+              + 'so the Copilot store location would not match where provisioning writes it; '
+              + 'unset it in the server\'s session environment and re-run',
+          );
+        }
+      }
+
+      if (positaiStore !== null) {
+        try {
+          // Existence alone is meaningless here: the rsession's AI client writes
+          // an unauthenticated stub data.json at session startup, so this step's
+          // own login just planted one. Only a store that holds a real sign-in is
+          // treated as pre-existing; a stub is overwritten (and scrubbed later).
+          //
+          // The stub write's timing is variable (observed both before this probe
+          // and several seconds after), and pushing while it is in flight loses
+          // the race -- the stub lands on top of the pushed store. When the path
+          // is absent, wait out the stub writer before writing; accounts without
+          // the assistant enabled never write one and just pay the full wait.
+          const remoteExists = await waitForRemotePath(page, REMOTE_POSITAI_STORE, POSITAI_STUB_WAIT_MS);
+          if (remoteExists === null) {
+            // "Can't tell" is not "absent". Treating it as absent would push
+            // over a store this step never managed to read, which could be the
+            // account's own sign-in. Bail out of the provider instead: the catch
+            // below leaves the file untouched, skips its tests, and records the
+            // reason so strict mode can escalate it.
+            throw new Error(
+              `could not determine whether ${REMOTE_POSITAI_STORE} exists on the remote account; `
+                + 'leaving it untouched rather than risk overwriting a real sign-in',
+            );
+          }
+          const remoteAuthenticated = remoteExists
+            ? await remotePositAiStoreAuthenticated(page)
+            : false;
+          if (remoteAuthenticated === true) {
+            console.log(`[auth-setup] ${REMOTE_POSITAI_STORE} on the remote account already holds a sign-in; using it as-is`);
+            markRemoteProvisioned(sandbox, 'positai', 'remote store pre-existing; left untouched');
+          } else if (remoteAuthenticated === null) {
+            // Unreadable content probe: same reasoning as the existence probe
+            // above -- the file might be someone's real sign-in, so leave it
+            // alone, and don't vouch for it either.
+            throw new Error(
+              `could not determine whether ${REMOTE_POSITAI_STORE} on the remote account holds a sign-in; `
+                + 'leaving it untouched',
+            );
+          } else {
+            // Recorded before the write so a partial push still gets scrubbed
+            // (and cannot pose as a pre-existing store on a later run).
+            recordPath(REMOTE_POSITAI_STORE);
+            await writeRemoteText(
+              page,
+              REMOTE_POSITAI_STORE,
+              fs.readFileSync(positaiStore, 'utf-8'),
+              undefined,
+              recordPath,
+            );
+            // writeRemoteText verified size and mode, which establishes that the
+            // bytes landed -- not that they are still there. A straggling stub
+            // writer that beat the write's own retry would satisfy both checks
+            // and still leave a signed-out store, so re-read the content before
+            // vouching for the provider.
+            if ((await remotePositAiStoreAuthenticated(page)) !== true) {
+              throw new Error(
+                `${REMOTE_POSITAI_STORE} does not read as signed in after the push `
+                  + '(a remote-side stub writer may have overwritten it)',
+              );
+            }
+            console.log(
+              remoteExists
+                ? `[auth-setup] replaced the unauthenticated stub at ${REMOTE_POSITAI_STORE} with the sandbox token store`
+                : `[auth-setup] pushed the Posit AI token store to ${REMOTE_POSITAI_STORE}`,
+            );
+            markRemoteProvisioned(sandbox, 'positai', 'pushed to the external server through the session');
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn('[auth-setup] WARNING: Posit AI remote provisioning failed; its tests will skip:', msg);
+          provisionFailures.push(`positai: ${msg}`);
+        }
+      }
+
+      if (copilotProvisioned) {
+        try {
+          const remoteDb = `${REMOTE_COPILOT_DIR}/auth.db`;
+          // Existence alone is as misleading as for the Posit AI store: any
+          // session that enables Copilot leaves an empty auth.db behind (see
+          // remoteCopilotStoreAuthenticated). Only a store holding a token is
+          // treated as pre-existing; an empty shell is replaced.
+          const existsProbe = await remotePathExists(page, remoteDb);
+          if (existsProbe === null) {
+            throw new Error(
+              `could not determine whether ${remoteDb} exists on the remote account; `
+                + 'leaving it untouched rather than risk overwriting a real sign-in',
+            );
+          }
+          const remoteExists = existsProbe;
+          const remoteAuthenticated = remoteExists
+            ? await remoteCopilotStoreAuthenticated(page)
+            : false;
+          if (remoteAuthenticated === true) {
+            console.log(`[auth-setup] ${remoteDb} on the remote account already holds a sign-in; using it as-is`);
+            markRemoteProvisioned(sandbox, 'copilot', 'remote store pre-existing; left untouched');
+          } else if (remoteAuthenticated === null) {
+            throw new Error(
+              `could not determine whether ${remoteDb} on the remote account holds a sign-in; `
+                + 'leaving it untouched',
+            );
+          } else {
+            if (remoteExists) {
+              // Replacing an empty shell: clear the whole main/-wal/-shm trio
+              // first, so a stale sidecar from the shell can't be paired with
+              // the pushed main file (SQLite treats them as one store). The
+              // -shm is cleared even though the push below never writes one:
+              // leaving the old index beside a new database is exactly the
+              // mismatch this is guarding against.
+              const survivors = await scrubRemote(page, ['', '-wal', '-shm'].map((s) => `${remoteDb}${s}`));
+              if (survivors.length > 0) {
+                // Pushing anyway is exactly how a signed-in main file ends up
+                // paired with a sidecar from the store it replaced, which
+                // SQLite may read in preference to it.
+                throw new Error(
+                  `could not clear the existing Copilot store before pushing: ${survivors.join(', ')}`,
+                );
+              }
+            }
+            // auth.db plus any SQLite sidecars: the sign-in agent can leave the
+            // token row in an uncheckpointed -wal, so the sidecars are part of
+            // the store's on-disk truth (see isCopilotStoreAuthenticated).
+            const localDb = copilotAuthDbPath(sandboxUserHome);
+            // Whether the bytes actually pushed carry the token marker
+            // remoteCopilotStoreAuthenticated searches for, using that probe's
+            // own definition (bytesHoldCopilotToken) so the two cannot drift.
+            // The local gate, isCopilotStoreAuthenticated, decides by counting
+            // oauth_tokens rows through SQLite instead, so the two can
+            // legitimately disagree -- a store the prefix scan can't see is a
+            // blind spot in the remote probe, not a failed push, and must not
+            // be reported as one.
+            //
+            // The main database and its -wal only. -shm is SQLite's WAL index:
+            // regenerable, holding no row data (and, checked here, no token
+            // marker), so pushing it would add a file of credential-adjacent
+            // state to a real account for no benefit. A remote reader rebuilds
+            // it from the -wal.
+            //
+            // Read every file before pushing any. The source store is live --
+            // the local copilot-language-server may rewrite it on a token
+            // refresh -- and each push takes seconds, so reading inside the
+            // loop could capture the database and its -wal from either side of
+            // such a write and land a torn pair on the remote.
+            const localFiles = ['', '-wal']
+              .map((suffix) => ({ suffix, local: `${localDb}${suffix}` }))
+              .filter(({ local }) => fs.existsSync(local))
+              .map(({ suffix, local }) => ({ suffix, bytes: fs.readFileSync(local) }));
+            const pushedTokenMarker = localFiles.some(({ bytes }) => bytesHoldCopilotToken(bytes));
+            for (const { suffix, bytes } of localFiles) {
+              const remote = `${remoteDb}${suffix}`;
+              // Recorded before the write so a partial push still gets scrubbed
+              // (and cannot pose as a pre-existing store on a later run).
+              recordPath(remote);
+              await writeRemoteBinary(page, remote, bytes, undefined, recordPath);
+            }
+            // Same reasoning as the Posit AI re-probe above: per-file size and
+            // mode checks say each piece landed, not that the assembled store
+            // still reads as a sign-in. Only decisive when the pushed bytes
+            // carried the marker to begin with.
+            //
+            // Both outcomes are logged. A check that silently does nothing is
+            // indistinguishable from one that passes, which is how an earlier
+            // marker mismatch (matching only gho_, while Copilot's GitHub App
+            // issues ghu_) went unnoticed: the re-probe never armed and every
+            // run still looked green. If the prefixes change again, the skip
+            // says so in the log instead of quietly dropping the check.
+            if (pushedTokenMarker) {
+              if ((await remoteCopilotStoreAuthenticated(page)) !== true) {
+                throw new Error(`${remoteDb} does not read as signed in after the push`);
+              }
+              console.log('[auth-setup] verified the pushed Copilot store reads as signed in on the remote');
+            } else {
+              console.log(
+                '[auth-setup] WARNING: the pushed Copilot store carries no recognizable GitHub token marker, '
+                  + 'so the post-push verification was skipped (see bytesHoldCopilotToken)',
+              );
+            }
+            console.log(
+              remoteExists
+                ? `[auth-setup] replaced the empty Copilot store at ${remoteDb} with the sandbox credential store`
+                : `[auth-setup] pushed the Copilot credential store to ${remoteDb}`,
+            );
+            markRemoteProvisioned(sandbox, 'copilot', 'pushed to the external server through the session');
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn('[auth-setup] WARNING: Copilot remote provisioning failed; its tests will skip:', msg);
+          provisionFailures.push(`copilot: ${msg}`);
+        }
+      }
+    })(), 180_000, 'remote provisioning deadline exceeded');
+  } catch (err) {
+    // Failures of the shared preamble (the XDG probe) and the overall deadline
+    // -- the per-provider pushes catch their own, and the login above happens
+    // outside this try. A deterministic misconfiguration fails the run;
+    // everything else leaves the affected providers without remoteProvisioned,
+    // so their tests skip with the status-file reason -- unless strict mode
+    // escalates it below.
+    if (err instanceof RemoteProvisionConfigError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(
+      '[auth-setup] WARNING: remote provisioning failed; unprovisioned AI tests will skip:',
+      msg,
+    );
+    provisionFailures.push(msg);
+  } finally {
+    // Close first: ending the remote R session is what makes the next login
+    // read the stores just pushed. Each half is guarded separately so one
+    // failing doesn't cost the other -- a close that throws must not skip the
+    // manifest, and a manifest write that throws must not leak the browser.
+    try {
+      await closeExternalSession(session);
+    } catch (err) {
+      console.warn(
+        '[auth-setup] WARNING: could not close the provisioning session:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+    // recordPath has already written this after every append; repeating it here
+    // is the backstop for the case where one of those writes failed.
+    try {
+      writeManifest(sandbox, { serverUrl: externalServerUrl()!, createdPaths });
+    } catch (err) {
+      console.warn(
+        '[auth-setup] WARNING: could not write the provisioning manifest; '
+          + 'scrub any pushed credentials from the remote host by hand:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+  if (provisionFailures.length > 0) {
+    failIfStrict('external-server AI credentials', `remote provisioning failed: ${provisionFailures.join('; ')}`);
+  }
 });
