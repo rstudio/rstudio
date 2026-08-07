@@ -4,7 +4,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
-import { annotateVersions } from './_chat-setup';
+import { annotateVersions, selectPositChatProvider } from './_chat-setup';
 import { getChatState, setChatUpdateCheckOverride } from '@utils/commands';
 
 /**
@@ -72,6 +72,8 @@ test.describe.serial('Deprecate old Posit AI builds -- #17145', { tag: ['@ai', '
     chatPane = chatActions.chatPane;
 
     versions = await consoleActions.getEnvironmentVersions();
+
+    await selectPositChatProvider(page);
 
     // Let Posit Assistant load normally first
     await chatActions.openChatPane();

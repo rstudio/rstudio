@@ -401,8 +401,37 @@ bool atTopLevelContext()
    return session::isAtTopLevel();
 }
 
+bool RFunction::requireMainThread(const char* method, const core::ErrorLocation& location)
+{
+   if (core::thread::isMainThread())
+      return true;
+
+   // poison this object so that a later call(), even one made from the
+   // main thread, fails cleanly instead of executing with missing state
+   functionSEXP_ = nullptr;
+
+   // the exchange also latches logging, so only the first offense per object
+   // logs -- even when two threads race to poison the same object; repeated
+   // uses of a poisoned object would just repeat the same diagnostic (and,
+   // in developer builds, the same backtrace)
+   if (!offMainThreadUse_.exchange(true))
+   {
+      // build the diagnostic only on this (cold) failure path
+      std::string reason = "R function '" +
+            (functionName_.empty() ? std::string("<unknown>") : functionName_) + "'";
+      core::thread::assertMainThread(reason, method, location);
+   }
+
+   return false;
+}
+
 RFunction::RFunction(SEXP functionSEXP)
 {
+   // the R runtime is not thread-safe; leave the function unset so that
+   // call() fails cleanly instead of racing code running on the main thread
+   if (!REQUIRE_MAIN_THREAD())
+      return;
+
    functionSEXP_ = functionSEXP;
    preserver_.add(functionSEXP_);
 }
@@ -418,6 +447,10 @@ RFunction& RFunction::addQuotedParam(SEXP paramSEXP)
 
 RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
 {
+   // no-op off the main thread; the R runtime is not thread-safe
+   if (!REQUIRE_MAIN_THREAD())
+      return *this;
+
    static SEXP s_quote = Rf_install("quote");
    SEXP quotedSEXP = Rf_lang2(s_quote, paramSEXP);
    preserver_.add(quotedSEXP);
@@ -427,19 +460,25 @@ RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
 
 void RFunction::commonInit(const std::string& functionName)
 {
-   // refresh source if necessary (no-op in production)
-   r::sourceManager().reloadIfNecessary();
-   
    // record functionName (used later for diagnostics)
    functionName_ = functionName;
-   
+   functionSEXP_ = nullptr;
+
+   // the R runtime is not thread-safe; leave the function unresolved (and
+   // this object poisoned) so that call() fails cleanly instead of racing
+   // code running on the main thread. this must precede everything below,
+   // including the empty-name early return, so that off-thread construction
+   // is always poisoned
+   if (!REQUIRE_MAIN_THREAD())
+      return;
+
+   // refresh source if necessary (no-op in production)
+   r::sourceManager().reloadIfNecessary();
+
    // handle empty function names up front
    if (functionName.empty())
-   {
-      functionSEXP_ = nullptr;
       return;
-   }
-   
+
    // otherwise, build call to function
    // check for namespace qualifier and handle that if set
    auto pos = functionName.find(":::");
@@ -484,20 +523,34 @@ Error RFunction::call(SEXP evalNS,
                       SEXP* pResultSEXP,
                       sexp::Protect* pProtect)
 {
+   // make sure we're on the main thread, and that this function wasn't
+   // previously touched from another thread; this must come before anything
+   // below touches the R runtime (including the function-exists evaluation)
+   if (!REQUIRE_MAIN_THREAD() || offMainThreadUse_)
+   {
+      std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
+      Error error = rCodeExecutionError(
+               "R function '" + functionName + "' was used from a non-main thread",
+               ERROR_LOCATION);
+      if (!functionName_.empty())
+         error.addProperty("symbol", functionName_);
+      return error;
+   }
+
    // note that we're executing R code in this scope
    CodeExecutingScope executingScope;
-   
+
    // check that the function exists
    if (functionSEXP_ != nullptr)
    {
       Error existsError = safely ?
                evaluateExpressions(functionSEXP_, evalNS, pResultSEXP, pProtect) :
                evaluateExpressionsUnsafe(functionSEXP_, evalNS, pResultSEXP, pProtect, EvalTry);
-      
+
       if (existsError)
          functionSEXP_ = nullptr;
    }
-   
+
    // verify the function
    if (functionSEXP_ == nullptr)
    {
@@ -505,15 +558,6 @@ Error RFunction::call(SEXP evalNS,
       if (!functionName_.empty())
          error.addProperty("symbol", functionName_);
       return error;
-   }
-   
-   // make sure we're on the main thread
-   std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
-   if (!ASSERT_MAIN_THREAD("Executing function: " + functionName_))
-   {
-      return rCodeExecutionError(
-               "Attempted to execute R function '" + functionName + "' on non-main thread",
-               ERROR_LOCATION);
    }
 
    // create the call object (LANGSXP) with the correct number of elements

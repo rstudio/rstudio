@@ -79,11 +79,54 @@ default.
 - 2FA uses a TOTP code generated from `COPILOT_TOTP_SECRET` (base32). A missing
   or malformed secret fails loud (`GitHubLoginError`), not a skip.
 
-## Server mode: sandbox credentials do not reach the rsession
+## Server mode: how sandbox credentials reach the rsession
 
-Both providers' credentials are written to the sandbox home, which the IDE
-reads on Desktop. On Server, `rserver` takes the rsession's `HOME` from the
-passwd db (`getpwnam` -> `pw_dir`), not the sandbox, so sandbox credentials
-never reach it and the gate is a false positive there. A green Server run can
-be the OS user's own local sign-in, not the provisioning. Pre-existing, both
-providers, tracked in issue #18348.
+`rserver` builds each rsession's environment from scratch and takes `HOME`
+from the passwd db (`getpwnam` -> `pw_dir`). Only a short allow-list survives
+from the rserver process -- `PATH`, `MANPATH`, `LANG`, `SHELL`, the
+`RS_LOG_*` family, and the names `forwardXdgEnvVars` carries
+(`core/system/Xdg.cpp`), which is why setting `RSTUDIO_CONFIG_HOME` on
+rserver does work. `HOME` and `R_LIBS_USER` are not on that list. For the
+spawned in-tree server, the fixture bridges the gap with a wrapper script
+passed as `--rsession-path` (`writeRsessionWrapper` in
+`fixtures/server.fixture.ts`): it exports the sandbox `HOME` and
+`R_LIBS_USER` (plus `GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false`, unsets
+`XDG_CONFIG_HOME`, re-exports `DYLD_INSERT_LIBRARIES` on macOS where SIP
+strips it across the `/bin/sh` exec) and execs the real rsession. Keep the
+wrapper's variable list in sync with what Desktop sets on its child process.
+The `@server_only` tripwire in `tests/sandbox.test.ts` asserts that `HOME` and
+`R_LIBS_USER` arrive with the expected values and that `XDG_CONFIG_HOME` is
+empty -- if the delivery chain breaks, that test is what catches it. Compare
+`R_LIBS_USER` through `base:::.expand_R_libs_env_var`, never against the raw
+template: R's Rprofile expands the `%p` / `%v` tokens at startup, so the
+session never reports back the string the wrapper exported.
+
+**External servers** (`PW_RSTUDIO_SERVER_URL`): the harness cannot control
+that server's rsession environment, so a final auth-setup step provisions
+the stores through the session instead (`utils/remote-provision.ts`): log
+in, upload each sandbox store over HTTP to the same `/upload` endpoint the
+Files pane posts to, move it into place with a console command carrying
+nothing but file paths, verify size and mode, re-probe the content, then end
+the session so tests get a fresh rsession. Never put file contents into a
+console command here: RStudio records every submitted command in the
+account's history database, so a command carrying a store would leave a
+recoverable copy of a live token there.
+Key rules baked into that step:
+
+- A store on the remote account counts as pre-existing only when it holds a
+  sign-in, since sessions create empty stubs on their own. Only paths
+  provisioning created go into the manifest
+  (`<sandbox>/remote-provision-manifest.json`), which `auth-teardown` scrubs.
+- `requireAiCredentials` additionally requires `remoteProvisioned` in the
+  provider's status file on external runs, so a sandbox-only store can't
+  false-pass the gate (the remote account's own sign-in state is what the
+  session actually sees).
+- An unreadable probe is not an absent store. Where existence or content
+  can't be determined, the store is left alone and that provider's tests
+  skip, rather than pushing over what may be the account's own sign-in.
+- Use a dedicated test account. The upload channel keeps token bytes out of
+  the console history, but the stores still land in a real account's home,
+  and a run that dies before teardown leaves them there.
+- A quick experiment for #18348 confirmed the copilot-language-server reads a
+  plaintext `auth.db` without `GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION` set, so
+  no remote `~/.Renviron` edit is needed.

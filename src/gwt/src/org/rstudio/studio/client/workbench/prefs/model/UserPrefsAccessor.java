@@ -324,6 +324,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_INDEXING_ENABLED = "assistant_indexing_enabled";
    public static final String ASSISTANT_NES_ENABLED = "assistant_nes_enabled";
    public static final String ASSISTANT_NES_AUTOSHOW = "assistant_nes_autoshow";
+   public static final String EDIT_SUGGESTION_DIFF_GRANULARITY = "edit_suggestion_diff_granularity";
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
    public static final String ASSISTANT_USE_SYSTEM_CA = "assistant_use_system_ca";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
@@ -4306,6 +4307,29 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Control the granularity of change highlighting in edit suggestion previews. Word-level highlighting marks whole changed words; character-level highlighting marks individual changed characters.
+    */
+   public PrefValue<String> editSuggestionDiffGranularity()
+   {
+      return enumeration(
+         "edit_suggestion_diff_granularity",
+         _constants.editSuggestionDiffGranularityTitle(), 
+         _constants.editSuggestionDiffGranularityDescription(), 
+         new String[] {
+            EDIT_SUGGESTION_DIFF_GRANULARITY_WORD,
+            EDIT_SUGGESTION_DIFF_GRANULARITY_CHARACTER
+         },
+         "word",
+         new String[] {
+            _constants.editSuggestionDiffGranularityEnum_word(),
+            _constants.editSuggestionDiffGranularityEnum_character()
+         });
+   }
+
+   public final static String EDIT_SUGGESTION_DIFF_GRANULARITY_WORD = "word";
+   public final static String EDIT_SUGGESTION_DIFF_GRANULARITY_CHARACTER = "character";
+
+   /**
     * When enabled, the Posit Assistant button is displayed in the main toolbar.
     */
    public PrefValue<Boolean> assistantToolbarButtonVisible()
@@ -5207,6 +5231,8 @@ public class UserPrefsAccessor extends Prefs
          assistantNesEnabled().setValue(layer, source.getBool("assistant_nes_enabled"));
       if (source.hasKey("assistant_nes_autoshow"))
          assistantNesAutoshow().setValue(layer, source.getBool("assistant_nes_autoshow"));
+      if (source.hasKey("edit_suggestion_diff_granularity"))
+         editSuggestionDiffGranularity().setValue(layer, source.getString("edit_suggestion_diff_granularity"));
       if (source.hasKey("assistant_toolbar_button_visible"))
          assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
       if (source.hasKey("assistant_use_system_ca"))
@@ -5537,6 +5563,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantIndexingEnabled());
       prefs.add(assistantNesEnabled());
       prefs.add(assistantNesAutoshow());
+      prefs.add(editSuggestionDiffGranularity());
       prefs.add(assistantToolbarButtonVisible());
       prefs.add(assistantUseSystemCa());
       prefs.add(positAssistantTestManifest());

@@ -55,23 +55,49 @@ core::Error lookupEstablishedSocketUid(const boost::asio::ip::address& localAddr
                                        int ephemeralPort,
                                        uid_t* pUid);
 
+// Look up the UID owning the *listening* socket bound to (listenAddress, listenPort).
+// Unlike lookupEstablishedSocketUid(), this targets the listener itself (dest port/
+// address wildcarded), which always has sk_socket set and therefore reports the
+// correct uid on every kernel version -- see OwnershipCheckMode::Listener below.
+// Returns Success and sets *pUid on an exact match; returns an error if the query
+// fails or no matching listening socket exists (caller must fail closed).
+core::Error lookupListeningSocketUid(const boost::asio::ip::address& listenAddress,
+                                     int listenPort,
+                                     uid_t* pUid);
+
 // Verify the peer of a just-established localhost proxy hop is owned by
-// expectedUid. Returns Success only when the owning UID equals expectedUid.
+// expectedUid, using the verification strategy selected by probeOwnershipCheckMode()
+// (#18439). Returns Success only when the owning UID equals expectedUid.
 core::Error verifyPeerUid(const boost::asio::ip::address& localAddress,
                           const boost::asio::ip::address& remoteAddress,
                           int appPort,
                           int ephemeralPort,
                           uid_t expectedUid);
 
-// One-time capability probe (rstudio-pro#11470): returns true if this process can
-// actually use NETLINK_SOCK_DIAG (i.e. open the socket and receive a well-formed
-// dump reply, not EPERM/EAFNOSUPPORT/ENOSYS from a restrictive seccomp/capability
-// profile). The result is computed once on first call and cached for the process
-// lifetime; a single warning is logged if unavailable. Enforcement sites call this
-// to decide whether to enforce at all -- when it returns false, ownership checks
-// are skipped (availability over isolation). It does NOT relax per-request
-// fail-closed behavior: when it returns true, verifyPeerUid() errors still reject.
-bool probeSockDiagAvailable();
+// Per-request verification strategy selected once by the startup probe (see
+// probeOwnershipCheckMode() below). Established-socket uid lookups are unreliable
+// on kernels lacking upstream commit c51da3f7a161 ("net: remove sock_i_uid()",
+// first in v6.17): on those kernels, an accepted TCP child socket that the target
+// application hasn't yet accept()'d reports owner uid 0 (#18439), which this
+// process's own startup probe below can detect deterministically.
+enum class OwnershipCheckMode
+{
+   Disabled,    // NETLINK_SOCK_DIAG unusable; enforcement skipped entirely
+   Listener,    // query the listening socket (safe on every kernel version)
+   Established  // query the established socket (kernel confirmed reliable)
+};
+
+// One-time capability probe (#18439): determines which
+// OwnershipCheckMode this process should use for per-request ownership checks.
+// The result is computed once on first call (using a deterministic repro: an
+// ephemeral loopback listener that is connect()'d to but never accept()'d,
+// exercising the same pre-accept race that production traffic can hit) and
+// cached for the process lifetime; a warning is logged once if enforcement ends
+// up Disabled. Enforcement sites call this to decide both whether to enforce at
+// all and, if so, which query strategy to use. It does NOT relax per-request
+// fail-closed behavior: in Listener or Established mode, verifyPeerUid() errors
+// still reject.
+OwnershipCheckMode probeOwnershipCheckMode();
 
 } // namespace socket_utils
 } // namespace server_core

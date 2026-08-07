@@ -146,6 +146,16 @@ bool assertMainThread(
    return false;
 }
 
+bool requireMainThread(
+      const char* functionName,
+      const core::ErrorLocation& errorLocation)
+{
+   if (isMainThread())
+      return true;
+
+   return assertMainThread(std::string(), functionName, errorLocation);
+}
+
 } // namespace thread
 } // namespace core
 } // namespace rstudio

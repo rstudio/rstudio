@@ -18,6 +18,16 @@ sudo apt-get install -y pkg-config pkgconf-
 # apt-installed openjdk-17 from install-dependencies-jammy (present by the
 # time the build consumes JAVA_HOME). The 24.04/26.04 images already default
 # to a new-enough JDK, so the sibling engines don't need this.
-J17="${JAVA_HOME_17_X64:-/usr/lib/jvm/java-17-openjdk-amd64}"
+#
+# Both halves are arch-specific, and this hook dir is shared by the
+# ubuntu-22-x86_64 and ubuntu-22-arm64 engines: the runner image names the
+# variable JAVA_HOME_17_<ARCH>, and Debian/Ubuntu installs openjdk to
+# java-17-openjdk-<dpkg arch>. Picking the x86_64 pair unconditionally would
+# export a nonexistent JAVA_HOME on arm64, reintroducing the very build
+# failure this block exists to prevent.
+case "$(dpkg --print-architecture)" in
+  arm64) J17="${JAVA_HOME_17_ARM64:-/usr/lib/jvm/java-17-openjdk-arm64}" ;;
+  *)     J17="${JAVA_HOME_17_X64:-/usr/lib/jvm/java-17-openjdk-amd64}" ;;
+esac
 echo "JAVA_HOME=$J17" >> "$GITHUB_ENV"
 echo "$J17/bin" >> "$GITHUB_PATH"

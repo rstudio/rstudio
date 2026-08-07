@@ -190,7 +190,9 @@ bool isAppleSilicon();
 
 #endif
 
-void initHook();
+// early process initialization; runs before logging is initialized, so any
+// error is returned for the caller to log once logging is available
+Error initHook();
 
 // initialization
 Error initializeSystemLog(const std::string& programIdentity,

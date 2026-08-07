@@ -3664,6 +3664,19 @@ core::Error UserPrefValues::setAssistantNesAutoshow(bool val)
 }
 
 /**
+ * Control the granularity of change highlighting in edit suggestion previews. Word-level highlighting marks whole changed words; character-level highlighting marks individual changed characters.
+ */
+std::string UserPrefValues::editSuggestionDiffGranularity()
+{
+   return readPref<std::string>("edit_suggestion_diff_granularity");
+}
+
+core::Error UserPrefValues::setEditSuggestionDiffGranularity(std::string val)
+{
+   return writePref("edit_suggestion_diff_granularity", val);
+}
+
+/**
  * When enabled, the Posit Assistant button is displayed in the main toolbar.
  */
 bool UserPrefValues::assistantToolbarButtonVisible()
@@ -4245,6 +4258,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantIndexingEnabled,
       kAssistantNesEnabled,
       kAssistantNesAutoshow,
+      kEditSuggestionDiffGranularity,
       kAssistantToolbarButtonVisible,
       kAssistantUseSystemCa,
       kPositAssistantTestManifest,

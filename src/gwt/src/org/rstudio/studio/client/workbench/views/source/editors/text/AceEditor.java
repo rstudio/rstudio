@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
@@ -1194,6 +1195,27 @@ public class AceEditor implements DocDisplay
       doSetCode(code, preserveCursorPosition);
    }
 
+   // Drop back to a single selection. Ace's exitMultiSelectMode() is a
+   // silent no-op on stranded multi-select state (it early-returns while
+   // 'inVirtualSelectionMode' is set), so corrupt state is reset rather than
+   // exited. See: https://github.com/rstudio/rstudio/issues/13605
+   private void exitOrResetMultiSelect()
+   {
+      AceEditorNative ed = widget_.getEditor();
+
+      String reason = ed.getMultiSelectCorruptionReason();
+      if (reason != null)
+      {
+         Debug.log("Resetting corrupt Ace multi-select state (" + reason + ")");
+         ed.resetMultiSelectState();
+      }
+      else if (ed.inMultiSelectMode())
+      {
+         Debug.log("Dropping extra cursors to apply document changes");
+         ed.exitMultiSelectMode();
+      }
+   }
+
    private void doSetCode(String code, boolean preserveCursorPosition)
    {
       // Filter out Escape characters that might have snuck in from an old
@@ -1205,6 +1227,12 @@ public class AceEditor implements DocDisplay
       final String normalizedCode = StringUtil.normalizeNewLines(code);
 
       final AceEditorNative ed = widget_.getEditor();
+
+      // Replacing the document while extra cursors are active can leave the
+      // selection's multi-select bookkeeping referencing stale ranges; drop
+      // back to a single selection first.
+      // See: https://github.com/rstudio/rstudio/issues/13605
+      exitOrResetMultiSelect();
 
       if (preserveCursorPosition)
       {
@@ -1316,6 +1344,12 @@ public class AceEditor implements DocDisplay
       // at the beginning of the file
       if (changes.length == 1 && changes[0].type == TextChange.Type.Equal)
          return;
+
+      // this runs from async contexts (e.g. canonicalizing a document on
+      // save) and drives Ace commands that are routed through multi-select
+      // handling when extra cursors are active; exit multi-select mode first
+      // so the command stream operates on a single, stable selection
+      exitOrResetMultiSelect();
 
       // application of changes (will run this below either with or w/o
       // preserving the cursor position)
@@ -1518,6 +1552,17 @@ public class AceEditor implements DocDisplay
    public void focus()
    {
       widget_.getEditor().focus();
+
+      // Update the last-focused editor here as well: the DOM focus event
+      // doesn't re-fire if this editor already had focus, and command
+      // routing via AceEditorCommandEvent depends on this field being
+      // current -- a stale value routes editor commands into a
+      // previously-focused tab. Claim the field only when focus actually
+      // landed, so a focus() on a hidden or detached editor can't steal
+      // command routing from the editor the user is really in.
+      // See: https://github.com/rstudio/rstudio/issues/13605
+      if (widget_.getEditor().isFocused())
+         s_lastFocusedEditor = this;
    }
 
    public boolean isFocused()

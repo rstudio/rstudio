@@ -28,13 +28,14 @@ sudo dnf -y install \
 # packages (tidyverse, shiny, rmarkdown, roxygen2, ...) are compiled from
 # source by pak. That needs a compiler stack (gcc/g++/gfortran + make) plus
 # the -devel headers their compiled dependencies link against:
-# libcurl/openssl/libxml2 (curl, openssl, xml2), the font/text stack
-# (systemfonts, textshaping, ragg), the image libs (ragg), zlib (data.table
-# and others), and ICU (stringi). zlib ships as zlib-ng on Fedora, so the
-# headers come from zlib-ng-compat-devel.
+# libcurl/openssl/libxml2 (curl, openssl, xml2), libgit2 (gert, which devtools
+# pulls in through usethis), the font/text stack (systemfonts, textshaping,
+# ragg), the image libs (ragg), zlib (data.table and others), and ICU
+# (stringi). zlib ships as zlib-ng on Fedora, so the headers come from
+# zlib-ng-compat-devel.
 sudo dnf -y install \
   gcc gcc-c++ gcc-gfortran make \
-  libcurl-devel openssl-devel libxml2-devel \
+  libcurl-devel openssl-devel libxml2-devel libgit2-devel \
   fontconfig-devel freetype-devel harfbuzz-devel fribidi-devel \
   libpng-devel libjpeg-turbo-devel libtiff-devel \
   zlib-ng-compat-devel libicu-devel cairo-devel
