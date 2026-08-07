@@ -3069,7 +3069,7 @@ public class AceEditor implements DocDisplay
 
    public void useDocumentLineNavigation()
    {
-      widget_.getEditor().useDocumentLineNavigation();
+      widget_.getEditor().getCommandManager().useDocumentLineNavigation();
    }
 
    @Override

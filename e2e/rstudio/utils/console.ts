@@ -12,11 +12,19 @@ export async function setConsoleInput(page: Page, text: string): Promise<void> {
   }, text);
 }
 
-/** The console input cursor's document position, or null if the console isn't present. */
-export async function getConsoleCursorPosition(page: Page): Promise<Ace.Position | null> {
+// The getters below throw (rather than returning a fallback) when the console
+// editor is missing: a fallback like '' is indistinguishable from a live
+// console with nothing selected, so it can turn a broken test into a false
+// pass. A throw also fails an enclosing expect.poll immediately instead of
+// burning its timeout on a misleading diff.
+
+/** The console input cursor's document position. */
+export async function getConsoleCursorPosition(page: Page): Promise<Ace.Position> {
   return page.evaluate(() => {
     const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
-    return el?.env?.editor?.getCursorPosition() ?? null;
+    const editor = el?.env?.editor;
+    if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
+    return editor.getCursorPosition();
   });
 }
 
@@ -24,7 +32,9 @@ export async function getConsoleCursorPosition(page: Page): Promise<Ace.Position
 export async function getConsoleSelectedText(page: Page): Promise<string> {
   return page.evaluate(() => {
     const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
-    return el?.env?.editor?.getSelectedText() ?? '';
+    const editor = el?.env?.editor;
+    if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
+    return editor.getSelectedText();
   });
 }
 
@@ -35,7 +45,9 @@ export async function getConsoleSelectedText(page: Page): Promise<string> {
 export async function getConsoleScreenRowCount(page: Page): Promise<number> {
   return page.evaluate(() => {
     const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
-    return el?.env?.editor?.session.getScreenLength() ?? 0;
+    const editor = el?.env?.editor;
+    if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
+    return editor.session.getScreenLength();
   });
 }
 

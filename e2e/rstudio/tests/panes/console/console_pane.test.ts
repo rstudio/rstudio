@@ -79,18 +79,22 @@ test.describe('Console pane', () => {
       expect(await getConsoleScreenRowCount(page)).toBeGreaterThan(1);
     });
 
-    test.afterEach(async ({ rstudioPage: page }) => {
+    // Key presses go through the console-input locator, not page.keyboard:
+    // pressing on the focused element is racy, since focus can shift between
+    // setConsoleInput's editor.focus() and the key press (see the same
+    // pattern in ConsolePaneActions.executeInConsole).
+    test.afterEach(async () => {
       // Leave the input empty; a leftover command would be submitted by the
       // next test's Enter and show up as a parse error.
-      await page.keyboard.press('Escape');
+      await consoleActions.consolePane.consoleInput.press('Escape');
       await expect.poll(() => consoleActions.consolePane.consoleInputValue()).toBe('');
     });
 
     test('Home and End reach the ends of the whole command', async ({ rstudioPage: page }) => {
-      await page.keyboard.press('Home');
+      await consoleActions.consolePane.consoleInput.press('Home');
       await expect.poll(() => getConsoleCursorPosition(page)).toEqual({ row: 0, column: 0 });
 
-      await page.keyboard.press('End');
+      await consoleActions.consolePane.consoleInput.press('End');
       await expect
         .poll(() => getConsoleCursorPosition(page))
         .toEqual({ row: 0, column: command.length });
@@ -100,11 +104,11 @@ test.describe('Console pane', () => {
       rstudioPage: page,
     }) => {
       // Cursor starts at the end of the command, so this selects all of it.
-      await page.keyboard.press('Shift+Home');
+      await consoleActions.consolePane.consoleInput.press('Shift+Home');
       await expect.poll(() => getConsoleSelectedText(page)).toBe(command);
 
-      await page.keyboard.press('Home');
-      await page.keyboard.press('Shift+End');
+      await consoleActions.consolePane.consoleInput.press('Home');
+      await consoleActions.consolePane.consoleInput.press('Shift+End');
       await expect.poll(() => getConsoleSelectedText(page)).toBe(command);
     });
   });
