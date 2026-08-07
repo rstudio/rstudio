@@ -94,6 +94,9 @@ public interface StandardIcons extends ClientBundle
    @Source("outline_2x.png")
    ImageResource outline2x();
 
+   @Source("split_editor_2x.png")
+   ImageResource splitEditor2x();
+
    @Source("options_2x.png")
    ImageResource options2x();
    

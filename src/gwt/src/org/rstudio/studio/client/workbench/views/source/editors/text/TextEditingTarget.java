@@ -302,6 +302,11 @@ public class TextEditingTarget implements
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
    public static final String USE_RAINBOW_FENCED_DIVS = "useRainbowFencedDivs";
+
+   public static final String EDITOR_SPLIT       = "editorSplit";
+   public static final String EDITOR_SPLIT_NONE  = "none";
+   public static final String EDITOR_SPLIT_RIGHT = "right";
+   public static final String EDITOR_SPLIT_DOWN  = "down";
    
    public static final String QUARTO_PREVIEW_FORMAT = "quartoPreviewFormat";
 
@@ -359,6 +364,26 @@ public class TextEditingTarget implements
       void toggleRainbowParens();
       void toggleRainbowFencedDivs();
       void toggleDetectMissingPackages();
+
+      // Editor splits: a tab can show a second view of its document
+      // (EDITOR_SPLIT_RIGHT / EDITOR_SPLIT_DOWN), sharing the document and
+      // undo history but with per-view selection, scrolling, and folds.
+      //
+      // Note the distinction between the "active tab" and the "active editor
+      // view". Command routing selects the active tab (this editing target);
+      // within the tab, docDisplay_ is always the primary view -- persistence
+      // (DocUpdateSentinel), breakpoints, lint/spelling/debug markers, chunk
+      // output line widgets, and navigation all bind to it. getActiveDisplay()
+      // returns the view that last held focus, and should be consulted only
+      // where behavior must follow the user's cursor or selection (e.g.
+      // executing code, reading the selection for rstudioapi, status bar
+      // position).
+      void setEditorSplit(String type);
+      String getEditorSplit();
+      boolean focusOtherEditorSplit();
+      boolean isEditorViewFocused();
+      DocDisplay getActiveDisplay();
+      void destroyEditorSplit();
 
       void setNotebookUIVisible(boolean visible);
 
@@ -2102,6 +2127,11 @@ public class TextEditingTarget implements
       TextEditingTargetPrefsHelper.registerPrefs(
             releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
 
+      // apply and track the editor split state (a second view of this document)
+      releaseOnDismiss_.add(docUpdateSentinel_.addPropertyValueChangeHandler(
+            EDITOR_SPLIT, (event) -> applyEditorSplit(event.getValue())));
+      applyEditorSplit(docUpdateSentinel_.getProperty(EDITOR_SPLIT, EDITOR_SPLIT_NONE));
+
       // Initialize sourceOnSave, and keep it in sync. Don't source on save
       // (regardless of preference) in auto save mode, which is mutually
       // exclusive with the manual source-and-save workflow.
@@ -2737,7 +2767,9 @@ public class TextEditingTarget implements
 
    private void updateStatusBarPosition()
    {
-      Position pos = docDisplay_.getCursorPosition();
+      // follows the active editor view (not just the tab) so the status bar
+      // reflects the split view's cursor when it holds focus
+      Position pos = activeDisplay().getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
    }
@@ -2767,7 +2799,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         Scope scope = docDisplay_.getCurrentScope();
+         Scope scope = activeDisplay().getCurrentScope();
          String label = scope != null
                ? scope.getLabel()
                      : null;
@@ -3763,12 +3795,19 @@ public class TextEditingTarget implements
       if (visualMode_ != null)
          visualMode_.onDismiss();
 
+      // tear down any split editor view; its pref bindings are registered
+      // against the UserPrefs singleton and would otherwise leak
+      if (view_ != null)
+         view_.destroyEditorSplit();
+
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
 
       docDisplay_.endCollabSession();
 
       codeExecution_.detachLastExecuted();
+      if (splitCodeExecution_ != null)
+         splitCodeExecution_.detachLastExecuted();
 
       if (notebook_ != null)
          notebook_.onDismiss();
@@ -3963,6 +4002,152 @@ public class TextEditingTarget implements
    {
       recordCurrentNavigationPosition();
       view_.toggleRmdVisualMode();
+   }
+
+   @Handler
+   void onSplitEditorRight()
+   {
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, EDITOR_SPLIT_RIGHT);
+   }
+
+   @Handler
+   void onSplitEditorDown()
+   {
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, EDITOR_SPLIT_DOWN);
+   }
+
+   @Handler
+   void onRemoveEditorSplit()
+   {
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, EDITOR_SPLIT_NONE);
+   }
+
+   @Handler
+   void onToggleEditorSplit()
+   {
+      String current = view_.getEditorSplit();
+      String desired = StringUtil.equals(current, EDITOR_SPLIT_NONE)
+            ? lastEditorSplit_
+            : EDITOR_SPLIT_NONE;
+      docUpdateSentinel_.setProperty(EDITOR_SPLIT, desired);
+   }
+
+   @Handler
+   void onFocusOtherEditorSplit()
+   {
+      view_.focusOtherEditorSplit();
+   }
+
+   // If an editor split is active and one of this editor's views currently
+   // holds focus, move focus to the other view and return true. Used by
+   // activateSource (Ctrl+1), so that repeated presses toggle between the
+   // views of a split editor instead of doing nothing.
+   public boolean focusOtherEditorSplitIfFocused()
+   {
+      if (isVisualModeActivated())
+         return false;
+
+      if (!view_.isEditorViewFocused())
+         return false;
+
+      // false when no split view has materialized (none requested, or a
+      // requested split is still waiting on layout)
+      return view_.focusOtherEditorSplit();
+   }
+
+   // True when an editor split is requested for this document; the split
+   // view itself may not have materialized yet (it waits on layout).
+   public boolean isEditorSplitActive()
+   {
+      return !StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_NONE);
+   }
+
+   private void applyEditorSplit(String type)
+   {
+      // tolerate stale or unrecognized property values
+      if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
+          !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      {
+         type = EDITOR_SPLIT_NONE;
+      }
+
+      if (!StringUtil.equals(type, EDITOR_SPLIT_NONE))
+         lastEditorSplit_ = type;
+
+      view_.setEditorSplit(type);
+   }
+
+   // The editor view holding the user's cursor -- the primary editor, or the
+   // split view when it last held focus. Selection-driven behavior (executing
+   // code, rstudioapi selection queries, status bar position) should read
+   // from this display; document-level behavior stays on docDisplay_. See
+   // the "active tab" vs "active editor view" note on Display. In visual
+   // mode the primary editor is always used, as visual mode synchronizes its
+   // selection into it.
+   private DocDisplay activeDisplay()
+   {
+      if (view_ == null || isVisualModeActivated())
+         return docDisplay_;
+
+      return view_.getActiveDisplay();
+   }
+
+   // Returns a code executor bound to the active editor view, so that
+   // executing the current line or selection follows the user's cursor
+   // rather than always reading the primary editor's selection.
+   private EditingTargetCodeExecution codeExecution()
+   {
+      DocDisplay display = activeDisplay();
+      if (display == docDisplay_)
+      {
+         lastCodeExecution_ = codeExecution_;
+      }
+      else
+      {
+         if (splitCodeExecution_ == null || splitCodeExecutionDisplay_ != display)
+         {
+            splitCodeExecutionDisplay_ = display;
+            splitCodeExecution_ = new EditingTargetCodeExecution(this, display, getId(), this);
+         }
+         lastCodeExecution_ = splitCodeExecution_;
+      }
+
+      return lastCodeExecution_;
+   }
+
+   // The executor that most recently ran code, used to re-run the last
+   // executed code independently of which view now has focus.
+   private EditingTargetCodeExecution lastCodeExecution()
+   {
+      return lastCodeExecution_ != null ? lastCodeExecution_ : codeExecution_;
+   }
+
+   // Called by the view when the cursor moves in the split editor view, so
+   // the status bar tracks whichever view the user is editing in.
+   void splitEditorCursorChanged(Position position)
+   {
+      if (statusBar_ == null)
+         return;
+
+      updateStatusBarPosition();
+      if (activeDisplay().isScopeTreeReady(position.getRow()))
+         updateCurrentScope();
+   }
+
+   // Called by the view when the split editor view is destroyed; drop any
+   // executor bound to it so re-run-last-code falls back to the primary view.
+   void splitEditorRemoved()
+   {
+      if (lastCodeExecution_ == splitCodeExecution_)
+         lastCodeExecution_ = codeExecution_;
+
+      // release the last-executed selection anchors, which attach to the
+      // shared document and would otherwise survive the split view
+      if (splitCodeExecution_ != null)
+         splitCodeExecution_.detachLastExecuted();
+
+      splitCodeExecution_ = null;
+      splitCodeExecutionDisplay_ = null;
    }
 
    @Handler
@@ -5915,7 +6100,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.executeSelection(false);
+         codeExecution().executeSelection(false);
       });
    }
 
@@ -5929,7 +6114,7 @@ public class TextEditingTarget implements
          {
             withVisualModeSelection(() ->
             {
-               codeExecution_.executeSelection(false, false, "profvis::profvis", true);
+               codeExecution().executeSelection(false, false, "profvis::profvis", true);
             });
          }
       });
@@ -5938,11 +6123,11 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutMovingCursor()
    {
-      if (docDisplay_.isFocused() || visualMode_.isVisualEditorActive())
+      if (activeDisplay().isFocused() || visualMode_.isVisualEditorActive())
       {
          withVisualModeSelection(() ->
          {
-            codeExecution_.executeSelection(true, false);
+            codeExecution().executeSelection(true, false);
          });
       }
       else if (view_.isAttached())
@@ -5956,13 +6141,13 @@ public class TextEditingTarget implements
    {
       if (fileType_.isScript())
       {
-         codeExecution_.sendSelectionToTerminal(true);
+         codeExecution().sendSelectionToTerminal(true);
       }
       else
       {
          withVisualModeSelection(() ->
          {
-            codeExecution_.executeSelection(true);
+            codeExecution().executeSelection(true);
          });
       }
    }
@@ -6019,7 +6204,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(false /*isWorkbenchJob*/);
+         codeExecution().runSelectionAsJob(false /*isWorkbenchJob*/);
       });
    }
 
@@ -6028,7 +6213,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(true /*isWorkbenchJob*/);
+         codeExecution().runSelectionAsJob(true /*isWorkbenchJob*/);
       });
    }
 
@@ -6037,7 +6222,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
+         codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
       });
    }
 
@@ -6046,7 +6231,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
+         codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
       });
    }
 
@@ -6055,7 +6240,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
+         codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
       });
    }
 
@@ -6064,7 +6249,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.sendSelectionToTerminal(false);
+         codeExecution().sendSelectionToTerminal(false);
       });
    }
 
@@ -6125,16 +6310,17 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
+         DocDisplay display = activeDisplay();
          if (!isVisualEditorActive())
          {
-            docDisplay_.focus();
+            display.focus();
          }
 
-         int row = docDisplay_.getSelectionEnd().getRow();
-         int col = docDisplay_.getLength(row);
+         int row = display.getSelectionEnd().getRow();
+         int col = display.getLength(row);
 
-         codeExecution_.executeRange(Range.fromPoints(Position.create(0, 0),
-                                     Position.create(row, col)));
+         codeExecution().executeRange(Range.fromPoints(Position.create(0, 0),
+                                      Position.create(row, col)));
       });
    }
 
@@ -6143,16 +6329,17 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
+         DocDisplay display = activeDisplay();
          if (!isVisualEditorActive())
          {
-            docDisplay_.focus();
+            display.focus();
          }
 
-         int startRow = docDisplay_.getSelectionStart().getRow();
+         int startRow = display.getSelectionStart().getRow();
          int startColumn = 0;
          Position start = Position.create(startRow, startColumn);
 
-         codeExecution_.executeRange(Range.fromPoints(start, endPosition()));
+         codeExecution().executeRange(Range.fromPoints(start, endPosition()));
       });
    }
 
@@ -6161,9 +6348,10 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
+         DocDisplay display = activeDisplay();
          if (!isVisualEditorActive())
          {
-            docDisplay_.focus();
+            display.focus();
 
             // HACK: This is just to force the entire function tree to be built.
             // It's the easiest way to make sure getCurrentScope() returns
@@ -6171,10 +6359,10 @@ public class TextEditingTarget implements
             //
             // We don't need to do this in visual mode since we force a scope
             // tree rebuild in the process of synchronizing the selection.
-            docDisplay_.getScopeTree();
+            display.getScopeTree();
          }
 
-         Scope currentFunction = docDisplay_.getCurrentFunction(false);
+         Scope currentFunction = display.getCurrentFunction(false);
 
          // Check if we're at the top level (i.e. not in a function), or in
          // an unclosed function
@@ -6184,7 +6372,7 @@ public class TextEditingTarget implements
          Position start = currentFunction.getPreamble();
          Position end = currentFunction.getEnd();
 
-         codeExecution_.executeRange(Range.fromPoints(start, end));
+         codeExecution().executeRange(Range.fromPoints(start, end));
       });
    }
 
@@ -6193,14 +6381,15 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
+         DocDisplay display = activeDisplay();
          if (!isVisualEditorActive())
          {
-            docDisplay_.focus();
-            docDisplay_.getScopeTree();
+            display.focus();
+            display.getScopeTree();
          }
 
          // Determine the current section.
-         Scope currentSection = docDisplay_.getCurrentSection();
+         Scope currentSection = display.getCurrentSection();
          if (currentSection == null)
             return;
 
@@ -6212,7 +6401,7 @@ public class TextEditingTarget implements
          if (end == null)
             end = endPosition();
 
-         codeExecution_.executeRange(Range.fromPoints(start, end));
+         codeExecution().executeRange(Range.fromPoints(start, end));
       });
    }
 
@@ -7226,7 +7415,7 @@ public class TextEditingTarget implements
          {
             withVisualModeSelection(() ->
             {
-               codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+               codeExecution().executeSelection(true, true, "profvis::profvis", true);
             });
          }
       });
@@ -7468,12 +7657,18 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
+         // re-run through the executor that last ran code, which may be
+         // bound to either editor view
+         EditingTargetCodeExecution codeExecution = lastCodeExecution();
          if (!isVisualEditorActive())
          {
-            docDisplay_.focus();
+            if (codeExecution == splitCodeExecution_ && splitCodeExecutionDisplay_ != null)
+               splitCodeExecutionDisplay_.focus();
+            else
+               docDisplay_.focus();
          }
 
-         codeExecution_.executeLastCode();
+         codeExecution.executeLastCode();
       });
    }
 
@@ -9688,10 +9883,12 @@ public class TextEditingTarget implements
       {
          ensureTextEditorActive(() ->
          {
+            // report the selection of the active editor view (which may be
+            // the split view of this document, not the primary editor)
             SourceColumnManager.getEditorContext(
                   getId(),
                   getPath(),
-                  getDocDisplay(),
+                  activeDisplay(),
                   server_);
          });
       }
@@ -9717,7 +9914,9 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               callback.execute(docDisplay_.getSelectionValue());
+               // read the selection of the active editor view (which may be
+               // the split view of this document, not the primary editor)
+               callback.execute(activeDisplay().getSelectionValue());
             }
          });
       }
@@ -9805,6 +10004,7 @@ public class TextEditingTarget implements
    private final Value<String> name_ = new Value<>(null);
    private TextFileType fileType_;
    private String id_;
+   private String lastEditorSplit_ = EDITOR_SPLIT_RIGHT;
    private HandlerRegistration commandHandlerReg_;
    private final ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
    private final DirtyState dirtyState_;
@@ -9847,6 +10047,9 @@ public class TextEditingTarget implements
          new IntervalTracker(1000, true);
    private boolean isWaitingForUserResponseToExternalEdit_ = false;
    private EditingTargetCodeExecution codeExecution_;
+   private EditingTargetCodeExecution splitCodeExecution_;
+   private DocDisplay splitCodeExecutionDisplay_;
+   private EditingTargetCodeExecution lastCodeExecution_;
 
    // Timer for saving cursor position
    private Timer cursorPositionSaveTimer_;
