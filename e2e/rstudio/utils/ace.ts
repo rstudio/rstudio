@@ -70,6 +70,7 @@ export namespace Ace {
     getCursorPosition(): Position;
     getSelectedText(): string;
     getFirstVisibleRow(): number;
+    getLastVisibleRow(): number;
     find(needle: string): void;
     insert(text: string): void;
     navigateLineEnd(): void;
