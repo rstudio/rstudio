@@ -42982,7 +42982,15 @@ var oop = require("./lib/oop");
 var EventEmitter = require("./lib/event_emitter").EventEmitter;
 var MAX_CONTEXT_DEPTH = 16;
 function cloneContext(context) {
-    return structuredClone(context || {});
+    if (context == null)
+        return {};
+    for (var key in context)
+        return structuredClone(context);
+    return {};
+}
+function isPlainObject(value) {
+    var proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
 }
 function equalContextValues(lhs, rhs, depth) {
     if (lhs === rhs)
@@ -42994,6 +43002,8 @@ function equalContextValues(lhs, rhs, depth) {
     if (typeof lhs !== "object" || typeof rhs !== "object")
         return false;
     if (Array.isArray(lhs) !== Array.isArray(rhs))
+        return false;
+    if (!Array.isArray(lhs) && (!isPlainObject(lhs) || !isPlainObject(rhs)))
         return false;
     var keys = Object.keys(lhs);
     if (keys.length !== Object.keys(rhs).length)
