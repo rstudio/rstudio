@@ -372,15 +372,20 @@ public class TextEditingTargetWidget
    }
 
    @Override
-   public void focusOtherEditorSplit()
+   public boolean focusOtherEditorSplit()
    {
+      // a requested split may not have materialized yet (see
+      // desiredSplitState_); report failure so callers can fall through to
+      // their default behavior instead of swallowing the gesture
       if (splitEditor_ == null)
-         return;
+         return false;
 
       if (splitEditorFocusedLast_)
          editor_.focus();
       else
          splitEditor_.focus();
+
+      return true;
    }
 
    @Override
@@ -407,11 +412,17 @@ public class TextEditingTargetWidget
 
       desiredSplitState_ = null;
 
+      // captured before teardown: detaching the views below blurs them
+      boolean editorHadFocus = isEditorViewFocused();
+
       Widget editorWidget = editor_.asWidget();
       double width = editorWidget.getOffsetWidth();
       double height = editorWidget.getOffsetHeight();
 
-      // tear down any active split, restoring the editor as the center widget
+      // tear down any active split; the editor is restored as the center
+      // widget only when returning to a single view -- when switching
+      // orientation it goes straight into the new split panel, avoiding a
+      // redundant detach/attach cycle
       if (splitPanel_ != null)
       {
          width = splitPanel_.getOffsetWidth();
@@ -422,15 +433,18 @@ public class TextEditingTargetWidget
          editorPanel_.remove(splitPanel_);
          splitPanel_ = null;
 
-         editorPanel_.add(editorWidget);
+         if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_NONE))
+            editorPanel_.add(editorWidget);
       }
 
       if (StringUtil.equals(type, TextEditingTarget.EDITOR_SPLIT_NONE))
       {
-         boolean hadFocus = splitEditorFocusedLast_;
          destroySplitEditor();
 
-         if (hadFocus)
+         // restore focus to the surviving view, but only when one of the
+         // editor views held it -- removing the split from e.g. the Console
+         // shouldn't steal focus
+         if (editorHadFocus)
             editor_.focus();
       }
       else
@@ -480,7 +494,6 @@ public class TextEditingTargetWidget
 
       // mirror per-document display state the primary editor picked up from
       // document properties
-      applyWrapMode(splitEditor_, editor_.getUseWrapMode());
       splitEditor_.setRainbowParentheses(editor_.getRainbowParentheses());
       splitEditor_.setRainbowFencedDivs(editor_.getRainbowFencedDivs());
 
@@ -500,6 +513,11 @@ public class TextEditingTargetWidget
             splitEditor_,
             docUpdateSentinel_.getDoc());
 
+      // apply the document's soft wrap state last: both setFileType() and
+      // the pref sync above reset the wrap limit range from preferences,
+      // which would clobber the margin-column wrap applied here
+      applyWrapMode(splitEditor_, editor_.getUseWrapMode());
+
       // route commands to this editing target when the split view is focused
       splitEditorRegistrations_.add(splitEditor_.addFocusHandler(event ->
       {
@@ -511,6 +529,16 @@ public class TextEditingTargetWidget
       // keep the status bar in sync with the split view's cursor
       splitEditorRegistrations_.add(splitEditor_.addCursorChangedHandler(event ->
             target_.splitEditorCursorChanged(event.getPosition())));
+   }
+
+   // Tear down any split editor view when the editing target is dismissed.
+   // The pref bindings in splitEditorRegistrations_ hang off the UserPrefs
+   // singleton, so they (and the editors they capture) would otherwise
+   // outlive the closed tab.
+   @Override
+   public void destroyEditorSplit()
+   {
+      destroySplitEditor();
    }
 
    private void destroySplitEditor()
@@ -1315,8 +1343,12 @@ public class TextEditingTargetWidget
       }
 
       toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
-      
-      
+
+      // editor splits are a source-mode feature; no layout reads here, as
+      // adaptToFileType runs before the widget is initialized -- the width
+      // gate is manageToolbarSizes's, reapplied on every layout pass
+      splitEditorButton_.setVisible(!visualRmdMode);
+
       // update modes for filetype
       syncWrapMode();
       syncRainbowParenMode();
@@ -1446,7 +1478,10 @@ public class TextEditingTargetWidget
       
       goToNextButton_.setVisible(commands_.goToNextChunk().isVisible() && width >= 640);
       goToPrevButton_.setVisible(commands_.goToPrevChunk().isVisible() && width >= 640);
-      splitEditorButton_.setVisible(width >= 590);
+
+      // editor splits are a source-mode feature; in visual mode the button
+      // would open a menu of uniformly disabled commands
+      splitEditorButton_.setVisible(width >= 590 && !isVisualMode());
       toolbar_.invalidateSeparators();
    }
    

@@ -372,16 +372,18 @@ public class TextEditingTarget implements
       // Note the distinction between the "active tab" and the "active editor
       // view". Command routing selects the active tab (this editing target);
       // within the tab, docDisplay_ is always the primary view -- persistence
-      // (DocUpdateSentinel), lint/spelling/debug markers, chunk output line
-      // widgets, and navigation all bind to it. getActiveDisplay() returns
-      // the view that last held focus, and should be consulted only where
-      // behavior must follow the user's cursor or selection (e.g. executing
-      // code, reading the selection for rstudioapi, status bar position).
+      // (DocUpdateSentinel), breakpoints, lint/spelling/debug markers, chunk
+      // output line widgets, and navigation all bind to it. getActiveDisplay()
+      // returns the view that last held focus, and should be consulted only
+      // where behavior must follow the user's cursor or selection (e.g.
+      // executing code, reading the selection for rstudioapi, status bar
+      // position).
       void setEditorSplit(String type);
       String getEditorSplit();
-      void focusOtherEditorSplit();
+      boolean focusOtherEditorSplit();
       boolean isEditorViewFocused();
       DocDisplay getActiveDisplay();
+      void destroyEditorSplit();
 
       void setNotebookUIVisible(boolean visible);
 
@@ -3793,6 +3795,11 @@ public class TextEditingTarget implements
       if (visualMode_ != null)
          visualMode_.onDismiss();
 
+      // tear down any split editor view; its pref bindings are registered
+      // against the UserPrefs singleton and would otherwise leak
+      if (view_ != null)
+         view_.destroyEditorSplit();
+
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
 
@@ -4040,20 +4047,22 @@ public class TextEditingTarget implements
       if (isVisualModeActivated())
          return false;
 
-      if (StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_NONE))
-         return false;
-
       if (!view_.isEditorViewFocused())
          return false;
 
-      view_.focusOtherEditorSplit();
-      return true;
+      // false when no split view has materialized (none requested, or a
+      // requested split is still waiting on layout)
+      return view_.focusOtherEditorSplit();
    }
 
    private void applyEditorSplit(String type)
    {
-      if (StringUtil.isNullOrEmpty(type))
+      // tolerate stale or unrecognized property values
+      if (!StringUtil.equals(type, EDITOR_SPLIT_RIGHT) &&
+          !StringUtil.equals(type, EDITOR_SPLIT_DOWN))
+      {
          type = EDITOR_SPLIT_NONE;
+      }
 
       if (!StringUtil.equals(type, EDITOR_SPLIT_NONE))
          lastEditorSplit_ = type;
@@ -4124,6 +4133,11 @@ public class TextEditingTarget implements
    {
       if (lastCodeExecution_ == splitCodeExecution_)
          lastCodeExecution_ = codeExecution_;
+
+      // release the last-executed selection anchors, which attach to the
+      // shared document and would otherwise survive the split view
+      if (splitCodeExecution_ != null)
+         splitCodeExecution_.detachLastExecuted();
 
       splitCodeExecution_ = null;
       splitCodeExecutionDisplay_ = null;
