@@ -4055,6 +4055,13 @@ public class TextEditingTarget implements
       return view_.focusOtherEditorSplit();
    }
 
+   // True when an editor split is requested for this document; the split
+   // view itself may not have materialized yet (it waits on layout).
+   public boolean isEditorSplitActive()
+   {
+      return !StringUtil.equals(view_.getEditorSplit(), EDITOR_SPLIT_NONE);
+   }
+
    private void applyEditorSplit(String type)
    {
       // tolerate stale or unrecognized property values
