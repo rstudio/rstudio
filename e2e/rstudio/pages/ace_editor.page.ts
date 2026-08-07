@@ -187,6 +187,11 @@ export class AceEditor extends PageObject {
     });
   }
 
+  /** Rows as rendered (session.getScreenLength): exceeds the document line count exactly when soft-wrapped. */
+  async getScreenRowCount(): Promise<number> {
+    return this.run((editor) => editor.session.getScreenLength());
+  }
+
   async getCursorPosition(): Promise<Ace.Position> {
     return this.run((editor) => {
       const pos = editor.getCursorPosition();
