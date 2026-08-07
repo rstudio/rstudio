@@ -343,19 +343,33 @@ content one
 # Header two
 
 content two
+
+\`\`\`{r}
+w <- r"(never closed
+\`\`\`
+
+# Header three
+
+content three
 `;
 
     await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.Rmd', content);
 
     const editor = new AceEditor(page, 'Header one');
-    await expect.poll(() => editor.getValue()).toContain('# Header two');
+    await expect.poll(() => editor.getValue()).toContain('# Header three');
 
     // raw strings still highlight as strings
     await expect.poll(async () => (await editor.getTokenAt(1, 6))?.type).toMatch(/string/);
     await expect.poll(async () => (await editor.getTokenAt(3, 0))?.type).toMatch(/string/);
 
-    // rows after a closed raw string carry plain string states, not the
-    // leaked tokenizer stack (an array)
+    // gate on row 4 ('z <- 1', inside the chunk) reaching its correct state:
+    // an untokenized row reports the literal 'start', so 'r-start' is the
+    // only value that proves tokenization got past the raw strings cleanly
+    await expect.poll(() => editor.getState(4)).toBe('r-start');
+
+    // each of these rows saves a plain state name, not the leaked tokenizer
+    // stack (an array); rows 1 and 3 are the rows on which a raw string
+    // closes, row 9 is below the chunk
     expect(await editor.getState(1)).toBe('r-start');
     expect(await editor.getState(3)).toBe('r-start');
     expect(await editor.getState(9)).toBe('start');
@@ -364,5 +378,22 @@ content two
     // with the leaked stack, the fold swallowed the rest of the document
     const range = await editor.getFoldWidgetRange(7);
     expect(range?.end.row).toBe(10);
+
+    // the second chunk's raw string is never closed; the chunk end (row 17)
+    // escapes it and must clear the raw string's tokenizer stack too. gate on
+    // the chunk-end token so the rows are known to be tokenized in context.
+    await expect
+      .poll(async () => (await editor.getTokenAt(17, 0))?.type)
+      .toBe('support.function.codeend');
+    expect(Array.isArray(await editor.getState(16))).toBe(true);
+
+    // the chunk-end row saves the host markdown state -- a plain string
+    // ('start' or 'allowBlock' depending on the preceding content), never
+    // the raw string's leaked stack
+    expect(typeof (await editor.getState(17))).toBe('string');
+
+    // folding '# Header two' (row 11) stops before '# Header three' (row 19)
+    const range2 = await editor.getFoldWidgetRange(11);
+    expect(range2?.end.row).toBe(18);
   });
 });
