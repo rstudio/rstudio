@@ -326,4 +326,43 @@ color3: notacolor
       return { type: t?.type, value: t?.value };
     }).toEqual({ type: 'text', value: 'notacolor' });
   });
+
+  // https://github.com/rstudio/rstudio/issues/18469
+  test('R raw strings do not leak tokenizer state into following rows', async ({ rstudioPage: page }) => {
+    const content = `\`\`\`{r}
+x <- r"(hello)"
+y <- r"[multi
+line]"
+z <- 1
+\`\`\`
+
+# Header one
+
+content one
+
+# Header two
+
+content two
+`;
+
+    await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.Rmd', content);
+
+    const editor = new AceEditor(page, 'Header one');
+    await expect.poll(() => editor.getValue()).toContain('# Header two');
+
+    // raw strings still highlight as strings
+    await expect.poll(async () => (await editor.getTokenAt(1, 6))?.type).toMatch(/string/);
+    await expect.poll(async () => (await editor.getTokenAt(3, 0))?.type).toMatch(/string/);
+
+    // rows after a closed raw string carry plain string states, not the
+    // leaked tokenizer stack (an array)
+    expect(await editor.getState(1)).toBe('r-start');
+    expect(await editor.getState(3)).toBe('r-start');
+    expect(await editor.getState(9)).toBe('start');
+
+    // folding '# Header one' (row 7) stops before '# Header two' (row 11);
+    // with the leaked stack, the fold swallowed the rest of the document
+    const range = await editor.getFoldWidgetRange(7);
+    expect(range?.end.row).toBe(10);
+  });
 });

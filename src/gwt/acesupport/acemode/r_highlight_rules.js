@@ -529,7 +529,16 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : "string",
         regex : "[\\]})][-]*['\"]",
         onMatch: function(value, state, stack, line) {
-          this.next = (value === stack[2]) ? stack[0] : stack[1];
+          if (value === stack[2]) {
+            // remove the entries saved when the raw string was opened;
+            // otherwise, the non-empty stack becomes the saved state for
+            // every following row (an array rather than a string state),
+            // breaking consumers that compare states with string equality
+            this.next = stack[0];
+            stack.splice(0, 3);
+          } else {
+            this.next = stack[1];
+          }
           return this.token;
         }
       },
