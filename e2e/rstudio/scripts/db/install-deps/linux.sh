@@ -134,11 +134,18 @@ build_sqliteodbc() {
     return 1
   fi
 
-  # Only the SQLite 3 driver is wanted. --without-sqlite2 avoids needing the
-  # long-obsolete SQLite 2 headers, which no current distro ships.
+  # --build is needed on arm64: this configure script's bundled config.guess
+  # (dated 2003) doesn't recognize aarch64 and aborts with "cannot guess
+  # build type" (seen on rocky-10-arm64). Passing --build skips that check;
+  # its equally old config.sub still accepts an explicit aarch64 triplet
+  # (verified locally), so nothing needs patching.
+  #
+  # --without-sqlite2 was dropped: it isn't a real option here (checked
+  # --help). SQLite 2 support only activates via --with-sqlite=DIR, which
+  # is never passed.
   (
     cd "$src"
-    ./configure --prefix=/usr --libdir=/usr/lib64 --without-sqlite2 >/dev/null
+    ./configure --prefix=/usr --libdir=/usr/lib64 "--build=$(uname -m)-unknown-linux-gnu" >/dev/null
     make >/dev/null
   )
   $SUDO make -C "$src" install >/dev/null
