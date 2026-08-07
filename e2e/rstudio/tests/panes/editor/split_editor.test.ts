@@ -3,6 +3,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { executeCommand, setPref, clearPref } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
 import type { AceEditorElement } from '@utils/ace';
 import type { Locator, Page } from '@playwright/test';
@@ -14,8 +15,7 @@ test.describe('Split editor', () => {
 
   const FILE = 'split_editor.R';
 
-  // The marker comment identifies the source editor views in the DOM; it is
-  // never executed, so it cannot leak into the console's Ace instance.
+  // The marker comment identifies the source editor views in the DOM.
   const CONTENT = heredoc`
     # split_view_marker
     split_x <- 10
@@ -23,9 +23,14 @@ test.describe('Split editor', () => {
   `;
 
   // Both views of the document render the marker on their first (visible)
-  // row; the primary view precedes the split view in the DOM.
+  // row; the primary view precedes the split view in the DOM. Scoped to the
+  // source panel: on Server, writeAndOpenFile falls back to a console
+  // writeLines() whose echoed command leaves the marker sitting in the
+  // console's own Ace instance.
   function sourceViews(page: Page): Locator {
-    return page.locator('.ace_editor').filter({ hasText: 'split_view_marker' });
+    return page
+      .locator("[class*='rstudio_source_panel'] .ace_editor")
+      .filter({ hasText: 'split_view_marker' });
   }
 
   // The shared document's contents, read through the active editor. Throws
@@ -236,8 +241,10 @@ test.describe('Split editor', () => {
     await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000 });
 
     // The restored split is applied through the deferred-layout path
-    // (the property arrives before the editor has been laid out).
-    await expect(views).toHaveCount(2);
+    // (the property arrives before the editor has been laid out). The
+    // document itself restores asynchronously after `ready`, so allow the
+    // same budget as a file open.
+    await expect(views).toHaveCount(2, { timeout: TIMEOUTS.fileOpen });
     const boxes = await viewBoxes(page);
     expect(boxes.split.y).toBeGreaterThan(boxes.primary.y);
   });
