@@ -1,20 +1,22 @@
 name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source)"
 
-# One workflow that drives the reusable per-OS E2E "engines" five ways:
+# One workflow that drives the reusable per-OS E2E "engines" six ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday, so the engines in those
 #     slates get a run during the week without running the whole matrix daily.
 #     The slates cover 14 of the 21 engines; the other seven are reached only by
 #     the Sunday runs below.
 #   - Friday afternoon cron: macOS 14 alone, timed to land inside the October
 #     2026 brownout windows for the deprecated macos-14 image (see the pick job).
-#   - Weekly cron (Sunday 08:00): every x86_64 engine, for a full-matrix
-#     snapshot of that architecture.
-#   - Weekly cron (Sunday 14:00): every arm64 engine. Six hours after the x86_64
-#     run, so a daily-install fleet finishes well before the second one starts
-#     and the two don't contend for runners.
-#   - Manual dispatch: every engine at once (all 21, both architectures),
-#     optionally against a specific daily build (the "version" input) or built
-#     from source (the "build_from_source" input).
+#   - Weekly cron (Sunday 08:00): every Linux x86_64 engine, for a full-matrix
+#     snapshot of that group.
+#   - Weekly cron (Sunday 12:00): every Linux arm64 engine. Four hours after the
+#     x86_64 run, so a daily-install fleet finishes well before the next one
+#     starts and the two don't contend for runners.
+#   - Weekly cron (Sunday 16:00): every macOS and Windows engine, of either
+#     architecture. Four hours after the Linux arm64 run, for the same reason.
+#   - Manual dispatch: every engine at once (all 21, every platform and
+#     architecture), optionally against a specific daily build (the "version"
+#     input) or built from source (the "build_from_source" input).
 #
 # The Linux Desktop engines all run through the consolidated
 # os-test-e2e-rstudio-desktop-linux.yml workflow as a matrix (one entry per
@@ -28,19 +30,20 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # (see rstudio/latest-builds#251). Manual dispatch can instead build every
 # engine from source via build_from_source.
 #
-# Cron times are UTC: 08:00 UTC is 4 AM EDT in summer, 3 AM EST in winter, and
-# 14:00 UTC is 10 AM EDT / 9 AM EST.
+# Cron times are UTC: 08:00 UTC is 4 AM EDT in summer, 3 AM EST in winter;
+# 12:00 UTC is 8 AM EDT / 7 AM EST; 16:00 UTC is noon EDT / 11 AM EST.
 #
 # GitHub cannot tell two identical cron strings apart, and github.event.schedule
 # returns the string exactly as written here -- which is how the pick job below
-# distinguishes the two Sunday runs. So the strings must differ from each other,
-# and each must match its check in the pick job character for character.
+# distinguishes the three Sunday runs. So the strings must differ from each
+# other, and each must match its check in the pick job character for character.
 
 on:
   schedule:
     - cron: '0 8 * * 1-5'   # Mon-Fri 08:00 UTC (4 AM EDT) -- fixed slate per weekday
-    - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- all x86_64 engines (this string must match the check in the pick job and the concurrency group below)
-    - cron: '0 14 * * 0'    # Sunday 14:00 UTC (10 AM EDT) -- all arm64 engines (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- every Linux x86_64 engine (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 12 * * 0'    # Sunday 12:00 UTC (8 AM EDT) -- every Linux arm64 engine (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 16 * * 0'    # Sunday 16:00 UTC (noon EDT) -- every macOS and Windows engine (this string must match the check in the pick job and the concurrency group below)
     - cron: '0 16 * * 5'    # Friday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
   workflow_dispatch:
     inputs:
@@ -69,19 +72,21 @@ concurrency:
   # "main") can now run the macOS 14 engine at the same time as this cron does,
   # which a single shared group used to make impossible.
   #
-  # The two Sunday crons get a group each for the same reason: sharing "main"
-  # would make the 14:00 arm64 run queue behind the 08:00 x86_64 one, and since
-  # only one run per group can be pending, a third trigger would cancel it
-  # outright. Six hours is more than a daily-install fleet needs, so in practice
-  # they don't overlap -- but if the x86_64 run does overrun, separate groups
-  # keep it from delaying or cancelling the arm64 run rather than merely making
-  # that unlikely. The two runs share no runners by construction: each Sunday
-  # run is a single architecture.
+  # The three Sunday crons get a group each for the same reason: sharing "main"
+  # would make each later run queue behind the earlier one, and since only one
+  # run per group can be pending, a fourth trigger would cancel it outright.
+  # Four hours is less slack than the original two-way split had, so this is
+  # tighter than ideal for a daily-install fleet that overruns -- but each run
+  # still gets its own group, so an overrun delays or cancels only that run's
+  # own next occurrence, not one of the other two. The three runs share no
+  # runners by construction: Linux x86_64, Linux arm64, and macOS+Windows are
+  # disjoint pools.
   group: >-
     pw-scheduled-e2e-${{
     github.event.schedule == '0 16 * * 5' && 'macos14'
-    || github.event.schedule == '0 8 * * 0' && 'sunday-x86_64'
-    || github.event.schedule == '0 14 * * 0' && 'sunday-arm64'
+    || github.event.schedule == '0 8 * * 0' && 'sunday-linux-x86_64'
+    || github.event.schedule == '0 12 * * 0' && 'sunday-linux-arm64'
+    || github.event.schedule == '0 16 * * 0' && 'sunday-macos-windows'
     || 'main' }}
   cancel-in-progress: false
 
@@ -105,16 +110,22 @@ jobs:
         name: Select engines for this run
         run: |
           # workflow_dispatch runs every engine; each Sunday cron runs every
-          # engine of one architecture; the weekday cron (Mon-Fri) runs a fixed
-          # slate per day; the Friday afternoon cron runs macOS 14 alone.
+          # engine of one platform/architecture group; the weekday cron
+          # (Mon-Fri) runs a fixed slate per day; the Friday afternoon cron
+          # runs macOS 14 alone.
           #
           # ENGINES is the single source of truth for what exists. Every engine
-          # appears exactly once, tagged with the architecture it runs on, and
-          # everything else here is derived from it: ALL, both Sunday
-          # selections, and the Linux Desktop matrix. That is the point of the
-          # array -- with one declaration, a newly added engine cannot end up in
-          # neither Sunday run or in both, which two hand-maintained lists made
-          # easy to get wrong.
+          # appears exactly once, tagged with the platform and architecture it
+          # runs on, and everything else here is derived from it: ALL, all
+          # three Sunday selections, and the Linux Desktop matrix. That is the
+          # point of the array -- with one declaration, a newly added engine
+          # cannot end up in none of the three Sunday runs or in more than one,
+          # which hand-maintained lists made easy to get wrong.
+          #
+          # platform is "linux", "macos", or "windows", and only matters for
+          # the Sunday selection below: the two Linux runs split by arch, but
+          # macOS and Windows run together regardless of arch, so arch alone
+          # can't express the grouping.
           #
           # Linux Desktop entries carry three more fields: os names the
           # .github/e2e-linux config, name is the job label, and url_key names
@@ -123,7 +134,7 @@ jobs:
           # select(.os) is what separates them from the five non-Linux engines
           # when the matrix is built below; those five are keyed on by the
           # if: contains(...) guards further down this file and so need only
-          # key and arch.
+          # key, platform, and arch.
           #
           # arch is also asserted downstream: the consolidated Linux workflow
           # fails the run if it disagrees with the engine config's tools_arch,
@@ -140,27 +151,27 @@ jobs:
           # ubuntu24s appear twice, and macos14 is in no slate at all -- its
           # weekly run is the Friday 16:00 cron.
           ENGINES='[
-            {"key":"ubuntu22-x86_64","arch":"x86_64","os":"ubuntu-22-x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
-            {"key":"ubuntu22-arm64","arch":"arm64","os":"ubuntu-22-arm64","name":"Ubuntu 22 (arm64)","url_key":"jammy_arm64"},
-            {"key":"ubuntu24d-x86_64","arch":"x86_64","os":"ubuntu-24-x86_64","name":"Ubuntu 24 Desktop (x86_64)","url_key":"noble_amd64"},
-            {"key":"ubuntu24d-arm64","arch":"arm64","os":"ubuntu-24-arm64","name":"Ubuntu 24 Desktop (arm64)","url_key":"noble_arm64"},
-            {"key":"ubuntu26-x86_64","arch":"x86_64","os":"ubuntu-26-x86_64","name":"Ubuntu 26 (x86_64)","url_key":"resolute_amd64"},
-            {"key":"ubuntu26-arm64","arch":"arm64","os":"ubuntu-26-arm64","name":"Ubuntu 26 (arm64)","url_key":"resolute_arm64"},
-            {"key":"debian13-x86_64","arch":"x86_64","os":"debian-13-x86_64","name":"Debian 13 (x86_64)","url_key":"noble_amd64"},
-            {"key":"debian13-arm64","arch":"arm64","os":"debian-13-arm64","name":"Debian 13 (arm64)","url_key":"noble_arm64"},
-            {"key":"fedora43-x86_64","arch":"x86_64","os":"fedora-43-x86_64","name":"Fedora 43 (x86_64)","url_key":"rhel10_x86_64"},
-            {"key":"fedora43-arm64","arch":"arm64","os":"fedora-43-arm64","name":"Fedora 43 (arm64)","url_key":"rhel10_arm64"},
-            {"key":"fedora44-x86_64","arch":"x86_64","os":"fedora-44-x86_64","name":"Fedora 44 (x86_64)","url_key":"rhel10_x86_64"},
-            {"key":"fedora44-arm64","arch":"arm64","os":"fedora-44-arm64","name":"Fedora 44 (arm64)","url_key":"rhel10_arm64"},
-            {"key":"rocky9-x86_64","arch":"x86_64","os":"rocky-9-x86_64","name":"Rocky 9 (x86_64)","url_key":"rhel9_x86_64"},
-            {"key":"rocky9-arm64","arch":"arm64","os":"rocky-9-arm64","name":"Rocky 9 (arm64)","url_key":"rhel9_arm64"},
-            {"key":"rocky10-x86_64","arch":"x86_64","os":"rocky-10-x86_64","name":"Rocky 10 (x86_64)","url_key":"rhel10_x86_64"},
-            {"key":"rocky10-arm64","arch":"arm64","os":"rocky-10-arm64","name":"Rocky 10 (arm64)","url_key":"rhel10_arm64"},
-            {"key":"ubuntu24s","arch":"x86_64"},
-            {"key":"macos15","arch":"x86_64"},
-            {"key":"windows2025","arch":"x86_64"},
-            {"key":"macos14","arch":"arm64"},
-            {"key":"macos26","arch":"arm64"}
+            {"key":"ubuntu22-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-22-x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
+            {"key":"ubuntu22-arm64","platform":"linux","arch":"arm64","os":"ubuntu-22-arm64","name":"Ubuntu 22 (arm64)","url_key":"jammy_arm64"},
+            {"key":"ubuntu24d-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-24-x86_64","name":"Ubuntu 24 Desktop (x86_64)","url_key":"noble_amd64"},
+            {"key":"ubuntu24d-arm64","platform":"linux","arch":"arm64","os":"ubuntu-24-arm64","name":"Ubuntu 24 Desktop (arm64)","url_key":"noble_arm64"},
+            {"key":"ubuntu26-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-26-x86_64","name":"Ubuntu 26 (x86_64)","url_key":"resolute_amd64"},
+            {"key":"ubuntu26-arm64","platform":"linux","arch":"arm64","os":"ubuntu-26-arm64","name":"Ubuntu 26 (arm64)","url_key":"resolute_arm64"},
+            {"key":"debian13-x86_64","platform":"linux","arch":"x86_64","os":"debian-13-x86_64","name":"Debian 13 (x86_64)","url_key":"noble_amd64"},
+            {"key":"debian13-arm64","platform":"linux","arch":"arm64","os":"debian-13-arm64","name":"Debian 13 (arm64)","url_key":"noble_arm64"},
+            {"key":"fedora43-x86_64","platform":"linux","arch":"x86_64","os":"fedora-43-x86_64","name":"Fedora 43 (x86_64)","url_key":"rhel10_x86_64"},
+            {"key":"fedora43-arm64","platform":"linux","arch":"arm64","os":"fedora-43-arm64","name":"Fedora 43 (arm64)","url_key":"rhel10_arm64"},
+            {"key":"fedora44-x86_64","platform":"linux","arch":"x86_64","os":"fedora-44-x86_64","name":"Fedora 44 (x86_64)","url_key":"rhel10_x86_64"},
+            {"key":"fedora44-arm64","platform":"linux","arch":"arm64","os":"fedora-44-arm64","name":"Fedora 44 (arm64)","url_key":"rhel10_arm64"},
+            {"key":"rocky9-x86_64","platform":"linux","arch":"x86_64","os":"rocky-9-x86_64","name":"Rocky 9 (x86_64)","url_key":"rhel9_x86_64"},
+            {"key":"rocky9-arm64","platform":"linux","arch":"arm64","os":"rocky-9-arm64","name":"Rocky 9 (arm64)","url_key":"rhel9_arm64"},
+            {"key":"rocky10-x86_64","platform":"linux","arch":"x86_64","os":"rocky-10-x86_64","name":"Rocky 10 (x86_64)","url_key":"rhel10_x86_64"},
+            {"key":"rocky10-arm64","platform":"linux","arch":"arm64","os":"rocky-10-arm64","name":"Rocky 10 (arm64)","url_key":"rhel10_arm64"},
+            {"key":"ubuntu24s","platform":"linux","arch":"x86_64"},
+            {"key":"macos15","platform":"macos","arch":"x86_64"},
+            {"key":"windows2025","platform":"windows","arch":"x86_64"},
+            {"key":"macos14","platform":"macos","arch":"arm64"},
+            {"key":"macos26","platform":"macos","arch":"arm64"}
           ]'
           # keys "" gives every key; keys <arch> gives that architecture's.
           keys() { jq -cn --argjson e "$ENGINES" --arg a "$1" \
@@ -169,9 +180,14 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SEL="$ALL"
           elif [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
-            SEL=$(keys x86_64)
-          elif [ "${{ github.event.schedule }}" = "0 14 * * 0" ]; then
-            SEL=$(keys arm64)
+            SEL=$(jq -cn --argjson e "$ENGINES" \
+              '[$e[] | select(.platform=="linux" and .arch=="x86_64") | .key]')
+          elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then
+            SEL=$(jq -cn --argjson e "$ENGINES" \
+              '[$e[] | select(.platform=="linux" and .arch=="arm64") | .key]')
+          elif [ "${{ github.event.schedule }}" = "0 16 * * 0" ]; then
+            SEL=$(jq -cn --argjson e "$ENGINES" \
+              '[$e[] | select(.platform=="macos" or .platform=="windows") | .key]')
           elif [ "${{ github.event.schedule }}" = "0 16 * * 5" ]; then
             # macOS 14 runs on its own Friday-afternoon cron instead of in a
             # weekday slate, so its runs land inside the October 2026 brownout
@@ -183,11 +199,11 @@ jobs:
             # this slot. Verified against actions/runner-images#13518.
             # Those failures are the point -- early warning that the image is
             # fully retired on 2026-11-02. No brownout window falls on a Sunday,
-            # so neither Sunday cron is affected before that date, but a
-            # dispatch launched inside any of the eight windows will hit one.
-            # After the retirement date this run, the Sunday arm64 run, and
-            # every dispatch fail until macos14 is removed from this workflow
-            # and from ENGINES above.
+            # so none of the three Sunday crons is affected before that date,
+            # but a dispatch launched inside any of the eight windows will hit
+            # one. After the retirement date this run, the Sunday macOS+Windows
+            # run, and every dispatch fail until macos14 is removed from this
+            # workflow and from ENGINES above.
             SEL='["macos14"]'
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
@@ -197,9 +213,9 @@ jobs:
               4) SEL='["fedora43-x86_64","ubuntu24d-arm64","windows2025"]' ;;
               5) SEL='["ubuntu24s","macos26","debian13-arm64"]' ;;
               # Only reachable by re-running a weekday run on Sat/Sun, or if
-              # either Sunday cron above changed without updating its check
+              # any Sunday cron above changed without updating its check
               # above. Fail loudly rather than silently selecting nothing.
-              *) echo "::error::No engine slate for weekday $(date -u +%u). If either Sunday cron changed, update the '0 8 * * 0' and '0 14 * * 0' checks in this job."; exit 1 ;;
+              *) echo "::error::No engine slate for weekday $(date -u +%u). If any Sunday cron changed, update the '0 8 * * 0', '0 12 * * 0', and '0 16 * * 0' checks in this job."; exit 1 ;;
             esac
           fi
           echo "selected=$SEL" >> "$GITHUB_OUTPUT"
