@@ -72,11 +72,12 @@ html, body {
    background-color: var(--grid-bg);
    color: var(--grid-fg);
    overflow: hidden;
-   /* The root never scrolls, but declaring this here stops wheel deltas that
-      no pane consumed from chaining out of the iframe to the host page (e.g.
-      a horizontal trackpad gesture over the frozen pane triggering history
-      swipe navigation). Per-pane declarations only apply to gestures that
-      latch onto that pane; the root catches everything else. */
+   /* Defense in depth against wheel deltas chaining out of the iframe to the
+      host page: the scroll panes (#gridViewport, #pinnedPane) declare this
+      for gestures that latch onto them; the root's declaration catches
+      everything else. Only the root element's value propagates to the
+      viewport (as with overflow), so on body this is inert -- it rides along
+      in the shared html, body rule. */
    overscroll-behavior: none;
 }
 
