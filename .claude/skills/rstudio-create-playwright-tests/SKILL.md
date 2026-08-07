@@ -117,7 +117,68 @@ This file covers RStudio-specific gotchas that aren't in the README.
    spuriously idle. Wait for busy first (`waitForConsoleBusy`,
    `pages/console_pane.page.ts`), then for idle.
 
-9. **A stray modal reads as "intercepts pointer events".** Any GWT modal
+9. **A console prompt does not mean R-side change detection has run.** The
+   session queues `kConsolePrompt`, wakes the waiting `get_events` poller
+   (`ClientEventQueue::add` ends in `notify_all`), and calls `onDetectChanges`
+   only after that (`SessionConsoleInput.cpp`). So the prompt is ordered ahead of
+   every change-detection event, and it can reach the client first.
+   `executeInConsole` resolves on the prompt counter. At that moment a plot that
+   raises the Plots pane, a package-list refresh, or a file change can be
+   unqueued, undelivered, or not yet rendered. If you wait on the prompt and then
+   measure, the assertion passes whether or not the effect happened. Wait on the
+   effect itself, for example the `aria-selected` value of the Plots tab. Pick a
+   signal that reads differently on a broken build.
+
+10. **Client state reaches the server on a passive 5s timer.**
+   `persistClientState()` fires `PushClientStateEvent` with `active=false`, so
+   `ClientStateUpdater` reschedules instead of pushing now
+   (`PASSIVE_INTERVAL_MILLIS`). A test that changes persisted state and then
+   reloads normally outruns the save and restores nothing. It passes without
+   exercising the restore. First wait for the `set_client_state` RPC that carries
+   your value:
+   `page.waitForResponse(r => r.url().includes('set_client_state') &&
+   (r.request().postData() ?? '').includes('<YourKey>'))`. All state values go in
+   one RPC, so this also waits for state from other components. Then make sure
+   the RPC succeeded. `waitForResponse` also resolves for a rejected response,
+   and a rejected RPC returns HTTP 200 with an `error` member, because
+   `HttpConnection::sendJsonRpcError` uses the normal `sendJsonRpcResponse` path.
+   `response.ok()` alone does not prove the write landed. Look for `"error"` in
+   the body.
+
+11. **`window.rstudio.ready` is the earliest usable post-reload signal. It is
+   not a state-applied gate.** It is better than a pane selector: panes attach at
+   construction, so `waitForSelector('#rstudio_TabSet1_pane')` returns while
+   startup state handling is still pending. But `ready` does not mean startup
+   finished, and it does not even mean the panes exist. Two reasons:
+   - `Application.java` sets `ready` in `initializeAgent()`, then calls
+     `initializeWorkbench()` in the same task, so you cannot observe the gap.
+     Work that startup defers to a *later* task is still pending:
+     `Scheduler.scheduleDeferred` work, and timers such as the 200ms timer in
+     `PaneManager.ZoomedTabStateValue.onInit`.
+   - `initializeWorkbench()` returns early with a `ReloadEvent` when the
+     UI-language cookie, or the web-dialogs cookie on Electron, disagrees with
+     its pref. It returns before it builds the workbench, and the reload it
+     fires is delayed.
+
+   On the re-join path of a `page.reload()` the R session stays up, so
+   `sessionInfo.deferred_init_completed` is already true and
+   `DeferredInitCompletedEvent` does not fire again -- which is why `ready` is
+   set in `initializeAgent()` at all. Gate on `ready`, then let the assertion
+   wait for the element and for the timing (see the next entry).
+
+12. **`expect.poll` cannot assert that something never happens.** It returns on
+   the first sample that passes. When the starting state is also the passing
+   state -- the pane is not zoomed, no dialog appeared -- the poll succeeds at
+   once, and the test is green before the bad state arrives. Its `timeout` value
+   does not help in that direction, and a fixed `sleep` in front of it only races
+   the product timer. For a must-not-happen assertion, sample the predicate over
+   a window that outlasts the deferred work, and fail on the first violation.
+   Start that window after the first sample passes: a slow first sample can
+   otherwise consume the whole window and check the state once. This is entry 9's
+   trap in the other direction. Pick the signal by asking what a broken build
+   does.
+
+13. **A stray modal reads as "intercepts pointer events".** Any GWT modal
    renders a `gwt-PopupPanelGlass` overlay, so an unexpected dialog (e.g.
    "Error Listing Packages" after resume) surfaces as an opaque
    `gwt-PopupPanelGlass intercepts pointer events` timeout at an unrelated

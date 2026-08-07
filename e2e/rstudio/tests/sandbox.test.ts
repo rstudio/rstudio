@@ -19,9 +19,7 @@ const SANDBOX = process.env.PW_SANDBOX;
 test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
   test.skip(!SANDBOX, 'PW_SANDBOX is not set; sandbox-setup did not run');
 
-  test('Desktop launch populates electron-userdata and creates data-home/user-home', async ({ rstudioPage }) => {
-    void rstudioPage; // Triggers the worker-scoped launch.
-
+  test('Desktop launch populates electron-userdata and creates data-home/user-home', async ({ rstudioSession }) => {
     // Sandbox-level dirs: user-home is shared; data-home is only the
     // seeded-pai source (Desktop sessions get per-spec data homes below).
     expect(fs.existsSync(path.join(SANDBOX!, 'data-home'))).toBe(true);
@@ -32,7 +30,12 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
     // or relaunch from scratch can add more config dirs over a full-suite
     // run. Validate the layout against *every* config dir so a partial-init
     // sibling (e.g., from a Desktop spawn that died mid-launch) can't pass
-    // silently behind a healthy one chosen by readdir order.
+    // silently behind a healthy one chosen by readdir order. Only markers
+    // written synchronously before/at launch are asserted here: Chromium
+    // writes electron-userdata/Local State through a delayed committer
+    // (~10s after launch), so a healthy sibling instance that exited young
+    // may never have flushed it, and its stale dir would fail this test on
+    // every retry for the rest of the run (#18475).
     const configDirs = fs.readdirSync(SANDBOX!).filter(e => e.startsWith('config_'));
     expect(configDirs.length).toBeGreaterThanOrEqual(1);
 
@@ -43,16 +46,9 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
         `${dir}: expected config-home/rstudio-prefs.json to exist`,
       ).toBe(true);
 
-      const electronData = path.join(configRoot, 'electron-userdata');
       expect(
-        fs.existsSync(electronData),
+        fs.existsSync(path.join(configRoot, 'electron-userdata')),
         `${dir}: expected electron-userdata to exist`,
-      ).toBe(true);
-      // Electron writes Local State asynchronously at startup. Poll for it
-      // rather than asserting readdirSync().length > 0 on a single read.
-      await expect.poll(
-        () => fs.existsSync(path.join(electronData, 'Local State')),
-        { message: `${dir}: expected electron-userdata/Local State to exist` },
       ).toBe(true);
 
       // Each config root carries its own isolated data home; a shared one
@@ -63,6 +59,22 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
         `${dir}: expected per-spec data-home to exist`,
       ).toBe(true);
     }
+
+    // Check Local State -- proof that Electron actually adopted our
+    // --user-data-dir -- only in this worker's own config root, whose
+    // instance is still alive and therefore guaranteed to reach Chromium's
+    // first commit. The poll budget must cover the committer's ~10s delay,
+    // measured from process start; the default 5s expect timeout left too
+    // little headroom when launch readiness came up fast.
+    const ownConfigRoot = rstudioSession.configRoot;
+    expect(ownConfigRoot, 'expected the desktop fixture to expose its config root').toBeTruthy();
+    await expect.poll(
+      () => fs.existsSync(path.join(ownConfigRoot!, 'electron-userdata', 'Local State')),
+      {
+        message: 'expected electron-userdata/Local State to exist in the current spec config root',
+        timeout: 15000,
+      },
+    ).toBe(true);
 
     // The session persists its state under RSTUDIO_DATA_HOME; at least the
     // current worker's launch must have written there. Catches the session
