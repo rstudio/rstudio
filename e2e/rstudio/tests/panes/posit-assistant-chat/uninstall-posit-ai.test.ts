@@ -5,7 +5,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { YES_BTN, NO_BTN } from '@pages/modals.page';
-import { requireAiCredentials } from '@utils/ai-credentials';
+import { hasAiCredentials, requireAiCredentials } from '@utils/ai-credentials';
 import { selectPositChatProvider } from './_chat-setup';
 import type { Page } from 'playwright';
 
@@ -61,6 +61,16 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@chat
   let chatActions: ChatPaneActions;
 
   base.beforeAll(async () => {
+    // requireAiCredentials gates each test through beforeEach, which Playwright
+    // runs AFTER beforeAll -- so without this guard the setup below still runs
+    // when there are no PAI credentials, and any failure in it turns what
+    // should be a clean skip into a failed test. The sibling chat files take
+    // the rstudioPage fixture and so aren't exposed; this one manages its own
+    // session (see the note above), which is what puts the launch and the PAI
+    // install ahead of the gate. Bail out and let beforeEach report the skip.
+    // Shares hasAiCredentials with the gate so the two can't disagree.
+    if (!(await hasAiCredentials('positai'))) return;
+
     session = await launchRStudio();
     page = session.page;
     consoleActions = new ConsolePaneActions(page);
