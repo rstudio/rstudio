@@ -292,6 +292,11 @@ struct CachedFrame : MoveOnly
    std::vector<int> workingOrderCols;
    std::vector<std::string> workingOrderDirs;
 
+   // True when a .rs.removeWorkingData call for this frame failed, so the
+   // working copy on the R side is stale. applyViewTransform must not reuse
+   // it, and onDetectChanges retries the removal on the next evaluation.
+   bool pendingWorkingDataWipe = false;
+
    // The R underlying object being monitored
    // Protection is required as we introspect the object for changes
    r::sexp::PreservedSEXP observedSEXP;
@@ -659,7 +664,8 @@ SEXP applyViewTransform(SEXP dataSEXP,
    // superset we can further filter) before recomputing from scratch.
    bool recompute = true;
    auto cachedFrame = s_cachedFrames.find(cacheKey);
-   if (cachedFrame != s_cachedFrames.end())
+   if (cachedFrame != s_cachedFrames.end() &&
+       !cachedFrame->second.pendingWorkingDataWipe)
    {
       SEXP workingDataSEXP = R_NilValue;
       r::exec::RFunction(".rs.findWorkingData", cacheKey)
@@ -1335,27 +1341,50 @@ void onDetectChanges(module_context::ChangeSource source)
       // clear working data (the cached sort/filter/search copy) for the
       // object, but only when a change was actually observed: clearing it on
       // every REPL evaluation forced the first grid request after any console
-      // command to re-sort and re-filter the entire frame (#17806).
+      // command to re-sort and re-filter the entire frame (#17806). The
+      // trade-off is residency: the retained copy (for a sort with no filter,
+      // a full-size duplicate of the frame) now lives until the next observed
+      // change or viewer close, where it previously survived at most one
+      // prompt.
       //
-      // Retention is only safe where the checks above are trustworthy: the
-      // copy-on-modify classes whose row count we track (data.frame / matrix,
-      // mirroring CachedFrame). data.table is excluded because an in-place
-      // value update (DT[i, x := v]) changes none of the SEXP, class, dims,
-      // or names. Anything else -- e.g. remote tables, whose nrow is
-      // deliberately never queried -- keeps the conservative per-prompt
-      // wipe: slower, but never silently stale.
+      // Retention is limited to plain data.frames. What actually protects the
+      // retained copy is reference counting, not the class per se: the viewer
+      // preserves a reference to the frame, so the ordinary mutation paths
+      // ([<-, $<-, etc.) copy on write and sexpChanged observes the new SEXP.
+      // Classes whose ordinary mutation paths write in place defeat that:
+      // data.table's := updates values while changing none of the SEXP,
+      // class, dims, or names, so it keeps the per-prompt wipe. (The same C
+      // code reached via data.table::set() on a plain data.frame is an
+      // accepted residual hole -- and one that does not self-heal, since a
+      // later narrowed filter transforms FROM the stale copy; wrong values
+      // persist until a widened filter, a detected change, or the tab
+      // closes.) Matrices are excluded because change detection never
+      // queries their row count (CachedFrame leaves nrow at -1; note that
+      // C-level Rf_inherits sees only a real class attribute, so it is FALSE
+      // for a plain matrix regardless). Everything else keeps the
+      // conservative per-prompt wipe: slower, but stale for at most one
+      // evaluation.
       bool changeDetectionReliable =
-            (Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix")) &&
+            Rf_inherits(sexp, "data.frame") &&
             !Rf_inherits(sexp, "data.table");
 
-      if (frameChanged || !changeDetectionReliable)
+      if (frameChanged || !changeDetectionReliable || i->second.pendingWorkingDataWipe)
       {
-         // now that this no longer runs on every evaluation, a dropped
-         // failure would leave the stale copy in place for the life of the
-         // viewer (applyViewTransform matches on parameters only), so log it
+         // a failed removal used to self-correct (the wipe re-ran every
+         // evaluation); on the retention path it would leave the stale copy
+         // served indefinitely, because the replacement CachedFrame's empty
+         // working state lets applyViewTransform match it as a superset of
+         // any sort-only request. Remember the failure on both the current
+         // frame and its replacement (newFrame supplants i->second below
+         // when frameChanged), so applyViewTransform skips reuse and the
+         // removal is retried on the next evaluation.
          Error error = r::exec::RFunction(".rs.removeWorkingData", i->first).call();
          if (error)
             LOG_ERROR(error);
+
+         bool wipeFailed = static_cast<bool>(error);
+         i->second.pendingWorkingDataWipe = wipeFailed;
+         newFrame.pendingWorkingDataWipe = wipeFailed;
       }
 
       if (frameChanged)
