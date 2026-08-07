@@ -270,14 +270,18 @@ public class MiniPopupPanel extends DecoratedPopupPanel
 
    private void addEscHandler()
    {
+      // show() can be invoked on an already-visible popup; remove any
+      // previous handler so it doesn't leak (and later fire with a null
+      // escapeHandler_ field)
+      removeEscHandler();
+
       escapeHandler_ = Event.addNativePreviewHandler(nativePreviewEvent ->
       {
          if (nativePreviewEvent.getTypeInt() == Event.ONKEYDOWN &&
             nativePreviewEvent.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
          {
             nativePreviewEvent.cancel();
-            escapeHandler_.removeHandler();
-            escapeHandler_ = null;
+            removeEscHandler();
             hide();
          }
       });
