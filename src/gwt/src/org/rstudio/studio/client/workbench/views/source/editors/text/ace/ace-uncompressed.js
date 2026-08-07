@@ -43094,8 +43094,9 @@ var BackgroundTokenizer = /** @class */ (function () {
         var state = this.states[row - 1];
         var context = Object.assign({}, this.contexts[row - 1] || {});
         var data = this.tokenizer.getLineTokens(line, state, row, context);
+        var contextChanged = JSON.stringify(this.contexts[row]) !== JSON.stringify(context);
         this.contexts[row] = context;
-        if (this.states[row] + "" !== data.state + "") {
+        if (contextChanged || this.states[row] + "" !== data.state + "") {
             this.states[row] = data.state;
             this.lines[row + 1] = null;
             if (this.currentLine > row + 1)
@@ -57554,7 +57555,6 @@ var Editor = require("./editor").Editor;
         if (this.inMultiSelectMode && !this.inVirtualSelectionMode) {
             var range = this.multiSelect.ranges[0];
             if (range == null) {
-                // https://github.com/rstudio/rstudio/issues/13605
                 return;
             }
             if (this.multiSelect.isEmpty() && anchor == this.multiSelect.anchor)

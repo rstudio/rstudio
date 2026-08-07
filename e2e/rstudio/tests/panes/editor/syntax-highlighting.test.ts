@@ -23,6 +23,7 @@ test.describe('Syntax Highlighting', () => {
       'syntax_highlight.qmd',
       'syntax_highlight.R',
       'syntax_highlight.yml',
+      'syntax_highlight.md',
     ]);
   });
 
@@ -325,5 +326,38 @@ color3: notacolor
       const t = (await editor.getTokens(2))[2];
       return { type: t?.type, value: t?.value };
     }).toEqual({ type: 'text', value: 'notacolor' });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18472
+  //
+  // The background tokenizer used to propagate invalidation to following
+  // rows only when a row's end *state* changed; an edit that changed only
+  // tokenizer *context* (here, the indent recorded for a YAML multiline
+  // string) left every row below with stale cached tokens. A plain .yml
+  // document is used because modes with a code-model scope tree mask the
+  // bug (the scope-tree rebuild force-retokenizes the document after every
+  // edit), and the document is tall enough that the target row sits below
+  // the viewport, beyond reach of the fold gutter's incidental getState()
+  // sweeps.
+  test('context-only edits re-highlight following rows', async ({ rstudioPage: page }) => {
+    const lines = Array.from({ length: 40 }, (_, i) => `    value${i}`).join('\n');
+    const content = `key: |\n${lines}\ntail: done\n`;
+
+    await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.yml', content);
+
+    const editor = new AceEditor(page, 'value39');
+    await expect.poll(() => editor.getValue()).toContain('tail: done');
+
+    // rows 1-40 are the multiline string's content; row 35 is off-screen
+    await expect.poll(async () => (await editor.getTokens(35))[0]?.type).toMatch(/string/);
+
+    // re-indent the opener so its indent (6) exceeds the content indent (4):
+    // the multiline string now ends at its first content row, but the opener
+    // row's end state is unchanged -- only the tokenizer context differs
+    await editor.gotoLine(1, 0);
+    await editor.insert('      ');
+
+    await expect.poll(async () => (await editor.getTokens(35))[0]?.type, { timeout: 15000 })
+      .not.toMatch(/string/);
   });
 });
