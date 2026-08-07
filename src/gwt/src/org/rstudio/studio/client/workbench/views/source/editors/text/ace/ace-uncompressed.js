@@ -42980,6 +42980,46 @@ exports.Document = Document;
 define("ace/background_tokenizer",["require","exports","module","ace/lib/oop","ace/lib/event_emitter"], function(require, exports, module){"use strict";
 var oop = require("./lib/oop");
 var EventEmitter = require("./lib/event_emitter").EventEmitter;
+var MAX_CONTEXT_DEPTH = 16;
+function cloneContext(context) {
+    if (context == null)
+        return {};
+    for (var key in context)
+        return structuredClone(context);
+    return {};
+}
+function isPlainObject(value) {
+    var proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+}
+function equalContextValues(lhs, rhs, depth) {
+    if (lhs === rhs)
+        return true;
+    if (typeof lhs === "number" && typeof rhs === "number")
+        return lhs !== lhs && rhs !== rhs; // both NaN
+    if (depth <= 0 || lhs == null || rhs == null)
+        return false;
+    if (typeof lhs !== "object" || typeof rhs !== "object")
+        return false;
+    if (Array.isArray(lhs) !== Array.isArray(rhs))
+        return false;
+    if (!Array.isArray(lhs) && (!isPlainObject(lhs) || !isPlainObject(rhs)))
+        return false;
+    var keys = Object.keys(lhs);
+    if (keys.length !== Object.keys(rhs).length)
+        return false;
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (!Object.prototype.hasOwnProperty.call(rhs, key))
+            return false;
+        if (!equalContextValues(lhs[key], rhs[key], depth - 1))
+            return false;
+    }
+    return true;
+}
+function equalContexts(lhs, rhs) {
+    return equalContextValues(lhs, rhs, MAX_CONTEXT_DEPTH);
+}
 var BackgroundTokenizer = /** @class */ (function () {
     function BackgroundTokenizer(tokenizer, session) {
         this.running = false;
@@ -43092,10 +43132,11 @@ var BackgroundTokenizer = /** @class */ (function () {
     BackgroundTokenizer.prototype.$tokenizeRow = function (row) {
         var line = this.doc.getLine(row);
         var state = this.states[row - 1];
-        var context = Object.assign({}, this.contexts[row - 1] || {});
+        var context = cloneContext(this.contexts[row - 1]);
         var data = this.tokenizer.getLineTokens(line, state, row, context);
+        var contextChanged = !equalContexts(this.contexts[row], context);
         this.contexts[row] = context;
-        if (this.states[row] + "" !== data.state + "") {
+        if (contextChanged || this.states[row] + "" !== data.state + "") {
             this.states[row] = data.state;
             this.lines[row + 1] = null;
             if (this.currentLine > row + 1)
@@ -43118,6 +43159,8 @@ var BackgroundTokenizer = /** @class */ (function () {
 }());
 oop.implement(BackgroundTokenizer.prototype, EventEmitter);
 exports.BackgroundTokenizer = BackgroundTokenizer;
+exports.cloneContext = cloneContext;
+exports.equalContexts = equalContexts;
 
 });
 
@@ -57554,7 +57597,6 @@ var Editor = require("./editor").Editor;
         if (this.inMultiSelectMode && !this.inVirtualSelectionMode) {
             var range = this.multiSelect.ranges[0];
             if (range == null) {
-                // https://github.com/rstudio/rstudio/issues/13605
                 return;
             }
             if (this.multiSelect.isEmpty() && anchor == this.multiSelect.anchor)
