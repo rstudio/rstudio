@@ -1,0 +1,191 @@
+name: "Cert: E2E Playwright RStudio (cross-platform release certification)"
+
+# Kicks off an end-to-end certification run across macOS, Windows, and Linux
+# Server against a SPECIFIC pre-built installer for each platform -- the binaries
+# the team has decided to certify, not a fresh source build, not "latest daily".
+#
+# Trigger from gh:
+#   gh workflow run cert-e2e-rstudio.yml --repo rstudio/rstudio \
+#     --ref <release-branch> \
+#     -f mac_installer_url=https://.../RStudio-X.Y.Z.dmg \
+#     -f win_installer_url=https://.../RStudio-X.Y.Z.exe \
+#     -f linux_installer_url=https://.../rstudio-server-X.Y.Z-amd64.deb
+#
+# --ref picks both the workflow file and the e2e/ test version: certify the
+# tests that ship with the release branch against the binaries that ship with
+# the release. There is also a wrapper at scripts/run-cert-e2e.sh.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mac_installer_url:
+        description: "URL to the macOS .dmg installer to certify."
+        type: string
+        required: true
+      win_installer_url:
+        description: "URL to the Windows .exe installer to certify."
+        type: string
+        required: true
+      linux_installer_url:
+        description: "URL to the Linux Server .deb installer to certify (Ubuntu 24)."
+        type: string
+        required: true
+      r_version:
+        description: "R version to install via rig across all three platforms (e.g. 'release', '4.5.3'). Keep consistent across platforms for a meaningful cert."
+        type: string
+        default: "release"
+      grep_invert:
+        description: "Playwright --grep-invert pattern to skip tests by title. Default '@ai' excludes tests requiring credentials not available to unattended cert runs."
+        type: string
+        default: "@ai"
+
+concurrency:
+  # One cert run at a time per branch -- a new dispatch on the same branch
+  # cancels the previous in-flight cert rather than queueing.
+  group: cert-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  # Propagated to the per-platform reusables, which declare it for their PR
+  # sticky-comment path. Cert runs themselves set post_pr_comment: false, so
+  # this is unused at the cert level -- kept only so workflow_call doesn't
+  # fail the implicit permission check.
+  pull-requests: write
+
+jobs:
+  # Fail fast before burning ~3 hours of cross-platform runner time on a typo'd
+  # URL or a 404'd build. HEAD-checks each URL and verifies the file extension
+  # matches the target platform (pasting a .dmg URL into the Windows slot is
+  # the most common mistake when copy-pasting from a release tracker).
+  validate-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate URLs reachable and have expected extensions
+        env:
+          MAC_URL: ${{ inputs.mac_installer_url }}
+          WIN_URL: ${{ inputs.win_installer_url }}
+          LINUX_URL: ${{ inputs.linux_installer_url }}
+        run: |
+          set -euo pipefail
+          fail=0
+
+          check() {
+            local label="$1" url="$2" suffix="$3"
+            if [[ "$url" != *"$suffix" ]]; then
+              echo "::error::$label URL does not end in $suffix: $url"
+              fail=1
+              return
+            fi
+            # -L follows redirects (dailies.rstudio.com 302s to S3),
+            # -I issues a HEAD (don't download the installer),
+            # --fail makes 4xx/5xx exit non-zero so the workflow stops here.
+            if ! curl -sSL -I --fail --max-time 30 "$url" -o /dev/null; then
+              echo "::error::$label URL did not respond 2xx to HEAD: $url"
+              fail=1
+              return
+            fi
+            echo "::notice::$label OK: $url"
+          }
+
+          check "macOS"   "$MAC_URL"   ".dmg"
+          check "Windows" "$WIN_URL"   ".exe"
+          check "Linux"   "$LINUX_URL" ".deb"
+
+          if [[ $fail -ne 0 ]]; then
+            echo "::error::One or more cert installer URLs failed validation. Aborting before runner-expensive jobs."
+            exit 1
+          fi
+
+      - name: Record cert context in run summary
+        env:
+          MAC_URL: ${{ inputs.mac_installer_url }}
+          WIN_URL: ${{ inputs.win_installer_url }}
+          LINUX_URL: ${{ inputs.linux_installer_url }}
+        run: |
+          {
+            echo "## Certification run inputs"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Branch (\`--ref\`) | \`${{ github.ref_name }}\` |"
+            echo "| Triggered by | @${{ github.actor }} |"
+            echo "| R version | \`${{ inputs.r_version }}\` |"
+            echo "| \`grep_invert\` | \`${{ inputs.grep_invert }}\` |"
+            echo "| macOS installer | $MAC_URL |"
+            echo "| Windows installer | $WIN_URL |"
+            echo "| Linux installer | $LINUX_URL |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  macos:
+    needs: validate-inputs
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      # The reusable declares OP_SERVICE_ACCOUNT_TOKEN, not CONNECT_API_KEY --
+      # it fetches CONNECT_API_KEY (and the @ai-test credentials) from 1Password
+      # using this token. Passing CONNECT_API_KEY directly would be rejected at
+      # workflow_call validation. Empty value is acceptable: the reusable's
+      # 1Password step skips cleanly and dependent features degrade gracefully.
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      build_from_source: false
+      rstudio_installer_url: ${{ inputs.mac_installer_url }}
+      project: desktop
+      r_version: ${{ inputs.r_version }}
+      grep_invert: ${{ inputs.grep_invert }}
+      post_pr_comment: false
+
+  windows:
+    needs: validate-inputs
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      # See note on the macos job above re: OP_SERVICE_ACCOUNT_TOKEN vs.
+      # CONNECT_API_KEY.
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      build_from_source: false
+      rstudio_installer_url: ${{ inputs.win_installer_url }}
+      project: desktop
+      r_version: ${{ inputs.r_version }}
+      grep_invert: ${{ inputs.grep_invert }}
+      post_pr_comment: false
+
+  linux-server:
+    needs: validate-inputs
+    # The Linux Server reusable on this branch is the pre-PR-#17939 shape:
+    # no build_from_source / build_only / post_pr_comment inputs, and no
+    # workflow_call.secrets block. By definition cert tests a pinned URL, so
+    # the smaller input set is sufficient. After #17939 merges, this call
+    # can add `build_from_source: false`, `post_pr_comment: false`, and pass
+    # OP_SERVICE_ACCOUNT_TOKEN through for parity with mac/win.
+    uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
+    with:
+      rstudio_installer_url: ${{ inputs.linux_installer_url }}
+      project: server
+      r_version: ${{ inputs.r_version }}
+      grep_invert: ${{ inputs.grep_invert }}
+
+  cert-summary:
+    needs: [macos, windows, linux-server]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Per-platform status table
+        run: |
+          {
+            echo "## Certification results"
+            echo
+            echo "| Platform | Result |"
+            echo "|---|---|"
+            echo "| macOS arm64 | ${{ needs.macos.result }} |"
+            echo "| Windows Server 2025 | ${{ needs.windows.result }} |"
+            echo "| Linux Server ubuntu-24 | ${{ needs.linux-server.result }} |"
+            echo
+            echo "Each platform uploads its merged Playwright report as an artifact (\`playwright-report-mac\`, \`playwright-report-win\`, \`playwright-report-linux\` after PR #17939 merges); download from the run's Summary panel to inspect failed tests."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the overall cert run if any platform did not succeed
+        if: needs.macos.result != 'success' || needs.windows.result != 'success' || needs.linux-server.result != 'success'
+        run: |
+          echo "::error::At least one platform did not pass certification. See per-platform jobs above."
+          exit 1
