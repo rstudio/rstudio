@@ -194,16 +194,17 @@ case "$family" in
     # unixODBC-devel because Fedora has no PPM binaries: the R odbc package
     # compiles from source and needs the headers, not just the runtime.
     #
-    # TEMPORARY DIAGNOSTIC (2026-08-07): Fedora's own dnf-packaged sqliteodbc
-    # (sqliteodbc-0.99991-8.fc44) crashes R with a fatal, uncatchable error
-    # inside odbc::odbcListObjectTypes() -- confirmed via a breadcrumb probe
-    # that isolated the exact call, on tests/panes/connections/, run
-    # 31203160622. Building from the same upstream source RHEL/Rocky already
-    # use (see build_sqliteodbc below) tests whether that is a defect in
-    # Fedora's specific build, or in the upstream driver code regardless of
-    # how it's compiled. Revert this to the plain `dnf install sqliteodbc`
-    # once that question is answered, unless the source build turns out to be
-    # the fix Fedora needs going forward.
+    # sqliteodbc is built from upstream source here, NOT installed via dnf.
+    # Fedora's own dnf-packaged sqliteodbc (sqliteodbc-0.99991-8.fc44) crashes
+    # R with a fatal, uncatchable error inside odbc::odbcListObjectTypes() --
+    # confirmed with a breadcrumb probe that isolated the exact call (run
+    # 31203160622). Building the identical upstream version ourselves (see
+    # build_sqliteodbc below) survives that same call cleanly (run
+    # 31217182547), which places the defect in Fedora's own RPM build --
+    # a different linked SQLite version, compiler flags, or a distro patch --
+    # not in the upstream driver code. So this isn't a workaround pending an
+    # answer; it's the fix, matching how RHEL/Rocky already get sqliteodbc
+    # (they have no package for it at all).
     packages="unixODBC unixODBC-devel postgresql-odbc sqlite-devel gcc make tar"
     have_postgres || packages="$packages postgresql-server"
     echo "[db-deps] dnf install: $packages"
