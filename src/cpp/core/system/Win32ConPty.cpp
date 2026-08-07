@@ -10,6 +10,7 @@
 #include "Win32ConPty.hpp"
 
 #include <climits>
+#include <system_error>
 
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
@@ -464,11 +465,33 @@ void ConPty::teardownLocked()
    // Close the pseudoconsole on a closer thread that captures only the HPCON
    // value (so detaching it as a last resort cannot touch freed members). This
    // terminates the child and breaks the output pipe, unblocking the reader.
+   //
+   // The launch is guarded because teardownLocked() runs from ~ConPty and so
+   // must not let an exception escape. rsession exits through R's exit(), so a
+   // terminal still registered with the process-wide ProcessSupervisor is torn
+   // down from that singleton's atexit destructor -- after RtlExitUserProcess
+   // has begun, where thread creation fails with STATUS_PROCESS_IS_TERMINATING
+   // and std::thread's constructor throws std::system_error. Unguarded, that
+   // exception left the destructor and std::terminate()d the process.
+   //
+   // Skip the close rather than falling back to closing on this thread: before
+   // Windows 24H2 ClosePseudoConsole blocks until the output pipe drains, and
+   // the reader that would drain it is already gone at that point, so an inline
+   // close risks hanging exit. The OS reclaims the pseudoconsole and terminates
+   // its client as the process goes away.
    std::thread closer;
    if (hPC_)
    {
       HPCON hpc = hPC_;
-      closer = std::thread([hpc] { api().close(hpc); });
+      try
+      {
+         closer = std::thread([hpc] { api().close(hpc); });
+      }
+      catch (const std::system_error& e)
+      {
+         LOG_WARNING_MESSAGE("Could not start ConPTY closer thread (" +
+                             e.code().message() + "); leaving the pseudoconsole to the OS");
+      }
    }
 
    // Reap the closer (reader is still draining, so it completes even pre-24H2).
