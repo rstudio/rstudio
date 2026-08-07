@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
-import { setPref } from '@utils/commands';
+import { clearPref, setPref } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 
@@ -87,7 +87,7 @@ Goodbye, world!
 
       expect(await editor.getState(5)).toBe('start');
     } finally {
-      await setPref(page, 'rainbow_fenced_divs', false);
+      await clearPref(page, 'rainbow_fenced_divs');
     }
   });
 
@@ -117,26 +117,31 @@ something
       const editor = new AceEditor(page, '{#1.1.2}');
       await expect.poll(() => editor.getValue()).toContain('::::::');
 
-      // opening and closing fences at the same nesting depth share a color
-      const expectedFenceColors = [
-        [0, 0],   // :::::: {#1}
-        [3, 1],   // ::::: {#1.1}
-        [6, 2],   // ::: {#1.1.1}
-        [8, 2],   // :::
-        [10, 2],  // ::: {#1.1.2}
-        [12, 2],  // :::
-        [13, 1],  // :::::
-        [14, 0],  // ::::::
-      ] as const;
+      // opening and closing fences at the same nesting depth share a color;
+      // one entry per fence line of 'content', in document order
+      const expectedFenceColors = [0, 1, 2, 2, 2, 2, 1, 0];
+      const fenceRows = content
+        .split('\n')
+        .map((line, row) => ({ line, row }))
+        .filter(({ line }) => line.startsWith(':::'));
+      expect(fenceRows).toHaveLength(expectedFenceColors.length);
 
-      for (const [row, color] of expectedFenceColors) {
+      for (const [i, { line, row }] of fenceRows.entries()) {
+        const color = expectedFenceColors[i];
+        const fence = line.replace(/[^:].*$/, '');
+        const text = line.slice(fence.length);
+        const expected = [{ type: `fenced_div_${color}`, value: fence }];
+        if (text.length > 0) {
+          expected.push({ type: `fenced_div_text_${color}`, value: text });
+        }
+
         await expect.poll(async () => {
           const tokens = await editor.getTokens(row);
-          return tokens[0]?.type;
-        }, { message: `fence color at row ${row}` }).toBe(`fenced_div_${color}`);
+          return tokens.map((t) => ({ type: t.type, value: t.value }));
+        }, { message: `fence tokens at row ${row} (${line})` }).toEqual(expected);
       }
     } finally {
-      await setPref(page, 'rainbow_fenced_divs', false);
+      await clearPref(page, 'rainbow_fenced_divs');
     }
   });
 
