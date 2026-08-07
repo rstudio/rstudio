@@ -57,9 +57,11 @@ var SweaveHighlightRules = function() {
     // embed R highlight rules within \Sexpr{}
     //
     // NOTE: the entry state and brace count are stored as separate primitive
-    // context fields, so that the tokenizer's per-row shallow copies snapshot
-    // them correctly -- brace-count mutations on a shared object would leak
-    // into the contexts saved for previously-tokenized rows
+    // context fields, so that the per-row context snapshots (TokenUtils'
+    // $tokenizeUpToRow, BackgroundTokenizer's $tokenizeRow) capture them
+    // correctly -- those snapshots are shallow copies, so brace-count
+    // mutations on a shared object would leak into the snapshots saved for
+    // previously-tokenized rows
     this.$rules["start"].unshift({
         regex: "(\\\\Sexpr)([{])",
         next: "r-sexpr-start",
@@ -89,6 +91,9 @@ var SweaveHighlightRules = function() {
         regex : "[}]",
         merge : false,
         onMatch: function(value, state, stack, line, context) {
+            if (context.sexprCount == null)
+                Utils.warnMissingContext("sexpr");
+
             var count = (context.sexprCount || 1) - 1;
             if (count === 0) {
                 this.next = context.sexprState || "start";

@@ -113,6 +113,13 @@ var TokenUtils = function(doc, tokenizer, tokens,
          // If we ended in the same state that the cache says, then we know that
          // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
          // that has been explicitly invalidated.
+         //
+         // NOTE: this resume check compares end states only, so an edit that
+         // changes a row's context without changing its end state (e.g. a
+         // chunk fence widened from 3 backticks to 4, where the width lives
+         // only in the context) can leave stale $contexts entries below it.
+         // A limitation shared with RCodeModel and Ace's BackgroundTokenizer,
+         // which resume the same way.
          if (lineTokens.state === this.$endStates[row])
             assumeGood = true;
          else

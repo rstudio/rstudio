@@ -34,6 +34,22 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
    var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
    var Colors = require("mode/colors");
 
+   // Warn (once) when the multiline-string rule finds no yaml context. It
+   // degrades gracefully rather than crash, but a missing context usually
+   // means some caller isn't threading a context object through
+   // getLineTokens(). A local copy of Utils.warnMissingContext, as requiring
+   // "mode/utils" here would be circular (utils requires this module).
+   var $warnedMissingContext = false;
+   function warnMissingContext()
+   {
+      if ($warnedMissingContext)
+         return;
+
+      $warnedMissingContext = true;
+      if (typeof console !== "undefined" && console.warn)
+         console.warn("tokenizer context is missing 'yaml' state; using fallback (highlighting may be degraded)");
+   }
+
    var makeNumberRule = function(suffix) {
       return {
          token: ["constant.numeric", "text"],
@@ -191,10 +207,12 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
                var match = /^(?:#[|])?(\s*)/.exec(line);
                var indent = match[1];
 
-               // save prior state + indent length; use a fresh object, as
-               // the tokenizer's per-row contexts are shallow copies, and
-               // mutating an inherited object would corrupt the contexts
-               // saved for previously-tokenized rows
+               // save prior state + indent length; store a fresh object, as
+               // the per-row context snapshots (TokenUtils' $tokenizeUpToRow,
+               // BackgroundTokenizer's $tokenizeRow) are shallow copies, and
+               // this object is not deleted on exit, so mutating an inherited
+               // one would retroactively corrupt the snapshots saved for a
+               // previous multiline string's rows
                context.yaml = { state: state, indent: indent.length };
 
                // return token
@@ -352,8 +370,17 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
                // was used to start the multiline string, then
                // exit multiline string state
                var yaml = context.yaml;
+               if (yaml == null)
+                  warnMissingContext();
                if (yaml == null || yaml.indent >= value.length) {
-                  this.next = (yaml && yaml.state) || "start";
+                  // The fallback derives the multiline opener's state from
+                  // this one, preserving any embed prefix: a dynamically
+                  // assigned 'this.next' is not rewritten by Ace's addRules()
+                  // when these rules are embedded, so a hardcoded "start"
+                  // would escape to the outermost mode (e.g. from
+                  // 'quarto-yaml-multiline-string' we must exit to
+                  // 'quarto-yaml-start', not 'start').
+                  this.next = (yaml && yaml.state) || state.replace(/multiline-string$/, "start");
                } else {
                   this.next = state + "-rest";
                }

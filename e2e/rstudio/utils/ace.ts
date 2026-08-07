@@ -45,6 +45,7 @@ export namespace Ace {
     getFoldWidget(row: number): string;
     getFoldWidgetRange(row: number): Range | null;
     getState(row: number): string;
+    getTabString(): string;
     getTokens(row: number): unknown[];
     getTokenAt(row: number, column: number): unknown | null;
     getMarkers(): Record<string, unknown>;
