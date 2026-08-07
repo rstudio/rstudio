@@ -178,11 +178,23 @@ case "$family" in
   fedora)
     # unixODBC-devel because Fedora has no PPM binaries: the R odbc package
     # compiles from source and needs the headers, not just the runtime.
-    packages="unixODBC unixODBC-devel postgresql-odbc sqliteodbc"
+    #
+    # TEMPORARY DIAGNOSTIC (2026-08-07): Fedora's own dnf-packaged sqliteodbc
+    # (sqliteodbc-0.99991-8.fc44) crashes R with a fatal, uncatchable error
+    # inside odbc::odbcListObjectTypes() -- confirmed via a breadcrumb probe
+    # that isolated the exact call, on tests/panes/connections/, run
+    # 31203160622. Building from the same upstream source RHEL/Rocky already
+    # use (see build_sqliteodbc below) tests whether that is a defect in
+    # Fedora's specific build, or in the upstream driver code regardless of
+    # how it's compiled. Revert this to the plain `dnf install sqliteodbc`
+    # once that question is answered, unless the source build turns out to be
+    # the fix Fedora needs going forward.
+    packages="unixODBC unixODBC-devel postgresql-odbc sqlite-devel gcc make tar"
     have_postgres || packages="$packages postgresql-server"
     echo "[db-deps] dnf install: $packages"
     # shellcheck disable=SC2086
     $SUDO dnf install -y $packages
+    build_sqliteodbc
     expect_postgres_driver="psqlodbcw.so"
     expect_sqlite_driver="libsqlite3odbc.so"
     ;;
