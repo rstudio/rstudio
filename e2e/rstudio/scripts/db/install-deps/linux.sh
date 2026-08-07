@@ -143,8 +143,23 @@ build_sqliteodbc() {
   # --without-sqlite2 was dropped: it isn't a real option here (checked
   # --help). SQLite 2 support only activates via --with-sqlite=DIR, which
   # is never passed.
+  #
+  # CFLAGS demote GCC 14+'s default-to-error strictness back to the older
+  # behavior. This ~2010s-era C code assigns/calls through old-style,
+  # unprototyped function pointers (e.g. `int (*gpps)()` called with 6 real
+  # arguments) and mismatched function-pointer types -- both are exactly the
+  # class of thing GCC 14 turned from warnings into hard errors by default
+  # (per its own release notes), which is what failed the build on Fedora 44
+  # (Rocky's older GCC compiles the identical source with no flags at all, so
+  # this is purely a toolchain-strictness gap, not a real code fix). -std=gnu17
+  # opts back into the pre-C23 dialect these warnings are keyed to; the
+  # individual -Wno-error= flags cover what -std alone does not demote.
+  local cflags="-std=gnu17 -Wno-error=implicit-function-declaration"
+  cflags="$cflags -Wno-error=implicit-int -Wno-error=incompatible-pointer-types"
+  cflags="$cflags -Wno-error=int-conversion"
   (
     cd "$src"
+    export CFLAGS="$cflags"
     ./configure --prefix=/usr --libdir=/usr/lib64 "--build=$(uname -m)-unknown-linux-gnu" >/dev/null
     make >/dev/null
   )
