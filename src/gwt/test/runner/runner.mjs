@@ -22,6 +22,7 @@ const PAGES = [
    "test/autoindent_test_r.html",
    "test/context_test_rmd.html",
    "test/highlight_test_cpp.html",
+   "test/highlight_test_markdown.html",
    "test/highlight_test_sql.html",
 ];
 

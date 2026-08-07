@@ -217,7 +217,7 @@ var MarkdownHighlightRules = function () {
          token: "markup.heading.2",
          regex: "^\\-{3,}(?=\\s*$)"
       }, {
-         // opening fenced div
+         // fenced div, either opening (has trailing text) or closing (bare colons)
          token: "fenced_open",
          regex: "^[:]{3,}\\s*.*$",
          onMatch: function (val, state, stack, line, context) {
@@ -226,21 +226,27 @@ var MarkdownHighlightRules = function () {
                return "keyword.operator";
             }
 
-            var color = (context.fences || 0) % $numFencedDivsColors;
+            // color fences by nesting depth, like rainbow parentheses;
+            // 'context.fences' tracks the current nesting depth
+            var depth = context.fences || 0;
             var close = /^[:]{3,}\s*$/.test(val);
 
-            if (close) {
-               context.fences = color + 1;
+            if (close)
+               depth = Math.max(0, depth - 1);
+
+            var color = depth % $numFencedDivsColors;
+            context.fences = close ? depth : depth + 1;
+
+            if (close)
                return "fenced_div_" + color;
-            } else {
-               // separating the fence (:::) from the follow up text
-               // in case we want to style them differently
-               var rx = /^([:]{3,})(.*)$/;
-               return [
-                  { type: "fenced_div_" + color, value: val.replace(rx, '$1') },
-                  { type: "fenced_div_text_" + color, value: val.replace(rx, '$2') },
-               ];
-            }
+
+            // separating the fence (:::) from the follow up text
+            // in case we want to style them differently
+            var rx = /^([:]{3,})(.*)$/;
+            return [
+               { type: "fenced_div_" + color, value: val.replace(rx, '$1') },
+               { type: "fenced_div_text_" + color, value: val.replace(rx, '$2') },
+            ];
          },
          next: "start"
       }, {
