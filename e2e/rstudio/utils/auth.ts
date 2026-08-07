@@ -433,6 +433,25 @@ export interface AiAuthStatus {
   source: AiAuthSource;
   outcome: AiAuthOutcome;
   reason: string;
+  // External-server runs only (see isExternalServerRun): true once the
+  // provisioning step has confirmed this provider's credentials are in place
+  // in the REMOTE home -- pushed there through the session, or found already
+  // present on the account. requireAiCredentials additionally requires this
+  // on external-server runs, because there the sandbox store the other gates
+  // read never reaches the rsession (#18348). Absent on all other runs.
+  remoteProvisioned?: boolean;
+}
+
+// Whether this run targets an external RStudio Server (as opposed to desktop
+// or a spawned in-tree rserver, whose rsessions get the sandbox credentials
+// via the --rsession-path wrapper in fixtures/server.fixture.ts). On external
+// runs the sandbox stores only reach the rsession through the remote
+// provisioning step (utils/remote-provision.ts).
+export function isExternalServerRun(): boolean {
+  return (
+    (process.env.PW_RSTUDIO_MODE ?? 'desktop').toLowerCase() === 'server'
+    && !!process.env.PW_RSTUDIO_SERVER_URL
+  );
 }
 
 // One status file per provider ('positai-auth-status.json',
@@ -477,9 +496,15 @@ export function readAuthStatus(sandbox: string, provider: AIProvider): AiAuthSta
     || !isOneOf(parsed.source, AUTH_SOURCES)
     || !isOneOf(parsed.outcome, AUTH_OUTCOMES)
     || typeof parsed.reason !== 'string'
+    || (parsed.remoteProvisioned !== undefined && typeof parsed.remoteProvisioned !== 'boolean')
   ) {
     console.warn(`[auth] WARNING: unrecognized auth status shape in ${file}; ignoring it`);
     return null;
   }
-  return { source: parsed.source, outcome: parsed.outcome, reason: parsed.reason };
+  return {
+    source: parsed.source,
+    outcome: parsed.outcome,
+    reason: parsed.reason,
+    ...(parsed.remoteProvisioned !== undefined && { remoteProvisioned: parsed.remoteProvisioned }),
+  };
 }
