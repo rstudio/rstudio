@@ -168,7 +168,7 @@ export class AceEditor extends PageObject {
     });
   }
 
-  async getState(row: number): Promise<string> {
+  async getState(row: number): Promise<string | string[]> {
     return this.run((editor, r: number) => editor.session.getState(r), row);
   }
 

@@ -23,6 +23,7 @@ const PAGES = [
    "test/context_test_rmd.html",
    "test/highlight_test_cpp.html",
    "test/highlight_test_markdown.html",
+   "test/highlight_test_r.html",
    "test/highlight_test_sql.html",
 ];
 

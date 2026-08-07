@@ -135,6 +135,7 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
             var chunk = context.chunk;
             if (chunk == null) {
                that.warnMissingContext("chunk");
+               stack.splice(0);
                this.next = endState;
                return "support.function.codeend";
             }
@@ -147,6 +148,13 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
                this.next = state;
                return "text";
             }
+
+            // Discard any entries the embedded mode left on the tokenizer
+            // stack (e.g. an unterminated R raw string or sh heredoc); the
+            // host mode doesn't use the stack, and a non-empty stack would
+            // become the saved state (an array, rather than a string) for
+            // every following row.
+            stack.splice(0);
 
             // Update the next state and return the matched token.
             this.next = chunk.state || endState;
