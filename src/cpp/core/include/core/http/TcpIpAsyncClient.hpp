@@ -17,6 +17,7 @@
 #define CORE_HTTP_TCP_IP_ASYNC_CLIENT_HPP
 
 #include <boost/function.hpp>
+#include <boost/optional.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <boost/asio/ip/tcp.hpp>
@@ -58,6 +59,11 @@ protected:
       return socket_;
    }
 
+   // Restricts the destination hostname's resolution to the given address
+   // family (rstudio-pro#12142). Unset (the default) preserves the prior
+   // behavior of an unrestricted resolve.
+   void setIpFamily(boost::asio::ip::tcp family) { ipFamily_ = family; }
+
 private:
 
    void verifyThenWriteRequest()
@@ -85,10 +91,17 @@ private:
       
       const auto proxyUrl = proxyUtils().httpProxyUrl(address_, port_);
 
+      // ipFamily_ is only meant to disambiguate the real destination's
+      // hostname (e.g. "localhost"); when routed through a forward proxy,
+      // resolve the proxy's own hostname unrestricted rather than potentially
+      // forcing a family the proxy itself isn't reachable over.
+      auto connectIpFamily = ipFamily_;
+
       if(proxyUrl.has_value())
       {
          connectAddress = proxyUrl->hostname();
          connectPort = std::to_string(proxyUrl->port());
+         connectIpFamily = boost::none;
          LOG_DEBUG_MESSAGE("Using proxy: " + connectAddress + ":" + connectPort);
       }
 
@@ -101,7 +114,8 @@ private:
             boost::asio::bind_executor(*pStrand_,
                  boost::bind(&TcpIpAsyncClient::handleConnectionError,
                              TcpIpAsyncClient::sharedFromThis(), _1)),
-            connectionTimeout_);
+            connectionTimeout_,
+            connectIpFamily);
 
    }
 
@@ -130,6 +144,7 @@ private:
    std::string address_;
    std::string port_;
    boost::posix_time::time_duration connectionTimeout_;
+   boost::optional<boost::asio::ip::tcp> ipFamily_;
 };
 
 } // namespace http

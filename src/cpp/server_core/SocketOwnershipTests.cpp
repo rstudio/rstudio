@@ -31,17 +31,31 @@ namespace socket_utils {
 
 namespace {
 
-// Minimal blocking HTTP/1.1 responder used only by the LocalhostAsyncClient
-// positive-path test below: accepts a single connection, reads the request
+// Minimal blocking HTTP/1.1 responder used by the LocalhostAsyncClient
+// positive-path tests below: accepts a single connection, reads the request
 // headers, and writes back a trivial 200 OK with no body. The reject-path
 // test above never needs this since it asserts the request is never written.
 class MinimalHttpResponder
 {
 public:
-   MinimalHttpResponder()
-      : acceptor_(ioc_, boost::asio::ip::tcp::endpoint(
-                            boost::asio::ip::make_address("127.0.0.1"), 0))
+   // Binds a loopback listener at the given address (a v4 or v6 literal) on
+   // an ephemeral port. Binding an IPv6 address can fail in environments
+   // without an IPv6 loopback (mirroring the other IPv6 tests in this file);
+   // callers must check ok() and GTEST_SKIP() rather than use the object if
+   // it's false.
+   explicit MinimalHttpResponder(const std::string& bindAddress = "127.0.0.1")
+      : acceptor_(ioc_)
    {
+      boost::system::error_code ec;
+      auto address = boost::asio::ip::make_address(bindAddress, ec);
+      if (!ec)
+         acceptor_.open(address.is_v6() ? boost::asio::ip::tcp::v6() : boost::asio::ip::tcp::v4(), ec);
+      if (!ec)
+         acceptor_.bind(boost::asio::ip::tcp::endpoint(address, 0), ec);
+      if (!ec)
+         acceptor_.listen(boost::asio::socket_base::max_listen_connections, ec);
+      ok_ = !ec;
+      errorMessage_ = ec.message();
    }
 
    ~MinimalHttpResponder()
@@ -49,6 +63,9 @@ public:
       if (thread_.joinable())
          thread_.join();
    }
+
+   bool ok() const { return ok_; }
+   const std::string& errorMessage() const { return errorMessage_; }
 
    unsigned short port() { return acceptor_.local_endpoint().port(); }
 
@@ -78,6 +95,8 @@ private:
    boost::asio::io_context ioc_;
    boost::asio::ip::tcp::acceptor acceptor_;
    std::thread thread_;
+   bool ok_ = false;
+   std::string errorMessage_;
 };
 
 } // anonymous namespace
@@ -425,6 +444,7 @@ TEST(SocketOwnershipTest, LocalhostAsyncClientAllowsPeerWithMatchingUid)
    // matching (or unenforced) uid always allows the request through, so no
    // GTEST_SKIP() guard is needed here (contrast the reject-path test above).
    MinimalHttpResponder responder;
+   ASSERT_TRUE(responder.ok()) << responder.errorMessage();
    responder.start();
 
    boost::asio::io_context io;
@@ -447,6 +467,135 @@ TEST(SocketOwnershipTest, LocalhostAsyncClientAllowsPeerWithMatchingUid)
    io.run();
    EXPECT_TRUE(gotResponse);
    EXPECT_EQ(200, statusCode);
+}
+
+TEST(SocketOwnershipTest, LocalhostAsyncClientSetIpv6FalseConnectsOverIPv4)
+{
+   // setIpv6(false) restricts "localhost"'s resolution to its A record, so
+   // the client should reach a plain IPv4 loopback listener normally.
+   MinimalHttpResponder responder("127.0.0.1");
+   ASSERT_TRUE(responder.ok()) << responder.errorMessage();
+   responder.start();
+
+   boost::asio::io_context io;
+   auto pClient = boost::make_shared<server_core::http::LocalhostAsyncClient>(
+                     io, "localhost", std::to_string(responder.port()));
+   pClient->setIpv6(false);
+   pClient->setRequestTimeout(boost::posix_time::seconds(5));
+   pClient->request().setMethod("GET");
+   pClient->request().setUri("/");
+
+   bool gotResponse = false;
+   int statusCode = 0;
+   pClient->execute(
+      [&](const core::http::Response& response)
+      {
+         gotResponse = true;
+         statusCode = response.statusCode();
+      },
+      [&](const core::Error&) { /* must not reach here */ });
+   io.run();
+   EXPECT_TRUE(gotResponse);
+   EXPECT_EQ(200, statusCode);
+}
+
+TEST(SocketOwnershipTest, LocalhostAsyncClientSetIpv6TrueConnectsOverIPv6)
+{
+   // Positive-path complement of the test above: setIpv6(true) restricts
+   // "localhost"'s resolution to its AAAA record, so the client should reach
+   // a plain IPv6 loopback listener.
+   MinimalHttpResponder responder("::1");
+   if (!responder.ok())
+   {
+      GTEST_SKIP() << "IPv6 loopback (::1) is not available in this environment: "
+                   << responder.errorMessage();
+   }
+   responder.start();
+
+   boost::asio::io_context io;
+   auto pClient = boost::make_shared<server_core::http::LocalhostAsyncClient>(
+                     io, "localhost", std::to_string(responder.port()));
+   pClient->setIpv6(true);
+   pClient->setRequestTimeout(boost::posix_time::seconds(5));
+   pClient->request().setMethod("GET");
+   pClient->request().setUri("/");
+
+   bool gotResponse = false;
+   int statusCode = 0;
+   pClient->execute(
+      [&](const core::http::Response& response)
+      {
+         gotResponse = true;
+         statusCode = response.statusCode();
+      },
+      [&](const core::Error&) { /* must not reach here */ });
+   io.run();
+   EXPECT_TRUE(gotResponse);
+   EXPECT_EQ(200, statusCode);
+}
+
+TEST(SocketOwnershipTest, LocalhostAsyncClientSetIpv6TrueDoesNotFallBackToIPv4)
+{
+   // Negative-path check that the restriction is real rather than a no-op:
+   // with only an IPv4 loopback listener present, setIpv6(true) must not
+   // silently fall back to it -- the connection has to fail (either because
+   // "localhost" has no AAAA record to resolve to in this environment, or
+   // because it resolves to ::1 and nothing is listening there on this port).
+   // Deliberately never call start(): no connection is expected to reach
+   // this listener, and its accept-and-respond thread would otherwise block
+   // forever in accept() (and hang the test in ~MinimalHttpResponder's
+   // thread_.join()) since nothing will ever connect to it here.
+   MinimalHttpResponder responder("127.0.0.1");
+   ASSERT_TRUE(responder.ok()) << responder.errorMessage();
+
+   boost::asio::io_context io;
+   auto pClient = boost::make_shared<server_core::http::LocalhostAsyncClient>(
+                     io, "localhost", std::to_string(responder.port()));
+   pClient->setIpv6(true);
+   pClient->setRequestTimeout(boost::posix_time::seconds(5));
+   pClient->request().setMethod("GET");
+   pClient->request().setUri("/");
+
+   bool gotResponse = false;
+   bool gotError = false;
+   pClient->execute(
+      [&](const core::http::Response&) { gotResponse = true; },
+      [&](const core::Error&) { gotError = true; });
+   io.run();
+   EXPECT_FALSE(gotResponse);
+   EXPECT_TRUE(gotError);
+}
+
+TEST(SocketOwnershipTest, LocalhostAsyncClientSetIpv6FalseDoesNotFallBackToIPv6)
+{
+   // Mirror of the test above: with only an IPv6 loopback listener present,
+   // setIpv6(false) must not fall back to it -- "localhost" is restricted to
+   // its A record, which nothing is listening on for this port.
+   // Deliberately never call start() -- see the comment in the mirror test
+   // above.
+   MinimalHttpResponder responder("::1");
+   if (!responder.ok())
+   {
+      GTEST_SKIP() << "IPv6 loopback (::1) is not available in this environment: "
+                   << responder.errorMessage();
+   }
+
+   boost::asio::io_context io;
+   auto pClient = boost::make_shared<server_core::http::LocalhostAsyncClient>(
+                     io, "localhost", std::to_string(responder.port()));
+   pClient->setIpv6(false);
+   pClient->setRequestTimeout(boost::posix_time::seconds(5));
+   pClient->request().setMethod("GET");
+   pClient->request().setUri("/");
+
+   bool gotResponse = false;
+   bool gotError = false;
+   pClient->execute(
+      [&](const core::http::Response&) { gotResponse = true; },
+      [&](const core::Error&) { gotError = true; });
+   io.run();
+   EXPECT_FALSE(gotResponse);
+   EXPECT_TRUE(gotError);
 }
 
 // Note: LocalhostAsyncClientSsl shares the same verifyConnectedPeer() logic

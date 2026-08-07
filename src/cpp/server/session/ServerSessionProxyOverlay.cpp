@@ -41,6 +41,7 @@ bool proxyRequest(
 bool proxyLocalhostRequest(
       http::Request& request,
       const std::string& port,
+      bool ipv6,
       const r_util::SessionContext& context,
       boost::shared_ptr<http::AsyncConnection> ptrConnection,
       const LocalhostResponseHandler& responseHandler,
