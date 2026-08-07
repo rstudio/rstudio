@@ -2,7 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
-import { setPref } from '@utils/commands';
+import { clearPref, setPref } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 
@@ -77,18 +77,72 @@ Goodbye, world!
         { type: 'fenced_div_text_0', value: ' {.callout 0}' },
       ]);
 
-      // Second callout block (row 4): tokens cycle to fenced_div_1
+      // Second callout block (row 4): same nesting depth, so same color
       await expect.poll(async () => {
         const tokens = await editor.getTokens(4);
         return tokens.map((t) => ({ type: t.type, value: t.value }));
       }).toEqual([
-        { type: 'fenced_div_1', value: ':::' },
-        { type: 'fenced_div_text_1', value: ' {.callout 1}' },
+        { type: 'fenced_div_0', value: ':::' },
+        { type: 'fenced_div_text_0', value: ' {.callout 1}' },
       ]);
 
       expect(await editor.getState(5)).toBe('start');
     } finally {
-      await setPref(page, 'rainbow_fenced_divs', false);
+      await clearPref(page, 'rainbow_fenced_divs');
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18464
+  test('nested fenced divs are colored by nesting depth', async ({ rstudioPage: page }) => {
+    const content = `:::::: {#1}
+something
+
+::::: {#1.1}
+something
+
+::: {#1.1.1}
+something
+:::
+
+::: {#1.1.2}
+something
+:::
+:::::
+::::::
+`;
+
+    await setPref(page, 'rainbow_fenced_divs', true);
+    try {
+      await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.qmd', content);
+
+      const editor = new AceEditor(page, '{#1.1.2}');
+      await expect.poll(() => editor.getValue()).toContain('::::::');
+
+      // opening and closing fences at the same nesting depth share a color;
+      // one entry per fence line of 'content', in document order
+      const expectedFenceColors = [0, 1, 2, 2, 2, 2, 1, 0];
+      const fenceRows = content
+        .split('\n')
+        .map((line, row) => ({ line, row }))
+        .filter(({ line }) => line.startsWith(':::'));
+      expect(fenceRows).toHaveLength(expectedFenceColors.length);
+
+      for (const [i, { line, row }] of fenceRows.entries()) {
+        const color = expectedFenceColors[i];
+        const fence = line.replace(/[^:].*$/, '');
+        const text = line.slice(fence.length);
+        const expected = [{ type: `fenced_div_${color}`, value: fence }];
+        if (text.length > 0) {
+          expected.push({ type: `fenced_div_text_${color}`, value: text });
+        }
+
+        await expect.poll(async () => {
+          const tokens = await editor.getTokens(row);
+          return tokens.map((t) => ({ type: t.type, value: t.value }));
+        }, { message: `fence tokens at row ${row} (${line})` }).toEqual(expected);
+      }
+    } finally {
+      await clearPref(page, 'rainbow_fenced_divs');
     }
   });
 
@@ -377,13 +431,13 @@ color3: notacolor
   // https://github.com/rstudio/rstudio/issues/18472
   //
   // The same bug, exercising the symptom reported in the issue: rainbow
-  // fenced div colors in plain Markdown. The color index lives in tokenizer
-  // context (a counter advanced by each closing fence), so a fence inserted
-  // at the top must shift the color of every following block, while leaving
-  // every row's end state unchanged.
+  // fenced div colors in plain Markdown. The nesting depth lives in
+  // tokenizer context, so an unclosed opener inserted at the top must
+  // deepen (and so recolor) every following block, while leaving every
+  // row's end state unchanged.
   test('context-only edits recolor fenced divs on following rows', async ({ rstudioPage: page }) => {
-    // 25 fenced div blocks, 4 rows each: block k opens at row 4k with color
-    // k % 7 (7 rainbow colors)
+    // 25 fenced div blocks, 4 rows each: block k opens at row 4k; every
+    // block sits at nesting depth 0, so every fence starts with color 0
     const content = Array.from(
       { length: 25 },
       (_, k) => `::: {.block-${k}}\ncontent ${k}\n:::\n`,
@@ -396,13 +450,13 @@ color3: notacolor
       const editor = new AceEditor(page, '');
       await expect.poll(() => editor.getValue()).toContain('block-24');
 
-      // block 20 opens at row 80, with color 20 % 7 = 6
+      // block 20 opens at row 80, at depth 0
       await expect.poll(async () => {
         const tokens = await editor.getTokens(80);
         return tokens.map((t) => ({ type: t.type, value: t.value }));
       }, { timeout: 15000 }).toEqual([
-        { type: 'fenced_div_6', value: ':::' },
-        { type: 'fenced_div_text_6', value: ' {.block-20}' },
+        { type: 'fenced_div_0', value: ':::' },
+        { type: 'fenced_div_text_0', value: ' {.block-20}' },
       ]);
 
       // the guard the test's validity rests on: the target row must sit
@@ -410,22 +464,92 @@ color3: notacolor
       // incidental getState() sweeps (which re-tokenize the rendered rows)
       expect(await editor.getLastVisibleRow()).toBeLessThan(80);
 
-      // insert a closing fence at the top: it advances the color counter,
-      // so every following block cycles to the next color, but each row's
+      // insert an unclosed opener at the top: every following block now
+      // nests one level deeper and takes the next color, but each row's
       // end state is unchanged -- only the tokenizer context differs
       await editor.gotoLine(1, 0);
-      await editor.insert(':::\n');
+      await editor.insert('::: {.outer}\n');
 
-      // block 20 now opens at row 81, and its color wraps to 21 % 7 = 0
+      // block 20 now opens at row 81, at depth 1
       await expect.poll(async () => {
         const tokens = await editor.getTokens(81);
         return tokens.map((t) => ({ type: t.type, value: t.value }));
       }, { timeout: 15000 }).toEqual([
-        { type: 'fenced_div_0', value: ':::' },
-        { type: 'fenced_div_text_0', value: ' {.block-20}' },
+        { type: 'fenced_div_1', value: ':::' },
+        { type: 'fenced_div_text_1', value: ' {.block-20}' },
       ]);
     } finally {
       await setPref(page, 'rainbow_fenced_divs', false);
     }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18469
+  test('R raw strings do not leak tokenizer state into following rows', async ({ rstudioPage: page }) => {
+    const content = `\`\`\`{r}
+x <- r"(hello)"
+y <- r"[multi
+line]"
+z <- 1
+\`\`\`
+
+# Header one
+
+content one
+
+# Header two
+
+content two
+
+\`\`\`{r}
+w <- r"(never closed
+\`\`\`
+
+# Header three
+
+content three
+`;
+
+    await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.Rmd', content);
+
+    const editor = new AceEditor(page, 'Header one');
+    await expect.poll(() => editor.getValue()).toContain('# Header three');
+
+    // raw strings still highlight as strings
+    await expect.poll(async () => (await editor.getTokenAt(1, 6))?.type).toMatch(/string/);
+    await expect.poll(async () => (await editor.getTokenAt(3, 0))?.type).toMatch(/string/);
+
+    // gate on row 4 ('z <- 1', inside the chunk) reaching its correct state:
+    // an untokenized row reports the literal 'start', so 'r-start' is the
+    // only value that proves tokenization got past the raw strings cleanly
+    await expect.poll(() => editor.getState(4)).toBe('r-start');
+
+    // each of these rows saves a plain state name, not the leaked tokenizer
+    // stack (an array); rows 1 and 3 are the rows on which a raw string
+    // closes, row 9 is below the chunk
+    expect(await editor.getState(1)).toBe('r-start');
+    expect(await editor.getState(3)).toBe('r-start');
+    expect(await editor.getState(9)).toBe('start');
+
+    // folding '# Header one' (row 7) stops before '# Header two' (row 11);
+    // with the leaked stack, the fold swallowed the rest of the document
+    const range = await editor.getFoldWidgetRange(7);
+    expect(range?.end.row).toBe(10);
+
+    // the second chunk's raw string is never closed; the chunk end (row 17)
+    // escapes it and must clear the raw string's tokenizer stack too. gate on
+    // the chunk-end token so the rows are known to be tokenized in context.
+    await expect
+      .poll(async () => (await editor.getTokenAt(17, 0))?.type)
+      .toBe('support.function.codeend');
+    expect(Array.isArray(await editor.getState(16))).toBe(true);
+
+    // the chunk-end row saves the host markdown state -- a plain string
+    // ('start' or 'allowBlock' depending on the preceding content), never
+    // the raw string's leaked stack
+    expect(typeof (await editor.getState(17))).toBe('string');
+
+    // folding '# Header two' (row 11) stops before '# Header three' (row 19)
+    const range2 = await editor.getFoldWidgetRange(11);
+    expect(range2?.end.row).toBe(18);
   });
 });

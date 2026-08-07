@@ -21,6 +21,7 @@ var TokenUtils = function(doc, tokenizer, tokens,
    this.$tokenizer = tokenizer;
    this.$tokens = tokens;
    this.$endStates = new Array(doc.getLength());
+   this.$contexts = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
    this.$codeEndPattern = codeEndPattern;
@@ -97,8 +98,10 @@ var TokenUtils = function(doc, tokenizer, tokens,
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row - 1];
+         var context = Object.assign({}, this.$contexts[row - 1]);
          var line = this.$doc.getLine(row);
-         var lineTokens = this.$tokenizer.getLineTokens(line, state, row);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state, row, context);
+         this.$contexts[row] = context;
 
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||
@@ -110,6 +113,13 @@ var TokenUtils = function(doc, tokenizer, tokens,
          // If we ended in the same state that the cache says, then we know that
          // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
          // that has been explicitly invalidated.
+         //
+         // NOTE: this resume check compares end states only, so an edit that
+         // changes a row's context without changing its end state (e.g. a
+         // chunk fence widened from 3 backticks to 4, where the width lives
+         // only in the context) can leave stale $contexts entries below it.
+         // A limitation shared with RCodeModel and Ace's BackgroundTokenizer,
+         // which resume the same way.
          if (lineTokens.state === this.$endStates[row])
             assumeGood = true;
          else
@@ -159,8 +169,9 @@ var TokenUtils = function(doc, tokenizer, tokens,
    {
       this.$tokens[row] = null;
       this.$endStates[row] = null;
+      this.$contexts[row] = null;
    };
-   
+
    this.$insertNewRows = function(row, count)
    {
       var args = [row, 0];
@@ -168,12 +179,14 @@ var TokenUtils = function(doc, tokenizer, tokens,
          args.push(null);
       this.$tokens.splice.apply(this.$tokens, args);
       this.$endStates.splice.apply(this.$endStates, args);
+      this.$contexts.splice.apply(this.$contexts, args);
    };
-   
+
    this.$removeRows = function(row, count)
    {
       this.$tokens.splice(row, count);
       this.$endStates.splice(row, count);
+      this.$contexts.splice(row, count);
    };
 
    this.$walkParens = function(startRow, endRow, fun)
