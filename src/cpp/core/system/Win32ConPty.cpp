@@ -10,7 +10,6 @@
 #include "Win32ConPty.hpp"
 
 #include <climits>
-#include <system_error>
 
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
@@ -118,7 +117,29 @@ bool ConPty::isAvailable()
 
 ConPty::~ConPty()
 {
-   stop();
+   // A destructor is implicitly noexcept, so anything that escapes terminates the
+   // process. Teardown takes mutexes, joins threads, and logs, and it runs during
+   // process shutdown (see teardownLocked), so make the guarantee hold here at the
+   // boundary rather than by enumerating every operation inside that can throw.
+   try
+   {
+      stop();
+   }
+   catch (...)
+   {
+      // The expected failure (the closer thread not starting) is already logged
+      // by teardownLocked, so anything arriving here is unexpected and worth
+      // recording -- but logging allocates, so it gets its own guard.
+      try
+      {
+         LOG_WARNING_MESSAGE("Unexpected exception while tearing down ConPTY");
+      }
+      catch (...)
+      {
+         // Intentionally empty: nothing may escape a destructor, and there is no
+         // way left to report this.
+      }
+   }
 }
 
 bool ConPty::running() const
@@ -466,19 +487,25 @@ void ConPty::teardownLocked()
    // value (so detaching it as a last resort cannot touch freed members). This
    // terminates the child and breaks the output pipe, unblocking the reader.
    //
-   // The launch is guarded because teardownLocked() runs from ~ConPty and so
-   // must not let an exception escape. rsession exits through R's exit(), so a
-   // terminal still registered with the process-wide ProcessSupervisor is torn
-   // down from that singleton's atexit destructor -- after RtlExitUserProcess
-   // has begun, where thread creation fails with STATUS_PROCESS_IS_TERMINATING
-   // and std::thread's constructor throws std::system_error. Unguarded, that
-   // exception left the destructor and std::terminate()d the process.
+   // The launch is guarded because ~ConPty reaches here and is implicitly
+   // noexcept, so an escaping exception terminates the process. The failure we
+   // have actually seen is at process exit: R.dll's own C runtime calls exit()
+   // and then ExitProcess without flushing rsession's onexit table (they are
+   // separate CRTs), so our statics -- including the ProcessSupervisor that may
+   // still own a live terminal -- are destroyed later, from DLL detach inside
+   // LdrShutdownProcess, by which point a new thread can no longer be started.
    //
-   // Skip the close rather than falling back to closing on this thread: before
-   // Windows 24H2 ClosePseudoConsole blocks until the output pipe drains, and
-   // the reader that would drain it is already gone at that point, so an inline
-   // close risks hanging exit. The OS reclaims the pseudoconsole and terminates
-   // its client as the process goes away.
+   // On that path skipping the close is the right answer, not a fallback to
+   // closing on this thread: before Windows 24H2 ClosePseudoConsole blocks until
+   // the output pipe drains, and the reader that would drain it has already been
+   // terminated with every other thread, so an inline close could hang exit. The
+   // OS reclaims the pseudoconsole and its client as the process goes away.
+   //
+   // teardownLocked() also runs mid-session (the child-exit poll, and a failed
+   // start()), where nothing reclaims anything, so a failure there leaks the
+   // pseudoconsole and orphans the child instead. Accepted deliberately: this
+   // throws only when _beginthreadex fails, which in a 64-bit process means
+   // resource exhaustion severe enough that a stray HPCON is the lesser problem.
    std::thread closer;
    if (hPC_)
    {
@@ -487,10 +514,17 @@ void ConPty::teardownLocked()
       {
          closer = std::thread([hpc] { api().close(hpc); });
       }
-      catch (const std::system_error& e)
+      catch (...)
       {
-         LOG_WARNING_MESSAGE("Could not start ConPTY closer thread (" +
-                             e.code().message() + "); leaving the pseudoconsole to the OS");
+         // Catch everything: the thread constructor allocates before it calls
+         // _beginthreadex, so this throws bad_alloc as well as system_error, and
+         // neither may escape. Log the OS error rather than the exception -- MSVC
+         // reports every launch failure as "resource unavailable try again"
+         // regardless of cause, so only GetLastError() can say what went wrong.
+         DWORD launchError = ::GetLastError();
+         LOG_WARNING_MESSAGE("Could not start ConPTY closer thread (error " +
+                             std::to_string(launchError) +
+                             "); leaving the pseudoconsole to the OS");
       }
    }
 
