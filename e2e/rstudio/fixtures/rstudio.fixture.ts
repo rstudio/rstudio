@@ -32,6 +32,10 @@ interface SessionContext {
   page: Page;
   consoleBuffer: ConsoleLine[];
   logDir?: string;
+  // Config root of this worker's own Desktop launch (desktop only). The
+  // sandbox layout test uses it to scope assertions that only hold while
+  // the launching instance is alive (see #18475).
+  configRoot?: string;
 }
 
 /** Tags whose tests intentionally run with an AI assistant active. */
@@ -251,7 +255,12 @@ export const test = base.extend<
       const session = await launchRStudio();
       attachConsoleCapture(session.page, consoleBuffer);
       await logVersions(session.page);
-      await use({ page: session.page, consoleBuffer, logDir: session.logDir });
+      await use({
+        page: session.page,
+        consoleBuffer,
+        logDir: session.logDir,
+        configRoot: session.configRoot,
+      });
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. No-op otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
