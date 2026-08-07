@@ -1,6 +1,7 @@
 import type { TestType } from '@playwright/test';
 import {
   isCopilotAuthenticated,
+  isExternalServerRun,
   isPositAiAuthenticated,
   readAuthStatus,
   type AIProvider,
@@ -14,22 +15,34 @@ import {
  */
 export type { AIProvider } from './auth';
 
-/**
- * Whether real credentials for `provider` are present in the sandbox.
- *
- * The single predicate behind both the `requireAiCredentials` gate below and
- * any `beforeAll` that has to bail out before the gate can run. Playwright
- * runs `beforeEach` (where the gate lives) *after* `beforeAll`, so a describe
- * block that does expensive setup in `beforeAll` -- launching RStudio,
- * installing Posit Assistant -- would otherwise run it with no credentials and
- * turn what should be a clean skip into a failed test. Such a block guards its
- * `beforeAll` on this function; keeping one predicate means the guard and the
- * gate cannot drift apart and disagree about whether the suite is runnable.
- *
- * Async because the Copilot store check is: it reads the agent's auth.db from
- * a child process. The Posit AI check is synchronous underneath.
- */
-export async function hasAiCredentials(provider: AIProvider): Promise<boolean> {
+// Display label, and the hint shown when a provider's sandbox store is missing
+// outright. Kept in one table so the gate, the beforeAll guard, and the
+// external-server check cannot disagree about how a provider is named.
+const PROVIDERS: Record<AIProvider, { label: string; missingStoreHint: string }> = {
+  positai: {
+    label: 'Posit AI',
+    missingStoreHint:
+      'No Posit AI credentials in the sandbox. Sign in to Posit AI '
+      + 'locally so the setup project can copy the token store, or set '
+      + 'POSIT_EMAIL/POSIT_PASSWORD for the sign-in flow.',
+  },
+  copilot: {
+    label: 'GitHub Copilot',
+    missingStoreHint:
+      'No GitHub Copilot credentials in the sandbox. Sign in to Copilot '
+      + 'locally so the setup project can copy the credential store, or '
+      + 'set COPILOT_USER/COPILOT_PASSWORD for the sign-in flow.',
+  },
+};
+
+// Whether the provider's credential store exists and is valid in the sandbox
+// user-home. Necessary for a run to be able to exercise the provider, but not
+// sufficient on external-server runs (see externalServerSkipReason), so this
+// is deliberately private -- callers want aiCredentialSkipReason below.
+//
+// Async because the Copilot store check is: it reads the agent's auth.db from
+// a child process. The Posit AI check is synchronous underneath.
+async function sandboxStoreHasCredentials(provider: AIProvider): Promise<boolean> {
   switch (provider) {
     case 'positai':
       return isPositAiAuthenticated();
@@ -58,6 +71,56 @@ function skipReason(provider: AIProvider, label: string, fallback: string): stri
       + 'now missing or invalid -- the credential may have expired or been removed mid-run.';
   }
   return `No ${label} credentials in the sandbox: ${status.reason}`;
+}
+
+// External-server runs only: the sandbox store never reaches the remote
+// rsession (#18348), so a valid sandbox store is necessary but not
+// sufficient -- the provisioning step (auth.setup.ts, via
+// utils/remote-provision.ts) must also have confirmed the credentials are in
+// place in the remote home, recorded as remoteProvisioned in the status
+// file. Returns a skip reason when it hasn't, null when the gate passes.
+function externalServerSkipReason(provider: AIProvider, label: string): string | null {
+  if (!isExternalServerRun()) return null;
+  const status = readAuthStatus(process.env.PW_SANDBOX!, provider);
+  if (status?.remoteProvisioned === true) return null;
+  return `${label} credentials are in the sandbox, but were not provisioned to the external `
+    + `server at PW_RSTUDIO_SERVER_URL (whose rsession reads the logged-in account's own home `
+    + `directory, not the sandbox)${status ? `: ${status.reason}` : ''}`;
+}
+
+/**
+ * Why `provider` cannot be exercised in this run, or null when it can.
+ *
+ * The single source of truth behind both the `requireAiCredentials` gate below
+ * and the `hasAiCredentials` guard: being runnable means the sandbox store is
+ * valid AND, on external-server runs, that the store actually reached the
+ * remote home. Deriving both from one function is what stops the guard and the
+ * gate from disagreeing about whether a suite can run -- a disagreement that
+ * would let expensive `beforeAll` setup proceed for tests `beforeEach` then
+ * skips.
+ */
+async function aiCredentialSkipReason(provider: AIProvider): Promise<string | null> {
+  const { label, missingStoreHint } = PROVIDERS[provider];
+  if (!(await sandboxStoreHasCredentials(provider))) {
+    return skipReason(provider, label, missingStoreHint);
+  }
+  return externalServerSkipReason(provider, label);
+}
+
+/**
+ * Whether `provider` can actually be exercised in this run.
+ *
+ * For any `beforeAll` that has to bail out before the gate can run. Playwright
+ * runs `beforeEach` (where `requireAiCredentials` lives) *after* `beforeAll`,
+ * so a describe block that does expensive setup in `beforeAll` -- launching
+ * RStudio, installing Posit Assistant -- would otherwise run it with no usable
+ * credentials and turn what should be a clean skip into a failed test. Such a
+ * block guards its `beforeAll` on this function; sharing
+ * `aiCredentialSkipReason` with the gate means the guard and the gate cannot
+ * drift apart.
+ */
+export async function hasAiCredentials(provider: AIProvider): Promise<boolean> {
+  return (await aiCredentialSkipReason(provider)) === null;
 }
 
 /**
@@ -97,32 +160,9 @@ export function requireAiCredentials(
   provider: AIProvider,
 ): void {
   test.beforeEach(async () => {
-    if (await hasAiCredentials(provider)) {
-      return;
-    }
-    switch (provider) {
-      case 'positai':
-        test.skip(true, skipReason(
-          'positai',
-          'Posit AI',
-          'No Posit AI credentials in the sandbox. Sign in to Posit AI '
-            + 'locally so the setup project can copy the token store, or set '
-            + 'POSIT_EMAIL/POSIT_PASSWORD for the sign-in flow.',
-        ));
-        return;
-      case 'copilot':
-        test.skip(true, skipReason(
-          'copilot',
-          'GitHub Copilot',
-          'No GitHub Copilot credentials in the sandbox. Sign in to Copilot '
-            + 'locally so the setup project can copy the credential store, or '
-            + 'set COPILOT_USER/COPILOT_PASSWORD for the sign-in flow.',
-        ));
-        return;
-      default:
-        // Exhaustiveness: a new AIProvider member must be given its own skip
-        // reason here, not silently fall through with no explanation.
-        provider satisfies never;
+    const reason = await aiCredentialSkipReason(provider);
+    if (reason !== null) {
+      test.skip(true, reason);
     }
   });
 }
