@@ -60,6 +60,22 @@ var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRule
 var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
 var SassHighlightRules = require("ace/mode/sass_highlight_rules").SassHighlightRules;
 var LessHighlightRules = require("ace/mode/less_highlight_rules").LessHighlightRules;
+
+// Warn (once) when the chunk-end rule finds no chunk context. It degrades
+// gracefully rather than crash, but a missing context usually means some
+// caller isn't threading a context object through getLineTokens(). A local
+// copy of Utils.warnMissingContext, to avoid coupling this (otherwise
+// standalone) module to "mode/utils".
+var $warnedMissingContext = false;
+function warnMissingContext()
+{
+   if ($warnedMissingContext)
+      return;
+
+   $warnedMissingContext = true;
+   if (typeof console !== "undefined" && console.warn)
+      console.warn("tokenizer context is missing 'chunk' state; using fallback (highlighting may be degraded)");
+}
 var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
 var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
@@ -456,17 +472,22 @@ var MarkdownHighlightRules = function () {
             // Check whether we're already within a chunk. If so,
             // skip this chunk header -- assume that it's embedded
             // within another active chunk.
-            context.chunk = context.chunk || {};
-            if (context.chunk.state != null) {
+            var chunk = context.chunk;
+            if (chunk != null && chunk.state != null) {
                this.next = state;
                return this.token;
             }
 
             // A chunk header was found; record the state we entered
-            // from, and also the width of the chunk header.
+            // from, and also the width of the chunk header. Store a fresh
+            // object: the per-row context snapshots (TokenUtils'
+            // $tokenizeUpToRow, BackgroundTokenizer's $tokenizeRow) are
+            // shallow copies, so shared objects must not be mutated.
+            // (An inherited chunk can't actually reach this point -- see
+            // the guard above -- but keep this consistent with the quarto
+            // and yaml rules, where in-place mutation was a real bug.)
             var match = /^\s*((?:`|-)+)/.exec(value);
-            context.chunk.width = match[1].length;
-            context.chunk.state = state;
+            context.chunk = { width: match[1].length, state: state };
 
             // Update the next state and return the matched token.
             this.next = `github-block-${context.chunk.width}`;
@@ -480,17 +501,33 @@ var MarkdownHighlightRules = function () {
          token: "support.function",
          regex: "^\\s*`{3,16}(?!`)",
          onMatch: function (value, state, stack, line, context) {
-            // Check whether the width of this chunk tail matches
-            // the width of the chunk header that started this chunk.
             var match = /^\s*((?:`|-)+)/.exec(value);
             var width = match[1].length;
-            if (context.chunk.width !== width) {
+
+            // If we have no chunk information -- most likely because this
+            // line was tokenized without a context -- synthesize it, rather
+            // than crashing below. The fence width is recoverable from the
+            // state name ('github-block-<width>'), and stripping that suffix
+            // recovers the entry state while preserving any embed prefix.
+            var chunk = context.chunk;
+            if (chunk == null) {
+               warnMissingContext();
+               var header = /(\d+)$/.exec(state);
+               chunk = {
+                  width: header ? parseInt(header[1], 10) : width,
+                  state: state.replace(/github-block-\d+$/, "start")
+               };
+            }
+
+            // Check whether the width of this chunk tail matches
+            // the width of the chunk header that started this chunk.
+            if (chunk.width !== width) {
                this.next = state;
                return this.token;
             }
 
             // Update the next state and return the matched token.
-            this.next = context.chunk.state || "start";
+            this.next = chunk.state || "start";
             delete context.chunk;
             return this.token;
          }
