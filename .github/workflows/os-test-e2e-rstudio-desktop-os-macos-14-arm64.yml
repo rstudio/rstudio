@@ -367,6 +367,12 @@ jobs:
       # (PW_SANDBOX_ROOT_CREATE=1).
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
+      # Point globalSetup's R-libs provisioner at the same library the
+      # e2e-deps action installs and caches. Without this the harness default
+      # is ~/.cache/rstudio-playwright/r-libs/... -- a different, uncached
+      # path, so packages re-download from CRAN on every run of this
+      # ephemeral runner.
+      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
 
     steps:
       - uses: actions/checkout@v4
@@ -516,6 +522,11 @@ jobs:
           # by both.
           cache-scope: macos14-arm64
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # Pre-install the harness's REQUIRED_PACKAGES set into the cached
+          # library (found via PW_RSTUDIO_R_LIBS_USER in the job env above),
+          # so nothing installs from CRAN at test time; a CRAN outage
+          # otherwise surfaces as mid-suite install hangs.
+          install-required-packages: "true"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
