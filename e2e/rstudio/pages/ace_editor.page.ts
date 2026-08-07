@@ -172,6 +172,11 @@ export class AceEditor extends PageObject {
     return this.run((editor, r: number) => editor.session.getState(r), row);
   }
 
+  /** Returns one level of indentation, e.g. "  " for two-space soft tabs. */
+  async getTabString(): Promise<string> {
+    return this.run((editor) => editor.session.getTabString());
+  }
+
   /**
    * Returns the editor's multi-cursor selection ranges, normalized to plain
    * objects. Useful for verifying commands like renameInScope, which place a

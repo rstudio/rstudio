@@ -47,6 +47,7 @@ export namespace Ace {
     // usually a plain state name, but rows inside a multi-line construct
     // (e.g. an open raw string) save the tokenizer stack instead
     getState(row: number): string | string[];
+    getTabString(): string;
     getTokens(row: number): unknown[];
     getTokenAt(row: number, column: number): unknown | null;
     getMarkers(): Record<string, unknown>;
