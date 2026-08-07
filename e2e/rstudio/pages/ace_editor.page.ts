@@ -168,8 +168,13 @@ export class AceEditor extends PageObject {
     });
   }
 
-  async getState(row: number): Promise<string> {
+  async getState(row: number): Promise<string | string[]> {
     return this.run((editor, r: number) => editor.session.getState(r), row);
+  }
+
+  /** Returns one level of indentation, e.g. "  " for two-space soft tabs. */
+  async getTabString(): Promise<string> {
+    return this.run((editor) => editor.session.getTabString());
   }
 
   /**

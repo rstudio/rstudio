@@ -2173,7 +2173,7 @@ var RCodeModel = function(session, tokenizer,
          var state = (row === 0) ? 'start' : this.$endStates[row - 1];
          var context = Object.assign({}, this.$contexts[row - 1]);
          var line = this.$getLine(row);
-         var lineTokens = this.$tokenizer.getLineTokens(line, state, row, context || {});
+         var lineTokens = this.$tokenizer.getLineTokens(line, state, row, context);
          this.$contexts[row] = context;
 
          if (!this.$statePattern ||

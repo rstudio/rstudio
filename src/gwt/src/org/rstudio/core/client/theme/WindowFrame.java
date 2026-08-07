@@ -150,9 +150,13 @@ public class WindowFrame extends Composite
       return name_;
    }
 
-   public void setMaximizeClickHandler(Command handler)
+   /**
+    * Replace what the frame's maximize gestures do. The action can call
+    * maximizeDefault() to get the built-in behavior. Pass null to restore it.
+    */
+   public void setMaximizeAction(Command action)
    {
-      maximizeButton_.setClickHandler(handler);
+      maximizeAction_ = action;
    }
 
    public void setCloseClickHandler(Command handler)
@@ -179,7 +183,33 @@ public class WindowFrame extends Composite
          ((RequiresVisibilityChanged)header_).onVisibilityChanged(visible);
    }
 
-   private void maximize()
+   /**
+    * The frame's maximize gesture. Three gestures come here:
+    *
+    *  - the maximize button
+    *  - a double-click on the Console title bar (PrimaryWindowFrame)
+    *  - a double-click on a tabset's tab bar (ModuleTabLayoutPanel)
+    *
+    * So an owner intercepts all three in one place with setMaximizeAction,
+    * instead of one gesture at a time.
+    *
+    * Two other paths reach WindowState.MAXIMIZE without the frame: the button
+    * on MinimizedWindowFrame, and EnsureHeightEvent.MAXIMIZED in
+    * LogicalWindow.onEnsureHeight. Both fire at the LogicalWindow. See
+    * PaneManager.endZoomIfActive.
+    */
+   public void maximize()
+   {
+      if (maximizeAction_ != null)
+         maximizeAction_.execute();
+      else
+         maximizeDefault();
+   }
+
+   /**
+    * The built-in maximize behavior. A custom maximize action can call this.
+    */
+   public void maximizeDefault()
    {
       fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
    }
@@ -475,6 +505,7 @@ public class WindowFrame extends Composite
    private Widget previousHeader_;
    private final FlowPanel buttonsArea_;
    private WindowState logicalState_ = WindowState.NORMAL;
+   private Command maximizeAction_;
 
    private static final int TOP_SHADOW_WIDTH = 3,
                             LEFT_SHADOW_WIDTH = 3,

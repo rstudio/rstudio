@@ -20,7 +20,10 @@ const GWT_ROOT = resolve(__dirname, "..", "..");
 const PAGES = [
    "test/autoindent_test_cpp.html",
    "test/autoindent_test_r.html",
+   "test/context_test_rmd.html",
    "test/highlight_test_cpp.html",
+   "test/highlight_test_markdown.html",
+   "test/highlight_test_r.html",
    "test/highlight_test_sql.html",
 ];
 
