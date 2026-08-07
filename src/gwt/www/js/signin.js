@@ -19,6 +19,57 @@ var responseURL = "";
 // Global variable; tracks whether an active sign-in is in progress
 var activeSignIn = false;
 
+// Bounds (ms) on the interval between background polls that detect a sign-in
+// from another tab. The poll starts at the minimum and backs off to the maximum,
+// so a sign-in that happens soon after this page loads is picked up quickly
+// without a sign-in page left open for hours polling every few seconds.
+var MIN_POLL_INTERVAL_MS = 3000;
+var MAX_POLL_INTERVAL_MS = 30000;
+
+// Delay to use for the next scheduled poll. Doubles up to MAX_POLL_INTERVAL_MS,
+// and resets to the minimum whenever the tab becomes visible again.
+var pollInterval = MIN_POLL_INTERVAL_MS;
+
+// Handle for the pending poll timer, so we can cancel/replace it (e.g. when the
+// tab becomes visible again) without spawning overlapping poll chains.
+var pollTimer = null;
+
+// Whether a poll request is currently in flight; guards against issuing a second
+// overlapping request if a visibility change fires mid-request.
+var pollInFlight = false;
+
+// Set once we've detected that the user signed in from another tab. This swaps
+// in the "Signed Out" panel, whose button takes the user on to their session,
+// so there's nothing left to poll for: we stop the poll chain rather than
+// re-fetching the (full) session page every few seconds for as long as the tab
+// happens to stay open. It isn't quite terminal, though -- becoming visible
+// again triggers one confirming poll, which clears this if it turns out we were
+// wrong (see the visibilitychange handler).
+var signedInElsewhere = false;
+
+/**
+ * Schedules a sign-in poll after the given delay, replacing any already-pending
+ * poll so we never end up with more than one poll chain running at a time.
+ */
+function schedulePoll(delayMs) {
+   if (pollTimer !== null) {
+      clearTimeout(pollTimer);
+   }
+   pollTimer = setTimeout(function() {
+      pollTimer = null;
+      pollForSignin();
+   }, delayMs);
+}
+
+/**
+ * Schedules the next poll at the current backoff delay, then doubles that delay
+ * (up to the maximum) for the poll after it.
+ */
+function scheduleNextPoll() {
+   schedulePoll(pollInterval);
+   pollInterval = Math.min(pollInterval * 2, MAX_POLL_INTERVAL_MS);
+}
+
 /**
  * Ensure error region is spoken by a screen reader.
  */
@@ -215,35 +266,79 @@ function pollForSignin() {
   if (activeSignIn)
      return;
 
+  // Don't poll while the tab is hidden - there's no point checking for a
+  // sign-in the user can't see, and it wastes requests. The visibilitychange
+  // handler resumes polling immediately when the tab becomes visible again.
+  if (document.hidden)
+     return;
+
+  // Guard against overlapping requests (e.g. if the tab is made visible while a
+  // poll is already in flight).
+  if (pollInFlight)
+     return;
+  pollInFlight = true;
+
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", "./", true);
+  // Cache-bust the poll: without this a "./" response cached from a previous
+  // (signed-in) session can be replayed by the browser, and a stale/cached
+  // response can also come back with an empty responseURL - either of which
+  // used to be misread as "signed in elsewhere" and spuriously showed the
+  // "Signed Out" dialog on a fresh sign-in page.
+  xhr.open("GET", "./?rs-signin-poll=" + Date.now(), true);
+  xhr.setRequestHeader("Cache-Control", "no-cache");
   xhr.onreadystatechange = function() {
      if (activeSignIn)
        return;
+     if (xhr.readyState !== 4)
+       return;
+
+     pollInFlight = false;
      try {
-        if (xhr.readyState === 4) {
-           setTimeout(pollForSignin, 3000);
-           if (xhr.status === 200) {
-              var isSignIn = false;
-              var url = xhr.responseURL.split('?')[0];
-              var href = location.href.split('?')[0];
-              var isSignIn = url === href;
-              var controls = document.getElementById("controls");
-              var goback = document.getElementById("goback");
-              if (isSignIn) {
-                 // This is the sign-in page; no external sign-in has occurred
-                 controls.classList.remove('signinhidden');
-                 goback.classList.add('signinhidden');
-              } else {
-                 // This is a different page; the user has signed in via another tab.
-                 responseURL = url;
-                 controls.classList.add('signinhidden');
-                 goback.classList.remove('signinhidden');
-              }
+        if (xhr.status === 200) {
+           var url = xhr.responseURL.split('?')[0];
+           var href = location.href.split('?')[0];
+           var controls = document.getElementById("controls");
+           var goback = document.getElementById("goback");
+           // Only change what's on screen on a positive signal, in either
+           // direction: a non-empty responseURL that is either a different page
+           // than this one (signed in elsewhere) or this same page (still signed
+           // out). An empty responseURL means we can't tell -- some browsers
+           // leave it empty for cached/opaque responses -- and guessing there is
+           // what used to spuriously show the "Signed Out" panel on a fresh
+           // sign-in page.
+           if (url && url !== href) {
+              // A different page - the user has signed in via another tab. Show
+              // the "Signed Out" panel and stop polling; its button carries the
+              // user on to the session from here.
+              signedInElsewhere = true;
+              responseURL = url;
+              controls.classList.add('signinhidden');
+              goback.classList.remove('signinhidden');
+           } else if (url) {
+              // Genuinely still the sign-in page. Show the controls, and clear
+              // any previous signed-in-elsewhere state: if we'd latched onto a
+              // false positive (an SSO interstitial or a proxy error page, say),
+              // this is what recovers the form. The poll chain then resumes
+              // below.
+              signedInElsewhere = false;
+              controls.classList.remove('signinhidden');
+              goback.classList.add('signinhidden');
            }
+           // An empty responseURL is indeterminate, so leave the panels as they
+           // are rather than guessing in either direction. On a fresh page that
+           // means the sign-in controls stay up (their initial state); if we've
+           // already shown the "Signed Out" panel it stays up too, so one opaque
+           // response can't yank the user back to the form.
         }
      } catch (exception) {
        showError("Error: " + exception);
+     } finally {
+       // Queue the next poll only if there's still something to poll for and the
+       // tab is visible; otherwise the visibilitychange handler resumes polling
+       // when the tab reappears. In a finally so a failure above can't silently
+       // kill the poll chain.
+       if (!signedInElsewhere && !document.hidden)
+          scheduleNextPoll();
      }
    };
    xhr.send(null);
@@ -264,7 +359,23 @@ window.addEventListener("load", function() {
       userEle.focus();
 
       // Begin polling for sign-ins from other tabs (we only do this for interactive forms)
-      setTimeout(pollForSignin, 3000);
+      scheduleNextPoll();
+
+      // Pause polling while the tab is hidden and resume immediately when it
+      // becomes visible again, so a background tab isn't polling needlessly.
+      // Coming back to the tab also resets the backoff: the user is looking at
+      // the page again, so a sign-in from elsewhere should be picked up quickly.
+      //
+      // This fires even once we've shown the "Signed Out" panel and stopped the
+      // poll chain. That single confirming poll is how a stale panel corrects
+      // itself: the user comes back to a tab they left hours ago, and either the
+      // sign-in is confirmed (we stay put) or it isn't and the form comes back.
+      document.addEventListener("visibilitychange", function() {
+         if (!document.hidden && !activeSignIn) {
+            pollInterval = MIN_POLL_INTERVAL_MS;
+            schedulePoll(0);
+         }
+      });
    }
 
 

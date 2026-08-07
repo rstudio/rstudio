@@ -427,6 +427,11 @@ public class RemoteServer implements Server
       authWatcher_.start();
    }
 
+   public void checkAuthNow()
+   {
+      authWatcher_.checkNow();
+   }
+
    public void disconnect()
    {
       disconnected_ = true;
