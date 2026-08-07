@@ -309,7 +309,12 @@ public class AceEditorNative extends JavaScriptObject
    public final native void attachToDocumentOf(AceEditorNative other) /*-{
       var loader = $wnd.require("rstudio/loader");
       var session = loader.cloneSession(other.session);
+
+      // RStudioEditor's constructor gives its session a back-pointer to the
+      // renderer (read by auto_brace_insert's ghost text checks); a session
+      // swapped in after construction needs it set by hand
       session.renderer = this.renderer;
+
       this.setSession(session);
    }-*/;
 

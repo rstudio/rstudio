@@ -589,12 +589,20 @@ oop.inherits(RStudioRenderer, Renderer);
 
 // Create a new edit session over an existing session's document, for
 // showing multiple views of one document (split editors). The document
-// and undo history are shared; everything else (selection, scroll
-// position, folds) is per-session state owned by the new session.
-// Breakpoints are deliberately not copied: the primary view owns
-// breakpoint state, and a one-time copy here would just go stale.
+// and undo history are shared; selection, scroll position, and folds are
+// per-session state (folds are seeded from the source session's current
+// folds, then diverge). Breakpoints are deliberately not copied: the
+// primary view owns breakpoint state, and a one-time copy here would
+// just go stale.
 function cloneSession(session) {
-   var clone = new RStudioEditSession(session.getDocument(), session.getMode());
+   // Start from a plain text mode rather than the source session's mode:
+   // RStudio modes bind their code model to the session they were created
+   // with, so sharing the mode object would leave the clone's code model
+   // (indentation, scope tree) reading the source session's cursor and
+   // cache. The clone gets its own session-bound mode when a file type is
+   // applied, since EditSession.setEditorMode only reuses a mode whose
+   // constructor already matches.
+   var clone = new RStudioEditSession(session.getDocument(), new TextMode());
    clone.setUndoManager(session.getUndoManager());
    clone.setTabSize(session.getTabSize());
    clone.setUseSoftTabs(session.getUseSoftTabs());
@@ -603,6 +611,17 @@ function cloneSession(session) {
    clone.setUseWorker(session.getUseWorker());
    clone.setWrapLimitRange(session.$wrapLimitRange.min, session.$wrapLimitRange.max);
    clone.$foldData = session.$cloneFoldData();
+
+   // The shared UndoManager reads mergeUndoDeltas from whichever session
+   // reports a delta first -- the source session, since it attached to the
+   // document first. Editor commands set the flag on the session they run
+   // against, so delegate the clone's flag to the source session; without
+   // this, typing in the clone starts a new undo group on every keystroke.
+   Object.defineProperty(clone, "mergeUndoDeltas", {
+      get: function() { return session.mergeUndoDeltas; },
+      set: function(value) { session.mergeUndoDeltas = value; }
+   });
+
    return clone;
 }
 
