@@ -42981,23 +42981,8 @@ define("ace/background_tokenizer",["require","exports","module","ace/lib/oop","a
 var oop = require("./lib/oop");
 var EventEmitter = require("./lib/event_emitter").EventEmitter;
 var MAX_CONTEXT_DEPTH = 16;
-function cloneContextValue(value, depth) {
-    if (depth <= 0 || value == null || typeof value !== "object")
-        return value;
-    if (Array.isArray(value)) {
-        var array = new Array(value.length);
-        for (var i = 0; i < value.length; i++)
-            array[i] = cloneContextValue(value[i], depth - 1);
-        return array;
-    }
-    var object = {};
-    for (var key in value)
-        if (Object.prototype.hasOwnProperty.call(value, key))
-            object[key] = cloneContextValue(value[key], depth - 1);
-    return object;
-}
 function cloneContext(context) {
-    return cloneContextValue(context || {}, MAX_CONTEXT_DEPTH);
+    return structuredClone(context || {});
 }
 function equalContextValues(lhs, rhs, depth) {
     if (lhs === rhs)
