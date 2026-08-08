@@ -25,19 +25,20 @@ inputs:
     default: ""
   install-required-packages:
     description: >
-      When "true", also install the harness's REQUIRED_PACKAGES set (from
-      <working-directory>/required-packages.txt) into R_LIBS_USER, before the
-      cache save. The caller must then point the Playwright globalSetup at the
-      same library (PW_RSTUDIO_R_LIBS_USER) so it finds everything present and
-      installs nothing at test time. Callers that leave this empty pay
-      globalSetup's install into its own (uncached) default library on every
-      run: a fast binary download where PPM covers the platform, a full source
-      compile where it doesn't (Fedora) -- and any upstream outage during that
-      install surfaces as mid-suite hangs. Every desktop e2e engine sets it;
-      the Linux Server workflow instead seeds a system library of its own
-      (its tests uninstall packages, which a root-owned seed would break).
+      When "true" (the default), also install the harness's REQUIRED_PACKAGES
+      set (from <working-directory>/required-packages.txt) into R_LIBS_USER,
+      before the cache save, and export PW_RSTUDIO_R_LIBS_USER so the
+      Playwright globalSetup looks in that same library, finds everything
+      present, and installs nothing at test time. The two halves only work as
+      a pair -- a populated library the harness never looks in, or a harness
+      pointed at an unpopulated one, both degrade to test-time installs from
+      the upstream repo, where an outage surfaces as mid-suite hangs (see
+      #18488) -- which is why the action owns both. Pass an explicit "" to opt
+      out of both halves; globalSetup then provisions its own (uncached)
+      default library on every run: a fast binary download where PPM covers
+      the platform, a full source compile where it doesn't (Fedora).
     required: false
-    default: ""
+    default: "true"
 
 runs:
   using: "composite"
@@ -60,6 +61,15 @@ runs:
         # key so its compiled R packages can't collide with another distro's.
         SCOPE="${{ inputs.cache-scope }}"
         echo "CACHE_OS=${RUNNER_OS}${SCOPE:+-$SCOPE}" >> "$GITHUB_ENV"
+        # Point the harness's R-libs provisioner (fixtures/r-libs-setup.ts,
+        # run in globalSetup) at the library this action populates, so the
+        # caller can't configure the install without the lookup or vice
+        # versa (the half-configured states behind #18390 and #18488).
+        # Skipped when the caller already defines PW_RSTUDIO_R_LIBS_USER
+        # (a job-level env override wins) or opted out of the install.
+        if [ "${{ inputs.install-required-packages }}" = "true" ] && [ -z "${PW_RSTUDIO_R_LIBS_USER:-}" ]; then
+          echo "PW_RSTUDIO_R_LIBS_USER=${{ inputs.r-libs-user }}" >> "$GITHUB_ENV"
+        fi
 
     # Resolve the *installed* R version (major.minor) and fold it into the
     # cache keys below. Installed packages and pak's binary downloads are only
