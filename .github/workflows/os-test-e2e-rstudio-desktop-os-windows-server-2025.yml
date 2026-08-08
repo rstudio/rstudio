@@ -710,14 +710,11 @@ jobs:
       run:
         shell: pwsh
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}\R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}\pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
-      # Override the default platform-specific R library template so the sandbox
-      # uses the same path that the e2e-deps action installs and caches. Without
-      # this the sandbox writes to %LOCALAPPDATA%\rstudio-playwright\r-libs\...
-      # (a different path) causing packages to be re-downloaded on every run.
-      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}\R-libs
 
     steps:
       - uses: actions/checkout@v4
@@ -878,17 +875,10 @@ jobs:
           }
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
-      # install-required-packages pre-installs the harness's REQUIRED_PACKAGES
-      # set into the cached R library that PW_RSTUDIO_R_LIBS_USER (job env
-      # above) points globalSetup at, so tests find every package present and
-      # install nothing at test time. Without it the set is fetched from
-      # cran.r-project.org on every run, and a CRAN outage surfaces as
-      # mid-suite install hangs (s4_unloaded_package, shinytest2).
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
-          install-required-packages: "true"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

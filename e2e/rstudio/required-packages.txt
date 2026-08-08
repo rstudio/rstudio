@@ -17,6 +17,7 @@ knitr
 nycflights13
 pillar
 praise
+readr
 remotes
 reticulate
 rmarkdown

@@ -79,13 +79,9 @@ jobs:
       run:
         shell: pwsh
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}\R-libs
-      # Point globalSetup's R-libs provisioner at the same library the
-      # e2e-deps action installs and caches (see the main windows-server-2025
-      # workflow). Without this the harness default is
-      # %LOCALAPPDATA%\rstudio-playwright\r-libs\... -- a different path, so
-      # packages re-download from CRAN on every run of this ephemeral runner.
-      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}\R-libs
 
     steps:
       - uses: actions/checkout@v4
@@ -187,14 +183,10 @@ jobs:
           }
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
-      # install-required-packages: see the main windows-server-2025 workflow --
-      # pre-installs the harness's REQUIRED_PACKAGES set into the cached
-      # library so nothing installs from CRAN at test time.
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
-          install-required-packages: "true"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
