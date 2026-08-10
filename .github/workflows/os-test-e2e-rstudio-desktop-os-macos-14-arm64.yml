@@ -96,6 +96,9 @@ on:
       AWS_SCCACHE_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
         required: false
+      OP_SERVICE_ACCOUNT_TOKEN:
+        description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
+        required: false
 
 permissions:
   contents: read
@@ -359,6 +362,7 @@ jobs:
         shard: [1, 2]
     runs-on: macos-14
     timeout-minutes: 120
+    environment: e2e-playwright
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       # Pin the sandbox parent so the upload-artifact step below knows where
@@ -517,6 +521,30 @@ jobs:
           cache-scope: macos14-arm64
           r-libs-user: ${{ env.R_LIBS_USER }}
 
+      # The secrets context isn't available in a step-level if:, so read the
+      # token into this step's own env and publish only a present/absent flag.
+      # Fork PRs and any caller that doesn't pass the token land on present=false,
+      # which skips the retrieve step below; the auth setup project then falls back
+      # to its no-credentials path instead of failing the run.
+      - name: Check for OP service account token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Retrieve test credentials
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: ./e2e/rstudio/.env.op
+
       - name: Run Playwright tests
         working-directory: e2e/rstudio
         env:
@@ -539,6 +567,8 @@ jobs:
           # reporter still runs but its uploads fail with warnings (never fails
           # the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
+          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
           SHARD_NAME: desktop-macos14-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows
           # which phase exceeded the deadline (CDP-connect vs. bridge-installed

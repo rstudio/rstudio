@@ -604,6 +604,7 @@ jobs:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       options: ${{ needs.setup.outputs.e2e_container_options }}
     timeout-minutes: 120
+    environment: e2e-playwright
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
