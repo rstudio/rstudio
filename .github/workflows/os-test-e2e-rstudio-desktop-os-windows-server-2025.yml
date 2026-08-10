@@ -90,6 +90,13 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+    outputs:
+      r_version_actual:
+        description: >-
+          The R version this engine actually ran against, read back from the
+          installed R rather than echoed from the r_version input. Empty when
+          the e2e job did not run (build_only, or a build failure).
+        value: ${{ jobs.e2e-desktop-windows.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -697,6 +704,10 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
+    # Every shard installs the same R, so which one writes this last does not
+    # matter -- matrix job outputs are last-writer-wins.
+    outputs:
+      r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     strategy:
       fail-fast: false
       matrix:
@@ -879,6 +890,7 @@ jobs:
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
       - name: Install e2e test dependencies
+        id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}

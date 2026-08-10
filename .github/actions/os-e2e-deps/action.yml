@@ -36,6 +36,20 @@ inputs:
     required: false
     default: ""
 
+outputs:
+  r-version:
+    description: >
+      The installed R version as major.minor (e.g. "4.5"), resolved from the R
+      that is actually on PATH. This is the value folded into the cache keys.
+    value: ${{ steps.r_version.outputs.version }}
+  r-version-full:
+    description: >
+      The full installed R version (e.g. "4.5.3"), resolved from the R that is
+      actually on PATH -- not the version the caller requested. Engines whose
+      config sets r_install "distro" ignore the requested version entirely, so
+      this is the only reliable record of what a run actually tested against.
+    value: ${{ steps.r_version.outputs.version_full }}
+
 runs:
   using: "composite"
   steps:
@@ -66,13 +80,39 @@ runs:
     # on the resolved version (rather than the requested alias, which never
     # changes) handles that, and scoping restore-keys to the same version
     # stops a prefix-match fallback from pulling a stale-version library in.
+    #
+    # The full version is captured alongside it and written to the run summary.
+    # Nothing else in the E2E workflows records which R a run actually used, and
+    # the requested version can't be trusted as that record: engines whose
+    # config sets r_install "distro" (the Fedora ones) drop it silently and
+    # install whatever the distro ships. Reading it back from the installed R
+    # is what makes the answer true on every engine.
     - name: Resolve R version
       id: r_version
       shell: bash
       run: |
         VERSION=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        VERSION_FULL=$(Rscript -e 'cat(paste(R.version$major, R.version$minor, sep = "."))')
         echo "Resolved R version (major.minor): $VERSION"
+        echo "Installed R version: $VERSION_FULL"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "version_full=$VERSION_FULL" >> "$GITHUB_OUTPUT"
+        # Surfaced on the job's summary page so the R version is visible without
+        # opening the log. Deliberately unconditional: every engine and every
+        # caller gets it, not just certification runs.
+        {
+          echo "### R version"
+          echo ""
+          echo "Installed R: \`$VERSION_FULL\` (cache series \`$VERSION\`)"
+        } >> "$GITHUB_STEP_SUMMARY"
+        # Also drop it in the workspace so a caller can upload it as an
+        # artifact. A caller that runs several engines as one matrix cannot read
+        # a per-engine job output (a matrix job collapses to one value), so an
+        # artifact is the only way to attribute a version to its own engine.
+        # $GITHUB_WORKSPACE rather than the github.workspace expression: this
+        # step runs inside the container on container-based engines, where the
+        # two can differ.
+        printf '%s\n' "$VERSION_FULL" > "$GITHUB_WORKSPACE/r-version.txt"
 
     # All three caches below are restore-only, with matching Save steps after
     # the corresponding install. The saves run only from main-scoped runs (the

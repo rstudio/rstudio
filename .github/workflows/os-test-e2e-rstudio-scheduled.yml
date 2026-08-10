@@ -236,6 +236,10 @@ jobs:
     runs-on: ubuntu-latest
     # Every output is named for the daily manifest key it resolves, so an
     # engine's url_key matches its config's daily_platform_key with '-' as '_'.
+    # The work itself lives in a composite action, shared with the
+    # certification workflow -- the URL/token-swap logic is the piece most
+    # likely to need a fix when the manifest format changes, and one copy is
+    # what keeps that fix from having to land twice.
     outputs:
       rhel10_x86_64:  ${{ steps.resolve.outputs.rhel10_x86_64 }}
       rhel10_arm64:   ${{ steps.resolve.outputs.rhel10_arm64 }}
@@ -251,93 +255,15 @@ jobs:
       windows:        ${{ steps.resolve.outputs.windows }}
       server_noble:   ${{ steps.resolve.outputs.server_noble }}
     steps:
+      # The composite action lives in this repo, so it has to be on disk before
+      # it can be used. Nothing else in this job needs the checkout.
+      - uses: actions/checkout@v4
       - id: resolve
         name: Build per-platform installer URLs for a specific version
-        env:
-          VERSION: ${{ inputs.version }}
-          BUILD_FROM_SOURCE: ${{ inputs.build_from_source }}
-        run: |
-          # Emit empty URLs when building from source (engines build, ignoring
-          # any URL) or when no version is given (engines self-resolve the
-          # latest daily, keeping their SHA-256 check). Only a specific version
-          # needs URLs built here: swap the version token (+ -> -) into each
-          # platform's latest download URL.
-          if [ "$BUILD_FROM_SOURCE" = "true" ] || [ -z "$VERSION" ]; then
-            {
-              echo "rhel10_x86_64="
-              echo "rhel10_arm64="
-              echo "rhel9_x86_64="
-              echo "rhel9_arm64="
-              echo "noble_amd64="
-              echo "noble_arm64="
-              echo "jammy_amd64="
-              echo "jammy_arm64="
-              echo "resolute_amd64="
-              echo "resolute_arm64="
-              echo "macos="
-              echo "windows="
-              echo "server_noble="
-            } >> "$GITHUB_OUTPUT"
-            echo "No installer URLs to resolve (building from source or using the latest daily)."
-            exit 0
-          fi
-          M=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
-          REQ=${VERSION//+/-}
-          emit() {
-            local product="$1" key="$2" link ver cur
-            link=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].link // empty")
-            ver=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].version // empty")
-            cur=${ver//+/-}
-            if [ -z "$link" ] || [ -z "$cur" ]; then
-              echo "::error::Could not build a URL for ${product}/${key} from the latest manifest." >&2
-              return 1
-            fi
-            local out=${link//$cur/$REQ}
-            if [ "$REQ" != "$cur" ] && [ "$out" = "$link" ]; then
-              echo "::error::Version '$REQ' did not substitute into the ${product}/${key} URL ($link); the manifest link format may have changed." >&2
-              return 1
-            fi
-            if ! curl -fsI "$out" >/dev/null 2>&1; then
-              echo "::error::Resolved URL for ${product}/${key} does not exist: $out (version '$VERSION' may be unavailable or mistyped)." >&2
-              return 1
-            fi
-            printf '%s' "$out"
-          }
-          # Every emit is fatal on purpose. A missing key yields an empty
-          # output, and an empty rstudio_installer_url means "self-resolve the
-          # latest daily" to the engines below -- so a non-fatal emit would let
-          # a version-pinned dispatch quietly test the latest daily instead of
-          # the version asked for. Failing the job is the only way a pin can't
-          # be silently ignored.
-          RHEL10_X86=$(emit electron rhel10-x86_64) || exit 1
-          RHEL10_ARM=$(emit electron rhel10-arm64) || exit 1
-          RHEL9_X86=$(emit electron rhel9-x86_64) || exit 1
-          RHEL9_ARM=$(emit electron rhel9-arm64) || exit 1
-          NOBLE_X86=$(emit electron noble-amd64) || exit 1
-          NOBLE_ARM=$(emit electron noble-arm64) || exit 1
-          JAMMY_X86=$(emit electron jammy-amd64) || exit 1
-          JAMMY_ARM=$(emit electron jammy-arm64) || exit 1
-          RESOLUTE_X86=$(emit electron resolute-amd64) || exit 1
-          RESOLUTE_ARM=$(emit electron resolute-arm64) || exit 1
-          MAC=$(emit electron macos) || exit 1
-          WIN=$(emit electron windows) || exit 1
-          SERVER=$(emit server noble-amd64) || exit 1
-          {
-            echo "rhel10_x86_64=$RHEL10_X86"
-            echo "rhel10_arm64=$RHEL10_ARM"
-            echo "rhel9_x86_64=$RHEL9_X86"
-            echo "rhel9_arm64=$RHEL9_ARM"
-            echo "noble_amd64=$NOBLE_X86"
-            echo "noble_arm64=$NOBLE_ARM"
-            echo "jammy_amd64=$JAMMY_X86"
-            echo "jammy_arm64=$JAMMY_ARM"
-            echo "resolute_amd64=$RESOLUTE_X86"
-            echo "resolute_arm64=$RESOLUTE_ARM"
-            echo "macos=$MAC"
-            echo "windows=$WIN"
-            echo "server_noble=$SERVER"
-          } >> "$GITHUB_OUTPUT"
-          echo "Resolved URLs for version $VERSION."
+        uses: ./.github/actions/os-resolve-daily-urls
+        with:
+          version: ${{ inputs.version }}
+          build_from_source: ${{ inputs.build_from_source }}
 
   # Every selected Linux Desktop engine, one matrix entry each, through the
   # consolidated Linux workflow. The matrix is built (already filtered to the

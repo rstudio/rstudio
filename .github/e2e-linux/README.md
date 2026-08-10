@@ -42,10 +42,32 @@ need the same distro setup (`script_dir`).
 3. Wire the engine into the callers you want: the scheduled rotation
    (`os-test-e2e-rstudio-scheduled.yml` -- add it to the `ENGINES` array, which
    puts it in its platform/arch group's Sunday run (Linux x86_64, Linux arm64,
-   or macOS+Windows), and optionally to a weekday slate) and/or the PR run
-   (`os-test-e2e-rstudio-pr.yml`).
+   or macOS+Windows), and optionally to a weekday slate), the PR run
+   (`os-test-e2e-rstudio-pr.yml`), and/or the certification run
+   (`.github/e2e-certification/matrix.json` -- see that directory's README;
+   an engine absent from that file cannot be certified at all).
 4. Add it to the `os` choice list in the workflow's `workflow_dispatch`
    inputs, so it can be run by hand.
+
+## R versions
+
+Which R an engine runs against is a caller's choice, not a property of the
+engine config -- with one exception, which is the config's business:
+
+- `r_install: "rig"` (12 of the 16 engines) honors the caller's `r_version`
+  input, passing it to `rig add` / `rig default` verbatim.
+- `r_install: "distro"` (the four Fedora engines) **ignores `r_version`
+  entirely** and installs whatever R the distro's repos ship, via
+  `fedora/install-r.sh`. Nothing warns about the dropped value, so a caller
+  that pins a version for one of these engines gets a different R than it asked
+  for. `.github/actions/os-e2e-deps` reads the installed R back and writes it to
+  the job summary, which is the only reliable record of what a run covered.
+
+`os-e2e-deps` also folds the *resolved* R major.minor into the R-library and pak
+cache keys, with version-scoped `restore-keys`. Two R versions on one engine
+therefore get separate cache entries and cannot poison each other; two patch
+levels within a minor series (4.5.1 and 4.5.3) share one entry, which is safe
+because package ABI is stable within a series.
 
 ## Architecture
 

@@ -152,6 +152,15 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+    outputs:
+      r_version_actual:
+        description: >-
+          The R version this engine actually ran against, read back from the
+          installed R rather than echoed from the r_version input. Engines whose
+          config sets r_install "distro" ignore that input, so this is the only
+          value a caller can trust. Empty when the e2e job did not run
+          (build_only, or a build failure).
+        value: ${{ jobs.e2e.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -593,6 +602,10 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
+    # Both shards install the same R, so which one writes this last does not
+    # matter -- matrix job outputs are last-writer-wins.
+    outputs:
+      r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     runs-on: ${{ needs.setup.outputs.e2e_runner }}
     container:
       image: ${{ needs.setup.outputs.e2e_image }}
@@ -803,6 +816,7 @@ jobs:
       # run -- a few minutes of PPM binary downloads on Ubuntu/Debian, a full
       # source compile on engines without PPM binaries (Fedora).
       - name: Install e2e test dependencies
+        id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
@@ -958,6 +972,26 @@ jobs:
       # run's artifact namespace (the PR orchestrator, the scheduled
       # rotation's all-engines Sunday run) uploads under its own os slug so
       # no engine's merge job can sweep in another engine's blobs.
+      # The R version this engine ran against, as a one-line artifact.
+      #
+      # This exists because a caller that runs several engines as one matrix
+      # (the certification workflow) cannot read it any other way: a matrix job
+      # exposes a single output value for the whole matrix, last writer wins, so
+      # the r_version_actual output below is only usable by a caller invoking
+      # this workflow once. The artifact is per-engine, so a matrix caller can
+      # download them all and attribute each version to its own cell.
+      #
+      # Shard 1 only: every shard installs the same R, and upload-artifact@v4
+      # fails the run on a duplicate artifact name.
+      - name: Upload resolved R version
+        if: always() && matrix.shard == 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: r-version-linux-desktop-${{ inputs.os }}
+          path: ${{ github.workspace }}/r-version.txt
+          if-no-files-found: warn
+          retention-days: 1
+
       - name: Upload blob report
         if: always()
         uses: actions/upload-artifact@v4

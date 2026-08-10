@@ -1,0 +1,157 @@
+name: "Resolve daily installer URLs"
+description: >-
+  Build a per-platform RStudio installer URL for one specific daily version, by
+  token-swapping that version into each platform's latest-daily download URL
+  from the dailies manifest. Emits an empty string for every platform when
+  building from source or when no version is given, which callers pass through
+  as rstudio_installer_url to mean "self-resolve the latest daily".
+
+# Every output is named for the daily manifest key it resolves, so an engine's
+# url_key matches its config's daily_platform_key with '-' as '_'.
+inputs:
+  version:
+    description: >-
+      Daily build to resolve, given as the version string exactly as shown on
+      dailies.rstudio.com (e.g. 2026.08.0-daily+44). Empty means the caller
+      wants the latest daily, so every output is empty.
+    required: false
+    default: ""
+  build_from_source:
+    description: >-
+      When "true", the caller builds every engine from source and no URL is
+      needed, so every output is empty. Overrides version.
+    required: false
+    default: "false"
+
+outputs:
+  rhel10_x86_64:
+    description: "RStudio Desktop (Electron) for RHEL 10 x86_64"
+    value: ${{ steps.resolve.outputs.rhel10_x86_64 }}
+  rhel10_arm64:
+    description: "RStudio Desktop (Electron) for RHEL 10 arm64"
+    value: ${{ steps.resolve.outputs.rhel10_arm64 }}
+  rhel9_x86_64:
+    description: "RStudio Desktop (Electron) for RHEL 9 x86_64"
+    value: ${{ steps.resolve.outputs.rhel9_x86_64 }}
+  rhel9_arm64:
+    description: "RStudio Desktop (Electron) for RHEL 9 arm64"
+    value: ${{ steps.resolve.outputs.rhel9_arm64 }}
+  noble_amd64:
+    description: "RStudio Desktop (Electron) for Ubuntu 24 amd64"
+    value: ${{ steps.resolve.outputs.noble_amd64 }}
+  noble_arm64:
+    description: "RStudio Desktop (Electron) for Ubuntu 24 arm64"
+    value: ${{ steps.resolve.outputs.noble_arm64 }}
+  jammy_amd64:
+    description: "RStudio Desktop (Electron) for Ubuntu 22 amd64"
+    value: ${{ steps.resolve.outputs.jammy_amd64 }}
+  jammy_arm64:
+    description: "RStudio Desktop (Electron) for Ubuntu 22 arm64"
+    value: ${{ steps.resolve.outputs.jammy_arm64 }}
+  resolute_amd64:
+    description: "RStudio Desktop (Electron) for Ubuntu 26 amd64"
+    value: ${{ steps.resolve.outputs.resolute_amd64 }}
+  resolute_arm64:
+    description: "RStudio Desktop (Electron) for Ubuntu 26 arm64"
+    value: ${{ steps.resolve.outputs.resolute_arm64 }}
+  macos:
+    description: "RStudio Desktop (Electron) for macOS (universal .dmg, both arches)"
+    value: ${{ steps.resolve.outputs.macos }}
+  windows:
+    description: "RStudio Desktop (Electron) for Windows"
+    value: ${{ steps.resolve.outputs.windows }}
+  server_noble:
+    description: "RStudio Server for Ubuntu 24 amd64"
+    value: ${{ steps.resolve.outputs.server_noble }}
+
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      name: Build per-platform installer URLs for a specific version
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        BUILD_FROM_SOURCE: ${{ inputs.build_from_source }}
+      run: |
+        # Emit empty URLs when building from source (engines build, ignoring
+        # any URL) or when no version is given (engines self-resolve the
+        # latest daily, keeping their SHA-256 check). Only a specific version
+        # needs URLs built here: swap the version token (+ -> -) into each
+        # platform's latest download URL.
+        if [ "$BUILD_FROM_SOURCE" = "true" ] || [ -z "$VERSION" ]; then
+          {
+            echo "rhel10_x86_64="
+            echo "rhel10_arm64="
+            echo "rhel9_x86_64="
+            echo "rhel9_arm64="
+            echo "noble_amd64="
+            echo "noble_arm64="
+            echo "jammy_amd64="
+            echo "jammy_arm64="
+            echo "resolute_amd64="
+            echo "resolute_arm64="
+            echo "macos="
+            echo "windows="
+            echo "server_noble="
+          } >> "$GITHUB_OUTPUT"
+          echo "No installer URLs to resolve (building from source or using the latest daily)."
+          exit 0
+        fi
+        M=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+        REQ=${VERSION//+/-}
+        emit() {
+          local product="$1" key="$2" link ver cur
+          link=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].link // empty")
+          ver=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].version // empty")
+          cur=${ver//+/-}
+          if [ -z "$link" ] || [ -z "$cur" ]; then
+            echo "::error::Could not build a URL for ${product}/${key} from the latest manifest." >&2
+            return 1
+          fi
+          local out=${link//$cur/$REQ}
+          if [ "$REQ" != "$cur" ] && [ "$out" = "$link" ]; then
+            echo "::error::Version '$REQ' did not substitute into the ${product}/${key} URL ($link); the manifest link format may have changed." >&2
+            return 1
+          fi
+          if ! curl -fsI "$out" >/dev/null 2>&1; then
+            echo "::error::Resolved URL for ${product}/${key} does not exist: $out (version '$VERSION' may be unavailable or mistyped)." >&2
+            return 1
+          fi
+          printf '%s' "$out"
+        }
+        # Every emit is fatal on purpose. A missing key yields an empty
+        # output, and an empty rstudio_installer_url means "self-resolve the
+        # latest daily" to the engines downstream -- so a non-fatal emit would
+        # let a version-pinned run quietly test the latest daily instead of
+        # the version asked for. Failing the job is the only way a pin can't
+        # be silently ignored.
+        RHEL10_X86=$(emit electron rhel10-x86_64) || exit 1
+        RHEL10_ARM=$(emit electron rhel10-arm64) || exit 1
+        RHEL9_X86=$(emit electron rhel9-x86_64) || exit 1
+        RHEL9_ARM=$(emit electron rhel9-arm64) || exit 1
+        NOBLE_X86=$(emit electron noble-amd64) || exit 1
+        NOBLE_ARM=$(emit electron noble-arm64) || exit 1
+        JAMMY_X86=$(emit electron jammy-amd64) || exit 1
+        JAMMY_ARM=$(emit electron jammy-arm64) || exit 1
+        RESOLUTE_X86=$(emit electron resolute-amd64) || exit 1
+        RESOLUTE_ARM=$(emit electron resolute-arm64) || exit 1
+        MAC=$(emit electron macos) || exit 1
+        WIN=$(emit electron windows) || exit 1
+        SERVER=$(emit server noble-amd64) || exit 1
+        {
+          echo "rhel10_x86_64=$RHEL10_X86"
+          echo "rhel10_arm64=$RHEL10_ARM"
+          echo "rhel9_x86_64=$RHEL9_X86"
+          echo "rhel9_arm64=$RHEL9_ARM"
+          echo "noble_amd64=$NOBLE_X86"
+          echo "noble_arm64=$NOBLE_ARM"
+          echo "jammy_amd64=$JAMMY_X86"
+          echo "jammy_arm64=$JAMMY_ARM"
+          echo "resolute_amd64=$RESOLUTE_X86"
+          echo "resolute_arm64=$RESOLUTE_ARM"
+          echo "macos=$MAC"
+          echo "windows=$WIN"
+          echo "server_noble=$SERVER"
+        } >> "$GITHUB_OUTPUT"
+        echo "Resolved URLs for version $VERSION."
