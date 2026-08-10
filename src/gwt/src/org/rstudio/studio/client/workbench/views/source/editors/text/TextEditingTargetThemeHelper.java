@@ -98,13 +98,21 @@ public class TextEditingTargetThemeHelper
          if (n < 1)
             return;
       }
+      else if (editingTarget.isEditorSplitActive())
+      {
+         // With an editor split, the editing target holds two views; the
+         // split view can also lag the request (it materializes on layout).
+         // Styles are read from the primary view, first in the DOM.
+         assert n == 1 || n == 2
+               : "Expected one or two editor instances; found " + n;
+      }
       else
       {
          // Otherwise, we expect a single editor instance.
          assert n == 1
                : "Expected a single editor instance; found " + n;
       }
-      
+
       Element content = aceContentElements[0];
       currentStyle_ = DomUtils.getComputedStyles(content);
       currentContent_ = content;

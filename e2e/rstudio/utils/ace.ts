@@ -79,6 +79,7 @@ export namespace Ace {
     find(needle: string): void;
     insert(text: string): void;
     navigateLineEnd(): void;
+    navigateFileEnd(): void;
     selectAll(): void;
     execCommand(name: string): void;
     exitMultiSelectMode(): void;
