@@ -1,0 +1,94 @@
+# TEMPORARY -- validation trigger, DELETE THIS FILE ON THIS SAME PR BEFORE MERGE.
+#
+# Runs all 6 e2e engines with the newly-wired OP_SERVICE_ACCOUNT_TOKEN
+# retrieval + environment: e2e-playwright, to confirm the environment secret
+# actually resolves and Posit AI sign-in succeeds on every platform before
+# this branch merges. build_from_source is false (uses the latest daily
+# install) and each engine runs only open-chat-pane.test.ts, which requires
+# AI credentials -- fast, and exercises the real auth.setup.ts sign-in path.
+name: zz-temp OP wiring validation
+
+on:
+  push:
+    branches:
+      - test/ron/e2e-workflow-env-file-refs
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  windows:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      test_selector: "open-chat-pane.test.ts"
+      defer_merge: true
+
+  macos15:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-15-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      test_selector: "open-chat-pane.test.ts"
+      defer_merge: true
+
+  macos26:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      test_selector: "open-chat-pane.test.ts"
+      defer_merge: true
+
+  macos14:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: desktop
+      test_selector: "open-chat-pane.test.ts"
+      defer_merge: true
+
+  linux-desktop:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-linux.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      os: ubuntu-24-x86_64
+      arch: x86_64
+      build_from_source: false
+      project: desktop
+      test_selector: "open-chat-pane.test.ts"
+      defer_merge: true
+
+  linux-server:
+    uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+    with:
+      build_from_source: false
+      project: server
+      test_selector: "open-chat-pane.test.ts"
+      defer_merge: true
