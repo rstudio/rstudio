@@ -1,4 +1,5 @@
 /.cache
+/.rstudio-dev/
 /build/
 build_*/
 build-*/

@@ -27,11 +27,12 @@ inputs:
     description: >
       When "true", also install the harness's REQUIRED_PACKAGES set (from
       <working-directory>/required-packages.txt) into R_LIBS_USER, before the
-      cache save. Set this only on distros with no prebuilt CRAN binaries
-      (Fedora): there the Playwright globalSetup would otherwise source-compile
-      that set at test time, so installing it here lands it in the cached
-      library instead. Platforms that get binaries (Ubuntu/macOS/Windows) leave
-      this empty -- their globalSetup install is a fast download.
+      cache save. The caller must then point the Playwright globalSetup at the
+      same library (PW_RSTUDIO_R_LIBS_USER) so it finds everything present and
+      installs nothing at test time. Callers that leave this empty pay
+      globalSetup's install into its own (uncached) default library on every
+      run: a fast binary download where PPM covers the platform, a full source
+      compile where it doesn't (Fedora). All Linux e2e engines set it.
     required: false
     default: ""
 

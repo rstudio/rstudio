@@ -48,6 +48,7 @@ set(CORE_SOURCE_FILES
    Settings.cpp
    SocketRpc.cpp
    StringUtils.cpp
+   SqlIdentifier.cpp
    ColorUtils.cpp
    Thread.cpp
    Timer.cpp
@@ -138,6 +139,8 @@ set(CORE_SOURCE_FILES
 
 if (RSTUDIO_HAS_SOCI)
    list(APPEND CORE_SOURCE_FILES Database.cpp)
+   list(APPEND CORE_SOURCE_FILES QueryBuilder.cpp)
+   list(APPEND CORE_SOURCE_FILES SqlPreprocessor.cpp)
 endif()
 
 # UNIX specific
@@ -355,7 +358,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    # Find all test files (including both standard tests and gtest files)
    file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
-   
+
    if (NOT RSTUDIO_HAS_SOCI)
       list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
    endif()
@@ -363,7 +366,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    # Use gtest from vendor directory
    set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
    include_directories(${GTEST_SOURCE_DIR}/include)
-   
+
    # Add Google Test if not already added
    if(NOT TARGET gtest)
       add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
@@ -396,8 +399,16 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       target_link_libraries(rstudio-core-tests rstudio-zlib)
    endif()
 
+   # normalize before baking these in, so the compiled-in strings don't carry a
+   # literal "core/.." segment into FilePath comparisons and error messages
+   get_filename_component(RSTUDIO_DB_SCHEMA_DIR_ABS
+      "${CMAKE_CURRENT_SOURCE_DIR}/../server/db" ABSOLUTE)
+   get_filename_component(RSTUDIO_CPP_SOURCE_DIR_ABS
+      "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+
    target_compile_definitions(rstudio-core-tests PRIVATE
-      RSTUDIO_DB_SCHEMA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../server/db"
+      RSTUDIO_DB_SCHEMA_DIR="${RSTUDIO_DB_SCHEMA_DIR_ABS}"
+      RSTUDIO_CPP_SOURCE_DIR="${RSTUDIO_CPP_SOURCE_DIR_ABS}"
    )
 
    enable_testing()

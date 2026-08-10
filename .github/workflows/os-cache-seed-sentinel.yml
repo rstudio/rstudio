@@ -9,8 +9,10 @@ name: "Cache Seed: Sentinel (re-seed evicted E2E build caches)"
 # expected cache-key prefix still resolves on refs/heads/main and dispatches
 # the owning seed workflow when one has gone missing.
 #
-# Ubuntu 26 AMD64 has no seed workflow yet and is not part of the PR
-# orchestrator, so it is deliberately absent from the checks below.
+# Ubuntu 26 AMD64 and macOS 14 ARM64 have no seed workflow and are not part of
+# the PR orchestrator, so they are deliberately absent from the checks below.
+# macOS 14's routine runs install the daily .dmg and skip its build job, so the
+# build caches a seed would maintain are never read on that path.
 on:
   schedule:
     # Every 2 hours, offset from the nightly seeds (07:00 / 07:30 UTC).

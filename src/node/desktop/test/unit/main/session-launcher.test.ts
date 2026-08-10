@@ -15,6 +15,7 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 import { restore, saveAndClear } from '../unit-utils';
 
 import { FilePath } from '../../../src/core/file-path';
@@ -24,6 +25,7 @@ import { launchFailedDetail, SessionLauncher } from '../../../src/main/session-l
 import { ApplicationLaunch } from '../../../src/main/application-launch';
 import { Application } from '../../../src/main/application';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
+import { MainWindow } from '../../../src/main/main-window';
 
 function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch(), null);
@@ -87,5 +89,48 @@ describe('SessionLauncher', () => {
     await launcher.buildLaunchContext(false);
     const newPort = appState().port;
     assert.isAbove(newPort, 0);
+  });
+
+  describe('launchNextSession', () => {
+    // A minimal stand-in for MainWindow: launchNextSession only touches
+    // setSessionProcess and (on reload) workbenchInitialized.
+    function fakeMainWindow(): MainWindow {
+      return {
+        workbenchInitialized: true,
+        setSessionProcess: () => {},
+      } as unknown as MainWindow;
+    }
+
+    // Stub the private launchSession to throw so launchNextSession returns
+    // right after the flag handling under test, without spawning a process.
+    function stubLaunchSession(launcher: SessionLauncher): void {
+      sinon
+        .stub(launcher as unknown as { launchSession: () => unknown }, 'launchSession')
+        .throws(new Error('no session process in unit tests'));
+    }
+
+    it('clears workbenchInitialized when reloading', async () => {
+      const launcher = getNewLauncher();
+      const mainWindow = fakeMainWindow();
+      launcher.mainWindow = mainWindow;
+      stubLaunchSession(launcher);
+
+      const error = await launcher.launchNextSession(true);
+
+      assert.isNotNull(error);
+      assert.isFalse(mainWindow.workbenchInitialized);
+    });
+
+    it('preserves workbenchInitialized when not reloading', async () => {
+      const launcher = getNewLauncher();
+      const mainWindow = fakeMainWindow();
+      launcher.mainWindow = mainWindow;
+      stubLaunchSession(launcher);
+
+      const error = await launcher.launchNextSession(false);
+
+      assert.isNotNull(error);
+      assert.isTrue(mainWindow.workbenchInitialized);
+    });
   });
 });

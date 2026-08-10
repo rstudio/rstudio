@@ -4,6 +4,17 @@
       name="diagnostics"
       type="win32"/>
    <description>diagnostics</description>
+   <!--
+      Opt out of the MAX_PATH (260 character) limit, so that diagnostics can
+      report on the same paths a long-path-aware session can use. Also requires
+      the machine's HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\LongPathsEnabled
+      registry value to be set.
+   -->
+   <application>
+      <windowsSettings>
+         <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+      </windowsSettings>
+   </application>
    <!-- Identify the application security requirements. -->
    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
       <security>

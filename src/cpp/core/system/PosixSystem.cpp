@@ -284,13 +284,36 @@ Error realPath(const std::string& path, FilePath* pRealPath)
    return Success();
 }
      
-void initHook()
+Error initHook()
 {
+   return Success();
 }
 
 Error findProgramOnPath(const std::string& program,
                         core::FilePath* pProgramPath)
 {
+   // nothing to search for; bail before opening every PATH entry
+   if (program.empty())
+      return fileNotFoundError(program, ERROR_LOCATION);
+
+   // A path-qualified name isn't a PATH search; resolve it directly. Without this,
+   // the rooted name falls through to completeChildPath() below, which rejects it
+   // and hands back the PATH entry itself -- a directory, reported as success, that
+   // an isEmpty() check on the result won't catch. Matches the Windows implementation.
+   if (program.find('/') != std::string::npos)
+   {
+      FilePath programPath(program);
+      if (!programPath.isRegularFile())
+         return fileNotFoundError(program, ERROR_LOCATION);
+
+      // as below, AT_EACCESS so the check uses the effective user id
+      if (::faccessat(AT_FDCWD, program.c_str(), X_OK, AT_EACCESS) == -1)
+         return fileNotFoundError(program, ERROR_LOCATION);
+
+      *pProgramPath = programPath;
+      return Success();
+   }
+
    std::string path = core::system::getenv("PATH");
    auto paths = core::algorithm::split(path, ":");
 

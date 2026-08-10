@@ -35,7 +35,8 @@ var TextMode = require("ace/mode/text").Mode;
 var UndoManager = require("ace/undomanager").UndoManager;
 var Utils = require("mode/utils");
 
-require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
+require("mixins/token_iterator");     // adds mixins to TokenIterator.prototype
+require("mixins/multi_select_guard"); // exception-safety for multi-select state
 
 
 

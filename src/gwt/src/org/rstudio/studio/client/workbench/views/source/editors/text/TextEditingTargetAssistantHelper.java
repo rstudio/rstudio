@@ -29,7 +29,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardHelper;
-import org.rstudio.core.client.diff.JsDiff;
+import org.rstudio.core.client.diff.DiffUtils;
 import org.rstudio.core.client.diff.JsDiff.Delta;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.EventProperty;
@@ -228,17 +228,15 @@ public class TextEditingTargetAssistantHelper
     */
    private static class EditDeltas
    {
-      public EditDeltas(String originalText, String replacementText)
+      public EditDeltas(String originalText, String replacementText, boolean wordDiff)
       {
-         JsArrayLike<Delta> deltas = JsDiff.diffChars(originalText, replacementText);
+         List<Delta> deltas = DiffUtils.computeDeltas(originalText, replacementText, wordDiff);
 
          // Track position in the original text (for deletions)
          StringBuilder originalPos = new StringBuilder();
 
-         for (int i = 0, n = deltas.getLength(); i < n; i++)
+         for (Delta delta : deltas)
          {
-            Delta delta = deltas.getAt(i);
-
             if (delta.added)
             {
                hasAdditions_ = true;
@@ -519,7 +517,7 @@ public class TextEditingTargetAssistantHelper
          Position.create(normalized.range.end.line, normalized.range.end.character));
 
       // Check if this is a deletion-only change
-      EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
+      EditDeltas deltas = new EditDeltas(originalText, normalized.insertText, useWordDiff());
       if (deltas.isDeletionOnly())
       {
          setEditSuggestion(normalized, SuggestionType.DELETION, deltas);
@@ -566,8 +564,9 @@ public class TextEditingTargetAssistantHelper
          }
       }
 
-      // For single-line deltas, use mixed in-document rendering;
-      // for multiline deltas, fall back to the inline diff view.
+      // Single-line and multiline deltas both render via the inline diff
+      // view when shown (renderEditSuggestion() routes MIXED there too);
+      // the distinction determines the gutter icon used while pending.
       if (deltas.isSingleLineDeltas())
       {
          setEditSuggestion(normalized, SuggestionType.MIXED, deltas);
@@ -591,7 +590,15 @@ public class TextEditingTargetAssistantHelper
             server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
       }
    }
-   
+
+   private boolean useWordDiff()
+   {
+      // Compare against 'character' rather than 'word' so an unrecognized
+      // pref value degrades to the schema default (word-level).
+      String granularity = prefs_.editSuggestionDiffGranularity().getValue();
+      return !StringUtil.equals(granularity, UserPrefsAccessor.EDIT_SUGGESTION_DIFF_GRANULARITY_CHARACTER);
+   }
+
    private void showDiffViewEditSuggestion()
    {
       // Note that we can accept the diff suggestion with Tab
@@ -624,7 +631,7 @@ public class TextEditingTargetAssistantHelper
       final AssistantCompletionCommand command = editSuggestion_.command;
 
       // Create the diff view widget
-      diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType())
+      diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType(), useWordDiff())
       {
          @Override
          protected void apply()

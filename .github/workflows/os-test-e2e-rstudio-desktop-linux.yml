@@ -12,8 +12,10 @@ name: "Test: E2E Playwright RStudio (Desktop, Linux, Open Source)"
 #   - Bare GitHub-hosted runners (Ubuntu 22/24/26, x86_64 and arm64): build
 #     and test directly on the runner image, Chromium sandbox enabled via a
 #     host sysctl where the distro restricts unprivileged user namespaces.
-#     Each arch is its own engine (ubuntu-24-x86_64 / ubuntu-24-arm64) so no
-#     two share a cache key; see .github/e2e-linux/README.md.
+#     Each arch is its own engine (ubuntu-24-x86_64 / ubuntu-24-arm64), so no
+#     two engines share an sccache prefix, installer artifact, R-library scope
+#     or Playwright label. The three *build* cache keys are deliberately shared
+#     where the build is ABI-identical; see .github/e2e-linux/README.md.
 #   - Container engines (Debian, Fedora, Rocky): GitHub has no hosted runner
 #     for these, so the jobs run in a distro container on an ubuntu host.
 #     SYS_ADMIN + an unconfined seccomp profile let the Chromium/Electron
@@ -35,12 +37,19 @@ on:
           - ubuntu-24-x86_64
           - ubuntu-24-arm64
           - ubuntu-26-x86_64
+          - ubuntu-26-arm64
           - ubuntu-22-x86_64
+          - ubuntu-22-arm64
           - debian-13-arm64
+          - debian-13-x86_64
           - fedora-43-x86_64
+          - fedora-43-arm64
           - fedora-44-x86_64
+          - fedora-44-arm64
           - rocky-9-x86_64
+          - rocky-9-arm64
           - rocky-10-arm64
+          - rocky-10-x86_64
         default: ubuntu-24-x86_64
       arch:
         description: "Architecture the selected engine is expected to run on. 'auto' takes it from the engine config; naming it explicitly asserts it (the run fails on mismatch)."
@@ -740,9 +749,11 @@ jobs:
           if [ -z "$URL" ]; then
             MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
             # daily_platform_key names this engine's installer under the
-            # electron product. Engines without their own daily reuse the
-            # nearest build (Ubuntu 26 -> noble-amd64, Debian -> noble-arm64,
-            # Fedora -> rhel10-x86_64); see the engine config.
+            # electron product. Engines with no daily of their own reuse the
+            # nearest build of the same arch: Debian -> the Ubuntu 24 daily
+            # (noble-amd64 / noble-arm64), Fedora -> the RHEL 10 daily
+            # (rhel10-x86_64 / rhel10-arm64). Every Ubuntu and Rocky engine has
+            # a key of its own. See the engine config.
             URL=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].link // empty')
             SHA=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].sha256 // empty')
             FILENAME=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].filename // empty')
@@ -801,11 +812,15 @@ jobs:
           esac
           ls -la /usr/bin/rstudio
 
-      # install-required-packages (engines without PPM binary coverage, where
-      # the in-test harness would otherwise source-compile at test time)
-      # pre-installs the harness's full REQUIRED_PACKAGES set into the cached
-      # R library; PW_RSTUDIO_R_LIBS_USER below then points globalSetup at
-      # that same library so it finds everything present and installs nothing.
+      # install-required-packages pre-installs the harness's full
+      # REQUIRED_PACKAGES set into the cached R library;
+      # PW_RSTUDIO_R_LIBS_USER below then points globalSetup at that same
+      # library so it finds everything present and installs nothing. Every
+      # Linux engine sets it: the harness-default library
+      # (~/.cache/rstudio-playwright) is not in any workflow cache, so an
+      # engine that leaves it off pays the full 23-package install on every
+      # run -- a few minutes of PPM binary downloads on Ubuntu/Debian, a full
+      # source compile on engines without PPM binaries (Fedora).
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
@@ -889,8 +904,12 @@ jobs:
           PW_DEBUG_LAUNCH: '1'
           # Point the harness's R-libs provisioner (fixtures/r-libs-setup.ts,
           # run in globalSetup) at the library os-e2e-deps pre-populated, so
-          # globalSetup installs nothing at test time. Empty (the harness
-          # default) on engines with PPM binary coverage.
+          # globalSetup installs nothing at test time. All engines currently
+          # set preinstall_r_packages; the conditional keeps the degraded mode
+          # working (empty means the harness default -- treated as unset since
+          # the empty-override fix in r-libs-setup.ts, which this expression
+          # relies on: an Actions env value of '' is exported as a defined
+          # empty string, not an absent variable).
           PW_RSTUDIO_R_LIBS_USER: ${{ needs.setup.outputs.preinstall_r_packages == 'true' && format('{0}/R-libs', github.workspace) || '' }}
           # Defensive ceiling on engines where a straggler R package may
           # source-compile at test time: that is a long silent stretch the

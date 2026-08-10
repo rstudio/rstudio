@@ -20,7 +20,9 @@ need to persist environment variables for later steps write to `$GITHUB_ENV` /
 
 Every engine name ends in its architecture (`ubuntu-24-x86_64`,
 `rocky-10-arm64`), so the arch is visible everywhere the name surfaces: the
-dispatch picker, job names, artifact names, and the Playwright project label.
+dispatch picker, job names, and artifact names. The Playwright project label is
+not one of those places -- it is built from `pw_label`, not from the engine
+name (see below).
 Hook directories are *not* arch-suffixed -- they're shared by whichever engines
 need the same distro setup (`script_dir`).
 
@@ -43,9 +45,31 @@ need the same distro setup (`script_dir`).
 Architecture is not a second selection axis: every engine config is
 single-arch, and the arch it runs on is spelled out in `tools_arch`, the runner
 labels, all three build cache keys, `sccache_key_prefix`, `installer_artifact`,
-`daily_platform_key`, `e2e_deps_cache_scope`, and `pw_label`. Keeping the arch
-literal in each of those (rather than templating it in) is what stops two
-engines of different arch from ever sharing a cache entry or an artifact name.
+`daily_platform_key`, and `e2e_deps_cache_scope`. Keeping the arch literal in
+each of those (rather than templating it in) is what stops two engines of
+different arch from ever sharing a cache entry or an artifact name. `pw_label`
+follows the same convention on new engines, with older exceptions noted below.
+(`daily_platform_key` is the exception to the "unique per engine" reading: it is
+a lookup into the dailies manifest, not a cache or artifact name, so engines of
+the same arch correctly share one -- both Fedora engines and `rocky-10-arm64`
+all install `rhel10-arm64`, and both Debian x86_64 and Ubuntu 24 x86_64 install
+`noble-amd64`.)
+
+New engines spell `pw_label` as `linux-<distro><version>-<arch>`. Five older
+values predate that convention and are deliberately left alone:
+
+| Config | `pw_label` | Missing |
+|---|---|---|
+| `ubuntu-24-x86_64` | `linux` | version and arch |
+| `fedora-44-x86_64` | `linux-fedora` | version and arch |
+| `fedora-43-x86_64` | `linux-fedora43` | arch |
+| `debian-13-arm64` | `linux-debian-arm64` | version |
+| `rocky-10-arm64` | `linux-rocky-arm64` | version |
+
+The label is the only per-engine discriminator that reaches the Test Insights
+dashboard, so renaming one breaks the continuity of its series there -- which is
+why the inconsistency with their newer siblings is a deliberate freeze rather
+than an oversight, and why normalising them belongs in a change of its own.
 
 To run an existing distro on a second architecture, add a *new* engine and give
 every key above an arch-distinct value; the only workflow change is adding it to
@@ -59,20 +83,29 @@ glob `playwright-blob-report-linux-desktop-<os>-*`, so a bare `ubuntu-24` would
 also match `ubuntu-24-arm64`'s blobs and silently merge foreign results into the
 x86_64 report.
 
-`ubuntu-24-arm64` does share `tools_cache_key` / `rlibs_cache_key` /
-`gwt_cache_key` with `debian-13-arm64`, which is not an oversight -- that engine
-also *builds* bare on `ubuntu-24.04-arm` with `install-dependencies-noble` (only
-its tests run in a container), so the cached artifacts are ABI-identical and the
-new engine starts warm. What must stay arch-distinct is anything that would
-otherwise collide with the x86_64 Ubuntu 24 engine: `sccache_key_prefix`,
+Each Debian engine shares `tools_cache_key` / `rlibs_cache_key` /
+`gwt_cache_key` with the Ubuntu 24 engine of the same arch -- `debian-13-arm64`
+with `ubuntu-24-arm64`, `debian-13-x86_64` with `ubuntu-24-x86_64` -- which is
+not an oversight: those engines also *build* bare on the Ubuntu 24 runner with
+`install-dependencies-noble` (only their tests run in a container), so the
+cached artifacts are ABI-identical and the new engine starts warm. On x86_64
+that pool is three deep, because the `ubuntu-24-x86_64` keys are also shared
+with the Linux Server build and its cache seed (see the config-keys table).
+What must stay arch-distinct is anything that would
+otherwise collide with the engine of the other architecture:
+`sccache_key_prefix`,
 `installer_artifact`, `pw_label`, and especially `e2e_deps_cache_scope` -- an
-empty scope means
-`runner.os` alone (`Linux`), which the x86_64 engines already use, so leaving
-it empty on an arm64 engine would hand it an x86_64 R library.
+empty scope means `runner.os` alone (`Linux`), so any two engines that left it
+empty would hand each other ABI-incompatible R libraries. Every engine sets an
+explicit scope; this matters more now that the cached library carries the full
+compiled REQUIRED_PACKAGES set, not just pak's DESCRIPTION deps.
 
-`ubuntu-24-arm64` is dispatch-only for now: it's in the `workflow_dispatch`
-choice list but not in the scheduled rotation's engine table, so it costs no
-nightly runner time until it's proven.
+Several engines are dispatch-only: they're in the `workflow_dispatch` choice
+list but have no row in the scheduled rotation's engine table, so they cost no
+nightly runner time until they're proven. The rotation's `TABLE` in
+`os-test-e2e-rstudio-scheduled.yml` is the authoritative list of what runs on a
+schedule -- consult it rather than assuming an engine is wired up because a
+config exists.
 
 Callers pass an `arch` input naming the architecture they expect the engine to
 run on; the workflow compares it against the config's `tools_arch` and fails
@@ -114,6 +147,6 @@ as `key=value` job outputs.
 | `run_as_user` | non-root user the test run drops to via setpriv (container engines); empty = run as the step user |
 | `display_server` | `xvfb` or `cage` (RHEL 10 dropped X.Org, so Xwayland-under-Cage provides the display) |
 | `e2e_deps_cache_scope` | os-e2e-deps cache isolation scope (R libraries are ABI-bound to the distro/arch) |
-| `preinstall_r_packages` | `true` to pre-install the harness's full REQUIRED_PACKAGES set (engines without PPM binary coverage) and point globalSetup at that library |
+| `preinstall_r_packages` | `true` to pre-install the harness's full REQUIRED_PACKAGES set into the cached R library and point globalSetup at it. Every engine sets it: an engine that leaves it empty pays globalSetup's install into an uncached library on every run |
 | `heartbeat_timeout_seconds` | PW heartbeat idle ceiling; raised where R packages may source-compile at test time |
 | `pw_label` | suffix for PW_PROJECT_LABEL / SHARD_NAME (report + dashboard continuity; do not rename casually) |

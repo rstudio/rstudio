@@ -18,8 +18,9 @@
 # 
 #     docker-compile.sh rhel8 electron 1.2.345
 #
-# will produce an RPM of RStudio Electron from the RHEL8 container, 
-# with build version 1.2.345, in your package/linux/ directory.
+# will produce an RPM of RStudio Electron from the RHEL8 container,
+# with build version 1.2.345, in the package/ directory beneath your current
+# working directory.
 #
 # For convenience, this script will build the required image if it doesn't
 # exist, but for efficiency, this script does not attempt rebuild the image if

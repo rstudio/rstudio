@@ -21,7 +21,20 @@ export namespace Ace {
 
   export interface Selection {
     setRange(range: Range): void;
-    rangeList: { ranges: Range[] };
+    rangeList: { ranges: Range[]; session?: unknown | null; detach(): void };
+    // Multi-select bookkeeping (see Ace's multi_select.js). 'index' is set
+    // only on the temporary Selection that forEachSelection installs while
+    // iterating, so its presence on session.selection indicates an aborted
+    // multi-select operation (#13605).
+    inMultiSelectMode?: boolean;
+    ranges?: Range[] | null;
+    rangeCount?: number;
+    index?: number;
+  }
+
+  export interface Document {
+    on(event: string, fn: (e: unknown) => void): void;
+    off(event: string, fn: (e: unknown) => void): void;
   }
 
   // Methods on the EditSession (editor.session). Ace exposes many more --
@@ -31,12 +44,21 @@ export namespace Ace {
     getLine(row: number): string;
     getFoldWidget(row: number): string;
     getFoldWidgetRange(row: number): Range | null;
-    getState(row: number): string;
+    // usually a plain state name, but rows inside a multi-line construct
+    // (e.g. an open raw string) save the tokenizer stack instead
+    getState(row: number): string | string[];
+    getTabString(): string;
     getTokens(row: number): unknown[];
     getTokenAt(row: number, column: number): unknown | null;
     getMarkers(): Record<string, unknown>;
     replace(range: Range, text: string): Position;
     remove(range: Range): Position;
+    getDocument(): Document;
+    selection: Selection;
+    // The session's real Selection object; session.selection may briefly
+    // point at a temporary Selection during multi-select operations (see
+    // Ace's Editor.forEachSelection).
+    multiSelect?: Selection;
   }
 
   // The runtime editor instance. Hung off the .ace_editor DOM element via
@@ -55,6 +77,10 @@ export namespace Ace {
     insert(text: string): void;
     navigateLineEnd(): void;
     selectAll(): void;
+    execCommand(name: string): void;
+    exitMultiSelectMode(): void;
+    inMultiSelectMode?: boolean;
+    inVirtualSelectionMode?: boolean;
   }
 }
 

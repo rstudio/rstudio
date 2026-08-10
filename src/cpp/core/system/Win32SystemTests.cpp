@@ -15,6 +15,9 @@
 
 #ifdef _WIN32
 
+#include <core/FileUtils.hpp>
+#include <core/system/Environment.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -106,6 +109,227 @@ TEST(Win32SystemTest, ComSpec)
    FilePath command = expandComSpec();
    ASSERT_FALSE(command.isEmpty());
    ASSERT_TRUE(command.exists());
+}
+
+TEST(Win32SystemTest, ExecutablePathIsResolved)
+{
+   // a smoke test only: the test binary's own path is far short of MAX_PATH, so
+   // the grow-and-retry loop never iterates here
+   FilePath exePath;
+   Error err = executablePath(nullptr, &exePath);
+   ASSERT_FALSE(err);
+   ASSERT_FALSE(exePath.isEmpty());
+   ASSERT_TRUE(exePath.isRegularFile());
+}
+
+TEST(Win32SystemTest, FindProgramOnPath)
+{
+   FilePath cmdPath;
+   Error err = findProgramOnPath("cmd.exe", &cmdPath);
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(cmdPath.isRegularFile());
+   ASSERT_TRUE(boost::algorithm::iequals(cmdPath.getFilename(), "cmd.exe"));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathProbesExtensions)
+{
+   // no extension supplied, so .exe should be probed
+   FilePath cmdPath;
+   Error err = findProgramOnPath("cmd", &cmdPath);
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(boost::algorithm::iequals(cmdPath.getFilename(), "cmd.exe"));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathMissing)
+{
+   FilePath programPath;
+   ASSERT_TRUE(findProgramOnPath("oncetherewasafakeprogram374732.exe", &programPath));
+   ASSERT_TRUE(findProgramOnPath("", &programPath));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathQualified)
+{
+   FilePath cmdPath;
+   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
+
+   // an already-qualified program isn't a PATH search, but should still resolve
+   FilePath qualified;
+   ASSERT_FALSE(findProgramOnPath(cmdPath.getAbsolutePath(), &qualified));
+   ASSERT_TRUE(qualified == cmdPath);
+
+   ASSERT_TRUE(findProgramOnPath(cmdPath.getAbsolutePath() + "-nope", &qualified));
+
+   // a drive-relative name is rooted as far as FilePath is concerned; it must not
+   // be joined onto each PATH entry
+   ASSERT_TRUE(findProgramOnPath("C:oncetherewasafakeprogram374732.exe", &qualified));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathQualifiedProbesExtensions)
+{
+   FilePath cmdPath;
+   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
+
+   // a qualified name without an extension gets the same probing a bare name does,
+   // so dropping the ".exe" here should still resolve
+   std::string withoutExt = cmdPath.getParent().completeChildPath("cmd").getAbsolutePath();
+
+   FilePath qualified;
+   ASSERT_FALSE(findProgramOnPath(withoutExt, &qualified));
+   ASSERT_TRUE(boost::algorithm::iequals(qualified.getFilename(), "cmd.exe"));
+}
+
+TEST(Win32SystemTest, FindProgramOnPathProbesExtensionsUnderDottedDirectories)
+{
+   // The extension of a qualified name has to be read from its last component. Taken over
+   // the whole path, a dotted *directory* reads as an extension and suppresses the probing
+   // above for a name that has none -- and dotted directories are the norm on Windows
+   // ("C:/R/R-4.4.1/bin", "C:/Users/first.last"). The System32 case cannot catch this,
+   // because none of its components contain a dot.
+   const std::string kProbeProgram = "rs-probe-374732";
+
+   FilePath probeDir;
+   ASSERT_FALSE(FilePath::tempFilePath(probeDir));
+
+   FilePath dottedDir = probeDir.completeChildPath("R-4.4.1").completeChildPath("bin");
+   ASSERT_FALSE(dottedDir.ensureDirectory());
+   ASSERT_FALSE(dottedDir.completeChildPath(kProbeProgram + ".exe").ensureFile());
+
+   FilePath qualified;
+   Error err = findProgramOnPath(
+      dottedDir.completeChildPath(kProbeProgram).getAbsolutePath(),
+      &qualified);
+
+   // evaluate before cleanup, so a failure doesn't leave the temp directory behind
+   bool foundProbe = !err &&
+                     qualified.isRegularFile() &&
+                     qualified.getFilename() == kProbeProgram + ".exe";
+
+   probeDir.remove();
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(foundProbe);
+}
+
+TEST(Win32SystemTest, FindProgramOnPathSearchesSystemDirectories)
+{
+   // clear PATH so the system directories are the only place cmd.exe can come from
+   std::string savedPath = getenv("PATH");
+   setenv("PATH", "");
+
+   FilePath cmdPath;
+   Error err = findProgramOnPath("cmd.exe", &cmdPath);
+
+   setenv("PATH", savedPath);
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(cmdPath.isRegularFile());
+}
+
+TEST(Win32SystemTest, FindProgramOnPathPrefersSystemDirectories)
+{
+   FilePath cmdPath;
+   ASSERT_FALSE(findProgramOnPath("cmd.exe", &cmdPath));
+
+   // A decoy cmd.exe at the front of PATH must not shadow the one in System32.
+   // PathFindOnPath, which this replaced, searched the system directories before
+   // PATH, and resolving cmd.exe is how we launch batch files.
+   FilePath decoyDir;
+   ASSERT_FALSE(FilePath::tempFilePath(decoyDir));
+   ASSERT_FALSE(decoyDir.ensureDirectory());
+   ASSERT_FALSE(decoyDir.completeChildPath("cmd.exe").ensureFile());
+
+   std::string savedPath = getenv("PATH");
+   setenv("PATH", decoyDir.getAbsolutePathNative() + ";" + savedPath);
+
+   FilePath resolved;
+   Error err = findProgramOnPath("cmd.exe", &resolved);
+
+   setenv("PATH", savedPath);
+   decoyDir.remove();
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(resolved == cmdPath);
+}
+
+TEST(Win32SystemTest, FindProgramOnPathTrimsQuotedEntries)
+{
+   // The program has to be one the system directories cannot supply. Those are searched
+   // ahead of PATH, so probing for something like cmd.exe would resolve from System32
+   // and return before the quoted PATH entry was ever examined -- leaving the trimming
+   // this test exists to cover unexercised.
+   const std::string kProbeProgram = "rs-probe-374732.exe";
+
+   FilePath probeDir;
+   ASSERT_FALSE(FilePath::tempFilePath(probeDir));
+   ASSERT_FALSE(probeDir.ensureDirectory());
+   ASSERT_FALSE(probeDir.completeChildPath(kProbeProgram).ensureFile());
+
+   std::string savedPath = getenv("PATH");
+   setenv("PATH", "  \"" + probeDir.getAbsolutePathNative() + "\"  ");
+
+   FilePath quotedPath;
+   Error err = findProgramOnPath(kProbeProgram, &quotedPath);
+
+   // evaluate before cleanup, so a failure doesn't leave the environment or temp dir behind
+   bool foundProbe = !err &&
+                     quotedPath.isRegularFile() &&
+                     quotedPath.getFilename() == kProbeProgram;
+
+   setenv("PATH", savedPath);
+   probeDir.remove();
+
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(foundProbe);
+}
+
+TEST(Win32SystemTest, RunCommandReachesTheShell)
+{
+   // runCommand() resolves cmd.exe through findProgramOnPath() and then builds the
+   // CreateProcessW command line by hand. cmd parses that line itself and stops
+   // scanning an unquoted program name at the first '/', so a forward-slash path to
+   // cmd.exe leaves it reading "/Windows/..." as switches: the shell starts, prints a
+   // usage complaint and exits, and the command never runs. That failure is silent at
+   // every layer above -- runCommand() succeeds, only the exit status says otherwise.
+   ProcessResult result;
+   Error err = runCommand("echo rstudio-shell-probe", ProcessOptions(), &result);
+   ASSERT_FALSE(err);
+   ASSERT_EQ(0, result.exitStatus);
+   ASSERT_TRUE(boost::algorithm::contains(result.stdOut, "rstudio-shell-probe"));
+}
+
+TEST(Win32SystemTest, LongPathNameRoundTrip)
+{
+   FilePath tempDir;
+   Error err = FilePath::tempFilePath(tempDir);
+   ASSERT_FALSE(err);
+
+   err = tempDir.ensureDirectory();
+   ASSERT_FALSE(err);
+
+   std::string longPath = tempDir.getAbsolutePath();
+   std::string shortPath = file_utils::shortPathName(longPath);
+   if (shortPath == longPath)
+   {
+      // 8.3 name generation can be disabled per-volume, in which case there's no
+      // short name to expand back
+      tempDir.remove();
+      GTEST_SKIP() << "no 8.3 short name available for the temporary directory";
+   }
+
+   // expanding the short form should recover the long form
+   ASSERT_TRUE(boost::algorithm::iequals(file_utils::longPathName(shortPath), longPath));
+
+   tempDir.remove();
+}
+
+TEST(Win32SystemTest, LongPathNamePassesThroughMissingPaths)
+{
+   // GetLongPathNameW returns 0 for a path that doesn't exist, and we hand back the
+   // input. Note this does not cover the buffer-too-small case (a non-zero return with
+   // the buffer left unwritten), which is what the old fixed-size code misread as
+   // success; reproducing that needs a path longer than its 520-byte buffer.
+   std::string missing = "C:\\oncetherewasafakedirectory374732\\nope.txt";
+   ASSERT_EQ(missing, file_utils::longPathName(missing));
 }
 
 TEST(Win32SystemTest, WindowsArchitectureBitnessAssumptions)
