@@ -28,3 +28,4 @@ stringr
 styler
 testthat
 tibble
+tidyverse
