@@ -1,4 +1,4 @@
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
@@ -137,17 +137,14 @@ export class ChatPaneActions {
 
       if (await overlayTrustBtn.isVisible().catch(() => false)) {
         console.log('waitForChatReady: clicking trust overlay button');
-        await overlayTrustBtn.click({ timeout: 5000 });
-        // Let the overlay tear down before re-polling
-        await sleep(500);
+        await this.grantWorkspaceTrust(overlayTrustBtn);
         continue;
       }
 
       const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
       if (await anyTrustBtn.isVisible().catch(() => false)) {
         console.log('waitForChatReady: clicking fallback trust button');
-        await anyTrustBtn.click({ timeout: 5000 });
-        await sleep(500);
+        await this.grantWorkspaceTrust(anyTrustBtn);
         continue;
       }
 
@@ -155,6 +152,17 @@ export class ChatPaneActions {
     }
 
     // Deadline expired -- pick the most actionable error message.
+    // Check the trust overlay first: it renders over the sign-in panel
+    // without hiding it, so the sign-in check below would otherwise win and
+    // blame credentials for a trust grant that never landed.
+    if (await overlayTrustBtn.isVisible().catch(() => false)) {
+      throw new Error(
+        `waitForChatReady: the workspace-trust dialog was still showing after ${timeout}ms. ` +
+        'Clicking "Trust this workspace" did not complete the trustWorkspace round-trip; ' +
+        'check the chat iframe console for a "Failed to trust workspace" error.'
+      );
+    }
+
     // The Sign-In affordance can flash briefly during backend startup while
     // credentials are still being loaded from the token store, so we only
     // treat it as a hard failure when it's still visible at the end of the
@@ -173,6 +181,34 @@ export class ChatPaneActions {
       `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
       `have stalled.`
     );
+  }
+
+  /**
+   * Click a "Trust this workspace" affordance and wait for it to go away.
+   *
+   * The overlay disables both of its buttons for as long as the trustWorkspace
+   * round-trip runs -- around two seconds, since the assistant tears down and
+   * rebuilds the conversation view once trust is granted -- and only then
+   * unmounts. Polling back around after a fixed sleep lands inside that
+   * window: the overlay is still visible, so we click again, and that second
+   * click waits on a button that is disabled and about to detach until it
+   * times out. Waiting for the button to disappear keeps it to one click per
+   * appearance.
+   *
+   * Both steps are best-effort. The overlay can also be torn down by a trust
+   * grant we didn't make (leaving the click with no element), and a failed
+   * grant leaves it up with its buttons re-enabled and an inline error -- in
+   * which case the caller's next poll simply retries. The caller's deadline,
+   * not this click, is what fails the test.
+   */
+  private async grantWorkspaceTrust(trustBtn: Locator): Promise<void> {
+    try {
+      await trustBtn.click({ timeout: 5000 });
+      await trustBtn.waitFor({ state: 'hidden', timeout: 10000 });
+    } catch (err) {
+      const [firstLine] = String(err instanceof Error ? err.message : err).split('\n');
+      console.log(`waitForChatReady: trust click did not settle (${firstLine}); re-polling`);
+    }
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
