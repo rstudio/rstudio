@@ -120,6 +120,11 @@ runs:
         E2E_ROOT: ${{ inputs.working-directory }}
         R_USER_CACHE_DIR: ${{ github.workspace }}/.r-pkg-cache
         INSTALL_REQUIRED: ${{ inputs.install-required-packages }}
+        # The install targets R_LIBS_USER while the cache path and the
+        # PW_RSTUDIO_R_LIBS_USER export use the r-libs-user input; set the
+        # former from the latter so they can't diverge on a caller whose
+        # job-level R_LIBS_USER doesn't match the input.
+        R_LIBS_USER: ${{ inputs.r-libs-user }}
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
           # Track the runner's actual distro so PPM serves native binaries and

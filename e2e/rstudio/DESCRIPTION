@@ -13,5 +13,4 @@ Imports:
     rlang,
     roxygen2,
     shiny,
-    testthat,
-    tidyverse
+    testthat

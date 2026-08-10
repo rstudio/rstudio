@@ -597,10 +597,19 @@ jobs:
           echo "Cloning $R_LIBS_USER into $USER_LIB"
           sudo mkdir -p "$USER_LIB"
           sudo cp -a "$R_LIBS_USER/." "$USER_LIB/"
-          sudo chown -R "$PW_RSTUDIO_SERVER_USER:$PW_RSTUDIO_SERVER_USER" "/home/$PW_RSTUDIO_SERVER_USER/R"
+          sudo chown -R "$PW_RSTUDIO_SERVER_USER:$PW_RSTUDIO_SERVER_USER" "$USER_LIB"
 
-          COUNT=$(sudo -H -u "$PW_RSTUDIO_SERVER_USER" Rscript --vanilla -e 'cat(nrow(installed.packages(lib.loc = .libPaths()[1])))')
-          echo "Test user library has $COUNT packages"
+          # Fail fast, with names, if the clone is missing anything tests
+          # require -- a partial library otherwise surfaces later as
+          # test-time installs inside the rsessions (#18488).
+          REQUIRED=$(sed -e 's/#.*//' -e 's/[[:space:]]//g' e2e/rstudio/required-packages.txt | grep -v '^$' | sort -u)
+          INSTALLED=$(sudo -H -u "$PW_RSTUDIO_SERVER_USER" Rscript --vanilla -e 'writeLines(rownames(installed.packages(lib.loc = commandArgs(TRUE)[[1]])))' "$USER_LIB" | sort -u)
+          MISSING=$(comm -23 <(printf '%s\n' "$REQUIRED") <(printf '%s\n' "$INSTALLED"))
+          if [ -n "$MISSING" ]; then
+            echo "::error::test user library is missing required packages: ${MISSING//$'\n'/ }"
+            exit 1
+          fi
+          echo "Test user library has $(printf '%s\n' "$INSTALLED" | wc -l) packages; all required packages present"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
