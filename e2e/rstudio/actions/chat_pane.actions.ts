@@ -137,18 +137,26 @@ export class ChatPaneActions {
 
       if (await overlayTrustBtn.isVisible().catch(() => false)) {
         console.log('waitForChatReady: clicking trust overlay button');
-        await this.grantWorkspaceTrust(overlayTrustBtn);
+        await this.grantWorkspaceTrust(overlayTrustBtn, deadline);
         continue;
       }
 
       const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
       if (await anyTrustBtn.isVisible().catch(() => false)) {
         console.log('waitForChatReady: clicking fallback trust button');
-        await this.grantWorkspaceTrust(anyTrustBtn);
+        await this.grantWorkspaceTrust(anyTrustBtn, deadline);
         continue;
       }
 
       await sleep(500);
+    }
+
+    // A trust grant can consume the tail of the budget, leaving the loop no
+    // iteration in which to observe its result. Sample the real readiness
+    // signal once more before calling this a failure.
+    if (await this.chatPane.isChatInputReady()) {
+      console.log('waitForChatReady: input editable at deadline');
+      return;
     }
 
     // Deadline expired -- pick the most actionable error message.
@@ -199,12 +207,22 @@ export class ChatPaneActions {
    * grant we didn't make (leaving the click with no element), and a failed
    * grant leaves it up with its buttons re-enabled and an inline error -- in
    * which case the caller's next poll simply retries. The caller's deadline,
-   * not this click, is what fails the test.
+   * not this click, is what fails the test, so neither step may outlive it:
+   * an attempt begun just before the deadline would otherwise overrun it by
+   * its full budget.
    */
-  private async grantWorkspaceTrust(trustBtn: Locator): Promise<void> {
+  private async grantWorkspaceTrust(trustBtn: Locator, deadline: number): Promise<void> {
+    // Playwright reads a timeout of 0 as "wait forever", so an exhausted
+    // budget has to skip the step outright rather than pass 0 through.
+    const budget = (max: number) => Math.min(max, deadline - Date.now());
     try {
-      await trustBtn.click({ timeout: 5000 });
-      await trustBtn.waitFor({ state: 'hidden', timeout: 10000 });
+      const clickBudget = budget(5000);
+      if (clickBudget <= 0) return;
+      await trustBtn.click({ timeout: clickBudget });
+
+      const hiddenBudget = budget(10000);
+      if (hiddenBudget <= 0) return;
+      await trustBtn.waitFor({ state: 'hidden', timeout: hiddenBudget });
     } catch (err) {
       const [firstLine] = String(err instanceof Error ? err.message : err).split('\n');
       console.log(`waitForChatReady: trust click did not settle (${firstLine}); re-polling`);
