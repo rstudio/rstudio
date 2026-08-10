@@ -2260,6 +2260,44 @@ input[type="checkbox"]:checked:before {
    background-position-y: 1px;
 }
 
+/* Windows contrast themes (CSS forced colors mode) recolor backgrounds, borders
+ * and text, but leave background images at their authored color -- so the
+ * checkmark and radio dot drawn above stayed black and disappeared against a
+ * black Canvas. Hand these controls back to the browser's native rendering,
+ * which is contrast-theme aware; the custom rendering above is untouched when
+ * contrast themes are off. This has to follow the rules it overrides, since a
+ * media query does not add specificity.
+ *
+ * The @supports wrapper is load-bearing. GWT's legacy CssResource parser is a
+ * CSS2 parser that understands media types only, and would silently drop a bare
+ * "@media (forced-colors: active)" block -- warning but still compiling. It
+ * passes the body of an unrecognized at-rule through untouched, so the media
+ * query reaches the browser intact. Only @external class names may be used in
+ * here, since obfuscation does not run on a passed-through body either. */
+
+@supports (forced-color-adjust: auto) {
+   @media (forced-colors: active) {
+      .macintosh .gwt-CheckBox input[type="checkbox"],
+      .linux .gwt-CheckBox input[type="checkbox"],
+      .linux .gwt-RadioButton input[type="radio"],
+      .windows-highdpi .gwt-CheckBox input[type="checkbox"],
+      .windows-highdpi .gwt-RadioButton input[type="radio"],
+      input[type="checkbox"] {
+         -webkit-appearance: auto;
+         appearance: auto;
+      }
+
+      .macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
+      .linux .gwt-CheckBox input[type="checkbox"]:checked:before,
+      .linux .gwt-RadioButton input[type="radio"]:checked:before,
+      .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before,
+      .windows-highdpi .gwt-RadioButton input[type="radio"]:checked:before,
+      input[type="checkbox"]:checked:before {
+         content: none;
+      }
+   }
+}
+
 .dialogTabPanel .gwt-TabLayoutPanelTab {
    background: #f5f5f5 -moz-linear-gradient(top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.9) 17%, rgba(255,255,255,0) 50%);
    background: #f5f5f5 -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.9)), color-stop(17%,rgba(255,255,255,0.9)), color-stop(50%,rgba(255,255,255,0)));

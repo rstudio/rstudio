@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- ([#18493](https://github.com/rstudio/rstudio/issues/18493)): Fixed an issue where checkbox and radio button states were invisible on Windows when a contrast theme with a dark background was enabled. RStudio drew the checkmark and radio dot as fixed black images, which contrast themes leave untouched while forcing the surrounding control to the theme's background color. These controls now use the browser's native rendering when a contrast theme is active.
 - ([#18469](https://github.com/rstudio/rstudio/issues/18469)): Fixed an issue where an R raw string (e.g. `r"(...)"`) corrupted internal editor state for all following lines, most visibly breaking header folding below the raw string in R Markdown documents.
 - ([#18468](https://github.com/rstudio/rstudio/issues/18468)): Fixed an issue where pressing Enter inside a C++ (e.g. Rcpp) chunk of an R Markdown or Quarto document failed to indent the new line, raising an internal error, whenever another completed chunk appeared earlier in the document. Also fixed an internal error raised when reformatting R code containing Quarto `#|` comment lines.
 - ([#18464](https://github.com/rstudio/rstudio/issues/18464)): Fixed rainbow fenced div highlighting in the source editor so that colors follow the nesting structure: nested divs now use a different color than their parent, and sibling divs at the same depth share a color, with opening and closing fences of the same div always matching.
