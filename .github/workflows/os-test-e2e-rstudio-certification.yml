@@ -260,7 +260,13 @@ jobs:
       rstudio_installer_url: ${{ needs.resolve.outputs[matrix.url_key] }}
 
   ubuntu24s:
-    name: Ubuntu 24 Server (R ${{ fromJSON(needs.pick.outputs.r_declared).ubuntu24s }})
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      Ubuntu 24 Server ${{ fromJSON(needs.pick.outputs.r_declared).ubuntu24s
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).ubuntu24s)
+      || '(not selected)' }}
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu24s') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
@@ -276,7 +282,13 @@ jobs:
       rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
 
   macos26:
-    name: macOS 26 arm64 (R ${{ fromJSON(needs.pick.outputs.r_declared).macos26 }})
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      macOS 26 arm64 ${{ fromJSON(needs.pick.outputs.r_declared).macos26
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos26)
+      || '(not selected)' }}
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos26') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
@@ -292,7 +304,13 @@ jobs:
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
   macos15:
-    name: macOS 15 x86_64 (R ${{ fromJSON(needs.pick.outputs.r_declared).macos15 }})
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      macOS 15 x86_64 ${{ fromJSON(needs.pick.outputs.r_declared).macos15
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos15)
+      || '(not selected)' }}
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos15') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-15-x86_64.yml
@@ -310,7 +328,13 @@ jobs:
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
   macos14:
-    name: macOS 14 arm64 (R ${{ fromJSON(needs.pick.outputs.r_declared).macos14 }})
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      macOS 14 arm64 ${{ fromJSON(needs.pick.outputs.r_declared).macos14
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos14)
+      || '(not selected)' }}
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos14') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
@@ -326,7 +350,13 @@ jobs:
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
   windows2025:
-    name: Windows Server 2025 (R ${{ fromJSON(needs.pick.outputs.r_declared).windows2025 }})
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      Windows Server 2025 ${{ fromJSON(needs.pick.outputs.r_declared).windows2025
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).windows2025)
+      || '(not selected)' }}
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'windows2025') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
