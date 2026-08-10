@@ -90,12 +90,15 @@ public class MiniPopupPanel extends DecoratedPopupPanel
       super.show();
    }
    
+   // override the boolean overload rather than hide(): auto-hide dismissal
+   // (e.g. clicking away from the popup) invokes hide(boolean) directly,
+   // bypassing hide(), which delegates here
    @Override
-   public void hide()
+   public void hide(boolean autoClosed)
    {
       removeDragHandler();
       removeEscHandler();
-      super.hide();
+      super.hide(autoClosed);
    }
    
    private void commonInit(boolean useStyleSheet)

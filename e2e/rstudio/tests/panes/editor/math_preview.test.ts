@@ -172,6 +172,11 @@ test.describe('Inline LaTeX math previews', () => {
     const popupMath = page.locator('mjx-container:not(.rstudio-mathjax-root mjx-container)');
     await expect(popupMath).toBeVisible({ timeout: 60000 });
 
+    // snapshot the exception count so the assertion below sees only errors
+    // raised by the Escape presses; earlier unrelated exceptions still fail
+    // the test via the per-test fixture drain (don't clear() them away)
+    const errorCountBefore = await page.evaluate(() => window.rstudio!.errors.list().length);
+
     // Escape dismisses the popup
     await page.keyboard.press('Escape');
     await expect(popupMath).toBeHidden();
@@ -181,8 +186,9 @@ test.describe('Inline LaTeX math previews', () => {
     // an uncaught TypeError on a nulled handler field (#18474); Escape after
     // dismissal must not raise a client exception
     await page.keyboard.press('Escape');
-    const errors = await page.evaluate(() =>
-      window.rstudio!.errors.list().map((e) => e.message)
+    const errors = await page.evaluate(
+      (count) => window.rstudio!.errors.list().slice(count).map((e) => e.message),
+      errorCountBefore
     );
     expect(errors).toEqual([]);
 
