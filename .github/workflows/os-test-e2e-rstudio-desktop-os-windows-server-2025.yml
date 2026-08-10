@@ -100,6 +100,9 @@ on:
       AWS_SCCACHE_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
         required: false
+      OP_SERVICE_ACCOUNT_TOKEN:
+        description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
+        required: false
 
 permissions:
   contents: read
