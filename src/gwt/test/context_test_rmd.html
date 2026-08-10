@@ -1,0 +1,315 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!--
+    Regression tests for tokenizer context handling in the R Markdown and
+    Sweave modes (https://github.com/rstudio/rstudio/issues/18468).
+
+    Highlight rules track cross-line information (chunk fences, quarto '#|'
+    blocks, YAML multiline strings, \Sexpr brace counts) on a per-row context
+    object. TokenUtils.$tokenizeUpToRow and Ace's BackgroundTokenizer save a
+    shallow copy of that context for every row, so rules must store fresh
+    objects rather than mutate inherited ones, and must degrade gracefully
+    when a caller tokenizes a line without any context at all. These tests
+    pin both properties, plus the C++ chunk auto-indent that first exposed
+    the problem.
+  -->
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_fold_mode.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_style_behaviour.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/python_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/python.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sh_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/stan_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sql_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/mermaid_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/markdown_folding.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/markdown_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/markdown.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rmarkdown_folding.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rmarkdown_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rmarkdown.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sweave_highlight_rules.js"></script>
+</head>
+<body>
+
+<h2>R Markdown / Sweave tokenizer context tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<div id="testEditor" style="display: none;"></div>
+<ol id="results"></ol>
+
+<script type="text/javascript">
+
+var passed = 0, failed = 0;
+var results = document.getElementById("results");
+
+function check(name, actual, expected) {
+  var ok = actual === expected;
+  var li = document.createElement("li");
+  li.textContent = (ok ? "[PASS] " : "[FAIL] ") + name +
+    (ok ? "" : " -- expected " + JSON.stringify(expected) +
+               ", got " + JSON.stringify(actual));
+  li.style.color = ok ? "green" : "red";
+  results.appendChild(li);
+  if (ok)
+    passed++;
+  else
+    failed++;
+}
+
+var Tokenizer = require("ace/tokenizer").Tokenizer;
+var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
+var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
+var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules;
+var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighlightRules;
+
+// Tokenize all rows the way TokenUtils.$tokenizeUpToRow and Ace's
+// BackgroundTokenizer.$tokenizeRow do: each row starts from a shallow copy
+// of the previous row's context, and that copy is saved as the row's
+// snapshot.
+function tokenizeRows(tokenizer, lines, startState) {
+  var states = [], contexts = [];
+  for (var row = 0; row < lines.length; row++) {
+    var state = (row === 0) ? startState : states[row - 1];
+    var context = Object.assign({}, contexts[row - 1]);
+    var result = tokenizer.getLineTokens(lines[row], state, row, context);
+    states[row] = result.state;
+    contexts[row] = context;
+  }
+  return { states: states, contexts: contexts };
+}
+
+// Re-tokenize a single row from its saved predecessor snapshot, as happens
+// when an edit invalidates just that row. If a later row corrupted the
+// snapshot (by mutating a shared context object), this returns the wrong
+// state.
+function retokenizeRow(tokenizer, lines, saved, startState, row) {
+  var state = (row === 0) ? startState : saved.states[row - 1];
+  var context = Object.assign({}, saved.contexts[row - 1]);
+  return tokenizer.getLineTokens(lines[row], state, row, context);
+}
+
+// ---------------------------------------------------------------------------
+// C++ chunk auto-indent (#18468). Pressing Enter at the end of the brace
+// line routes through CppCodeModel.getNextLineIndent, which re-tokenizes the
+// document through TokenUtils; without a threaded context this threw a
+// TypeError once tokenization crossed the completed R chunk above, and the
+// new line was left unindented.
+// ---------------------------------------------------------------------------
+(function() {
+
+  var RMarkdownMode = require("mode/rmarkdown").Mode;
+
+  var editor = ace.edit("testEditor");
+  editor.setBehavioursEnabled(false);
+  var session = editor.getSession();
+  session.setMode(new RMarkdownMode(false, session));
+
+  var content = [
+    "---",
+    "title: cpp chunk indent",
+    "---",
+    "",
+    "```{r}",
+    "1 + 1",
+    "```",
+    "",
+    "```{Rcpp}",
+    "int add(int x) {"
+  ].join("\n");
+
+  editor.insert(content);
+
+  // The background tokenizer runs on a timer; force it synchronously so
+  // Editor.insert() sees real states (its auto-indent dispatches on
+  // session.getState(cursor.row)).
+  for (var row = 0; row < session.getLength(); row++)
+    session.bgTokenizer.getTokens(row);
+
+  check("brace line tokenizes as C++ embedded in R Markdown",
+        /^r-cpp-/.test(session.getState(9)), true);
+
+  try {
+    editor.insert("\n");
+    check("Enter after '{' in an Rcpp chunk indents one level",
+          session.getLine(session.getLength() - 1),
+          session.getTabString());
+  } catch (e) {
+    check("Enter after '{' in an Rcpp chunk indents one level",
+          "exception: " + e.message, session.getTabString());
+  }
+
+})();
+
+// ---------------------------------------------------------------------------
+// Quarto '#|' blocks must not corrupt earlier rows' context snapshots. The
+// '#|' opener records the state it was entered from, and that record is
+// never deleted, so reusing (mutating) an inherited object would leak the
+// second block's entry state into the snapshots saved for the first block's
+// rows.
+// ---------------------------------------------------------------------------
+(function() {
+
+  var tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
+
+  var lines = [
+    "```{r}",          // 0
+    "#| echo: false",  // 1
+    "1 + 1",           // 2
+    "```",             // 3
+    "",                // 4
+    "```{python}",     // 5
+    "#| echo: true",   // 6
+    "x = 1",           // 7
+    "```"              // 8
+  ];
+
+  var saved = tokenizeRows(tokenizer, lines, "start");
+  check("quarto: R chunk '#|' line enters the r-quarto-yaml state",
+        saved.states[1], "r-quarto-yaml-start");
+  check("quarto: R chunk code line returns to the r state",
+        saved.states[2], "r-start");
+  check("quarto: python chunk '#|' line enters the python-quarto-yaml state",
+        saved.states[6], "python-quarto-yaml-start");
+  check("quarto: python chunk code line returns to the python state",
+        saved.states[7], "python-start");
+
+  // Re-tokenize the R chunk's code line from its saved snapshot. If the
+  // python chunk's '#|' opener mutated the shared quarto context, this
+  // exits to python-start instead.
+  var retokenized = retokenizeRow(tokenizer, lines, saved, "start", 2);
+  check("quarto: '#|' exit state survives a later '#|' block",
+        retokenized.state, "r-start");
+
+  // A '#|' exit tokenized without any context must stay within the
+  // enclosing mode: a hardcoded "start" fallback would escape from
+  // r-quarto-yaml-start to top-level Markdown.
+  var fallback = tokenizer.getLineTokens("x", "r-quarto-yaml-start", 0, {});
+  check("quarto: missing-context exit falls back to the enclosing mode",
+        fallback.state, "r-start");
+
+  var multiline = tokenizer.getLineTokens("#| bar", "r-quarto-yaml-multiline-string", 0, {});
+  check("quarto: missing-context multiline exit preserves the embed prefix",
+        multiline.state, "r-quarto-yaml-start");
+
+  // A chunk fence tokenized without any context assumes the fence closes
+  // the chunk instead of crashing.
+  var fence = tokenizer.getLineTokens("```", "r-start", 0, {});
+  check("chunk: missing-context fence exits the chunk",
+        fence.state, "start");
+
+})();
+
+// ---------------------------------------------------------------------------
+// Markdown github blocks: with no context, the closing-fence rule recovers
+// the fence width from the state name ('github-block-<width>') rather than
+// unconditionally closing the block.
+// ---------------------------------------------------------------------------
+(function() {
+
+  var tokenizer = new Tokenizer(new MarkdownHighlightRules().getRules());
+
+  var matched = tokenizer.getLineTokens("````", "github-block-4", 0, {});
+  check("markdown: missing-context fence of matching width closes the block",
+        matched.state, "start");
+
+  var mismatched = tokenizer.getLineTokens("```", "github-block-4", 0, {});
+  check("markdown: missing-context fence of differing width stays in the block",
+        mismatched.state, "github-block-4");
+
+})();
+
+// ---------------------------------------------------------------------------
+// YAML multiline strings must not corrupt earlier rows' context snapshots.
+// The opener records the entry state and indent, and that record is never
+// deleted, so reusing (mutating) an inherited object would leak the second
+// string's indent into the snapshots saved for the first string's rows.
+// ---------------------------------------------------------------------------
+(function() {
+
+  var tokenizer = new Tokenizer(new YamlHighlightRules().getRules());
+
+  var lines = [
+    "    a: |",         // 0: multiline opener at indent 4
+    "     b",           // 1: continuation at indent 5
+    "end: 1",           // 2: exits the multiline string
+    "        c: |",     // 3: second opener at indent 8
+    "         d",       // 4: continuation at indent 9
+    "done: 1"           // 5: exits the multiline string
+  ];
+
+  var saved = tokenizeRows(tokenizer, lines, "start");
+  check("yaml: first multiline string continues past its continuation line",
+        saved.states[1], "multiline-string");
+  check("yaml: first multiline string exits on dedent",
+        saved.states[2], "start");
+  check("yaml: second multiline string continues past its continuation line",
+        saved.states[4], "multiline-string");
+
+  // Re-tokenize the first string's continuation line from its snapshot. If
+  // the second opener mutated the shared yaml context, the recorded indent
+  // becomes 8 and the line (indent 5) exits the string prematurely.
+  var retokenized = retokenizeRow(tokenizer, lines, saved, "start", 1);
+  check("yaml: multiline indent survives a later multiline string",
+        retokenized.state, "multiline-string");
+
+  // With no context at all, exit to the state derived from the state name.
+  var fallback = tokenizer.getLineTokens("x: 1", "multiline-string", 0, {});
+  check("yaml: missing-context multiline exit falls back to start",
+        fallback.state, "start");
+
+})();
+
+// ---------------------------------------------------------------------------
+// Sweave \Sexpr{} brace counts are stored as primitive context fields so
+// per-row snapshots capture them; counts on a shared object would be
+// decremented in place by later rows, corrupting earlier snapshots.
+// ---------------------------------------------------------------------------
+(function() {
+
+  var tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
+
+  var lines = [
+    "\\Sexpr{foo({",    // 0: enters \Sexpr, brace count 2
+    "})}"               // 1: closes both braces, exits \Sexpr
+  ];
+
+  var saved = tokenizeRows(tokenizer, lines, "start");
+  check("sweave: multi-line \\Sexpr stays open across rows",
+        saved.states[0], "r-sexpr-start");
+  check("sweave: multi-line \\Sexpr exits once braces balance",
+        saved.states[1], "start");
+
+  // Re-tokenize the closing line from row 0's snapshot; a shared brace
+  // count would have been consumed by the first pass, so the \Sexpr would
+  // never exit.
+  var retokenized = retokenizeRow(tokenizer, lines, saved, "start", 1);
+  check("sweave: \\Sexpr brace count survives in the row snapshot",
+        retokenized.state, "start");
+
+})();
+
+document.getElementById("passed").innerText = passed;
+document.getElementById("failed").innerText = failed;
+
+</script>
+</body>
+</html>
