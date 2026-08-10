@@ -136,6 +136,11 @@ export class AceEditor extends PageObject {
     return this.run((editor, r: number) => editor.session.getLine(r), row);
   }
 
+  /** Returns the last (partially) rendered row, 0-indexed. */
+  async getLastVisibleRow(): Promise<number> {
+    return this.run((editor) => editor.getLastVisibleRow());
+  }
+
   async getTokens(row: number): Promise<AceToken[]> {
     return this.run(
       (editor, r: number) => editor.session.getTokens(r) as AceToken[],

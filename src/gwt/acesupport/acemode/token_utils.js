@@ -15,6 +15,9 @@
 
 define("mode/token_utils", ["require", "exports", "module"], function(require, exports, module) {
 
+var cloneContext = require("ace/background_tokenizer").cloneContext;
+var equalContexts = require("ace/background_tokenizer").equalContexts;
+
 var TokenUtils = function(doc, tokenizer, tokens,
                           statePattern, codeBeginPattern, codeEndPattern) {
    this.$doc = doc;
@@ -98,9 +101,15 @@ var TokenUtils = function(doc, tokenizer, tokens,
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row - 1];
-         var context = Object.assign({}, this.$contexts[row - 1]);
+
+         // Deep-copy the incoming context (as ace's BackgroundTokenizer does),
+         // so a highlight rule mutating a nested context object in place
+         // cannot corrupt the context stored for the previous row.
+         var context = cloneContext(this.$contexts[row - 1]);
          var line = this.$doc.getLine(row);
          var lineTokens = this.$tokenizer.getLineTokens(line, state, row, context);
+
+         var contextChanged = !equalContexts(this.$contexts[row], context);
          this.$contexts[row] = context;
 
          if (!this.$statePattern ||
@@ -110,17 +119,11 @@ var TokenUtils = function(doc, tokenizer, tokens,
          else
             this.$tokens[row] = [];
 
-         // If we ended in the same state that the cache says, then we know that
-         // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
+         // If we ended in the same state that the cache says, and the context
+         // flowing into the next row is also unchanged, then we know that the
+         // cache is up-to-date for the subsequent lines--UNTIL we hit a row
          // that has been explicitly invalidated.
-         //
-         // NOTE: this resume check compares end states only, so an edit that
-         // changes a row's context without changing its end state (e.g. a
-         // chunk fence widened from 3 backticks to 4, where the width lives
-         // only in the context) can leave stale $contexts entries below it.
-         // A limitation shared with RCodeModel and Ace's BackgroundTokenizer,
-         // which resume the same way.
-         if (lineTokens.state === this.$endStates[row])
+         if (!contextChanged && lineTokens.state === this.$endStates[row])
             assumeGood = true;
          else
             this.$endStates[row] = lineTokens.state;
