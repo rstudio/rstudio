@@ -1,7 +1,7 @@
 # R packages pre-installed into the shared R library by globalSetup
-# (fixtures/r-libs-setup.ts) and, on distros without CRAN binaries (Fedora),
-# by the os-e2e-deps action so they land in the cached library instead of
-# compiling at test time. Single source of truth -- both the TypeScript
+# (fixtures/r-libs-setup.ts) and, in CI, by the os-e2e-deps action
+# (install-required-packages) so they land in the cached library instead of
+# being installed at test time. Single source of truth -- both the TypeScript
 # harness and the bash action read this file. One package per line; blank
 # lines and #-comments are ignored.
 DBI
@@ -17,6 +17,7 @@ knitr
 nycflights13
 pillar
 praise
+readr
 remotes
 reticulate
 rmarkdown
@@ -27,3 +28,4 @@ stringr
 styler
 testthat
 tibble
+tidyverse

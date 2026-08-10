@@ -136,6 +136,11 @@ export class AceEditor extends PageObject {
     return this.run((editor, r: number) => editor.session.getLine(r), row);
   }
 
+  /** Returns the last (partially) rendered row, 0-indexed. */
+  async getLastVisibleRow(): Promise<number> {
+    return this.run((editor) => editor.getLastVisibleRow());
+  }
+
   async getTokens(row: number): Promise<AceToken[]> {
     return this.run(
       (editor, r: number) => editor.session.getTokens(r) as AceToken[],
@@ -168,8 +173,13 @@ export class AceEditor extends PageObject {
     });
   }
 
-  async getState(row: number): Promise<string> {
+  async getState(row: number): Promise<string | string[]> {
     return this.run((editor, r: number) => editor.session.getState(r), row);
+  }
+
+  /** Returns one level of indentation, e.g. "  " for two-space soft tabs. */
+  async getTabString(): Promise<string> {
+    return this.run((editor) => editor.session.getTabString());
   }
 
   /**
@@ -185,6 +195,11 @@ export class AceEditor extends PageObject {
         end: { row: r.end.row, column: r.end.column },
       }));
     });
+  }
+
+  /** Rows as rendered (session.getScreenLength): exceeds the document line count exactly when soft-wrapped. */
+  async getScreenRowCount(): Promise<number> {
+    return this.run((editor) => editor.session.getScreenLength());
   }
 
   async getCursorPosition(): Promise<Ace.Position> {

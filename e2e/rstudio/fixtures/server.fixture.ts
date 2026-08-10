@@ -487,7 +487,11 @@ export async function shutdownServer(session: ServerSession): Promise<void> {
       null,
       { timeout: 10000, polling: 50 },
     ).catch(() => {});
-    await executeInConsole(page, 'quit(save = "no")');
+    // wait:false -- quit() never returns to a prompt, so the default
+    // prompt-count wait would stall the full sessionRestart timeout before
+    // its TimeoutError lands in the catch below. The overlay wait next is
+    // the real completion signal.
+    await executeInConsole(page, 'quit(save = "no")', { wait: false });
     // Wait for the "R Session Ended" overlay (ApplicationEndedPopupPanel in
     // QUIT mode) -- the deterministic signal that the rsession has exited --
     // rather than sleeping a fixed interval with the dead tab still open.

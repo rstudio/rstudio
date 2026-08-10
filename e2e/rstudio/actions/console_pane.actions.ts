@@ -13,7 +13,7 @@ import {
 } from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
-import { AceEditorElement } from '../utils/ace';
+import { setConsoleInput } from '../utils/console';
 
 let cachedInstallRepos: string | null = null;
 
@@ -89,13 +89,7 @@ export class ConsolePaneActions {
     // pane's trust-prompt iframe load after a project open) can steal
     // focus after a single dispatch.
     await focusConsole(this.page);
-    await this.page.evaluate((text) => {
-      const el = document.getElementById('rstudio_console_input') as AceEditorElement | null;
-      const editor = el?.env?.editor;
-      if (!editor) throw new Error('Console Ace editor not found at #rstudio_console_input');
-      editor.setValue(text, 1); // 1 = move cursor to end
-      editor.focus();
-    }, command);
+    await setConsoleInput(this.page, command);
     // Capture the prompt count before submitting so the wait keys off a new
     // prompt (command completed), not a sampled busy class -- read it before
     // pressing Enter, while R is still at the prior prompt.

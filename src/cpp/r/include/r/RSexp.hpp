@@ -366,8 +366,15 @@ public:
 
    PreservedSEXP& operator=(PreservedSEXP&& other)
    {
-      sexp_ = other.sexp_;
-      other.sexp_ = R_NilValue;
+      if (this != &other)
+      {
+         // release our current object before adopting the other's; assigning
+         // over it would leak its R_PreserveObject reference, pinning the
+         // old SEXP for the life of the session
+         release();
+         sexp_ = other.sexp_;
+         other.sexp_ = R_NilValue;
+      }
       return *this;
    }
 

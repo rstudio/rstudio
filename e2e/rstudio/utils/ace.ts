@@ -41,10 +41,15 @@ export namespace Ace {
   // restrict to the ones tests actually need to keep the surface obvious.
   export interface Session {
     getLength(): number;
+    /** Rows as rendered: with wrap mode on, one soft-wrapped line counts once per visual row. */
+    getScreenLength(): number;
     getLine(row: number): string;
     getFoldWidget(row: number): string;
     getFoldWidgetRange(row: number): Range | null;
-    getState(row: number): string;
+    // usually a plain state name, but rows inside a multi-line construct
+    // (e.g. an open raw string) save the tokenizer stack instead
+    getState(row: number): string | string[];
+    getTabString(): string;
     getTokens(row: number): unknown[];
     getTokenAt(row: number, column: number): unknown | null;
     getMarkers(): Record<string, unknown>;
@@ -70,9 +75,11 @@ export namespace Ace {
     getCursorPosition(): Position;
     getSelectedText(): string;
     getFirstVisibleRow(): number;
+    getLastVisibleRow(): number;
     find(needle: string): void;
     insert(text: string): void;
     navigateLineEnd(): void;
+    navigateFileEnd(): void;
     selectAll(): void;
     execCommand(name: string): void;
     exitMultiSelectMode(): void;
