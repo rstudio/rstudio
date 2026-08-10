@@ -144,6 +144,11 @@ public class AceEditorWidget extends Composite
 
    public AceEditorWidget(boolean applyNormalFontSize)
    {
+      this(applyNormalFontSize, null);
+   }
+
+   public AceEditorWidget(boolean applyNormalFontSize, AceEditorNative attachTo)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
       initWidget(new HTML());
       if (applyNormalFontSize)
@@ -158,6 +163,14 @@ public class AceEditorWidget extends Composite
       addStyleName("loading");
 
       editor_ = AceEditorNative.createEditor(getElement());
+
+      // when this widget is a second view of an existing document, share
+      // that document via a cloned session; this must precede the session
+      // handler wiring below, which binds to the session in place
+      isDocumentView_ = attachTo != null;
+      if (attachTo != null)
+         editor_.attachToDocumentOf(attachTo);
+
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
       editor_.setUseResizeObserver(false);
@@ -264,6 +277,15 @@ public class AceEditorWidget extends Composite
            // right-clicking shouldn't set a breakpoint
            if (evt.getButton() != NativeEvent.BUTTON_LEFT)
               return;
+
+           // secondary views of a document don't manage breakpoints; the
+           // primary view owns breakpoint state (see the editor split
+           // support in TextEditingTargetWidget)
+           if (isDocumentView_)
+           {
+              arg.invokeDefaultHandler(getEditor());
+              return;
+           }
 
            // make sure that the click was in the left half of the element--
            // clicking on the line number itself (or the gutter near the
@@ -1661,6 +1683,10 @@ public class AceEditorWidget extends Composite
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
    private final ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
+
+   // true when this widget is a secondary view of another editor's document
+   // (an editor split); secondary views don't manage breakpoints
+   private final boolean isDocumentView_;
    private final List<AnchoredAceAnnotation> gutterAnnotations_ = new ArrayList<>();
    private final Map<String, AnchoredAceAnnotation> externalGutterAnnotations_ = new HashMap<>();
    private final List<AnchoredAceAnnotation> inlineAnnotations_ = new ArrayList<>();

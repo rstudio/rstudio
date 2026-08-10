@@ -1702,6 +1702,46 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Switch markdown editing mode") // $NON-NLS-1$
     String toggleRmdVisualModeDesc();
     
+    // splitEditorRight
+    @DefaultStringValue("Split Editor Right") // $NON-NLS-1$
+    String splitEditorRightLabel();
+    @DefaultStringValue("Split Editor _Right") // $NON-NLS-1$
+    String splitEditorRightMenuLabel();
+    @DefaultStringValue("Show a second view of this document beside the current one") // $NON-NLS-1$
+    String splitEditorRightDesc();
+    
+    // splitEditorDown
+    @DefaultStringValue("Split Editor Down") // $NON-NLS-1$
+    String splitEditorDownLabel();
+    @DefaultStringValue("Split Editor _Down") // $NON-NLS-1$
+    String splitEditorDownMenuLabel();
+    @DefaultStringValue("Show a second view of this document below the current one") // $NON-NLS-1$
+    String splitEditorDownDesc();
+    
+    // removeEditorSplit
+    @DefaultStringValue("Remove Editor Split") // $NON-NLS-1$
+    String removeEditorSplitLabel();
+    @DefaultStringValue("Remo_ve Editor Split") // $NON-NLS-1$
+    String removeEditorSplitMenuLabel();
+    @DefaultStringValue("Close the second view of this document") // $NON-NLS-1$
+    String removeEditorSplitDesc();
+    
+    // toggleEditorSplit
+    @DefaultStringValue("Toggle Editor Split") // $NON-NLS-1$
+    String toggleEditorSplitLabel();
+    @DefaultStringValue("_Toggle Editor Split") // $NON-NLS-1$
+    String toggleEditorSplitMenuLabel();
+    @DefaultStringValue("Toggle the second view of this document") // $NON-NLS-1$
+    String toggleEditorSplitDesc();
+    
+    // focusOtherEditorSplit
+    @DefaultStringValue("Focus Other Editor Split") // $NON-NLS-1$
+    String focusOtherEditorSplitLabel();
+    @DefaultStringValue("_Focus Other Editor Split") // $NON-NLS-1$
+    String focusOtherEditorSplitMenuLabel();
+    @DefaultStringValue("Move focus to the other view of this document") // $NON-NLS-1$
+    String focusOtherEditorSplitDesc();
+    
     // enableProsemirrorDevTools
     @DefaultStringValue("Enable Prosemirror DevTools") // $NON-NLS-1$
     String enableProsemirrorDevToolsLabel();

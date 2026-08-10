@@ -300,6 +300,27 @@ public class AceEditorNative extends JavaScriptObject
       var loader = require("rstudio/loader");
       return loader.loadEditor(container);
    }-*/;
+
+   // Replace this editor's session with a clone of another editor's session,
+   // sharing that editor's document and undo history. Used to create a second
+   // view of an existing document (split editors). Any handlers bound to the
+   // old session are not migrated, so this must be called before session
+   // handlers are attached.
+   public final native void attachToDocumentOf(AceEditorNative other) /*-{
+      var loader = $wnd.require("rstudio/loader");
+      var session = loader.cloneSession(other.session);
+
+      // RStudioEditor's constructor gives its session a back-pointer to the
+      // renderer (read by auto_brace_insert's ghost text checks); a session
+      // swapped in after construction needs it set by hand
+      session.renderer = this.renderer;
+
+      this.setSession(session);
+   }-*/;
+
+   public final native void destroy() /*-{
+      this.destroy();
+   }-*/;
   
    public final native void manageDefaultKeybindings() /*-{
       
