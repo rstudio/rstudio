@@ -42,9 +42,14 @@ public class Tokenizer extends JavaScriptObject
       var tokens = [];
       var state = "start";
       var splat = line.split("\n");
-      
+
+      // Thread a single tokenizer context through all lines: highlight rules
+      // (e.g. Quarto '#|' comment handling) record cross-line state on it,
+      // and would mis-tokenize if each line got a fresh context.
+      var context = {};
+
       // Add the first line.
-      var tokenizedLine = this.getLineTokens(splat[0], state);
+      var tokenizedLine = this.getLineTokens(splat[0], state, 0, context);
       tokens = tokenizedLine.tokens;
       state = tokenizedLine.state;
       
@@ -63,7 +68,7 @@ public class Tokenizer extends JavaScriptObject
       // Iterate through the rest of the lines.
       for (var i = 1; i < splat.length; i++) {
          
-         var tokenizedLine = this.getLineTokens(splat[i], state);
+         var tokenizedLine = this.getLineTokens(splat[i], state, i, context);
          var lineTokens = tokenizedLine.tokens;
          var n = lineTokens.length;
          
