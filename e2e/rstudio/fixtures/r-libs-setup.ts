@@ -43,10 +43,11 @@ const TOTAL_WORKERS_ENV = 'PW_TOTAL_WORKERS';
  *
  * The list lives in ../required-packages.txt as the single source of truth, so
  * the os-e2e-deps action can install the identical set into the cached R
- * library on distros without CRAN binaries (Fedora) -- if the two lists ever
- * drifted, globalSetup would source-compile the difference at test time. One
- * package per line; blank lines and #-comments are ignored. Adding a package
- * is cheap; trim only when it's genuinely unused by any test in the suite.
+ * library in CI -- if the two lists ever drifted, globalSetup would install
+ * the difference at test time (a source compile on distros without CRAN
+ * binaries). One package per line; blank lines and #-comments are ignored.
+ * Adding a package is cheap; trim only when it's genuinely unused by any test
+ * in the suite.
  */
 const requiredPackagesFile = path.join(__dirname, '..', 'required-packages.txt');
 export const REQUIRED_PACKAGES: readonly string[] = fs

@@ -15,12 +15,16 @@
 
 define("mode/token_utils", ["require", "exports", "module"], function(require, exports, module) {
 
+var cloneContext = require("ace/background_tokenizer").cloneContext;
+var equalContexts = require("ace/background_tokenizer").equalContexts;
+
 var TokenUtils = function(doc, tokenizer, tokens,
                           statePattern, codeBeginPattern, codeEndPattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = tokens;
    this.$endStates = new Array(doc.getLength());
+   this.$contexts = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
    this.$codeEndPattern = codeEndPattern;
@@ -97,8 +101,16 @@ var TokenUtils = function(doc, tokenizer, tokens,
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row - 1];
+
+         // Deep-copy the incoming context (as ace's BackgroundTokenizer does),
+         // so a highlight rule mutating a nested context object in place
+         // cannot corrupt the context stored for the previous row.
+         var context = cloneContext(this.$contexts[row - 1]);
          var line = this.$doc.getLine(row);
-         var lineTokens = this.$tokenizer.getLineTokens(line, state, row);
+         var lineTokens = this.$tokenizer.getLineTokens(line, state, row, context);
+
+         var contextChanged = !equalContexts(this.$contexts[row], context);
+         this.$contexts[row] = context;
 
          if (!this.$statePattern ||
              this.$statePattern.test(lineTokens.state) ||
@@ -107,10 +119,11 @@ var TokenUtils = function(doc, tokenizer, tokens,
          else
             this.$tokens[row] = [];
 
-         // If we ended in the same state that the cache says, then we know that
-         // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
+         // If we ended in the same state that the cache says, and the context
+         // flowing into the next row is also unchanged, then we know that the
+         // cache is up-to-date for the subsequent lines--UNTIL we hit a row
          // that has been explicitly invalidated.
-         if (lineTokens.state === this.$endStates[row])
+         if (!contextChanged && lineTokens.state === this.$endStates[row])
             assumeGood = true;
          else
             this.$endStates[row] = lineTokens.state;
@@ -159,8 +172,9 @@ var TokenUtils = function(doc, tokenizer, tokens,
    {
       this.$tokens[row] = null;
       this.$endStates[row] = null;
+      this.$contexts[row] = null;
    };
-   
+
    this.$insertNewRows = function(row, count)
    {
       var args = [row, 0];
@@ -168,12 +182,14 @@ var TokenUtils = function(doc, tokenizer, tokens,
          args.push(null);
       this.$tokens.splice.apply(this.$tokens, args);
       this.$endStates.splice.apply(this.$endStates, args);
+      this.$contexts.splice.apply(this.$contexts, args);
    };
-   
+
    this.$removeRows = function(row, count)
    {
       this.$tokens.splice(row, count);
       this.$endStates.splice(row, count);
+      this.$contexts.splice(row, count);
    };
 
    this.$walkParens = function(startRow, endRow, fun)
