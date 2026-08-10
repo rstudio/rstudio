@@ -1,5 +1,4 @@
 import { defineConfig, ReporterDescription } from '@playwright/test';
-import { execFileSync } from 'child_process';
 import dotenv from 'dotenv';
 import os from 'os';
 import path from 'path';
@@ -168,31 +167,6 @@ const testIgnore = (process.env.PW_TEST_IGNORE ?? '')
   .split(/\s+/)
   .filter(Boolean);
 
-// The R version this run is testing against, read from the R on PATH and
-// surfaced as report metadata (it renders in the HTML report header and travels
-// with the uploaded report artifact).
-//
-// Read from R rather than echoed back from the environment on purpose: CI asks
-// for an R version by name (an alias like "release", or a pinned number), and
-// some engines cannot honor the request at all -- the Fedora ones install R from
-// the distro's own repos and drop it silently. Only the installed R is a true
-// record of what a run actually covered, which is what a certification run needs.
-//
-// Best-effort: a missing or broken R is not a config error, because Playwright
-// loads this file for commands that never touch R (--list, show-report). The
-// tests themselves fail soon enough, and far more legibly, if R is really absent.
-function resolveRVersion(): string | undefined {
-  try {
-    const out = execFileSync('Rscript', ['-e', 'cat(paste(R.version$major, R.version$minor, sep = "."))'],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 30000 });
-    return out.trim() || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-const rVersion = resolveRVersion();
-
 // Reporters common to every environment. The HTML report is also uploaded as
 // a CI artifact (view locally with `npx playwright show-report`).
 const reporters: ReporterDescription[] = [
@@ -242,9 +216,6 @@ if (process.env.GITHUB_ACTIONS && process.env.PW_SHARD)
 export default defineConfig<{}, ProjectOptions>({
   testDir: './tests',
   testIgnore: testIgnore.length > 0 ? testIgnore : undefined,
-  // Shown in the HTML report header. Only set the key when R was actually
-  // resolvable, so a report never claims an R version it could not read.
-  metadata: rVersion ? { rVersion } : {},
   fullyParallel: false,
   workers: 1,
   // Global per-test budget. Kept low so a hung test fails fast rather than
