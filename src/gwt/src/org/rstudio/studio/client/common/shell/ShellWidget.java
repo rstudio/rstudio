@@ -140,6 +140,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       input_.setPadding(0);
       input_.autoHeight();
 
+      // Home / End (plus Ctrl+A / Ctrl+E and Cmd+Left / Cmd+Right on macOS)
+      // should jump to the ends of the whole command, not to a soft-wrap
+      // boundary, since this is a command line rather than a text editor.
+      input_.useDocumentLineNavigation();
+
       if (!Desktop.isDesktop())
          input_.setNewLineMode(NewLineMode.Unix);
 

@@ -17,6 +17,8 @@ define("mode/r_code_model", ["require", "exports", "module"], function(require, 
 
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
+var cloneContext = require("ace/background_tokenizer").cloneContext;
+var equalContexts = require("ace/background_tokenizer").equalContexts;
 var RTokenCursor = require("mode/token_cursor").RTokenCursor;
 var Utils = require("mode/utils");
 
@@ -2171,9 +2173,15 @@ var RCodeModel = function(session, tokenizer,
          assumeGood = false;
 
          var state = (row === 0) ? 'start' : this.$endStates[row - 1];
-         var context = Object.assign({}, this.$contexts[row - 1]);
+
+         // Deep-copy the incoming context (as ace's BackgroundTokenizer does),
+         // so a highlight rule mutating a nested context object in place
+         // cannot corrupt the context stored for the previous row.
+         var context = cloneContext(this.$contexts[row - 1]);
          var line = this.$getLine(row);
          var lineTokens = this.$tokenizer.getLineTokens(line, state, row, context);
+
+         var contextChanged = !equalContexts(this.$contexts[row], context);
          this.$contexts[row] = context;
 
          if (!this.$statePattern ||
@@ -2183,10 +2191,11 @@ var RCodeModel = function(session, tokenizer,
          else
             this.$tokens[row] = [];
 
-         // If we ended in the same state that the cache says, then we know that
-         // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
+         // If we ended in the same state that the cache says, and the context
+         // flowing into the next row is also unchanged, then we know that the
+         // cache is up-to-date for the subsequent lines--UNTIL we hit a row
          // that has been explicitly invalidated.
-         if (lineTokens.state === this.$endStates[row])
+         if (!contextChanged && lineTokens.state === this.$endStates[row])
             assumeGood = true;
          else
             this.$endStates[row] = lineTokens.state;
