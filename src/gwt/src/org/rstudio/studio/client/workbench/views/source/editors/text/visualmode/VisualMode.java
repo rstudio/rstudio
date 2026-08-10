@@ -754,7 +754,15 @@ public class VisualMode implements VisualModeEditorSync,
         commands_.findSelectAll(),
 
         // Disabled since we don't have line numbers in the visual editor
-        commands_.goToLine()
+        commands_.goToLine(),
+
+        // Editor splits are a source-mode feature; the split (if any) is
+        // hidden along with the source editor while visual mode is active
+        commands_.splitEditorRight(),
+        commands_.splitEditorDown(),
+        commands_.removeEditorSplit(),
+        commands_.toggleEditorSplit(),
+        commands_.focusOtherEditorSplit()
       );
       
       // initially disable code commands (they will be re-enabled later when an

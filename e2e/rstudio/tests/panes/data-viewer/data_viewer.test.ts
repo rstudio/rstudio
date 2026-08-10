@@ -7,6 +7,7 @@
 // across a refresh, and HTML-special-character escaping in both cell
 // values and column names.
 
+import type { Request, Response } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
@@ -432,6 +433,261 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.sidebar_filt_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17806
+  // With the Summary panel hidden, search/filter changes must not issue the
+  // filtered-summary describe (show=cols&filtered=1): it recomputes summary
+  // statistics for every column of the fetched window on the R main thread,
+  // and before the fix every search keystroke paid that cost even though
+  // nothing displayed the result. The refresh is deferred until the panel is
+  // reopened, at which point the summaries must reflect the active filter.
+  test('hidden summary panel defers filtered summaries until reopened (#17806)', async ({ rstudioPage: page }) => {
+    // Same shape as the filtered-summary test above: searching "alpha" keeps
+    // rows whose num range (1..4) differs visibly from the whole frame's.
+    await consoleActions.executeInConsole(
+      '{ .rs.sidebar_defer_df <- data.frame(' +
+        'grp = rep(c("alpha", "beta"), each = 4), ' +
+        'num = c(1, 2, 3, 4, 50, 60, NA, 80)); View(.rs.sidebar_defer_df) }',
+    );
+    // Record ALL grid_data traffic -- request dispatches and response
+    // arrivals -- in one array, in CDP delivery order. gridDataFetch sends
+    // URL-encoded bodies, so "filtered=1" is a stable substring marking the
+    // filtered-summary describe. Recording responses too lets the absence
+    // check below be a pure ordering assertion within this single event
+    // stream: the pre-fix code dispatched the describe in the same
+    // synchronous tick as the search's row fetch, so its request event is
+    // recorded before that row fetch's response event -- no assumption about
+    // when a DOM poll happens to observe the rendered response.
+    //
+    // NOTE: filtered=1 is sent both by fetchFilteredSummaries (the deferred
+    // refresh under test) and by the sidebar's lazy off-window batches
+    // (fetchSidebarSummaries) -- the request bodies are otherwise
+    // indistinguishable. This fixture has 2 columns, both inside the fetched
+    // window, so no lazy batches fire and the counts below are pinned to the
+    // deferred refresh.
+    type GridEvent = { kind: 'request' | 'response'; body: string };
+    const gridEvents: GridEvent[] = [];
+    const onRequest = (req: Request) => {
+      if (req.url().includes('grid_data'))
+        gridEvents.push({ kind: 'request', body: req.postData() ?? '' });
+    };
+    const onResponse = (res: Response) => {
+      if (res.url().includes('grid_data'))
+        gridEvents.push({ kind: 'response', body: res.request().postData() ?? '' });
+    };
+    const filteredRequestCount = (upTo?: number) =>
+      gridEvents.slice(0, upTo)
+        .filter((e) => e.kind === 'request' && e.body.includes('filtered=1'))
+        .length;
+    page.on('request', onRequest);
+    page.on('response', onResponse);
+    try {
+      await waitForViewer(dataViewer);
+
+      // Collapse the Summary panel via the host toolbar's latching button.
+      // (The in-grid #sidebarToggle collapses fine but cannot be clicked to
+      // reopen: the collapsed #sidebarPanel is width:0, so the toggle has no
+      // hit target -- see 'the in-grid Summary toggle still works after a
+      // data refresh' for the gory details.)
+      const summaryButton = page.locator('#data_editing_toolbar .rstudio_dt_sidebar_toggle');
+      const panel = dataViewer.frame.locator('#sidebarPanel');
+      await expect(panel).toHaveClass(/\bexpanded\b/, { timeout: TIMEOUTS.fileOpen });
+      await summaryButton.click();
+      await expect(panel).not.toHaveClass(/\bexpanded\b/);
+
+      // Search down to the alpha rows; the grid itself still filters.
+      const search = page.locator('#data_editing_toolbar').getByLabel('Search data table');
+      await search.click();
+      await page.keyboard.type('alpha');
+      await expect(dataViewer.gridInfo)
+        .toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+
+      // No filtered-summary describe was issued for the hidden panel. Wait
+      // for the search's row fetch to complete in the recorded stream, then
+      // assert nothing before that point was a filtered describe. If the
+      // gate regressed, the describe's request event would sit at or before
+      // the row fetch's response event (both were dispatched from the same
+      // synchronous tick in the pre-fix code), so this fails rather than
+      // false-passing on delivery timing.
+      const searchFetchDone = () => gridEvents.findIndex((e) =>
+        e.kind === 'response' && e.body.includes('search%5Bvalue%5D=alpha'));
+      await expect.poll(searchFetchDone, { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(-1);
+      expect(filteredRequestCount(searchFetchDone() + 1)).toBe(0);
+
+      // Reopen the panel: the deferred refresh fires now, and the summaries
+      // describe the filtered rows (num range 1..4, "(filtered)" tag shown).
+      await summaryButton.click();
+      await expect(panel).toHaveClass(/\bexpanded\b/);
+      await expect.poll(() => filteredRequestCount(), { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(0);
+      await expect(dataViewer.frame.locator('.sidebar-toggle-filtered'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-col-summary'))
+        .toHaveText('[1, 4]', { timeout: TIMEOUTS.fileOpen });
+
+      // Change the search to a DIFFERENT non-empty value while hidden. The
+      // gate drops the retained map and the header's "(filtered)" tag
+      // synchronously (the tag is created only by initSidebar, which the
+      // reopen path doesn't run) -- otherwise the whole-frame stats painted
+      // on reopen would sit under a tag claiming they describe the filter.
+      await summaryButton.click();
+      await expect(panel).not.toHaveClass(/\bexpanded\b/);
+      await search.click();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.type('beta');
+      const betaFetchDone = () => gridEvents.findIndex((e) =>
+        e.kind === 'response' && e.body.includes('search%5Bvalue%5D=beta'));
+      await expect.poll(betaFetchDone, { timeout: TIMEOUTS.fileOpen })
+        .toBeGreaterThan(-1);
+      await expect(dataViewer.frame.locator('.sidebar-toggle-filtered')).toHaveCount(0);
+
+      // Reopen: the deferred refresh lands, re-tags the header, and the
+      // summaries describe the new filter (beta's num values are 50..80).
+      await summaryButton.click();
+      await expect(panel).toHaveClass(/\bexpanded\b/);
+      await expect(dataViewer.frame.locator('.sidebar-toggle-filtered'))
+        .toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-col-summary'))
+        .toHaveText('[50, 80]', { timeout: TIMEOUTS.fileOpen });
+
+      // Collapse again and clear the search while hidden: the hidden-panel
+      // gate must drop the retained filtered map (it describes the old search
+      // state), so reopening paints whole-frame stats with no "(filtered)"
+      // tag -- and the cleared filter state needs no filtered describe at all.
+      const requestsBeforeClear = filteredRequestCount();
+      await summaryButton.click();
+      await expect(panel).not.toHaveClass(/\bexpanded\b/);
+      await search.click();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.press('Backspace');
+      await expect(dataViewer.gridInfo)
+        .not.toContainText('filtered from', { timeout: TIMEOUTS.fileOpen });
+      await summaryButton.click();
+      await expect(panel).toHaveClass(/\bexpanded\b/);
+      await expect(dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-col-summary'))
+        .toHaveText('[1, 80]', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('.sidebar-toggle-filtered')).toHaveCount(0);
+      expect(filteredRequestCount()).toBe(requestsBeforeClear);
+    } finally {
+      page.off('request', onRequest);
+      page.off('response', onResponse);
+      await consoleActions.executeInConsole(
+        'rm(".rs.sidebar_defer_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17806
+  // The backend keeps the sort/filter working copy across console commands,
+  // discarding it only when the viewed object is untrusted or observed to
+  // change. data.table's := mutates in place -- same SEXP, class, dimensions,
+  // and names -- which the change detection cannot observe, so data.tables
+  // keep the conservative per-prompt wipe. Rows fetched after the := must be
+  // recomputed from the mutated object, not served from a stale working copy.
+  test('sorted data.table view serves fresh values after := mutation (#17806)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.dt_wc <- data.table::data.table(v = 1:2000); View(.rs.dt_wc) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Sort descending (two clicks); the reversed first row is the signal
+      // that the sorted re-fetch landed, i.e. the server-side working copy
+      // for these sort parameters has been materialized.
+      const header = dataViewer.frame.locator('th[data-col-idx="1"]');
+      await header.click();
+      await header.click();
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'))
+        .toHaveText('2000', { timeout: TIMEOUTS.fileOpen });
+
+      // Mutate in place at the console. Nothing the change detection checks
+      // (SEXP pointer, class, dims, names) is altered by this; only the
+      // per-prompt working-copy wipe keeps the sorted view honest.
+      await consoleActions.executeInConsole('.rs.dt_wc[, v := v + 100000L]');
+
+      // Scroll to a block that was not fetched before the mutation: the
+      // initial fetch covers rows 0-499 plus one prefetched block, so rows
+      // >= 1000 are cold, and serving one resolves the same sort parameters
+      // on the server -- which on the pre-carve-out code would exact-match
+      // the stale working copy. Derive the probe row from the scroll offset
+      // and the RENDERED row height instead of hard-coding the row-height
+      // constant (which shifts with platform fonts; see #18378). Descending,
+      // 0-based row i holds 2000 - i, so the mutated value is 102000 - i.
+      const scrollTop = 30000;
+      const rowHeight = await dataViewer.frame
+        .locator('#gridBody tr[data-row="0"]')
+        .evaluate((el) => (el as HTMLElement).offsetHeight);
+      const probeRow = Math.floor(scrollTop / rowHeight);
+      expect(probeRow).toBeGreaterThanOrEqual(1000);
+      await dataViewer.viewport.evaluate(
+        (el: HTMLElement, top) => { el.scrollTop = top; },
+        scrollTop,
+      );
+      await expect(dataViewer.frame.locator(`#gridBody tr[data-row="${probeRow}"] td[data-col-pos="1"]`))
+        .toHaveText(String(102000 - probeRow), { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.dt_wc", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/17806
+  // The headline retention change, from the other side: a plain data.frame's
+  // working copy must SURVIVE console commands that don't touch the viewed
+  // object (pre-fix it was wiped every prompt, forcing the next grid request
+  // to re-sort the whole frame), while a value mutation -- observable via
+  // copy-on-modify, since the viewer holds a preserved reference -- must
+  // still invalidate it. Retention is probed in the server's working-data
+  // environment directly, keyed by this viewer's cache key: rendered grid
+  // values cannot distinguish a retained copy from a wiped-and-rebuilt one,
+  // so without this probe the retention path could silently regress to the
+  // per-prompt wipe with the whole suite still green.
+  test('sorted data.frame working copy survives unrelated console commands (#17806)', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.df_wc <- data.frame(v = 1:2000); View(.rs.df_wc) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Sort descending; the reversed first row signals the sorted re-fetch
+      // landed, i.e. the working copy for these sort parameters exists.
+      const header = dataViewer.frame.locator('th[data-col-idx="1"]');
+      await header.click();
+      await header.click();
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'))
+        .toHaveText('2000', { timeout: TIMEOUTS.fileOpen });
+
+      // The working copy is keyed by the viewer's cache key; read it from
+      // the grid frame's own URL so the probe is pinned to this viewer (the
+      // worker session may have other viewers open from earlier tests).
+      const cacheKey = await dataViewer.viewport.evaluate((vp) =>
+        new URLSearchParams(vp.ownerDocument.location.search).get('cache_key'));
+      expect(cacheKey).toBeTruthy();
+
+      // An unrelated command must not wipe the working copy. The probe is a
+      // separate console command, so change detection has already run for
+      // the unrelated command by the time the probe evaluates.
+      await consoleActions.executeInConsole('invisible(NULL)');
+      expect(await consoleActions.evalRLogical(
+        `exists("${cacheKey}", where = .rs.WorkingDataEnv, inherits = FALSE)`,
+      )).toBe(true);
+
+      // A value mutation replaces the SEXP (copy-on-modify), so the change
+      // is detected: the viewer refreshes and re-sorts from the mutated
+      // frame. Assert on the rendered value rather than the working-data
+      // environment -- the client's refresh immediately rebuilds the working
+      // copy, so probing the environment for the wipe would race it.
+      await consoleActions.executeInConsole('.rs.df_wc$v[1] <- 999999L');
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="0"] td[data-col-pos="1"]'))
+        .toHaveText('999999', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.df_wc", envir = .GlobalEnv)',
       );
     }
   });

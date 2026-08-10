@@ -23,6 +23,7 @@ test.describe('Syntax Highlighting', () => {
       'syntax_highlight.qmd',
       'syntax_highlight.R',
       'syntax_highlight.yml',
+      'syntax_highlight.md',
     ]);
   });
 
@@ -379,6 +380,107 @@ color3: notacolor
       const t = (await editor.getTokens(2))[2];
       return { type: t?.type, value: t?.value };
     }).toEqual({ type: 'text', value: 'notacolor' });
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18472
+  //
+  // The background tokenizer used to propagate invalidation to following
+  // rows only when a row's end *state* changed; an edit that changed only
+  // tokenizer *context* (here, the indent recorded for a YAML multiline
+  // string) left every row below with stale cached tokens. A plain .yml
+  // document is used because modes with a code-model scope tree mask the
+  // bug (the scope-tree rebuild force-retokenizes the document after every
+  // edit), and the document is tall enough that the target row sits below
+  // the viewport, beyond reach of the fold gutter's incidental getState()
+  // sweeps.
+  test('context-only edits re-highlight following rows', async ({ rstudioPage: page }) => {
+    const lines = Array.from({ length: 40 }, (_, i) => `    value${i}`).join('\n');
+    const content = `key: |\n${lines}\ntail: done\n`;
+
+    await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.yml', content);
+
+    const editor = new AceEditor(page, '');
+    await expect.poll(() => editor.getValue()).toContain('tail: done');
+
+    // rows 1-40 are the multiline string's content
+    await expect.poll(async () => {
+      const tokens = await editor.getTokens(35);
+      return tokens.map((t) => ({ type: t.type, value: t.value }));
+    }, { timeout: 15000 }).toEqual([{ type: 'string', value: '    value34' }]);
+
+    // the guard the test's validity rests on: the target row must sit below
+    // the viewport, beyond the reach of the fold gutter's incidental
+    // getState() sweeps (which re-tokenize the rendered rows)
+    expect(await editor.getLastVisibleRow()).toBeLessThan(35);
+
+    // re-indent the opener so its indent (6) exceeds the content indent (4):
+    // the multiline string now ends at its first content row, but the opener
+    // row's end state is unchanged -- only the tokenizer context differs
+    await editor.gotoLine(1, 0);
+    await editor.insert('      ');
+
+    await expect.poll(async () => {
+      const tokens = await editor.getTokens(35);
+      return tokens.map((t) => ({ type: t.type, value: t.value }));
+    }, { timeout: 15000 }).toEqual([
+      { type: 'whitespace', value: '    ' },
+      { type: 'text', value: 'value34' },
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18472
+  //
+  // The same bug, exercising the symptom reported in the issue: rainbow
+  // fenced div colors in plain Markdown. The nesting depth lives in
+  // tokenizer context, so an unclosed opener inserted at the top must
+  // deepen (and so recolor) every following block, while leaving every
+  // row's end state unchanged.
+  test('context-only edits recolor fenced divs on following rows', async ({ rstudioPage: page }) => {
+    // 25 fenced div blocks, 4 rows each: block k opens at row 4k; every
+    // block sits at nesting depth 0, so every fence starts with color 0
+    const content = Array.from(
+      { length: 25 },
+      (_, k) => `::: {.block-${k}}\ncontent ${k}\n:::\n`,
+    ).join('\n');
+
+    await setPref(page, 'rainbow_fenced_divs', true);
+    try {
+      await writeAndOpenFile(page, sandbox.dir, 'syntax_highlight.md', content);
+
+      const editor = new AceEditor(page, '');
+      await expect.poll(() => editor.getValue()).toContain('block-24');
+
+      // block 20 opens at row 80, at depth 0
+      await expect.poll(async () => {
+        const tokens = await editor.getTokens(80);
+        return tokens.map((t) => ({ type: t.type, value: t.value }));
+      }, { timeout: 15000 }).toEqual([
+        { type: 'fenced_div_0', value: ':::' },
+        { type: 'fenced_div_text_0', value: ' {.block-20}' },
+      ]);
+
+      // the guard the test's validity rests on: the target row must sit
+      // below the viewport, beyond the reach of the fold gutter's
+      // incidental getState() sweeps (which re-tokenize the rendered rows)
+      expect(await editor.getLastVisibleRow()).toBeLessThan(80);
+
+      // insert an unclosed opener at the top: every following block now
+      // nests one level deeper and takes the next color, but each row's
+      // end state is unchanged -- only the tokenizer context differs
+      await editor.gotoLine(1, 0);
+      await editor.insert('::: {.outer}\n');
+
+      // block 20 now opens at row 81, at depth 1
+      await expect.poll(async () => {
+        const tokens = await editor.getTokens(81);
+        return tokens.map((t) => ({ type: t.type, value: t.value }));
+      }, { timeout: 15000 }).toEqual([
+        { type: 'fenced_div_1', value: ':::' },
+        { type: 'fenced_div_text_1', value: ' {.block-20}' },
+      ]);
+    } finally {
+      await setPref(page, 'rainbow_fenced_divs', false);
+    }
   });
 
   // https://github.com/rstudio/rstudio/issues/18469

@@ -1492,6 +1492,16 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onActivateSource()
    {
+      // when a source editor already holds focus and its document is split,
+      // activating the source pane again toggles focus to the other view
+      EditingTarget activeEditor = columnManager_.getActive().getActiveEditor();
+      if (activeEditor instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor;
+         if (target.focusOtherEditorSplitIfFocused())
+            return;
+      }
+
       onActivateSource(columnManager_.getActive().getName(), null);
    }
 
