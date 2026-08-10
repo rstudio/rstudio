@@ -3,8 +3,9 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # One workflow that drives the reusable per-OS E2E "engines" six ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday, so the engines in those
 #     slates get a run during the week without running the whole matrix daily.
-#     The slates cover 14 of the 21 engines; the other seven are reached only by
-#     the Sunday runs below.
+#     The slates cover 13 of the 21 engines; macos14 gets its weekly run from
+#     the Friday cron below, and the remaining seven are reached only by the
+#     Sunday runs.
 #   - Friday afternoon cron: macOS 14 alone, timed to land inside the October
 #     2026 brownout windows for the deprecated macos-14 image (see the pick job).
 #   - Weekly cron (Sunday 08:00): every Linux x86_64 engine, for a full-matrix
@@ -78,9 +79,10 @@ concurrency:
   # Four hours is less slack than the original two-way split had, so this is
   # tighter than ideal for a daily-install fleet that overruns -- but each run
   # still gets its own group, so an overrun delays or cancels only that run's
-  # own next occurrence, not one of the other two. The three runs share no
-  # runners by construction: Linux x86_64, Linux arm64, and macOS+Windows are
-  # disjoint pools.
+  # own next occurrence, not one of the other two. Their *build and test* jobs
+  # share no runners by construction -- Linux x86_64, Linux arm64, and
+  # macOS+Windows are disjoint pools -- though pick, resolve, and every engine's
+  # e2e-merge all run on ubuntu-latest, so those do compete.
   group: >-
     pw-scheduled-e2e-${{
     github.event.schedule == '0 16 * * 5' && 'macos14'
@@ -146,10 +148,10 @@ jobs:
           # noble_arm64). Every Ubuntu and Rocky engine has a key of its own.
           # These url_keys must agree with each config's daily_platform_key.
           #
-          # The weekday slates below reach 14 of the 21 engines. The other seven
-          # run only in a Sunday selection. Of the 14, macos26, windows2025 and
-          # ubuntu24s appear twice, and macos14 is in no slate at all -- its
-          # weekly run is the Friday 16:00 cron.
+          # The weekday slates below name 16 engine slots but only 13 distinct
+          # engines: macos26, windows2025 and ubuntu24s each appear twice. Of the
+          # eight engines in no slate, macos14's weekly run is the Friday 16:00
+          # cron, and the other seven run only in a Sunday selection.
           ENGINES='[
             {"key":"ubuntu22-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-22-x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
             {"key":"ubuntu22-arm64","platform":"linux","arch":"arm64","os":"ubuntu-22-arm64","name":"Ubuntu 22 (arm64)","url_key":"jammy_arm64"},
@@ -173,10 +175,9 @@ jobs:
             {"key":"macos14","platform":"macos","arch":"arm64"},
             {"key":"macos26","platform":"macos","arch":"arm64"}
           ]'
-          # keys "" gives every key; keys <arch> gives that architecture's.
-          keys() { jq -cn --argjson e "$ENGINES" --arg a "$1" \
-            '[$e[] | select($a == "" or .arch == $a) | .key]'; }
-          ALL=$(keys "")
+          # Every engine key. The Sunday branches below filter on platform and
+          # arch together, which this can't express, so they inline their own jq.
+          ALL=$(jq -cn --argjson e "$ENGINES" '[$e[] | .key]')
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SEL="$ALL"
           elif [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then

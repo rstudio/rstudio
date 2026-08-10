@@ -91,7 +91,8 @@ on:
         description: >-
           The R version this engine actually ran against, read back from the
           installed R rather than echoed from the r_version input. Empty when
-          the e2e job did not run (build_only, or a build failure).
+          the e2e job did not run (build_only, or a build failure), and also when
+          it ran but failed before reaching the R install.
         value: ${{ jobs.e2e-desktop-macos.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
@@ -326,8 +327,12 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
-    # Every shard installs the same R, so which one writes this last does not
-    # matter -- matrix job outputs are last-writer-wins.
+    # Matrix job outputs are last-writer-wins. Every shard that reaches the deps
+    # step installs the same R, so which of those writes last does not matter --
+    # but a shard failing earlier writes an empty value, and if it finishes last
+    # the output is empty for a cell that did run. Callers reading this should
+    # treat empty as "unknown", not as "no R was installed". The Linux engine
+    # sidesteps it by uploading an artifact from shard 1 instead.
     outputs:
       r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     strategy:

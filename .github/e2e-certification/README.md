@@ -30,8 +30,8 @@ a plain dispatch runs.
 | Field | Required | Meaning |
 |---|---|---|
 | `cell` | always | Selection name, matching the rotation's engine `key`. What you type into the `cells` and `r_overrides` dispatch inputs. |
-| `platform` | always | `linux`, `macos`, or `windows`. |
-| `arch` | always | `x86_64` or `arm64`. Asserted downstream: the Linux workflow fails the run if it disagrees with the engine config's `tools_arch`. |
+| `platform` | always | `linux`, `macos`, or `windows`. Documentation only in this file -- nothing in the certification workflow reads it, which routes Linux cells by the presence of `os` instead. It is functional in the rotation's `ENGINES`, where it drives the Sunday grouping. |
+| `arch` | always | `x86_64` or `arm64`. Passed through and asserted for Linux cells only: that workflow fails the run if it disagrees with the engine config's `tools_arch`. On the other five it is documentation. |
 | `r_version` | always | The R version this cell certifies against, or the sentinel `distro` (see below). |
 | `default` | always | `true` to include the cell in a plain dispatch; `false` to make it selectable by name only. |
 | `os` | Linux Desktop only | Names the `.github/e2e-linux/<os>.json` engine config. Its presence is what marks a cell as Linux Desktop. |
@@ -67,26 +67,53 @@ installed R and reported, so the sentinel never has to be trusted.
   `.github/e2e-linux/README.md`). An engine absent from this file cannot be
   certified even by name.
 
-Both dispatch inputs validate every name against this file and fail the run on
-an unknown one, before any runner is provisioned.
+Both dispatch inputs validate every name against this file and fail the run on an
+unknown one, before any *engine* runner is provisioned -- the validation itself
+runs in the `pick` job. The file's own invariants are checked there too: a
+duplicate `cell` or `os`, and a `url_key` the resolve action doesn't emit, both
+fail the run rather than surfacing later as a collided artifact name or a silently
+empty installer URL.
+
+## Pinning a version
+
+`version` takes a build exactly as shown on dailies.rstudio.com. Two things to
+know:
+
+- **The format matters.** `2026.08.0+187` and `2026.08.0-daily+186` are both real
+  forms; some platforms' filenames carry the `daily` token and some don't, and the
+  resolver swaps the requested string into each platform's own URL. If a pin
+  fails, check the string against the manifest before assuming the build is gone.
+- **Only the most recent dailies survive.** Older builds are removed from the
+  download host, so a pin from more than a few days back fails the HEAD check for
+  every platform. That failure is loud and lands in `resolve`, before any engine
+  starts.
+
+The resolver builds all 13 platform URLs regardless of which cells are selected,
+and a pinned version must resolve for all of them. A one-cell run can therefore
+fail on an unrelated platform whose build is missing. Deliberate for now, since
+it fails loudly and diagnosably.
 
 ## What a run reports
 
-The workflow's summary job writes a table of environment, R requested, R actually
-used, and result. "R actually used" is read back from the installed R, never
-echoed from the request, so a `distro` cell shows the concrete version `dnf`
-supplied and a cell whose R silently failed to change shows what really ran.
+The summary job writes a table of environment, R requested, R actually used, and
+result. "R actually used" is read back from the installed R, never echoed from the
+request, so a `distro` cell shows the concrete version `dnf` supplied and a cell
+whose R silently failed to change shows what really ran.
 
-Two routes get that value to the table, because one alone can't cover both
-shapes:
+Two routes carry the per-cell facts, because one alone can't cover both shapes:
 
-- The five non-Linux engines each return it as a `workflow_call` output.
+- The five non-Linux engines each return the version as a `workflow_call` output,
+  and their result is their own job's result.
 - The Linux Desktop cells run as a single matrix call, and a matrix job collapses
-  to one output value, so each uploads a `r-version-linux-desktop-<os>` artifact
-  that the summary job downloads and attributes per cell. A cell that never
-  reached the R install has no artifact and reads `_not reached_`.
+  to one output value for the whole matrix -- so each uploads a
+  `r-version-linux-desktop-<os>` artifact holding its version and its own job
+  status, which the summary attributes per cell. This is what stops one failing
+  cell from being reported against every other cell in the matrix.
 
-The R version also appears in the Playwright HTML report's metadata, so it
-travels with the uploaded report artifact, and on every E2E job's own summary
-page (written by `.github/actions/os-e2e-deps`, for all callers, not just this
-one).
+Three distinguishable gaps in that column: `_not reached_` when a cell has no
+artifact because it never got as far as installing R, `_summary could not fetch_`
+when the artifact download itself failed (the cells may have been fine), and
+`_empty_` when the artifact exists but holds nothing.
+
+The installed R version also appears on every E2E job's own summary page, written
+by `.github/actions/os-e2e-deps` for all callers rather than just this one.

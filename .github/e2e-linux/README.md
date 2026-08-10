@@ -54,14 +54,20 @@ need the same distro setup (`script_dir`).
 Which R an engine runs against is a caller's choice, not a property of the
 engine config -- with one exception, which is the config's business:
 
-- `r_install: "rig"` (12 of the 16 engines) honors the caller's `r_version`
-  input, passing it to `rig add` / `rig default` verbatim.
+- `r_install: "rig"` (12 of the 16 Linux Desktop engines documented here) honors
+  the caller's `r_version` input, passing it to `rig add` / `rig default`
+  verbatim.
 - `r_install: "distro"` (the four Fedora engines) **ignores `r_version`
   entirely** and installs whatever R the distro's repos ship, via
   `fedora/install-r.sh`. Nothing warns about the dropped value, so a caller
   that pins a version for one of these engines gets a different R than it asked
   for. `.github/actions/os-e2e-deps` reads the installed R back and writes it to
-  the job summary, which is the only reliable record of what a run covered.
+  the job summary; reading it back is the only trustworthy *method*, because the
+  requested version is not a record of anything.
+
+Counts in this file refer to the 16 Linux Desktop engines it documents. The
+rotation's `ENGINES` array counts 21, adding Linux Server, three macOS engines,
+and Windows.
 
 `os-e2e-deps` also folds the *resolved* R major.minor into the R-library and pak
 cache keys, with version-scoped `restore-keys`. Two R versions on one engine

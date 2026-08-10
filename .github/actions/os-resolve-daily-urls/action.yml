@@ -2,12 +2,16 @@ name: "Resolve daily installer URLs"
 description: >-
   Build a per-platform RStudio installer URL for one specific daily version, by
   token-swapping that version into each platform's latest-daily download URL
-  from the dailies manifest. Emits an empty string for every platform when
-  building from source or when no version is given, which callers pass through
-  as rstudio_installer_url to mean "self-resolve the latest daily".
+  from the dailies manifest. Emits an empty string for every platform in two
+  cases, which mean different things to the caller: with no version given, an
+  empty rstudio_installer_url tells each engine to self-resolve the latest daily;
+  when building from source, the engines build and ignore the URL entirely.
 
-# Every output is named for the daily manifest key it resolves, so an engine's
-# url_key matches its config's daily_platform_key with '-' as '_'.
+# Every *electron* output is named for the daily manifest key it resolves, so an
+# engine's url_key matches its config's daily_platform_key with '-' as '_'.
+# server_noble is the exception: it resolves the server product for noble-amd64,
+# is named for product and platform rather than a manifest key, and is not any
+# engine's url_key.
 inputs:
   version:
     description: >-
