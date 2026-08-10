@@ -208,8 +208,16 @@ case "$family" in
     packages="unixODBC unixODBC-devel postgresql-odbc sqlite-devel gcc make tar"
     have_postgres || packages="$packages postgresql-server"
     echo "[db-deps] dnf install: $packages"
+    # --allowerasing: the fedora:43 container image ships
+    # systemd-standalone-tmpfiles, which conflicts with the full systemd that
+    # postgresql-server requires (confirmed on fedora-43-x86_64, run
+    # 31220018710: "Failed to resolve the transaction ... conflicting
+    # requests"). dnf's own error output names this flag as the fix. A
+    # throwaway CI container rebuilt every run, so letting dnf swap one
+    # package for another here is not a real workstation concern the way it
+    # would be on a persistent machine.
     # shellcheck disable=SC2086
-    $SUDO dnf install -y $packages
+    $SUDO dnf install -y --allowerasing $packages
     build_sqliteodbc
     expect_postgres_driver="psqlodbcw.so"
     expect_sqlite_driver="libsqlite3odbc.so"
