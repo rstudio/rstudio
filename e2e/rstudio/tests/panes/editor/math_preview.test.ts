@@ -153,4 +153,45 @@ test.describe('Inline LaTeX math previews', () => {
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
   });
+
+  test('dismissed popup does not leak Escape handlers', async ({ rstudioPage: page }) => {
+    const fileName = `math_preview_escape_${Date.now()}.Rmd`;
+    const content = heredoc`
+      ---
+      title: "Math"
+      ---
+
+      Einstein wrote $e = mc^2$ and moved on.
+    `;
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
+
+    // place the cursor inside the inline math region and wait for the popup
+    await moveCursorTo(page, 5, 20);
+    const popupMath = page.locator('mjx-container:not(.rstudio-mathjax-root mjx-container)');
+    await expect(popupMath).toBeVisible({ timeout: 60000 });
+
+    // snapshot the exception count so the assertion below sees only errors
+    // raised by the Escape presses; earlier unrelated exceptions still fail
+    // the test via the per-test fixture drain (don't clear() them away)
+    const errorCountBefore = await page.evaluate(() => window.rstudio!.errors.list().length);
+
+    // Escape dismisses the popup
+    await page.keyboard.press('Escape');
+    await expect(popupMath).toBeHidden();
+
+    // each popup render used to register a second, leaked Escape preview
+    // handler that swallowed every later Escape keydown app-wide and raised
+    // an uncaught TypeError on a nulled handler field (#18474); Escape after
+    // dismissal must not raise a client exception
+    await page.keyboard.press('Escape');
+    const errors = await page.evaluate(
+      (count) => window.rstudio!.errors.list().slice(count).map((e) => e.message),
+      errorCountBefore
+    );
+    expect(errors).toEqual([]);
+
+    await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
 });
