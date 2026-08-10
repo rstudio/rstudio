@@ -46,20 +46,18 @@ export class ConnectionsPaneActions {
    * Pick a connection type and fill its labeled parameter fields, then verify
    * every field ended up holding what was asked for.
    *
-   * fill(), not pressSequentially: the parameter grid is rebuilt whenever a
-   * field commits (NewConnectionSnippetHost registers a ChangeHandler that
-   * calls updateCodePanel), and a rebuild between resolving a field and
-   * writing to it sends the text somewhere else. fill() is one write per
-   * field instead of one per character, so it hits that window far less
-   * often -- and nothing needs per-keystroke input, since the handler is on
-   * the DOM change event, which fill() dispatches.
-   *
-   * The verification pass is the part that matters. Losing this race does not
-   * throw: characters silently land in the wrong box, and the wizard happily
-   * connects to whatever that produced (a stray "pwpostgresql" split into
-   * Server "127.0.0.1wpostgresql" and Database "p", for instance). Reading
-   * every value back afterwards turns that into an immediate, named failure
-   * instead of a puzzling connection error several steps later.
+   * Each field is filled with real per-character key events (see the inline
+   * comment at the fill site below for why), then re-read to confirm it
+   * stuck. The verification pass is the part that matters: the parameter
+   * grid is rebuilt whenever a field commits (NewConnectionSnippetHost
+   * registers a ChangeHandler that calls updateCodePanel), and a rebuild
+   * between resolving a field and writing to it sends the text somewhere
+   * else. Losing this race does not throw: characters silently land in the
+   * wrong box, and the wizard happily connects to whatever that produced (a
+   * stray "pwpostgresql" split into Server "127.0.0.1wpostgresql" and
+   * Database "p", for instance). Reading every value back afterwards turns
+   * that into an immediate, named failure instead of a puzzling connection
+   * error several steps later.
    *
    * Server and Port are verified too even though nothing writes to them: the
    * snippet prefills them, and they are exactly what a misdirected write
@@ -70,8 +68,9 @@ export class ConnectionsPaneActions {
    * runs after the type is selected, and retries a few milliseconds apart
    * (no pause) reliably reproduced the same corruption instead of clearing
    * it, so a pause is what actually gives the next attempt a clean window.
-   * fill() clears a field before setting it, so redoing an already-correct
-   * one is harmless. Only exhausting every attempt is a real failure.
+   * Each attempt clears a field before writing it, so redoing an
+   * already-correct one is harmless. Only exhausting every attempt is a real
+   * failure.
    */
   async fillWizardForTarget(
     target: EffectiveDbTarget,
@@ -171,10 +170,15 @@ export class ConnectionsPaneActions {
    * Seed the target database through DBI from the rsession, invisibly to the
    * pane: the odbc package announces connections through the
    * connectionObserver option, so nulling it for the duration keeps this
-   * setup connection out of the UI under test. Returns false when any part
-   * of the seeding errored.
+   * setup connection out of the UI under test.
+   *
+   * `detail` carries the console's raw output on failure (an R error, most
+   * often -- a bad credential, a platform-specific SQL syntax issue in
+   * `seedSql`) so a caller's skip reason can name the actual problem instead
+   * of a generic "seeding failed", matching the standard `dbAvailability`
+   * sets for every other skip reason in this suite. Empty on success.
    */
-  async seedDatabase(target: EffectiveDbTarget): Promise<boolean> {
+  async seedDatabase(target: EffectiveDbTarget): Promise<{ ok: boolean; detail: string }> {
     const sqlVector = target.seedSql.map((s) => rStringLiteral(s)).join(', ');
     // The connection arguments mirror the target's own snippet: a server
     // engine needs endpoint plus credentials, a file engine takes the path
@@ -197,7 +201,11 @@ export class ConnectionsPaneActions {
       'on.exit(DBI::dbDisconnect(con), add = TRUE); ' +
       `for (sql in c(${sqlVector})) DBI::dbExecute(con, sql); ` +
       'TRUE })';
-    return (await this.consoleActions.evalRLogical(expr)) === true;
+    if ((await this.consoleActions.evalRLogical(expr)) === true) {
+      return { ok: true, detail: '' };
+    }
+    const detail = (await this.consoleActions.lastOutputText()).trim();
+    return { ok: false, detail };
   }
 
   /**

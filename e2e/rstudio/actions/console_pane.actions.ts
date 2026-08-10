@@ -188,6 +188,18 @@ export class ConsolePaneActions {
   }
 
   /**
+   * Raw text currently in the console output pane. For turning a failed
+   * evalRLogical probe into a real error message -- a `null`/mismatched
+   * result means the console holds something other than TRUE/FALSE (an R
+   * error, most often), and this is how a caller recovers what it actually
+   * said. Callers that only need the TRUE/FALSE answer should use
+   * evalRLogical alone.
+   */
+  async lastOutputText(): Promise<string> {
+    return this.consolePane.consoleOutput.innerText();
+  }
+
+  /**
    * Ensure an R package is available, installing it if necessary.
    * Returns true if the package is available after the check, false if installation failed.
    */

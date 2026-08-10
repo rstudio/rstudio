@@ -196,8 +196,15 @@ $env:PGPASSWORD = $password
 # token for the server child (see the header note about postgres.exe).
 & $PgCtl -D $PgData -l $PgLog -w -t 60 start
 if ($LASTEXITCODE -ne 0) {
-    Write-Error 'postgres failed to start; log follows:'
-    if (Test-Path $PgLog) { Get-Content $PgLog | Write-Error }
+    # Write-Output, not Write-Error: under $ErrorActionPreference = 'Stop'
+    # (set at the top of this script), Write-Error is a terminating error, so
+    # the header line would abort the script before the log dump below it
+    # ever ran -- the one piece of evidence explaining why postgres failed
+    # would never reach the log. Confirmed by reproducing it directly.
+    # exit 1 below is what makes this failure real; these lines are just the
+    # message.
+    Write-Output 'ERROR: postgres failed to start; log follows:'
+    if (Test-Path $PgLog) { Get-Content $PgLog | Write-Output }
     exit 1
 }
 

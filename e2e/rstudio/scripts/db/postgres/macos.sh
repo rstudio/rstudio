@@ -120,7 +120,11 @@ export PGHOST=127.0.0.1
 export PGPORT="$PW_DBP_PORT"
 export PGPASSWORD="$PW_DBP_PASSWORD"
 
-if ! "$PGBIN/pg_ctl" -D "$PGDATA" -l "$PGLOG" -w -t 60 start >> "$PGLOG" 2>&1; then
+# pg_ctl's own progress output goes to this script's stdout (the dispatcher
+# captures it) rather than being appended to the same file pg_ctl is telling
+# the server to write, which would have this reading and writing one file at
+# once.
+if ! "$PGBIN/pg_ctl" -D "$PGDATA" -l "$PGLOG" -w -t 60 start; then
   echo "ERROR: postgres failed to start; log follows:" >&2
   cat "$PGLOG" >&2
   exit 1

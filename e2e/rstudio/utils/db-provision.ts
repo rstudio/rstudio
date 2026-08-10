@@ -25,10 +25,12 @@ import * as path from 'path';
 import { ALL_DB_TARGETS, effectiveTarget } from './db-targets';
 import { isTcpReachable } from './network';
 
+/** See the module doc above for what each outcome means. */
+export type DbStatusOutcome = 'override' | 'external' | 'provisioned' | 'file' | 'failed';
+
 export interface DbStatus {
   ok: boolean;
-  /** 'override' | 'external' | 'provisioned' | 'failed' */
-  outcome: string;
+  outcome: DbStatusOutcome;
   /** Human-readable detail; for failures, includes the script output. */
   detail: string;
   /** Set only when outcome is 'provisioned': what teardown must stop. */
@@ -188,14 +190,28 @@ export async function provisionDatabases(sandbox: string): Promise<DbStatusFile>
  * open, or null when the probe could not answer (no engine support, server
  * already gone, unparseable output). Called with the IDE shut down, so a
  * non-zero answer means the tests left a session behind on the server.
+ *
+ * A nonzero exit is warned about, not just folded into `null`: unlike "this
+ * engine doesn't support the probe" (a normal, silent case for some
+ * targets), a script that used to work and now exits nonzero means the
+ * leak-detection safety net this function exists for has gone dark, and
+ * that should show up in the log rather than look identical to "nothing to
+ * report."
  */
 function countOpenSessions(
+  id: string,
   script: string,
   dataDir: string,
   env: NodeJS.ProcessEnv,
 ): number | null {
   const run = runDbScript(script, 'sessions', dataDir, env, 30_000);
-  if (run.status !== 0) return null;
+  if (run.status !== 0) {
+    console.warn(
+      `[db] ${id}: sessions probe exited ${run.status}, could not check for leaked connections:\n` +
+        `${`${run.stdout ?? ''}${run.stderr ?? ''}`.trim()}`,
+    );
+    return null;
+  }
   const count = Number((run.stdout ?? '').trim());
   return Number.isInteger(count) ? count : null;
 }
@@ -237,7 +253,7 @@ export function stopProvisionedDatabases(sandbox: string): void {
         }
       : process.env;
 
-    const open = countOpenSessions(s.script, s.dataDir, env);
+    const open = countOpenSessions(id, s.script, s.dataDir, env);
     if (open !== null && open > 0) {
       console.warn(
         `[db] ${id}: ${open} connection(s) to ${target?.database ?? id} still open at teardown; ` +

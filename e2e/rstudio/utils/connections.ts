@@ -270,6 +270,32 @@ function prepareOdbcSandboxUnix(sandbox: string): OdbcSandbox {
 }
 
 /**
+ * Record one more successfully-registered driver name in the sandbox
+ * manifest, read-modify-write so each success is flushed to disk as it
+ * happens rather than batched until the whole loop finishes. That matters
+ * because `winRegisterDriver` just made a real HKLM write for this target:
+ * if a later target in the same loop throws (a locked DLL on
+ * `fs.copyFileSync`, say), this target's registration must still be in the
+ * manifest so `unregisterWindowsOdbcDrivers` can undo it on the next
+ * teardown -- a manifest written only after the full loop completes would
+ * otherwise lose every earlier success along with the one that threw.
+ */
+function appendWindowsManifestEntry(odbcDir: string, name: string): void {
+  const manifestPath = path.join(odbcDir, WIN_MANIFEST);
+  let names: string[] = [];
+  if (fs.existsSync(manifestPath)) {
+    try {
+      names = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as string[];
+    } catch (err) {
+      console.warn(`[odbc] could not read existing ${manifestPath}, starting fresh: ${(err as Error).message}`);
+      names = [];
+    }
+  }
+  names.push(name);
+  fs.writeFileSync(manifestPath, JSON.stringify(names, null, 2));
+}
+
+/**
  * The Windows equivalent, which has to work differently in two ways.
  *
  * There is no ODBCSYSINI, so drivers are registered machine-wide in HKLM (the
@@ -297,7 +323,6 @@ function prepareOdbcSandboxUnix(sandbox: string): OdbcSandbox {
 function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
   const odbcDir = path.join(sandbox, 'odbc');
   const registered: string[] = [];
-  const registeredNames: string[] = [];
   const driverPaths: string[] = [];
 
   for (const base of ALL_DB_TARGETS) {
@@ -320,7 +345,7 @@ function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
       continue;
     }
     registered.push(target.id);
-    registeredNames.push(target.driverName);
+    appendWindowsManifestEntry(odbcDir, target.driverName);
 
     // A driver installed in a system directory needs nothing on PATH: that
     // directory is already searched, and adding it would be noise.
@@ -330,12 +355,10 @@ function prepareOdbcSandboxWindows(sandbox: string): OdbcSandbox {
     }
   }
 
-  // Written even when empty is pointless, but written before returning so a
-  // partially-successful run still records what teardown must undo.
-  if (registeredNames.length > 0) {
-    fs.mkdirSync(odbcDir, { recursive: true });
-    fs.writeFileSync(path.join(odbcDir, WIN_MANIFEST), JSON.stringify(registeredNames, null, 2));
-  }
+  // The manifest is flushed incrementally inside the loop
+  // (appendWindowsManifestEntry), not batched here, so a run that throws
+  // partway through still leaves teardown a manifest naming every target
+  // that got as far as a real HKLM registration.
 
   // odbcDir stays null: nothing on Windows consumes ODBCSYSINI.
   return { odbcDir: null, registered, driverPaths };

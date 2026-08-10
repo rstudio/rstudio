@@ -23,6 +23,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeCommand } from '@utils/commands';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
+import { CONNECTIONS_PANEL, NEW_CONNECTION_BTN } from '@pages/connections_pane.page';
 import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
 import {
   dbAvailability,
@@ -30,9 +31,6 @@ import {
   driverVisibleInSession,
 } from '@utils/connections';
 import { rStringLiteral } from '@utils/r';
-
-const CONNECTIONS_PANEL = '#rstudio_workbench_panel_connections';
-const NEW_CONNECTION_BTN = "[id^='rstudio_tb_newconnection']";
 
 test.describe('Connections pane', () => {
   let consoleActions: ConsolePaneActions;

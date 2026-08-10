@@ -11,15 +11,13 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConnectionsPaneActions } from '@actions/connections_pane.actions';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
-import { executeCommand } from '@utils/commands';
-import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
+import { ALL_DB_TARGETS, connectionDisplayName, effectiveTarget } from '@utils/db-targets';
 import {
   dbAvailability,
   drainKnownExplorerException,
   driverVisibleInSession,
   resetConnectionState,
 } from '@utils/connections';
-import { connectionDisplayName } from '@utils/db-targets';
 import { restartSessionWithSentinel } from '@utils/project';
 
 // The pane rebuilds its connection list from a client event, so membership
@@ -131,6 +129,21 @@ for (const base of ALL_DB_TARGETS) {
       expect(
         await actions.testConnection(),
         'wizard Test should report failure for an unreachable server',
+      ).toBe(false);
+      await actions.wizard.cancelBtn.click();
+    });
+
+    test('Test button reports failure for a nonexistent database path', async () => {
+      test.skip(
+        target.kind !== 'file',
+        `${target.id} has no bare file path to connect to (wrong password and unreachable ` +
+          'port above already cover its failure modes)',
+      );
+      await actions.openWizard();
+      await actions.fillWizardForTarget(target, { Database: '/nonexistent/dir/x.db' });
+      expect(
+        await actions.testConnection(),
+        'wizard Test should report failure for a path whose directory does not exist',
       ).toBe(false);
       await actions.wizard.cancelBtn.click();
     });

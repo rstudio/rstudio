@@ -23,12 +23,15 @@ for (const base of ALL_DB_TARGETS) {
     let actions: ConnectionsPaneActions;
     let driverVisible = false;
     let seeded = false;
+    let seedFailureDetail = '';
 
     test.beforeAll(async ({ rstudioPage: page }) => {
       actions = new ConnectionsPaneActions(page);
       driverVisible = await driverVisibleInSession(page, target);
       if (driverVisible && dbAvailability(target).ok) {
-        seeded = await actions.seedDatabase(target);
+        const result = await actions.seedDatabase(target);
+        seeded = result.ok;
+        seedFailureDetail = result.detail;
       }
     });
 
@@ -39,7 +42,7 @@ for (const base of ALL_DB_TARGETS) {
       );
       const avail = dbAvailability(target);
       test.skip(!avail.ok, avail.reason);
-      test.skip(!seeded, 'seeding the database through DBI failed');
+      test.skip(!seeded, `seeding the database through DBI failed: ${seedFailureDetail}`);
       // Specs share one session: clear this target's connection and
       // history entry, then restart R so no live connection or `con`
       // binding survives from a prior test. The restart costs a couple
@@ -90,6 +93,14 @@ for (const base of ALL_DB_TARGETS) {
     });
 
     test.afterEach(async ({ rstudioPage: page }) => {
+      // Leave no live connection or open dialog behind for the next test.
+      if (await actions.wizard.dialog.isVisible()) {
+        await actions.wizard.cancelBtn.click();
+        await actions.wizard.dialog.waitFor({ state: 'hidden', timeout: 5000 });
+      }
+      if (await actions.pane.disconnectBtn.isVisible()) {
+        await actions.disconnect();
+      }
       expect(
         await drainKnownExplorerException(page),
         'only the known object_types client exception is tolerated',

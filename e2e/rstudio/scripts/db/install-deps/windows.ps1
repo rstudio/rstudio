@@ -71,6 +71,12 @@ foreach ($package in $packages) {
 # confirms the install worked.
 $sqliteOdbcUrl = 'https://ch-werner.hier-im-netz.de/sqliteodbc/sqliteodbc_w64.exe'
 $sqliteOdbcExe = Join-Path $env:TEMP 'sqliteodbc_w64.exe'
+# There is no versioned filename for this file upstream (unlike the Linux
+# tarball's sqliteodbc-0.99991.tar.gz), so this hash IS the version pin:
+# computed from a fresh download at the time this was written, re-verify and
+# update together if the author ever ships a new build under the same name.
+$sqliteOdbcSha256 = 'A4804E4F54F42C721DF1323C5FCAC101A8C7A577E7F20979227324CEAB572D51'
+
 Write-Output "[db-deps] downloading SQLite ODBC driver from $sqliteOdbcUrl"
 # Progress rendering makes Invoke-WebRequest dramatically slower in CI.
 $prevProgress = $ProgressPreference
@@ -79,6 +85,14 @@ try {
     Invoke-WebRequest -Uri $sqliteOdbcUrl -OutFile $sqliteOdbcExe -UseBasicParsing
 } finally {
     $ProgressPreference = $prevProgress
+}
+
+$actualSha256 = (Get-FileHash -Path $sqliteOdbcExe -Algorithm SHA256).Hash
+if ($actualSha256 -ne $sqliteOdbcSha256) {
+    Write-Output "ERROR: sqliteodbc_w64.exe checksum mismatch:"
+    Write-Output "  expected $sqliteOdbcSha256"
+    Write-Output "  got      $actualSha256"
+    exit 1
 }
 
 Write-Output '[db-deps] installing SQLite ODBC driver (silent)'
@@ -133,8 +147,14 @@ if (-not ($env:PGBIN -and (Test-Path (Join-Path $env:PGBIN 'initdb.exe')))) {
 }
 
 if ($missing.Count -gt 0) {
-    Write-Error 'database stack incomplete after install; missing:'
-    $missing | ForEach-Object { Write-Error "  $_" }
+    # Write-Output, not Write-Error: under $ErrorActionPreference = 'Stop'
+    # (set at the top of this script), Write-Error is a terminating error, so
+    # the FIRST call would abort the script right there and the actual
+    # $missing list below it would never print -- only the header line would
+    # ever reach the log. Confirmed by reproducing it directly. exit 1 below
+    # is what makes this failure real; these lines are just the message.
+    Write-Output 'ERROR: database stack incomplete after install; missing:'
+    $missing | ForEach-Object { Write-Output "  $_" }
     exit 1
 }
 

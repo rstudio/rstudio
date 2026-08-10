@@ -13,8 +13,9 @@
 # internally (PPM repo selection, Playwright browser deps).
 #
 #   Debian/Ubuntu   unixodbc  odbc-postgresql  libsqliteodbc  [postgresql]
-#   Fedora          unixODBC  unixODBC-devel  postgresql-odbc  sqliteodbc
-#                   [postgresql-server]
+#   Fedora          unixODBC  unixODBC-devel  postgresql-odbc  sqlite-devel
+#                   gcc make tar  [postgresql-server]
+#                   plus sqliteodbc compiled from source, see below
 #   RHEL/Rocky      unixODBC  unixODBC-devel  postgresql-odbc  sqlite-devel
 #                   gcc make tar  [postgresql-server]
 #                   plus sqliteodbc compiled from source, see below
@@ -27,9 +28,12 @@
 #
 # RHEL and Rocky have no packaged sqliteodbc -- not in the base repos and not
 # in official EPEL either -- so it is compiled from the author's own tarball
-# there (build_sqliteodbc below). That keeps all three families on the same two
-# targets and the same driver version, which is what makes results across the
-# nine distro configs comparable.
+# there (build_sqliteodbc below). Fedora DOES have a packaged sqliteodbc, but
+# it is deliberately not used: it crashes R at runtime (see the fedora case
+# below), so it is built from the same source as RHEL/Rocky instead. That
+# keeps all three families on the same two targets and the same driver
+# version, which is what makes results across the nine distro configs
+# comparable.
 #
 # Only CI runs this. A developer's machine is expected to have the stack
 # installed by hand, and the suite deliberately does not mutate it.
@@ -113,6 +117,9 @@ have_postgres() {
 # keeps one set of candidate paths working across the whole family.
 SQLITEODBC_VERSION="0.99991"
 SQLITEODBC_URL="https://ch-werner.hier-im-netz.de/sqliteodbc/sqliteodbc-${SQLITEODBC_VERSION}.tar.gz"
+# Computed from a fresh download of the URL above; re-verify and update
+# together with SQLITEODBC_VERSION if that ever changes.
+SQLITEODBC_SHA256="4d94adb8d3cde1fa94a28aeb0dfcc7be73145bcdfcdf3d5e225434db31dc8a5c"
 
 build_sqliteodbc() {
   if [ -f /usr/lib64/libsqlite3odbc.so ]; then
@@ -126,6 +133,16 @@ build_sqliteodbc() {
   trap 'rm -rf "$workdir"' RETURN
 
   curl -fsSL --retry 3 --retry-delay 5 -o "$workdir/sqliteodbc.tar.gz" "$SQLITEODBC_URL"
+
+  local actual_sha256
+  actual_sha256=$(sha256sum "$workdir/sqliteodbc.tar.gz" | cut -d' ' -f1)
+  if [ "$actual_sha256" != "$SQLITEODBC_SHA256" ]; then
+    echo "ERROR: sqliteodbc-${SQLITEODBC_VERSION}.tar.gz checksum mismatch:" >&2
+    echo "  expected $SQLITEODBC_SHA256" >&2
+    echo "  got      $actual_sha256" >&2
+    return 1
+  fi
+
   tar -xzf "$workdir/sqliteodbc.tar.gz" -C "$workdir"
 
   local src="$workdir/sqliteodbc-${SQLITEODBC_VERSION}"
@@ -239,8 +256,11 @@ esac
 
 # Verify what this script set out to install, and fail here if it is absent.
 # Deliberately not a search for "any driver": only the ones this family was
-# supposed to provide, so an expected-absent SQLite driver on RHEL does not
-# fail the run while a missing PostgreSQL driver does.
+# supposed to provide. All three families currently expect both drivers, but
+# keying the check on each family's own expectation (rather than a blanket
+# "some SQLite driver exists somewhere") is what would let a future family
+# with a real gap skip that one driver without the check going blind to a
+# missing PostgreSQL driver too.
 find_driver_lib() {
   local name=$1 dir
   for dir in /usr/lib/x86_64-linux-gnu/odbc /usr/lib/aarch64-linux-gnu/odbc \
