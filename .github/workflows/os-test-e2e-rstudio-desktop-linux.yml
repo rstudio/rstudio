@@ -156,9 +156,6 @@ on:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
         required: false
-      OP_SERVICE_ACCOUNT_TOKEN:
-        description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
-        required: false
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
