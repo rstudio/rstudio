@@ -1,0 +1,216 @@
+<html>
+<head>
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/yaml_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/colors.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/python_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sh_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/stan_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sql_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/mermaid_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/markdown_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rmarkdown_highlight_rules.js"></script>
+</head>
+<body>
+
+  <h2>R Highlight Tester</h2>
+  <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+  <pre id="log"></pre>
+
+  <script type="text/javascript">
+
+  // Tokenizer-level tests for R raw strings (https://github.com/rstudio/rstudio/issues/18469).
+  //
+  // Rows are tokenized the same way Ace's BackgroundTokenizer does it: each
+  // row starts from the previous row's saved state and a copy of its context.
+  // The key invariant under test is the saved per-row state: it must be a
+  // plain string once a raw string has closed (or been escaped by a chunk
+  // end), and is legitimately an array only while a multi-line construct is
+  // still open.
+
+  var Tokenizer = require("ace/tokenizer").Tokenizer;
+  var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
+  var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
+
+  var passed = 0;
+  var failed = 0;
+  var log = document.getElementById("log");
+
+  function check(label, ok, detail) {
+    if (ok) {
+      passed++;
+    } else {
+      failed++;
+    }
+    log.textContent += (ok ? "PASS " : "FAIL ") + label + (ok ? "" : " -- " + detail) + "\n";
+  }
+
+  function checkState(label, state, expected) {
+    check(
+      label,
+      state === expected,
+      "expected '" + expected + "', got " + JSON.stringify(state)
+    );
+  }
+
+  function checkArrayState(label, state) {
+    check(
+      label,
+      Array.isArray(state),
+      "expected an array state, got " + JSON.stringify(state)
+    );
+  }
+
+  function tokenize(HighlightRules, lines) {
+    var tokenizer = new Tokenizer(new HighlightRules().getRules());
+    var states = [];
+    var tokens = [];
+    var state;
+    var context = {};
+    for (var i = 0; i < lines.length; i++) {
+      context = Object.assign({}, context);
+      var data = tokenizer.getLineTokens(lines[i], state, i, context);
+      states.push(data.state);
+      tokens.push(data.tokens);
+      state = data.state;
+    }
+    return { states: states, tokens: tokens };
+  }
+
+  // Concatenated text of the string-typed tokens in a row.
+  function stringText(tokens) {
+    var text = "";
+    for (var i = 0; i < tokens.length; i++) {
+      if (/string/.test(tokens[i].type))
+        text += tokens[i].value;
+    }
+    return text;
+  }
+
+  // --- R mode: closed raw strings leave a plain string state ---
+
+  var r1 = tokenize(RHighlightRules, [
+    'x <- r"(hello)"',
+    'a <- r"(a)"; b <- R"[b]"',
+    'd <- r"---(text)---"',
+    'y <- 1'
+  ]);
+
+  checkState("r: single raw string", r1.states[0], "start");
+  checkState("r: two raw strings on one line", r1.states[1], "start");
+  check(
+    "r: both raw strings highlight as strings",
+    stringText(r1.tokens[1]) === 'r"(a)"R"[b]"',
+    "got " + JSON.stringify(stringText(r1.tokens[1]))
+  );
+  checkState("r: dashed delimiters", r1.states[2], "start");
+  check(
+    "r: dashed raw string highlights as string",
+    stringText(r1.tokens[2]) === 'r"---(text)---"',
+    "got " + JSON.stringify(stringText(r1.tokens[2]))
+  );
+  checkState("r: row after raw strings", r1.states[3], "start");
+
+  // --- R mode: multi-line raw string persists while open, closes cleanly ---
+
+  var r2 = tokenize(RHighlightRules, [
+    'x <- r"[multi',
+    'line]"',
+    'y <- 1'
+  ]);
+
+  checkArrayState("r: state while raw string open", r2.states[0]);
+  check(
+    "r: raw string interior highlights as string",
+    stringText(r2.tokens[1]) === 'line]"',
+    "got " + JSON.stringify(stringText(r2.tokens[1]))
+  );
+  checkState("r: state on closing row", r2.states[1], "start");
+  checkState("r: row after multi-line raw string", r2.states[2], "start");
+
+  // --- R mode: a near-miss suffix does not close the raw string ---
+
+  var r3 = tokenize(RHighlightRules, [
+    'x <- r"(hello)-"',
+    'still string',
+    ')"',
+    'y <- 1'
+  ]);
+
+  checkArrayState("r: ')-\"' does not close 'r\"(' raw string", r3.states[0]);
+  check(
+    "r: content after near-miss suffix is still string",
+    stringText(r3.tokens[1]) === 'still string',
+    "got " + JSON.stringify(stringText(r3.tokens[1]))
+  );
+  checkState("r: real suffix closes raw string", r3.states[2], "start");
+  checkState("r: row after near-miss raw string", r3.states[3], "start");
+
+  // --- R Markdown mode: prefixed states behave the same way ---
+
+  var rmd1 = tokenize(RMarkdownHighlightRules, [
+    '```{r}',
+    'x <- r"(hello)"',
+    'y <- r"[multi',
+    'line]"',
+    'z <- 1',
+    '```',
+    '',
+    '# Header'
+  ]);
+
+  checkState("rmd: closing row of single-line raw string", rmd1.states[1], "r-start");
+  checkArrayState("rmd: state while raw string open", rmd1.states[2]);
+  checkState("rmd: closing row of multi-line raw string", rmd1.states[3], "r-start");
+  checkState("rmd: row after raw strings", rmd1.states[4], "r-start");
+  checkState("rmd: chunk end", rmd1.states[5], "start");
+  checkState("rmd: row after chunk", rmd1.states[7], "start");
+
+  // --- R Markdown mode: chunk end escapes an unterminated raw string ---
+
+  var rmd2 = tokenize(RMarkdownHighlightRules, [
+    '```{r}',
+    'x <- r"(abc',
+    '```',
+    '',
+    '# Header'
+  ]);
+
+  checkArrayState("rmd: state while unterminated raw string open", rmd2.states[1]);
+  check(
+    "rmd: chunk end still tokenizes as codeend",
+    rmd2.tokens[2].length > 0 && rmd2.tokens[2][0].type === "support.function.codeend",
+    "got " + JSON.stringify(rmd2.tokens[2])
+  );
+  checkState("rmd: chunk end clears raw string state", rmd2.states[2], "start");
+  checkState("rmd: row after escaped raw string", rmd2.states[4], "start");
+
+  // --- R Markdown mode: chunk end escapes an unterminated sh heredoc ---
+
+  var rmd3 = tokenize(RMarkdownHighlightRules, [
+    '```{bash}',
+    'cat <<EOF',
+    'text',
+    '```',
+    '',
+    '# Header'
+  ]);
+
+  checkArrayState("rmd: state while unterminated heredoc open", rmd3.states[1]);
+  checkState("rmd: chunk end clears heredoc state", rmd3.states[3], "start");
+  checkState("rmd: row after escaped heredoc", rmd3.states[5], "start");
+
+  document.getElementById("passed").innerText = String(passed);
+  document.getElementById("failed").innerText = String(failed);
+
+  </script>
+
+</body>
+
+</html>

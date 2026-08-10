@@ -55,6 +55,11 @@ const editionExclusions = edition === 'os' ? ['@pro_only'] : ['@os_only'];
 const setupProject = {
   name: 'setup',
   testMatch: /tests[\\/]auth\.setup\.ts$/,
+  // After every project depending on this setup finishes, the auth-teardown
+  // project scrubs whatever the external-server provisioning step pushed to
+  // the remote host (tests/auth.teardown.ts; skips in one step on all other
+  // runs).
+  teardown: 'auth-teardown',
   // Never retry the setup: only its deterministic (fail-loud) path throws --
   // wrong credentials, an OAuth config fault -- and retrying that means a
   // second live bad-credential sign-in against login.posit.cloud, plus the
@@ -71,6 +76,18 @@ const setupProject = {
   // Diagnostic context comes from the flows' own error messages instead
   // (step name, page URL); PW_DEBUG_AUTH_CAPTURE=1 opts into flow-owned page dumps
   // for debugging login-page changes (see utils/auth-debug.ts).
+  use: { trace: 'off' as const, video: 'off' as const, screenshot: 'off' as const },
+};
+
+// Scrubs remotely provisioned credentials after external-server runs; wired
+// as the setup project's teardown above. Same artifact and retry rules as
+// setup: its console traffic touches the same login flow, and a retry would
+// re-drive a live remote session to no benefit (scrub failures are
+// deterministic enough to want eyes, not retries).
+const authTeardownProject = {
+  name: 'auth-teardown',
+  testMatch: /tests[\\/]auth\.teardown\.ts$/,
+  retries: 0,
   use: { trace: 'off' as const, video: 'off' as const, screenshot: 'off' as const },
 };
 
@@ -136,10 +153,12 @@ if (modeEnv !== 'desktop' && modeEnv !== 'server') {
 // per-platform labels show up there as distinct series.
 const projectLabel = process.env.PW_PROJECT_LABEL || modeEnv;
 const projects = [
-  // The auth setup project runs auth.setup.ts (raw chromium, no RStudio launch),
-  // so mode is inert for it -- it's set only to satisfy ProjectOptions. modeEnv
-  // is validated to be 'desktop'|'server' above, so the cast is sound.
+  // The auth setup and teardown projects run raw chromium (no RStudio
+  // launch), so mode is inert for them -- it's set only to satisfy
+  // ProjectOptions. modeEnv is validated to be 'desktop'|'server' above, so
+  // the cast is sound.
   { ...setupProject, use: { ...setupProject.use, mode: modeEnv as ProjectOptions['mode'] } },
+  { ...authTeardownProject, use: { ...authTeardownProject.use, mode: modeEnv as ProjectOptions['mode'] } },
   ...allProjects
     .filter(p => p.name === modeEnv)
     .map(p => ({ ...p, name: projectLabel })),
