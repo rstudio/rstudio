@@ -710,14 +710,11 @@ jobs:
       run:
         shell: pwsh
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}\R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}\pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
-      # Override the default platform-specific R library template so the sandbox
-      # uses the same path that the e2e-deps action installs and caches. Without
-      # this the sandbox writes to %LOCALAPPDATA%\rstudio-playwright\r-libs\...
-      # (a different path) causing packages to be re-downloaded on every run.
-      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}\R-libs
 
     steps:
       - uses: actions/checkout@v4

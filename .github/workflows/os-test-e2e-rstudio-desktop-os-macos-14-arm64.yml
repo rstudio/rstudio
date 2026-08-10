@@ -360,6 +360,8 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 120
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       # Pin the sandbox parent so the upload-artifact step below knows where
       # rsession logs / preserved per-spec config trees end up after a failed

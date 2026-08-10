@@ -79,6 +79,8 @@ jobs:
       run:
         shell: pwsh
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}\R-libs
       # Point globalSetup's R-libs provisioner at the same library the
       # e2e-deps action installs and caches (see the main windows-server-2025
