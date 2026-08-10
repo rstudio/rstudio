@@ -12,12 +12,16 @@
  * downgrades to a skip that names the problem; anything else that renders
  * nothing still fails.
  *
- * The two @desktop_only tests assert the Desktop fixture's launch-env
- * plumbing specifically. In Server mode rserver rebuilds each rsession's
- * environment from scratch (see the note in fixtures/server.fixture.ts), so
- * spawn-time variables never arrive; server engines instead register drivers
- * machine-wide (CI-enablement phase), and the wizard/connect specs gate on
- * in-session driver visibility rather than on mode.
+ * The two @desktop_only tests assert the Desktop fixture's own launch-env
+ * plumbing specifically -- that the CDP-spawned RStudio process itself
+ * receives ODBCSYSINI. Server-mode sessions get the same sandbox ODBC
+ * configuration through a different path: the per-worker rsession wrapper
+ * fixtures/server.fixture.ts writes (see writeRsessionWrapper) also exports
+ * ODBCSYSINI, mirroring the Desktop fixture, so the driver the sandbox
+ * registered is visible in-session there too -- no machine-wide driver
+ * install required. The wizard/connect specs gate on that in-session driver
+ * visibility rather than on mode, which is what lets them run under Server
+ * mode as well.
  */
 
 import { test, expect } from '@fixtures/rstudio.fixture';
