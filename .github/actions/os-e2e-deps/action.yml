@@ -32,7 +32,10 @@ inputs:
       installs nothing at test time. Callers that leave this empty pay
       globalSetup's install into its own (uncached) default library on every
       run: a fast binary download where PPM covers the platform, a full source
-      compile where it doesn't (Fedora). All Linux e2e engines set it.
+      compile where it doesn't (Fedora) -- and any upstream outage during that
+      install surfaces as mid-suite hangs. Every desktop e2e engine sets it;
+      the Linux Server workflow instead seeds a system library of its own
+      (its tests uninstall packages, which a root-owned seed would break).
     required: false
     default: ""
 
@@ -141,9 +144,10 @@ runs:
           ask = FALSE,
           upgrade = FALSE
         )
-        # On distros without CRAN binaries (Fedora), also install the harness's
-        # REQUIRED_PACKAGES set now so it lands in the cached library rather than
-        # being source-compiled by the Playwright globalSetup at test time. Reads
+        # When requested, also install the harness's REQUIRED_PACKAGES set now
+        # so it lands in the cached library rather than being installed by the
+        # Playwright globalSetup at test time (a source compile on distros
+        # without CRAN binaries, a CRAN download everywhere else). Reads
         # the same required-packages.txt that fixtures/r-libs-setup.ts reads, so
         # the two sets can't drift. Both the presence check and the install are
         # scoped to R_LIBS_USER (the cached tree), mirroring the harness's own
