@@ -69,3 +69,7 @@ spec/
 # Non-persistent Mole caches
 .mole.web_cache
 .mole.rust_cache
+
+# Written at the workspace root by the os-e2e-deps action so a caller can upload
+# the installed R version as an artifact; never wanted in a commit.
+/r-version.txt

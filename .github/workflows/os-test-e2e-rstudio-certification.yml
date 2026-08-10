@@ -77,10 +77,16 @@ on:
 
 concurrency:
   # Certification runs are hand-launched against a named build, so two of them
-  # are normally deliberate (different builds, or different cells). Keyed on the
-  # ref rather than shared globally, and never cancelling: losing half a
-  # certification matrix to a cancel would waste the whole run.
-  group: pw-certification-${{ github.ref }}
+  # are normally deliberate -- and the version is what makes them distinct. It is
+  # in the group key so certifying two different builds proceeds in parallel,
+  # while a second run for the *same* build queues behind the first, which is what
+  # you want: nobody needs one build certified twice at once.
+  #
+  # Keyed on the ref as well, and never cancelling: losing half a certification
+  # matrix to a cancel would waste hours. Note only one run per group can be
+  # pending, so a third dispatch for the same ref and version discards the queued
+  # second -- another reason to keep the version in the key.
+  group: pw-certification-${{ github.ref }}-${{ inputs.version || 'latest' }}
   cancel-in-progress: false
 
 permissions:
@@ -113,14 +119,59 @@ jobs:
           MATRIX_FILE=.github/e2e-certification/matrix.json
           MATRIX=$(cat "$MATRIX_FILE")
 
-          # Accept either separator, and tolerate runs of them, so a pasted list
-          # works whichever way it was written.
-          norm() { printf '%s' "$1" | tr ',' ' ' | tr -s ' ' | sed 's/^ *//; s/ *$//'; }
+          # Accept any of these separators, and tolerate runs of them, so a pasted
+          # list works whichever way it was written -- including one pasted with
+          # tabs or across lines, which would otherwise arrive as a single token
+          # and be reported as one absurd unknown cell name.
+          norm() { printf '%s' "$1" | tr ',\t\n' '   ' | tr -s ' ' | sed 's/^ *//; s/ *$//'; }
           # Space-separated string -> JSON array of non-empty tokens.
           as_array() { printf '%s' "$1" | jq -R -s 'split(" ") | map(select(length > 0))'; }
 
+          # A cells input that is non-empty but normalizes away (", ," or spaces,
+          # e.g. a pasted list whose names were deleted) is not the same as
+          # leaving the field blank. Blank means "everything"; punctuation means
+          # the author was trying to narrow the run and it did not land, so
+          # silently certifying all 13 would be the expensive wrong answer.
+          if [ -n "${CELLS}" ] && [ -z "$(norm "${CELLS}")" ]; then
+            echo "::error::The cells input contains only separators, so no cell name could be read. Leave it empty to run every default cell."
+            exit 1
+          fi
+
           CELLS_REQ=$(as_array "$(norm "${CELLS}")")
           OVER_REQ=$(as_array "$(norm "${R_OVERRIDES}")")
+
+          # --- validate the matrix file itself -----------------------------
+          # A duplicated cell or os would produce two identical Linux matrix rows
+          # that collide on job name and on every artifact name, and
+          # upload-artifact@v4 fails on a duplicate -- deep inside a multi-hour
+          # matrix, with a message that says nothing about this file.
+          for field in cell os; do
+            DUPES=$(jq -cn --argjson m "$MATRIX" --arg f "$field" \
+              '[$m[] | .[$f] | select(. != null)] | group_by(.) | map(select(length > 1) | .[0])')
+            if [ "$DUPES" != "[]" ]; then
+              echo "::error::Duplicate $field value(s) in $MATRIX_FILE: $(jq -r 'join(", ")' <<<"$DUPES")."
+              exit 1
+            fi
+          done
+
+          # Every Linux Desktop cell must name a url_key that the resolve action
+          # actually emits. This is the one field whose failure is silent: an
+          # unknown name makes needs.resolve.outputs[matrix.url_key] evaluate to
+          # '', and an empty rstudio_installer_url means "self-resolve the latest
+          # daily" to every engine -- so a version-pinned run would quietly test
+          # the wrong build and report the pinned version as certified. That is
+          # exactly what the fatal emit() in the resolve action prevents, and the
+          # guarantee has to be extended here because the caller can manufacture
+          # the same empty value without any fatality. Keep in step with the
+          # action's outputs.
+          RESOLVE_KEYS='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
+          BAD_KEYS=$(jq -cn --argjson m "$MATRIX" --argjson k "$RESOLVE_KEYS" \
+            '[$m[] | select(.os) | select((.url_key // "") as $u | ($k | index($u)) == null) | .cell]')
+          if [ "$BAD_KEYS" != "[]" ]; then
+            echo "::error::Cell(s) in $MATRIX_FILE have a missing or unrecognized url_key: $(jq -r 'join(", ")' <<<"$BAD_KEYS")."
+            echo "::error::Valid url_keys: $(jq -r 'join(", ")' <<<"$RESOLVE_KEYS")"
+            exit 1
+          fi
 
           # --- validate the cells input ------------------------------------
           UNKNOWN=$(jq -cn --argjson m "$MATRIX" --argjson r "$CELLS_REQ" \
@@ -167,6 +218,21 @@ jobs:
             exit 1
           fi
 
+          # Every selected cell must be runnable. Linux Desktop cells go through
+          # the matrix below; the other five each have a dedicated job. A cell
+          # with neither would be selected, never run, and never appear in the
+          # summary -- a certification table quietly missing an environment is
+          # worse than one that fails. Keep in step with the jobs below.
+          JOB_BACKED='["ubuntu24s","macos14","macos15","macos26","windows2025"]'
+          NO_JOB=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson j "$JOB_BACKED" \
+            '[ $m[] | select(.cell as $c | $sel | index($c)) | select(.os == null)
+               | select(.cell as $c | ($j | index($c)) == null) | .cell ]')
+          if [ "$NO_JOB" != "[]" ]; then
+            echo "::error::Selected cell(s) have no job to run them: $(jq -r 'join(", ")' <<<"$NO_JOB")."
+            echo "::error::A non-Linux cell needs a dedicated job in this workflow and an entry in JOB_BACKED."
+            exit 1
+          fi
+
           # An override for a cell that is not running is almost always a
           # mistake (a trimmed cells list, or a typo that happened to match
           # another cell), so say so -- but don't fail, since overriding while
@@ -177,6 +243,29 @@ jobs:
             echo "::warning::r_overrides names cell(s) that are not in this run, so the override does nothing: $(jq -r 'join(", ")' <<<"$IGNORED")."
           fi
 
+          # Two overrides for one cell is self-contradictory, and from_entries
+          # below silently keeps the last. The harmless not-in-this-run case
+          # already warns, so staying quiet about this one would be inconsistent.
+          DUP_OV=$(jq -cn --argjson p "$PAIRS" \
+            '[$p[].cell] | group_by(.) | map(select(length > 1) | .[0])')
+          if [ "$DUP_OV" != "[]" ]; then
+            echo "::warning::r_overrides names cell(s) more than once; the last value wins: $(jq -r 'join(", ")' <<<"$DUP_OV")."
+          fi
+
+          # An override aimed at a distro-R cell cannot take effect at all: those
+          # engines install R from the distro's repos and ignore r_version. Left
+          # unsaid it is actively misleading, because overriding also replaces the
+          # "distro" sentinel that the summary's footnote keys on -- so the table
+          # would assert a version nothing tried to install.
+          OV_DISTRO=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson p "$PAIRS" '
+            ($p | map(.cell)) as $oc
+            | [ $m[] | select(.cell as $c | $sel | index($c))
+                | select(.r_version == "distro")
+                | select(.cell as $c | $oc | index($c)) | .cell ]')
+          if [ "$OV_DISTRO" != "[]" ]; then
+            echo "::warning::r_overrides names cell(s) whose R comes from the distro's own repos, so the requested version will be ignored: $(jq -r 'join(", ")' <<<"$OV_DISTRO"). The summary reports what actually installed."
+          fi
+
           # --- merge overrides over the declared versions ------------------
           # r_declared is what the matrix (or the override) asked for, kept for
           # the summary. r_effective is what the engine is actually handed: the
@@ -184,12 +273,20 @@ jobs:
           # ignore the value anyway, and a literal "distro" would break the rig
           # engines outright if a config ever switched away from r_install
           # distro.
+          #
+          # A distro cell keeps "distro" visible in r_declared even when
+          # overridden, with the ignored request shown alongside it, so the
+          # summary's footnote still applies and the table cannot claim a version
+          # that was never attempted.
           RESOLVED=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson p "$PAIRS" '
             ($p | map({key: .cell, value: .version}) | from_entries) as $ov
             | [ $m[]
                 | select(.cell as $c | $sel | index($c))
-                | . + { r_declared: ($ov[.cell] // .r_version) }
-                | . + { r_version: (if .r_declared == "distro" then "release" else .r_declared end) } ]')
+                | . + { r_declared:
+                        (if .r_version == "distro" then
+                           (if $ov[.cell] then "distro (\($ov[.cell]) ignored)" else "distro" end)
+                         else ($ov[.cell] // .r_version) end) }
+                | . + { r_version: (if .r_version == "distro" then "release" else .r_declared end) } ]')
 
           # Linux Desktop cells are the ones carrying an os field; the other
           # five are keyed on by the if: contains(...) guards on their own jobs.
@@ -208,6 +305,9 @@ jobs:
   resolve:
     name: Resolve installer URLs
     runs-on: ubuntu-latest
+    # Needs pick only so the verification step below knows which cells are in the
+    # run; the URL resolution itself is selection-independent.
+    needs: pick
     outputs:
       rhel10_x86_64:  ${{ steps.resolve.outputs.rhel10_x86_64 }}
       rhel10_arm64:   ${{ steps.resolve.outputs.rhel10_arm64 }}
@@ -232,6 +332,46 @@ jobs:
         with:
           version: ${{ inputs.version }}
           build_from_source: ${{ inputs.build_from_source }}
+
+      # A pinned version that produced no URL for a cell in this run must stop
+      # the run, because an empty rstudio_installer_url means "self-resolve the
+      # latest daily" to the engines -- so the alternative is a green run that
+      # certified a different build than the one named. The action's own emit()
+      # is fatal per platform, but that guarantee ends at its boundary: the
+      # caller can still hand an engine an empty string by naming a url_key the
+      # action does not emit. The pick job rejects unknown url_keys up front;
+      # this catches the remaining case, a key that is valid but whose platform
+      # genuinely has no build at the requested version.
+      #
+      # Skipped when no version was pinned or when building from source, where
+      # empty URLs are the intended signal rather than a failure.
+      - name: Verify a pinned version resolved for every selected cell
+        if: ${{ inputs.version != '' && !inputs.build_from_source }}
+        env:
+          LINUX_MATRIX: ${{ needs.pick.outputs.linux_matrix }}
+          SELECTED: ${{ needs.pick.outputs.selected }}
+          VERSION: ${{ inputs.version }}
+          URLS: ${{ toJSON(steps.resolve.outputs) }}
+        run: |
+          set -euo pipefail
+          # Linux Desktop cells name their platform via url_key; the other five
+          # each map to one fixed output.
+          NEEDED=$(jq -cn --argjson l "$LINUX_MATRIX" --argjson s "$SELECTED" '
+            ([$l[] | {cell: .cell, key: .url_key}])
+            + ([{cell:"ubuntu24s",key:"server_noble"},
+                {cell:"macos14",key:"macos"},
+                {cell:"macos15",key:"macos"},
+                {cell:"macos26",key:"macos"},
+                {cell:"windows2025",key:"windows"}]
+               | map(select(.cell as $c | $s | index($c))))')
+          MISSING=$(jq -cn --argjson n "$NEEDED" --argjson u "$URLS" \
+            '[$n[] | select(($u[.key] // "") == "") | "\(.cell) (\(.key))"]')
+          if [ "$MISSING" != "[]" ]; then
+            echo "::error::Version '$VERSION' produced no installer URL for: $(jq -r 'join(", ")' <<<"$MISSING")."
+            echo "::error::Refusing to continue -- those engines would silently fall back to the latest daily."
+            exit 1
+          fi
+          echo "::notice::All $(jq -r 'length' <<<"$NEEDED") selected cell(s) have an installer URL for $VERSION."
 
   # Every selected Linux Desktop cell, one matrix entry each, through the
   # consolidated Linux workflow. Unlike the scheduled rotation, r_version comes
@@ -379,12 +519,18 @@ jobs:
     if: always() && needs.pick.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      # One artifact per Linux Desktop cell, each holding the R version that
-      # cell actually installed. The Linux cells run as a single matrix call, so
-      # their job output collapses to one value; these artifacts are what let
-      # the table attribute a version to each cell. Best-effort: a cell that
-      # never reached the R install has no artifact, and the table says so.
+      # One artifact per Linux Desktop cell, each holding two lines: the R version
+      # that cell installed, and that cell's own job status. The Linux cells run
+      # as a single matrix call, so neither fact is available as a job output --
+      # a matrix job collapses to one value. These artifacts are what let the
+      # table attribute both to the right cell, which is what stops one failing
+      # cell from being reported against every other cell in the matrix.
+      #
+      # continue-on-error so a transient artifacts-API failure degrades the table
+      # rather than losing it. The step id lets the table say which happened: a
+      # cell that never reached the R install, or a summary that could not fetch.
       - name: Download per-cell R versions (Linux Desktop)
+        id: fetch_versions
         if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
         continue-on-error: true
         uses: actions/download-artifact@v4
@@ -400,8 +546,11 @@ jobs:
           LINUX_MATRIX: ${{ needs.pick.outputs.linux_matrix }}
           # The five non-Linux engines each return the R they actually used as a
           # workflow output. The Linux cells can't: they run as one matrix call,
-          # and a matrix job collapses to a single output value, so their
-          # versions arrive as one artifact per cell (downloaded above).
+          # and a matrix job collapses to a single output value, so both their
+          # version and their per-cell result arrive by artifact (downloaded
+          # above). RESULT_LINUX is only the fallback for a cell whose artifact
+          # is missing.
+          FETCH_OUTCOME: ${{ steps.fetch_versions.outcome }}
           ACTUAL_UBUNTU24S: ${{ needs.ubuntu24s.outputs.r_version_actual }}
           ACTUAL_MACOS26: ${{ needs.macos26.outputs.r_version_actual }}
           ACTUAL_MACOS15: ${{ needs.macos15.outputs.r_version_actual }}
@@ -435,19 +584,28 @@ jobs:
             echo "| \`$cell\` | $declared | $actual | $result |" >> "$GITHUB_STEP_SUMMARY"
           }
 
-          # Linux cells: one shared result for the whole matrix call, so the
-          # per-cell actual R comes from each cell's downloaded artifact. The
-          # artifact is named for the engine's os, which is unique per cell.
+          # Linux cells: both the version and this cell's own result come from its
+          # artifact (line 1 and line 2), named for the engine's os, which is
+          # unique per cell. Falling back to the matrix-wide RESULT_LINUX only
+          # when the artifact is absent keeps one failing cell from being reported
+          # against the rest.
           if [ "$LINUX_MATRIX" != "[]" ]; then
             while IFS=$'\t' read -r cell os declared; do
               actual_file="r-versions/r-version-linux-desktop-${os}/r-version.txt"
+              result="$RESULT_LINUX"
               if [ -r "$actual_file" ]; then
-                actual=$(tr -d '\r\n' < "$actual_file")
+                actual=$(sed -n '1p' "$actual_file" | tr -d '\r')
+                cell_result=$(sed -n '2p' "$actual_file" | tr -d '\r')
                 [ -n "$actual" ] || actual="_empty_"
+                [ -z "$cell_result" ] || result="$cell_result"
+              elif [ "${FETCH_OUTCOME:-}" = "failure" ]; then
+                # The cells may well have run fine; the summary just could not
+                # read their artifacts. Do not imply they never reached R.
+                actual="_summary could not fetch_"
               else
                 actual="_not reached_"
               fi
-              echo "| \`$cell\` | $declared | $actual | $RESULT_LINUX |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| \`$cell\` | $declared | $actual | $result |" >> "$GITHUB_STEP_SUMMARY"
             done < <(jq -r '.[] | [.cell, .os, .r_declared] | @tsv' <<<"$LINUX_MATRIX")
           fi
 

@@ -44,10 +44,13 @@ outputs:
     value: ${{ steps.r_version.outputs.version }}
   r-version-full:
     description: >
-      The full installed R version (e.g. "4.5.3"), resolved from the R that is
-      actually on PATH -- not the version the caller requested. Engines whose
-      config sets r_install "distro" ignore the requested version entirely, so
-      this is the only reliable record of what a run actually tested against.
+      The full installed R version, resolved from the R that is actually on PATH
+      rather than echoed from the caller's request -- which is the only
+      trustworthy method, since engines whose config sets r_install "distro"
+      ignore the request entirely. Normally a bare version ("4.5.3"); under
+      R-devel the status is appended ("4.6.0 (Under development (unstable))"),
+      because otherwise a snapshot is indistinguishable from the release it
+      precedes.
     value: ${{ steps.r_version.outputs.version_full }}
 
 runs:
@@ -82,17 +85,39 @@ runs:
     # stops a prefix-match fallback from pulling a stale-version library in.
     #
     # The full version is captured alongside it and written to the run summary.
-    # Nothing else in the E2E workflows records which R a run actually used, and
-    # the requested version can't be trusted as that record: engines whose
-    # config sets r_install "distro" (the Fedora ones) drop it silently and
-    # install whatever the distro ships. Reading it back from the installed R
-    # is what makes the answer true on every engine.
+    # Reading it back from the installed R is the only trustworthy *method*: the
+    # requested version is not a record of anything, because engines whose config
+    # sets r_install "distro" (the Fedora ones) drop it silently and install
+    # whatever the distro ships.
+    #
+    # --vanilla on both calls: without it, a site or user profile that prints on
+    # load prepends its output to stdout, so the version would arrive as
+    # "Loading site profile\n4.6.1" and flow on into the run summary, the
+    # artifact, and any caller's table. Fedora installs R from dnf, whose
+    # Rprofile.site is distro-controlled, which is exactly where we don't govern
+    # what loads. The shape check then rejects anything that isn't a bare version.
     - name: Resolve R version
       id: r_version
       shell: bash
       run: |
-        VERSION=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
-        VERSION_FULL=$(Rscript -e 'cat(paste(R.version$major, R.version$minor, sep = "."))')
+        VERSION=$(Rscript --vanilla -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        VERSION_FULL=$(Rscript --vanilla -e 'cat(paste(R.version$major, R.version$minor, sep = "."))')
+        # [[ =~ ]] rather than grep: grep matches line by line, so a polluted
+        # "Loading site profile\n4.6.1" would pass on its second line -- the very
+        # case this rejects. Bash anchors the pattern to the whole string.
+        for v in "$VERSION" "$VERSION_FULL"; do
+          if [[ ! "$v" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Could not read a plain R version from Rscript (got '$v'). An R profile printing on load is the usual cause."
+            exit 1
+          fi
+        done
+        # R-devel reports the same major.minor.patch as the release it precedes,
+        # so without the status suffix a certification record cannot tell an
+        # unstable snapshot from a shipped version -- and "devel" is an advertised
+        # r_overrides value. Kept out of $VERSION so the cache key stays a bare
+        # series.
+        STATUS=$(Rscript --vanilla -e 'cat(R.version$status)')
+        [ -z "$STATUS" ] || VERSION_FULL="$VERSION_FULL ($STATUS)"
         echo "Resolved R version (major.minor): $VERSION"
         echo "Installed R version: $VERSION_FULL"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -109,9 +134,16 @@ runs:
         # artifact. A caller that runs several engines as one matrix cannot read
         # a per-engine job output (a matrix job collapses to one value), so an
         # artifact is the only way to attribute a version to its own engine.
-        # $GITHUB_WORKSPACE rather than the github.workspace expression: this
-        # step runs inside the container on container-based engines, where the
-        # two can differ.
+        # $GITHUB_WORKSPACE rather than the github.workspace expression, and the
+        # pairing with the caller's upload step is deliberate rather than
+        # inconsistent. On a container engine the two kinds of step see different
+        # filesystems: a run: step executes inside the container, where the
+        # workspace is mounted at /__w/<repo>/<repo>, while a JS action like
+        # upload-artifact executes on the host, where github.workspace is
+        # /home/runner/work/... So a shell step must read the environment
+        # variable and an artifact path must use the expression -- they name the
+        # same directory from the two sides. Using github.workspace here broke the
+        # Rocky 10 arm64 build in July 2026; don't "harmonize" them.
         printf '%s\n' "$VERSION_FULL" > "$GITHUB_WORKSPACE/r-version.txt"
 
     # All three caches below are restore-only, with matching Save steps after

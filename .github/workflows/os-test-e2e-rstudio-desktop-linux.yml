@@ -159,7 +159,8 @@ on:
           installed R rather than echoed from the r_version input. Engines whose
           config sets r_install "distro" ignore that input, so this is the only
           value a caller can trust. Empty when the e2e job did not run
-          (build_only, or a build failure).
+          (build_only, or a build failure), and also when it ran but failed
+          before reaching the R install.
         value: ${{ jobs.e2e.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
@@ -602,8 +603,12 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
-    # Both shards install the same R, so which one writes this last does not
-    # matter -- matrix job outputs are last-writer-wins.
+    # Matrix job outputs are last-writer-wins. Every shard that reaches the deps
+    # step installs the same R, so which of those writes last does not matter --
+    # but a shard failing earlier writes an empty value, and if it finishes last
+    # the output is empty for a cell that did run. Callers reading this should
+    # treat empty as "unknown", not as "no R was installed". The Linux engine
+    # sidesteps it by uploading an artifact from shard 1 instead.
     outputs:
       r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     runs-on: ${{ needs.setup.outputs.e2e_runner }}
@@ -972,15 +977,36 @@ jobs:
       # run's artifact namespace (the PR orchestrator, the scheduled
       # rotation's all-engines Sunday run) uploads under its own os slug so
       # no engine's merge job can sweep in another engine's blobs.
-      # The R version this engine ran against, as a one-line artifact.
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-blob-report-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
+          path: e2e/rstudio/blob-report/
+          if-no-files-found: warn
+          retention-days: 1
+
+      # This engine's R version and outcome, as a two-line artifact:
+      #   line 1: the installed R version (written by os-e2e-deps)
+      #   line 2: this job's status
       #
-      # This exists because a caller that runs several engines as one matrix
-      # (the certification workflow) cannot read it any other way: a matrix job
-      # exposes a single output value for the whole matrix, last writer wins, so
-      # the r_version_actual output below is only usable by a caller invoking
-      # this workflow once. The artifact is per-engine, so a matrix caller can
-      # download them all and attribute each version to its own cell.
+      # It exists because a caller that runs several engines as one matrix (the
+      # certification workflow) cannot read either value any other way: a matrix
+      # job exposes one output value for the whole matrix, last writer wins, so
+      # the r_version_actual output declared above is only usable by a caller
+      # invoking this workflow once. The artifact is per-engine, so a matrix
+      # caller can download them all and attribute both facts to the right cell
+      # -- which is what stops one failing cell from being reported against every
+      # other cell in the same matrix.
       #
+      # The status is appended here rather than by os-e2e-deps because that step
+      # runs before the tests; job.status is only meaningful once they have.
+      # $GITHUB_WORKSPACE because this is a shell step (see os-e2e-deps).
+      - name: Record this engine's outcome
+        if: always() && matrix.shard == 1
+        shell: bash
+        run: printf '%s\n' "${{ job.status }}" >> "$GITHUB_WORKSPACE/r-version.txt"
+
       # Shard 1 only: every shard installs the same R, and upload-artifact@v4
       # fails the run on a duplicate artifact name.
       - name: Upload resolved R version
@@ -989,15 +1015,6 @@ jobs:
         with:
           name: r-version-linux-desktop-${{ inputs.os }}
           path: ${{ github.workspace }}/r-version.txt
-          if-no-files-found: warn
-          retention-days: 1
-
-      - name: Upload blob report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-blob-report-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
-          path: e2e/rstudio/blob-report/
           if-no-files-found: warn
           retention-days: 1
 
