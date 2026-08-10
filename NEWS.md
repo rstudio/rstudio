@@ -17,5 +17,5 @@
 - ([#18482](https://github.com/rstudio/rstudio/issues/18482)): Fixed an issue on Windows where the R session reported a crash as it exited, if a terminal was still running when the session closed. The session had already shut down and saved its state by that point, so nothing was lost, but the spurious report was recorded in the Windows event log and submitted to Windows Error Reporting.
 
 ### Dependencies
--
+- Electron 42.8.1
 
