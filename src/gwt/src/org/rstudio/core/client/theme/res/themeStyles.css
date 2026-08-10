@@ -2273,9 +2273,14 @@ input[type="checkbox"]:checked:before {
  * "@media (forced-colors: active)" block -- warning but still compiling. It
  * passes the body of an unrecognized at-rule through untouched, so the media
  * query reaches the browser intact. Only @external class names may be used in
- * here, since obfuscation does not run on a passed-through body either. */
+ * here, since obfuscation does not run on a passed-through body either.
+ *
+ * Its condition is deliberately trivial. GWT ignores it, and the browser must
+ * not gate on it: a condition naming a forced-colors property would drop the
+ * fix on browsers that shipped the "forced-colors" media feature before that
+ * property, which is what Firefox 89 through 112 did. */
 
-@supports (forced-color-adjust: auto) {
+@supports (display: block) {
    @media (forced-colors: active) {
       .macintosh .gwt-CheckBox input[type="checkbox"],
       .linux .gwt-CheckBox input[type="checkbox"],
