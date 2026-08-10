@@ -55,8 +55,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - name: Decide build-from-source vs daily (per platform)
         id: check
+        env:
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
           CHANGED=$(git diff --name-only "$BASE" HEAD)
@@ -79,7 +85,7 @@ jobs:
           # build from source. A non-200 response or a body that doesn't parse
           # as JSON is normalized to empty so decide() treats it as unreachable
           # rather than letting a later jq error abort this step.
-          MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json' || echo '')
+          MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 "$MANIFEST_URL" || echo '')
           if [ -n "$MANIFEST" ] && ! echo "$MANIFEST" | jq empty 2>/dev/null; then
             echo "Daily manifest did not parse as JSON -- treating as unreachable"
             MANIFEST=""

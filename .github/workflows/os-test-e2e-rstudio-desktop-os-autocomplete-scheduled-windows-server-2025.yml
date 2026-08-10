@@ -105,26 +105,32 @@ jobs:
           rig ls
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - name: Resolve RStudio .exe URL
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           $ErrorActionPreference = 'Stop'
           $url = $env:INSTALLER_URL
+          $manifestUrl = $env:MANIFEST_URL
           $sha = ''
           $filename = ''
           if ([string]::IsNullOrEmpty($url)) {
-            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json'
+            $manifest = Invoke-RestMethod -Uri $manifestUrl
             $win = $manifest.products.electron.platforms.windows
             $url = $win.link
             $sha = $win.sha256
             $filename = $win.filename
             if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
-              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              Write-Error "No usable windows entry in $manifestUrl (url='$url', filename='$filename', sha256='$sha'). Either this release branch has no Windows daily yet, or the manifest schema changed."
               exit 1
             }
-            Write-Host "Auto-resolved latest windows daily:"
+            Write-Host "Auto-resolved windows daily:"
             Write-Host "  URL:      $url"
             Write-Host "  SHA-256:  $sha"
             Write-Host "  Filename: $filename"

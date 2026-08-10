@@ -714,21 +714,26 @@ jobs:
           ls -la /usr/bin/rstudio
 
       # Daily-download path: resolve and install the latest (or specified)
-      # installer. Runs when build_from_source is false (auto-resolve the
-      # daily via dailies.rstudio.com/rstudio/latest/index.json) or when an
-      # explicit rstudio_installer_url is provided (use that URL verbatim).
+      # installer. Runs when build_from_source is false (auto-resolve this
+      # branch's daily from its per-branch manifest) or when an explicit
+      # rstudio_installer_url is provided (use that URL verbatim).
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - name: Resolve installer URL
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
           DAILY_KEY: ${{ needs.setup.outputs.daily_platform_key }}
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           URL="$INSTALLER_URL"
           SHA=""
           FILENAME=""
           if [ -z "$URL" ]; then
-            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 "$MANIFEST_URL")
             # daily_platform_key names this engine's installer under the
             # electron product. Engines with no daily of their own reuse the
             # nearest build of the same arch: Debian -> the Ubuntu 24 daily
@@ -739,10 +744,10 @@ jobs:
             SHA=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].sha256 // empty')
             FILENAME=$(echo "$MANIFEST" | jq -r --arg k "$DAILY_KEY" '.products.electron.platforms[$k].filename // empty')
             if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
-              echo "::error::Daily manifest is missing expected fields for '$DAILY_KEY' (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              echo "::error::No usable '$DAILY_KEY' entry in $MANIFEST_URL (url='$URL', filename='$FILENAME', sha256='$SHA'). Either this release branch has no daily for that platform yet, or the manifest schema changed. Re-run with build_from_source to test this branch without a daily."
               exit 1
             fi
-            echo "Auto-resolved latest $DAILY_KEY desktop daily:"
+            echo "Auto-resolved $DAILY_KEY desktop daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
