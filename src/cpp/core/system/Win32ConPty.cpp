@@ -10,6 +10,7 @@
 #include "Win32ConPty.hpp"
 
 #include <climits>
+#include <system_error>
 
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
@@ -108,6 +109,60 @@ std::vector<wchar_t> buildEnvBlock(const ProcessOptions& options)
    return env;
 }
 
+// Teardown runs from ~ConPty, so nothing below it may throw. That is stricter
+// than it looks for std::thread: join() reports failure without clearing the
+// handle, and ~thread calls std::terminate on a thread that is still joinable,
+// so an unguarded join turns any failure into a process abort no matter who
+// catches the exception. These leave the thread non-joinable either way.
+// Detaching is a safe fallback: both threads run to completion on their own.
+
+void abandonThread(std::thread& thread) noexcept
+{
+   try
+   {
+      if (thread.joinable())
+         thread.detach();
+   }
+   catch (...)
+   {
+      // Intentionally empty: nothing may escape toward ~ConPty, and a thread that
+      // can be neither joined nor detached is beyond recovery here.
+   }
+}
+
+void reapThread(std::thread& thread) noexcept
+{
+   try
+   {
+      if (thread.joinable())
+         thread.join();
+   }
+   catch (...)
+   {
+      abandonThread(thread);
+   }
+}
+
+// Composing a message allocates, so reporting a skipped ClosePseudoConsole needs
+// its own guard. osError is 0 when no thread launch was attempted.
+void logCloserLaunchFailure(DWORD osError) noexcept
+{
+   try
+   {
+      std::string message("Could not create ConPTY closer thread (out of memory)");
+      if (osError != 0)
+      {
+         message = "Could not start ConPTY closer thread (error " +
+                   std::to_string(osError) + ")";
+      }
+      LOG_WARNING_MESSAGE(message + "; leaving the pseudoconsole to the OS");
+   }
+   catch (...)
+   {
+      // Intentionally empty: there is no way left to report this.
+   }
+}
+
 } // anonymous namespace
 
 bool ConPty::isAvailable()
@@ -117,7 +172,30 @@ bool ConPty::isAvailable()
 
 ConPty::~ConPty()
 {
-   stop();
+   // A destructor is implicitly noexcept, so anything that escapes terminates the
+   // process, and teardown takes mutexes and logs while running during process
+   // shutdown (see teardownLocked). This is the backstop, not the whole guarantee:
+   // catching here cannot save a std::thread member left joinable, which ~thread
+   // would terminate on regardless, so teardown reaps its threads unconditionally.
+   try
+   {
+      stop();
+   }
+   catch (...)
+   {
+      // The expected failure (the closer thread not starting) is already logged
+      // by teardownLocked, so anything arriving here is unexpected and worth
+      // recording -- but logging allocates, so it gets its own guard.
+      try
+      {
+         LOG_WARNING_MESSAGE("Unexpected exception while tearing down ConPTY");
+      }
+      catch (...)
+      {
+         // Intentionally empty: nothing may escape a destructor, and there is no
+         // way left to report this.
+      }
+   }
 }
 
 bool ConPty::running() const
@@ -464,11 +542,48 @@ void ConPty::teardownLocked()
    // Close the pseudoconsole on a closer thread that captures only the HPCON
    // value (so detaching it as a last resort cannot touch freed members). This
    // terminates the child and breaks the output pipe, unblocking the reader.
+   //
+   // The launch is guarded because ~ConPty reaches here and is implicitly
+   // noexcept, so an escaping exception terminates the process. The failure we
+   // have actually seen is at process exit: R.dll's own C runtime calls exit()
+   // and then ExitProcess without flushing rsession's onexit table (they are
+   // separate CRTs), so our statics -- including the ProcessSupervisor that may
+   // still own a live terminal -- are destroyed later, from DLL detach inside
+   // LdrShutdownProcess, by which point a new thread can no longer be started.
+   //
+   // On that path skipping the close is the right answer, not a fallback to
+   // closing on this thread: before Windows 24H2 ClosePseudoConsole blocks until
+   // the output pipe drains, and the reader that would drain it has already been
+   // terminated with every other thread, so an inline close could hang exit. The
+   // OS reclaims the pseudoconsole and its client as the process goes away.
+   //
+   // teardownLocked() also runs mid-session (the child-exit poll, and a failed
+   // start()), where nothing reclaims anything, so a failure there leaks the
+   // pseudoconsole and orphans the child instead. Accepted deliberately: this
+   // throws only when _beginthreadex fails, which in a 64-bit process means
+   // resource exhaustion severe enough that a stray HPCON is the lesser problem.
    std::thread closer;
    if (hPC_)
    {
       HPCON hpc = hPC_;
-      closer = std::thread([hpc] { api().close(hpc); });
+      try
+      {
+         closer = std::thread([hpc] { api().close(hpc); });
+      }
+      catch (const std::system_error&)
+      {
+         // _beginthreadex failed. MSVC reports every such failure as "resource
+         // unavailable try again" whatever the cause, so the OS error is the only
+         // informative detail; on the shutdown path it is 5 (ERROR_ACCESS_DENIED).
+         logCloserLaunchFailure(::GetLastError());
+      }
+      catch (...)
+      {
+         // The thread constructor allocates the decay-copied callable before it
+         // reaches _beginthreadex, so this is bad_alloc. No launch was attempted,
+         // which is why GetLastError() is not reported: it would be stale.
+         logCloserLaunchFailure(0);
+      }
    }
 
    // Reap the closer (reader is still draining, so it completes even pre-24H2).
@@ -476,9 +591,9 @@ void ConPty::teardownLocked()
    if (closer.joinable())
    {
       if (::WaitForSingleObject(closer.native_handle(), kShutdownTimeout) == WAIT_OBJECT_0)
-         closer.join();
+         reapThread(closer);
       else
-         closer.detach();
+         abandonThread(closer);
    }
    hPC_ = nullptr;
 
@@ -492,7 +607,7 @@ void ConPty::teardownLocked()
          while (::WaitForSingleObject(rh, 25) != WAIT_OBJECT_0)
             ::CancelSynchronousIo(rh);
       }
-      readerThread_.join();
+      reapThread(readerThread_);
    }
 
    {

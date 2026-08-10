@@ -39,6 +39,7 @@ test.describe('Editor', () => {
       'editor_shortcuts.R',
       'editor_find_from_selection.R',
       'editor_comment_indent.R',
+      'editor_soft_wrap.R',
     ]);
   });
 
@@ -62,6 +63,43 @@ test.describe('Editor', () => {
       expect((await editor.getValue()).trim()).toBe('# comment 1\n# comment 2\n# comment 3\n# comment 4');
     } finally {
       await clearPref(page, 'strip_trailing_whitespace');
+    }
+  });
+
+  // Scoping regression for https://github.com/rstudio/rstudio/issues/18447:
+  // the console overrides Ace's line start / line end commands to span the
+  // whole soft-wrapped command, but that override is opted into per editor
+  // (ShellWidget), so source editors must keep the stock wrap-aware behavior,
+  // where End stops at the soft-wrap boundary rather than the end of the
+  // document line.
+  test('End stops at the soft-wrap boundary in a soft-wrapped source editor', async ({ rstudioPage: page }) => {
+    await setPref(page, 'soft_wrap_r_files', true);
+    try {
+      // Long enough to wrap at any plausible source pane width.
+      const line = `x <- c(${Array.from({ length: 80 }, (_, i) => i + 1).join(', ')})`;
+      await writeAndOpenFile(page, sandbox.dir, 'editor_soft_wrap.R', line);
+
+      const editor = new AceEditor(page, 'x <- c(');
+      await expect.poll(() => editor.getValue()).toContain('x <- c(');
+
+      // The assertions below are vacuously true unless the line really
+      // soft-wrapped; wrap mode is applied asynchronously after open.
+      await expect.poll(() => editor.getScreenRowCount()).toBeGreaterThan(1);
+
+      await editor.gotoLine(1);
+      await editor.focus();
+      await page.keyboard.press('End');
+
+      // Poll until the End press has moved the cursor off column 0, then
+      // check where it landed: wrap-aware End stays on the (single) document
+      // line but stops at the wrap boundary, short of the document line's end.
+      await expect.poll(async () => (await editor.getCursorPosition()).column).toBeGreaterThan(0);
+
+      const position = await editor.getCursorPosition();
+      expect(position.row).toBe(0);
+      expect(position.column).toBeLessThan(line.length);
+    } finally {
+      await clearPref(page, 'soft_wrap_r_files');
     }
   });
 

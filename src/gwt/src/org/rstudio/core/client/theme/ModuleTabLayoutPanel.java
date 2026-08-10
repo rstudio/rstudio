@@ -18,8 +18,6 @@ import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.events.WindowStateChangeEvent;
-import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -192,7 +190,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          clickEvent.stopPropagation();
          if (doubleClickState_.checkForDoubleClick(clickEvent.getNativeEvent()))
          {
-            owner.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+            owner.maximize();
          }
       };
       addDomHandler(onClick, ClickEvent.getType());

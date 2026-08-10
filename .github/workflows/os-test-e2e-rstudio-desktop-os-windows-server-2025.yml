@@ -878,10 +878,17 @@ jobs:
           }
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
+      # install-required-packages pre-installs the harness's REQUIRED_PACKAGES
+      # set into the cached R library that PW_RSTUDIO_R_LIBS_USER (job env
+      # above) points globalSetup at, so tests find every package present and
+      # install nothing at test time. Without it the set is fetched from
+      # cran.r-project.org on every run, and a CRAN outage surfaces as
+      # mid-suite install hangs (s4_unloaded_package, shinytest2).
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          install-required-packages: "true"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio

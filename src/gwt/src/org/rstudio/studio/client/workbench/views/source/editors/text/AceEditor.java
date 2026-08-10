@@ -3067,6 +3067,11 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().getCommandManager().exec("gotolineend", widget_.getEditor());
    }
 
+   public void useDocumentLineNavigation()
+   {
+      widget_.getEditor().getCommandManager().useDocumentLineNavigation();
+   }
+
    @Override
    public void moveCursorNearTop(int rowOffset)
    {
