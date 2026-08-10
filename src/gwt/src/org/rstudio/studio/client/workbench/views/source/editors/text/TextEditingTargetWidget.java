@@ -1003,10 +1003,9 @@ public class TextEditingTargetWidget
       splitEditorButton_ = new ToolbarMenuButton(
             ToolbarButton.NoText,
             commands_.toggleEditorSplit().getTooltip(),
-            new ImageResource2x(StandardIcons.INSTANCE.splitEditor2x()),
+            commands_.toggleEditorSplit().getImageResource(),
             splitEditorMenu,
             false);
-      splitEditorButton_.addStyleName("rstudio-themes-inverts");
 
       toolbar.addRightSeparator();
       toolbar.addRightWidget(splitEditorButton_);
