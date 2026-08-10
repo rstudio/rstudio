@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from '@playwright/test';
 import { ConsolePaneActions } from '../actions/console_pane.actions';
+import { executeInConsole } from '../pages/console_pane.page';
 import {
   ALL_DB_TARGETS,
   DbTarget,
@@ -27,6 +28,7 @@ import {
 } from './db-targets';
 import { readDbStatus } from './db-provision';
 import { drainClientExceptions } from './commands';
+import { remotePathExists, writeRemoteText } from './remote-provision';
 import { rStringLiteral } from './r';
 
 /**
@@ -251,12 +253,7 @@ function prepareOdbcSandboxUnix(sandbox: string): OdbcSandbox {
       wizardSnippet(target),
     );
 
-    stanzas.push(
-      `[${target.driverName}]`,
-      `Description = ${target.id} driver registered by the Playwright sandbox`,
-      `Driver = ${linkPath}`,
-      '',
-    );
+    stanzas.push(...odbcinstStanza(target.driverName, target.id, linkPath));
     registered.push(target.id);
   }
 
@@ -266,7 +263,219 @@ function prepareOdbcSandboxUnix(sandbox: string): OdbcSandbox {
 
   fs.writeFileSync(path.join(odbcDir, 'odbcinst.ini'), stanzas.join('\n'));
   fs.writeFileSync(path.join(odbcDir, 'odbc.ini'), '');
+  makeOdbcSandboxWorldReadable(sandbox, odbcDir);
   return { odbcDir, registered, driverPaths: [] };
+}
+
+/**
+ * A real installed RStudio Server (CI's systemd-managed service, or a
+ * genuinely external server) often runs its rsessions as a different OS user
+ * than the one that built this sandbox -- fs.mkdtempSync creates the sandbox
+ * root 0700, which would otherwise block that user from reading ODBCSYSINI
+ * even after it's set. Grant just enough: +x (traverse only, not +r) on the
+ * sandbox root itself, so a user who knows this exact path can reach it but
+ * still can't list the root and browse into unrelated sandbox directories
+ * (credential stores, etc.); then the whole odbc subtree world-readable.
+ * None of this content is a secret, unlike the credential stores.
+ */
+function makeOdbcSandboxWorldReadable(sandbox: string, odbcDir: string): void {
+  fs.chmodSync(sandbox, fs.statSync(sandbox).mode | fs.constants.S_IXOTH);
+  chmodWorldReadableRecursive(odbcDir);
+}
+
+/**
+ * Directories world-readable+traversable, regular files world-readable.
+ * Skips symlinks: chmod has no lchmod on Linux and would follow the link,
+ * changing the mode of the vendor-installed driver library itself rather
+ * than the sandbox's copy -- that file's permissions are the package
+ * manager's concern, and it is already world-readable as installed.
+ */
+function chmodWorldReadableRecursive(dir: string): void {
+  fs.chmodSync(dir, 0o755);
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isSymbolicLink()) continue;
+    if (entry.isDirectory()) {
+      chmodWorldReadableRecursive(full);
+    } else {
+      fs.chmodSync(full, 0o644);
+    }
+  }
+}
+
+/**
+ * The [name]/Description/Driver/blank stanza written into odbcinst.ini.
+ * Shared by the local (prepareOdbcSandboxUnix) and remote
+ * (provisionRemoteOdbcSandbox) builders so the two text formats cannot drift
+ * apart.
+ */
+function odbcinstStanza(driverName: string, id: string, linkPath: string): string[] {
+  return [
+    `[${driverName}]`,
+    `Description = ${id} driver registered by the Playwright sandbox`,
+    `Driver = ${linkPath}`,
+    '',
+  ];
+}
+
+/**
+ * Home-relative directory a genuinely external RStudio Server's ODBC
+ * sandbox is built under (see provisionRemoteOdbcSandbox). Namespaced like
+ * the local machine's `.cache/rstudio-playwright/...` convention
+ * (fixtures/r-libs-setup.ts), distinct from the real app-specific paths
+ * remote-provision.ts pushes credentials to (`~/.config/github-copilot`,
+ * etc.) since this is a harness-owned sandbox, not real application state.
+ */
+export const REMOTE_ODBC_DIR = '~/.rstudio-playwright/odbc';
+
+/**
+ * Unix-only analogue of resolveDriverLibrary (db-targets.ts), but checked on
+ * the REMOTE machine via an in-session file.exists() probe
+ * (remotePathExists, utils/remote-provision.ts) rather than Node's local
+ * fs.existsSync -- there is no SSH access to a genuinely external server,
+ * only the session itself. Always tests the `linux` candidates regardless
+ * of the test runner's own OS: RStudio Server only ships for Linux, so the
+ * runner's platform is irrelevant to what the remote machine has installed.
+ *
+ * Windows resolves this differently (winInstalledDriverLibrary reads the
+ * vendor installer's own HKLM registration) because there is a real
+ * registration to read back. Unix ODBC packages have no equivalent: they
+ * just drop a .so at a known path and never self-register in odbcinst.ini,
+ * so the curated candidate list -- kept in sync with
+ * scripts/db/install-deps/linux.sh -- is the only source of truth, local or
+ * remote. An operator can run that script directly against the external
+ * machine as a prerequisite; it has no CI-specific assumptions.
+ */
+async function resolveDriverLibraryRemote(page: Page, target: DbTarget): Promise<string | null> {
+  for (const candidate of target.driverLibraries.linux ?? []) {
+    if ((await remotePathExists(page, candidate)) === true) return candidate;
+  }
+  return null;
+}
+
+/** What provisionRemoteOdbcSandbox found and built. */
+export interface RemoteOdbcStatus {
+  /**
+   * Value to Sys.setenv(ODBCSYSINI = ...) in the actual test session, or
+   * null when no target's driver could be found on the remote machine.
+   * Left as the "~/"-prefixed REMOTE_ODBC_DIR rather than an expanded
+   * absolute path -- the caller wraps it in path.expand() when applying it,
+   * so expansion happens in whichever session actually uses the value
+   * rather than requiring a round trip back through this one to resolve it.
+   */
+  odbcSysIni: string | null;
+  /** Ids of the targets whose drivers were found and registered. */
+  registered: string[];
+}
+
+function remoteOdbcStatusPath(sandbox: string): string {
+  return path.join(sandbox, 'remote-odbc-status.json');
+}
+
+/**
+ * Persist what provisionRemoteOdbcSandbox found. The step that runs it
+ * (tests/auth.setup.ts) and the fixture that later applies ODBCSYSINI
+ * (fixtures/rstudio.fixture.ts) are separate worker processes -- setting
+ * process.env here would not cross that boundary, the same reason AI
+ * credential outcomes cross it via a status file (readAuthStatus /
+ * writeAuthStatus in utils/auth.ts) rather than an environment variable.
+ */
+export function writeRemoteOdbcStatus(sandbox: string, status: RemoteOdbcStatus): void {
+  fs.writeFileSync(remoteOdbcStatusPath(sandbox), JSON.stringify(status, null, 2));
+}
+
+/**
+ * Returns null when the file is absent, unreadable, or malformed -- callers
+ * treat that the same as "nothing was provisioned", since the file only
+ * exists once provisionRemoteOdbcSandbox has actually run.
+ */
+export function readRemoteOdbcStatus(sandbox: string): RemoteOdbcStatus | null {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(remoteOdbcStatusPath(sandbox), 'utf-8');
+  } catch {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as Partial<RemoteOdbcStatus>;
+    if (!Array.isArray(parsed.registered)) return null;
+    return {
+      odbcSysIni: typeof parsed.odbcSysIni === 'string' ? parsed.odbcSysIni : null,
+      registered: parsed.registered,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Build the same odbcinst.ini / odbc.ini / per-driver snippets.R content
+ * prepareOdbcSandboxUnix builds locally, but for a genuinely external
+ * RStudio Server: driver discovery and every write happen in-session
+ * (resolveDriverLibraryRemote, writeRemoteText, a console-run
+ * file.symlink()), never through Node's local filesystem. Only paths ever
+ * cross the console -- never file content -- matching the rule
+ * utils/remote-provision.ts establishes for credential pushes; lower risk
+ * here since none of this content is a secret.
+ *
+ * `recordPath` is called once, immediately, with REMOTE_ODBC_DIR itself --
+ * before anything is created under it -- so a run killed partway through
+ * still leaves the caller's manifest naming the whole subtree to scrub
+ * (recursively; every file this writes lives under that one directory, so
+ * one entry covers all of them, unlike the credential push's scattered
+ * store paths). It is also passed as writeRemoteText's temp-file recorder,
+ * so a stray upload temp file outside that directory still gets tracked.
+ *
+ * Never throws on a single target's discovery/write failure -- logs a
+ * warning and moves on, so that target's specs skip with an accurate
+ * reason exactly like the local-machine path today, and one target's bad
+ * luck cannot strand the others.
+ */
+export async function provisionRemoteOdbcSandbox(
+  page: Page,
+  recordPath: (remotePath: string) => void,
+): Promise<RemoteOdbcStatus> {
+  recordPath(REMOTE_ODBC_DIR);
+
+  const stanzas: string[] = [];
+  const registered: string[] = [];
+
+  for (const base of ALL_DB_TARGETS) {
+    const target = effectiveTarget(base);
+    try {
+      const library = await resolveDriverLibraryRemote(page, target);
+      if (!library) {
+        console.log(`[connections] ${target.id}: no driver library found on the remote machine; its specs will skip`);
+        continue;
+      }
+
+      const driverDir = `${REMOTE_ODBC_DIR}/drivers/${target.id}`;
+      const linkPath = `${driverDir}/${library.split('/').pop()}`;
+      await executeInConsole(
+        page,
+        `dir.create(path.expand(${rStringLiteral(driverDir)}), recursive = TRUE, showWarnings = FALSE); `
+          + `file.symlink(${rStringLiteral(library)}, path.expand(${rStringLiteral(linkPath)}))`,
+      );
+
+      const snippetPath = `${driverDir}/snippets/${snippetFileName(target.driverName)}`;
+      await writeRemoteText(page, snippetPath, wizardSnippet(target), '0644', recordPath);
+
+      stanzas.push(...odbcinstStanza(target.driverName, target.id, linkPath));
+      registered.push(target.id);
+    } catch (err) {
+      console.warn(
+        `[connections] ${target.id}: remote ODBC provisioning failed, its specs will skip:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  if (registered.length === 0) return { odbcSysIni: null, registered: [] };
+
+  await writeRemoteText(page, `${REMOTE_ODBC_DIR}/odbcinst.ini`, stanzas.join('\n'), '0644', recordPath);
+  await writeRemoteText(page, `${REMOTE_ODBC_DIR}/odbc.ini`, '', '0644', recordPath);
+
+  return { odbcSysIni: REMOTE_ODBC_DIR, registered };
 }
 
 /**

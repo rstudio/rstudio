@@ -25,6 +25,7 @@ import {
   closeExternalSession,
   connectExternalSession,
   evalRemoteLogical,
+  readManifest,
   remoteCopilotStoreAuthenticated,
   remotePathExists,
   remotePositAiStoreAuthenticated,
@@ -34,6 +35,7 @@ import {
   writeRemoteBinary,
   writeRemoteText,
 } from '../utils/remote-provision';
+import { provisionRemoteOdbcSandbox, writeRemoteOdbcStatus, type RemoteOdbcStatus } from '../utils/connections';
 import { externalServerUrl } from '../fixtures/server.fixture';
 import {
   CopilotAgent,
@@ -1255,4 +1257,70 @@ setup('provision external server credentials', async () => {
   if (provisionFailures.length > 0) {
     failIfStrict('external-server AI credentials', `remote provisioning failed: ${provisionFailures.join('; ')}`);
   }
+});
+
+// Remote ODBC provisioning for the Connections pane tests, for the same
+// reason and through the same channel as the AI credential push above (see
+// utils/remote-provision.ts): a genuinely external server's rsessions are
+// outside the harness's reach, so the sandbox's ODBC config is pushed
+// through a logged-in session rather than injected into the process
+// environment. Its own independent session/login, separate from the
+// credential push above, so a hiccup in one cannot strand the other.
+//
+// Unlike the credential stores, none of this is a secret and there is no
+// "don't overwrite a real sign-in" concern -- REMOTE_ODBC_DIR is rebuilt
+// from scratch on every run. A target whose driver can't be found or
+// pushed just means that target's specs skip, mirroring how a missing
+// driver library skips locally (utils/connections.ts, prepareOdbcSandbox);
+// there is no strict-mode escalation here the way there is for AI auth.
+setup('provision remote ODBC drivers', async () => {
+  setup.skip(!IS_EXTERNAL_SERVER, 'remote ODBC provisioning applies only to external-server runs (PW_RSTUDIO_SERVER_URL)');
+  setup.setTimeout(120_000);
+
+  const sandbox = process.env.PW_SANDBOX;
+  if (!sandbox) throw new Error('PW_SANDBOX is not set; sandbox-setup must run first');
+
+  const session = await connectExternalSession();
+  const { page } = session;
+  const priorManifest = readManifest(sandbox);
+  const createdPaths: string[] = priorManifest ? [...priorManifest.createdPaths] : [];
+  // Persisted on every append, not just once at the end -- a run killed
+  // mid-push must still leave the manifest naming what to scrub, same
+  // reasoning as recordPath in the credential-provisioning step above.
+  const recordPath = (remotePath: string): void => {
+    createdPaths.push(remotePath);
+    try {
+      writeManifest(sandbox, { serverUrl: externalServerUrl()!, createdPaths });
+    } catch (err) {
+      console.warn(
+        `[db-setup] WARNING: could not update the provisioning manifest after ${remotePath}:`,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  };
+
+  let status: RemoteOdbcStatus = { odbcSysIni: null, registered: [] };
+  try {
+    status = await provisionRemoteOdbcSandbox(page, recordPath);
+    console.log(
+      status.registered.length > 0
+        ? `[db-setup] remote ODBC drivers registered: ${status.registered.join(', ')}`
+        : '[db-setup] no ODBC driver found on the remote machine; Connections pane specs will skip',
+    );
+  } catch (err) {
+    console.warn(
+      '[db-setup] WARNING: remote ODBC provisioning failed; Connections pane specs will skip:',
+      err instanceof Error ? err.message : String(err),
+    );
+  } finally {
+    try {
+      await closeExternalSession(session);
+    } catch (err) {
+      console.warn(
+        '[db-setup] WARNING: could not close the ODBC provisioning session:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+  writeRemoteOdbcStatus(sandbox, status);
 });

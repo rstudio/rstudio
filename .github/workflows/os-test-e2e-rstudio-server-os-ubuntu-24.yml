@@ -593,6 +593,13 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # Postgres + ODBC drivers for the Connections pane tests (see
+          # scripts/db/install-deps/linux.sh). The sandbox's ODBC config is
+          # then delivered into rsession via Sys.setenv(ODBCSYSINI = ...) in
+          # fixtures/rstudio.fixture.ts, since this workflow runs a real
+          # systemd-managed rstudio-server rather than the in-tree
+          # rserver-dev the Playwright harness spawns itself.
+          install-database-stack: "true"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
