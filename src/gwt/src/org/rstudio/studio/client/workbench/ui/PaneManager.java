@@ -1326,16 +1326,6 @@ public class PaneManager
       panel.clear();
    }
 
-   /**
-    * A sidebar this wide can only be a zoomed sidebar: the zoom gives it the
-    * whole panel minus the 1px slivers left for the collapsed columns. The
-    * 50px margin matches MainSplitPanel.isZoomedColumnState.
-    */
-   private boolean isZoomedSidebarWidth(double width)
-   {
-      return width > panel_.getOffsetWidth() - 50;
-   }
-
    public void refreshSidebar()
    {
       // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)
@@ -1347,7 +1337,7 @@ public class PaneManager
          // nearly the whole panel again (#18448); the recreation falls back
          // to its saved or default width instead.
          int sidebarWidth = panel_.getSidebarWidth();
-         if (isZoomedSidebarWidth(sidebarWidth))
+         if (panel_.isZoomedWidth(sidebarWidth))
             sidebarWidth = -1;
 
          showSidebar(false);
@@ -1897,9 +1887,9 @@ public class PaneManager
       // it to the same default a fresh sidebar gets. Only in that state: a
       // custom sidebar width must survive an unrelated restore (#18448).
       if (sidebar_ != null && panel_.hasSidebarWidget() &&
-          isZoomedSidebarWidth(sidebar_.getOffsetWidth()))
+          panel_.isZoomedWidth(sidebar_.getOffsetWidth()))
       {
-         panel_.setWidgetSize(sidebar_, panel_.getDefaultSplitterWidth() * 0.8);
+         panel_.setWidgetSize(sidebar_, panel_.getDefaultSidebarWidth());
       }
 
       getValidColumnWidth(right_, true);
