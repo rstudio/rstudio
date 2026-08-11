@@ -350,14 +350,15 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
 }
 
 // Reconcile the tree after fseventsd reported dropped events (kernel or
-// user-space queue overflow) on a recursive watch. The loss is not
-// necessarily confined to the delivered paths, and the flagged path may even
-// be excluded by our filter (e.g. .git), so rescan from the stream root
-// rather than trusting the flagged path. Returns false if the scan failed;
-// callers then process the delivered events normally so they are not lost.
+// user-space queue overflow) or demanded a recursive scan (MustScanSubDirs)
+// on a recursive watch. The loss is not necessarily confined to the
+// delivered paths, and the flagged path may even be excluded by our filter
+// (e.g. .git), so rescan from the stream root rather than trusting the
+// flagged path. Returns false if the scan failed; callers then process the
+// delivered events normally so they are not lost.
 bool performDroppedRescan(FileEventContext* pContext)
 {
-   LOG_WARNING_MESSAGE("File monitor events were dropped; rescanning " +
+   LOG_WARNING_MESSAGE("File monitor events were dropped or coalesced; rescanning " +
                        pContext->rootPath.getAbsolutePath());
 
    Error error = impl::discoverAndProcessFileChanges(
@@ -366,17 +367,17 @@ bool performDroppedRescan(FileEventContext* pContext)
                          pContext->filter,
                          &(pContext->fileTree),
                          pContext->callbacks.onFilesChanged);
-
-   // measure the debounce interval from completion rather than start; the
-   // scan itself can take several seconds on a large tree
-   pContext->lastDroppedRescanTime = ::CFAbsoluteTimeGetCurrent();
-
    if (error)
    {
       if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
          LOG_ERROR(error);
       return false;
    }
+
+   // measure the debounce interval from the completion of a successful scan:
+   // the scan itself can take several seconds on a large tree, and a failed
+   // attempt shouldn't arm the debounce and suppress a prompt retry
+   pContext->lastDroppedRescanTime = ::CFAbsoluteTimeGetCurrent();
 
    return true;
 }
@@ -391,6 +392,8 @@ void releaseDroppedRescanTimer(FileEventContext* pContext)
    pContext->rescanTimerRef = nullptr;
 }
 
+void scheduleDroppedRescan(FileEventContext* pContext, CFTimeInterval delay);
+
 void droppedRescanTimerCallback(CFRunLoopTimerRef timerRef, void* pInfo)
 {
    FileEventContext* pContext = (FileEventContext*) pInfo;
@@ -399,7 +402,13 @@ void droppedRescanTimerCallback(CFRunLoopTimerRef timerRef, void* pInfo)
    // delivered during the rescan can schedule a new deferred rescan
    releaseDroppedRescanTimer(pContext);
 
-   performDroppedRescan(pContext);
+   // retry on failure: batches delivered while this timer was pending had
+   // their MustScanSubDirs recursion suppressed on the promise that this
+   // rescan would cover them, so giving up would leave those changes
+   // unreconciled (unregistration cancels the timer if the monitor goes
+   // away first)
+   if (!performDroppedRescan(pContext))
+      scheduleDroppedRescan(pContext, kDroppedRescanIntervalSeconds);
 }
 
 // Schedule a single deferred recovery rescan on the file monitor thread's
@@ -502,7 +511,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    // MustScanSubDirs recovery rescan (#18260).
    std::vector<std::pair<std::string, FSEventStreamEventFlags>> events;
    std::map<std::string, std::size_t> eventIndex;
-   bool eventsDropped = false;
+   bool needsRescan = false;
    for (std::size_t i = 0; i < numEvents; i++)
    {
       // make a copy of the path and strip off trailing / if necessary
@@ -512,10 +521,16 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       // map the canonical event path back to the registered path form
       path = mapEventPath(pContext, path);
 
+      // drops (kernel or user-space queue overflow) require a recovery
+      // rescan, and fseventsd can also demand recursive scans
+      // (MustScanSubDirs, from hierarchical coalescing) without either drop
+      // flag; route both through the same debounced rescan below so that
+      // neither can trigger unbounded back-to-back full-tree scans
       if (eventFlags[i] & (kFSEventStreamEventFlagUserDropped |
-                           kFSEventStreamEventFlagKernelDropped))
+                           kFSEventStreamEventFlagKernelDropped |
+                           kFSEventStreamEventFlagMustScanSubDirs))
       {
-         eventsDropped = true;
+         needsRescan = true;
       }
 
       // fold duplicate paths into a single event, merging their flags
@@ -531,8 +546,8 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       }
    }
 
-   // If fseventsd dropped events for this stream (kernel or user-space queue
-   // overflow), reconcile with a recursive rescan from the stream root (see
+   // If fseventsd dropped events for this stream or demanded a recursive
+   // scan, reconcile with a recursive rescan from the stream root (see
    // performDroppedRescan). Debounce the rescans: overload tends to arrive
    // in bursts, since the rescan itself blocks the run loop long enough for
    // the queue to overflow again, and back-to-back full rescans only feed
@@ -540,7 +555,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    // deferred rescan is already scheduled) coalesce into a single trailing
    // rescan, and the delivered events are still processed below in the
    // meantime.
-   if (eventsDropped && pContext->rescanTimerRef == nullptr)
+   if (needsRescan && pContext->rescanTimerRef == nullptr)
    {
       CFAbsoluteTime elapsed =
             ::CFAbsoluteTimeGetCurrent() - pContext->lastDroppedRescanTime;
@@ -561,9 +576,9 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
 
    // While a deferred recovery rescan is pending, skip MustScanSubDirs
    // recursion below: fseventsd attaches that flag (typically to the root
-   // path) alongside the drop flags, so honoring it would perform exactly
-   // the full-tree scan the debounce is deferring. The deferred rescan runs
-   // later and from the root, so it observes everything these scans would.
+   // path), and honoring it would perform exactly the full-tree scan the
+   // debounce is deferring. The deferred rescan runs later and from the
+   // root, so it observes everything these scans would.
    bool rescanPending = pContext->rescanTimerRef != nullptr;
 
    for (const std::pair<std::string, FSEventStreamEventFlags>& event : events)
