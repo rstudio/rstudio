@@ -1044,6 +1044,136 @@ test.describe('Pane and column management', () => {
   });
 
   // -------------------------------------------------------------------------
+  // #18448: the remaining routes that re-lay-out the panes without clearing
+  // the zoom bookkeeping. Same failure mode as #18444: bookkeeping that
+  // outlives the drawn zoom re-zooms the next pane that raises itself.
+
+  test('Zooming a different column while a pane is zoomed ends the pane zoom (#18448)', async ({ rstudioPage: page }) => {
+    // Deselect Plots while the layout is still normal, so its selection later
+    // is a clear signal that the raise happened.
+    await executeCommand(page, 'activateFiles');
+    await expect.poll(() => isPlotsTabSelected(page), { timeout: 5000 }).toBe(false);
+
+    await zoomConsolePane(page);
+
+    // Ask for a column other than the one the pane zoom collapsed into. This
+    // falls through zoomColumn's per-column branches; before the fix those
+    // never cleared the pane-zoom bookkeeping, so Zoom Console and Zoom Right
+    // Column ended up check-marked at once.
+    await executeCommand(page, 'layoutZoomRightColumn');
+    await expect.poll(
+      async () =>
+        (await getOffsetWidth(page, CONSOLE_PANE)) < 50 &&
+        (await getOffsetWidth(page, TABSET1_PANE)) > 200,
+      { timeout: 10000 },
+    ).toBe(true);
+
+    expect(
+      await isCommandChecked(page, 'layoutZoomConsole'),
+      'switching to a column zoom must end the tracked pane zoom',
+    ).toBe(false);
+    expect(
+      await isCommandChecked(page, 'layoutZoomRightColumn'),
+      'the requested column zoom should be the one active',
+    ).toBe(true);
+
+    const zoomedTabSet1Width = await getOffsetWidth(page, TABSET1_PANE);
+
+    // The original #18444 cascade: with stale bookkeeping, a pane raising
+    // itself hands the whole window to fullyMaximizeWindow, hiding its
+    // sibling. Raise Plots through its activate command rather than plot():
+    // typing at the console raises the Console pane, which the column zoom
+    // has collapsed to width 0, and an ensure-visible on a zero-width pane
+    // legitimately redistributes the columns. Plots lives in the zoomed right
+    // column, so on a fixed build nothing needs to move.
+    await executeCommand(page, 'activatePlots');
+    await expect.poll(() => isPlotsTabSelected(page), { timeout: 10000 }).toBe(true);
+    await sleep(TIMEOUTS.layoutSettle);
+
+    expect(
+      await getOffsetHeight(page, TABSET1_PANE),
+      'a pane raising itself must not hide TabSet1 via a stale pane zoom',
+    ).toBeGreaterThan(50);
+    expectWidthClose(
+      await getOffsetWidth(page, TABSET1_PANE),
+      zoomedTabSet1Width,
+      0.05,
+      'zoomed TabSet1 after the raise',
+    );
+    expect(
+      await getOffsetWidth(page, CONSOLE_PANE),
+      'the raise must not move the layout: Console stays collapsed by the column zoom',
+    ).toBeLessThan(50);
+  });
+
+  // The two-click repro from the issue: zoom the sidebar column, then close
+  // the sidebar from its header button. removeSidebarWidget hands the freed
+  // width to the center column, so without the fix the right column stays at
+  // 1px -- Environment / Plots / Help gone, and no zoom check-marked anywhere.
+  test('Closing the sidebar while its column is zoomed restores the columns (#18448)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await expect.poll(
+      async () =>
+        (await getOffsetWidth(page, TABSET1_PANE)) < 50 &&
+        (await getOffsetWidth(page, SIDEBAR_PANE)) > 200,
+      { timeout: 10000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomSidebar'),
+      'precondition: the sidebar column zoom should be tracked',
+    ).toBe(true);
+
+    await page.locator(SIDEBAR_CLOSE_BTN).click();
+    await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 5000 });
+
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+    expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThan(50);
+  });
+
+  // MainSplitPanel.addLeftWidget rebuilds the split panel and re-applies
+  // persisted widths, undrawing a zoom. Before the fix the bookkeeping
+  // survived: the zoomed pane stayed EXCLUSIVE (its sibling hidden), and the
+  // next pane to raise itself was re-zoomed.
+  test('Adding a source column while a pane is zoomed ends the zoom (#18448)', async ({ rstudioPage: page }) => {
+    await zoomConsolePane(page);
+
+    await executeCommand(page, 'newSourceColumn');
+    await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+
+    try {
+      await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+      expect(
+        await isCommandChecked(page, 'layoutZoomConsole'),
+        'adding a source column must end the tracked pane zoom',
+      ).toBe(false);
+      expect(
+        await getOffsetHeight(page, SOURCE_PANE),
+        'the zoomed pane\'s sibling must come back when the zoom is undrawn',
+      ).toBeGreaterThan(50);
+
+      const consoleActions = new ConsolePaneActions(page);
+      await consoleActions.executeInConsole('plot(1:10)');
+      await expect.poll(() => isPlotsTabSelected(page), { timeout: 15000 }).toBe(true);
+      await sleep(TIMEOUTS.layoutSettle);
+
+      expect(
+        await getOffsetWidth(page, CONSOLE_PANE),
+        'a pane raising itself must not collapse the layout via a stale pane zoom',
+      ).toBeGreaterThan(50);
+    } finally {
+      // newSourceColumn auto-creates an Untitled doc in the new column; close
+      // it so the column is removed and later tests see the default layout.
+      await page.locator(SOURCE1_PANE).click();
+      await executeCommand(page, 'closeSourceDoc');
+      await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+    }
+  });
+
+  // -------------------------------------------------------------------------
   test('Sidebar visibility persists across UI reload', async ({ rstudioPage: page }) => {
     expect(await elementExists(page, SIDEBAR_PANE)).toBe(false);
 

@@ -779,6 +779,34 @@ public class PaneManager
       }
    }
 
+   /**
+    * End any tracked zoom -- pane/window or column -- through restoreLayout();
+    * no-op when nothing is tracked. For routes that lay the columns out again
+    * outside the zoom machinery (sidebar visibility changes, adding a source
+    * column). Any such route must end an active zoom first: bookkeeping that
+    * outlives the drawn zoom re-zooms the next pane that raises itself
+    * (#18444, #18448).
+    *
+    * "Tracked" means the zoom bookkeeping, not getZoomedColumn(): that method
+    * reads widths, so a splitter dragged to the edge by hand looks the same
+    * as a zoom command, and restoring would clobber the custom widths the
+    * user chose. widgetSizePriorToZoom_ is recorded by every zoom command
+    * (zoomColumn and fullyMaximizeWindow) and by nothing else, so it also
+    * covers the column zooms getZoomedColumn() misreads -- with the sidebar
+    * visible, collapsed columns hold 1px rather than 0. Unlike
+    * endZoomIfActive, this leaves untracked MAXIMIZE-state quadrants alone --
+    * a column relayout does not disturb the vertical split they live in.
+    */
+   private void endZoomBeforeRelayout()
+   {
+      if (maximizedWindow_ != null ||
+          maximizedTab_ != null ||
+          widgetSizePriorToZoom_ >= 0)
+      {
+         restoreLayout();
+      }
+   }
+
    @Handler
    public void onLayoutConsoleOnLeft()
    {
@@ -873,6 +901,10 @@ public class PaneManager
    {
       if (validateNewColumnRequest())
       {
+         // addLeftWidget rebuilds the split panel and re-applies persisted or
+         // default column widths, undrawing any active zoom (#18448).
+         endZoomBeforeRelayout();
+
          ColumnName name = createSourceColumn();
          SourceColumn column = sourceColumnManager_.getByName(name.getName());
          column.incrementNewTabPending();
@@ -894,6 +926,10 @@ public class PaneManager
    {
       if (targetFile != null && validateNewColumnRequest())
       {
+         // addLeftWidget rebuilds the split panel and re-applies persisted or
+         // default column widths, undrawing any active zoom (#18448).
+         endZoomBeforeRelayout();
+
          ColumnName name = createSourceColumn();
          SourceColumn column = sourceColumnManager_.getByName(name.getName());
          column.incrementNewTabPending();
@@ -1161,13 +1197,13 @@ public class PaneManager
       // A sidebar show or hide lays out the columns again, which can undraw an
       // active zoom. On a first show, setSidebarWidget resets the other columns
       // to default widths. On a restore, its deferred center-collapse reclaim
-      // can do the same. Clear the zoom whenever visibility changes, instead of
-      // working out which path fired: the bookkeeping must not outlive the drawn
-      // zoom, because a stale zoom re-zooms the next pane that raises itself
-      // (#18444). The width restore animates. Only the bookkeeping is cleared
-      // at once.
-      if (visibilityChanging && maximizedWindow_ != null)
-         restoreLayout();
+      // can do the same. On a hide, removeSidebarWidget hands the sidebar's
+      // width to the center column, so a zoomed sidebar's collapsed siblings
+      // stay collapsed with nothing on screen zoomed (#18448). Clear the zoom
+      // whenever visibility changes, instead of working out which path fired.
+      // The width restore animates. Only the bookkeeping is cleared at once.
+      if (visibilityChanging)
+         endZoomBeforeRelayout();
 
       if (showSidebar && sidebar_ == null)
       {
@@ -2313,6 +2349,20 @@ public class PaneManager
       String currentZoomedColumn = getZoomedColumn();
       boolean unZooming = false;
 
+      // A tracked pane zoom makes its column read as zoomed, and the
+      // same-column branch below ends it through restoreLayout(). A request
+      // for a different column would fall through to the per-column branches,
+      // which never clear the pane-zoom bookkeeping -- leaving both a pane
+      // zoom and a column zoom tracked at once, and a stale pane zoom re-zooms
+      // the next pane that raises itself (#18448). End the pane zoom first and
+      // re-apply the requested column zoom once the restore has settled, so
+      // the column zoom records the restored widths as its prior state.
+      if (maximizedWindow_ != null && !StringUtil.equals(currentZoomedColumn, columnId))
+      {
+         restoreLayout(() -> zoomColumn(columnId));
+         return;
+      }
+
       if (StringUtil.equals(currentZoomedColumn, columnId))
       {
          // A column can read as zoomed because a pane inside it is zoomed. Zoom
@@ -2536,6 +2586,10 @@ public class PaneManager
 
    private void createAndDisplaySourceColumn()
    {
+      // addLeftWidget rebuilds the split panel and re-applies persisted or
+      // default column widths, undrawing any active zoom (#18448).
+      endZoomBeforeRelayout();
+
       ColumnName name = createSourceColumn();
       Widget panel = createSourceColumnWindow(name.getName(), name.getAccessibleName());
       panel_.addLeftWidget(panel);
