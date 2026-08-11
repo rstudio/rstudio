@@ -871,6 +871,7 @@ void ProjectContext::onDeferredInit(bool newSession)
       directory().completeChildPath(".quarto"),
       directory().completeChildPath("node_modules"),
       directory().completeChildPath("renv/library"),
+      directory().completeChildPath("renv/staging"),
       directory().completeChildPath("packrat/lib")
    };
 
