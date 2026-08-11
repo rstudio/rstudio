@@ -1209,6 +1209,58 @@ test.describe('Pane and column management', () => {
     });
   });
 
+  // Recreating the sidebar (hide/show, location change) replaces its
+  // WorkbenchTabPanel. The selection must survive: the reused
+  // SelectedTabStateValue no longer runs onInit's restore, so PaneManager
+  // carries the outgoing panel's selected tab to the replacement explicitly.
+  test('Sidebar recreation keeps the selected tab (#18448)', async ({ rstudioPage: page }) => {
+    // Two tabs are needed to observe a selection reset; put Viewer in the
+    // sidebar next to Chat via the Pane Layout dialog.
+    await openPaneLayoutOptions(page);
+    await toggleTab(page, PL_SIDEBAR, 'Viewer');
+    const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+    if (!(await sidebarVisibleCheckbox.isChecked())) {
+      await sidebarVisibleCheckbox.click();
+      await sleep(TIMEOUTS.layoutSettle);
+    }
+    await page.locator(PREFERENCES_CONFIRM).click();
+    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+
+    try {
+      const sidebarTabs = page.locator(`${SIDEBAR_PANE} [role="tab"]`);
+      await expect(sidebarTabs).toHaveCount(2, { timeout: 10000 });
+
+      // Select the second tab, so a reset-to-first is distinguishable.
+      await sidebarTabs.nth(1).click();
+      await expect(sidebarTabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+      const selectedTabId = await sidebarTabs.nth(1).getAttribute('id');
+
+      await executeCommand(page, 'toggleSidebarLocation');
+      await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+      await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
+
+      // Same tab set, so the same position is the same tab; pin it by id too.
+      const tabsAfter = page.locator(`${SIDEBAR_PANE} [role="tab"]`);
+      await expect(tabsAfter).toHaveCount(2, { timeout: 10000 });
+      expect(await tabsAfter.nth(1).getAttribute('id')).toBe(selectedTabId);
+      await expect(
+        tabsAfter.nth(1),
+        'the selected tab must survive the sidebar recreation',
+      ).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      const cleanupCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+      if (await cleanupCheckbox.isChecked()) {
+        await cleanupCheckbox.click();
+        await sleep(TIMEOUTS.layoutSettle);
+      }
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    }
+  });
+
   // A maximize height request (EnsureHeightEvent.MAXIMIZED) is a vertical
   // operation, but the sidebar's maximize action is a horizontal column zoom
   // (layoutZoomSidebar). Routing the request through the frame's maximize

@@ -1282,7 +1282,18 @@ public class PaneManager
       {
          Widget fill = oldWindow.getNormal().getFillWidget();
          if (fill instanceof WorkbenchTabPanel)
-            ((WorkbenchTabPanel) fill).clear();
+         {
+            WorkbenchTabPanel oldPanel = (WorkbenchTabPanel) fill;
+
+            // Remember which tab was selected so the replacement panel can
+            // restore it -- by tab, not index, so a changed tab set degrades
+            // to no selection rather than the wrong one. Clearing the panel
+            // is what loses the selection, so capture it first.
+            int selected = oldPanel.getSelectedIndex();
+            sidebarSelectedTab_ = selected >= 0 ? oldPanel.getTab(selected) : null;
+
+            oldPanel.clear();
+         }
       }
    }
 
@@ -2892,9 +2903,23 @@ public class PaneManager
          // selected index (-1) over the live one's (#18448). Reuse one
          // instance and repoint it.
          if (sidebarTabStateValue_ == null)
+         {
             sidebarTabStateValue_ = new SelectedTabStateValue(persisterName, tabPanel);
+         }
          else
+         {
             sidebarTabStateValue_.setTabPanel(tabPanel);
+
+            // Reusing the state value skips onInit's selection restore, so
+            // re-select the tab the outgoing panel had (captured by
+            // clearSidebarCache). selectTab no-ops when the tab is no longer
+            // in the sidebar.
+            if (sidebarSelectedTab_ != null)
+            {
+               tabPanel.selectTab(sidebarSelectedTab_);
+               sidebarSelectedTab_ = null;
+            }
+         }
       }
       else if (!StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
       {
@@ -3233,6 +3258,7 @@ public class PaneManager
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
    private SelectedTabStateValue sidebarTabStateValue_;
+   private WorkbenchTab sidebarSelectedTab_;
    private Widget sidebar_;
    private PaneConfig previousPaneConfig_;
 
