@@ -1327,9 +1327,6 @@ public class PaneManager
 
    public void toggleWindowZoom(LogicalWindow window, Tab tab)
    {
-      if (isAnimating_)
-         return;
-
       boolean hasZoom = maximizedWindow_ != null;
 
       if (hasZoom)
@@ -1676,36 +1673,57 @@ public class PaneManager
 
    private void restoreLayout(Command afterComplete)
    {
-      // If we're currently zoomed, then use that to provide the previous
-      // 'non-zoom' state.
-      if (maximizedWindow_ != null &&
-          leftList_.size() == leftWidgetSizePriorToZoom_.size())
-         restoreSavedLayout(afterComplete);
+      // Snapshot the zoom bookkeeping, then clear it before any window state
+      // changes fire. Both restore paths call restorePaneStateToDefault, whose
+      // state changes run onBeforeShow on the panes they reveal, and a tab
+      // that raises itself from there re-enters the WindowEnsureVisibleEvent
+      // handler. If maximizedWindow_ were still set, that handler would start
+      // a new zoom in the middle of this restore (#18448).
+      final LogicalWindow maximizedWindow = maximizedWindow_;
+      final double rightWidthPriorToZoom = widgetSizePriorToZoom_;
+      final double sidebarWidthPriorToZoom = sidebarSizePriorToZoom_;
+      final ArrayList<Double> leftWidthsPriorToZoom =
+            new ArrayList<>(leftWidgetSizePriorToZoom_);
+      clearZoomBookkeeping();
+
+      // If we were zoomed, the snapshot provides the previous 'non-zoom' state.
+      if (maximizedWindow != null &&
+          leftList_.size() == leftWidthsPriorToZoom.size())
+      {
+         restoreSavedLayout(maximizedWindow,
+                            rightWidthPriorToZoom,
+                            leftWidthsPriorToZoom,
+                            sidebarWidthPriorToZoom,
+                            afterComplete);
+      }
       else
-         restorePaneLayout(afterComplete);
+      {
+         restorePaneLayout(leftWidthsPriorToZoom, afterComplete);
+      }
    }
 
-   private void invalidateSavedLayoutState(boolean enableSplitter)
+   private void clearZoomBookkeeping()
    {
       maximizedWindow_ = null;
       maximizedTab_ = null;
       widgetSizePriorToZoom_ = -1;
       sidebarSizePriorToZoom_ = -1;
       leftWidgetSizePriorToZoom_.clear();
+   }
+
+   private void invalidateSavedLayoutState(boolean enableSplitter)
+   {
+      clearZoomBookkeeping();
       panel_.setSplitterEnabled(enableSplitter);
       manageLayoutCommands();
       eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
    }
 
-   private void restorePaneLayout()
-   {
-      restorePaneLayout(null);
-   }
-
-   private void restorePaneLayout(Command afterComplete)
+   private void restorePaneLayout(ArrayList<Double> leftWidthsPriorToZoom,
+                                  Command afterComplete)
    {
       restorePaneStateToDefault();
-      restoreColumnLayout();
+      restoreColumnLayout(leftWidthsPriorToZoom);
 
       // restoreColumnLayout applies column widths via setWidgetSize without an
       // explicit animate(), so there's no animation callback to hook here --
@@ -1787,24 +1805,33 @@ public class PaneManager
 
    private void restoreColumnLayout()
    {
+      restoreColumnLayout(leftWidgetSizePriorToZoom_);
+   }
+
+   private void restoreColumnLayout(ArrayList<Double> leftWidthsPriorToZoom)
+   {
       getValidColumnWidth(right_, true);
-      getValidColumnWidths(leftList_, leftWidgetSizePriorToZoom_, true);
+      getValidColumnWidths(leftList_, leftWidthsPriorToZoom, true);
       invalidateSavedLayoutState(true);
    }
 
-   private void restoreSavedLayout(Command afterComplete)
+   private void restoreSavedLayout(LogicalWindow maximizedWindow,
+                                   double rightWidthPriorToZoom,
+                                   ArrayList<Double> leftWidthsPriorToZoom,
+                                   double sidebarWidthPriorToZoom,
+                                   Command afterComplete)
    {
       restorePaneStateToDefault();
 
-      maximizedWindow_.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
+      maximizedWindow.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
 
       ArrayList<Double> leftTargets = new ArrayList<>();
       if (leftList_.size() > 0)
       {
-         if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
-            leftTargets = getValidColumnWidths(leftList_, leftWidgetSizePriorToZoom_, false);
+         if (leftWidthsPriorToZoom.size() != leftList_.size())
+            leftTargets = getValidColumnWidths(leftList_, leftWidthsPriorToZoom, false);
          else
-            leftTargets.addAll(leftWidgetSizePriorToZoom_);
+            leftTargets.addAll(leftWidthsPriorToZoom);
       }
 
       // Check if sidebar is visible and get its location
@@ -1815,17 +1842,17 @@ public class PaneManager
                               "left".equals(config.getSidebarLocation());
 
       // Restore with sidebar handling if sidebar was visible during zoom
-      if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ >= 0)
+      if ((sidebarOnRight || sidebarOnLeft) && sidebarWidthPriorToZoom >= 0)
       {
          if (sidebarOnRight)
-            resizeHorizontallyWithSidebarOnRight(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, afterComplete);
+            resizeHorizontallyWithSidebarOnRight(rightWidthPriorToZoom, leftTargets, sidebarWidthPriorToZoom, afterComplete);
          else
-            resizeHorizontallyWithSidebarOnLeft(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, afterComplete);
+            resizeHorizontallyWithSidebarOnLeft(rightWidthPriorToZoom, leftTargets, sidebarWidthPriorToZoom, afterComplete);
       }
       else
       {
          // No sidebar or sidebar wasn't saved - use original behavior
-         resizeHorizontally(widgetSizePriorToZoom_, leftTargets, afterComplete);
+         resizeHorizontally(rightWidthPriorToZoom, leftTargets, afterComplete);
       }
 
       invalidateSavedLayoutState(true);
@@ -3151,7 +3178,6 @@ public class PaneManager
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
    private double sidebarSizePriorToZoom_ = -1;
-   private boolean isAnimating_ = false;
    private final ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
 
    private ArrayList<Tab> tabs1_;
