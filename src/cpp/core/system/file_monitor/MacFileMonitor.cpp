@@ -19,6 +19,7 @@
 
 #include <sys/stat.h>
 
+#include <algorithm>
 #include <map>
 #include <vector>
 
@@ -569,8 +570,11 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       }
       else
       {
+         // CFAbsoluteTimeGetCurrent() is wall-clock time, so a backward
+         // clock step can make 'elapsed' negative; clamp so the deferred
+         // rescan is never scheduled more than a full debounce interval out
          scheduleDroppedRescan(pContext,
-                               kDroppedRescanIntervalSeconds - elapsed);
+                               kDroppedRescanIntervalSeconds - std::max(elapsed, 0.0));
       }
    }
 
