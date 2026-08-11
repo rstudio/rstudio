@@ -104,6 +104,7 @@ void proxyVSCodeRequest(const r_util::SessionContext& context,
 
 bool proxyLocalhostRequest(http::Request& request,
                            const std::string& port,
+                           bool ipv6,
                            const r_util::SessionContext& context,
                            boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
                            const LocalhostResponseHandler& responseHandler,
@@ -1253,13 +1254,21 @@ void proxyLocalhostRequest(
    http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
 
    // see if the request should be handled by the overlay (unless it should be handled by the server)
-   if (!server && overlay::proxyLocalhostRequest(*pRequest, port, context, ptrConnection, onResponse, onError))
+   if (!server && overlay::proxyLocalhostRequest(*pRequest, port, ipv6, context, ptrConnection, onResponse, onError))
    {
       // request handled by the overlay
       return;
    }
 
    // set the host
+   //
+   // The ipv6=false case deliberately keeps the ambiguous "localhost" (rather
+   // than substituting the unambiguous literal "127.0.0.1", as done below for
+   // ipv6=true) because this value is also sent as the outgoing Host header
+   // just below -- some downstream apps (dev servers with Host-header/DNS-
+   // rebinding checks, e.g. webpack-dev-server, Vite) reject requests whose
+   // Host doesn't match "localhost". setIpv6() below restricts resolution
+   // instead, without changing what's on the wire.
    std::string address;
    if (!ipv6)
    {
@@ -1273,6 +1282,11 @@ void proxyLocalhostRequest(
 
    boost::shared_ptr<server_core::http::LocalhostAsyncClient> pLocalhost(
       new server_core::http::LocalhostAsyncClient(ptrConnection->ioContext(), address, port));
+   // "::1" above is already an unambiguous literal, but "localhost" (the ipv6=false
+   // case) could still non-deterministically resolve its AAAA record first on an
+   // IPv6-enabled host -- restrict resolution to the correct family explicitly, for
+   // defense-in-depth parity with the Launcher-mode SessionProxy fix (rstudio-pro#12142).
+   pLocalhost->setIpv6(ipv6);
 
    // resolve the requesting user's uid so LocalhostAsyncClient can verify the
    // destination port is actually owned by them before proxying (rstudio-pro#11470),
