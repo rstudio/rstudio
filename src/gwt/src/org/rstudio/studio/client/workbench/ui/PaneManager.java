@@ -131,7 +131,14 @@ public class PaneManager
       protected void onInit(Integer value)
       {
          if (value != null && tabPanel_.getWidgetCount() > 0)
+         {
             tabPanel_.selectTab(value);
+
+            // Seed the fallback from the applied (clamped) selection, so a
+            // panel disposed before the first client-state save still
+            // persists this restored tab rather than -1.
+            lastSelected_ = tabPanel_.getSelectedIndex();
+         }
       }
 
       @Override
