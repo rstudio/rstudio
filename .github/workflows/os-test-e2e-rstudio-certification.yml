@@ -525,7 +525,7 @@ jobs:
 
   summary:
     name: Certification summary
-    needs: [pick, linux-desktop, ubuntu24s, macos26, macos15, macos14, windows2025]
+    needs: [pick, resolve, linux-desktop, ubuntu24s, macos26, macos15, macos14, windows2025]
     # Every cell's result belongs in the table, including the failures -- a
     # certification run that half-failed still has to say which half.
     if: always() && needs.pick.result == 'success'
@@ -556,6 +556,9 @@ jobs:
           R_DECLARED: ${{ needs.pick.outputs.r_declared }}
           SELECTED: ${{ needs.pick.outputs.selected }}
           LINUX_MATRIX: ${{ needs.pick.outputs.linux_matrix }}
+          # Resolved installer URLs, to work out which cells shared a binary.
+          # Empty on an unpinned run, where each engine self-resolved instead.
+          RESOLVED_URLS: ${{ toJSON(needs.resolve.outputs) }}
           # The five non-Linux engines each return the R they actually used as a
           # workflow output. The Linux cells can't: they run as one matrix call,
           # and a matrix job collapses to a single output value, so both their
@@ -634,3 +637,42 @@ jobs:
             echo "repos and ignores the request, so only the actual version is"
             echo "meaningful for those cells."
           } >> "$GITHUB_STEP_SUMMARY"
+
+          # RStudio publishes one package per family rather than one per release:
+          # a single .deb covers the Ubuntu line, a single .rpm the RHEL line, and
+          # one universal .dmg every macOS version. So several cells install the
+          # same binary and differ only in the OS they run it on -- which is the
+          # point of OS certification, but a reader seeing thirteen rows would
+          # otherwise assume thirteen builds. Grouped from the URLs actually
+          # resolved, so it cannot go stale if that packaging changes.
+          #
+          # Skipped on an unpinned run: the engines self-resolved and this job
+          # never saw their URLs.
+          if [ -n "${RESOLVED_URLS:-}" ] && [ "$RESOLVED_URLS" != "null" ]; then
+            SHARED=$(jq -rn \
+              --argjson u "$RESOLVED_URLS" \
+              --argjson l "$LINUX_MATRIX" \
+              --argjson s "$SELECTED" '
+              ([$l[] | {cell: .cell, key: .url_key}]
+               + ([{cell:"ubuntu24s",key:"server_noble"},
+                   {cell:"macos14",key:"macos"},
+                   {cell:"macos15",key:"macos"},
+                   {cell:"macos26",key:"macos"},
+                   {cell:"windows2025",key:"windows"}]
+                  | map(select(.cell as $c | $s | index($c)))))
+              | map(. + {url: ($u[.key] // "")})
+              | map(select(.url != ""))
+              | group_by(.url)
+              | map(select(length > 1) | [.[].cell])
+              | map("  - " + join(", "))
+              | join("\n")')
+            if [ -n "$SHARED" ]; then
+              {
+                echo ""
+                echo "These cells installed the same binary, differing only in the OS"
+                echo "under test -- RStudio ships one package per family, not per release:"
+                echo ""
+                printf '%s\n' "$SHARED"
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
