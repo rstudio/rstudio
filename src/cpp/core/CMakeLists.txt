@@ -363,6 +363,12 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
    endif()
 
+   # ManifestTests.cpp checks manifests under src/cpp/session and src/cpp/diagnostics,
+   # which are not present in other consumers of this library.
+   if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../session")
+      list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/ManifestTests.cpp")
+   endif()
+
    # Use gtest from vendor directory
    set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
    include_directories(${GTEST_SOURCE_DIR}/include)
