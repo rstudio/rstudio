@@ -1261,8 +1261,29 @@ public class PaneManager
 
    public void clearSidebarCache()
    {
-      // Remove the cached sidebar window so it gets recreated with new tabs
-      panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      // Remove the cached sidebar window so it gets recreated with new tabs.
+      // Dispose the old panel's per-tab event forwarding first: the tabs are
+      // long-lived singletons, so an abandoned panel that stays registered on
+      // them is retained forever and keeps forwarding their events to its
+      // stale window (#18448).
+      LogicalWindow oldWindow =
+            panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      if (oldWindow != null && oldWindow.getNormal() != null)
+      {
+         Widget fill = oldWindow.getNormal().getFillWidget();
+         if (fill instanceof WorkbenchTabPanel)
+            ((WorkbenchTabPanel) fill).clear();
+      }
+   }
+
+   /**
+    * A sidebar this wide can only be a zoomed sidebar: the zoom gives it the
+    * whole panel minus the 1px slivers left for the collapsed columns. The
+    * 50px margin matches MainSplitPanel.isZoomedColumnState.
+    */
+   private boolean isZoomedSidebarWidth(double width)
+   {
+      return width > panel_.getOffsetWidth() - 50;
    }
 
    public void refreshSidebar()
@@ -1270,8 +1291,14 @@ public class PaneManager
       // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)
       if (sidebar_ != null)
       {
-         // Preserve the current sidebar width before destroying
+         // Preserve the current sidebar width before destroying -- unless it
+         // is a zoomed sidebar's width. The hide below ends the zoom, and
+         // re-applying the captured width afterwards would hand the sidebar
+         // nearly the whole panel again (#18448); the recreation falls back
+         // to its saved or default width instead.
          int sidebarWidth = panel_.getSidebarWidth();
+         if (isZoomedSidebarWidth(sidebarWidth))
+            sidebarWidth = -1;
 
          showSidebar(false);
          showSidebar(true);
@@ -1280,11 +1307,12 @@ public class PaneManager
          if (sidebarWidth > 0)
          {
             // Use a deferred command to ensure the sidebar is fully initialized
+            final int restoredWidth = sidebarWidth;
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                public void execute()
                {
-                  panel_.setSidebarWidth(sidebarWidth);
+                  panel_.setSidebarWidth(restoredWidth);
                }
             });
          }
@@ -1816,7 +1844,7 @@ public class PaneManager
       // it to the same default a fresh sidebar gets. Only in that state: a
       // custom sidebar width must survive an unrelated restore (#18448).
       if (sidebar_ != null && panel_.hasSidebarWidget() &&
-          sidebar_.getOffsetWidth() > panel_.getOffsetWidth() - 50)
+          isZoomedSidebarWidth(sidebar_.getOffsetWidth()))
       {
          panel_.setWidgetSize(sidebar_, panel_.getDefaultSplitterWidth() * 0.8);
       }
