@@ -18,6 +18,7 @@
 #include <core/system/PosixSystem.hpp>
 
 #include <grp.h>
+#include <pthread.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -27,6 +28,8 @@
 
 #include <gtest/gtest.h>
 
+#include <core/Thread.hpp>
+#include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/PosixGroup.hpp>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
@@ -825,6 +828,55 @@ VERSION_CODENAME="focal"
    EXPECT_EQ(info.osId, "ubuntu");
    EXPECT_EQ(info.osVersion, "20.04");
    EXPECT_EQ(info.osVersionCodename, "focal");
+}
+
+TEST(PosixTests, SafeLaunchThreadLeavesFaultSignalsUnblocked)
+{
+   sigset_t threadMask;
+   sigemptyset(&threadMask);
+
+   boost::thread thread;
+   core::thread::safeLaunchThread([&threadMask]()
+   {
+      ::pthread_sigmask(SIG_BLOCK, nullptr, &threadMask);
+   }, &thread);
+   thread.join();
+
+   // synchronous fault signals must stay unblocked: a blocked fault signal
+   // makes the kernel bypass any crash handler and kill the process silently
+   EXPECT_FALSE(sigismember(&threadMask, SIGSEGV));
+   EXPECT_FALSE(sigismember(&threadMask, SIGBUS));
+   EXPECT_FALSE(sigismember(&threadMask, SIGILL));
+   EXPECT_FALSE(sigismember(&threadMask, SIGFPE));
+
+   // asynchronous signals stay blocked on background threads
+   EXPECT_TRUE(sigismember(&threadMask, SIGINT));
+   EXPECT_TRUE(sigismember(&threadMask, SIGTERM));
+   EXPECT_TRUE(sigismember(&threadMask, SIGHUP));
+}
+
+TEST(PosixTests, WaitForParentTerminationNoParentWithoutFds)
+{
+   using namespace parent_process_monitor;
+
+   EXPECT_EQ(ParentTerminationNoParent, waitForParentTermination(-1, -1));
+}
+
+TEST(PosixTests, WaitForParentTerminationReadsPipeFds)
+{
+   using namespace parent_process_monitor;
+
+   // parent writes before exiting: normal termination
+   int fds[2];
+   ASSERT_EQ(0, ::pipe(fds));
+   ASSERT_EQ(4, ::write(fds[1], "done", 4));
+   EXPECT_EQ(ParentTerminationNormal, waitForParentTermination(fds[0], fds[1]));
+   ::close(fds[0]);
+
+   // parent exits without writing (write end closed): abnormal termination
+   ASSERT_EQ(0, ::pipe(fds));
+   EXPECT_EQ(ParentTerminationAbnormal, waitForParentTermination(fds[0], fds[1]));
+   ::close(fds[0]);
 }
 
 } // namespace tests

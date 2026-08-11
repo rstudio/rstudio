@@ -16,6 +16,8 @@
 #ifndef PARENT_PROCESS_MONITOR_HPP
 #define PARENT_PROCESS_MONITOR_HPP
 
+#include <utility>
+
 #include <shared_core/Error.hpp>
 #include <boost/function.hpp>
 
@@ -33,6 +35,19 @@ enum ParentTermination {
 };
 
 ParentTermination waitForParentTermination();
+
+#ifndef _WIN32
+
+// reads the RS_PPM_FD_* environment variables established by wrapFork().
+// call this on the thread that owns startup (typically the main thread)
+// and pass the result to the overload below: reading the environment from
+// a freshly launched monitor thread races the setenv calls made during
+// startup, which is not thread-safe
+std::pair<int, int> parentTerminationFds();
+
+ParentTermination waitForParentTermination(int readFd, int writeFd);
+
+#endif
 
 } // namespace parent_process_monitor
 } // namespace core

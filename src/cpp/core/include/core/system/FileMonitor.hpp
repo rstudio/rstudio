@@ -117,10 +117,17 @@ struct Callbacks
 // guarantee that the deletion of your shared_ptr object is invoked on the same
 // thread that called registerMonitor you should also bind a function to
 // onUnregistered (otherwise the delete will occur on the file monitoring thread)
+//
+// excludedPaths is a best-effort hint listing directories whose events the
+// platform backend may suppress at the source (currently macOS only, via
+// FSEventStreamSetExclusionPaths; other backends ignore the hint). callers
+// must still exclude these paths via the filter -- the hint only reduces
+// event-queue pressure, it does not guarantee suppression.
 void registerMonitor(const core::FilePath& filePath,
                      bool recursive,
                      const boost::function<bool(const FileInfo&)>& filter,
-                     const Callbacks& callbacks);
+                     const Callbacks& callbacks,
+                     const std::vector<core::FilePath>& excludedPaths = std::vector<core::FilePath>());
 
 // unregister a file monitor. note that file monitors can be automatically
 // unregistered in the case of errors or a call to global file_monitor::stop,

@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/thread.hpp>
+
 #include <shared_core/Error.hpp>
 
 #include <core/system/Environment.hpp>
@@ -61,6 +63,59 @@ TEST(EnvironmentTest, ExpandVariablesInBraces)
    std::string expanded = expandEnvVars(env, "Don't be ${VAR}lish or ${VAR}lhardy.");
 
    EXPECT_EQ(std::string("Don't be foolish or foolhardy."), expanded);
+}
+
+TEST(EnvironmentTest, EnvironmentScopeRestoresPreviousValue)
+{
+   setenv("RSTUDIO_ENV_SCOPE_TEST", "original");
+   {
+      EnvironmentScope scope("RSTUDIO_ENV_SCOPE_TEST", "temporary");
+      EXPECT_EQ("temporary", getenv("RSTUDIO_ENV_SCOPE_TEST"));
+
+      // overwrite another variable so the environ array is reshuffled while
+      // the scope holds its captured copy of the previous value
+      setenv("RSTUDIO_ENV_SCOPE_TEST_OTHER", "other");
+   }
+   EXPECT_EQ("original", getenv("RSTUDIO_ENV_SCOPE_TEST"));
+
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST_OTHER");
+}
+
+TEST(EnvironmentTest, EnvironmentScopeUnsetsAbsentValue)
+{
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+   {
+      EnvironmentScope scope("RSTUDIO_ENV_SCOPE_TEST", "temporary");
+      EXPECT_EQ("temporary", getenv("RSTUDIO_ENV_SCOPE_TEST"));
+   }
+   EXPECT_EQ("", getenv("RSTUDIO_ENV_SCOPE_TEST"));
+}
+
+TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
+{
+   // getenv walking environ while setenv reallocates it is the crash class
+   // behind #10756; with the environment lock this is well-defined. a
+   // regression (e.g. recursive locking) shows up here as a deadlock, which
+   // the test harness watchdog reports with a stack trace.
+   boost::thread reader([]()
+   {
+      for (int i = 0; i < 5000; i++)
+      {
+         getenv("RSTUDIO_ENV_HAMMER_" + std::to_string(i % 50));
+         Options env;
+         if (i % 500 == 0)
+            environment(&env);
+      }
+   });
+
+   for (int i = 0; i < 5000; i++)
+      setenv("RSTUDIO_ENV_HAMMER_" + std::to_string(i % 50), std::to_string(i));
+
+   reader.join();
+
+   for (int i = 0; i < 50; i++)
+      unsetenv("RSTUDIO_ENV_HAMMER_" + std::to_string(i));
 }
 
 TEST(ResourcesTest, NonzeroResourceMetrics)
