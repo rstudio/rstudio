@@ -117,6 +117,16 @@ public class PaneManager
          finishInit(session_.getSessionInfo().getClientState());
       }
 
+      /**
+       * Point this state value at a replacement panel. A ClientStateValue
+       * registers permanently on the event bus, so a panel that is recreated
+       * (the sidebar) must reuse its instance rather than make another one.
+       */
+      void setTabPanel(WorkbenchTabPanel tabPanel)
+      {
+         tabPanel_ = tabPanel;
+      }
+
       @Override
       protected void onInit(Integer value)
       {
@@ -127,7 +137,7 @@ public class PaneManager
       @Override
       protected Integer getValue() { return tabPanel_.getSelectedIndex(); }
 
-      private final WorkbenchTabPanel tabPanel_;
+      private WorkbenchTabPanel tabPanel_;
    }
 
    private class ZoomedTabStateValue extends JSObjectStateValue
@@ -2873,8 +2883,23 @@ public class PaneManager
          eventBus_.fireEvent(new ChatPaneActiveEvent(isChatActivatedInSidebar()));
       });
 
-      if (!StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
+      if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      {
+         // The sidebar is the one tabset that gets recreated -- on every show
+         // and on location changes. A ClientStateValue registers permanently
+         // on the event bus, so a fresh instance per recreation would retain
+         // every abandoned panel and could persist the cleared panel's
+         // selected index (-1) over the live one's (#18448). Reuse one
+         // instance and repoint it.
+         if (sidebarTabStateValue_ == null)
+            sidebarTabStateValue_ = new SelectedTabStateValue(persisterName, tabPanel);
+         else
+            sidebarTabStateValue_.setTabPanel(tabPanel);
+      }
+      else if (!StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
+      {
          new SelectedTabStateValue(persisterName, tabPanel);
+      }
 
       return new Triad<>(
          logicalWindow,
@@ -3207,6 +3232,7 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
+   private SelectedTabStateValue sidebarTabStateValue_;
    private Widget sidebar_;
    private PaneConfig previousPaneConfig_;
 
