@@ -444,11 +444,14 @@ Handle registrationFailure(int errorNumber,
 
 namespace detail {
 
-// register a new file monitor
+// register a new file monitor. the excludedPaths hint is not used here:
+// inotify only watches directories the filter admits in the first place, so
+// there is no post-delivery filtering cost to avoid
 Handle registerMonitor(const core::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
-                       const Callbacks& callbacks)
+                       const Callbacks& callbacks,
+                       const std::vector<core::FilePath>& excludedPaths)
 {
    // create and allocate FileEventContext
    // (also pack into unique_ptr to auto-delete if we return early;
