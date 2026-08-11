@@ -135,9 +135,20 @@ public class PaneManager
       }
 
       @Override
-      protected Integer getValue() { return tabPanel_.getSelectedIndex(); }
+      protected Integer getValue()
+      {
+         // A disposed or empty panel reports -1 -- e.g. the sidebar's panel
+         // is cleared while the sidebar is hidden. Keep persisting the last
+         // real selection instead, so a reload in that window does not lose
+         // the remembered tab (#18448).
+         int selected = tabPanel_.getSelectedIndex();
+         if (selected >= 0)
+            lastSelected_ = selected;
+         return lastSelected_;
+      }
 
       private WorkbenchTabPanel tabPanel_;
+      private int lastSelected_ = -1;
    }
 
    private class ZoomedTabStateValue extends JSObjectStateValue
