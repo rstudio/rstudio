@@ -317,39 +317,36 @@ Error findProgramOnPath(const std::string& program,
    std::string path = core::system::getenv("PATH");
    auto paths = core::algorithm::split(path, ":");
 
-   for (auto&& path : paths)
+   for (auto&& pathEntry : paths)
    {
-      // get file descriptor for path entry
-      int fd = ::open(path.c_str(), 0);
-      if (fd == -1)
+      // skip empty entries: historically the search never resolved against
+      // the working directory, and completeChildPath below would
+      if (pathEntry.empty())
          continue;
-      
-      // clean up when we're done
-      BOOST_SCOPE_EXIT( (&fd) )
-      {
-         ::close(fd);
-      }
-      BOOST_SCOPE_EXIT_END;
-      
-      // confirm that it's a regular file
+
+      // build the candidate path for this PATH entry
+      FilePath candidatePath = FilePath(pathEntry).completeChildPath(program);
+      if (candidatePath.isEmpty())
+         continue;
+
+      std::string candidate = candidatePath.getAbsolutePath();
+
+      // confirm that it's a regular file (following symlinks, as before)
       struct stat sb;
-      int status = ::fstatat(fd, program.c_str(), &sb, 0);
-      if (status == -1)
+      if (::stat(candidate.c_str(), &sb) == -1)
          continue;
-      
-      bool isRegularFile = S_ISREG(sb.st_mode);
-      if (!isRegularFile)
+
+      if (!S_ISREG(sb.st_mode))
          continue;
-      
+
       // confirm that it's executable
       // note that we use AT_EACCESS to ensure checks are done using
       // the effective user id
-      status = ::faccessat(fd, program.c_str(), X_OK, AT_EACCESS);
-      if (status == -1)
+      if (::faccessat(AT_FDCWD, candidate.c_str(), X_OK, AT_EACCESS) == -1)
          continue;
-      
+
       // all checks passed; return full path
-      *pProgramPath = FilePath(path).completeChildPath(program);
+      *pProgramPath = candidatePath;
       return Success();
    }
 
