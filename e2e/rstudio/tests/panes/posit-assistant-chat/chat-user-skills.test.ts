@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { requireAiCredentials } from '@utils/ai-credentials';
+import { isExternalServerRun } from '@utils/auth';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
@@ -178,6 +179,14 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     );
     const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
+    // Assert rather than just read back: if dir.create or writeLines above
+    // silently did nothing, the first symptom would otherwise be an
+    // LLM-content assertion failing in a test body, which is indistinguishable
+    // from the model simply not naming the marker. Fail here, with the cause
+    // obvious.
+    expect(projectOutput).toContain(PROJECT_MARKER);
+    expect(userOutput).toContain(USER_MARKER);
+
     // -----------------------------------------------------------------------
     // Step 5: Start a fresh backend by setting chat_provider back to "posit".
     //
@@ -215,9 +224,17 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     await closeProjectIfOpen(page);
   });
 
-  // @desktop_only: this assertion needs the user-level skill, which server
-  // mode can't see -- see the comment on the user-level-skill test below.
-  test('both custom skills are discovered by assistant', { tag: ['@desktop_only'] }, async () => {
+  // This asserts on the user-level skill, which an EXTERNAL server can't see
+  // (see the user-level-skill notes in this file's header). Skipped on that
+  // predicate rather than tagged @desktop_only: a spawned in-tree server does
+  // read the sandbox HOME, so a tag would drop coverage in a mode where this
+  // passes -- and a tag also removes the row from the report entirely, where a
+  // skip carries its reason.
+  test('both custom skills are discovered by assistant', async () => {
+    test.skip(
+      isExternalServerRun(),
+      'asserts on the user-level skill, which an external server rsession never reads (its HOME comes from the passwd db, not the sandbox)',
+    );
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();
@@ -258,12 +275,19 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     expect(responseText).toContain(PROJECT_MARKER);
   });
 
-  // @desktop_only: the user-level skill lives under sandbox-redirected HOME
-  // (see the comment below), which an external RStudio Server never reads --
-  // rserver takes each rsession's HOME from the passwd db, not from anything
-  // the harness sets (#18348). No product bug; the skill genuinely isn't
-  // there for that account.
-  test('user-level skill is selected when its description matches the prompt', { tag: ['@desktop_only'] }, async () => {
+  // The user-level skill lives under the sandbox-redirected HOME described in
+  // this file's header. An EXTERNAL RStudio Server never reads it: rserver
+  // builds each rsession's environment from scratch and takes HOME from the
+  // passwd db, not from anything the harness sets (issue 18348). No product
+  // bug -- the skill genuinely isn't there for that account. A spawned in-tree
+  // server DOES see it, via the HOME its rsession wrapper exports, which is
+  // why this skips on isExternalServerRun() rather than carrying
+  // @desktop_only.
+  test('user-level skill is selected when its description matches the prompt', async () => {
+    test.skip(
+      isExternalServerRun(),
+      'the user-level skill lives under the sandbox HOME, which an external server rsession never reads (its HOME comes from the passwd db)',
+    );
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();

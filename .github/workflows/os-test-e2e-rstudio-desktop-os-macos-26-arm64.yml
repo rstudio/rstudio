@@ -497,8 +497,10 @@ jobs:
         run: |
           if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::OP service account token present; test credentials will be retrieved."
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
           fi
 
       - name: Retrieve test credentials

@@ -24,19 +24,29 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     let sourcePane: SourcePane;
 
     // Puts the cursor on a fresh line at the end of the file, types the
-    // trigger text, then clears any Ace autocomplete popup (while that popup
-    // is visible it suppresses ghost text from rendering).
+    // trigger text, then clears any Ace autocomplete popup so the ghost-text
+    // assertion that follows isn't racing it.
     //
-    // Deliberately NOT sourcePane.contentPane.click(): Playwright clicks an
-    // element's geometric centre, and Ace sizes .ace_content from the viewport
-    // rather than from the document, so that centre moves with the window
-    // size. On the narrower server-engine window (960x540) it landed mid-line
-    // and split an existing statement -- the trigger text became part of a
-    // syntactically broken line, which the model correctly declined to
-    // complete, so these tests waited out the full ghost-text timeout for a
-    // suggestion that was never coming. They passed only because the taller
-    // desktop window (1024x645) happened to put the same click past the last
-    // row, where Ace clamps the cursor to a trailing blank line.
+    // Deliberately NOT sourcePane.contentPane.click(). Playwright clicks the
+    // centre of the element's box after clipping it to the viewport, and Ace
+    // sizes .ace_content's HEIGHT from the viewport -- minHeight is
+    // scrollerHeight plus a couple of line heights (ace-uncompressed.js, the
+    // $computeLayerConfig path) -- so which ROW that centre lands on moves with
+    // the window height. Width is document-derived (the longest line), so the
+    // column does not vary between engines; the row does.
+    //
+    // Observed on the server engine: the click landed on a content row and the
+    // trigger text split an existing statement, leaving a syntactically broken
+    // line that the model declined to complete, so the tests waited out the
+    // full ghost-text timeout for a suggestion that was never coming. The
+    // likely reason desktop passed is that its taller window put the same
+    // click past the last row, where Ace clamps to the trailing blank line
+    // every fixture here ends with -- inferred, not directly observed.
+    //
+    // The two windows are sized in different units, so compare the fixtures
+    // rather than the raw numbers: the server engine runs a headed browser
+    // window (fixtures/server.fixture.ts) whose page viewport is shorter than
+    // the desktop Electron client area (fixtures/desktop.fixture.ts).
     const typeTriggerOnNewLine = async (page: Page, trigger: string) => {
       await sourceActions.goToEnd();
       await sleep(500);
@@ -659,23 +669,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      // Position cursor at the end and type to trigger a ghost text suggestion
-      await sourceActions.goToEnd();
-      await sleep(500);
-      await page.keyboard.press('Enter');
-      await sleep(200);
-      await page.keyboard.type('x <- calc');
-
-      // Dismiss Ace autocomplete popup if it pops up first. When the popup
-      // is visible it suppresses ghost text from rendering, so we have to
-      // clear it before waiting for the suggestion.
-      const popup = page.locator('#rstudio_popup_completions');
-      await popup.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
-      if (await popup.isVisible().catch(() => false)) {
-        await page.keyboard.press('Escape');
-        await sleep(500);
-        console.log('  Dismissed autocomplete popup (pre-ghost-text)');
-      }
+      await typeTriggerOnNewLine(page, 'x <- calc');
 
       // Wait for ghost text to confirm a real suggestion arrived
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });

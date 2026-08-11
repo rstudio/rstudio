@@ -648,8 +648,10 @@ jobs:
         run: |
           if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::OP service account token present; test credentials will be retrieved."
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
           fi
 
       # Distro-specific runtime setup: display server / Chromium runtime
@@ -835,6 +837,20 @@ jobs:
           cache-scope: ${{ needs.setup.outputs.e2e_deps_cache_scope }}
           install-required-packages: ${{ needs.setup.outputs.preinstall_r_packages }}
 
+      # Turns the op:// references in e2e/rstudio/.env.op into step outputs.
+      # OP_ENV_FILE is read by the action's OP CLI and its path is relative to
+      # the workspace root, not the Playwright working-directory. Deliberately
+      # not using export-env: that would publish the resolved credentials to
+      # every later step in the job, whereas step outputs keep them scoped to
+      # the one step that consumes them.
+      - name: Retrieve test credentials
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: ./e2e/rstudio/.env.op
+
       # Run the tests as a non-root user on container engines, matching the
       # bare-runner engines (which execute as the runner user). GHA container
       # jobs default to root, and RStudio-as-root diverges from real usage:
@@ -844,21 +860,6 @@ jobs:
       # here and hand it ownership of everything the run writes under the
       # workspace (R-libs and its per-worker clones, ms-playwright,
       # pw-sandbox, the pak cache, and the report dirs under e2e/rstudio).
-      # Turns the op:// references in e2e/rstudio/.env.op into step outputs.
-      # OP_ENV_FILE is read by the action's OP CLI and its path is relative to
-      # the workspace root, not the Playwright working-directory. Deliberately
-      # not using export-env: that would publish the resolved credentials to
-      # every later step in the job, whereas step outputs keep them scoped to
-      # the one step that consumes them. Runs before the non-root drop below so
-      # anything it leaves in the workspace is still covered by that chown.
-      - name: Retrieve test credentials
-        id: op
-        if: steps.op_token_check.outputs.present == 'true'
-        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          OP_ENV_FILE: ./e2e/rstudio/.env.op
-
       - name: Create non-root test user
         if: needs.setup.outputs.run_as_user != ''
         env:

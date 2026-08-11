@@ -903,8 +903,10 @@ jobs:
         run: |
           if ($env:OP_SERVICE_ACCOUNT_TOKEN) {
             "present=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Output "::notice::OP service account token present; test credentials will be retrieved."
           } else {
             "present=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Output "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
           }
 
       - name: Retrieve test credentials
