@@ -732,9 +732,10 @@ public class PaneManager
     *
     * Quadrants can also be maximized without PaneManager's zoom tracking ever
     * knowing: the pane-header min/max buttons and EnsureHeightEvent.MAXIMIZED
-    * (fired e.g. when an R Notebook preview opens in the Viewer) drive the
-    * WindowFrame state machine in DualWindowLayoutPanel directly, and that
-    * state persists across sessions via client state (windowlayoutstate). So
+    * (fired e.g. when an R Notebook preview opens in the Viewer) reach the
+    * WindowFrame state machine in DualWindowLayoutPanel while no zoom is
+    * tracked, and that state persists across sessions via client state
+    * (windowlayoutstate). So
     * when no tracked zoom is active, restore any MAXIMIZE-state quadrant to
     * NORMAL -- which also restores its MINIMIZE-state sibling (see
     * DualWindowLayoutPanel.WindowStateChangeManager). HIDE/EXCLUSIVE pairs are

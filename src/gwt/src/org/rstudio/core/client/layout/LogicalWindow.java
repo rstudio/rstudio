@@ -137,15 +137,36 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    @Override
    public void onEnsureHeight(EnsureHeightEvent event)
    {
+      // Route the MAXIMIZED and NORMAL conversions through the frame's
+      // maximize action rather than firing state changes at this window
+      // directly. Firing directly bypasses the owner's zoom bookkeeping
+      // (PaneManager), which leaves a pane zoom tracked while the layout no
+      // longer shows one, and a stale zoom re-zooms the next pane that raises
+      // itself (#18448). An unhooked frame's maximize() falls back to the
+      // default action, which reaches the same state changes as before.
       if (event.getHeight() == EnsureHeightEvent.MAXIMIZED)
       {
-         if (getState() != WindowState.MAXIMIZE)
-            events_.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+         // EXCLUSIVE already fills the window, so the height request is
+         // satisfied; the frame's maximize gesture would mean "restore" there.
+         if (getState() != WindowState.MAXIMIZE &&
+             getState() != WindowState.EXCLUSIVE)
+         {
+            normal_.maximize();
+         }
       }
       else if (event.getHeight() == EnsureHeightEvent.NORMAL)
       {
-         if (getState() != WindowState.NORMAL)
+         if (getState() == WindowState.EXCLUSIVE)
+         {
+            // While zoomed, the maximize gesture means "restore": the owner
+            // ends the zoom, or the default action's MAXIMIZE is remapped to
+            // NORMAL by onWindowStateChange.
+            normal_.maximize();
+         }
+         else if (getState() != WindowState.NORMAL)
+         {
             events_.fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+         }
       }
       else
       {
