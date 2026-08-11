@@ -11,8 +11,9 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 #   - Weekly cron (Sunday 08:00): every Linux x86_64 engine, for a full-matrix
 #     snapshot of that group.
 #   - Weekly cron (Sunday 12:00): every Linux arm64 engine. Four hours after the
-#     x86_64 run, so a daily-install fleet finishes well before the next one
-#     starts and the two don't contend for runners.
+#     x86_64 run so the two fleets' ubuntu-latest jobs (pick, resolve, and every
+#     engine's e2e-merge) don't pile up; their build and test jobs sit on disjoint
+#     runner pools and never compete. See the concurrency note below.
 #   - Weekly cron (Sunday 16:00): every macOS and Windows engine, of either
 #     architecture. Four hours after the Linux arm64 run, for the same reason.
 #   - Manual dispatch: every engine at once (all 21, every platform and
@@ -115,6 +116,7 @@ jobs:
       - id: pick
         name: Select engines for this run
         run: |
+          set -euo pipefail
           # workflow_dispatch runs every engine; each Sunday cron runs every
           # engine of one platform/architecture group; the weekday cron
           # (Mon-Fri) runs a fixed slate per day; the Friday afternoon cron
@@ -126,7 +128,8 @@ jobs:
           # three Sunday selections, and the Linux Desktop matrix. That is the
           # point of the array -- with one declaration, a newly added engine
           # cannot end up in none of the three Sunday runs or in more than one,
-          # which hand-maintained lists made easy to get wrong.
+          # which hand-maintained lists made easy to get wrong. The partition
+          # assertion below enforces that rather than leaving it to the reader.
           #
           # platform is "linux", "macos", or "windows", and only matters for
           # the Sunday selection below: the two Linux runs split by arch, but
@@ -182,6 +185,41 @@ jobs:
           # Every engine key. The Sunday branches below filter on platform and
           # arch together, which this can't express, so they inline their own jq.
           ALL=$(jq -cn --argjson e "$ENGINES" '[$e[] | .key]')
+
+          # The three Sunday filters must partition ENGINES exactly. They are bare
+          # select(...) filters, so an entry with a missing, misspelled or
+          # unrecognized platform matches none of them: it would silently drop out
+          # of every Sunday run while still appearing in ALL, so a dispatch would
+          # still cover it and nobody would notice for months. The groups cannot
+          # overlap by construction, which makes "the three counts sum to the whole"
+          # the same statement as "every engine is in exactly one".
+          jq -en --argjson e "$ENGINES" '
+            ([$e[] | select(.platform=="linux" and .arch=="x86_64")] | length)
+            + ([$e[] | select(.platform=="linux" and .arch=="arm64")]  | length)
+            + ([$e[] | select(.platform=="macos" or .platform=="windows")] | length)
+            == ($e | length)' >/dev/null || {
+            echo "::error::The three Sunday selections do not partition ENGINES. Every entry needs platform 'linux' with arch 'x86_64' or 'arm64', or platform 'macos' or 'windows'."
+            exit 1
+          }
+
+          # Every Linux Desktop engine must name a url_key the resolve job actually
+          # emits. This is the one field whose failure is silent: an unknown name
+          # makes needs.resolve.outputs[matrix.url_key] evaluate to '', and an empty
+          # rstudio_installer_url means "self-resolve the latest daily" to the
+          # engine -- so a version-pinned run would quietly install a different
+          # build and report the pinned version as tested. The "Verify a pinned
+          # version resolved for every platform" step below cannot catch it: that
+          # checks the action's own 13 outputs, never that an engine's url_key names
+          # one of them. The certification workflow carries the same check against
+          # its matrix file; keep both in step with the action's outputs.
+          RESOLVE_KEYS='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
+          BAD_KEYS=$(jq -cn --argjson e "$ENGINES" --argjson k "$RESOLVE_KEYS" \
+            '[$e[] | select(.os) | select((.url_key // "") as $u | ($k | index($u)) == null) | .key]')
+          if [ "$BAD_KEYS" != "[]" ]; then
+            echo "::error::Engine(s) in ENGINES have a missing or unrecognized url_key: $(jq -r 'join(", ")' <<<"$BAD_KEYS")."
+            echo "::error::Valid url_keys: $(jq -r 'join(", ")' <<<"$RESOLVE_KEYS")"
+            exit 1
+          fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SEL="$ALL"
           elif [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
@@ -223,6 +261,26 @@ jobs:
               *) echo "::error::No engine slate for weekday $(date -u +%u). If any Sunday cron changed, update the '0 8 * * 0', '0 12 * * 0', and '0 16 * * 0' checks in this job."; exit 1 ;;
             esac
           fi
+          # Nothing selected means every job below is skipped by its own if:, and
+          # the run reports green having tested nothing. The weekday case has its
+          # own loud fallback; the Sunday and Friday branches are bare filters and
+          # need this one.
+          if [ "$SEL" = "[]" ]; then
+            echo "::error::No engines selected for this trigger. Check the platform and arch tags in ENGINES against the filters in this step."
+            exit 1
+          fi
+
+          # A slate naming an engine that no longer exists fails the index($k)
+          # filter further down and silently drops it, so a three-engine weekday
+          # would quietly run two. Catch a stale key here instead.
+          UNKNOWN=$(jq -cn --argjson a "$ALL" --argjson s "$SEL" \
+            '[$s[] | select(. as $k | ($a | index($k)) == null)]')
+          if [ "$UNKNOWN" != "[]" ]; then
+            echo "::error::Selection names engine(s) not in ENGINES: $(jq -r 'join(", ")' <<<"$UNKNOWN")."
+            echo "::error::Valid engines: $(jq -r 'join(", ")' <<<"$ALL")"
+            exit 1
+          fi
+
           echo "selected=$SEL" >> "$GITHUB_OUTPUT"
           echo "::notice::Selected engines: $SEL"
 

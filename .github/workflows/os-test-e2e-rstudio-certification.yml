@@ -229,7 +229,7 @@ jobs:
                | select(.cell as $c | ($j | index($c)) == null) | .cell ]')
           if [ "$NO_JOB" != "[]" ]; then
             echo "::error::Selected cell(s) have no job to run them: $(jq -r 'join(", ")' <<<"$NO_JOB")."
-            echo "::error::A non-Linux cell needs a dedicated job in this workflow and an entry in JOB_BACKED."
+            echo "::error::A cell with no 'os' field needs a dedicated job in this workflow and an entry in JOB_BACKED."
             exit 1
           fi
 
@@ -531,12 +531,19 @@ jobs:
     if: always() && needs.pick.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      # One artifact per Linux Desktop cell, each holding two lines: the R version
-      # that cell installed, and that cell's own job status. The Linux cells run
-      # as a single matrix call, so neither fact is available as a job output --
-      # a matrix job collapses to one value. These artifacts are what let the
-      # table attribute both to the right cell, which is what stops one failing
-      # cell from being reported against every other cell in the matrix.
+      # Two artifacts per Linux Desktop cell, one fact each: the R version that
+      # cell installed, and that cell's own result. The Linux cells run as a single
+      # matrix call, so neither fact is available as a job output -- a matrix job
+      # collapses to one value. These artifacts are what let the table attribute
+      # both to the right cell, which is what stops one failing cell from being
+      # reported against every other cell in the matrix.
+      #
+      # They are separate artifacts, written by different jobs, on purpose. The
+      # version comes from a shard, because that is where R is installed; the
+      # result comes from the engine's merge job, because only a job downstream of
+      # the whole shard matrix can see whether every shard passed. They were once
+      # two lines of one file, which meant a job dying before the R install put its
+      # status on the version line.
       #
       # continue-on-error so a transient artifacts-API failure degrades the table
       # rather than losing it. The step id lets the table say which happened: a
@@ -549,6 +556,15 @@ jobs:
         with:
           pattern: r-version-linux-desktop-*
           path: r-versions
+
+      - name: Download per-cell results (Linux Desktop)
+        id: fetch_outcomes
+        if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: r-outcome-linux-desktop-*
+          path: r-outcomes
 
       - name: Write the certification table
         env:
@@ -563,8 +579,8 @@ jobs:
           # workflow output. The Linux cells can't: they run as one matrix call,
           # and a matrix job collapses to a single output value, so both their
           # version and their per-cell result arrive by artifact (downloaded
-          # above). RESULT_LINUX is only the fallback for a cell whose artifact
-          # is missing.
+          # above). RESULT_LINUX is only the fallback for a cell whose result
+          # artifact is missing.
           FETCH_OUTCOME: ${{ steps.fetch_versions.outcome }}
           ACTUAL_UBUNTU24S: ${{ needs.ubuntu24s.outputs.r_version_actual }}
           ACTUAL_MACOS26: ${{ needs.macos26.outputs.r_version_actual }}
@@ -595,24 +611,43 @@ jobs:
               return 0
             fi
             declared=$(jq -r --arg c "$cell" '.[$c]' <<<"$R_DECLARED")
-            [ -n "$actual" ] || actual="_not reached_"
+            # An empty version means one of two things, and they are not the same
+            # claim. A job that never ran cannot have installed R. A job that ran
+            # and still returned nothing had its output collapse across its shards
+            # (see the note above that output in each engine workflow) and may well
+            # have installed R and run the whole suite -- calling that "not reached"
+            # asserts something false about a cell that worked.
+            if [ -z "$actual" ]; then
+              case "$result" in
+                skipped|cancelled) actual="_not reached_" ;;
+                *)                 actual="_shard output collapsed_" ;;
+              esac
+            fi
             echo "| \`$cell\` | $declared | $actual | $result |" >> "$GITHUB_STEP_SUMMARY"
           }
 
-          # Linux cells: both the version and this cell's own result come from its
-          # artifact (line 1 and line 2), named for the engine's os, which is
-          # unique per cell. Falling back to the matrix-wide RESULT_LINUX only
-          # when the artifact is absent keeps one failing cell from being reported
-          # against the rest.
+          # Linux cells: the version and this cell's own result come from two
+          # artifacts, each named for the engine's os, which is unique per cell.
+          # Falling back to the matrix-wide RESULT_LINUX only when the result
+          # artifact is absent keeps one failing cell from being reported against
+          # the rest.
           if [ "$LINUX_MATRIX" != "[]" ]; then
             while IFS=$'\t' read -r cell os declared; do
               actual_file="r-versions/r-version-linux-desktop-${os}/r-version.txt"
+              outcome_file="r-outcomes/r-outcome-linux-desktop-${os}/r-outcome.txt"
+              # The engine's merge job wrote the aggregate over every shard, so a
+              # cell whose second shard failed reads failure here. Absent means
+              # this cell's own result is genuinely unknown -- the merge job was
+              # skipped, or the download failed -- and only then is the matrix-wide
+              # value the best available answer.
               result="$RESULT_LINUX"
+              if [ -r "$outcome_file" ]; then
+                cell_result=$(sed -n '1p' "$outcome_file" | tr -d '\r')
+                [ -z "$cell_result" ] || result="$cell_result"
+              fi
               if [ -r "$actual_file" ]; then
                 actual=$(sed -n '1p' "$actual_file" | tr -d '\r')
-                cell_result=$(sed -n '2p' "$actual_file" | tr -d '\r')
                 [ -n "$actual" ] || actual="_empty_"
-                [ -z "$cell_result" ] || result="$cell_result"
               elif [ "${FETCH_OUTCOME:-}" = "failure" ]; then
                 # The cells may well have run fine; the summary just could not
                 # read their artifacts. Do not imply they never reached R.

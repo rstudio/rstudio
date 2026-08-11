@@ -88,10 +88,13 @@ know:
   every platform. That failure is loud and lands in `resolve`, before any engine
   starts.
 
-The resolver builds all 13 platform URLs regardless of which cells are selected,
-and a pinned version must resolve for all of them. A one-cell run can therefore
-fail on an unrelated platform whose build is missing. Deliberate for now, since
-it fails loudly and diagnosably.
+The resolver attempts all 13 platform URLs regardless of which cells are
+selected, but resolution is best-effort: platform builds fail independently, so a
+platform nobody asked about warns rather than failing the run. What fails the run
+is a *selected* cell whose URL came back empty, which the `resolve` job's "Verify
+a pinned version resolved for every selected cell" step checks before any engine
+starts. So a Linux-only run is not held up by a missing Windows build, and a pin
+that resolved for nothing still fails loudly.
 
 ## What a run reports
 
@@ -105,15 +108,27 @@ Two routes carry the per-cell facts, because one alone can't cover both shapes:
 - The five non-Linux engines each return the version as a `workflow_call` output,
   and their result is their own job's result.
 - The Linux Desktop cells run as a single matrix call, and a matrix job collapses
-  to one output value for the whole matrix -- so each uploads a
-  `r-version-linux-desktop-<os>` artifact holding its version and its own job
-  status, which the summary attributes per cell. This is what stops one failing
-  cell from being reported against every other cell in the matrix.
+  to one output value for the whole matrix -- so each uploads two artifacts,
+  `r-version-linux-desktop-<os>` holding the R it installed and
+  `r-outcome-linux-desktop-<os>` holding its own result, which the summary
+  attributes per cell. This is what stops one failing cell from being reported
+  against every other cell in the matrix. Two artifacts from two jobs, because the
+  version is known inside a shard (where R is installed) while the result is only
+  known downstream of the whole shard matrix: a cell whose second shard failed has
+  failed, and no value available inside shard 1 can say so.
 
-Three distinguishable gaps in that column: `_not reached_` when a cell has no
-artifact because it never got as far as installing R, `_summary could not fetch_`
-when the artifact download itself failed (the cells may have been fine), and
-`_empty_` when the artifact exists but holds nothing.
+Four distinguishable gaps in that column:
+
+- `_not reached_` -- the cell never got as far as installing R. On a Linux cell
+  that means no artifact at all; on one of the five job-backed cells it means the
+  job was skipped or cancelled, so no shard ran.
+- `_summary could not fetch_` -- the artifact download itself failed. The cells may
+  well have been fine.
+- `_empty_` -- a Linux cell's version artifact exists but holds nothing.
+- `_shard output collapsed_` -- one of the five job-backed cells ran but returned
+  no version, because its output is a single value for a whole shard matrix. Not
+  the same as never having installed R, and deliberately not reported as such: such
+  a cell may have run the entire suite.
 
 The installed R version also appears on every E2E job's own summary page, written
 by `.github/actions/os-e2e-deps` for all callers rather than just this one.

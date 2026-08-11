@@ -338,12 +338,14 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
-    # Matrix job outputs are last-writer-wins. Every shard that reaches the deps
-    # step installs the same R, so which of those writes last does not matter --
-    # but a shard failing earlier writes an empty value, and if it finishes last
-    # the output is empty for a cell that did run. Callers reading this should
-    # treat empty as "unknown", not as "no R was installed". The Linux engine
-    # sidesteps it by uploading an artifact from shard 1 instead.
+    # This job is a shard matrix, so this is one output value for the whole matrix
+    # rather than one per shard. Every shard that reaches the deps step installs
+    # the same R, so the value is the same wherever it comes from -- but which
+    # shard supplies it is not something to depend on, and a shard that never
+    # reached that step supplies nothing. The output can therefore be empty for an
+    # engine that did install R and did run the suite. Callers must treat empty as
+    # "unknown", never as "no R was installed". The Linux engine sidesteps this by
+    # uploading per-engine artifacts instead.
     outputs:
       r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     strategy:

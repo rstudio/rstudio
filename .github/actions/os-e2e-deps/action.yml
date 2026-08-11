@@ -207,11 +207,16 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        # Read Makeconf rather than asking `R CMD config OBJCXX`: that prints
-        # "ERROR: no information for variable 'OBJCXX'" to *stdout* and exits 0,
-        # even on an R whose Makeconf defines OBJCXX perfectly well. A guard built
-        # on it therefore always sees non-empty output, always concludes the
-        # variable is present, and never fills the gap it exists to fill.
+        # Read Makeconf rather than asking `R CMD config OBJCXX`: that command
+        # answers only for the variables on its own known list, and OBJCXX is not
+        # one of them. On an R whose Makeconf defines OBJCXX perfectly well
+        # (verified on 4.6.1, where it is `clang++ -arch arm64 -std=gnu++20`) it
+        # prints "ERROR: no information for variable 'OBJCXX'" to *stdout* and
+        # exits 1. So it cannot answer this question either way: its output is
+        # non-empty whether or not the variable is set, and its exit status is
+        # nonzero whether or not the variable is set. Under the set -e above, a
+        # guard written as CURRENT=$(R CMD config OBJCXX) aborts this step rather
+        # than reaching any conclusion at all.
         MAKECONF="$(Rscript --vanilla -e 'cat(R.home("etc"))')/Makeconf"
         CURRENT=$(sed -n 's/^OBJCXX[[:space:]]*=[[:space:]]*//p' "$MAKECONF" | head -1)
         if [ -n "$CURRENT" ]; then
@@ -261,13 +266,21 @@ runs:
         SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
         cat > "$SCRIPT" <<'EOF'
         options(repos = c(P3M = Sys.getenv("PKG_REPO")))
-        # pak comes from its own repository rather than PKG_REPO. PPM does not
-        # carry a pak binary for every platform and R combination it serves --
-        # macOS x86_64 on R 4.4.3 has none, and install.packages() there reports
-        # the misleading "package 'pak' is not available for this version of R",
-        # when in fact pak declares only R >= 3.5. Its own repo publishes a binary
-        # per platform and R version, and the URL is built from the running
-        # session, which is the method pak's own install instructions give.
+        # pak comes from its own repository rather than PKG_REPO. PPM's pak
+        # coverage varies by platform and R series, and it moves: a certification
+        # cell installing an older R hit a PPM index carrying no pak at all (as of
+        # 2026-08), where install.packages() reports the misleading "package 'pak'
+        # is not available for this version of R" even though pak declares only
+        # R >= 3.5. Treat no particular gap as permanent -- check the index before
+        # concluding this line has stopped being necessary.
+        #
+        # pak's own repository is keyed on the running session's pkgType, os and
+        # arch, not on an R version: each of those triples publishes a build
+        # carrying its own R-series bound, so the URL below always lands on a build
+        # for the R that is running. This is the install line pak's own README
+        # gives. pak documents support back to R 4.1.0 on macOS arm64 and R 3.5.0
+        # on macOS x86_64, Linux and Windows, which covers every cell in
+        # .github/e2e-certification/matrix.json.
         if (!requireNamespace("pak", quietly = TRUE))
           install.packages("pak", repos = sprintf(
             "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
