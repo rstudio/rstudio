@@ -26,6 +26,14 @@ inputs:
       needed, so every output is empty. Overrides version.
     required: false
     default: "false"
+  manifest_url:
+    description: >-
+      URL of the dailies manifest to read, from
+      .github/actions/os-resolve-daily-manifest. Required, with no default on
+      purpose: defaulting it would let a caller silently fall back to the
+      /rstudio/latest alias, whose index.json lags a branch rollover and once
+      had CI installing a Yellow Yarrow binary against main's tests (#18498).
+    required: true
 
 outputs:
   rhel10_x86_64:
@@ -77,6 +85,7 @@ runs:
       env:
         VERSION: ${{ inputs.version }}
         BUILD_FROM_SOURCE: ${{ inputs.build_from_source }}
+        MANIFEST_URL: ${{ inputs.manifest_url }}
       run: |
         # Emit empty URLs when building from source (engines build, ignoring
         # any URL) or when no version is given (engines self-resolve the
@@ -102,15 +111,30 @@ runs:
           echo "No installer URLs to resolve (building from source or using the latest daily)."
           exit 0
         fi
-        M=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+        M=$(curl -fsSL --retry 3 --retry-delay 5 "$MANIFEST_URL")
+
         REQ=${VERSION//+/-}
+        # The whole version token is replaced, not just the build number, so the
+        # channel marker and build both come from the version asked for. That is
+        # what makes a stale manifest entry harmless: a platform still listed at
+        # 2026.08.0-daily+186 resolves correctly for a requested 2026.08.0+187,
+        # because "2026.08.0-daily-186" is swapped out wholesale rather than
+        # edited in place.
+        #
+        # This briefly looked broken against the autumn-hawkbit manifest, whose
+        # version field read 2026.09.0.0-daily+11 while its filenames carried
+        # 2026.09.0-daily-11 -- so the token was not in the URL and every pin
+        # tripped the guard below. That was upstream's CALENDAR_VERSION bug
+        # (#18492: "2026.09.0" where "2026.09" was meant, giving a four-part
+        # version), not a fault here, and the same bug is what broke Windows
+        # signing on main. Fixed there; nothing to work around here.
         emit() {
           local product="$1" key="$2" link ver cur
           link=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].link // empty")
           ver=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].version // empty")
           cur=${ver//+/-}
           if [ -z "$link" ] || [ -z "$cur" ]; then
-            echo "::error::Could not build a URL for ${product}/${key} from the latest manifest." >&2
+            echo "::error::Could not build a URL for ${product}/${key} from $MANIFEST_URL." >&2
             return 1
           fi
           local out=${link//$cur/$REQ}
@@ -124,25 +148,60 @@ runs:
           fi
           printf '%s' "$out"
         }
-        # Every emit is fatal on purpose. A missing key yields an empty
-        # output, and an empty rstudio_installer_url means "self-resolve the
-        # latest daily" to the engines downstream -- so a non-fatal emit would
-        # let a version-pinned run quietly test the latest daily instead of
-        # the version asked for. Failing the job is the only way a pin can't
-        # be silently ignored.
-        RHEL10_X86=$(emit electron rhel10-x86_64) || exit 1
-        RHEL10_ARM=$(emit electron rhel10-arm64) || exit 1
-        RHEL9_X86=$(emit electron rhel9-x86_64) || exit 1
-        RHEL9_ARM=$(emit electron rhel9-arm64) || exit 1
-        NOBLE_X86=$(emit electron noble-amd64) || exit 1
-        NOBLE_ARM=$(emit electron noble-arm64) || exit 1
-        JAMMY_X86=$(emit electron jammy-amd64) || exit 1
-        JAMMY_ARM=$(emit electron jammy-arm64) || exit 1
-        RESOLUTE_X86=$(emit electron resolute-amd64) || exit 1
-        RESOLUTE_ARM=$(emit electron resolute-arm64) || exit 1
-        MAC=$(emit electron macos) || exit 1
-        WIN=$(emit electron windows) || exit 1
-        SERVER=$(emit server noble-amd64) || exit 1
+        # A platform that cannot be resolved yields an empty output, and an empty
+        # rstudio_installer_url means "self-resolve the latest daily" to the
+        # engines downstream -- so an unnoticed empty would let a version-pinned
+        # run quietly test something other than the version asked for. That must
+        # never pass silently.
+        #
+        # It does not follow that every platform has to resolve. Platform builds
+        # fail independently: the first Autumn Hawkbit Windows build failed, so
+        # that branch's manifest lists eleven platforms and no windows, while
+        # Yellow Yarrow's lists twelve. Under an all-or-nothing rule that one
+        # failure blocks every pinned run, including Linux-only ones that never
+        # touch Windows.
+        #
+        # So resolution is best-effort here and the *caller* decides what it
+        # needs: it knows which cells are selected, and fails the run if any of
+        # those came back empty (see the certification workflow's "Verify a
+        # pinned version resolved for every selected cell" step). Each failure is
+        # still reported, so nothing is hidden -- it is only no longer fatal for a
+        # platform nobody asked about.
+        #
+        # A caller that genuinely needs all of them, like the full-matrix Sunday
+        # rotation, gets the same guarantee by checking its own selection.
+        # emit() prints the URL on success and nothing on failure, so an empty
+        # variable is the failure signal. `|| true` because this step runs under
+        # bash -e; without it the first unresolvable platform would abort, which
+        # is the all-or-nothing behaviour being removed.
+        #
+        # Which platforms failed is worked out afterwards, from the values. An
+        # earlier version had the wrapper append to a FAILED list, which silently
+        # did nothing: command substitution runs in a subshell, so the assignment
+        # never reached the parent.
+        RHEL10_X86=$(emit electron rhel10-x86_64 || true)
+        RHEL10_ARM=$(emit electron rhel10-arm64 || true)
+        RHEL9_X86=$(emit electron rhel9-x86_64 || true)
+        RHEL9_ARM=$(emit electron rhel9-arm64 || true)
+        NOBLE_X86=$(emit electron noble-amd64 || true)
+        NOBLE_ARM=$(emit electron noble-arm64 || true)
+        JAMMY_X86=$(emit electron jammy-amd64 || true)
+        JAMMY_ARM=$(emit electron jammy-arm64 || true)
+        RESOLUTE_X86=$(emit electron resolute-amd64 || true)
+        RESOLUTE_ARM=$(emit electron resolute-arm64 || true)
+        MAC=$(emit electron macos || true)
+        WIN=$(emit electron windows || true)
+        SERVER=$(emit server noble-amd64 || true)
+        FAILED=""
+        for pair in \
+          "rhel10_x86_64=$RHEL10_X86" "rhel10_arm64=$RHEL10_ARM" \
+          "rhel9_x86_64=$RHEL9_X86" "rhel9_arm64=$RHEL9_ARM" \
+          "noble_amd64=$NOBLE_X86" "noble_arm64=$NOBLE_ARM" \
+          "jammy_amd64=$JAMMY_X86" "jammy_arm64=$JAMMY_ARM" \
+          "resolute_amd64=$RESOLUTE_X86" "resolute_arm64=$RESOLUTE_ARM" \
+          "macos=$MAC" "windows=$WIN" "server_noble=$SERVER"; do
+          [ -n "${pair#*=}" ] || FAILED="$FAILED ${pair%%=*}"
+        done
         {
           echo "rhel10_x86_64=$RHEL10_X86"
           echo "rhel10_arm64=$RHEL10_ARM"
@@ -158,4 +217,7 @@ runs:
           echo "windows=$WIN"
           echo "server_noble=$SERVER"
         } >> "$GITHUB_OUTPUT"
+        if [ -n "$FAILED" ]; then
+          echo "::warning::No installer URL for version $VERSION on:$FAILED. Their outputs are empty; a caller that needs one of these must fail rather than let an engine self-resolve a different build."
+        fi
         echo "Resolved URLs for version $VERSION."

@@ -1,0 +1,62 @@
+name: "Resolve daily build manifest URL"
+description: >
+  Build the URL of the dailies.rstudio.com JSON manifest for the release branch
+  this checkout is on, so the installer CI downloads matches the tests checked
+  out beside it.
+
+  Do not use the /rstudio/latest alias for this. That alias is generated
+  separately from the per-branch manifests, and its index.json can lag a branch
+  rollover by days: after the 2026.08 branch cut, /rstudio/latest/ served
+  Autumn Hawkbit (2026.09) as a web page while /rstudio/latest/index.json still
+  named a Yellow Yarrow (2026.08) build. CI reads the JSON, so the scheduled
+  e2e rotation installed a 2026.08 binary and ran main's tests against it --
+  every test covering behavior added after the cut failed on every platform
+  (#18498). A manifest named after its own branch cannot be mis-pointed that
+  way.
+
+  The path segment is the "flower" name: version/RELEASE, lowercased, with
+  spaces turned into hyphens. docker/jenkins/publish-build.sh derives it the
+  same way when it publishes a build, and writes the manifest under it, so the
+  reader and the writer stay in step.
+
+  Requires the repository to be checked out, because version/RELEASE is read
+  from the workspace. Computes a URL and makes no network request, so it is
+  safe to run in a job that turns out not to need a manifest.
+
+outputs:
+  flower:
+    description: 'Release branch slug taken from version/RELEASE, e.g. "autumn-hawkbit".'
+    value: ${{ steps.resolve.outputs.flower }}
+  manifest-url:
+    description: "URL of the daily build manifest for this branch."
+    value: ${{ steps.resolve.outputs.manifest-url }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: resolve
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if [ ! -e version/RELEASE ]; then
+          echo "::error::version/RELEASE not found. Check out the repository before this action."
+          exit 1
+        fi
+
+        # Same derivation as flower() in docker/jenkins/rstudio-version.sh,
+        # which is the name publish-build.sh writes the manifest under.
+        FLOWER=$(tr ' ' '-' < version/RELEASE | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+
+        # A flower name is one path segment. Rejecting anything else stops a
+        # malformed version/RELEASE from resolving to some other object on the
+        # dailies host instead of failing.
+        if ! printf '%s' "$FLOWER" | grep -qE '^[a-z0-9][a-z0-9-]*$'; then
+          echo "::error::version/RELEASE does not yield a usable manifest path segment (got '$FLOWER')."
+          exit 1
+        fi
+
+        MANIFEST_URL="https://dailies.rstudio.com/rstudio/$FLOWER/index.json"
+        echo "flower=$FLOWER"             >> "$GITHUB_OUTPUT"
+        echo "manifest-url=$MANIFEST_URL" >> "$GITHUB_OUTPUT"
+        echo "Daily manifest for '$FLOWER': $MANIFEST_URL"

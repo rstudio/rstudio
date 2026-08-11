@@ -31,6 +31,10 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # (see rstudio/latest-builds#251). Manual dispatch can instead build every
 # engine from source via build_from_source.
 #
+# Either way the daily comes from the manifest for the branch this workflow is
+# checked out on, never the /rstudio/latest alias -- see
+# .github/actions/os-resolve-daily-manifest for why (#18498).
+#
 # Cron times are UTC: 08:00 UTC is 4 AM EDT in summer, 3 AM EST in winter;
 # 12:00 UTC is 8 AM EDT / 7 AM EST; 16:00 UTC is noon EDT / 11 AM EST.
 #
@@ -256,15 +260,50 @@ jobs:
       windows:        ${{ steps.resolve.outputs.windows }}
       server_noble:   ${{ steps.resolve.outputs.server_noble }}
     steps:
-      # The composite action lives in this repo, so it has to be on disk before
-      # it can be used. Nothing else in this job needs the checkout.
+      # version/RELEASE names the branch whose daily manifest the URLs below
+      # come from, so this job needs the repository -- and the composite actions
+      # live here too, so they have to be on disk before they can be used.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - id: resolve
         name: Build per-platform installer URLs for a specific version
         uses: ./.github/actions/os-resolve-daily-urls
         with:
           version: ${{ inputs.version }}
           build_from_source: ${{ inputs.build_from_source }}
+          manifest_url: ${{ steps.manifest.outputs.manifest-url }}
+
+      # The resolve action is best-effort per platform, because platform builds
+      # fail independently and one failure should not block a run that never
+      # touches that platform. The cost of that is a caller now has to say what
+      # it needs -- an empty rstudio_installer_url means "self-resolve the latest
+      # daily" to an engine, so an unnoticed empty is a pinned run quietly
+      # testing something else.
+      #
+      # This workflow's dispatch runs every engine, so it needs every platform.
+      # Checked here rather than left to each engine because failing once, before
+      # any runner is provisioned, beats failing 21 times.
+      - name: Verify a pinned version resolved for every platform
+        if: ${{ inputs.version != '' && !inputs.build_from_source }}
+        env:
+          URLS: ${{ toJSON(steps.resolve.outputs) }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          MISSING=$(jq -rn --argjson u "$URLS" \
+            '[$u | to_entries[] | select((.value // "") == "") | .key] | join(", ")')
+          if [ -n "$MISSING" ]; then
+            echo "::error::Version '$VERSION' produced no installer URL for: $MISSING."
+            echo "::error::A dispatch runs every engine, so every platform must resolve. Those engines would otherwise silently fall back to the latest daily."
+            exit 1
+          fi
+          echo "::notice::All platforms have an installer URL for $VERSION."
 
   # Every selected Linux Desktop engine, one matrix entry each, through the
   # consolidated Linux workflow. The matrix is built (already filtered to the

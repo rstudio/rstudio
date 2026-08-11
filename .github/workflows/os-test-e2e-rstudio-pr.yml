@@ -11,6 +11,14 @@ on:
       - "e2e/rstudio/**"
       - ".github/actions/os-e2e-deps/**"
       - ".github/actions/os-publish-e2e-report/**"
+      - ".github/actions/os-resolve-daily-manifest/**"
+      - ".github/actions/os-resolve-daily-urls/**"
+      # version/RELEASE picks which branch's daily every platform resolves, so
+      # a change to it changes the binary under test. A flower with no daily
+      # yet resolves to a source build via decide(), which is the answer we
+      # want to see proven on the PR that renames it rather than in the next
+      # cron rotation.
+      - "version/RELEASE"
       - ".github/workflows/os-test-e2e-rstudio-pr.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml"
       - ".github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml"
@@ -55,8 +63,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - name: Decide build-from-source vs daily (per platform)
         id: check
+        env:
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
           CHANGED=$(git diff --name-only "$BASE" HEAD)
@@ -79,7 +93,7 @@ jobs:
           # build from source. A non-200 response or a body that doesn't parse
           # as JSON is normalized to empty so decide() treats it as unreachable
           # rather than letting a later jq error abort this step.
-          MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json' || echo '')
+          MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 "$MANIFEST_URL" || echo '')
           if [ -n "$MANIFEST" ] && ! echo "$MANIFEST" | jq empty 2>/dev/null; then
             echo "Daily manifest did not parse as JSON -- treating as unreachable"
             MANIFEST=""

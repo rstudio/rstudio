@@ -1,6 +1,12 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { getSelectionInfo } from '@utils/console';
+import {
+  getConsoleCursorPosition,
+  getConsoleScreenRowCount,
+  getConsoleSelectedText,
+  getSelectionInfo,
+  setConsoleInput,
+} from '@utils/console';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { waitForConsoleFocus } from '@pages/console_pane.page';
 
@@ -55,6 +61,56 @@ test.describe('Console pane', () => {
     // into the next test's input and becomes a parse error.
     await page.keyboard.press('Escape');
     await expect.poll(readInput).toBe('');
+  });
+
+  // The console is a command line, so the ends of a soft-wrapped command --
+  // not the ends of a wrapped visual row -- are what Home / End should reach.
+  // Ace's stock behavior stranded the cursor at the wrap boundary (#18447).
+  test.describe('line navigation over a soft-wrapped command', () => {
+    // Long enough to wrap at any plausible console width.
+    const command = `x <- c(${Array.from({ length: 80 }, (_, i) => i + 1).join(', ')})`;
+
+    test.beforeEach(async ({ rstudioPage: page }) => {
+      await consoleActions.consolePane.consoleInput.click({ force: true });
+      await waitForConsoleFocus(page);
+      await setConsoleInput(page, command);
+
+      // Everything below is vacuously true unless the input really wrapped.
+      expect(await getConsoleScreenRowCount(page)).toBeGreaterThan(1);
+    });
+
+    // Key presses go through the console-input locator, not page.keyboard:
+    // pressing on the focused element is racy, since focus can shift between
+    // setConsoleInput's editor.focus() and the key press (see the same
+    // pattern in ConsolePaneActions.executeInConsole).
+    test.afterEach(async () => {
+      // Leave the input empty; a leftover command would be submitted by the
+      // next test's Enter and show up as a parse error.
+      await consoleActions.consolePane.consoleInput.press('Escape');
+      await expect.poll(() => consoleActions.consolePane.consoleInputValue()).toBe('');
+    });
+
+    test('Home and End reach the ends of the whole command', async ({ rstudioPage: page }) => {
+      await consoleActions.consolePane.consoleInput.press('Home');
+      await expect.poll(() => getConsoleCursorPosition(page)).toEqual({ row: 0, column: 0 });
+
+      await consoleActions.consolePane.consoleInput.press('End');
+      await expect
+        .poll(() => getConsoleCursorPosition(page))
+        .toEqual({ row: 0, column: command.length });
+    });
+
+    test('Shift+Home and Shift+End select to the ends of the whole command', async ({
+      rstudioPage: page,
+    }) => {
+      // Cursor starts at the end of the command, so this selects all of it.
+      await consoleActions.consolePane.consoleInput.press('Shift+Home');
+      await expect.poll(() => getConsoleSelectedText(page)).toBe(command);
+
+      await consoleActions.consolePane.consoleInput.press('Home');
+      await consoleActions.consolePane.consoleInput.press('Shift+End');
+      await expect.poll(() => getConsoleSelectedText(page)).toBe(command);
+    });
   });
 
   test('timestamp() adds an entry to console history', async ({ rstudioPage: page }) => {

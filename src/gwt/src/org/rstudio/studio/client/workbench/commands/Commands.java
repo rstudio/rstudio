@@ -171,6 +171,11 @@ public abstract class
    public abstract AppCommand splitIntoLines();
    public abstract AppCommand editLinesFromStart();
    public abstract AppCommand toggleDocumentOutline();
+   public abstract AppCommand splitEditorRight();
+   public abstract AppCommand splitEditorDown();
+   public abstract AppCommand removeEditorSplit();
+   public abstract AppCommand toggleEditorSplit();
+   public abstract AppCommand focusOtherEditorSplit();
    public abstract AppCommand expandSelection();
    public abstract AppCommand shrinkSelection();
    public abstract AppCommand goToNextSection();

@@ -323,15 +323,27 @@ jobs:
       windows:        ${{ steps.resolve.outputs.windows }}
       server_noble:   ${{ steps.resolve.outputs.server_noble }}
     steps:
-      # The composite action lives in this repo, so it has to be on disk before
-      # it can be used. Nothing else in this job needs the checkout.
+      # version/RELEASE names the branch whose daily manifest the URLs come from,
+      # so this job needs the repository -- and the composite actions live here
+      # too, so they have to be on disk before they can be used.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # Which manifest: the one for this branch, never the /rstudio/latest alias.
+      # Computes a URL and makes no network request, so it is safe to run ahead of
+      # the resolve step even when nothing turns out to be pinned.
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - id: resolve
         name: Build per-platform installer URLs for a specific version
         uses: ./.github/actions/os-resolve-daily-urls
         with:
           version: ${{ inputs.version }}
           build_from_source: ${{ inputs.build_from_source }}
+          manifest_url: ${{ steps.manifest.outputs.manifest-url }}
 
       # A pinned version that produced no URL for a cell in this run must stop
       # the run, because an empty rstudio_installer_url means "self-resolve the
