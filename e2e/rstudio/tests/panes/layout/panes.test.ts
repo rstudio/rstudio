@@ -16,6 +16,9 @@ const TABSET2_PANE = '#rstudio_TabSet2_pane';
 const CONSOLE_PANE = '#rstudio_Console_pane';
 const SOURCE_PANE = '#rstudio_Source_pane';
 const SOURCE1_PANE = '#rstudio_Source1_pane';
+// Any additional source column, whatever number its pane id carries; the main
+// Source pane (#rstudio_Source_pane) is excluded.
+const EXTRA_SOURCE_COLUMN_PANES = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
 const SOURCE2_PANE = '#rstudio_Source2_pane';
 const SOURCE3_PANE = '#rstudio_Source3_pane';
 const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
@@ -1182,20 +1185,27 @@ test.describe('Pane and column management', () => {
   // the same clearForRefresh + initialize rebuild as addLeftWidget, so closing
   // a source column undraws a zoom too and must end the bookkeeping with it.
   test('Closing a source column while a pane is zoomed ends the zoom (#18448)', async ({ rstudioPage: page }) => {
+    // Match the added column by shape, not by number: SourceColumnManager's
+    // column counter only ever climbs within a client session (it restarts at 1
+    // on a UI reload), so which SourceN a fresh column gets depends on what ran
+    // before this test.
+    const extraColumn = page.locator(EXTRA_SOURCE_COLUMN_PANES);
+    await expect(extraColumn, 'precondition: no extra source column to start').toHaveCount(0);
+
     await executeCommand(page, 'newSourceColumn');
-    await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+    await expect(extraColumn).toHaveCount(1, { timeout: 10000 });
 
     try {
       // Make the new column the active one before zooming: the zoom collapses
       // it to zero width, and a click on a zero-width pane never lands.
       // closeSourceDoc then targets its auto-created Untitled, whose close
       // removes the column.
-      await page.locator(SOURCE1_PANE).click();
+      await extraColumn.click();
 
       await zoomConsolePane(page);
 
       await executeCommand(page, 'closeSourceDoc');
-      await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+      await expect(extraColumn).toHaveCount(0, { timeout: 10000 });
 
       await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
       expect(
@@ -1222,10 +1232,10 @@ test.describe('Pane and column management', () => {
       });
     } finally {
       // The body closes the column; clean up only when it failed before that.
-      if (await elementExists(page, SOURCE1_PANE)) {
-        await page.locator(SOURCE1_PANE).click();
+      if ((await extraColumn.count()) > 0) {
+        await extraColumn.click();
         await executeCommand(page, 'closeSourceDoc');
-        await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+        await expect(extraColumn).toHaveCount(0, { timeout: 10000 });
       }
     }
   });
