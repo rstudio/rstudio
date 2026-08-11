@@ -1,10 +1,11 @@
 // The Viewer's "maximize" height request is the one live producer of
-// EnsureHeightEvent.MAXIMIZED, which LogicalWindow now routes through
-// WindowFrame.maximize() so PaneManager's zoom bookkeeping can intercept it
+// EnsureHeightEvent.MAXIMIZED, which LogicalWindow now absorbs on a zoomed
+// (EXCLUSIVE) window instead of firing at the quadrant state machine
 // (#18448). Nothing else in the suite drives that event: the tab tests fire
-// window state changes directly. These are regression guards on the routing --
+// window state changes directly. These are regression guards on that change --
 // the maximize must still reach the quadrant when nothing is zoomed, and must
-// not corrupt a zoom when one is active.
+// not corrupt a zoom when one is active. The sidebar-hosted variant lives in
+// panes.test.ts, which owns the Pane Layout dialog helpers it needs.
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';

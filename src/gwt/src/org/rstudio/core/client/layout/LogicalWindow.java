@@ -137,30 +137,34 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    @Override
    public void onEnsureHeight(EnsureHeightEvent event)
    {
-      // Route the MAXIMIZED and NORMAL conversions through the frame's
-      // maximize action rather than firing state changes at this window
-      // directly. Firing directly bypasses the owner's zoom bookkeeping
-      // (PaneManager), which leaves a pane zoom tracked while the layout no
-      // longer shows one, and a stale zoom re-zooms the next pane that raises
-      // itself (#18448). An unhooked frame's maximize() falls back to the
-      // default action, which reaches the same state changes as before.
+      // EXCLUSIVE means an owner (PaneManager) has this window zoomed. The
+      // conversions below must not fire state changes at a zoomed window:
+      // that drives the quadrant state machine while the zoom bookkeeping
+      // still points here, and stale bookkeeping re-zooms the next pane that
+      // raises itself (#18448). A MAXIMIZED request on an EXCLUSIVE window is
+      // already satisfied -- it fills the window. A NORMAL request means
+      // un-zoom, which is what the frame's maximize gesture does while
+      // zoomed, so route it there and let the owner end the zoom (an
+      // unhooked frame's default action is remapped EXCLUSIVE + MAXIMIZE ->
+      // NORMAL by onWindowStateChange, preserving the old behavior).
+      //
+      // Non-EXCLUSIVE windows keep the direct conversions. In particular,
+      // MAXIMIZED must not route through the frame's maximize action: an
+      // ensure-height is a vertical request, but the sidebar's maximize
+      // action is a horizontal column zoom (layoutZoomSidebar), so e.g. a
+      // Viewer preview in the sidebar would collapse every other column.
       if (event.getHeight() == EnsureHeightEvent.MAXIMIZED)
       {
-         // EXCLUSIVE already fills the window, so the height request is
-         // satisfied; the frame's maximize gesture would mean "restore" there.
          if (getState() != WindowState.MAXIMIZE &&
              getState() != WindowState.EXCLUSIVE)
          {
-            normal_.maximize();
+            events_.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
          }
       }
       else if (event.getHeight() == EnsureHeightEvent.NORMAL)
       {
          if (getState() == WindowState.EXCLUSIVE)
          {
-            // While zoomed, the maximize gesture means "restore": the owner
-            // ends the zoom, or the default action's MAXIMIZE is remapped to
-            // NORMAL by onWindowStateChange.
             normal_.maximize();
          }
          else if (getState() != WindowState.NORMAL)
