@@ -41,9 +41,11 @@ namespace system {
  * a concurrent getenv walks it without locking, so unsynchronized cross-thread
  * access can dereference a freed array (see rstudio-pro#4628, #10756). Take
  * this lock around any direct ::getenv / ::setenv / ::unsetenv / environ
- * access; the core::system environment accessors take it internally. Direct
- * environment reads made by third-party code (libc internals, R) cannot be
- * covered.
+ * access; the core::system environment accessors take it internally. Code
+ * that touches the environment without taking this lock is not serialized --
+ * neither third-party reads (libc internals) nor third-party writes (R's
+ * Sys.setenv calls ::setenv directly and can reallocate environ under a
+ * locked reader) -- so the race is closed only among RStudio's own callers.
  *
  * On Windows the Get/SetEnvironmentVariable APIs already serialize
  * internally; the lock is provided there for uniform cross-platform semantics
