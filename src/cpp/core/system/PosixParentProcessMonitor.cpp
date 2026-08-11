@@ -84,19 +84,27 @@ Error wrapFork(boost::function<void()> func)
    return Success();
 }
 
+std::pair<int, int> parentTerminationFds()
+{
+   return std::make_pair(getFdEnv("RS_PPM_FD_READ", -1),
+                         getFdEnv("RS_PPM_FD_WRITE", -1));
+}
+
 ParentTermination waitForParentTermination()
 {
-   int fds[2];
-   fds[0] = getFdEnv("RS_PPM_FD_READ", -1);
-   fds[1] = getFdEnv("RS_PPM_FD_WRITE", -1);
+   std::pair<int, int> fds = parentTerminationFds();
+   return waitForParentTermination(fds.first, fds.second);
+}
 
-   if (fds[0] < 0 || fds[1] < 0)
+ParentTermination waitForParentTermination(int readFd, int writeFd)
+{
+   if (readFd < 0 || writeFd < 0)
       return ParentTerminationNoParent;
 
-   ::close(fds[1]);
+   ::close(writeFd);
 
    char buf[256];
-   int result = ::read(fds[0], buf, 256);
+   int result = ::read(readFd, buf, 256);
 
    if (result == 0)
       return ParentTerminationAbnormal;

@@ -428,6 +428,13 @@ void logConfigReloadThreadFunc(sigset_t waitMask)
 
 void initializeLogConfigReload()
 {
+   // initializeLog can run more than once in a process (e.g. desktop mode
+   // re-initializes logging with the user log path); only ever start one
+   // reload thread, since each one would react to the same SIGHUP
+   static bool s_initialized = false;
+   if (s_initialized)
+      return;
+
    // block the SIGHUP signal
    sigset_t waitMask;
    sigemptyset(&waitMask);
@@ -439,6 +446,7 @@ void initializeLogConfigReload()
 
    // start a thread to handle the SIGHUP signal
    boost::thread thread(boost::bind(logConfigReloadThreadFunc, waitMask));
+   s_initialized = true;
 }
 
 
@@ -563,7 +571,16 @@ Error SignalBlocker::blockAll()
    // create mask to block all signals
    sigset_t blockMask;
    sigfillset(&blockMask);
-   
+
+   // leave synchronous fault signals unblocked: they are always delivered
+   // to the faulting thread, so blocking them cannot route them elsewhere.
+   // it only makes the kernel bypass any installed crash handler and kill
+   // the process with no diagnostics (see #10756)
+   sigdelset(&blockMask, SIGSEGV);
+   sigdelset(&blockMask, SIGBUS);
+   sigdelset(&blockMask, SIGILL);
+   sigdelset(&blockMask, SIGFPE);
+
    // block
    return pImpl_->block(&blockMask);
 }
