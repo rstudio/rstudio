@@ -25,6 +25,7 @@
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
+#include <shared_core/system/EnvironmentLock.hpp>
 #include <shared_core/system/User.hpp> // For detail::getenv
 
 namespace rstudio {
@@ -43,6 +44,8 @@ bool optionIsNamed(const Option& option, const std::string& name)
 
 void environment(Options* pEnvironment)
 {
+   EnvironmentLock lock;
+
    // get all environment strings (as unicode)
    LPWSTR lpEnv = ::GetEnvironmentStringsW();
    if (lpEnv == nullptr)
@@ -81,17 +84,23 @@ void environment(Options* pEnvironment)
 // Value returned is UTF-8 encoded
 std::string getenv(const std::string& name)
 {
+   // no EnvironmentLock here: detail::getenv takes it, and the lock is
+   // not recursive
    return detail::getenv(name);
 }
 
 void setenv(const std::string& name, const std::string& value)
 {
+   EnvironmentLock lock;
+
    ::SetEnvironmentVariableW(string_utils::utf8ToWide(name).c_str(),
                              string_utils::utf8ToWide(value).c_str());
 }
 
 void unsetenv(const std::string& name)
 {
+   EnvironmentLock lock;
+
    ::SetEnvironmentVariable(name.c_str(), nullptr);
 }
 

@@ -22,6 +22,8 @@
 #include <boost/assert.hpp>
 
 #include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/EnvironmentLock.hpp>
+
 #include <core/Log.hpp>
 
 namespace rstudio {
@@ -34,12 +36,16 @@ std::vector<int> s_writeOnExit;
 
 int setFdEnv(std::string name, int val)
 {
+   core::system::EnvironmentLock lock;
+
    std::string strVal = safe_convert::numberToString(val);
-   return ::setenv(name.c_str(), strVal.c_str(), strVal.size());
+   return ::setenv(name.c_str(), strVal.c_str(), 1);
 }
 
 int getFdEnv(std::string name, int defaultVal)
 {
+   core::system::EnvironmentLock lock;
+
    char* result = ::getenv(name.c_str());
    if (!result)
       return defaultVal;

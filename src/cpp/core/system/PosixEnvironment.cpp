@@ -15,73 +15,17 @@
 
 #include <core/system/Environment.hpp>
 
-#include <pthread.h>
 #include <stdlib.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+
+#include <shared_core/system/EnvironmentLock.hpp>
 
 extern char **environ;
 
 namespace rstudio {
 namespace core {
 namespace system {
-
-namespace {
-
-// guards access to the process environment: glibc's setenv can reallocate
-// (and free) the environ array while a concurrent getenv walks it without
-// locking, so unsynchronized cross-thread access can dereference a freed
-// array (see rstudio-pro#4628, #10756). only callers of these wrappers are
-// protected; direct ::getenv calls (libc internals, R) are not.
-//
-// a plain pthread mutex (rather than boost::mutex) so it can participate in
-// pthread_atfork below: forked children may read the environment before
-// exec, so a fork must never snapshot this mutex in the locked state
-pthread_mutex_t s_environmentMutex = PTHREAD_MUTEX_INITIALIZER;
-
-class EnvironmentLock
-{
-public:
-   EnvironmentLock()
-   {
-      ::pthread_mutex_lock(&s_environmentMutex);
-   }
-
-   ~EnvironmentLock()
-   {
-      ::pthread_mutex_unlock(&s_environmentMutex);
-   }
-
-private:
-   EnvironmentLock(const EnvironmentLock&);
-   EnvironmentLock& operator=(const EnvironmentLock&);
-};
-
-void lockEnvironmentMutex()
-{
-   ::pthread_mutex_lock(&s_environmentMutex);
-}
-
-void unlockEnvironmentMutex()
-{
-   ::pthread_mutex_unlock(&s_environmentMutex);
-}
-
-// hold the mutex across fork so both the parent and the child resume with
-// it unlocked (the child's sole thread is the forking thread, which owns it)
-struct AtForkRegistration
-{
-   AtForkRegistration()
-   {
-      ::pthread_atfork(lockEnvironmentMutex,
-                       unlockEnvironmentMutex,
-                       unlockEnvironmentMutex);
-   }
-};
-
-AtForkRegistration s_atForkRegistration;
-
-} // anonymous namespace
 
 namespace impl {
 
