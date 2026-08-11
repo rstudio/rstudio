@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include <map>
+#include <vector>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -43,6 +44,27 @@ namespace system {
 namespace file_monitor {
 
 namespace {
+
+// FSEvents delivery latency, in seconds. fseventsd coalesces events for the
+// same path within this window before delivering them, so a longer latency
+// directly reduces the number of entries transiting the per-client queue
+// during sustained churn (e.g. a build) -- overflow of that queue is what
+// produces UserDropped events and forces recovery rescans. Because streams
+// are created with kFSEventStreamCreateFlagNoDefer, the first event after an
+// idle period is still delivered immediately; the latency only batches
+// subsequent events.
+const CFTimeInterval kFSEventsLatencySeconds = 2.0;
+
+// Minimum interval, in seconds, between full-tree rescans triggered by
+// dropped events (measured from the completion of one rescan to the start of
+// the next). Dropped events tend to arrive in bursts -- the recovery rescan
+// itself blocks the run loop long enough for the queue to overflow again --
+// so drops arriving inside the interval are coalesced into a single deferred
+// rescan rather than each triggering their own.
+const CFTimeInterval kDroppedRescanIntervalSeconds = 10.0;
+
+// FSEventStreamSetExclusionPaths silently fails above this documented limit
+const CFIndex kMaxExclusionPaths = 8;
 
 class DirectoryHandle : boost::noncopyable
 {
@@ -98,7 +120,9 @@ public:
       : rootPath(rootPath),
         rootHandle(rootPath.getAbsolutePathNative()),
         streamRef(nullptr),
-        recursive(false)
+        recursive(false),
+        rescanTimerRef(nullptr),
+        lastDroppedRescanTime(0)
    {
       handle = Handle((void*)this);
    }
@@ -113,6 +137,12 @@ public:
    DirectoryHandle rootHandle;
    FSEventStreamRef streamRef;
    bool recursive;
+
+   // deferred dropped-event recovery rescan (see performDroppedRescan); the
+   // timer, the FSEvents callback, and unregistration all run on the file
+   // monitor thread's run loop, so no synchronization is required
+   CFRunLoopTimerRef rescanTimerRef;
+   CFAbsoluteTime lastDroppedRescanTime;
    boost::function<bool(const FileInfo&)> filter;
    tree<FileInfo> fileTree;
    Callbacks callbacks;
@@ -140,6 +170,32 @@ std::string mapEventPath(FileEventContext* pContext, const std::string& path)
        path[canonicalRoot.length()] == '/')
    {
       return registeredRoot + path.substr(canonicalRoot.length());
+   }
+
+   return path;
+}
+
+// Map a path under the registered root to the canonical form FSEvents works
+// with (the inverse of mapEventPath). Used for exclusion paths, which
+// fseventsd matches against canonical event paths. Only the root prefix is
+// mapped -- symlinked components below the root are left as given, matching
+// how FSEvents reports paths under the watched hierarchy.
+std::string mapToCanonicalPath(FileEventContext* pContext,
+                               const std::string& path)
+{
+   const std::string& canonicalRoot = pContext->canonicalRootPath;
+   const std::string& registeredRoot = pContext->rootPath.getAbsolutePath();
+   if (canonicalRoot == registeredRoot)
+      return path;
+
+   if (path == registeredRoot)
+      return canonicalRoot;
+
+   if (path.length() > registeredRoot.length() &&
+       path.compare(0, registeredRoot.length(), registeredRoot) == 0 &&
+       path[registeredRoot.length()] == '/')
+   {
+      return canonicalRoot + path.substr(registeredRoot.length());
    }
 
    return path;
@@ -293,6 +349,92 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
       pContext->callbacks.onFilesChanged(fileChanges);
 }
 
+// Reconcile the tree after fseventsd reported dropped events (kernel or
+// user-space queue overflow) on a recursive watch. The loss is not
+// necessarily confined to the delivered paths, and the flagged path may even
+// be excluded by our filter (e.g. .git), so rescan from the stream root
+// rather than trusting the flagged path. Returns false if the scan failed;
+// callers then process the delivered events normally so they are not lost.
+bool performDroppedRescan(FileEventContext* pContext)
+{
+   LOG_WARNING_MESSAGE("File monitor events were dropped; rescanning " +
+                       pContext->rootPath.getAbsolutePath());
+
+   Error error = impl::discoverAndProcessFileChanges(
+                         FileInfo(pContext->rootPath.getAbsolutePath(), true),
+                         true,
+                         pContext->filter,
+                         &(pContext->fileTree),
+                         pContext->callbacks.onFilesChanged);
+
+   // measure the debounce interval from completion rather than start; the
+   // scan itself can take several seconds on a large tree
+   pContext->lastDroppedRescanTime = ::CFAbsoluteTimeGetCurrent();
+
+   if (error)
+   {
+      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+         LOG_ERROR(error);
+      return false;
+   }
+
+   return true;
+}
+
+void releaseDroppedRescanTimer(FileEventContext* pContext)
+{
+   if (pContext->rescanTimerRef == nullptr)
+      return;
+
+   ::CFRunLoopTimerInvalidate(pContext->rescanTimerRef);
+   ::CFRelease(pContext->rescanTimerRef);
+   pContext->rescanTimerRef = nullptr;
+}
+
+void droppedRescanTimerCallback(CFRunLoopTimerRef timerRef, void* pInfo)
+{
+   FileEventContext* pContext = (FileEventContext*) pInfo;
+
+   // the timer is one-shot; drop our reference before rescanning so a drop
+   // delivered during the rescan can schedule a new deferred rescan
+   releaseDroppedRescanTimer(pContext);
+
+   performDroppedRescan(pContext);
+}
+
+// Schedule a single deferred recovery rescan on the file monitor thread's
+// run loop. Used when drops arrive inside the debounce interval: the
+// trailing rescan is required for correctness, since the dropped changes may
+// postdate what the previous rescan observed.
+void scheduleDroppedRescan(FileEventContext* pContext, CFTimeInterval delay)
+{
+   CFRunLoopTimerContext timerContext;
+   timerContext.version = 0;
+   timerContext.info = (void*) pContext;
+   timerContext.retain = nullptr;
+   timerContext.release = nullptr;
+   timerContext.copyDescription = nullptr;
+
+   CFRunLoopTimerRef timerRef = ::CFRunLoopTimerCreate(
+                  kCFAllocatorDefault,
+                  ::CFAbsoluteTimeGetCurrent() + delay,
+                  0,
+                  0,
+                  0,
+                  droppedRescanTimerCallback,
+                  &timerContext);
+   if (timerRef == nullptr)
+   {
+      // couldn't allocate the timer; rescan immediately rather than risk
+      // leaving the dropped changes unreconciled
+      performDroppedRescan(pContext);
+      return;
+   }
+
+   pContext->rescanTimerRef = timerRef;
+   ::CFRunLoopAddTimer(::CFRunLoopGetCurrent(), timerRef, kCFRunLoopDefaultMode);
+}
+
 void fileEventCallback(ConstFSEventStreamRef streamRef,
                        void *pCallbackInfo,
                        size_t numEvents,
@@ -390,29 +532,39 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    }
 
    // If fseventsd dropped events for this stream (kernel or user-space queue
-   // overflow), the loss is not necessarily confined to the delivered paths,
-   // and the flagged path may even be excluded by our filter (e.g. .git).
-   // Reconcile with a single recursive rescan from the stream root rather
-   // than trusting the flagged path; the per-path scans below are redundant
-   // after a successful rescan, but on rescan failure fall through to them
-   // so the delivered events are still processed.
-   if (eventsDropped)
+   // overflow), reconcile with a recursive rescan from the stream root (see
+   // performDroppedRescan). Debounce the rescans: overload tends to arrive
+   // in bursts, since the rescan itself blocks the run loop long enough for
+   // the queue to overflow again, and back-to-back full rescans only feed
+   // that cycle. Drops arriving inside the debounce interval (or while a
+   // deferred rescan is already scheduled) coalesce into a single trailing
+   // rescan, and the delivered events are still processed below in the
+   // meantime.
+   if (eventsDropped && pContext->rescanTimerRef == nullptr)
    {
-      LOG_WARNING_MESSAGE("File monitor events were dropped; rescanning " +
-                          pContext->rootPath.getAbsolutePath());
-
-      Error error = impl::discoverAndProcessFileChanges(
-                            FileInfo(pContext->rootPath.getAbsolutePath(), true),
-                            true,
-                            pContext->filter,
-                            &(pContext->fileTree),
-                            pContext->callbacks.onFilesChanged);
-      if (!error)
-         return;
-
-      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
-         LOG_ERROR(error);
+      CFAbsoluteTime elapsed =
+            ::CFAbsoluteTimeGetCurrent() - pContext->lastDroppedRescanTime;
+      if (elapsed >= kDroppedRescanIntervalSeconds)
+      {
+         // the per-path scans below are redundant after a successful rescan,
+         // but on rescan failure fall through to them so the delivered
+         // events are still processed
+         if (performDroppedRescan(pContext))
+            return;
+      }
+      else
+      {
+         scheduleDroppedRescan(pContext,
+                               kDroppedRescanIntervalSeconds - elapsed);
+      }
    }
+
+   // While a deferred recovery rescan is pending, skip MustScanSubDirs
+   // recursion below: fseventsd attaches that flag (typically to the root
+   // path) alongside the drop flags, so honoring it would perform exactly
+   // the full-tree scan the debounce is deferring. The deferred rescan runs
+   // later and from the root, so it observes everything these scans would.
+   bool rescanPending = pContext->rescanTimerRef != nullptr;
 
    for (const std::pair<std::string, FSEventStreamEventFlags>& event : events)
    {
@@ -424,6 +576,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       {
          // check for need to do recursive scan
          bool recursive = pContext->recursive &&
+                          !rescanPending &&
                           (event.second & kFSEventStreamEventFlagMustScanSubDirs);
 
          // process changes
@@ -483,7 +636,8 @@ namespace detail {
 Handle registerMonitor(const FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
-                       const Callbacks& callbacks)
+                       const Callbacks& callbacks,
+                       const std::vector<FilePath>& excludedPaths)
 {
    // FSEvents reports event paths in canonical form (e.g. /private/tmp/foo
    // even when we registered /tmp/foo, because /tmp is a symlink on macOS).
@@ -564,7 +718,7 @@ Handle registerMonitor(const FilePath& filePath,
                   &context,
                   pathsArrayRef,
                   kFSEventStreamEventIdSinceNow,
-                  1,
+                  kFSEventsLatencySeconds,
                   streamFlags);
    if (pContext->streamRef == nullptr)
    {
@@ -572,6 +726,52 @@ Handle registerMonitor(const FilePath& filePath,
                                        boost::system::errc::no_stream_resources,
                                        ERROR_LOCATION));
       return Handle();
+   }
+
+   // Exclude the requested directories at the fseventsd level (best effort).
+   // The caller's filter already discards events under these paths, but
+   // filtering happens after delivery: every event still transits the
+   // per-client queue, so sustained churn in an ignored directory can
+   // overflow it and force dropped-event recovery rescans. fseventsd matches
+   // exclusions against canonical event paths, so map them accordingly.
+   if (!excludedPaths.empty())
+   {
+      std::vector<CFStringRef> exclusionRefs;
+      for (const FilePath& excludedPath : excludedPaths)
+      {
+         if ((CFIndex) exclusionRefs.size() >= kMaxExclusionPaths)
+         {
+            LOG_DEBUG_MESSAGE("Ignoring file monitor exclusion paths beyond the FSEvents limit");
+            break;
+         }
+
+         std::string canonicalPath =
+               mapToCanonicalPath(pContext, excludedPath.getAbsolutePath());
+         CFStringRef pathRef = ::CFStringCreateWithCString(
+                                          kCFAllocatorDefault,
+                                          canonicalPath.c_str(),
+                                          kCFStringEncodingUTF8);
+         if (pathRef != nullptr)
+            exclusionRefs.push_back(pathRef);
+      }
+
+      if (!exclusionRefs.empty())
+      {
+         CFArrayRef exclusionsArrayRef = ::CFArrayCreate(
+                  kCFAllocatorDefault,
+                  (const void**) exclusionRefs.data(),
+                  exclusionRefs.size(),
+                  &kCFTypeArrayCallBacks);
+         if (exclusionsArrayRef != nullptr)
+         {
+            if (!::FSEventStreamSetExclusionPaths(pContext->streamRef, exclusionsArrayRef))
+               LOG_WARNING_MESSAGE("Failed to set file monitor exclusion paths for " + filePath.getAbsolutePath());
+            ::CFRelease(exclusionsArrayRef);
+         }
+
+         for (CFStringRef pathRef : exclusionRefs)
+            ::CFRelease(pathRef);
+      }
    }
 
    // schedule with the run loop
@@ -626,6 +826,9 @@ void unregisterMonitor(Handle handle)
 {
    // cast to context
    FileEventContext* pContext = (FileEventContext*)(handle.pData);
+
+   // cancel any pending deferred rescan (its callback holds pContext)
+   releaseDroppedRescanTimer(pContext);
 
    // stop, invalidate, release
    stopInvalidateAndReleaseEventStream(pContext->streamRef);

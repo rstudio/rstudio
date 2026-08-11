@@ -859,11 +859,27 @@ void ProjectContext::onDeferredInit(bool newSession)
       context.pGit = boost::make_shared<Git>(directory());
    }
 
+   // High-churn directories that fileMonitorFilter always excludes. Passing
+   // them to the file monitor as well lets backends with source-level
+   // exclusion support (macOS) suppress their events before they are
+   // delivered, rather than after -- sustained churn in these directories
+   // can otherwise overflow the event queue and force repeated full-project
+   // rescans (#18507). Keep this list within the FSEvents limit of 8 paths.
+   std::vector<FilePath> excludedPaths = {
+      directory().completeChildPath(".git"),
+      directory().completeChildPath(".Rproj.user"),
+      directory().completeChildPath(".quarto"),
+      directory().completeChildPath("node_modules"),
+      directory().completeChildPath("renv/library"),
+      directory().completeChildPath("packrat/lib")
+   };
+
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
          boost::bind(&ProjectContext::fileMonitorFilter, this, _1, context),
-         cb);
+         cb,
+         excludedPaths);
 }
 
 void ProjectContext::fileMonitorRegistered(
