@@ -224,8 +224,17 @@ runs:
         SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
         cat > "$SCRIPT" <<'EOF'
         options(repos = c(P3M = Sys.getenv("PKG_REPO")))
+        # pak comes from its own repository rather than PKG_REPO. PPM does not
+        # carry a pak binary for every platform and R combination it serves --
+        # macOS x86_64 on R 4.4.3 has none, and install.packages() there reports
+        # the misleading "package 'pak' is not available for this version of R",
+        # when in fact pak declares only R >= 3.5. Its own repo publishes a binary
+        # per platform and R version, and the URL is built from the running
+        # session, which is the method pak's own install instructions give.
         if (!requireNamespace("pak", quietly = TRUE))
-          install.packages("pak")
+          install.packages("pak", repos = sprintf(
+            "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+            .Platform$pkgType, R.Version()$os, R.Version()$arch))
         pak::local_install_dev_deps(
           root = Sys.getenv("E2E_ROOT"),
           ask = FALSE,
