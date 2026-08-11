@@ -75,6 +75,14 @@ test.describe('Viewer maximize height request', () => {
     // trailing MAXIMIZED request on the now-EXCLUSIVE window must be absorbed
     // rather than fired at the quadrant state machine.
     await consoleActions.executeInConsole(VIEWER_MAXIMIZE_R, { wait: true });
+
+    // Wait on the effect, not the prompt: the transferred zoom is what proves
+    // the viewer's raise landed, and the session wakes the poller before the
+    // event is delivered.
+    await expect.poll(
+      async () => isCommandChecked(page, 'layoutZoomViewer'),
+      { timeout: 10000 },
+    ).toBe(true);
     await sleep(TIMEOUTS.layoutSettle);
 
     // Ending the zoom restores the full four-pane layout.

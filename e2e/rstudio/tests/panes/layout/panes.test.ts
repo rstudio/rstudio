@@ -1091,20 +1091,24 @@ test.describe('Pane and column management', () => {
     await expect.poll(() => isPlotsTabSelected(page), { timeout: 10000 }).toBe(true);
     await sleep(TIMEOUTS.layoutSettle);
 
-    expect(
-      await getOffsetHeight(page, TABSET1_PANE),
-      'a pane raising itself must not hide TabSet1 via a stale pane zoom',
-    ).toBeGreaterThan(50);
-    expectWidthClose(
-      await getOffsetWidth(page, TABSET1_PANE),
-      zoomedTabSet1Width,
-      0.05,
-      'zoomed TabSet1 after the raise',
-    );
-    expect(
-      await getOffsetWidth(page, CONSOLE_PANE),
-      'the raise must not move the layout: Console stays collapsed by the column zoom',
-    ).toBeLessThan(50);
+    // A stale zoom collapses the layout on a later pass than the raise, so hold
+    // the assertions over a window instead of sampling once.
+    await expectHoldsFor(1000, async () => {
+      expect(
+        await getOffsetHeight(page, TABSET1_PANE),
+        'a pane raising itself must not hide TabSet1 via a stale pane zoom',
+      ).toBeGreaterThan(50);
+      expectWidthClose(
+        await getOffsetWidth(page, TABSET1_PANE),
+        zoomedTabSet1Width,
+        0.05,
+        'zoomed TabSet1 after the raise',
+      );
+      expect(
+        await getOffsetWidth(page, CONSOLE_PANE),
+        'the raise must not move the layout: Console stays collapsed by the column zoom',
+      ).toBeLessThan(50);
+    });
   });
 
   // The two-click repro from the issue: zoom the sidebar column, then close
@@ -1382,14 +1386,18 @@ test.describe('Pane and column management', () => {
       ).toBe(true);
       await sleep(TIMEOUTS.layoutSettle);
 
-      const after = await widthsBefore();
-      for (const key of Object.keys(before) as (keyof typeof before)[]) {
-        expect(
-          Math.abs(after[key] - before[key]),
-          `a vertical height request must not move the ${key} column (${before[key]} -> ${after[key]})`,
-        ).toBeLessThan(10);
-      }
-      expect(await isCommandChecked(page, 'layoutZoomSidebar')).toBe(false);
+      // A misrouted height request turns into a column zoom on a later layout
+      // pass, so hold the invariant over a window rather than sampling once.
+      await expectHoldsFor(1000, async () => {
+        const after = await widthsBefore();
+        for (const key of Object.keys(before) as (keyof typeof before)[]) {
+          expect(
+            Math.abs(after[key] - before[key]),
+            `a vertical height request must not move the ${key} column (${before[key]} -> ${after[key]})`,
+          ).toBeLessThan(10);
+        }
+        expect(await isCommandChecked(page, 'layoutZoomSidebar')).toBe(false);
+      });
     } finally {
       // Put Viewer back in TabSet2 and hide the sidebar via the dialog's
       // reset link, the same cleanup the suite's afterAll uses.
