@@ -1174,6 +1174,41 @@ test.describe('Pane and column management', () => {
     }
   });
 
+  // Moving a zoomed sidebar exercises refreshSidebar, which captures the
+  // sidebar width before its hide/show cycle ends the zoom and re-applies it
+  // after. A zoomed sidebar's captured width is nearly the whole panel, so
+  // re-applying it would zoom the sidebar right back (#18448).
+  test('Moving a zoomed sidebar to the other side ends the zoom (#18448)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await expect.poll(
+      async () =>
+        (await getOffsetWidth(page, TABSET1_PANE)) < 50 &&
+        (await getOffsetWidth(page, SIDEBAR_PANE)) > 200,
+      { timeout: 10000 },
+    ).toBe(true);
+    const zoomedSidebarWidth = await getOffsetWidth(page, SIDEBAR_PANE);
+
+    await executeCommand(page, 'toggleSidebarLocation');
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+
+    // The relocated sidebar must come back at a normal width, not the
+    // captured zoomed one, with every column visible again. The deferred
+    // width re-apply lands after the recreation settles, so hold the
+    // assertion over a window rather than sampling once.
+    await expectHoldsFor(1000, async () => {
+      expect(
+        await getOffsetWidth(page, SIDEBAR_PANE),
+        'the relocated sidebar must not keep its zoomed width',
+      ).toBeLessThan(zoomedSidebarWidth / 2);
+      expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+      expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+      expect(await getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThan(50);
+    });
+  });
+
   // A maximize height request (EnsureHeightEvent.MAXIMIZED) is a vertical
   // operation, but the sidebar's maximize action is a horizontal column zoom
   // (layoutZoomSidebar). Routing the request through the frame's maximize
