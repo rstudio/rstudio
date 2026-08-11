@@ -384,6 +384,7 @@ public class TextEditingTarget implements
       boolean isEditorViewFocused();
       DocDisplay getActiveDisplay();
       void destroyEditorSplit();
+      void syncSplitShowChunkOutputInline();
 
       void setNotebookUIVisible(boolean visible);
 
@@ -4134,6 +4135,17 @@ public class TextEditingTarget implements
          updateCurrentScope();
    }
 
+   // Applies the inline-chunk-output mode to every view of this document.
+   // The flag lives on each editor view, and code execution consults the
+   // view that initiated it, so a stale flag on the split view would send
+   // chunk code to the console instead of the notebook queue.
+   public void setShowChunkOutputInline(boolean show)
+   {
+      docDisplay_.setShowChunkOutputInline(show);
+      if (view_ != null)
+         view_.syncSplitShowChunkOutputInline();
+   }
+
    // Called by the view when the split editor view is destroyed; drop any
    // executor bound to it so re-run-last-code falls back to the primary view.
    void splitEditorRemoved()
@@ -5811,7 +5823,7 @@ public class TextEditingTarget implements
       {
          // turn off inline output in Shiny documents (if it's not already)
          if (docDisplay_.showChunkOutputInline())
-            docDisplay_.setShowChunkOutputInline(false);
+            setShowChunkOutputInline(false);
       }
    }
    
@@ -6850,8 +6862,11 @@ public class TextEditingTarget implements
          // a Scope with an end.
          docDisplay_.getScopeTree();
 
-         executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(),
-              NotebookQueueUnit.EXEC_MODE_SINGLE, false);
+         // resolve the chunk at the active view's cursor; positions are
+         // document-wide, so the primary view's scope tree can service them
+         executeSweaveChunk(
+               scopeHelper_.getCurrentSweaveChunk(activeDisplay().getCursorPosition()),
+               NotebookQueueUnit.EXEC_MODE_SINGLE, false);
       });
    }
 
@@ -6873,15 +6888,19 @@ public class TextEditingTarget implements
          }
          else
          {
-            // Force scope tree rebuild and get chunk from source mode
+            // Force scope tree rebuild and get chunk from source mode,
+            // looking forward from the active view's selection
             docDisplay_.getScopeTree();
-            nextChunk = scopeHelper_.getNextSweaveChunk();
+            nextChunk = scopeHelper_.getNextSweaveChunk(activeDisplay().getSelectionEnd());
          }
+
+         if (nextChunk == null)
+            return;
 
          executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE,
                true);
-         docDisplay_.setCursorPosition(nextChunk.getBodyStart());
-         docDisplay_.ensureCursorVisible();
+         activeDisplay().setCursorPosition(nextChunk.getBodyStart());
+         activeDisplay().ensureCursorVisible();
       });
    }
 
@@ -6940,9 +6959,10 @@ public class TextEditingTarget implements
 
    public void executeChunks(Position position, int which)
    {
-      // null implies we should use current cursor position
+      // null implies we should use the current cursor position, read from
+      // the view that holds it
       if (position == null)
-         position = docDisplay_.getSelectionStart();
+         position = activeDisplay().getSelectionStart();
 
       if (docDisplay_.showChunkOutputInline())
       {
@@ -7193,6 +7213,10 @@ public class TextEditingTarget implements
       if (chunk == null)
          return;
 
+      // cursor and scroll feedback should land in the view that initiated
+      // the execution; capture it now, as execution may be deferred below
+      final DocDisplay display = activeDisplay();
+
       // command used to execute chunk (we may need to defer it if this
       // is an Rmd document as populating params might be necessary)
       final Command executeChunk = new Command() {
@@ -7202,7 +7226,7 @@ public class TextEditingTarget implements
             Range range = scopeHelper_.getSweaveChunkInnerRange(chunk);
             if (scrollNearTop)
             {
-               docDisplay_.navigateToPosition(
+               display.navigateToPosition(
                      SourcePosition.create(range.getStart().getRow(),
                                            range.getStart().getColumn()),
                      true);
@@ -7229,7 +7253,7 @@ public class TextEditingTarget implements
 
                events_.fireEvent(new SendToConsoleEvent(code, language, true));
             }
-            docDisplay_.collapseSelection(true);
+            display.collapseSelection(true);
          }
       };
 

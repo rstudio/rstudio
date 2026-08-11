@@ -160,15 +160,19 @@ public class TextEditingTargetScopeHelper
    
    public Scope getNextSweaveChunk()
    {
+      return getNextSweaveChunk(docDisplay_.getSelectionEnd());
+   }
+
+   public Scope getNextSweaveChunk(final Position position)
+   {
       ScopeList scopeList = new ScopeList(docDisplay_);
       scopeList.selectAll(ScopeList.CHUNK);
-      final Position selectionEnd = docDisplay_.getSelectionEnd();
       return scopeList.findFirst(new ScopePredicate()
       {
          @Override
          public boolean test(Scope scope)
          {
-            return scope.getPreamble().compareTo(selectionEnd) > 0;
+            return scope.getPreamble().compareTo(position) > 0;
          }
       });
    }
