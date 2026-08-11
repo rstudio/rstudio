@@ -5,6 +5,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { executeCommand, isCommandChecked } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
+import { VIEWER_TAB } from '@pages/viewer_pane.page';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -1170,6 +1171,98 @@ test.describe('Pane and column management', () => {
       await page.locator(SOURCE1_PANE).click();
       await executeCommand(page, 'closeSourceDoc');
       await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+    }
+  });
+
+  // A maximize height request (EnsureHeightEvent.MAXIMIZED) is a vertical
+  // operation, but the sidebar's maximize action is a horizontal column zoom
+  // (layoutZoomSidebar). Routing the request through the frame's maximize
+  // action would collapse every other column, so LogicalWindow keeps the
+  // direct conversion for non-zoomed windows. Here rather than in
+  // viewer-maximize-zoom.test.ts because moving Viewer into the sidebar needs
+  // this file's Pane Layout dialog helpers (the window.rstudio prefs bridge
+  // cannot set object-valued prefs like panes).
+  test('A viewer in the sidebar keeps its maximize request vertical (#18448)', async ({ rstudioPage: page }) => {
+    await openPaneLayoutOptions(page);
+    await toggleTab(page, PL_SIDEBAR, 'Viewer');
+    const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+    if (!(await sidebarVisibleCheckbox.isChecked())) {
+      await sidebarVisibleCheckbox.click();
+      await sleep(TIMEOUTS.layoutSettle);
+    }
+    await page.locator(PREFERENCES_CONFIRM).click();
+    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`${SIDEBAR_PANE} ${VIEWER_TAB}`)).toBeVisible({ timeout: 10000 });
+
+    try {
+      // The invariant is relative -- a vertical height request must change no
+      // column width -- because the starting widths aren't pristine here: a
+      // prior sidebar hide can record a collapsed center that the show path
+      // then deliberately preserves (savedCenterCollapsed_).
+      await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
+      await sleep(TIMEOUTS.layoutSettle);
+
+      // Typing at a zero-width console raises it, and an ensure-visible on a
+      // zero-width pane legitimately redistributes the columns. Give the
+      // center a healthy width first, so the height request is the only
+      // remaining actor. Press-until-wide rather than a fixed count: a fixed
+      // 60 presses squeezes the right column to zero instead.
+      if ((await getOffsetWidth(page, CONSOLE_PANE)) < 200) {
+        await focusSplitter(page);
+        for (let i = 0; i < 60 && (await getOffsetWidth(page, CONSOLE_PANE)) < 200; i++) {
+          await page.keyboard.press('ArrowRight');
+        }
+        await sleep(TIMEOUTS.layoutSettle);
+      }
+      const widthsBefore = async () => ({
+        console: await getOffsetWidth(page, CONSOLE_PANE),
+        tabSet1: await getOffsetWidth(page, TABSET1_PANE),
+        tabSet2: await getOffsetWidth(page, TABSET2_PANE),
+        sidebar: await getOffsetWidth(page, SIDEBAR_PANE),
+      });
+      const before = await widthsBefore();
+      expect(
+        before.tabSet1,
+        'precondition: TabSet1 visible before the height request',
+      ).toBeGreaterThan(50);
+
+      const consoleActions = new ConsolePaneActions(page);
+      await consoleActions.executeInConsole(
+        'f <- file.path(tempdir(), "t18448.html"); ' +
+        'writeLines("<h1>hi</h1>", f); ' +
+        '.rs.api.viewer(f, height = "maximize")',
+      );
+
+      // Wait on the effect, not the prompt: the request also brings the
+      // Viewer tab to the front, so its selection shows the event landed.
+      await expect.poll(
+        async () =>
+          (await page.locator(`${SIDEBAR_PANE} ${VIEWER_TAB}`).getAttribute('aria-selected')) === 'true',
+        { timeout: 10000 },
+      ).toBe(true);
+      await sleep(TIMEOUTS.layoutSettle);
+
+      const after = await widthsBefore();
+      for (const key of Object.keys(before) as (keyof typeof before)[]) {
+        expect(
+          Math.abs(after[key] - before[key]),
+          `a vertical height request must not move the ${key} column (${before[key]} -> ${after[key]})`,
+        ).toBeLessThan(10);
+      }
+      expect(await isCommandChecked(page, 'layoutZoomSidebar')).toBe(false);
+    } finally {
+      // Put Viewer back in TabSet2 and hide the sidebar via the dialog's
+      // reset link, the same cleanup the suite's afterAll uses.
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      const cleanupCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+      if (await cleanupCheckbox.isChecked()) {
+        await cleanupCheckbox.click();
+        await sleep(TIMEOUTS.layoutSettle);
+      }
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
     }
   });
 

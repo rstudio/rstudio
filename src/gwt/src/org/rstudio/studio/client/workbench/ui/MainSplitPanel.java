@@ -472,12 +472,29 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       // Save sidebar width and location so we can restore them when sidebar is shown again
       if (sidebar_ != null)
       {
-         savedSidebarWidth_ = sidebar_.getOffsetWidth();
-         savedSidebarLocation_ = sidebarLocation_;
-         // Remember a deliberately-collapsed center so showing the sidebar
-         // again restores it as-is rather than treating it as a squeeze.
-         savedCenterCollapsed_ = center_ != null &&
-             center_.getOffsetWidth() < MINIMUM_CENTER_WIDTH;
+         int sidebarWidth = sidebar_.getOffsetWidth();
+
+         // A zoomed sidebar fills nearly the whole panel, and ending the zoom
+         // applies the restored widths on a later layout pass, so this read
+         // can still see the zoomed width. Restoring it on the next show
+         // would hand the sidebar the whole panel again, so discard it --
+         // the same rule the persisted-state path applies in
+         // isZoomedColumnState (#18448).
+         if (sidebarWidth > getOffsetWidth() - 50)
+         {
+            savedSidebarWidth_ = -1;
+            savedSidebarLocation_ = null;
+            savedCenterCollapsed_ = false;
+         }
+         else
+         {
+            savedSidebarWidth_ = sidebarWidth;
+            savedSidebarLocation_ = sidebarLocation_;
+            // Remember a deliberately-collapsed center so showing the sidebar
+            // again restores it as-is rather than treating it as a squeeze.
+            savedCenterCollapsed_ = center_ != null &&
+                center_.getOffsetWidth() < MINIMUM_CENTER_WIDTH;
+         }
       }
 
       // Remove only the sidebar widget (and its splitter). center_ and right_

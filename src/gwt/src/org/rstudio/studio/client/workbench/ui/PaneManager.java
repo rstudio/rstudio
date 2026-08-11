@@ -1811,6 +1811,16 @@ public class PaneManager
 
    private void restoreColumnLayout(ArrayList<Double> leftWidthsPriorToZoom)
    {
+      // A zoomed sidebar holds nearly the whole panel, and nothing below
+      // resizes it -- the center column could never reclaim the width. Reset
+      // it to the same default a fresh sidebar gets. Only in that state: a
+      // custom sidebar width must survive an unrelated restore (#18448).
+      if (sidebar_ != null && panel_.hasSidebarWidget() &&
+          sidebar_.getOffsetWidth() > panel_.getOffsetWidth() - 50)
+      {
+         panel_.setWidgetSize(sidebar_, panel_.getDefaultSplitterWidth() * 0.8);
+      }
+
       getValidColumnWidth(right_, true);
       getValidColumnWidths(leftList_, leftWidthsPriorToZoom, true);
       invalidateSavedLayoutState(true);
