@@ -46,15 +46,21 @@ namespace file_monitor {
 
 namespace {
 
-// FSEvents delivery latency, in seconds. fseventsd coalesces events for the
-// same path within this window before delivering them, so a longer latency
-// directly reduces the number of entries transiting the per-client queue
-// during sustained churn (e.g. a build) -- overflow of that queue is what
-// produces UserDropped events and forces recovery rescans. Because streams
-// are created with kFSEventStreamCreateFlagNoDefer, the first event after an
-// idle period is still delivered immediately; the latency only batches
-// subsequent events.
+// FSEvents delivery latency for recursive watches, in seconds. fseventsd
+// coalesces events for the same path within this window before delivering
+// them, so a longer latency directly reduces the number of entries
+// transiting the per-client queue during sustained churn (e.g. a build) --
+// overflow of that queue is what produces UserDropped events and forces
+// recovery rescans. Because streams are created with
+// kFSEventStreamCreateFlagNoDefer, the first event after an idle period is
+// still delivered immediately; the latency only batches subsequent events.
 const CFTimeInterval kFSEventsLatencySeconds = 2.0;
+
+// Non-recursive watches (a single directory, with per-file events) don't
+// generate the event volume that overflows the queue, and a longer latency
+// only leaves the UI (e.g. the Files pane) staler during bursts of changes,
+// so they keep the historical latency.
+const CFTimeInterval kFSEventsNonRecursiveLatencySeconds = 1.0;
 
 // Minimum interval, in seconds, between full-tree rescans triggered by
 // dropped events (measured from the completion of one rescan to the start of
@@ -63,6 +69,13 @@ const CFTimeInterval kFSEventsLatencySeconds = 2.0;
 // so drops arriving inside the interval are coalesced into a single deferred
 // rescan rather than each triggering their own.
 const CFTimeInterval kDroppedRescanIntervalSeconds = 10.0;
+
+// Maximum number of consecutive failed deferred recovery rescans before
+// giving up (see droppedRescanTimerCallback). A rescan that keeps failing
+// (e.g. because the watched root became unreadable) won't start succeeding
+// on its own, so retrying it forever only spams the log; a later dropped
+// event re-triggers recovery through the normal path.
+const int kMaxDroppedRescanAttempts = 3;
 
 // FSEventStreamSetExclusionPaths silently fails above this documented limit
 const CFIndex kMaxExclusionPaths = 8;
@@ -123,7 +136,8 @@ public:
         streamRef(nullptr),
         recursive(false),
         rescanTimerRef(nullptr),
-        lastDroppedRescanTime(0)
+        lastDroppedRescanTime(0),
+        rescanFailureCount(0)
    {
       handle = Handle((void*)this);
    }
@@ -144,6 +158,7 @@ public:
    // monitor thread's run loop, so no synchronization is required
    CFRunLoopTimerRef rescanTimerRef;
    CFAbsoluteTime lastDroppedRescanTime;
+   int rescanFailureCount;
    boost::function<bool(const FileInfo&)> filter;
    tree<FileInfo> fileTree;
    Callbacks callbacks;
@@ -351,12 +366,13 @@ void processNonRecursiveFileEvents(FileEventContext* pContext,
 }
 
 // Reconcile the tree after fseventsd reported dropped events (kernel or
-// user-space queue overflow) or demanded a recursive scan (MustScanSubDirs)
-// on a recursive watch. The loss is not necessarily confined to the
-// delivered paths, and the flagged path may even be excluded by our filter
-// (e.g. .git), so rescan from the stream root rather than trusting the
-// flagged path. Returns false if the scan failed; callers then process the
-// delivered events normally so they are not lost.
+// user-space queue overflow) or coalesced events onto the stream root (a
+// root-flagged MustScanSubDirs) on a recursive watch. With drops the loss
+// is not necessarily confined to the delivered paths, and the flagged path
+// may even be excluded by our filter (e.g. .git), so rescan from the stream
+// root rather than trusting the flagged path. Returns false if the scan
+// failed; callers then process the delivered events normally so they are
+// not lost.
 bool performDroppedRescan(FileEventContext* pContext)
 {
    LOG_WARNING_MESSAGE("File monitor events were dropped or coalesced; rescanning " +
@@ -379,6 +395,7 @@ bool performDroppedRescan(FileEventContext* pContext)
    // the scan itself can take several seconds on a large tree, and a failed
    // attempt shouldn't arm the debounce and suppress a prompt retry
    pContext->lastDroppedRescanTime = ::CFAbsoluteTimeGetCurrent();
+   pContext->rescanFailureCount = 0;
 
    return true;
 }
@@ -403,13 +420,26 @@ void droppedRescanTimerCallback(CFRunLoopTimerRef timerRef, void* pInfo)
    // delivered during the rescan can schedule a new deferred rescan
    releaseDroppedRescanTimer(pContext);
 
+   if (performDroppedRescan(pContext))
+      return;
+
    // retry on failure: batches delivered while this timer was pending had
    // their MustScanSubDirs recursion suppressed on the promise that this
-   // rescan would cover them, so giving up would leave those changes
+   // rescan would cover them, so giving up early would leave those changes
    // unreconciled (unregistration cancels the timer if the monitor goes
-   // away first)
-   if (!performDroppedRescan(pContext))
+   // away first). cap the attempts, though: a rescan that keeps failing
+   // won't start succeeding on its own, and a later dropped event
+   // re-triggers recovery through the normal path
+   if (++pContext->rescanFailureCount < kMaxDroppedRescanAttempts)
+   {
       scheduleDroppedRescan(pContext, kDroppedRescanIntervalSeconds);
+   }
+   else
+   {
+      LOG_ERROR_MESSAGE("Giving up on file monitor recovery rescan for " +
+                        pContext->rootPath.getAbsolutePath());
+      pContext->rescanFailureCount = 0;
+   }
 }
 
 // Schedule a single deferred recovery rescan on the file monitor thread's
@@ -522,14 +552,22 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       // map the canonical event path back to the registered path form
       path = mapEventPath(pContext, path);
 
-      // drops (kernel or user-space queue overflow) require a recovery
-      // rescan, and fseventsd can also demand recursive scans
-      // (MustScanSubDirs, from hierarchical coalescing) without either drop
-      // flag; route both through the same debounced rescan below so that
-      // neither can trigger unbounded back-to-back full-tree scans
+      // drops (kernel or user-space queue overflow) mean the loss is not
+      // confined to the delivered paths, so recover with a rescan from the
+      // stream root. MustScanSubDirs without a drop flag (hierarchical
+      // coalescing per FSEvents.h) is confined to the flagged path's
+      // subtree, so it is left to the scoped, filter-gated per-path
+      // recursion below -- except when the flagged path is the root
+      // itself, where the scoped scan would be a full-tree scan anyway;
+      // route that through the same debounced rescan so root-level
+      // coalescing can't trigger unbounded back-to-back full-tree scans
       if (eventFlags[i] & (kFSEventStreamEventFlagUserDropped |
-                           kFSEventStreamEventFlagKernelDropped |
-                           kFSEventStreamEventFlagMustScanSubDirs))
+                           kFSEventStreamEventFlagKernelDropped))
+      {
+         needsRescan = true;
+      }
+      else if ((eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs) &&
+               path == pContext->rootPath.getAbsolutePath())
       {
          needsRescan = true;
       }
@@ -547,15 +585,15 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
       }
    }
 
-   // If fseventsd dropped events for this stream or demanded a recursive
-   // scan, reconcile with a recursive rescan from the stream root (see
-   // performDroppedRescan). Debounce the rescans: overload tends to arrive
-   // in bursts, since the rescan itself blocks the run loop long enough for
-   // the queue to overflow again, and back-to-back full rescans only feed
-   // that cycle. Drops arriving inside the debounce interval (or while a
-   // deferred rescan is already scheduled) coalesce into a single trailing
-   // rescan, and the delivered events are still processed below in the
-   // meantime.
+   // If fseventsd dropped events for this stream or coalesced events onto
+   // the stream root, reconcile with a recursive rescan from the stream
+   // root (see performDroppedRescan). Debounce the rescans: overload tends
+   // to arrive in bursts, since the rescan itself blocks the run loop long
+   // enough for the queue to overflow again, and back-to-back full rescans
+   // only feed that cycle. Drops arriving inside the debounce interval (or
+   // while a deferred rescan is already scheduled) coalesce into a single
+   // trailing rescan, and the delivered events are still processed below in
+   // the meantime.
    if (needsRescan && pContext->rescanTimerRef == nullptr)
    {
       CFAbsoluteTime elapsed =
@@ -731,13 +769,17 @@ Handle registerMonitor(const FilePath& filePath,
    if (!recursive)
       streamFlags |= kFSEventStreamCreateFlagFileEvents;
 
+   CFTimeInterval latency = recursive
+         ? kFSEventsLatencySeconds
+         : kFSEventsNonRecursiveLatencySeconds;
+
    pContext->streamRef = ::FSEventStreamCreate(
                   kCFAllocatorDefault,
                   &fileEventCallback,
                   &context,
                   pathsArrayRef,
                   kFSEventStreamEventIdSinceNow,
-                  kFSEventsLatencySeconds,
+                  latency,
                   streamFlags);
    if (pContext->streamRef == nullptr)
    {
