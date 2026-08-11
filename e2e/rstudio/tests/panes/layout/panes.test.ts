@@ -5,7 +5,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
 import { executeCommand, isCommandChecked } from '@utils/commands';
 import { PLOTS_TAB } from '@pages/plots_pane.page';
-import { VIEWER_TAB } from '@pages/viewer_pane.page';
+import { VIEWER_MAXIMIZE_R, VIEWER_TAB } from '@pages/viewer_pane.page';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -1332,7 +1332,7 @@ test.describe('Pane and column management', () => {
   // (layoutZoomSidebar). Routing the request through the frame's maximize
   // action would collapse every other column, so LogicalWindow keeps the
   // direct conversion for non-zoomed windows. Here rather than in
-  // viewer-maximize-zoom.test.ts because moving Viewer into the sidebar needs
+  // viewer_maximize_zoom.test.ts because moving Viewer into the sidebar needs
   // this file's Pane Layout dialog helpers (the window.rstudio prefs bridge
   // cannot set object-valued prefs like panes).
   test('A viewer in the sidebar keeps its maximize request vertical (#18448)', async ({ rstudioPage: page }) => {
@@ -1381,11 +1381,7 @@ test.describe('Pane and column management', () => {
       ).toBeGreaterThan(50);
 
       const consoleActions = new ConsolePaneActions(page);
-      await consoleActions.executeInConsole(
-        'f <- file.path(tempdir(), "t18448.html"); ' +
-        'writeLines("<h1>hi</h1>", f); ' +
-        '.rs.api.viewer(f, height = "maximize")',
-      );
+      await consoleActions.executeInConsole(VIEWER_MAXIMIZE_R);
 
       // Wait on the effect, not the prompt: the request also brings the
       // Viewer tab to the front, so its selection shows the event landed.

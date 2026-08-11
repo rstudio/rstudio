@@ -9,8 +9,9 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeCommand, isCommandChecked } from '@utils/commands';
+import { executeCommand, isCommandChecked, resetLayoutZoom } from '@utils/commands';
 import { sleep, TIMEOUTS } from '@utils/constants';
+import { VIEWER_MAXIMIZE_R } from '@pages/viewer_pane.page';
 import type { Page } from 'playwright';
 
 const TABSET1_PANE = '#rstudio_TabSet1_pane';
@@ -24,25 +25,13 @@ async function getOffsetWidth(page: Page, selector: string): Promise<number> {
   return await page.locator(selector).evaluate(el => (el as HTMLElement).offsetWidth);
 }
 
-// End any zoom and restore any maximized quadrant, whichever a failed test
-// left behind. The bridge reset covers both; the command-based unzoom in
-// panes.test.ts's resetUILayout only covers tracked zooms.
-async function resetLayoutViaBridge(page: Page): Promise<void> {
-  await page.evaluate(() => window.rstudio?.layout.reset());
-  await sleep(TIMEOUTS.layoutSettle);
-}
-
-// Serving a file from the session tempdir is the documented viewer path that
-// works on Desktop and Server alike; height = "maximize" is what an R Notebook
-// preview requests.
-const VIEWER_MAXIMIZE_R =
-  'f <- file.path(tempdir(), "t18448.html"); ' +
-  'writeLines("<h1>hi</h1>", f); ' +
-  '.rs.api.viewer(f, height = "maximize")';
-
 test.describe('Viewer maximize height request', () => {
+  // End any zoom and restore any maximized quadrant, whichever a failed test
+  // left behind. The bridge reset covers both; the command-based unzoom in
+  // panes.test.ts's resetUILayout only covers tracked zooms.
   test.afterEach(async ({ rstudioPage: page }) => {
-    await resetLayoutViaBridge(page);
+    await resetLayoutZoom(page);
+    await sleep(TIMEOUTS.layoutSettle);
   });
 
   test('maximizes the quadrant when nothing is zoomed', async ({ rstudioPage: page }) => {
