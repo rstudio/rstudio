@@ -1248,6 +1248,16 @@ public class PaneManager
       }
       else if (!showSidebar && sidebar_ != null)
       {
+         // Dispose the panel here too, not just on the recreation path: a
+         // pane-layout change can replace panesByName_ wholesale while the
+         // sidebar is hidden, and a panel still registered on the tabs would
+         // then never be reached again (#18448). The window itself stays in
+         // panesByName_ -- other code reads it while the sidebar is hidden.
+         LogicalWindow sidebarWindow =
+               panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow != null)
+            disposeSidebarPanel(sidebarWindow);
+
          panel_.removeSidebarWidget();
          sidebar_ = null;
       }
@@ -1277,29 +1287,43 @@ public class PaneManager
    public void clearSidebarCache()
    {
       // Remove the cached sidebar window so it gets recreated with new tabs.
-      // Dispose the old panel's per-tab event forwarding first: the tabs are
-      // long-lived singletons, so an abandoned panel that stays registered on
-      // them is retained forever and keeps forwarding their events to its
-      // stale window (#18448).
       LogicalWindow oldWindow =
             panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-      if (oldWindow != null && oldWindow.getNormal() != null)
-      {
-         Widget fill = oldWindow.getNormal().getFillWidget();
-         if (fill instanceof WorkbenchTabPanel)
-         {
-            WorkbenchTabPanel oldPanel = (WorkbenchTabPanel) fill;
+      if (oldWindow != null)
+         disposeSidebarPanel(oldWindow);
+   }
 
-            // Remember which tab was selected so the replacement panel can
-            // restore it -- by tab, not index, so a changed tab set degrades
-            // to no selection rather than the wrong one. Clearing the panel
-            // is what loses the selection, so capture it first.
-            int selected = oldPanel.getSelectedIndex();
-            sidebarSelectedTab_ = selected >= 0 ? oldPanel.getTab(selected) : null;
+   /**
+    * Tear down a sidebar window's tab panel, detaching its per-tab event
+    * forwarding. The tabs are long-lived singletons, so a panel that stays
+    * registered on them is retained forever and keeps forwarding their events
+    * to a window that is no longer on screen (#18448). Every route that stops
+    * showing the sidebar has to come through here.
+    *
+    * Safe to call twice on the same window: clearing an already-cleared panel
+    * is a no-op, and the tab capture below skips a panel with no selection
+    * rather than erasing what the first call recorded.
+    */
+   private void disposeSidebarPanel(LogicalWindow window)
+   {
+      if (window.getNormal() == null)
+         return;
 
-            oldPanel.clear();
-         }
-      }
+      Widget fill = window.getNormal().getFillWidget();
+      if (!(fill instanceof WorkbenchTabPanel))
+         return;
+
+      WorkbenchTabPanel panel = (WorkbenchTabPanel) fill;
+
+      // Remember which tab was selected so the replacement panel can restore
+      // it -- by tab, not index, so a changed tab set degrades to no selection
+      // rather than the wrong one. Clearing the panel is what loses the
+      // selection, so capture it first.
+      int selected = panel.getSelectedIndex();
+      if (selected >= 0)
+         sidebarSelectedTab_ = panel.getTab(selected);
+
+      panel.clear();
    }
 
    /**
