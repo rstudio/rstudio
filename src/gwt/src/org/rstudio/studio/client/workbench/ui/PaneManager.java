@@ -1775,13 +1775,16 @@ public class PaneManager
       restorePaneStateToDefault();
       restoreColumnLayout(leftWidthsPriorToZoom);
 
-      // restoreColumnLayout applies column widths via setWidgetSize without an
-      // explicit animate(), so there's no animation callback to hook here --
-      // the sizes are already applied by the time we return. Run afterComplete
-      // directly. (The pane/window-zoom path goes through restoreSavedLayout,
-      // which does animate and threads afterComplete into onAnimationComplete.)
+      // restoreColumnLayout applies column widths via setWidgetSize, which only
+      // records them on each widget's LayoutData and defers the layout pass that
+      // makes them real. An afterComplete that measures the columns -- as
+      // zoomColumn's re-entry does, recording the restored widths as the new
+      // zoom's prior state -- would read the zoom-time geometry if it ran here.
+      // Defer it, so it lands behind the layout the panel already scheduled.
+      // (The pane/window-zoom path goes through restoreSavedLayout, which does
+      // animate and threads afterComplete into onAnimationComplete.)
       if (afterComplete != null)
-         afterComplete.execute();
+         Scheduler.get().scheduleDeferred(afterComplete::execute);
    }
 
    private Double getValidColumnWidth(Widget w, boolean set)
