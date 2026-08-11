@@ -215,7 +215,9 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     await closeProjectIfOpen(page);
   });
 
-  test('both custom skills are discovered by assistant', async () => {
+  // @desktop_only: this assertion needs the user-level skill, which server
+  // mode can't see -- see the comment on the user-level-skill test below.
+  test('both custom skills are discovered by assistant', { tag: ['@desktop_only'] }, async () => {
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();
@@ -256,7 +258,12 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     expect(responseText).toContain(PROJECT_MARKER);
   });
 
-  test('user-level skill is selected when its description matches the prompt', async () => {
+  // @desktop_only: the user-level skill lives under sandbox-redirected HOME
+  // (see the comment below), which an external RStudio Server never reads --
+  // rserver takes each rsession's HOME from the passwd db, not from anything
+  // the harness sets (#18348). No product bug; the skill genuinely isn't
+  // there for that account.
+  test('user-level skill is selected when its description matches the prompt', { tag: ['@desktop_only'] }, async () => {
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();

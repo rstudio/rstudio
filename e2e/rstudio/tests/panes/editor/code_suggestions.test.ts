@@ -1,4 +1,4 @@
-import type { Request } from 'playwright';
+import type { Page, Request } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS, sleep, CODE_SUGGESTION_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -22,6 +22,36 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     let assistantActions: AssistantOptionsActions;
     let sourceActions: SourcePaneActions;
     let sourcePane: SourcePane;
+
+    // Puts the cursor on a fresh line at the end of the file, types the
+    // trigger text, then clears any Ace autocomplete popup (while that popup
+    // is visible it suppresses ghost text from rendering).
+    //
+    // Deliberately NOT sourcePane.contentPane.click(): Playwright clicks an
+    // element's geometric centre, and Ace sizes .ace_content from the viewport
+    // rather than from the document, so that centre moves with the window
+    // size. On the narrower server-engine window (960x540) it landed mid-line
+    // and split an existing statement -- the trigger text became part of a
+    // syntactically broken line, which the model correctly declined to
+    // complete, so these tests waited out the full ghost-text timeout for a
+    // suggestion that was never coming. They passed only because the taller
+    // desktop window (1024x645) happened to put the same click past the last
+    // row, where Ace clamps the cursor to a trailing blank line.
+    const typeTriggerOnNewLine = async (page: Page, trigger: string) => {
+      await sourceActions.goToEnd();
+      await sleep(500);
+      await page.keyboard.press('Enter');
+      await sleep(200);
+      await page.keyboard.type(trigger);
+
+      const popup = page.locator('#rstudio_popup_completions');
+      await popup.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+      if (await popup.isVisible().catch(() => false)) {
+        await page.keyboard.press('Escape');
+        await sleep(500);
+        console.log('  Dismissed autocomplete popup (pre-ghost-text)');
+      }
+    };
 
     test.beforeAll(async ({ rstudioPage: page }) => {
       consoleActions = new ConsolePaneActions(page);
@@ -76,10 +106,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      await sourcePane.contentPane.click();
-      await sleep(500);
-
-      await page.keyboard.type('x <- func');
+      await typeTriggerOnNewLine(page, 'x <- func');
 
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
 
@@ -389,10 +416,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      await sourcePane.contentPane.click();
-      await sleep(500);
-
-      await page.keyboard.type('x <- func');
+      await typeTriggerOnNewLine(page, 'x <- func');
 
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       console.log('  Ghost text visible — pressing Escape');
@@ -429,10 +453,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      await sourcePane.contentPane.click();
-      await sleep(500);
-
-      await page.keyboard.type('x <- func');
+      await typeTriggerOnNewLine(page, 'x <- func');
 
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       console.log('  Ghost text visible — moving cursor away');
