@@ -1174,6 +1174,58 @@ test.describe('Pane and column management', () => {
     }
   });
 
+  // The removal half of the same defect: MainSplitPanel.removeLeftWidget does
+  // the same clearForRefresh + initialize rebuild as addLeftWidget, so closing
+  // a source column undraws a zoom too and must end the bookkeeping with it.
+  test('Closing a source column while a pane is zoomed ends the zoom (#18448)', async ({ rstudioPage: page }) => {
+    await executeCommand(page, 'newSourceColumn');
+    await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+
+    try {
+      // Make the new column the active one before zooming: the zoom collapses
+      // it to zero width, and a click on a zero-width pane never lands.
+      // closeSourceDoc then targets its auto-created Untitled, whose close
+      // removes the column.
+      await page.locator(SOURCE1_PANE).click();
+
+      await zoomConsolePane(page);
+
+      await executeCommand(page, 'closeSourceDoc');
+      await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+
+      await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+      expect(
+        await isCommandChecked(page, 'layoutZoomConsole'),
+        'closing a source column must end the tracked pane zoom',
+      ).toBe(false);
+      expect(
+        await getOffsetHeight(page, SOURCE_PANE),
+        'the zoomed pane\'s sibling must come back when the zoom is undrawn',
+      ).toBeGreaterThan(50);
+
+      const consoleActions = new ConsolePaneActions(page);
+      await consoleActions.executeInConsole('plot(1:10)');
+      await expect.poll(() => isPlotsTabSelected(page), { timeout: 15000 }).toBe(true);
+      await sleep(TIMEOUTS.layoutSettle);
+
+      // A stale zoom re-collapses the layout when Plots raises itself, which
+      // can land after the first sample -- hold the assertion over a window.
+      await expectHoldsFor(1000, async () => {
+        expect(
+          await getOffsetWidth(page, CONSOLE_PANE),
+          'a pane raising itself must not collapse the layout via a stale pane zoom',
+        ).toBeGreaterThan(50);
+      });
+    } finally {
+      // The body closes the column; clean up only when it failed before that.
+      if (await elementExists(page, SOURCE1_PANE)) {
+        await page.locator(SOURCE1_PANE).click();
+        await executeCommand(page, 'closeSourceDoc');
+        await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+      }
+    }
+  });
+
   // Moving a zoomed sidebar exercises refreshSidebar, which captures the
   // sidebar width before its hide/show cycle ends the zoom and re-applies it
   // after. A zoomed sidebar's captured width is nearly the whole panel, so

@@ -2722,6 +2722,10 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.HIDE));
       else
       {
+         // removeLeftWidget rebuilds the split panel and re-applies persisted or
+         // default column widths, undrawing any active zoom (#18448).
+         endZoomBeforeRelayout();
+
          SourceColumn column = sourceColumnManager_.getByName(name);
          if (column != null)
             sourceColumnManager_.closeColumn(column, true);
