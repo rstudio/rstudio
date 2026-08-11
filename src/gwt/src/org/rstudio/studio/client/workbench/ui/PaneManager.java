@@ -804,9 +804,14 @@ public class PaneManager
     * user chose. widgetSizePriorToZoom_ is recorded by every zoom command
     * (zoomColumn and fullyMaximizeWindow) and by nothing else, so it also
     * covers the column zooms getZoomedColumn() misreads -- with the sidebar
-    * visible, collapsed columns hold 1px rather than 0. Unlike
-    * endZoomIfActive, this leaves untracked MAXIMIZE-state quadrants alone --
-    * a column relayout does not disturb the vertical split they live in.
+    * visible, collapsed columns hold 1px rather than 0.
+    *
+    * Ending a tracked zoom resets the quadrant states: restoreLayout() runs
+    * restorePaneStateToDefault, which returns every non-empty quadrant to
+    * NORMAL -- an untracked MAXIMIZE-state quadrant included. That is true of
+    * endZoomIfActive too. The difference is what the two do when no zoom is
+    * tracked: endZoomIfActive still hunts down MAXIMIZE-state quadrants and
+    * restores them, while this is a strict no-op.
     */
    private void endZoomBeforeRelayout()
    {
