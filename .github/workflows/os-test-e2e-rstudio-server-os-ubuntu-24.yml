@@ -138,7 +138,7 @@ jobs:
       GWT_STYLE: PRETTY
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
       # copilot-language-server, sccache, etc.) all land under RSTUDIO_TOOLS_ROOT.
@@ -146,7 +146,7 @@ jobs:
       # dependencies" run only from main-scoped runs.
       - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-linux-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
@@ -158,7 +158,7 @@ jobs:
       # R-libs tree -- R's %p/%v subpaths keep different versions isolated.
       - name: Restore build-time R packages
         id: rlibs-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: rstudio-build-rlibs-linux-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
@@ -176,7 +176,7 @@ jobs:
       # so a failed mid-compile run can't poison the cache.
       - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: package/linux/build-Server-DEB/gwt
           key: rstudio-gwt-linux-x86_64-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
@@ -197,7 +197,7 @@ jobs:
         # A failed OIDC exchange degrades to the GHA backend below rather
         # than failing the build.
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
           aws-region: us-east-1
@@ -261,14 +261,14 @@ jobs:
       # every PR build cold in the first place.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
       - name: Save build-time R packages
         if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
@@ -312,7 +312,7 @@ jobs:
       # sends every PR build cold in the first place.
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: package/linux/build-Server-DEB/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
@@ -332,7 +332,7 @@ jobs:
 
       - name: Upload RStudio Server .deb artifact
         if: inputs.build_only != true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rstudio-server-deb-ubuntu-24
           path: rstudio-server.deb
@@ -364,9 +364,9 @@ jobs:
       PW_SANDBOX_ROOT_CREATE: '1'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -409,7 +409,7 @@ jobs:
       # build job above and install it.
       - name: Download RStudio Server .deb artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: rstudio-server-deb-ubuntu-24
           path: ${{ github.workspace }}
@@ -709,7 +709,7 @@ jobs:
       # own. A bare `-linux-` prefix would also match the Linux Desktop blobs.
       - name: Upload blob report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-blob-report-linux-server-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
@@ -718,7 +718,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           # Platform-prefixed for the same reason as the blob report above:
           # macOS uploads test-results-${{ matrix.shard }} too, so under the
@@ -737,7 +737,7 @@ jobs:
       # orchestrator.
       - name: Upload PW sandbox (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pw-sandbox-linux-server-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
@@ -760,7 +760,7 @@ jobs:
 
       - name: Upload rstudio-server logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rstudio-server-logs-${{ matrix.shard }}
           path: |
@@ -783,9 +783,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -800,7 +800,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           # Linux-Server-only glob: in the combined PR orchestrator the other
           # platforms also publish blob reports (playwright-blob-report-mac-*,
@@ -831,7 +831,7 @@ jobs:
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           # Match the -mac / -win / -linux-desktop suffixes the other workflows
           # use for their merged reports. Avoids a future collision if the bare
