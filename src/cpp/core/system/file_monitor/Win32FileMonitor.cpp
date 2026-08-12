@@ -492,11 +492,13 @@ Error readDirectoryChanges(FileEventContext* pContext)
 
 namespace detail {
 
-// register a new file monitor
+// register a new file monitor. the excludedPaths hint is not used here:
+// ReadDirectoryChangesW has no per-path exclusion mechanism
 Handle registerMonitor(const core::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
-                       const Callbacks& callbacks)
+                       const Callbacks& callbacks,
+                       const std::vector<core::FilePath>& excludedPaths)
 {
    // create and allocate FileEventContext (create auto-ptr in case we
    // return early, we'll call release later before returning)

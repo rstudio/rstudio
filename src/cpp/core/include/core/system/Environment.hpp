@@ -16,9 +16,13 @@
 #ifndef CORE_SYSTEM_ENVIRONMENT_HPP
 #define CORE_SYSTEM_ENVIRONMENT_HPP
 
+#include <stdlib.h>
+
 #include <string>
 
 #include <boost/noncopyable.hpp>
+
+#include <shared_core/system/EnvironmentLock.hpp>
 
 #include <core/system/Types.hpp>
 
@@ -105,27 +109,40 @@ public:
    EnvironmentScope(const char* variable,
                     const char* value)
       : variable_(variable),
-        value_(::getenv(variable))
+        hadValue_(false)
    {
+      // copy the previous value under the environment lock: the pointer
+      // returned by ::getenv is invalidated by any subsequent setenv
+      {
+         EnvironmentLock lock;
+         const char* previous = ::getenv(variable);
+         if (previous)
+         {
+            hadValue_ = true;
+            previousValue_ = previous;
+         }
+      }
+
       core::system::setenv(variable, value);
    }
-   
+
    ~EnvironmentScope()
    {
-      if (value_)
+      if (hadValue_)
       {
-         core::system::setenv(variable_, value_);
+         core::system::setenv(variable_, previousValue_);
       }
       else
       {
          core::system::unsetenv(variable_);
       }
    }
-   
+
 private:
    const char* variable_;
-   const char* value_;
-   
+   std::string previousValue_;
+   bool hadValue_;
+
 };
 
 } // namespace system
