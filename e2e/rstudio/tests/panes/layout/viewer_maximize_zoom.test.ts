@@ -17,6 +17,7 @@ import type { Page } from 'playwright';
 const TABSET1_PANE = '#rstudio_TabSet1_pane';
 const TABSET2_PANE = '#rstudio_TabSet2_pane';
 const CONSOLE_PANE = '#rstudio_Console_pane';
+const TAB_ENVIRONMENT = '#rstudio_workbench_tab_environment';
 
 async function getOffsetHeight(page: Page, selector: string): Promise<number> {
   return await page.locator(selector).evaluate(el => (el as HTMLElement).offsetHeight);
@@ -36,15 +37,24 @@ test.describe('Viewer maximize height request', () => {
 
   test('maximizes the quadrant when nothing is zoomed', async ({ rstudioPage: page }) => {
     const consoleActions = new ConsolePaneActions(page);
+    const envTab = page.locator(TAB_ENVIRONMENT);
     const initialTabSet2Height = await getOffsetHeight(page, TABSET2_PANE);
+
+    // Precondition: TabSet1 starts normal, with its real tab strip visible.
+    await expect(envTab).toBeVisible();
 
     await consoleActions.executeInConsole(VIEWER_MAXIMIZE_R, { wait: true });
 
-    // The quadrant maximizes vertically: TabSet2 grows well past its half.
+    // The quadrant maximizes vertically. Assert the maximize invariant --
+    // the sibling TabSet1 minimizes to a facsimile header strip, hiding its
+    // real tab elements (as in tabs.test.ts) -- not a fixed growth margin,
+    // which a short CI window cannot meet (the ubuntu-server runner's window
+    // leaves the maximized pane less than 100px taller than its half).
+    await expect(envTab).toBeHidden({ timeout: 10000 });
     await expect.poll(
       async () => getOffsetHeight(page, TABSET2_PANE),
       { timeout: 10000 },
-    ).toBeGreaterThan(initialTabSet2Height + 100);
+    ).toBeGreaterThan(initialTabSet2Height);
 
     // A vertical maximize is not a zoom: no column collapses, no zoom tracked.
     expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
