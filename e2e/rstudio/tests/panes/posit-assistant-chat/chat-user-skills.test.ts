@@ -163,7 +163,8 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     );
 
     // -----------------------------------------------------------------------
-    // Step 4: Verify both files exist and have correct content
+    // Step 4: Verify the skill files exist and hold their markers (the
+    // user-level one only where an rsession can actually read it)
     // -----------------------------------------------------------------------
     await consoleActions.clearConsole();
     await consoleActions.executeInConsole(
@@ -172,20 +173,29 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     );
     const projectOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
-    await consoleActions.clearConsole();
-    await consoleActions.executeInConsole(
-      `cat(readLines("${userSkillPath()}"), sep = "\\n")`,
-      { wait: true },
-    );
-    const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
-
     // Assert rather than just read back: if dir.create or writeLines above
     // silently did nothing, the first symptom would otherwise be an
     // LLM-content assertion failing in a test body, which is indistinguishable
     // from the model simply not naming the marker. Fail here, with the cause
-    // obvious.
+    // obvious. The project skill lives in the opened project directory, which
+    // every run mode can read, so this one is unconditional.
     expect(projectOutput).toContain(PROJECT_MARKER);
-    expect(userOutput).toContain(USER_MARKER);
+
+    // The user-level skill sits under the sandbox HOME. A server reached by URL
+    // never reads that path -- rserver takes each rsession's HOME from the
+    // passwd db -- which is exactly why the two tests that depend on it skip on
+    // the same predicate. Asserting it unconditionally failed beforeAll on every
+    // such run and took the whole describe.serial block down, including those
+    // skips.
+    if (!isExternalServerRun()) {
+      await consoleActions.clearConsole();
+      await consoleActions.executeInConsole(
+        `cat(readLines("${userSkillPath()}"), sep = "\\n")`,
+        { wait: true },
+      );
+      const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
+      expect(userOutput).toContain(USER_MARKER);
+    }
 
     // -----------------------------------------------------------------------
     // Step 5: Start a fresh backend by setting chat_provider back to "posit".
