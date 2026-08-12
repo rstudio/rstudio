@@ -119,6 +119,25 @@ TEST(EnvironmentTest, GetenvOverloadDistinguishesUnset)
    unsetenv("RSTUDIO_ENV_SCOPE_TEST");
 }
 
+TEST(EnvironmentTest, AccessorsAgreeOnNonAsciiNames)
+{
+   // "\xC3\x84" is UTF-8 for 'A' with umlaut; on Windows the name must be
+   // UTF-8 decoded on its way to the wide-character APIs, so an accessor
+   // that widens the name byte-by-byte instead would address a different
+   // variable than the one setenv wrote
+   std::string name = "RSTUDIO_ENV_SCOPE_TEST_\xC3\x84";
+
+   setenv(name, "value");
+   EXPECT_EQ("value", getenv(name));
+
+   std::string value;
+   EXPECT_TRUE(getenv(name, &value));
+   EXPECT_EQ("value", value);
+
+   unsetenv(name);
+   EXPECT_FALSE(getenv(name, &value));
+}
+
 TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
 {
    // getenv walking environ while setenv reallocates it is the crash class

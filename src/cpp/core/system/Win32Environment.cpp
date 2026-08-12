@@ -26,7 +26,6 @@
 #include <core/StringUtils.hpp>
 
 #include <shared_core/system/EnvironmentLock.hpp>
-#include <shared_core/system/User.hpp> // For detail::getenv
 
 namespace rstudio {
 namespace core {
@@ -84,9 +83,11 @@ void environment(Options* pEnvironment)
 // Value returned is UTF-8 encoded
 std::string getenv(const std::string& name)
 {
-   // no EnvironmentLock here: detail::getenv takes it, and the lock is
-   // not recursive
-   return detail::getenv(name);
+   // no EnvironmentLock here: the two-argument overload takes it, and the
+   // lock is not recursive
+   std::string value;
+   getenv(name, &value);
+   return value;
 }
 
 bool getenv(const std::string& name, std::string* pValue)
@@ -117,7 +118,12 @@ bool getenv(const std::string& name, std::string* pValue)
       buffer.resize(nSize);
       result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
       if (result == 0 || result > nSize)
+      {
+         // the variable changed between the two reads -- something outside
+         // the environment lock is writing to the process environment
+         WLOGF("GetEnvironmentVariable(\"{}\") failed on retry; reporting variable as unset", name);
          return false;
+      }
    }
 
    *pValue = string_utils::wideToUtf8(&(buffer[0]));
@@ -136,7 +142,7 @@ void unsetenv(const std::string& name)
 {
    EnvironmentLock lock;
 
-   ::SetEnvironmentVariable(name.c_str(), nullptr);
+   ::SetEnvironmentVariableW(string_utils::utf8ToWide(name).c_str(), nullptr);
 }
 
 
