@@ -371,11 +371,14 @@
    generic <- eval(matched[["generic"]], envir = globalenv())
    s7generic <- S7$as_generic(generic)
    
+   # NOTE: use prop() rather than `@` to read S7 properties; on R < 4.3.0,
+   # the base `@` primitive only supports S4 objects, and S7's own `@` shim
+   # is not visible from this scope (#18526)
    if (inherits(s7generic, "S7_S3_generic"))
    {
       f <- as.character(matched[["generic"]])
       class <- eval(matched[["class"]], envir = globalenv())
-      getS3method(f, class@name)
+      getS3method(f, S7$prop(class, "name"))
    }
    else if (inherits(s7generic, "S7_generic"))
    {
@@ -658,15 +661,19 @@
    
    s7generic <- S7:::as_generic(generic)
    s7class <- eval(expr[["class"]], envir = globalenv())
+
+   # NOTE: use prop() rather than `@` to read S7 properties; on R < 4.3.0,
+   # the base `@` primitive only supports S4 objects, and S7's own `@` shim
+   # is not visible from this scope (#18526)
    if (inherits(s7generic, "S7_S3_generic"))
    {
-      methodName <- paste(s7generic$name, s7class@name, sep = ".")
+      methodName <- paste(s7generic$name, S7::prop(s7class, "name"), sep = ".")
       methodEnvir <- environment(generic)[[".__S3MethodsTable__."]]
    }
    else if (inherits(s7generic, "S7_generic"))
    {
-      methodName <- s7class@name
-      methodEnvir <- s7generic@methods
+      methodName <- S7::prop(s7class, "name")
+      methodEnvir <- S7::prop(s7generic, "methods")
    }
    else
    {
