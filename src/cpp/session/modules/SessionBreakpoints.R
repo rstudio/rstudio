@@ -672,12 +672,37 @@
    {
       return(FALSE)
    }
-   
-   .rs.setFunctionBreakpoints(
+
+   # trace() cannot trace S7 methods for S7 generics directly, as the methods
+   # package cannot derive a trace class from the S7 method's class attribute.
+   # Strip the class before tracing, stashing it on the function so it can be
+   # restored when breakpoints are cleared. (#18531)
+   method <- methodEnvir[[methodName]]
+   if (inherits(method, "S7_method"))
+   {
+      attr(method, ".rs.s7MethodClass") <- oldClass(method)
+      oldClass(method) <- NULL
+      assign(methodName, method, envir = methodEnvir)
+   }
+
+   result <- .rs.setFunctionBreakpoints(
       functionName = methodName,
       envir = methodEnvir,
       steps = steps
    )
+
+   # if breakpoints were just cleared, untrace() has restored the stripped
+   # copy of the method; reapply the stashed S7 method class
+   method <- methodEnvir[[methodName]]
+   s7MethodClass <- attr(method, ".rs.s7MethodClass", exact = TRUE)
+   if (!is.null(s7MethodClass) && !.rs.isTraced(method))
+   {
+      attr(method, ".rs.s7MethodClass") <- NULL
+      oldClass(method) <- s7MethodClass
+      assign(methodName, method, envir = methodEnvir)
+   }
+
+   result
 })
 
 .rs.addFunction("setBreakpoint", function(functionName,

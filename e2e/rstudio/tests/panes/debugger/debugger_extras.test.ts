@@ -282,6 +282,41 @@ test.describe('R debugger extras', () => {
         '[1] "This is my S7 method."',
       );
     });
+
+    test('breakpoints fire in S7 methods for S7 generics (#18531)', async ({ rstudioPage: page }) => {
+      test.skip(s7Missing.length > 0, `S7 not available: ${s7Missing.join(', ')}`);
+
+      const fileName = `s7_generic_breakpoint_${Date.now()}.R`;
+      const content = heredoc`
+        s7class <- S7::new_class("s7class")
+        s7generic <- S7::new_generic("s7generic", "x")
+        S7::method(s7generic, s7class) <- function(x, ...) {
+           print("This is my S7 generic method.")
+        }
+      ` + '\n';
+      await writeAndOpenFile(page, sandbox.dir, fileName, content);
+
+      // Breakpoint on the body of the S7 method (line 4 = the print() call).
+      await debuggerActions.setBreakpoint(4);
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
+      await waitForConsoleIdle(consoleActions.page);
+
+      // Dispatch through the S7 generic into the method.
+      await consoleActions.executeInConsole('s7generic(s7class())');
+
+      await debuggerActions.waitForDebugMode();
+      await expect.poll(
+        () => debuggerActions.waitForExecutingLineGutterText(),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe('4');
+
+      // Continue and verify the method actually printed its message.
+      await debuggerActions.continueDebug();
+      await debuggerActions.waitForDebugExit();
+      await expect(consoleActions.consolePane.consoleOutput).toContainText(
+        '[1] "This is my S7 generic method."',
+      );
+    });
   });
 
   // --- Package build/reload cycle (TODOs) ---------------------------------
