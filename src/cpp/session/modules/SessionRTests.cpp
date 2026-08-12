@@ -18,6 +18,8 @@
 #include <memory>
 #include <thread>
 
+#include <core/system/Environment.hpp>
+
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
@@ -111,6 +113,31 @@ TEST(SessionRTest, RFunctionRefusesNonMainThread) {
          .call(&result);
    EXPECT_FALSE(error);
    EXPECT_EQ("x", result);
+}
+
+TEST(SessionRTest, SysGetenvSeesCoreSetenv) {
+   // Sys.getenv reads the environment via R's C runtime; on Windows,
+   // core::system::setenv historically wrote only the Win32 environment
+   // block, so variables set after R started were visible to child
+   // processes but not to R code. setenv now writes through the C runtime
+   // as well, so this must hold even with R running
+   core::system::setenv("RSTUDIO_ENV_BRIDGE_TEST", "42");
+
+   std::string value;
+   Error error = r::exec::RFunction("Sys.getenv")
+         .addParam("RSTUDIO_ENV_BRIDGE_TEST")
+         .call(&value);
+   EXPECT_FALSE(error);
+   EXPECT_EQ("42", value);
+
+   // deletion must be visible to R as well
+   core::system::unsetenv("RSTUDIO_ENV_BRIDGE_TEST");
+
+   error = r::exec::RFunction("Sys.getenv")
+         .addParam("RSTUDIO_ENV_BRIDGE_TEST")
+         .call(&value);
+   EXPECT_FALSE(error);
+   EXPECT_EQ("", value);
 }
 
 TEST(SessionRTest, RActiveBindingDetection) {

@@ -18,6 +18,8 @@
 
 #include <windows.h>
 
+#include <stdlib.h>
+
 #include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -93,15 +95,32 @@ void setenv(const std::string& name, const std::string& value)
 {
    EnvironmentLock lock;
 
-   ::SetEnvironmentVariableW(string_utils::utf8ToWide(name).c_str(),
-                             string_utils::utf8ToWide(value).c_str());
+   std::wstring nameWide = string_utils::utf8ToWide(name);
+   std::wstring valueWide = string_utils::utf8ToWide(value);
+
+   // write to the Win32 process environment block: the source of truth for
+   // getenv() above, and what child processes inherit
+   ::SetEnvironmentVariableW(nameWide.c_str(), valueWide.c_str());
+
+   // also write through the C runtime: the CRT keeps its own copy of the
+   // environment, snapshotted lazily from the process block and never
+   // refreshed by SetEnvironmentVariable, so without this raw ::getenv
+   // calls (including those made by in-process libraries and by R itself,
+   // which reads the environment via its CRT) would not see the update
+   ::_wputenv_s(nameWide.c_str(), valueWide.c_str());
 }
 
 void unsetenv(const std::string& name)
 {
    EnvironmentLock lock;
 
-   ::SetEnvironmentVariable(name.c_str(), nullptr);
+   std::wstring nameWide = string_utils::utf8ToWide(name);
+
+   // remove from the Win32 process environment block
+   ::SetEnvironmentVariableW(nameWide.c_str(), nullptr);
+
+   // remove from the CRT environment as well (an empty value deletes)
+   ::_wputenv_s(nameWide.c_str(), L"");
 }
 
 

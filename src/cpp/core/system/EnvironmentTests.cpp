@@ -92,6 +92,28 @@ TEST(EnvironmentTest, EnvironmentScopeUnsetsAbsentValue)
    EXPECT_EQ("", getenv("RSTUDIO_ENV_SCOPE_TEST"));
 }
 
+#ifdef _WIN32
+
+TEST(EnvironmentTest, SetenvIsVisibleToCRuntime)
+{
+   // core::system::setenv writes the Win32 environment block, but raw
+   // ::getenv reads the C runtime's own copy of the environment, which
+   // SetEnvironmentVariable does not update; setenv must write through
+   // both so that CRT readers (in-process libraries, and R itself when
+   // it shares our C runtime) observe the update
+   setenv("RSTUDIO_ENV_CRT_TEST", "value");
+   const char* value = ::getenv("RSTUDIO_ENV_CRT_TEST");
+   ASSERT_NE(nullptr, value);
+   EXPECT_EQ(std::string("value"), value);
+
+   // unsetenv must scrub the CRT copy as well: read-then-scrub secret
+   // handling relies on the value being gone from every store
+   unsetenv("RSTUDIO_ENV_CRT_TEST");
+   EXPECT_EQ(nullptr, ::getenv("RSTUDIO_ENV_CRT_TEST"));
+}
+
+#endif
+
 TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
 {
    // getenv walking environ while setenv reallocates it is the crash class
