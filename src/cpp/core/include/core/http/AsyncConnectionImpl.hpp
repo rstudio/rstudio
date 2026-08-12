@@ -208,18 +208,8 @@ public:
 
    virtual void writeResponse(bool close = true, Socket::Handler handler = Socket::NullHandler)
    {
-      if (sendingResponse_)
-      {
-         // A response (or just its headers, e.g. via writeResponseHeaders())
-         // has already been started on this connection -- writing a second
-         // one would corrupt the wire framing (a second status line
-         // interleaved with an in-flight body) or send a second response the
-         // peer isn't expecting. This can happen if an upstream error arrives
-         // after a streaming proxy (e.g. FixedBufferProxy) has already
-         // flushed headers/body to this connection.
-         LOG_ERROR_MESSAGE("Attempt to write a response after one was already started; ignoring");
+      if (responseAlreadyStarted())
          return;
-      }
 
       sendingResponse_ = true;
 
@@ -290,6 +280,14 @@ public:
                               const Headers& additionalHeaders = Headers(),
                               Socket::Handler handler = Socket::NullHandler)
    {
+      // Check the guard before mutating response_: if a response (or just
+      // its headers) has already started, an in-flight asyncWrite may still
+      // hold buffers pointing into response_'s current backing storage --
+      // assign()ing over it here would corrupt those buffers mid-write, not
+      // just send a logically-duplicate response.
+      if (responseAlreadyStarted())
+         return;
+
       response_.assign(response, additionalHeaders);
       writeResponse(close, handler);
    }
@@ -307,6 +305,12 @@ public:
 
    virtual void writeError(const Error& error)
    {
+      // Same guard-before-mutating-response_ rationale as the writeResponse()
+      // overload above: setError() below must not run once a response has
+      // already started.
+      if (responseAlreadyStarted())
+         return;
+
       response_.setError(error);
       writeResponse();
    }
@@ -470,6 +474,23 @@ public:
    }
    
 private:
+
+   // Guards against writing (or beginning to assemble) a second response
+   // once one has already started on this connection -- e.g. a streaming
+   // proxy (FixedBufferProxy) already flushed headers/body directly via
+   // writeResponseHeaders()/asyncWrite(), and an upstream error then arrives
+   // and its handler calls writeResponse()/writeError(). Checked before
+   // response_ is mutated in each entry point (not just before the socket
+   // write), since an in-flight asyncWrite may still hold buffers pointing
+   // into response_'s current backing storage.
+   bool responseAlreadyStarted()
+   {
+      if (!sendingResponse_)
+         return false;
+
+      LOG_ERROR_MESSAGE("Attempt to write a response after one was already started; ignoring");
+      return true;
+   }
 
    void logConnectionError(Error error)
    {
