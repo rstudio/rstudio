@@ -71,7 +71,7 @@ export namespace Ace {
     getValue(): string;
     setValue(value: string, cursorPos?: number): void;
     focus(): void;
-    gotoLine(line: number, column?: number): void;
+    gotoLine(line: number, column?: number, animate?: boolean): void;
     getCursorPosition(): Position;
     getSelectedText(): string;
     getFirstVisibleRow(): number;

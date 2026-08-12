@@ -11,13 +11,17 @@ import type { ElementHandle, Page } from '@playwright/test';
 //
 // Chunk execution in an R Markdown notebook must follow the focused editor
 // view: Run Line inside a chunk goes through the notebook queue (not the
-// console), and Run Current Chunk resolves the chunk under the focused
-// view's cursor, not the primary view's.
+// console), and Run Current Chunk / Run All Chunks Above resolve chunks
+// from the focused view's cursor, not the primary view's.
 test.describe('Split editor with R Markdown chunks', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
 
-  const FILE = 'split_editor_rmd.Rmd';
+  // One file name per test: reopening a path whose content matches a
+  // previously executed notebook restores its chunk output widgets from the
+  // notebook cache, which would skew the widget-count baselines below.
+  let fileCounter = 0;
+  let file: string;
 
   // The chunk fences are interpolated because heredoc reads template parts
   // raw -- an escaped backtick would land in the file as a literal
@@ -45,8 +49,8 @@ test.describe('Split editor with R Markdown chunks', () => {
   // Element handles (rather than text-filtered locators) because Ace only
   // renders visible rows: a locator filtered on document text stops matching
   // a view as soon as it scrolls the probed line offscreen.
-  async function docViewHandles(page: Page): Promise<ElementHandle[]> {
-    return await page.$$("[class*='rstudio_source_panel'] .ace_editor:visible");
+  async function docViewHandles(page: Page): Promise<ElementHandle<HTMLElement>[]> {
+    return await page.$$("[class*='rstudio_source_panel'] .ace_editor:visible") as ElementHandle<HTMLElement>[];
   }
 
   function viewEditor(handle: ElementHandle) {
@@ -75,7 +79,8 @@ test.describe('Split editor with R Markdown chunks', () => {
   }
 
   async function openAndSplit(page: Page) {
-    await writeAndOpenFile(page, sandbox.dir, FILE, CONTENT);
+    file = `split_editor_rmd_${++fileCounter}.Rmd`;
+    await writeAndOpenFile(page, sandbox.dir, file, CONTENT);
     await expect.poll(async () => (await docViewHandles(page)).length).toBe(1);
 
     await executeCommand(page, 'splitEditorDown');
@@ -89,14 +94,22 @@ test.describe('Split editor with R Markdown chunks', () => {
     const primary = viewEditor(handles[isSplit.indexOf(false)]);
     const split = viewEditor(handles[isSplit.indexOf(true)]);
 
+    // Clear leftover state now: the console helpers put keyboard focus in
+    // the console input, so they must run before the views are focused for
+    // the keyboard-driven Run Line test to exercise real focus routing.
+    await consoleActions.evalRLogical(
+      '{ rm(list = intersect(c("chunk_one", "chunk_two"), ls(globalenv())), envir = globalenv()); TRUE }');
+
+    // Chunk toolbars are line widgets, created asynchronously (one per
+    // chunk) once the notebook's scope tree is ready; wait for them so the
+    // widget-count baselines the tests capture are stable.
+    await expect.poll(() => primary.lineWidgetCount()).toBe(2);
+
     // Primary cursor in chunk-one; split view keeps focus in chunk-two, so
     // a run that reads the wrong view is caught by which chunk executes.
     await primary.focusAndGoto(CHUNK_ONE_LINE);
     await split.focusAndGoto(CHUNK_TWO_LINE);
     await expect.poll(() => split.hasFocus()).toBe(true);
-
-    await consoleActions.evalRLogical(
-      '{ rm(list = intersect(c("chunk_one", "chunk_two"), ls(globalenv())), envir = globalenv()); TRUE }');
 
     return { primary, split };
   }
@@ -120,7 +133,7 @@ test.describe('Split editor with R Markdown chunks', () => {
 
   test.afterEach(async ({ rstudioPage: page }) => {
     await executeCommand(page, 'removeEditorSplit');
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, [FILE]);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, [file]);
   });
 
   test('Run Line from the split view executes its chunk inline', async ({ rstudioPage: page }) => {
@@ -148,6 +161,19 @@ test.describe('Split editor with R Markdown chunks', () => {
     await executeCommand(page, 'executeCurrentChunk');
 
     expect(await pollWhichRan()).toBe('chunk_one=false chunk_two=true');
+    await expect.poll(() => primary.lineWidgetCount()).toBe(widgetsBefore + 1);
+  });
+
+  test('Run All Chunks Above runs chunks above the focused view cursor', async ({ rstudioPage: page }) => {
+    const { primary } = await openAndSplit(page);
+    const widgetsBefore = await primary.lineWidgetCount();
+
+    // The split view's cursor sits in chunk-two, so the chunk above it --
+    // chunk-one -- must run. Resolving from the primary view's cursor
+    // (inside chunk-one) would find no chunks above it and run nothing.
+    await executeCommand(page, 'executePreviousChunks');
+
+    expect(await pollWhichRan()).toBe('chunk_one=true chunk_two=false');
     await expect.poll(() => primary.lineWidgetCount()).toBe(widgetsBefore + 1);
   });
 });
