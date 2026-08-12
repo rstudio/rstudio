@@ -72,7 +72,7 @@ for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
   )
 )
 
-set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
+set QUARTO_URL=quarto/%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
 set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
 

@@ -110,6 +110,8 @@ The second command is expected to match the archived release notes under `versio
 
 Run the upload script. It downloads release archives for all supported platforms (linux-amd64, linux-arm64, macos, win) from the Quarto GitHub releases page and copies each to the `rstudio-buildtools` S3 bucket.
 
+**This step is load-bearing, not archival.** Every build installs Quarto from that bucket, so until the new version is mirrored there, the version bump breaks every platform's build. Treat a failure here as blocking.
+
 ```bash
 bash dependencies/tools/upload-quarto.sh
 ```
@@ -177,7 +179,7 @@ RSTUDIO_TOOLS_ROOT="$VERIFY_DIR" bash dependencies/common/install-quarto
 
 Run `quarto --version` yourself, as above; do not infer it from the install script's output. The script does compare versions (`install-quarto:38-44`), but that is a pre-install early exit for a tools root that already has Quarto — against the empty temporary root it is skipped entirely, so exit code 0 on its own proves only that the archive downloaded and extracted. Running the binary is what shows the release is usable, since it exercises the bundled Deno runtime. The `trap` cleans up the temporary directory whether the install succeeds or fails. If the install fails, or the reported version is not the expected one, report it and stop.
 
-Note that this step does **not** verify the S3 mirror from step 6: `install-quarto:31` downloads from the Quarto GitHub releases page, and the `RSTUDIO_BUILDTOOLS` alternative on the following line is commented out (as is the equivalent in `install-dependencies.cmd`). The mirror is a fallback, which is why step 6 verifies it directly.
+Because `install-quarto` downloads from the build tools bucket, this step also proves the mirror works — but only for the archive matching the current platform. The other three are covered by step 6's checks alone, so do not skip them.
 
 After verification, tell the user they will need to re-run `dependencies/common/install-quarto` themselves (with appropriate privileges) to install the new Quarto into their dev environment.
 
