@@ -89,6 +89,41 @@ std::string getenv(const std::string& name)
    return detail::getenv(name);
 }
 
+bool getenv(const std::string& name, std::string* pValue)
+{
+   EnvironmentLock lock;
+
+   std::wstring nameWide = string_utils::utf8ToWide(name);
+
+   DWORD nSize = 256;
+   std::vector<wchar_t> buffer(nSize);
+   ::SetLastError(ERROR_SUCCESS);
+   DWORD result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
+
+   if (result == 0)
+   {
+      // a zero result means either the variable is unset, or it exists with
+      // an empty value; GetLastError distinguishes the two
+      if (::GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+         return false;
+
+      pValue->clear();
+      return true;
+   }
+
+   if (result > nSize)
+   {
+      nSize = result;
+      buffer.resize(nSize);
+      result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
+      if (result == 0 || result > nSize)
+         return false;
+   }
+
+   *pValue = string_utils::wideToUtf8(&(buffer[0]));
+   return true;
+}
+
 void setenv(const std::string& name, const std::string& value)
 {
    EnvironmentLock lock;

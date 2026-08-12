@@ -92,6 +92,33 @@ TEST(EnvironmentTest, EnvironmentScopeUnsetsAbsentValue)
    EXPECT_EQ("", getenv("RSTUDIO_ENV_SCOPE_TEST"));
 }
 
+TEST(EnvironmentTest, GetenvOverloadDistinguishesUnset)
+{
+   // the two-argument getenv must observe values written by setenv; on
+   // Windows this means reading the process environment block, not the
+   // CRT's startup snapshot (which raw ::getenv reads)
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+
+   std::string value = "sentinel";
+   EXPECT_FALSE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("sentinel", value);
+
+   setenv("RSTUDIO_ENV_SCOPE_TEST", "value");
+   EXPECT_TRUE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("value", value);
+
+#ifndef _WIN32
+   // set-but-empty is distinguishable from unset on POSIX only: on Windows,
+   // setting a variable to the empty string deletes it
+   setenv("RSTUDIO_ENV_SCOPE_TEST", "");
+   value = "sentinel";
+   EXPECT_TRUE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("", value);
+#endif
+
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+}
+
 TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
 {
    // getenv walking environ while setenv reallocates it is the crash class
