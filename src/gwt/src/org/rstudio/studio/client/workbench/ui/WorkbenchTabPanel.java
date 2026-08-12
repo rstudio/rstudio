@@ -197,6 +197,7 @@ class WorkbenchTabPanel
          return;
 
       clearing_ = true;
+      tabEventRegistrations_.detach();
       tabPanel_.clear();
       tabs_.clear();
       clearing_ = false;
@@ -269,20 +270,25 @@ class WorkbenchTabPanel
          });
       }
 
-      tab.addEnsureVisibleHandler(ensureVisibleEvent ->
+      // Retain these registrations so setTabs()/clear() can detach them. Tabs
+      // are long-lived singletons that a pane-layout change can move to a
+      // different panel; without the detach, this panel keeps forwarding the
+      // moved tab's events to its old quadrant's window -- e.g. a Viewer
+      // moved to the sidebar still maximized the TabSet2 quadrant on a
+      // height = "maximize" request (#18448).
+      tabEventRegistrations_.add(tab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
          if (!neverVisible_)
          {
             // First ensure that we ourselves are visible
-            int myInt = tabPanel_.getWidgetCount();
-            LogicalWindow window = getParentWindow();
             fireEvent(new EnsureVisibleEvent(ensureVisibleEvent.getActivate()));
             if (ensureVisibleEvent.getActivate())
                tabPanel_.selectTab(widget);
          }
-      });
+      }));
 
-      tab.addEnsureHeightHandler(ensureHeightEvent -> fireEvent(ensureHeightEvent));
+      tabEventRegistrations_.add(
+            tab.addEnsureHeightHandler(ensureHeightEvent -> fireEvent(ensureHeightEvent)));
    }
 
    public void selectNextTab()
@@ -398,6 +404,7 @@ class WorkbenchTabPanel
    public void clear()
    {
       clearing_ = true;
+      tabEventRegistrations_.detach();
       tabPanel_.clear();
       tabs_.clear();
       clearing_ = false;
@@ -496,6 +503,10 @@ class WorkbenchTabPanel
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<>();
    private final LogicalWindow parentWindow_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
+   // Per-tab event forwarding, detached when the tab set changes -- not on
+   // unload, because a panel that is detached and re-attached by a layout
+   // change keeps its tabs and must keep forwarding their events.
+   private final HandlerRegistrations tabEventRegistrations_ = new HandlerRegistrations();
    private boolean clearing_ = false;
    private boolean neverVisible_ = false;
    private LayoutPanel panel_;

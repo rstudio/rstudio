@@ -317,39 +317,36 @@ Error findProgramOnPath(const std::string& program,
    std::string path = core::system::getenv("PATH");
    auto paths = core::algorithm::split(path, ":");
 
-   for (auto&& path : paths)
+   for (auto&& pathEntry : paths)
    {
-      // get file descriptor for path entry
-      int fd = ::open(path.c_str(), 0);
-      if (fd == -1)
+      // skip empty entries: historically the search never resolved against
+      // the working directory, and completeChildPath below would
+      if (pathEntry.empty())
          continue;
-      
-      // clean up when we're done
-      BOOST_SCOPE_EXIT( (&fd) )
-      {
-         ::close(fd);
-      }
-      BOOST_SCOPE_EXIT_END;
-      
-      // confirm that it's a regular file
+
+      // build the candidate path for this PATH entry
+      FilePath candidatePath = FilePath(pathEntry).completeChildPath(program);
+      if (candidatePath.isEmpty())
+         continue;
+
+      std::string candidate = candidatePath.getAbsolutePath();
+
+      // confirm that it's a regular file (following symlinks, as before)
       struct stat sb;
-      int status = ::fstatat(fd, program.c_str(), &sb, 0);
-      if (status == -1)
+      if (::stat(candidate.c_str(), &sb) == -1)
          continue;
-      
-      bool isRegularFile = S_ISREG(sb.st_mode);
-      if (!isRegularFile)
+
+      if (!S_ISREG(sb.st_mode))
          continue;
-      
+
       // confirm that it's executable
       // note that we use AT_EACCESS to ensure checks are done using
       // the effective user id
-      status = ::faccessat(fd, program.c_str(), X_OK, AT_EACCESS);
-      if (status == -1)
+      if (::faccessat(AT_FDCWD, candidate.c_str(), X_OK, AT_EACCESS) == -1)
          continue;
-      
+
       // all checks passed; return full path
-      *pProgramPath = FilePath(path).completeChildPath(program);
+      *pProgramPath = candidatePath;
       return Success();
    }
 
@@ -428,6 +425,13 @@ void logConfigReloadThreadFunc(sigset_t waitMask)
 
 void initializeLogConfigReload()
 {
+   // initializeLog can run more than once in a process (e.g. desktop mode
+   // re-initializes logging with the user log path); only ever start one
+   // reload thread, since each one would react to the same SIGHUP
+   static bool s_initialized = false;
+   if (s_initialized)
+      return;
+
    // block the SIGHUP signal
    sigset_t waitMask;
    sigemptyset(&waitMask);
@@ -439,6 +443,7 @@ void initializeLogConfigReload()
 
    // start a thread to handle the SIGHUP signal
    boost::thread thread(boost::bind(logConfigReloadThreadFunc, waitMask));
+   s_initialized = true;
 }
 
 
@@ -563,7 +568,16 @@ Error SignalBlocker::blockAll()
    // create mask to block all signals
    sigset_t blockMask;
    sigfillset(&blockMask);
-   
+
+   // leave synchronous fault signals unblocked: they are always delivered
+   // to the faulting thread, so blocking them cannot route them elsewhere.
+   // it only makes the kernel bypass any installed crash handler and kill
+   // the process with no diagnostics (see #10756)
+   sigdelset(&blockMask, SIGSEGV);
+   sigdelset(&blockMask, SIGBUS);
+   sigdelset(&blockMask, SIGILL);
+   sigdelset(&blockMask, SIGFPE);
+
    // block
    return pImpl_->block(&blockMask);
 }

@@ -22,6 +22,10 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # (see rstudio/latest-builds#251). Manual dispatch can instead build every
 # engine from source via build_from_source.
 #
+# Either way the daily comes from the manifest for the branch this workflow is
+# checked out on, never the /rstudio/latest alias -- see
+# .github/actions/os-resolve-daily-manifest for why (#18498).
+#
 # Cron times are UTC: 08:00 UTC is 4 AM EDT in summer, 3 AM EST in winter.
 
 on:
@@ -161,17 +165,28 @@ jobs:
       jammy_amd64:  ${{ steps.resolve.outputs.jammy_amd64 }}
       resolute_amd64: ${{ steps.resolve.outputs.resolute_amd64 }}
     steps:
+      # version/RELEASE names the branch whose daily manifest the URLs below
+      # come from, so this job needs the repository.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - id: resolve
         name: Build per-platform installer URLs for a specific version
         env:
           VERSION: ${{ inputs.version }}
           BUILD_FROM_SOURCE: ${{ inputs.build_from_source }}
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           # Emit empty URLs when building from source (engines build, ignoring
-          # any URL) or when no version is given (engines self-resolve the
-          # latest daily, keeping their SHA-256 check). Only a specific version
-          # needs URLs built here: swap the version token (+ -> -) into each
-          # platform's latest download URL.
+          # any URL) or when no version is given (engines self-resolve their
+          # branch's latest daily, keeping their SHA-256 check). Only a specific
+          # version needs URLs built here: swap the version token (+ -> -) into
+          # each platform's latest download URL.
           if [ "$BUILD_FROM_SOURCE" = "true" ] || [ -z "$VERSION" ]; then
             {
               echo "rhel="
@@ -188,7 +203,7 @@ jobs:
             echo "No installer URLs to resolve (building from source or using the latest daily)."
             exit 0
           fi
-          M=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+          M=$(curl -fsSL --retry 3 --retry-delay 5 "$MANIFEST_URL")
           REQ=${VERSION//+/-}
           emit() {
             local product="$1" key="$2" link ver cur
@@ -196,7 +211,7 @@ jobs:
             ver=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].version // empty")
             cur=${ver//+/-}
             if [ -z "$link" ] || [ -z "$cur" ]; then
-              echo "::error::Could not build a URL for ${product}/${key} from the latest manifest." >&2
+              echo "::error::Could not build a URL for ${product}/${key} from $MANIFEST_URL." >&2
               return 1
             fi
             local out=${link//$cur/$REQ}

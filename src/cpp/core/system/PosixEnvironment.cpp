@@ -19,6 +19,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <shared_core/system/EnvironmentLock.hpp>
+
 extern char **environ;
 
 namespace rstudio {
@@ -36,6 +38,8 @@ bool optionIsNamed(const Option& option, const std::string& name)
 
 void environment(Options* pEnvironment)
 {
+   EnvironmentLock lock;
+
    for (char **env = environ; *env; ++env)
    {
       Option envVar;
@@ -46,6 +50,8 @@ void environment(Options* pEnvironment)
 
 std::string getenv(const std::string& name)
 {
+   EnvironmentLock lock;
+
    char * value = ::getenv(name.c_str());
    if (value)
       return std::string(value);
@@ -55,11 +61,15 @@ std::string getenv(const std::string& name)
 
 void setenv(const std::string& name, const std::string& value)
 {
+   EnvironmentLock lock;
+
    ::setenv(name.c_str(), value.c_str(), 1);
 }
 
 void unsetenv(const std::string& name)
 {
+   EnvironmentLock lock;
+
    ::unsetenv(name.c_str());
 }
 
@@ -67,4 +77,3 @@ void unsetenv(const std::string& name)
 } // namespace system
 } // namespace core
 } // namespace rstudio
-

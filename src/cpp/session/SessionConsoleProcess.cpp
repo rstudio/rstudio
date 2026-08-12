@@ -15,6 +15,8 @@
 
 #include <sstream>
 
+#include <shared_core/system/EnvironmentLock.hpp>
+
 #include <core/StringUtils.hpp>
 #include <core/system/Interrupts.hpp>
 
@@ -1074,6 +1076,17 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       core::FilePath bashDotDir = session::options().rResourcesPath().completeChildPath("terminal/bash");
       core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
+      // read ENV under the environment lock; the raw ::getenv (rather than
+      // core::system::getenv) preserves the set-but-empty vs. unset
+      // distinction
+      std::string realEnv = "<unset>";
+      {
+         core::system::EnvironmentLock lock;
+         const char* env = ::getenv("ENV");
+         if (env)
+            realEnv = env;
+      }
+
 #ifdef __APPLE__
       if (cp->getShellType() == TerminalShell::ShellType::PosixBash)
       {
@@ -1085,14 +1098,12 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       else
       {
          // use ENV with other custom shells (presumedly a modern Bash shell)
-         const char* env = ::getenv("ENV");
-         cp->setenv("_REALENV", env ? env : "<unset>");
+         cp->setenv("_REALENV", realEnv);
          cp->setenv("ENV", bashProfile.getAbsolutePath());
       }
 #else
       // set ENV so that our terminal hooks are run
-      const char* env = ::getenv("ENV");
-      cp->setenv("_REALENV", env ? env : "<unset>");
+      cp->setenv("_REALENV", realEnv);
       cp->setenv("ENV", bashProfile.getAbsolutePath());
 #endif
    }

@@ -24,6 +24,7 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Logger.hpp>
 #include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/EnvironmentLock.hpp>
 #include <shared_core/system/Win32StringUtils.hpp>
 
 using namespace boost::placeholders;
@@ -135,6 +136,8 @@ namespace detail {
 
 std::string getenv(const std::string& name)
 {
+   EnvironmentLock lock;
+
    std::wstring nameWide(name.begin(), name.end());
 
    // get the variable

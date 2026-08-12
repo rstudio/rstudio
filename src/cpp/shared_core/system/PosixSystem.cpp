@@ -37,6 +37,7 @@
 #endif
 
 #include <shared_core/Error.hpp>
+#include <shared_core/system/EnvironmentLock.hpp>
 #include <shared_core/system/User.hpp>
 
 namespace rstudio {
@@ -165,6 +166,8 @@ Error enableCoreDumps()
 
 std::string getEnvironmentVariable(const std::string& in_name)
 {
+   EnvironmentLock lock;
+
    char* value = ::getenv(in_name.c_str());
    if (value)
       return std::string(value);
