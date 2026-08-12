@@ -208,6 +208,19 @@ public:
 
    virtual void writeResponse(bool close = true, Socket::Handler handler = Socket::NullHandler)
    {
+      if (sendingResponse_)
+      {
+         // A response (or just its headers, e.g. via writeResponseHeaders())
+         // has already been started on this connection -- writing a second
+         // one would corrupt the wire framing (a second status line
+         // interleaved with an in-flight body) or send a second response the
+         // peer isn't expecting. This can happen if an upstream error arrives
+         // after a streaming proxy (e.g. FixedBufferProxy) has already
+         // flushed headers/body to this connection.
+         LOG_ERROR_MESSAGE("Attempt to write a response after one was already started; ignoring");
+         return;
+      }
+
       sendingResponse_ = true;
 
       // add extra response headers
@@ -283,6 +296,8 @@ public:
 
    virtual void writeResponseHeaders(Socket::Handler handler)
    {
+      sendingResponse_ = true;
+
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
 

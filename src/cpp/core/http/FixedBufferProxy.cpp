@@ -1,5 +1,5 @@
 /*
- * ChunkProxy.cpp
+ * FixedBufferProxy.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -14,9 +14,11 @@
  */
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/optional.hpp>
 
-#include <core/http/ChunkProxy.hpp>
+#include <core/http/FixedBufferProxy.hpp>
 #include <core/http/Util.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 using namespace boost::placeholders;
 
@@ -24,8 +26,8 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-ChunkProxy::ChunkProxy(const boost::shared_ptr<AsyncConnection>& pClientConnection,
-                       uint64_t maxBufferSize) :
+FixedBufferProxy::FixedBufferProxy(const boost::shared_ptr<AsyncConnection>& pClientConnection,
+                                    uint64_t maxBufferSize) :
    pClientConnection_(pClientConnection),
    maxBufferSize_(maxBufferSize),
    wroteHeaders_(false),
@@ -34,35 +36,39 @@ ChunkProxy::ChunkProxy(const boost::shared_ptr<AsyncConnection>& pClientConnecti
 {
 }
 
-void ChunkProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection)
+void FixedBufferProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection)
 {
    pServerConnection_ = pServerConnection;
-   pServerConnection_->setChunkHandler(boost::bind(&ChunkProxy::queueChunk,
-                                                   shared_from_this(),
-                                                   _1, _2));
+   pServerConnection_->setFixedBufferHandler(boost::bind(&FixedBufferProxy::queueChunk,
+                                                          shared_from_this(),
+                                                          _1, _2));
 
    // queueChunk() may decline (return false) under backpressure while
    // leaving the connection open, expecting to be resumed once writeChunk()
-   // drains -- see setChunkHandlerSupportsPause()'s declaration for why this
-   // must be opted into rather than assumed for every ChunkHandler consumer.
-   pServerConnection_->setChunkHandlerSupportsPause(true);
+   // drains -- see setFixedBufferHandlerSupportsPause()'s declaration for why this
+   // must be opted into rather than assumed for every FixedBufferHandler consumer.
+   pServerConnection_->setFixedBufferHandlerSupportsPause(true);
 }
 
-bool ChunkProxy::queueChunk(const http::Response& response,
-                            const std::string& chunk)
+bool FixedBufferProxy::queueChunk(const http::Response& response,
+                                   const std::string& chunk)
 {
    LOCK_MUTEX(mutex_)
    {
       // Decide the client-facing framing once, from the upstream response.
       // Content-Length framing preserves a known upstream length end-to-end
       // (progress bars; HTTP/1.1 forbids CL + chunked together). Chunked is the
-      // fallback when the upstream length is unknown (upstream was chunked or
-      // EOF-delimited).
+      // fallback when the upstream length is unknown (upstream was chunked,
+      // EOF-delimited, or declares an unparseable Content-Length -- matching
+      // AsyncClient's own fallback to EOF-delimited reading in that case, see
+      // responseBodyComplete()/streamedBodyComplete() in AsyncClient.hpp).
       if (framing_ == Framing::Undecided)
       {
          bool upstreamChunked =
             response.headerValue(kTransferEncoding) == kChunkedTransferEncoding;
-         framing_ = (response.containsHeader("Content-Length") && !upstreamChunked)
+         boost::optional<uintmax_t> contentLength =
+            safe_convert::stringTo<uintmax_t>(response.headerValue("Content-Length"));
+         framing_ = (contentLength && !upstreamChunked)
                        ? Framing::ContentLength
                        : Framing::Chunked;
       }
@@ -121,7 +127,7 @@ bool ChunkProxy::queueChunk(const http::Response& response,
          // mechanism below (copying Set-Cookie already present on
          // pClientConnection_->response()) is the intended seam: the future
          // streaming-enabled /s/ wiring should stamp refreshed auth cookies onto
-         // that response object *before* the first ChunkProxy::queueChunk() call
+         // that response object *before* the first FixedBufferProxy::queueChunk() call
          // (i.e. at header-received time in AsyncClient, not at completion time).
          http::Headers preserved;
          for (const http::Header& h : resp.headers())
@@ -144,9 +150,9 @@ bool ChunkProxy::queueChunk(const http::Response& response,
          // Content-Length framing: keep the upstream Content-Length as-is.
 
          clientWriteInProgress_ = true;
-         pClientConnection_->writeResponseHeaders(boost::bind(&ChunkProxy::onHeadersWrote,
-                                                              shared_from_this(),
-                                                              boost::asio::placeholders::error));
+         pClientConnection_->writeResponseHeaders(boost::bind(&FixedBufferProxy::onHeadersWrote,
+                                                               shared_from_this(),
+                                                               boost::asio::placeholders::error));
          wroteHeaders_ = true;
       }
       else
@@ -179,7 +185,7 @@ bool ChunkProxy::queueChunk(const http::Response& response,
    return true;
 }
 
-void ChunkProxy::onHeadersWrote(const boost::system::error_code& ec)
+void FixedBufferProxy::onHeadersWrote(const boost::system::error_code& ec)
 {
    if (handleError(ec))
       return;
@@ -196,7 +202,7 @@ void ChunkProxy::onHeadersWrote(const boost::system::error_code& ec)
    END_LOCK_MUTEX
 }
 
-void ChunkProxy::writeChunk()
+void FixedBufferProxy::writeChunk()
 {
    if (writeBuffer_.empty())
    {
@@ -225,12 +231,12 @@ void ChunkProxy::writeChunk()
    clientWriteInProgress_ = true;
    boost::asio::const_buffer buffer(chunk.c_str(), chunk.size());
    pClientConnection_->asyncWrite(buffer,
-                                  boost::bind(&ChunkProxy::onChunkWrote,
-                                              shared_from_this(),
-                                              boost::asio::placeholders::error));
+                                  boost::bind(&FixedBufferProxy::onChunkWrote,
+                                                    shared_from_this(),
+                                                    boost::asio::placeholders::error));
 }
 
-void ChunkProxy::onChunkWrote(const boost::system::error_code& ec)
+void FixedBufferProxy::onChunkWrote(const boost::system::error_code& ec)
 {
    if (handleError(ec))
       return;
@@ -259,7 +265,7 @@ void ChunkProxy::onChunkWrote(const boost::system::error_code& ec)
    END_LOCK_MUTEX
 }
 
-bool ChunkProxy::handleError(const boost::system::error_code& ec)
+bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
 {
    if (ec)
    {

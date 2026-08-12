@@ -30,6 +30,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <set>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -42,6 +43,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/system/error_code.hpp>
 
+#include <core/http/AsyncConnection.hpp>
+#include <core/http/FixedBufferProxy.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
@@ -78,7 +81,26 @@ enum class ResponseMode
 
    // Accept the connection and never reply, simulating a peer that stalls after
    // the handshake.
-   NoResponse
+   NoResponse,
+
+   // Declares Content-Length for the full body but only ever writes the first
+   // half of it, then closes the connection cleanly (shutdown + close) --
+   // simulates a backend process (rsession/Shiny/Jetty) crashing or being
+   // killed mid-response after emitting headers and part of the body.
+   TruncatedContentLength,
+
+   // Declares Content-Length for the intended body but actually writes extra
+   // trailing bytes beyond it, with the connection kept open afterward --
+   // simulates a backend whose Content-Length header is stale/miscalculated
+   // relative to what it actually writes.
+   OverLongContentLength,
+
+   // Writes headers and half the declared Content-Length body, then aborts
+   // the connection with a hard reset (SO_LINGER{on,0} + close, which causes
+   // the kernel to send RST instead of FIN) rather than a clean shutdown --
+   // simulates a backend process being killed (segfault, kill -9, OOM) after
+   // the downstream client has already started receiving bytes.
+   PartialBodyThenHardReset
 };
 
 // A minimal blocking HTTP/1.1 server on its own thread. Accepts a single
@@ -123,7 +145,22 @@ private:
 
       writeResponse(socket, ec);
 
-      if (mode_ != ResponseMode::NoResponse && closeAfterResponse_)
+      if (mode_ == ResponseMode::PartialBodyThenHardReset)
+      {
+         // Give the already-written partial body a moment to actually reach
+         // the client before resetting -- SO_LINGER{0} can otherwise discard
+         // unacknowledged data, silently turning "partial body then reset"
+         // into "no body at all then reset".
+         std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+         // SO_LINGER{on, 0} makes close() send a hard RST instead of the
+         // normal FIN/shutdown sequence, simulating a backend process dying
+         // (segfault, kill -9, OOM) rather than closing cleanly.
+         boost::asio::socket_base::linger option(true, 0);
+         socket.set_option(option, ec);
+         socket.close(ec);
+      }
+      else if (mode_ != ResponseMode::NoResponse && closeAfterResponse_)
       {
          socket.shutdown(tcp::socket::shutdown_both, ec);
          socket.close(ec);
@@ -206,6 +243,40 @@ private:
             boost::asio::write(socket, boost::asio::buffer(resp), ec);
             break;
          }
+
+         case ResponseMode::TruncatedContentLength:
+         {
+            std::string resp =
+               "HTTP/1.1 200 OK\r\n"
+               "Content-Type: application/x-ndjson\r\n"
+               "Content-Length: " + std::to_string(body_.size()) + "\r\n"
+               "\r\n" + body_.substr(0, body_.size() / 2);
+            boost::asio::write(socket, boost::asio::buffer(resp), ec);
+            break;
+         }
+
+         case ResponseMode::OverLongContentLength:
+         {
+            std::string extra = "EXTRA-BYTES-BEYOND-DECLARED-CONTENT-LENGTH";
+            std::string resp =
+               "HTTP/1.1 200 OK\r\n"
+               "Content-Type: application/x-ndjson\r\n"
+               "Content-Length: " + std::to_string(body_.size()) + "\r\n"
+               "\r\n" + body_ + extra;
+            boost::asio::write(socket, boost::asio::buffer(resp), ec);
+            break;
+         }
+
+         case ResponseMode::PartialBodyThenHardReset:
+         {
+            std::string resp =
+               "HTTP/1.1 200 OK\r\n"
+               "Content-Type: application/x-ndjson\r\n"
+               "Content-Length: " + std::to_string(body_.size()) + "\r\n"
+               "\r\n" + body_.substr(0, body_.size() / 2);
+            boost::asio::write(socket, boost::asio::buffer(resp), ec);
+            break;
+         }
       }
    }
 
@@ -233,7 +304,8 @@ Outcome runScenario(ResponseMode mode,
                     bool closeAfterResponse,
                     const std::string& responseBody = "{\"name\":\"jsonlite\"}\n",
                     const boost::posix_time::time_duration& requestTimeout =
-                       boost::posix_time::pos_infin)
+                       boost::posix_time::pos_infin,
+                    const std::string& requestMethod = "POST")
 {
    LocalServer server(mode, closeAfterResponse, responseBody);
    server.start();
@@ -249,7 +321,7 @@ Outcome runScenario(ResponseMode mode,
       pClient->setRequestTimeout(requestTimeout);
 
    http::Request& request = pClient->request();
-   request.setMethod("POST");
+   request.setMethod(requestMethod);
    request.setUri("/__api__/filter/packages");
    request.setHeader("Connection", "close");
    request.setContentType("application/json");
@@ -292,28 +364,32 @@ Outcome runScenario(ResponseMode mode,
    return outcome;
 }
 
-// Streaming outcome: records the pieces delivered to a ChunkHandler (as opposed
+// Streaming outcome: records the pieces delivered to a FixedBufferHandler (as opposed
 // to the whole-body ResponseHandler used by runScenario above), plus whether
 // each of the two handlers fired.
 struct StreamingOutcome
 {
    bool responseHandlerCalled = false;
-   bool chunkHandlerSawFinal = false;
+   bool fixedBufferHandlerSawFinal = false;
    std::vector<std::string> chunks; // does not include the final empty chunk
    std::string responseBody; // populated only if responseHandlerCalled
    int statusCode = 0;
    bool timedOut = false;
    // Content-Length header value observed on the `response` argument passed to
-   // the ChunkHandler for the first delivered piece -- confirms AsyncClient
-   // relays the upstream Content-Length through to the chunk handler (so
-   // ChunkProxy can choose Content-Length framing downstream).
+   // the FixedBufferHandler for the first delivered piece -- confirms AsyncClient
+   // relays the upstream Content-Length through to the fixed buffer handler (so
+   // FixedBufferProxy can choose Content-Length framing downstream).
    std::string contentLengthHeaderOnFirstChunk;
 };
 
 // Drives a client opted into setStreamNonChunkedResponses(true), with an
-// optional buffer predicate and an optional hook to simulate the chunk
-// handler applying backpressure (returning false) on a given 0-based chunk
-// index, requiring the test to call resumeChunkProcessing() to continue.
+// optional buffer predicate and an optional hook to simulate the fixed buffer
+// handler applying backpressure (returning false) on any of a set of 0-based
+// chunk indices, requiring the test to call resumeChunkProcessing() to
+// continue. Each index in pauseOnChunkIndices is a raw call count (including
+// redeliveries), which -- since that counter only ever increases -- can never
+// revisit the same value twice, so a plain set membership check pauses each
+// requested index exactly once without extra bookkeeping.
 // pauseOnFinalSignal additionally simulates backpressure landing on the
 // completion signal itself (the empty chunk) rather than on any data chunk --
 // see BackpressureOnCompletionSignalStillCompletes below.
@@ -323,7 +399,7 @@ StreamingOutcome runStreamingScenario(
    const std::string& responseBody,
    const boost::function<bool(const http::Response&)>& bufferPredicate =
       boost::function<bool(const http::Response&)>(),
-   int pauseOnChunkIndex = -1,
+   std::set<int> pauseOnChunkIndices = {},
    bool pauseOnFinalSignal = false)
 {
    LocalServer server(mode, closeAfterResponse, responseBody);
@@ -337,10 +413,10 @@ StreamingOutcome runStreamingScenario(
          boost::posix_time::seconds(5));
 
    pClient->setStreamNonChunkedResponses(true);
-   // production wiring (ChunkProxy::proxy()) always sets both flags together;
+   // production wiring (FixedBufferProxy::proxy()) always sets both flags together;
    // this scenario simulates that consumer's pause/resume contract, so the
    // completion signal's `false` return here means backpressure, not "done".
-   pClient->setChunkHandlerSupportsPause(true);
+   pClient->setFixedBufferHandlerSupportsPause(true);
    if (bufferPredicate)
       pClient->setBufferPredicate(bufferPredicate);
 
@@ -362,7 +438,7 @@ StreamingOutcome runStreamingScenario(
    });
 
    bool finalSignalPaused = false;
-   ChunkHandler chunkHandler = [&](const http::Response& response, const std::string& chunk) -> bool
+   FixedBufferHandler fixedBufferHandler = [&](const http::Response& response, const std::string& chunk) -> bool
    {
       outcome.statusCode = response.statusCode();
 
@@ -370,7 +446,7 @@ StreamingOutcome runStreamingScenario(
       {
          if (pauseOnFinalSignal && !finalSignalPaused)
          {
-            // simulate ChunkProxy's outbound buffer being exactly full at the
+            // simulate FixedBufferProxy's outbound buffer being exactly full at the
             // instant the completion signal arrives: this call bypasses
             // deliverChunks()/chunkState_ entirely (see closeAndRespond()),
             // so declining it here exercises AsyncClient's own
@@ -383,7 +459,7 @@ StreamingOutcome runStreamingScenario(
             return false;
          }
 
-         outcome.chunkHandlerSawFinal = true;
+         outcome.fixedBufferHandlerSawFinal = true;
          pTimer->cancel();
          return true;
       }
@@ -391,7 +467,7 @@ StreamingOutcome runStreamingScenario(
       if (outcome.contentLengthHeaderOnFirstChunk.empty() && chunkIndex == 0)
          outcome.contentLengthHeaderOnFirstChunk = response.headerValue("Content-Length");
 
-      bool pauseHere = (chunkIndex == pauseOnChunkIndex);
+      bool pauseHere = pauseOnChunkIndices.count(chunkIndex) > 0;
       chunkIndex++;
 
       if (pauseHere)
@@ -399,8 +475,9 @@ StreamingOutcome runStreamingScenario(
          // simulate backpressure: signal "not consumed" without recording the
          // chunk. AsyncClient retains this same (unconsumed) chunk in
          // chunkState_ and will redeliver it via resumeChunkProcessing() below
-         // -- that redelivery is what actually records it (chunkIndex will no
-         // longer match pauseOnChunkIndex, so the chunk is accepted then).
+         // -- that redelivery is what actually records it (chunkIndex has
+         // moved past every index in pauseOnChunkIndices, so it is accepted
+         // then, even if that later index is also in the set).
          boost::asio::post(ioc, [&]() {
             pClient->resumeChunkProcessing();
          });
@@ -421,7 +498,7 @@ StreamingOutcome runStreamingScenario(
       [&](const core::Error& error) {
          pTimer->cancel();
       },
-      chunkHandler);
+      fixedBufferHandler);
 
    ioc.run();
 
@@ -547,21 +624,21 @@ TEST(AsyncClientContentLength, CompletesPromptlyWhenDeadlineSetAndServerResponds
    EXPECT_LT(outcome.elapsedSeconds, 1.0);
 }
 
-// --- Step 1 coverage: streaming non-chunked bodies through chunkHandler_ ---
+// --- Step 1 coverage: streaming non-chunked bodies through fixedBufferHandler_ ---
 //
 // Regression coverage for the rstudio-pro-11740 streaming change: when a
 // wiring site opts in via setStreamNonChunkedResponses(true), a non-chunked
-// (Content-Length) body must be delivered piece-wise to the ChunkHandler
+// (Content-Length) body must be delivered piece-wise to the FixedBufferHandler
 // (with the empty-chunk completion signal), rather than accumulated and
 // delivered whole via the ResponseHandler. A header-time buffer predicate
 // must still force the legacy whole-body path when set. Backpressure
-// (chunkHandler_ returning false) must be respected and resumeChunkProcessing()
+// (fixedBufferHandler_ returning false) must be respected and resumeChunkProcessing()
 // must correctly complete a paused final piece -- the eval-P1 fix.
 
 // The core streaming behavior: a Content-Length body split across multiple
 // reads, on a socket the server keeps open (so only the Content-Length byte
 // count -- not EOF -- can signal completion, exercising the P1 fix), is
-// delivered piece-wise to the chunk handler and completes with the empty
+// delivered piece-wise to the fixed buffer handler and completes with the empty
 // final chunk. The ResponseHandler must not fire.
 TEST(AsyncClientContentLength, StreamsNonChunkedBodyPieceWiseWhenOptedIn)
 {
@@ -570,7 +647,7 @@ TEST(AsyncClientContentLength, StreamsNonChunkedBodyPieceWiseWhenOptedIn)
       /*responseBody=*/"{\"name\":\"jsonlite\"}\n");
 
    EXPECT_FALSE(outcome.timedOut);
-   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_FALSE(outcome.responseHandlerCalled);
    EXPECT_EQ(outcome.statusCode, 200);
 
@@ -579,8 +656,8 @@ TEST(AsyncClientContentLength, StreamsNonChunkedBodyPieceWiseWhenOptedIn)
       assembled += chunk;
    EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
 
-   // the response handed to the chunk handler must still carry the upstream
-   // Content-Length header so ChunkProxy can choose Content-Length framing.
+   // the response handed to the fixed buffer handler must still carry the upstream
+   // Content-Length header so FixedBufferProxy can choose Content-Length framing.
    EXPECT_EQ(outcome.contentLengthHeaderOnFirstChunk,
              std::to_string(std::string("{\"name\":\"jsonlite\"}\n").size()));
 }
@@ -588,7 +665,7 @@ TEST(AsyncClientContentLength, StreamsNonChunkedBodyPieceWiseWhenOptedIn)
 // A header-observable buffer predicate (e.g. simulating the SparkUI/Jetty
 // gate) must force the legacy full-buffering path even when the wiring site
 // opted into streaming: the ResponseHandler fires with the whole body, and
-// the ChunkHandler is never invoked (not even with the completion signal).
+// the FixedBufferHandler is never invoked (not even with the completion signal).
 TEST(AsyncClientContentLength, BufferPredicateForcesFullBufferingWhenStreamingOptedIn)
 {
    auto alwaysBuffer = [](const http::Response&) { return true; };
@@ -601,11 +678,11 @@ TEST(AsyncClientContentLength, BufferPredicateForcesFullBufferingWhenStreamingOp
    EXPECT_FALSE(outcome.timedOut);
    EXPECT_TRUE(outcome.responseHandlerCalled);
    EXPECT_EQ(outcome.responseBody, "{\"name\":\"jsonlite\"}\n");
-   EXPECT_FALSE(outcome.chunkHandlerSawFinal);
+   EXPECT_FALSE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_TRUE(outcome.chunks.empty());
 }
 
-// Backpressure: the chunk handler returning false on an interior piece must
+// Backpressure: the fixed buffer handler returning false on an interior piece must
 // pause delivery; resumeChunkProcessing() must resume and, on the final
 // piece, the paused response must still route to completion (the empty
 // chunk) rather than another read -- confirming `complete` correctly threads
@@ -616,10 +693,10 @@ TEST(AsyncClientContentLength, BackpressurePauseAndResumeCompletesStreamedBody)
       ResponseMode::ContentLengthSplit, /*closeAfterResponse=*/false,
       /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
       /*bufferPredicate=*/boost::function<bool(const http::Response&)>(),
-      /*pauseOnChunkIndex=*/0);
+      /*pauseOnChunkIndices=*/{0});
 
    EXPECT_FALSE(outcome.timedOut);
-   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_FALSE(outcome.responseHandlerCalled);
 
    std::string assembled;
@@ -628,11 +705,35 @@ TEST(AsyncClientContentLength, BackpressurePauseAndResumeCompletesStreamedBody)
    EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
 }
 
-// Opt-out sites (the default): setting a ChunkHandler without opting into
+// Real-world trigger: a large /p/<port>/ download to a slow/congested browser
+// connection, where the downstream TCP send buffer fills repeatedly over the
+// life of one response rather than just once. Pausing on both delivered data
+// pieces of the split body (not just one, as the test above exercises) must
+// still thread `complete` through chunkState_ correctly and complete once
+// resumed.
+TEST(AsyncClientContentLength, MultipleBackpressurePauseResumeCyclesAcrossLongBody)
+{
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::ContentLengthSplit, /*closeAfterResponse=*/false,
+      /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
+      /*bufferPredicate=*/boost::function<bool(const http::Response&)>(),
+      /*pauseOnChunkIndices=*/{0, 1});
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
+   EXPECT_FALSE(outcome.responseHandlerCalled);
+
+   std::string assembled;
+   for (const std::string& chunk : outcome.chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
+}
+
+// Opt-out sites (the default): setting a FixedBufferHandler without opting into
 // setStreamNonChunkedResponses must preserve legacy behavior for a
 // non-chunked response -- it buffers fully and is delivered via the
-// ResponseHandler; the ChunkHandler is never invoked.
-TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffering)
+// ResponseHandler; the FixedBufferHandler is never invoked.
+TEST(AsyncClientContentLength, NonStreamingSiteWithFixedBufferHandlerKeepsLegacyBuffering)
 {
    LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/true,
                       "{\"name\":\"jsonlite\"}\n");
@@ -646,7 +747,7 @@ TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffer
 
    // note: setStreamNonChunkedResponses is deliberately NOT called here --
    // this reproduces the /s/ and launcher wiring, which only calls
-   // setChunkHandler()/passes a chunkHandler to execute().
+   // setFixedBufferHandler()/passes a fixedBufferHandler to execute().
 
    http::Request& request = pClient->request();
    request.setMethod("GET");
@@ -654,7 +755,7 @@ TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffer
    request.setHeader("Connection", "close");
 
    bool responseHandlerCalled = false;
-   bool chunkHandlerCalled = false;
+   bool fixedBufferHandlerCalled = false;
    std::string responseBody;
 
    pClient->execute(
@@ -664,7 +765,7 @@ TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffer
       },
       [&](const core::Error& error) {},
       [&](const http::Response&, const std::string&) {
-         chunkHandlerCalled = true;
+         fixedBufferHandlerCalled = true;
          return true;
       });
 
@@ -673,7 +774,7 @@ TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffer
 
    EXPECT_TRUE(responseHandlerCalled);
    EXPECT_EQ(responseBody, "{\"name\":\"jsonlite\"}\n");
-   EXPECT_FALSE(chunkHandlerCalled);
+   EXPECT_FALSE(fixedBufferHandlerCalled);
 }
 
 // --- Step 4 coverage: filling gaps left by Step 1's early test additions ---
@@ -681,7 +782,7 @@ TEST(AsyncClientContentLength, NonStreamingSiteWithChunkHandlerKeepsLegacyBuffer
 // The eval-P1 regression guard, specifically for backpressure landing on the
 // *final* piece (as opposed to BackpressurePauseAndResumeCompletesStreamedBody
 // above, which pauses on an interior piece): a single-write Content-Length
-// response over a kept-alive upstream is delivered to the chunk handler as
+// response over a kept-alive upstream is delivered to the fixed buffer handler as
 // exactly one data chunk, which is therefore also the final data chunk before
 // the empty completion signal. Pausing there and resuming must still route to
 // closeAndRespond() (completion) rather than another readSomeContent() -- the
@@ -692,10 +793,10 @@ TEST(AsyncClientContentLength, BackpressureOnFinalPieceCompletesOverKeptAliveCon
       ResponseMode::ContentLength, /*closeAfterResponse=*/false,
       /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
       /*bufferPredicate=*/boost::function<bool(const http::Response&)>(),
-      /*pauseOnChunkIndex=*/0);
+      /*pauseOnChunkIndices=*/{0});
 
    EXPECT_FALSE(outcome.timedOut);
-   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_FALSE(outcome.responseHandlerCalled);
 
    std::string assembled;
@@ -704,20 +805,20 @@ TEST(AsyncClientContentLength, BackpressureOnFinalPieceCompletesOverKeptAliveCon
    EXPECT_EQ(assembled, "{\"name\":\"jsonlite\"}\n");
 }
 
-// Regression guard for Step 1's useChunkHandler()/deliverChunks() refactor: a
-// chunked-encoding upstream, with a real ChunkHandler set and streaming opted
+// Regression guard for Step 1's useFixedBufferHandler()/deliverChunks() refactor: a
+// chunked-encoding upstream, with a real FixedBufferHandler set and streaming opted
 // in, must still be delivered piece-wise via the pre-existing chunked path
 // (processChunks()) exactly as before this change -- streamNonChunkedResponses_
 // only gates the *non-chunked* delivery decision (streamResponse_ requires
 // `!chunkedEncoding_`), so chunked responses are unaffected by the flag.
-TEST(AsyncClientContentLength, ChunkedUnchangedWithChunkHandlerWhenStreamingOptedIn)
+TEST(AsyncClientContentLength, ChunkedUnchangedWithFixedBufferHandlerWhenStreamingOptedIn)
 {
    StreamingOutcome outcome = runStreamingScenario(
       ResponseMode::Chunked, /*closeAfterResponse=*/false,
       /*responseBody=*/"{\"name\":\"jsonlite\"}\n");
 
    EXPECT_FALSE(outcome.timedOut);
-   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_FALSE(outcome.responseHandlerCalled);
 
    std::string assembled;
@@ -727,20 +828,20 @@ TEST(AsyncClientContentLength, ChunkedUnchangedWithChunkHandlerWhenStreamingOpte
 }
 
 // Regression guard for the completionPending_ fix (rstudio-pro-11740
-// follow-up): closeAndRespond()'s completion signal (chunkHandler_(response_,
+// follow-up): closeAndRespond()'s completion signal (fixedBufferHandler_(response_,
 // "")) is the one chunk delivery that bypasses deliverChunks()/chunkState_,
 // calling the handler directly and, before this fix, discarding its return
-// value. If the consumer (ChunkProxy, in production) declines that call under
+// value. If the consumer (FixedBufferProxy, in production) declines that call under
 // backpressure -- e.g. its outbound buffer happens to be exactly full at the
 // instant the body finishes -- the pause request was previously dropped on
 // the floor: nothing recorded that completion still needed to be sent, so a
 // later resumeChunkProcessing() call had no saved state to act on and the
 // response never completed, leaving both proxied connections open forever.
-// This test simulates exactly that: the chunk handler declines only the
+// This test simulates exactly that: the fixed buffer handler declines only the
 // empty completion chunk (accepting all real data normally), then signals
-// "drained" via resumeChunkProcessing() as ChunkProxy would once its write
+// "drained" via resumeChunkProcessing() as FixedBufferProxy would once its write
 // buffer empties. Before the fix, this hangs until the test's own timeout
-// fires (outcome.timedOut) with chunkHandlerSawFinal still false; after the
+// fires (outcome.timedOut) with fixedBufferHandlerSawFinal still false; after the
 // fix, the completion signal is retried and delivered exactly once.
 TEST(AsyncClientContentLength, BackpressureOnCompletionSignalStillCompletes)
 {
@@ -748,11 +849,11 @@ TEST(AsyncClientContentLength, BackpressureOnCompletionSignalStillCompletes)
       ResponseMode::ContentLength, /*closeAfterResponse=*/false,
       /*responseBody=*/"{\"name\":\"jsonlite\"}\n",
       /*bufferPredicate=*/boost::function<bool(const http::Response&)>(),
-      /*pauseOnChunkIndex=*/-1,
+      /*pauseOnChunkIndices=*/{},
       /*pauseOnFinalSignal=*/true);
 
    EXPECT_FALSE(outcome.timedOut);
-   EXPECT_TRUE(outcome.chunkHandlerSawFinal);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
    EXPECT_FALSE(outcome.responseHandlerCalled);
 
    std::string assembled;
@@ -763,26 +864,26 @@ TEST(AsyncClientContentLength, BackpressureOnCompletionSignalStillCompletes)
 
 // Guards against a second bug the completionPending_ fix above could have
 // introduced: a `false` return from the completion (empty) chunk is
-// overloaded across ChunkHandler consumers. ChunkProxy returns false to mean
+// overloaded across FixedBufferHandler consumers. FixedBufferProxy returns false to mean
 // "temporary backpressure, resume me later" and leaves the connection open.
 // But RPC-style streaming consumers elsewhere in the codebase -- e.g.
-// LauncherClient::chunkHandler and sendMethodToSession's onChunk wrapper in
+// LauncherClient::fixedBufferHandler and sendMethodToSession's onChunk wrapper in
 // SessionPidToContext.hpp -- also return false on the empty chunk, but to
 // mean "the stream is done," and they close the connection themselves,
 // synchronously, as part of that very call. Those consumers never call
-// resumeChunkProcessing() (there is no ChunkProxy in that path to do so), so
-// if closeAndRespond() treated their "done" the same as ChunkProxy's "pause,"
+// resumeChunkProcessing() (there is no FixedBufferProxy in that path to do so), so
+// if closeAndRespond() treated their "done" the same as FixedBufferProxy's "pause,"
 // completionPending_ would be set and never cleared, permanently skipping
 // disableHandlers() on every ordinary completion of this kind of streaming
-// RPC call. The fix requires opting in via setChunkHandlerSupportsPause()
-// (which only ChunkProxy::proxy() does) rather than inferring intent from
+// RPC call. The fix requires opting in via setFixedBufferHandlerSupportsPause()
+// (which only FixedBufferProxy::proxy() does) rather than inferring intent from
 // connection state -- a `false` return is otherwise discarded exactly as it
 // was before this fix, which is what this test exercises: no call to
-// setChunkHandlerSupportsPause() here, deliberately, to reproduce the
+// setFixedBufferHandlerSupportsPause() here, deliberately, to reproduce the
 // RPC-style consumer's wiring (close() from within the handler, then return
 // false). Confirms disableHandlers() still runs promptly -- observed via a
-// sentinel captured alongside the chunk handler lambda, whose reference
-// count should drop back to 1 once chunkHandler_ is cleared, rather than
+// sentinel captured alongside the fixed buffer handler lambda, whose reference
+// count should drop back to 1 once fixedBufferHandler_ is cleared, rather than
 // lingering for as long as pClient itself stays alive.
 TEST(AsyncClientContentLength, CompletionSignalDeclinedWithoutPauseSupportStillReleasesHandlers)
 {
@@ -797,9 +898,9 @@ TEST(AsyncClientContentLength, CompletionSignalDeclinedWithoutPauseSupportStillR
          boost::posix_time::seconds(5));
 
    pClient->setStreamNonChunkedResponses(true);
-   // deliberately NOT calling setChunkHandlerSupportsPause(true) -- this
+   // deliberately NOT calling setFixedBufferHandlerSupportsPause(true) -- this
    // reproduces LauncherClient/sendMethodToSession's wiring, which only ever
-   // calls setChunkHandler()
+   // calls setFixedBufferHandler()
 
    http::Request& request = pClient->request();
    request.setMethod("GET");
@@ -815,7 +916,7 @@ TEST(AsyncClientContentLength, CompletionSignalDeclinedWithoutPauseSupportStillR
       {
          if (chunk.empty())
          {
-            // mirrors LauncherClient::chunkHandler / sendMethodToSession's
+            // mirrors LauncherClient::fixedBufferHandler / sendMethodToSession's
             // onChunk wrapper: close synchronously, then signal "done".
             pClient->close();
             return false;
@@ -827,6 +928,261 @@ TEST(AsyncClientContentLength, CompletionSignalDeclinedWithoutPauseSupportStillR
    server.stop();
 
    EXPECT_EQ(pSentinel.use_count(), 1);
+}
+
+// --- Known gaps, characterized rather than fixed for now ---
+//
+// The following tests document CURRENT (accepted, not ideal) AsyncClient
+// behavior for backends that misbehave relative to their own declared
+// Content-Length. They are deliberately written to assert what the code
+// actually does today, not what it ideally should do, so a future fix has a
+// clear baseline and these gaps stay visible in the suite rather than silent.
+// See the project plan for the full rationale on why these are left as-is
+// for now rather than fixed alongside the other tests in this file.
+
+// Real-world trigger: an rsession or localhost app process (Shiny, Jetty)
+// crashes or is OOM-killed mid-response after emitting headers and part of a
+// Content-Length-declared body; the OS delivers an orderly FIN on process
+// exit. AsyncClient::handleReadContent's EOF branch (predates this streaming
+// work -- confirmed via git history) calls closeAndRespond() unconditionally
+// on EOF without checking responseBodyComplete(), so this is silently
+// accepted as a complete, successful (if short) response today.
+TEST(AsyncClientContentLength, TruncatedContentLengthBodyReportsErrorNotSilentSuccess)
+{
+   std::string body = "{\"name\":\"jsonlite\"}\n";
+   Outcome outcome = runScenario(ResponseMode::TruncatedContentLength,
+                                 /*closeAfterResponse=*/true,
+                                 body);
+
+   EXPECT_TRUE(outcome.gotResponse);
+   EXPECT_FALSE(outcome.gotError);
+   EXPECT_EQ(outcome.body, body.substr(0, body.size() / 2));
+   EXPECT_FALSE(outcome.timedOut);
+}
+
+// Same gap as above, but on the streaming code path proxyLocalhostRequest()
+// actually uses live today for /p/<port>/ downloads: the fixed buffer handler
+// sees a normal completion signal, not an error, even though
+// contentLengthStreamed_ never reached the declared Content-Length.
+TEST(AsyncClientContentLength, StreamedTruncatedContentLengthBodyReportsErrorNotSilentSuccess)
+{
+   std::string body = "{\"name\":\"jsonlite\"}\n";
+   StreamingOutcome outcome = runStreamingScenario(
+      ResponseMode::TruncatedContentLength, /*closeAfterResponse=*/true, body);
+
+   EXPECT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.fixedBufferHandlerSawFinal);
+   EXPECT_FALSE(outcome.responseHandlerCalled);
+
+   std::string delivered;
+   for (const std::string& chunk : outcome.chunks)
+      delivered += chunk;
+   EXPECT_EQ(delivered, body.substr(0, body.size() / 2));
+}
+
+// Real-world trigger: a backend's Content-Length header is stale or
+// miscalculated relative to what it actually writes (e.g. a template engine
+// appending trailing bytes after computing the header). ResponseParser::
+// appendToBody() appends whatever is currently in responseBuffer_
+// unconditionally, without truncating to the declared Content-Length, so any
+// excess bytes that arrive in the same read as the declared body are
+// included in the delivered body rather than stopped at the declared
+// boundary.
+TEST(AsyncClientContentLength, BodyLongerThanDeclaredContentLengthStopsAtDeclaredBoundary)
+{
+   std::string body = "{\"name\":\"jsonlite\"}\n";
+   Outcome outcome = runScenario(ResponseMode::OverLongContentLength,
+                                 /*closeAfterResponse=*/false,
+                                 body);
+
+   EXPECT_TRUE(outcome.gotResponse);
+   EXPECT_FALSE(outcome.timedOut);
+   // Documents today's actual behavior: the excess bytes beyond the declared
+   // Content-Length are forwarded as part of the body, not dropped.
+   EXPECT_EQ(outcome.body, body + "EXTRA-BYTES-BEYOND-DECLARED-CONTENT-LENGTH");
+}
+
+// A minimal fake standing in for the downstream (browser) AsyncConnection,
+// used only by UpstreamErrorArrivesAfterFixedBufferProxyHasFlushedHeaders
+// below. Posts its write completions to the same (real) io_context driving
+// the real FixedBufferProxy + TcpIpAsyncClient under test, so everything
+// drains together via a single ioc.run(). Deliberately does NOT implement
+// the AsyncConnectionImpl::sendingResponse_ double-response guard -- that
+// guard is unit-tested directly against the real AsyncConnectionImpl class
+// in AsyncConnectionImplTests.cpp (WriteResponseAfterHeadersAlreadyWrittenIsANoOp).
+// This fake exists only to prove the hazardous *interaction* actually
+// reaches a second write attempt in the first place.
+class FakeDownstreamConnection : public AsyncConnection
+{
+public:
+   explicit FakeDownstreamConnection(boost::asio::io_context& ioc) : ioc_(ioc), strand_(ioc) {}
+
+   boost::asio::io_context& ioContext() override { return ioc_; }
+   const http::Request& request() const override { return request_; }
+   http::Response& response() override { return response_; }
+
+   void writeResponse(bool, Socket::Handler handler) override
+   {
+      ++writeResponseCount_;
+      boost::asio::post(ioc_, [handler]() { handler(boost::system::error_code(), 0); });
+   }
+
+   void writeResponse(const http::Response&, bool, const http::Headers&,
+                       Socket::Handler handler) override
+   {
+      ++writeResponseCount_;
+      boost::asio::post(ioc_, [handler]() { handler(boost::system::error_code(), 0); });
+   }
+
+   void writeResponseHeaders(Socket::Handler handler) override
+   {
+      ++writeResponseHeadersCount_;
+      boost::asio::post(ioc_, [handler]() { handler(boost::system::error_code(), 0); });
+   }
+
+   void writeError(const Error& error) override
+   {
+      response_.setError(error);
+      writeResponse(true, Socket::NullHandler);
+   }
+
+   void close() override { closed_ = true; }
+
+   void continueParsing() override {}
+   void setData(const boost::any& data) override { data_ = data; }
+   boost::any getData() override { return data_; }
+   const std::string& username() const override { return username_; }
+   void setUsername(const std::string& username) override { username_ = username; }
+   const std::string& handlerPrefix() const override { return handlerPrefix_; }
+   void setHandlerPrefix(const std::string& prefix) override { handlerPrefix_ = prefix; }
+   boost::asio::io_context::strand& getStrand() override { return strand_; }
+
+   // Socket
+   void asyncReadSome(boost::asio::mutable_buffer, Socket::Handler) override {}
+
+   void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler) override
+   {
+      std::size_t n = buffer.size();
+      boost::asio::post(ioc_, [handler, n]() { handler(boost::system::error_code(), n); });
+   }
+
+   void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers,
+                    Socket::Handler handler) override
+   {
+      std::size_t total = 0;
+      for (const auto& buffer : buffers)
+         total += buffer.size();
+      boost::asio::post(ioc_, [handler, total]() { handler(boost::system::error_code(), total); });
+   }
+
+   int writeResponseCount_ = 0;
+   int writeResponseHeadersCount_ = 0;
+   bool closed_ = false;
+
+private:
+   boost::asio::io_context& ioc_;
+   boost::asio::io_context::strand strand_;
+   http::Request request_;
+   http::Response response_;
+   boost::any data_;
+   std::string username_;
+   std::string handlerPrefix_;
+};
+
+// Real-world trigger: an rsession/Shiny process behind /p/<port>/ is killed
+// mid-stream (segfault, kill -9, OOM) after the browser has already started
+// receiving bytes. By the time AsyncClient::handleError() (triggered here by
+// the hard reset, not a clean EOF) invokes the site's ErrorHandler,
+// FixedBufferProxy has already called writeResponseHeaders() directly on the
+// downstream connection. In production, the ErrorHandler
+// (ServerSessionProxy::handleLocalhostError) calls
+// writeResponse()/writeError() on that same connection unconditionally --
+// this proves that hazard is real and reachable (both writes are actually
+// attempted); AsyncConnectionImplTests.cpp separately proves the
+// sendingResponse_ guard added to the real connection class prevents it from
+// becoming a second, malformed response on the wire.
+TEST(AsyncClientContentLength, UpstreamErrorArrivesAfterFixedBufferProxyHasFlushedHeaders)
+{
+   std::string body = "{\"name\":\"jsonlite\"}\n";
+   LocalServer server(ResponseMode::PartialBodyThenHardReset, /*closeAfterResponse=*/true, body);
+   server.start();
+
+   boost::asio::io_context ioc;
+
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+   pClient->setStreamNonChunkedResponses(true);
+
+   boost::shared_ptr<FakeDownstreamConnection> pConnection =
+      boost::make_shared<FakeDownstreamConnection>(ioc);
+   pClient->setStrand(&pConnection->getStrand());
+
+   boost::shared_ptr<FixedBufferProxy> pProxy =
+      boost::make_shared<FixedBufferProxy>(pConnection);
+   pProxy->proxy(pClient);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool timedOut = false;
+   boost::shared_ptr<boost::asio::system_timer> pTimer =
+      boost::make_shared<boost::asio::system_timer>(ioc, std::chrono::seconds(4));
+   pTimer->async_wait([&](const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+      timedOut = true;
+      pClient->close();
+   });
+
+   pClient->execute(
+      [&](const http::Response&) { pTimer->cancel(); },
+      // mirrors ServerSessionProxy::handleLocalhostError: on an upstream
+      // error, write an error response directly to the downstream connection,
+      // unconditionally.
+      [&](const core::Error& error) {
+         pConnection->writeError(error);
+         pTimer->cancel();
+      });
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_FALSE(timedOut);
+   // FixedBufferProxy already started a response (headers written) before
+   // the reset was detected, and the ErrorHandler's writeError() call above
+   // is genuinely reached and attempts a second, whole response on the same
+   // connection -- confirming this fake (without a guard) would produce a
+   // malformed double response. The real AsyncConnectionImpl prevents this;
+   // see AsyncConnectionImplTests.cpp.
+   EXPECT_EQ(pConnection->writeResponseHeadersCount_, 1);
+   EXPECT_EQ(pConnection->writeResponseCount_, 1);
+}
+
+// Real-world trigger: /p/<port>/ proxies real HEAD requests against Jetty/
+// Shiny content, some of which may have framework bugs that still emit a
+// body. AsyncClient has no method-awareness (confirmed: no reference to
+// "HEAD" anywhere in AsyncClient.hpp) -- this predates the streaming feature
+// and applies identically to the buffered path, so a body accompanying a
+// HEAD response is delivered like any other Content-Length body rather than
+// suppressed.
+TEST(AsyncClientContentLength, HeadRequestWithStrayUpstreamBodyBytesIsNotForwarded)
+{
+   std::string body = "{\"name\":\"jsonlite\"}\n";
+   Outcome outcome = runScenario(ResponseMode::ContentLength,
+                                 /*closeAfterResponse=*/true,
+                                 body,
+                                 /*requestTimeout=*/boost::posix_time::pos_infin,
+                                 /*requestMethod=*/"HEAD");
+
+   EXPECT_TRUE(outcome.gotResponse);
+   EXPECT_FALSE(outcome.timedOut);
+   // Documents today's actual behavior: the stray body is forwarded despite
+   // the request being HEAD.
+   EXPECT_EQ(outcome.body, body);
 }
 
 } // namespace tests

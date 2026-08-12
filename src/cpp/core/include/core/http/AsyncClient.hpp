@@ -66,9 +66,9 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-// chunked handler for reading chunked encoding chunks
-// ONLY used for responses that return chunked encoding
-typedef boost::function<bool(const http::Response&, const std::string&)> ChunkHandler;
+// handler for delivering response body pieces (bounded to at most 1MB each)
+// as they become available, for both chunked-encoding and non-chunked bodies
+typedef boost::function<bool(const http::Response&, const std::string&)> FixedBufferHandler;
 
 typedef boost::function<void(const http::Response&)> ResponseHandler;
 typedef boost::function<void(const core::Error&)> ErrorHandler;
@@ -84,18 +84,18 @@ public:
          const boost::posix_time::time_duration& requestTimeout) = 0;
    virtual void execute(const ResponseHandler& responseHandler,
                         const ErrorHandler& errorHandler,
-                        const ChunkHandler& chunkHandler = ChunkHandler()) = 0;
-   virtual void setChunkHandler(const ChunkHandler& chunkHandler) = 0;
+                        const FixedBufferHandler& fixedBufferHandler = FixedBufferHandler()) = 0;
+   virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler) = 0;
 
    // Opt in to streaming non-chunked (Content-Length/EOF-delimited) response
-   // bodies piece-wise to the ChunkHandler instead of accumulating them in
+   // bodies piece-wise to the FixedBufferHandler instead of accumulating them in
    // memory and delivering via the ResponseHandler. Default is false, so a
-   // wiring site that only calls setChunkHandler() (as /s/ and the launcher do)
+   // wiring site that only calls setFixedBufferHandler() (as /s/ and the launcher do)
    // keeps its legacy behavior: non-chunked responses buffer and run the
    // ResponseHandler; chunked responses still stream. Only wiring sites that can
    // tolerate their non-chunked ResponseHandler side effects being skipped
    // (currently just the /p/ localhost path) should opt in. The client-facing
-   // framing (Content-Length vs chunked) is chosen downstream by ChunkProxy from
+   // framing (Content-Length vs chunked) is chosen downstream by FixedBufferProxy from
    // the upstream response's Content-Length; AsyncClient only relays bytes.
    virtual void setStreamNonChunkedResponses(bool stream) = 0;
 
@@ -115,21 +115,21 @@ public:
    virtual void close() = 0;
    virtual void setStrand(boost::asio::io_context::strand* pStrand) = 0;
 
-   // Opt in to treating a `false` return from the ChunkHandler's completion
+   // Opt in to treating a `false` return from the FixedBufferHandler's completion
    // call (the empty chunk sent by closeAndRespond()) as "temporary
    // backpressure, resume me later" rather than discarding it. Only
-   // ChunkProxy's contract works this way -- it declines under backpressure
+   // FixedBufferProxy's contract works this way -- it declines under backpressure
    // while leaving the connection open, and calls resumeChunkProcessing()
-   // once its outbound buffer drains. Other ChunkHandler consumers (e.g.
+   // once its outbound buffer drains. Other FixedBufferHandler consumers (e.g.
    // LauncherClient, sendMethodToSession's onChunk wrapper) return false on
    // the empty chunk to mean "stream is done" and close the connection
    // themselves, synchronously, within that same call -- they never call
    // resumeChunkProcessing(), so treating their "done" as a pause would leave
    // completion permanently unretried and disableHandlers() permanently
    // skipped. Default is false (discard the return value, matching every
-   // consumer's existing behavior); ChunkProxy sets this to true when it
-   // wires setChunkHandler().
-   virtual void setChunkHandlerSupportsPause(bool supportsPause) = 0;
+   // consumer's existing behavior); FixedBufferProxy sets this to true when it
+   // wires setFixedBufferHandler().
+   virtual void setFixedBufferHandlerSupportsPause(bool supportsPause) = 0;
 };
 
 template <typename SocketService>
@@ -186,13 +186,13 @@ public:
    // The errorHandler is called on a low level level error like failure to read or write
    virtual void execute(const ResponseHandler& responseHandler,
                         const ErrorHandler& errorHandler,
-                        const ChunkHandler& chunkHandler = ChunkHandler())
+                        const FixedBufferHandler& fixedBufferHandler = FixedBufferHandler())
    {
       // set handlers
       responseHandler_ = responseHandler;
       errorHandler_ = errorHandler;
-      if (chunkHandler)
-         chunkHandler_ = chunkHandler;
+      if (fixedBufferHandler)
+         fixedBufferHandler_ = fixedBufferHandler;
 
       // if the host header is not already set, make sure we stamp a default one
       // this is required by the http standard
@@ -222,7 +222,7 @@ public:
 
       responseHandler_ = ResponseHandler();
       errorHandler_ = ErrorHandler();
-      chunkHandler_ = ChunkHandler();
+      fixedBufferHandler_ = FixedBufferHandler();
       connectHandler_ = ConnectHandler();
    }
 
@@ -269,9 +269,9 @@ public:
       END_LOCK_MUTEX
    }
 
-   virtual void setChunkHandler(const ChunkHandler& chunkHandler)
+   virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler)
    {
-      chunkHandler_ = chunkHandler;
+      fixedBufferHandler_ = fixedBufferHandler;
    }
 
    virtual void setStreamNonChunkedResponses(bool stream)
@@ -285,9 +285,9 @@ public:
       bufferPredicate_ = predicate;
    }
 
-   virtual void setChunkHandlerSupportsPause(bool supportsPause)
+   virtual void setFixedBufferHandlerSupportsPause(bool supportsPause)
    {
-      chunkHandlerSupportsPause_ = supportsPause;
+      fixedBufferHandlerSupportsPause_ = supportsPause;
    }
 
    virtual void resumeChunkProcessing()
@@ -718,16 +718,16 @@ private:
       return response_.body().size() >= *contentLength;
    }
 
-   // True when body data should be handed to the ChunkHandler (streamed to the
+   // True when body data should be handed to the FixedBufferHandler (streamed to the
    // browser) rather than accumulated into response_ for the ResponseHandler.
-   bool useChunkHandler() const
+   bool useFixedBufferHandler() const
    {
-      return chunkHandler_ && !bufferFullResponse_;
+      return fixedBufferHandler_ && !bufferFullResponse_;
    }
 
    // Streaming analog of responseBodyComplete(): in streaming mode response_.body()
-   // is never populated, so we compare the count of bytes handed to the chunk
-   // handler against the declared Content-Length instead. Returns false when there
+   // is never populated, so we compare the count of bytes handed to the fixed
+   // buffer handler against the declared Content-Length instead. Returns false when there
    // is no valid Content-Length header (EOF-delimited body): completion is then
    // signalled by the upstream connection close in handleReadContent's EOF branch.
    // Mirrors responseBodyComplete()'s explicit parse so an absent/malformed value
@@ -741,10 +741,10 @@ private:
       return contentLengthStreamed_ >= *contentLength;
    }
 
-   // Deliver the raw bytes currently in responseBuffer_ to the chunk handler as
+   // Deliver the raw bytes currently in responseBuffer_ to the fixed buffer handler as
    // one or more <=1MB pieces, reusing the chunked-path delivery/backpressure.
    // The non-chunked analog of processChunks(): the bytes are the decoded body
-   // only -- ChunkProxy decides the client-facing framing. Detects completion via
+   // only -- FixedBufferProxy decides the client-facing framing. Detects completion via
    // the byte counter (not response_.body(), which streaming never fills), passes
    // the computed `complete` through deliverChunks() into chunkState_, and drives
    // read-more / close-and-respond itself.
@@ -764,7 +764,7 @@ private:
       std::deque<boost::shared_ptr<std::string>> chunks;
       if (n > 0)
          chunks.push_back(piece); // never deliver an empty piece mid-stream:
-                                  // ChunkProxy treats an empty chunk as the final
+                                  // FixedBufferProxy treats an empty chunk as the final
                                   // completion signal (sent via closeAndRespond).
       breakChunks(chunks);
 
@@ -778,7 +778,7 @@ private:
          return; // paused; resumeChunkProcessing() will continue
 
       if (complete)
-         closeAndRespond();  // sends chunkHandler_(response_, "") completion signal
+         closeAndRespond();  // sends fixedBufferHandler_(response_, "") completion signal
       else
          readSomeContent();
    }
@@ -816,14 +816,14 @@ private:
                }
             }
 
-            // a non-chunked body streams piece-wise to the chunk handler only if
+            // a non-chunked body streams piece-wise to the fixed buffer handler only if
             // this wiring site opted in AND no handler needs the whole body
             // buffered. Sites that did not opt in keep buffering non-chunked
             // responses (legacy responseHandler_ path) -- see Step 3 / Background.
             streamResponse_ = streamNonChunkedResponses_ &&
-                              useChunkHandler() && !chunkedEncoding_;
+                              useFixedBufferHandler() && !chunkedEncoding_;
 
-            // Streaming path: hand the decoded body to the chunk handler and let
+            // Streaming path: hand the decoded body to the fixed buffer handler and let
             // deliverContentAsChunk() drive completion/read-more (analog of the
             // chunked branch's processChunks()/readSomeContent() above). Do NOT
             // fall through to responseBodyComplete() below -- it counts
@@ -873,7 +873,7 @@ private:
 
             if (streamResponse_)
             {
-               // deliver this read piece-wise to the chunk handler.
+               // deliver this read piece-wise to the fixed buffer handler.
                // deliverContentAsChunk() tracks bytes-vs-Content-Length for its
                // own completion, closes/responds or reads more as appropriate,
                // and pauses (saving chunkState_) under backpressure -- mirroring
@@ -982,9 +982,9 @@ private:
       {
          boost::shared_ptr<std::string> chunk = *iter;
 
-         if (useChunkHandler())
+         if (useFixedBufferHandler())
          {
-            bool keepGoing = chunkHandler_(response_, *chunk);
+            bool keepGoing = fixedBufferHandler_(response_, *chunk);
 
             if (!keepGoing)
             {
@@ -1003,7 +1003,7 @@ private:
          }
          else
          {
-            // no chunk handler supplied, so caller expects to receive all chunks
+            // no fixed buffer handler supplied, so caller expects to receive all chunks
             // in one shot when the request finishes - simply append chunk to final response
             ResponseParser::appendToBody(*chunk, &response_);
 
@@ -1024,30 +1024,30 @@ private:
       if (!keepConnectionAlive())
          close();
 
-      if (responseHandler_ && !(useChunkHandler() && (chunkedEncoding_ || streamResponse_)))
+      if (responseHandler_ && !(useFixedBufferHandler() && (chunkedEncoding_ || streamResponse_)))
       {
          responseHandler_(response_);
       }
-      else if (useChunkHandler())
+      else if (useFixedBufferHandler())
       {
-         // The empty chunk is the completion signal for the chunk handler,
-         // and -- like any other chunk delivery -- the consumer (ChunkProxy)
+         // The empty chunk is the completion signal for the fixed buffer handler,
+         // and -- like any other chunk delivery -- the consumer (FixedBufferProxy)
          // may decline it under backpressure (e.g. its outbound buffer is
          // exactly full at the moment the body finishes). Unlike every other
          // chunk delivery, this call bypasses deliverChunks()/chunkState_, so
          // its return value must be checked explicitly: silently discarding a
          // "please pause" here would leave completion permanently unsent (see
-         // completionPending_), since ChunkProxy's writeChunk() prioritizes a
+         // completionPending_), since FixedBufferProxy's writeChunk() prioritizes a
          // pending buffer-full condition over its "received final, nothing
          // left to write" close.
          //
-         // Only do this when chunkHandlerSupportsPause_ is set (ChunkProxy's
+         // Only do this when fixedBufferHandlerSupportsPause_ is set (FixedBufferProxy's
          // contract) -- see that flag's declaration for why a `false` return
-         // here is overloaded across ChunkHandler consumers, and why treating
+         // here is overloaded across FixedBufferHandler consumers, and why treating
          // every consumer's `false` as a pause would break the others.
-         if (chunkHandlerSupportsPause_)
+         if (fixedBufferHandlerSupportsPause_)
          {
-            if (!chunkHandler_(response_, ""))
+            if (!fixedBufferHandler_(response_, ""))
             {
                completionPending_ = true;
                return; // resumeChunkProcessing() will retry via closeAndRespond()
@@ -1055,7 +1055,7 @@ private:
          }
          else
          {
-            chunkHandler_(response_, "");
+            fixedBufferHandler_(response_, "");
          }
       }
 
@@ -1186,10 +1186,10 @@ private:
    http::Request request_;
    boost::asio::streambuf responseBuffer_;
    boost::shared_ptr<ChunkParser> chunkParser_;
-   ChunkHandler chunkHandler_;
+   FixedBufferHandler fixedBufferHandler_;
    boost::function<bool(const http::Response&)> bufferPredicate_;
    bool streamNonChunkedResponses_ = false; // opt-in, set by wiring site
-   bool chunkHandlerSupportsPause_ = false; // opt-in, set by ChunkProxy::proxy()
+   bool fixedBufferHandlerSupportsPause_ = false; // opt-in, set by FixedBufferProxy::proxy()
    bool bufferFullResponse_ = false; // decided at header time
    bool streamResponse_ = false;     // the final streaming decision for this
                                      // response, computed once at header time
@@ -1197,29 +1197,29 @@ private:
                                      // bufferFullResponse_ (the predicate
                                      // result), and whether the body is
                                      // already chunked (always streamed)
-   uintmax_t contentLengthStreamed_ = 0; // bytes handed to chunkHandler_ so far
+   uintmax_t contentLengthStreamed_ = 0; // bytes handed to fixedBufferHandler_ so far
                                          // (response_.body() stays empty when
                                          // streaming, so we count completion here)
 
    boost::shared_ptr<ChunkState> chunkState_;
 
-   // True when closeAndRespond()'s completion signal (chunkHandler_(response_,
-   // "")) was declined by the chunk handler (e.g. ChunkProxy is buffer-full at
+   // True when closeAndRespond()'s completion signal (fixedBufferHandler_(response_,
+   // "")) was declined by the fixed buffer handler (e.g. FixedBufferProxy is buffer-full at
    // the exact moment the body finishes) and has not yet been redelivered.
    // The completion signal is the one chunk delivery that does not flow
    // through deliverChunks()/chunkState_ (see closeAndRespond()), so without
    // this flag a genuine "please pause" here would be silently dropped:
    // nothing would remember that completion still needs to be sent, and
-   // ChunkProxy's writeChunk() prioritizes a pending buffer-full condition
+   // FixedBufferProxy's writeChunk() prioritizes a pending buffer-full condition
    // over its "received final, nothing left to write" close -- so both
    // connections would stay open forever. resumeChunkProcessing() checks this
    // before chunkState_ and retries closeAndRespond() itself, keeping the
    // retry logic separate from real-content redelivery so the completion
    // signal is never sent twice.
    //
-   // Only ever set when chunkHandlerSupportsPause_ is true (see its
+   // Only ever set when fixedBufferHandlerSupportsPause_ is true (see its
    // declaration): a `false` return from the completion call is overloaded
-   // across ChunkHandler consumers, and only ChunkProxy's contract treats it
+   // across FixedBufferHandler consumers, and only FixedBufferProxy's contract treats it
    // as "pause, resume me later." Gating on that flag -- rather than trying
    // to infer intent from connection state -- keeps this correct without
    // affecting any other consumer's existing behavior.

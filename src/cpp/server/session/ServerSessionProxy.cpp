@@ -48,7 +48,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
-#include <core/http/ChunkProxy.hpp>
+#include <core/http/FixedBufferProxy.hpp>
 #include <core/http/FormProxy.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixGroup.hpp>
@@ -852,8 +852,8 @@ void proxyRequest(
    LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
    // proxy the request
-   boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
-   chunkProxy->proxy(pClient);
+   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
+   fixedBufferProxy->proxy(pClient);
    pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
                     errorHandler);
 
@@ -1325,7 +1325,7 @@ void proxyLocalhostRequest(
 
    // Stream the response to the browser by default (this path carries the large
    // port-proxied downloads the issue is about, and handleLocalhostResponse has
-   // no non-chunked side effects to preserve). ChunkProxy preserves a known
+   // no non-chunked side effects to preserve). FixedBufferProxy preserves a known
    // Content-Length end-to-end (progress bars) and falls back to chunked only
    // when the upstream length is unknown. Force full buffering only for the
    // header-observable cases handleLocalhostResponse must handle with the entire
@@ -1339,8 +1339,8 @@ void proxyLocalhostRequest(
              boost::algorithm::contains(response.headerValue("Server"), "Jetty");
    });
 
-   boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
-   chunkProxy->proxy(pClient);
+   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
+   fixedBufferProxy->proxy(pClient);
 
    // execute request
    pClient->execute(

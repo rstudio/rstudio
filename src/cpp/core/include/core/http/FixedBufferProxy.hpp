@@ -1,5 +1,5 @@
 /*
- * ChunkProxy.hpp
+ * FixedBufferProxy.hpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef CORE_HTTP_CHUNK_PROXY_HPP
-#define CORE_HTTP_CHUNK_PROXY_HPP
+#ifndef CORE_HTTP_FIXED_BUFFER_PROXY_HPP
+#define CORE_HTTP_FIXED_BUFFER_PROXY_HPP
 
 #include <boost/enable_shared_from_this.hpp>
 
@@ -27,12 +27,12 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-class ChunkProxy : public boost::enable_shared_from_this<ChunkProxy>,
-                   boost::noncopyable
+class FixedBufferProxy : public boost::enable_shared_from_this<FixedBufferProxy>,
+                          boost::noncopyable
 {
 public:
-   ChunkProxy(const boost::shared_ptr<AsyncConnection>& pClientConnection,
-              uint64_t maxBufferSize = defaultMaxBufferSize);
+   FixedBufferProxy(const boost::shared_ptr<AsyncConnection>& pClientConnection,
+                     uint64_t maxBufferSize = defaultMaxBufferSize);
 
    void proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection);
 
@@ -68,5 +68,5 @@ private:
 } // namespace core
 } // namespace rstudio
 
-#endif // CORE_HTTP_CHUNK_PROXY_HPP
+#endif // CORE_HTTP_FIXED_BUFFER_PROXY_HPP
 
