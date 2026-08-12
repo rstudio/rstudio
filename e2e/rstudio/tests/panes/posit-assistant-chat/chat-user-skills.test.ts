@@ -261,7 +261,8 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     await expect(lastMessage).toContainText(USER_SKILL_NAME, { timeout: 10000 });
   });
 
-  test('project-level skill markers appear in response', async () => {
+  // Chat-UI flake on RStudio Server, not skill-file access (followups item 16).
+  test('project-level skill markers appear in response', { tag: ['@desktop_only'] }, async () => {
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();
@@ -293,7 +294,8 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
   // server DOES see it, via the HOME its rsession wrapper exports, which is
   // why this skips on isExternalServerRun() rather than carrying
   // @desktop_only.
-  test('user-level skill is selected when its description matches the prompt', async () => {
+  // Also tagged desktop_only: same pollWithAllowDialogs flake as above (item 16).
+  test('user-level skill is selected when its description matches the prompt', { tag: ['@desktop_only'] }, async () => {
     test.skip(
       isExternalServerRun(),
       'the user-level skill lives under the sandbox HOME, which an external server rsession never reads (its HOME comes from the passwd db)',
