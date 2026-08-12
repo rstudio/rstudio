@@ -34,12 +34,13 @@ Before modifying any files, verify that AWS credentials and required tools are i
 Run these checks and stop if any fail:
 
 ```bash
-command -v aws >/dev/null 2>&1 && echo "aws: ok" || echo "aws: MISSING"
-command -v wget >/dev/null 2>&1 && echo "wget: ok" || echo "wget: MISSING"
+for tool in aws wget curl shasum; do
+   command -v "$tool" >/dev/null 2>&1 && echo "$tool: ok" || echo "$tool: MISSING"
+done
 aws sts get-caller-identity
 ```
 
-If `aws` or `wget` is missing, tell the user to install it. If `aws sts get-caller-identity` fails, tell the user to configure AWS credentials (e.g. `aws sso login` or `aws configure sso` if SSO isn't set up yet) and try again.
+The upload script uses `wget`; step 6 verifies the mirror with `curl` and `shasum`. If any tool is missing, tell the user to install it. If `aws sts get-caller-identity` fails, tell the user to configure AWS credentials (e.g. `aws sso login` or `aws configure sso` if SSO isn't set up yet) and try again.
 
 Do not skip this check on the assumption that the upload script handles it. `upload-quarto.sh` starts with `aws sts get-caller-identity || aws sso login`, which opens an interactive SSO login — that has nowhere to go in a non-interactive session and leaves the script waiting.
 
@@ -110,14 +111,24 @@ bash dependencies/tools/upload-quarto.sh
 
 **Do not treat exit code 0 as proof the upload worked.** The script has no `set -e` and does not check any command's status: a failed `wget` still falls through to `aws s3 cp`, the loop continues to the next platform, and the script's exit status reflects only its final command. It also produces hundreds of lines of progress output, so a failure partway up the log is easy to miss.
 
-Verify against the bucket instead, and compare the object sizes to the archives that were just downloaded:
+Verify the result directly instead. First confirm the downloaded archives are intact, using the checksums published alongside the release. Size alone proves nothing here: an interrupted `wget` leaves a partial file, the script uploads it without complaint, and a partial local file matches its own partial upload.
+
+```bash
+CHECKSUMS="${TMPDIR:-/tmp}/quarto-<VERSION>-checksums.txt"
+curl -fsSL "https://github.com/quarto-dev/quarto-cli/releases/download/v<VERSION>/quarto-<VERSION>-checksums.txt" -o "$CHECKSUMS"
+grep -E "quarto-<VERSION>-(linux-amd64\.tar\.gz|linux-arm64\.tar\.gz|macos\.tar\.gz|win\.zip)$" "$CHECKSUMS" | shasum -a 256 -c
+```
+
+Expect exactly four `OK` lines. Anything less — a `FAILED` line, or fewer than four files checked — means an archive is corrupt or the checksum list did not download, so re-run the upload script (`wget -c` resumes the partial file) and check again. On Linux, `sha256sum -c` is equivalent.
+
+Then confirm the upload itself was complete, by comparing the object sizes against those same verified archives:
 
 ```bash
 aws s3 ls "s3://rstudio-buildtools/quarto/<VERSION>/"
 ls -l quarto-<VERSION>-*
 ```
 
-Both report sizes in bytes, so the four pairs should match exactly. The mirror is only useful if it is publicly readable — the upload requests `--acl public-read`, but a bucket policy that rejects ACLs can leave the objects private without failing the upload — so confirm each one is reachable anonymously:
+Both report sizes in bytes, so the four pairs should match exactly. Verified local bytes plus a matching object length is sufficient: S3 checks its own payload integrity on upload, so a length-preserving corruption in transit is not a realistic failure. Finally, the mirror is only useful if it is publicly readable — the upload requests `--acl public-read`, but a bucket policy that rejects ACLs can leave the objects private without failing the upload — so confirm each one is reachable anonymously:
 
 ```bash
 for f in linux-amd64.tar.gz linux-arm64.tar.gz macos.tar.gz win.zip; do
@@ -128,12 +139,16 @@ done
 
 A ranged request returns `206` for a readable object; `403` means the object is private. If any archive is missing, mismatched, or private, report it and stop.
 
-The upload script downloads each archive into the current working directory and does **not** clean up afterward. That is roughly 700 MB of untracked files in the repository root, so remove them once the upload is verified and confirm the working tree is clean:
+If an archive ever needs to be re-uploaded, or the mirror's contents are in doubt, the end-to-end check is to fetch each object from its public URL and run the same `shasum -a 256 -c` against it. That covers integrity and readability in one pass, at the cost of re-downloading roughly 700 MB.
+
+The upload script downloads each archive into the current working directory and does **not** clean up afterward. That is roughly 700 MB of untracked files in the repository root, so remove them once the upload is verified:
 
 ```bash
 rm -f quarto-<VERSION>-*
 git status --short
 ```
+
+`git status` should show exactly the four tracked files modified in step 5 and no `quarto-<VERSION>-*` archives. It is **not** expected to be clean — those edits are not committed until step 8.
 
 ### 7. Verify the install
 
