@@ -2,6 +2,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
+import { collectClientStatePushes, waitForActiveDocIdPush } from '@utils/client-state';
 import { executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import { heredoc } from '@utils/heredoc';
@@ -228,6 +229,8 @@ test.describe('Split editor', () => {
   });
 
   test('the split is restored when the IDE reloads', async ({ rstudioPage: page }) => {
+    const clientStatePushes = collectClientStatePushes(page);
+
     await writeAndOpenFile(page, sandbox.dir, FILE, CONTENT);
     const views = sourceViews(page);
 
@@ -236,6 +239,15 @@ test.describe('Split editor', () => {
     // reload.
     await executeCommand(page, 'splitEditorDown');
     await expect(views).toHaveCount(2);
+
+    // The active tab is persisted as the "activeTabDocId" client state
+    // value, pushed on a passive ~5s timer. Reloading before that push
+    // restores a stale value: the document then comes back as a background
+    // tab, which is never laid out, so neither its text nor the split
+    // (applied on layout) ever renders and the view count stays at 0.
+    const docId = await page.evaluate(() => window.rstudio?.documents.active()?.id ?? null);
+    expect(docId).not.toBeNull();
+    await waitForActiveDocIdPush(page, clientStatePushes, docId as string);
 
     await page.reload();
     await page.waitForFunction(() => window.rstudio?.ready === true, null, { timeout: 30000 });
