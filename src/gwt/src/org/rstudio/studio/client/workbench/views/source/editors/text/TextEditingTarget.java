@@ -6195,7 +6195,8 @@ public class TextEditingTarget implements
     * Performs a command after synchronizing the document and selection state
     * from visual mode. The command will be passed the current position of the
     * cursor after synchronizing, or null if the cursor in visual mode has no
-    * corresponding location in source mode.
+    * corresponding location in source mode. In source mode, the cursor is
+    * read from the focused editor view, which may be the split view.
     *
     * @param command The command to perform.
     */
@@ -6207,7 +6208,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         command.execute(docDisplay_.getCursorPosition());
+         command.execute(activeDisplay().getCursorPosition());
       }
    }
 
@@ -7214,8 +7215,12 @@ public class TextEditingTarget implements
          return;
 
       // cursor and scroll feedback should land in the view that initiated
-      // the execution; capture it now, as execution may be deferred below
+      // the execution; capture it now, as execution may be deferred below.
+      // record the executed range on that view's executor too, so that
+      // Re-Run Previous re-runs this chunk rather than whatever the
+      // last-used executor ran before it.
       final DocDisplay display = activeDisplay();
+      final EditingTargetCodeExecution codeExecution = codeExecution();
 
       // command used to execute chunk (we may need to defer it if this
       // is an Rmd document as populating params might be necessary)
@@ -7233,7 +7238,7 @@ public class TextEditingTarget implements
             }
             if (!range.isEmpty())
             {
-               codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
+               codeExecution.setLastExecuted(range.getStart(), range.getEnd());
             }
             if (fileType_.isRmd() &&
                 docDisplay_.showChunkOutputInline())

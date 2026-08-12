@@ -34,11 +34,6 @@ public class TextEditingTargetScopeHelper
       docDisplay_ = docDisplay;
    }
 
-   public Scope getCurrentSweaveChunk()
-   {
-      return getCurrentSweaveChunk(null);
-   }
-
    public Scope getCurrentSweaveChunk(Position position)
    {
       if (position != null)
@@ -124,12 +119,7 @@ public class TextEditingTargetScopeHelper
       return Range.fromPoints(start, end);
    }
 
-   public Scope[] getPreviousSweaveChunks()
-   {
-      return getSweaveChunks(null, PREVIOUS_CHUNKS);
-   }
-
-   public Scope[] getSweaveChunks(Position startPosition, 
+   public Scope[] getSweaveChunks(Position startPosition,
          final int which)
    {
       // provide default position based on selection if necessary
@@ -158,11 +148,6 @@ public class TextEditingTargetScopeHelper
       return scopeList.getScopes();   
    }
    
-   public Scope getNextSweaveChunk()
-   {
-      return getNextSweaveChunk(docDisplay_.getSelectionEnd());
-   }
-
    public Scope getNextSweaveChunk(final Position position)
    {
       ScopeList scopeList = new ScopeList(docDisplay_);
