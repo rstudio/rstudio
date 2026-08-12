@@ -385,6 +385,18 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
     const dialogVisible = await isTrustDialogVisible(page, 15000);
 
     if (!dialogVisible) {
+      // Distinguish "trust dialogs disabled" from "an unrelated dialog is in
+      // the way": skipping here silently skips the rest of the suite, so fail
+      // loudly if some other alertdialog (e.g. "Error Listing Objects") is
+      // showing instead of the trust dialog.
+      const otherDialog = page.locator('[role="alertdialog"]').first();
+      if (await otherDialog.isVisible()) {
+        const text = (await otherDialog.innerText().catch(() => ''))
+          .replace(/\s+/g, ' ')
+          .trim();
+        throw new Error(`Trust dialog not visible, but an unrelated dialog is showing: "${text}"`);
+      }
+
       // Trust dialogs not enabled on this server
       trustEnabled = false;
       const markerExists = await captureResult(page, 'exists("TRUST_MARKER")');
