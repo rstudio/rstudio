@@ -208,7 +208,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
             {
-               refreshViewIfEnabled();
+               refreshViewIfEnabled(true);
             }
          }
       });
@@ -1086,11 +1086,21 @@ public class EnvironmentPresenter extends BasePresenter
     */
    private void refreshViewIfEnabled()
    {
+      refreshViewIfEnabled(false);
+   }
+
+   private void refreshViewIfEnabled(boolean afterRestart)
+   {
       if (view_ == null || view_.environmentMonitoring())
-         refreshView();
+         refreshView(afterRestart);
    }
 
    private void refreshView()
+   {
+      refreshView(false);
+   }
+
+   private void refreshView(boolean afterRestart)
    {
       // if we're currently waiting for a view refresh to come back, don't
       // queue another server request
@@ -1120,17 +1130,18 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
-            // Don't surface connection-level failures: this refresh runs on
-            // RESTART_COMPLETED, which fires while the old session is still
-            // exiting, and the proxied RPC can fail with a CONNECTION error
-            // long after the isRestartInProgress() grace period has passed
-            // (e.g. rserver holds it for rsession-proxy-max-wait-secs when
-            // the relaunch is slow). The reconnect UI already communicates
-            // session availability, and the view refreshes again once the
-            // new session finishes initializing.
+            // The refresh issued on RESTART_COMPLETED fires while the old
+            // session is still exiting, and the proxied RPC can fail with a
+            // CONNECTION error long after the isRestartInProgress() grace
+            // period has passed (e.g. rserver holds it for
+            // rsession-proxy-max-wait-secs when the relaunch is slow). Don't
+            // surface connection-level failures for that refresh: the
+            // reconnect UI already communicates session availability, and the
+            // view refreshes again once the new session finishes initializing.
+            // User-initiated refreshes still report connection errors.
             if (!workbenchContext_.isRestartInProgress() &&
                 (error.getCode() != ServerError.TRANSMISSION) &&
-                (error.getCode() != ServerError.CONNECTION))
+                !(afterRestart && error.getCode() == ServerError.CONNECTION))
             {
                globalDisplay_.showErrorMessage(constants_.errorListingObjects(),
                                                error.getUserMessage());
