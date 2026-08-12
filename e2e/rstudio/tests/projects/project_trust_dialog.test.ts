@@ -25,7 +25,12 @@ import type { Page } from 'playwright';
 
 // -- Selectors ----------------------------------------------------------------
 
-const TRUST_DIALOG = '[role="alertdialog"]';
+// The trust dialog is an alertdialog, but so is every GWT error message box
+// (e.g. "Error Listing Objects" when an environment refresh races a session
+// restart) -- so scope the selector to the trust dialog's own explanation
+// labels (.rstudio-trust-detail, present in both dialog variants) to avoid
+// misdetecting an unrelated error dialog as the trust dialog.
+const TRUST_DIALOG = '[role="alertdialog"]:has(.rstudio-trust-detail)';
 const TRUST_BTN_UNKNOWN = 'button:has-text("Yes, I trust this project")';
 const DONT_TRUST_BTN = 'button:has-text("No, I do not trust this project")';
 const TRUST_BTN_RESTRICTED = 'button:has-text("Trust this project")';
@@ -271,6 +276,23 @@ async function createProjectViaUI(page: Page, name: string): Promise<void> {
 // -- Test Suite ---------------------------------------------------------------
 
 test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@serial'] }, () => {
+  // Dismiss any leftover dialog/overlay from a prior failed run (or one left
+  // behind by the previous suite in this worker, e.g. "Error Listing Objects"
+  // raised by an environment refresh racing a session restart). Registered
+  // BEFORE useSuiteSandbox() so it runs first: a leftover modal intercepts
+  // pointer events and would otherwise fail createSandbox's console click.
+  // Waits for the overlay to actually detach after each Escape instead of a
+  // fixed sleep -- much faster in the common no-dialog case, and only retries
+  // as many times as actually needed.
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
+    for (let i = 0; i < 3; i++) {
+      if (!(await overlay.isVisible())) break;
+      await page.keyboard.press('Escape');
+      await overlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
+    }
+  });
+
   const sandbox = useSuiteSandbox();
   let projectDir = '';
   let trustEnabled = true;
@@ -278,17 +300,6 @@ test.describe.serial('Project Trust Dialog (#17231)', { tag: ['@server_only', '@
   let originalDefaultProjectLocation = '';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
-    // Dismiss any leftover dialog/overlay from a prior failed run. Wait for
-    // the overlay to actually detach after each Escape instead of a fixed
-    // sleep -- much faster in the common no-dialog case, and only retries
-    // as many times as actually needed.
-    const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
-    for (let i = 0; i < 3; i++) {
-      if (!(await overlay.isVisible())) break;
-      await page.keyboard.press('Escape');
-      await overlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
-    }
-
     // Capture original load_workspace preference for restoration
     originalLoadWorkspace = await getPref(page, 'load_workspace') as boolean;
     console.log(`Original load_workspace: ${originalLoadWorkspace}`);

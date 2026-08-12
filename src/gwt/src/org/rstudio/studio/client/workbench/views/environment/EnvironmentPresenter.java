@@ -1120,8 +1120,17 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
+            // Don't surface connection-level failures: this refresh runs on
+            // RESTART_COMPLETED, which fires while the old session is still
+            // exiting, and the proxied RPC can fail with a CONNECTION error
+            // long after the isRestartInProgress() grace period has passed
+            // (e.g. rserver holds it for rsession-proxy-max-wait-secs when
+            // the relaunch is slow). The reconnect UI already communicates
+            // session availability, and the view refreshes again once the
+            // new session finishes initializing.
             if (!workbenchContext_.isRestartInProgress() &&
-                (error.getCode() != ServerError.TRANSMISSION))
+                (error.getCode() != ServerError.TRANSMISSION) &&
+                (error.getCode() != ServerError.CONNECTION))
             {
                globalDisplay_.showErrorMessage(constants_.errorListingObjects(),
                                                error.getUserMessage());
