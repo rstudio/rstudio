@@ -41,6 +41,8 @@ aws sts get-caller-identity
 
 If `aws` or `wget` is missing, tell the user to install it. If `aws sts get-caller-identity` fails, tell the user to configure AWS credentials (e.g. `aws sso login` or `aws configure sso` if SSO isn't set up yet) and try again.
 
+Do not skip this check on the assumption that the upload script handles it. `upload-quarto.sh` starts with `aws sts get-caller-identity || aws sso login`, which opens an interactive SSO login — that has nowhere to go in a non-interactive session and leaves the script waiting.
+
 ### 4. Create a branch
 
 ```bash
@@ -53,11 +55,13 @@ Update the Quarto version in the following four files. Each file uses a slightly
 
 #### `NEWS.md`
 
-In the `### Dependencies` section, update the Quarto line:
+In the `### Dependencies` section of the release notes at the top of the file, set the Quarto line:
 
 ```
 - Quarto <VERSION>
 ```
+
+**There is often no Quarto line to update.** That section lists only the dependencies modified during the current release cycle, so when the notes are rotated for a new release, the unchanged dependency lines are pruned (see commit `e8b91f112a`). If no Quarto line is present, add one, keeping the ordering used before the prune: Ace, MathJax, Copilot Language Server, Electron, Node.js, Quarto, xterm.js.
 
 #### `dependencies/tools/upload-quarto.sh`
 
@@ -85,7 +89,16 @@ Windows batch syntax, no quotes:
 set QUARTO_VERSION=<VERSION>
 ```
 
-After editing, verify all four files contain the new version string.
+After editing, confirm all four files contain the new version and that nothing else still pins the old one:
+
+```bash
+git grep -n "QUARTO_VERSION\|^- Quarto" -- NEWS.md dependencies
+git grep -nF "<OLD_VERSION>"
+```
+
+The first command should show only the new version. Use `-F` on the second: without it the dots in the version are regex wildcards, which match unrelated text in minified sources and bury the real hits in hundreds of kilobytes of output.
+
+The second command is expected to match the archived release notes under `version/news/os/` — **leave those alone.** They record what shipped in past releases, so rewriting them would falsify release history. If the old version turns up anywhere outside `version/news/os/`, stop and report it rather than guessing whether it needs updating.
 
 ### 6. Upload to S3
 
@@ -95,12 +108,31 @@ Run the upload script. It downloads release archives for all supported platforms
 bash dependencies/tools/upload-quarto.sh
 ```
 
-Confirm exit code 0 and that every platform archive was uploaded. If any download or upload fails, report the error and stop.
+**Do not treat exit code 0 as proof the upload worked.** The script has no `set -e` and does not check any command's status: a failed `wget` still falls through to `aws s3 cp`, the loop continues to the next platform, and the script's exit status reflects only its final command. It also produces hundreds of lines of progress output, so a failure partway up the log is easy to miss.
 
-The upload script downloads each archive into the current working directory and does **not** clean up afterward, so remove the leftover archives once the upload succeeds:
+Verify against the bucket instead, and compare the object sizes to the archives that were just downloaded:
+
+```bash
+aws s3 ls "s3://rstudio-buildtools/quarto/<VERSION>/"
+ls -l quarto-<VERSION>-*
+```
+
+Both report sizes in bytes, so the four pairs should match exactly. The mirror is only useful if it is publicly readable — the upload requests `--acl public-read`, but a bucket policy that rejects ACLs can leave the objects private without failing the upload — so confirm each one is reachable anonymously:
+
+```bash
+for f in linux-amd64.tar.gz linux-arm64.tar.gz macos.tar.gz win.zip; do
+   url="https://rstudio-buildtools.s3.amazonaws.com/quarto/<VERSION>/quarto-<VERSION>-$f"
+   echo "$f -> $(curl -s -o /dev/null -w '%{http_code}' -r 0-0 "$url")"
+done
+```
+
+A ranged request returns `206` for a readable object; `403` means the object is private. If any archive is missing, mismatched, or private, report it and stop.
+
+The upload script downloads each archive into the current working directory and does **not** clean up afterward. That is roughly 700 MB of untracked files in the repository root, so remove them once the upload is verified and confirm the working tree is clean:
 
 ```bash
 rm -f quarto-<VERSION>-*
+git status --short
 ```
 
 ### 7. Verify the install
@@ -111,9 +143,18 @@ The default tools root (`/opt/rstudio-tools/...`) requires elevated privileges, 
 VERIFY_DIR="$(mktemp -d)"
 trap 'rm -rf "$VERIFY_DIR"' EXIT
 RSTUDIO_TOOLS_ROOT="$VERIFY_DIR" bash dependencies/common/install-quarto
+echo "install exit=$?"
+
+# the installed binary must report the new version
+"$VERIFY_DIR/quarto/bin/quarto" --version
+
+# a second run should take the "already installed" path
+RSTUDIO_TOOLS_ROOT="$VERIFY_DIR" bash dependencies/common/install-quarto
 ```
 
-Confirm exit code 0. The install script checks the resulting `quarto --version` against the expected value, so a successful run end-to-end is meaningful verification that the new release is usable. The `trap` ensures the temp directory is cleaned up whether the install succeeds or fails. If the install fails, report the error and stop.
+Run `quarto --version` yourself, as above; do not infer it from the install script's output. The script does compare versions (`install-quarto:38-44`), but that is a pre-install early exit for a tools root that already has Quarto — against the empty temporary root it is skipped entirely, so exit code 0 on its own proves only that the archive downloaded and extracted. Running the binary is what shows the release is usable, since it exercises the bundled Deno runtime. The `trap` cleans up the temporary directory whether the install succeeds or fails. If the install fails, or the reported version is not the expected one, report it and stop.
+
+Note that this step does **not** verify the S3 mirror from step 6: `install-quarto:31` downloads from the Quarto GitHub releases page, and the `RSTUDIO_BUILDTOOLS` alternative on the following line is commented out (as is the equivalent in `install-dependencies.cmd`). The mirror is a fallback, which is why step 6 verifies it directly.
 
 After verification, tell the user they will need to re-run `dependencies/common/install-quarto` themselves (with appropriate privileges) to install the new Quarto into their dev environment.
 
@@ -124,4 +165,7 @@ Commit the four modified files and open a pull request:
 - **Branch**: `feature/update-quarto-<VERSION>`
 - **Commit message**: `Update Quarto to <VERSION>`
 - **PR title**: `Update Quarto to <VERSION>`
-- **PR body**: mention the version bump and that the S3 upload and local install were verified
+- **PR body**: the old and new versions, the files updated, and what verification actually established — that all four archives are mirrored and publicly readable, and that the installed binary reports the new version. Describe the checks that were run, not the steps this skill lists.
+- **Milestone**: match the release name in `version/RELEASE` against the existing milestones (`gh api repos/rstudio/rstudio/milestones --jq '.[].title'`) and set it if one matches. Never create a milestone.
+
+This is a dependency bump with no associated GitHub issue, so no issue reference is needed. No NEWS.md entry beyond the `### Dependencies` line from step 5 is needed either.
