@@ -8,6 +8,8 @@ playwright-report-*/
 .env
 .env.*
 !.env.example
+# .env.op holds only OP op:// references, never secret values.
+!.env.op
 
 # Local-only notes, scratchpads, audit lists, etc.
 *.local.md
