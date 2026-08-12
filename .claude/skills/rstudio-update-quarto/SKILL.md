@@ -34,13 +34,18 @@ Before modifying any files, verify that AWS credentials and required tools are i
 Run these checks and stop if any fail:
 
 ```bash
-for tool in aws wget curl shasum; do
+for tool in aws wget curl; do
    command -v "$tool" >/dev/null 2>&1 && echo "$tool: ok" || echo "$tool: MISSING"
 done
+if command -v shasum >/dev/null 2>&1 || command -v sha256sum >/dev/null 2>&1; then
+   echo "sha256: ok"
+else
+   echo "sha256: MISSING (need shasum or sha256sum)"
+fi
 aws sts get-caller-identity
 ```
 
-The upload script uses `wget`; step 6 verifies the mirror with `curl` and `shasum`. If any tool is missing, tell the user to install it. If `aws sts get-caller-identity` fails, tell the user to configure AWS credentials (e.g. `aws sso login` or `aws configure sso` if SSO isn't set up yet) and try again.
+The upload script uses `wget`; step 6 verifies the mirror with `curl` and a SHA-256 checker. Either checker is fine — macOS ships `shasum` and not `sha256sum`, most Linux distributions ship `sha256sum` from coreutils and get `shasum` only with Perl installed — so requiring both would block otherwise usable machines. If a tool is missing, tell the user to install it. If `aws sts get-caller-identity` fails, tell the user to configure AWS credentials (e.g. `aws sso login` or `aws configure sso` if SSO isn't set up yet) and try again.
 
 Do not skip this check on the assumption that the upload script handles it. `upload-quarto.sh` starts with `aws sts get-caller-identity || aws sso login`, which opens an interactive SSO login — that has nowhere to go in a non-interactive session and leaves the script waiting.
 
@@ -114,12 +119,15 @@ bash dependencies/tools/upload-quarto.sh
 Verify the result directly instead. First confirm the downloaded archives are intact, using the checksums published alongside the release. Size alone proves nothing here: an interrupted `wget` leaves a partial file, the script uploads it without complaint, and a partial local file matches its own partial upload.
 
 ```bash
+if command -v shasum >/dev/null 2>&1; then SHACHECK=(shasum -a 256 -c); else SHACHECK=(sha256sum -c); fi
 CHECKSUMS="${TMPDIR:-/tmp}/quarto-<VERSION>-checksums.txt"
 curl -fsSL "https://github.com/quarto-dev/quarto-cli/releases/download/v<VERSION>/quarto-<VERSION>-checksums.txt" -o "$CHECKSUMS"
-grep -E "quarto-<VERSION>-(linux-amd64\.tar\.gz|linux-arm64\.tar\.gz|macos\.tar\.gz|win\.zip)$" "$CHECKSUMS" | shasum -a 256 -c
+grep -E "quarto-<VERSION>-(linux-amd64\.tar\.gz|linux-arm64\.tar\.gz|macos\.tar\.gz|win\.zip)$" "$CHECKSUMS" | "${SHACHECK[@]}"
 ```
 
-Expect exactly four `OK` lines. Anything less — a `FAILED` line, or fewer than four files checked — means an archive is corrupt or the checksum list did not download, so re-run the upload script (`wget -c` resumes the partial file) and check again. On Linux, `sha256sum -c` is equivalent.
+Expect exactly four `OK` lines. Anything less — a `FAILED` line, or fewer than four files checked — means an archive is corrupt or the checksum list did not download.
+
+To recover, **delete each failing archive** and re-run the upload script. Do not rely on `wget -c` to repair one in place: it resumes a short file, but a corrupt file that already has the full expected length looks complete to it, so the script would skip the download and re-upload the same bad bytes.
 
 Then confirm the upload itself was complete, by comparing the object sizes against those same verified archives:
 
@@ -139,7 +147,7 @@ done
 
 A ranged request returns `206` for a readable object; `403` means the object is private. If any archive is missing, mismatched, or private, report it and stop.
 
-If an archive ever needs to be re-uploaded, or the mirror's contents are in doubt, the end-to-end check is to fetch each object from its public URL and run the same `shasum -a 256 -c` against it. That covers integrity and readability in one pass, at the cost of re-downloading roughly 700 MB.
+If an archive ever needs to be re-uploaded, or the mirror's contents are in doubt, the end-to-end check is to fetch each object from its public URL and run the same `"${SHACHECK[@]}"` verification against it. That covers integrity and readability in one pass, at the cost of re-downloading roughly 700 MB.
 
 The upload script downloads each archive into the current working directory and does **not** clean up afterward. That is roughly 700 MB of untracked files in the repository root, so remove them once the upload is verified:
 
