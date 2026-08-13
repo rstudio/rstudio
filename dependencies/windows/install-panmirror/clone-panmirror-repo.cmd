@@ -30,24 +30,35 @@ git ls-remote --exit-code --heads %PANMIRROR_REPO_URL% %PANMIRROR_BRANCH% >nul
 if errorlevel 1 (
   echo ERROR: Branch %PANMIRROR_BRANCH% does not exist in %PANMIRROR_REPO_URL%.
   echo Create it from quarto's 'main', or set PANMIRROR_BRANCH to a branch that exists.
-  popd
-  exit /b 1
+  goto :failed
 )
 
+:: Every git step below is checked. cmd has no 'set -e', and a later command that
+:: succeeds clears ERRORLEVEL, so an unchecked failure would leave a missing or
+:: stale clone for the build to pick up instead of stopping it.
 if not exist quarto (
-  git clone --branch %PANMIRROR_BRANCH% %PANMIRROR_REPO_URL% ..\..\..\src\gwt\lib\quarto
-  pushd ..\..\..\src\gwt\lib\quarto
-  git rev-parse HEAD
-  popd
+  git clone --branch %PANMIRROR_BRANCH% %PANMIRROR_REPO_URL% quarto
+  if errorlevel 1 goto :failed
 ) else (
-  pushd quarto
-  git fetch
-  git reset --hard
-  git clean -dfx
-  git checkout %PANMIRROR_BRANCH%
-  git pull
-  git rev-parse HEAD
-  popd
+  git -C quarto fetch
+  if errorlevel 1 goto :failed
+  git -C quarto reset --hard
+  if errorlevel 1 goto :failed
+  git -C quarto clean -dfx
+  if errorlevel 1 goto :failed
+  git -C quarto checkout %PANMIRROR_BRANCH%
+  if errorlevel 1 goto :failed
+  git -C quarto pull
+  if errorlevel 1 goto :failed
 )
+
+git -C quarto rev-parse HEAD
+if errorlevel 1 goto :failed
 
 popd
+exit /b 0
+
+:failed
+echo ERROR: panmirror (quarto) checkout failed.
+popd
+exit /b 1
