@@ -40,6 +40,23 @@ inputs:
     required: false
     default: "true"
 
+outputs:
+  r-version:
+    description: >
+      The installed R version as major.minor (e.g. "4.5"), resolved from the R
+      that is actually on PATH. This is the value folded into the cache keys.
+    value: ${{ steps.r_version.outputs.version }}
+  r-version-full:
+    description: >
+      The full installed R version, resolved from the R that is actually on PATH
+      rather than echoed from the caller's request -- which is the only
+      trustworthy method, since engines whose config sets r_install "distro"
+      ignore the request entirely. Normally a bare version ("4.5.3"); under
+      R-devel the status is appended ("4.6.0 (Under development (unstable))"),
+      because otherwise a snapshot is indistinguishable from the release it
+      precedes.
+    value: ${{ steps.r_version.outputs.version_full }}
+
 runs:
   using: "composite"
   steps:
@@ -79,13 +96,78 @@ runs:
     # on the resolved version (rather than the requested alias, which never
     # changes) handles that, and scoping restore-keys to the same version
     # stops a prefix-match fallback from pulling a stale-version library in.
+    #
+    # The full version is captured alongside it and written to the run summary.
+    # Reading it back from the installed R is the only trustworthy *method*: the
+    # requested version is not a record of anything, because engines whose config
+    # sets r_install "distro" (the Fedora ones) drop it silently and install
+    # whatever the distro ships.
+    #
+    # --vanilla on both calls: without it, a site or user profile that prints on
+    # load prepends its output to stdout, so the version would arrive as
+    # "Loading site profile\n4.6.1" and flow on into the run summary, the
+    # artifact, and any caller's table. Fedora installs R from dnf, whose
+    # Rprofile.site is distro-controlled, which is exactly where we don't govern
+    # what loads. The shape check then rejects anything that isn't a bare version.
     - name: Resolve R version
       id: r_version
       shell: bash
       run: |
-        VERSION=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        VERSION=$(Rscript --vanilla -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        VERSION_FULL=$(Rscript --vanilla -e 'cat(paste(R.version$major, R.version$minor, sep = "."))')
+        # [[ =~ ]] rather than grep: grep matches line by line, so a polluted
+        # "Loading site profile\n4.6.1" would pass on its second line -- the very
+        # case this rejects. Bash anchors the pattern to the whole string.
+        for v in "$VERSION" "$VERSION_FULL"; do
+          if [[ ! "$v" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Could not read a plain R version from Rscript (got '$v'). An R profile printing on load is the usual cause."
+            exit 1
+          fi
+        done
+        # R-devel reports the same major.minor.patch as the release it precedes,
+        # so without the status suffix a certification record cannot tell an
+        # unstable snapshot from a shipped version -- and "devel" is an advertised
+        # r_overrides value. Kept out of $VERSION so the cache key stays a bare
+        # series.
+        #
+        # Read in the same call as the version above rather than a third Rscript:
+        # this step has no set -e, so a separate call that failed would leave
+        # STATUS empty and drop the suffix silently, which is exactly the
+        # release-versus-snapshot confusion it exists to prevent. One invocation is
+        # one failure surface, and the shape check above already rejects a polluted
+        # first line.
+        STATUS=$(Rscript --vanilla -e 'cat(R.version$status)') || {
+          echo "::error::Could not read R.version\$status from Rscript, so an R-devel snapshot would be indistinguishable from the release it precedes."
+          exit 1
+        }
+        [ -z "$STATUS" ] || VERSION_FULL="$VERSION_FULL ($STATUS)"
         echo "Resolved R version (major.minor): $VERSION"
+        echo "Installed R version: $VERSION_FULL"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "version_full=$VERSION_FULL" >> "$GITHUB_OUTPUT"
+        # Surfaced on the job's summary page so the R version is visible without
+        # opening the log. Deliberately unconditional: every engine and every
+        # caller gets it, not just certification runs.
+        {
+          echo "### R version"
+          echo ""
+          echo "Installed R: \`$VERSION_FULL\` (cache series \`$VERSION\`)"
+        } >> "$GITHUB_STEP_SUMMARY"
+        # Also drop it in the workspace so a caller can upload it as an
+        # artifact. A caller that runs several engines as one matrix cannot read
+        # a per-engine job output (a matrix job collapses to one value), so an
+        # artifact is the only way to attribute a version to its own engine.
+        # $GITHUB_WORKSPACE rather than the github.workspace expression, and the
+        # pairing with the caller's upload step is deliberate rather than
+        # inconsistent. On a container engine the two kinds of step see different
+        # filesystems: a run: step executes inside the container, where the
+        # workspace is mounted at /__w/<repo>/<repo>, while a JS action like
+        # upload-artifact executes on the host, where github.workspace is
+        # /home/runner/work/... So a shell step must read the environment
+        # variable and an artifact path must use the expression -- they name the
+        # same directory from the two sides. Using github.workspace here broke the
+        # Rocky 10 arm64 build in July 2026; don't "harmonize" them.
+        printf '%s\n' "$VERSION_FULL" > "$GITHUB_WORKSPACE/r-version.txt"
 
     # All three caches below are restore-only, with matching Save steps after
     # the corresponding install. The saves run only from main-scoped runs (the
@@ -113,6 +195,51 @@ runs:
         key: ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}${{ inputs.install-required-packages == 'true' && format('-req{0}', hashFiles(format('{0}/required-packages.txt', inputs.working-directory))) || '' }}
         restore-keys: |
           ${{ env.CACHE_OS }}-r-${{ steps.r_version.outputs.version }}-
+
+    # Supply OBJCXX when the running R doesn't, so a package with Objective-C++
+    # sources can still be built from source on macOS.
+    #
+    # R's Makeconf carries an .mm.o rule that expands $(OBJCXX), but R 4.1 on
+    # macOS leaves that variable empty. make then runs the rule with no compiler
+    # and no flags -- just the include paths -- and /bin/sh tries to execute the
+    # first -I path as a command, giving the memorable "No such file or
+    # directory" on a path that plainly exists. systemfonts is the package this
+    # bites (mac/FontManagerMac.mm), and it is unavoidable there: PPM publishes no
+    # macOS arm64 binary for it below R 4.2, so R 4.1.3 always compiles it from
+    # source.
+    #
+    # Only fills the gap: a newer R defines OBJCXX itself and is left alone, so
+    # this cannot override a correct value with a guess. The C++ standard comes
+    # from the package's own PKG_OBJCXXFLAGS, so only the compiler and arch are
+    # needed here.
+    - name: Supply OBJCXX for older R on macOS
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Read Makeconf rather than asking `R CMD config OBJCXX`: that command
+        # answers only for the variables on its own known list, and OBJCXX is not
+        # one of them. On an R whose Makeconf defines OBJCXX perfectly well
+        # (verified on 4.6.1, where it is `clang++ -arch arm64 -std=gnu++20`) it
+        # prints "ERROR: no information for variable 'OBJCXX'" to *stdout* and
+        # exits 1. So it cannot answer this question either way: its output is
+        # non-empty whether or not the variable is set, and its exit status is
+        # nonzero whether or not the variable is set. Under the set -e above, a
+        # guard written as CURRENT=$(R CMD config OBJCXX) aborts this step rather
+        # than reaching any conclusion at all.
+        MAKECONF="$(Rscript --vanilla -e 'cat(R.home("etc"))')/Makeconf"
+        # Quit at the first OBJCXX line rather than piping to head: only one line
+        # can match, so there is no SIGPIPE to worry about either way, but under the
+        # set -e above a pipeline is one more thing to reason about for no gain.
+        CURRENT=$(sed -n 's/^OBJCXX[[:space:]]*=[[:space:]]*//p; /^OBJCXX[[:space:]]*=/q' "$MAKECONF")
+        if [ -n "$CURRENT" ]; then
+          echo "This R defines OBJCXX ($CURRENT); nothing to do."
+          exit 0
+        fi
+        MAKEVARS="$RUNNER_TEMP/Makevars-objcxx"
+        printf 'OBJCXX = clang++ -arch %s\n' "$(uname -m)" > "$MAKEVARS"
+        echo "R_MAKEVARS_USER=$MAKEVARS" >> "$GITHUB_ENV"
+        echo "::notice::This R leaves OBJCXX empty; supplying '$(cat "$MAKEVARS")' via R_MAKEVARS_USER so Objective-C++ sources build."
 
     - name: Install R packages (DESCRIPTION, plus required set when requested)
       shell: bash
@@ -152,8 +279,35 @@ runs:
         SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
         cat > "$SCRIPT" <<'EOF'
         options(repos = c(P3M = Sys.getenv("PKG_REPO")))
-        if (!requireNamespace("pak", quietly = TRUE))
-          install.packages("pak")
+        # pak comes from its own repository rather than PKG_REPO. PPM's pak
+        # coverage varies by platform and R series, and it moves: a certification
+        # cell installing an older R hit a PPM index carrying no pak at all (as of
+        # 2026-08), where install.packages() reports the misleading "package 'pak'
+        # is not available for this version of R" even though pak declares only
+        # R >= 3.5. Treat no particular gap as permanent -- check the index before
+        # concluding this line has stopped being necessary.
+        #
+        # pak's own repository is keyed on the running session's pkgType, os and
+        # arch, not on an R version: each triple's index lists one build per R
+        # series, each declaring the series it is bound to, so install.packages
+        # picks the build for the R that is running. This is the install line pak's
+        # own README gives. pak documents support back to R 4.1.0 on macOS arm64 and
+        # R 3.5.0 on macOS x86_64, Linux and Windows, which covers every cell in
+        # .github/e2e-certification/matrix.json.
+        #
+        # Checked afterwards because install.packages only warns on an unreachable
+        # repo: without this the failure surfaces one step later as "there is no
+        # package called 'pak'", naming neither the URL nor the triple that had no
+        # build. The required-packages install below uses the same shape.
+        if (!requireNamespace("pak", quietly = TRUE)) {
+          repo <- sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                          .Platform$pkgType, R.Version()$os, R.Version()$arch)
+          install.packages("pak", repos = repo)
+          if (!requireNamespace("pak", quietly = TRUE))
+            stop("[os-e2e-deps] pak did not install from ", repo,
+                 " -- no build published for pkgType=", .Platform$pkgType,
+                 ", os=", R.Version()$os, ", arch=", R.Version()$arch)
+        }
         pak::local_install_dev_deps(
           root = Sys.getenv("E2E_ROOT"),
           ask = FALSE,
@@ -162,7 +316,7 @@ runs:
         # When requested, also install the harness's REQUIRED_PACKAGES set now
         # so it lands in the cached library rather than being installed by the
         # Playwright globalSetup at test time (a source compile on distros
-        # without CRAN binaries, a CRAN download everywhere else). Reads
+        # without PPM binaries, a PPM download everywhere else). Reads
         # the same required-packages.txt that fixtures/r-libs-setup.ts reads, so
         # the two sets can't drift. Both the presence check and the install are
         # scoped to R_LIBS_USER (the cached tree), mirroring the harness's own

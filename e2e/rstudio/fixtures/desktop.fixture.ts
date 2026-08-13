@@ -329,6 +329,43 @@ const PAGE_READY_TIMEOUT_MS =
   Number(process.env.PW_GWT_READY_TIMEOUT_MS) ||
   (process.env.CI ? 60000 : 30000);
 
+// Shard-level circuit breaker (rstudio#18522): when the environment is broken
+// (e.g. an orphaned process holding the worker's CDP port), every launch in
+// the shard fails the same way, each burning the better part of a minute
+// across its attempts -- and the retry loop's own logging keeps the
+// run-with-heartbeat watchdog fed, so a shard making no progress still looks
+// alive. Left alone, that occupied a Windows runner for the full 2h job
+// timeout without recording a single test result. Track the consecutive
+// launch-failure streak in a file (Playwright replaces the worker process
+// after a test failure, so module state would reset) and refuse to launch
+// once it crosses the threshold, failing the remaining tests immediately.
+const LAUNCH_FAILURE_STREAK_LIMIT = Math.max(1, Number(process.env.PW_LAUNCH_FAILURE_STREAK_LIMIT) || 3);
+
+interface LaunchFailureStreak {
+  count: number;
+  lastError?: string;
+}
+
+// One streak file per worker slot: parallel workers have independent CDP
+// ports, so one worker's poisoned port shouldn't abort its siblings. The
+// parallel index is reused by Playwright's replacement workers, and the
+// sandbox root is removed at end of run, so the streak spans one worker
+// slot's launches within a single run and nothing else.
+function launchFailureStreakFile(): string {
+  const idx = Number(process.env.TEST_PARALLEL_INDEX ?? '0') || 0;
+  return path.join(sandboxRoot(), `launch-failure-streak-${idx}.json`);
+}
+
+function readLaunchFailureStreak(): LaunchFailureStreak {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(launchFailureStreakFile(), 'utf8')) as LaunchFailureStreak;
+    return Number.isFinite(parsed.count) && parsed.count > 0 ? parsed : { count: 0 };
+  } catch {
+    // Missing or unreadable file = no streak
+    return { count: 0 };
+  }
+}
+
 /**
  * Launch RStudio with CDP, connect Playwright, and return the session.
  *
@@ -340,13 +377,29 @@ const PAGE_READY_TIMEOUT_MS =
  * post-CDP catch already tears the process tree down on failure, so a
  * second attempt is safe and cheap. Set PW_LAUNCH_ATTEMPTS to override the
  * attempt count (default 2 -- one retry).
+ *
+ * Once LAUNCH_FAILURE_STREAK_LIMIT consecutive launches (all attempts
+ * exhausted, no success in between) have failed on this worker slot, gives
+ * up immediately without spawning anything -- see the circuit-breaker note
+ * above. PW_LAUNCH_FAILURE_STREAK_LIMIT overrides the threshold.
  */
 export async function launchRStudio(existingConfigRoot?: string): Promise<DesktopSession> {
+  const streak = readLaunchFailureStreak();
+  if (streak.count >= LAUNCH_FAILURE_STREAK_LIMIT) {
+    throw new Error(
+      `Launch circuit breaker open: ${streak.count} consecutive RStudio launches have failed on this worker` +
+      ` (last: ${streak.lastError ?? 'unknown'}). Refusing further launches so the shard fails fast instead of` +
+      ` running out the job timeout (rstudio#18522). Set PW_LAUNCH_FAILURE_STREAK_LIMIT to tune.`,
+    );
+  }
+
   const maxAttempts = Math.max(1, Number(process.env.PW_LAUNCH_ATTEMPTS) || 2);
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await launchRStudioOnce(existingConfigRoot);
+      const session = await launchRStudioOnce(existingConfigRoot);
+      fs.rmSync(launchFailureStreakFile(), { force: true });
+      return session;
     } catch (err) {
       lastError = err;
       const msg = (err as Error)?.message ?? String(err);
@@ -357,7 +410,40 @@ export async function launchRStudio(existingConfigRoot?: string): Promise<Deskto
       }
     }
   }
+
+  try {
+    const lastMessage = (lastError as Error)?.message ?? String(lastError);
+    fs.writeFileSync(
+      launchFailureStreakFile(),
+      JSON.stringify({ count: streak.count + 1, lastError: lastMessage }),
+    );
+  } catch {
+    // Never mask the launch error with a bookkeeping failure
+  }
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+/**
+ * PIDs the TCP stack reports as owning a LISTEN socket on this worker's CDP
+ * port, comma-separated ('' when the port is free). The owning PID is
+ * recorded at socket creation, so for a socket kept alive only by an
+ * inherited handle this can name a process that already exited.
+ */
+function cdpPortListenerPids(): string {
+  try {
+    if (process.platform === 'win32') {
+      return execSync(
+        `powershell.exe -NoProfile -Command "(Get-NetTCPConnection -LocalPort ${CDP_PORT} -State Listen -ErrorAction SilentlyContinue).OwningProcess -join ','"`,
+        { encoding: 'utf-8', stdio: 'pipe' },
+      ).trim();
+    } else {
+      const out = execSync(`lsof -ti TCP:${CDP_PORT} -sTCP:LISTEN`, { encoding: 'utf-8', stdio: 'pipe' }).trim();
+      return out.split('\n').filter(Boolean).join(',');
+    }
+  } catch {
+    // lsof exits non-zero when there is no listener
+    return '';
+  }
 }
 
 async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSession> {
@@ -385,25 +471,34 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   }
 
   // Wait for the port to be free. When nothing was ever bound, the first
-  // probe throws immediately and we break out in microseconds. When we
-  // just killed something, the OS usually releases the port within a few
-  // hundred ms; the 15s ceiling is purely a safety net. As above, probe the
-  // LISTEN socket only -- what matters is whether Electron can bind the port,
-  // and matching connected client sockets too would stall the full 15s.
+  // probe reports empty and we break out in microseconds. When we just
+  // killed something, the OS usually releases the port within a few hundred
+  // ms; the 15s ceiling covers a lingering rsession that inherited the
+  // socket handle and exits when it notices its parent is gone. As above,
+  // probe the LISTEN socket only -- what matters is whether Electron can
+  // bind the port, and matching connected client sockets too would stall
+  // the full 15s.
+  let portHolders = '';
   const portDeadline = Date.now() + 15000;
   while (Date.now() < portDeadline) {
-    try {
-      if (process.platform === 'win32') {
-        const result = execSync(`powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort ${CDP_PORT} -State Listen -ErrorAction SilentlyContinue"`, { encoding: 'utf-8' });
-        if (!result.trim()) break;
-      } else {
-        execSync(`lsof -ti TCP:${CDP_PORT} -sTCP:LISTEN`, { encoding: 'utf-8' });
-        // If lsof succeeds, port is still in use -- keep waiting
-      }
-    } catch {
-      break; // No listener on the port
-    }
+    portHolders = cdpPortListenerPids();
+    if (!portHolders) break;
     await sleep(100);
+  }
+
+  // A LISTEN socket that survives the kill above is one the cleanup cannot
+  // clear: when a process holds an inherited handle to another process's
+  // socket, the TCP table still attributes the listener to the (now dead)
+  // creator PID, so killing by owning PID is a no-op. Launching anyway would
+  // spawn an RStudio that cannot bind the port and never becomes reachable
+  // over CDP -- and did, repeatedly, for the rest of a 2h shard
+  // (rstudio#18522). Fail now with the real reason instead.
+  if (portHolders) {
+    throw new Error(
+      `CDP port ${CDP_PORT} still has a LISTEN socket after cleanup (owning PID(s): ${portHolders});` +
+      ` an orphaned process is likely holding an inherited handle to it, and a newly launched RStudio` +
+      ` would not be able to bind it (rstudio#18522)`,
+    );
   }
 
   // Set up the isolated config directory (or reuse one across a restart)
@@ -717,17 +812,39 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
 }
 
 /**
+ * A snapshot of running RStudio processes: pid -> start-time key. Keying on
+ * (pid, start time) rather than bare pid means a PID the OS recycled between
+ * two snapshots -- routine on Windows -- doesn't read as "the same process".
+ */
+export type RStudioProcessSnapshot = ReadonlyMap<number, string>;
+
+/**
  * Relaunch RStudio after a full quit+restart (e.g. uninstall Posit Assistant).
  * The doRestart() flow quits Electron entirely and opens a new window without
- * our CDP flag. We wait for the old process to exit, kill the non-CDP instance,
- * and launch a fresh CDP-enabled session.
+ * our CDP flag. We wait for the old process to exit, kill the non-CDP restart
+ * instance, and launch a fresh CDP-enabled session.
+ *
+ * `processesBefore` must be captured with snapshotRStudioProcesses() BEFORE
+ * the restart is triggered (e.g. before confirming the uninstall dialog).
+ * The restart instance is spawned by the old Electron main as part of its
+ * quit sequence, so a snapshot taken here would race that spawn: on a loaded
+ * runner the restart instance's main process is already running and lands in
+ * the "before" set, and the diff below spares it. That mattered far beyond a
+ * leaked process: the restart instance inherits the old main's open handles
+ * (application-launch.ts spawns it from the dying Electron), including the
+ * CDP listen socket on Windows, so the spared orphan kept the worker's CDP
+ * port in LISTEN -- unkillable via its owning PID, unbindable by every later
+ * launch -- and the shard burned its full 2h job timeout (rstudio#18522).
+ * Killing everything not in the caller's snapshot still preserves an RStudio
+ * instance a developer had open before the test began.
  */
-export async function relaunchAfterRestart(session: DesktopSession): Promise<DesktopSession> {
+export async function relaunchAfterRestart(
+  session: DesktopSession,
+  processesBefore: RStudioProcessSnapshot,
+): Promise<DesktopSession> {
   const { browser, rstudioProcess, configRoot } = session;
 
-  // Snapshot all RStudio PIDs before the restart so we can identify new ones
-  const pidsBefore = getRStudioPids();
-  console.log(`RStudio PIDs before restart: ${[...pidsBefore].join(', ') || 'none'}`);
+  console.log(`RStudio PIDs before restart: ${[...processesBefore.keys()].join(', ') || 'none'}`);
 
   // Wait for the old process to exit
   console.log('Waiting for RStudio process to exit...');
@@ -745,11 +862,13 @@ export async function relaunchAfterRestart(session: DesktopSession): Promise<Des
   // Wait for the non-CDP restart instance to spawn
   await sleep(5000);
 
-  // Find and kill only the NEW RStudio processes (the non-CDP restart).
-  // This preserves any other RStudio instance the user has open.
-  const pidsAfter = getRStudioPids();
-  const newPids = [...pidsAfter].filter(pid => !pidsBefore.has(pid));
-  console.log(`RStudio PIDs after restart: ${[...pidsAfter].join(', ') || 'none'}`);
+  // Kill every RStudio process that wasn't already running when the caller
+  // took its snapshot -- i.e. the non-CDP restart instance.
+  const processesAfter = snapshotRStudioProcesses();
+  const newPids = [...processesAfter]
+    .filter(([pid, start]) => processesBefore.get(pid) !== start)
+    .map(([pid]) => pid);
+  console.log(`RStudio PIDs after restart: ${[...processesAfter.keys()].join(', ') || 'none'}`);
   console.log(`New PIDs to kill: ${newPids.join(', ') || 'none'}`);
 
   for (const pid of newPids) {
@@ -771,7 +890,7 @@ export async function relaunchAfterRestart(session: DesktopSession): Promise<Des
 }
 
 /**
- * Get all RStudio PIDs currently running.
+ * Snapshot the RStudio processes currently running, keyed pid -> start time.
  *
  * Matched case-insensitively (-i): the executable is `RStudio` on macOS but
  * `rstudio` on Linux, and a case-sensitive `pgrep -x rstudio` silently matched
@@ -779,22 +898,40 @@ export async function relaunchAfterRestart(session: DesktopSession): Promise<Des
  * output, so relaunchAfterRestart saw an empty before/after diff and left the
  * post-restart instance running for the rest of the run.
  */
-function getRStudioPids(): Set<number> {
+export function snapshotRStudioProcesses(): RStudioProcessSnapshot {
+  const snapshot = new Map<number, string>();
   try {
     if (process.platform === 'win32') {
+      // StartTime can throw for a process that exits mid-enumeration or is
+      // inaccessible; record those as 'unknown' rather than dropping them --
+      // an entry that matches by accident only ever spares a process, while
+      // a dropped one could get an unrelated pre-existing instance killed.
       const output = execSync(
-        `powershell.exe -NoProfile -Command "(Get-Process rstudio -ErrorAction SilentlyContinue).Id -join ','"`,
+        `powershell.exe -NoProfile -Command "Get-Process rstudio -ErrorAction SilentlyContinue | ForEach-Object { $t = 'unknown'; try { $t = $_.StartTime.Ticks } catch { }; Write-Output ($_.Id.ToString() + '=' + $t) }"`,
         { encoding: 'utf-8' }
       ).trim();
-      return new Set(output ? output.split(',').map(Number) : []);
+      for (const line of output ? output.split('\n') : []) {
+        const [pid, start] = line.trim().split('=');
+        if (Number.isInteger(Number(pid)) && Number(pid) > 0) {
+          snapshot.set(Number(pid), start || 'unknown');
+        }
+      }
     } else {
       const output = execSync('pgrep -ix rstudio 2>/dev/null || true', { encoding: 'utf-8' }).trim();
-      return new Set(output ? output.split('\n').map(Number).filter(n => Number.isInteger(n) && n > 0) : []);
+      const pids = output ? output.split('\n').map(Number).filter(n => Number.isInteger(n) && n > 0) : [];
+      for (const pid of pids) {
+        try {
+          const start = execSync(`ps -p ${pid} -o lstart=`, { encoding: 'utf-8' }).trim();
+          snapshot.set(pid, start || 'unknown');
+        } catch {
+          // Process exited between pgrep and ps
+        }
+      }
     }
   } catch (err) {
-    console.log(`WARNING: getRStudioPids() failed, returning empty set: ${err}`);
-    return new Set();
+    console.log(`WARNING: snapshotRStudioProcesses() failed, returning empty snapshot: ${err}`);
   }
+  return snapshot;
 }
 
 /**
