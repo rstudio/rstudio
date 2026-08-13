@@ -5,7 +5,16 @@ if not exist ..\..\..\src\gwt\lib (
     echo Creating directory ..\..\..\src\gwt\lib
     mkdir ..\..\..\src\gwt\lib
 )
+
+:: The clone below is addressed relative to this directory, so stop if we are not in
+:: it -- otherwise quarto lands next to this script and the build never sees it. A
+:: failed mkdir above arrives here too, having already reported why. Nothing has been
+:: pushed yet, so exit without the popd that :failed does.
 pushd ..\..\..\src\gwt\lib
+if errorlevel 1 (
+  echo ERROR: Could not enter ..\..\..\src\gwt\lib
+  exit /b 1
+)
 
 
 :: panmirror is taken from a branch of the quarto repo named for the RStudio release
