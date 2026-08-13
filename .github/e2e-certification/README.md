@@ -117,18 +117,29 @@ Two routes carry the per-cell facts, because one alone can't cover both shapes:
   known downstream of the whole shard matrix: a cell whose second shard failed has
   failed, and no value available inside shard 1 can say so.
 
-Four distinguishable gaps in that column:
+The two columns answer different questions, and the Result column is the one to
+trust. It is also not quite the same fact for every cell: for a Linux cell it is
+the *test* result (the shard matrix's own outcome), while for the five job-backed
+cells it is the whole workflow call, build and report-merge included. So a Linux
+cell whose tests passed but whose merge job failed reads `success` on a red run.
 
-- `_not reached_` -- the cell never got as far as installing R. On a Linux cell
-  that means no artifact at all; on one of the five job-backed cells it means the
-  job was skipped or cancelled, so no shard ran.
-- `_summary could not fetch_` -- the artifact download itself failed. The cells may
-  well have been fine.
+Four distinguishable gaps in the "R actually used" column:
+
+- `_not reached_` -- no evidence the cell installed R. On a Linux cell that means
+  no version artifact: normally because it never got that far, but also if shard 1
+  specifically died ahead of the R install while another shard ran, since only
+  shard 1 uploads it. On one of the five job-backed cells it means the job was
+  skipped or cancelled, so no shard ran.
+- `_summary could not fetch_` -- the version artifact download itself failed. The
+  cells may well have been fine. A failed *results* download is reported in the
+  Result column instead, which says so rather than printing the matrix-wide value
+  as though each cell had been measured.
 - `_empty_` -- a Linux cell's version artifact exists but holds nothing.
-- `_shard output collapsed_` -- one of the five job-backed cells ran but returned
-  no version, because its output is a single value for a whole shard matrix. Not
-  the same as never having installed R, and deliberately not reported as such: such
-  a cell may have run the entire suite.
+- `_shard output collapsed_` -- one of the five job-backed cells ran and returned
+  no version. Usually its output collapsed across its shard matrix, in which case
+  the cell may have run the entire suite. A build failure, or a failure ahead of
+  the R install, reads the same way here; the label errs toward not claiming a
+  working cell never reached R.
 
 The installed R version also appears on every E2E job's own summary page, written
 by `.github/actions/os-e2e-deps` for all callers rather than just this one.

@@ -12,8 +12,10 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 #     snapshot of that group.
 #   - Weekly cron (Sunday 12:00): every Linux arm64 engine. Four hours after the
 #     x86_64 run so the two fleets' ubuntu-latest jobs (pick, resolve, and every
-#     engine's e2e-merge) don't pile up; their build and test jobs sit on disjoint
-#     runner pools and never compete. See the concurrency note below.
+#     engine's e2e-merge) don't pile up. Their build and test jobs sit on disjoint
+#     runner pools, so they don't queue for the same machines, though every job
+#     still counts against the account-wide concurrent-job limit. See the
+#     concurrency note below.
 #   - Weekly cron (Sunday 16:00): every macOS and Windows engine, of either
 #     architecture. Four hours after the Linux arm64 run, for the same reason.
 #   - Manual dispatch: every engine at once (all 21, every platform and
@@ -87,7 +89,8 @@ concurrency:
   # own next occurrence, not one of the other two. Their *build and test* jobs
   # share no runners by construction -- Linux x86_64, Linux arm64, and
   # macOS+Windows are disjoint pools -- though pick, resolve, and every engine's
-  # e2e-merge all run on ubuntu-latest, so those do compete.
+  # e2e-merge all run on ubuntu-latest, so those do compete, and every job counts
+  # against the account-wide concurrent-job limit regardless of pool.
   group: >-
     pw-scheduled-e2e-${{
     github.event.schedule == '0 16 * * 5' && 'macos14'
@@ -193,14 +196,14 @@ jobs:
           # still cover it and nobody would notice for months. The groups cannot
           # overlap by construction, which makes "the three counts sum to the whole"
           # the same statement as "every engine is in exactly one".
-          jq -en --argjson e "$ENGINES" '
+          if ! jq -en --argjson e "$ENGINES" '
             ([$e[] | select(.platform=="linux" and .arch=="x86_64")] | length)
             + ([$e[] | select(.platform=="linux" and .arch=="arm64")]  | length)
             + ([$e[] | select(.platform=="macos" or .platform=="windows")] | length)
-            == ($e | length)' >/dev/null || {
+            == ($e | length)' >/dev/null; then
             echo "::error::The three Sunday selections do not partition ENGINES. Every entry needs platform 'linux' with arch 'x86_64' or 'arm64', or platform 'macos' or 'windows'."
             exit 1
-          }
+          fi
 
           # Every Linux Desktop engine must name a url_key the resolve job actually
           # emits. This is the one field whose failure is silent: an unknown name
@@ -220,6 +223,7 @@ jobs:
             echo "::error::Valid url_keys: $(jq -r 'join(", ")' <<<"$RESOLVE_KEYS")"
             exit 1
           fi
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SEL="$ALL"
           elif [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
@@ -263,8 +267,9 @@ jobs:
           fi
           # Nothing selected means every job below is skipped by its own if:, and
           # the run reports green having tested nothing. The weekday case has its
-          # own loud fallback; the Sunday and Friday branches are bare filters and
-          # need this one.
+          # own loud fallback and the Friday branch is a literal, so this guard is
+          # really for the three Sunday filters -- and for a dispatch, if ENGINES
+          # itself ever came back empty.
           if [ "$SEL" = "[]" ]; then
             echo "::error::No engines selected for this trigger. Check the platform and arch tags in ENGINES against the filters in this step."
             exit 1
@@ -354,14 +359,21 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          MISSING=$(jq -rn --argjson u "$URLS" \
-            '[$u | to_entries[] | select((.value // "") == "") | .key] | join(", ")')
+          # Checked against an explicit key list, not against whatever keys the
+          # object happens to carry. A key the action stops emitting -- a renamed
+          # platform, an edited outputs: block -- simply vanishes from $URLS, so
+          # iterating to_entries would find nothing missing, pass, and let that
+          # engine self-resolve the latest daily under a pinned dispatch. Keep in
+          # step with the action's outputs, and with the same list in the pick job.
+          EXPECT='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
+          MISSING=$(jq -rn --argjson u "$URLS" --argjson k "$EXPECT" \
+            '[$k[] | select((($u[.]) // "") == "")] | join(", ")')
           if [ -n "$MISSING" ]; then
             echo "::error::Version '$VERSION' produced no installer URL for: $MISSING."
             echo "::error::A dispatch runs every engine, so every platform must resolve. Those engines would otherwise silently fall back to the latest daily."
             exit 1
           fi
-          echo "::notice::All platforms have an installer URL for $VERSION."
+          echo "::notice::All $(jq -r 'length' <<<"$EXPECT") platforms have an installer URL for $VERSION."
 
   # Every selected Linux Desktop engine, one matrix entry each, through the
   # consolidated Linux workflow. The matrix is built (already filtered to the

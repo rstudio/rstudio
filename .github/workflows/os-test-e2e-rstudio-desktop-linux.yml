@@ -1042,12 +1042,16 @@ jobs:
       #
       # Nothing appends to this file. An earlier version had the job append its own
       # status as line 2, which put the status on *line 1* whenever the job died
-      # before os-e2e-deps ran (six steps can fail ahead of it), and the
-      # certification summary then printed a job status in its "R actually used"
-      # column. The outcome now travels as its own artifact, from e2e-merge.
+      # before os-e2e-deps ran -- and plenty of steps can fail ahead of it, from
+      # container prep through the RStudio install. The certification summary then
+      # printed a job status in its "R actually used" column. The outcome now
+      # travels as its own artifact, from e2e-merge.
       #
       # Shard 1 only: every shard installs the same R, and upload-artifact@v4
-      # fails the run on a duplicate artifact name.
+      # fails the run on a duplicate artifact name. The cost is that a cell whose
+      # shard 1 died before the R install has no version artifact even if another
+      # shard ran, so the caller's table cannot tell that apart from a cell that
+      # never started -- see the gap vocabulary in .github/e2e-certification/README.md.
       - name: Upload resolved R version
         if: always() && matrix.shard == 1
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -1106,12 +1110,18 @@ jobs:
       # divergence documented in os-e2e-deps does not apply, and these two paths
       # are not the inconsistency it warns about.
       #
+      # Both steps also sit *ahead of* actions/checkout deliberately. On a fresh
+      # hosted-runner job the workspace exists with no .git, so checkout clears its
+      # contents -- this file included. Moving the upload below the checkout, or
+      # adding a checkout above, loses it, and if-no-files-found: warn would hide
+      # that: the caller's table would quietly fall back to the matrix-wide result
+      # for every cell.
+      #
       # A caller passing defer_merge skips this job and so gets no outcome
       # artifact. The certification summary falls back to the matrix-wide result
       # for any cell whose artifact is missing, which is the honest answer there.
       - name: Record this engine's outcome
         if: always()
-        shell: bash
         run: printf '%s\n' "${{ needs.e2e.result }}" > "$GITHUB_WORKSPACE/r-outcome.txt"
 
       - name: Upload this engine's outcome

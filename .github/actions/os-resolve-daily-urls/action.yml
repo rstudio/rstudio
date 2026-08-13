@@ -142,7 +142,11 @@ runs:
             echo "::error::Version '$REQ' did not substitute into the ${product}/${key} URL ($link); the manifest link format may have changed." >&2
             return 1
           fi
-          if ! curl -fsI "$out" >/dev/null 2>&1; then
+          # Retried like the manifest fetch above. This check fails closed, so a
+          # single CDN 503 would otherwise empty that platform and stop a caller
+          # that needed it -- aborting a multi-hour certification before any cell
+          # starts, with an error blaming the version string.
+          if ! curl -fsI --retry 3 --retry-delay 5 "$out" >/dev/null 2>&1; then
             echo "::error::Resolved URL for ${product}/${key} does not exist: $out (version '$VERSION' may be unavailable or mistyped)." >&2
             return 1
           fi

@@ -166,10 +166,9 @@ jobs:
           # unknown name makes needs.resolve.outputs[matrix.url_key] evaluate to
           # '', and an empty rstudio_installer_url means "self-resolve the latest
           # daily" to every engine -- so a version-pinned run would quietly test
-          # the wrong build and report the pinned version as certified. That is
-          # exactly what the fatal emit() in the resolve action prevents, and the
-          # guarantee has to be extended here because the caller can manufacture
-          # the same empty value without any fatality. Keep in step with the
+          # the wrong build and report the pinned version as certified. The
+          # resolve action cannot catch it: an unknown key is not a platform it
+          # failed to resolve, it is a name it never had. Keep in step with the
           # action's outputs.
           RESOLVE_KEYS='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
           BAD_KEYS=$(jq -cn --argjson m "$MATRIX" --argjson k "$RESOLVE_KEYS" \
@@ -177,6 +176,20 @@ jobs:
           if [ "$BAD_KEYS" != "[]" ]; then
             echo "::error::Cell(s) in $MATRIX_FILE have a missing or unrecognized url_key: $(jq -r 'join(", ")' <<<"$BAD_KEYS")."
             echo "::error::Valid url_keys: $(jq -r 'join(", ")' <<<"$RESOLVE_KEYS")"
+            exit 1
+          fi
+
+          # Every cell must declare an r_version. A missing or misspelled field
+          # reads as null, which flows through as an empty r_version input -- and
+          # a workflow_call default only applies to an absent key, not to an empty
+          # expression, so the engine reaches `rig add ""` inside a cell it has
+          # already spent minutes provisioning. Shape-checked too, since the value
+          # is either the distro sentinel or something rig can resolve.
+          BAD_R=$(jq -cn --argjson m "$MATRIX" \
+            '[$m[] | select((.r_version // "") | test("^(distro|[0-9]+\\.[0-9]+\\.[0-9]+|release|oldrel(-[0-9]+)?|devel|next)$") | not) | .cell]')
+          if [ "$BAD_R" != "[]" ]; then
+            echo "::error::Cell(s) in $MATRIX_FILE have a missing or unrecognized r_version: $(jq -r 'join(", ")' <<<"$BAD_R")."
+            echo "::error::Use an exact version (4.4.1), an alias (release, oldrel, oldrel-N, devel, next), or the sentinel 'distro'."
             exit 1
           fi
 
@@ -355,12 +368,13 @@ jobs:
       # A pinned version that produced no URL for a cell in this run must stop
       # the run, because an empty rstudio_installer_url means "self-resolve the
       # latest daily" to the engines -- so the alternative is a green run that
-      # certified a different build than the one named. The action's own emit()
-      # is fatal per platform, but that guarantee ends at its boundary: the
-      # caller can still hand an engine an empty string by naming a url_key the
-      # action does not emit. The pick job rejects unknown url_keys up front;
-      # this catches the remaining case, a key that is valid but whose platform
-      # genuinely has no build at the requested version.
+      # certified a different build than the one named. Nothing upstream catches
+      # it: the resolve action is best-effort by design, warning on a platform it
+      # could not resolve rather than failing, precisely so a missing Windows
+      # build cannot block a Linux-only run. This step is the whole guarantee.
+      # The pick job separately rejects a url_key the action does not emit; what
+      # remains here is a valid key whose platform genuinely has no build at the
+      # requested version.
       #
       # Skipped when no version was pinned or when building from source, where
       # empty URLs are the intended signal rather than a failure.
@@ -383,6 +397,17 @@ jobs:
                 {cell:"macos26",key:"macos"},
                 {cell:"windows2025",key:"windows"}]
                | map(select(.cell as $c | $s | index($c))))')
+          # The five job-backed cells are spelled out above, and in three other
+          # places in this file. Only JOB_BACKED is guarded, so a new cell added
+          # there but not here would drop out of NEEDED silently and this step
+          # would pass having checked nothing. Covering every selected cell is
+          # the invariant, so assert it rather than trusting four lists to stay
+          # in step.
+          if [ "$(jq -r 'length' <<<"$NEEDED")" != "$(jq -r 'length' <<<"$SELECTED")" ]; then
+            echo "::error::Only $(jq -r 'length' <<<"$NEEDED") of $(jq -r 'length' <<<"$SELECTED") selected cell(s) map to an installer URL, so this check would not cover them all."
+            echo "::error::A cell with no 'os' field needs an entry in this step's NEEDED list as well as in JOB_BACKED. Uncovered: $(jq -rn --argjson n "$NEEDED" --argjson s "$SELECTED" '[$s[] | select(. as $c | ($n | map(.cell) | index($c)) == null)] | join(", ")')"
+            exit 1
+          fi
           MISSING=$(jq -cn --argjson n "$NEEDED" --argjson u "$URLS" \
             '[$n[] | select(($u[.key] // "") == "") | "\(.cell) (\(.key))"]')
           if [ "$MISSING" != "[]" ]; then
@@ -594,7 +619,14 @@ jobs:
           # version and their per-cell result arrive by artifact (downloaded
           # above). RESULT_LINUX is only the fallback for a cell whose result
           # artifact is missing.
-          FETCH_OUTCOME: ${{ steps.fetch_versions.outcome }}
+          #
+          # Both download outcomes come in, and they are not interchangeable: a
+          # failed *versions* fetch costs the R column, a failed *results* fetch
+          # costs the Result column and sends every Linux row to the matrix-wide
+          # value. The table has to say which happened rather than print a
+          # confident wrong answer.
+          FETCH_VERSIONS_OUTCOME: ${{ steps.fetch_versions.outcome }}
+          FETCH_OUTCOMES_OUTCOME: ${{ steps.fetch_outcomes.outcome }}
           ACTUAL_UBUNTU24S: ${{ needs.ubuntu24s.outputs.r_version_actual }}
           ACTUAL_MACOS26: ${{ needs.macos26.outputs.r_version_actual }}
           ACTUAL_MACOS15: ${{ needs.macos15.outputs.r_version_actual }}
@@ -617,6 +649,12 @@ jobs:
             echo "|---|---|---|---|"
           } >> "$GITHUB_STEP_SUMMARY"
 
+          # Counted so the table can prove it covered every selected cell. Both
+          # emitters run in this shell -- emit_single is a function, and the Linux
+          # loop reads from a process substitution rather than a pipe -- so the
+          # increments survive.
+          ROWS=0
+
           # Non-Linux cells: actual R comes back from the engine's output.
           emit_single() {
             local cell="$1" actual="$2" result="$3" declared
@@ -624,12 +662,16 @@ jobs:
               return 0
             fi
             declared=$(jq -r --arg c "$cell" '.[$c]' <<<"$R_DECLARED")
-            # An empty version means one of two things, and they are not the same
-            # claim. A job that never ran cannot have installed R. A job that ran
-            # and still returned nothing had its output collapse across its shards
-            # (see the note above that output in each engine workflow) and may well
-            # have installed R and run the whole suite -- calling that "not reached"
-            # asserts something false about a cell that worked.
+            # An empty version has several causes and only one signal to tell them
+            # apart, so these two labels are the safest split available rather than
+            # a diagnosis. A skipped or cancelled job cannot have installed R.
+            # Anything else that ran and returned nothing may have collapsed its
+            # output across shards and run the entire suite -- or may have failed
+            # ahead of the R install, or been a build_only call (each engine's
+            # output description lists all three). The optimistic label is the
+            # deliberate choice: it avoids asserting "not reached" about a cell
+            # that worked, at the cost of covering a build failure too. The Result
+            # column is the fact to trust.
             if [ -z "$actual" ]; then
               case "$result" in
                 skipped|cancelled) actual="_not reached_" ;;
@@ -637,6 +679,7 @@ jobs:
               esac
             fi
             echo "| \`$cell\` | $declared | $actual | $result |" >> "$GITHUB_STEP_SUMMARY"
+            ROWS=$((ROWS + 1))
           }
 
           # Linux cells: the version and this cell's own result come from two
@@ -652,16 +695,22 @@ jobs:
               # cell whose second shard failed reads failure here. Absent means
               # this cell's own result is genuinely unknown -- the merge job was
               # skipped, or the download failed -- and only then is the matrix-wide
-              # value the best available answer.
+              # value the best available answer. Say so when the download is the
+              # reason: otherwise one transient artifacts-API failure prints the
+              # matrix-wide result against every cell as though each had been
+              # measured, which is the whole-table version of the misattribution
+              # these artifacts exist to prevent.
               result="$RESULT_LINUX"
               if [ -r "$outcome_file" ]; then
                 cell_result=$(sed -n '1p' "$outcome_file" | tr -d '\r')
                 [ -z "$cell_result" ] || result="$cell_result"
+              elif [ "${FETCH_OUTCOMES_OUTCOME:-}" = "failure" ]; then
+                result="$RESULT_LINUX (matrix-wide; per-cell results unavailable)"
               fi
               if [ -r "$actual_file" ]; then
                 actual=$(sed -n '1p' "$actual_file" | tr -d '\r')
                 [ -n "$actual" ] || actual="_empty_"
-              elif [ "${FETCH_OUTCOME:-}" = "failure" ]; then
+              elif [ "${FETCH_VERSIONS_OUTCOME:-}" = "failure" ]; then
                 # The cells may well have run fine; the summary just could not
                 # read their artifacts. Do not imply they never reached R.
                 actual="_summary could not fetch_"
@@ -669,6 +718,7 @@ jobs:
                 actual="_not reached_"
               fi
               echo "| \`$cell\` | $declared | $actual | $result |" >> "$GITHUB_STEP_SUMMARY"
+              ROWS=$((ROWS + 1))
             done < <(jq -r '.[] | [.cell, .os, .r_declared] | @tsv' <<<"$LINUX_MATRIX")
           fi
 
@@ -677,6 +727,18 @@ jobs:
           emit_single macos15     "$ACTUAL_MACOS15"     "$RESULT_MACOS15"
           emit_single macos26     "$ACTUAL_MACOS26"     "$RESULT_MACOS26"
           emit_single windows2025 "$ACTUAL_WINDOWS2025" "$RESULT_WINDOWS2025"
+
+          # A table quietly missing an environment is worse than one that fails,
+          # which the pick job already enforces for jobs; this is the reporting
+          # half. It also catches the one failure that is otherwise invisible: the
+          # Linux loop reads from a process substitution, so a jq error there
+          # yields zero rows and leaves this step's exit status at 0.
+          EXPECTED=$(jq -r 'length' <<<"$SELECTED")
+          if [ "$ROWS" != "$EXPECTED" ]; then
+            echo "::error::The certification table has $ROWS row(s) for $EXPECTED selected cell(s), so at least one environment is missing from it."
+            echo "::error::Selected: $(jq -r 'join(", ")' <<<"$SELECTED")"
+            exit 1
+          fi
 
           {
             echo ""

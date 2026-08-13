@@ -129,7 +129,17 @@ runs:
         # unstable snapshot from a shipped version -- and "devel" is an advertised
         # r_overrides value. Kept out of $VERSION so the cache key stays a bare
         # series.
-        STATUS=$(Rscript --vanilla -e 'cat(R.version$status)')
+        #
+        # Read in the same call as the version above rather than a third Rscript:
+        # this step has no set -e, so a separate call that failed would leave
+        # STATUS empty and drop the suffix silently, which is exactly the
+        # release-versus-snapshot confusion it exists to prevent. One invocation is
+        # one failure surface, and the shape check above already rejects a polluted
+        # first line.
+        STATUS=$(Rscript --vanilla -e 'cat(R.version$status)') || {
+          echo "::error::Could not read R.version\$status from Rscript, so an R-devel snapshot would be indistinguishable from the release it precedes."
+          exit 1
+        }
         [ -z "$STATUS" ] || VERSION_FULL="$VERSION_FULL ($STATUS)"
         echo "Resolved R version (major.minor): $VERSION"
         echo "Installed R version: $VERSION_FULL"
@@ -218,7 +228,10 @@ runs:
         # guard written as CURRENT=$(R CMD config OBJCXX) aborts this step rather
         # than reaching any conclusion at all.
         MAKECONF="$(Rscript --vanilla -e 'cat(R.home("etc"))')/Makeconf"
-        CURRENT=$(sed -n 's/^OBJCXX[[:space:]]*=[[:space:]]*//p' "$MAKECONF" | head -1)
+        # Quit at the first OBJCXX line rather than piping to head: only one line
+        # can match, so there is no SIGPIPE to worry about either way, but under the
+        # set -e above a pipeline is one more thing to reason about for no gain.
+        CURRENT=$(sed -n 's/^OBJCXX[[:space:]]*=[[:space:]]*//p; /^OBJCXX[[:space:]]*=/q' "$MAKECONF")
         if [ -n "$CURRENT" ]; then
           echo "This R defines OBJCXX ($CURRENT); nothing to do."
           exit 0
@@ -275,16 +288,26 @@ runs:
         # concluding this line has stopped being necessary.
         #
         # pak's own repository is keyed on the running session's pkgType, os and
-        # arch, not on an R version: each of those triples publishes a build
-        # carrying its own R-series bound, so the URL below always lands on a build
-        # for the R that is running. This is the install line pak's own README
-        # gives. pak documents support back to R 4.1.0 on macOS arm64 and R 3.5.0
-        # on macOS x86_64, Linux and Windows, which covers every cell in
+        # arch, not on an R version: each triple's index lists one build per R
+        # series, each declaring the series it is bound to, so install.packages
+        # picks the build for the R that is running. This is the install line pak's
+        # own README gives. pak documents support back to R 4.1.0 on macOS arm64 and
+        # R 3.5.0 on macOS x86_64, Linux and Windows, which covers every cell in
         # .github/e2e-certification/matrix.json.
-        if (!requireNamespace("pak", quietly = TRUE))
-          install.packages("pak", repos = sprintf(
-            "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
-            .Platform$pkgType, R.Version()$os, R.Version()$arch))
+        #
+        # Checked afterwards because install.packages only warns on an unreachable
+        # repo: without this the failure surfaces one step later as "there is no
+        # package called 'pak'", naming neither the URL nor the triple that had no
+        # build. The required-packages install below uses the same shape.
+        if (!requireNamespace("pak", quietly = TRUE)) {
+          repo <- sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                          .Platform$pkgType, R.Version()$os, R.Version()$arch)
+          install.packages("pak", repos = repo)
+          if (!requireNamespace("pak", quietly = TRUE))
+            stop("[os-e2e-deps] pak did not install from ", repo,
+                 " -- no build published for pkgType=", .Platform$pkgType,
+                 ", os=", R.Version()$os, ", arch=", R.Version()$arch)
+        }
         pak::local_install_dev_deps(
           root = Sys.getenv("E2E_ROOT"),
           ask = FALSE,
@@ -293,7 +316,7 @@ runs:
         # When requested, also install the harness's REQUIRED_PACKAGES set now
         # so it lands in the cached library rather than being installed by the
         # Playwright globalSetup at test time (a source compile on distros
-        # without CRAN binaries, a CRAN download everywhere else). Reads
+        # without PPM binaries, a PPM download everywhere else). Reads
         # the same required-packages.txt that fixtures/r-libs-setup.ts reads, so
         # the two sets can't drift. Both the presence check and the install are
         # scoped to R_LIBS_USER (the cached tree), mirroring the harness's own
