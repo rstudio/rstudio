@@ -75,50 +75,60 @@ runs:
     # Foundation feature (Chromium needs its media DLLs on Server SKUs). The
     # feature install takes ~3 minutes, is not cacheable, and used to run
     # serially inside the browser-install step on every run -- even on a full
-    # cache hit. Start it here as a detached process instead, so it overlaps
-    # the R/npm/browser installs below; the browser-install step then skips
-    # --with-deps on Windows, and the final step of this action waits for the
-    # detached install and fails on the same errors the serial install would
-    # have surfaced. Runs via Windows PowerShell (not pwsh) because the
-    # ServerManager module that provides Install-WindowsFeature is a Windows
-    # PowerShell module, matching how Playwright's own installer invokes it.
+    # cache hit. Start it here so it overlaps the R/npm/browser installs
+    # below; the browser-install step then skips --with-deps on Windows, and
+    # the final step of this action waits for the install and fails on the
+    # same errors the serial install would have surfaced.
+    #
+    # Launched via a scheduled task, not Start-Process: the runner kills
+    # detached child processes when the step exits (runs 31735929103 and
+    # 31746122882 both saw a Start-Process child die without output within
+    # ~80s), while Task Scheduler spawns the process outside the runner's
+    # process tree. The task runs as SYSTEM with its own clean environment,
+    # so the generated script bakes in absolute paths (RUNNER_TEMP is not
+    # defined there) and writes its own output log (no shell redirection).
     - name: Install Windows Media Foundation (background)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
         $ErrorActionPreference = 'Stop'
+        $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
+        $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
+        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
+
         # Built from a line array rather than a here-string: a here-string's
         # closing '@ must sit at column 0, which would terminate this YAML
-        # block scalar.
+        # block scalar. The first two lines interpolate the absolute paths.
         $lines = @(
-          '$marker = Join-Path $env:RUNNER_TEMP ''media-foundation.done''',
+          "`$marker = '$marker'",
+          "`$outLog = '$outLog'",
           'try {',
           '  $r = Install-WindowsFeature -Name Server-Media-Foundation -ErrorAction Stop',
+          '  $r | Out-String | Out-File -FilePath $outLog -Append',
           '  $status = if ($r.Success) { ''ok'' } else { "failed: exit code $($r.ExitCode)" }',
           '} catch {',
+          '  $_ | Out-String | Out-File -FilePath $outLog -Append',
           '  $status = "failed: $($_.Exception.Message)"',
           '}',
           'Set-Content -Path $marker -Value $status'
         )
-        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
         Set-Content -Path $script -Value ($lines -join "`n") -Encoding utf8
 
-        # The child inherits this pwsh step's environment, including
-        # PowerShell 7's PSModulePath -- a documented way to break module
-        # loading in a Windows PowerShell child (ServerManager is a Windows
-        # PowerShell module). Hand it the Windows PowerShell module paths
-        # instead, and restore ours afterwards.
-        $savedPSModulePath = $env:PSModulePath
-        try {
-          $env:PSModulePath = "$env:SystemRoot\system32\WindowsPowerShell\v1.0\Modules;$env:ProgramFiles\WindowsPowerShell\Modules"
-          Start-Process powershell -WindowStyle Hidden `
-            -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script `
-            -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'media-foundation.out') `
-            -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'media-foundation.err')
-        } finally {
-          $env:PSModulePath = $savedPSModulePath
+        # Failures here only cost the overlap, not the install: the wait step
+        # runs the same script synchronously whenever the marker is missing.
+        schtasks /create /f /tn 'rstudio-e2e-mf-install' /sc once /st 23:59 /ru SYSTEM `
+          /tr "powershell -NoProfile -ExecutionPolicy Bypass -File $script"
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::schtasks /create failed ($LASTEXITCODE); Media Foundation will install synchronously in the wait step."
+          exit 0
         }
-        Write-Host "Media Foundation install started in the background."
+
+        schtasks /run /tn 'rstudio-e2e-mf-install'
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::schtasks /run failed ($LASTEXITCODE); Media Foundation will install synchronously in the wait step."
+          exit 0
+        }
+        Write-Host "Media Foundation install started in the background (scheduled task)."
 
     # Resolve the *installed* R version (major.minor) and fold it into the
     # cache keys below. Installed packages and pak's binary downloads are only
@@ -336,12 +346,11 @@ runs:
     # Companion to "Install Windows Media Foundation (background)" above: on a
     # typical run the feature install (~3 min) finished while the R/npm/browser
     # installs ran, so this is a no-op; when it didn't, block here rather than
-    # letting tests launch an Electron missing its media DLLs. The detached
-    # installer is not guaranteed to survive or make progress (run 31735929103
-    # saw it produce neither marker nor output on all six shards), so a missing
-    # marker falls back to running the same script synchronously, bounded --
-    # the worst case is the serial install this action always used to do. A
-    # failed install still fails the action, matching --with-deps behavior.
+    # letting tests launch an Electron missing its media DLLs. When the marker
+    # never lands (task creation failed, or the installer died), fall back to
+    # running the same script synchronously, bounded -- the worst case is the
+    # serial install this action always used to do. A failed install still
+    # fails the action, matching --with-deps behavior.
     - name: Wait for Windows Media Foundation install
       if: runner.os == 'Windows'
       shell: pwsh
@@ -354,9 +363,12 @@ runs:
             Where-Object { $_.CommandLine -like '*install-media-foundation.ps1*' }
         }
 
-        # Poll only while the detached installer is demonstrably alive: a dead
-        # process without a marker will never produce one, so there is nothing
-        # to wait for beyond its lifetime.
+        # Poll only while the installer is demonstrably alive: a dead process
+        # without a marker will never produce one, so there is nothing to
+        # wait for beyond its lifetime. A brief initial grace period covers
+        # Task Scheduler's spawn latency so a not-yet-started installer isn't
+        # mistaken for a dead one.
+        Start-Sleep -Seconds 5
         $deadline = (Get-Date).AddMinutes(10)
         while (-not (Test-Path $marker) -and (Get-Date) -lt $deadline) {
           if (-not (Get-InstallerProcess)) {
@@ -365,12 +377,10 @@ runs:
           Start-Sleep -Seconds 5
         }
 
-        foreach ($f in @('media-foundation.out', 'media-foundation.err')) {
-          $path = Join-Path $env:RUNNER_TEMP $f
-          if ((Test-Path $path) -and (Get-Item $path).Length -gt 0) {
-            Write-Host "--- $f ---"
-            Get-Content $path | Write-Host
-          }
+        $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
+        if ((Test-Path $outLog) -and (Get-Item $outLog).Length -gt 0) {
+          Write-Host "--- media-foundation.out ---"
+          Get-Content $outLog | Write-Host
         }
 
         if (-not (Test-Path $marker)) {
