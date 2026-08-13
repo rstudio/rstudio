@@ -71,6 +71,44 @@ runs:
           echo "PW_RSTUDIO_R_LIBS_USER=${{ inputs.r-libs-user }}" >> "$GITHUB_ENV"
         fi
 
+    # On Windows Server, `playwright install --with-deps` installs the Media
+    # Foundation feature (Chromium needs its media DLLs on Server SKUs). The
+    # feature install takes ~3 minutes, is not cacheable, and used to run
+    # serially inside the browser-install step on every run -- even on a full
+    # cache hit. Start it here as a detached process instead, so it overlaps
+    # the R/npm/browser installs below; the browser-install step then skips
+    # --with-deps on Windows, and the final step of this action waits for the
+    # detached install and fails on the same errors the serial install would
+    # have surfaced. Runs via Windows PowerShell (not pwsh) because the
+    # ServerManager module that provides Install-WindowsFeature is a Windows
+    # PowerShell module, matching how Playwright's own installer invokes it.
+    - name: Install Windows Media Foundation (background)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        # Built from a line array rather than a here-string: a here-string's
+        # closing '@ must sit at column 0, which would terminate this YAML
+        # block scalar.
+        $lines = @(
+          '$marker = Join-Path $env:RUNNER_TEMP ''media-foundation.done''',
+          'try {',
+          '  $r = Install-WindowsFeature -Name Server-Media-Foundation -ErrorAction Stop',
+          '  $status = if ($r.Success) { ''ok'' } else { "failed: exit code $($r.ExitCode)" }',
+          '} catch {',
+          '  $status = "failed: $($_.Exception.Message)"',
+          '}',
+          'Set-Content -Path $marker -Value $status'
+        )
+        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
+        Set-Content -Path $script -Value ($lines -join "`n") -Encoding utf8
+
+        Start-Process powershell -WindowStyle Hidden `
+          -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script `
+          -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'media-foundation.out') `
+          -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'media-foundation.err')
+        Write-Host "Media Foundation install started in the background."
+
     # Resolve the *installed* R version (major.minor) and fold it into the
     # cache keys below. Installed packages and pak's binary downloads are only
     # compatible within an R major.minor series, so when an alias like
@@ -259,6 +297,12 @@ runs:
       # launch error.
       run: |
         BINARY_ONLY=false
+        # On Windows, --with-deps only installs the Media Foundation feature,
+        # which the background step at the top of this action already handles
+        # (and the final step waits for), so fetch only the browser binary.
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          BINARY_ONLY=true
+        fi
         if [ "$RUNNER_OS" = "Linux" ] && [ -r /etc/os-release ]; then
           . /etc/os-release
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || [ "$ID" = "fedora" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
@@ -277,3 +321,38 @@ runs:
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ steps.pw-cache.outputs.cache-primary-key }}
+
+    # Companion to "Install Windows Media Foundation (background)" above: on a
+    # typical run the feature install (~3 min) finished while the R/npm/browser
+    # installs ran, so this is a no-op; when it didn't, block here rather than
+    # letting tests launch an Electron missing its media DLLs. A failed or
+    # stuck install fails the action, matching what the serial --with-deps
+    # install would have done.
+    - name: Wait for Windows Media Foundation install
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
+        $deadline = (Get-Date).AddMinutes(10)
+        while (-not (Test-Path $marker) -and (Get-Date) -lt $deadline) {
+          Start-Sleep -Seconds 5
+        }
+
+        foreach ($f in @('media-foundation.out', 'media-foundation.err')) {
+          $path = Join-Path $env:RUNNER_TEMP $f
+          if ((Test-Path $path) -and (Get-Item $path).Length -gt 0) {
+            Write-Host "--- $f ---"
+            Get-Content $path | Write-Host
+          }
+        }
+
+        if (-not (Test-Path $marker)) {
+          Write-Error "Media Foundation install did not finish within 10 minutes."
+          exit 1
+        }
+        $status = (Get-Content $marker -Raw).Trim()
+        if ($status -ne 'ok') {
+          Write-Error "Media Foundation install failed: $status"
+          exit 1
+        }
+        Write-Host "Media Foundation installed."
