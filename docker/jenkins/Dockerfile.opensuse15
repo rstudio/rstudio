@@ -35,6 +35,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libjpeg-devel \
     libopenssl-devel \
     libpng-devel  \
+    libsecret-devel \
     libtiff-devel  \
     libtool \
     libwebp-devel \
@@ -102,8 +103,9 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common open
 RUN chmod -R 777 /opt/rstudio-tools/src
 
 # install GnuPG 1.4 from source (needed for release signing)
+# mirrored into rstudio-buildtools because gnupg.org returns 403 to the builders
 RUN cd /tmp && \
-    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
+    wget https://rstudio-buildtools.s3.amazonaws.com/gnupg-1.4.23.tar.bz2 && \
     bzip2 -d gnupg-1.4.23.tar.bz2 && \
     tar xvf gnupg-1.4.23.tar && \
     cd gnupg-1.4.23 && \

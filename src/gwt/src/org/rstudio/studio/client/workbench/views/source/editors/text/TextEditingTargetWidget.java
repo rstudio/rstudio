@@ -496,6 +496,7 @@ public class TextEditingTargetWidget
       // document properties
       splitEditor_.setRainbowParentheses(editor_.getRainbowParentheses());
       splitEditor_.setRainbowFencedDivs(editor_.getRainbowFencedDivs());
+      splitEditor_.setShowChunkOutputInline(editor_.showChunkOutputInline());
 
       // forward completion contexts from the editing target so completion
       // behaves the same in either view; contexts must be in place before
@@ -529,6 +530,16 @@ public class TextEditingTargetWidget
       // keep the status bar in sync with the split view's cursor
       splitEditorRegistrations_.add(splitEditor_.addCursorChangedHandler(event ->
             target_.splitEditorCursorChanged(event.getPosition())));
+   }
+
+   // Keep the split view's inline-chunk-output flag matching the primary
+   // editor's, which the notebook maintains (see
+   // TextEditingTarget.setShowChunkOutputInline).
+   @Override
+   public void syncSplitShowChunkOutputInline()
+   {
+      if (splitEditor_ != null)
+         splitEditor_.setShowChunkOutputInline(editor_.showChunkOutputInline());
    }
 
    // Tear down any split editor view when the editing target is dismissed.
