@@ -69,3 +69,9 @@ spec/
 # Non-persistent Mole caches
 .mole.web_cache
 .mole.rust_cache
+
+# Written at the workspace root by CI so a caller can upload them as artifacts:
+# r-version.txt by the os-e2e-deps action, r-outcome.txt by an engine's merge job.
+# Never wanted in a commit.
+/r-version.txt
+/r-outcome.txt
