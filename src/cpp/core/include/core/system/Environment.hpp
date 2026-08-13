@@ -16,13 +16,9 @@
 #ifndef CORE_SYSTEM_ENVIRONMENT_HPP
 #define CORE_SYSTEM_ENVIRONMENT_HPP
 
-#include <stdlib.h>
-
 #include <string>
 
 #include <boost/noncopyable.hpp>
-
-#include <shared_core/system/EnvironmentLock.hpp>
 
 #include <core/system/Types.hpp>
 
@@ -46,6 +42,10 @@ std::string getenv(const std::string& name);
 // lock. Once R is running, call these only from the main thread.
 void setenv(const std::string& name, const std::string& value);
 void unsetenv(const std::string& name);
+
+// read an environment variable, distinguishing unset from set-but-empty;
+// returns whether the variable was set, populating *pValue only when true
+bool getenv(const std::string& name, std::string* pValue);
 
 
 /****************************************************************
@@ -114,20 +114,12 @@ public:
    
    EnvironmentScope(const char* variable,
                     const char* value)
-      : variable_(variable),
-        hadValue_(false)
+      : variable_(variable)
    {
-      // copy the previous value under the environment lock: the pointer
-      // returned by ::getenv is invalidated by any subsequent setenv
-      {
-         EnvironmentLock lock;
-         const char* previous = ::getenv(variable);
-         if (previous)
-         {
-            hadValue_ = true;
-            previousValue_ = previous;
-         }
-      }
+      // NOTE: raw ::getenv would be wrong here on Windows, where it reads
+      // the CRT's startup snapshot of the environment rather than the
+      // process environment block that core::system::setenv writes to
+      hadValue_ = core::system::getenv(variable, &previousValue_);
 
       core::system::setenv(variable, value);
    }
