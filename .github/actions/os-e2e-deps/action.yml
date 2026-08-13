@@ -103,10 +103,21 @@ runs:
         $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
         Set-Content -Path $script -Value ($lines -join "`n") -Encoding utf8
 
-        Start-Process powershell -WindowStyle Hidden `
-          -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script `
-          -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'media-foundation.out') `
-          -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'media-foundation.err')
+        # The child inherits this pwsh step's environment, including
+        # PowerShell 7's PSModulePath -- a documented way to break module
+        # loading in a Windows PowerShell child (ServerManager is a Windows
+        # PowerShell module). Hand it the Windows PowerShell module paths
+        # instead, and restore ours afterwards.
+        $savedPSModulePath = $env:PSModulePath
+        try {
+          $env:PSModulePath = "$env:SystemRoot\system32\WindowsPowerShell\v1.0\Modules;$env:ProgramFiles\WindowsPowerShell\Modules"
+          Start-Process powershell -WindowStyle Hidden `
+            -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script `
+            -RedirectStandardOutput (Join-Path $env:RUNNER_TEMP 'media-foundation.out') `
+            -RedirectStandardError (Join-Path $env:RUNNER_TEMP 'media-foundation.err')
+        } finally {
+          $env:PSModulePath = $savedPSModulePath
+        }
         Write-Host "Media Foundation install started in the background."
 
     # Resolve the *installed* R version (major.minor) and fold it into the
@@ -325,16 +336,32 @@ runs:
     # Companion to "Install Windows Media Foundation (background)" above: on a
     # typical run the feature install (~3 min) finished while the R/npm/browser
     # installs ran, so this is a no-op; when it didn't, block here rather than
-    # letting tests launch an Electron missing its media DLLs. A failed or
-    # stuck install fails the action, matching what the serial --with-deps
-    # install would have done.
+    # letting tests launch an Electron missing its media DLLs. The detached
+    # installer is not guaranteed to survive or make progress (run 31735929103
+    # saw it produce neither marker nor output on all six shards), so a missing
+    # marker falls back to running the same script synchronously, bounded --
+    # the worst case is the serial install this action always used to do. A
+    # failed install still fails the action, matching --with-deps behavior.
     - name: Wait for Windows Media Foundation install
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
         $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
+        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
+
+        function Get-InstallerProcess {
+          Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" |
+            Where-Object { $_.CommandLine -like '*install-media-foundation.ps1*' }
+        }
+
+        # Poll only while the detached installer is demonstrably alive: a dead
+        # process without a marker will never produce one, so there is nothing
+        # to wait for beyond its lifetime.
         $deadline = (Get-Date).AddMinutes(10)
         while (-not (Test-Path $marker) -and (Get-Date) -lt $deadline) {
+          if (-not (Get-InstallerProcess)) {
+            break
+          }
           Start-Sleep -Seconds 5
         }
 
@@ -347,7 +374,35 @@ runs:
         }
 
         if (-not (Test-Path $marker)) {
-          Write-Error "Media Foundation install did not finish within 10 minutes."
+          # Diagnose which way the background install failed, then kill any
+          # hung remnant so it can't hold the servicing stack against the
+          # synchronous run below.
+          $proc = Get-InstallerProcess
+          if ($proc) {
+            Write-Host "Background installer still running with no result after 10 minutes; killing it."
+            $proc | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+          } else {
+            Write-Host "Background installer is no longer running and left no result."
+          }
+
+          Write-Host "Running the Media Foundation install synchronously."
+          $savedPSModulePath = $env:PSModulePath
+          try {
+            $env:PSModulePath = "$env:SystemRoot\system32\WindowsPowerShell\v1.0\Modules;$env:ProgramFiles\WindowsPowerShell\Modules"
+            $p = Start-Process powershell -NoNewWindow -PassThru `
+              -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script
+            if (-not $p.WaitForExit(600000)) {
+              $p.Kill()
+              Write-Error "Synchronous Media Foundation install timed out after 10 minutes."
+              exit 1
+            }
+          } finally {
+            $env:PSModulePath = $savedPSModulePath
+          }
+        }
+
+        if (-not (Test-Path $marker)) {
+          Write-Error "Media Foundation install wrote no result marker."
           exit 1
         }
         $status = (Get-Content $marker -Raw).Trim()
