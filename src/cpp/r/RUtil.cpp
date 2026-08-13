@@ -89,9 +89,11 @@ void setenv(const std::string& key, const std::string& value)
    core::system::setenv(key, value);
 
 #ifdef _WIN32
-   // NOTE: Required on Windows as R links to a static copy
-   // of libc and libgcc, and so has a separate environment
-   // block from the rsession.exe executable itself.
+   // NOTE: Sys.getenv reads the environment via R's C runtime, which keeps
+   // its own copy of the environment. core::system::setenv writes through
+   // both the Win32 environment block and our C runtime, which suffices for
+   // UCRT builds of R (R >= 4.2, which share our C runtime), but R built
+   // against msvcrt has a separate copy that only R itself can update.
    Error error = r::exec::RFunction("base:::Sys.setenv")
          .addParam(key, value)
          .call();
