@@ -299,6 +299,7 @@ if not exist %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh (
 echo -- Installing panmirror (Visual Editor)
 pushd "%WINDOWS_SCRIPTS_DIR%install-panmirror"
 call clone-panmirror-repo.cmd
+if errorlevel 1 exit /b 1
 popd
 
 echo -- Installing SOCI
