@@ -74,6 +74,13 @@ on:
         required: false
       AWS_SCCACHE_ROLE_ARN:
         required: false
+      # Every engine declares this optional, so omitting it fails nothing: each
+      # cell just warns that AI-gated tests will skip, and still reports success.
+      # A certification run that quietly covers less than the weekly rotation is
+      # the one result this workflow must not produce, so forward it like every
+      # other caller does.
+      OP_SERVICE_ACCOUNT_TOKEN:
+        required: false
 
 concurrency:
   # Certification runs are hand-launched against a named build, so two of them
@@ -402,6 +409,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       os: ${{ matrix.os }}
       arch: ${{ matrix.arch }}
@@ -426,6 +434,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: server
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).ubuntu24s }}
@@ -448,6 +457,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos26 }}
@@ -470,6 +480,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos15 }}
@@ -494,6 +505,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos14 }}
@@ -516,6 +528,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: ${{ fromJSON(needs.pick.outputs.r_effective).windows2025 }}
