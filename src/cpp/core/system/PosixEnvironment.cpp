@@ -59,6 +59,18 @@ std::string getenv(const std::string& name)
       return std::string();
 }
 
+bool getenv(const std::string& name, std::string* pValue)
+{
+   EnvironmentLock lock;
+
+   char* value = ::getenv(name.c_str());
+   if (value == nullptr)
+      return false;
+
+   *pValue = value;
+   return true;
+}
+
 void setenv(const std::string& name, const std::string& value)
 {
    EnvironmentLock lock;

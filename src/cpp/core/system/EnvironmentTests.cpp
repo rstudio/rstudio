@@ -92,6 +92,52 @@ TEST(EnvironmentTest, EnvironmentScopeUnsetsAbsentValue)
    EXPECT_EQ("", getenv("RSTUDIO_ENV_SCOPE_TEST"));
 }
 
+TEST(EnvironmentTest, GetenvOverloadDistinguishesUnset)
+{
+   // the two-argument getenv must observe values written by setenv; on
+   // Windows this means reading the process environment block, not the
+   // CRT's startup snapshot (which raw ::getenv reads)
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+
+   std::string value = "sentinel";
+   EXPECT_FALSE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("sentinel", value);
+
+   setenv("RSTUDIO_ENV_SCOPE_TEST", "value");
+   EXPECT_TRUE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("value", value);
+
+#ifndef _WIN32
+   // set-but-empty is distinguishable from unset on POSIX only: on Windows,
+   // setting a variable to the empty string deletes it
+   setenv("RSTUDIO_ENV_SCOPE_TEST", "");
+   value = "sentinel";
+   EXPECT_TRUE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("", value);
+#endif
+
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+}
+
+TEST(EnvironmentTest, AccessorsAgreeOnNonAsciiNames)
+{
+   // "\xC3\x84" is UTF-8 for 'A' with umlaut; on Windows the name must be
+   // UTF-8 decoded on its way to the wide-character APIs, so an accessor
+   // that widens the name byte-by-byte instead would address a different
+   // variable than the one setenv wrote
+   std::string name = "RSTUDIO_ENV_SCOPE_TEST_\xC3\x84";
+
+   setenv(name, "value");
+   EXPECT_EQ("value", getenv(name));
+
+   std::string value;
+   EXPECT_TRUE(getenv(name, &value));
+   EXPECT_EQ("value", value);
+
+   unsetenv(name);
+   EXPECT_FALSE(getenv(name, &value));
+}
+
 TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
 {
    // getenv walking environ while setenv reallocates it is the crash class
