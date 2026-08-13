@@ -33,14 +33,18 @@ set PANMIRROR_BRANCH=release/rstudio-autumn-hawkbit
 echo -- panmirror branch: %PANMIRROR_BRANCH%
 
 :: Check the branch up front; the git errors from the clone and checkout below don't
-:: say what to do about a missing branch. Never fall back to another branch -- that
-:: would silently ship the wrong panmirror.
-git ls-remote --exit-code --heads %PANMIRROR_REPO_URL% %PANMIRROR_BRANCH% >nul
-if errorlevel 1 (
-  echo ERROR: Branch %PANMIRROR_BRANCH% does not exist in %PANMIRROR_REPO_URL%.
-  echo Create it from quarto's 'main', or set PANMIRROR_BRANCH to a branch that exists.
-  goto :failed
-)
+:: say what to do about a missing branch. Match the full ref path rather than passing
+:: --heads with a bare name: --heads matches any tail of a ref at a path boundary, so a
+:: name missing the 'release/' prefix would match the real branch and pass the check.
+:: Never fall back to another branch -- that would silently ship the wrong panmirror.
+git ls-remote --exit-code %PANMIRROR_REPO_URL% refs/heads/%PANMIRROR_BRANCH% >nul
+
+:: Only --exit-code's 2 means "no such ref". Anything else -- 128 for network, DNS or
+:: TLS trouble -- must not be reported as a missing branch. 'if errorlevel N' means "N
+:: or greater", so the cases are tested from the top down.
+if errorlevel 3 goto :unreachable
+if errorlevel 2 goto :nobranch
+if errorlevel 1 goto :unreachable
 
 :: Every git step below is checked. cmd has no 'set -e', and a later command that
 :: succeeds clears ERRORLEVEL, so an unchecked failure would leave a missing or
@@ -55,9 +59,12 @@ if not exist quarto (
   if errorlevel 1 goto :failed
   git -C quarto clean -dfx
   if errorlevel 1 goto :failed
-  git -C quarto checkout %PANMIRROR_BRANCH%
-  if errorlevel 1 goto :failed
-  git -C quarto pull
+  REM Force the branch to the fetched tip rather than checkout + pull. A local branch
+  REM left ahead of origin -- an interrupted earlier run, or an upstream force-push --
+  REM makes pull report "Already up to date" and exit 0 while HEAD sits on a commit
+  REM that is not the branch tip, the divergence this whole scheme exists to avoid.
+  REM Uses REM, not ::, since a label inside a parenthesized block is a cmd error.
+  git -C quarto checkout -B %PANMIRROR_BRANCH% origin/%PANMIRROR_BRANCH%
   if errorlevel 1 goto :failed
 )
 
@@ -66,6 +73,15 @@ if errorlevel 1 goto :failed
 
 popd
 exit /b 0
+
+:nobranch
+echo ERROR: Branch %PANMIRROR_BRANCH% does not exist in %PANMIRROR_REPO_URL%.
+echo Create it from quarto's 'main', or edit PANMIRROR_BRANCH in this script.
+goto :failed
+
+:unreachable
+echo ERROR: Could not reach %PANMIRROR_REPO_URL% to look for %PANMIRROR_BRANCH%.
+goto :failed
 
 :failed
 echo ERROR: panmirror (quarto) checkout failed.

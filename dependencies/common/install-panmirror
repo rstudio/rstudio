@@ -46,11 +46,24 @@ PANMIRROR_BRANCH="release/rstudio-autumn-hawkbit"
 info "PANMIRROR_BRANCH: ${PANMIRROR_BRANCH}"
 
 # Check the branch up front; the git errors from the clone and checkout below don't
-# say what to do about a missing branch. Never fall back to another branch -- that
-# would silently ship the wrong panmirror.
-if ! git ls-remote --exit-code --heads "${QUARTO_REPO_URL}" "${PANMIRROR_BRANCH}" > /dev/null; then
+# say what to do about a missing branch. Match the full ref path rather than passing
+# --heads with a bare name: --heads matches any tail of a ref at a path boundary, so a
+# name missing the 'release/' prefix would match the real branch and pass the check.
+# Never fall back to another branch -- that would silently ship the wrong panmirror.
+LS_REMOTE_STATUS=0
+git ls-remote --exit-code "${QUARTO_REPO_URL}" "refs/heads/${PANMIRROR_BRANCH}" > /dev/null \
+  || LS_REMOTE_STATUS=$?
+
+# Only --exit-code's 2 means "no such ref". Anything else -- 128 for network, DNS or
+# TLS trouble -- must not be reported as a missing branch, or an outage sends whoever
+# reads the log off to create a branch that is already there.
+if [ "${LS_REMOTE_STATUS}" -eq 2 ]; then
   error "Branch '${PANMIRROR_BRANCH}' does not exist in ${QUARTO_REPO_URL}." \
-        "Create it from quarto's 'main', or set PANMIRROR_BRANCH to a branch that exists." >&2
+        "Create it from quarto's 'main', or edit PANMIRROR_BRANCH in this script." >&2
+  exit 1
+elif [ "${LS_REMOTE_STATUS}" -ne 0 ]; then
+  error "Could not reach ${QUARTO_REPO_URL} to look for '${PANMIRROR_BRANCH}'" \
+        "(git exited ${LS_REMOTE_STATUS})." >&2
   exit 1
 fi
 
@@ -67,8 +80,11 @@ else
   pushd $QUARTO_DIR
   git fetch
   git reset --hard && git clean -dfx
-  git checkout "$PANMIRROR_BRANCH"
-  git pull
+  # Force the branch to the fetched tip rather than checkout + pull. A local branch
+  # left ahead of origin -- an interrupted earlier run, or an upstream force-push --
+  # makes pull report "Already up to date" and exit 0 while HEAD sits on a commit that
+  # is not the branch tip, which is the divergence this whole scheme exists to avoid.
+  git checkout -B "$PANMIRROR_BRANCH" "origin/${PANMIRROR_BRANCH}"
   git rev-parse HEAD
 
   popd
