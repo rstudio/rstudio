@@ -37,6 +37,7 @@ RUN yum install -y \
     libcap-devel \
     libcurl-devel \
     libpq-devel \
+    libsecret-devel \
     libtool \
     libuuid-devel \
     libxml2-devel \
