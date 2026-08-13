@@ -38,8 +38,16 @@ public class MathJaxTypeset
             @Override
             public void onMathJaxTypesetComplete(boolean error)
             {
-               callback.onMathJaxTypesetComplete(error);
-               cont.execute();
+               // always advance the queue, even if the callback throws --
+               // a missed continuation wedges all future typesets
+               try
+               {
+                  callback.onMathJaxTypesetComplete(error);
+               }
+               finally
+               {
+                  cont.execute();
+               }
             }
          });
       };
@@ -89,11 +97,22 @@ public class MathJaxTypeset
       el.appendChild(scratch);
 
       var cleanup = function() {
+         // remove the scratch before clearing typeset state: a scratch leaked
+         // inside the target would satisfy the next typeset's previous-render
+         // check with output the user cannot see
+         try
+         {
+            if (scratch.parentNode != null)
+               scratch.parentNode.removeChild(scratch);
+         }
+         catch (e)
+         {
+            $wnd.console.warn(e);
+         }
+
          try
          {
             MathJax.typesetClear([scratch]);
-            if (scratch.parentNode != null)
-               scratch.parentNode.removeChild(scratch);
          }
          catch (e)
          {
@@ -119,16 +138,28 @@ public class MathJaxTypeset
             // there is no previous render to preserve
             if (!error || !hadRender)
             {
-               while (el.firstChild != null)
+               // if the scratch was moved out from under us, there is nothing
+               // to swap in -- report failure rather than emptying the target
+               if (scratch.parentNode !== el)
                {
-                  if (el.firstChild == scratch)
-                     break;
-                  el.removeChild(el.firstChild);
+                  error = true;
                }
+               else
+               {
+                  while (el.firstChild != scratch)
+                     el.removeChild(el.firstChild);
 
-               while (scratch.firstChild != null)
-                  el.insertBefore(scratch.firstChild, scratch);
+                  while (scratch.firstChild != null)
+                     el.insertBefore(scratch.firstChild, scratch);
+               }
             }
+         }
+         catch (e)
+         {
+            // a failed swap must not report success: the target may have been
+            // emptied, and callers would otherwise trust a blank render
+            error = true;
+            $wnd.console.warn(e);
          }
          finally
          {
