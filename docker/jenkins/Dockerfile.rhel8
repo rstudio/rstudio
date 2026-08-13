@@ -113,7 +113,8 @@ RUN cp libuser-libuser-0.62/lib/*.h /usr/include/libuser
 
 # build and install gpg1.4 which we need to sign the builds in headless mode
 # this is unavailable in the official rhel8 repos
-RUN wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2
+# mirrored into rstudio-buildtools because gnupg.org returns 403 to the builders
+RUN wget https://rstudio-buildtools.s3.amazonaws.com/gnupg-1.4.23.tar.bz2
 RUN tar xvf gnupg-1.4.23.tar.bz2
 RUN cd gnupg-1.4.23 && ./configure --prefix=/gnupg1 && make && make install
 RUN ln -s /gnupg1/bin/gpg /usr/local/bin/gpg1
