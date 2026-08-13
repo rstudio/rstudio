@@ -439,18 +439,21 @@ export class ChatPaneActions {
   }
 
   /**
-   * Rename the current conversation via the UI context menu
+   * Rename the current conversation via the UI context menu.
+   *
+   * Verifies the rename actually took effect before returning (#18363): the
+   * history panel is closed and reopened so the list reflects the new name,
+   * and the renamed item is asserted present. Leaves the history panel closed.
+   *
    * @param name The new name for the conversation
    */
   async renameConversation(name: string): Promise<void> {
-    // Open history panel to access conversation list. toggleConversationHistory
-    // polls for the list to appear, so no post-call sleep is needed here.
-    await this.toggleConversationHistory();
+    await this.openConversationHistory();
 
     // Get the first (current/active) conversation item. Each toBeVisible
     // below polls, replacing what used to be a chain of blind sleeps
     // between hover, click, menu-item click, and input fill.
-    const activeConvItem = this.chatPane.conversationList.first();
+    const activeConvItem = this.chatPane.conversationListItem.first();
     await expect(activeConvItem).toBeVisible({ timeout: 5000 });
 
     // Hover over the conversation item to reveal the menu button
@@ -477,15 +480,49 @@ export class ChatPaneActions {
     await nameInput.clear();
     await nameInput.fill(name);
 
-    // Press Enter to confirm the rename
+    // Press Enter to confirm the rename; the input leaves edit mode once the
+    // rename has been committed.
     await nameInput.press('Enter');
+    await expect(nameInput).toBeHidden({ timeout: 5000 });
+
+    // Close and reopen the panel so the list reflects the rename, then verify
+    // it took effect. Without this, a silently-failed rename surfaces several
+    // steps later as an opaque locator timeout (#18363).
+    await this.closeConversationHistory();
+    await this.openConversationHistory();
+    await expect(this.chatPane.getConversationItemByName(name).first()).toBeVisible({ timeout: 5000 });
+    await this.closeConversationHistory();
 
     console.log(`Renamed conversation to "${name}"`);
   }
 
-  async toggleConversationHistory(): Promise<void> {
+  /**
+   * Open the conversation history panel, or do nothing if it is already open.
+   *
+   * The history toolbar button is a strict toggle and the panel is removed
+   * from the DOM when closed, so a state-blind "click and expect the list"
+   * helper inverts the panel state whenever its assumption about the current
+   * state is wrong -- and its post-click assertion could only pass on a
+   * closing toggle by winning a race against the panel's fade-out. Checking
+   * the panel's actual state first makes these helpers idempotent.
+   */
+  async openConversationHistory(): Promise<void> {
+    if (await this.chatPane.conversationHistoryPanel.isVisible()) {
+      return;
+    }
     await this.chatPane.historyBtn.click({ timeout: 10000 });
-    // Poll for the conversation list panel to appear (replaces post-click sleep).
-    await expect(this.chatPane.conversationList.first()).toBeVisible({ timeout: 10000 });
+    await expect(this.chatPane.conversationHistoryPanel).toBeVisible({ timeout: 10000 });
+  }
+
+  /**
+   * Close the conversation history panel, or do nothing if it is already
+   * closed. See openConversationHistory for why this checks state first.
+   */
+  async closeConversationHistory(): Promise<void> {
+    if (!(await this.chatPane.conversationHistoryPanel.isVisible())) {
+      return;
+    }
+    await this.chatPane.historyBtn.click({ timeout: 10000 });
+    await expect(this.chatPane.conversationHistoryPanel).toBeHidden({ timeout: 10000 });
   }
 }
