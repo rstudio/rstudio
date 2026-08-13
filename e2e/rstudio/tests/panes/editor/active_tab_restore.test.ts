@@ -13,6 +13,7 @@ import { Page } from '@playwright/test';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
+import { collectClientStatePushes, waitForActiveDocIdPush } from '@utils/client-state';
 import { documentOpen, executeCommand } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 import * as path from 'path';
@@ -23,37 +24,6 @@ async function getActiveFilename(page: Page): Promise<string | null> {
   if (active === null) return null;
   const normalized = active.replace(/\\/g, '/');
   return normalized.slice(normalized.lastIndexOf('/') + 1);
-}
-
-// Client state is pushed on a passive ~5s timer; wait until a push carrying
-// the persisted active document id (under the "activeTabDocId" client state
-// key -- doc ids also appear in other client state structures, so matching
-// the id alone is not enough) has gone out before reloading, otherwise the
-// reload restores a stale value. Best-effort: if the push is never observed
-// (e.g. the persisted value regressed to something other than the doc id),
-// proceed to the reload anyway so the failure surfaces in the behavioral
-// assertions that follow.
-async function waitForActiveDocIdPush(
-  page: Page,
-  clientStatePushes: string[],
-  docId: string,
-): Promise<void> {
-  // satellite source windows persist under "activeTabDocIdSourceWindow<n>"
-  const pattern = new RegExp(`"activeTabDocId[^"]*"\\s*:\\s*"${docId}"`);
-
-  const deadline = Date.now() + 20000;
-  let pushed = false;
-  while (!pushed && Date.now() < deadline) {
-    pushed = clientStatePushes.some((body) => pattern.test(body));
-    if (!pushed)
-      await page.waitForTimeout(250);
-  }
-  if (!pushed) {
-    console.warn(
-      '[active_tab_restore] no set_client_state push carrying the active ' +
-      'doc id was observed within 20s; reloading anyway',
-    );
-  }
 }
 
 async function reloadAndWaitForReady(page: Page): Promise<void> {
@@ -86,13 +56,8 @@ test.describe('Active source tab restore across reload', () => {
     rstudioPage: page,
   }) => {
     // Collect set_client_state RPC bodies so we can tell when the saved
-    // active-tab value has actually reached the server. Registered up front
-    // so a push that fires immediately after the last open can't be missed.
-    const clientStatePushes: string[] = [];
-    page.on('request', (request) => {
-      if (request.url().includes('set_client_state'))
-        clientStatePushes.push(request.postData() ?? '');
-    });
+    // active-tab value has actually reached the server.
+    const clientStatePushes = collectClientStatePushes(page);
 
     // Open A, B, C in order. None of them are drag-reordered, so they all
     // keep relativeOrder == 0 and a reload restores them in creation order.
@@ -123,11 +88,7 @@ test.describe('Active source tab restore across reload', () => {
   test('falls back to a sane active tab when the persisted document was closed (#17944)', async ({
     rstudioPage: page,
   }) => {
-    const clientStatePushes: string[] = [];
-    page.on('request', (request) => {
-      if (request.url().includes('set_client_state'))
-        clientStatePushes.push(request.postData() ?? '');
-    });
+    const clientStatePushes = collectClientStatePushes(page);
 
     // Open E, F, G; G is active.
     for (const file of [fileE, fileF, fileG])

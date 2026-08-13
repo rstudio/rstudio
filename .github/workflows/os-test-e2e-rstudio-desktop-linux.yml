@@ -166,6 +166,9 @@ on:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
         required: false
+      OP_SERVICE_ACCOUNT_TOKEN:
+        description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
+        required: false
       AWS_E2E_REPORTS_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC to upload the Playwright report to S3"
         required: false
@@ -232,7 +235,7 @@ jobs:
       heartbeat_timeout_seconds: ${{ steps.config.outputs.heartbeat_timeout_seconds }}
       pw_label: ${{ steps.config.outputs.pw_label }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           sparse-checkout: .github/e2e-linux
           sparse-checkout-cone-mode: false
@@ -369,7 +372,7 @@ jobs:
               ;;
           esac
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # Distro-specific build prerequisites (repo enablement, runner-image
       # quirks); no-op for engines without a hook.
@@ -392,7 +395,7 @@ jobs:
       # from main-scoped runs.
       - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ needs.setup.outputs.tools_cache_key }}-${{ hashFiles('dependencies/common/install-*', 'dependencies/linux/install-*', 'dependencies/tools/rstudio-tools.sh') }}
@@ -404,7 +407,7 @@ jobs:
       # R's %p/%v subpaths keep different versions isolated.
       - name: Restore build-time R packages
         id: rlibs-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: ${{ needs.setup.outputs.rlibs_cache_key }}-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
@@ -423,7 +426,7 @@ jobs:
       # so a failed mid-compile run can't poison the cache.
       - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: package/linux/build-Electron-${{ needs.setup.outputs.package_format }}/gwt
           key: ${{ needs.setup.outputs.gwt_cache_key }}-${{ env.GWT_STYLE }}-v1-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
@@ -444,7 +447,7 @@ jobs:
         # A failed OIDC exchange degrades to the GHA backend below rather
         # than failing the build.
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
           aws-region: us-east-1
@@ -505,14 +508,14 @@ jobs:
       # evicts main's copies and sends every PR build cold in the first place.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
       - name: Save build-time R packages
         if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
@@ -554,7 +557,7 @@ jobs:
       # cache-quota reasoning as the tools/rlibs Save steps above).
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: package/linux/build-Electron-${{ needs.setup.outputs.package_format }}/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
@@ -582,7 +585,7 @@ jobs:
 
       - name: Upload installer artifact
         if: inputs.build_only != true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ needs.setup.outputs.installer_artifact }}
           path: rstudio-desktop.${{ needs.setup.outputs.package_ext }}
@@ -623,6 +626,7 @@ jobs:
         PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       options: ${{ needs.setup.outputs.e2e_container_options }}
     timeout-minutes: 120
+    environment: e2e-playwright
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
@@ -646,13 +650,31 @@ jobs:
               ;;
           esac
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
+
+      # The secrets context isn't available in a step-level if:, so read the
+      # token into this step's own env and publish only a present/absent flag.
+      # Fork PRs and any caller that doesn't pass the token land on present=false,
+      # which skips the retrieve step below; the auth setup project then falls back
+      # to its no-credentials path instead of failing the run.
+      - name: Check for OP service account token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::OP service account token present; test credentials will be retrieved."
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
+          fi
 
       # Distro-specific runtime setup: display server / Chromium runtime
       # packages, repo enablement, sandbox sysctls, locale exports, and the R
@@ -718,7 +740,7 @@ jobs:
       # from the package's own resolution.
       - name: Download installer artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: ${{ needs.setup.outputs.installer_artifact }}
           path: ${{ github.workspace }}
@@ -843,6 +865,20 @@ jobs:
           cache-scope: ${{ needs.setup.outputs.e2e_deps_cache_scope }}
           install-required-packages: ${{ needs.setup.outputs.preinstall_r_packages }}
 
+      # Turns the op:// references in e2e/rstudio/.env.op into step outputs.
+      # OP_ENV_FILE is read by the action's OP CLI and its path is relative to
+      # the workspace root, not the Playwright working-directory. Deliberately
+      # not using export-env: that would publish the resolved credentials to
+      # every later step in the job, whereas step outputs keep them scoped to
+      # the one step that consumes them.
+      - name: Retrieve test credentials
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: ./e2e/rstudio/.env.op
+
       # Run the tests as a non-root user on container engines, matching the
       # bare-runner engines (which execute as the runner user). GHA container
       # jobs default to root, and RStudio-as-root diverges from real usage:
@@ -887,6 +923,13 @@ jobs:
           # CONNECT_API_KEY is empty on fork PRs; the reporter still runs but its
           # uploads fail with warnings (never fails the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          # Test-account credentials for the Playwright auth setup project. Empty
+          # when the retrieve step was skipped, which the setup project treats as
+          # "no credentials supplied" rather than a failure. These survive the
+          # setpriv drop below for the same reason the PW_* variables do: only
+          # HOME is overridden there.
+          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
+          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
           SHARD_NAME: desktop-${{ needs.setup.outputs.pw_label }}-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows which
           # phase exceeded the deadline.
@@ -981,7 +1024,7 @@ jobs:
       # no engine's merge job can sweep in another engine's blobs.
       - name: Upload blob report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-blob-report-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
@@ -1007,7 +1050,7 @@ jobs:
       # fails the run on a duplicate artifact name.
       - name: Upload resolved R version
         if: always() && matrix.shard == 1
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: r-version-linux-desktop-${{ inputs.os }}
           path: ${{ github.workspace }}/r-version.txt
@@ -1016,7 +1059,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-results-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
@@ -1026,7 +1069,7 @@ jobs:
       # the spec's RStudio config / data home, and per-test working dirs.
       - name: Upload PW sandbox (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pw-sandbox-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
@@ -1073,16 +1116,16 @@ jobs:
 
       - name: Upload this engine's outcome
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: r-outcome-linux-desktop-${{ inputs.os }}
           path: ${{ github.workspace }}/r-outcome.txt
           if-no-files-found: warn
           retention-days: 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -1096,7 +1139,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           # Engine-scoped glob: in a combined parent run the other platforms
           # and engines also publish blob reports; the os suffix keeps this
@@ -1125,7 +1168,7 @@ jobs:
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report-linux-desktop-${{ inputs.os }}
           path: e2e/rstudio/playwright-report/

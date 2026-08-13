@@ -167,7 +167,7 @@ runs:
     # what evicts main's copies and sends every run cold in the first place.
     - name: Restore R packages (pak download cache)
       id: pak-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
         key: ${{ env.CACHE_OS }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
@@ -176,7 +176,7 @@ runs:
 
     - name: Restore R library
       id: rlib-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ inputs.r-libs-user }}
         # When install-required-packages is set, fold required-packages.txt into
@@ -327,14 +327,14 @@ runs:
 
     - name: Save R packages (pak download cache)
       if: github.ref == 'refs/heads/main' && steps.pak-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
         key: ${{ steps.pak-cache.outputs.cache-primary-key }}
 
     - name: Save R library
       if: github.ref == 'refs/heads/main' && steps.rlib-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ inputs.r-libs-user }}
         key: ${{ steps.rlib-cache.outputs.cache-primary-key }}
@@ -365,7 +365,7 @@ runs:
     # with an empty cache-scope keep the legacy runner.os key byte-for-byte.
     - name: Restore Playwright browsers
       id: pw-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ env.CACHE_OS }}-pw-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
@@ -373,7 +373,7 @@ runs:
           ${{ env.CACHE_OS }}-pw-
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.x'
 
@@ -404,7 +404,7 @@ runs:
 
     - name: Save Playwright browsers
       if: github.ref == 'refs/heads/main' && steps.pw-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ steps.pw-cache.outputs.cache-primary-key }}

@@ -137,15 +137,40 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    @Override
    public void onEnsureHeight(EnsureHeightEvent event)
    {
+      // EXCLUSIVE means an owner (PaneManager) has this window zoomed. The
+      // conversions below must not fire state changes at a zoomed window:
+      // that drives the quadrant state machine while the zoom bookkeeping
+      // still points here, and stale bookkeeping re-zooms the next pane that
+      // raises itself (#18448). A MAXIMIZED request on an EXCLUSIVE window is
+      // already satisfied -- it fills the window. A NORMAL request means
+      // un-zoom, which is what the frame's maximize gesture does while
+      // zoomed, so route it there and let the owner end the zoom (an
+      // unhooked frame's default action is remapped EXCLUSIVE + MAXIMIZE ->
+      // NORMAL by onWindowStateChange, preserving the old behavior).
+      //
+      // Non-EXCLUSIVE windows keep the direct conversions. In particular,
+      // MAXIMIZED must not route through the frame's maximize action: an
+      // ensure-height is a vertical request, but the sidebar's maximize
+      // action is a horizontal column zoom (layoutZoomSidebar), so e.g. a
+      // Viewer preview in the sidebar would collapse every other column.
       if (event.getHeight() == EnsureHeightEvent.MAXIMIZED)
       {
-         if (getState() != WindowState.MAXIMIZE)
+         if (getState() != WindowState.MAXIMIZE &&
+             getState() != WindowState.EXCLUSIVE)
+         {
             events_.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+         }
       }
       else if (event.getHeight() == EnsureHeightEvent.NORMAL)
       {
-         if (getState() != WindowState.NORMAL)
+         if (getState() == WindowState.EXCLUSIVE)
+         {
+            normal_.maximize();
+         }
+         else if (getState() != WindowState.NORMAL)
+         {
             events_.fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+         }
       }
       else
       {

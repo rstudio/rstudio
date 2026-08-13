@@ -29,6 +29,7 @@ PACKAGES=(
 	java-devel
 	jq
 	libffi
+	libsecret-devel
 	libuser-devel
 	libuuid-devel
 	libuv-devel

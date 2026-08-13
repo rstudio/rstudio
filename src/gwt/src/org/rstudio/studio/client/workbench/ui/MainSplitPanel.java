@@ -236,15 +236,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                
                // Add sidebar if on left
                if (sidebar_ != null && "left".equals(sidebarLocation_))
-                  addWest(sidebar_, splitWidth * 0.8); // Sidebar slightly narrower
-               
+                  addWest(sidebar_, getDefaultSidebarWidth());
+
                // Add left widgets
                for (Widget w : leftList_)
                   addWest(w, splitWidth);
                
                // Add right sidebar if present
                if (sidebar_ != null && !"left".equals(sidebarLocation_))
-                  addEast(sidebar_, splitWidth * 0.8); // Sidebar slightly narrower
+                  addEast(sidebar_, getDefaultSidebarWidth());
 
                // Right is always EAST, center is always CENTER (fill)
                addEast(right_, splitWidth);
@@ -331,6 +331,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
    }
 
+   /**
+    * The width a sidebar gets when there is nothing saved to restore: slightly
+    * narrower than a regular column.
+    */
+   public double getDefaultSidebarWidth()
+   {
+      return getDefaultSplitterWidth() * 0.8;
+   }
+
    public double getDefaultSplitterWidth()
    {
       int columnCount = 2 + leftList_.size() + (sidebar_ != null ? 1 : 0);
@@ -386,7 +395,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       // Calculate sidebar width. getDefaultSplitterWidth() now includes
       // the sidebar in the column count since sidebar_ was just set.
       double splitWidth = getDefaultSplitterWidth();
-      int sidebarWidth = restoringSavedWidths ? restoredWidth : (int)(splitWidth * 0.8);
+      int sidebarWidth = restoringSavedWidths ? restoredWidth : (int) getDefaultSidebarWidth();
 
       // Insert sidebar into the panel without removing/re-adding center_ or right_.
       // This avoids detaching all GWT widgets in those panels (which triggers
@@ -472,12 +481,29 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       // Save sidebar width and location so we can restore them when sidebar is shown again
       if (sidebar_ != null)
       {
-         savedSidebarWidth_ = sidebar_.getOffsetWidth();
-         savedSidebarLocation_ = sidebarLocation_;
-         // Remember a deliberately-collapsed center so showing the sidebar
-         // again restores it as-is rather than treating it as a squeeze.
-         savedCenterCollapsed_ = center_ != null &&
-             center_.getOffsetWidth() < MINIMUM_CENTER_WIDTH;
+         int sidebarWidth = sidebar_.getOffsetWidth();
+
+         // A zoomed sidebar fills nearly the whole panel, and ending the zoom
+         // applies the restored widths on a later layout pass, so this read
+         // can still see the zoomed width. Restoring it on the next show
+         // would hand the sidebar the whole panel again, so discard it --
+         // the same rule the persisted-state path applies in
+         // isZoomedColumnState (#18448).
+         if (isZoomedWidth(sidebarWidth))
+         {
+            savedSidebarWidth_ = -1;
+            savedSidebarLocation_ = null;
+            savedCenterCollapsed_ = false;
+         }
+         else
+         {
+            savedSidebarWidth_ = sidebarWidth;
+            savedSidebarLocation_ = sidebarLocation_;
+            // Remember a deliberately-collapsed center so showing the sidebar
+            // again restores it as-is rather than treating it as a squeeze.
+            savedCenterCollapsed_ = center_ != null &&
+                center_.getOffsetWidth() < MINIMUM_CENTER_WIDTH;
+         }
       }
 
       // Remove only the sidebar widget (and its splitter). center_ and right_
@@ -680,7 +706,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       // This catches sidebar zoom and right column zoom
       for (int width : widths)
       {
-         if (width > panelWidth - 50)
+         if (isZoomedWidth(width, panelWidth))
             return true;
       }
 
@@ -704,6 +730,23 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          return true;
 
       return false;
+   }
+
+   /**
+    * Whether a column width can only belong to a zoomed column: the zoom hands
+    * it the whole panel minus the slivers left for the collapsed columns. The
+    * 50px margin covers those slivers -- with the sidebar visible they hold 1px
+    * each rather than 0 -- and is the same rule isZoomedColumnState applies to
+    * persisted state (#18448).
+    */
+   public boolean isZoomedWidth(double width)
+   {
+      return isZoomedWidth(width, getOffsetWidth());
+   }
+
+   private static boolean isZoomedWidth(double width, int panelWidth)
+   {
+      return panelWidth > 0 && width > panelWidth - 50;
    }
 
    private Map<Widget, Double> widgetPercentages_ = new HashMap<>();

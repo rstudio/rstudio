@@ -35,6 +35,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libjpeg-devel \
     libopenssl-devel \
     libpng-devel  \
+    libsecret-devel \
     libtiff-devel  \
     libtool \
     libwebp-devel \

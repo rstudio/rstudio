@@ -25,7 +25,6 @@ import {
   CONSOLE_INPUT,
   CONSOLE_OUTPUT,
 } from '@pages/console_pane.page';
-import { YES_BTN } from '@pages/modals.page';
 import { executeCommand, setPref } from '@utils/commands';
 import type { Page } from 'playwright';
 
@@ -44,13 +43,15 @@ async function captureResult(page: Page, rExpr: string): Promise<string> {
 }
 
 /**
- * Install DBI, create an S4 object, save workspace, then remove DBI.
- * Also creates plain objects as controls for the Environment pane.
+ * Install DBI, create an S4 object, save workspace, then stash DBI out of
+ * the library. Also creates plain objects as controls for the Environment
+ * pane.
  */
 async function setupWorkspace(page: Page): Promise<void> {
-  // Install DBI if not already present (binary, fast -- only dep is methods,
-  // which is always loaded). ensurePackageInstalled skips the download when
-  // DBI was left behind by a prior run.
+  // A prior run (or a failed earlier attempt) may have left DBI stashed --
+  // restore it first so the ensure-install below is the no-op fast path
+  // rather than a network install.
+  await executeInConsole(page, '.rs.restoreStashedPackage("DBI")', { wait: true });
   await ensurePackageInstalled(page, 'DBI');
 
   // Create an S4 object from DBI
@@ -69,26 +70,21 @@ async function setupWorkspace(page: Page): Promise<void> {
   // Save workspace
   await executeInConsole(page, 'save.image()', { wait: true });
 
-  // Remove DBI so it won't be loadable after restart. This may trigger a
-  // "loaded packages" dialog -- click Yes if it appears. Can't pass
-  // { wait: true } here: if the dialog blocks R, the busy class would never
-  // clear. Fire-and-forget, click the dialog if present, then wait for idle.
-  await executeInConsole(page, 'remove.packages("DBI")');
-  try {
-    await page.locator(YES_BTN).click({ timeout: 3000 });
-    console.log('Clicked Yes on loaded-packages dialog');
-  } catch {
-    // No dialog appeared
-  }
-  await waitForConsoleIdle(page);
+  // Stash DBI so it won't be loadable after restart. Renaming the package
+  // directory aside (instead of remove.packages + a network reinstall in
+  // cleanup) keeps the spec off the network -- CRAN stalls have blown the
+  // 120s afterAll budget here -- and can't trigger the "loaded packages"
+  // dialog that remove.packages shows.
+  await executeInConsole(page, '.rs.stashPackage("DBI")', { wait: true });
 
-  // Verify removal succeeded by checking the disk (not requireNamespace, which
-  // returns TRUE for already-loaded namespaces even after the files are deleted)
+  // Verify the stash succeeded by checking the disk (not requireNamespace,
+  // which returns TRUE for already-loaded namespaces even after the files
+  // are gone)
   const dbiRemoved = await captureResult(page, 'file.exists(file.path(.libPaths()[1], "DBI"))');
-  expect(dbiRemoved, 'DBI should be uninstalled after remove.packages').toBe('FALSE');
+  expect(dbiRemoved, 'DBI should be gone from the library after stashing').toBe('FALSE');
 }
 
-/** Remove test objects, delete .RData, restore preferences, reinstall DBI. */
+/** Remove test objects, delete .RData, restore preferences, un-stash DBI. */
 async function cleanup(page: Page): Promise<void> {
   await executeInConsole(
     page,
@@ -97,9 +93,9 @@ async function cleanup(page: Page): Promise<void> {
   );
   await executeInConsole(page, 'unlink(".RData")', { wait: true });
   await setPref(page, 'save_workspace', 'never');
-  // Reinstall DBI so we leave things as we found them. The test just removed
-  // it, so ensurePackageInstalled will see the gap and do a real install.
-  await ensurePackageInstalled(page, 'DBI');
+  // Put DBI back so we leave things as we found them -- a rename, never a
+  // download.
+  await executeInConsole(page, '.rs.restoreStashedPackage("DBI")', { wait: true });
 }
 
 /** Verify the session survived and the S4 object is handled safely. */

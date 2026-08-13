@@ -395,11 +395,14 @@ namespace detail {
 // new registrations or unregistrations
 void run(const boost::function<void()>& checkForInput);
 
-// register a new file monitor
+// register a new file monitor. excludedPaths is a best-effort hint (see
+// the public registerMonitor declaration); backends without source-level
+// exclusion support ignore it
 Handle registerMonitor(const core::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
-                       const Callbacks& callbacks);
+                       const Callbacks& callbacks,
+                       const std::vector<core::FilePath>& excludedPaths);
 
 // unregister a file monitor
 void unregisterMonitor(Handle handle);
@@ -428,12 +431,14 @@ public:
    RegistrationCommand(const core::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
-                       const Callbacks& callbacks)
+                       const Callbacks& callbacks,
+                       const std::vector<core::FilePath>& excludedPaths)
       : type_(Register),
         filePath_(filePath),
         recursive_(recursive),
         filter_(filter),
-        callbacks_(callbacks)
+        callbacks_(callbacks),
+        excludedPaths_(excludedPaths)
    {
    }
 
@@ -453,6 +458,10 @@ public:
       return filter_;
    }
    const Callbacks& callbacks() const { return callbacks_; }
+   const std::vector<core::FilePath>& excludedPaths() const
+   {
+      return excludedPaths_;
+   }
 
    Handle handle() const
    {
@@ -468,6 +477,7 @@ private:
    bool recursive_;
    boost::function<bool(const FileInfo&)> filter_;
    Callbacks callbacks_;
+   std::vector<core::FilePath> excludedPaths_;
 
    // unregister command data
    Handle handle_;
@@ -511,7 +521,8 @@ void checkForInput()
          Handle handle = detail::registerMonitor(command.filePath(),
                                                  command.recursive(),
                                                  command.filter(),
-                                                 command.callbacks());
+                                                 command.callbacks(),
+                                                 command.excludedPaths());
          if (!handle.empty())
             s_pActiveHandles->push_back(handle);
          break;
@@ -646,7 +657,8 @@ void stop()
 void registerMonitor(const FilePath& filePath,
                      bool recursive,
                      const boost::function<bool(const FileInfo&)>& filter,
-                     const Callbacks& callbacks)
+                     const Callbacks& callbacks,
+                     const std::vector<FilePath>& excludedPaths)
 {
    // bind a new version of the callbacks that puts them on the callback queue
    Callbacks qCallbacks;
@@ -664,7 +676,8 @@ void registerMonitor(const FilePath& filePath,
    registrationCommandQueue().enque(RegistrationCommand(filePath,
                                                         recursive,
                                                         filter,
-                                                        qCallbacks));
+                                                        qCallbacks,
+                                                        excludedPaths));
 }
 
 void unregisterMonitor(Handle handle)
