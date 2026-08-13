@@ -22,6 +22,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
@@ -169,7 +170,13 @@ public class AceEditorWidget extends Composite
       // handler wiring below, which binds to the session in place
       isDocumentView_ = attachTo != null;
       if (attachTo != null)
+      {
          editor_.attachToDocumentOf(attachTo);
+
+         // tag the view in the DOM so styling and automation can tell the
+         // split view apart from the primary editor
+         ClassIds.assignClassId(getElement(), ClassIds.EDITOR_SPLIT_VIEW);
+      }
 
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);

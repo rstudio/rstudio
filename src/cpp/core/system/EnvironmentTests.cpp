@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+#include <stdlib.h>
+
 #include <boost/thread.hpp>
 
 #include <shared_core/Error.hpp>
@@ -91,6 +93,74 @@ TEST(EnvironmentTest, EnvironmentScopeUnsetsAbsentValue)
    }
    EXPECT_EQ("", getenv("RSTUDIO_ENV_SCOPE_TEST"));
 }
+
+TEST(EnvironmentTest, GetenvOverloadDistinguishesUnset)
+{
+   // the two-argument getenv must observe values written by setenv; on
+   // Windows this means reading the process environment block, not the
+   // CRT's startup snapshot (which raw ::getenv reads)
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+
+   std::string value = "sentinel";
+   EXPECT_FALSE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("sentinel", value);
+
+   setenv("RSTUDIO_ENV_SCOPE_TEST", "value");
+   EXPECT_TRUE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("value", value);
+
+#ifndef _WIN32
+   // set-but-empty is distinguishable from unset on POSIX only: on Windows,
+   // setting a variable to the empty string deletes it
+   setenv("RSTUDIO_ENV_SCOPE_TEST", "");
+   value = "sentinel";
+   EXPECT_TRUE(getenv("RSTUDIO_ENV_SCOPE_TEST", &value));
+   EXPECT_EQ("", value);
+#endif
+
+   unsetenv("RSTUDIO_ENV_SCOPE_TEST");
+}
+
+TEST(EnvironmentTest, AccessorsAgreeOnNonAsciiNames)
+{
+   // "\xC3\x84" is UTF-8 for 'A' with umlaut; on Windows the name must be
+   // UTF-8 decoded on its way to the wide-character APIs, so an accessor
+   // that widens the name byte-by-byte instead would address a different
+   // variable than the one setenv wrote
+   std::string name = "RSTUDIO_ENV_SCOPE_TEST_\xC3\x84";
+
+   setenv(name, "value");
+   EXPECT_EQ("value", getenv(name));
+
+   std::string value;
+   EXPECT_TRUE(getenv(name, &value));
+   EXPECT_EQ("value", value);
+
+   unsetenv(name);
+   EXPECT_FALSE(getenv(name, &value));
+}
+
+#ifdef _WIN32
+
+TEST(EnvironmentTest, SetenvIsVisibleToCRuntime)
+{
+   // core::system::setenv writes the Win32 environment block, but raw
+   // ::getenv reads the C runtime's own copy of the environment, which
+   // SetEnvironmentVariable does not update; setenv must write through
+   // both so that CRT readers (in-process libraries, and R itself when
+   // it shares our C runtime) observe the update
+   setenv("RSTUDIO_ENV_CRT_TEST", "value");
+   const char* value = ::getenv("RSTUDIO_ENV_CRT_TEST");
+   ASSERT_NE(nullptr, value);
+   EXPECT_EQ(std::string("value"), value);
+
+   // unsetenv must scrub the CRT copy as well: read-then-scrub secret
+   // handling relies on the value being gone from every store
+   unsetenv("RSTUDIO_ENV_CRT_TEST");
+   EXPECT_EQ(nullptr, ::getenv("RSTUDIO_ENV_CRT_TEST"));
+}
+
+#endif
 
 TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
 {

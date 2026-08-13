@@ -18,6 +18,9 @@
 
 #include <windows.h>
 
+#include <stdlib.h>
+
+#include <system_error>
 #include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -26,7 +29,6 @@
 #include <core/StringUtils.hpp>
 
 #include <shared_core/system/EnvironmentLock.hpp>
-#include <shared_core/system/User.hpp> // For detail::getenv
 
 namespace rstudio {
 namespace core {
@@ -84,24 +86,112 @@ void environment(Options* pEnvironment)
 // Value returned is UTF-8 encoded
 std::string getenv(const std::string& name)
 {
-   // no EnvironmentLock here: detail::getenv takes it, and the lock is
-   // not recursive
-   return detail::getenv(name);
+   // no EnvironmentLock here: the two-argument overload takes it, and the
+   // lock is not recursive
+   std::string value;
+   getenv(name, &value);
+   return value;
+}
+
+bool getenv(const std::string& name, std::string* pValue)
+{
+   EnvironmentLock lock;
+
+   std::wstring nameWide = string_utils::utf8ToWide(name);
+
+   DWORD nSize = 256;
+   std::vector<wchar_t> buffer(nSize);
+   ::SetLastError(ERROR_SUCCESS);
+   DWORD result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
+
+   if (result == 0)
+   {
+      // a zero result means either the variable is unset, or it exists with
+      // an empty value; GetLastError distinguishes the two
+      if (::GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+         return false;
+
+      pValue->clear();
+      return true;
+   }
+
+   if (result > nSize)
+   {
+      nSize = result;
+      buffer.resize(nSize);
+      result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
+      if (result == 0 || result > nSize)
+      {
+         // the variable changed between the two reads -- something outside
+         // the environment lock is writing to the process environment
+         WLOGF("GetEnvironmentVariable(\"{}\") failed on retry; reporting variable as unset", name);
+         return false;
+      }
+   }
+
+   *pValue = string_utils::wideToUtf8(&(buffer[0]));
+   return true;
 }
 
 void setenv(const std::string& name, const std::string& value)
 {
    EnvironmentLock lock;
 
-   ::SetEnvironmentVariableW(string_utils::utf8ToWide(name).c_str(),
-                             string_utils::utf8ToWide(value).c_str());
+   std::wstring nameWide = string_utils::utf8ToWide(name);
+   std::wstring valueWide = string_utils::utf8ToWide(value);
+
+   // write to the Win32 process environment block: the source of truth for
+   // getenv() above, and what child processes inherit
+   if (!::SetEnvironmentVariableW(nameWide.c_str(), valueWide.c_str()))
+   {
+      Error error = LAST_SYSTEM_ERROR();
+      error.addProperty("name", name);
+      LOG_ERROR(error);
+   }
+
+   // also write through the C runtime: the CRT keeps its own copy of the
+   // environment, snapshotted lazily from the process block and never
+   // refreshed by SetEnvironmentVariable, so without this raw ::getenv
+   // calls (including those made by in-process libraries and by R itself,
+   // which reads the environment via its CRT) would not see the update.
+   // a failure in one store but not the other leaves the two out of sync,
+   // so log it
+   errno_t status = ::_wputenv_s(nameWide.c_str(), valueWide.c_str());
+   if (status != 0)
+   {
+      Error error = systemError(std::error_code(status, std::generic_category()), ERROR_LOCATION);
+      error.addProperty("name", name);
+      LOG_ERROR(error);
+   }
 }
 
 void unsetenv(const std::string& name)
 {
    EnvironmentLock lock;
 
-   ::SetEnvironmentVariable(name.c_str(), nullptr);
+   std::wstring nameWide = string_utils::utf8ToWide(name);
+
+   // remove from the Win32 process environment block; removing a variable
+   // that is not set fails with ERROR_ENVVAR_NOT_FOUND, which is fine
+   if (!::SetEnvironmentVariableW(nameWide.c_str(), nullptr))
+   {
+      DWORD errorCode = ::GetLastError();
+      if (errorCode != ERROR_ENVVAR_NOT_FOUND)
+      {
+         Error error = systemError(errorCode, ERROR_LOCATION);
+         error.addProperty("name", name);
+         LOG_ERROR(error);
+      }
+   }
+
+   // remove from the CRT environment as well (an empty value deletes)
+   errno_t status = ::_wputenv_s(nameWide.c_str(), L"");
+   if (status != 0)
+   {
+      Error error = systemError(std::error_code(status, std::generic_category()), ERROR_LOCATION);
+      error.addProperty("name", name);
+      LOG_ERROR(error);
+   }
 }
 
 

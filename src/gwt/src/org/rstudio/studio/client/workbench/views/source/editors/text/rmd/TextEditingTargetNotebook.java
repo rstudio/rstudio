@@ -1475,13 +1475,13 @@ public class TextEditingTargetNotebook
       if (!StringUtil.isNullOrEmpty(outputType) && outputType != "undefined")
       {
          // if the document property is set, apply it directly
-         docDisplay_.setShowChunkOutputInline(
+         editingTarget_.setShowChunkOutputInline(
                outputType == CHUNK_OUTPUT_INLINE);
       }
       else
       {
          // otherwise, use the global preference to set the value
-         docDisplay_.setShowChunkOutputInline(
+         editingTarget_.setShowChunkOutputInline(
             docDisplay_.getModeId() == "mode/rmarkdown" &&
             RStudioGinjector.INSTANCE.getUserPrefs()
                                      .rmdChunkOutputInline().getValue());
@@ -1801,7 +1801,7 @@ public class TextEditingTargetNotebook
 
    private void changeOutputMode(String mode)
    {
-      docDisplay_.setShowChunkOutputInline(mode == CHUNK_OUTPUT_INLINE);
+      editingTarget_.setShowChunkOutputInline(mode == CHUNK_OUTPUT_INLINE);
 
       // manage commands
       manageCommands();
