@@ -116,6 +116,17 @@ TEST(SessionRTest, RFunctionRefusesNonMainThread) {
 }
 
 TEST(SessionRTest, SysGetenvSeesCoreSetenv) {
+#ifdef _WIN32
+   // the write-through only reaches R when R shares our C runtime: UCRT
+   // builds of R (>= 4.2). msvcrt builds keep a separate environment copy
+   // that only the r::util::setenv bridge can update
+   bool sharedRuntime = false;
+   Error versionError = r::exec::evaluateString("getRversion() >= '4.2.0'", &sharedRuntime);
+   ASSERT_FALSE(versionError);
+   if (!sharedRuntime)
+      GTEST_SKIP() << "R < 4.2 links against msvcrt, which has its own environment";
+#endif
+
    // Sys.getenv reads the environment via R's C runtime; on Windows,
    // core::system::setenv historically wrote only the Win32 environment
    // block, so variables set after R started were visible to child
