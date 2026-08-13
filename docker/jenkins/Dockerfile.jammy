@@ -48,6 +48,7 @@ RUN apt-get update && \
     libpango1.0-dev \
     libpng-dev\
     libpq-dev \
+    libsecret-1-dev \
     libsqlite3-dev \
     libssl-dev \
     libtiff5-dev\
