@@ -34,6 +34,12 @@ namespace system {
 *****************************************************************/
 
 std::string getenv(const std::string& name);
+
+// NOTE: setenv / unsetenv mutate environment tables that in-process code
+// may walk without synchronization: EnvironmentLock serializes these
+// accessors against each other, but raw readers -- including R, whose
+// Sys.getenv() iterates the C runtime's environment directly -- take no
+// lock. Once R is running, call these only from the main thread.
 void setenv(const std::string& name, const std::string& value);
 void unsetenv(const std::string& name);
 

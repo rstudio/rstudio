@@ -276,6 +276,21 @@ async function cleanupProject(page: Page, projectDir: string): Promise<void> {
 // -- Tests --------------------------------------------------------------------
 
 test.describe.serial('Create Projects in New Directory', () => {
+  // Dismiss any leftover dialog from a prior failed run (or one left behind
+  // by the previous suite in this worker). Registered BEFORE useSuiteSandbox()
+  // so it runs first: a leftover modal intercepts pointer events and would
+  // otherwise fail createSandbox's console click. Waits briefly after each
+  // Escape for the overlay to detach -- a long wait per loop would just waste
+  // time in the common no-dialog case.
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
+    for (let i = 0; i < 3; i++) {
+      if (!(await overlay.isVisible())) break;
+      await page.keyboard.press('Escape');
+      await overlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
+    }
+  });
+
   const sandbox = useSuiteSandbox();
 
   // Tracked per-test so afterEach can clean up on failure
@@ -291,16 +306,6 @@ test.describe.serial('Create Projects in New Directory', () => {
     // The quarto pre-warm below can take over a minute on a cold CI runner;
     // give the hook the headroom it needs.
     test.setTimeout(300000);
-
-    // Dismiss any leftover dialog from a prior failed run. Wait briefly after
-    // each Escape for the overlay to detach -- a long wait per loop would
-    // just waste time in the common no-dialog case.
-    const overlay = page.locator('.gwt-PopupPanelGlass, [role="alertdialog"]').first();
-    for (let i = 0; i < 3; i++) {
-      if (!(await overlay.isVisible())) break;
-      await page.keyboard.press('Escape');
-      await overlay.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
-    }
 
     // Close any open project from a prior run
     const hasProject = await captureResult(page, '!is.null(rstudioapi::getActiveProject())');

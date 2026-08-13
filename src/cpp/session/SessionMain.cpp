@@ -2896,7 +2896,16 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       if (modules::trust::shouldSuppressStartupFiles())
       {
          rOptions.disableRProfileOnStart = true;
+
+         // R skips user .Renviron processing when R_ENVIRON_USER is set but
+         // empty; Windows cannot represent a set-but-empty environment
+         // variable (an empty value deletes it), so point R at the null
+         // device there instead
+#ifdef _WIN32
+         core::system::setenv("R_ENVIRON_USER", "NUL");
+#else
          core::system::setenv("R_ENVIRON_USER", "");
+#endif
       }
 
       if (modules::trust::shouldSuppressWorkspaceRestore())

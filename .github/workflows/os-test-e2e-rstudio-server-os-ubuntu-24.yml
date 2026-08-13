@@ -79,6 +79,14 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+    outputs:
+      r_version_actual:
+        description: >-
+          The R version this engine actually ran against, read back from the
+          installed R rather than echoed from the r_version input. Empty when
+          the e2e job did not run (build_only, or a build failure), and also when
+          it ran but failed before reaching the R install.
+        value: ${{ jobs.e2e-server-ubuntu.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -347,6 +355,16 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
+    # This job is a shard matrix, so this is one output value for the whole matrix
+    # rather than one per shard. Every shard that reaches the deps step installs
+    # the same R, so the value is the same wherever it comes from -- but which
+    # shard supplies it is not something to depend on, and a shard that never
+    # reached that step supplies nothing. The output can therefore be empty for an
+    # engine that did install R and did run the suite. Callers must treat empty as
+    # "unknown", never as "no R was installed". The Linux engine sidesteps this by
+    # uploading per-engine artifacts instead.
+    outputs:
+      r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     strategy:
       fail-fast: false
       matrix:
@@ -571,6 +589,7 @@ jobs:
           exit 1
 
       - name: Install e2e test dependencies
+        id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}

@@ -12,6 +12,7 @@ on:
       - ".github/actions/os-e2e-deps/**"
       - ".github/actions/os-publish-e2e-report/**"
       - ".github/actions/os-resolve-daily-manifest/**"
+      - ".github/actions/os-resolve-daily-urls/**"
       # version/RELEASE picks which branch's daily every platform resolves, so
       # a change to it changes the binary under test. A flower with no daily
       # yet resolves to a source build via decide(), which is the answer we
