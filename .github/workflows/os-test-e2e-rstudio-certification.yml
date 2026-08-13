@@ -185,11 +185,16 @@ jobs:
           # expression, so the engine reaches `rig add ""` inside a cell it has
           # already spent minutes provisioning. Shape-checked too, since the value
           # is either the distro sentinel or something rig can resolve.
+          #
+          # A two-component version is accepted because rig resolves it (4.4 ->
+          # 4.4.3), and the engines' own r_version inputs take it. oldrel-N is
+          # deliberately absent from the advertised list below: rig 0.8.1, the
+          # floor os-install-rig-unix pins, fails it outright.
           BAD_R=$(jq -cn --argjson m "$MATRIX" \
-            '[$m[] | select((.r_version // "") | test("^(distro|[0-9]+\\.[0-9]+\\.[0-9]+|release|oldrel(-[0-9]+)?|devel|next)$") | not) | .cell]')
+            '[$m[] | select((.r_version // "") | test("^(distro|[0-9]+\\.[0-9]+(\\.[0-9]+)?|release|oldrel(-[0-9]+)?|devel|next)$") | not) | .cell]')
           if [ "$BAD_R" != "[]" ]; then
             echo "::error::Cell(s) in $MATRIX_FILE have a missing or unrecognized r_version: $(jq -r 'join(", ")' <<<"$BAD_R")."
-            echo "::error::Use an exact version (4.4.1), an alias (release, oldrel, oldrel-N, devel, next), or the sentinel 'distro'."
+            echo "::error::Use a version (4.4 or 4.4.1), an alias (release, oldrel, devel, next), or the sentinel 'distro'."
             exit 1
           fi
 
@@ -584,8 +589,9 @@ jobs:
       # status on the version line.
       #
       # continue-on-error so a transient artifacts-API failure degrades the table
-      # rather than losing it. The step id lets the table say which happened: a
-      # cell that never reached the R install, or a summary that could not fetch.
+      # rather than losing it. The step ids feed the table, but note that a
+      # pattern matching nothing is a success to this action, so the table works
+      # out what arrived by counting files rather than by reading these outcomes.
       - name: Download per-cell R versions (Linux Desktop)
         id: fetch_versions
         if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
@@ -620,11 +626,11 @@ jobs:
           # above). RESULT_LINUX is only the fallback for a cell whose result
           # artifact is missing.
           #
-          # Both download outcomes come in, and they are not interchangeable: a
-          # failed *versions* fetch costs the R column, a failed *results* fetch
-          # costs the Result column and sends every Linux row to the matrix-wide
-          # value. The table has to say which happened rather than print a
-          # confident wrong answer.
+          # Both download outcomes come in, but they are only half the signal:
+          # download-artifact reports success when its pattern matches nothing, so
+          # a step outcome cannot distinguish "retrieved every artifact" from
+          # "found none to retrieve". The script counts what arrived instead and
+          # uses these only to name the reason. See "Attribute the per-cell facts".
           FETCH_VERSIONS_OUTCOME: ${{ steps.fetch_versions.outcome }}
           FETCH_OUTCOMES_OUTCOME: ${{ steps.fetch_outcomes.outcome }}
           ACTUAL_UBUNTU24S: ${{ needs.ubuntu24s.outputs.r_version_actual }}
@@ -640,6 +646,40 @@ jobs:
           RESULT_WINDOWS2025: ${{ needs.windows2025.result }}
         run: |
           set -euo pipefail
+
+          # --- Attribute the per-cell facts ---------------------------------
+          #
+          # How many artifacts actually arrived, against how many Linux cells ran.
+          # Counting rather than reading steps.<download>.outcome: a pattern that
+          # matches nothing is not an error to download-artifact -- it logs
+          # "Total of 0 artifact(s) downloaded" and finishes successfully -- so the
+          # outcome stays 'success' in exactly the case the table must not treat as
+          # measured. Expired artifacts on a re-run, and an engine whose merge job
+          # was skipped, both land here.
+          #
+          # A partial arrival is the informative case: if some cells uploaded and
+          # this one did not, that cell is the reason. If none arrived at all, the
+          # summary is the more likely reason, because the engine's merge job
+          # writes the outcome file unconditionally -- so a cell that ran at all
+          # has one.
+          #
+          # Guarded on the directory rather than relying on `find ... 2>/dev/null`:
+          # find still exits 1 on a missing directory, and under the pipefail above
+          # that would abort this whole step. The download steps are skipped
+          # entirely when no Linux cell was selected, so on a macOS-only or
+          # Windows-only run neither directory exists.
+          LINUX_CELLS=$(jq -r 'length' <<<"$LINUX_MATRIX")
+          VERSIONS_FOUND=0
+          OUTCOMES_FOUND=0
+          [ ! -d r-versions ] || VERSIONS_FOUND=$(find r-versions -name r-version.txt | wc -l | tr -d ' ')
+          [ ! -d r-outcomes ] || OUTCOMES_FOUND=$(find r-outcomes -name r-outcome.txt | wc -l | tr -d ' ')
+          if [ "$LINUX_CELLS" != "0" ] && [ "$OUTCOMES_FOUND" != "$LINUX_CELLS" ]; then
+            echo "::warning::$OUTCOMES_FOUND of $LINUX_CELLS per-cell result artifact(s) arrived; rows without one are labelled rather than given the matrix-wide result."
+          fi
+          if [ "$LINUX_CELLS" != "0" ] && [ "$VERSIONS_FOUND" != "$LINUX_CELLS" ]; then
+            echo "::warning::$VERSIONS_FOUND of $LINUX_CELLS per-cell R version artifact(s) arrived."
+          fi
+
           {
             echo "## RStudio E2E certification"
             echo ""
@@ -692,27 +732,38 @@ jobs:
               actual_file="r-versions/r-version-linux-desktop-${os}/r-version.txt"
               outcome_file="r-outcomes/r-outcome-linux-desktop-${os}/r-outcome.txt"
               # The engine's merge job wrote the aggregate over every shard, so a
-              # cell whose second shard failed reads failure here. Absent means
-              # this cell's own result is genuinely unknown -- the merge job was
-              # skipped, or the download failed -- and only then is the matrix-wide
-              # value the best available answer. Say so when the download is the
-              # reason: otherwise one transient artifacts-API failure prints the
-              # matrix-wide result against every cell as though each had been
-              # measured, which is the whole-table version of the misattribution
-              # these artifacts exist to prevent.
-              result="$RESULT_LINUX"
-              if [ -r "$outcome_file" ]; then
-                cell_result=$(sed -n '1p' "$outcome_file" | tr -d '\r')
-                [ -z "$cell_result" ] || result="$cell_result"
-              elif [ "${FETCH_OUTCOMES_OUTCOME:-}" = "failure" ]; then
+              # cell whose second shard failed reads failure here. No usable value
+              # means this cell's own result is genuinely unknown -- its merge job
+              # was skipped, its artifact expired, or the summary could not
+              # retrieve it -- and only then is the matrix-wide value the best
+              # available answer.
+              #
+              # Every such fall back is labelled, including an artifact that
+              # arrived empty, and the label names which of the two happened. An
+              # unlabelled matrix-wide value reads as this cell's own measured
+              # result, which is the misattribution these artifacts exist to
+              # prevent.
+              cell_result=""
+              [ ! -r "$outcome_file" ] || cell_result=$(sed -n '1p' "$outcome_file" | tr -d '\r')
+              if [ -n "$cell_result" ]; then
+                result="$cell_result"
+              elif [ "${FETCH_OUTCOMES_OUTCOME:-}" = "failure" ] || [ "$OUTCOMES_FOUND" = "0" ]; then
                 result="$RESULT_LINUX (matrix-wide; per-cell results unavailable)"
+              else
+                result="$RESULT_LINUX (matrix-wide; this cell reported no result)"
               fi
               if [ -r "$actual_file" ]; then
                 actual=$(sed -n '1p' "$actual_file" | tr -d '\r')
                 [ -n "$actual" ] || actual="_empty_"
               elif [ "${FETCH_VERSIONS_OUTCOME:-}" = "failure" ]; then
                 # The cells may well have run fine; the summary just could not
-                # read their artifacts. Do not imply they never reached R.
+                # retrieve their artifacts. Do not imply they never reached R.
+                #
+                # Deliberately not keyed on a zero count, unlike the result column
+                # above: no version artifact at all is a plausible real outcome,
+                # since every cell dying after setup but before the R install
+                # uploads an outcome and no version. Blaming the summary there
+                # would hide a genuine "nothing reached R".
                 actual="_summary could not fetch_"
               else
                 actual="_not reached_"

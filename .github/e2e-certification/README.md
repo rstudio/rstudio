@@ -123,17 +123,27 @@ the *test* result (the shard matrix's own outcome), while for the five job-backe
 cells it is the whole workflow call, build and report-merge included. So a Linux
 cell whose tests passed but whose merge job failed reads `success` on a red run.
 
+A Linux cell with no usable result artifact is the exception, and it says so in
+the cell rather than looking measured. The workflow falls back to the matrix-wide
+result and appends why -- either `per-cell results unavailable`, when nothing
+arrived and the summary is the likely reason, or `this cell reported no result`,
+when other cells did arrive and this one did not. The distinction is drawn by
+counting the artifacts that arrived, not from the download step's status: a
+download whose pattern matches nothing reports success, so an expired artifact on
+a re-run and a skipped merge job both look like a clean fetch.
+
 Four distinguishable gaps in the "R actually used" column:
 
 - `_not reached_` -- no evidence the cell installed R. On a Linux cell that means
-  no version artifact: normally because it never got that far, but also if shard 1
-  specifically died ahead of the R install while another shard ran, since only
-  shard 1 uploads it. On one of the five job-backed cells it means the job was
-  skipped or cancelled, so no shard ran.
-- `_summary could not fetch_` -- the version artifact download itself failed. The
-  cells may well have been fine. A failed *results* download is reported in the
-  Result column instead, which says so rather than printing the matrix-wide value
-  as though each cell had been measured.
+  other cells' version artifacts arrived and this one's did not: normally because
+  it never got that far, but also if shard 1 specifically died ahead of the R
+  install while another shard ran, since only shard 1 uploads it. On one of the
+  five job-backed cells it means the job was skipped or cancelled, so no shard ran.
+- `_summary could not fetch_` -- the version artifact download itself errored. The
+  cells may well have been fine. Unlike the Result column above, this label is not
+  given when the download merely found nothing: no version artifact at all is a
+  plausible real outcome, since a cell that dies after setup but before the R
+  install uploads a result and no version, so that case stays `_not reached_`.
 - `_empty_` -- a Linux cell's version artifact exists but holds nothing.
 - `_shard output collapsed_` -- one of the five job-backed cells ran and returned
   no version. Usually its output collapsed across its shard matrix, in which case
