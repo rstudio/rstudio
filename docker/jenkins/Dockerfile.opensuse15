@@ -113,8 +113,6 @@ RUN cd /tmp && \
     make && \
     make install
 
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
-
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN

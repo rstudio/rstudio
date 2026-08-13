@@ -117,8 +117,6 @@ RUN tar xvf gnupg-1.4.23.tar.bz2
 RUN cd gnupg-1.4.23 && CFLAGS="-fcommon" ./configure --prefix=/gnupg1 && make && make install
 RUN ln -s /gnupg1/bin/gpg /usr/local/bin/gpg1
 
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
-
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN

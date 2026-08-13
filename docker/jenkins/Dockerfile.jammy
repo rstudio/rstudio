@@ -137,8 +137,6 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common jamm
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
 
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
-
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
