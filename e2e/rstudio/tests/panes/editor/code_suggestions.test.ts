@@ -6,7 +6,7 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { resetSourcePaneState } from '@utils/commands';
+import { resetSourcePaneState, setPref } from '@utils/commands';
 import { requireAiCredentials } from '@utils/ai-credentials';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
@@ -820,6 +820,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test.afterAll(async ({ rstudioPage: page }) => {
+      // Disable the assistant before anything else that could fail: the suite
+      // leaves a signed-in provider with automatic suggestions enabled, and
+      // later editor suites then race real completions (seen displacing the
+      // injected NES in edit_suggestions.test.ts). The pref defaults to
+      // "posit", so it must be set to "none" explicitly, not cleared.
+      await setPref(page, 'assistant', 'none');
+
       // Post-suite cleanup: discard any open buffers and delete artifacts.
       // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
       // afterAll, so saving races the directory removal and surfaces an
