@@ -49,10 +49,11 @@
 # PCRE patterns matched against normalized paths to deny reads.
 # Paths are always absolute and normalized before matching.
 #
-# NOTE: The primary defense against credential file reads is the file
-# permission check in isFileReadAllowed (denying files without world-
-# readable permissions). These patterns are defense-in-depth for common
-# credential paths, in case file permissions are misconfigured.
+# NOTE: These patterns work together with the file permission check in
+# isFileReadAllowed (denying files without world-readable permissions).
+# That check is a heuristic which only applies outside the allowed roots,
+# and only when the umask grants world-read to newly-created files, so
+# these patterns serve as the backstop for common credential paths.
 .rs.setVar("chat.denyReadPatterns", c(
 
    # Deny files that are likely to contain credentials
@@ -101,16 +102,10 @@
 
 # PCRE patterns matched against normalized paths to deny edits.
 # Note that file edits are disallowed by default, except for files within
-#
-# - The R temporary directory
-# - The project directory (when a project is open)
-# - The current working directory
-# - The RStudio scratch path
-# - R library paths (.libPaths())
-# - R user directories (data, config, cache)
+# the allowed roots enumerated by chat.allowedRoots.
 #
 # This list serves to deny edits for certain files even if they're within
-# one of the above 'allowed' directories.
+# one of the 'allowed' roots.
 .rs.setVar("chat.denyEditPatterns", c(
 
    # Deny edits on or within the .ssh directory.
@@ -301,8 +296,16 @@
 #' Check whether reading the given paths is allowed.
 #'
 #' Reads are allowed by default, but denied for files that lack
-#' world-readable permissions, match well-known sensitive path
+#' world-readable permissions or match well-known sensitive path
 #' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
+#'
+#' The permission check is a heuristic for spotting sensitive files, so
+#' it only applies where a missing world-read bit is actually a signal:
+#' outside the allowed roots (see `chat.allowedRoots()`), and only when
+#' the umask would grant world-read to newly-created files. Otherwise
+#' the check would deny every file the session itself creates in
+#' environments with a restrictive umask (e.g. containers with umask
+#' 077), including caches that `install.packages()` needs to read back.
 #'
 #' When `trusted` is `TRUE` (i.e. the call originates from a
 #' non-base package), the deny-pattern check is skipped so that
@@ -321,11 +324,18 @@
    # assume file reads are permitted by default
    reasons <- rep.int("", length(path))
 
-   # deny reads on files that lack read permission for 'others'
-   # (use which() to drop NA modes from non-existent files)
-   info <- suppressWarnings(file.info(path))
-   deny <- bitwAnd(info$mode, 4L) == 0L
-   reasons[which(deny)] <- "File is not world-readable."
+   # deny reads on files that lack read permission for 'others', skipping
+   # files within the allowed roots -- the session itself creates files
+   # there that would fail the check under a restrictive umask. skip the
+   # check entirely when the umask strips world-read from new files, as
+   # then every file is private by default and the missing bit carries no
+   # signal (use which() to drop NA modes from non-existent files)
+   if (!.rs.chat.umaskMasksWorldRead())
+   {
+      info <- suppressWarnings(file.info(path))
+      deny <- bitwAnd(info$mode, 4L) == 0L & !.rs.chat.isPathWithinAllowedRoots(path)
+      reasons[which(deny)] <- "File is not world-readable."
+   }
 
    # deny reads matching sensitive path patterns
    # (skip for trusted callers, i.e. non-base package code)
@@ -354,13 +364,80 @@
    .Call("rs_userDataDir", PACKAGE = "(embedding)")
 })
 
+#' Enumerate the roots within which agent file edits are allowed.
+#'
+#' Edits are allowed within:
+#'
+#' - The R temporary directory
+#' - The current working directory
+#' - The RStudio user scratch path (tool-invoked code may update files there)
+#' - R library paths (e.g. for package installation)
+#' - The user library (R_LIBS_USER), even before it has been created
+#' - The active project directory (when a project is open)
+#' - R user directories (data, config, cache)
+#'
+#' Reads within these roots are also exempt from the world-readable
+#' permission check, since the session itself creates files there.
+#'
+#' @return A character vector of normalized directory paths.
+.rs.addFunction("chat.allowedRoots", function()
+{
+   roots <- c(tempdir(), getwd(), .rs.chat.userScratchPath(), .libPaths())
+
+   # include the user library even when it doesn't exist yet -- a nonexistent
+   # user library is excluded from .libPaths(), but install.packages() offers
+   # to create it on first use
+   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
+   roots <- c(roots, userLibs[nzchar(userLibs)])
+
+   projectDir <- .rs.getProjectDirectory()
+   if (!is.null(projectDir))
+      roots <- c(roots, projectDir)
+
+   # R user directories (data, config, cache),
+   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
+   # Use dirname() to obtain the parent directory from a dummy package name.
+   # tools::R_user_dir was introduced in R 4.0.0.
+   if (getRversion() >= "4.0.0")
+   {
+      for (which in c("data", "config", "cache"))
+         roots <- c(roots, dirname(tools::R_user_dir("_", which = which)))
+   }
+
+   .rs.chat.normalizePath(roots)
+})
+
+#' Check whether paths lie within any of the allowed roots.
+#'
+#' @param path A character vector of normalized file paths.
+#' @return A logical vector the same length as `path`.
+.rs.addFunction("chat.isPathWithinAllowedRoots", function(path)
+{
+   allowed <- rep.int(FALSE, length(path))
+   for (root in .rs.chat.allowedRoots())
+      allowed <- allowed | .rs.chat.isPathWithin(path, root)
+   allowed
+})
+
+#' Check whether the current umask strips world-read from new files.
+#'
+#' When it does (e.g. hardened containers commonly run with umask 077),
+#' a file lacking the world-read bit is just the environment's default
+#' rather than a deliberate act of protection, so the missing bit
+#' carries no signal about the file's sensitivity.
+#'
+#' @return `TRUE` if newly-created files would not be world-readable.
+.rs.addFunction("chat.umaskMasksWorldRead", function()
+{
+   umask <- Sys.umask(NA)
+   bitwAnd(as.integer(umask), 4L) != 0L
+})
+
 #' Check whether editing the given paths is allowed.
 #'
-#' Edits are denied by default, but allowed within the R temporary
-#' directory, the active project directory, the current working
-#' directory, the RStudio user scratch path, R library paths, and
-#' R user directories (data, config, cache). Edits within sensitive
-#' directories (e.g. `~/.ssh`) are always denied.
+#' Edits are denied by default, but allowed within the allowed roots
+#' (see `chat.allowedRoots()`). Edits within sensitive directories
+#' (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
 #' @return A character vector the same length as `path`, where
@@ -377,46 +454,8 @@
       length(path)
    )
 
-   # allow edits within the R temporary directory
-   tempDir <- .rs.chat.normalizePath(tempdir())
-   reasons[.rs.chat.isPathWithin(path, tempDir)] <- ""
-
-   # allow edits within the project directory
-   projectDir <- .rs.getProjectDirectory()
-   if (!is.null(projectDir))
-   {
-      projectDir <- .rs.chat.normalizePath(projectDir)
-      reasons[.rs.chat.isPathWithin(path, projectDir)] <- ""
-   }
-
-   # allow edits within the current working directory
-   workingDir <- .rs.chat.normalizePath(getwd())
-   reasons[.rs.chat.isPathWithin(path, workingDir)] <- ""
-
-   # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
-   # since tool-invoked code may update files there
-   scratchDir <- .rs.chat.userScratchPath()
-   reasons[.rs.chat.isPathWithin(path, scratchDir)] <- ""
-
-   # allow edits within R library paths (e.g. for package installation)
-   for (libPath in .libPaths())
-   {
-      libPath <- .rs.chat.normalizePath(libPath)
-      reasons[.rs.chat.isPathWithin(path, libPath)] <- ""
-   }
-
-   # allow edits within R user directories (data, config, cache),
-   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
-   # Use dirname() to obtain the parent directory from a dummy package name.
-   # tools::R_user_dir was introduced in R 4.0.0.
-   if (getRversion() >= "4.0.0")
-   {
-      for (which in c("data", "config", "cache"))
-      {
-         rDir <- .rs.chat.normalizePath(dirname(tools::R_user_dir("_", which = which)))
-         reasons[.rs.chat.isPathWithin(path, rDir)] <- ""
-      }
-   }
+   # allow edits within the allowed roots
+   reasons[.rs.chat.isPathWithinAllowedRoots(path)] <- ""
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)

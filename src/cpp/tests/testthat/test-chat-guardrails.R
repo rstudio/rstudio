@@ -189,6 +189,58 @@ test_that("isFileEditAllowed permits edits in R user directories", {
 
 })
 
+test_that("isFileEditAllowed permits edits in a not-yet-created user library", {
+
+   oldLibsUser <- Sys.getenv("R_LIBS_USER", unset = NA)
+   on.exit({
+      if (is.na(oldLibsUser))
+         Sys.unsetenv("R_LIBS_USER")
+      else
+         Sys.setenv(R_LIBS_USER = oldLibsUser)
+   }, add = TRUE)
+
+   # point R_LIBS_USER at a directory that does not exist, and is not
+   # within any other allowed root
+   fakeLib <- file.path(dirname(tempdir()), "chat-guardrails-fake-lib", "4.0")
+   Sys.setenv(R_LIBS_USER = fakeLib)
+
+   path <- file.path(fakeLib, "testpkg", "DESCRIPTION")
+   expect_equal(.rs.chat.isFileEditAllowed(path), "")
+
+})
+
+# -- allowedRoots / umask ------------------------------------------------------
+
+test_that("isPathWithinAllowedRoots identifies allowed and disallowed paths", {
+
+   allowedPaths <- .rs.chat.normalizePath(c(
+      file.path(tempdir(), "file.R"),
+      file.path(getwd(), "file.R"),
+      file.path(.libPaths()[[1L]], "pkg", "DESCRIPTION")
+   ))
+   expect_true(all(.rs.chat.isPathWithinAllowedRoots(allowedPaths)))
+
+   deniedPath <- .rs.chat.normalizePath("/no/such/allowed/root/file.R")
+   expect_false(any(.rs.chat.isPathWithinAllowedRoots(deniedPath)))
+
+})
+
+test_that("umaskMasksWorldRead reflects the current umask", {
+
+   skip_on_os("windows")
+
+   oldMask <- Sys.umask("022")
+   on.exit(Sys.umask(oldMask), add = TRUE)
+   expect_false(.rs.chat.umaskMasksWorldRead())
+
+   Sys.umask("077")
+   expect_true(.rs.chat.umaskMasksWorldRead())
+
+   Sys.umask("027")
+   expect_true(.rs.chat.umaskMasksWorldRead())
+
+})
+
 # -- isFileReadAllowed ---------------------------------------------------------
 
 test_that("isFileReadAllowed denies reads on credential files", {
@@ -227,6 +279,75 @@ test_that("isFileReadAllowed allows credential files when trusted", {
    expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials"), trusted = TRUE), "")
    expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".Renviron"), trusted = TRUE), "")
    expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".Rprofile"), trusted = TRUE), "")
+
+})
+
+test_that("isFileReadAllowed permits non-world-readable files within allowed roots", {
+
+   skip_on_os("windows")
+
+   oldMask <- Sys.umask("022")
+   on.exit(Sys.umask(oldMask), add = TRUE)
+
+   path <- tempfile("guardrails-private-")
+   writeLines("private", path)
+   on.exit(unlink(path), add = TRUE)
+   Sys.chmod(path, "600")
+
+   expect_equal(.rs.chat.isFileReadAllowed(path), "")
+
+})
+
+test_that("isFileReadAllowed denies non-world-readable files outside allowed roots", {
+
+   skip_on_os("windows")
+
+   oldMask <- Sys.umask("022")
+   on.exit(Sys.umask(oldMask), add = TRUE)
+
+   # place the file in a sibling of the R temporary directory, outside
+   # all of the allowed roots
+   dir <- tempfile("chat-guardrails-", tmpdir = dirname(tempdir()))
+   dir.create(dir)
+   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+   path <- file.path(dir, "private.txt")
+   writeLines("private", path)
+   Sys.chmod(path, "600")
+
+   # denied while the umask would grant world-read to new files
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(path)))
+
+   # but allowed when the umask strips world-read from new files, as then
+   # the missing bit carries no signal
+   Sys.umask("077")
+   expect_equal(.rs.chat.isFileReadAllowed(path), "")
+
+})
+
+test_that("deny-read patterns still apply within allowed roots", {
+
+   path <- file.path(tempdir(), ".env")
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(path)))
+
+})
+
+test_that("installed.packages() survives guardrails under a restrictive umask", {
+
+   skip_on_os("windows")
+
+   oldMask <- Sys.umask("077")
+   on.exit(Sys.umask(oldMask), add = TRUE)
+
+   # remove cached metadata so the first call writes a fresh cache that is
+   # not world-readable; the second call then reads it back (this is how
+   # install.packages() failed in rstudio-pro#11975)
+   unlink(list.files(tempdir(), pattern = "^libloc_", full.names = TRUE))
+
+   expect_no_error(.rs.chat.withGuardrails({
+      utils::installed.packages(lib.loc = .Library)
+      utils::installed.packages(lib.loc = .Library)
+   }))
 
 })
 
