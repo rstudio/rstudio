@@ -39,12 +39,13 @@ var pollTimer = null;
 var pollInFlight = false;
 
 // Set once we've detected that the user signed in from another tab. This swaps
-// in the "Signed Out" panel, whose button takes the user on to their session,
-// so there's nothing left to poll for: we stop the poll chain rather than
-// re-fetching the (full) session page every few seconds for as long as the tab
-// happens to stay open. It isn't quite terminal, though -- becoming visible
-// again triggers one confirming poll, which clears this if it turns out we were
-// wrong (see the visibilitychange handler).
+// in the "Signed Out" panel, whose button takes the user on to their session.
+// There's nothing new to detect at that point, so we drop the poll to the
+// slowest interval rather than re-fetching the (full) session page every few
+// seconds for as long as the tab happens to stay open -- but we keep polling,
+// because the detection can go stale: the other tab can sign out, or its
+// session can expire, and only a further poll can notice that and bring the
+// sign-in form back.
 var signedInElsewhere = false;
 
 /**
@@ -64,10 +65,18 @@ function schedulePoll(delayMs) {
 /**
  * Schedules the next poll at the current backoff delay, then doubles that delay
  * (up to the maximum) for the poll after it.
+ *
+ * Pass true for holdBackoff to schedule at the current delay while leaving it
+ * where it is. That's for polls that failed: a poll which told us nothing
+ * shouldn't push us toward the slow end of the range (a gateway erroring for
+ * half a minute would otherwise leave cross-tab detection lagging by 30s long
+ * after it recovered), but it shouldn't wind the delay back down either, or an
+ * outage would have us polling harder than success does.
  */
-function scheduleNextPoll() {
+function scheduleNextPoll(holdBackoff) {
    schedulePoll(pollInterval);
-   pollInterval = Math.min(pollInterval * 2, MAX_POLL_INTERVAL_MS);
+   if (!holdBackoff)
+      pollInterval = Math.min(pollInterval * 2, MAX_POLL_INTERVAL_MS);
 }
 
 /**
@@ -279,13 +288,6 @@ function pollForSignin() {
   pollInFlight = true;
 
   var xhr = new XMLHttpRequest();
-  // Cache-bust the poll: without this a "./" response cached from a previous
-  // (signed-in) session can be replayed by the browser, and a stale/cached
-  // response can also come back with an empty responseURL - either of which
-  // used to be misread as "signed in elsewhere" and spuriously showed the
-  // "Signed Out" dialog on a fresh sign-in page.
-  xhr.open("GET", "./?rs-signin-poll=" + Date.now(), true);
-  xhr.setRequestHeader("Cache-Control", "no-cache");
   xhr.onreadystatechange = function() {
      if (activeSignIn)
        return;
@@ -302,24 +304,24 @@ function pollForSignin() {
            // Only change what's on screen on a positive signal, in either
            // direction: a non-empty responseURL that is either a different page
            // than this one (signed in elsewhere) or this same page (still signed
-           // out). An empty responseURL means we can't tell -- some browsers
-           // leave it empty for cached/opaque responses -- and guessing there is
-           // what used to spuriously show the "Signed Out" panel on a fresh
+           // out). An empty responseURL means we can't tell, and guessing there
+           // is what used to spuriously show the "Signed Out" panel on a fresh
            // sign-in page.
            if (url && url !== href) {
               // A different page - the user has signed in via another tab. Show
-              // the "Signed Out" panel and stop polling; its button carries the
-              // user on to the session from here.
+              // the "Signed Out" panel, whose button carries the user on to the
+              // session from here. We keep polling (see the finally below), just
+              // slowly, so this can be undone if it stops being true.
               signedInElsewhere = true;
               responseURL = url;
               controls.classList.add('signinhidden');
               goback.classList.remove('signinhidden');
            } else if (url) {
               // Genuinely still the sign-in page. Show the controls, and clear
-              // any previous signed-in-elsewhere state: if we'd latched onto a
-              // false positive (an SSO interstitial or a proxy error page, say),
-              // this is what recovers the form. The poll chain then resumes
-              // below.
+              // any previous signed-in-elsewhere state: this is what brings the
+              // form back if the sign-in we detected has since gone away (the
+              // other tab signed out, or its session expired), or if we'd
+              // latched onto a false positive such as an SSO interstitial.
               signedInElsewhere = false;
               controls.classList.remove('signinhidden');
               goback.classList.add('signinhidden');
@@ -327,21 +329,60 @@ function pollForSignin() {
            // An empty responseURL is indeterminate, so leave the panels as they
            // are rather than guessing in either direction. On a fresh page that
            // means the sign-in controls stay up (their initial state); if we've
-           // already shown the "Signed Out" panel it stays up too, so one opaque
-           // response can't yank the user back to the form.
+           // already shown the "Signed Out" panel it stays up too, so one
+           // unreadable response can't yank the user back to the form. A Service
+           // Worker synthesizing the response is the likeliest way to land here.
+        } else {
+           // Anything else - a proxy error page, a gateway hiccup, or status 0
+           // from a dropped or timed-out request - tells us nothing about the
+           // sign-in state, so leave the panels alone and hold the backoff where
+           // it is (see scheduleNextPoll below).
+           console.warn("Sign-in poll failed with status " + xhr.status);
         }
      } catch (exception) {
        showError("Error: " + exception);
      } finally {
-       // Queue the next poll only if there's still something to poll for and the
-       // tab is visible; otherwise the visibilitychange handler resumes polling
-       // when the tab reappears. In a finally so a failure above can't silently
-       // kill the poll chain.
-       if (!signedInElsewhere && !document.hidden)
-          scheduleNextPoll();
+       // While the "Signed Out" panel is up there's nothing new to detect, so
+       // poll at the slowest interval - but do keep polling. Stopping outright
+       // would make a stale panel permanent, since the sign-in it reports can go
+       // away without anything on this page hearing about it.
+       if (signedInElsewhere)
+          pollInterval = MAX_POLL_INTERVAL_MS;
+
+       // Queue the next poll if the tab is visible; otherwise the
+       // visibilitychange handler resumes polling when the tab reappears. In a
+       // finally so a failure above can't silently kill the poll chain. Only a
+       // poll that actually told us something advances the backoff.
+       if (!document.hidden)
+          scheduleNextPoll(xhr.status !== 200);
      }
    };
-   xhr.send(null);
+
+   try {
+      // Cache-bust the poll and ask intermediaries not to serve it from cache:
+      // without this a "./" response cached from a previous (signed-in) session
+      // can be replayed by the browser and misread as a fresh signal that the
+      // user has signed in elsewhere. (What guards against an unreadable
+      // responseURL is the url checks above, not this.)
+      xhr.open("GET", "./?rs-signin-poll=" + Date.now(), true);
+      xhr.setRequestHeader("Cache-Control", "no-cache");
+
+      // Bound the request. A connection black-holed by a proxy would otherwise
+      // leave pollInFlight set with no response ever arriving to clear it, and
+      // every later poll would return early at the guard above - ending the
+      // chain for good. A timeout drives readyState to DONE and fires
+      // readystatechange, so the handler above clears the flag and reschedules;
+      // status is 0 there, so the panels are left alone.
+      xhr.timeout = MAX_POLL_INTERVAL_MS;
+
+      xhr.send(null);
+   } catch (exception) {
+      // open()/send() can throw synchronously; clear the in-flight guard and
+      // keep the chain alive rather than wedging it.
+      console.warn("Sign-in poll failed to send: " + exception);
+      pollInFlight = false;
+      scheduleNextPoll(true);
+   }
 }
 
 window.addEventListener("load", function() {
@@ -366,10 +407,11 @@ window.addEventListener("load", function() {
       // Coming back to the tab also resets the backoff: the user is looking at
       // the page again, so a sign-in from elsewhere should be picked up quickly.
       //
-      // This fires even once we've shown the "Signed Out" panel and stopped the
-      // poll chain. That single confirming poll is how a stale panel corrects
-      // itself: the user comes back to a tab they left hours ago, and either the
-      // sign-in is confirmed (we stay put) or it isn't and the form comes back.
+      // This fires even once we've shown the "Signed Out" panel, and there it
+      // gets the user a prompt answer rather than waiting out the 30s interval
+      // the panel polls at: they come back to a tab they left hours ago, and
+      // either the sign-in is confirmed (we stay put) or it isn't and the form
+      // comes back.
       document.addEventListener("visibilitychange", function() {
          if (!document.hidden && !activeSignIn) {
             pollInterval = MIN_POLL_INTERVAL_MS;
