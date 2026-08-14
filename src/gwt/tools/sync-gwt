@@ -94,7 +94,7 @@ like:
 	cd ../../../dependencies/common/gwtproject
 	rm -f gwt-*
 	tar czf gwt.tar.gz
-	aws s3 cp gwt.tar.gz s3://rstudio-buildtools/gwt/gwt-2.12.2-apple-blossom.tar.gz --acl public-read
+	aws s3 cp gwt.tar.gz s3://rstudio-buildtools/gwt/gwt-2.12.2-autumn-hawkbit.tar.gz --acl public-read
 	rm gwt.tar.gz
 
 and then update the GWT versions used in our various dependency files.

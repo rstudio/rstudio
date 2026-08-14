@@ -202,13 +202,16 @@ public class SnippetHelper
    public void applySnippet(final String token,
                             final String snippetName)
    {
+      // the snippet can be missing if the active mode changed since it was
+      // offered; in that case there is nothing to apply
+      String snippetContent = getSnippetContents(snippetName);
+      if (snippetContent == null)
+         return;
+
       // Set the selection based on what we want to replace. For auto-paired
       // insertions, e.g. `[|]`, we want to replace both characters; typically
       // we only want to replace the token.
-      String snippetContent = transformMacros(
-            getSnippetContents(snippetName),
-            token,
-            snippetName);
+      snippetContent = transformMacros(snippetContent, token, snippetName);
 
       // For snippets that contain code we want to execute in R, we pass the
       // snippet down to the server and then apply the response.
@@ -331,7 +334,14 @@ public class SnippetHelper
    // you need to call the ensure* functions)
    public String getSnippetContents(String snippetName)
    {
-      return getSnippetImpl(manager_, getActiveMode(), snippetName).getContent();
+      // the lookup is mode-dependent and the active mode follows the cursor,
+      // so a snippet offered earlier (e.g. by a completion) can be missing by
+      // the time its contents are requested (#18425)
+      Snippet snippet = getSnippet(snippetName);
+      if (snippet == null)
+         return null;
+
+      return snippet.getContent();
    }
 
    private static final native String getActiveModeImpl(AceEditorNative editor,

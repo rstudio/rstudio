@@ -9,6 +9,7 @@ import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { withDeadline } from '../utils/deadline';
 import { workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { isDebugMode } from '../utils/debug';
@@ -955,25 +956,28 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   // Options, Import Dataset, ...) blocks the Electron close path: the
   // renderer's quit confirmation prompts queue behind the existing modal and
   // q(save="no") never gets a chance to cascade to a full quit (#17790).
+  //
+  // Each graceful phase gets a deadline: a page left mid-transition can make
+  // `page.evaluate` reject with "context was destroyed", but a transition
+  // that never completes (the #18394 wedge) makes it hang instead, and this
+  // teardown is on the path of an interrupted run flushing its report. The
+  // browser close and force-kill below always run either way.
   try {
-    await dismissAllModals(page);
+    await withDeadline(dismissAllModals(page), 10_000, 'dismiss modals at shutdown');
   } catch {
-    // Page context may already be gone; we still force-kill below.
+    // Page context may already be gone or wedged; we still force-kill below.
   }
 
-  // Close all source files without prompting to save. If a test left the page
-  // in the middle of a navigation (e.g. opening a project triggers a session
-  // restart), `page.evaluate` will reject with "context was destroyed" --
-  // we don't care, we're shutting down anyway.
+  // Close all source files without prompting to save.
   try {
-    await documentCloseAllNoSave(page);
+    await withDeadline(documentCloseAllNoSave(page), 15_000, 'close documents at shutdown');
     await sleep(1000);
   } catch {
-    // Page context may already be gone; we still force-kill below.
+    // Page context may already be gone or wedged; we still force-kill below.
   }
 
   try {
-    await executeInConsole(page, 'q(save = "no")');
+    await withDeadline(executeInConsole(page, 'q(save = "no")'), 15_000, 'quit R at shutdown');
   } catch {
     // Console may already be unresponsive; we still force-kill below.
   }

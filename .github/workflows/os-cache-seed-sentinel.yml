@@ -48,12 +48,21 @@ jobs:
           # Server Ubuntu 24 builds, so they are listed once, under the
           # Desktop seed; each seed re-warms every cache its build job
           # touches, missing or not.
+          #
+          # The os-cache-seed-e2e-deps.yml prefixes are the os-e2e-deps cache
+          # keys the PR orchestrator's e2e jobs read: <CACHE_OS>-{r,pak}-<R
+          # major.minor>- plus the R-version-independent <CACHE_OS>-pw-
+          # browser keys. The 4.5 in the r/pak prefixes tracks the R version
+          # the PR orchestrator pins (os-test-e2e-rstudio-pr.yml r_version,
+          # currently 4.5.3) as resolved to major.minor -- when that pin is
+          # bumped, bump these prefixes and the seed's R_VERSION together.
           CHECKS='
           os-cache-seed-e2e-rstudio-desktop-os-ubuntu-24.yml=rstudio-tools-linux-x86_64- rstudio-build-rlibs-linux-x86_64- rstudio-gwt-linux-desktop-x86_64-
           os-cache-seed-e2e-rstudio-server-os-ubuntu-24.yml=rstudio-gwt-linux-x86_64-
           os-cache-seed-e2e-macos-26-arm64.yml=rstudio-tools-arm64- rstudio-build-rlibs-arm64- rstudio-gwt-arm64-
           os-cache-seed-e2e-macos-15-x86_64.yml=rstudio-tools-x86_64- rstudio-build-rlibs-x86_64- rstudio-gwt-x86_64-
           os-cache-seed-e2e-rstudio-desktop-os-windows-server-2025.yml=rstudio-tools-win64- rstudio-gwt-win64-
+          os-cache-seed-e2e-deps.yml=Windows-r-4.5- Windows-pak-4.5- Windows-pw- macOS-macos26-arm64-r-4.5- macOS-macos26-arm64-pak-4.5- macOS-macos26-arm64-pw- Linux-noble-amd64-r-4.5- Linux-noble-amd64-pak-4.5- Linux-noble-amd64-pw- Linux-r-4.5- Linux-pak-4.5- Linux-pw-
           '
 
           FAILED=0
