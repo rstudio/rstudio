@@ -40,7 +40,8 @@ namespace r {
 namespace util {
 
 // NOTE: On Windows, environment variables set via core::system::setenv()
-// won't be visible in the R session.
+// are not visible to Sys.getenv() when R is built against a C runtime
+// other than our own (msvcrt builds of R, i.e. R < 4.2).
 //
 // These routines should be preferred when getting and
 // setting environment variables in the R session.

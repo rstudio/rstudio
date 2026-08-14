@@ -66,7 +66,8 @@ bool verifyConnectedPeerImpl(boost::asio::ip::tcp::socket& socket,
    if (expectedPeerUid == static_cast<uid_t>(-1))
       return true; // no ownership check requested for this client
 
-   if (!server_core::socket_utils::probeSockDiagAvailable())
+   if (server_core::socket_utils::probeOwnershipCheckMode() ==
+       server_core::socket_utils::OwnershipCheckMode::Disabled)
       return true; // capability absent (logged once at probe) -> degrade to
                    // no-enforcement rather than break proxying
 
@@ -78,7 +79,7 @@ bool verifyConnectedPeerImpl(boost::asio::ip::tcp::socket& socket,
                           appPort, ephemeralPort, expectedPeerUid);
    if (error)
    {
-      WLOGF("Refusing localhost proxy to port {}: {}", appPort, error.getSummary());
+      WLOGF("Refusing localhost proxy to port {}: {} ({})", appPort, error.getSummary(), error.getProperty("description"));
       *pError = error;
       return false;
    }
@@ -103,6 +104,14 @@ public:
    // When set (default: no check), verifyConnectedPeer() enforces that the
    // established peer socket is owned by expectedPeerUid (rstudio-pro#11470).
    void setExpectedPeerUid(uid_t uid) { expectedPeerUid_ = uid; }
+
+   // Restricts resolution of this client's (ambiguous, e.g. "localhost")
+   // destination hostname to the given address family, matching which of
+   // /p/ or /p6/ the original request used (rstudio-pro#12142).
+   void setIpv6(bool ipv6)
+   {
+      setIpFamily(ipv6 ? boost::asio::ip::tcp::v6() : boost::asio::ip::tcp::v4());
+   }
 
 private:
    uid_t expectedPeerUid_ = static_cast<uid_t>(-1);
@@ -142,6 +151,14 @@ public:
    // When set (default: no check), verifyConnectedPeer() enforces that the
    // established peer socket is owned by expectedPeerUid (rstudio-pro#11470).
    void setExpectedPeerUid(uid_t uid) { expectedPeerUid_ = uid; }
+
+   // Restricts resolution of this client's (ambiguous, e.g. "localhost")
+   // destination hostname to the given address family, matching which of
+   // /p/ or /p6/ the original request used (rstudio-pro#12142).
+   void setIpv6(bool ipv6)
+   {
+      setIpFamily(ipv6 ? boost::asio::ip::tcp::v6() : boost::asio::ip::tcp::v4());
+   }
 
 private:
    uid_t expectedPeerUid_ = static_cast<uid_t>(-1);

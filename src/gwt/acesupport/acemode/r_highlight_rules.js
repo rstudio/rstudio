@@ -529,7 +529,24 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : "string",
         regex : "[\\]})][-]*['\"]",
         onMatch: function(value, state, stack, line) {
-          this.next = (value === stack[2]) ? stack[0] : stack[1];
+          if (value === stack[2]) {
+            // the raw string closed; remove the three entries saved on
+            // entry. they always sit at indices 0-2: raw strings cannot
+            // nest, and Ace strips its own '#tmp' markers from the stack
+            // before rules run. leaving them behind would make the
+            // non-empty stack the saved state for every following row --
+            // an array rather than a string -- which breaks consumers
+            // that treat row states as strings (e.g. $findNextHeader in
+            // rmarkdown_folding.js compares states with '!=='; use
+            // Utils.primaryState() to read a possibly-array state)
+            this.next = stack[0];
+            stack.splice(0, 3);
+          } else {
+            // not the expected suffix, so the raw string remains open;
+            // keep the saved entries so following rows can still
+            // recognize the real terminator
+            this.next = stack[1];
+          }
           return this.token;
         }
       },

@@ -10,6 +10,16 @@ set -euo pipefail
 # libfontconfig1 (ragg, systemfonts), libharfbuzz0b / libfribidi0
 # (textshaping). Install the runtime libs (not the -dev variants) so
 # rsession's R can load them without a source compile.
+#
+# Runtime-only works here because PPM publishes prebuilt binaries for every
+# release/architecture this hook serves -- noble and resolute, x86_64 and
+# arm64 -- so pak never compiles. Verified 2026-08-05: an ubuntu-26-arm64 run
+# installed 45 binary packages from __linux__/resolute/latest with zero source
+# compiles. Contrast ubuntu-22/e2e-setup.sh, which does need an arm64-guarded
+# toolchain, -dev headers and PKG_INCLUDE_LINKINGTO=TRUE, because PPM publishes
+# no jammy arm64 binaries and serves that engine source tarballs instead. If a
+# future Ubuntu release lands here without arm64 binary coverage, it needs the
+# ubuntu-22 treatment rather than this one.
 sudo apt-get update
 sudo apt-get install -y xvfb jq \
   libfreetype6 libfontconfig1 libharfbuzz0b libfribidi0

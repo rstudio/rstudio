@@ -67,6 +67,9 @@ public class ClassIds
    public final static String SOURCE_PANEL = "source_panel";
    public final static String DOC_OUTLINE_CONTAINER = "doc_outline_container";
 
+   // The secondary editor view created by splitting a document (Pane > Split)
+   public final static String EDITOR_SPLIT_VIEW = "editor_split_view";
+
    // WindowFrameButton (combined with unique suffix for each panel)
    public final static String PANEL_MIN_BTN = "panel_min_btn";
    public final static String PANEL_MAX_BTN = "panel_max_btn";

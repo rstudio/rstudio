@@ -136,6 +136,11 @@ export class AceEditor extends PageObject {
     return this.run((editor, r: number) => editor.session.getLine(r), row);
   }
 
+  /** Returns the last (partially) rendered row, 0-indexed. */
+  async getLastVisibleRow(): Promise<number> {
+    return this.run((editor) => editor.getLastVisibleRow());
+  }
+
   async getTokens(row: number): Promise<AceToken[]> {
     return this.run(
       (editor, r: number) => editor.session.getTokens(r) as AceToken[],
@@ -168,8 +173,13 @@ export class AceEditor extends PageObject {
     });
   }
 
-  async getState(row: number): Promise<string> {
+  async getState(row: number): Promise<string | string[]> {
     return this.run((editor, r: number) => editor.session.getState(r), row);
+  }
+
+  /** Returns one level of indentation, e.g. "  " for two-space soft tabs. */
+  async getTabString(): Promise<string> {
+    return this.run((editor) => editor.session.getTabString());
   }
 
   /**
@@ -185,6 +195,11 @@ export class AceEditor extends PageObject {
         end: { row: r.end.row, column: r.end.column },
       }));
     });
+  }
+
+  /** Rows as rendered (session.getScreenLength): exceeds the document line count exactly when soft-wrapped. */
+  async getScreenRowCount(): Promise<number> {
+    return this.run((editor) => editor.session.getScreenLength());
   }
 
   async getCursorPosition(): Promise<Ace.Position> {
@@ -229,5 +244,79 @@ export class AceEditor extends PageObject {
       const renderer = (editor as unknown as { renderer?: { $ghostText?: unknown } }).renderer;
       return renderer?.$ghostText != null;
     });
+  }
+
+  /** Execute a built-in Ace editor command by name (e.g. 'addCursorBelow'). */
+  async execCommand(name: string): Promise<void> {
+    await this.run((editor, cmd: string) => editor.execCommand(cmd), name);
+  }
+
+  /**
+   * Snapshot of the editor's multi-select bookkeeping, for asserting on
+   * recovery from the corrupt states behind #13605. 'tempSelectionInstalled'
+   * reports whether the throwaway Selection that forEachSelection swaps in
+   * mid-iteration is still installed -- a sign the operation was aborted by
+   * an exception and never restored its state.
+   */
+  async getMultiSelectState(): Promise<{
+    editorInMultiSelectMode: boolean;
+    selectionInMultiSelectMode: boolean;
+    inVirtualSelectionMode: boolean;
+    tempSelectionInstalled: boolean;
+    rangeCount: number;
+    rangeListAttached: boolean;
+  }> {
+    return this.run((editor) => {
+      const session = editor.session;
+      const selection = session.selection;
+      return {
+        editorInMultiSelectMode: !!editor.inMultiSelectMode,
+        selectionInMultiSelectMode: !!selection.inMultiSelectMode,
+        inVirtualSelectionMode: !!editor.inVirtualSelectionMode,
+        tempSelectionInstalled:
+          selection.index !== undefined ||
+          (session.multiSelect != null && selection !== session.multiSelect),
+        rangeCount: selection.rangeCount ?? 0,
+        rangeListAttached: selection.rangeList != null && selection.rangeList.session != null,
+      };
+    });
+  }
+
+  /**
+   * Fault injection for exception-safety tests: installs a one-shot document
+   * 'change' listener that throws `message`, simulating a client exception
+   * escaping into Ace's change dispatch mid-operation (#13605). The listener
+   * removes itself and sets a window sentinel (see throwingChangeListenerFired)
+   * before throwing, so only the next change is affected and tests can prove
+   * the injection fired without depending on how the exception is routed.
+   */
+  async injectThrowingChangeListener(message: string): Promise<void> {
+    await this.run((editor, msg: string) => {
+      (window as { __throwingChangeListenerFired?: boolean }).__throwingChangeListenerFired = false;
+      const doc = editor.session.getDocument();
+      const listener = () => {
+        doc.off('change', listener);
+        (window as { __throwingChangeListenerFired?: boolean }).__throwingChangeListenerFired = true;
+        throw new Error(msg);
+      };
+      doc.on('change', listener);
+    }, message);
+  }
+
+  /** Whether the listener installed by injectThrowingChangeListener has thrown. */
+  async throwingChangeListenerFired(): Promise<boolean> {
+    return this.page.evaluate(
+      () => !!(window as { __throwingChangeListenerFired?: boolean }).__throwingChangeListenerFired
+    );
+  }
+
+  /**
+   * Corrupt a live multi-select the way an aborted operation does: detach
+   * the selection's range list so it stops tracking document edits (the
+   * "range list detached" corruption branch of
+   * AceEditorNative.getMultiSelectCorruptionReason).
+   */
+  async detachRangeList(): Promise<void> {
+    await this.run((editor) => editor.session.selection.rangeList.detach());
   }
 }

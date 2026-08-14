@@ -499,6 +499,11 @@ public class TextFileType extends EditableFileType
       results.add(commands.sendFilenameToTerminal());
       results.add(commands.openNewTerminalAtEditorLocation());
       results.add(commands.toggleSoftWrapMode());
+      results.add(commands.splitEditorRight());
+      results.add(commands.splitEditorDown());
+      results.add(commands.removeEditorSplit());
+      results.add(commands.toggleEditorSplit());
+      results.add(commands.focusOtherEditorSplit());
 
       // The missing-package banner only fires for these four file types --
       // see TextEditingTargetPackageDependencyHelper.discoverPackageDependencies.

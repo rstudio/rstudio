@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import type { Browser, Page } from 'playwright';
-import { spawn, type ChildProcess } from 'child_process';
+import { execFileSync, spawn, type ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { createServer } from 'net';
 import * as fs from 'fs';
@@ -9,13 +9,13 @@ import * as path from 'path';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
 import { setPref, documentCloseAllNoSave } from '../utils/commands';
-import { rLibsUserTemplate } from './r-libs-setup';
+import { rLibsUserTemplate, workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
 
 // PW_SANDBOX is exported by the globalSetup hook in fixtures/sandbox-setup.ts
 // before any worker spawns. Resolve lazily so importing this module (for
-// --list, type-checking, etc.) doesn't require the env var -- the assertion
+// --list, type-checking, etc.) doesn't require the environment variable -- the assertion
 // fires only when a test actually launches a session.
 function sandboxRoot(): string {
   const s = process.env.PW_SANDBOX;
@@ -66,6 +66,103 @@ interface SpawnedServer {
 }
 
 /**
+ * Resolve the real rsession binary the spawned rserver would launch, from the
+ * rsession-path setting in the conf in use. rserver-dev.conf carries an
+ * absolute path into the build tree; installed confs may omit it or use the
+ * default relative form ("rsession", resolved against the installation
+ * layout), so relative values are tried against the rserver binary's own
+ * directory and its parent. Fails loud when nothing resolves -- a wrapper
+ * exec'ing a missing binary would otherwise surface as an opaque
+ * session-launch failure.
+ */
+function resolveRsessionPath(rserverBin: string, rserverConf: string): string {
+  const conf = fs.readFileSync(rserverConf, 'utf-8');
+  const match = conf.match(/^\s*rsession-path=(.+)$/m);
+  const configured = match ? match[1].trim() : 'rsession';
+  const candidates = path.isAbsolute(configured)
+    ? [configured]
+    : [
+        path.resolve(path.dirname(rserverBin), configured),
+        path.resolve(path.dirname(path.dirname(rserverBin)), configured),
+      ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  throw new Error(
+    `Cannot resolve the rsession binary for the session-env wrapper: ` +
+      `rsession-path=${configured} (from ${rserverConf}) resolved to none of: ${candidates.join(', ')}`,
+  );
+}
+
+/**
+ * On macOS, rserver injects DYLD_INSERT_LIBRARIES=<R_HOME>/lib/libR.dylib
+ * into every rsession's environment (ServerSessionManager.cpp,
+ * launchAndTrackSession). SIP strips DYLD_* variables across the exec of a
+ * protected interpreter like /bin/sh, so the wrapper script must re-export
+ * it itself. Compute R_HOME the same way rserver does: from the conf's
+ * rsession-which-r (falling back to `R` on PATH).
+ */
+function macosLibRPath(rserverConf: string): string {
+  const conf = fs.readFileSync(rserverConf, 'utf-8');
+  const match = conf.match(/^\s*rsession-which-r=(.+)$/m);
+  const rBinary = match ? match[1].trim() : 'R';
+  const rHome = execFileSync(rBinary, ['RHOME'], { encoding: 'utf-8' }).trim();
+  return path.join(rHome, 'lib', 'libR.dylib');
+}
+
+/** Shell-quote a path for the generated wrapper script. */
+function shQuote(value: string): string {
+  return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
+/**
+ * Generate the per-worker rsession wrapper script that delivers the sandbox
+ * environment to the rsession (and thus to the AI backends it spawns).
+ * rserver builds each rsession's environment from scratch (runProcess in
+ * core/system/PosixSystem.cpp) with HOME taken from the passwd db. Only a
+ * short allow-list survives from the rserver process: PATH, MANPATH, LANG,
+ * SHELL, the RS_LOG_* family, and the names forwardXdgEnvVars carries (see
+ * the env block in spawnSandboxedRserver). HOME and R_LIBS_USER are not among
+ * them, so setting those on rserver would accomplish nothing (#18348). The
+ * wrapper runs as the session user after that environment is built, so its
+ * exports win:
+ *  - HOME: the sandbox user-home (honoring aiAuth-stripped variants), where
+ *    auth.setup provisioned the Posit AI token store and Copilot's auth.db.
+ *  - R_LIBS_USER: under the redirected HOME, R would otherwise compute an
+ *    empty default user library and the session would not see the packages
+ *    globalSetup pre-populated. Resolved with workerRLibsUser() to match
+ *    desktop.fixture.ts -- the shared template on single-worker runs, a
+ *    per-worker hermetic clone when running in parallel. The value keeps R's
+ *    own %p/%v tokens; R expands them itself.
+ *  - GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false: the sandbox auth.db is
+ *    written plaintext (#18205; matches desktop.fixture.ts), and under the
+ *    redirected HOME macOS has no login keychain.
+ *  - XDG_CONFIG_HOME unset: rserver's xdg filter forwards a developer-shell
+ *    value to the session, and the copilot-language-server resolves its
+ *    config dir from XDG_CONFIG_HOME before HOME -- unset, it falls back to
+ *    $HOME/.config/github-copilot, inside the sandbox.
+ */
+function writeRsessionWrapper(serverRoot: string, userHome: string, rserverBin: string, rserverConf: string): string {
+  const rsessionBin = resolveRsessionPath(rserverBin, rserverConf);
+  const lines = [
+    '#!/bin/sh',
+    `export HOME=${shQuote(userHome)}`,
+    `export R_LIBS_USER=${shQuote(workerRLibsUser())}`,
+    'export GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false',
+    'unset XDG_CONFIG_HOME',
+  ];
+  if (process.platform === 'darwin') {
+    lines.push(`export DYLD_INSERT_LIBRARIES=${shQuote(macosLibRPath(rserverConf))}`);
+  }
+  lines.push(`exec ${shQuote(rsessionBin)} "$@"`, '');
+  const wrapperPath = path.join(serverRoot, 'rsession-wrapper.sh');
+  fs.writeFileSync(wrapperPath, lines.join('\n'), { mode: 0o755 });
+  return wrapperPath;
+}
+
+/**
  * Spawn a private rserver-dev process with sandboxed env so each worker gets
  * its own server data dir, R config home, and HOME pointing into PW_SANDBOX.
  * Mirrors the Desktop fixture's per-worker isolation.
@@ -105,26 +202,55 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
   // per server_core/http/SecureCookie.cpp ensureKeyStrength().
   fs.writeFileSync(secureCookieKey, randomBytes(32).toString('hex'), { mode: 0o600 });
 
+  // Deliver the sandbox environment to each rsession through a wrapper
+  // script passed as --rsession-path (#18348). Most of what is set on the
+  // rserver process below does NOT reach its rsessions -- rserver rebuilds
+  // their environment from scratch (runProcess in
+  // core/system/PosixSystem.cpp), with HOME from the passwd db, copying over
+  // only PATH, MANPATH, LANG, SHELL, the RS_LOG_* family, and the names the
+  // xdg filter forwards. HOME and R_LIBS_USER are not on that list, so the
+  // wrapper is what redirects the rsession (and the AI backends it spawns)
+  // into the sandbox. See writeRsessionWrapper for what it carries.
+  const rsessionWrapper = writeRsessionWrapper(serverRoot, userHome, rserverBin, rserverConf);
+
   const env = {
     ...process.env,
     HOME: userHome,
     USERPROFILE: userHome,
-    // Mirror the Desktop fixture -- under the redirected HOME, R would
-    // otherwise compute an empty default user library. globalSetup
-    // pre-creates and pre-populates this same path.
+    // The rserver process's own copy, which does NOT reach its rsessions (see
+    // the comment above). What gives a session its user library is the
+    // wrapper's export, resolved per worker; this one only affects R that
+    // rserver itself runs. globalSetup pre-creates and pre-populates the path.
     R_LIBS_USER: rLibsUserTemplate(),
     RS_DB_MIGRATIONS_PATH: process.env.RS_DB_MIGRATIONS_PATH || DEFAULT_DB_MIGRATIONS,
     RSTUDIO_PROJECT_ROOT: process.env.RSTUDIO_PROJECT_ROOT || REPO_ROOT,
+    // These two DO reach the rsessions: the xdg filter forwards them by name
+    // (forwardXdgEnvVars, core/system/Xdg.cpp), which is the whole reason
+    // setting them here works when setting HOME here would not.
     RSTUDIO_CONFIG_HOME: configHome,
     RSTUDIO_DATA_HOME: dataHome,
-    // No GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION here, unlike desktop.fixture.ts
-    // (#18205): rserver builds each rsession's environment from scratch
-    // (runProcess in core/system/PosixSystem.cpp), so arbitrary vars set here
-    // never reach the rsession that hosts the Copilot language server. The
-    // macOS "Keychain Not Found" modal also cannot occur in server mode --
-    // rsession's HOME comes from the passwd db, not this redirect, so the
-    // real login keychain is always found.
   };
+  // Keep developer-shell config dirs out of the picture entirely: the xdg
+  // filter forwards each name below to every rsession, where XDG_CONFIG_HOME
+  // would win over the wrapper's HOME for the Copilot config dir and point it
+  // outside the sandbox. The wrapper also unsets XDG_CONFIG_HOME
+  // session-side; this covers the rserver process itself and the rest of the
+  // family.
+  //
+  // The list is everything forwardXdgEnvVars carries (core/system/Xdg.cpp)
+  // except the two names set just above. RSTUDIO_CONFIG_DIR and
+  // RSTUDIO_DATA_DIR are deleted rather than redirected because they name
+  // system-wide dirs with no per-run sandbox equivalent; dropping them falls
+  // back to the built-in defaults, which is the isolation we want. Deleting
+  // an unset name changes nothing, so this is safe on a clean shell.
+  // XDG_CACHE_HOME is absent on purpose: rserver never forwards it, so
+  // deleting it here would imply a relationship that isn't there.
+  for (const v of [
+    'XDG_CONFIG_HOME', 'XDG_CONFIG_DIRS', 'XDG_DATA_HOME', 'XDG_DATA_DIRS', 'XDG_STATE_HOME',
+    'RSTUDIO_CONFIG_DIR', 'RSTUDIO_DATA_DIR',
+  ]) {
+    delete (env as Record<string, string | undefined>)[v];
+  }
 
   const args = [
     `--server-user=${os.userInfo().username}`,
@@ -139,6 +265,9 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
     // @utils/commands. Matches what desktop.fixture.ts does directly to its
     // single rsession.
     `--automation-agent=1`,
+    // Launch rsessions through the sandbox-env wrapper. CLI args override
+    // conf-file values (as --auth-none above already relies on).
+    `--rsession-path=${rsessionWrapper}`,
   ];
 
   console.log(`[server] spawning ${path.basename(rserverBin)} on port ${port}`);
@@ -199,6 +328,55 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
 }
 
 /**
+ * The external server URL this run targets (PW_RSTUDIO_SERVER_URL, with
+ * PW_RSTUDIO_SERVER_PORT applied and any trailing slash removed), or null
+ * when the run spawns its own in-tree rserver. Shared by launchServer and
+ * the remote-provisioning flows (utils/remote-provision.ts) so both resolve
+ * the same server.
+ */
+export function externalServerUrl(): string | null {
+  const externalUrl = process.env.PW_RSTUDIO_SERVER_URL;
+  if (!externalUrl) return null;
+  const url = new URL(externalUrl);
+  if (process.env.PW_RSTUDIO_SERVER_PORT) {
+    url.port = process.env.PW_RSTUDIO_SERVER_PORT;
+  }
+  return url.toString().replace(/\/$/, '');
+}
+
+/**
+ * Complete the RStudio Server login on `page` (already navigated to the
+ * server) and wait until the R console is ready. Fills the login form when
+ * one is presented (PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD);
+ * servers running with --auth-none (e.g. our spawn) skip straight to the
+ * IDE, so credentials are only required when the form appears. Shared by
+ * launchServer and the remote-provisioning flows.
+ */
+export async function signInToServer(page: Page): Promise<void> {
+  const username = process.env.PW_RSTUDIO_SERVER_USER || '';
+  const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
+
+  const usernameField = page.locator('#username');
+  if (await usernameField.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    if (!username || !password) {
+      throw new Error(
+        'Server presented a login form but PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD are not set',
+      );
+    }
+    await usernameField.fill(username);
+    await page.locator('#password').fill(password);
+    await page.locator('#signinbutton').click();
+    console.log(`Logged in as ${username}`);
+  } else {
+    console.log('No login form detected (auth-none mode)');
+  }
+
+  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
+  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
+  console.log('RStudio console is ready');
+}
+
+/**
  * Connect to RStudio Server, log in, and return a ready session. When
  * PW_RSTUDIO_SERVER_URL is unset, a private rserver-dev is spawned per
  * worker with sandboxed env so HOME / data dirs / config dirs are isolated
@@ -206,9 +384,7 @@ async function spawnSandboxedRserver(): Promise<SpawnedServer | null> {
  * to point at an external server (e.g. CI) to skip the spawn.
  */
 export async function launchServer(): Promise<ServerSession> {
-  const externalUrl = process.env.PW_RSTUDIO_SERVER_URL;
-  const username = process.env.PW_RSTUDIO_SERVER_USER || '';
-  const password = process.env.PW_RSTUDIO_SERVER_PASSWORD || '';
+  const externalUrl = externalServerUrl();
 
   let rserverProcess: ChildProcess | undefined;
   let rserverCleanupDirs: string[] | undefined;
@@ -224,11 +400,7 @@ export async function launchServer(): Promise<ServerSession> {
         `test.use({ aiAuth }) requests signing out of ${stripped.join(', ')}, but PW_RSTUDIO_SERVER_URL points at an external server whose credentials the harness cannot control. Unset PW_RSTUDIO_SERVER_URL to use a spawned server, or remove the aiAuth declaration.`,
       );
     }
-    const url = new URL(externalUrl);
-    if (process.env.PW_RSTUDIO_SERVER_PORT) {
-      url.port = process.env.PW_RSTUDIO_SERVER_PORT;
-    }
-    serverUrl = url.toString().replace(/\/$/, '');
+    serverUrl = externalUrl;
     console.log(`[server] using external URL ${serverUrl}`);
   } else {
     const spawned = await spawnSandboxedRserver();
@@ -252,28 +424,7 @@ export async function launchServer(): Promise<ServerSession> {
   const page = await context.newPage();
 
   await page.goto(serverUrl, { waitUntil: 'domcontentloaded' });
-
-  // Log in if a login form is presented. Servers running with --auth-none
-  // (e.g. local rserver-dev, our spawn) skip straight to the IDE, so
-  // credentials are only required when the form appears.
-  const usernameField = page.locator('#username');
-  if (await usernameField.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    if (!username || !password) {
-      throw new Error(
-        'Server presented a login form but PW_RSTUDIO_SERVER_USER / PW_RSTUDIO_SERVER_PASSWORD are not set',
-      );
-    }
-    await usernameField.fill(username);
-    await page.locator('#password').fill(password);
-    await page.locator('#signinbutton').click();
-    console.log(`Logged in as ${username}`);
-  } else {
-    console.log('No login form detected (auth-none mode)');
-  }
-
-  const loginTimeout = Number(process.env.PW_RSTUDIO_SERVER_LOGIN_TIMEOUT) || 60_000;
-  await page.waitForSelector(CONSOLE_INPUT, { state: 'visible', timeout: loginTimeout });
-  console.log('RStudio console is ready');
+  await signInToServer(page);
 
   // Dismiss any "save changes" modal from a previous interrupted run.
   // Use isVisible() (snapshot, no wait) to gate the click -- click({ timeout })
@@ -336,7 +487,11 @@ export async function shutdownServer(session: ServerSession): Promise<void> {
       null,
       { timeout: 10000, polling: 50 },
     ).catch(() => {});
-    await executeInConsole(page, 'quit(save = "no")');
+    // wait:false -- quit() never returns to a prompt, so the default
+    // prompt-count wait would stall the full sessionRestart timeout before
+    // its TimeoutError lands in the catch below. The overlay wait next is
+    // the real completion signal.
+    await executeInConsole(page, 'quit(save = "no")', { wait: false });
     // Wait for the "R Session Ended" overlay (ApplicationEndedPopupPanel in
     // QUIT mode) -- the deterministic signal that the rsession has exited --
     // rather than sleeping a fixed interval with the dead tab still open.

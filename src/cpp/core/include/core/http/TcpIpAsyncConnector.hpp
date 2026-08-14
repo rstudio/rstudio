@@ -17,6 +17,7 @@
 #define CORE_HTTP_TCP_IP_ASYNC_CONNECTOR_HPP
 
 #include <boost/function.hpp>
+#include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
@@ -70,7 +71,14 @@ public:
                 const ConnectedHandler& connectedHandler,
                 const ErrorHandler& errorHandler,
                 const boost::posix_time::time_duration& timeout =
-                   boost::posix_time::time_duration(boost::posix_time::pos_infin))
+                   boost::posix_time::time_duration(boost::posix_time::pos_infin),
+                // Restricts resolution to the given address family (rstudio-pro#12142)
+                // -- e.g. so a caller that knows the destination should be reached via
+                // a specific family (IPv4 vs IPv6) doesn't have to rely on whichever
+                // family the resolver happens to try first for an ambiguous hostname
+                // like "localhost". Unset (the default) preserves the prior behavior:
+                // an unrestricted resolve that may return both A and AAAA results.
+                boost::optional<boost::asio::ip::tcp> ipFamily = boost::none)
    {
       // save handlers
       connectedHandler_ = connectedHandler;
@@ -97,7 +105,10 @@ public:
          handleResolve(ec, results.begin());
       };
 
-      resolver_.async_resolve(address, port, std::move(callback));
+      if (ipFamily)
+         resolver_.async_resolve(*ipFamily, address, port, std::move(callback));
+      else
+         resolver_.async_resolve(address, port, std::move(callback));
    }
 
 private:

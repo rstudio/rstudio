@@ -158,10 +158,15 @@ pipeline {
 
         stage('Sign Executables') {
           environment {
+            // rsession.dll carries the bulk of the session code and is loaded by
+            // the rsession.exe / rsession-utf8.exe launcher stubs, so it needs a
+            // signature of its own; multiarch builds ship an x86 copy as well
             EXECUTABLES = """^
               package\\win32\\build\\src\\cpp\\session\\rsession-utf8.exe ^
               package\\win32\\build\\src\\cpp\\session\\rsession.exe ^
+              package\\win32\\build\\src\\cpp\\session\\rsession.dll ^
               package\\win32\\build\\src\\cpp\\session\\x86\\rsession.exe ^
+              package\\win32\\build\\src\\cpp\\session\\x86\\rsession.dll ^
               package\\win32\\build\\src\\cpp\\session\\consoleio\\consoleio.exe ^
               package\\win32\\build\\src\\cpp\\session\\postback\\rpostback.exe ^
               package\\win32\\build\\src\\cpp\\diagnostics\\diagnostics.exe ^
@@ -213,6 +218,27 @@ pipeline {
               "set \"package_os=windows\" &&" +
               "make-dist-packages.bat &&" +
               "cd ../.."
+          }
+        }
+
+        stage('Upload Debug Symbols') {
+
+          when { expression { return params.PUBLISH } }
+
+          environment {
+            PRODUCT = "${utils.getProductName()}"
+            VERSION = "${RSTUDIO_VERSION}"
+          }
+
+          steps {
+            // same role the linux builds use to publish to rstudio-debug-symbols;
+            // as with the package upload below, the windows docker container cannot
+            // reach the instance-metadata endpoint, so supply credentials here
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID, region: 'us-east-1') {
+              retry(5) {
+                powershell '.\\package\\win32\\scripts\\upload-debug-symbols.ps1 -product ${env:PRODUCT} -version ${env:VERSION}'
+              }
+            }
           }
         }
 

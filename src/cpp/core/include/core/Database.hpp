@@ -555,6 +555,9 @@ public:
    boost::posix_time::ptime checkoutTime() const { return checkoutTime_; }
    void setCheckoutTime(const boost::posix_time::ptime& time) { checkoutTime_ = time; }
 
+   bool needsHealthCheck() const { return needsHealthCheck_; }
+   void setNeedsHealthCheck(bool needs) { needsHealthCheck_ = needs; }
+
 private:
    friend class ConnectVisitor;
    friend class Transaction;
@@ -572,6 +575,11 @@ private:
    // Tracks when this connection was checked out from the pool.
    // Used to compute hold duration for monitoring.
    boost::posix_time::ptime checkoutTime_;
+
+   // Set when a health check or reconnect fails. Survives the return-to-pool
+   // path so the idle-skip fast path cannot hand a known-broken connection
+   // back out untested. Cleared only after a successful SELECT 1 or reconnect.
+   bool needsHealthCheck_ = false;
 };
 
 class PooledConnection : public IConnection
@@ -755,11 +763,21 @@ Error createConnectionPool(size_t poolSize,
                            const ConnectionOptions& options,
                            boost::shared_ptr<ConnectionPool>* pPool);
 
-// execute a provided query and pass each row to the rowHandler
-Error execAndProcessQuery(boost::shared_ptr<database::IConnection> pConnection,
-                          const std::string& sql,
-                          const boost::function<void(const database::Row&)>& rowHandler =
-                             boost::function<void(const database::Row&)>());
+// run a handler on each row in a rowset
+void forEachRow(database::Rowset& rowset,
+   const boost::function<void(const Row&)>& rowHandler);
+
+// run a handler on each row in a rowset, returning values
+template <typename T>
+std::vector<T> mapRows(Rowset& rowset,
+   const boost::function<T(const Row&)>& rowHandler)
+{
+   std::vector<T> result;
+   forEachRow(rowset, [&](const Row& row) {
+      result.push_back(rowHandler(row));
+   });
+   return result;
+}
 
 // uses soci::indicator to safely parse a string value from a row
 std::string getRowStringValue(const Row& row, const std::string& column);

@@ -3,7 +3,9 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { sleep, TIMEOUTS } from '@utils/constants';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, isCommandChecked } from '@utils/commands';
+import { PLOTS_TAB } from '@pages/plots_pane.page';
+import { VIEWER_MAXIMIZE_R, VIEWER_TAB } from '@pages/viewer_pane.page';
 import type { Locator, Page } from 'playwright';
 
 // ---------------------------------------------------------------------------
@@ -14,12 +16,19 @@ const TABSET2_PANE = '#rstudio_TabSet2_pane';
 const CONSOLE_PANE = '#rstudio_Console_pane';
 const SOURCE_PANE = '#rstudio_Source_pane';
 const SOURCE1_PANE = '#rstudio_Source1_pane';
+// Any additional source column, whatever number its pane id carries; the main
+// Source pane (#rstudio_Source_pane) is excluded.
+const EXTRA_SOURCE_COLUMN_PANES = '[id^="rstudio_Source"][id$="_pane"]:not(#rstudio_Source_pane)';
 const SOURCE2_PANE = '#rstudio_Source2_pane';
 const SOURCE3_PANE = '#rstudio_Source3_pane';
 const SIDEBAR_PANE = '#rstudio_Sidebar_pane';
 const CUSTOMIZE_PANES_BUTTON = '#rstudio_customize_panes';
 const SIDEBAR_CLOSE_BTN = '.rstudio_panel_close_btn_sidebar';
+const SIDEBAR_MAX_BTN = '.rstudio_panel_max_btn_sidebar';
 const MIDDLE_COLUMN_SPLITTER = '#rstudio_middle_column_splitter';
+// Pane header maximize button; doubles as "restore" once the pane is EXCLUSIVE.
+// Scoped to the normal frame -- MinimizedWindowFrame reuses the same class.
+const CONSOLE_MAX_BTN = `${CONSOLE_PANE} .rstudio_panel_max_btn_console`;
 
 // Pane Layout dialog selectors
 const PL_RIGHT_TOP = '#rstudio_pane_layout_right_top';
@@ -31,6 +40,11 @@ const DIALOG_BOX = '.gwt-DialogBox';
 // Splitter resizes that don't move the splitter at all should fail loudly —
 // otherwise the preservation tests degenerate to no-op cycles.
 const RESIZE_MIN_DELTA_PX = 20;
+
+// How long a post-reload layout must stay un-zoomed to count as not replayed.
+// Must outlast the 200ms Timer in ZoomedTabStateValue.onInit, which runs after
+// window.rstudio.ready. 2s leaves room for a draft build on a loaded machine.
+const RELOAD_ZOOM_REPLAY_WINDOW_MS = 2000;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -73,8 +87,27 @@ async function waitForStableWidth(
   return prev;
 }
 
+// Asserts continuously for `durationMs`, failing on the first violation.
+// expect.poll cannot express "must not happen": it returns on its first passing
+// sample, and here the good state is also the starting state. The window starts
+// after the first sample, which is a locator read and can be slow.
+async function expectHoldsFor(durationMs: number, assertions: () => Promise<void>): Promise<void> {
+  await assertions();
+  const deadline = Date.now() + durationMs;
+  for (;;) {
+    if (Date.now() >= deadline)
+      return;
+    await sleep(50);
+    await assertions();
+  }
+}
+
 async function elementExists(page: Page, selector: string): Promise<boolean> {
   return (await page.locator(selector).count()) > 0;
+}
+
+async function isPlotsTabSelected(page: Page): Promise<boolean> {
+  return (await page.locator(PLOTS_TAB).getAttribute('aria-selected')) === 'true';
 }
 
 // Asserts that `actual` is within `tolerance` (as a fraction) of `expected`.
@@ -126,6 +159,17 @@ async function resetUILayout(page: Page): Promise<void> {
     await executeCommand(page, 'layoutZoomLeftColumn');
     await sleep(TIMEOUTS.layoutSettle);
   }
+
+  // A failed zoom test can leave a quadrant stuck in HIDE/EXCLUSIVE, which
+  // persists across a reload and breaks every later test. resetLayoutZoom won't
+  // touch it, since HIDE/EXCLUSIVE also encodes the empty-source-pane layout.
+  // Detect the one wrong case -- Source has tabs but no height -- and clear it.
+  const sourceTabCount = await page.locator(`${SOURCE_PANE} [role="tab"]`).count();
+  if (sourceTabCount > 0 && (await getOffsetHeight(page, SOURCE_PANE)) < 50) {
+    await executeCommand(page, 'layoutEndZoom');
+    await sleep(TIMEOUTS.layoutSettle);
+  }
+
   await hideSidebarIfVisible(page);
 }
 
@@ -687,6 +731,692 @@ test.describe('Pane and column management', () => {
     expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
     expectWidthClose(await getOffsetWidth(page, TABSET2_PANE), initialTabSet2Width, 0.1, 'restored TabSet2');
     expectWidthClose(await getOffsetWidth(page, SIDEBAR_PANE), initialSidebarWidth, 0.1, 'restored Sidebar');
+  });
+
+  // -------------------------------------------------------------------------
+  // #18444: PaneManager's zoom bookkeeping (maximizedWindow_ / maximizedTab_)
+  // must not outlive the visible zoom. While it does, WindowEnsureVisibleEvent
+  // re-zooms the next pane that raises itself -- a plot, a package refresh, a
+  // render -- collapsing the layout again and again. `View > Panes > Zoom
+  // Console` is the live readout: manageLayoutCommands drives its checkmark off
+  // maximizedTab_, so a checkmark beside a normal layout is the stale state.
+
+  // The button a user reaches for to escape a zoom: it reads as "restore" once
+  // the pane is EXCLUSIVE (WindowFrameButton.updateLabel).
+  async function clickConsoleRestoreButton(page: Page): Promise<void> {
+    await page.locator(CONSOLE_MAX_BTN).click();
+    await sleep(TIMEOUTS.layoutSettle);
+  }
+
+  // Zoom the Console pane and wait for the right column to collapse.
+  async function zoomConsolePane(page: Page): Promise<void> {
+    await executeCommand(page, 'layoutZoomConsole');
+    await expect.poll(
+      async () => (await getOffsetWidth(page, TABSET1_PANE)) < 50,
+      { timeout: 5000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomConsole'),
+      'precondition: zoom should be tracked after layoutZoomConsole',
+    ).toBe(true);
+  }
+
+  test('Restoring a zoomed pane from its header button ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    const initialTabSet1Width = await getOffsetWidth(page, TABSET1_PANE);
+    const initialTabSet2Width = await getOffsetWidth(page, TABSET2_PANE);
+    expect(initialTabSet1Width).toBeGreaterThan(50);
+
+    await zoomConsolePane(page);
+    await clickConsoleRestoreButton(page);
+
+    // The button restores the vertical split, so Source comes back...
+    await waitForStableWidth(page, SOURCE_PANE, { min: 50 });
+    expect(await getOffsetHeight(page, SOURCE_PANE)).toBeGreaterThan(50);
+
+    // ...and the right column too, with the bookkeeping cleared. Before the fix
+    // neither happened: the button drove DualWindowLayoutPanel directly and
+    // PaneManager never heard about it.
+    expect(
+      await isCommandChecked(page, 'layoutZoomConsole'),
+      'zoom bookkeeping should be cleared after escaping the zoom',
+    ).toBe(false);
+    expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.1, 'restored TabSet1');
+    expectWidthClose(await getOffsetWidth(page, TABSET2_PANE), initialTabSet2Width, 0.1, 'restored TabSet2');
+  });
+
+  // The button is not the only maximize gesture: a tab-bar double-click
+  // (ModuleTabLayoutPanel) and a Console title-bar double-click
+  // (PrimaryWindowFrame) do it too, and all must end a zoom the same way.
+  //
+  // Only the tab bar is covered. ConsoleTabPanel.managePanels calls
+  // setFillWidget while any secondary console tab is visible (Terminal is, by
+  // default), which drops that title bar -- so the gesture is unreachable in
+  // the default configuration. Verified by hand instead.
+  test('Restoring a zoomed tabset by double-clicking its tab ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+
+    await executeCommand(page, 'layoutZoomEnvironment');
+    await expect.poll(
+      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50,
+      { timeout: 5000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomEnvironment'),
+      'precondition: zoom should be tracked after layoutZoomEnvironment',
+    ).toBe(true);
+
+    await page.locator(`${TABSET1_PANE} [role="tab"]`).first().dblclick();
+    await sleep(TIMEOUTS.layoutSettle);
+
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+    expect(
+      await isCommandChecked(page, 'layoutZoomEnvironment'),
+      'a tab double-click must end the zoom, not just restore the quadrant',
+    ).toBe(false);
+    expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
+  });
+
+  // The end-to-end guard on the reported cascade: zoom, escape, then let a pane
+  // raise itself. Before the fix the escape left maximizedWindow_ set, and
+  // WindowEnsureVisibleEvent turned the raise into a fresh zoom.
+  test('A pane raising itself does not collapse the layout (#18444)', async ({ rstudioPage: page }) => {
+    const consoleActions = new ConsolePaneActions(page);
+
+    // Deselect Plots first, so its selection is a clear signal of the raise.
+    await executeCommand(page, 'activateFiles');
+    await expect.poll(() => isPlotsTabSelected(page), { timeout: 5000 }).toBe(false);
+
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+    const initialTabSet1Width = await getOffsetWidth(page, TABSET1_PANE);
+
+    await zoomConsolePane(page);
+    await clickConsoleRestoreButton(page);
+    await waitForStableWidth(page, SOURCE_PANE, { min: 50 });
+
+    // `plot()` activates Plots, which ends in WindowEnsureVisibleEvent -- the
+    // handler that used to steal the zoom.
+    await consoleActions.executeInConsole('plot(1:10)');
+
+    // Wait for the raise, not the prompt: the session queues the prompt and
+    // wakes the poller before running change detection (SessionConsoleInput.cpp),
+    // so at the prompt the plots event may be unqueued, undelivered, or
+    // unrendered. Plots is selected on fixed and broken builds alike, so this
+    // gate cannot mask the regression.
+    await expect.poll(() => isPlotsTabSelected(page), { timeout: 15000 }).toBe(true);
+    await sleep(TIMEOUTS.layoutSettle);
+
+    // Nothing must move: the raise activates Plots inside the existing layout.
+    expect(
+      await getOffsetWidth(page, CONSOLE_PANE),
+      'a pane raising itself must not collapse the Console column',
+    ).toBeGreaterThan(50);
+    expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.05, 'Console after plot');
+    expectWidthClose(await getOffsetWidth(page, TABSET1_PANE), initialTabSet1Width, 0.05, 'TabSet1 after plot');
+    expect(
+      await getOffsetHeight(page, TABSET1_PANE),
+      'TabSet1 should not be hidden by a pane raising itself',
+    ).toBeGreaterThan(50);
+  });
+
+  // Covers hookPaneMaximize's maximizeDefault() branch, for a pane that is not
+  // the zoomed one. Nothing else does: tabs.test.ts drives maximizeTabSet2,
+  // which calls onWindowStateChange directly and never reaches the frame. A
+  // regression here breaks the header button silently.
+  test('The pane header button still maximizes when nothing is zoomed (#18444)', async ({ rstudioPage: page }) => {
+    expect(
+      await isCommandChecked(page, 'layoutZoomConsole'),
+      'precondition: nothing should be zoomed',
+    ).toBe(false);
+
+    const initialSourceHeight = await getOffsetHeight(page, SOURCE_PANE);
+    expect(initialSourceHeight).toBeGreaterThan(50);
+
+    await page.locator(CONSOLE_MAX_BTN).click();
+    await expect.poll(
+      async () => getOffsetHeight(page, SOURCE_PANE),
+      { message: 'maximizing Console should shrink Source', timeout: 5000 },
+    ).toBeLessThan(initialSourceHeight);
+
+    // A vertical maximize is not a zoom: no column collapses, bookkeeping clear.
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+    expect(await isCommandChecked(page, 'layoutZoomConsole')).toBe(false);
+
+    // A second click restores: LogicalWindow maps MAXIMIZE on MAXIMIZE to NORMAL.
+    await page.locator(CONSOLE_MAX_BTN).click();
+    await expect.poll(
+      async () => getOffsetHeight(page, SOURCE_PANE),
+      { message: 'clicking again should restore Source', timeout: 5000 },
+    ).toBeGreaterThan(50);
+  });
+
+  test('Toggling the sidebar while zoomed ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    await zoomConsolePane(page);
+
+    // A sidebar show re-lays-out the columns, which undraws the zoom -- before
+    // the fix, without telling PaneManager.
+    await showSidebar(page);
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+
+    expect(
+      await isCommandChecked(page, 'layoutZoomConsole'),
+      'zoom bookkeeping should be cleared once the sidebar re-lays-out the columns',
+    ).toBe(false);
+    // Every column, not just TabSet1: the restore animates while setSidebarWidget
+    // lays out on top of it, so a bad interleaving can collapse a different one.
+    expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, SIDEBAR_PANE)).toBeGreaterThan(50);
+    expect(
+      await getOffsetHeight(page, TABSET1_PANE),
+      'TabSet1 should not be left hidden after the zoom is undrawn',
+    ).toBeGreaterThan(50);
+  });
+
+  // The sidebar maximizes by zooming its column, not its quadrant -- but it can
+  // still be the pane-zoomed window (Zoom Chat -> zoomTab -> fullyMaximizeWindow)
+  // and zoomColumn's un-zoom branch does not clear pane-zoom bookkeeping. Hence
+  // its own zoom-aware dispatch.
+  test('Restoring a zoomed sidebar from its header button ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+
+    await executeCommand(page, 'layoutZoomChat');
+    await expect.poll(
+      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50,
+      { timeout: 5000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomChat'),
+      'precondition: the sidebar pane zoom should be tracked',
+    ).toBe(true);
+
+    await page.locator(SIDEBAR_MAX_BTN).click();
+    await sleep(TIMEOUTS.layoutSettle);
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+
+    expect(
+      await isCommandChecked(page, 'layoutZoomChat'),
+      'escaping a sidebar pane zoom must clear the zoom bookkeeping',
+    ).toBe(false);
+    expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+  });
+
+  // The same defect through the menu: View > Panes > Zoom Sidebar calls
+  // zoomColumn directly and never reaches the frame's maximize action.
+  test('Escaping a zoomed sidebar via the Zoom Sidebar command ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+    const initialConsoleWidth = await getOffsetWidth(page, CONSOLE_PANE);
+
+    await executeCommand(page, 'layoutZoomChat');
+    await expect.poll(
+      async () => (await getOffsetWidth(page, CONSOLE_PANE)) < 50,
+      { timeout: 5000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomChat'),
+      'precondition: the sidebar pane zoom should be tracked',
+    ).toBe(true);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await waitForStableWidth(page, CONSOLE_PANE, { min: 50 });
+
+    expect(
+      await isCommandChecked(page, 'layoutZoomChat'),
+      'the Zoom Sidebar command must clear a tracked pane zoom, not just the widths',
+    ).toBe(false);
+    expectWidthClose(await getOffsetWidth(page, CONSOLE_PANE), initialConsoleWidth, 0.1, 'restored Console');
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+  });
+
+  // Not redundant: refreshSidebar implements the location toggle as
+  // showSidebar(false) then showSidebar(true), so the hide branch is what
+  // carries "move the sidebar while a pane is zoomed".
+  test('Hiding the sidebar while zoomed ends the zoom (#18444)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+    await zoomConsolePane(page);
+
+    await executeCommand(page, 'toggleSidebar');
+    await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 5000 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+
+    expect(
+      await isCommandChecked(page, 'layoutZoomConsole'),
+      'zoom bookkeeping should be cleared when the sidebar is hidden',
+    ).toBe(false);
+    expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThan(50);
+  });
+
+  test('A zoomed pane does not resurrect across a UI reload (#18444)', async ({ rstudioPage: page }) => {
+    // Client state ships on a passive 5s timer (PushClientStateEvent defaults to
+    // active=false), so a reload straight after the zoom outruns the save and
+    // leaves nothing to replay. Wait for the RPC that carries it.
+    const zoomPersisted = page.waitForResponse(
+      (response) =>
+        response.url().includes('set_client_state') &&
+        (response.request().postData() ?? '').includes('MaximizedTab'),
+      { timeout: 15000 },
+    );
+    await zoomConsolePane(page);
+    const persistResponse = await zoomPersisted;
+    // A rejected RPC still returns HTTP 200 with an error member, so ok() alone
+    // does not prove the zoom was stored -- and an unstored zoom would make
+    // everything below pass vacuously.
+    expect(persistResponse.ok(), 'the set_client_state carrying the zoom must succeed').toBe(true);
+    expect(
+      await persistResponse.text(),
+      'the set_client_state carrying the zoom must not be rejected',
+    ).not.toContain('"error"');
+
+    // isZoomedColumnState discards zoomed column widths on restore (#16688), so
+    // the zoom's other half must not come back either: PaneManager's TabZoom, and
+    // DualWindowLayoutPanel's quadrant state (HIDE for a Console zoom). Otherwise
+    // the session reopens with default widths and live zoom bookkeeping.
+    await page.reload();
+    // TABSET1_PANE attaches at construction, so it gates nothing here.
+    // window.rstudio.ready is the right signal but not a state-applied gate:
+    // later-task startup work has not run when it flips, and
+    // initializeWorkbench() can return early with a ReloadEvent, so it does not
+    // even prove the panes exist. The assertion below waits for both.
+    await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+      timeout: TIMEOUTS.sessionRestart,
+    });
+
+    // A must-not-happen assertion against exactly that late work: a replayed
+    // zoom lands on onInit's 200ms Timer, after ready. One sample -- or a poll,
+    // which returns on its first pass -- goes green on the pre-replay layout.
+    await expectHoldsFor(RELOAD_ZOOM_REPLAY_WINDOW_MS, async () => {
+      expect(
+        await getOffsetWidth(page, TABSET1_PANE),
+        'the zoom must not be replayed after a reload that discarded its column widths',
+      ).toBeGreaterThan(50);
+      expect(
+        await isCommandChecked(page, 'layoutZoomConsole'),
+        'a zoom whose column widths were not restored must not stay tracked',
+      ).toBe(false);
+      expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+      // DualWindowLayoutPanel persists the quadrant half separately: a Console
+      // zoom puts Source in HIDE, so skipping only the column half is not enough.
+      expect(
+        await getOffsetHeight(page, SOURCE_PANE),
+        'the zoomed pane\'s sibling quadrant must not come back hidden',
+      ).toBeGreaterThan(50);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // #18448: the remaining routes that re-lay-out the panes without clearing
+  // the zoom bookkeeping. Same failure mode as #18444: bookkeeping that
+  // outlives the drawn zoom re-zooms the next pane that raises itself.
+
+  test('Zooming a different column while a pane is zoomed ends the pane zoom (#18448)', async ({ rstudioPage: page }) => {
+    // Deselect Plots while the layout is still normal, so its selection later
+    // is a clear signal that the raise happened.
+    await executeCommand(page, 'activateFiles');
+    await expect.poll(() => isPlotsTabSelected(page), { timeout: 5000 }).toBe(false);
+
+    await zoomConsolePane(page);
+
+    // Ask for a column other than the one the pane zoom collapsed into. This
+    // falls through zoomColumn's per-column branches; before the fix those
+    // never cleared the pane-zoom bookkeeping, so Zoom Console and Zoom Right
+    // Column ended up check-marked at once.
+    await executeCommand(page, 'layoutZoomRightColumn');
+    await expect.poll(
+      async () =>
+        (await getOffsetWidth(page, CONSOLE_PANE)) < 50 &&
+        (await getOffsetWidth(page, TABSET1_PANE)) > 200,
+      { timeout: 10000 },
+    ).toBe(true);
+
+    expect(
+      await isCommandChecked(page, 'layoutZoomConsole'),
+      'switching to a column zoom must end the tracked pane zoom',
+    ).toBe(false);
+    expect(
+      await isCommandChecked(page, 'layoutZoomRightColumn'),
+      'the requested column zoom should be the one active',
+    ).toBe(true);
+
+    const zoomedTabSet1Width = await getOffsetWidth(page, TABSET1_PANE);
+
+    // The original #18444 cascade: with stale bookkeeping, a pane raising
+    // itself hands the whole window to fullyMaximizeWindow, hiding its
+    // sibling. Raise Plots through its activate command rather than plot():
+    // typing at the console raises the Console pane, which the column zoom
+    // has collapsed to width 0, and an ensure-visible on a zero-width pane
+    // legitimately redistributes the columns. Plots lives in the zoomed right
+    // column, so on a fixed build nothing needs to move.
+    await executeCommand(page, 'activatePlots');
+    await expect.poll(() => isPlotsTabSelected(page), { timeout: 10000 }).toBe(true);
+    await sleep(TIMEOUTS.layoutSettle);
+
+    // A stale zoom collapses the layout on a later pass than the raise, so hold
+    // the assertions over a window instead of sampling once.
+    await expectHoldsFor(1000, async () => {
+      expect(
+        await getOffsetHeight(page, TABSET1_PANE),
+        'a pane raising itself must not hide TabSet1 via a stale pane zoom',
+      ).toBeGreaterThan(50);
+      expectWidthClose(
+        await getOffsetWidth(page, TABSET1_PANE),
+        zoomedTabSet1Width,
+        0.05,
+        'zoomed TabSet1 after the raise',
+      );
+      expect(
+        await getOffsetWidth(page, CONSOLE_PANE),
+        'the raise must not move the layout: Console stays collapsed by the column zoom',
+      ).toBeLessThan(50);
+    });
+  });
+
+  // The two-click repro from the issue: zoom the sidebar column, then close
+  // the sidebar from its header button. removeSidebarWidget hands the freed
+  // width to the center column, so without the fix the right column stays at
+  // 1px -- Environment / Plots / Help gone, and no zoom check-marked anywhere.
+  test('Closing the sidebar while its column is zoomed restores the columns (#18448)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await expect.poll(
+      async () =>
+        (await getOffsetWidth(page, TABSET1_PANE)) < 50 &&
+        (await getOffsetWidth(page, SIDEBAR_PANE)) > 200,
+      { timeout: 10000 },
+    ).toBe(true);
+    expect(
+      await isCommandChecked(page, 'layoutZoomSidebar'),
+      'precondition: the sidebar column zoom should be tracked',
+    ).toBe(true);
+
+    await page.locator(SIDEBAR_CLOSE_BTN).click();
+    await expect(page.locator(SIDEBAR_PANE)).toHaveCount(0, { timeout: 5000 });
+
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+    expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+    expect(await getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThan(50);
+  });
+
+  // MainSplitPanel.addLeftWidget rebuilds the split panel and re-applies
+  // persisted widths, undrawing a zoom. Before the fix the bookkeeping
+  // survived: the zoomed pane stayed EXCLUSIVE (its sibling hidden), and the
+  // next pane to raise itself was re-zoomed.
+  test('Adding a source column while a pane is zoomed ends the zoom (#18448)', async ({ rstudioPage: page }) => {
+    await zoomConsolePane(page);
+
+    await executeCommand(page, 'newSourceColumn');
+    await expect(page.locator(SOURCE1_PANE)).toBeVisible({ timeout: 10000 });
+
+    try {
+      await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+      expect(
+        await isCommandChecked(page, 'layoutZoomConsole'),
+        'adding a source column must end the tracked pane zoom',
+      ).toBe(false);
+      expect(
+        await getOffsetHeight(page, SOURCE_PANE),
+        'the zoomed pane\'s sibling must come back when the zoom is undrawn',
+      ).toBeGreaterThan(50);
+
+      const consoleActions = new ConsolePaneActions(page);
+      await consoleActions.executeInConsole('plot(1:10)');
+      await expect.poll(() => isPlotsTabSelected(page), { timeout: 15000 }).toBe(true);
+      await sleep(TIMEOUTS.layoutSettle);
+
+      expect(
+        await getOffsetWidth(page, CONSOLE_PANE),
+        'a pane raising itself must not collapse the layout via a stale pane zoom',
+      ).toBeGreaterThan(50);
+    } finally {
+      // newSourceColumn auto-creates an Untitled doc in the new column; close
+      // it so the column is removed and later tests see the default layout.
+      await page.locator(SOURCE1_PANE).click();
+      await executeCommand(page, 'closeSourceDoc');
+      await expect(page.locator(SOURCE1_PANE)).toHaveCount(0, { timeout: 10000 });
+    }
+  });
+
+  // The removal half of the same defect: MainSplitPanel.removeLeftWidget does
+  // the same clearForRefresh + initialize rebuild as addLeftWidget, so closing
+  // a source column undraws a zoom too and must end the bookkeeping with it.
+  test('Closing a source column while a pane is zoomed ends the zoom (#18448)', async ({ rstudioPage: page }) => {
+    // Match the added column by shape, not by number: SourceColumnManager's
+    // column counter only ever climbs within a client session (it restarts at 1
+    // on a UI reload), so which SourceN a fresh column gets depends on what ran
+    // before this test.
+    const extraColumn = page.locator(EXTRA_SOURCE_COLUMN_PANES);
+    await expect(extraColumn, 'precondition: no extra source column to start').toHaveCount(0);
+
+    await executeCommand(page, 'newSourceColumn');
+    await expect(extraColumn).toHaveCount(1, { timeout: 10000 });
+
+    try {
+      // Make the new column the active one before zooming: the zoom collapses
+      // it to zero width, and a click on a zero-width pane never lands.
+      // closeSourceDoc then targets its auto-created Untitled, whose close
+      // removes the column.
+      await extraColumn.click();
+
+      await zoomConsolePane(page);
+
+      await executeCommand(page, 'closeSourceDoc');
+      await expect(extraColumn).toHaveCount(0, { timeout: 10000 });
+
+      await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+      expect(
+        await isCommandChecked(page, 'layoutZoomConsole'),
+        'closing a source column must end the tracked pane zoom',
+      ).toBe(false);
+      expect(
+        await getOffsetHeight(page, SOURCE_PANE),
+        'the zoomed pane\'s sibling must come back when the zoom is undrawn',
+      ).toBeGreaterThan(50);
+
+      const consoleActions = new ConsolePaneActions(page);
+      await consoleActions.executeInConsole('plot(1:10)');
+      await expect.poll(() => isPlotsTabSelected(page), { timeout: 15000 }).toBe(true);
+      await sleep(TIMEOUTS.layoutSettle);
+
+      // A stale zoom re-collapses the layout when Plots raises itself, which
+      // can land after the first sample -- hold the assertion over a window.
+      await expectHoldsFor(1000, async () => {
+        expect(
+          await getOffsetWidth(page, CONSOLE_PANE),
+          'a pane raising itself must not collapse the layout via a stale pane zoom',
+        ).toBeGreaterThan(50);
+      });
+    } finally {
+      // The body closes the column; clean up only when it failed before that.
+      if ((await extraColumn.count()) > 0) {
+        await extraColumn.click();
+        await executeCommand(page, 'closeSourceDoc');
+        await expect(extraColumn).toHaveCount(0, { timeout: 10000 });
+      }
+    }
+  });
+
+  // Moving a zoomed sidebar exercises refreshSidebar, which captures the
+  // sidebar width before its hide/show cycle ends the zoom and re-applies it
+  // after. A zoomed sidebar's captured width is nearly the whole panel, so
+  // re-applying it would zoom the sidebar right back (#18448).
+  test('Moving a zoomed sidebar to the other side ends the zoom (#18448)', async ({ rstudioPage: page }) => {
+    await showSidebar(page);
+
+    await executeCommand(page, 'layoutZoomSidebar');
+    await expect.poll(
+      async () =>
+        (await getOffsetWidth(page, TABSET1_PANE)) < 50 &&
+        (await getOffsetWidth(page, SIDEBAR_PANE)) > 200,
+      { timeout: 10000 },
+    ).toBe(true);
+    const zoomedSidebarWidth = await getOffsetWidth(page, SIDEBAR_PANE);
+
+    await executeCommand(page, 'toggleSidebarLocation');
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+    await waitForStableWidth(page, TABSET1_PANE, { min: 50 });
+
+    // The relocated sidebar must come back at a normal width, not the
+    // captured zoomed one, with every column visible again. The deferred
+    // width re-apply lands after the recreation settles, so hold the
+    // assertion over a window rather than sampling once.
+    await expectHoldsFor(1000, async () => {
+      expect(
+        await getOffsetWidth(page, SIDEBAR_PANE),
+        'the relocated sidebar must not keep its zoomed width',
+      ).toBeLessThan(zoomedSidebarWidth / 2);
+      expect(await getOffsetWidth(page, CONSOLE_PANE)).toBeGreaterThan(50);
+      expect(await getOffsetWidth(page, TABSET1_PANE)).toBeGreaterThan(50);
+      expect(await getOffsetWidth(page, TABSET2_PANE)).toBeGreaterThan(50);
+    });
+  });
+
+  // Recreating the sidebar (hide/show, location change) replaces its
+  // WorkbenchTabPanel. The selection must survive: the reused
+  // SelectedTabStateValue no longer runs onInit's restore, so PaneManager
+  // carries the outgoing panel's selected tab to the replacement explicitly.
+  test('Sidebar recreation keeps the selected tab (#18448)', async ({ rstudioPage: page }) => {
+    // Two tabs are needed to observe a selection reset; put Viewer in the
+    // sidebar next to Chat via the Pane Layout dialog.
+    await openPaneLayoutOptions(page);
+    await toggleTab(page, PL_SIDEBAR, 'Viewer');
+    const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+    if (!(await sidebarVisibleCheckbox.isChecked())) {
+      await sidebarVisibleCheckbox.click();
+      await sleep(TIMEOUTS.layoutSettle);
+    }
+    await page.locator(PREFERENCES_CONFIRM).click();
+    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+
+    try {
+      const sidebarTabs = page.locator(`${SIDEBAR_PANE} [role="tab"]`);
+      await expect(sidebarTabs).toHaveCount(2, { timeout: 10000 });
+
+      // Select the second tab, so a reset-to-first is distinguishable.
+      await sidebarTabs.nth(1).click();
+      await expect(sidebarTabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+      const selectedTabId = await sidebarTabs.nth(1).getAttribute('id');
+
+      await executeCommand(page, 'toggleSidebarLocation');
+      await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+      await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
+
+      // Same tab set, so the same position is the same tab; pin it by id too.
+      const tabsAfter = page.locator(`${SIDEBAR_PANE} [role="tab"]`);
+      await expect(tabsAfter).toHaveCount(2, { timeout: 10000 });
+      expect(await tabsAfter.nth(1).getAttribute('id')).toBe(selectedTabId);
+      await expect(
+        tabsAfter.nth(1),
+        'the selected tab must survive the sidebar recreation',
+      ).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      const cleanupCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+      if (await cleanupCheckbox.isChecked()) {
+        await cleanupCheckbox.click();
+        await sleep(TIMEOUTS.layoutSettle);
+      }
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    }
+  });
+
+  // A maximize height request (EnsureHeightEvent.MAXIMIZED) is a vertical
+  // operation, but the sidebar's maximize action is a horizontal column zoom
+  // (layoutZoomSidebar). Routing the request through the frame's maximize
+  // action would collapse every other column, so LogicalWindow keeps the
+  // direct conversion for non-zoomed windows. Here rather than in
+  // viewer_maximize_zoom.test.ts because moving Viewer into the sidebar needs
+  // this file's Pane Layout dialog helpers (the window.rstudio prefs bridge
+  // cannot set object-valued prefs like panes).
+  test('A viewer in the sidebar keeps its maximize request vertical (#18448)', async ({ rstudioPage: page }) => {
+    await openPaneLayoutOptions(page);
+    await toggleTab(page, PL_SIDEBAR, 'Viewer');
+    const sidebarVisibleCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+    if (!(await sidebarVisibleCheckbox.isChecked())) {
+      await sidebarVisibleCheckbox.click();
+      await sleep(TIMEOUTS.layoutSettle);
+    }
+    await page.locator(PREFERENCES_CONFIRM).click();
+    await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    await expect(page.locator(SIDEBAR_PANE)).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`${SIDEBAR_PANE} ${VIEWER_TAB}`)).toBeVisible({ timeout: 10000 });
+
+    try {
+      // The invariant is relative -- a vertical height request must change no
+      // column width -- because the starting widths aren't pristine here: a
+      // prior sidebar hide can record a collapsed center that the show path
+      // then deliberately preserves (savedCenterCollapsed_).
+      await waitForStableWidth(page, SIDEBAR_PANE, { min: 50 });
+      await sleep(TIMEOUTS.layoutSettle);
+
+      // Typing at a zero-width console raises it, and an ensure-visible on a
+      // zero-width pane legitimately redistributes the columns. Give the
+      // center a healthy width first, so the height request is the only
+      // remaining actor. Press-until-wide rather than a fixed count: a fixed
+      // 60 presses squeezes the right column to zero instead.
+      if ((await getOffsetWidth(page, CONSOLE_PANE)) < 200) {
+        await focusSplitter(page);
+        for (let i = 0; i < 60 && (await getOffsetWidth(page, CONSOLE_PANE)) < 200; i++) {
+          await page.keyboard.press('ArrowRight');
+        }
+        await sleep(TIMEOUTS.layoutSettle);
+      }
+      const widthsBefore = async () => ({
+        console: await getOffsetWidth(page, CONSOLE_PANE),
+        tabSet1: await getOffsetWidth(page, TABSET1_PANE),
+        tabSet2: await getOffsetWidth(page, TABSET2_PANE),
+        sidebar: await getOffsetWidth(page, SIDEBAR_PANE),
+      });
+      const before = await widthsBefore();
+      expect(
+        before.tabSet1,
+        'precondition: TabSet1 visible before the height request',
+      ).toBeGreaterThan(50);
+
+      const consoleActions = new ConsolePaneActions(page);
+      await consoleActions.executeInConsole(VIEWER_MAXIMIZE_R);
+
+      // Wait on the effect, not the prompt: the request also brings the
+      // Viewer tab to the front, so its selection shows the event landed.
+      await expect.poll(
+        async () =>
+          (await page.locator(`${SIDEBAR_PANE} ${VIEWER_TAB}`).getAttribute('aria-selected')) === 'true',
+        { timeout: 10000 },
+      ).toBe(true);
+      await sleep(TIMEOUTS.layoutSettle);
+
+      // A misrouted height request turns into a column zoom on a later layout
+      // pass, so hold the invariant over a window rather than sampling once.
+      await expectHoldsFor(1000, async () => {
+        const after = await widthsBefore();
+        for (const key of Object.keys(before) as (keyof typeof before)[]) {
+          expect(
+            Math.abs(after[key] - before[key]),
+            `a vertical height request must not move the ${key} column (${before[key]} -> ${after[key]})`,
+          ).toBeLessThan(10);
+        }
+        expect(await isCommandChecked(page, 'layoutZoomSidebar')).toBe(false);
+      });
+    } finally {
+      // Put Viewer back in TabSet2 and hide the sidebar via the dialog's
+      // reset link, the same cleanup the suite's afterAll uses.
+      await openPaneLayoutOptions(page);
+      await resetPaneLayoutInDialog(page);
+      const cleanupCheckbox = page.locator(PL_SIDEBAR_VISIBLE);
+      if (await cleanupCheckbox.isChecked()) {
+        await cleanupCheckbox.click();
+        await sleep(TIMEOUTS.layoutSettle);
+      }
+      await page.locator(PREFERENCES_CONFIRM).click();
+      await expect(page.locator(DIALOG_BOX)).toHaveCount(0, { timeout: 10000 });
+    }
   });
 
   // -------------------------------------------------------------------------

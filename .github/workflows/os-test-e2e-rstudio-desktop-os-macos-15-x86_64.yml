@@ -86,6 +86,14 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+    outputs:
+      r_version_actual:
+        description: >-
+          The R version this engine actually ran against, read back from the
+          installed R rather than echoed from the r_version input. Empty when
+          the e2e job did not run (build_only, or a build failure), and also when
+          it ran but failed before reaching the R install.
+        value: ${{ jobs.e2e-desktop-macos15.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -95,6 +103,9 @@ on:
         required: false
       AWS_SCCACHE_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
+        required: false
+      OP_SERVICE_ACCOUNT_TOKEN:
+        description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
         required: false
 
 permissions:
@@ -139,7 +150,7 @@ jobs:
       # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
       GWT_STYLE: PRETTY
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
       # copilot-language-server, etc.) all land under RSTUDIO_TOOLS_ROOT.
@@ -149,7 +160,7 @@ jobs:
       # main-scoped runs.
       - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
@@ -162,7 +173,7 @@ jobs:
       # different versions / platforms isolated automatically.
       - name: Restore build-time R packages
         id: rlibs-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: rstudio-build-rlibs-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
@@ -183,7 +194,7 @@ jobs:
       # on a key miss (see that step's comment).
       - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: package/osx/build/gwt
           key: rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
@@ -209,14 +220,14 @@ jobs:
       # every PR build cold in the first place.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
       - name: Save build-time R packages
         if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
@@ -235,7 +246,7 @@ jobs:
         # A failed OIDC exchange degrades to the GHA backend below rather
         # than failing the build.
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
           aws-region: us-east-1
@@ -295,7 +306,7 @@ jobs:
       # sends every PR build cold in the first place.
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: package/osx/build/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
@@ -314,7 +325,7 @@ jobs:
 
       - name: Upload RStudio.app artifact
         if: inputs.build_only != true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rstudio-app-macos-x86_64
           path: RStudio.app.tar.gz
@@ -330,13 +341,26 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
+    # This job is a shard matrix, so this is one output value for the whole matrix
+    # rather than one per shard. Every shard that reaches the deps step installs
+    # the same R, so the value is the same wherever it comes from -- but which
+    # shard supplies it is not something to depend on, and a shard that never
+    # reached that step supplies nothing. The output can therefore be empty for an
+    # engine that did install R and did run the suite. Callers must treat empty as
+    # "unknown", never as "no R was installed". The Linux engine sidesteps this by
+    # uploading per-engine artifacts instead.
+    outputs:
+      r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     strategy:
       fail-fast: false
       matrix:
         shard: [1, 2]
     runs-on: macos-15-intel
     timeout-minutes: 120
+    environment: e2e-playwright
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}/R-libs
       # Pin the sandbox parent so the upload-artifact step below knows where
       # rsession logs / preserved per-spec config trees end up after a failed
@@ -344,11 +368,17 @@ jobs:
       # (PW_SANDBOX_ROOT_CREATE=1).
       PW_SANDBOX_ROOT: ${{ github.workspace }}/pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
+      # Point globalSetup's R-libs provisioner at the same library the
+      # e2e-deps action installs and caches. Without this the harness default
+      # is ~/.cache/rstudio-playwright/r-libs/... -- a different, uncached
+      # path, so packages re-download from CRAN on every run of this
+      # ephemeral runner.
+      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -385,7 +415,7 @@ jobs:
       # the build job above.
       - name: Download RStudio.app artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: rstudio-app-macos-x86_64
           path: ${{ github.workspace }}
@@ -401,27 +431,32 @@ jobs:
 
       # Daily-download path: resolve and install the latest (or specified) .dmg.
       # Runs when build_from_source is false or an explicit URL was provided.
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - name: Resolve RStudio .dmg URL
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           URL="$INSTALLER_URL"
           SHA=""
           FILENAME=""
           if [ -z "$URL" ]; then
-            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
+            MANIFEST=$(curl -fsSL --retry 3 --retry-delay 5 "$MANIFEST_URL")
             # macOS ships a single universal .dmg keyed "macos" in the daily
             # manifest (older schemas used "mac-arm64"/"mac"; kept as fallbacks).
             URL=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["macos"].link // .products.electron.platforms["mac-arm64"].link // .products.electron.platforms["mac"].link // empty')
             SHA=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["macos"].sha256 // .products.electron.platforms["mac-arm64"].sha256 // .products.electron.platforms["mac"].sha256 // empty')
             FILENAME=$(echo "$MANIFEST" | jq -r '.products.electron.platforms["macos"].filename // .products.electron.platforms["mac-arm64"].filename // .products.electron.platforms["mac"].filename // empty')
             if [ -z "$URL" ] || [ -z "$FILENAME" ] || [ -z "$SHA" ]; then
-              echo "::error::Daily manifest is missing expected fields (url='$URL', filename='$FILENAME', sha256='$SHA'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              echo "::error::No usable macos entry in $MANIFEST_URL (url='$URL', filename='$FILENAME', sha256='$SHA'). Either this release branch has no macOS daily yet, or the manifest schema changed. Re-run with build_from_source to test this branch without a daily."
               exit 1
             fi
-            echo "Auto-resolved latest macOS daily:"
+            echo "Auto-resolved macOS daily:"
             echo "  URL:      $URL"
             echo "  SHA-256:  $SHA"
             echo "  Filename: $FILENAME"
@@ -482,6 +517,7 @@ jobs:
           ls -la /Applications/RStudio.app/Contents/MacOS/RStudio
 
       - name: Install e2e test dependencies
+        id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
@@ -490,6 +526,37 @@ jobs:
           # and each restores the other's wrong-arch binaries (pak/cli .so fail
           # to dyn.load). Scope by OS and arch to isolate the two.
           cache-scope: macos15-x86_64
+          # Pre-install the harness's REQUIRED_PACKAGES set into the cached
+          # library (found via PW_RSTUDIO_R_LIBS_USER in the job env above),
+          # so nothing installs from CRAN at test time; a CRAN outage
+          # otherwise surfaces as mid-suite install hangs.
+          install-required-packages: "true"
+
+      # The secrets context isn't available in a step-level if:, so read the
+      # token into this step's own env and publish only a present/absent flag.
+      # Fork PRs and any caller that doesn't pass the token land on present=false,
+      # which skips the retrieve step below; the auth setup project then falls back
+      # to its no-credentials path instead of failing the run.
+      - name: Check for OP service account token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::OP service account token present; test credentials will be retrieved."
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
+          fi
+
+      - name: Retrieve test credentials
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: ./e2e/rstudio/.env.op
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
@@ -513,6 +580,8 @@ jobs:
           # reporter still runs but its uploads fail with warnings (never fails
           # the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
+          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
           SHARD_NAME: desktop-macos15-${{ matrix.shard }}
           # Print the GWT launch timeline so the next launch failure shows
           # which phase exceeded the deadline (CDP-connect vs. bridge-installed
@@ -536,7 +605,7 @@ jobs:
 
       - name: Upload blob report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-blob-report-macos15-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
@@ -545,7 +614,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-results-macos15-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
@@ -558,7 +627,7 @@ jobs:
       # silently skips upload.
       - name: Upload PW sandbox (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pw-sandbox-macos15-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
@@ -569,7 +638,7 @@ jobs:
       # the GWT-ready handshake.
       - name: Upload macOS diagnostic reports (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: macos15-diagnostic-reports-${{ matrix.shard }}
           path: ~/Library/Logs/DiagnosticReports/
@@ -590,9 +659,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -603,7 +672,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: playwright-blob-report-macos15-*
           path: e2e/rstudio/all-blob-reports
@@ -629,7 +698,7 @@ jobs:
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report-macos15
           path: e2e/rstudio/playwright-report/

@@ -244,18 +244,21 @@ test.describe.serial('Terminal pane', () => {
 
     // cd into the absolute sandbox path first, then create and list the file
     // using a short name. The file is cleaned up by globalTeardown regardless
-    // of the terminal's working directory. We deliberately keep the touch/ls
-    // arguments short rather than passing the absolute path: a narrow terminal
-    // wraps a long path across physical lines, and terminalBuffer() returns one
-    // entry per physical line, which would split "ztestfile.txt" across a wrap
-    // boundary and break the grep below. Require the filename to appear at least
-    // twice in the buffer: once in the echoed touch command and once in the ls
-    // output. A single match would pass even if touch failed (the filename
-    // appears in the echoed command regardless).
+    // of the terminal's working directory. terminalBuffer() returns one entry
+    // per *physical* line, and the echoed command line (prompt + command) can
+    // wrap anywhere -- on macOS CI the runner's GUID hostname makes the
+    // prompt so long that "ztestfile.txt" was seen torn across a wrap
+    // boundary mid-filename. So type the touch argument with a quote split
+    // ("ztest""file.txt"), the same trick as expectTerminalRenders: the
+    // echoed command then never contains the contiguous filename, and a
+    // single intact match can only come from the ls output, which starts at
+    // column 0 and cannot wrap. (Requiring the echo too would reintroduce
+    // the wrap dependency; this way a match still proves touch succeeded,
+    // since ls only lists the file if it exists.)
     const sandboxDir = sandbox.dir.replace(/\\/g, '/');
     await page.keyboard.type(`cd ${sandboxDir}`);
     await page.keyboard.press('Enter');
-    await page.keyboard.type('touch ztestfile.txt');
+    await page.keyboard.type('touch "ztest""file.txt"');
     await page.keyboard.press('Enter');
     await page.keyboard.type('ls');
     await page.keyboard.press('Enter');
@@ -264,8 +267,8 @@ test.describe.serial('Terminal pane', () => {
       () => captureResult(
         page,
         '{ ids <- rstudioapi::terminalList(); ' +
-        'buf <- paste(rstudioapi::terminalBuffer(ids[[1]]), collapse = "\\n"); ' +
-        'length(ids) > 0 && length(grep("ztestfile.txt", unlist(strsplit(buf, "\\n")))) >= 2 }',
+        'buf <- rstudioapi::terminalBuffer(ids[[1]]); ' +
+        'length(ids) > 0 && any(grepl("ztestfile.txt", buf, fixed = TRUE)) }',
       ),
       { timeout: TIMEOUTS.consoleReady },
     ).toBe('TRUE');

@@ -42,6 +42,24 @@ namespace rstudio {
 namespace core {
 namespace http {
 
+void writeUpgradeResponseAndBridge(
+      boost::shared_ptr<AsyncConnection> ptrConnection,
+      const Response& response,
+      boost::shared_ptr<Socket> ptrServer)
+{
+   boost::shared_ptr<Socket> ptrClient =
+      boost::static_pointer_cast<Socket>(ptrConnection);
+
+   ptrConnection->writeResponse(response, false, Headers(),
+      [ptrClient, ptrServer](const boost::system::error_code& ec, std::size_t)
+      {
+         if (ec || !ptrServer)
+            return;
+
+         SocketProxy::create(ptrClient, ptrServer);
+      });
+}
+
 void SocketProxy::readClient()
 {
    ptrClient_->asyncReadSome(

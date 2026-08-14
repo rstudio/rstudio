@@ -1,11 +1,18 @@
 import { test as base, expect } from '@playwright/test';
-import { launchRStudio, shutdownRStudio, relaunchAfterRestart, type DesktopSession } from '@fixtures/desktop.fixture';
+import {
+  launchRStudio,
+  shutdownRStudio,
+  relaunchAfterRestart,
+  snapshotRStudioProcesses,
+  type DesktopSession,
+} from '@fixtures/desktop.fixture';
 import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { CONSOLE_INPUT } from '@pages/console_pane.page';
 import { YES_BTN, NO_BTN } from '@pages/modals.page';
-import { requireAiCredentials } from '@utils/ai-credentials';
+import { hasAiCredentials, requireAiCredentials } from '@utils/ai-credentials';
+import { selectPositChatProvider } from './_chat-setup';
 import type { Page } from 'playwright';
 
 /**
@@ -60,10 +67,22 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@chat
   let chatActions: ChatPaneActions;
 
   base.beforeAll(async () => {
+    // requireAiCredentials gates each test through beforeEach, which Playwright
+    // runs AFTER beforeAll -- so without this guard the setup below still runs
+    // when there are no PAI credentials, and any failure in it turns what
+    // should be a clean skip into a failed test. The sibling chat files take
+    // the rstudioPage fixture and so aren't exposed; this one manages its own
+    // session (see the note above), which is what puts the launch and the PAI
+    // install ahead of the gate. Bail out and let beforeEach report the skip.
+    // Shares hasAiCredentials with the gate so the two can't disagree.
+    if (!(await hasAiCredentials('positai'))) return;
+
     session = await launchRStudio();
     page = session.page;
     consoleActions = new ConsolePaneActions(page);
     chatActions = new ChatPaneActions(page, consoleActions);
+
+    await selectPositChatProvider(page);
 
     // Ensure PAI is installed before the suite
     await chatActions.openChatPane();
@@ -141,11 +160,17 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@chat
 
     const yesBtn = page.locator(YES_BTN);
     await expect(yesBtn).toBeVisible({ timeout: 5000 });
+
+    // Snapshot running RStudio processes BEFORE confirming: the restart
+    // instance is spawned by the dying Electron, so a snapshot taken after
+    // the click can already contain it and relaunchAfterRestart would spare
+    // it -- poisoning the CDP port for the rest of the shard (rstudio#18522).
+    const processesBefore = snapshotRStudioProcesses();
     await yesBtn.click();
 
-    // RStudio restarts: Electron stays alive but destroys the CDP page target.
-    // Reconnect to get a fresh page from the same process.
-    session = await relaunchAfterRestart(session);
+    // RStudio restarts as a new process without our CDP flag; kill it and
+    // relaunch a CDP-enabled session against the same config root.
+    session = await relaunchAfterRestart(session, processesBefore);
     page = session.page;
 
     // Reinitialize actions on the new page

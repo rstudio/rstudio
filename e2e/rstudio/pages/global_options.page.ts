@@ -95,6 +95,10 @@ export const ASSISTANT_COMPLETIONS_DELAY_INPUT =
   "xpath=.//*[contains(text(),'Show code suggestions after keyboard idle')]/following::input[1]";
 export const ASSISTANT_COPILOT_OPTION = 'GitHub Copilot';
 export const ASSISTANT_NONE_OPTION = '(None)';
+// The edit-suggestion granularity selector renders in the common settings
+// panel, which is only attached once a code assistant (not "None") is selected.
+export const ASSISTANT_EDIT_SUGGESTION_GRANULARITY_SELECT =
+  "xpath=//label[contains(text(),'Highlight changes in edit suggestions by')]/following::select[1]";
 // Always-visible numeric field with no explicit maximum (Chat section).
 // Relative to ASSISTANT_PANEL: the value input that follows its label.
 export const ASSISTANT_UPDATE_CHECK_INPUT =

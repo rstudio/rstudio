@@ -1703,11 +1703,34 @@ void detectParentTermination()
       }
    }
 }
-#else
+#elif defined(_WIN32)
 void detectParentTermination()
 {
    using namespace parent_process_monitor;
    ParentTermination result = waitForParentTermination();
+   if (result == ParentTerminationAbnormal)
+   {
+      LOG_ERROR_MESSAGE("Parent terminated");
+
+      // we no longer exit with ::abort because it generated unwanted exceptions
+      // ::_Exit should perform the same functionality (not running destructors and exiting process)
+      // without generating an exception
+      std::_Exit(EXIT_FAILURE);
+   }
+   else if (result == ParentTerminationNormal)
+   {
+      //LOG_ERROR_MESSAGE("Normal terminate");
+   }
+   else if (result == ParentTerminationWaitFailure)
+   {
+      LOG_ERROR_MESSAGE("waitForParentTermination failed");
+   }
+}
+#else
+void detectParentTermination(int parentFdRead, int parentFdWrite)
+{
+   using namespace parent_process_monitor;
+   ParentTermination result = waitForParentTermination(parentFdRead, parentFdWrite);
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
@@ -2201,7 +2224,9 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       // longer be part of the same job, but because rsession is not detached from
       // the desktop frontend, it will still be closed if the frontend is closed
 #ifdef _WIN32
-      core::system::initHook();
+      // logging is not initialized yet; the error is logged further below,
+      // once logging is available
+      Error initHookError = core::system::initHook();
 #endif
 
       // set an invalid parameter handler -- we do this to match the behavior of
@@ -2276,6 +2301,17 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                   core::log::LogLevel::WARN,
                                   core::system::xdg::userLogDir(),
                                   true); // force log dir to be under user's home directory
+
+      // report any failure from initHook(), which ran before logging was up
+#ifdef _WIN32
+      if (initHookError)
+      {
+         initHookError.addProperty(
+                  "description",
+                  "failed to set up the session job object; child processes may not be cleaned up when the session exits");
+         LOG_ERROR(initHookError);
+      }
+#endif
 
       // initialize COM eagerly, so the main thread's apartment state is
       // deterministic rather than depending on which Windows API happens to
@@ -2554,7 +2590,23 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
 
       // detect parent termination
       if (desktopMode)
+      {
+#if defined(__APPLE__) || defined(_WIN32)
          core::thread::safeLaunchThread(detectParentTermination);
+#else
+         // read the RS_PPM_FD_* environment variables here on the main
+         // thread: reading them on the monitor thread races the setenv
+         // calls made below during startup (getenv walks environ without
+         // locking), and that thread runs with all signals blocked, so a
+         // fault there kills the process with no crash report
+         std::pair<int, int> parentFds =
+               parent_process_monitor::parentTerminationFds();
+         core::thread::safeLaunchThread(
+               boost::bind(detectParentTermination,
+                           parentFds.first,
+                           parentFds.second));
+#endif
+      }
 
       // set the rpostback absolute path
       FilePath rpostback = module_context::rPostbackPath();
@@ -2844,7 +2896,16 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       if (modules::trust::shouldSuppressStartupFiles())
       {
          rOptions.disableRProfileOnStart = true;
+
+         // R skips user .Renviron processing when R_ENVIRON_USER is set but
+         // empty; Windows cannot represent a set-but-empty environment
+         // variable (an empty value deletes it), so point R at the null
+         // device there instead
+#ifdef _WIN32
+         core::system::setenv("R_ENVIRON_USER", "NUL");
+#else
          core::system::setenv("R_ENVIRON_USER", "");
+#endif
       }
 
       if (modules::trust::shouldSuppressWorkspaceRestore())

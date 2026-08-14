@@ -34,8 +34,18 @@ namespace system {
 *****************************************************************/
 
 std::string getenv(const std::string& name);
+
+// NOTE: setenv / unsetenv mutate environment tables that in-process code
+// may walk without synchronization: EnvironmentLock serializes these
+// accessors against each other, but raw readers -- including R, whose
+// Sys.getenv() iterates the C runtime's environment directly -- take no
+// lock. Once R is running, call these only from the main thread.
 void setenv(const std::string& name, const std::string& value);
 void unsetenv(const std::string& name);
+
+// read an environment variable, distinguishing unset from set-but-empty;
+// returns whether the variable was set, populating *pValue only when true
+bool getenv(const std::string& name, std::string* pValue);
 
 
 /****************************************************************
@@ -104,28 +114,33 @@ public:
    
    EnvironmentScope(const char* variable,
                     const char* value)
-      : variable_(variable),
-        value_(::getenv(variable))
+      : variable_(variable)
    {
+      // NOTE: raw ::getenv would be wrong here on Windows, where it reads
+      // the CRT's startup snapshot of the environment rather than the
+      // process environment block that core::system::setenv writes to
+      hadValue_ = core::system::getenv(variable, &previousValue_);
+
       core::system::setenv(variable, value);
    }
-   
+
    ~EnvironmentScope()
    {
-      if (value_)
+      if (hadValue_)
       {
-         core::system::setenv(variable_, value_);
+         core::system::setenv(variable_, previousValue_);
       }
       else
       {
          core::system::unsetenv(variable_);
       }
    }
-   
+
 private:
    const char* variable_;
-   const char* value_;
-   
+   std::string previousValue_;
+   bool hadValue_;
+
 };
 
 } // namespace system

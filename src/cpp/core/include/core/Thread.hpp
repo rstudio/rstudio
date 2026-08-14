@@ -28,6 +28,7 @@
 
 #include <core/BoostErrors.hpp>
 #include <core/BoostThread.hpp>
+#include <core/MainThread.hpp>
 #include <core/system/System.hpp>
 
 #define LOCK_MUTEX(m)                                                          \
@@ -54,13 +55,6 @@
       LOG_ERROR(threadError);                                                  \
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
-
-#define ASSERT_MAIN_THREAD(__REASON__)                                         \
-   (::rstudio::core::thread::assertMainThread(                                 \
-      { __REASON__ },                                                          \
-      BOOST_CURRENT_FUNCTION,                                                  \
-      ERROR_LOCATION))
-
 
 namespace rstudio {
 namespace core {
@@ -461,12 +455,8 @@ bool joinOrAbandonThread(
 
 void initializeMainThreadId(boost::thread::id id);
 
-bool isMainThread();
-
-bool assertMainThread(
-      const std::string& reason,
-      const std::string& functionName,
-      const core::ErrorLocation& errorLocation);
+// see core/MainThread.hpp for isMainThread, assertMainThread, and the
+// ASSERT_MAIN_THREAD / REQUIRE_MAIN_THREAD macros
 
 } // namespace thread
 } // namespace core

@@ -68,6 +68,10 @@ public interface MenuConstants extends Constants {
     @DefaultStringValue("P_anes") // $NON-NLS-1$
     String main$_View$P_anesLabel();
     
+    // main$_View$Split_Editor
+    @DefaultStringValue("Split _Editor") // $NON-NLS-1$
+    String main$_View$Split_EditorLabel();
+    
     // main$_View$Show_Other_Panes
     @DefaultStringValue("Show Other _Panes") // $NON-NLS-1$
     String main$_View$Show_Other_PanesLabel();

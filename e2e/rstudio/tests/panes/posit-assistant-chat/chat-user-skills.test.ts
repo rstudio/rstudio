@@ -1,6 +1,7 @@
 import * as path from 'path';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { requireAiCredentials } from '@utils/ai-credentials';
+import { isExternalServerRun } from '@utils/auth';
 import { CHAT_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AssistantOptionsActions } from '@actions/assistant_options.actions';
@@ -9,7 +10,7 @@ import { ChatPane } from '@pages/chat_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
-import { setPref } from '@utils/commands';
+import { getPref, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
 
 // ---------------------------------------------------------------------------
@@ -117,20 +118,25 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     versions = await consoleActions.getEnvironmentVersions();
 
     // -----------------------------------------------------------------------
-    // Step 1: Stop any running backend FIRST.
+    // Step 1: Make sure no backend is running FIRST.
     //
-    // The default chat_provider is "posit", so the backend auto-starts when
-    // RStudio launches. We must stop it before creating skill files, because
-    // skills are only discovered during DatabotCore.initialize() (at process
-    // start). Setting the preference to "none" (a valid enum value -- NOT "")
-    // triggers onChatProviderChanged() → stopBackend() on the GWT side.
+    // The e2e base prefs start chat_provider at "none", so normally there is
+    // no backend here -- but an earlier @chat suite in this worker may have
+    // left the provider on (the per-test leak guard skips @chat-tagged
+    // tests), and a running backend must be stopped before creating skill
+    // files: skills are only discovered during DatabotCore.initialize() (at
+    // process start). Setting the preference to "none" (a valid enum value --
+    // NOT "") triggers onChatProviderChanged() → stopBackend() on the GWT
+    // side.
     // -----------------------------------------------------------------------
-    await setPref(page, 'chat_provider', 'none');
-    // Deliberate wait: setPref triggers stopBackend() asynchronously on the
-    // GWT side. There's no bridge-exposed signal for "backend has fully shut
-    // down", so we settle for an observation window long enough for the
-    // child process to terminate before we recreate skill files below.
-    await page.waitForTimeout(5000);
+    if ((await getPref(page, 'chat_provider')) !== 'none') {
+      await setPref(page, 'chat_provider', 'none');
+      // Deliberate wait: setPref triggers stopBackend() asynchronously on the
+      // GWT side. There's no bridge-exposed signal for "backend has fully shut
+      // down", so we settle for an observation window long enough for the
+      // child process to terminate before we recreate skill files below.
+      await page.waitForTimeout(5000);
+    }
 
     // -----------------------------------------------------------------------
     // Step 2: Create a project-level skill (.positai/skills/ in workspace)
@@ -157,7 +163,8 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     );
 
     // -----------------------------------------------------------------------
-    // Step 4: Verify both files exist and have correct content
+    // Step 4: Verify the skill files exist and hold their markers (the
+    // user-level one only where an rsession can actually read it)
     // -----------------------------------------------------------------------
     await consoleActions.clearConsole();
     await consoleActions.executeInConsole(
@@ -166,12 +173,29 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     );
     const projectOutput = await consoleActions.consolePane.consoleOutput.innerText();
 
-    await consoleActions.clearConsole();
-    await consoleActions.executeInConsole(
-      `cat(readLines("${userSkillPath()}"), sep = "\\n")`,
-      { wait: true },
-    );
-    const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
+    // Assert rather than just read back: if dir.create or writeLines above
+    // silently did nothing, the first symptom would otherwise be an
+    // LLM-content assertion failing in a test body, which is indistinguishable
+    // from the model simply not naming the marker. Fail here, with the cause
+    // obvious. The project skill lives in the opened project directory, which
+    // every run mode can read, so this one is unconditional.
+    expect(projectOutput).toContain(PROJECT_MARKER);
+
+    // The user-level skill sits under the sandbox HOME. A server reached by URL
+    // never reads that path -- rserver takes each rsession's HOME from the
+    // passwd db -- which is exactly why the two tests that depend on it skip on
+    // the same predicate. Asserting it unconditionally failed beforeAll on every
+    // such run and took the whole describe.serial block down, including those
+    // skips.
+    if (!isExternalServerRun()) {
+      await consoleActions.clearConsole();
+      await consoleActions.executeInConsole(
+        `cat(readLines("${userSkillPath()}"), sep = "\\n")`,
+        { wait: true },
+      );
+      const userOutput = await consoleActions.consolePane.consoleOutput.innerText();
+      expect(userOutput).toContain(USER_MARKER);
+    }
 
     // -----------------------------------------------------------------------
     // Step 5: Start a fresh backend by setting chat_provider back to "posit".
@@ -210,7 +234,17 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     await closeProjectIfOpen(page);
   });
 
+  // This asserts on the user-level skill, which an EXTERNAL server can't see
+  // (see the user-level-skill notes in this file's header). Skipped on that
+  // predicate rather than tagged @desktop_only: a spawned in-tree server does
+  // read the sandbox HOME, so a tag would drop coverage in a mode where this
+  // passes -- and a tag also removes the row from the report entirely, where a
+  // skip carries its reason.
   test('both custom skills are discovered by assistant', async () => {
+    test.skip(
+      isExternalServerRun(),
+      'asserts on the user-level skill, which an external server rsession never reads (its HOME comes from the passwd db, not the sandbox)',
+    );
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();
@@ -227,7 +261,8 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     await expect(lastMessage).toContainText(USER_SKILL_NAME, { timeout: 10000 });
   });
 
-  test('project-level skill markers appear in response', async () => {
+  // Chat-UI flake on RStudio Server, not skill-file access (followups item 16).
+  test('project-level skill markers appear in response', { tag: ['@desktop_only'] }, async () => {
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();
@@ -251,7 +286,20 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     expect(responseText).toContain(PROJECT_MARKER);
   });
 
-  test('user-level skill is selected when its description matches the prompt', async () => {
+  // The user-level skill lives under the sandbox-redirected HOME described in
+  // this file's header. An EXTERNAL RStudio Server never reads it: rserver
+  // builds each rsession's environment from scratch and takes HOME from the
+  // passwd db, not from anything the harness sets (issue 18348). No product
+  // bug -- the skill genuinely isn't there for that account. A spawned in-tree
+  // server DOES see it, via the HOME its rsession wrapper exports, which is
+  // why this skips on isExternalServerRun() rather than carrying
+  // @desktop_only.
+  // Also tagged desktop_only: same pollWithAllowDialogs flake as above (item 16).
+  test('user-level skill is selected when its description matches the prompt', { tag: ['@desktop_only'] }, async () => {
+    test.skip(
+      isExternalServerRun(),
+      'the user-level skill lives under the sandbox HOME, which an external server rsession never reads (its HOME comes from the passwd db)',
+    );
     await chatActions.startNewConversation();
 
     const initialCount = await chatPane.getMessageCount();

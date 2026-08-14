@@ -138,6 +138,15 @@
 #define kSessionProxyDefaultPort   "8789"
 #define kRStudioSessionProxyPort   "X-RStudio-Session-Proxy-Port"
 
+// Which address family (rstudio-pro#12142) the original /p/ (IPv4) or /p6/
+// (IPv6) portmapped-app request used. The /p//p6/ prefix and the encoded
+// port are stripped from the request's URI before it's forwarded to
+// SessionProxy (see ServerSessionProxy.cpp's proxyLocalhostRequest()), so
+// this header is the only surviving signal of the caller's original intent
+// -- always set explicitly to "1" or "0" (never omitted) so a dropped
+// header can't silently default to the wrong address family.
+#define kRStudioSessionProxyIPv6   "X-RStudio-Session-Proxy-IPv6"
+
 #define kSessionUserLicenseSoftLimitReached  "session-user-license-soft-limit-reached"
 
 #define kRestoreWorkspaceNo       0

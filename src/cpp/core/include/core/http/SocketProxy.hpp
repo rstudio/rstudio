@@ -24,11 +24,32 @@
 
 #include <core/Thread.hpp>
 #include <shared_core/Error.hpp>
+#include <core/http/AsyncConnection.hpp>
 #include <core/http/Socket.hpp>
 
 namespace rstudio {
 namespace core {
 namespace http {
+
+// Writes an upgrade (e.g. 101 Switching Protocols) response on
+// ptrConnection, then bridges ptrConnection to ptrServer via
+// SocketProxy::create -- but only once that write has completed.
+//
+// This ordering matters: once bridged, SocketProxy immediately starts
+// relaying upstream bytes onto ptrConnection. If that relay's async_write
+// were issued while the upgrade response's own async_write was still in
+// flight, the two concurrent writes to the same connection would interleave,
+// corrupting the response. Upstreams that send data immediately after the
+// handshake (e.g. Jupyter's terminal websocket, which writes ["setup", {}]
+// on open) reliably lose that race, so the bridge must wait for the upgrade
+// write's completion handler before calling SocketProxy::create.
+//
+// ptrServer may be null (e.g. a lock()'d weak_ptr that has already expired);
+// in that case the response is still written but no proxy is created.
+void writeUpgradeResponseAndBridge(
+      boost::shared_ptr<AsyncConnection> ptrConnection,
+      const Response& response,
+      boost::shared_ptr<Socket> ptrServer);
 
 class SocketProxy : public boost::enable_shared_from_this<SocketProxy>
 {

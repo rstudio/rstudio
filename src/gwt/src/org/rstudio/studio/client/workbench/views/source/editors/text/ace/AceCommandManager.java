@@ -154,25 +154,18 @@ public class AceCommandManager extends JavaScriptObject
    private final native void rebindCommand(String id, JsArrayString keys)
    /*-{
       var command = this.byName[id];
-      
+
       // The command can be null if it's an excluded command, or
       // the user has manually edited their keybinding file and
       // selected the ID of a non-existent command.
       if (command == null)
          return;
-      
-      // Clone the command (we don't want to modify the default
-      // commands because we might want to reset in the future)
-      var newCommand = {};
-      for (var key in command) {
-         if (command.hasOwnProperty(key)) {
-            newCommand[key] = command[key];
-         }
-      }
-      
+
+      var newCommand = @org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager::cloneCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(command);
+
       newCommand.bindKey = keys.join("|");
       newCommand.isCustom = true;
-      
+
       this.addCommand(newCommand);
       
       // Refresh the 'chainKeys' fields. This is necessary
@@ -196,6 +189,99 @@ public class AceCommandManager extends JavaScriptObject
    
    public final native void addCommand(AceCommand command) /*-{
       this.addCommand(command);
+   }-*/;
+
+   // Clone a command object. Ace's default command objects are shared by
+   // every editor instance, so install modified clones rather than mutating
+   // the originals -- both so other editors are unaffected and so the
+   // defaults remain available for reset.
+   private static final native JavaScriptObject cloneCommand(JavaScriptObject command)
+   /*-{
+      var clone = {};
+      for (var key in command) {
+         if (command.hasOwnProperty(key)) {
+            clone[key] = command[key];
+         }
+      }
+      return clone;
+   }-*/;
+
+   /**
+    * Make the line start / line end navigation commands act on document lines
+    * rather than soft-wrapped screen rows.
+    *
+    * By default, Ace treats each visual row of a soft-wrapped line as its own
+    * line, so Home / End (and, on macOS, Ctrl+A / Ctrl+E) stop at the wrap
+    * boundary. That's the right behavior for a text editor, but not for a
+    * console, where the whole wrapped command should behave as a single line
+    * the way it does under readline.
+    *
+    * Command tables are per-editor, so this only affects the editor whose
+    * command manager this is.
+    *
+    * https://github.com/rstudio/rstudio/issues/18447
+    */
+   public final native void useDocumentLineNavigation()
+   /*-{
+      var self = this;
+
+      var override = function(name, exec) {
+         var command = self.byName[name];
+
+         // The names below are Ace built-ins, so a missing one means an Ace
+         // update renamed or removed it. Warn rather than silently skipping
+         // part of the override: a partial application (say, navigation
+         // updated but selection not) would leave the two disagreeing.
+         if (command == null) {
+            @org.rstudio.core.client.Debug::logWarning(Ljava/lang/String;)("useDocumentLineNavigation: Ace command '" + name + "' not found");
+            return;
+         }
+
+         var clone = @org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager::cloneCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(command);
+         clone.exec = exec;
+         self.addCommand(clone);
+      };
+
+      var lineStart = function(editor) {
+         return { row: editor.getCursorPosition().row, column: 0 };
+      };
+
+      var lineEnd = function(editor) {
+         var row = editor.getCursorPosition().row;
+         return { row: row, column: editor.getSession().getLine(row).length };
+      };
+
+      var navigateToLineStart = function(editor) {
+         var position = lineStart(editor);
+         editor.navigateTo(position.row, position.column);
+      };
+
+      var navigateToLineEnd = function(editor) {
+         var position = lineEnd(editor);
+         editor.navigateTo(position.row, position.column);
+      };
+
+      var selectToLineStart = function(editor) {
+         var position = lineStart(editor);
+         editor.getSelection().selectTo(position.row, position.column);
+      };
+
+      var selectToLineEnd = function(editor) {
+         var position = lineEnd(editor);
+         editor.getSelection().selectTo(position.row, position.column);
+      };
+
+      override("gotolinestart", navigateToLineStart);
+      override("gotolineend", navigateToLineEnd);
+
+      // Ace has two equivalent pairs of selection commands here: 'selectto*'
+      // (Cmd+Shift+Left / Ctrl+Shift+A and friends) and 'select*' (Shift+Home /
+      // Shift+End). Which one a given key reaches varies by platform, so both
+      // have to move in step with the navigation commands above.
+      override("selecttolinestart", selectToLineStart);
+      override("selecttolineend", selectToLineEnd);
+      override("selectlinestart", selectToLineStart);
+      override("selectlineend", selectToLineEnd);
    }-*/;
    
    private static final JsObject EXCLUDED_COMMANDS_MAP =

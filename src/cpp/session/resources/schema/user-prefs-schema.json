@@ -1925,6 +1925,14 @@
             "description": "When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.",
             "fallback": "copilot_nes_autoshow"
         },
+        "edit_suggestion_diff_granularity": {
+            "type": "string",
+            "enum": ["word", "character"],
+            "enumReadable": ["Word", "Character"],
+            "default": "word",
+            "title": "Highlight changes in edit suggestions by:",
+            "description": "Control the granularity of change highlighting in edit suggestion previews. Word-level highlighting marks whole changed words; character-level highlighting marks individual changed characters."
+        },
         "assistant_toolbar_button_visible": {
             "type": "boolean",
             "default": true,

@@ -150,9 +150,13 @@ public class WindowFrame extends Composite
       return name_;
    }
 
-   public void setMaximizeClickHandler(Command handler)
+   /**
+    * Replace what the frame's maximize gestures do. The action can call
+    * maximizeDefault() to get the built-in behavior. Pass null to restore it.
+    */
+   public void setMaximizeAction(Command action)
    {
-      maximizeButton_.setClickHandler(handler);
+      maximizeAction_ = action;
    }
 
    public void setCloseClickHandler(Command handler)
@@ -179,7 +183,37 @@ public class WindowFrame extends Composite
          ((RequiresVisibilityChanged)header_).onVisibilityChanged(visible);
    }
 
-   private void maximize()
+   /**
+    * The frame's maximize gesture. Four routes come here:
+    *
+    *  - the maximize button
+    *  - a double-click on the Console title bar (PrimaryWindowFrame)
+    *  - a double-click on a tabset's tab bar (ModuleTabLayoutPanel)
+    *  - EnsureHeightEvent.NORMAL on a zoomed (EXCLUSIVE) window, where the
+    *    gesture means "restore" (LogicalWindow.onEnsureHeight)
+    *
+    * So an owner intercepts all of them in one place with setMaximizeAction,
+    * instead of one route at a time.
+    *
+    * Two other paths reach WindowState.MAXIMIZE without the frame, both
+    * firing at the LogicalWindow: the button on MinimizedWindowFrame, and
+    * EnsureHeightEvent.MAXIMIZED on a non-zoomed window -- deliberately, as
+    * that is a vertical request and an owner's maximize action may be
+    * horizontal (the sidebar's is layoutZoomSidebar). See
+    * PaneManager.endZoomIfActive.
+    */
+   public void maximize()
+   {
+      if (maximizeAction_ != null)
+         maximizeAction_.execute();
+      else
+         maximizeDefault();
+   }
+
+   /**
+    * The built-in maximize behavior. A custom maximize action can call this.
+    */
+   public void maximizeDefault()
    {
       fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
    }
@@ -475,6 +509,7 @@ public class WindowFrame extends Composite
    private Widget previousHeader_;
    private final FlowPanel buttonsArea_;
    private WindowState logicalState_ = WindowState.NORMAL;
+   private Command maximizeAction_;
 
    private static final int TOP_SHADOW_WIDTH = 3,
                             LEFT_SHADOW_WIDTH = 3,

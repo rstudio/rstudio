@@ -1,14 +1,26 @@
 name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source)"
 
-# One workflow that drives the reusable per-OS E2E "engines" four ways:
-#   - Weekday cron (Mon-Fri): a fixed slate per weekday, so every engine runs
-#     at least once a week without running the whole matrix daily.
-#   - Monday afternoon cron: macOS 14 alone, timed to land inside the October
+# One workflow that drives the reusable per-OS E2E "engines" six ways:
+#   - Weekday cron (Mon-Fri): a fixed slate per weekday, so the engines in those
+#     slates get a run during the week without running the whole matrix daily.
+#     The slates cover 13 of the 21 engines; macos14 gets its weekly run from
+#     the Friday cron below, and the remaining seven are reached only by the
+#     Sunday runs.
+#   - Friday afternoon cron: macOS 14 alone, timed to land inside the October
 #     2026 brownout windows for the deprecated macos-14 image (see the pick job).
-#   - Weekly cron (Sunday): every engine at once, for a full-matrix snapshot.
-#   - Manual dispatch: every engine at once, optionally against a specific daily
-#     build (the "version" input) or built from source (the "build_from_source"
-#     input).
+#   - Weekly cron (Sunday 08:00): every Linux x86_64 engine, for a full-matrix
+#     snapshot of that group.
+#   - Weekly cron (Sunday 12:00): every Linux arm64 engine. Four hours after the
+#     x86_64 run so the two fleets' ubuntu-latest jobs (pick, resolve, and every
+#     engine's e2e-merge) don't pile up. Their build and test jobs sit on disjoint
+#     runner pools, so they don't queue for the same machines, though every job
+#     still counts against the account-wide concurrent-job limit. See the
+#     concurrency note below.
+#   - Weekly cron (Sunday 16:00): every macOS and Windows engine, of either
+#     architecture. Four hours after the Linux arm64 run, for the same reason.
+#   - Manual dispatch: every engine at once (all 21, every platform and
+#     architecture), optionally against a specific daily build (the "version"
+#     input) or built from source (the "build_from_source" input).
 #
 # The Linux Desktop engines all run through the consolidated
 # os-test-e2e-rstudio-desktop-linux.yml workflow as a matrix (one entry per
@@ -22,13 +34,25 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # (see rstudio/latest-builds#251). Manual dispatch can instead build every
 # engine from source via build_from_source.
 #
-# Cron times are UTC: 08:00 UTC is 4 AM EDT in summer, 3 AM EST in winter.
+# Either way the daily comes from the manifest for the branch this workflow is
+# checked out on, never the /rstudio/latest alias -- see
+# .github/actions/os-resolve-daily-manifest for why (#18498).
+#
+# Cron times are UTC: 08:00 UTC is 4 AM EDT in summer, 3 AM EST in winter;
+# 12:00 UTC is 8 AM EDT / 7 AM EST; 16:00 UTC is noon EDT / 11 AM EST.
+#
+# GitHub cannot tell two identical cron strings apart, and github.event.schedule
+# returns the string exactly as written here -- which is how the pick job below
+# distinguishes the three Sunday runs. So the strings must differ from each
+# other, and each must match its check in the pick job character for character.
 
 on:
   schedule:
     - cron: '0 8 * * 1-5'   # Mon-Fri 08:00 UTC (4 AM EDT) -- fixed slate per weekday
-    - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- all engines (this string must match the check in the pick job)
-    - cron: '0 16 * * 1'    # Monday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 8 * * 0'     # Sunday 08:00 UTC (4 AM EDT) -- every Linux x86_64 engine (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 12 * * 0'    # Sunday 12:00 UTC (8 AM EDT) -- every Linux arm64 engine (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 16 * * 0'    # Sunday 16:00 UTC (noon EDT) -- every macOS and Windows engine (this string must match the check in the pick job and the concurrency group below)
+    - cron: '0 16 * * 5'    # Friday 16:00 UTC (noon EDT) -- macOS 14 only (this string must match the check in the pick job and the concurrency group below)
   workflow_dispatch:
     inputs:
       version:
@@ -41,8 +65,8 @@ on:
         default: false
 
 concurrency:
-  # The Monday 16:00 macOS 14 cron gets its own group: it would otherwise share
-  # the one pending slot with the Monday 08:00 weekday slate, and only one run
+  # The Friday 16:00 macOS 14 cron gets its own group: it would otherwise share
+  # the one pending slot with the Friday 08:00 weekday slate, and only one run
   # per group can be pending (a third trigger cancels the pending one rather
   # than queueing behind it). Either outcome can push the macOS 14 run out of
   # the brownout window it is timed to land in. Every other trigger keeps the
@@ -50,11 +74,30 @@ concurrency:
   #
   # Two trade-offs come with the split. The macOS 14 run may now overlap a
   # weekday slate, contending for the shared macOS runner pool if a morning
-  # slate is still going at 16:00. And because macos14 is in ALL below, a
-  # run-everything dispatch (group "main") can now run the macOS 14 engine at
-  # the same time as this cron does, which a single shared group used to make
-  # impossible.
-  group: pw-scheduled-e2e-${{ github.event.schedule == '0 16 * * 1' && 'macos14' || 'main' }}
+  # slate is still going at 16:00 -- Friday's 08:00 slate contains macos26, so
+  # that contention is live, exactly as it was when this cron ran on Monday.
+  # And because macos14 is in ENGINES below, a run-everything dispatch (group
+  # "main") can now run the macOS 14 engine at the same time as this cron does,
+  # which a single shared group used to make impossible.
+  #
+  # The three Sunday crons get a group each for the same reason: sharing "main"
+  # would make each later run queue behind the earlier one, and since only one
+  # run per group can be pending, a fourth trigger would cancel it outright.
+  # Four hours is less slack than the original two-way split had, so this is
+  # tighter than ideal for a daily-install fleet that overruns -- but each run
+  # still gets its own group, so an overrun delays or cancels only that run's
+  # own next occurrence, not one of the other two. Their *build and test* jobs
+  # share no runners by construction -- Linux x86_64, Linux arm64, and
+  # macOS+Windows are disjoint pools -- though pick, resolve, and every engine's
+  # e2e-merge all run on ubuntu-latest, so those do compete, and every job counts
+  # against the account-wide concurrent-job limit regardless of pool.
+  group: >-
+    pw-scheduled-e2e-${{
+    github.event.schedule == '0 16 * * 5' && 'macos14'
+    || github.event.schedule == '0 8 * * 0' && 'sunday-linux-x86_64'
+    || github.event.schedule == '0 12 * * 0' && 'sunday-linux-arm64'
+    || github.event.schedule == '0 16 * * 0' && 'sunday-macos-windows'
+    || 'main' }}
   cancel-in-progress: false
 
 permissions:
@@ -76,152 +119,261 @@ jobs:
       - id: pick
         name: Select engines for this run
         run: |
-          # workflow_dispatch and the Sunday cron run every engine; the weekday
-          # cron (Mon-Fri) runs a fixed slate per day; the Monday afternoon cron
+          set -euo pipefail
+          # workflow_dispatch runs every engine; each Sunday cron runs every
+          # engine of one platform/architecture group; the weekday cron
+          # (Mon-Fri) runs a fixed slate per day; the Friday afternoon cron
           # runs macOS 14 alone.
-          # Each engine appears once a week in the weekday slates below, except
-          # macos26, windows2025, and ubuntu24s (twice) and macos14, which is in
-          # no slate at all -- its weekly run is the Monday 16:00 cron.
-          ALL='["fedora43","fedora44","ubuntu26","ubuntu22","ubuntu24d","ubuntu24s","macos26","windows2025","debian13","rocky10","rocky9","macos15","macos14"]'
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
+          #
+          # ENGINES is the single source of truth for what exists. Every engine
+          # appears exactly once, tagged with the platform and architecture it
+          # runs on, and everything else here is derived from it: ALL, all
+          # three Sunday selections, and the Linux Desktop matrix. That is the
+          # point of the array -- with one declaration, a newly added engine
+          # cannot end up in none of the three Sunday runs or in more than one,
+          # which hand-maintained lists made easy to get wrong. The partition
+          # assertion below enforces that rather than leaving it to the reader.
+          #
+          # platform is "linux", "macos", or "windows", and only matters for
+          # the Sunday selection below: the two Linux runs split by arch, but
+          # macOS and Windows run together regardless of arch, so arch alone
+          # can't express the grouping.
+          #
+          # Linux Desktop entries carry three more fields: os names the
+          # .github/e2e-linux config, name is the job label, and url_key names
+          # the resolve job's output holding that engine's version-specific
+          # installer URL (empty on latest-daily / build-from-source runs).
+          # select(.os) is what separates them from the five non-Linux engines
+          # when the matrix is built below; those five are keyed on by the
+          # if: contains(...) guards further down this file and so need only
+          # key, platform, and arch.
+          #
+          # arch is also asserted downstream: the consolidated Linux workflow
+          # fails the run if it disagrees with the engine config's tools_arch,
+          # so a wrong tag here is caught rather than silently mistesting.
+          #
+          # Engines with no daily of their own reuse the nearest build of the
+          # same arch: Fedora -> the RHEL 10 daily (rhel10_x86_64 /
+          # rhel10_arm64), Debian -> the Ubuntu 24 daily (noble_amd64 /
+          # noble_arm64). Every Ubuntu and Rocky engine has a key of its own.
+          # These url_keys must agree with each config's daily_platform_key.
+          #
+          # The weekday slates below name 16 engine slots but only 13 distinct
+          # engines: macos26, windows2025 and ubuntu24s each appear twice. Of the
+          # eight engines in no slate, macos14's weekly run is the Friday 16:00
+          # cron, and the other seven run only in a Sunday selection.
+          ENGINES='[
+            {"key":"ubuntu22-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-22-x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
+            {"key":"ubuntu22-arm64","platform":"linux","arch":"arm64","os":"ubuntu-22-arm64","name":"Ubuntu 22 (arm64)","url_key":"jammy_arm64"},
+            {"key":"ubuntu24d-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-24-x86_64","name":"Ubuntu 24 Desktop (x86_64)","url_key":"noble_amd64"},
+            {"key":"ubuntu24d-arm64","platform":"linux","arch":"arm64","os":"ubuntu-24-arm64","name":"Ubuntu 24 Desktop (arm64)","url_key":"noble_arm64"},
+            {"key":"ubuntu26-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-26-x86_64","name":"Ubuntu 26 (x86_64)","url_key":"resolute_amd64"},
+            {"key":"ubuntu26-arm64","platform":"linux","arch":"arm64","os":"ubuntu-26-arm64","name":"Ubuntu 26 (arm64)","url_key":"resolute_arm64"},
+            {"key":"debian13-x86_64","platform":"linux","arch":"x86_64","os":"debian-13-x86_64","name":"Debian 13 (x86_64)","url_key":"noble_amd64"},
+            {"key":"debian13-arm64","platform":"linux","arch":"arm64","os":"debian-13-arm64","name":"Debian 13 (arm64)","url_key":"noble_arm64"},
+            {"key":"fedora43-x86_64","platform":"linux","arch":"x86_64","os":"fedora-43-x86_64","name":"Fedora 43 (x86_64)","url_key":"rhel10_x86_64"},
+            {"key":"fedora43-arm64","platform":"linux","arch":"arm64","os":"fedora-43-arm64","name":"Fedora 43 (arm64)","url_key":"rhel10_arm64"},
+            {"key":"fedora44-x86_64","platform":"linux","arch":"x86_64","os":"fedora-44-x86_64","name":"Fedora 44 (x86_64)","url_key":"rhel10_x86_64"},
+            {"key":"fedora44-arm64","platform":"linux","arch":"arm64","os":"fedora-44-arm64","name":"Fedora 44 (arm64)","url_key":"rhel10_arm64"},
+            {"key":"rocky9-x86_64","platform":"linux","arch":"x86_64","os":"rocky-9-x86_64","name":"Rocky 9 (x86_64)","url_key":"rhel9_x86_64"},
+            {"key":"rocky9-arm64","platform":"linux","arch":"arm64","os":"rocky-9-arm64","name":"Rocky 9 (arm64)","url_key":"rhel9_arm64"},
+            {"key":"rocky10-x86_64","platform":"linux","arch":"x86_64","os":"rocky-10-x86_64","name":"Rocky 10 (x86_64)","url_key":"rhel10_x86_64"},
+            {"key":"rocky10-arm64","platform":"linux","arch":"arm64","os":"rocky-10-arm64","name":"Rocky 10 (arm64)","url_key":"rhel10_arm64"},
+            {"key":"ubuntu24s","platform":"linux","arch":"x86_64"},
+            {"key":"macos15","platform":"macos","arch":"x86_64"},
+            {"key":"windows2025","platform":"windows","arch":"x86_64"},
+            {"key":"macos14","platform":"macos","arch":"arm64"},
+            {"key":"macos26","platform":"macos","arch":"arm64"}
+          ]'
+          # Every engine key. The Sunday branches below filter on platform and
+          # arch together, which this can't express, so they inline their own jq.
+          ALL=$(jq -cn --argjson e "$ENGINES" '[$e[] | .key]')
+
+          # The three Sunday filters must partition ENGINES exactly. They are bare
+          # select(...) filters, so an entry with a missing, misspelled or
+          # unrecognized platform matches none of them: it would silently drop out
+          # of every Sunday run while still appearing in ALL, so a dispatch would
+          # still cover it and nobody would notice for months. The groups cannot
+          # overlap by construction, which makes "the three counts sum to the whole"
+          # the same statement as "every engine is in exactly one".
+          if ! jq -en --argjson e "$ENGINES" '
+            ([$e[] | select(.platform=="linux" and .arch=="x86_64")] | length)
+            + ([$e[] | select(.platform=="linux" and .arch=="arm64")]  | length)
+            + ([$e[] | select(.platform=="macos" or .platform=="windows")] | length)
+            == ($e | length)' >/dev/null; then
+            echo "::error::The three Sunday selections do not partition ENGINES. Every entry needs platform 'linux' with arch 'x86_64' or 'arm64', or platform 'macos' or 'windows'."
+            exit 1
+          fi
+
+          # Every Linux Desktop engine must name a url_key the resolve job actually
+          # emits. This is the one field whose failure is silent: an unknown name
+          # makes needs.resolve.outputs[matrix.url_key] evaluate to '', and an empty
+          # rstudio_installer_url means "self-resolve the latest daily" to the
+          # engine -- so a version-pinned run would quietly install a different
+          # build and report the pinned version as tested. The "Verify a pinned
+          # version resolved for every platform" step below cannot catch it: that
+          # checks the action's own 13 outputs, never that an engine's url_key names
+          # one of them. The certification workflow carries the same check against
+          # its matrix file; keep both in step with the action's outputs.
+          RESOLVE_KEYS='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
+          BAD_KEYS=$(jq -cn --argjson e "$ENGINES" --argjson k "$RESOLVE_KEYS" \
+            '[$e[] | select(.os) | select((.url_key // "") as $u | ($k | index($u)) == null) | .key]')
+          if [ "$BAD_KEYS" != "[]" ]; then
+            echo "::error::Engine(s) in ENGINES have a missing or unrecognized url_key: $(jq -r 'join(", ")' <<<"$BAD_KEYS")."
+            echo "::error::Valid url_keys: $(jq -r 'join(", ")' <<<"$RESOLVE_KEYS")"
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             SEL="$ALL"
-          elif [ "${{ github.event.schedule }}" = "0 16 * * 1" ]; then
-            # macOS 14 runs on its own Monday-afternoon cron instead of in a
+          elif [ "${{ github.event.schedule }}" = "0 8 * * 0" ]; then
+            SEL=$(jq -cn --argjson e "$ENGINES" \
+              '[$e[] | select(.platform=="linux" and .arch=="x86_64") | .key]')
+          elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then
+            SEL=$(jq -cn --argjson e "$ENGINES" \
+              '[$e[] | select(.platform=="linux" and .arch=="arm64") | .key]')
+          elif [ "${{ github.event.schedule }}" = "0 16 * * 0" ]; then
+            SEL=$(jq -cn --argjson e "$ENGINES" \
+              '[$e[] | select(.platform=="macos" or .platform=="windows") | .key]')
+          elif [ "${{ github.event.schedule }}" = "0 16 * * 5" ]; then
+            # macOS 14 runs on its own Friday-afternoon cron instead of in a
             # weekday slate, so its runs land inside the October 2026 brownout
-            # windows for the deprecated macos-14 image (14:00-00:00 UTC on Oct
-            # 5, 12, 19 and 26; the 08:00 slates miss all eight windows by six
-            # hours). Those failures are the point -- early warning that the
-            # image is fully retired on 2026-11-02. No brownout window falls on
-            # a Sunday, so the full-matrix cron is unaffected before that date,
-            # but a dispatch launched inside any of the eight windows (they open
-            # on four Mondays, three Fridays and one Thursday) will hit one.
-            # After the retirement date this run, the Sunday run, and every
-            # dispatch fail until macos14 is removed from this workflow and from
-            # ALL above.
+            # windows for the deprecated macos-14 image. The eight windows all
+            # run 14:00-00:00 UTC, on Oct 5, 12, 19 and 26 (Mondays), Oct 16, 23
+            # and 30 (Fridays) and Oct 29 (Thursday); the 08:00 slates miss all
+            # eight by six hours. A Friday 16:00 run therefore lands inside
+            # three of them -- one fewer than Monday's four, which is the cost of
+            # this slot. Verified against actions/runner-images#13518.
+            # Those failures are the point -- early warning that the image is
+            # fully retired on 2026-11-02. No brownout window falls on a Sunday,
+            # so none of the three Sunday crons is affected before that date,
+            # but a dispatch launched inside any of the eight windows will hit
+            # one. After the retirement date this run, the Sunday macOS+Windows
+            # run, and every dispatch fail until macos14 is removed from this
+            # workflow and from ENGINES above.
             SEL='["macos14"]'
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
-              1) SEL='["ubuntu24d","macos26","rocky9"]' ;;
-              2) SEL='["ubuntu24s","windows2025","rocky10"]' ;;
-              3) SEL='["ubuntu26","fedora44","macos15"]' ;;
-              4) SEL='["fedora43","ubuntu22","windows2025"]' ;;
-              5) SEL='["ubuntu24s","macos26","debian13"]' ;;
-              # Only reachable by re-running a weekday run on Sat/Sun, or if the
-              # Sunday cron above changed without updating the check above.
-              # Fail loudly rather than silently selecting nothing.
-              *) echo "::error::No engine slate for weekday $(date -u +%u). If the Sunday cron changed, update the '0 8 * * 0' check in this job."; exit 1 ;;
+              1) SEL='["ubuntu24d-x86_64","macos26","rocky9-x86_64"]' ;;
+              2) SEL='["ubuntu24s","windows2025","rocky10-arm64"]' ;;
+              3) SEL='["ubuntu26-x86_64","fedora44-x86_64","macos15","ubuntu22-x86_64"]' ;;
+              4) SEL='["fedora43-x86_64","ubuntu24d-arm64","windows2025"]' ;;
+              5) SEL='["ubuntu24s","macos26","debian13-arm64"]' ;;
+              # Only reachable by re-running a weekday run on Sat/Sun, or if
+              # any Sunday cron above changed without updating its check
+              # above. Fail loudly rather than silently selecting nothing.
+              *) echo "::error::No engine slate for weekday $(date -u +%u). If any Sunday cron changed, update the '0 8 * * 0', '0 12 * * 0', and '0 16 * * 0' checks in this job."; exit 1 ;;
             esac
           fi
+          # Nothing selected means every job below is skipped by its own if:, and
+          # the run reports green having tested nothing. The weekday case has its
+          # own loud fallback and the Friday branch is a literal, so this guard is
+          # really for the three Sunday filters -- and for a dispatch, if ENGINES
+          # itself ever came back empty.
+          if [ "$SEL" = "[]" ]; then
+            echo "::error::No engines selected for this trigger. Check the platform and arch tags in ENGINES against the filters in this step."
+            exit 1
+          fi
+
+          # A slate naming an engine that no longer exists fails the index($k)
+          # filter further down and silently drops it, so a three-engine weekday
+          # would quietly run two. Catch a stale key here instead.
+          UNKNOWN=$(jq -cn --argjson a "$ALL" --argjson s "$SEL" \
+            '[$s[] | select(. as $k | ($a | index($k)) == null)]')
+          if [ "$UNKNOWN" != "[]" ]; then
+            echo "::error::Selection names engine(s) not in ENGINES: $(jq -r 'join(", ")' <<<"$UNKNOWN")."
+            echo "::error::Valid engines: $(jq -r 'join(", ")' <<<"$ALL")"
+            exit 1
+          fi
+
           echo "selected=$SEL" >> "$GITHUB_OUTPUT"
           echo "::notice::Selected engines: $SEL"
 
           # Map the selected Linux Desktop engines onto the consolidated
-          # workflow's matrix: os names the .github/e2e-linux config, arch is
-          # the architecture that config is expected to run on (the called
-          # workflow fails the run if the two disagree), and url_key names the
-          # resolve job's output holding that engine's version-specific
-          # installer URL (empty on latest-daily / build-from-source runs).
-          # Engines without their own daily reuse the nearest build (Fedora ->
-          # rhel10-x86_64, Debian -> noble-arm64, Ubuntu 26 -> noble-amd64);
-          # see the engine configs.
-          TABLE='[
-            {"key":"fedora43","os":"fedora-43-x86_64","arch":"x86_64","name":"Fedora 43 (x86_64)","url_key":"rhel"},
-            {"key":"fedora44","os":"fedora-44-x86_64","arch":"x86_64","name":"Fedora 44 (x86_64)","url_key":"rhel"},
-            {"key":"ubuntu26","os":"ubuntu-26-x86_64","arch":"x86_64","name":"Ubuntu 26 (x86_64)","url_key":"noble_amd64"},
-            {"key":"ubuntu22","os":"ubuntu-22-x86_64","arch":"x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
-            {"key":"ubuntu24d","os":"ubuntu-24-x86_64","arch":"x86_64","name":"Ubuntu 24 Desktop (x86_64)","url_key":"noble_amd64"},
-            {"key":"debian13","os":"debian-13-arm64","arch":"arm64","name":"Debian 13 (arm64)","url_key":"noble_arm64"},
-            {"key":"rocky10","os":"rocky-10-arm64","arch":"arm64","name":"Rocky 10 (arm64)","url_key":"rocky"},
-            {"key":"rocky9","os":"rocky-9-x86_64","arch":"x86_64","name":"Rocky 9 (x86_64)","url_key":"rhel9"}
-          ]'
-          LINUX=$(jq -cn --argjson table "$TABLE" --argjson sel "$SEL" \
-            '[$table[] | select(.key as $k | $sel | index($k))]')
+          # workflow's matrix. select(.os) keeps just the Linux entries, since
+          # only those carry the os / name / url_key fields the matrix needs;
+          # the five non-Linux engines are reached by the if: contains(...)
+          # guards on their own jobs instead.
+          LINUX=$(jq -cn --argjson e "$ENGINES" --argjson sel "$SEL" \
+            '[$e[] | select(.os) | select(.key as $k | $sel | index($k))]')
           echo "linux_matrix=$LINUX" >> "$GITHUB_OUTPUT"
           echo "::notice::Linux Desktop matrix: $LINUX"
 
   resolve:
     name: Resolve installer URLs
     runs-on: ubuntu-latest
+    # Every output is named for the daily manifest key it resolves, so an
+    # engine's url_key matches its config's daily_platform_key with '-' as '_'.
+    # The work itself lives in a composite action, shared with the
+    # certification workflow -- the URL/token-swap logic is the piece most
+    # likely to need a fix when the manifest format changes, and one copy is
+    # what keeps that fix from having to land twice.
     outputs:
-      rhel:         ${{ steps.resolve.outputs.rhel }}
-      rhel9:        ${{ steps.resolve.outputs.rhel9 }}
-      noble_amd64:  ${{ steps.resolve.outputs.noble_amd64 }}
-      server_noble: ${{ steps.resolve.outputs.server_noble }}
-      macos:        ${{ steps.resolve.outputs.macos }}
-      windows:      ${{ steps.resolve.outputs.windows }}
-      noble_arm64:  ${{ steps.resolve.outputs.noble_arm64 }}
-      rocky:        ${{ steps.resolve.outputs.rocky }}
-      jammy_amd64:  ${{ steps.resolve.outputs.jammy_amd64 }}
+      rhel10_x86_64:  ${{ steps.resolve.outputs.rhel10_x86_64 }}
+      rhel10_arm64:   ${{ steps.resolve.outputs.rhel10_arm64 }}
+      rhel9_x86_64:   ${{ steps.resolve.outputs.rhel9_x86_64 }}
+      rhel9_arm64:    ${{ steps.resolve.outputs.rhel9_arm64 }}
+      noble_amd64:    ${{ steps.resolve.outputs.noble_amd64 }}
+      noble_arm64:    ${{ steps.resolve.outputs.noble_arm64 }}
+      jammy_amd64:    ${{ steps.resolve.outputs.jammy_amd64 }}
+      jammy_arm64:    ${{ steps.resolve.outputs.jammy_arm64 }}
+      resolute_amd64: ${{ steps.resolve.outputs.resolute_amd64 }}
+      resolute_arm64: ${{ steps.resolve.outputs.resolute_arm64 }}
+      macos:          ${{ steps.resolve.outputs.macos }}
+      windows:        ${{ steps.resolve.outputs.windows }}
+      server_noble:   ${{ steps.resolve.outputs.server_noble }}
     steps:
+      # version/RELEASE names the branch whose daily manifest the URLs below
+      # come from, so this job needs the repository -- and the composite actions
+      # live here too, so they have to be on disk before they can be used.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - id: resolve
         name: Build per-platform installer URLs for a specific version
+        uses: ./.github/actions/os-resolve-daily-urls
+        with:
+          version: ${{ inputs.version }}
+          build_from_source: ${{ inputs.build_from_source }}
+          manifest_url: ${{ steps.manifest.outputs.manifest-url }}
+
+      # The resolve action is best-effort per platform, because platform builds
+      # fail independently and one failure should not block a run that never
+      # touches that platform. The cost of that is a caller now has to say what
+      # it needs -- an empty rstudio_installer_url means "self-resolve the latest
+      # daily" to an engine, so an unnoticed empty is a pinned run quietly
+      # testing something else.
+      #
+      # This workflow's dispatch runs every engine, so it needs every platform.
+      # Checked here rather than left to each engine because failing once, before
+      # any runner is provisioned, beats failing 21 times.
+      - name: Verify a pinned version resolved for every platform
+        if: ${{ inputs.version != '' && !inputs.build_from_source }}
         env:
+          URLS: ${{ toJSON(steps.resolve.outputs) }}
           VERSION: ${{ inputs.version }}
-          BUILD_FROM_SOURCE: ${{ inputs.build_from_source }}
         run: |
-          # Emit empty URLs when building from source (engines build, ignoring
-          # any URL) or when no version is given (engines self-resolve the
-          # latest daily, keeping their SHA-256 check). Only a specific version
-          # needs URLs built here: swap the version token (+ -> -) into each
-          # platform's latest download URL.
-          if [ "$BUILD_FROM_SOURCE" = "true" ] || [ -z "$VERSION" ]; then
-            {
-              echo "rhel="
-              echo "rhel9="
-              echo "noble_amd64="
-              echo "server_noble="
-              echo "macos="
-              echo "windows="
-              echo "noble_arm64="
-              echo "rocky="
-              echo "jammy_amd64="
-            } >> "$GITHUB_OUTPUT"
-            echo "No installer URLs to resolve (building from source or using the latest daily)."
-            exit 0
+          set -euo pipefail
+          # Checked against an explicit key list, not against whatever keys the
+          # object happens to carry. A key the action stops emitting -- a renamed
+          # platform, an edited outputs: block -- simply vanishes from $URLS, so
+          # iterating to_entries would find nothing missing, pass, and let that
+          # engine self-resolve the latest daily under a pinned dispatch. Keep in
+          # step with the action's outputs, and with the same list in the pick job.
+          EXPECT='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
+          MISSING=$(jq -rn --argjson u "$URLS" --argjson k "$EXPECT" \
+            '[$k[] | select((($u[.]) // "") == "")] | join(", ")')
+          if [ -n "$MISSING" ]; then
+            echo "::error::Version '$VERSION' produced no installer URL for: $MISSING."
+            echo "::error::A dispatch runs every engine, so every platform must resolve. Those engines would otherwise silently fall back to the latest daily."
+            exit 1
           fi
-          M=$(curl -fsSL --retry 3 --retry-delay 5 'https://dailies.rstudio.com/rstudio/latest/index.json')
-          REQ=${VERSION//+/-}
-          emit() {
-            local product="$1" key="$2" link ver cur
-            link=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].link // empty")
-            ver=$(printf '%s' "$M" | jq -r ".products.${product}.platforms[\"${key}\"].version // empty")
-            cur=${ver//+/-}
-            if [ -z "$link" ] || [ -z "$cur" ]; then
-              echo "::error::Could not build a URL for ${product}/${key} from the latest manifest." >&2
-              return 1
-            fi
-            local out=${link//$cur/$REQ}
-            if [ "$REQ" != "$cur" ] && [ "$out" = "$link" ]; then
-              echo "::error::Version '$REQ' did not substitute into the ${product}/${key} URL ($link); the manifest link format may have changed." >&2
-              return 1
-            fi
-            if ! curl -fsI "$out" >/dev/null 2>&1; then
-              echo "::error::Resolved URL for ${product}/${key} does not exist: $out (version '$VERSION' may be unavailable or mistyped)." >&2
-              return 1
-            fi
-            printf '%s' "$out"
-          }
-          RHEL=$(emit electron rhel10-x86_64) || exit 1
-          RHEL9=$(emit electron rhel9-x86_64) || exit 1
-          NOBLE=$(emit electron noble-amd64) || exit 1
-          SERVER=$(emit server noble-amd64) || exit 1
-          MAC=$(emit electron macos) || exit 1
-          WIN=$(emit electron windows) || exit 1
-          NARM=$(emit electron noble-arm64) || exit 1
-          ROCKY=$(emit electron rhel10-arm64) || exit 1
-          JAMMY=$(emit electron jammy-amd64) || exit 1
-          {
-            echo "rhel=$RHEL"
-            echo "rhel9=$RHEL9"
-            echo "noble_amd64=$NOBLE"
-            echo "server_noble=$SERVER"
-            echo "macos=$MAC"
-            echo "windows=$WIN"
-            echo "noble_arm64=$NARM"
-            echo "rocky=$ROCKY"
-            echo "jammy_amd64=$JAMMY"
-          } >> "$GITHUB_OUTPUT"
-          echo "Resolved URLs for version $VERSION."
+          echo "::notice::All $(jq -r 'length' <<<"$EXPECT") platforms have an installer URL for $VERSION."
 
   # Every selected Linux Desktop engine, one matrix entry each, through the
   # consolidated Linux workflow. The matrix is built (already filtered to the
@@ -240,6 +392,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       os: ${{ matrix.os }}
       arch: ${{ matrix.arch }}
@@ -257,6 +410,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: server
       r_version: "release"
@@ -272,6 +426,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: "release"
@@ -287,6 +442,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: "release"
@@ -304,6 +460,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: "release"
@@ -319,6 +476,7 @@ jobs:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
       AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
       r_version: "release"

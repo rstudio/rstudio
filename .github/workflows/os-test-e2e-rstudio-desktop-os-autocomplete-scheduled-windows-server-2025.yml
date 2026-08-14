@@ -79,12 +79,20 @@ jobs:
       run:
         shell: pwsh
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}\R-libs
+      # Point globalSetup's R-libs provisioner at the same library the
+      # e2e-deps action installs and caches (see the main windows-server-2025
+      # workflow). Without this the harness default is
+      # %LOCALAPPDATA%\rstudio-playwright\r-libs\... -- a different path, so
+      # packages re-download from CRAN on every run of this ephemeral runner.
+      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}\R-libs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -105,26 +113,32 @@ jobs:
           rig ls
           New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
 
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - name: Resolve RStudio .exe URL
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           $ErrorActionPreference = 'Stop'
           $url = $env:INSTALLER_URL
+          $manifestUrl = $env:MANIFEST_URL
           $sha = ''
           $filename = ''
           if ([string]::IsNullOrEmpty($url)) {
-            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json'
+            $manifest = Invoke-RestMethod -Uri $manifestUrl
             $win = $manifest.products.electron.platforms.windows
             $url = $win.link
             $sha = $win.sha256
             $filename = $win.filename
             if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
-              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              Write-Error "No usable windows entry in $manifestUrl (url='$url', filename='$filename', sha256='$sha'). Either this release branch has no Windows daily yet, or the manifest schema changed."
               exit 1
             }
-            Write-Host "Auto-resolved latest windows daily:"
+            Write-Host "Auto-resolved windows daily:"
             Write-Host "  URL:      $url"
             Write-Host "  SHA-256:  $sha"
             Write-Host "  Filename: $filename"
@@ -181,10 +195,14 @@ jobs:
           }
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
+      # install-required-packages: see the main windows-server-2025 workflow --
+      # pre-installs the harness's REQUIRED_PACKAGES set into the cached
+      # library so nothing installs from CRAN at test time.
       - name: Install e2e test dependencies
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
+          install-required-packages: "true"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
@@ -216,7 +234,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report
           path: e2e/rstudio/playwright-report/
@@ -224,7 +242,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-results
           path: e2e/rstudio/test-results/

@@ -3,3 +3,7 @@
 # Entries are added per path as reviewing teams are confirmed. A file with
 # no entries leaves every path unowned, so enabling "Require review from
 # Code Owners" in branch protection has no effect until an entry lands.
+
+# Temporary owner while the reviewing team is confirmed. Replace with the
+# team handle once it's known.
+/e2e/rstudio/.env.op     @ronblum

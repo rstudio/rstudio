@@ -44,7 +44,7 @@ set NSISMULTIUSER_VERSION=a33d494c62ad
 set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
-set QUARTO_VERSION=1.9.38
+set QUARTO_VERSION=1.10.18
 set COPILOT_VERSION=1.520.0
 set SUMATRA_VERSION=3.1.2
 set WINUTILS_VERSION=1.0
@@ -72,7 +72,7 @@ for %%X in (R.exe 7z.exe cmake.exe curl.exe) do (
   )
 )
 
-set QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
+set QUARTO_URL=quarto/%QUARTO_VERSION%/quarto-%QUARTO_VERSION%-win.zip
 set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
 
@@ -299,6 +299,7 @@ if not exist %NSISMULTIUSER_FOLDER%\Include\NsisMultiUser.nsh (
 echo -- Installing panmirror (Visual Editor)
 pushd "%WINDOWS_SCRIPTS_DIR%install-panmirror"
 call clone-panmirror-repo.cmd
+if errorlevel 1 exit /b 1
 popd
 
 echo -- Installing SOCI

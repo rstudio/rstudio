@@ -1,4 +1,4 @@
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { ChatPane } from '../pages/chat_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
@@ -137,24 +137,40 @@ export class ChatPaneActions {
 
       if (await overlayTrustBtn.isVisible().catch(() => false)) {
         console.log('waitForChatReady: clicking trust overlay button');
-        await overlayTrustBtn.click({ timeout: 5000 });
-        // Let the overlay tear down before re-polling
-        await sleep(500);
+        await this.grantWorkspaceTrust(overlayTrustBtn, deadline);
         continue;
       }
 
       const anyTrustBtn = this.chatPane.trustWorkspaceBtn.first();
       if (await anyTrustBtn.isVisible().catch(() => false)) {
         console.log('waitForChatReady: clicking fallback trust button');
-        await anyTrustBtn.click({ timeout: 5000 });
-        await sleep(500);
+        await this.grantWorkspaceTrust(anyTrustBtn, deadline);
         continue;
       }
 
       await sleep(500);
     }
 
+    // A trust grant can consume the tail of the budget, leaving the loop no
+    // iteration in which to observe its result. Sample the real readiness
+    // signal once more before calling this a failure.
+    if (await this.chatPane.isChatInputReady()) {
+      console.log('waitForChatReady: input editable at deadline');
+      return;
+    }
+
     // Deadline expired -- pick the most actionable error message.
+    // Check the trust overlay first: it renders over the sign-in panel
+    // without hiding it, so the sign-in check below would otherwise win and
+    // blame credentials for a trust grant that never landed.
+    if (await overlayTrustBtn.isVisible().catch(() => false)) {
+      throw new Error(
+        `waitForChatReady: the workspace-trust dialog was still showing after ${timeout}ms. ` +
+        'Clicking "Trust this workspace" did not complete the trustWorkspace round-trip; ' +
+        'check the chat iframe console for a "Failed to trust workspace" error.'
+      );
+    }
+
     // The Sign-In affordance can flash briefly during backend startup while
     // credentials are still being loaded from the token store, so we only
     // treat it as a hard failure when it's still visible at the end of the
@@ -173,6 +189,44 @@ export class ChatPaneActions {
       `(no Sign-In button, no Trust dialog). Chat pane initialization may ` +
       `have stalled.`
     );
+  }
+
+  /**
+   * Click a "Trust this workspace" affordance and wait for it to go away.
+   *
+   * The overlay disables both of its buttons for as long as the trustWorkspace
+   * round-trip runs -- around two seconds, since the assistant tears down and
+   * rebuilds the conversation view once trust is granted -- and only then
+   * unmounts. Polling back around after a fixed sleep lands inside that
+   * window: the overlay is still visible, so we click again, and that second
+   * click waits on a button that is disabled and about to detach until it
+   * times out. Waiting for the button to disappear keeps it to one click per
+   * appearance.
+   *
+   * Both steps are best-effort. The overlay can also be torn down by a trust
+   * grant we didn't make (leaving the click with no element), and a failed
+   * grant leaves it up with its buttons re-enabled and an inline error -- in
+   * which case the caller's next poll simply retries. The caller's deadline,
+   * not this click, is what fails the test, so neither step may outlive it:
+   * an attempt begun just before the deadline would otherwise overrun it by
+   * its full budget.
+   */
+  private async grantWorkspaceTrust(trustBtn: Locator, deadline: number): Promise<void> {
+    // Playwright reads a timeout of 0 as "wait forever", so an exhausted
+    // budget has to skip the step outright rather than pass 0 through.
+    const budget = (max: number) => Math.min(max, deadline - Date.now());
+    try {
+      const clickBudget = budget(5000);
+      if (clickBudget <= 0) return;
+      await trustBtn.click({ timeout: clickBudget });
+
+      const hiddenBudget = budget(10000);
+      if (hiddenBudget <= 0) return;
+      await trustBtn.waitFor({ state: 'hidden', timeout: hiddenBudget });
+    } catch (err) {
+      const [firstLine] = String(err instanceof Error ? err.message : err).split('\n');
+      console.log(`waitForChatReady: trust click did not settle (${firstLine}); re-polling`);
+    }
   }
 
   async clickAllowOnceIfPresent(): Promise<void> {
@@ -385,18 +439,21 @@ export class ChatPaneActions {
   }
 
   /**
-   * Rename the current conversation via the UI context menu
+   * Rename the current conversation via the UI context menu.
+   *
+   * Verifies the rename actually took effect before returning (#18363): the
+   * history panel is closed and reopened so the list reflects the new name,
+   * and the renamed item is asserted present. Leaves the history panel closed.
+   *
    * @param name The new name for the conversation
    */
   async renameConversation(name: string): Promise<void> {
-    // Open history panel to access conversation list. toggleConversationHistory
-    // polls for the list to appear, so no post-call sleep is needed here.
-    await this.toggleConversationHistory();
+    await this.openConversationHistory();
 
     // Get the first (current/active) conversation item. Each toBeVisible
     // below polls, replacing what used to be a chain of blind sleeps
     // between hover, click, menu-item click, and input fill.
-    const activeConvItem = this.chatPane.conversationList.first();
+    const activeConvItem = this.chatPane.conversationListItem.first();
     await expect(activeConvItem).toBeVisible({ timeout: 5000 });
 
     // Hover over the conversation item to reveal the menu button
@@ -423,15 +480,49 @@ export class ChatPaneActions {
     await nameInput.clear();
     await nameInput.fill(name);
 
-    // Press Enter to confirm the rename
+    // Press Enter to confirm the rename; the input leaves edit mode once the
+    // rename has been committed.
     await nameInput.press('Enter');
+    await expect(nameInput).toBeHidden({ timeout: 5000 });
+
+    // Close and reopen the panel so the list reflects the rename, then verify
+    // it took effect. Without this, a silently-failed rename surfaces several
+    // steps later as an opaque locator timeout (#18363).
+    await this.closeConversationHistory();
+    await this.openConversationHistory();
+    await expect(this.chatPane.getConversationItemByName(name).first()).toBeVisible({ timeout: 5000 });
+    await this.closeConversationHistory();
 
     console.log(`Renamed conversation to "${name}"`);
   }
 
-  async toggleConversationHistory(): Promise<void> {
+  /**
+   * Open the conversation history panel, or do nothing if it is already open.
+   *
+   * The history toolbar button is a strict toggle and the panel is removed
+   * from the DOM when closed, so a state-blind "click and expect the list"
+   * helper inverts the panel state whenever its assumption about the current
+   * state is wrong -- and its post-click assertion could only pass on a
+   * closing toggle by winning a race against the panel's fade-out. Checking
+   * the panel's actual state first makes these helpers idempotent.
+   */
+  async openConversationHistory(): Promise<void> {
+    if (await this.chatPane.conversationHistoryPanel.isVisible()) {
+      return;
+    }
     await this.chatPane.historyBtn.click({ timeout: 10000 });
-    // Poll for the conversation list panel to appear (replaces post-click sleep).
-    await expect(this.chatPane.conversationList.first()).toBeVisible({ timeout: 10000 });
+    await expect(this.chatPane.conversationHistoryPanel).toBeVisible({ timeout: 10000 });
+  }
+
+  /**
+   * Close the conversation history panel, or do nothing if it is already
+   * closed. See openConversationHistory for why this checks state first.
+   */
+  async closeConversationHistory(): Promise<void> {
+    if (!(await this.chatPane.conversationHistoryPanel.isVisible())) {
+      return;
+    }
+    await this.chatPane.historyBtn.click({ timeout: 10000 });
+    await expect(this.chatPane.conversationHistoryPanel).toBeHidden({ timeout: 10000 });
   }
 }
