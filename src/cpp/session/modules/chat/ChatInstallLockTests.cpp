@@ -556,6 +556,41 @@ TEST_F(ChatInstallLock, AdvisoryStartProbeIsNonDestructive)
    EXPECT_TRUE(installLockFile.exists());
 }
 
+TEST_F(ChatInstallLock, SameOwnerIdCollidesWithLivePredecessor)
+{
+   // A process that reuses another live process's owner id (e.g. a session
+   // relaunch reusing the stable session id while an orphaned predecessor
+   // still runs, #18571/#18572) names the SAME lock file: its start is
+   // refused as an "update in progress" that never clears while the
+   // predecessor lives. This is why installLock() derives a per-process
+   // owner id rather than using the bare session id.
+   InstallLock predecessor(
+      locksDir_, "session-same", FileLock::LOCKTYPE_LINKBASED);
+   InstallLock replacement(
+      locksDir_, "session-same", FileLock::LOCKTYPE_LINKBASED);
+
+   uint64_t predecessorToken = 0;
+   ASSERT_FALSE(predecessor.acquireInUse(
+      InstallLock::Component::ChatBackend, &predecessorToken));
+
+   uint64_t token = 0;
+   std::string userMessage;
+   Error error = replacement.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage);
+   EXPECT_TRUE(error);
+   EXPECT_NE(userMessage.find("update is in progress"), std::string::npos);
+   EXPECT_EQ(token, 0u);
+   EXPECT_FALSE(replacement.inUseHeld());
+
+   // once the predecessor releases (exits), the same-named start succeeds
+   predecessor.releaseInUse(
+      InstallLock::Component::ChatBackend, predecessorToken);
+   ASSERT_FALSE(replacement.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
+   EXPECT_NE(token, 0u);
+   replacement.releaseInUse(InstallLock::Component::ChatBackend, token);
+}
+
 TEST_F(ChatInstallLock, AcquireInUseForStartSucceedsWhenIdle)
 {
    uint64_t token = 0;
