@@ -43,6 +43,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "../SessionConsoleInput.hpp"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -740,17 +742,47 @@ void onClientInit()
    renderGraphicsOutput(false, false);
 }
 
+// Set when a mid-turn render consumed a graphics-device change without
+// activating the Plots pane; honored (and cleared) by the next activating
+// change detection, i.e. the REPL change source fired at end of turn.
+bool s_pendingReplActivation = false;
+
 void detectChanges(bool activatePlots)
 {
    // check for changes
    using namespace rstudio::r::session;
    if (graphics::display().hasChanges())
    {
+      // Rendering consumes the device's change flag. When a render that cannot
+      // activate the pane (busy-time background processing, RPC handlers) runs
+      // inside a console turn or an interactive agent execution, it would
+      // swallow the activation normally performed by the REPL change source at
+      // end of turn -- that fires with no changes left and does nothing
+      // (#18559). Remember the unactivated change so the end-of-turn detection
+      // can still activate. Silent agent helpers report ChangeSourceRPC at
+      // completion and are deliberately excluded (isAgentExecuting is false
+      // for them).
+      if (!activatePlots &&
+          (console_input::executing() || module_context::isAgentExecuting()))
+      {
+         s_pendingReplActivation = true;
+      }
+
       graphics::display().render(boost::bind(enquePlotsChanged,
                                              _1,
                                              activatePlots,
                                              false));
    }
+   else if (activatePlots && s_pendingReplActivation)
+   {
+      // The change this turn produced was already consumed by a non-activating
+      // render above; re-emit the current state with activation requested.
+      // enquePlotsChanged still self-gates on plotCount > 0.
+      renderGraphicsOutput(true, false);
+   }
+
+   if (activatePlots)
+      s_pendingReplActivation = false;
 }
 
 void onDetectChanges(module_context::ChangeSource source)
