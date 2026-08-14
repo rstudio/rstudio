@@ -30,7 +30,8 @@ export class ChatPane extends FramePageObject {
   public aboutItem: Locator;
   public newConversationBtn: Locator;
   public historyBtn: Locator;
-  public conversationList: Locator;
+  public conversationHistoryPanel: Locator;
+  public conversationListItem: Locator;
   public pendingQuestions: Locator;
   public submitAnswersBtn: Locator;
 
@@ -79,7 +80,14 @@ export class ChatPane extends FramePageObject {
     this.aboutItem = this.frame.locator("xpath=//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]");
     this.newConversationBtn = this.frame.getByRole('button', { name: 'New conversation' });
     this.historyBtn = this.frame.getByRole('button', { name: 'Conversation history' });
-    this.conversationList = this.frame.locator("[class*='conversation']");
+    // The history panel container and its per-conversation rows. The panel is
+    // removed from the DOM when the history is closed, so its presence is the
+    // open/closed signal that openConversationHistory / closeConversationHistory
+    // key off. The old catch-all "[class*='conversation']" locator matched the
+    // panel itself before any row, and matched nothing at all once the panel
+    // closed -- both of which made state-blind assertions racy.
+    this.conversationHistoryPanel = this.frame.locator('.conversation-list-panel');
+    this.conversationListItem = this.frame.locator('.conversation-list-item-panel');
     // PAI 0.7.x AskUser elicitation: the assistant can pause mid-turn and render
     // a question form instead of acting. The turn stays active (stop button
     // showing, composer in "queue" mode) until the form is submitted or
