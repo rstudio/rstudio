@@ -721,10 +721,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 4 shards: per-shard setup is only ~5 minutes against a ~35 minute
-        # (at 2 shards) test step, so extra shards still convert nearly 1:1
-        # into wall-clock savings.
-        shard: [1, 2, 3, 4]
+        # 6 shards: per-shard setup is only ~5 minutes against a ~30 minute
+        # (at 4 shards) worst-case test step, so extra shards still convert
+        # nearly 1:1 into wall-clock savings. Playwright shards by file, not
+        # by duration, so the shard counts stay unbalanced -- at 4 shards the
+        # slowest shard ran ~30 minutes of tests against ~22 for its siblings
+        # and was the long pole of the whole PR-triggered run.
+        shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-2025
     timeout-minutes: 120
     environment: e2e-playwright
@@ -1163,4 +1166,4 @@ jobs:
             </details>
 
             ---
-            <sub>4 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>6 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
