@@ -2026,15 +2026,6 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
    return Success();
 }
 
-bool isProcessRunning(pid_t pid)
-{
-   // the posix standard way of checking if a process
-   // is running is to send the 0 signal to it
-   // requires root privilege if process is owned by another user
-   int result = kill(pid, 0);
-   return result == 0;
-}
-
 namespace {
 
 Error readStatFields(const FilePath& statFilePath,
@@ -2211,6 +2202,15 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
 #endif
+
+bool isProcessRunning(pid_t pid)
+{
+   // the posix standard way of checking if a process
+   // is running is to send the 0 signal to it
+   // requires root privilege if process is owned by another user
+   int result = kill(pid, 0);
+   return result == 0;
+}
 
 std::string ProcessInfo::getUsername() const
 {
