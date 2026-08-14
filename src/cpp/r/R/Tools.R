@@ -1049,7 +1049,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 .rs.addFunction("isTraced", function(fun) {
-   isS4(fun) && class(fun) == "functionWithTrace"
+   # use %in% rather than ==, as the class attribute of a traced S7 method
+   # is a hybrid of the S7 method class and 'functionWithTrace' (#18531)
+   isS4(fun) && "functionWithTrace" %in% class(fun)
 })
 
 # when a function is traced, some data about the function (such as its original

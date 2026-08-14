@@ -316,6 +316,28 @@ test.describe('R debugger extras', () => {
       await expect(consoleActions.consolePane.consoleOutput).toContainText(
         '[1] "This is my S7 generic method."',
       );
+
+      // While the breakpoint is set, the traced method should still look
+      // like an S7 method -- printing the generic must not error.
+      await consoleActions.executeInConsole('print(s7generic)');
+      await expect(consoleActions.consolePane.consoleOutput).toContainText(
+        'with 1 methods',
+      );
+
+      // Clear the breakpoint and verify the method was restored exactly:
+      // S7 class back in place, no trace machinery or stashed attributes
+      // left behind.
+      await debuggerActions.clearBreakpoint(4);
+      await consoleActions.executeInConsole(
+        '{ m <- attr(s7generic, "methods", exact = TRUE)$s7class;' +
+        ' cat("s7-method-state:", class(m),' +
+        ' is.null(attr(m, ".rs.s7MethodClass", exact = TRUE)),' +
+        ' !grepl(".doTrace", paste(deparse(body(m)), collapse = ""), fixed = TRUE),' +
+        ' "\\n") }',
+      );
+      await expect(consoleActions.consolePane.consoleOutput).toContainText(
+        's7-method-state: S7_method function S7_object TRUE TRUE',
+      );
     });
   });
 
