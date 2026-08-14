@@ -555,9 +555,15 @@ public class MathJax
             if (!error)
                lastRenderedText_ = text;
 
-            // re-position popup after render
-            popup_.positionNearRange(docDisplay_, range_);
-            popup_.show();
+            // re-position the popup after render, unless the cursor left the
+            // math range while the typeset was in flight -- endRender() has
+            // then already reset the render state (nulling range_) and hidden
+            // the popup
+            if (range_ != null)
+            {
+               popup_.positionNearRange(docDisplay_, range_);
+               popup_.show();
+            }
 
             // invoke user callback if provided
             if (callback != null)
