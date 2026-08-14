@@ -95,6 +95,10 @@ on:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS. Set to '--no-sandbox' if the in-container Chromium sandbox won't initialize."
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        description: "Test the pre-release (test) Posit Assistant manifest instead of the released one. Off by default: only the Posit Assistant release gate turns this on."
+        type: boolean
+        default: false
       build_only:
         description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
         type: boolean
@@ -142,6 +146,9 @@ on:
       rstudio_extra_args:
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        type: boolean
+        default: false
       build_only:
         type: boolean
         default: false
@@ -888,6 +895,16 @@ jobs:
       # here and hand it ownership of everything the run writes under the
       # workspace (R-libs and its per-worker clones, ms-playwright,
       # pw-sandbox, the pak cache, and the report dirs under e2e/rstudio).
+      # Opt this run into the Posit Assistant pre-release manifest. A per-run
+      # prefs override, never a base pref -- every other run keeps testing GA.
+      # Must precede the chown below so the non-root test user can read it.
+      - name: Enable Posit Assistant test manifest
+        if: inputs.posit_assistant_test_manifest
+        run: |
+          PREFS="$GITHUB_WORKSPACE/e2e/rstudio/.prefs.local.json"
+          echo '{"posit_assistant_test_manifest": true}' > "$PREFS"
+          echo "PW_RSTUDIO_PREFS_OVERRIDE=$PREFS" >> "$GITHUB_ENV"
+
       - name: Create non-root test user
         if: needs.setup.outputs.run_as_user != ''
         env:

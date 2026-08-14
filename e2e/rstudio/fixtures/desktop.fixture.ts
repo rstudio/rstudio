@@ -177,6 +177,9 @@ export interface DesktopSession {
   // RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp userLogDir). The per-test
   // fixture reads them from here to attach backend logs on a failure.
   logDir: string;
+  // Whether this launch's merged prefs asked for the Posit Assistant
+  // pre-release (test) manifest -- see TempConfig.requestedTestManifest.
+  requestedTestManifest: boolean;
 }
 
 // Gated diagnostic: when PW_DEBUG_PAGES=1 is set, attach listeners to every
@@ -241,6 +244,11 @@ interface TempConfig {
   configDir: string;
   electronUserData: string;
   dataHome: string;
+  // Whether the merged base+override prefs asked for the Posit Assistant
+  // pre-release (test) manifest. False on the existingConfigRoot reuse path
+  // below, which doesn't re-merge -- launchRStudio's callers never request a
+  // relaunch there, so that path never needs the check this feeds.
+  requestedTestManifest: boolean;
 }
 
 /**
@@ -277,6 +285,8 @@ function createTempConfig(): TempConfig {
     JSON.stringify(prefs, null, 2),
   );
 
+  const requestedTestManifest = prefs.posit_assistant_test_manifest === true;
+
   // Pre-seed electron-store's config.json with explicit windowBounds, pinned
   // to ONE geometry that both local machines and CI render identically:
   // 1024x645, the macOS GH Actions runner's display workArea. Asking for
@@ -297,7 +307,7 @@ function createTempConfig(): TempConfig {
     ),
   );
 
-  return { root, configHome, configDir, electronUserData, dataHome };
+  return { root, configHome, configDir, electronUserData, dataHome, requestedTestManifest };
 }
 
 /**
@@ -510,6 +520,7 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       configDir: path.join(existingConfigRoot, 'config-dir'),
       electronUserData: path.join(existingConfigRoot, 'electron-userdata'),
       dataHome: path.join(existingConfigRoot, 'data-home'),
+      requestedTestManifest: false,
     };
     // Defensively recreate child dirs in case anything cleared them between runs
     for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData, tempConfig.dataHome]) {
@@ -803,7 +814,14 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
 
     // rsession logs land in RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp).
     const logDir = path.join(tempConfig.dataHome, 'log');
-    return { page, browser, rstudioProcess, configRoot, logDir };
+    return {
+      page,
+      browser,
+      rstudioProcess,
+      configRoot,
+      logDir,
+      requestedTestManifest: tempConfig.requestedTestManifest,
+    };
   } catch (err) {
     await browser?.close().catch(() => {});
     killProcessTree(rstudioProcess);

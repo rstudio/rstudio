@@ -39,6 +39,10 @@ on:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        description: "Test the pre-release (test) Posit Assistant manifest instead of the released one. Off by default: only the Posit Assistant release gate turns this on."
+        type: boolean
+        default: false
       build_only:
         description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
         type: boolean
@@ -76,6 +80,9 @@ on:
       rstudio_extra_args:
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        type: boolean
+        default: false
       build_only:
         type: boolean
         default: false
@@ -534,6 +541,15 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           OP_ENV_FILE: ./e2e/rstudio/.env.op
+
+      # Opt this run into the Posit Assistant pre-release manifest. A per-run
+      # prefs override, never a base pref -- every other run keeps testing GA.
+      - name: Enable Posit Assistant test manifest
+        if: inputs.posit_assistant_test_manifest
+        run: |
+          PREFS="$GITHUB_WORKSPACE/e2e/rstudio/.prefs.local.json"
+          echo '{"posit_assistant_test_manifest": true}' > "$PREFS"
+          echo "PW_RSTUDIO_PREFS_OVERRIDE=$PREFS" >> "$GITHUB_ENV"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
