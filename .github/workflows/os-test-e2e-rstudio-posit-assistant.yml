@@ -28,11 +28,6 @@ on:
   schedule:
     - cron: '0 20 * * 0'   # Sunday 20:00 UTC (4 PM EDT)
   workflow_dispatch: {}
-  # TEMPORARY: workflow_dispatch only works once this file exists on the
-  # default branch. This lets the whole three-OS gate run pre-merge; remove
-  # before this branch merges (see rstudio/rstudio#18477).
-  push:
-    branches: [test/ron/e2e-assistant-gate]
 
 concurrency:
   group: pw-posit-assistant-gate
