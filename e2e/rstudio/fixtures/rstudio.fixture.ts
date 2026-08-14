@@ -2,10 +2,11 @@ import { test as base, type Page, type TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
-import { launchServer, shutdownServer } from './server.fixture';
+import { launchServer, shutdownServer, externalServerUrl } from './server.fixture';
 import { setAuthStateEnv, type AiAuthOption } from '../utils/auth';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
+import { withDeadline, DeadlineError } from '../utils/deadline';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 
@@ -60,14 +61,17 @@ const ASSISTANT_TEST_TAGS = ['@ai', '@chat'];
  * session or opens a project still does that work under any leaked provider
  * prefs; the guard then normalizes state before its first test runs.
  *
- * Desktop only: in server mode prefs live in the server's config home. A
- * spawned rserver (the CI path) gets a per-worker config home, but an
- * external PW_RSTUDIO_SERVER_URL server has a single config shared by every
- * worker, where flipping the pref here would race a @chat suite running
- * concurrently in another worker. (What server workers always share is the
- * data home -- the installed backend -- not the prefs.) A leaked-on provider
- * in server mode costs agent start/stop churn, not a wedge: the shutdown
- * hardening that landed with #18394 bounds the restarts product-side.
+ * Desktop and spawned-server workers only: a spawned rserver (the CI path)
+ * gets a per-worker config home, so flipping the prefs here is as isolated
+ * as on desktop. An external PW_RSTUDIO_SERVER_URL server has a single
+ * config shared by every worker, where flipping the pref would race a @chat
+ * suite running concurrently in another worker, so that path stays
+ * excluded. (What server workers always share is the data home -- the
+ * installed backend -- not the prefs.) Spawned-server workers were
+ * originally excluded too, on the assumption that the #18417 shutdown
+ * hardening bounded the restarts product-side -- but the wedge kept firing
+ * on the server shards (#18394), where the projects region restarts
+ * sessions ~30 times with a live agent, so the guard now covers them.
  */
 async function disableLeakedAssistant(page: Page): Promise<void> {
   const [assistant, chatProvider] = await Promise.all([
@@ -209,6 +213,53 @@ async function attachSessionLogs(
 }
 
 /**
+ * Deadline for the per-test drain evaluates. A healthy page answers in
+ * milliseconds; a page still settling a session transition answers within a
+ * few seconds. 30s is comfortably past both while staying well under the
+ * 120s test timeout, leaving room to diagnose and report within the test's
+ * own budget.
+ */
+const WEDGE_PROBE_MS = 30_000;
+
+/**
+ * A page that stops answering evaluates is the signature of the #18394
+ * wedge: a session shutdown that never completes leaves the browser parked
+ * on a transition that never finishes (server: the proxied request to the
+ * zombie session has no deadline; desktop: the relaunch is driven by a child
+ * exit event that never fires), so the frame has no JS context and every
+ * bridge call blocks forever. Untreated, that stacks fixture stages into
+ * 300s of output silence and the CI heartbeat kills the whole shard with no
+ * report.
+ *
+ * Capture what needs no JS context -- page.url() is tracked protocol-side
+ * and tells a stuck navigation apart from a frozen renderer, and a
+ * screenshot is a protocol-level capture -- then hand back a descriptive
+ * error for the caller to throw. Failing the test fast makes Playwright
+ * discard this worker and run the remaining tests in a fresh one, so the
+ * shard survives with its report intact.
+ */
+async function attachWedgeDiagnostics(page: Page, testInfo: TestInfo, cause: Error): Promise<Error> {
+  const url = page.url();
+
+  let screenshotNote = 'screenshot unavailable';
+  try {
+    const shot = await page.screenshot({ timeout: 5000 });
+    await testInfo.attach('wedged-page.png', { body: shot, contentType: 'image/png' });
+    screenshotNote = 'screenshot attached as wedged-page.png';
+  } catch {
+    // A frozen renderer can block even protocol-level capture; the URL
+    // alone still distinguishes the stuck-navigation case.
+  }
+
+  console.error(`[wedged-page] ${cause.message}; page URL: ${url} (${screenshotNote})`);
+  return new Error(
+    `page is unresponsive (${cause.message}); URL at detection: ${url}. ` +
+    'This is the session-transition wedge signature (#18394); failing fast ' +
+    'so the worker restarts with a fresh session.',
+  );
+}
+
+/**
  * Unified Playwright Test fixture that provides a shared RStudio page.
  *
  * The `mode` option is set per-project in playwright.config.ts; select with
@@ -292,8 +343,19 @@ export const test = base.extend<
 
     // Drain exceptions that arrived BEFORE this test (a previous test's
     // teardown, the gap between specs). They can't be attributed to the
-    // upcoming test, so log them rather than fail it.
-    const leftovers = await drainClientExceptions(page);
+    // upcoming test, so log them rather than fail it. The drain is the first
+    // page.evaluate of the test, so it is also where a wedged page (#18394)
+    // surfaces: bound it and fail fast with diagnostics rather than hang the
+    // whole 120s test timeout doing nothing.
+    let leftovers: Awaited<ReturnType<typeof drainClientExceptions>>;
+    try {
+      leftovers = await withDeadline(
+        drainClientExceptions(page), WEDGE_PROBE_MS, 'pre-test client-exception drain');
+    } catch (err) {
+      if (!(err instanceof DeadlineError))
+        throw err;
+      throw await attachWedgeDiagnostics(page, testInfo, err);
+    }
     for (const e of leftovers) {
       console.warn(
         `[client-exception] recorded between tests (not attributed): ${e.message}\n${e.stack}`,
@@ -309,9 +371,11 @@ export const test = base.extend<
     await resetForNextTest(page);
 
     // Keep the AI assistant off for tests that don't opt in via @ai/@chat --
-    // see disableLeakedAssistant. Runs after resetForNextTest so the bridge
-    // readiness gate has already been cleared.
-    if (mode === 'desktop' && !testInfo.tags.some((tag) => ASSISTANT_TEST_TAGS.includes(tag)))
+    // see disableLeakedAssistant (also for why external servers are
+    // excluded). Runs after resetForNextTest so the bridge readiness gate
+    // has already been cleared.
+    const prefsAreWorkerScoped = mode === 'desktop' || externalServerUrl() === null;
+    if (prefsAreWorkerScoped && !testInfo.tags.some((tag) => ASSISTANT_TEST_TAGS.includes(tag)))
       await disableLeakedAssistant(page);
 
     // Debug-only: park the test (IDE clean and idle) so a human can arm
@@ -329,7 +393,21 @@ export const test = base.extend<
     // hide behind passing tests indefinitely. PW_IGNORE_CLIENT_EXCEPTIONS=1
     // downgrades to a warning if a known benign exception must be tolerated
     // while a fix lands.
-    const raised = await drainClientExceptions(page);
+    //
+    // The drain is bounded for the same reason as in setup: a test body that
+    // wedged the page (#18394) already burned the 120s test timeout, and an
+    // unbounded evaluate here would silently burn the teardown budget too,
+    // pushing total output silence past the CI heartbeat's kill window.
+    let raised: Awaited<ReturnType<typeof drainClientExceptions>> = [];
+    let wedge: Error | null = null;
+    try {
+      raised = await withDeadline(
+        drainClientExceptions(page), WEDGE_PROBE_MS, 'post-test client-exception drain');
+    } catch (err) {
+      if (!(err instanceof DeadlineError))
+        throw err;
+      wedge = await attachWedgeDiagnostics(page, testInfo, err);
+    }
     const ignoreClientExceptions = ['1', 'true'].includes(
       (process.env.PW_IGNORE_CLIENT_EXCEPTIONS ?? '').toLowerCase(),
     );
@@ -341,11 +419,15 @@ export const test = base.extend<
     // rsession log captures backend errors that never reach the browser.
     const willFail =
       testInfo.status !== testInfo.expectedStatus ||
+      wedge !== null ||
       (raised.length > 0 && !ignoreClientExceptions);
     if (willFail) {
       await attachBrowserConsole(testInfo, rstudioSession.consoleBuffer);
       await attachSessionLogs(testInfo, rstudioSession.logDir, logBaseline);
     }
+
+    if (wedge)
+      throw wedge;
 
     if (raised.length > 0) {
       const detail = raised.map((e) => `${e.message}\n${e.stack}`).join('\n---\n');
