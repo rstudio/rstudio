@@ -152,6 +152,16 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+    outputs:
+      r_version_actual:
+        description: >-
+          The R version this engine actually ran against, read back from the
+          installed R rather than echoed from the r_version input. Engines whose
+          config sets r_install "distro" ignore that input, so this is the only
+          value a caller can trust. Empty when the e2e job did not run
+          (build_only, or a build failure), and also when it ran but failed
+          before reaching the R install.
+        value: ${{ jobs.e2e.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -596,6 +606,18 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
+    # This job is a shard matrix, so this is one output value for the whole matrix
+    # rather than one per shard. Every shard that reaches the deps step installs
+    # the same R, so the value is the same wherever it comes from -- but which
+    # shard supplies it is not something to depend on, and a shard that never
+    # reached that step supplies nothing. The output can therefore be empty for an
+    # engine that did install R and did run the suite. Callers must treat empty as
+    # "unknown", never as "no R was installed". A caller running several engines as
+    # one matrix cannot use this output at all, and reads the per-engine artifacts
+    # instead: the version uploaded at the end of this job, and the result uploaded
+    # by e2e-merge.
+    outputs:
+      r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     runs-on: ${{ needs.setup.outputs.e2e_runner }}
     container:
       image: ${{ needs.setup.outputs.e2e_image }}
@@ -832,6 +854,7 @@ jobs:
       # Ubuntu/Debian, a full source compile on engines without PPM binaries
       # (Fedora).
       - name: Install e2e test dependencies
+        id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
@@ -1008,6 +1031,36 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
+      # This engine's installed R version, one line, written by os-e2e-deps.
+      #
+      # It exists because a caller that runs several engines as one matrix (the
+      # certification workflow) cannot read the value any other way: a matrix job
+      # exposes one output value for the whole matrix, so the r_version_actual
+      # output declared above is only usable by a caller invoking this workflow
+      # once. The artifact is per-engine, so a matrix caller can download them all
+      # and attribute the version to the right cell.
+      #
+      # Nothing appends to this file. An earlier version had the job append its own
+      # status as line 2, which put the status on *line 1* whenever the job died
+      # before os-e2e-deps ran -- and plenty of steps can fail ahead of it, from
+      # container prep through the RStudio install. The certification summary then
+      # printed a job status in its "R actually used" column. The outcome now
+      # travels as its own artifact, from e2e-merge.
+      #
+      # Shard 1 only: every shard installs the same R, and upload-artifact@v4
+      # fails the run on a duplicate artifact name. The cost is that a cell whose
+      # shard 1 died before the R install has no version artifact even if another
+      # shard ran, so the caller's table cannot tell that apart from a cell that
+      # never started -- see the gap vocabulary in .github/e2e-certification/README.md.
+      - name: Upload resolved R version
+        if: always() && matrix.shard == 1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r-version-linux-desktop-${{ inputs.os }}
+          path: ${{ github.workspace }}/r-version.txt
+          if-no-files-found: warn
+          retention-days: 1
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -1043,6 +1096,43 @@ jobs:
       id-token: write
 
     steps:
+      # This engine's outcome, for a caller that runs several engines as one matrix
+      # (the certification workflow). needs.e2e.result is the aggregate across
+      # every shard, which is the fact such a caller needs: a cell whose second
+      # shard failed has failed, even though shard 1 succeeded. No value available
+      # inside a shard can express that -- recording job.status from shard 1
+      # reported exactly that cell as a success, which is the reverse of what the
+      # per-cell artifacts exist to achieve.
+      #
+      # First step, and if: always(), so a failure in the merge steps below cannot
+      # cost the caller its result. This job runs on a plain hosted runner, so
+      # $GITHUB_WORKSPACE and github.workspace agree here; the container
+      # divergence documented in os-e2e-deps does not apply, and these two paths
+      # are not the inconsistency it warns about.
+      #
+      # Both steps also sit *ahead of* actions/checkout deliberately. On a fresh
+      # hosted-runner job the workspace exists with no .git, so checkout clears its
+      # contents -- this file included. Moving the upload below the checkout, or
+      # adding a checkout above, loses it, and if-no-files-found: warn would hide
+      # that: the caller's table would quietly fall back to the matrix-wide result
+      # for every cell.
+      #
+      # A caller passing defer_merge skips this job and so gets no outcome
+      # artifact. The certification summary falls back to the matrix-wide result
+      # for any cell whose artifact is missing, which is the honest answer there.
+      - name: Record this engine's outcome
+        if: always()
+        run: printf '%s\n' "${{ needs.e2e.result }}" > "$GITHUB_WORKSPACE/r-outcome.txt"
+
+      - name: Upload this engine's outcome
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: r-outcome-linux-desktop-${{ inputs.os }}
+          path: ${{ github.workspace }}/r-outcome.txt
+          if-no-files-found: warn
+          retention-days: 1
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0

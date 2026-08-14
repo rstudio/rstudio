@@ -1,5 +1,11 @@
 import { test as base, expect } from '@playwright/test';
-import { launchRStudio, shutdownRStudio, relaunchAfterRestart, type DesktopSession } from '@fixtures/desktop.fixture';
+import {
+  launchRStudio,
+  shutdownRStudio,
+  relaunchAfterRestart,
+  snapshotRStudioProcesses,
+  type DesktopSession,
+} from '@fixtures/desktop.fixture';
 import { sleep } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
@@ -154,11 +160,17 @@ base.describe.serial('Uninstall Posit Assistant - #17322', { tag: ['@ai', '@chat
 
     const yesBtn = page.locator(YES_BTN);
     await expect(yesBtn).toBeVisible({ timeout: 5000 });
+
+    // Snapshot running RStudio processes BEFORE confirming: the restart
+    // instance is spawned by the dying Electron, so a snapshot taken after
+    // the click can already contain it and relaunchAfterRestart would spare
+    // it -- poisoning the CDP port for the rest of the shard (rstudio#18522).
+    const processesBefore = snapshotRStudioProcesses();
     await yesBtn.click();
 
-    // RStudio restarts: Electron stays alive but destroys the CDP page target.
-    // Reconnect to get a fresh page from the same process.
-    session = await relaunchAfterRestart(session);
+    // RStudio restarts as a new process without our CDP flag; kill it and
+    // relaunch a CDP-enabled session against the same config root.
+    session = await relaunchAfterRestart(session, processesBefore);
     page = session.page;
 
     // Reinitialize actions on the new page
