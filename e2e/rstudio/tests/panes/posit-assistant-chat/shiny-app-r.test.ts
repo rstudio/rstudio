@@ -5,6 +5,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { ChatPaneActions } from '@actions/chat_pane.actions';
 import { ChatPane } from '@pages/chat_pane.page';
 import { VIEWER_FRAME } from '@pages/viewer_pane.page';
+import { ensureConsoleIdle, waitForConsoleIdle } from '@pages/console_pane.page';
 import type { EnvironmentVersions } from '@pages/console_pane.page';
 import { executeCommand, setPref } from '@utils/commands';
 import { createChatActions, annotateVersions } from './_chat-setup';
@@ -60,44 +61,30 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    // Stop any running Shiny app via the Viewer pane's stop button
+    // Stop the app cleanly when the Viewer is showing it. This is best
+    // effort: when the test failed before the Viewer activated (the app ran
+    // but never rendered there), the stop button never appears even though
+    // R is busy serving the app.
     const viewerStopBtn = page.locator("[id^='rstudio_tb_viewerstop']");
-    const interruptBtn = page.locator("[id^='rstudio_tb_interruptr']");
-
     if (await viewerStopBtn.isVisible().catch(() => false)) {
       await viewerStopBtn.click();
-
-      const stoppedCleanly = await interruptBtn
-        .waitFor({ state: 'hidden', timeout: 5000 })
-        .then(() => true)
-        .catch(() => false);
-
-      if (!stoppedCleanly) {
-        // R is still busy -- confirm "Terminate R" dialog if present,
-        // otherwise click the Interrupt R button directly.
-        const terminateDialog = page.locator('[role="alertdialog"]:has-text("Terminate R")');
-        if (await terminateDialog.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await terminateDialog.locator('button:has-text("Yes")').click();
-        } else {
-          await interruptBtn.click();
-        }
-        await interruptBtn.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {
-          console.warn('Interrupt R did not complete within 10s; subsequent tests may be affected');
-        });
-      }
+      await waitForConsoleIdle(page, 10000).catch(() => {});
     }
 
-    // Dismiss any remaining "Terminate R" dialog before touching the console.
-    const terminateDialog = page.locator('[role="alertdialog"]:has-text("Terminate R")');
-    if (await terminateDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await terminateDialog.locator('button:has-text("Yes")').click();
-      await interruptBtn.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {
-        console.warn('Interrupt R did not complete within 10s; subsequent tests may be affected');
-      });
-    }
+    // Never hand the worker off with a busy R: a leaked runApp() blocks the
+    // console for every later suite in the worker (in Server mode, the rest
+    // of the shard). ensureConsoleIdle interrupts regardless of what the
+    // Viewer shows, escalating to the "Terminate R" dialog if R is stuck.
+    await ensureConsoleIdle(page);
 
     // Clean up created file(s)
-    await consoleActions.executeInConsole('unlink("app.R")', { wait: true });
+    await consoleActions
+      .executeInConsole('unlink("app.R")', { wait: true })
+      .catch((err) => {
+        console.warn(
+          `[shiny-app-r] cleanup unlink failed (R may be stuck): ${(err as Error).message}`,
+        );
+      });
   });
 
   test.beforeEach(async () => {

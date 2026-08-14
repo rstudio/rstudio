@@ -1,6 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeCommand, setPref, stopForegroundShinyApp } from '@utils/commands';
+import { ensureConsoleIdle } from '@pages/console_pane.page';
+import { setPref, stopForegroundShinyApp } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
 import type { Page } from '@playwright/test';
 
@@ -60,24 +61,6 @@ async function waitForShinyIdle(satellitePage: Page) {
     .toBeGreaterThanOrEqual(5);
 }
 
-// Defense in depth after the launcher waits for shiny idle. If a previous
-// test left R busy (e.g. interrupt landed mid-callback) the interrupt button
-// stays visible -- send one nudge and bail. Re-spamming interruptR every 2s
-// makes the IDE stack "Terminate R" confirmation dialogs (one per request
-// while R is unresponsive), which is what the historical 30s-toPass loop
-// produced when it ran past the third interrupt.
-async function ensureConsoleIdle(page: Page) {
-  const interruptButton = page.locator("[id^='rstudio_tb_interruptr']");
-  try {
-    await expect(interruptButton).toBeHidden({ timeout: 3000 });
-    return;
-  } catch {
-    // still busy; fall through and try one more interrupt
-  }
-  await executeCommand(page, 'interruptR');
-  await expect(interruptButton).toBeHidden({ timeout: 10000 });
-}
-
 test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () => {
   test.beforeAll(async ({ rstudioPage: page }) => {
     // a preceding spec can hand off the worker with a main-window reload
@@ -103,21 +86,19 @@ test.describe.serial('shiny app window close', { tag: ['@desktop_only'] }, () =>
 
   test.afterAll(async ({ rstudioPage: page }) => {
     // if a test failed mid-app, R may still be busy serving it; free the
-    // console before driving it. Wrap in try/finally so a still-busy console
-    // can't leak the temp app dir into the next worker -- the unlink is the
-    // important side effect here, not the idle assertion.
-    try {
-      await ensureConsoleIdle(page);
-    } finally {
-      const consoleActions = new ConsolePaneActions(page);
-      await consoleActions
-        .executeInConsole(`unlink("${APP_DIR}", recursive = TRUE)`, { wait: true })
-        .catch((err) => {
-          console.warn(
-            `[shiny-app-window-close] cleanup unlink failed (R may be stuck): ${(err as Error).message}`,
-          );
-        });
-    }
+    // console (interrupting, and terminating R if the interrupt is caught by
+    // shiny mid-callback) before driving it. ensureConsoleIdle never throws,
+    // so the unlink below always runs.
+    await ensureConsoleIdle(page);
+
+    const consoleActions = new ConsolePaneActions(page);
+    await consoleActions
+      .executeInConsole(`unlink("${APP_DIR}", recursive = TRUE)`, { wait: true })
+      .catch((err) => {
+        console.warn(
+          `[shiny-app-window-close] cleanup unlink failed (R may be stuck): ${(err as Error).message}`,
+        );
+      });
   });
 
   test('window closes when the app is stopped', async ({ rstudioPage: page }) => {
