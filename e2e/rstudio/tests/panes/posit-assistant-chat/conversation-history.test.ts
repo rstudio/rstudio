@@ -48,25 +48,25 @@ test.describe.serial('Conversation History', { tag: ['@ai', '@chat'] }, () => {
     await chatActions.waitForResponse(count);
     await chatActions.renameConversation(artemisName);
 
-    // Close and reopen history panel to refresh the list after all the renames
-    await chatActions.toggleConversationHistory();
-    await chatActions.toggleConversationHistory();
+    // renameConversation verifies each rename in the history panel and leaves
+    // the panel closed, so no refresh dance is needed here.
 
     // Select Athena and verify its content is restored
+    await chatActions.openConversationHistory();
     await chatPane.getConversationItemByName(athenaName).first().click();
-    await chatActions.toggleConversationHistory();
+    await chatActions.closeConversationHistory();
     const athenaMessages = chatPane.frame.locator('[data-message-id]');
     await expect(athenaMessages.last()).toContainText('Athena', { timeout: 5000 });
 
     // Open history again for Aphrodite
-    await chatActions.toggleConversationHistory();
+    await chatActions.openConversationHistory();
     await chatPane.getConversationItemByName(aphroditeName).first().click();
-    await chatActions.toggleConversationHistory();
+    await chatActions.closeConversationHistory();
     const aphroditeMessages = chatPane.frame.locator('[data-message-id]');
     await expect(aphroditeMessages.last()).toContainText('Aphrodite', { timeout: 5000 });
 
     // Open history and delete Artemis conversation
-    await chatActions.toggleConversationHistory();
+    await chatActions.openConversationHistory();
 
     // Find Artemis in the history, hover to reveal menu button
     const artemisItem = chatPane.getConversationItemByName(artemisName).first();
@@ -83,10 +83,11 @@ test.describe.serial('Conversation History', { tag: ['@ai', '@chat'] }, () => {
     const deleteButton = chatPane.getDeleteConfirmButton();
     await expect(deleteButton).toBeVisible({ timeout: 5000 });
     await deleteButton.click();
+    await expect(deleteButton).toBeHidden({ timeout: 5000 });
 
-    // Verify Artemis is gone from history
-    await chatActions.toggleConversationHistory();
-    await chatActions.toggleConversationHistory();
+    // Close and reopen the panel to refresh the list, then verify Artemis is gone
+    await chatActions.closeConversationHistory();
+    await chatActions.openConversationHistory();
     await expect(chatPane.getConversationItemByName(artemisName)).not.toBeVisible({ timeout: 5000 });
 
     // Select Athena conversation, then press Escape to dismiss history
@@ -94,6 +95,6 @@ test.describe.serial('Conversation History', { tag: ['@ai', '@chat'] }, () => {
     await page.keyboard.press('Escape');
 
     // Verify history panel is closed
-    await expect(chatPane.conversationList.first()).not.toBeVisible({ timeout: 5000 });
+    await expect(chatPane.conversationHistoryPanel).not.toBeVisible({ timeout: 5000 });
   });
 });
