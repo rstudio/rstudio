@@ -45,6 +45,12 @@
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
 .rs.setVar("chat.bindingsInjected", FALSE)
 
+# Cached state for guardrail checks: the sampled umask, the memoized
+# allowed roots, and the normalized home directory. See the individual
+# accessors (chat.umaskMasksWorldRead, chat.allowedRoots,
+# chat.homeDirectory) for the caching rationale.
+.rs.setVar("chat.guardrailState", new.env(parent = emptyenv()))
+
 
 # PCRE patterns matched against normalized paths to deny reads.
 # Paths are always absolute and normalized before matching.
@@ -61,7 +67,6 @@
    "/\\.aws/config$",
    "/\\.netrc$",
    "/\\.npmrc$",
-   "/\\.ssh/config$",
 
    # Deny container/cloud credential directories
    "/\\.docker(/|$)",
@@ -94,9 +99,10 @@
    "/\\.Renviron(\\.|$)",
    "/\\.Rprofile(\\.|$)",
 
-   # Deny access to non-public files within the .ssh directory.
-   "/\\.ssh/id.*(?<!\\.pub)$"
-   
+   # Deny access to non-public files within the .ssh directory (config,
+   # private keys under any name, known_hosts); public keys stay readable.
+   "/\\.ssh/.*(?<!\\.pub)$"
+
 ))
 
 
@@ -307,6 +313,12 @@
 #' environments with a restrictive umask (e.g. containers with umask
 #' 077), including caches that `install.packages()` needs to read back.
 #'
+#' The home directory itself never counts as an allowed root here, even
+#' though it can be one for edits (it is the fallback working directory
+#' when no project is open): exempting all of `$HOME` would hide
+#' deliberately-private dotfiles (e.g. mode-600 tokens and keys) from
+#' the permission check.
+#'
 #' When `trusted` is `TRUE` (i.e. the call originates from a
 #' non-base package), the deny-pattern check is skipped so that
 #' package code can legitimately access credential files.
@@ -332,8 +344,13 @@
    # signal (use which() to drop NA modes from non-existent files)
    if (!.rs.chat.umaskMasksWorldRead())
    {
+      # exclude the home directory from the exemption: as the fallback
+      # working directory it can be an allowed root, but private files
+      # directly under $HOME are exactly what this check is for
+      roots <- setdiff(.rs.chat.allowedRoots(), .rs.chat.homeDirectory())
+
       info <- suppressWarnings(file.info(path))
-      deny <- bitwAnd(info$mode, 4L) == 0L & !.rs.chat.isPathWithinAllowedRoots(path)
+      deny <- bitwAnd(info$mode, 4L) == 0L & !.rs.chat.isPathWithinAllowedRoots(path, roots)
       reasons[which(deny)] <- "File is not world-readable."
    }
 
@@ -376,18 +393,31 @@
 #' - The active project directory (when a project is open)
 #' - R user directories (data, config, cache)
 #'
-#' Reads within these roots are also exempt from the world-readable
+#' Reads within these roots (except the home directory itself; see
+#' `chat.isFileReadAllowed`) are also exempt from the world-readable
 #' permission check, since the session itself creates files there.
+#'
+#' The result is memoized on the inputs that can change while the
+#' session runs (working directory, library paths, `R_LIBS_USER`):
+#' this runs on every hooked file operation, and enumerating the
+#' roots is comparatively expensive (the scratch-path lookup alone
+#' touches the filesystem).
 #'
 #' @return A character vector of normalized directory paths.
 .rs.addFunction("chat.allowedRoots", function()
 {
+   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
+   key <- list(getwd(), .libPaths(), userLibs)
+
+   state <- .rs.chat.guardrailState
+   if (identical(state$allowedRootsKey, key))
+      return(state$allowedRoots)
+
    roots <- c(tempdir(), getwd(), .rs.chat.userScratchPath(), .libPaths())
 
    # include the user library even when it doesn't exist yet -- a nonexistent
    # user library is excluded from .libPaths(), but install.packages() offers
    # to create it on first use
-   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
    roots <- c(roots, userLibs[nzchar(userLibs)])
 
    projectDir <- .rs.getProjectDirectory()
@@ -404,33 +434,61 @@
          roots <- c(roots, dirname(tools::R_user_dir("_", which = which)))
    }
 
-   .rs.chat.normalizePath(roots)
+   roots <- .rs.chat.normalizePath(roots)
+   state$allowedRootsKey <- key
+   state$allowedRoots <- roots
+   roots
 })
 
 #' Check whether paths lie within any of the allowed roots.
 #'
 #' @param path A character vector of normalized file paths.
+#' @param roots The roots to check against.
 #' @return A logical vector the same length as `path`.
-.rs.addFunction("chat.isPathWithinAllowedRoots", function(path)
+.rs.addFunction("chat.isPathWithinAllowedRoots", function(path, roots = .rs.chat.allowedRoots())
 {
    allowed <- rep.int(FALSE, length(path))
-   for (root in .rs.chat.allowedRoots())
+   for (root in roots)
       allowed <- allowed | .rs.chat.isPathWithin(path, root)
    allowed
 })
 
-#' Check whether the current umask strips world-read from new files.
+#' The normalized home directory, computed once.
+#'
+#' @return A single normalized directory path.
+.rs.addFunction("chat.homeDirectory", function()
+{
+   state <- .rs.chat.guardrailState
+   if (is.null(state$homeDirectory))
+      state$homeDirectory <- .rs.chat.normalizePath(path.expand("~"))
+   state$homeDirectory
+})
+
+#' Check whether the umask strips world-read from new files.
 #'
 #' When it does (e.g. hardened containers commonly run with umask 077),
 #' a file lacking the world-read bit is just the environment's default
 #' rather than a deliberate act of protection, so the missing bit
 #' carries no signal about the file's sensitivity.
 #'
+#' The umask is sampled once and cached: `Sys.umask(NA)` reads the umask
+#' by briefly setting it to 0 and restoring it, which is both unsafe to
+#' run on every hooked file operation (a background thread creating a
+#' file inside that window would get mode 666) and would let agent code
+#' switch the permission check off by changing the umask. The sample is
+#' taken no later than the first `chat.injectBindings()` call, before
+#' any agent code has run.
+#'
 #' @return `TRUE` if newly-created files would not be world-readable.
 .rs.addFunction("chat.umaskMasksWorldRead", function()
 {
-   umask <- Sys.umask(NA)
-   bitwAnd(as.integer(umask), 4L) != 0L
+   state <- .rs.chat.guardrailState
+   if (is.null(state$umaskMasksWorldRead))
+   {
+      umask <- Sys.umask(NA)
+      state$umaskMasksWorldRead <- bitwAnd(as.integer(umask), 4L) != 0L
+   }
+   state$umaskMasksWorldRead
 })
 
 #' Check whether editing the given paths is allowed.
@@ -530,6 +588,10 @@
    # skip injection to avoid overwriting saved originals
    if (.rs.chat.bindingsInjected)
       return(invisible())
+
+   # sample the umask before agent code can run, so the cached value
+   # cannot be influenced by the code the guardrails police
+   .rs.chat.umaskMasksWorldRead()
 
    baseHooks <- list(
 

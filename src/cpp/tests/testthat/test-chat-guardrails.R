@@ -26,10 +26,12 @@ test_that("deny-read patterns block credential files", {
    expect_true(matches("/home/user/.aws/credentials"))
    expect_true(matches("/home/user/.aws/config"))
 
-   # SSH
+   # SSH (any non-public file within .ssh, not just the id_* names)
    expect_true(matches("/home/user/.ssh/config"))
    expect_true(matches("/home/user/.ssh/id_rsa"))
    expect_true(matches("/home/user/.ssh/id_ed25519"))
+   expect_true(matches("/home/user/.ssh/deploy_key"))
+   expect_true(matches("/home/user/.ssh/known_hosts"))
 
    # SSH public keys should be allowed
    expect_false(matches("/home/user/.ssh/id_rsa.pub"))
@@ -225,19 +227,51 @@ test_that("isPathWithinAllowedRoots identifies allowed and disallowed paths", {
 
 })
 
-test_that("umaskMasksWorldRead reflects the current umask", {
+test_that("umaskMasksWorldRead samples the umask once", {
 
    skip_on_os("windows")
 
+   state <- .rs.chat.guardrailState
+   oldValue <- state$umaskMasksWorldRead
    oldMask <- Sys.umask("022")
-   on.exit(Sys.umask(oldMask), add = TRUE)
+   on.exit({
+      Sys.umask(oldMask)
+      state$umaskMasksWorldRead <- oldValue
+   }, add = TRUE)
+
+   state$umaskMasksWorldRead <- NULL
    expect_false(.rs.chat.umaskMasksWorldRead())
 
+   # the sample is cached, so later umask changes (e.g. by agent code
+   # attempting to switch the permission check off) have no effect
    Sys.umask("077")
+   expect_false(.rs.chat.umaskMasksWorldRead())
+
+   state$umaskMasksWorldRead <- NULL
    expect_true(.rs.chat.umaskMasksWorldRead())
 
+   state$umaskMasksWorldRead <- NULL
    Sys.umask("027")
    expect_true(.rs.chat.umaskMasksWorldRead())
+
+})
+
+test_that("allowedRoots tracks working-directory changes", {
+
+   dir <- tempfile("chat-guardrails-wd-", tmpdir = dirname(tempdir()))
+   dir.create(dir)
+   oldWd <- getwd()
+   on.exit({
+      setwd(oldWd)
+      unlink(dir, recursive = TRUE)
+   }, add = TRUE)
+
+   path <- .rs.chat.normalizePath(file.path(dir, "file.R"))
+   expect_false(any(.rs.chat.isPathWithinAllowedRoots(path)))
+
+   # the memoized roots refresh when the working directory changes
+   setwd(dir)
+   expect_true(all(.rs.chat.isPathWithinAllowedRoots(path)))
 
 })
 
@@ -249,6 +283,7 @@ test_that("isFileReadAllowed denies reads on credential files", {
 
    expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials"))))
    expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_rsa"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/deploy_key"))))
    expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".env"))))
    expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".docker/config.json"))))
    expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".docker/trust/private/root.key"))))
@@ -286,8 +321,14 @@ test_that("isFileReadAllowed permits non-world-readable files within allowed roo
 
    skip_on_os("windows")
 
+   state <- .rs.chat.guardrailState
+   oldValue <- state$umaskMasksWorldRead
    oldMask <- Sys.umask("022")
-   on.exit(Sys.umask(oldMask), add = TRUE)
+   on.exit({
+      Sys.umask(oldMask)
+      state$umaskMasksWorldRead <- oldValue
+   }, add = TRUE)
+   state$umaskMasksWorldRead <- NULL
 
    path <- tempfile("guardrails-private-")
    writeLines("private", path)
@@ -298,12 +339,51 @@ test_that("isFileReadAllowed permits non-world-readable files within allowed roo
 
 })
 
+test_that("home directory is not read-exempt even as the working directory", {
+
+   skip_on_os("windows")
+
+   state <- .rs.chat.guardrailState
+   oldValue <- state$umaskMasksWorldRead
+   oldMask <- Sys.umask("022")
+   oldWd <- getwd()
+   on.exit({
+      Sys.umask(oldMask)
+      setwd(oldWd)
+      state$umaskMasksWorldRead <- oldValue
+   }, add = TRUE)
+   state$umaskMasksWorldRead <- NULL
+
+   # with no project open, the session working directory defaults to the
+   # home directory -- that must not exempt private files under $HOME
+   # from the permission check
+   home <- path.expand("~")
+   setwd(home)
+
+   path <- tempfile("chat-guardrails-private-", tmpdir = home)
+   writeLines("private", path)
+   on.exit(unlink(path), add = TRUE)
+   Sys.chmod(path, "600")
+
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(path)))
+
+   # edits within the working directory remain allowed
+   expect_equal(.rs.chat.isFileEditAllowed(path), "")
+
+})
+
 test_that("isFileReadAllowed denies non-world-readable files outside allowed roots", {
 
    skip_on_os("windows")
 
+   state <- .rs.chat.guardrailState
+   oldValue <- state$umaskMasksWorldRead
    oldMask <- Sys.umask("022")
-   on.exit(Sys.umask(oldMask), add = TRUE)
+   on.exit({
+      Sys.umask(oldMask)
+      state$umaskMasksWorldRead <- oldValue
+   }, add = TRUE)
+   state$umaskMasksWorldRead <- NULL
 
    # place the file in a sibling of the R temporary directory, outside
    # all of the allowed roots
@@ -321,6 +401,7 @@ test_that("isFileReadAllowed denies non-world-readable files outside allowed roo
    # but allowed when the umask strips world-read from new files, as then
    # the missing bit carries no signal
    Sys.umask("077")
+   state$umaskMasksWorldRead <- NULL
    expect_equal(.rs.chat.isFileReadAllowed(path), "")
 
 })
@@ -336,8 +417,14 @@ test_that("installed.packages() survives guardrails under a restrictive umask", 
 
    skip_on_os("windows")
 
+   state <- .rs.chat.guardrailState
+   oldValue <- state$umaskMasksWorldRead
    oldMask <- Sys.umask("077")
-   on.exit(Sys.umask(oldMask), add = TRUE)
+   on.exit({
+      Sys.umask(oldMask)
+      state$umaskMasksWorldRead <- oldValue
+   }, add = TRUE)
+   state$umaskMasksWorldRead <- NULL
 
    # remove cached metadata so the first call writes a fresh cache that is
    # not world-readable; the second call then reads it back (this is how
