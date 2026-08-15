@@ -77,7 +77,11 @@ public:
    // locksDir: directory for lock files (e.g. <userDataDir>/pai/locks); it
    //   must live outside the installation directory so it survives the
    //   mutation's rename/delete.
-   // ownerId: unique per rsession process; names this session's lock file.
+   // ownerId: names this session's lock file; MUST be unique per rsession
+   //   process. An id that is stable across session relaunches (e.g. the
+   //   bare session id) collides with an orphaned predecessor's live lock
+   //   file and permanently refuses this process's starts as a spurious
+   //   "update in progress" (#18571).
    // lockType: test seam; production omits it and uses the process default
    //   configured by FileLock::initialize() (advisory in desktop mode,
    //   link-based in server mode).

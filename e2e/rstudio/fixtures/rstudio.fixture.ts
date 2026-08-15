@@ -61,17 +61,25 @@ const ASSISTANT_TEST_TAGS = ['@ai', '@chat'];
  * session or opens a project still does that work under any leaked provider
  * prefs; the guard then normalizes state before its first test runs.
  *
- * Desktop and spawned-server workers only: a spawned rserver (the CI path)
- * gets a per-worker config home, so flipping the prefs here is as isolated
- * as on desktop. An external PW_RSTUDIO_SERVER_URL server has a single
- * config shared by every worker, where flipping the pref would race a @chat
- * suite running concurrently in another worker, so that path stays
- * excluded. (What server workers always share is the data home -- the
- * installed backend -- not the prefs.) Spawned-server workers were
- * originally excluded too, on the assumption that the #18417 shutdown
- * hardening bounded the restarts product-side -- but the wedge kept firing
- * on the server shards (#18394), where the projects region restarts
- * sessions ~30 times with a live agent, so the guard now covers them.
+ * Desktop and spawned-server workers get a per-worker config home, so
+ * flipping the prefs there is always isolated. An external
+ * PW_RSTUDIO_SERVER_URL server has a single config shared by every worker,
+ * where flipping the pref would race a @chat suite running concurrently in
+ * another worker -- so external servers are only covered when the run has a
+ * single worker (which cannot race itself). That includes the CI server
+ * shards: one worker against a job-local rserver at localhost:8787. The
+ * single-worker coverage exists because suite-local hygiene is not enough
+ * on those shards: an @ai suite whose afterAll never runs (crash, timeout,
+ * interrupt) leaves the provider prefs on server-side, where they survive
+ * worker restarts; run 31833520057 showed a leaked live provider swallowing
+ * an Escape keypress in multiselect_recovery and displacing the injected
+ * suggestion in edit_suggestions. (What server workers always share is the
+ * data home -- the installed backend -- not the prefs.) Spawned-server
+ * workers were originally excluded too, on the assumption that the #18417
+ * shutdown hardening bounded the restarts product-side -- but the wedge
+ * kept firing on the server shards (#18394), where the projects region
+ * restarts sessions ~30 times with a live agent, so the guard now covers
+ * them.
  */
 async function disableLeakedAssistant(page: Page): Promise<void> {
   const [assistant, chatProvider] = await Promise.all([
@@ -371,11 +379,13 @@ export const test = base.extend<
     await resetForNextTest(page);
 
     // Keep the AI assistant off for tests that don't opt in via @ai/@chat --
-    // see disableLeakedAssistant (also for why external servers are
-    // excluded). Runs after resetForNextTest so the bridge readiness gate
-    // has already been cleared.
+    // see disableLeakedAssistant (also for why multi-worker runs against an
+    // external server are excluded). Runs after resetForNextTest so the
+    // bridge readiness gate has already been cleared.
     const prefsAreWorkerScoped = mode === 'desktop' || externalServerUrl() === null;
-    if (prefsAreWorkerScoped && !testInfo.tags.some((tag) => ASSISTANT_TEST_TAGS.includes(tag)))
+    const cannotRaceAnotherWorker = testInfo.config.workers === 1;
+    if ((prefsAreWorkerScoped || cannotRaceAnotherWorker) &&
+        !testInfo.tags.some((tag) => ASSISTANT_TEST_TAGS.includes(tag)))
       await disableLeakedAssistant(page);
 
     // Debug-only: park the test (IDE clean and idle) so a human can arm

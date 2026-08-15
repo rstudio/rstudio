@@ -446,18 +446,47 @@ void SessionManager::addSessionLaunchProfileFilter(
 void SessionManager::removePendingLaunch(const r_util::SessionContext& context, const bool success, const std::string& errorMsg)
 {
    bool removed = false;
+   PidType keptPid = -1;
    boost::posix_time::ptime startTime;
    LOCK_MUTEX(launchesMutex_)
    {
       LaunchMap::const_iterator it = pendingLaunches_.find(context);
       if (it != pendingLaunches_.cend())
       {
-         removed = true;
-         startTime = it->second.launchTime;
-         pendingLaunches_.erase(context);
+         // a request failing for this context says nothing about the health
+         // of a separately launched, still-booting session process: an RPC
+         // in flight to an exiting session dies with EOF right as the
+         // replacement is spawned, and erasing the replacement's entry here
+         // let the next connection-retry recovery pass launch a second
+         // replacement -- the loser of the socket-bind race was then orphaned
+         // forever, still holding the project and Posit Assistant locks
+         // (#18572). keep the entry while its process is alive; if it never
+         // becomes reachable, the exit tracker clears it when it dies and
+         // launchSession's one-minute window expires it otherwise. custom
+         // session launchers never record a pid, so they keep the old
+         // clear-on-error behavior.
+         if (!success &&
+             it->second.pid != -1 &&
+             core::system::isProcessRunning(it->second.pid))
+         {
+            keptPid = it->second.pid;
+         }
+         else
+         {
+            removed = true;
+            startTime = it->second.launchTime;
+            pendingLaunches_.erase(context);
+         }
       }
    }
    END_LOCK_MUTEX
+
+   if (keptPid != -1)
+   {
+      DLOGF("Keeping pending launch of live session process {} for user {} (id: {}) despite request error: {}",
+            keptPid, context.username, context.scope.id(), errorMsg.empty() ? "(none)" : errorMsg);
+      return;
+   }
 
    if (removed)
    {
