@@ -2205,11 +2205,13 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 
 bool isProcessRunning(pid_t pid)
 {
-   // the posix standard way of checking if a process
-   // is running is to send the 0 signal to it
-   // requires root privilege if process is owned by another user
+   // the posix standard way of checking if a process is running is to send
+   // the 0 signal to it. EPERM still proves the process exists -- the caller
+   // merely lacks permission to signal it, as when rserver's
+   // privilege-dropped threads probe an rsession owned by another user
+   // (#18572); only ESRCH means it is gone.
    int result = kill(pid, 0);
-   return result == 0;
+   return result == 0 || errno == EPERM;
 }
 
 std::string ProcessInfo::getUsername() const
