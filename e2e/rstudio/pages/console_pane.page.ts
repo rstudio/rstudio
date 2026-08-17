@@ -91,6 +91,121 @@ export async function waitForConsoleIdle(
 }
 
 /**
+ * True when the console input carries its "busy" class (R is executing).
+ * Evaluation failures (e.g. mid-reload after a session abort) read as
+ * "not busy" -- pair with a readiness wait where that matters.
+ */
+async function isConsoleBusy(page: Page): Promise<boolean> {
+  return page
+    .evaluate(() => {
+      const el = document.getElementById('rstudio_console_input');
+      return !!el && el.classList.contains('rstudio-console-busy');
+    })
+    .catch(() => false);
+}
+
+/**
+ * The blocking confirmation ApplicationInterrupt raises when R stays busy
+ * through interrupt requests (its 10s "unresponsive" timer, or a third
+ * request while one is already pending). Confirming aborts the session and
+ * relaunches it.
+ */
+const TERMINATE_R_DIALOG = '[role="alertdialog"]:has-text("Terminate R")';
+
+/**
+ * Wait for the automation bridge to report ready again after a session
+ * abort/relaunch. Polls with per-sample evaluate calls rather than
+ * waitForFunction because the abort's page reload destroys the execution
+ * context mid-wait; a destroyed context reads as "not ready yet".
+ */
+async function waitForSessionReady(page: Page, timeout: number = 60000): Promise<boolean> {
+  const deadline = Date.now() + timeout;
+
+  while (Date.now() < deadline) {
+    const ready = await page
+      .evaluate(() => window.rstudio?.ready === true)
+      .catch(() => false);
+    if (ready)
+      return !(await isConsoleBusy(page));
+
+    await sleep(500);
+  }
+
+  console.warn('[console] ensureConsoleIdle: session did not come back ready after Terminate R');
+  return false;
+}
+
+/**
+ * Actively free a busy console that no test is waiting on -- a prior test
+ * leaked a long-running command (the classic case: a shiny app its teardown
+ * failed to stop, which in Server mode blocks the shared session for every
+ * suite behind it in the shard). Escalates deliberately slowly:
+ *
+ *   1. Fast path: console already idle -- decline any stale "Terminate R"
+ *      dialog (terminating a healthy session would just cost a restart) and
+ *      return.
+ *   2. Dispatch interruptR and watch for up to 10s. A clean interrupt lands
+ *      well inside that window; meanwhile ApplicationInterrupt schedules a
+ *      10s "unresponsive" timer on the first request, so if R is stuck
+ *      (e.g. shiny caught the interrupt mid-callback and kept serving) the
+ *      blocking "Terminate R" dialog pops without further prodding.
+ *   3. Confirm the Terminate R dialog when it shows: the session aborts and
+ *      relaunches, and we wait for the automation bridge to come back. A
+ *      restarted session is fully usable by whatever runs next; a
+ *      permanently busy one is not.
+ *
+ * Interrupt dispatches are spaced ~10s apart on purpose: the client raises
+ * one Terminate R confirmation per interrupt request while R stays busy, so
+ * spamming interruptR stacks dialogs instead of helping.
+ *
+ * Never throws; returns whether the console ended up idle. Cleanup-path
+ * callers can ignore the result (the warnings above tell the story in the
+ * log); callers that need a working console (e.g. createSandbox) should
+ * escalate a false return to a failure.
+ */
+export async function ensureConsoleIdle(page: Page): Promise<boolean> {
+  const terminateDialog = page.locator(TERMINATE_R_DIALOG);
+
+  if (!(await isConsoleBusy(page))) {
+    if (await terminateDialog.isVisible().catch(() => false)) {
+      await terminateDialog.locator('button:has-text("No")').first().click().catch(() => {});
+    }
+    return true;
+  }
+
+  console.warn('[console] ensureConsoleIdle: console is busy with no test waiting on it; interrupting R');
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await executeCommand(page, 'interruptR').catch((err) => {
+      console.warn(`[console] ensureConsoleIdle: interruptR dispatch failed: ${(err as Error).message}`);
+    });
+
+    const deadline = Date.now() + 10000;
+    while (Date.now() < deadline) {
+      if (!(await isConsoleBusy(page)))
+        return true;
+
+      if (await terminateDialog.isVisible().catch(() => false)) {
+        console.warn(
+          '[console] ensureConsoleIdle: R is not responding to interrupts; ' +
+          'confirming "Terminate R" (the session will restart)',
+        );
+        await terminateDialog.locator('button:has-text("Yes")').first().click().catch(() => {});
+        return waitForSessionReady(page);
+      }
+
+      await sleep(500);
+    }
+  }
+
+  console.warn(
+    '[console] ensureConsoleIdle: console still busy after 3 interrupts ' +
+    'with no Terminate R dialog; giving up',
+  );
+  return false;
+}
+
+/**
  * Read the automation agent's monotonic console prompt counter, or null if the
  * running binary predates it (`window.rstudio.console.promptCount`, added in
  * ApplicationAutomation). The counter advances by one each time R issues a

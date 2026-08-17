@@ -110,4 +110,13 @@ export class DebuggerPage extends PageObject {
       hasText: new RegExp(`^\\s*${line}\\s*$`),
     });
   }
+
+  /** Locate a breakpoint marker in any state (active/pending/inactive) on
+   *  `line`. Use this when waiting for a breakpoint to disappear, where the
+   *  state it was last rendered in doesn't matter. */
+  anyBreakpointForLine(line: number): Locator {
+    return this.anyBreakpointMarker.filter({
+      hasText: new RegExp(`^\\s*${line}\\s*$`),
+    });
+  }
 }

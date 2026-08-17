@@ -6455,16 +6455,24 @@ install_lock::InstallLock& installLock()
    // Constructed lazily so xdg paths and activeSession() are initialized
    // (FileLock::initialize() has also run by first use; the helper creates
    // its FileLock instances per-operation, not at construction).
-   // The owner id names this session's lock file; activeSession().id() can
-   // be empty for dev/automation-launched sessions (no launcher token), so
-   // fall back to a per-process UUID to keep concurrent sessions from
-   // colliding on one file. Stability across restarts is not required —
-   // a crashed session's leftover file is stale-cleaned by the next mutator.
+   // The owner id names this session's lock file and must be unique per
+   // process (see ChatInstallLock.hpp): the session id alone is stable
+   // across a session relaunch, so an orphaned predecessor process that
+   // outlives the relaunch (#18572) holds a live lock under the
+   // replacement's own name, and every chat_start_backend in the
+   // replacement then fails with a spurious "update in progress" (#18571).
+   // The session id is kept as a prefix so lock files remain attributable
+   // (it can be empty for dev/automation-launched sessions); the uuid
+   // supplies the per-process uniqueness. Leftover files from dead
+   // processes are stale-cleaned by the next mutator.
+   static const std::string ownerId =
+      module_context::activeSession().id().empty()
+         ? core::system::generateUuid(false)
+         : module_context::activeSession().id() + "-" +
+              core::system::generateUuid(false);
    static install_lock::InstallLock instance(
       xdg::userDataDir().completePath(chat_constants::kPositAiLocksDirName),
-      !module_context::activeSession().id().empty()
-         ? module_context::activeSession().id()
-         : core::system::generateUuid(false));
+      ownerId);
    return instance;
 }
 // ============================================================================

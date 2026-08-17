@@ -15,6 +15,10 @@
 
 #include <server/session/ServerSessionManager.hpp>
 
+#include <limits>
+
+#include <unistd.h>
+
 #include <boost/asio/io_context.hpp>
 
 #include <core/http/Request.hpp>
@@ -118,6 +122,71 @@ TEST(SessionManagerTest, ExitNotificationWithoutRecordedPidIsIgnored)
    sessionManager().removePendingLaunchForPid(context, 1234, 1);
    EXPECT_FALSE(attemptLaunch(context));
    EXPECT_EQ(1, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, RequestErrorKeepsPendingLaunchOfLiveProcess)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // an RPC in flight to an exiting session dies with EOF right as its
+   // replacement is spawned; that error must not erase the replacement's
+   // pending launch while its process is alive, or the next recovery pass
+   // double-launches and orphans the loser of the socket-bind race (#18572).
+   // this test process stands in for the live session process.
+   r_util::SessionContext context("pending-launch-live-process-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   sessionManager().notePendingLaunchPid(context, ::getpid());
+
+   sessionManager().removePendingLaunch(context, false, "request error");
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   // a successful proxied response (connection made) still clears it
+   sessionManager().removePendingLaunch(context);
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, RequestErrorClearsPendingLaunchOfDeadProcess)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // the liveness guard must not keep entries for processes that are gone:
+   // a pid no process can have stands in for a dead session process
+   r_util::SessionContext context("pending-launch-dead-pid-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   sessionManager().notePendingLaunchPid(
+      context, std::numeric_limits<PidType>::max());
+
+   sessionManager().removePendingLaunch(context, false, "request error");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
+TEST(SessionManagerTest, RequestErrorClearsPendingLaunchWithoutRecordedPid)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // custom session launchers never record a pid, and have no exit tracker
+   // to clear a dead launch: the error paths must keep clearing for them
+   r_util::SessionContext context("pending-launch-error-no-pid-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   sessionManager().removePendingLaunch(context, false, "request error");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(2, s_launchCount);
 
    sessionManager().removePendingLaunch(context);
 }
