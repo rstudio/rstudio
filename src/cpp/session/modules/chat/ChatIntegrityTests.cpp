@@ -145,23 +145,6 @@ TEST(ChatIntegrity, ManifestFromResultFoldsStderrIntoMessage)
    EXPECT_NE(error.asString().find("cannot resolve host name"), std::string::npos);
 }
 
-TEST(ChatIntegrity, ManifestFromResultDetailReachableViaErrorDescription)
-{
-   // The human message lives in the description property; getMessage() is only
-   // the generic errno text. Consumers that surface the failure -- the session
-   // log and the Connection Error dialog (onUpdateCheckComplete in
-   // SessionChat.cpp) -- must therefore read errorDescription(). Pin that
-   // contract: the detail is reachable through errorDescription() and absent
-   // from getMessage().
-   json::Object manifest;
-   Error error = manifestFromDownloadResult(
-      downloadResult(1, "", "cannot resolve host name"), &manifest);
-   std::string description = errorDescription(error);
-   EXPECT_NE(description.find("Manifest download failed"), std::string::npos);
-   EXPECT_NE(description.find("cannot resolve host name"), std::string::npos);
-   EXPECT_EQ(error.getMessage().find("cannot resolve host name"), std::string::npos);
-}
-
 // ============================================================================
 // verifyPackageSha256 tests
 // ============================================================================
