@@ -1,7 +1,7 @@
 import { test as base, type Page, type TestInfo } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { launchRStudio, shutdownRStudio } from './desktop.fixture';
+import { launchRStudio, shutdownRStudio, type DesktopSession } from './desktop.fixture';
 import { launchServer, shutdownServer, externalServerUrl } from './server.fixture';
 import { setAuthStateEnv, type AiAuthOption } from '../utils/auth';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
@@ -114,6 +114,73 @@ async function logVersions(page: Page): Promise<void> {
   const versions = await getEnvironmentVersions(page);
   console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
   await clearConsole(page);
+}
+
+/**
+ * Log a line that GitHub also surfaces as a run annotation, so it is readable
+ * without scrolling a collapsed step. Under CI only: locally the `::notice::`
+ * marker is just noise. Must be stdout -- that is where GitHub parses workflow
+ * commands from.
+ */
+function logCiNotice(message: string): void {
+  console.log(process.env.GITHUB_ACTIONS ? `::notice::${message}` : message);
+}
+
+/**
+ * If this worker's launch requested the Posit Assistant pre-release (test)
+ * manifest (via PW_RSTUDIO_PREFS_OVERRIDE -- see desktop.fixture.ts), confirm
+ * the live session actually applied it. A misapplied override (wrong prefs
+ * file, timing) would otherwise silently fall back to the released Assistant
+ * while every test still passes -- the run would report green having tested
+ * the wrong build. Skipped entirely, with no output, on every ordinary run
+ * that didn't request the test manifest.
+ *
+ * Desktop only, because PW_RSTUDIO_PREFS_OVERRIDE is: server.fixture.ts has no
+ * prefs-override mechanism (rstudio/rstudio#17520), so a Server engine cannot
+ * be gated this way -- the override would be ignored AND this check skipped.
+ */
+async function verifyTestManifestIfRequested(session: DesktopSession): Promise<void> {
+  if (!session.requestedTestManifest) return;
+  const actual = await getPref(session.page, 'posit_assistant_test_manifest');
+  if (actual !== true) {
+    throw new Error(
+      'Posit Assistant test manifest was requested for this run, but the live session reports ' +
+      `posit_assistant_test_manifest=${actual}. This run would silently test the released ` +
+      'Assistant instead of the pre-release candidate -- refusing to continue.',
+    );
+  }
+  logCiNotice('Confirmed: Posit Assistant pre-release (test) manifest is active for this worker.');
+}
+
+/**
+ * Record which Posit Assistant build this worker exercised. A read-back of what
+ * is on disk, not an assertion -- but absence IS reported, because by this point
+ * the run has declared it is testing a pre-release candidate, and no install
+ * means the subject under test was never there (Copilot-based @ai tests would
+ * still pass regardless). Gated on requestedTestManifest, so an ordinary run
+ * prints nothing. Under PW_SEED_PAI this reports the seeded local build, which
+ * nothing downloaded.
+ */
+async function logPositAssistantVersionIfInstalled(session: DesktopSession): Promise<void> {
+  if (!session.requestedTestManifest) return;
+  const packageJsonPath = path.join(session.dataHome, 'pai', 'bin', 'package.json');
+  if (!fs.existsSync(packageJsonPath)) {
+    console.warn(
+      `WARNING: this run requested the Posit Assistant test manifest, but no install exists at ` +
+      `${packageJsonPath} -- this worker exercised no Assistant build.`,
+    );
+    return;
+  }
+  try {
+    const { version } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    if (!version) {
+      console.warn(`WARNING: no version field in ${packageJsonPath}.`);
+      return;
+    }
+    logCiNotice(`Posit Assistant version under test: ${version}`);
+  } catch (err) {
+    console.warn(`WARNING: could not read Posit Assistant version from ${packageJsonPath}: ${err}`);
+  }
 }
 
 /**
@@ -307,21 +374,23 @@ export const test = base.extend<
       await logVersions(session.page);
       await use({ page: session.page, consoleBuffer });
       // Debug-only: keep the session alive after the last test so you can
-      // keep inspecting; press Enter in the Console to quit. No-op otherwise.
+      // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
       await shutdownServer(session);
     } else {
       const session = await launchRStudio();
       attachConsoleCapture(session.page, consoleBuffer);
       await logVersions(session.page);
+      await verifyTestManifestIfRequested(session);
       await use({
         page: session.page,
         consoleBuffer,
         logDir: session.logDir,
         configRoot: session.configRoot,
       });
+      await logPositAssistantVersionIfInstalled(session);
       // Debug-only: keep the session alive after the last test so you can
-      // keep inspecting; press Enter in the Console to quit. No-op otherwise.
+      // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
       await shutdownRStudio(session);
     }
