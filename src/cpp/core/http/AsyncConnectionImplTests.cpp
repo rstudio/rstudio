@@ -109,6 +109,55 @@ TEST(AsyncConnectionImpl, WriteResponseAfterHeadersAlreadyWrittenIsANoOp)
    EXPECT_EQ(received.find("502"), std::string::npos);
 }
 
+TEST(AsyncConnectionImpl, WriteResponseHeadersSetsNosniffHeader)
+{
+   // writeResponseHeaders() (what FixedBufferProxy calls to stream a proxied
+   // response) is a thinner path than writeResponse(), which has long set
+   // X-Content-Type-Options: nosniff unconditionally on every response.
+   // Confirm that parity is retained here too.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+
+   bool headersWritten = false;
+   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+      headersWritten = true;
+   });
+
+   ioc.run();
+   EXPECT_TRUE(headersWritten);
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_NE(received.find("X-Content-Type-Options: nosniff"), std::string::npos);
+}
+
 } // namespace tests
 } // namespace http
 } // namespace core

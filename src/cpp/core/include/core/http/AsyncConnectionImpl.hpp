@@ -299,6 +299,10 @@ public:
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
 
+      // kept for parity with the older writeResponse() above, which has set
+      // this unconditionally on every response for a long time
+      response_.setHeader("X-Content-Type-Options", "nosniff");
+
       // write only the header buffers
       socketOperations_->asyncWrite(response_.headerBuffers(), handler);
    }
