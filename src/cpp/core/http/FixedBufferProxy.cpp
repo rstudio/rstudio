@@ -153,15 +153,24 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
                preserved.push_back(h);
          }
 
-         resp.assign(response, preserved);
+         // Assign without extraHeaders here and strip hop-by-hop headers
+         // (below) before restoring the preserved headers, not after: a
+         // nominated-by-Connection removal (e.g. an upstream sending
+         // "Connection: Set-Cookie") must only ever be able to strip the
+         // *upstream's* headers, never the proxy's own refreshed auth
+         // cookies re-added afterward.
+         resp.assign(response);
 
          // This connection to the client is not the same connection, nor
          // subject to the same per-hop semantics, as the one to the upstream
          // server -- strip Connection/Keep-Alive/Upgrade/TE/Trailer/
-         // Proxy-Authenticate/Proxy-Authorization/Transfer-Encoding (and
-         // anything else Connection nominates) before setting our own framing
-         // headers below.
+         // Proxy-Authenticate/Proxy-Authorization/Proxy-Connection/
+         // Transfer-Encoding (and anything else Connection nominates) before
+         // restoring preserved headers and setting our own framing headers
+         // below.
          http::util::removeHopByHopHeaders(&resp);
+         resp.addHeaders(preserved);
+
          if (framing_ == Framing::Chunked)
          {
             resp.removeHeader("Content-Length");

@@ -168,10 +168,14 @@ void fileRequestHandler(const std::string& wwwLocalPath,
 std::string formatMessageAsHttpChunk(const std::string& message);
 
 // Strips the headers a proxy must never forward end-to-end unmodified: the
-// fixed RFC 7230 6.1 hop-by-hop set (Connection, Keep-Alive,
+// fixed RFC 7230 6.1 hop-by-hop set (Connection, Proxy-Connection, Keep-Alive,
 // Proxy-Authenticate, Proxy-Authorization, TE, Trailer, Transfer-Encoding,
-// Upgrade), plus any additional header names the response's own Connection
-// header nominates. Matches Go's net/http/httputil.removeHopByHopHeaders.
+// Upgrade), plus any additional header names nominated by any of the
+// response's Connection header field(s). Matches Go's
+// net/http/httputil.removeHopByHopHeaders. Callers that need to add their own
+// headers back afterward (e.g. re-stamping a cookie) must do so only *after*
+// calling this, so a malicious or misbehaving upstream can't use Connection
+// to nominate away headers the caller re-adds.
 void removeHopByHopHeaders(Response* pResponse);
 
 // determines if the given string is a well-formed IP address

@@ -544,6 +544,7 @@ void removeHopByHopHeaders(Response* pResponse)
 {
    static const char* const hopByHopHeaders[] = {
       "Connection",
+      "Proxy-Connection", // non-standard but still sent by some clients/proxies
       "Keep-Alive",
       "Proxy-Authenticate",
       "Proxy-Authorization",
@@ -553,13 +554,18 @@ void removeHopByHopHeaders(Response* pResponse)
       "Upgrade"
    };
 
-   // The Connection header value can itself list additional header names
-   // that are hop-by-hop for this particular message (RFC 7230 6.1); collect
-   // those before removing Connection.
+   // The message can have more than one Connection header field (each of
+   // which can itself be a comma-separated list), and any of those values
+   // can nominate additional header names that are hop-by-hop for this
+   // particular message (RFC 7230 6.1); collect all of them before removing
+   // Connection. headerValue() would only see the first field.
    std::vector<std::string> connectionTokens;
-   boost::algorithm::split(connectionTokens,
-                           pResponse->headerValue("Connection"),
-                           boost::is_any_of(","));
+   for (const std::string& value : headerValues(pResponse->headers(), "Connection"))
+   {
+      std::vector<std::string> tokens;
+      boost::algorithm::split(tokens, value, boost::is_any_of(","));
+      connectionTokens.insert(connectionTokens.end(), tokens.begin(), tokens.end());
+   }
 
    for (const char* name : hopByHopHeaders)
       pResponse->removeHeader(name);

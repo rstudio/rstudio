@@ -325,6 +325,7 @@ TEST(FixedBufferProxy, StripsHopByHopHeadersFromUpstreamResponse)
    makeContentLengthResponse(&upstream, body);
    upstream.setHeader("Connection", "keep-alive, X-Upstream-Only");
    upstream.setHeader("Keep-Alive", "timeout=5");
+   upstream.setHeader("Proxy-Connection", "keep-alive");
    upstream.setHeader("Proxy-Authenticate", "Basic");
    upstream.setHeader("Proxy-Authorization", "Basic abc123");
    upstream.setHeader("TE", "trailers");
@@ -339,6 +340,7 @@ TEST(FixedBufferProxy, StripsHopByHopHeadersFromUpstreamResponse)
    const http::Response& written = fixture.pClientConnection->writtenHeaders_;
    EXPECT_TRUE(written.headerValue("Connection").empty());
    EXPECT_TRUE(written.headerValue("Keep-Alive").empty());
+   EXPECT_TRUE(written.headerValue("Proxy-Connection").empty());
    EXPECT_TRUE(written.headerValue("Proxy-Authenticate").empty());
    EXPECT_TRUE(written.headerValue("Proxy-Authorization").empty());
    EXPECT_TRUE(written.headerValue("TE").empty());
@@ -346,6 +348,57 @@ TEST(FixedBufferProxy, StripsHopByHopHeadersFromUpstreamResponse)
    EXPECT_TRUE(written.headerValue("Upgrade").empty());
    EXPECT_TRUE(written.headerValue("X-Upstream-Only").empty());
    EXPECT_EQ(written.headerValue("X-End-To-End"), "should-survive");
+}
+
+TEST(FixedBufferProxy, HonorsHeadersNominatedByEveryConnectionFieldNotJustTheFirst)
+{
+   // Regression test: a response can carry more than one Connection header
+   // field (each itself a comma-separated list per RFC 7230 6.1). Using
+   // headerValue() (which only sees the first field) would miss header names
+   // nominated by any later Connection field.
+   Fixture fixture;
+   std::string body = "hi";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+   upstream.addHeader("Connection", "X-First-Nominated");
+   upstream.addHeader("Connection", "X-Second-Nominated");
+   upstream.setHeader("X-First-Nominated", "should-be-stripped");
+   upstream.setHeader("X-Second-Nominated", "should-be-stripped");
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   const http::Response& written = fixture.pClientConnection->writtenHeaders_;
+   EXPECT_TRUE(written.headerValue("X-First-Nominated").empty());
+   EXPECT_TRUE(written.headerValue("X-Second-Nominated").empty());
+}
+
+TEST(FixedBufferProxy, UpstreamCannotNominateSetCookieToStripProxysOwnRefreshedCookie)
+{
+   // Regression test: hop-by-hop stripping must run against the upstream's
+   // own headers *before* the proxy's preserved Set-Cookie (e.g. a refreshed
+   // auth cookie stamped before the proxy request executed, see
+   // PreservesSetCookieAlreadyStampedOnClientResponse) is restored. Otherwise
+   // a misbehaving or malicious upstream could send "Connection: Set-Cookie"
+   // and have the proxy's own re-added cookie stripped along with it.
+   Fixture fixture;
+   fixture.pClientConnection->response().setHeader(http::Header("Set-Cookie", "auth=refreshed"));
+
+   std::string body = "hi";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+   upstream.setHeader("Connection", "Set-Cookie");
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   bool found = false;
+   for (const http::Header& header : fixture.pClientConnection->writtenHeaders_.headers())
+   {
+      if (boost::iequals(header.name, "Set-Cookie") && header.value == "auth=refreshed")
+         found = true;
+   }
+   EXPECT_TRUE(found);
 }
 
 TEST(FixedBufferProxy, PreservesSetCookieAlreadyStampedOnClientResponse)
