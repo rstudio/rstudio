@@ -171,6 +171,16 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
          http::util::removeHopByHopHeaders(&resp);
          resp.addHeaders(preserved);
 
+         // FixedBufferProxy always closes both connections once the body
+         // finishes (every terminal path below calls close() on both), the
+         // same "close after this response" behavior
+         // AsyncConnectionImpl::writeResponse() signals via this header when
+         // called with its default close=true -- but writeResponseHeaders()
+         // below is a thinner path that never sets it. Without this, a client
+         // that pools/pipelines HTTP/1.1 connections has no signal that this
+         // one is about to be closed.
+         resp.setHeader("Connection", "close");
+
          if (framing_ == Framing::Chunked)
          {
             resp.removeHeader("Content-Length");

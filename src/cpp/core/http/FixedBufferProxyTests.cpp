@@ -272,6 +272,25 @@ TEST(FixedBufferProxy, UsesContentLengthFramingWhenUpstreamLengthKnown)
    EXPECT_TRUE(fixture.pServerConnection->closed_);
 }
 
+TEST(FixedBufferProxy, SetsConnectionCloseSinceItAlwaysClosesAfterTheResponse)
+{
+   // FixedBufferProxy unconditionally closes both connections once the body
+   // finishes (unlike AsyncConnectionImpl::writeResponse(), which only does
+   // so -- and only then sets this header -- when called with close=true).
+   // writeResponseHeaders(), which this path uses instead of writeResponse(),
+   // never sets Connection on its own, so this must be set explicitly or the
+   // client is never told the connection is about to close.
+   Fixture fixture;
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, ""); // completion signal
+
+   EXPECT_EQ(fixture.pClientConnection->writtenHeaders_.headerValue("Connection"), "close");
+}
+
 TEST(FixedBufferProxy, FallsBackToChunkedFramingWhenUpstreamLengthUnknown)
 {
    Fixture fixture;
@@ -338,7 +357,11 @@ TEST(FixedBufferProxy, StripsHopByHopHeadersFromUpstreamResponse)
    fixture.deliver(upstream, "");
 
    const http::Response& written = fixture.pClientConnection->writtenHeaders_;
-   EXPECT_TRUE(written.headerValue("Connection").empty());
+   // The proxy sets its own Connection: close (see
+   // SetsConnectionCloseSinceItAlwaysClosesAfterTheResponse) after stripping
+   // hop-by-hop headers, so its presence here must be that, not the
+   // upstream's forwarded "keep-alive" value.
+   EXPECT_EQ(written.headerValue("Connection"), "close");
    EXPECT_TRUE(written.headerValue("Keep-Alive").empty());
    EXPECT_TRUE(written.headerValue("Proxy-Connection").empty());
    EXPECT_TRUE(written.headerValue("Proxy-Authenticate").empty());
