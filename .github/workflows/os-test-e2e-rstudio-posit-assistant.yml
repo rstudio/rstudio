@@ -7,11 +7,8 @@ name: "Test: E2E Playwright RStudio (Posit Assistant Release Gate, Open Source)"
 # manifest, and runs the @ai suite against it -- the same procedure previously
 # run by hand (rstudio/rstudio#18477).
 #
-# Scheduled for Monday 17:00 UTC: 13 hours after that morning's Posit Assistant
-# build (04:00 UTC), so the day's candidate already exists. Nine hours clear of
-# the Monday 08:00 UTC weekday slate in os-test-e2e-rstudio-scheduled.yml, and
-# the separate concurrency group below means any overlap degrades to runner
-# contention rather than a cancelled run.
+# Scheduled for Sunday 20:00 UTC, 16 hours after the Posit Assistant build
+# (04:00 UTC), so the candidate for that day already exists.
 #
 # One engine per platform family, not the full 21-engine matrix: Linux Desktop
 # (Ubuntu 24 x86_64), macOS (26 arm64), and Windows (Server 2025, the permanent
@@ -35,7 +32,7 @@ name: "Test: E2E Playwright RStudio (Posit Assistant Release Gate, Open Source)"
 
 on:
   schedule:
-    - cron: '0 17 * * 1'   # Monday 17:00 UTC (1 PM EDT / noon EST)
+    - cron: '0 20 * * 0'   # Sunday 20:00 UTC (4 PM EDT)
   workflow_dispatch: {}
 
 concurrency:
