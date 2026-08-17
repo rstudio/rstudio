@@ -77,8 +77,6 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
       // framing there is no terminator to write; in chunked framing we still must
       // emit the 0\r\n\r\n terminator, so fall through and enqueue it below.
       bool isFinal = chunk.empty();
-      if (isFinal)
-         receivedFinal_ = true;
 
       // Format the outbound bytes for this piece: raw for Content-Length, or a
       // size-prefixed HTTP chunk for chunked framing.
@@ -108,6 +106,17 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
          // when we have space for it
          return false;
       }
+
+      // Only latch completion once this piece is guaranteed to be enqueued (or
+      // was already accepted above) -- an oversized chunk accepted into an idle
+      // buffer can leave the completion signal itself exceeding maxBufferSize_
+      // when it arrives before that chunk's write completes. If receivedFinal_
+      // were set on the declined attempt, onChunkWrote() would close both
+      // connections as soon as the in-flight write drains -- without ever
+      // writing chunked framing's required 0\r\n\r\n terminator, and without
+      // the completion signal ever being redelivered.
+      if (isFinal)
+         receivedFinal_ = true;
 
       if (!formatted.empty())
       {
