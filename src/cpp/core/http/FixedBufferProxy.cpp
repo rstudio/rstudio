@@ -90,7 +90,15 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
       // Account against the *formatted* (enveloped) size we actually enqueue, so
       // currentBufferSize_ stays consistent with what onChunkWrote() subtracts
       // (writeBuffer_.front().size()) in both framings.
-      if (currentBufferSize_ + formatted.size() > maxBufferSize_)
+      //
+      // Guarantee forward progress regardless of how maxBufferSize_ and
+      // AsyncClient's chunk/envelope sizing relate to each other: when nothing
+      // is queued and no write is in flight, there is nothing this piece could
+      // ever resume after if declined, so accept it unconditionally rather than
+      // risking a hang with no future resume trigger. Normal backpressure still
+      // applies once anything is queued or outstanding.
+      bool bufferIdle = writeBuffer_.empty() && !clientWriteInProgress_;
+      if (!bufferIdle && currentBufferSize_ + formatted.size() > maxBufferSize_)
       {
          bufferFull_ = true;
 

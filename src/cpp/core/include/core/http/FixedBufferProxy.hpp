@@ -37,7 +37,14 @@ public:
    void proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection);
 
 private:
-   static constexpr uint64_t defaultMaxBufferSize = 1024*1024; // 1MB
+   // AsyncClient::breakChunks() (AsyncClient.hpp) caps each upstream piece at
+   // maxChunkSize (1MB) before handing it to our FixedBufferHandler, and in
+   // Chunked framing formatMessageAsHttpChunk() adds a small hex-length-prefixed
+   // envelope on top. Size this comfortably above maxChunkSize + that envelope
+   // overhead so a maximal piece always fits into an empty buffer on its own --
+   // queueChunk()'s empty-buffer acceptance is a second line of defense if
+   // either constant ever changes without updating the other.
+   static constexpr uint64_t defaultMaxBufferSize = 1024*1024 + 4096; // ~1MB + 4KB
 
    enum class Framing { Undecided, ContentLength, Chunked };
 

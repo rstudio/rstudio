@@ -389,20 +389,49 @@ TEST(FixedBufferProxy, DoesNotDuplicateWriteWhenFinalSignalArrivesBeforeHeaderWr
 
 TEST(FixedBufferProxy, AccountsBufferSizeAgainstFormattedNotRawBytesInChunkedMode)
 {
-   // "hello" is 5 raw bytes but its chunked envelope ("5\r\nhello\r\n") is 10
-   // bytes. A maxBufferSize between those two values must report bufferFull_
-   // (queueChunk returns false) -- confirming currentBufferSize_ is accounted
-   // against the formatted (enveloped) size, matching what onChunkWrote()
-   // subtracts, not the smaller raw chunk size (eval P3).
-   std::string body = "hello";
+   // "hi" is 2 raw bytes but its chunked envelope ("2\r\nhi\r\n") is 7 bytes.
+   // queueChunk() now accepts unconditionally into an empty, idle buffer (see
+   // AcceptsOversizedFirstChunkWhenBufferIsIdle below), so to exercise the
+   // decline path this delivers a second piece while the first's header write
+   // is still outstanding (non-idle) -- mirroring
+   // DoesNotDuplicateWriteWhenFinalSignalArrivesBeforeHeaderWriteCompletes.
+   // A maxBufferSize sized to exactly fit only the first piece's *formatted*
+   // bytes must decline the second: if accounting instead used the smaller raw
+   // chunk sizes, both would fit and the decline would never fire.
+   std::string first = "hi";
+   std::string firstFormatted = http::util::formatMessageAsHttpChunk(first);
+   std::string second = "hello";
+   ASSERT_GT(firstFormatted.size(), first.size());
+
+   Fixture fixture(/* maxBufferSize = */ firstFormatted.size());
+   http::Response upstream;
+   makeChunkedResponse(&upstream);
+
+   bool result1 = fixture.pServerConnection->fixedBufferHandler_(upstream, first);
+   bool result2 = fixture.pServerConnection->fixedBufferHandler_(upstream, second);
+
+   EXPECT_TRUE(result1);
+   EXPECT_FALSE(result2);
+}
+
+TEST(FixedBufferProxy, AcceptsOversizedFirstChunkWhenBufferIsIdle)
+{
+   // Regression test for PR #18541 review discussion r3786635238:
+   // AsyncClient::breakChunks() caps upstream pieces at maxChunkSize (1MB),
+   // which chunked-envelopes to slightly more than 1MB. If maxBufferSize_ is
+   // at or below that enveloped size, the very first piece into an empty,
+   // idle buffer must still be accepted -- there is no write completion that
+   // will ever retry a piece declined with nothing in flight, so declining it
+   // here would hang both connections until client timeout.
+   std::string body(1024 * 1024, 'x'); // matches AsyncClient::maxChunkSize
    std::string formatted = http::util::formatMessageAsHttpChunk(body);
-   ASSERT_GT(formatted.size(), body.size());
 
    Fixture fixture(/* maxBufferSize = */ formatted.size() - 1);
    http::Response upstream;
    makeChunkedResponse(&upstream);
 
-   EXPECT_FALSE(fixture.deliver(upstream, body));
+   EXPECT_TRUE(fixture.deliver(upstream, body));
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, formatted);
 }
 
 TEST(FixedBufferProxy, FallsBackToChunkedWhenUpstreamContentLengthHeaderIsMalformed)
@@ -441,13 +470,22 @@ TEST(FixedBufferProxy, QueueChunkDeclinesWhenContentLengthFramedBodyExceedsBuffe
    // fill the buffer in practice, since Content-Length is preferred over
    // chunked whenever the upstream declares a length -- but only the chunked
    // buffer-full path had coverage.
-   std::string body = "hello";
+   //
+   // As above, queueChunk() now accepts unconditionally into an empty, idle
+   // buffer, so the decline is exercised on a second piece delivered while
+   // the first's header write is still outstanding (non-idle).
+   std::string first = "a";
+   std::string second = "hello";
 
-   Fixture fixture(/* maxBufferSize = */ body.size() - 1);
+   Fixture fixture(/* maxBufferSize = */ first.size());
    http::Response upstream;
-   makeContentLengthResponse(&upstream, body);
+   makeContentLengthResponse(&upstream, first + second);
 
-   EXPECT_FALSE(fixture.deliver(upstream, body));
+   bool result1 = fixture.pServerConnection->fixedBufferHandler_(upstream, first);
+   bool result2 = fixture.pServerConnection->fixedBufferHandler_(upstream, second);
+
+   EXPECT_TRUE(result1);
+   EXPECT_FALSE(result2);
 }
 
 TEST(FixedBufferProxy, HandlesDownstreamWriteFailureDuringBodyWrite)
