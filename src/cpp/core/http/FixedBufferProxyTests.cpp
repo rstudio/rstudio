@@ -311,6 +311,43 @@ TEST(FixedBufferProxy, StripsUpstreamTransferEncodingWhenContentLengthFraming)
    EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
 }
 
+TEST(FixedBufferProxy, StripsHopByHopHeadersFromUpstreamResponse)
+{
+   // Regression test for PR #18541 review discussion r3786635259: only
+   // Transfer-Encoding was being stripped from the upstream response, so
+   // other hop-by-hop headers (e.g. an upstream backend's own
+   // "Connection: keep-alive") were forwarded verbatim to the client on a
+   // connection this proxy unconditionally closes after the body -- and
+   // Connection can itself nominate additional per-message headers to strip.
+   Fixture fixture;
+   std::string body = "hi";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+   upstream.setHeader("Connection", "keep-alive, X-Upstream-Only");
+   upstream.setHeader("Keep-Alive", "timeout=5");
+   upstream.setHeader("Proxy-Authenticate", "Basic");
+   upstream.setHeader("Proxy-Authorization", "Basic abc123");
+   upstream.setHeader("TE", "trailers");
+   upstream.setHeader("Trailer", "X-Checksum");
+   upstream.setHeader("Upgrade", "websocket");
+   upstream.setHeader("X-Upstream-Only", "should-be-stripped");
+   upstream.setHeader("X-End-To-End", "should-survive");
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   const http::Response& written = fixture.pClientConnection->writtenHeaders_;
+   EXPECT_TRUE(written.headerValue("Connection").empty());
+   EXPECT_TRUE(written.headerValue("Keep-Alive").empty());
+   EXPECT_TRUE(written.headerValue("Proxy-Authenticate").empty());
+   EXPECT_TRUE(written.headerValue("Proxy-Authorization").empty());
+   EXPECT_TRUE(written.headerValue("TE").empty());
+   EXPECT_TRUE(written.headerValue("Trailer").empty());
+   EXPECT_TRUE(written.headerValue("Upgrade").empty());
+   EXPECT_TRUE(written.headerValue("X-Upstream-Only").empty());
+   EXPECT_EQ(written.headerValue("X-End-To-End"), "should-survive");
+}
+
 TEST(FixedBufferProxy, PreservesSetCookieAlreadyStampedOnClientResponse)
 {
    Fixture fixture;

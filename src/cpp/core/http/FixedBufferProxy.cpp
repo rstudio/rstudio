@@ -155,10 +155,13 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
 
          resp.assign(response, preserved);
 
-         // Transfer-Encoding is hop-by-hop: never forward the upstream framing
-         // verbatim (matches Go removeHopByHopHeaders). Then set the client
-         // framing headers per the decision above.
-         resp.removeHeader(kTransferEncoding);
+         // This connection to the client is not the same connection, nor
+         // subject to the same per-hop semantics, as the one to the upstream
+         // server -- strip Connection/Keep-Alive/Upgrade/TE/Trailer/
+         // Proxy-Authenticate/Proxy-Authorization/Transfer-Encoding (and
+         // anything else Connection nominates) before setting our own framing
+         // headers below.
+         http::util::removeHopByHopHeaders(&resp);
          if (framing_ == Framing::Chunked)
          {
             resp.removeHeader("Content-Length");

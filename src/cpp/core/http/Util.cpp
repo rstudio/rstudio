@@ -23,6 +23,8 @@
 
 #include <boost/asio.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -536,6 +538,38 @@ std::string formatMessageAsHttpChunk(const std::string& message)
    std::stringstream sstr;
    sstr << std::hex << message.size() << "\r\n" << message << "\r\n";
    return sstr.str();
+}
+
+void removeHopByHopHeaders(Response* pResponse)
+{
+   static const char* const hopByHopHeaders[] = {
+      "Connection",
+      "Keep-Alive",
+      "Proxy-Authenticate",
+      "Proxy-Authorization",
+      "TE",
+      "Trailer",
+      "Transfer-Encoding",
+      "Upgrade"
+   };
+
+   // The Connection header value can itself list additional header names
+   // that are hop-by-hop for this particular message (RFC 7230 6.1); collect
+   // those before removing Connection.
+   std::vector<std::string> connectionTokens;
+   boost::algorithm::split(connectionTokens,
+                           pResponse->headerValue("Connection"),
+                           boost::is_any_of(","));
+
+   for (const char* name : hopByHopHeaders)
+      pResponse->removeHeader(name);
+
+   for (std::string token : connectionTokens)
+   {
+      boost::algorithm::trim(token);
+      if (!token.empty())
+         pResponse->removeHeader(token);
+   }
 }
 
 bool isIpAddress(const std::string& str)
