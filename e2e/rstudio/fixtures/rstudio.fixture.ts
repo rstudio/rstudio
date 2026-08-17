@@ -117,6 +117,16 @@ async function logVersions(page: Page): Promise<void> {
 }
 
 /**
+ * Log a line that GitHub also surfaces as a run annotation, so it is readable
+ * without scrolling a collapsed step. Under CI only: locally the `::notice::`
+ * marker is just noise. Must be stdout -- that is where GitHub parses workflow
+ * commands from.
+ */
+function logCiNotice(message: string): void {
+  console.log(process.env.GITHUB_ACTIONS ? `::notice::${message}` : message);
+}
+
+/**
  * If this worker's launch requested the Posit Assistant pre-release (test)
  * manifest (via PW_RSTUDIO_PREFS_OVERRIDE -- see desktop.fixture.ts), confirm
  * the live session actually applied it. A misapplied override (wrong prefs
@@ -139,7 +149,7 @@ async function verifyTestManifestIfRequested(session: DesktopSession): Promise<v
       'Assistant instead of the pre-release candidate -- refusing to continue.',
     );
   }
-  console.log('Confirmed: Posit Assistant pre-release (test) manifest is active for this worker.');
+  logCiNotice('Confirmed: Posit Assistant pre-release (test) manifest is active for this worker.');
 }
 
 /**
@@ -167,7 +177,7 @@ async function logPositAssistantVersionIfInstalled(session: DesktopSession): Pro
       console.warn(`WARNING: no version field in ${packageJsonPath}.`);
       return;
     }
-    console.log(`Posit Assistant version exercised this worker: ${version}`);
+    logCiNotice(`Posit Assistant version under test: ${version}`);
   } catch (err) {
     console.warn(`WARNING: could not read Posit Assistant version from ${packageJsonPath}: ${err}`);
   }
