@@ -54,6 +54,7 @@ private:
    void writeChunk();
    void onChunkWrote(const boost::system::error_code& ec);
    bool handleError(const boost::system::error_code& ec);
+   void closeConnections();
 
    boost::shared_ptr<AsyncConnection> pClientConnection_;
    boost::shared_ptr<IAsyncClient> pServerConnection_;

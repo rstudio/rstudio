@@ -172,7 +172,17 @@ public:
    void setFixedBufferHandlerSupportsPause(bool supportsPause) override { fixedBufferHandlerSupportsPause_ = supportsPause; }
    void setConnectHandler(const ConnectHandler&) override {}
    void resumeChunkProcessing() override { resumed_ = true; }
-   void disableHandlers() override {}
+   void disableHandlers() override
+   {
+      disableHandlersCalled_ = true;
+
+      // Mirror the real AsyncClient::disableHandlers(): this is what breaks
+      // the FixedBufferProxy <-> AsyncClient reference cycle (queueChunk()
+      // was bound here via shared_from_this() in proxy()). Without actually
+      // clearing this, a test could pass a "was it called" assertion while
+      // the leak the call is meant to fix still silently persists.
+      fixedBufferHandler_ = FixedBufferHandler();
+   }
    void close() override { closed_ = true; }
    void setStrand(boost::asio::io_context::strand*) override {}
 
@@ -184,6 +194,7 @@ public:
    FixedBufferHandler fixedBufferHandler_;
    bool resumed_ = false;
    bool closed_ = false;
+   bool disableHandlersCalled_ = false;
    bool fixedBufferHandlerSupportsPause_ = false;
 
 private:
@@ -460,6 +471,11 @@ TEST(FixedBufferProxy, ClosesConnectionsForEmptyContentLengthZeroResponse)
    EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "");
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
+   // This hits writeChunk()'s receivedFinal_-with-nothing-to-flush close
+   // site -- confirm it, like every other close site, breaks the
+   // FixedBufferProxy <-> AsyncClient reference cycle via disableHandlers(),
+   // not just the raw close() pair.
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
 }
 
 TEST(FixedBufferProxy, DoesNotDuplicateWriteWhenFinalSignalArrivesBeforeHeaderWriteCompletes)
@@ -670,6 +686,18 @@ TEST(FixedBufferProxy, HandlesDownstreamWriteFailureDuringBodyWrite)
 
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
+
+   // Regression coverage for a reference-cycle leak: proxy() bound queueChunk()
+   // into AsyncClient's fixedBufferHandler_ via shared_from_this(), and
+   // AsyncClient::close() alone never clears it (its own internal
+   // disableHandlers() call is unreachable once we've already closed it
+   // ourselves). Without handleError() calling disableHandlers() explicitly,
+   // this FixedBufferProxy, pClientConnection_, and any buffered chunks would
+   // leak forever on every routine mid-download browser disconnect.
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+   // The Fixture's own pProxy is the only remaining reference once the fake's
+   // fixedBufferHandler_ has actually been cleared.
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
 }
 
 TEST(FixedBufferProxy, HandlesDownstreamWriteFailureDuringHeaderWrite)
@@ -690,6 +718,11 @@ TEST(FixedBufferProxy, HandlesDownstreamWriteFailureDuringHeaderWrite)
    EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
+
+   // See HandlesDownstreamWriteFailureDuringBodyWrite: same reference-cycle
+   // leak, but via onHeadersWrote()'s call into handleError() instead.
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
 }
 
 TEST(FixedBufferProxy, MultipleQueuedChunksDrainInOrderAndAccountBufferCorrectly)

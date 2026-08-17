@@ -214,8 +214,7 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
          else if (writeBuffer_.empty() && receivedFinal_ && !clientWriteInProgress_)
          {
             // Content-Length final with nothing left to write: close now.
-            pClientConnection_->close();
-            pServerConnection_->close();
+            closeConnections();
          }
       }
    }
@@ -258,8 +257,7 @@ void FixedBufferProxy::writeChunk()
          // (e.g. the empty final chunk of a Content-Length: 0 / 204 response,
          // where headers were just written and no body chunk was ever
          // enqueued) - nothing left to write, close now.
-         pClientConnection_->close();
-         pServerConnection_->close();
+         closeConnections();
       }
 
       return;
@@ -293,8 +291,7 @@ void FixedBufferProxy::onChunkWrote(const boost::system::error_code& ec)
       {
          // we wrote the last outbound bytes (chunked terminator or final body
          // bytes) - close connections
-         pClientConnection_->close();
-         pServerConnection_->close();
+         closeConnections();
          return;
       }
 
@@ -314,12 +311,27 @@ bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
          LOG_ERROR(error);
 
       // close both connections to stop all data transfer
-      pClientConnection_->close();
-      pServerConnection_->close();
+      closeConnections();
       return true;
    }
 
    return false;
+}
+
+void FixedBufferProxy::closeConnections()
+{
+   pClientConnection_->close();
+   pServerConnection_->close();
+
+   // AsyncClient::close() only closes the socket -- it never clears
+   // fixedBufferHandler_, the boost::function that holds a shared_ptr back to
+   // us (see proxy()). AsyncClient's own internal disableHandlers() call (in
+   // its handleError()) is unreachable once we've already closed it
+   // ourselves (its closed_ guard short-circuits first), and under
+   // backpressure pause no callback ever fires at all. Without this, every
+   // caller above leaks this FixedBufferProxy, pClientConnection_, and any
+   // buffered chunks forever.
+   pServerConnection_->disableHandlers();
 }
 
 } // namespace http
