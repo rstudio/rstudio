@@ -177,8 +177,12 @@ export interface DesktopSession {
   // RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp userLogDir). The per-test
   // fixture reads them from here to attach backend logs on a failure.
   logDir: string;
-  // Whether this launch's merged prefs asked for the Posit Assistant
-  // pre-release (test) manifest -- see TempConfig.requestedTestManifest.
+  // RSTUDIO_DATA_HOME for this launch. Owned here because this file owns the
+  // config-tree layout; callers needing something under it (e.g. the installed
+  // Posit Assistant at data-home/pai) should build from this, not re-derive it.
+  dataHome: string;
+  // Whether this launch's prefs asked for the Posit Assistant pre-release
+  // (test) manifest -- see TempConfig.requestedTestManifest.
   requestedTestManifest: boolean;
 }
 
@@ -244,10 +248,10 @@ interface TempConfig {
   configDir: string;
   electronUserData: string;
   dataHome: string;
-  // Whether the merged base+override prefs asked for the Posit Assistant
-  // pre-release (test) manifest. False on the existingConfigRoot reuse path
-  // below, which doesn't re-merge -- launchRStudio's callers never request a
-  // relaunch there, so that path never needs the check this feeds.
+  // Whether this launch's prefs ask for the Posit Assistant pre-release (test)
+  // manifest. Derived from the merged base+override prefs on a fresh config,
+  // and re-read from the reused prefs file on the relaunch path -- a relaunched
+  // session reads that same file, so it can genuinely be on the test manifest.
   requestedTestManifest: boolean;
 }
 
@@ -514,13 +518,18 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   // Set up the isolated config directory (or reuse one across a restart)
   let tempConfig: TempConfig;
   if (existingConfigRoot) {
+    const reusedPrefsPath = path.join(existingConfigRoot, 'config-home', 'rstudio-prefs.json');
     tempConfig = {
       root: existingConfigRoot,
       configHome: path.join(existingConfigRoot, 'config-home'),
       configDir: path.join(existingConfigRoot, 'config-dir'),
       electronUserData: path.join(existingConfigRoot, 'electron-userdata'),
       dataHome: path.join(existingConfigRoot, 'data-home'),
-      requestedTestManifest: false,
+      // Read back rather than assumed: this path doesn't re-merge, but the
+      // prefs file it reuses still carries whatever the first launch wrote.
+      requestedTestManifest:
+        fs.existsSync(reusedPrefsPath) &&
+        readPrefsFile(reusedPrefsPath, 'reused config').posit_assistant_test_manifest === true,
     };
     // Defensively recreate child dirs in case anything cleared them between runs
     for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData, tempConfig.dataHome]) {
@@ -820,6 +829,7 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       rstudioProcess,
       configRoot,
       logDir,
+      dataHome: tempConfig.dataHome,
       requestedTestManifest: tempConfig.requestedTestManifest,
     };
   } catch (err) {

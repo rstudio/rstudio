@@ -4,25 +4,36 @@ name: "Test: E2E Playwright RStudio (Posit Assistant Release Gate, Open Source)"
 # host these tests run inside. Posit Assistant ships independently over its own
 # CDN manifest, so before a pre-release build is promoted to GA, this workflow
 # installs the latest RStudio daily, opts that run into the pre-release (test)
-# manifest, and runs the @ai suite against it -- the same procedure Gary
-# Ritchie has been running by hand (rstudio/rstudio#18477).
+# manifest, and runs the @ai suite against it -- the same procedure previously
+# run by hand (rstudio/rstudio#18477).
 #
 # Scheduled for Sunday 20:00 UTC: 16 hours after the Posit Assistant build
 # (04:00 UTC), so the candidate for that day already exists, and four hours
 # after the existing Sunday macOS+Windows E2E cron (16:00 UTC) in
-# os-test-e2e-rstudio-scheduled.yml, so the two don't contend for the same
-# runner pools.
+# os-test-e2e-rstudio-scheduled.yml. Four hours is spacing, not a guarantee --
+# that file's own comment calls the same gap "tighter than ideal" for a fleet
+# that overruns -- but the separate concurrency group below means an overlap
+# degrades to runner contention rather than a cancelled run.
 #
 # One engine per platform family, not the full 21-engine matrix: Linux Desktop
-# (Ubuntu 24 x86_64), macOS (26 arm64), and Windows (Server 2025, the
-# permanent stand-in for Windows 11 -- see rstudio/rstudio#18477 notes on
-# GitHub Actions having no Windows 11 x86_64 runner). Widen this list later if
-# the signal proves useful.
+# (Ubuntu 24 x86_64), macOS (26 arm64), and Windows (Server 2025, the permanent
+# stand-in for Windows 11, since GitHub Actions offers no Windows 11 x86_64
+# runner and RStudio Desktop does not support Windows arm64).
+#
+# Desktop only, and not incidentally: the opt-in travels via
+# PW_RSTUDIO_PREFS_OVERRIDE, which server.fixture.ts does not read
+# (rstudio/rstudio#17520). A Server engine added here would silently ignore the
+# override AND skip the fixture's verification, i.e. quietly test GA. Don't add
+# one until that issue lands.
 #
 # posit_assistant_test_manifest is opt-in per call (default false on every
 # engine) and is the only thing distinguishing this run from any other E2E
 # run: it must never become a base pref or a suite default, or every regular
 # run would silently start testing the pre-release Assistant.
+#
+# require_tests_passed is the floor that stops a run which executed nothing
+# from reporting "safe to promote" -- see the engines' own step for why a
+# zero-test run otherwise looks clean.
 
 on:
   schedule:
@@ -36,9 +47,10 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write  # the engines' e2e-merge job declares this
-  # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC, and
-  # every engine's build job assumes the S3 sccache role via OIDC; a reusable
-  # workflow's id-token grant is capped by its caller's.
+  # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC; a
+  # reusable workflow's id-token grant is capped by its caller's. (Their build
+  # jobs assume the sccache role the same way, but never run here -- every
+  # engine is called with build_from_source: false.)
   id-token: write
 
 jobs:
@@ -58,6 +70,7 @@ jobs:
       build_from_source: false
       grep: "@ai"
       posit_assistant_test_manifest: true
+      require_tests_passed: true
 
   macos:
     name: macOS 26 arm64
@@ -73,6 +86,7 @@ jobs:
       build_from_source: false
       grep: "@ai"
       posit_assistant_test_manifest: true
+      require_tests_passed: true
 
   windows:
     name: Windows Server 2025
@@ -88,3 +102,4 @@ jobs:
       build_from_source: false
       grep: "@ai"
       posit_assistant_test_manifest: true
+      require_tests_passed: true

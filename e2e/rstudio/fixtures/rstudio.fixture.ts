@@ -112,6 +112,10 @@ async function logVersions(page: Page): Promise<void> {
  * while every test still passes -- the run would report green having tested
  * the wrong build. Skipped entirely, with no output, on every ordinary run
  * that didn't request the test manifest.
+ *
+ * Desktop only, because PW_RSTUDIO_PREFS_OVERRIDE is: server.fixture.ts has no
+ * prefs-override mechanism (rstudio/rstudio#17520), so a Server engine cannot
+ * be gated this way -- the override would be ignored AND this check skipped.
  */
 async function verifyTestManifestIfRequested(session: DesktopSession): Promise<void> {
   if (!session.requestedTestManifest) return;
@@ -127,22 +131,33 @@ async function verifyTestManifestIfRequested(session: DesktopSession): Promise<v
 }
 
 /**
- * Record which Posit Assistant version this worker actually exercised, if a
- * test manifest run installed one. A read-back, not an assertion -- it says
- * what ran, the same way the certification workflow records the R version
- * actually installed rather than trusting the requested one. Gated on
- * requestedTestManifest for the same reason as the check above: no output on
- * an ordinary run.
+ * Record which Posit Assistant build this worker exercised. A read-back of what
+ * is on disk, not an assertion -- but absence IS reported, because by this point
+ * the run has declared it is testing a pre-release candidate, and no install
+ * means the subject under test was never there (Copilot-based @ai tests would
+ * still pass regardless). Gated on requestedTestManifest, so an ordinary run
+ * prints nothing. Under PW_SEED_PAI this reports the seeded local build, which
+ * nothing downloaded.
  */
 async function logPositAssistantVersionIfInstalled(session: DesktopSession): Promise<void> {
   if (!session.requestedTestManifest) return;
-  const packageJsonPath = path.join(session.configRoot, 'data-home', 'pai', 'bin', 'package.json');
-  if (!fs.existsSync(packageJsonPath)) return;
+  const packageJsonPath = path.join(session.dataHome, 'pai', 'bin', 'package.json');
+  if (!fs.existsSync(packageJsonPath)) {
+    console.warn(
+      `WARNING: this run requested the Posit Assistant test manifest, but no install exists at ` +
+      `${packageJsonPath} -- this worker exercised no Assistant build.`,
+    );
+    return;
+  }
   try {
     const { version } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    if (!version) {
+      console.warn(`WARNING: no version field in ${packageJsonPath}.`);
+      return;
+    }
     console.log(`Posit Assistant version exercised this worker: ${version}`);
   } catch (err) {
-    console.log(`WARNING: could not read Posit Assistant version from ${packageJsonPath}: ${err}`);
+    console.warn(`WARNING: could not read Posit Assistant version from ${packageJsonPath}: ${err}`);
   }
 }
 
@@ -290,7 +305,7 @@ export const test = base.extend<
       await logVersions(session.page);
       await use({ page: session.page, consoleBuffer });
       // Debug-only: keep the session alive after the last test so you can
-      // keep inspecting; press Enter in the Console to quit. No-op otherwise.
+      // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.
       await waitForUserConsoleInput(session.page, 'quit RStudio');
       await shutdownServer(session);
     } else {

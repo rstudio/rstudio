@@ -43,6 +43,10 @@ on:
         description: "Test the pre-release (test) Posit Assistant manifest instead of the released one. Off by default: only the Posit Assistant release gate turns this on."
         type: boolean
         default: false
+      require_tests_passed:
+        description: "Fail the run if it passed zero tests. For release gates, where an empty or all-skipped run must not report green."
+        type: boolean
+        default: false
       build_only:
         description: "Run only the build job (to seed the rstudio-tools / R-libs / GWT / sccache caches) and skip the e2e job."
         type: boolean
@@ -81,6 +85,9 @@ on:
         type: string
         default: ""
       posit_assistant_test_manifest:
+        type: boolean
+        default: false
+      require_tests_passed:
         type: boolean
         default: false
       build_only:
@@ -596,9 +603,7 @@ jobs:
       - name: Enable Posit Assistant test manifest
         if: inputs.posit_assistant_test_manifest
         run: |
-          PREFS="$GITHUB_WORKSPACE/e2e/rstudio/.prefs.local.json"
-          echo '{"posit_assistant_test_manifest": true}' > "$PREFS"
-          echo "PW_RSTUDIO_PREFS_OVERRIDE=$PREFS" >> "$GITHUB_ENV"
+          echo '{"posit_assistant_test_manifest": true}' > "$GITHUB_WORKSPACE/e2e/rstudio/.prefs.local.json"
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
@@ -614,6 +619,9 @@ jobs:
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          # Relative to this step's working-directory. Empty (not set) unless
+          # this run opted in, leaving the fixture's default prefs alone.
+          PW_RSTUDIO_PREFS_OVERRIDE: ${{ inputs.posit_assistant_test_manifest && '.prefs.local.json' || '' }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard
@@ -792,3 +800,19 @@ jobs:
 
             ---
             <sub>2 shards · macos-14 ARM64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+
+      # Release-gate floor, last so the reporting above still runs. A run that
+      # executed nothing must not report green: Playwright suppresses its own
+      # "no tests found" error whenever --shard is passed (which every engine
+      # does), and requireAiCredentials turns a credential lapse into skips --
+      # both leave a zero-passed run looking clean.
+      - name: Require the run to have executed tests
+        if: always() && inputs.require_tests_passed
+        env:
+          PASSED: ${{ steps.summary.outputs.passed }}
+        run: |
+          if [ -z "$PASSED" ] || [ "$PASSED" = "0" ]; then
+            echo "::error::This run passed 0 tests, so it proves nothing. Refusing to report green."
+            exit 1
+          fi
+          echo "::notice::Gate floor met: $PASSED test(s) passed."
