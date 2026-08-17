@@ -294,13 +294,24 @@ public:
 
    virtual void writeResponseHeaders(Socket::Handler handler)
    {
+      // Same guard-before-mutating-response_ rationale as writeResponse()/
+      // writeError() above: an in-flight asyncWrite of a prior
+      // writeResponseHeaders() call may still hold buffers pointing into
+      // response_'s current backing storage.
+      if (responseAlreadyStarted())
+         return;
+
       sendingResponse_ = true;
 
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
 
       // kept for parity with the older writeResponse() above, which has set
-      // this unconditionally on every response for a long time
+      // this unconditionally on every response for a long time. Remove any
+      // upstream-supplied instance(s) first -- setHeader() only replaces the
+      // first match, so a duplicated (or differently-cased) upstream header
+      // would otherwise still reach the client alongside ours.
+      response_.removeHeader("X-Content-Type-Options");
       response_.setHeader("X-Content-Type-Options", "nosniff");
 
       // write only the header buffers

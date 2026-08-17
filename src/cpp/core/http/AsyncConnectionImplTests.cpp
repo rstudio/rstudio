@@ -158,6 +158,125 @@ TEST(AsyncConnectionImpl, WriteResponseHeadersSetsNosniffHeader)
    EXPECT_NE(received.find("X-Content-Type-Options: nosniff"), std::string::npos);
 }
 
+TEST(AsyncConnectionImpl, WriteResponseHeadersAfterHeadersAlreadyWrittenIsANoOp)
+{
+   // writeResponseHeaders() must guard against being called a second time the
+   // same way writeResponse()/writeError() do (see
+   // WriteResponseAfterHeadersAlreadyWrittenIsANoOp above): an in-flight
+   // asyncWrite from the first call may still hold buffers pointing into
+   // response_'s current backing storage, so a second call must not mutate
+   // response_ (e.g. via the Date/nosniff header logic) or write again.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+
+   bool firstWritten = false;
+   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+      firstWritten = true;
+   });
+
+   // Simulate a second attempt to write headers on the same connection
+   // (e.g. a caller that doesn't itself track whether it already wrote
+   // headers) before the first write has run.
+   bool secondWriteHandlerCalled = false;
+   pConnection->response().setStatusCode(500);
+   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+      secondWriteHandlerCalled = true;
+   });
+
+   ioc.run();
+
+   EXPECT_TRUE(firstWritten);
+   EXPECT_FALSE(secondWriteHandlerCalled);
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_NE(received.find("200"), std::string::npos);
+   EXPECT_EQ(received.find("500"), std::string::npos);
+}
+
+TEST(AsyncConnectionImpl, WriteResponseHeadersCollapsesDuplicateUpstreamNosniffHeader)
+{
+   // FixedBufferProxy assigns the upstream response's headers verbatim before
+   // writeResponseHeaders() adds its own X-Content-Type-Options -- if the
+   // upstream already sent one (or, per HTTP, more than one field with that
+   // name, or a differently-cased duplicate), setHeader() only replaces the
+   // *first* match, so the wire must not end up carrying two instances.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+   pConnection->response().addHeader("X-Content-Type-Options", "sniff-allowed");
+   pConnection->response().addHeader("x-content-type-options", "also-stale");
+
+   bool headersWritten = false;
+   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+      headersWritten = true;
+   });
+
+   ioc.run();
+   EXPECT_TRUE(headersWritten);
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   // Both upstream-supplied duplicates must be gone entirely -- not just the
+   // first -- and our own value must be the only one present.
+   EXPECT_EQ(received.find("sniff-allowed"), std::string::npos);
+   EXPECT_EQ(received.find("also-stale"), std::string::npos);
+   EXPECT_NE(received.find("X-Content-Type-Options: nosniff"), std::string::npos);
+}
+
 } // namespace tests
 } // namespace http
 } // namespace core
