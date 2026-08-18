@@ -92,11 +92,45 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
   test('chat pane content survives R session restart', async ({ rstudioPage: page }) => {
     await ensureChatPaneVisible(page, chatActions);
 
+    // Tag the pre-restart iframe. On resume ChatPane double-buffers: it loads
+    // the resume URL into a second (untitled, hidden) frame and only removes
+    // this one once that load completes, so the tag is how we tell the
+    // resumed frame from the one we started with.
+    await page.evaluate((selector) => {
+      const f = document.querySelector(selector);
+      if (!f) throw new Error('chat iframe not found');
+      f.setAttribute('data-pw-prerestart', '');
+    }, CHAT_IFRAME);
+
     // Restart the R session (sentinel-confirmed)
     await restartSessionWithSentinel(page);
 
     // Re-open the chat pane (toggleSidebar may have hidden it during restart)
     await ensureChatPaneVisible(page, chatActions);
+
+    // Best-effort wait for the swap, so the body sampled below is the
+    // post-restart document rather than the preserved pre-restart one.
+    // window.rstudio.ready (awaited above) only covers GWT's own init; the
+    // chat resume load is independent of it. If the resumed frame stalls,
+    // ChatPane reclaims it after FRAME_LOAD_TIMEOUT_MS and reloads the
+    // original element instead -- the pane stays populated either way, which
+    // is the property under test, so a miss here is logged, not fatal.
+    const swapped = await page
+      .waitForFunction(
+        (selector) => {
+          const f = document.querySelector(selector);
+          return f !== null && !f.hasAttribute('data-pw-prerestart');
+        },
+        CHAT_IFRAME,
+        { timeout: 20000, polling: 250 },
+      )
+      .then(() => true)
+      .catch(() => false);
+
+    if (!swapped) {
+      console.log('resume swap did not replace the chat iframe within 20s -- ' +
+        'asserting against the pre-restart frame');
+    }
 
     // The iframe should have rendered content -- either the chat app root
     // or the "Not Installed" page. Both share a non-empty body.
