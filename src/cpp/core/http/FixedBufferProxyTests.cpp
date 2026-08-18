@@ -133,6 +133,13 @@ public:
    // the downstream (browser) connection dropping mid-write.
    void failNextWrite(const boost::system::error_code& ec) { nextWriteError_ = ec; }
 
+   // The client-facing request drives two of FixedBufferProxy's framing
+   // decisions (HEAD => no body at all; HTTP/1.0 => no Transfer-Encoding), so
+   // tests need to be able to vary it. Defaults match http::Request's own:
+   // an empty method and HTTP/1.1, i.e. the ordinary chunked-capable client.
+   void setRequestMethod(const std::string& method) { request_.setMethod(method); }
+   void setRequestHttpVersion(int major, int minor) { request_.setHttpVersion(major, minor); }
+
    bool headersWritten_ = false;
    bool closed_ = false;
    std::string writtenBytes_;
@@ -336,6 +343,239 @@ TEST(FixedBufferProxy, FallsBackToChunkedFramingWhenUpstreamLengthUnknown)
 
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
+// --- RFC 7230 3.3.1: "A server MUST NOT send a response containing
+// Transfer-Encoding unless the corresponding request indicates HTTP/1.1 (or
+// later)." ---------------------------------------------------------------
+//
+// An HTTP/1.0 client does not de-chunk. Because FixedBufferProxy always sends
+// Connection: close and always closes, such a client applies 3.3.3 rule 7 and
+// reads to EOF -- so emitting chunked framing at it does not merely violate the
+// spec, it hands the hex chunk-size lines to the user as body content. The
+// conformant framing for "length unknown, HTTP/1.0 client" is no framing header
+// at all, with the close delimiting the body.
+
+TEST(FixedBufferProxy, Http10ClientGetsCloseDelimitedFramingRatherThanChunked)
+{
+   Fixture fixture;
+   fixture.pClientConnection->setRequestHttpVersion(1, 0);
+
+   std::string body = "hello";
+   http::Response upstream;
+   makeChunkedResponse(&upstream); // upstream length unknown
+
+   EXPECT_TRUE(fixture.deliver(upstream, body));
+   EXPECT_TRUE(fixture.deliver(upstream, "")); // completion signal
+
+   EXPECT_TRUE(fixture.pClientConnection->headersWritten_);
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length").empty());
+
+   // raw body bytes, no chunk envelope and no 0\r\n\r\n terminator
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, body);
+
+   // the close is what delimits the body, so it must still happen
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
+TEST(FixedBufferProxy, Http10ClientStillGetsContentLengthFramingWhenLengthIsKnown)
+{
+   // The HTTP/1.0 fallback must be scoped to the unknown-length case only:
+   // Content-Length framing is perfectly valid for an HTTP/1.0 client and is
+   // strictly better than close-delimiting (the client can tell a complete
+   // response from a truncated one).
+   Fixture fixture;
+   fixture.pClientConnection->setRequestHttpVersion(1, 0);
+
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   EXPECT_EQ(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length"), "5");
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, body);
+}
+
+TEST(FixedBufferProxy, Http10CloseDelimitedFramingDropsUnparseableUpstreamContentLength)
+{
+   // An unparseable Content-Length is why we fell back to a self-generated
+   // framing in the first place (AsyncClient likewise reads to EOF in that
+   // case). Forwarding the bogus value would leave the client acting on a
+   // length this hop is not honoring.
+   Fixture fixture;
+   fixture.pClientConnection->setRequestHttpVersion(1, 0);
+
+   std::string body = "hello";
+   http::Response upstream;
+   upstream.setStatusCode(200);
+   upstream.setHeader("Content-Length", "not-a-number");
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length").empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, body);
+}
+
+TEST(FixedBufferProxy, ClientsNewerThanHttp11StillGetChunkedFraming)
+{
+   // The gate is "HTTP/1.1 or later", not "exactly HTTP/1.1".
+   Fixture fixture;
+   fixture.pClientConnection->setRequestHttpVersion(2, 0);
+
+   std::string body = "hello";
+   http::Response upstream;
+   makeChunkedResponse(&upstream);
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   EXPECT_EQ(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding),
+             kChunkedTransferEncoding);
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_,
+             http::util::formatMessageAsHttpChunk(body) + http::util::formatMessageAsHttpChunk(""));
+}
+
+// --- RFC 7230 3.3.3 rule 1: responses to HEAD and 1xx/204/304 responses
+// "cannot contain a message body" ------------------------------------------
+//
+// These are terminated by the first empty line after the headers regardless of
+// what framing headers are present, so FixedBufferProxy must emit no framing
+// header it would then have to terminate, and no body bytes. For 204 and 1xx,
+// 3.3.1 additionally forbids Transfer-Encoding outright and 3.3.2 forbids
+// Content-Length.
+
+TEST(FixedBufferProxy, NoTransferEncodingOrBodyForNoContentResponse)
+{
+   Fixture fixture;
+   http::Response upstream;
+   upstream.setStatusCode(http::status::NoContent); // no Content-Length, as is common
+
+   EXPECT_TRUE(fixture.deliver(upstream, "")); // completion signal
+
+   EXPECT_TRUE(fixture.pClientConnection->headersWritten_);
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length").empty());
+
+   // no body at all -- in particular no 0\r\n\r\n chunked terminator
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
+TEST(FixedBufferProxy, RemovesContentLengthFromNoContentResponse)
+{
+   // RFC 7230 3.3.2: "A server MUST NOT send a Content-Length header field in
+   // any response with a status code of 1xx (Informational) or 204 (No
+   // Content)." A Content-Length: 0 on a 204 is a common upstream habit.
+   Fixture fixture;
+   http::Response upstream;
+   upstream.setStatusCode(http::status::NoContent);
+   upstream.setHeader("Content-Length", "0");
+
+   fixture.deliver(upstream, "");
+
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length").empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+}
+
+TEST(FixedBufferProxy, NoTransferEncodingOrBodyForInformationalResponse)
+{
+   // ResponseParser has no interim-response handling, so a 1xx an upstream
+   // emits (103 Early Hints, or a 100 Continue we solicited) is parsed as *the*
+   // response and streamed. 101 never reaches here -- the localhost proxy's
+   // buffer predicate routes websocket upgrades to the buffered path.
+   Fixture fixture;
+   http::Response upstream;
+   upstream.setStatusCode(103); // Early Hints
+
+   fixture.deliver(upstream, "");
+
+   EXPECT_TRUE(fixture.pClientConnection->headersWritten_);
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length").empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+}
+
+TEST(FixedBufferProxy, DiscardsBodyBytesOnAResponseThatCannotHaveABody)
+{
+   // A malformed upstream that sends a body on a 204: the client will not read
+   // one (3.3.3 rule 1 terminates the message at the blank line), so anything
+   // we relayed would sit on the wire as the start of a different message --
+   // the response-smuggling shape. Drop it.
+   Fixture fixture;
+   http::Response upstream;
+   upstream.setStatusCode(http::status::NoContent);
+   upstream.setHeader("Content-Length", "5");
+
+   EXPECT_TRUE(fixture.deliver(upstream, "hello"));
+   EXPECT_TRUE(fixture.deliver(upstream, ""));
+
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length").empty());
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
+TEST(FixedBufferProxy, NotModifiedResponseKeepsContentLengthButWritesNoBody)
+{
+   // Unlike 1xx/204, a 304 MAY carry Content-Length (3.3.2) -- it describes the
+   // body the equivalent GET would have returned, and caches want it. So it
+   // stays; what must not appear is a body or a framing header we'd terminate.
+   Fixture fixture;
+   http::Response upstream;
+   upstream.setStatusCode(http::status::NotModified);
+   upstream.setHeader("Content-Length", "1000");
+   upstream.setHeader("ETag", "\"abc\"");
+
+   fixture.deliver(upstream, "");
+
+   EXPECT_EQ(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length"), "1000");
+   EXPECT_EQ(fixture.pClientConnection->writtenHeaders_.headerValue("ETag"), "\"abc\"");
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+}
+
+TEST(FixedBufferProxy, HeadResponseKeepsContentLengthButWritesNoBody)
+{
+   Fixture fixture;
+   fixture.pClientConnection->setRequestMethod("HEAD");
+
+   http::Response upstream;
+   upstream.setStatusCode(200);
+   upstream.setHeader("Content-Length", "1000"); // length of the GET body
+
+   fixture.deliver(upstream, "");
+
+   EXPECT_EQ(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length"), "1000");
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+}
+
+TEST(FixedBufferProxy, HeadResponseWithUnknownLengthEmitsNoTransferEncodingOrTerminator)
+{
+   // The status code alone would have selected chunked framing here; it is the
+   // HEAD request method that makes the response body-less.
+   Fixture fixture;
+   fixture.pClientConnection->setRequestMethod("HEAD");
+
+   http::Response upstream;
+   makeChunkedResponse(&upstream);
+
+   fixture.deliver(upstream, "");
+
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
 }
 
 TEST(FixedBufferProxy, StripsUpstreamTransferEncodingWhenContentLengthFraming)

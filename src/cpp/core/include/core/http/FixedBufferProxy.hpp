@@ -46,8 +46,21 @@ private:
    // either constant ever changes without updating the other.
    static constexpr uint64_t defaultMaxBufferSize = 1024*1024 + 4096; // ~1MB + 4KB
 
-   enum class Framing { Undecided, ContentLength, Chunked };
+   // How this proxy frames the body it writes to the client. Decided once, at
+   // the first queueChunk(), by decideFraming().
+   enum class Framing
+   {
+      Undecided,
+      NoBody,         // response cannot carry a body at all (RFC 7230 3.3.3
+                      // rule 1): headers only, no framing header, no body
+                      // bytes, no chunked terminator
+      ContentLength,  // upstream length known: raw bytes, Content-Length kept
+      Chunked,        // length unknown, client speaks HTTP/1.1+: chunked
+      CloseDelimited  // length unknown, client is HTTP/1.0: raw bytes, no
+                      // framing header, body delimited by our close
+   };
 
+   Framing decideFraming(const Response& response) const;
    bool queueChunk(const Response& response,
                    const std::string& chunk);
    void onHeadersWrote(const boost::system::error_code& ec);

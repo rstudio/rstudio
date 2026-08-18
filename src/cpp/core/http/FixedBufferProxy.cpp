@@ -50,40 +50,116 @@ void FixedBufferProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConne
    pServerConnection_->setFixedBufferHandlerSupportsPause(true);
 }
 
+// Choose the framing this proxy will use toward the client. Called once, at
+// the first queueChunk(), and never revisited: everything it looks at
+// (upstream status/headers, the client's own request) is already fixed by the
+// time any body byte arrives.
+FixedBufferProxy::Framing
+FixedBufferProxy::decideFraming(const http::Response& response) const
+{
+   // RFC 7230 3.3.3 rule 1: "Any response to a HEAD request and any response
+   // with a 1xx (Informational), 204 (No Content), or 304 (Not Modified)
+   // status code is always terminated by the first empty line after the header
+   // fields, regardless of the header fields present in the message, and thus
+   // cannot contain a message body." This overrides every header-derived
+   // signal below -- including an upstream Content-Length, which for HEAD and
+   // 304 describes the body an equivalent GET would have returned rather than
+   // anything on this wire.
+   //
+   // Getting this wrong is not merely cosmetic: it is what made us stamp
+   // Transfer-Encoding onto a 204, which 3.3.1 forbids outright ("A server
+   // MUST NOT send a Transfer-Encoding header field in any response with a
+   // status code of 1xx (Informational) or 204 (No Content)"), and then follow
+   // it with a 0\r\n\r\n terminator that rule 1 says cannot be there.
+   int statusCode = response.statusCode();
+   bool informational = statusCode >= 100 && statusCode < 200;
+   if (informational ||
+       statusCode == http::status::NoContent ||
+       statusCode == http::status::NotModified ||
+       pClientConnection_->request().method() == "HEAD")
+   {
+      return Framing::NoBody;
+   }
+
+   // Content-Length framing preserves a known upstream length end-to-end
+   // (progress bars; HTTP/1.1 forbids CL + chunked together). The fallbacks
+   // below handle the unknown-length case (upstream was chunked, EOF-delimited,
+   // or declares an unparseable Content-Length -- matching AsyncClient's own
+   // fallback to EOF-delimited reading in that case, see
+   // responseBodyComplete()/streamedBodyComplete() in AsyncClient.hpp).
+   bool upstreamChunked =
+      response.headerValue(kTransferEncoding) == kChunkedTransferEncoding;
+   boost::optional<uintmax_t> contentLength =
+      safe_convert::stringTo<uintmax_t>(response.headerValue("Content-Length"));
+   if (contentLength && !upstreamChunked)
+      return Framing::ContentLength;
+
+   // Length unknown, so the body needs a framing this hop generates itself.
+   // Chunked requires an HTTP/1.1 (or later) client: RFC 7230 3.3.1, "A server
+   // MUST NOT send a response containing Transfer-Encoding unless the
+   // corresponding request indicates HTTP/1.1 (or later)." That rule has teeth
+   // here -- an HTTP/1.0 recipient does not de-chunk, and because we always
+   // send Connection: close it would instead apply 3.3.3 rule 7 and hand the
+   // hex chunk-size lines to the user as body content.
+   //
+   // Note this is the *client's* request version, not the upstream response
+   // version: the two hops are framed independently, and the client is the
+   // only party that has to understand what we emit here.
+   const http::Request& request = pClientConnection_->request();
+   bool clientSupportsChunked =
+      request.httpVersionMajor() > 1 ||
+      (request.httpVersionMajor() == 1 && request.httpVersionMinor() >= 1);
+   if (clientSupportsChunked)
+      return Framing::Chunked;
+
+   // HTTP/1.0 client with an unknown length: send no framing header at all and
+   // let the connection close delimit the body (3.3.3 rule 7). This is exactly
+   // conformant here rather than a degradation, because FixedBufferProxy
+   // already closes both connections on every terminal path and already
+   // advertises Connection: close.
+   return Framing::CloseDelimited;
+}
+
 bool FixedBufferProxy::queueChunk(const http::Response& response,
                                    const std::string& chunk)
 {
    LOCK_MUTEX(mutex_)
    {
-      // Decide the client-facing framing once, from the upstream response.
-      // Content-Length framing preserves a known upstream length end-to-end
-      // (progress bars; HTTP/1.1 forbids CL + chunked together). Chunked is the
-      // fallback when the upstream length is unknown (upstream was chunked,
-      // EOF-delimited, or declares an unparseable Content-Length -- matching
-      // AsyncClient's own fallback to EOF-delimited reading in that case, see
-      // responseBodyComplete()/streamedBodyComplete() in AsyncClient.hpp).
+      // Decide the client-facing framing once, from the upstream response and
+      // this proxy's own client request -- see decideFraming().
       if (framing_ == Framing::Undecided)
-      {
-         bool upstreamChunked =
-            response.headerValue(kTransferEncoding) == kChunkedTransferEncoding;
-         boost::optional<uintmax_t> contentLength =
-            safe_convert::stringTo<uintmax_t>(response.headerValue("Content-Length"));
-         framing_ = (contentLength && !upstreamChunked)
-                       ? Framing::ContentLength
-                       : Framing::Chunked;
-      }
+         framing_ = decideFraming(response);
 
       // The empty chunk is AsyncClient's completion signal. In Content-Length
-      // framing there is no terminator to write; in chunked framing we still must
-      // emit the 0\r\n\r\n terminator, so fall through and enqueue it below.
+      // and CloseDelimited framing there is no terminator to write; in chunked
+      // framing we still must emit the 0\r\n\r\n terminator, so fall through
+      // and enqueue it below.
       bool isFinal = chunk.empty();
 
-      // Format the outbound bytes for this piece: raw for Content-Length, or a
-      // size-prefixed HTTP chunk for chunked framing.
-      std::string formatted =
-         (framing_ == Framing::Chunked)
-            ? http::util::formatMessageAsHttpChunk(chunk)
-            : chunk; // Content-Length: write body bytes verbatim
+      // Format the outbound bytes for this piece: a size-prefixed HTTP chunk in
+      // chunked framing, raw bytes in the two length/close-delimited framings,
+      // and nothing at all when the response cannot carry a body.
+      std::string formatted;
+      switch (framing_)
+      {
+         case Framing::Chunked:
+            formatted = http::util::formatMessageAsHttpChunk(chunk);
+            break;
+
+         case Framing::NoBody:
+            // Drop the bytes rather than relaying them. A body on a HEAD/1xx/
+            // 204/304 response is a malformed upstream, and per RFC 7230 3.3.3
+            // rule 1 the client will not read one -- so anything we forwarded
+            // would land on the wire as the start of a *different* message,
+            // which is the response-smuggling shape. formatted stays empty, so
+            // the rest of this function writes headers and then closes.
+            break;
+
+         default:
+            // ContentLength / CloseDelimited: write body bytes verbatim.
+            formatted = chunk;
+            break;
+      }
 
       // Account against the *formatted* (enveloped) size we actually enqueue, so
       // currentBufferSize_ stays consistent with what onChunkWrote() subtracts
@@ -138,7 +214,7 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
          // its auth-cookie stamping (getAuthCookies(), ServerSessionProxy.cpp:267,
          // 1003) will need to move from handleProxyResponse's single post-completion
          // writeResponse(response, true, authCookies) call into *this* header-write
-         // path — headers are flushed here, at the first queueChunk, before any
+         // path -- headers are flushed here, at the first queueChunk, before any
          // body bytes are streamed, so cookies can no longer be added at response
          // completion time the way the buffered path does today. The `preserved`
          // mechanism below (copying Set-Cookie already present on
@@ -181,12 +257,46 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
          // one is about to be closed.
          resp.setHeader("Connection", "close");
 
-         if (framing_ == Framing::Chunked)
+         // Framing headers. removeHopByHopHeaders() above has already stripped
+         // any upstream Transfer-Encoding, so the only way one reaches the
+         // client is the explicit set in the Chunked case below -- every other
+         // framing is guaranteed not to emit one, which is what keeps us on the
+         // right side of 3.3.1's MUST NOTs for 1xx/204 and HTTP/1.0 clients.
+         switch (framing_)
          {
-            resp.removeHeader("Content-Length");
-            resp.setHeader(kTransferEncoding, kChunkedTransferEncoding);
+            case Framing::Chunked:
+               resp.removeHeader("Content-Length");
+               resp.setHeader(kTransferEncoding, kChunkedTransferEncoding);
+               break;
+
+            case Framing::CloseDelimited:
+               // No framing header at all; our close delimits the body (RFC
+               // 7230 3.3.3 rule 7). By construction there is no *parseable*
+               // upstream Content-Length here (that would have selected
+               // ContentLength framing), but an unparseable one may still be
+               // present -- drop it rather than forward a length we are not
+               // honoring.
+               resp.removeHeader("Content-Length");
+               break;
+
+            case Framing::NoBody:
+               // RFC 7230 3.3.2: "A server MUST NOT send a Content-Length
+               // header field in any response with a status code of 1xx
+               // (Informational) or 204 (No Content)." For HEAD and 304 the
+               // upstream Content-Length is both permitted and useful -- it
+               // describes the body an equivalent GET would return -- so it
+               // stays.
+               if ((resp.statusCode() >= 100 && resp.statusCode() < 200) ||
+                   resp.statusCode() == http::status::NoContent)
+               {
+                  resp.removeHeader("Content-Length");
+               }
+               break;
+
+            default:
+               // Content-Length framing: keep the upstream Content-Length as-is.
+               break;
          }
-         // Content-Length framing: keep the upstream Content-Length as-is.
 
          clientWriteInProgress_ = true;
          pClientConnection_->writeResponseHeaders(boost::bind(&FixedBufferProxy::onHeadersWrote,
