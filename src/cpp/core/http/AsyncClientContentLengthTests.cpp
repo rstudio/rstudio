@@ -40,8 +40,12 @@
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/system_timer.hpp>
 #include <boost/asio/write.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/system/error_code.hpp>
+#include <boost/thread/lock_guard.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <core/http/AsyncConnection.hpp>
 #include <core/http/FixedBufferProxy.hpp>
@@ -506,6 +510,48 @@ StreamingOutcome runStreamingScenario(
    return outcome;
 }
 
+// Minimal stand-in for FixedBufferProxy: registers itself into
+// fixedBufferHandler_ via shared_from_this() (so it's kept alive solely by
+// that binding, with no other strong reference -- matching the real
+// production reference graph), and owns a mutex it locks around its
+// close()/disableHandlers() call, mirroring FixedBufferProxy's own
+// LOCK_MUTEX(mutex_)-protected close sites. Used to confirm disableHandlers()
+// doesn't destroy a caller (and any lock it holds) out from under itself.
+class FakeStreamingConsumer : public boost::enable_shared_from_this<FakeStreamingConsumer>
+{
+public:
+   explicit FakeStreamingConsumer(const boost::shared_ptr<TcpIpAsyncClient>& pClient)
+      : pClient_(pClient)
+   {
+   }
+
+   void wire()
+   {
+      pClient_->setFixedBufferHandlerSupportsPause(true);
+      boost::shared_ptr<FakeStreamingConsumer> self = shared_from_this();
+      pClient_->setFixedBufferHandler(
+         [self](const http::Response& response, const std::string& chunk) -> bool
+         {
+            return self->onChunk(response, chunk);
+         });
+   }
+
+   bool onChunk(const http::Response&, const std::string&)
+   {
+      // Mirrors FixedBufferProxy::handleError()/closeConnections() exactly:
+      // close(), then disableHandlers(), both synchronously, from within
+      // this very call, while holding our own mutex -- the way
+      // onChunkWrote()/writeChunk() do around their own close sites.
+      boost::lock_guard<boost::mutex> lock(mutex_);
+      pClient_->close();
+      pClient_->disableHandlers();
+      return true;
+   }
+
+   boost::shared_ptr<TcpIpAsyncClient> pClient_;
+   boost::mutex mutex_;
+};
+
 } // anonymous namespace
 
 // Baseline: a server that closes after the response delivers it via EOF.
@@ -928,6 +974,145 @@ TEST(AsyncClientContentLength, CompletionSignalDeclinedWithoutPauseSupportStillR
    server.stop();
 
    EXPECT_EQ(pSentinel.use_count(), 1);
+}
+
+// Regression test for a roborev finding on FixedBufferProxy::closeConnections():
+// it calls pServerConnection_->close() followed by disableHandlers(), both
+// synchronously, from within its own handleError() -- which itself runs from
+// inside the very fixedBufferHandler_ call this AsyncClient is invoking (or,
+// for the other three close sites, from inside a LOCK_MUTEX(mutex_) block
+// reached via one of FixedBufferProxy's own asyncWrite completion handlers).
+// disableHandlers() clears fixedBufferHandler_, the boost::function whose
+// bound state holds the only shared_ptr keeping a consumer like
+// FixedBufferProxy alive; clearing it inline, mid-call through it, would
+// destroy that consumer (and any locked mutex it owns) out from under
+// itself.
+//
+// FakeStreamingConsumer reproduces the real production reference graph
+// exactly (no extra keep-alive shared_ptr the way capturing pClient by
+// reference and a bare sentinel int would give): it is owned solely by the
+// binding inside fixedBufferHandler_, and it locks its own mutex around the
+// close()/disableHandlers() call the way FixedBufferProxy's own close sites
+// do. A weak_ptr confirms it survives the synchronous call (not destroyed
+// out from under its own still-executing method and locked mutex) and is
+// only destroyed once the deferred cleanup actually runs.
+TEST(AsyncClientContentLength, DisableHandlersIsSafeToCallFromWithinTheHandlerItClears)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/false,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   boost::weak_ptr<FakeStreamingConsumer> weakConsumer;
+   {
+      boost::shared_ptr<FakeStreamingConsumer> pConsumer =
+         boost::make_shared<FakeStreamingConsumer>(pClient);
+      pConsumer->wire();
+      weakConsumer = pConsumer;
+      // pConsumer goes out of scope here -- the only remaining strong
+      // reference is the one bound inside pClient's fixedBufferHandler_.
+   }
+   ASSERT_FALSE(weakConsumer.expired());
+
+   pClient->execute([&](const http::Response&) {}, [&](const core::Error&) {});
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_TRUE(weakConsumer.expired());
+}
+
+// Concurrent-disable regression test, pinning down disableHandlers()'s
+// cross-thread contract (see its declaration): called from a foreign thread
+// while a handler invocation is in flight -- the /s/ shape, where
+// FixedBufferProxy's write-completion path runs on the downstream
+// connection's strand, not this client's -- it must (a) return promptly
+// WITHOUT waiting for the in-flight invocation (a wait-based design
+// deadlocks in production, since the callback can be blocked on a lock the
+// disabling caller holds; here it would hang this test), (b) let that
+// already-admitted invocation complete safely on its own copy of the
+// handler, and (c) admit no further invocations afterward (in particular,
+// the completion signal closeAndRespond() would otherwise deliver).
+TEST(AsyncClientContentLength, DisableHandlersFromForeignThreadDoesNotBlockOnInFlightCallback)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/false,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   std::atomic<bool> inCallback(false);
+   std::atomic<bool> disableReturned(false);
+   std::atomic<bool> callbackTimedOut(false);
+   std::atomic<int> invocationsAfterDisable(0);
+
+   pClient->execute(
+      [&](const http::Response&) {},
+      [&](const core::Error&) {},
+      [&](const http::Response&, const std::string&) -> bool
+      {
+         if (disableReturned.load())
+         {
+            // admission after disableHandlers() returned -- contract breach
+            ++invocationsAfterDisable;
+            return true;
+         }
+
+         // signal the foreign thread, then block in-invocation until its
+         // disableHandlers() call has returned (bounded so a regression
+         // fails rather than hangs the suite)
+         inCallback.store(true);
+         for (int i = 0; i < 5000 && !disableReturned.load(); ++i)
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+         if (!disableReturned.load())
+            callbackTimedOut.store(true);
+         return true;
+      });
+
+   std::thread foreignThread([&]()
+   {
+      for (int i = 0; i < 5000 && !inCallback.load(); ++i)
+         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      if (!inCallback.load())
+         return; // callback never ran; the main-thread assertions will fail
+
+      // the invocation is in flight on the io thread; this must not block
+      // waiting for it
+      pClient->disableHandlers();
+      disableReturned.store(true);
+   });
+
+   ioc.run();
+   foreignThread.join();
+   server.stop();
+
+   EXPECT_TRUE(inCallback.load());
+   EXPECT_TRUE(disableReturned.load());
+   EXPECT_FALSE(callbackTimedOut.load());
+   EXPECT_EQ(invocationsAfterDisable.load(), 0);
 }
 
 // --- Known gaps, characterized rather than fixed for now ---

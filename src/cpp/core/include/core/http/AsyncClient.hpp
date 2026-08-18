@@ -188,11 +188,28 @@ public:
                         const ErrorHandler& errorHandler,
                         const FixedBufferHandler& fixedBufferHandler = FixedBufferHandler())
    {
-      // set handlers
-      responseHandler_ = responseHandler;
-      errorHandler_ = errorHandler;
-      if (fixedBufferHandler)
-         fixedBufferHandler_ = fixedBufferHandler;
+      // set handlers -- under socketMutex_, like every other access to these
+      // members (see disableHandlers()). Swap any previous values into
+      // locals so they destruct only after the lock is released: destroying
+      // a displaced handler can release the last reference to a consumer
+      // whose teardown calls back into close()/disableHandlers(), which
+      // take this same (non-recursive) mutex.
+      ResponseHandler oldResponseHandler;
+      ErrorHandler oldErrorHandler;
+      FixedBufferHandler oldFixedBufferHandler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         oldResponseHandler.swap(responseHandler_);
+         responseHandler_ = responseHandler;
+         oldErrorHandler.swap(errorHandler_);
+         errorHandler_ = errorHandler;
+         if (fixedBufferHandler)
+         {
+            oldFixedBufferHandler.swap(fixedBufferHandler_);
+            fixedBufferHandler_ = fixedBufferHandler;
+         }
+      }
+      END_LOCK_MUTEX
 
       // if the host header is not already set, make sure we stamp a default one
       // this is required by the http standard
@@ -214,16 +231,71 @@ public:
    // already been deleted. for this case (which does occur in the
    // desktop::NetworkReply class) we provide a method that disables
    // any pending handlers
+   //
+   // Contract: once this returns, no NEW handler invocation can be admitted
+   // -- every invocation site copies the handler out under socketMutex_
+   // (the same lock this method holds to mark handlersDisabled_ and detach
+   // the members), so the check-then-copy admission step is mutually
+   // exclusive with disabling. An invocation admitted concurrently on
+   // another thread before the detach may still complete after this
+   // returns; it operates on its own copy of the handler, which is
+   // memory-safe for consumers kept alive by the handler's own bound
+   // shared_ptr (FixedBufferProxy -- for which a late-completing invocation
+   // simply lands on already-closed connections and no-ops into its
+   // idempotent close path). The stronger "nothing is executing after this
+   // returns" guarantee holds only when this is called on the client's
+   // strand or from within a handler invocation itself, since all
+   // invocations run strand-serialized. That covers the internal callers
+   // (strand-bound continuations), /p/ (both connections share one strand,
+   // see ServerSessionProxy.cpp), and single-io-thread embedders
+   // (desktop::NetworkReply) -- but NOT /s/, where FixedBufferProxy's
+   // write-completion path calls this from the downstream connection's own
+   // strand; there, only the weaker (still memory-safe) guarantee applies.
+   //
+   // We deliberately do NOT close that residual window by blocking here
+   // until in-flight invocations drain: the in-flight callback
+   // (FixedBufferProxy::queueChunk) can itself be blocked acquiring
+   // FixedBufferProxy's mutex_, which the disabling caller
+   // (closeConnections(), called with mutex_ held) already owns -- a
+   // wait-based scheme deadlocks exactly in the /s/ scenario it would exist
+   // to serve. Likewise handlers must never be invoked while holding
+   // socketMutex_: FixedBufferProxy's close paths run with its mutex_ held
+   // and call close()/disableHandlers() (which take socketMutex_), so
+   // invoking under socketMutex_ would invert that lock order.
    virtual void disableHandlers()
    {
       // the request has settled (or is being torn down by an embedder); stop
       // the overall deadline so it can't fire a spurious timeout afterwards
       cancelRequestDeadline();
 
-      responseHandler_ = ResponseHandler();
-      errorHandler_ = ErrorHandler();
-      fixedBufferHandler_ = FixedBufferHandler();
-      connectHandler_ = ConnectHandler();
+      // Detach all four handlers synchronously, under socketMutex_. Swap
+      // into locals so the old values are destroyed after the lock is
+      // released (a destructor releasing the last reference to a consumer
+      // must not run under our lock -- the consumer's teardown may call
+      // back into close()/disableHandlers()).
+      ResponseHandler oldResponseHandler;
+      ErrorHandler oldErrorHandler;
+      FixedBufferHandler oldFixedBufferHandler;
+      ConnectHandler oldConnectHandler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         handlersDisabled_ = true;
+         oldResponseHandler.swap(responseHandler_);
+         oldErrorHandler.swap(errorHandler_);
+         oldFixedBufferHandler.swap(fixedBufferHandler_);
+         oldConnectHandler.swap(connectHandler_);
+      }
+      END_LOCK_MUTEX
+
+      // The old values now destruct inline, breaking any reference cycle
+      // (e.g. fixedBufferHandler_'s bound shared_ptr<FixedBufferProxy>)
+      // immediately and without depending on the io_context still running.
+      // This is safe even when we are called from *within* the very handler
+      // being detached: the invocation site invoked its own stack copy of
+      // the handler (copied out under socketMutex_, see the contract
+      // comment above), and that copy keeps the consumer alive until the
+      // invocation returns and the call site's scope ends -- dropping our
+      // reference here therefore never destroys a consumer mid-call.
    }
 
    // satisfy lower-level http::Socket interface (used when the client
@@ -271,7 +343,16 @@ public:
 
    virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler)
    {
-      fixedBufferHandler_ = fixedBufferHandler;
+      // swap the displaced value out and destroy it after releasing the
+      // lock -- see execute() for why destroying it under the lock could
+      // deadlock
+      FixedBufferHandler oldFixedBufferHandler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         oldFixedBufferHandler.swap(fixedBufferHandler_);
+         fixedBufferHandler_ = fixedBufferHandler;
+      }
+      END_LOCK_MUTEX
    }
 
    virtual void setStreamNonChunkedResponses(bool stream)
@@ -292,34 +373,41 @@ public:
 
    virtual void resumeChunkProcessing()
    {
-      // A rejected completion signal is tracked separately from chunkState_
-      // (see completionPending_'s declaration) and checked first: retrying it
-      // re-enters closeAndRespond() itself rather than deliverChunks(), so
-      // completion is never sent twice regardless of what chunkState_ holds.
-      if (completionPending_)
+      // Post unconditionally to the strand, and do ALL state inspection
+      // (completionPending_, chunkState_) and mutation inside that handler --
+      // not just the mutation, as an earlier version of this fix did. Every
+      // other continuation in this class is strand-bound (see
+      // asyncReadSome()/asyncWrite() above), and rserver's io_context runs a
+      // thread pool, so reading completionPending_/chunkState_ here, on
+      // whatever thread calls resumeChunkProcessing(), to decide whether/how
+      // to post, would race strand-bound writes to those same members from a
+      // different thread. resumeChunkProcessing() itself is called from the
+      // downstream connection's own completion context
+      // (FixedBufferProxy::writeChunk()), which for /p/ shares one strand
+      // with this connection (see ServerSessionProxy.cpp), but for /s/
+      // (which never calls setStrand()) that call arrives on whatever
+      // context the downstream side runs on.
+      auto self = AsyncClient<SocketService>::shared_from_this();
+      boost::asio::post(ioContext_, boost::asio::bind_executor(*pStrand_, [this, self]()
       {
-         auto self = AsyncClient<SocketService>::shared_from_this();
-         boost::asio::post(ioContext_, [this, self]()
+         // A rejected completion signal is tracked separately from
+         // chunkState_ (see completionPending_'s declaration) and checked
+         // first: retrying it re-enters closeAndRespond() itself rather than
+         // deliverChunks(), so completion is never sent twice regardless of
+         // what chunkState_ holds.
+         if (completionPending_)
          {
             completionPending_ = false;
             closeAndRespond(); // may set completionPending_ again if still full
-         });
-         return;
-      }
+            return;
+         }
 
-      if (!chunkState_)
-      {
-         // no saved chunk state so this was an errant call and we should not do anything
-         return;
-      }
+         if (!chunkState_)
+         {
+            // no saved chunk state so this was an errant call and we should not do anything
+            return;
+         }
 
-      // deliver the chunks on the thread pool instead of directly from this method
-      // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
-      auto self = AsyncClient<SocketService>::shared_from_this();
-      boost::asio::post(ioContext_, [this, self]()
-      {
-         // capture shared_ptr of this to keep instance alive while posting callback
-         // to io service
          bool complete = chunkState_->complete;
          bool handled = deliverChunks(chunkState_->chunks, complete);
 
@@ -330,7 +418,7 @@ public:
             else
                closeAndRespond();
          }
-      });
+      }));
    }
 
    virtual void setConnectHandler(const ConnectHandler& connectHandler)
@@ -338,12 +426,24 @@ public:
       // if we are already connected, don't bother saving the connect handler
       // and just invoke it directly
       bool invokeConnectHandler = false;
+      ConnectHandler oldConnectHandler; // displaced value destroyed after unlock, see execute()
       LOCK_MUTEX(socketMutex_)
       {
-         if (!requestWritten_)
-            connectHandler_ = connectHandler;
-         else
-            invokeConnectHandler = true;
+         // If handlers were already disabled, don't store or invoke a new
+         // one -- see disableHandlers()'s declaration for why this must be
+         // checked under the same lock it uses.
+         if (!handlersDisabled_)
+         {
+            if (!requestWritten_)
+            {
+               oldConnectHandler.swap(connectHandler_);
+               connectHandler_ = connectHandler;
+            }
+            else
+            {
+               invokeConnectHandler = true;
+            }
+         }
       }
       END_LOCK_MUTEX
 
@@ -424,9 +524,22 @@ protected:
       // close the socket
       close();
 
-      // invoke error handler
-      if (errorHandler_)
-         errorHandler_(httpError);
+      // invoke error handler -- copy it out under socketMutex_ (checking
+      // handlersDisabled_ in the same critical section disableHandlers()
+      // uses to set it and detach the handler) so a concurrent
+      // disableHandlers() call can't race between this check and the
+      // invocation below. Actual invocation happens outside the lock, same
+      // as handleWrite()'s connectHandler_ pattern.
+      ErrorHandler handler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!handlersDisabled_)
+            handler = errorHandler_;
+      }
+      END_LOCK_MUTEX
+
+      if (handler)
+         handler(httpError);
 
       // free handlers to ensure they do not keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -581,12 +694,13 @@ private:
       {
          if (!ec)
          {
-            // invoke connect handler if we have one
+            // invoke connect handler if we have one -- checked under the
+            // same lock disableHandlers() uses, see its declaration
             ConnectHandler handler;
             LOCK_MUTEX(socketMutex_)
             {
                requestWritten_ = true;
-               if (connectHandler_)
+               if (!handlersDisabled_ && connectHandler_)
                   handler = connectHandler_;
             }
             END_LOCK_MUTEX
@@ -720,9 +834,17 @@ private:
 
    // True when body data should be handed to the FixedBufferHandler (streamed to the
    // browser) rather than accumulated into response_ for the ResponseHandler.
+   // Reads fixedBufferHandler_ under socketMutex_ (like every access to the
+   // handler members, see disableHandlers()); must not be called while
+   // already holding that lock.
    bool useFixedBufferHandler() const
    {
-      return fixedBufferHandler_ && !bufferFullResponse_;
+      LOCK_MUTEX(socketMutex_)
+      {
+         return fixedBufferHandler_ && !bufferFullResponse_;
+      }
+      END_LOCK_MUTEX
+      return false;
    }
 
    // Streaming analog of responseBodyComplete(): in streaming mode response_.body()
@@ -982,9 +1104,37 @@ private:
       {
          boost::shared_ptr<std::string> chunk = *iter;
 
-         if (useFixedBufferHandler())
+         // Copy the handler out under socketMutex_, checking
+         // handlersDisabled_ in the same critical section disableHandlers()
+         // uses -- see that method's contract comment for why admission
+         // must be locked, why the mode decision below must come from this
+         // same copy (an unlocked useFixedBufferHandler() call here would
+         // both race disableHandlers()'s detach and, once detached, silently
+         // flip a streaming consumer into the accumulate-into-response_
+         // branch mid-body), and why this local copy also serves as the
+         // lifetime holder that keeps the consumer alive if it re-entrantly
+         // calls disableHandlers() from within the invocation.
+         FixedBufferHandler handler;
+         bool disabled;
+         LOCK_MUTEX(socketMutex_)
          {
-            bool keepGoing = fixedBufferHandler_(response_, *chunk);
+            disabled = handlersDisabled_;
+            handler = fixedBufferHandler_;
+         }
+         END_LOCK_MUTEX
+
+         if (disabled)
+         {
+            // Handlers were disabled (e.g. the downstream connection already
+            // errored out and broke its reference cycle via
+            // disableHandlers()) while chunks were still in flight -- stop
+            // processing entirely.
+            return false;
+         }
+
+         if (handler && !bufferFullResponse_) // useFixedBufferHandler(), from the copy
+         {
+            bool keepGoing = handler(response_, *chunk);
 
             if (!keepGoing)
             {
@@ -1024,11 +1174,43 @@ private:
       if (!keepConnectionAlive())
          close();
 
-      if (responseHandler_ && !(useFixedBufferHandler() && (chunkedEncoding_ || streamResponse_)))
+      // Copy both handlers out under socketMutex_, checking
+      // handlersDisabled_ in the same critical section disableHandlers()
+      // uses to set it and detach them -- see that method's contract comment
+      // for why admission must be locked, and why the mode decision below is
+      // computed from these same copies rather than re-reading the members
+      // through useFixedBufferHandler(). Neither branch below checks closed_
+      // on its own. The local copies also serve as the lifetime holders that
+      // keep the consumer alive if it re-entrantly calls disableHandlers()
+      // from within the invocation.
+      ResponseHandler responseHandler;
+      FixedBufferHandler fixedBufferHandler;
+      bool disabled;
+      LOCK_MUTEX(socketMutex_)
       {
-         responseHandler_(response_);
+         disabled = handlersDisabled_;
+         if (!disabled)
+         {
+            responseHandler = responseHandler_;
+            fixedBufferHandler = fixedBufferHandler_;
+         }
       }
-      else if (useFixedBufferHandler())
+      END_LOCK_MUTEX
+
+      if (disabled)
+      {
+         disableHandlers(); // idempotent
+         return;
+      }
+
+      // useFixedBufferHandler(), computed from the copy
+      bool useFixedBuffer = fixedBufferHandler && !bufferFullResponse_;
+
+      if (responseHandler && !(useFixedBuffer && (chunkedEncoding_ || streamResponse_)))
+      {
+         responseHandler(response_);
+      }
+      else if (useFixedBuffer)
       {
          // The empty chunk is the completion signal for the fixed buffer handler,
          // and -- like any other chunk delivery -- the consumer (FixedBufferProxy)
@@ -1047,7 +1229,7 @@ private:
          // every consumer's `false` as a pause would break the others.
          if (fixedBufferHandlerSupportsPause_)
          {
-            if (!fixedBufferHandler_(response_, ""))
+            if (!fixedBufferHandler(response_, ""))
             {
                completionPending_ = true;
                return; // resumeChunkProcessing() will retry via closeAndRespond()
@@ -1055,7 +1237,7 @@ private:
          }
          else
          {
-            fixedBufferHandler_(response_, "");
+            fixedBufferHandler(response_, "");
          }
       }
 
@@ -1183,6 +1365,18 @@ private:
    bool logToStderr_;
    ResponseHandler responseHandler_;
    ErrorHandler errorHandler_;
+
+   // Protected by socketMutex_ (like closed_ below), not a bare atomic: every
+   // site that invokes responseHandler_, errorHandler_, fixedBufferHandler_,
+   // or connectHandler_ must check this and copy out the handler it's about
+   // to call under the SAME lock disableHandlers() uses to set this and
+   // detach the handlers, or a thread could observe this as false and still
+   // be mid-call into a handler that another thread's disableHandlers() call
+   // is concurrently detaching. See disableHandlers()'s declaration for the
+   // full contract, including why the invocation-site copies double as the
+   // lifetime holders that make its synchronous detach safe.
+   bool handlersDisabled_ = false;
+
    http::Request request_;
    boost::asio::streambuf responseBuffer_;
    boost::shared_ptr<ChunkParser> chunkParser_;
@@ -1230,7 +1424,8 @@ private:
    boost::posix_time::time_duration requestTimeout_ = boost::posix_time::pos_infin;
    boost::shared_ptr<boost::asio::system_timer> pRequestDeadlineTimer_;
 
-   boost::mutex socketMutex_;
+   // mutable so const readers (useFixedBufferHandler()) can lock it
+   mutable boost::mutex socketMutex_;
    bool closed_;
 
    bool requestWritten_;

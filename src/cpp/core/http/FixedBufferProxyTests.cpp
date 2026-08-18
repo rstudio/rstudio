@@ -191,6 +191,19 @@ public:
    void asyncWrite(const boost::asio::const_buffer&, Socket::Handler) override {}
    void asyncWrite(const std::vector<boost::asio::const_buffer>&, Socket::Handler) override {}
 
+   // Deliver a piece the way the real AsyncClient does: invoke a COPY of the
+   // stored handler, never the member itself. FixedBufferProxy's close paths
+   // call disableHandlers() from within this very invocation, which detaches
+   // fixedBufferHandler_ -- invoking the member directly would have it
+   // destroyed out from under its own executing call, and the copy is also
+   // what keeps the consumer alive through that reentrant detach (see
+   // AsyncClient::disableHandlers()'s contract comment).
+   bool deliverChunk(const http::Response& response, const std::string& chunk)
+   {
+      FixedBufferHandler handler = fixedBufferHandler_;
+      return handler(response, chunk);
+   }
+
    FixedBufferHandler fixedBufferHandler_;
    bool resumed_ = false;
    bool closed_ = false;
@@ -219,7 +232,7 @@ struct Fixture
    // eventually fire asynchronously in production.
    bool deliver(const http::Response& upstream, const std::string& chunk)
    {
-      bool result = pServerConnection->fixedBufferHandler_(upstream, chunk);
+      bool result = pServerConnection->deliverChunk(upstream, chunk);
 
       // io_context::poll() marks the context "stopped" once it runs out of
       // ready work; it must be restarted before it will process any handlers
@@ -499,8 +512,8 @@ TEST(FixedBufferProxy, DoesNotDuplicateWriteWhenFinalSignalArrivesBeforeHeaderWr
    http::Response upstream;
    makeContentLengthResponse(&upstream, body);
 
-   bool result1 = fixture.pServerConnection->fixedBufferHandler_(upstream, body);
-   bool result2 = fixture.pServerConnection->fixedBufferHandler_(upstream, ""); // completion signal, before header write completes
+   bool result1 = fixture.pServerConnection->deliverChunk(upstream, body);
+   bool result2 = fixture.pServerConnection->deliverChunk(upstream, ""); // completion signal, before header write completes
    EXPECT_TRUE(result1);
    EXPECT_TRUE(result2);
 
@@ -536,8 +549,8 @@ TEST(FixedBufferProxy, AccountsBufferSizeAgainstFormattedNotRawBytesInChunkedMod
    http::Response upstream;
    makeChunkedResponse(&upstream);
 
-   bool result1 = fixture.pServerConnection->fixedBufferHandler_(upstream, first);
-   bool result2 = fixture.pServerConnection->fixedBufferHandler_(upstream, second);
+   bool result1 = fixture.pServerConnection->deliverChunk(upstream, first);
+   bool result2 = fixture.pServerConnection->deliverChunk(upstream, second);
 
    EXPECT_TRUE(result1);
    EXPECT_FALSE(result2);
@@ -584,8 +597,8 @@ TEST(FixedBufferProxy, RedeliveredCompletionSignalStillWritesTerminatorAfterOver
    // Deliver the oversized body and the completion signal back-to-back,
    // before draining, so the completion signal arrives while the oversized
    // chunk's header/body write is still outstanding.
-   bool result1 = fixture.pServerConnection->fixedBufferHandler_(upstream, body);
-   bool result2 = fixture.pServerConnection->fixedBufferHandler_(upstream, "");
+   bool result1 = fixture.pServerConnection->deliverChunk(upstream, body);
+   bool result2 = fixture.pServerConnection->deliverChunk(upstream, "");
    EXPECT_TRUE(result1);
    EXPECT_FALSE(result2);
 
@@ -599,7 +612,7 @@ TEST(FixedBufferProxy, RedeliveredCompletionSignalStillWritesTerminatorAfterOver
    EXPECT_FALSE(fixture.pClientConnection->closed_);
 
    // Simulate AsyncClient's real redelivery of the completion signal on resume.
-   EXPECT_TRUE(fixture.pServerConnection->fixedBufferHandler_(upstream, ""));
+   EXPECT_TRUE(fixture.pServerConnection->deliverChunk(upstream, ""));
    ioc.restart();
    ioc.poll();
 
@@ -656,8 +669,8 @@ TEST(FixedBufferProxy, QueueChunkDeclinesWhenContentLengthFramedBodyExceedsBuffe
    http::Response upstream;
    makeContentLengthResponse(&upstream, first + second);
 
-   bool result1 = fixture.pServerConnection->fixedBufferHandler_(upstream, first);
-   bool result2 = fixture.pServerConnection->fixedBufferHandler_(upstream, second);
+   bool result1 = fixture.pServerConnection->deliverChunk(upstream, first);
+   bool result2 = fixture.pServerConnection->deliverChunk(upstream, second);
 
    EXPECT_TRUE(result1);
    EXPECT_FALSE(result2);
@@ -737,10 +750,10 @@ TEST(FixedBufferProxy, MultipleQueuedChunksDrainInOrderAndAccountBufferCorrectly
    http::Response upstream;
    makeContentLengthResponse(&upstream, body);
 
-   bool r1 = fixture.pServerConnection->fixedBufferHandler_(upstream, "one-");
-   bool r2 = fixture.pServerConnection->fixedBufferHandler_(upstream, "two-");
-   bool r3 = fixture.pServerConnection->fixedBufferHandler_(upstream, "three");
-   bool r4 = fixture.pServerConnection->fixedBufferHandler_(upstream, ""); // completion signal
+   bool r1 = fixture.pServerConnection->deliverChunk(upstream, "one-");
+   bool r2 = fixture.pServerConnection->deliverChunk(upstream, "two-");
+   bool r3 = fixture.pServerConnection->deliverChunk(upstream, "three");
+   bool r4 = fixture.pServerConnection->deliverChunk(upstream, ""); // completion signal
    EXPECT_TRUE(r1);
    EXPECT_TRUE(r2);
    EXPECT_TRUE(r3);
