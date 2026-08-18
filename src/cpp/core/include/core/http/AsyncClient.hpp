@@ -955,6 +955,23 @@ private:
          readSomeContent();
    }
 
+   // True for an interim (informational) response -- one the sender will follow
+   // with a further response on this same connection.
+   //
+   // 101 is deliberately excluded. Despite its 1xx status it is the final HTTP
+   // response on the connection: what follows is the upgraded protocol, not
+   // another HTTP response, so skipping it would discard the handshake and
+   // then try to parse websocket frames as a status line. (The localhost proxy
+   // routes 101 to the buffered websocket-upgrade path via its buffer
+   // predicate.)
+   static bool isInterimResponse(const http::Response& response)
+   {
+      int statusCode = response.statusCode();
+      return statusCode >= 100 &&
+             statusCode < 200 &&
+             statusCode != http::status::SwitchingProtocols;
+   }
+
    void handleReadHeaders(const boost::system::error_code& ec)
    {
       try
@@ -963,6 +980,50 @@ private:
          {
             // parse headers
             ResponseParser::parseHeaders(&responseBuffer_, &response_);
+
+            // RFC 7231 6.2: "A client MUST be able to parse one or more 1xx
+            // responses received prior to a final response, even if the client
+            // does not expect one." A 1xx is interim: it carries no body (RFC
+            // 7230 3.3.3 rule 1) and another response follows it on the same
+            // connection. Treating it as the final response, as this used to,
+            // made the real response arrive as the interim one's body -- the
+            // caller saw a 100/103 status with the literal bytes
+            // "HTTP/1.1 200 OK\r\n..." behind it, and the actual response was
+            // never delivered at all.
+            //
+            // Reachable: nothing in this tree strips a client's
+            // "Expect: 100-continue" before the request is proxied on, and 103
+            // Early Hints is emitted unprompted by a growing number of servers.
+            if (isInterimResponse(response_))
+            {
+               // Bounded so an upstream that only ever emits interim responses
+               // fails rather than looping for as long as it cares to send them.
+               if (++interimResponseCount_ > maxInterimResponses)
+               {
+                  handleError(systemError(boost::system::errc::protocol_error,
+                                          "Too many interim (1xx) responses from upstream",
+                                          ERROR_LOCATION));
+                  return;
+               }
+
+               // Discard it and go back for the next response's status line.
+               // A 1xx has no body, so the bytes immediately after its header
+               // block start the next response -- async_read_until finds those
+               // already sitting in responseBuffer_ rather than waiting on the
+               // socket for them. (It always posts its completion handler, so
+               // looping this way does not nest stack frames.)
+               response_.reset();
+
+               boost::asio::async_read_until(
+                 socket(),
+                 responseBuffer_,
+                 "\r\n",
+                 boost::asio::bind_executor(*pStrand_,
+                        boost::bind(&AsyncClient<SocketService>::handleReadStatusLine,
+                                    AsyncClient<SocketService>::shared_from_this(),
+                                    boost::asio::placeholders::error)));
+               return;
+            }
 
             // decide, from headers alone, whether a downstream handler needs the
             // entire body buffered (legacy path) or whether we can stream it.
@@ -1443,6 +1504,12 @@ protected:
 private:
    static constexpr std::size_t maxChunkSize = 1'048'576; // 1MB
 
+   // How many interim (1xx) responses to skip before treating the upstream as
+   // broken. Generous next to real usage -- a server sends at most a couple of
+   // 103 Early Hints, or one 100 Continue -- while still bounding the work an
+   // upstream can make us do before it commits to a final response.
+   static constexpr int maxInterimResponses = 8;
+
    boost::asio::io_context& ioContext_;
    ConnectionRetryContext connectionRetryContext_;
    bool logToStderr_;
@@ -1475,6 +1542,7 @@ private:
                                      // result), and whether the body is
                                      // already chunked (always streamed)
    uintmax_t contentLengthStreamed_ = 0; // bytes handed to fixedBufferHandler_ so far
+   int interimResponseCount_ = 0;        // 1xx responses skipped so far (see handleReadHeaders)
                                          // (response_.body() stays empty when
                                          // streaming, so we count completion here)
 

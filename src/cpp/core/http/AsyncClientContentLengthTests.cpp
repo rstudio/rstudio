@@ -36,6 +36,7 @@
 #include <string>
 #include <thread>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read_until.hpp>
@@ -1358,8 +1359,16 @@ ProxiedOutcome proxyRawUpstreamResponse(const std::string& rawResponse)
          ioc, "127.0.0.1", std::to_string(server.port()),
          boost::posix_time::seconds(5));
 
-   // mirrors the localhost port-proxy wiring in ServerSessionProxy
+   // mirrors the localhost port-proxy wiring in ServerSessionProxy, buffer
+   // predicate included -- without it a 101 would take the streaming path here
+   // and never reach the websocket-upgrade handling it gets in production
    pClient->setStreamNonChunkedResponses(true);
+   pClient->setBufferPredicate([](const http::Response& response) {
+      return response.statusCode() == http::status::SwitchingProtocols ||
+             !response.headerValue("Location").empty() ||
+             !response.headerValue("Refresh").empty() ||
+             boost::algorithm::contains(response.headerValue("Server"), "Jetty");
+   });
 
    boost::shared_ptr<FakeDownstreamConnection> pConnection =
       boost::make_shared<FakeDownstreamConnection>(ioc);
@@ -1587,6 +1596,145 @@ TEST(AsyncClientContentLength, ResponseWithNoHeaderFieldsAtAllIsParsed)
    // 204 takes FixedBufferProxy's no-body framing: headers only
    EXPECT_TRUE(outcome.body.empty());
    EXPECT_TRUE(outcome.transferEncoding.empty());
+}
+
+// --- RFC 7231 6.2: "A client MUST be able to parse one or more 1xx responses
+// received prior to a final response, even if the client does not expect one."
+// ---------------------------------------------------------------------------
+//
+// A 1xx is interim: no body, and another response follows it on the same
+// connection. AsyncClient used to take the first status line it saw as the
+// final response, so the real response arrived as the interim one's body and
+// was never delivered as a response at all.
+
+TEST(AsyncClientContentLength, SkipsEarlyHintsAndDeliversTheFinalResponse)
+{
+   // 103 Early Hints, unprompted, followed by the real response -- the shape a
+   // growing number of servers emit. Previously the caller got a 103 whose
+   // "body" was the literal text of the 200.
+   std::string payload = "{\"name\":\"jsonlite\"}\n";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 103 Early Hints\r\n"
+          "Link: </style.css>; rel=preload; as=style\r\n"
+          "\r\n"
+          "HTTP/1.1 200 OK\r\n"
+          "Content-Type: application/x-ndjson\r\n"
+       << "Content-Length: " << payload.size() << "\r\n"
+          "\r\n"
+       << payload;
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_FALSE(outcome.gotError);
+
+   // the 200's body, framed by its own Content-Length -- and none of the
+   // interim response's headers carried over onto it
+   EXPECT_EQ(outcome.body, payload);
+   EXPECT_EQ(outcome.contentLength, std::to_string(payload.size()));
+   EXPECT_TRUE(outcome.transferEncoding.empty());
+}
+
+TEST(AsyncClientContentLength, SkipsContinueAndDeliversTheFinalResponse)
+{
+   // 100 Continue: reachable because nothing strips a client's
+   // "Expect: 100-continue" before the request is proxied upstream.
+   std::string payload = "created";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 100 Continue\r\n"
+          "\r\n"
+          "HTTP/1.1 201 Created\r\n"
+       << "Content-Length: " << payload.size() << "\r\n"
+          "\r\n"
+       << payload;
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_FALSE(outcome.gotError);
+   EXPECT_EQ(outcome.body, payload);
+}
+
+TEST(AsyncClientContentLength, SkipsSeveralInterimResponsesInARow)
+{
+   // "one or more" -- the skip has to loop, not just handle a single interim
+   // response. Also covers an interim response arriving with the final one in
+   // the same read: everything after the first header block is already sitting
+   // in the read buffer, so the re-read must find it there rather than waiting
+   // on the socket for bytes that have already arrived.
+   std::string payload = "after three hints";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 103 Early Hints\r\nLink: </a.css>; rel=preload\r\n\r\n"
+          "HTTP/1.1 103 Early Hints\r\nLink: </b.css>; rel=preload\r\n\r\n"
+          "HTTP/1.1 103 Early Hints\r\nLink: </c.css>; rel=preload\r\n\r\n"
+          "HTTP/1.1 200 OK\r\n"
+       << "Content-Length: " << payload.size() << "\r\n"
+          "\r\n"
+       << payload;
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_FALSE(outcome.gotError);
+   EXPECT_EQ(outcome.body, payload);
+}
+
+TEST(AsyncClientContentLength, InterimResponseBeforeAChunkedFinalResponseStillFramesCorrectly)
+{
+   // The interim response must leave no trace on the framing decision made for
+   // the response that follows it.
+   std::string payload = "streamed after hints";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 103 Early Hints\r\nLink: </a.css>; rel=preload\r\n\r\n"
+          "HTTP/1.1 200 OK\r\n"
+          "Transfer-Encoding: chunked\r\n"
+          "\r\n"
+       << std::hex << payload.size() << "\r\n" << payload << "\r\n"
+       << "0\r\n\r\n";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_FALSE(outcome.gotError);
+   EXPECT_EQ(outcome.body,
+             http::util::formatMessageAsHttpChunk(payload) +
+                http::util::formatMessageAsHttpChunk(""));
+   EXPECT_EQ(outcome.transferEncoding, kChunkedTransferEncoding);
+}
+
+TEST(AsyncClientContentLength, EndlessInterimResponsesFailRatherThanLoopingForever)
+{
+   // An upstream that never commits to a final response must not be able to
+   // keep us skipping for as long as it feels like sending 1xx headers.
+   std::ostringstream raw;
+   for (int i = 0; i < 50; i++)
+      raw << "HTTP/1.1 103 Early Hints\r\nLink: </a.css>; rel=preload\r\n\r\n";
+   raw << "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.gotError);
+   EXPECT_TRUE(outcome.body.empty());
+}
+
+TEST(AsyncClientContentLength, SwitchingProtocolsIsFinalAndIsNotSkipped)
+{
+   // 101 shares the 1xx range but is the final HTTP response on the connection
+   // -- what follows is the upgraded protocol, not another response. Skipping
+   // it would discard the handshake and then try to parse websocket frames as
+   // a status line.
+   std::ostringstream raw;
+   raw << "HTTP/1.1 101 Switching Protocols\r\n"
+          "Upgrade: websocket\r\n"
+          "Connection: Upgrade\r\n"
+          "\r\n";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_FALSE(outcome.gotError);
+   EXPECT_EQ(outcome.statusCode, 101);
 }
 
 // Real-world trigger: an rsession/Shiny process behind /p/<port>/ is killed
