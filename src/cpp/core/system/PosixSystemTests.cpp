@@ -23,6 +23,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <limits>
+
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/address_v4.hpp>
 
@@ -877,6 +879,21 @@ TEST(PosixTests, WaitForParentTerminationReadsPipeFds)
    ASSERT_EQ(0, ::pipe(fds));
    EXPECT_EQ(ParentTerminationAbnormal, waitForParentTermination(fds[0], fds[1]));
    ::close(fds[0]);
+}
+
+TEST(PosixTests, IsProcessRunningDetectsLiveAndDeadProcesses)
+{
+   // own process is trivially running
+   EXPECT_TRUE(isProcessRunning(::getpid()));
+
+   // pid 1 (init/launchd) always exists but is owned by root: when this
+   // test runs unprivileged the kill(pid, 0) probe fails with EPERM, which
+   // must still count as running -- rserver's privilege-dropped threads
+   // probe rsession processes owned by other users this way (#18572)
+   EXPECT_TRUE(isProcessRunning(1));
+
+   // a pid no process can have reports not running
+   EXPECT_FALSE(isProcessRunning(std::numeric_limits<pid_t>::max()));
 }
 
 } // namespace tests

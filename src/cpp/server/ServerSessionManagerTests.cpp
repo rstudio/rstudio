@@ -153,6 +153,29 @@ TEST(SessionManagerTest, RequestErrorKeepsPendingLaunchOfLiveProcess)
    sessionManager().removePendingLaunch(context);
 }
 
+TEST(SessionManagerTest, RequestErrorKeepsPendingLaunchOfOtherUserProcess)
+{
+   sessionManager().setSessionLaunchFunction(countingLaunchFunction);
+   s_launchCount = 0;
+
+   // in a root-launched multi-user deployment rserver's request-handling
+   // threads run privilege-dropped, so the kill(pid, 0) liveness probe
+   // yields EPERM for a live rsession owned by another user; that must
+   // still read as running, or the guard above is inert exactly where
+   // #18572 occurs. pid 1 (init/launchd) stands in for a live process
+   // this test cannot signal.
+   r_util::SessionContext context("pending-launch-other-user-process-user");
+   EXPECT_TRUE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+   sessionManager().notePendingLaunchPid(context, 1);
+
+   sessionManager().removePendingLaunch(context, false, "request error");
+   EXPECT_FALSE(attemptLaunch(context));
+   EXPECT_EQ(1, s_launchCount);
+
+   sessionManager().removePendingLaunch(context);
+}
+
 TEST(SessionManagerTest, RequestErrorClearsPendingLaunchOfDeadProcess)
 {
    sessionManager().setSessionLaunchFunction(countingLaunchFunction);

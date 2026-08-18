@@ -351,7 +351,11 @@ public class ChatPane
 
       final int savedScrollTop = getFrameScrollTop(frame_);
 
-      RStudioThemedFrame newFrame = new RStudioThemedFrame(constants_.chatTitle());
+      // The pending frame stays untitled until it is swapped in below: it is
+      // attached alongside frame_ for the duration of the load, so titling it
+      // here would leave two iframes named "Posit Assistant" in the DOM for up
+      // to FRAME_LOAD_TIMEOUT_MS, making any lookup by title ambiguous.
+      RStudioThemedFrame newFrame = new RStudioThemedFrame(null);
       newFrame.setSize("100%", "100%");
       pendingFrame_ = newFrame;
 
@@ -405,6 +409,7 @@ public class ChatPane
                 newFrame.getParent() == mainPanel_ &&
                 suspendedOverlay_.getParent() == mainPanel_)
             {
+               newFrame.setTitle(constants_.chatTitle());
                newFrame.getElement().getStyle().setVisibility(Visibility.VISIBLE);
                frame_.setUrl("about:blank");
                mainPanel_.remove(frame_);
