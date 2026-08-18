@@ -1339,6 +1339,7 @@ struct ProxiedOutcome
    std::string body;             // bytes FixedBufferProxy wrote downstream
    std::string transferEncoding; // framing headers it flushed ahead of them
    std::string contentLength;
+   int statusCode = 0;           // status of the response AsyncClient settled on
    bool gotError = false;        // the site's ErrorHandler fired
    bool timedOut = false;
 };
@@ -1384,7 +1385,10 @@ ProxiedOutcome proxyRawUpstreamResponse(const std::string& rawResponse)
    pConnection->onClosed_ = [&]() { pTimer->cancel(); };
 
    pClient->execute(
-      [&](const http::Response&) { pTimer->cancel(); },
+      [&](const http::Response& response) {
+         outcome.statusCode = response.statusCode();
+         pTimer->cancel();
+      },
       [&](const core::Error&) { outcome.gotError = true; pTimer->cancel(); });
 
    ioc.run();
@@ -1393,6 +1397,16 @@ ProxiedOutcome proxyRawUpstreamResponse(const std::string& rawResponse)
    outcome.body = pConnection->writtenBytes_;
    outcome.transferEncoding = pConnection->writtenHeaders_.headerValue(kTransferEncoding);
    outcome.contentLength = pConnection->writtenHeaders_.headerValue("Content-Length");
+
+   // Where the status comes from depends on which path ran. On the streaming
+   // path FixedBufferProxy writes the headers itself and then calls
+   // disableHandlers(), so the ResponseHandler set below never fires and the
+   // only record of the status is what went downstream. On the buffered path
+   // (the predicate above matched) FixedBufferProxy is never involved, and the
+   // ResponseHandler is the only source.
+   if (pConnection->writeResponseHeadersCount_ > 0)
+      outcome.statusCode = pConnection->writtenHeaders_.statusCode();
+
    return outcome;
 }
 
@@ -1544,6 +1558,35 @@ TEST(AsyncClientContentLength, OrdinaryChunkedUpstreamStillGetsExactlyOneChunkLa
    EXPECT_EQ(outcome.body,
              http::util::formatMessageAsHttpChunk(payload) +
                 http::util::formatMessageAsHttpChunk(""));
+}
+
+// A response is allowed to carry no header fields at all, and
+// ResponseParser::parseStatusLine() has already consumed the status line's
+// CRLF by the time the header block is read -- so all that remains of such a
+// response is its lone terminating CRLF.
+
+TEST(AsyncClientContentLength, ResponseWithNoHeaderFieldsAtAllIsParsed)
+{
+   // A response can legitimately carry zero header fields, and
+   // parseStatusLine() has already consumed the status line's CRLF by the time
+   // the header block is read -- so all that is left is the lone terminating
+   // CRLF. Both the read (which searched for "\r\n\r\n") and the parse (which
+   // skips a leading blank line as whitespace) used to run straight past it,
+   // so this response never arrived at all: the read waited for a terminator
+   // that never came and ended in an EOF error.
+   //
+   // Independent of the 1xx handling below, but that handling cannot work
+   // without it, since a 100 Continue is normally exactly this shape.
+   ProxiedOutcome outcome =
+      proxyRawUpstreamResponse("HTTP/1.1 204 No Content\r\n\r\n");
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_FALSE(outcome.gotError);
+   EXPECT_EQ(outcome.statusCode, 204);
+
+   // 204 takes FixedBufferProxy's no-body framing: headers only
+   EXPECT_TRUE(outcome.body.empty());
+   EXPECT_TRUE(outcome.transferEncoding.empty());
 }
 
 // Real-world trigger: an rsession/Shiny process behind /p/<port>/ is killed

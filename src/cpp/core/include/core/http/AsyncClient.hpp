@@ -27,6 +27,7 @@
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/read.hpp>
+#include <boost/asio/buffers_iterator.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/system_timer.hpp>
 
@@ -131,6 +132,54 @@ public:
    // wires setFixedBufferHandler().
    virtual void setFixedBufferHandlerSupportsPause(bool supportsPause) = 0;
 };
+
+typedef boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>
+   ResponseBufferIterator;
+
+// Locates the end of a response's header block within the bytes read so far,
+// for use as an async_read_until() match condition.
+//
+// The obvious delimiter -- "\r\n\r\n" -- is wrong here, because
+// ResponseParser::parseStatusLine() has already consumed the status line
+// *including* its CRLF. A response carrying no header fields at all therefore
+// leaves only "\r\n" in the buffer, which "\r\n\r\n" cannot match: the search
+// runs off the end of that response and swallows however many bytes follow it,
+// so the fields of the *next* response get attached to this one. Both
+// "HTTP/1.1 204 No Content\r\n\r\n" and a bare "HTTP/1.1 100 Continue\r\n\r\n"
+// are exactly that shape.
+//
+// Scanning line by line and stopping at the first empty line finds the
+// terminator whether or not any fields precede it.
+inline std::pair<ResponseBufferIterator, bool> findHeaderBlockEnd(
+   ResponseBufferIterator begin,
+   ResponseBufferIterator end)
+{
+   ResponseBufferIterator lineStart = begin;
+
+   for (ResponseBufferIterator it = begin; it != end; ++it)
+   {
+      if (*it != '\n')
+         continue;
+
+      ResponseBufferIterator next = it;
+      ++next;
+
+      // the line ending here is the terminator when it holds nothing but an
+      // optional CR (tolerating a bare LF the way the rest of this parsing
+      // path does)
+      std::size_t lineLength = std::distance(lineStart, it);
+      if (lineLength == 0 || (lineLength == 1 && *lineStart == '\r'))
+         return std::make_pair(next, true);
+
+      lineStart = next;
+   }
+
+   // No terminator yet. Resume from the start of the incomplete trailing line
+   // rather than from `end`: async_read_until remembers this position and
+   // passes it as `begin` next time, and this scan is only correct when it
+   // starts on a line boundary.
+   return std::make_pair(lineStart, false);
+}
 
 template <typename SocketService>
 class AsyncClient :
@@ -742,11 +791,12 @@ private:
             }
             else
             {
-               // initiate async read of the headers
+               // initiate async read of the headers -- see findHeaderBlockEnd()
+               // for why this cannot just look for "\r\n\r\n"
                boost::asio::async_read_until(
                  socket(),
                  responseBuffer_,
-                 "\r\n\r\n",
+                 findHeaderBlockEnd,
                  boost::asio::bind_executor(*pStrand_,
                         boost::bind(&AsyncClient<SocketService>::handleReadHeaders,
                                     AsyncClient<SocketService>::shared_from_this(),
