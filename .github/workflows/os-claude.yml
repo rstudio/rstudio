@@ -1,0 +1,126 @@
+name: Claude PR Assistant
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude-code-action:
+    # This is a public repository, so gate on author association: only
+    # owners, organization members, and collaborators may invoke the
+    # assistant. Anyone else mentioning @claude is a no-op.
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association)) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Generate token for GitHub App
+        id: generate-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.CLAUDE_APP_ID }}
+          private-key: ${{ secrets.CLAUDE_APP_PEM }}
+          permission-actions: read
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          token: ${{ steps.generate-token.outputs.token }}
+
+      # The AWS assume role step has this validation:
+      # Member must satisfy regular expression pattern: [\w+=,.@-]*
+      # so we should sanitize e.g. `[bot]` so that it is not rejected
+      - name: Sanitize role session name
+        id: session-name
+        run: |
+          echo "value=$(echo '${{ github.triggering_actor }}' | sed 's/[^a-zA-Z0-9_+=,.@-]/_/g')" >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          role-to-assume: ${{ secrets.AWS_CLAUDE_ROLE_ARN }}
+          role-session-name: ${{ steps.session-name.outputs.value }}
+          aws-region: us-east-2
+
+      - name: Generate branch prefix
+        id: branch-prefix
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          TITLE="${ISSUE_TITLE:-$PR_TITLE}"
+          NUMBER="${ISSUE_NUMBER:-$PR_NUMBER}"
+          SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
+          echo "value=claude/${NUMBER}-${SLUG}-" >> "$GITHUB_OUTPUT"
+
+      - name: Run Claude Code Action
+        uses: anthropics/claude-code-action@86180fa9e4d311eed10c9cc49854c53dab5d517a # v1.0.184
+        with:
+          use_bedrock: true
+          show_full_output: true
+          github_token: ${{ steps.generate-token.outputs.token }}
+          branch_prefix: ${{ steps.branch-prefix.outputs.value }}
+          additional_permissions: "actions: read"
+          track_progress: true
+          prompt: |
+            You are a helpful AI assistant for code reviews and issue triage in the
+            RStudio IDE open-source repository. Respond to comments and issues that
+            mention you by creating pull requests, summarizing research, updating
+            issues, and otherwise providing actionable advice.
+
+            If you cannot assist, politely inform the user. In your responses, don't
+            be overly complimentary. Stick to the facts and provide actionable advice.
+
+            Repository conventions live in .claude/CLAUDE.md. Follow them -- in
+            particular the NEWS.md, branch naming, commit message, and pull request
+            conventions.
+
+            This runner does not have a full RStudio build environment (no GWT/ant
+            toolchain, no configured C++ build). Do not attempt full builds; rely on
+            targeted checks and careful reading of the code instead.
+
+            When you implement code changes for an issue, create a pull request using
+            mcp__github__create_pull_request. If PR creation fails, push the branch
+            and include a link to create the PR in your comment.
+
+            When fixing a bug, write or update tests that reproduce the bug when the
+            affected area has test coverage; put new tests alongside the existing ones.
+
+            After creating a PR:
+            - Add a reviewer and assignee:
+              gh pr edit <PR_NUMBER> --add-reviewer ${{ github.triggering_actor }} --add-assignee ${{ github.triggering_actor }}
+            - Set the milestone to the one whose title contains the contents of the
+              version/RELEASE file, if such a milestone exists. Never create a new
+              milestone.
+
+            After creating an issue, add an assignee:
+            gh issue edit <ISSUE_NUMBER> --add-assignee ${{ github.triggering_actor }}
+
+            When labeling issues or pull requests, only apply labels that already
+            exist in the repository -- never create a new one. First list the
+            existing labels with `gh label list --limit 300`, then choose the closest
+            existing match. If no existing label is a good fit, leave the item
+            unlabeled instead of creating a new label.
+          claude_args: |
+            --model opus
+            --fallback-model haiku
+            --allowedTools WebFetch,WebSearch,Bash,Read,mcp__github__create_pull_request,mcp__github__create_issue,mcp__github__search_issues,mcp__github__update_issue,mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__sub_issue_write
