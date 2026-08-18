@@ -4596,7 +4596,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 
    if (fetchError)
    {
-      WLOG("Failed to download manifest: {}", fetchError.getMessage());
+      WLOG("Failed to download manifest: {}", core::errorDescription(fetchError));
 
       bool isInstalled = (installedVersion != "0.0.0");
       bool protocolMismatch = hasProtocolMismatch(installedVersion);
@@ -4619,7 +4619,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       {
          // Not installed, or protocol mismatch: cannot proceed -> block.
          manifestUnavailable = true;
-         errorMessage = fetchError.getMessage();
+         errorMessage = core::errorDescription(fetchError);
       }
 
       // recordToWrite stays unset -> finish() preserve-and-bumps the timestamp.
@@ -4633,9 +4633,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    if (error)
    {
       WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
-           error.getMessage());
+           core::errorDescription(error));
       manifestUnavailable = true;
-      errorMessage = error.getMessage();
+      errorMessage = core::errorDescription(error);
       finish();
       return;
    }
