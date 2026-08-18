@@ -10,6 +10,17 @@ import { createChatActions } from './_chat-setup';
 
 const CHAT_IFRAME = "iframe[title='Posit Assistant']";
 const PREFS_OK_BTN = '#rstudio_preferences_confirm';
+const PRERESTART_ATTR = 'data-pw-prerestart';
+
+// In-page state for the resume-window frame counts (see the restart test).
+// maxTitled is the invariant under test; maxSiblings says whether the resume
+// double-buffered at all, so a passing run can't quietly claim coverage it
+// didn't get.
+type ChatFrameWatch = {
+  counts: { maxTitled: number; maxSiblings: number };
+  observer: MutationObserver;
+};
+type WatchWindow = Window & { _chatFrameWatch?: ChatFrameWatch };
 
 // Posit Assistant is configured but not necessarily installed. Both tests
 // just need the iframe to exist; they don't depend on the chat backend being
@@ -40,6 +51,20 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
 
     await consoleActions.clearConsole();
     await actions.assistantActions.setChatProvider(CHAT_PROVIDERS['posit-assistant']);
+  });
+
+  // The restart test's observer and marker live on a page shared with every
+  // later test in this worker, so drop them even when that test throws before
+  // its own read. Cleanup must not mask the failure that got us here.
+  test.afterEach(async ({ rstudioPage: page }) => {
+    await page
+      .evaluate(({ selector, attr }) => {
+        const w = window as WatchWindow;
+        w._chatFrameWatch?.observer.disconnect();
+        delete w._chatFrameWatch;
+        document.querySelector(selector)?.removeAttribute(attr);
+      }, { selector: CHAT_IFRAME, attr: PRERESTART_ATTR })
+      .catch(() => undefined);
   });
 
   // Regression test for rstudio/rstudio#17223: dismissing Global Options
@@ -89,7 +114,7 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
 
   // Regression test for rstudio/rstudio#17240: chat pane must remain
   // populated after an R session restart.
-  test('chat pane content survives R session restart', async ({ rstudioPage: page }) => {
+  test('chat pane content survives R session restart', async ({ rstudioPage: page }, testInfo) => {
     await ensureChatPaneVisible(page, chatActions);
 
     // Tag the pre-restart iframe. On resume ChatPane double-buffers: it loads
@@ -103,28 +128,36 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
     // the length of the load. Callbacks run after each mutation batch, so the
     // swap's synchronous title-then-remove sequence is only ever seen in its
     // end state -- a reading of 2 means the frames genuinely coexisted.
-    await page.evaluate((selector) => {
+    //
+    // It also counts iframes under the chat pane's panel, where the pending
+    // frame is attached as a sibling of this one. That count reaching 2 is
+    // what proves the double-buffer ran, which the titled count alone cannot
+    // show: it starts at 1 and stays there both when the fix holds and when
+    // the resume never double-buffers.
+    await page.evaluate(({ selector, attr }) => {
       const f = document.querySelector(selector);
       if (!f) throw new Error('chat iframe not found');
-      f.setAttribute('data-pw-prerestart', '');
+      f.setAttribute(attr, '');
 
-      const w = window as Window & {
-        _maxChatFrames?: number;
-        _chatFrameObserver?: MutationObserver;
-      };
-      const count = () => document.querySelectorAll(selector).length;
-      w._maxChatFrames = count();
-      w._chatFrameObserver?.disconnect();
-      w._chatFrameObserver = new MutationObserver(() => {
-        w._maxChatFrames = Math.max(w._maxChatFrames ?? 0, count());
+      const pane = f.parentElement;
+      const titled = () => document.querySelectorAll(selector).length;
+      const siblings = () => pane?.querySelectorAll(':scope > iframe').length ?? 0;
+      const counts = { maxTitled: titled(), maxSiblings: siblings() };
+      const observer = new MutationObserver(() => {
+        counts.maxTitled = Math.max(counts.maxTitled, titled());
+        counts.maxSiblings = Math.max(counts.maxSiblings, siblings());
       });
-      w._chatFrameObserver.observe(document.body, {
+
+      const w = window as WatchWindow;
+      w._chatFrameWatch?.observer.disconnect();
+      w._chatFrameWatch = { counts, observer };
+      observer.observe(document.body, {
         childList: true,
         subtree: true,
         attributes: true,
         attributeFilter: ['title'],
       });
-    }, CHAT_IFRAME);
+    }, { selector: CHAT_IFRAME, attr: PRERESTART_ATTR });
 
     // Restart the R session (sentinel-confirmed)
     await restartSessionWithSentinel(page);
@@ -133,39 +166,22 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
     await ensureChatPaneVisible(page, chatActions);
 
     // Best-effort wait for the swap, so the body sampled below is the
-    // post-restart document rather than the preserved pre-restart one.
-    // window.rstudio.ready (awaited above) only covers GWT's own init; the
-    // chat resume load is independent of it. If the resumed frame stalls,
-    // ChatPane reclaims it after FRAME_LOAD_TIMEOUT_MS and reloads the
-    // original element instead -- the pane stays populated either way, which
-    // is the property under test, so a miss here is logged, not fatal.
+    // post-restart document rather than the preserved pre-restart one. If the
+    // resumed frame stalls, ChatPane reclaims it after FRAME_LOAD_TIMEOUT_MS
+    // and reloads the original element instead -- the pane stays populated
+    // either way, which is the property under test, so a miss is annotated
+    // below rather than failed.
     const swapped = await page
       .waitForFunction(
-        (selector) => {
+        ({ selector, attr }) => {
           const f = document.querySelector(selector);
-          return f !== null && !f.hasAttribute('data-pw-prerestart');
+          return f !== null && !f.hasAttribute(attr);
         },
-        CHAT_IFRAME,
+        { selector: CHAT_IFRAME, attr: PRERESTART_ATTR },
         { timeout: 20000, polling: 250 },
       )
       .then(() => true)
       .catch(() => false);
-
-    if (!swapped) {
-      console.log('resume swap did not replace the chat iframe within 20s -- ' +
-        'asserting against the pre-restart frame');
-    }
-
-    const maxChatFrames = await page.evaluate(() => {
-      const w = window as Window & {
-        _maxChatFrames?: number;
-        _chatFrameObserver?: MutationObserver;
-      };
-      w._chatFrameObserver?.disconnect();
-      return w._maxChatFrames ?? -1;
-    });
-
-    expect(maxChatFrames, 'iframes titled "Posit Assistant" attached at once during resume').toBe(1);
 
     // The iframe should have rendered content -- either the chat app root
     // or the "Not Installed" page. Both share a non-empty body.
@@ -175,6 +191,36 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
       .locator('body')
       .innerText({ timeout: TIMEOUTS.consoleReady });
 
+    // Read the counts only now: the resume load is independent of
+    // window.rstudio.ready, so on a slow worker the pending frame can be
+    // attached late, and disconnecting the observer any earlier could close
+    // the window before it opens.
+    const counts = await page.evaluate(() => {
+      const w = window as WatchWindow;
+      w._chatFrameWatch?.observer.disconnect();
+      return w._chatFrameWatch?.counts ?? { maxTitled: -1, maxSiblings: -1 };
+    });
+
+    // Record what the run actually exercised. The double-buffer only runs when
+    // the chat backend was loaded before the restart: with Posit Assistant not
+    // installed, ChatPresenter never caches a URL, so it neither dims the pane
+    // on suspend nor reloads it on resume -- it just re-polls install status.
+    // That is a legitimate environment, not a failure, but it does mean the
+    // #18585 guard below proved nothing, so say so rather than passing quietly.
+    if (counts.maxSiblings < 2) {
+      const note = 'resume did not double-buffer (no pending frame attached) -- ' +
+        'the duplicate-title assertion was not exercised';
+      console.log(note);
+      testInfo.annotations.push({ type: 'coverage-gap', description: note });
+    } else if (!swapped) {
+      const note = 'resume double-buffered but did not swap within 20s -- body asserted ' +
+        'against the pre-restart frame';
+      console.log(note);
+      testInfo.annotations.push({ type: 'coverage-gap', description: note });
+    }
+
     expect(bodyText.trim().length, 'chat iframe body should not be empty after restart').toBeGreaterThan(0);
+
+    expect(counts.maxTitled, 'iframes titled "Posit Assistant" attached at once during resume').toBe(1);
   });
 });
