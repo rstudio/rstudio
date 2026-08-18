@@ -107,8 +107,14 @@ FixedBufferProxy::decideFraming(const http::Response& response) const
    // or declares an unparseable Content-Length -- matching AsyncClient's own
    // fallback to EOF-delimited reading in that case, see
    // responseBodyComplete()/streamedBodyComplete() in AsyncClient.hpp).
-   bool upstreamChunked =
-      response.headerValue(kTransferEncoding) == kChunkedTransferEncoding;
+   // Ask the shared parser rather than comparing the raw field: this must
+   // reach the same verdict AsyncClient did when it decided whether to
+   // de-chunk, or we re-chunk a body that is already chunk-framed (RFC 7230
+   // 3.3.1: "A sender MUST NOT apply chunked more than once to a message
+   // body"). It also implements 3.3.3 rule 3 -- Transfer-Encoding overrides a
+   // Content-Length sent alongside it, and the Chunked branch below removes
+   // that Content-Length before forwarding, as rule 3 requires.
+   bool upstreamChunked = util::parseTransferEncoding(response.headers()).chunkedIsFinal;
    boost::optional<uintmax_t> contentLength =
       safe_convert::stringTo<uintmax_t>(response.headerValue("Content-Length"));
    if (contentLength && !upstreamChunked)

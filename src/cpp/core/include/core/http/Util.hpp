@@ -25,6 +25,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/system/error_code.hpp>
 
+#include <core/http/Header.hpp>
+
 namespace rstudio {
 namespace core {
    
@@ -177,6 +179,39 @@ std::string formatMessageAsHttpChunk(const std::string& message);
 // calling this, so a malicious or misbehaving upstream can't use Connection
 // to nominate away headers the caller re-adds.
 void removeHopByHopHeaders(Response* pResponse);
+
+// The transfer codings a message declares, parsed from its Transfer-Encoding
+// header field(s) per RFC 7230 3.3.1. Produced by parseTransferEncoding().
+struct TransferEncoding
+{
+   // at least one non-empty transfer-coding was declared
+   bool present = false;
+
+   // the *last* coding in the list is "chunked", i.e. the body on the wire is
+   // chunk-framed. This -- not "the field equals the string chunked" -- is what
+   // decides whether a body needs de-chunking, since "gzip, chunked" is also
+   // chunk-framed and "Chunked" is the same coding as "chunked".
+   bool chunkedIsFinal = false;
+
+   // some coding other than "chunked" was declared (e.g. gzip). Such a body is
+   // still transfer-encoded after de-chunking, so a consumer that can only undo
+   // "chunked" must not treat the bytes it gets as the decoded payload.
+   bool hasOtherCodings = false;
+};
+
+// Parses a message's Transfer-Encoding header field(s) into the summary above.
+// Handles what a bare string comparison against "chunked" does not: the field
+// is a comma-separated list (1#transfer-coding), may appear more than once,
+// coding names are case-insensitive, and each may carry parameters. The
+// obsolete "identity" coding (dropped as a transfer coding in RFC 7230 4) is
+// ignored rather than reported as a coding we cannot handle.
+//
+// Callers on both sides of a body handoff must use this rather than comparing
+// the raw field themselves: two independent comparisons that disagree about
+// whether a body is chunked is what lets an already-chunked body be chunked a
+// second time, which RFC 7230 3.3.1 forbids outright.
+TransferEncoding parseTransferEncoding(const Headers& headers);
+
 
 // determines if the given string is a well-formed IP address
 bool isIpAddress(const std::string& addr);

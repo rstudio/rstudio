@@ -29,6 +29,7 @@
 //     completes within the deadline must not see a spurious late timeout.
 
 #include <atomic>
+#include <functional>
 #include <chrono>
 #include <set>
 #include <sstream>
@@ -52,6 +53,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
+#include <core/http/Util.hpp>
 
 #include <gtest/gtest.h>
 
@@ -104,7 +106,13 @@ enum class ResponseMode
    // the kernel to send RST instead of FIN) rather than a clean shutdown --
    // simulates a backend process being killed (segfault, kill -9, OOM) after
    // the downstream client has already started receiving bytes.
-   PartialBodyThenHardReset
+   PartialBodyThenHardReset,
+
+   // Writes the caller-supplied bytes verbatim as the entire response, headers
+   // included. The only way to exercise the malformed/unusual framing headers
+   // a user's own app behind /p/<port>/ can emit -- an exact wire image is the
+   // point, so nothing here may normalize it.
+   Raw
 };
 
 // A minimal blocking HTTP/1.1 server on its own thread. Accepts a single
@@ -279,6 +287,13 @@ private:
                "Content-Length: " + std::to_string(body_.size()) + "\r\n"
                "\r\n" + body_.substr(0, body_.size() / 2);
             boost::asio::write(socket, boost::asio::buffer(resp), ec);
+            break;
+         }
+
+         case ResponseMode::Raw:
+         {
+            // body_ carries the whole response image, headers included
+            boost::asio::write(socket, boost::asio::buffer(body_), ec);
             break;
          }
       }
@@ -1222,6 +1237,7 @@ public:
    void writeResponseHeaders(Socket::Handler handler) override
    {
       ++writeResponseHeadersCount_;
+      writtenHeaders_.assign(response_);
       boost::asio::post(ioc_, [handler]() { handler(boost::system::error_code(), 0); });
    }
 
@@ -1231,7 +1247,18 @@ public:
       writeResponse(true, Socket::NullHandler);
    }
 
-   void close() override { closed_ = true; }
+   void close() override
+   {
+      closed_ = true;
+
+      // FixedBufferProxy closing this connection is the end of the exchange,
+      // on both the success and error paths -- and it is the only completion
+      // signal a test can rely on here, since closeConnections() also calls
+      // disableHandlers(), which clears the ResponseHandler the site passed to
+      // execute(). Waiting on that handler instead just waits out the timeout.
+      if (onClosed_)
+         onClosed_();
+   }
 
    void continueParsing() override {}
    void setData(const boost::any& data) override { data_ = data; }
@@ -1242,12 +1269,16 @@ public:
    void setHandlerPrefix(const std::string& prefix) override { handlerPrefix_ = prefix; }
    boost::asio::io_context::strand& getStrand() override { return strand_; }
 
+   // invoked from close(); see there
+   std::function<void()> onClosed_;
+
    // Socket
    void asyncReadSome(boost::asio::mutable_buffer, Socket::Handler) override {}
 
    void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler) override
    {
       std::size_t n = buffer.size();
+      writtenBytes_.append(static_cast<const char*>(buffer.data()), n);
       boost::asio::post(ioc_, [handler, n]() { handler(boost::system::error_code(), n); });
    }
 
@@ -1256,13 +1287,22 @@ public:
    {
       std::size_t total = 0;
       for (const auto& buffer : buffers)
+      {
+         writtenBytes_.append(static_cast<const char*>(buffer.data()), buffer.size());
          total += buffer.size();
+      }
       boost::asio::post(ioc_, [handler, total]() { handler(boost::system::error_code(), total); });
    }
 
    int writeResponseCount_ = 0;
    int writeResponseHeadersCount_ = 0;
    bool closed_ = false;
+
+   // the body bytes FixedBufferProxy actually put on the downstream wire, and
+   // the headers it flushed ahead of them -- what the double-chunking tests
+   // below have to inspect, since the defect is invisible from call counts
+   std::string writtenBytes_;
+   http::Response writtenHeaders_;
 
 private:
    boost::asio::io_context& ioc_;
@@ -1273,6 +1313,211 @@ private:
    std::string username_;
    std::string handlerPrefix_;
 };
+
+// --- RFC 7230 3.3.1: "A sender MUST NOT apply chunked more than once to a
+// message body" ------------------------------------------------------------
+//
+// AsyncClient decides whether to de-chunk; FixedBufferProxy decides how to
+// frame what it is handed. Those decisions used to be two independent string
+// comparisons against "chunked", so an upstream could put them out of step and
+// get a body that was chunk-framed on the wire, never de-chunked, and then
+// wrapped in a second chunk layer on the way to the browser -- which de-chunks
+// once and renders the inner chunk-size lines as content.
+//
+// These drive the whole real path (socket -> TcpIpAsyncClient -> the real
+// FixedBufferProxy -> downstream connection) rather than calling queueChunk()
+// directly, because the defect lives precisely in the handoff between the two.
+
+namespace {
+
+// Outcome of running one raw upstream response image through the real
+// AsyncClient + FixedBufferProxy pair.
+// (http::Response is noncopyable, so the two framing headers under test are
+// lifted out by value rather than carrying the whole response object.)
+struct ProxiedOutcome
+{
+   std::string body;             // bytes FixedBufferProxy wrote downstream
+   std::string transferEncoding; // framing headers it flushed ahead of them
+   std::string contentLength;
+   bool gotError = false;        // the site's ErrorHandler fired
+   bool timedOut = false;
+};
+
+ProxiedOutcome proxyRawUpstreamResponse(const std::string& rawResponse)
+{
+   ProxiedOutcome outcome;
+
+   LocalServer server(ResponseMode::Raw, /*closeAfterResponse=*/true, rawResponse);
+   server.start();
+
+   boost::asio::io_context ioc;
+
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   // mirrors the localhost port-proxy wiring in ServerSessionProxy
+   pClient->setStreamNonChunkedResponses(true);
+
+   boost::shared_ptr<FakeDownstreamConnection> pConnection =
+      boost::make_shared<FakeDownstreamConnection>(ioc);
+   pClient->setStrand(&pConnection->getStrand());
+
+   boost::shared_ptr<FixedBufferProxy> pProxy =
+      boost::make_shared<FixedBufferProxy>(pConnection);
+   pProxy->proxy(pClient);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   boost::shared_ptr<boost::asio::system_timer> pTimer =
+      boost::make_shared<boost::asio::system_timer>(ioc, std::chrono::seconds(4));
+   pTimer->async_wait([&](const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+      outcome.timedOut = true;
+      pClient->close();
+   });
+
+   pConnection->onClosed_ = [&]() { pTimer->cancel(); };
+
+   pClient->execute(
+      [&](const http::Response&) { pTimer->cancel(); },
+      [&](const core::Error&) { outcome.gotError = true; pTimer->cancel(); });
+
+   ioc.run();
+   server.stop();
+
+   outcome.body = pConnection->writtenBytes_;
+   outcome.transferEncoding = pConnection->writtenHeaders_.headerValue(kTransferEncoding);
+   outcome.contentLength = pConnection->writtenHeaders_.headerValue("Content-Length");
+   return outcome;
+}
+
+} // anonymous namespace
+
+TEST(AsyncClientContentLength, ChunkedUpstreamWithContentLengthIsNotChunkedTwice)
+{
+   // The header pair RFC 7230 3.3.3 rule 3 calls out as a possible smuggling
+   // attempt: Transfer-Encoding must win, the Content-Length must be ignored
+   // for framing and removed before forwarding. AsyncClient used to require
+   // contentLength() == 0 before de-chunking, so it read the chunk-framed
+   // bytes as an opaque Content-Length body while FixedBufferProxy -- seeing
+   // the same "chunked" header -- wrapped them again.
+   std::string payload = "{\"name\":\"jsonlite\"}\n";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 200 OK\r\n"
+          "Content-Type: application/x-ndjson\r\n"
+          "Transfer-Encoding: chunked\r\n"
+       << "Content-Length: " << payload.size() << "\r\n"
+          "\r\n"
+       << std::hex << payload.size() << "\r\n" << payload << "\r\n"
+       << "0\r\n\r\n";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+
+   // exactly one chunk layer: the payload, then the terminator
+   std::string expected = http::util::formatMessageAsHttpChunk(payload) +
+                          http::util::formatMessageAsHttpChunk("");
+   EXPECT_EQ(outcome.body, expected);
+
+   // rule 3 again: the Content-Length must not travel on with the response
+   EXPECT_TRUE(outcome.contentLength.empty());
+   EXPECT_EQ(outcome.transferEncoding, kChunkedTransferEncoding);
+}
+
+TEST(AsyncClientContentLength, ChunkedUpstreamSpelledWithCapitalCIsNotChunkedTwice)
+{
+   // Transfer-coding names are case-insensitive tokens (RFC 7230 4). The old
+   // exact compare read "Chunked" as "not chunked" on both sides at once, so
+   // the raw chunk-framed bytes were relayed and then re-chunked.
+   std::string payload = "hello chunked world";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 200 OK\r\n"
+          "Content-Type: text/plain\r\n"
+          "Transfer-Encoding: Chunked\r\n"
+          "\r\n"
+       << std::hex << payload.size() << "\r\n" << payload << "\r\n"
+       << "0\r\n\r\n";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_EQ(outcome.body,
+             http::util::formatMessageAsHttpChunk(payload) +
+                http::util::formatMessageAsHttpChunk(""));
+}
+
+TEST(AsyncClientContentLength, ChunkedUpstreamWrittenWithoutOwsIsNotChunkedTwice)
+{
+   // "Transfer-Encoding:chunked" -- legal per RFC 7230 3.2, since the OWS after
+   // the colon is optional. parseHeader() used to drop the field outright, so
+   // nothing downstream knew the body was chunk-framed and it was re-chunked.
+   std::string payload = "no optional whitespace here";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 200 OK\r\n"
+          "Content-Type: text/plain\r\n"
+          "Transfer-Encoding:chunked\r\n"
+          "\r\n"
+       << std::hex << payload.size() << "\r\n" << payload << "\r\n"
+       << "0\r\n\r\n";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_EQ(outcome.body,
+             http::util::formatMessageAsHttpChunk(payload) +
+                http::util::formatMessageAsHttpChunk(""));
+}
+
+TEST(AsyncClientContentLength, UndecodableTransferCodingFailsClosedRatherThanCorrupting)
+{
+   // "gzip, chunked" is chunk-framed, but de-chunking leaves gzip-encoded
+   // bytes rather than the payload. There is no way to hand those on honestly:
+   // relabelling them as a plain body corrupts the response, and the old code
+   // did worse still, re-chunking them under a header that claimed plain
+   // chunked. Refuse the response instead.
+   std::string payload = "not really gzip";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 200 OK\r\n"
+          "Content-Type: text/plain\r\n"
+          "Transfer-Encoding: gzip, chunked\r\n"
+          "\r\n"
+       << std::hex << payload.size() << "\r\n" << payload << "\r\n"
+       << "0\r\n\r\n";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.gotError);
+   EXPECT_TRUE(outcome.body.empty());
+}
+
+TEST(AsyncClientContentLength, OrdinaryChunkedUpstreamStillGetsExactlyOneChunkLayer)
+{
+   // The control: the common, well-formed case must be unchanged by all of the
+   // above -- de-chunked once by AsyncClient, chunked once by FixedBufferProxy.
+   std::string payload = "{\"name\":\"jsonlite\"}\n";
+   std::ostringstream raw;
+   raw << "HTTP/1.1 200 OK\r\n"
+          "Content-Type: application/x-ndjson\r\n"
+          "Transfer-Encoding: chunked\r\n"
+          "\r\n"
+       << std::hex << payload.size() << "\r\n" << payload << "\r\n"
+       << "0\r\n\r\n";
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_FALSE(outcome.gotError);
+   EXPECT_EQ(outcome.body,
+             http::util::formatMessageAsHttpChunk(payload) +
+                http::util::formatMessageAsHttpChunk(""));
+}
 
 // Real-world trigger: an rsession/Shiny process behind /p/<port>/ is killed
 // mid-stream (segfault, kill -9, OOM) after the browser has already started

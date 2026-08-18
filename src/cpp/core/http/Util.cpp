@@ -25,6 +25,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -576,6 +577,57 @@ void removeHopByHopHeaders(Response* pResponse)
       if (!token.empty())
          pResponse->removeHeader(token);
    }
+}
+
+TransferEncoding parseTransferEncoding(const Headers& headers)
+{
+   TransferEncoding result;
+
+   // The field is 1#transfer-coding and may be split across repeated header
+   // fields, so flatten every field's comma-separated list into one ordered
+   // list of coding names before judging it -- only the final coding decides
+   // whether the body on the wire is chunk-framed.
+   std::vector<std::string> codings;
+   for (const std::string& value : headerValues(headers, kTransferEncoding))
+   {
+      std::vector<std::string> tokens;
+      boost::algorithm::split(tokens, value, boost::is_any_of(","));
+
+      for (std::string token : tokens)
+      {
+         // a transfer-coding may carry parameters (token *( OWS ";" OWS
+         // transfer-parameter )); only the name identifies the coding
+         std::string::size_type semi = token.find(';');
+         if (semi != std::string::npos)
+            token.erase(semi);
+
+         boost::algorithm::trim(token);
+         if (token.empty())
+            continue;
+
+         boost::algorithm::to_lower(token);
+
+         // "identity" was dropped as a transfer coding in RFC 7230 4 and means
+         // "nothing was applied" anyway, so treat it as absent rather than as a
+         // coding we would have to refuse for not being able to decode it.
+         if (token == "identity")
+            continue;
+
+         codings.push_back(token);
+      }
+   }
+
+   if (codings.empty())
+      return result;
+
+   result.present = true;
+   result.chunkedIsFinal = codings.back() == kChunkedTransferEncoding;
+   result.hasOtherCodings =
+      std::any_of(codings.begin(), codings.end(), [](const std::string& coding) {
+         return coding != kChunkedTransferEncoding;
+      });
+
+   return result;
 }
 
 bool isIpAddress(const std::string& str)

@@ -467,7 +467,7 @@ void handleLocalhostResponse(
          {         
             sendSparkUIResponse(response, ptrConnection);
          }
-         else if (response.headerValue(core::http::kTransferEncoding) == core::http::kChunkedTransferEncoding)
+         else if (core::http::util::parseTransferEncoding(response.headers()).chunkedIsFinal)
          {
             // Even if the response from upstream is "Transfer-Encoding: chunked",
             // our response to the client is no longer chunked; the AsyncClient
@@ -475,8 +475,15 @@ void handleLocalhostResponse(
             // Transfer-Encoding header and set the content length, to reflect
             // that the body will come all at once.
             //
-            // TODO: Determine what happens when the Transfer-Encoding is both
-            // chunked and something else ("gzip, chunked" or "chunked, gzip").
+            // This must use the same parse AsyncClient used to decide to
+            // de-chunk (it once compared the raw field to "chunked" here): if
+            // AsyncClient de-chunked a body whose field read "Chunked", a
+            // string compare would leave the now-decoded body labelled as
+            // chunked on the way out, and the client would try to de-chunk it
+            // again. The "gzip, chunked" case the old TODO here asked about is
+            // now answered upstream -- AsyncClient rejects codings it cannot
+            // undo rather than delivering a still-encoded body.
+            //
             // TODO: What other hop-by-hop response headers are we not removing
             // but should?
             http::Response response1;

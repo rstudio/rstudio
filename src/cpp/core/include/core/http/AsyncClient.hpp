@@ -918,9 +918,41 @@ private:
             // entire body buffered (legacy path) or whether we can stream it.
             bufferFullResponse_ = bufferPredicate_ && bufferPredicate_(response_);
 
+            // Decide chunked-ness from the parsed transfer-coding list, not
+            // from a string compare against the raw field. The compare missed
+            // "Chunked" and "gzip, chunked" -- both chunk-framed on the wire --
+            // leaving the body read as if unencoded while a downstream consumer
+            // (FixedBufferProxy) looking at the same header reached its own,
+            // different conclusion. Two disagreeing answers to "is this body
+            // chunked" is what let an already-chunked body be chunked a second
+            // time, which RFC 7230 3.3.1 forbids outright.
+            util::TransferEncoding transferEncoding =
+               util::parseTransferEncoding(response_.headers());
+
+            // We can only undo the chunked coding. A body that is still
+            // transfer-encoded after de-chunking (gzip), or that was chunked
+            // before some other coding rather than last, cannot be handed on as
+            // a decoded payload -- and silently relabelling it as one corrupts
+            // the response. Fail closed instead.
+            if (transferEncoding.present &&
+                (!transferEncoding.chunkedIsFinal || transferEncoding.hasOtherCodings))
+            {
+               handleError(systemError(boost::system::errc::protocol_error,
+                                       "Unsupported Transfer-Encoding in response: " +
+                                          response_.headerValue(kTransferEncoding),
+                                       ERROR_LOCATION));
+               return;
+            }
+
             // if this is chunked encoding, start processing chunks
-            if (response_.headerValue(kTransferEncoding) == kChunkedTransferEncoding &&
-                response_.contentLength() == 0)
+            //
+            // Note this is deliberately not conditioned on Content-Length being
+            // absent: RFC 7230 3.3.3 rule 3 says that when a message carries
+            // both, the Transfer-Encoding wins and the Content-Length must not
+            // be used for framing (and must be removed before forwarding, which
+            // FixedBufferProxy's chunked branch does). Preferring Content-Length
+            // there read a chunk-framed body as if it were raw bytes.
+            if (transferEncoding.chunkedIsFinal)
             {
                chunkedEncoding_ = true;
 
