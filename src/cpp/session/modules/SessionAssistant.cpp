@@ -1184,17 +1184,26 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr, uint64_t
       return;
    }
 
-   LOG_ERROR_MESSAGE(stdErr);
- 
+   // A crashing Node.js agent prints the offending source line before the
+   // stack trace, and for a bundled agent that "line" is the entire minified
+   // bundle -- tens of kilobytes per chunk with the real error at the end.
+   // Log and accumulate only the tail; the full text remains on the agent's
+   // stderr for anyone who needs it.
+   constexpr std::size_t kMaxStderrBytes = 4096;
+   LOG_ERROR_MESSAGE(agentStderrTail(stdErr, kMaxStderrBytes));
+
    // If we get output from stderr while the agent is starting, that means
    // something went wrong and we're about to shut down.
    switch (s_agentRuntimeStatus)
    {
-   
+
    case AgentRuntimeStatus::Starting:
    case AgentRuntimeStatus::Stopping:
    {
-      s_agentStartupError += stdErr;
+      // s_agentStartupError is user-facing (launch-failure message, agent
+      // diagnostics), so keep the accumulation bounded as well.
+      s_agentStartupError =
+            agentStderrTail(s_agentStartupError + stdErr, kMaxStderrBytes);
       setAgentRuntimeStatus(AgentRuntimeStatus::Stopping);
       break;
    }
@@ -2938,6 +2947,22 @@ void onEnvironmentVariablesChanged(const module_context::EnvironmentVariablesCha
 int assistantRuntimeStatus()
 {
    return static_cast<int>(s_agentRuntimeStatus);
+}
+
+std::string agentStderrTail(const std::string& text, std::size_t maxLength)
+{
+   if (text.length() <= maxLength)
+      return text;
+
+   std::size_t start = text.length() - maxLength;
+
+   // don't start mid-way through a multi-byte UTF-8 character
+   while (start < text.length() &&
+          (static_cast<unsigned char>(text[start]) & 0xC0) == 0x80)
+      ++start;
+
+   return "[... " + std::to_string(start) + " bytes truncated ...] " +
+          text.substr(start);
 }
 
 bool stopAgentForUpdate()

@@ -16,6 +16,8 @@
 #ifndef RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 #define RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
 class Error;
@@ -28,6 +30,14 @@ namespace modules {
 namespace assistant {
 
 int assistantRuntimeStatus();
+
+// Bound a chunk of agent stderr to at most maxLength bytes, keeping the tail:
+// Node.js prints the offending source line before the error and stack trace,
+// and for a bundled agent that "line" is the entire minified bundle, so the
+// useful text is at the end. Truncation is prefixed with a marker noting how
+// many bytes were dropped, and never starts mid-way through a UTF-8 character
+// (the result is embedded in JSON). Exposed for testing.
+std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
 // its file handles are released. Returns true if the agent stopped (or was not
