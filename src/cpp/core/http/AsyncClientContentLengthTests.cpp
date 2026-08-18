@@ -1497,6 +1497,33 @@ TEST(AsyncClientContentLength, UndecodableTransferCodingFailsClosedRatherThanCor
    EXPECT_TRUE(outcome.body.empty());
 }
 
+TEST(AsyncClientContentLength, BodyChunkedTwiceByTheUpstreamFailsClosed)
+{
+   // "chunked, chunked" is a body the upstream really did chunk twice, which
+   // RFC 7230 3.3.1 forbids it from doing. Every signal short of counting the
+   // codings says "ordinary chunked", so de-chunking once and re-framing would
+   // hand the browser a body that still has a chunk layer inside it -- the same
+   // corruption this whole change exists to prevent, arrived at from the other
+   // direction. Refuse it.
+   std::string payload = "chunked twice over";
+   std::string innerBody = http::util::formatMessageAsHttpChunk(payload) +
+                           http::util::formatMessageAsHttpChunk("");
+
+   std::ostringstream raw;
+   raw << "HTTP/1.1 200 OK\r\n"
+          "Content-Type: text/plain\r\n"
+          "Transfer-Encoding: chunked, chunked\r\n"
+          "\r\n"
+       << http::util::formatMessageAsHttpChunk(innerBody)
+       << http::util::formatMessageAsHttpChunk("");
+
+   ProxiedOutcome outcome = proxyRawUpstreamResponse(raw.str());
+
+   ASSERT_FALSE(outcome.timedOut);
+   EXPECT_TRUE(outcome.gotError);
+   EXPECT_TRUE(outcome.body.empty());
+}
+
 TEST(AsyncClientContentLength, OrdinaryChunkedUpstreamStillGetsExactlyOneChunkLayer)
 {
    // The control: the common, well-formed case must be unchanged by all of the

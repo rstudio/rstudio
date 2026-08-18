@@ -56,7 +56,7 @@ TEST(TransferEncoding, AbsentFieldIsNotChunked)
    util::TransferEncoding te = util::parseTransferEncoding(headers);
    EXPECT_FALSE(te.present);
    EXPECT_FALSE(te.chunkedIsFinal);
-   EXPECT_FALSE(te.hasOtherCodings);
+   EXPECT_TRUE(te.isDecodable); // nothing to decode
 }
 
 TEST(TransferEncoding, PlainChunkedIsChunked)
@@ -64,7 +64,7 @@ TEST(TransferEncoding, PlainChunkedIsChunked)
    util::TransferEncoding te = util::parseTransferEncoding(transferEncoding("chunked"));
    EXPECT_TRUE(te.present);
    EXPECT_TRUE(te.chunkedIsFinal);
-   EXPECT_FALSE(te.hasOtherCodings);
+   EXPECT_TRUE(te.isDecodable);
 }
 
 TEST(TransferEncoding, CodingNamesAreCaseInsensitive)
@@ -74,7 +74,7 @@ TEST(TransferEncoding, CodingNamesAreCaseInsensitive)
    // was read as unencoded while chunk-framed on the wire.
    util::TransferEncoding te = util::parseTransferEncoding(transferEncoding("Chunked"));
    EXPECT_TRUE(te.chunkedIsFinal);
-   EXPECT_FALSE(te.hasOtherCodings);
+   EXPECT_TRUE(te.isDecodable);
 }
 
 TEST(TransferEncoding, TolerantOfSurroundingWhitespace)
@@ -91,7 +91,7 @@ TEST(TransferEncoding, ChunkedAppliedLastAfterAnotherCodingIsStillChunkFramed)
    util::TransferEncoding te = util::parseTransferEncoding(transferEncoding("gzip, chunked"));
    EXPECT_TRUE(te.present);
    EXPECT_TRUE(te.chunkedIsFinal);
-   EXPECT_TRUE(te.hasOtherCodings);
+   EXPECT_FALSE(te.isDecodable);
 }
 
 TEST(TransferEncoding, ChunkedNotAppliedLastIsNotChunkFramed)
@@ -101,7 +101,7 @@ TEST(TransferEncoding, ChunkedNotAppliedLastIsNotChunkFramed)
    util::TransferEncoding te = util::parseTransferEncoding(transferEncoding("chunked, gzip"));
    EXPECT_TRUE(te.present);
    EXPECT_FALSE(te.chunkedIsFinal);
-   EXPECT_TRUE(te.hasOtherCodings);
+   EXPECT_FALSE(te.isDecodable);
 }
 
 TEST(TransferEncoding, SplitAcrossRepeatedHeaderFieldsIsOneOrderedList)
@@ -115,7 +115,7 @@ TEST(TransferEncoding, SplitAcrossRepeatedHeaderFieldsIsOneOrderedList)
 
    util::TransferEncoding te = util::parseTransferEncoding(headers);
    EXPECT_TRUE(te.chunkedIsFinal);
-   EXPECT_TRUE(te.hasOtherCodings);
+   EXPECT_FALSE(te.isDecodable);
 }
 
 TEST(TransferEncoding, IgnoresCodingParameters)
@@ -123,7 +123,7 @@ TEST(TransferEncoding, IgnoresCodingParameters)
    util::TransferEncoding te =
       util::parseTransferEncoding(transferEncoding("chunked;q=1.0"));
    EXPECT_TRUE(te.chunkedIsFinal);
-   EXPECT_FALSE(te.hasOtherCodings);
+   EXPECT_TRUE(te.isDecodable);
 }
 
 TEST(TransferEncoding, IdentityIsTreatedAsNoCodingAtAll)
@@ -133,12 +133,38 @@ TEST(TransferEncoding, IdentityIsTreatedAsNoCodingAtAll)
    // have to refuse for being undecodable.
    util::TransferEncoding te = util::parseTransferEncoding(transferEncoding("identity"));
    EXPECT_FALSE(te.present);
-   EXPECT_FALSE(te.hasOtherCodings);
+   EXPECT_TRUE(te.isDecodable);
 
    util::TransferEncoding withChunked =
       util::parseTransferEncoding(transferEncoding("identity, chunked"));
    EXPECT_TRUE(withChunked.chunkedIsFinal);
-   EXPECT_FALSE(withChunked.hasOtherCodings);
+   EXPECT_TRUE(withChunked.isDecodable);
+}
+
+TEST(TransferEncoding, ChunkedAppliedTwiceIsNotSomethingWeCanUndo)
+{
+   // RFC 7230 3.3.1 forbids a sender applying chunked more than once, so this
+   // is malformed on arrival -- but every other signal here looks like ordinary
+   // chunking, and de-chunking once would leave a second chunk layer on the
+   // body for the next hop to wrap again. It has to be refused, not decoded.
+   util::TransferEncoding te =
+      util::parseTransferEncoding(transferEncoding("chunked, chunked"));
+   EXPECT_TRUE(te.present);
+   EXPECT_TRUE(te.chunkedIsFinal);
+   EXPECT_FALSE(te.isDecodable);
+}
+
+TEST(TransferEncoding, ChunkedRepeatedAcrossSeparateHeaderFieldsIsAlsoRefused)
+{
+   // The same thing spelled as two header fields -- a classic smuggling shape,
+   // and invisible to anything that only reads the first field.
+   Headers headers;
+   headers.push_back(Header(kTransferEncoding, "chunked"));
+   headers.push_back(Header(kTransferEncoding, "chunked"));
+
+   util::TransferEncoding te = util::parseTransferEncoding(headers);
+   EXPECT_TRUE(te.chunkedIsFinal);
+   EXPECT_FALSE(te.isDecodable);
 }
 
 TEST(TransferEncoding, EmptyFieldValueIsNotAcoding)
@@ -146,6 +172,7 @@ TEST(TransferEncoding, EmptyFieldValueIsNotAcoding)
    util::TransferEncoding te = util::parseTransferEncoding(transferEncoding(""));
    EXPECT_FALSE(te.present);
    EXPECT_FALSE(te.chunkedIsFinal);
+   EXPECT_TRUE(te.isDecodable);
 }
 
 TEST(TransferEncoding, UnknownCodingIsReportedAsOther)
@@ -153,7 +180,7 @@ TEST(TransferEncoding, UnknownCodingIsReportedAsOther)
    util::TransferEncoding te = util::parseTransferEncoding(transferEncoding("br"));
    EXPECT_TRUE(te.present);
    EXPECT_FALSE(te.chunkedIsFinal);
-   EXPECT_TRUE(te.hasOtherCodings);
+   EXPECT_FALSE(te.isDecodable);
 }
 
 } // namespace tests

@@ -620,12 +620,21 @@ TransferEncoding parseTransferEncoding(const Headers& headers)
    if (codings.empty())
       return result;
 
+   std::size_t chunkedCount =
+      std::count(codings.begin(), codings.end(), kChunkedTransferEncoding);
+
    result.present = true;
    result.chunkedIsFinal = codings.back() == kChunkedTransferEncoding;
-   result.hasOtherCodings =
-      std::any_of(codings.begin(), codings.end(), [](const std::string& coding) {
-         return coding != kChunkedTransferEncoding;
-      });
+
+   // The one shape we can undo is a single "chunked" applied last -- which is
+   // also the only shape a conforming sender can produce, since RFC 7230 3.3.1
+   // both forbids applying chunked more than once and requires it to be the
+   // final coding when anything else is applied. Note "chunked, chunked" would
+   // otherwise slip through every other flag here looking like ordinary
+   // chunking, while leaving a second chunk layer on the body.
+   result.isDecodable = result.chunkedIsFinal &&
+                        chunkedCount == 1 &&
+                        codings.size() == 1;
 
    return result;
 }

@@ -929,13 +929,14 @@ private:
             util::TransferEncoding transferEncoding =
                util::parseTransferEncoding(response_.headers());
 
-            // We can only undo the chunked coding. A body that is still
-            // transfer-encoded after de-chunking (gzip), or that was chunked
-            // before some other coding rather than last, cannot be handed on as
-            // a decoded payload -- and silently relabelling it as one corrupts
-            // the response. Fail closed instead.
-            if (transferEncoding.present &&
-                (!transferEncoding.chunkedIsFinal || transferEncoding.hasOtherCodings))
+            // A body still transfer-encoded after we have undone all we can --
+            // gzip we cannot decode, chunked applied before another coding, or
+            // chunked applied twice -- cannot be handed on as a decoded
+            // payload, and silently relabelling it as one corrupts the
+            // response. Fail closed instead. parseTransferEncoding() owns this
+            // verdict so no caller has to reassemble it (and get it subtly
+            // different).
+            if (!transferEncoding.isDecodable)
             {
                handleError(systemError(boost::system::errc::protocol_error,
                                        "Unsupported Transfer-Encoding in response: " +

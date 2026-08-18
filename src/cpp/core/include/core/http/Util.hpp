@@ -193,10 +193,19 @@ struct TransferEncoding
    // chunk-framed and "Chunked" is the same coding as "chunked".
    bool chunkedIsFinal = false;
 
-   // some coding other than "chunked" was declared (e.g. gzip). Such a body is
-   // still transfer-encoded after de-chunking, so a consumer that can only undo
-   // "chunked" must not treat the bytes it gets as the decoded payload.
-   bool hasOtherCodings = false;
+   // True when the declared codings are ones this process can actually undo:
+   // either none at all, or exactly one "chunked" applied last. Everything else
+   // leaves bytes that are still transfer-encoded after we have done all we can
+   // -- a coding we cannot decode ("gzip, chunked"), chunked applied before
+   // some other coding ("chunked, gzip"), or chunked applied more than once
+   // ("chunked, chunked", which RFC 7230 3.3.1 forbids a sender from producing
+   // at all). Handing those on as if they were the decoded payload corrupts the
+   // response, so callers must refuse the message instead.
+   //
+   // This verdict belongs here rather than being reassembled from the flags
+   // above at each call site: rebuilding the same judgement in more than one
+   // place is what let those places disagree in the first place.
+   bool isDecodable = true;
 };
 
 // Parses a message's Transfer-Encoding header field(s) into the summary above.
