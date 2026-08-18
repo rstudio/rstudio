@@ -158,6 +158,114 @@ TEST(AsyncConnectionImpl, WriteResponseHeadersSetsNosniffHeader)
    EXPECT_NE(received.find("X-Content-Type-Options: nosniff"), std::string::npos);
 }
 
+// RFC 7230 2.6: "Intermediaries that process HTTP messages (i.e., all
+// intermediaries other than those acting as tunnels) MUST send their own
+// HTTP-version in forwarded messages." A proxied response arrives here having
+// had Response::assign() copy the *upstream's* version onto it, so without
+// normalization an HTTP/1.0 backend's version ends up on the status line of a
+// response this server framed as HTTP/1.1 -- telling the client not to expect
+// chunked framing or a persistent connection regardless of what the headers
+// below the status line actually say.
+
+TEST(AsyncConnectionImpl, WriteResponseHeadersSendsOurOwnHttpVersionNotTheUpstreams)
+{
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+   pConnection->response().setHttpVersion(1, 0); // as an HTTP/1.0 upstream's would be
+
+   bool headersWritten = false;
+   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+      headersWritten = true;
+   });
+
+   ioc.run();
+   EXPECT_TRUE(headersWritten);
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_EQ(received.compare(0, 12, "HTTP/1.1 200"), 0) << "status line was: " << received.substr(0, 32);
+}
+
+TEST(AsyncConnectionImpl, WriteResponseSendsOurOwnHttpVersionNotTheUpstreams)
+{
+   // Same normalization on the buffered path, so the streaming and buffered
+   // proxy paths cannot disagree about what version this hop speaks.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   // mirrors what a proxy handler does: assign() an upstream response (which
+   // copies its version) onto the client-facing response, then write it
+   http::Response upstream;
+   upstream.setStatusCode(200);
+   upstream.setHttpVersion(1, 0);
+   upstream.setBody("hi");
+
+   bool responseWritten = false;
+   pConnection->writeResponse(upstream, true, http::Headers(),
+                              [&](const boost::system::error_code&, std::size_t) {
+      responseWritten = true;
+   });
+
+   ioc.run();
+   EXPECT_TRUE(responseWritten);
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_EQ(received.compare(0, 12, "HTTP/1.1 200"), 0) << "status line was: " << received.substr(0, 32);
+}
+
 TEST(AsyncConnectionImpl, WriteResponseHeadersAfterHeadersAlreadyWrittenIsANoOp)
 {
    // writeResponseHeaders() must guard against being called a second time the

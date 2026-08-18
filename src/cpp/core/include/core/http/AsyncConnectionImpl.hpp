@@ -213,6 +213,18 @@ public:
 
       sendingResponse_ = true;
 
+      // RFC 7230 2.6: "Intermediaries that process HTTP messages (i.e., all
+      // intermediaries other than those acting as tunnels) MUST send their own
+      // HTTP-version in forwarded messages." Responses this server generates
+      // itself already carry 1.1 (http::Message's constructor), but a proxied
+      // one does not: Response::assign() copies httpVersionMajor_/Minor_ off
+      // the upstream response, so an HTTP/1.0 backend's version would otherwise
+      // reach the client on our HTTP/1.1 connection. That is not cosmetic once
+      // this hop makes its own framing decisions -- a status line reading
+      // HTTP/1.0 tells the client not to expect chunked framing or a persistent
+      // connection, whatever headers follow it.
+      response_.setHttpVersion(1, 1);
+
       // add extra response headers
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
@@ -302,6 +314,12 @@ public:
          return;
 
       sendingResponse_ = true;
+
+      // Send our own HTTP-version, not a proxied upstream's -- same RFC 7230 2.6
+      // rationale as writeResponse() above, and it matters more here: this is
+      // the path FixedBufferProxy streams through, where the framing headers
+      // that follow are chosen for an HTTP/1.1 client.
+      response_.setHttpVersion(1, 1);
 
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
