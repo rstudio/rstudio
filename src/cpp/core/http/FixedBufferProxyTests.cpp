@@ -578,6 +578,52 @@ TEST(FixedBufferProxy, HeadResponseWithUnknownLengthEmitsNoTransferEncodingOrTer
    EXPECT_TRUE(fixture.pClientConnection->closed_);
 }
 
+TEST(FixedBufferProxy, NoTransferEncodingOnASuccessfulResponseToConnect)
+{
+   // RFC 7230 3.3.1: "A server MUST NOT send a Transfer-Encoding header field
+   // in any 2xx (Successful) response to a CONNECT request." Reachable rather
+   // than theoretical: AsyncServerImpl's method allowlist (which would reject
+   // CONNECT with a 405) is deliberately skipped for proxy handlers -- "proxy
+   // handlers do not perform this checking as we flow all traffic like a
+   // proxy" -- and /p/ and /p6/ are registered with addProxyHandler(). So a
+   // CONNECT whose request-target routes to the port proxy is forwarded to the
+   // user's app like any other method.
+   Fixture fixture;
+   fixture.pClientConnection->setRequestMethod("CONNECT");
+
+   http::Response upstream;
+   upstream.setStatusCode(200); // no Content-Length
+
+   fixture.deliver(upstream, "");
+
+   EXPECT_TRUE(fixture.pClientConnection->writtenHeaders_.headerValue(kTransferEncoding).empty());
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+}
+
+TEST(FixedBufferProxy, NonSuccessfulResponseToConnectKeepsOrdinaryFraming)
+{
+   // RFC 7231 4.3.6: any response to CONNECT other than a successful one means
+   // no tunnel was formed and the connection "remains governed by HTTP" -- so
+   // an error response to a CONNECT is framed like any other error response,
+   // body and all. Scoping the rule above to 2xx is what keeps a 405/502 from
+   // the upstream reaching the client with its body silently dropped.
+   Fixture fixture;
+   fixture.pClientConnection->setRequestMethod("CONNECT");
+
+   std::string body = "method not allowed";
+   http::Response upstream;
+   upstream.setStatusCode(405);
+   upstream.setHeader("Content-Length", body.size());
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, body);
+   EXPECT_EQ(fixture.pClientConnection->writtenHeaders_.headerValue("Content-Length"),
+             std::to_string(body.size()));
+}
+
 TEST(FixedBufferProxy, StripsUpstreamTransferEncodingWhenContentLengthFraming)
 {
    Fixture fixture;

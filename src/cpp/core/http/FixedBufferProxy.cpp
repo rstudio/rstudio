@@ -71,15 +71,35 @@ FixedBufferProxy::decideFraming(const http::Response& response) const
    // MUST NOT send a Transfer-Encoding header field in any response with a
    // status code of 1xx (Informational) or 204 (No Content)"), and then follow
    // it with a 0\r\n\r\n terminator that rule 1 says cannot be there.
+   const std::string& method = pClientConnection_->request().method();
    int statusCode = response.statusCode();
    bool informational = statusCode >= 100 && statusCode < 200;
    if (informational ||
        statusCode == http::status::NoContent ||
        statusCode == http::status::NotModified ||
-       pClientConnection_->request().method() == "HEAD")
+       method == "HEAD")
    {
       return Framing::NoBody;
    }
+
+   // The remaining case 3.3.1 forbids Transfer-Encoding for: "A server MUST NOT
+   // send a Transfer-Encoding header field in any 2xx (Successful) response to
+   // a CONNECT request." Per 3.3.3 rule 2 such a response has no body framing
+   // at all -- the connection becomes a tunnel immediately after the headers,
+   // and the client is required to ignore any Content-Length or
+   // Transfer-Encoding it sees.
+   //
+   // rserver implements no CONNECT tunneling (nothing anywhere dispatches on
+   // the method), so this is not us declining to tunnel -- it is a CONNECT that
+   // reached a proxy handler because its request-target happened to route
+   // there, and was then forwarded like any other method. NoBody is the
+   // least-wrong response we can frame: headers, no body, then the close we
+   // always perform. Only 2xx qualifies; per RFC 7231 4.3.6 any other status
+   // means no tunnel was formed and the connection is still governed by HTTP,
+   // so those keep ordinary framing.
+   bool successful = statusCode >= 200 && statusCode < 300;
+   if (successful && method == "CONNECT")
+      return Framing::NoBody;
 
    // Content-Length framing preserves a known upstream length end-to-end
    // (progress bars; HTTP/1.1 forbids CL + chunked together). The fallbacks
