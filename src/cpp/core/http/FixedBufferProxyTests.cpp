@@ -622,6 +622,53 @@ TEST(FixedBufferProxy, RedeliveredCompletionSignalStillWritesTerminatorAfterOver
    EXPECT_TRUE(fixture.pServerConnection->closed_);
 }
 
+TEST(FixedBufferProxy, RedeliveredCompletionSignalStillWritesTerminatorUnderOrdinaryBackpressure)
+{
+   // Regression test for PR #18541 review discussion r3786635248: the
+   // originally-reported trigger was ordinary sustained backpressure mid-
+   // stream (currentBufferSize_ a few bytes short of maxBufferSize_ from a
+   // normal, non-oversized chunk already queued), not the oversized-single-
+   // chunk edge case RedeliveredCompletionSignalStillWritesTerminatorAfter
+   // OversizedChunk above covers. Confirms the same fix (only latching
+   // receivedFinal_ once a piece is actually accepted) handles this more
+   // realistic shape too.
+   std::string body = "hello";
+   std::string formatted = http::util::formatMessageAsHttpChunk(body);
+
+   // Exactly 4 bytes of headroom remain after the body chunk is queued --
+   // one byte short of the 5-byte "0\r\n\r\n" terminator.
+   Fixture fixture(/* maxBufferSize = */ formatted.size() + 4);
+   http::Response upstream;
+   makeChunkedResponse(&upstream);
+
+   // Deliver the body and the completion signal back-to-back, before
+   // draining, so the completion signal arrives while the body chunk's
+   // header/body write is still outstanding (not idle).
+   bool result1 = fixture.pServerConnection->deliverChunk(upstream, body);
+   bool result2 = fixture.pServerConnection->deliverChunk(upstream, "");
+   EXPECT_TRUE(result1);
+   EXPECT_FALSE(result2);
+
+   boost::asio::io_context& ioc = fixture.pClientConnection->ioContext();
+   ioc.restart();
+   ioc.poll();
+
+   // The body chunk has drained; the declined completion signal must be
+   // resumable, not dropped, and the connections must still be open.
+   EXPECT_TRUE(fixture.pServerConnection->resumed_);
+   EXPECT_FALSE(fixture.pClientConnection->closed_);
+
+   // Simulate AsyncClient's real redelivery of the completion signal on resume.
+   EXPECT_TRUE(fixture.pServerConnection->deliverChunk(upstream, ""));
+   ioc.restart();
+   ioc.poll();
+
+   std::string expected = formatted + http::util::formatMessageAsHttpChunk("");
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, expected);
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
 TEST(FixedBufferProxy, FallsBackToChunkedWhenUpstreamContentLengthHeaderIsMalformed)
 {
    // A non-numeric (or otherwise unparseable) Content-Length must not be
