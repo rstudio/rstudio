@@ -96,10 +96,34 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
     // the resume URL into a second (untitled, hidden) frame and only removes
     // this one once that load completes, so the tag is how we tell the
     // resumed frame from the one we started with.
+    //
+    // The observer records the high-water mark of titled iframes across the
+    // resume (rstudio/rstudio#18585): the pending frame must stay untitled
+    // until it replaces this one, or every lookup by title is ambiguous for
+    // the length of the load. Callbacks run after each mutation batch, so the
+    // swap's synchronous title-then-remove sequence is only ever seen in its
+    // end state -- a reading of 2 means the frames genuinely coexisted.
     await page.evaluate((selector) => {
       const f = document.querySelector(selector);
       if (!f) throw new Error('chat iframe not found');
       f.setAttribute('data-pw-prerestart', '');
+
+      const w = window as Window & {
+        _maxChatFrames?: number;
+        _chatFrameObserver?: MutationObserver;
+      };
+      const count = () => document.querySelectorAll(selector).length;
+      w._maxChatFrames = count();
+      w._chatFrameObserver?.disconnect();
+      w._chatFrameObserver = new MutationObserver(() => {
+        w._maxChatFrames = Math.max(w._maxChatFrames ?? 0, count());
+      });
+      w._chatFrameObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['title'],
+      });
     }, CHAT_IFRAME);
 
     // Restart the R session (sentinel-confirmed)
@@ -131,6 +155,17 @@ test.describe.serial('Chat pane persistence', { tag: ['@ai', '@chat'] }, () => {
       console.log('resume swap did not replace the chat iframe within 20s -- ' +
         'asserting against the pre-restart frame');
     }
+
+    const maxChatFrames = await page.evaluate(() => {
+      const w = window as Window & {
+        _maxChatFrames?: number;
+        _chatFrameObserver?: MutationObserver;
+      };
+      w._chatFrameObserver?.disconnect();
+      return w._maxChatFrames ?? -1;
+    });
+
+    expect(maxChatFrames, 'iframes titled "Posit Assistant" attached at once during resume').toBe(1);
 
     // The iframe should have rendered content -- either the chat app root
     // or the "Not Installed" page. Both share a non-empty body.
