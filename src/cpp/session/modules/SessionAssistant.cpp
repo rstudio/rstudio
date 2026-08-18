@@ -211,7 +211,7 @@ uint64_t s_agentGeneration = 0;
 std::string s_runningAgentType;
 
 // Error output (if any) that was written during startup.
-std::string s_agentStartupError;
+AgentStderrTail s_agentStartupError(kAgentStderrMaxBytes);
 
 // The current status of the agent, mainly around if it's enabled
 // (and why or why not).
@@ -282,7 +282,7 @@ std::string agentNotRunningReason()
       case AgentNotRunningReason::DisabledViaGlobalPreferences:
          return "AI assistant has been disabled via global preferences.";
       case AgentNotRunningReason::LaunchError:
-         return "The AI assistant agent failed to launch: " + s_agentStartupError;
+         return "The AI assistant agent failed to launch: " + s_agentStartupError.text();
       case AgentNotRunningReason::Unsupported:
          return "The installed AI assistant version is no longer supported.";
    }
@@ -1180,17 +1180,17 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr, uint64_t
    // replacement's startup error or push its status to Stopping.
    if (generation != s_agentGeneration)
    {
-      DLOG("Ignoring stderr from stale agent generation: {}", stdErr);
+      DLOG("Ignoring stderr from stale agent generation: {}",
+           agentStderrTail(stdErr, kAgentStderrMaxBytes));
       return;
    }
 
    // A crashing Node.js agent prints the offending source line before the
    // stack trace, and for a bundled agent that "line" is the entire minified
    // bundle -- tens of kilobytes per chunk with the real error at the end.
-   // Log and accumulate only the tail; the full text remains on the agent's
-   // stderr for anyone who needs it.
-   constexpr std::size_t kMaxStderrBytes = 4096;
-   LOG_ERROR_MESSAGE(agentStderrTail(stdErr, kMaxStderrBytes));
+   // Keep only the tail; the head (minified bundle text) is deliberately
+   // discarded.
+   LOG_ERROR_MESSAGE(agentStderrTail(stdErr, kAgentStderrMaxBytes));
 
    // If we get output from stderr while the agent is starting, that means
    // something went wrong and we're about to shut down.
@@ -1201,9 +1201,8 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr, uint64_t
    case AgentRuntimeStatus::Stopping:
    {
       // s_agentStartupError is user-facing (launch-failure message, agent
-      // diagnostics), so keep the accumulation bounded as well.
-      s_agentStartupError =
-            agentStderrTail(s_agentStartupError + stdErr, kMaxStderrBytes);
+      // diagnostics); the accumulator bounds it the same way.
+      s_agentStartupError.append(stdErr);
       setAgentRuntimeStatus(AgentRuntimeStatus::Stopping);
       break;
    }
@@ -1231,7 +1230,7 @@ void onError(ProcessOperations& operations, const Error& error, uint64_t generat
    // A superseded process's stream error is not the replacement's startup
    // error — but terminating the errored process is right either way.
    if (generation == s_agentGeneration)
-      s_agentStartupError = error.getMessage();
+      s_agentStartupError.set(error.getMessage());
 
    Error terminateError = operations.terminate();
    if (terminateError)
@@ -1420,7 +1419,7 @@ Error startAgent(const std::string& assistantType = "")
       {
          // callers (ensureAgentRunning et al) tolerate failure and retry on
          // the next request, after the mutation has finished
-         s_agentStartupError = lockMessage;
+         s_agentStartupError.set(lockMessage);
          setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
          return error;
       }
@@ -1579,12 +1578,12 @@ Error startAgent(const std::string& assistantType = "")
    // We include this because all requests will fail if we haven't yet called
    // initialized, so maybe the right approach is to have some sort of 'ensureInitialized'
    // method?
-   s_agentStartupError = std::string();
+   s_agentStartupError.clear();
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
    {
       ELOG("Agent startup timed out [node='{}', stderr='{}'].",
-           nodePath.getAbsolutePath(), s_agentStartupError);
+           nodePath.getAbsolutePath(), s_agentStartupError.text());
       setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       s_runningAgentType.clear();  // Clear since agent failed to start
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
@@ -2731,7 +2730,7 @@ Error assistantStatus(const json::JsonRpcRequest& request,
          launchError.writeJson(&errorJson);
          resultJson["reason"] = static_cast<int>(AgentNotRunningReason::LaunchError);
          resultJson["error"] = errorJson;
-         resultJson["output"] = s_agentStartupError;
+         resultJson["output"] = s_agentStartupError.text();
       }
       else
       {
@@ -2949,20 +2948,49 @@ int assistantRuntimeStatus()
    return static_cast<int>(s_agentRuntimeStatus);
 }
 
-std::string agentStderrTail(const std::string& text, std::size_t maxLength)
+void AgentStderrTail::append(const std::string& text)
 {
-   if (text.length() <= maxLength)
-      return text;
+   tail_ += text;
+   if (tail_.length() <= maxLength_)
+      return;
 
-   std::size_t start = text.length() - maxLength;
+   std::size_t start = tail_.length() - maxLength_;
 
-   // don't start mid-way through a multi-byte UTF-8 character
-   while (start < text.length() &&
-          (static_cast<unsigned char>(text[start]) & 0xC0) == 0x80)
+   // don't cut mid-way through a multi-byte UTF-8 character
+   while (start < tail_.length() &&
+          (static_cast<unsigned char>(tail_[start]) & 0xC0) == 0x80)
       ++start;
 
-   return "[... " + std::to_string(start) + " bytes truncated ...] " +
-          text.substr(start);
+   droppedBytes_ += start;
+   tail_.erase(0, start);
+}
+
+void AgentStderrTail::set(const std::string& text)
+{
+   clear();
+   append(text);
+}
+
+void AgentStderrTail::clear()
+{
+   droppedBytes_ = 0;
+   tail_.clear();
+}
+
+std::string AgentStderrTail::text() const
+{
+   if (droppedBytes_ == 0)
+      return tail_;
+
+   return "[... " + std::to_string(droppedBytes_) + " bytes truncated ...] " +
+          tail_;
+}
+
+std::string agentStderrTail(const std::string& text, std::size_t maxLength)
+{
+   AgentStderrTail tail(maxLength);
+   tail.append(text);
+   return tail.text();
 }
 
 bool stopAgentForUpdate()

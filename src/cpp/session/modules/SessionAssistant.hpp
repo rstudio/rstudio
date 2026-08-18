@@ -16,6 +16,7 @@
 #ifndef RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 #define RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 
+#include <cstddef>
 #include <string>
 
 namespace rstudio {
@@ -31,13 +32,38 @@ namespace assistant {
 
 int assistantRuntimeStatus();
 
-// Bound a chunk of agent stderr, keeping at most its last maxLength bytes:
-// Node.js prints the offending source line before the error and stack trace,
-// and for a bundled agent that "line" is the entire minified bundle, so the
-// useful text is at the end. A truncated tail is prefixed with a short marker
-// noting how many bytes were dropped (so the result can slightly exceed
-// maxLength), and never starts mid-way through a UTF-8 character (the result
-// is embedded in JSON). Exposed for testing.
+// Default bound applied to agent stderr before logging or accumulating it. A
+// crashing Node.js agent prints the offending source line before the stack
+// trace, and for a bundled agent that "line" is the entire minified bundle --
+// tens of kilobytes per chunk with the useful text (error and stack trace) at
+// the end.
+constexpr std::size_t kAgentStderrMaxBytes = 4096;
+
+// Bounded tail of agent stderr: keeps at most the last maxLength bytes
+// appended, plus a cumulative count of the bytes dropped. text() prefixes a
+// truncated tail with a marker noting that count (so the result can slightly
+// exceed maxLength). The cut never lands mid-way through a UTF-8 character,
+// since the text is embedded in JSON. Exposed for testing.
+class AgentStderrTail
+{
+public:
+   explicit AgentStderrTail(std::size_t maxLength)
+      : maxLength_(maxLength)
+   {
+   }
+
+   void append(const std::string& text);
+   void set(const std::string& text);
+   void clear();
+   std::string text() const;
+
+private:
+   std::size_t maxLength_;
+   std::size_t droppedBytes_ = 0;
+   std::string tail_;
+};
+
+// One-shot convenience over AgentStderrTail, for bounding a single chunk.
 std::string agentStderrTail(const std::string& text, std::size_t maxLength);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
