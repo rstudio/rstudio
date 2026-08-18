@@ -5056,7 +5056,11 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
 {
-   WLOG("Chat backend stderr: {}", output);
+   // The chat backend is a bundled Node.js app: a crash prints the offending
+   // source line -- the entire minified bundle -- before the stack trace, so
+   // log only the tail, where the error and stack trace appear.
+   WLOG("Chat backend stderr: {}",
+        assistant::agentStderrTail(output, assistant::kAgentStderrMaxBytes));
 }
 
 void onBackendExit(int exitCode, uint64_t generation, uint64_t lockToken)
