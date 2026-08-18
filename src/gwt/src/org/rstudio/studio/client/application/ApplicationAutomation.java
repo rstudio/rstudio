@@ -577,17 +577,17 @@ public class ApplicationAutomation
          throw new RuntimeException(
             "Unsupported preference type for " + pref.getId() + ": " + pref.getClass().getSimpleName());
       }
-      userPrefs_.writeUserPrefs(succeeded -> invokeWriteCallback(onCompleted, succeeded));
+      userPrefs_.writeUserPrefs((succeeded, errorMessage) -> invokeWriteCallback(onCompleted, succeeded, errorMessage));
    }
 
    private void clearPrefValue(Prefs.PrefValue<?> pref, JavaScriptObject onCompleted)
    {
       pref.removeGlobalValue(true);
-      userPrefs_.writeUserPrefs(succeeded -> invokeWriteCallback(onCompleted, succeeded));
+      userPrefs_.writeUserPrefs((succeeded, errorMessage) -> invokeWriteCallback(onCompleted, succeeded, errorMessage));
    }
 
-   private native void invokeWriteCallback(JavaScriptObject cb, boolean succeeded) /*-{
-      if (cb) cb(succeeded);
+   private native void invokeWriteCallback(JavaScriptObject cb, boolean succeeded, String errorMessage) /*-{
+      if (cb) cb(succeeded, errorMessage);
    }-*/;
 
    private void dispatchCloseAllNoSave()
@@ -736,21 +736,25 @@ public class ApplicationAutomation
          // set / clear return a Promise that resolves once the setUserPrefs
          // RPC has completed, so callers (especially tests that immediately
          // follow with another server-affecting action) can be sure the
-         // pref change is fully landed before proceeding.
+         // pref change is fully landed before proceeding. On failure the
+         // rejection carries the underlying RPC error detail, so test
+         // reports name the real cause (e.g. a dropped connection).
          set: $entry(function(value) {
             return new $wnd.Promise(function(resolve, reject) {
-               var cb = $entry(function(succeeded) {
+               var cb = $entry(function(succeeded, errorMessage) {
                   if (succeeded) resolve();
-                  else reject(new Error('writeUserPrefs failed for pref: ' + name));
+                  else reject(new Error('writeUserPrefs failed for pref: ' + name +
+                                        (errorMessage ? ' -- ' + errorMessage : '')));
                });
                self.@org.rstudio.studio.client.application.ApplicationAutomation::setPrefValue(*)(pref, value, cb);
             });
          }),
          clear: $entry(function() {
             return new $wnd.Promise(function(resolve, reject) {
-               var cb = $entry(function(succeeded) {
+               var cb = $entry(function(succeeded, errorMessage) {
                   if (succeeded) resolve();
-                  else reject(new Error('writeUserPrefs failed for pref: ' + name));
+                  else reject(new Error('writeUserPrefs failed for pref: ' + name +
+                                        (errorMessage ? ' -- ' + errorMessage : '')));
                });
                self.@org.rstudio.studio.client.application.ApplicationAutomation::clearPrefValue(*)(pref, cb);
             });

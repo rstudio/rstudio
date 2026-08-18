@@ -356,6 +356,11 @@ export class ChatPaneActions {
       .toHaveAttribute('contenteditable', 'true', { timeout: 15000 });
     await this.chatPane.typeMessage(text);
 
+    // The previous turn may still be streaming -- the composer shows the stop
+    // button in place of send until the whole turn (including any post-tool
+    // continuation) completes, which can take well over 15s of model latency.
+    // Wait that out before requiring the send button.
+    await expect(this.chatPane.stopBtn).toBeHidden({ timeout: 60000 });
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
     await this.chatPane.sendBtn.click();
   }
@@ -373,9 +378,15 @@ export class ChatPaneActions {
 
       const currentCount = await this.chatPane.getMessageCount();
       if (currentCount > initialCount) {
+        // The stop button flickers off between streaming phases -- notably in
+        // the approval -> tool-execution handoff right after clicking Allow --
+        // so a single hidden sample does not mean the turn is done. Require it
+        // to stay hidden across consecutive samples before concluding.
         const readyDeadline = Date.now() + 30000;
+        let stopHiddenStreak = 0;
         while (Date.now() < readyDeadline) {
           if (await this.chatPane.isAllowButtonVisible()) {
+            stopHiddenStreak = 0;
             await sleep(1000);
             await this.chatPane.allowBtn.click();
             console.log('Clicked "Allow" after response arrived');
@@ -383,8 +394,13 @@ export class ChatPaneActions {
             continue;
           }
 
-          if (!(await this.chatPane.isStopButtonVisible())) {
-            break;
+          if (await this.chatPane.isStopButtonVisible()) {
+            stopHiddenStreak = 0;
+          } else {
+            stopHiddenStreak++;
+            if (stopHiddenStreak >= 4) {
+              break;
+            }
           }
 
           await sleep(500);
