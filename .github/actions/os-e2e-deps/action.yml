@@ -88,6 +88,65 @@ runs:
           echo "PW_RSTUDIO_R_LIBS_USER=${{ inputs.r-libs-user }}" >> "$GITHUB_ENV"
         fi
 
+    # On Windows Server, `playwright install --with-deps` installs the Media
+    # Foundation feature (Chromium needs its media DLLs on Server SKUs). The
+    # feature install takes ~3 minutes, is not cacheable, and used to run
+    # serially inside the browser-install step on every run -- even on a full
+    # cache hit. Start it here so it overlaps the R/npm/browser installs
+    # below; the browser-install step then skips --with-deps on Windows, and
+    # the final step of this action waits for the install and fails on the
+    # same errors the serial install would have surfaced.
+    #
+    # Launched via a scheduled task, not Start-Process: the runner kills
+    # detached child processes when the step exits (runs 31735929103 and
+    # 31746122882 both saw a Start-Process child die without output within
+    # ~80s), while Task Scheduler spawns the process outside the runner's
+    # process tree. The task runs as SYSTEM with its own clean environment,
+    # so the generated script bakes in absolute paths (RUNNER_TEMP is not
+    # defined there) and writes its own output log (no shell redirection).
+    - name: Install Windows Media Foundation (background)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
+        $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
+        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
+
+        # Built from a line array rather than a here-string: a here-string's
+        # closing '@ must sit at column 0, which would terminate this YAML
+        # block scalar. The first two lines interpolate the absolute paths.
+        $lines = @(
+          "`$marker = '$marker'",
+          "`$outLog = '$outLog'",
+          'try {',
+          '  $r = Install-WindowsFeature -Name Server-Media-Foundation -ErrorAction Stop',
+          '  $r | Out-String | Out-File -FilePath $outLog -Append',
+          '  $status = if ($r.Success) { ''ok'' } else { "failed: exit code $($r.ExitCode)" }',
+          '} catch {',
+          '  $_ | Out-String | Out-File -FilePath $outLog -Append',
+          '  $status = "failed: $($_.Exception.Message)"',
+          '}',
+          'Set-Content -Path $marker -Value $status'
+        )
+        Set-Content -Path $script -Value ($lines -join "`n") -Encoding utf8
+
+        # Failures here only cost the overlap, not the install: the wait step
+        # runs the same script synchronously whenever the marker is missing.
+        schtasks /create /f /tn 'rstudio-e2e-mf-install' /sc once /st 23:59 /ru SYSTEM `
+          /tr "powershell -NoProfile -ExecutionPolicy Bypass -File $script"
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::schtasks /create failed ($LASTEXITCODE); Media Foundation will install synchronously in the wait step."
+          exit 0
+        }
+
+        schtasks /run /tn 'rstudio-e2e-mf-install'
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::schtasks /run failed ($LASTEXITCODE); Media Foundation will install synchronously in the wait step."
+          exit 0
+        }
+        Write-Host "Media Foundation install started in the background (scheduled task)."
+
     # Resolve the *installed* R version (major.minor) and fold it into the
     # cache keys below. Installed packages and pak's binary downloads are only
     # compatible within an R major.minor series, so when an alias like
@@ -339,6 +398,15 @@ runs:
             installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
             install.packages(missing, lib = lib, type = installType)
             still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+            # PPM's binary coverage thins out on older R -- the macos14 cell
+            # (R 4.1.3 arm64) has none for devtools, reticulate or shinytest2 --
+            # and type="binary" never falls back on its own, so retry from source.
+            # Unreached where binaries exist, so those cells compile nothing.
+            if (length(still) && !identical(installType, "source")) {
+              cat("[os-e2e-deps] no binary for:", paste(still, collapse = ", "), "-- retrying from source\n")
+              install.packages(still, lib = lib, type = "source")
+              still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
+            }
             if (length(still))
               stop("[os-e2e-deps] failed to install required-packages: ", paste(still, collapse = ", "))
           } else {
@@ -413,6 +481,12 @@ runs:
       # launch error.
       run: |
         BINARY_ONLY=false
+        # On Windows, --with-deps only installs the Media Foundation feature,
+        # which the background step at the top of this action already handles
+        # (and the final step waits for), so fetch only the browser binary.
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          BINARY_ONLY=true
+        fi
         if [ "$RUNNER_OS" = "Linux" ] && [ -r /etc/os-release ]; then
           . /etc/os-release
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || [ "$ID" = "fedora" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
@@ -431,3 +505,82 @@ runs:
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ steps.pw-cache.outputs.cache-primary-key }}
+
+    # Companion to "Install Windows Media Foundation (background)" above: on a
+    # typical run the feature install (~3 min) finished while the R/npm/browser
+    # installs ran, so this is a no-op; when it didn't, block here rather than
+    # letting tests launch an Electron missing its media DLLs. When the marker
+    # never lands (task creation failed, or the installer died), fall back to
+    # running the same script synchronously, bounded -- the worst case is the
+    # serial install this action always used to do. A failed install still
+    # fails the action, matching --with-deps behavior.
+    - name: Wait for Windows Media Foundation install
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
+        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
+
+        function Get-InstallerProcess {
+          Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" |
+            Where-Object { $_.CommandLine -like '*install-media-foundation.ps1*' }
+        }
+
+        # Poll only while the installer is demonstrably alive: a dead process
+        # without a marker will never produce one, so there is nothing to
+        # wait for beyond its lifetime. A brief initial grace period covers
+        # Task Scheduler's spawn latency so a not-yet-started installer isn't
+        # mistaken for a dead one.
+        Start-Sleep -Seconds 5
+        $deadline = (Get-Date).AddMinutes(10)
+        while (-not (Test-Path $marker) -and (Get-Date) -lt $deadline) {
+          if (-not (Get-InstallerProcess)) {
+            break
+          }
+          Start-Sleep -Seconds 5
+        }
+
+        $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
+        if ((Test-Path $outLog) -and (Get-Item $outLog).Length -gt 0) {
+          Write-Host "--- media-foundation.out ---"
+          Get-Content $outLog | Write-Host
+        }
+
+        if (-not (Test-Path $marker)) {
+          # Diagnose which way the background install failed, then kill any
+          # hung remnant so it can't hold the servicing stack against the
+          # synchronous run below.
+          $proc = Get-InstallerProcess
+          if ($proc) {
+            Write-Host "Background installer still running with no result after 10 minutes; killing it."
+            $proc | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+          } else {
+            Write-Host "Background installer is no longer running and left no result."
+          }
+
+          Write-Host "Running the Media Foundation install synchronously."
+          $savedPSModulePath = $env:PSModulePath
+          try {
+            $env:PSModulePath = "$env:SystemRoot\system32\WindowsPowerShell\v1.0\Modules;$env:ProgramFiles\WindowsPowerShell\Modules"
+            $p = Start-Process powershell -NoNewWindow -PassThru `
+              -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script
+            if (-not $p.WaitForExit(600000)) {
+              $p.Kill()
+              Write-Error "Synchronous Media Foundation install timed out after 10 minutes."
+              exit 1
+            }
+          } finally {
+            $env:PSModulePath = $savedPSModulePath
+          }
+        }
+
+        if (-not (Test-Path $marker)) {
+          Write-Error "Media Foundation install wrote no result marker."
+          exit 1
+        }
+        $status = (Get-Content $marker -Raw).Trim()
+        if ($status -ne 'ok') {
+          Write-Error "Media Foundation install failed: $status"
+          exit 1
+        }
+        Write-Host "Media Foundation installed."

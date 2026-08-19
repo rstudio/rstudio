@@ -13,7 +13,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { SourcePane } from '@pages/source_pane.page';
-import { clearPref, setPref } from '@utils/commands';
+import { clearPref, getPref, setPref } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { typeSlowly } from '@utils/constants';
@@ -70,11 +70,28 @@ test.describe('Edit suggestions (showEditSuggestion injection)', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
+  let savedAssistantPref: boolean | number | string | null = null;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
     await consoleActions.resetSourcePane();
+
+    // These tests inject deterministic suggestions via showEditSuggestion; a
+    // live code assistant (e.g. a sign-in leaked from the @ai suites on
+    // credentialed shards) races them with real completions that displace the
+    // injected ones, so force the assistant off for the suite. Restore the
+    // prior value afterwards rather than clearing: the default is "posit",
+    // which would re-enable a leaked provider for later suites.
+    savedAssistantPref = await getPref(page, 'assistant');
+    await setPref(page, 'assistant', 'none');
+  });
+
+  test.afterAll(async ({ rstudioPage: page }) => {
+    if (savedAssistantPref === null)
+      await clearPref(page, 'assistant');
+    else
+      await setPref(page, 'assistant', savedAssistantPref);
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {

@@ -261,7 +261,9 @@ export async function prepareRLibs(): Promise<string | null> {
   //
   // installType is chosen at runtime via .Platform$pkgType so source-only R
   // builds (e.g. some macOS configurations where CRAN has no matching binary)
-  // don't fall over on a forced type = "binary".
+  // don't fall over on a forced type = "binary". Whatever a binary install
+  // leaves behind is retried from source, since neither CRAN nor PPM publishes
+  // a full binary set for older R (CRAN has no arm64 builds below 4.2 at all).
   const pkgsLiteral = REQUIRED_PACKAGES.map((p) => `"${p}"`).join(', ');
   const installCode = heredoc`
     lib <- ${JSON.stringify(expanded)}
@@ -276,6 +278,11 @@ export async function prepareRLibs(): Promise<string | null> {
       installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
       install.packages(missing, lib = lib, repos = ${JSON.stringify(repos)}, type = installType)
       still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+      if (length(still) > 0L && !identical(installType, "source")) {
+        cat("[r-libs] no binary for:", paste(still, collapse = ", "), "-- retrying from source\n")
+        install.packages(still, lib = lib, repos = ${JSON.stringify(repos)}, type = "source")
+        still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
+      }
       if (length(still) > 0L) {
         cat("[r-libs] WARNING: failed to install:", paste(still, collapse = ", "), "\n")
       }

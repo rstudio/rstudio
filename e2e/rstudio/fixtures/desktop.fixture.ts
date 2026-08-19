@@ -9,6 +9,7 @@ import stripJsonComments from 'strip-json-comments';
 import { TIMEOUTS, RSTUDIO_EXTRA_ARGS, sleep } from '../utils/constants';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../utils/commands';
+import { withDeadline } from '../utils/deadline';
 import { workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { isDebugMode } from '../utils/debug';
@@ -177,6 +178,13 @@ export interface DesktopSession {
   // RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp userLogDir). The per-test
   // fixture reads them from here to attach backend logs on a failure.
   logDir: string;
+  // RSTUDIO_DATA_HOME for this launch. Owned here because this file owns the
+  // config-tree layout; callers needing something under it (e.g. the installed
+  // Posit Assistant at data-home/pai) should build from this, not re-derive it.
+  dataHome: string;
+  // Whether this launch's prefs asked for the Posit Assistant pre-release
+  // (test) manifest -- see TempConfig.requestedTestManifest.
+  requestedTestManifest: boolean;
 }
 
 // Gated diagnostic: when PW_DEBUG_PAGES=1 is set, attach listeners to every
@@ -241,6 +249,11 @@ interface TempConfig {
   configDir: string;
   electronUserData: string;
   dataHome: string;
+  // Whether this launch's prefs ask for the Posit Assistant pre-release (test)
+  // manifest. Derived from the merged base+override prefs on a fresh config,
+  // and re-read from the reused prefs file on the relaunch path -- a relaunched
+  // session reads that same file, so it can genuinely be on the test manifest.
+  requestedTestManifest: boolean;
 }
 
 /**
@@ -277,6 +290,8 @@ function createTempConfig(): TempConfig {
     JSON.stringify(prefs, null, 2),
   );
 
+  const requestedTestManifest = prefs.posit_assistant_test_manifest === true;
+
   // Pre-seed electron-store's config.json with explicit windowBounds, pinned
   // to ONE geometry that both local machines and CI render identically:
   // 1024x645, the macOS GH Actions runner's display workArea. Asking for
@@ -297,7 +312,7 @@ function createTempConfig(): TempConfig {
     ),
   );
 
-  return { root, configHome, configDir, electronUserData, dataHome };
+  return { root, configHome, configDir, electronUserData, dataHome, requestedTestManifest };
 }
 
 /**
@@ -504,12 +519,18 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   // Set up the isolated config directory (or reuse one across a restart)
   let tempConfig: TempConfig;
   if (existingConfigRoot) {
+    const reusedPrefsPath = path.join(existingConfigRoot, 'config-home', 'rstudio-prefs.json');
     tempConfig = {
       root: existingConfigRoot,
       configHome: path.join(existingConfigRoot, 'config-home'),
       configDir: path.join(existingConfigRoot, 'config-dir'),
       electronUserData: path.join(existingConfigRoot, 'electron-userdata'),
       dataHome: path.join(existingConfigRoot, 'data-home'),
+      // Read back rather than assumed: this path doesn't re-merge, but the
+      // prefs file it reuses still carries whatever the first launch wrote.
+      requestedTestManifest:
+        fs.existsSync(reusedPrefsPath) &&
+        readPrefsFile(reusedPrefsPath, 'reused config').posit_assistant_test_manifest === true,
     };
     // Defensively recreate child dirs in case anything cleared them between runs
     for (const d of [tempConfig.configHome, tempConfig.configDir, tempConfig.electronUserData, tempConfig.dataHome]) {
@@ -803,7 +824,15 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
 
     // rsession logs land in RSTUDIO_DATA_HOME/log (see core/system/Xdg.cpp).
     const logDir = path.join(tempConfig.dataHome, 'log');
-    return { page, browser, rstudioProcess, configRoot, logDir };
+    return {
+      page,
+      browser,
+      rstudioProcess,
+      configRoot,
+      logDir,
+      dataHome: tempConfig.dataHome,
+      requestedTestManifest: tempConfig.requestedTestManifest,
+    };
   } catch (err) {
     await browser?.close().catch(() => {});
     killProcessTree(rstudioProcess);
@@ -955,25 +984,28 @@ export async function shutdownRStudio(session: DesktopSession): Promise<void> {
   // Options, Import Dataset, ...) blocks the Electron close path: the
   // renderer's quit confirmation prompts queue behind the existing modal and
   // q(save="no") never gets a chance to cascade to a full quit (#17790).
+  //
+  // Each graceful phase gets a deadline: a page left mid-transition can make
+  // `page.evaluate` reject with "context was destroyed", but a transition
+  // that never completes (the #18394 wedge) makes it hang instead, and this
+  // teardown is on the path of an interrupted run flushing its report. The
+  // browser close and force-kill below always run either way.
   try {
-    await dismissAllModals(page);
+    await withDeadline(dismissAllModals(page), 10_000, 'dismiss modals at shutdown');
   } catch {
-    // Page context may already be gone; we still force-kill below.
+    // Page context may already be gone or wedged; we still force-kill below.
   }
 
-  // Close all source files without prompting to save. If a test left the page
-  // in the middle of a navigation (e.g. opening a project triggers a session
-  // restart), `page.evaluate` will reject with "context was destroyed" --
-  // we don't care, we're shutting down anyway.
+  // Close all source files without prompting to save.
   try {
-    await documentCloseAllNoSave(page);
+    await withDeadline(documentCloseAllNoSave(page), 15_000, 'close documents at shutdown');
     await sleep(1000);
   } catch {
-    // Page context may already be gone; we still force-kill below.
+    // Page context may already be gone or wedged; we still force-kill below.
   }
 
   try {
-    await executeInConsole(page, 'q(save = "no")');
+    await withDeadline(executeInConsole(page, 'q(save = "no")'), 15_000, 'quit R at shutdown');
   } catch {
     // Console may already be unresponsive; we still force-kill below.
   }

@@ -37,6 +37,20 @@ export class DebuggerActions {
     ).toBeVisible({ timeout: TIMEOUTS.fileOpen });
   }
 
+  /** Click the breakpoint area of the gutter cell for `line` (1-indexed) to
+   *  remove an existing breakpoint, waiting until no marker remains on that
+   *  line. The removal RPC is dispatched during click processing (see
+   *  BreakpointManager.removeBreakpoint), so a console command submitted
+   *  after this resolves is processed after R has cleared the trace. */
+  async clearBreakpoint(line: number): Promise<void> {
+    const cell = this.debuggerPage.gutterCellForLine(line);
+    await cell.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await cell.click({ position: GUTTER_BREAKPOINT_HIT_AREA });
+    await expect(
+      this.debuggerPage.anyBreakpointForLine(line),
+    ).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+  }
+
   /** Toggle the breakpoint at the cursor's current position via Shift+F9
    *  (the keyboard shortcut bound to debugBreakpoint). Waits until the
    *  total breakpoint marker count changes -- the toggle either added a

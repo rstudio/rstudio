@@ -105,10 +105,16 @@ test.describe('Multi-select recovery', () => {
       })
       .toEqual({ inVirtualSelectionMode: false, tempSelectionInstalled: false });
 
-    // multi-select mode must still be exitable
-    await page.keyboard.press('Escape');
+    // multi-select mode must still be exitable. Escape is pressed inside the
+    // poll: a transient popup (e.g. a live completion, seen leaked from the
+    // @ai suites on run 31833520057) can swallow a single press, while the
+    // corruption this guards against ignores Escape no matter how often it
+    // is pressed.
     await expect
-      .poll(async () => (await editor.getMultiSelectState()).editorInMultiSelectMode)
+      .poll(async () => {
+        await page.keyboard.press('Escape');
+        return (await editor.getMultiSelectState()).editorInMultiSelectMode;
+      })
       .toBe(false);
 
     // and subsequent typing must reach the document at exactly one cursor
@@ -146,11 +152,14 @@ test.describe('Multi-select recovery', () => {
       })
       .toEqual({ inVirtualSelectionMode: false, rangeListAttached: true });
 
-    // multi-select mode must still be exitable, and typing must reach the
-    // document at exactly one cursor afterwards
-    await page.keyboard.press('Escape');
+    // multi-select mode must still be exitable (Escape retried inside the
+    // poll -- see above), and typing must reach the document at exactly one
+    // cursor afterwards
     await expect
-      .poll(async () => (await editor.getMultiSelectState()).editorInMultiSelectMode)
+      .poll(async () => {
+        await page.keyboard.press('Escape');
+        return (await editor.getMultiSelectState()).editorInMultiSelectMode;
+      })
       .toBe(false);
     await page.keyboard.type('Z');
     await expect.poll(async () => countChar(await editor.getValue(), 'Z')).toBe(1);

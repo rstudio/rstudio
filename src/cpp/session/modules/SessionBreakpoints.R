@@ -371,11 +371,16 @@
    generic <- eval(matched[["generic"]], envir = globalenv())
    s7generic <- S7$as_generic(generic)
    
+   # NOTE: look up the method under the name S7 registered it with, via
+   # class_register() -- for package-scoped classes that is "package::name",
+   # not the bare class name. class_register() also reads S7 properties from
+   # within the S7 namespace, which matters on R < 4.3.0 where the base `@`
+   # primitive is S4-only (#18526)
    if (inherits(s7generic, "S7_S3_generic"))
    {
       f <- as.character(matched[["generic"]])
       class <- eval(matched[["class"]], envir = globalenv())
-      getS3method(f, class@name)
+      getS3method(f, S7$class_register(class))
    }
    else if (inherits(s7generic, "S7_generic"))
    {
@@ -658,26 +663,102 @@
    
    s7generic <- S7:::as_generic(generic)
    s7class <- eval(expr[["class"]], envir = globalenv())
+
+   # NOTE: use prop() rather than `@` to read S7 properties; on R < 4.3.0,
+   # the base `@` primitive only supports S4 objects, and S7's own `@` shim
+   # is not visible from this scope (#18526). methods are stored under the
+   # name computed by class_register() -- for package-scoped classes that is
+   # "package::name", not the bare class name
    if (inherits(s7generic, "S7_S3_generic"))
    {
-      methodName <- paste(s7generic$name, s7class@name, sep = ".")
+      methodName <- paste(s7generic$name, S7:::class_register(s7class), sep = ".")
       methodEnvir <- environment(generic)[[".__S3MethodsTable__."]]
    }
    else if (inherits(s7generic, "S7_generic"))
    {
-      methodName <- s7class@name
-      methodEnvir <- s7generic@methods
+      methodName <- S7:::class_register(s7class)
+      methodEnvir <- S7::prop(s7generic, "methods")
    }
    else
    {
       return(FALSE)
    }
-   
-   .rs.setFunctionBreakpoints(
-      functionName = methodName,
-      envir = methodEnvir,
-      steps = steps
+
+   # trace() cannot trace S7 methods for S7 generics directly, as the methods
+   # package cannot derive a trace class from the S7 method's class attribute.
+   # Strip the class before tracing, and restore it afterwards -- onto the
+   # traced wrapper itself while breakpoints are active, so that the generic
+   # remains printable and S7 tooling keeps working. Note that we manipulate
+   # S4 slots via attributes below, as S4 slot assignment validates against
+   # the class attribute, which we intentionally leave in a hybrid state
+   # while breakpoints are active. (#18531)
+   method <- methodEnvir[[methodName]]
+   original <- method
+   s7MethodClass <- NULL
+
+   if (.rs.isTraced(method))
+   {
+      # already traced: recover the stashed S7 class from the hybrid class
+      # attribute, and return the binding to a native functionWithTrace
+      # shape so that trace() and untrace() can act on it
+      s7MethodClass <- setdiff(oldClass(method), "functionWithTrace")
+      if (length(s7MethodClass) == 0)
+         s7MethodClass <- NULL
+
+      untraced <- attr(method, "original", exact = TRUE)
+      oldClass(untraced) <- NULL
+      attr(method, "original") <- untraced
+      attr(method, "class") <- "functionWithTrace"
+      assign(methodName, method, envir = methodEnvir)
+   }
+   else if (inherits(method, "S7_method"))
+   {
+      s7MethodClass <- oldClass(method)
+      oldClass(method) <- NULL
+      assign(methodName, method, envir = methodEnvir)
+   }
+
+   result <- tryCatch(
+      .rs.setFunctionBreakpoints(methodName, methodEnvir, steps),
+      error = function(cnd)
+      {
+         # don't leave the method stripped of its class if trace() fails
+         if (!is.null(s7MethodClass))
+            assign(methodName, original, envir = methodEnvir)
+
+         stop(cnd)
+      }
    )
+
+   method <- methodEnvir[[methodName]]
+   if (!is.null(s7MethodClass))
+   {
+      if (.rs.isTraced(method))
+      {
+         # breakpoints were set: dress the traced wrapper back up as an S7
+         # method, so that the generic remains printable while breakpoints
+         # are active. Keep the class on the untraced copy as well, so that
+         # untrace() restores a well-formed method.
+         untraced <- attr(method, "original", exact = TRUE)
+         oldClass(untraced) <- s7MethodClass
+         attr(method, "original") <- untraced
+
+         skip <- c("class", "srcref", "original", "source")
+         for (attrName in setdiff(names(attributes(untraced)), skip))
+            attr(method, attrName) <- attr(untraced, attrName, exact = TRUE)
+         attr(method, "class") <- c(s7MethodClass, "functionWithTrace")
+      }
+      else
+      {
+         # breakpoints were cleared: untrace() has restored the stripped
+         # copy of the method; reapply the stashed S7 method class
+         oldClass(method) <- s7MethodClass
+      }
+
+      assign(methodName, method, envir = methodEnvir)
+   }
+
+   result
 })
 
 .rs.addFunction("setBreakpoint", function(functionName,
