@@ -119,7 +119,22 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           rig add "$R_VERSION"
-          rig default "$R_VERSION"
+          # rig names installs with arch/major.minor on macOS (e.g. "4.5-arm64"),
+          # not the requested patch version, so `rig default "$R_VERSION"` fails
+          # there. Query rig for the just-installed name, as the macOS e2e
+          # workflows do. Linux registers the full version and takes it as given.
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            R_NAME=$(rig list --json | jq -r '.[-1].name')
+            # No pipefail in this shell: if `rig list` fails, jq still exits 0
+            # and the assignment quietly lands empty.
+            if [ -z "$R_NAME" ] || [ "$R_NAME" = "null" ]; then
+              echo "::error::rig list returned no installed R versions"
+              exit 1
+            fi
+          else
+            R_NAME="$R_VERSION"
+          fi
+          rig default "$R_NAME"
           rig ls
           mkdir -p "$R_LIBS_USER"
 
