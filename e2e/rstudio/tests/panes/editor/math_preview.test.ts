@@ -1,6 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
+import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { setPref, clearPref } from '@utils/commands';
 import { heredoc } from '@utils/heredoc';
@@ -111,10 +112,10 @@ test.describe('Inline LaTeX math previews', () => {
     const popupMath = page.locator('mjx-container:not(.rstudio-mathjax-root mjx-container)');
     await expect(popupMath).toBeVisible({ timeout: 60000 });
 
-    // watch the popup's math element: rendered TeX errors must never enter
-    // the visible DOM (typesets happen in a hidden scratch element, and a
-    // failed render keeps the previous output). track scratch-element
-    // removals on the parent as the "a re-render completed" signal.
+    // watch the popup's math element: rendered TeX errors must never become
+    // visible (typesets happen in a hidden scratch element inside the target,
+    // and a failed render keeps the previous output). track scratch-element
+    // removals on the target as the "a re-render completed" signal.
     await page.evaluate(() => {
       const container = Array.from(document.querySelectorAll('mjx-container')).find(
         (c) => (c as HTMLElement).offsetParent != null
@@ -123,7 +124,8 @@ test.describe('Inline LaTeX math previews', () => {
       (window as any).__merrorSeen = false;
       (window as any).__renderAttempts = 0;
       new MutationObserver(() => {
-        if (el.querySelector('mjx-merror, [data-mjx-error]'))
+        const errors = Array.from(el.querySelectorAll('mjx-merror, [data-mjx-error]'));
+        if (errors.some((n) => getComputedStyle(n).visibility !== 'hidden'))
           (window as any).__merrorSeen = true;
       }).observe(el, { childList: true, subtree: true });
       new MutationObserver((mutations) => {
@@ -131,7 +133,7 @@ test.describe('Inline LaTeX math previews', () => {
           if (m.removedNodes.length > 0)
             (window as any).__renderAttempts += 1;
         }
-      }).observe(el.parentElement!, { childList: true });
+      }).observe(el, { childList: true });
     });
 
     // type a trailing subscript, making the expression incomplete
@@ -150,6 +152,87 @@ test.describe('Inline LaTeX math previews', () => {
     expect(await page.evaluate(() => (window as any).__merrorSeen)).toBe(false);
     await expect(popupMath).toBeVisible();
     await expect(popupMath).not.toContainText('Missing');
+
+    await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
+
+  test('dismissed popup does not leak Escape handlers', async ({ rstudioPage: page }) => {
+    const fileName = `math_preview_escape_${Date.now()}.Rmd`;
+    const content = heredoc`
+      ---
+      title: "Math"
+      ---
+
+      Einstein wrote $e = mc^2$ and moved on.
+    `;
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
+
+    // place the cursor inside the inline math region and wait for the popup
+    await moveCursorTo(page, 5, 20);
+    const popupMath = page.locator('mjx-container:not(.rstudio-mathjax-root mjx-container)');
+    await expect(popupMath).toBeVisible({ timeout: 60000 });
+
+    // snapshot the exception count so the assertion below sees only errors
+    // raised by the Escape presses; earlier unrelated exceptions still fail
+    // the test via the per-test fixture drain (don't clear() them away)
+    const errorCountBefore = await page.evaluate(() => window.rstudio!.errors.list().length);
+
+    // Escape dismisses the popup
+    await page.keyboard.press('Escape');
+    await expect(popupMath).toBeHidden();
+
+    // each popup render used to register a second, leaked Escape preview
+    // handler that swallowed every later Escape keydown app-wide and raised
+    // an uncaught TypeError on a nulled handler field (#18474); Escape after
+    // dismissal must not raise a client exception
+    await page.keyboard.press('Escape');
+    const errors = await page.evaluate(
+      (count) => window.rstudio!.errors.list().slice(count).map((e) => e.message),
+      errorCountBefore
+    );
+    expect(errors).toEqual([]);
+
+    await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
+
+  // math in the visual editor is typeset into ProseMirror widget decorations
+  // through the same MathJax pipeline. the typeset scratch element must live
+  // inside the widget: ProseMirror reverts unexpected siblings in its editing
+  // DOM, which detached the scratch mid-typeset (zero-size output), wedged
+  // the shared typeset queue, and re-parsed raw TeX into the document (#18551)
+  test('inline and display math render in the visual editor', async ({ rstudioPage: page }) => {
+    const fileName = `math_visual_${Date.now()}.qmd`;
+    const content = heredoc`
+      ---
+      format: html
+      ---
+
+      This is inline math: $\mu = 5$.
+
+      $$
+      \bar{X} \sim N\left(\mu,\frac{\sigma^2}{n}\right)
+      $$
+    `;
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    await expect(sourceActions.sourcePane.selectedTab).toContainText(fileName, { timeout: 20000 });
+
+    await sourceActions.ensureVisualMode();
+
+    // both expressions typeset into visible (non-zero-size) output; the
+    // regression rendered the first at zero size and left the rest empty
+    const containers = page.locator('.ProseMirror .pm-math-mathjax mjx-container');
+    await expect(containers).toHaveCount(2, { timeout: 60000 });
+    await expect(containers.nth(0)).toBeVisible();
+    await expect(containers.nth(1)).toBeVisible();
+
+    // the round trip back to source mode must preserve the math text
+    await sourceActions.ensureSourceMode();
+    const editor = new AceEditor(page, '');
+    await expect.poll(() => editor.getValue(), { timeout: 20000 }).toContain('\\mu = 5');
+    expect(await editor.getValue()).toContain('\\bar{X}');
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
   });

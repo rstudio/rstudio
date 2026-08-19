@@ -413,6 +413,43 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       install.packages(packageName, repos = repos, type = type)
 })
 
+# Move an installed package out of the library and into a stash directory
+# inside that same library (so the rename never crosses filesystems). Tests
+# use this to simulate an uninstalled package without discarding the installed
+# copy: .rs.restoreStashedPackage() puts it back with a rename rather than a
+# network reinstall. The stash directory is dot-prefixed, so library scans
+# (which use list.files() defaults) never mistake its contents for packages.
+.rs.addFunction("stashPackage", function(packageName, lib = .libPaths()[1])
+{
+   stash <- file.path(lib, ".rs-package-stash")
+   dir.create(stash, showWarnings = FALSE)
+
+   # drop any stale stash so the rename cannot collide
+   target <- file.path(stash, packageName)
+   unlink(target, recursive = TRUE)
+
+   invisible(file.rename(file.path(lib, packageName), target))
+})
+
+# Restore a package previously moved aside by .rs.stashPackage(). A no-op when
+# nothing is stashed; a stale stash is discarded if the package was already
+# reinstalled in the meantime.
+.rs.addFunction("restoreStashedPackage", function(packageName, lib = .libPaths()[1])
+{
+   source <- file.path(lib, ".rs-package-stash", packageName)
+   if (!file.exists(source))
+      return(invisible(FALSE))
+
+   target <- file.path(lib, packageName)
+   if (file.exists(target))
+   {
+      unlink(source, recursive = TRUE)
+      return(invisible(FALSE))
+   }
+
+   invisible(file.rename(source, target))
+})
+
 .rs.addFunction("getPackageVersion", function(packageName)
 {
    v <- suppressWarnings(utils:::packageDescription(packageName,
@@ -1012,7 +1049,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 .rs.addFunction("isTraced", function(fun) {
-   isS4(fun) && class(fun) == "functionWithTrace"
+   # use %in% rather than ==, as the class attribute of a traced S7 method
+   # is a hybrid of the S7 method class and 'functionWithTrace' (#18531)
+   isS4(fun) && "functionWithTrace" %in% class(fun)
 })
 
 # when a function is traced, some data about the function (such as its original

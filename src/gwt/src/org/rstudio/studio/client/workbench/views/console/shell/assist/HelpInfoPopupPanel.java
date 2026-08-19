@@ -199,8 +199,10 @@ public class HelpInfoPopupPanel extends PopupPanel
    {
       timer_.cancel();
       vpanel_.clear();
-      
-      Label contentsLabel = new Label(contents.replace("\t", "  "));
+
+      // contents can be null when the snippet is missing for the active mode
+      // (#18425); the caller hides the popup for null or empty contents
+      Label contentsLabel = new Label(StringUtil.notNull(contents).replace("\t", "  "));
       contentsLabel.addStyleName(RES.styles().snippetText());
       vpanel_.add(contentsLabel);
       

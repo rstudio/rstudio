@@ -555,6 +555,17 @@
       <delete dir="${panmirror.dir}/node_modules" failonerror="false"/>
       <delete dir="gen" failonerror="false" />
       <delete dir="${extras.dir}" failonerror="false" />
+      <!-- Super Dev Mode persists incremental compile state (unit cache +
+           MinimalRebuildCache) under the system temp directory, outside the
+           repository. Stale entries there can poison later devmode compiles
+           with dangling references to renamed synthetic types (e.g.
+           Foo$lambda$N$Type), so remove them here as well. -->
+      <delete failonerror="false" includeemptydirs="true">
+         <fileset dir="${java.io.tmpdir}" defaultexcludes="false">
+            <include name="gwt-cache-*/**"/>
+            <include name="gwt-cache-*"/>
+         </fileset>
+      </delete>
    </target>
 
    <target name="build-unittests" depends="acesupport,javac" description="Builds JUnit unit tests">

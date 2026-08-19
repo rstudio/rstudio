@@ -38,8 +38,16 @@ public class MathJaxTypeset
             @Override
             public void onMathJaxTypesetComplete(boolean error)
             {
-               callback.onMathJaxTypesetComplete(error);
-               cont.execute();
+               // always advance the queue, even if the callback throws --
+               // a missed continuation wedges all future typesets
+               try
+               {
+                  callback.onMathJaxTypesetComplete(error);
+               }
+               finally
+               {
+                  cont.execute();
+               }
             }
          });
       };
@@ -61,18 +69,24 @@ public class MathJaxTypeset
       });
 
       // bail (keeping the typeset queue alive) if the target has been
-      // detached in the interim
-      if (el.parentNode == null)
+      // detached in the interim -- typesetting a detached element would
+      // compute zero font metrics and render at zero size
+      if (!el.isConnected)
       {
          onCompleted(true);
          return;
       }
 
-      // typeset into a hidden scratch sibling, so that in-progress (or
+      // typeset into a hidden scratch child, so that in-progress (or
       // failed) renders are never visible -- while typing, incomplete
       // expressions would otherwise flash a rendered TeX error before the
-      // previous render could be restored. the scratch element shares the
-      // target's parent and class so it typesets with the same font metrics
+      // previous render could be restored. the scratch element lives inside
+      // the target (same inherited font metrics) rather than beside it: in
+      // the visual editor the target is a ProseMirror widget, and ProseMirror
+      // ignores DOM mutations within widgets but reverts unexpected siblings
+      // (removing the scratch mid-typeset, and re-parsing its raw TeX into
+      // the document) -- see https://github.com/rstudio/rstudio/issues/18551
+      var hadRender = el.querySelector("mjx-container") != null;
       var scratch = el.ownerDocument.createElement(el.tagName);
       scratch.className = el.className;
       scratch.style.position = "absolute";
@@ -80,40 +94,85 @@ public class MathJaxTypeset
       if (el.offsetWidth > 0)
          scratch.style.width = el.offsetWidth + "px";
       scratch.innerText = currentText;
-      el.parentNode.appendChild(scratch);
+      el.appendChild(scratch);
 
       var cleanup = function() {
-         MathJax.typesetClear([scratch]);
-         scratch.parentNode.removeChild(scratch);
-      };
-
-      MathJax.typesetPromise([scratch]).then(function() {
-
-         // failed typesets surface in two ways, neither of which rejects
-         // the typeset promise: recoverable TeX errors render as 'merror'
-         // nodes, while malformed inputs (e.g. unbalanced braces) are
-         // skipped by the math finder entirely, leaving raw text behind
-         var container = scratch.querySelector("mjx-container");
-         var merror = scratch.querySelector("mjx-merror, [data-mjx-error]");
-         var error = container == null || merror != null;
-
-         // swap the new output into place on success; on failure, keep any
-         // previous (successful) render, but surface the error output when
-         // there is no previous render to preserve
-         if (!error || el.querySelector("mjx-container") == null)
+         // remove the scratch before clearing typeset state: a scratch leaked
+         // inside the target would satisfy the next typeset's previous-render
+         // check with output the user cannot see
+         try
          {
-            el.innerHTML = "";
-            while (scratch.firstChild)
-               el.appendChild(scratch.firstChild);
+            if (scratch.parentNode != null)
+               scratch.parentNode.removeChild(scratch);
+         }
+         catch (e)
+         {
+            $wnd.console.warn(e);
          }
 
-         cleanup();
-         onCompleted(error);
+         try
+         {
+            MathJax.typesetClear([scratch]);
+         }
+         catch (e)
+         {
+            $wnd.console.warn(e);
+         }
+      };
 
-      }, function(err) {
+      MathJax.typesetPromise([scratch]).then($entry(function() {
+
+         var error = true;
+         try
+         {
+            // failed typesets surface in two ways, neither of which rejects
+            // the typeset promise: recoverable TeX errors render as 'merror'
+            // nodes, while malformed inputs (e.g. unbalanced braces) are
+            // skipped by the math finder entirely, leaving raw text behind
+            var container = scratch.querySelector("mjx-container");
+            var merror = scratch.querySelector("mjx-merror, [data-mjx-error]");
+            error = container == null || merror != null;
+
+            // swap the new output into place on success; on failure, keep any
+            // previous (successful) render, but surface the error output when
+            // there is no previous render to preserve
+            if (!error || !hadRender)
+            {
+               // if the scratch was moved out from under us, there is nothing
+               // to swap in -- report failure rather than emptying the target
+               if (scratch.parentNode !== el)
+               {
+                  error = true;
+               }
+               else
+               {
+                  while (el.firstChild != scratch)
+                     el.removeChild(el.firstChild);
+
+                  while (scratch.firstChild != null)
+                     el.insertBefore(scratch.firstChild, scratch);
+               }
+            }
+         }
+         catch (e)
+         {
+            // a failed swap must not report success: the target may have been
+            // emptied, and callers would otherwise trust a blank render
+            error = true;
+            $wnd.console.warn(e);
+         }
+         finally
+         {
+            // the queue must always advance, even if the swap fails
+            // unexpectedly -- a missed completion wedges all future typesets
+            cleanup();
+            onCompleted(error);
+         }
+
+      }), $entry(function(err) {
          cleanup();
          onCompleted(true);
-      });
+      }));
    }-*/;
 
 

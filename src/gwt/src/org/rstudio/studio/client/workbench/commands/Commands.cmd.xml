@@ -325,6 +325,15 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="paneLayout"/>
          </menu>
 
+         <menu label="Split _Editor">
+            <cmd refid="splitEditorRight"/>
+            <cmd refid="splitEditorDown"/>
+            <cmd refid="removeEditorSplit"/>
+            <separator/>
+            <cmd refid="toggleEditorSplit"/>
+            <cmd refid="focusOtherEditorSplit"/>
+         </menu>
+
          <separator/>
 
          <cmd refid="zoomActualSize"/>
@@ -2323,6 +2332,31 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Toggle Visual Markdown Editor"
         menuLabel="_Use Visual Editor"
         desc="Switch markdown editing mode"/>
+
+   <cmd id="splitEditorRight"
+        label="Split Editor Right"
+        menuLabel="Split Editor _Right"
+        desc="Show a second view of this document beside the current one"/>
+
+   <cmd id="splitEditorDown"
+        label="Split Editor Down"
+        menuLabel="Split Editor _Down"
+        desc="Show a second view of this document below the current one"/>
+
+   <cmd id="removeEditorSplit"
+        label="Remove Editor Split"
+        menuLabel="Remo_ve Editor Split"
+        desc="Close the second view of this document"/>
+
+   <cmd id="toggleEditorSplit"
+        label="Toggle Editor Split"
+        menuLabel="_Toggle Editor Split"
+        desc="Toggle the second view of this document"/>
+
+   <cmd id="focusOtherEditorSplit"
+        label="Focus Other Editor Split"
+        menuLabel="_Focus Other Editor Split"
+        desc="Move focus to the other view of this document"/>
 
    <cmd id="enableProsemirrorDevTools"
         label="Enable Prosemirror DevTools"

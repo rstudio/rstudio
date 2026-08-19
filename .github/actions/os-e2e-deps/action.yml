@@ -37,16 +37,37 @@ inputs:
     default: ""
   install-required-packages:
     description: >
-      When "true", also install the harness's REQUIRED_PACKAGES set (from
-      <working-directory>/required-packages.txt) into R_LIBS_USER, before the
-      cache save. The caller must then point the Playwright globalSetup at the
-      same library (PW_RSTUDIO_R_LIBS_USER) so it finds everything present and
-      installs nothing at test time. Callers that leave this empty pay
-      globalSetup's install into its own (uncached) default library on every
-      run: a fast binary download where PPM covers the platform, a full source
-      compile where it doesn't (Fedora). All Linux e2e engines set it.
+      When "true" (the default), also install the harness's REQUIRED_PACKAGES
+      set (from <working-directory>/required-packages.txt) into R_LIBS_USER,
+      before the cache save, and export PW_RSTUDIO_R_LIBS_USER so the
+      Playwright globalSetup looks in that same library, finds everything
+      present, and installs nothing at test time. The two halves only work as
+      a pair -- a populated library the harness never looks in, or a harness
+      pointed at an unpopulated one, both degrade to test-time installs from
+      the upstream repo, where an outage surfaces as mid-suite hangs (see
+      #18488) -- which is why the action owns both. Pass an explicit "" to opt
+      out of both halves; globalSetup then provisions its own (uncached)
+      default library on every run: a fast binary download where PPM covers
+      the platform, a full source compile where it doesn't (Fedora).
     required: false
-    default: ""
+    default: "true"
+
+outputs:
+  r-version:
+    description: >
+      The installed R version as major.minor (e.g. "4.5"), resolved from the R
+      that is actually on PATH. This is the value folded into the cache keys.
+    value: ${{ steps.r_version.outputs.version }}
+  r-version-full:
+    description: >
+      The full installed R version, resolved from the R that is actually on PATH
+      rather than echoed from the caller's request -- which is the only
+      trustworthy method, since engines whose config sets r_install "distro"
+      ignore the request entirely. Normally a bare version ("4.5.3"); under
+      R-devel the status is appended ("4.6.0 (Under development (unstable))"),
+      because otherwise a snapshot is indistinguishable from the release it
+      precedes.
+    value: ${{ steps.r_version.outputs.version_full }}
 
 runs:
   using: "composite"
@@ -69,6 +90,74 @@ runs:
         # key so its compiled R packages can't collide with another distro's.
         SCOPE="${{ inputs.cache-scope }}"
         echo "CACHE_OS=${RUNNER_OS}${SCOPE:+-$SCOPE}" >> "$GITHUB_ENV"
+        # Point the harness's R-libs provisioner (fixtures/r-libs-setup.ts,
+        # run in globalSetup) at the library this action populates, so the
+        # caller can't configure the install without the lookup or vice
+        # versa (the half-configured states behind #18390 and #18488).
+        # Skipped when the caller already defines PW_RSTUDIO_R_LIBS_USER
+        # (a job-level env override wins) or opted out of the install.
+        if [ "${{ inputs.install-required-packages }}" = "true" ] && [ -z "${PW_RSTUDIO_R_LIBS_USER:-}" ]; then
+          echo "PW_RSTUDIO_R_LIBS_USER=${{ inputs.r-libs-user }}" >> "$GITHUB_ENV"
+        fi
+
+    # On Windows Server, `playwright install --with-deps` installs the Media
+    # Foundation feature (Chromium needs its media DLLs on Server SKUs). The
+    # feature install takes ~3 minutes, is not cacheable, and used to run
+    # serially inside the browser-install step on every run -- even on a full
+    # cache hit. Start it here so it overlaps the R/npm/browser installs
+    # below; the browser-install step then skips --with-deps on Windows, and
+    # the final step of this action waits for the install and fails on the
+    # same errors the serial install would have surfaced.
+    #
+    # Launched via a scheduled task, not Start-Process: the runner kills
+    # detached child processes when the step exits (runs 31735929103 and
+    # 31746122882 both saw a Start-Process child die without output within
+    # ~80s), while Task Scheduler spawns the process outside the runner's
+    # process tree. The task runs as SYSTEM with its own clean environment,
+    # so the generated script bakes in absolute paths (RUNNER_TEMP is not
+    # defined there) and writes its own output log (no shell redirection).
+    - name: Install Windows Media Foundation (background)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
+        $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
+        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
+
+        # Built from a line array rather than a here-string: a here-string's
+        # closing '@ must sit at column 0, which would terminate this YAML
+        # block scalar. The first two lines interpolate the absolute paths.
+        $lines = @(
+          "`$marker = '$marker'",
+          "`$outLog = '$outLog'",
+          'try {',
+          '  $r = Install-WindowsFeature -Name Server-Media-Foundation -ErrorAction Stop',
+          '  $r | Out-String | Out-File -FilePath $outLog -Append',
+          '  $status = if ($r.Success) { ''ok'' } else { "failed: exit code $($r.ExitCode)" }',
+          '} catch {',
+          '  $_ | Out-String | Out-File -FilePath $outLog -Append',
+          '  $status = "failed: $($_.Exception.Message)"',
+          '}',
+          'Set-Content -Path $marker -Value $status'
+        )
+        Set-Content -Path $script -Value ($lines -join "`n") -Encoding utf8
+
+        # Failures here only cost the overlap, not the install: the wait step
+        # runs the same script synchronously whenever the marker is missing.
+        schtasks /create /f /tn 'rstudio-e2e-mf-install' /sc once /st 23:59 /ru SYSTEM `
+          /tr "powershell -NoProfile -ExecutionPolicy Bypass -File $script"
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::schtasks /create failed ($LASTEXITCODE); Media Foundation will install synchronously in the wait step."
+          exit 0
+        }
+
+        schtasks /run /tn 'rstudio-e2e-mf-install'
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "::warning::schtasks /run failed ($LASTEXITCODE); Media Foundation will install synchronously in the wait step."
+          exit 0
+        }
+        Write-Host "Media Foundation install started in the background (scheduled task)."
 
     # Resolve the *installed* R version (major.minor) and fold it into the
     # cache keys below. Installed packages and pak's binary downloads are only
@@ -78,13 +167,78 @@ runs:
     # on the resolved version (rather than the requested alias, which never
     # changes) handles that, and scoping restore-keys to the same version
     # stops a prefix-match fallback from pulling a stale-version library in.
+    #
+    # The full version is captured alongside it and written to the run summary.
+    # Reading it back from the installed R is the only trustworthy *method*: the
+    # requested version is not a record of anything, because engines whose config
+    # sets r_install "distro" (the Fedora ones) drop it silently and install
+    # whatever the distro ships.
+    #
+    # --vanilla on both calls: without it, a site or user profile that prints on
+    # load prepends its output to stdout, so the version would arrive as
+    # "Loading site profile\n4.6.1" and flow on into the run summary, the
+    # artifact, and any caller's table. Fedora installs R from dnf, whose
+    # Rprofile.site is distro-controlled, which is exactly where we don't govern
+    # what loads. The shape check then rejects anything that isn't a bare version.
     - name: Resolve R version
       id: r_version
       shell: bash
       run: |
-        VERSION=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        VERSION=$(Rscript --vanilla -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep=".")')
+        VERSION_FULL=$(Rscript --vanilla -e 'cat(paste(R.version$major, R.version$minor, sep = "."))')
+        # [[ =~ ]] rather than grep: grep matches line by line, so a polluted
+        # "Loading site profile\n4.6.1" would pass on its second line -- the very
+        # case this rejects. Bash anchors the pattern to the whole string.
+        for v in "$VERSION" "$VERSION_FULL"; do
+          if [[ ! "$v" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Could not read a plain R version from Rscript (got '$v'). An R profile printing on load is the usual cause."
+            exit 1
+          fi
+        done
+        # R-devel reports the same major.minor.patch as the release it precedes,
+        # so without the status suffix a certification record cannot tell an
+        # unstable snapshot from a shipped version -- and "devel" is an advertised
+        # r_overrides value. Kept out of $VERSION so the cache key stays a bare
+        # series.
+        #
+        # Read in the same call as the version above rather than a third Rscript:
+        # this step has no set -e, so a separate call that failed would leave
+        # STATUS empty and drop the suffix silently, which is exactly the
+        # release-versus-snapshot confusion it exists to prevent. One invocation is
+        # one failure surface, and the shape check above already rejects a polluted
+        # first line.
+        STATUS=$(Rscript --vanilla -e 'cat(R.version$status)') || {
+          echo "::error::Could not read R.version\$status from Rscript, so an R-devel snapshot would be indistinguishable from the release it precedes."
+          exit 1
+        }
+        [ -z "$STATUS" ] || VERSION_FULL="$VERSION_FULL ($STATUS)"
         echo "Resolved R version (major.minor): $VERSION"
+        echo "Installed R version: $VERSION_FULL"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "version_full=$VERSION_FULL" >> "$GITHUB_OUTPUT"
+        # Surfaced on the job's summary page so the R version is visible without
+        # opening the log. Deliberately unconditional: every engine and every
+        # caller gets it, not just certification runs.
+        {
+          echo "### R version"
+          echo ""
+          echo "Installed R: \`$VERSION_FULL\` (cache series \`$VERSION\`)"
+        } >> "$GITHUB_STEP_SUMMARY"
+        # Also drop it in the workspace so a caller can upload it as an
+        # artifact. A caller that runs several engines as one matrix cannot read
+        # a per-engine job output (a matrix job collapses to one value), so an
+        # artifact is the only way to attribute a version to its own engine.
+        # $GITHUB_WORKSPACE rather than the github.workspace expression, and the
+        # pairing with the caller's upload step is deliberate rather than
+        # inconsistent. On a container engine the two kinds of step see different
+        # filesystems: a run: step executes inside the container, where the
+        # workspace is mounted at /__w/<repo>/<repo>, while a JS action like
+        # upload-artifact executes on the host, where github.workspace is
+        # /home/runner/work/... So a shell step must read the environment
+        # variable and an artifact path must use the expression -- they name the
+        # same directory from the two sides. Using github.workspace here broke the
+        # Rocky 10 arm64 build in July 2026; don't "harmonize" them.
+        printf '%s\n' "$VERSION_FULL" > "$GITHUB_WORKSPACE/r-version.txt"
 
     # All three caches below are restore-only, with matching Save steps after
     # the corresponding install. The saves run only from main-scoped runs (the
@@ -94,7 +248,7 @@ runs:
     # what evicts main's copies and sends every run cold in the first place.
     - name: Restore R packages (pak download cache)
       id: pak-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
         key: ${{ env.CACHE_OS }}-pak-${{ steps.r_version.outputs.version }}-${{ hashFiles(format('{0}/DESCRIPTION', inputs.working-directory)) }}
@@ -103,7 +257,7 @@ runs:
 
     - name: Restore R library
       id: rlib-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ inputs.r-libs-user }}
         # When install-required-packages is set, fold required-packages.txt into
@@ -144,12 +298,62 @@ runs:
             ;;
         esac
 
+    # Supply OBJCXX when the running R doesn't, so a package with Objective-C++
+    # sources can still be built from source on macOS.
+    #
+    # R's Makeconf carries an .mm.o rule that expands $(OBJCXX), but R 4.1 on
+    # macOS leaves that variable empty. make then runs the rule with no compiler
+    # and no flags -- just the include paths -- and /bin/sh tries to execute the
+    # first -I path as a command, giving the memorable "No such file or
+    # directory" on a path that plainly exists. systemfonts is the package this
+    # bites (mac/FontManagerMac.mm), and it is unavoidable there: PPM publishes no
+    # macOS arm64 binary for it below R 4.2, so R 4.1.3 always compiles it from
+    # source.
+    #
+    # Only fills the gap: a newer R defines OBJCXX itself and is left alone, so
+    # this cannot override a correct value with a guess. The C++ standard comes
+    # from the package's own PKG_OBJCXXFLAGS, so only the compiler and arch are
+    # needed here.
+    - name: Supply OBJCXX for older R on macOS
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Read Makeconf rather than asking `R CMD config OBJCXX`: that command
+        # answers only for the variables on its own known list, and OBJCXX is not
+        # one of them. On an R whose Makeconf defines OBJCXX perfectly well
+        # (verified on 4.6.1, where it is `clang++ -arch arm64 -std=gnu++20`) it
+        # prints "ERROR: no information for variable 'OBJCXX'" to *stdout* and
+        # exits 1. So it cannot answer this question either way: its output is
+        # non-empty whether or not the variable is set, and its exit status is
+        # nonzero whether or not the variable is set. Under the set -e above, a
+        # guard written as CURRENT=$(R CMD config OBJCXX) aborts this step rather
+        # than reaching any conclusion at all.
+        MAKECONF="$(Rscript --vanilla -e 'cat(R.home("etc"))')/Makeconf"
+        # Quit at the first OBJCXX line rather than piping to head: only one line
+        # can match, so there is no SIGPIPE to worry about either way, but under the
+        # set -e above a pipeline is one more thing to reason about for no gain.
+        CURRENT=$(sed -n 's/^OBJCXX[[:space:]]*=[[:space:]]*//p; /^OBJCXX[[:space:]]*=/q' "$MAKECONF")
+        if [ -n "$CURRENT" ]; then
+          echo "This R defines OBJCXX ($CURRENT); nothing to do."
+          exit 0
+        fi
+        MAKEVARS="$RUNNER_TEMP/Makevars-objcxx"
+        printf 'OBJCXX = clang++ -arch %s\n' "$(uname -m)" > "$MAKEVARS"
+        echo "R_MAKEVARS_USER=$MAKEVARS" >> "$GITHUB_ENV"
+        echo "::notice::This R leaves OBJCXX empty; supplying '$(cat "$MAKEVARS")' via R_MAKEVARS_USER so Objective-C++ sources build."
+
     - name: Install R packages (DESCRIPTION, plus required set when requested)
       shell: bash
       env:
         E2E_ROOT: ${{ inputs.working-directory }}
         R_USER_CACHE_DIR: ${{ github.workspace }}/.r-pkg-cache
         INSTALL_REQUIRED: ${{ inputs.install-required-packages }}
+        # The install targets R_LIBS_USER while the cache path and the
+        # PW_RSTUDIO_R_LIBS_USER export use the r-libs-user input; set the
+        # former from the latter so they can't diverge on a caller whose
+        # job-level R_LIBS_USER doesn't match the input.
+        R_LIBS_USER: ${{ inputs.r-libs-user }}
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
           # Track the runner's actual distro so PPM serves native binaries and
@@ -177,16 +381,44 @@ runs:
         SCRIPT="$(mktemp -t install-deps.XXXXXX.R)"
         cat > "$SCRIPT" <<'EOF'
         options(repos = c(P3M = Sys.getenv("PKG_REPO")))
-        if (!requireNamespace("pak", quietly = TRUE))
-          install.packages("pak")
+        # pak comes from its own repository rather than PKG_REPO. PPM's pak
+        # coverage varies by platform and R series, and it moves: a certification
+        # cell installing an older R hit a PPM index carrying no pak at all (as of
+        # 2026-08), where install.packages() reports the misleading "package 'pak'
+        # is not available for this version of R" even though pak declares only
+        # R >= 3.5. Treat no particular gap as permanent -- check the index before
+        # concluding this line has stopped being necessary.
+        #
+        # pak's own repository is keyed on the running session's pkgType, os and
+        # arch, not on an R version: each triple's index lists one build per R
+        # series, each declaring the series it is bound to, so install.packages
+        # picks the build for the R that is running. This is the install line pak's
+        # own README gives. pak documents support back to R 4.1.0 on macOS arm64 and
+        # R 3.5.0 on macOS x86_64, Linux and Windows, which covers every cell in
+        # .github/e2e-certification/matrix.json.
+        #
+        # Checked afterwards because install.packages only warns on an unreachable
+        # repo: without this the failure surfaces one step later as "there is no
+        # package called 'pak'", naming neither the URL nor the triple that had no
+        # build. The required-packages install below uses the same shape.
+        if (!requireNamespace("pak", quietly = TRUE)) {
+          repo <- sprintf("https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+                          .Platform$pkgType, R.Version()$os, R.Version()$arch)
+          install.packages("pak", repos = repo)
+          if (!requireNamespace("pak", quietly = TRUE))
+            stop("[os-e2e-deps] pak did not install from ", repo,
+                 " -- no build published for pkgType=", .Platform$pkgType,
+                 ", os=", R.Version()$os, ", arch=", R.Version()$arch)
+        }
         pak::local_install_dev_deps(
           root = Sys.getenv("E2E_ROOT"),
           ask = FALSE,
           upgrade = FALSE
         )
-        # On distros without CRAN binaries (Fedora), also install the harness's
-        # REQUIRED_PACKAGES set now so it lands in the cached library rather than
-        # being source-compiled by the Playwright globalSetup at test time. Reads
+        # When requested, also install the harness's REQUIRED_PACKAGES set now
+        # so it lands in the cached library rather than being installed by the
+        # Playwright globalSetup at test time (a source compile on distros
+        # without PPM binaries, a PPM download everywhere else). Reads
         # the same required-packages.txt that fixtures/r-libs-setup.ts reads, so
         # the two sets can't drift. Both the presence check and the install are
         # scoped to R_LIBS_USER (the cached tree), mirroring the harness's own
@@ -209,6 +441,15 @@ runs:
             installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
             install.packages(missing, lib = lib, type = installType)
             still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+            # PPM's binary coverage thins out on older R -- the macos14 cell
+            # (R 4.1.3 arm64) has none for devtools, reticulate or shinytest2 --
+            # and type="binary" never falls back on its own, so retry from source.
+            # Unreached where binaries exist, so those cells compile nothing.
+            if (length(still) && !identical(installType, "source")) {
+              cat("[os-e2e-deps] no binary for:", paste(still, collapse = ", "), "-- retrying from source\n")
+              install.packages(still, lib = lib, type = "source")
+              still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
+            }
             if (length(still))
               stop("[os-e2e-deps] failed to install required-packages: ", paste(still, collapse = ", "))
           } else {
@@ -220,14 +461,14 @@ runs:
 
     - name: Save R packages (pak download cache)
       if: github.ref == 'refs/heads/main' && steps.pak-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/.r-pkg-cache
         key: ${{ steps.pak-cache.outputs.cache-primary-key }}
 
     - name: Save R library
       if: github.ref == 'refs/heads/main' && steps.rlib-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ inputs.r-libs-user }}
         key: ${{ steps.rlib-cache.outputs.cache-primary-key }}
@@ -258,7 +499,7 @@ runs:
     # with an empty cache-scope keep the legacy runner.os key byte-for-byte.
     - name: Restore Playwright browsers
       id: pw-cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ env.CACHE_OS }}-pw-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
@@ -266,7 +507,7 @@ runs:
           ${{ env.CACHE_OS }}-pw-
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
       with:
         python-version: '3.x'
 
@@ -283,6 +524,12 @@ runs:
       # launch error.
       run: |
         BINARY_ONLY=false
+        # On Windows, --with-deps only installs the Media Foundation feature,
+        # which the background step at the top of this action already handles
+        # (and the final step waits for), so fetch only the browser binary.
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          BINARY_ONLY=true
+        fi
         if [ "$RUNNER_OS" = "Linux" ] && [ -r /etc/os-release ]; then
           . /etc/os-release
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || [ "$ID" = "fedora" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
@@ -297,7 +544,86 @@ runs:
 
     - name: Save Playwright browsers
       if: github.ref == 'refs/heads/main' && steps.pw-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ github.workspace }}/ms-playwright
         key: ${{ steps.pw-cache.outputs.cache-primary-key }}
+
+    # Companion to "Install Windows Media Foundation (background)" above: on a
+    # typical run the feature install (~3 min) finished while the R/npm/browser
+    # installs ran, so this is a no-op; when it didn't, block here rather than
+    # letting tests launch an Electron missing its media DLLs. When the marker
+    # never lands (task creation failed, or the installer died), fall back to
+    # running the same script synchronously, bounded -- the worst case is the
+    # serial install this action always used to do. A failed install still
+    # fails the action, matching --with-deps behavior.
+    - name: Wait for Windows Media Foundation install
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
+        $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
+
+        function Get-InstallerProcess {
+          Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" |
+            Where-Object { $_.CommandLine -like '*install-media-foundation.ps1*' }
+        }
+
+        # Poll only while the installer is demonstrably alive: a dead process
+        # without a marker will never produce one, so there is nothing to
+        # wait for beyond its lifetime. A brief initial grace period covers
+        # Task Scheduler's spawn latency so a not-yet-started installer isn't
+        # mistaken for a dead one.
+        Start-Sleep -Seconds 5
+        $deadline = (Get-Date).AddMinutes(10)
+        while (-not (Test-Path $marker) -and (Get-Date) -lt $deadline) {
+          if (-not (Get-InstallerProcess)) {
+            break
+          }
+          Start-Sleep -Seconds 5
+        }
+
+        $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
+        if ((Test-Path $outLog) -and (Get-Item $outLog).Length -gt 0) {
+          Write-Host "--- media-foundation.out ---"
+          Get-Content $outLog | Write-Host
+        }
+
+        if (-not (Test-Path $marker)) {
+          # Diagnose which way the background install failed, then kill any
+          # hung remnant so it can't hold the servicing stack against the
+          # synchronous run below.
+          $proc = Get-InstallerProcess
+          if ($proc) {
+            Write-Host "Background installer still running with no result after 10 minutes; killing it."
+            $proc | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+          } else {
+            Write-Host "Background installer is no longer running and left no result."
+          }
+
+          Write-Host "Running the Media Foundation install synchronously."
+          $savedPSModulePath = $env:PSModulePath
+          try {
+            $env:PSModulePath = "$env:SystemRoot\system32\WindowsPowerShell\v1.0\Modules;$env:ProgramFiles\WindowsPowerShell\Modules"
+            $p = Start-Process powershell -NoNewWindow -PassThru `
+              -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script
+            if (-not $p.WaitForExit(600000)) {
+              $p.Kill()
+              Write-Error "Synchronous Media Foundation install timed out after 10 minutes."
+              exit 1
+            }
+          } finally {
+            $env:PSModulePath = $savedPSModulePath
+          }
+        }
+
+        if (-not (Test-Path $marker)) {
+          Write-Error "Media Foundation install wrote no result marker."
+          exit 1
+        }
+        $status = (Get-Content $marker -Raw).Trim()
+        if ($status -ne 'ok') {
+          Write-Error "Media Foundation install failed: $status"
+          exit 1
+        }
+        Write-Host "Media Foundation installed."

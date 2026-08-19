@@ -1,7 +1,12 @@
 import type { Page } from '@playwright/test';
 import * as path from 'path';
 import { test } from '../fixtures/rstudio.fixture';
-import { executeInConsole, CONSOLE_OUTPUT, waitForConsoleIdle } from '../pages/console_pane.page';
+import {
+  executeInConsole,
+  ensureConsoleIdle,
+  CONSOLE_OUTPUT,
+  waitForConsoleIdle,
+} from '../pages/console_pane.page';
 import { sleep, TIMEOUTS } from './constants';
 import { assertAbsolutePath } from './paths';
 
@@ -65,7 +70,18 @@ export async function createSandbox(page: Page): Promise<string> {
     // Bridge not in scope yet -- let the marker poll below surface any
     // real failure rather than blocking the suite on the readiness wait.
   });
-  await waitForConsoleIdle(page);
+  try {
+    await waitForConsoleIdle(page);
+  } catch (err) {
+    // The console is busy with something no test is waiting on -- a prior
+    // test leaked a long-running command (e.g. a shiny app its teardown
+    // failed to stop). Left alone this fails the sandbox beforeAll of every
+    // remaining suite in the worker (in Server mode, the rest of the shard),
+    // so attempt one bounded interrupt-based recovery and only propagate the
+    // timeout if the console really can't be freed.
+    if (!(await ensureConsoleIdle(page)))
+      throw err;
+  }
 
   // Build the R expression on a single line so executeInConsole's single
   // press('Enter') executes it atomically.

@@ -909,6 +909,18 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       DIRECTORY "resources/terminal"
       DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # collect the 32-bit session binaries produced by the multiarch sub-build, which
+   # package/win32/make-install-win32.bat installs into <build>/src/cpp/session/x86.
+   # CPack re-runs install rules after that sub-build, so the directory is populated
+   # by packaging time; MAKE_DIRECTORY keeps non-multiarch builds (where nothing
+   # writes it) from failing on a missing install(DIRECTORY) source.
+   if(WIN32)
+      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86")
+      install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x86"
+              USE_SOURCE_PERMISSIONS
+              DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   endif()
+
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")

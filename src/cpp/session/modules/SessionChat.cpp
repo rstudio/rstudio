@@ -4596,7 +4596,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 
    if (fetchError)
    {
-      WLOG("Failed to download manifest: {}", fetchError.getMessage());
+      WLOG("Failed to download manifest: {}", core::errorDescription(fetchError));
 
       bool isInstalled = (installedVersion != "0.0.0");
       bool protocolMismatch = hasProtocolMismatch(installedVersion);
@@ -4619,7 +4619,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       {
          // Not installed, or protocol mismatch: cannot proceed -> block.
          manifestUnavailable = true;
-         errorMessage = fetchError.getMessage();
+         errorMessage = core::errorDescription(fetchError);
       }
 
       // recordToWrite stays unset -> finish() preserve-and-bumps the timestamp.
@@ -4633,9 +4633,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    if (error)
    {
       WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
-           error.getMessage());
+           core::errorDescription(error));
       manifestUnavailable = true;
-      errorMessage = error.getMessage();
+      errorMessage = core::errorDescription(error);
       finish();
       return;
    }
@@ -5056,7 +5056,11 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
 {
-   WLOG("Chat backend stderr: {}", output);
+   // The chat backend is a bundled Node.js app: a crash prints the offending
+   // source line -- the entire minified bundle -- before the stack trace, so
+   // log only the tail, where the error and stack trace appear.
+   WLOG("Chat backend stderr: {}",
+        assistant::agentStderrTail(output, assistant::kAgentStderrMaxBytes));
 }
 
 void onBackendExit(int exitCode, uint64_t generation, uint64_t lockToken)
@@ -6455,16 +6459,24 @@ install_lock::InstallLock& installLock()
    // Constructed lazily so xdg paths and activeSession() are initialized
    // (FileLock::initialize() has also run by first use; the helper creates
    // its FileLock instances per-operation, not at construction).
-   // The owner id names this session's lock file; activeSession().id() can
-   // be empty for dev/automation-launched sessions (no launcher token), so
-   // fall back to a per-process UUID to keep concurrent sessions from
-   // colliding on one file. Stability across restarts is not required —
-   // a crashed session's leftover file is stale-cleaned by the next mutator.
+   // The owner id names this session's lock file and must be unique per
+   // process (see ChatInstallLock.hpp): the session id alone is stable
+   // across a session relaunch, so an orphaned predecessor process that
+   // outlives the relaunch (#18572) holds a live lock under the
+   // replacement's own name, and every chat_start_backend in the
+   // replacement then fails with a spurious "update in progress" (#18571).
+   // The session id is kept as a prefix so lock files remain attributable
+   // (it can be empty for dev/automation-launched sessions); the uuid
+   // supplies the per-process uniqueness. Leftover files from dead
+   // processes are stale-cleaned by the next mutator.
+   static const std::string ownerId =
+      module_context::activeSession().id().empty()
+         ? core::system::generateUuid(false)
+         : module_context::activeSession().id() + "-" +
+              core::system::generateUuid(false);
    static install_lock::InstallLock instance(
       xdg::userDataDir().completePath(chat_constants::kPositAiLocksDirName),
-      !module_context::activeSession().id().empty()
-         ? module_context::activeSession().id()
-         : core::system::generateUuid(false));
+      ownerId);
    return instance;
 }
 // ============================================================================

@@ -75,8 +75,8 @@ pipeline {
             echo "Commit_hash value: ${params.COMMIT_HASH}"
             checkout([$class: 'GitSCM',
                       branches: [[name: "${params.COMMIT_HASH}"]],
-                      extensions: [],
-                      userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL ]]])
+                      extensions: [[$class: 'CloneOption', shallow: true, depth: 50, noTags: true, honorRefspec: true]],
+                      userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL, refspec: "+refs/heads/${env.BRANCH_NAME}:refs/remotes/origin/${env.BRANCH_NAME}"]]])
           }
         }
 
@@ -189,8 +189,8 @@ pipeline {
                   // We need to checkout the correct commit again here because the matrix builds run on different agents
                   checkout([$class: 'GitSCM',
                             branches: [[name: "${params.COMMIT_HASH}"]],
-                            extensions: [],
-                            userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL ]]])
+                            extensions: [[$class: 'CloneOption', shallow: true, depth: 50, noTags: true, honorRefspec: true]],
+                            userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL, refspec: "+refs/heads/${env.BRANCH_NAME}:refs/remotes/origin/${env.BRANCH_NAME}"]]])
                 }
               }
 

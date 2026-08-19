@@ -741,6 +741,12 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // ... but allow e.g. .github
       "/.git/",
 
+      // ignore nested git worktree checkouts (the common in-repo convention).
+      // These are parallel checkouts of the project used for concurrent work;
+      // builds running inside them churn heavily, and rescanning them makes
+      // dropped-event recovery rescans (#18507) far more expensive.
+      "/.worktrees/",
+
       // ignore contents of AI tool state directories. The trailing slash is
       // important: it excludes children but lets the directory entry itself
       // ("/proj/.posit/assistant") pass through so the allowlist in
@@ -859,11 +865,31 @@ void ProjectContext::onDeferredInit(bool newSession)
       context.pGit = boost::make_shared<Git>(directory());
    }
 
+   // High-churn directories that fileMonitorFilter always excludes. Passing
+   // them to the file monitor as well lets backends with source-level
+   // exclusion support (macOS) suppress their events before they are
+   // delivered, rather than after -- sustained churn in these directories
+   // can otherwise overflow the event queue and force repeated full-project
+   // rescans (#18507). This list is now at the FSEvents limit of 8 paths;
+   // adding another entry requires dropping or consolidating one of these
+   // (MacFileMonitor silently ignores paths beyond the limit).
+   std::vector<FilePath> excludedPaths = {
+      directory().completeChildPath(".git"),
+      directory().completeChildPath(".Rproj.user"),
+      directory().completeChildPath(".quarto"),
+      directory().completeChildPath(".worktrees"),
+      directory().completeChildPath("node_modules"),
+      directory().completeChildPath("renv/library"),
+      directory().completeChildPath("renv/staging"),
+      directory().completeChildPath("packrat/lib")
+   };
+
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
          boost::bind(&ProjectContext::fileMonitorFilter, this, _1, context),
-         cb);
+         cb,
+         excludedPaths);
 }
 
 void ProjectContext::fileMonitorRegistered(

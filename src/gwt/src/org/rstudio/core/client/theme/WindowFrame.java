@@ -184,18 +184,22 @@ public class WindowFrame extends Composite
    }
 
    /**
-    * The frame's maximize gesture. Three gestures come here:
+    * The frame's maximize gesture. Four routes come here:
     *
     *  - the maximize button
     *  - a double-click on the Console title bar (PrimaryWindowFrame)
     *  - a double-click on a tabset's tab bar (ModuleTabLayoutPanel)
+    *  - EnsureHeightEvent.NORMAL on a zoomed (EXCLUSIVE) window, where the
+    *    gesture means "restore" (LogicalWindow.onEnsureHeight)
     *
-    * So an owner intercepts all three in one place with setMaximizeAction,
-    * instead of one gesture at a time.
+    * So an owner intercepts all of them in one place with setMaximizeAction,
+    * instead of one route at a time.
     *
-    * Two other paths reach WindowState.MAXIMIZE without the frame: the button
-    * on MinimizedWindowFrame, and EnsureHeightEvent.MAXIMIZED in
-    * LogicalWindow.onEnsureHeight. Both fire at the LogicalWindow. See
+    * Two other paths reach WindowState.MAXIMIZE without the frame, both
+    * firing at the LogicalWindow: the button on MinimizedWindowFrame, and
+    * EnsureHeightEvent.MAXIMIZED on a non-zoomed window -- deliberately, as
+    * that is a vertical request and an owner's maximize action may be
+    * horizontal (the sidebar's is layoutZoomSidebar). See
     * PaneManager.endZoomIfActive.
     */
    public void maximize()

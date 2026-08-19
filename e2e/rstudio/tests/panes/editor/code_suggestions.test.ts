@@ -1,4 +1,4 @@
-import type { Request } from 'playwright';
+import type { Page, Request } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS, sleep, CODE_SUGGESTION_PROVIDERS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
@@ -6,7 +6,7 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { resetSourcePaneState } from '@utils/commands';
+import { resetSourcePaneState, setPref } from '@utils/commands';
 import { requireAiCredentials } from '@utils/ai-credentials';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
@@ -22,6 +22,46 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     let assistantActions: AssistantOptionsActions;
     let sourceActions: SourcePaneActions;
     let sourcePane: SourcePane;
+
+    // Puts the cursor on a fresh line at the end of the file, types the
+    // trigger text, then clears any Ace autocomplete popup so the ghost-text
+    // assertion that follows isn't racing it.
+    //
+    // Deliberately NOT sourcePane.contentPane.click(). Playwright clicks the
+    // centre of the element's box after clipping it to the viewport, and Ace
+    // sizes .ace_content's HEIGHT from the viewport -- minHeight is
+    // scrollerHeight plus a couple of line heights (ace-uncompressed.js, the
+    // $computeLayerConfig path) -- so which ROW that centre lands on moves with
+    // the window height. Width is document-derived (the longest line), so the
+    // column does not vary between engines; the row does.
+    //
+    // Observed on the server engine: the click landed on a content row and the
+    // trigger text split an existing statement, leaving a syntactically broken
+    // line that the model declined to complete, so the tests waited out the
+    // full ghost-text timeout for a suggestion that was never coming. The
+    // likely reason desktop passed is that its taller window put the same
+    // click past the last row, where Ace clamps to the trailing blank line
+    // every fixture here ends with -- inferred, not directly observed.
+    //
+    // The two windows are sized in different units, so compare the fixtures
+    // rather than the raw numbers: the server engine runs a headed browser
+    // window (fixtures/server.fixture.ts) whose page viewport is shorter than
+    // the desktop Electron client area (fixtures/desktop.fixture.ts).
+    const typeTriggerOnNewLine = async (page: Page, trigger: string) => {
+      await sourceActions.goToEnd();
+      await sleep(500);
+      await page.keyboard.press('Enter');
+      await sleep(200);
+      await page.keyboard.type(trigger);
+
+      const popup = page.locator('#rstudio_popup_completions');
+      await popup.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
+      if (await popup.isVisible().catch(() => false)) {
+        await page.keyboard.press('Escape');
+        await sleep(500);
+        console.log('  Dismissed autocomplete popup (pre-ghost-text)');
+      }
+    };
 
     test.beforeAll(async ({ rstudioPage: page }) => {
       consoleActions = new ConsolePaneActions(page);
@@ -76,10 +116,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      await sourcePane.contentPane.click();
-      await sleep(500);
-
-      await page.keyboard.type('x <- func');
+      await typeTriggerOnNewLine(page, 'x <- func');
 
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
 
@@ -389,10 +426,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      await sourcePane.contentPane.click();
-      await sleep(500);
-
-      await page.keyboard.type('x <- func');
+      await typeTriggerOnNewLine(page, 'x <- func');
 
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       console.log('  Ghost text visible — pressing Escape');
@@ -429,10 +463,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      await sourcePane.contentPane.click();
-      await sleep(500);
-
-      await page.keyboard.type('x <- func');
+      await typeTriggerOnNewLine(page, 'x <- func');
 
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
       console.log('  Ghost text visible — moving cursor away');
@@ -638,23 +669,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourceActions.createAndOpenFile(fileName, fileContent);
       await sleep(1000);
 
-      // Position cursor at the end and type to trigger a ghost text suggestion
-      await sourceActions.goToEnd();
-      await sleep(500);
-      await page.keyboard.press('Enter');
-      await sleep(200);
-      await page.keyboard.type('x <- calc');
-
-      // Dismiss Ace autocomplete popup if it pops up first. When the popup
-      // is visible it suppresses ghost text from rendering, so we have to
-      // clear it before waiting for the suggestion.
-      const popup = page.locator('#rstudio_popup_completions');
-      await popup.waitFor({ state: 'visible', timeout: 1500 }).catch(() => {});
-      if (await popup.isVisible().catch(() => false)) {
-        await page.keyboard.press('Escape');
-        await sleep(500);
-        console.log('  Dismissed autocomplete popup (pre-ghost-text)');
-      }
+      await typeTriggerOnNewLine(page, 'x <- calc');
 
       // Wait for ghost text to confirm a real suggestion arrived
       await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
@@ -805,6 +820,13 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
     });
 
     test.afterAll(async ({ rstudioPage: page }) => {
+      // Disable the assistant before anything else that could fail: the suite
+      // leaves a signed-in provider with automatic suggestions enabled, and
+      // later editor suites then race real completions (seen displacing the
+      // injected NES in edit_suggestions.test.ts). The pref defaults to
+      // "posit", so it must be set to "none" explicitly, not cleared.
+      await setPref(page, 'assistant', 'none');
+
       // Post-suite cleanup: discard any open buffers and delete artifacts.
       // Don't save -- the sandbox is about to be unlinked by useSuiteSandbox's
       // afterAll, so saving races the directory removal and surfaces an

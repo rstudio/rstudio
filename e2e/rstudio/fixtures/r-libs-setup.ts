@@ -43,10 +43,11 @@ const TOTAL_WORKERS_ENV = 'PW_TOTAL_WORKERS';
  *
  * The list lives in ../required-packages.txt as the single source of truth, so
  * the os-e2e-deps action can install the identical set into the cached R
- * library on distros without CRAN binaries (Fedora) -- if the two lists ever
- * drifted, globalSetup would source-compile the difference at test time. One
- * package per line; blank lines and #-comments are ignored. Adding a package
- * is cheap; trim only when it's genuinely unused by any test in the suite.
+ * library in CI -- if the two lists ever drifted, globalSetup would install
+ * the difference at test time (a source compile on distros without CRAN
+ * binaries). One package per line; blank lines and #-comments are ignored.
+ * Adding a package is cheap; trim only when it's genuinely unused by any test
+ * in the suite.
  */
 const requiredPackagesFile = path.join(__dirname, '..', 'required-packages.txt');
 export const REQUIRED_PACKAGES: readonly string[] = fs
@@ -260,7 +261,9 @@ export async function prepareRLibs(): Promise<string | null> {
   //
   // installType is chosen at runtime via .Platform$pkgType so source-only R
   // builds (e.g. some macOS configurations where CRAN has no matching binary)
-  // don't fall over on a forced type = "binary".
+  // don't fall over on a forced type = "binary". Whatever a binary install
+  // leaves behind is retried from source, since neither CRAN nor PPM publishes
+  // a full binary set for older R (CRAN has no arm64 builds below 4.2 at all).
   const pkgsLiteral = REQUIRED_PACKAGES.map((p) => `"${p}"`).join(', ');
   const installCode = heredoc`
     lib <- ${JSON.stringify(expanded)}
@@ -275,6 +278,11 @@ export async function prepareRLibs(): Promise<string | null> {
       installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
       install.packages(missing, lib = lib, repos = ${JSON.stringify(repos)}, type = installType)
       still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+      if (length(still) > 0L && !identical(installType, "source")) {
+        cat("[r-libs] no binary for:", paste(still, collapse = ", "), "-- retrying from source\n")
+        install.packages(still, lib = lib, repos = ${JSON.stringify(repos)}, type = "source")
+        still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
+      }
       if (length(still) > 0L) {
         cat("[r-libs] WARNING: failed to install:", paste(still, collapse = ", "), "\n")
       }

@@ -159,7 +159,8 @@ system::file_monitor::Handle startMonitor(
       CallbackState* pState,
       boost::function<bool(const FileInfo&)> filter =
          boost::function<bool(const FileInfo&)>(),
-      bool recursive = false)
+      bool recursive = false,
+      const std::vector<FilePath>& excludedPaths = std::vector<FilePath>())
 {
    using namespace boost::placeholders;
 
@@ -174,7 +175,8 @@ system::file_monitor::Handle startMonitor(
       dir,
       recursive,
       filter,
-      cb);
+      cb,
+      excludedPaths);
 
    EXPECT_TRUE(waitFor([&] { return pState->registered || pState->registrationError; }));
    EXPECT_TRUE(pState->registered);
@@ -536,6 +538,46 @@ TEST_F(FileMonitorTest, SymlinkedRootReportsRegisteredPathFormRecursive)
                                                 linkPrefix + "/"))
          << "event path not in link form: " << event.fileInfo().absolutePath();
    }
+
+   stopMonitor(handle, &state);
+}
+
+// Exclusion paths are handed to fseventsd via FSEventStreamSetExclusionPaths,
+// so events under an excluded directory should never reach the callback --
+// unlike the filter, which discards them after delivery. Events elsewhere in
+// the tree must be unaffected.
+TEST_F(FileMonitorTest, RecursiveExcludedPathSuppressesEvents)
+{
+   FilePath excludedDir = tempDir_.completeChildPath("excluded");
+   ASSERT_FALSE(excludedDir.ensureDirectory());
+   FilePath includedDir = tempDir_.completeChildPath("included");
+   ASSERT_FALSE(includedDir.ensureDirectory());
+
+   CallbackState state;
+   auto handle = startMonitor(tempDir_, &state,
+                              boost::function<bool(const FileInfo&)>(),
+                              /*recursive=*/true,
+                              {excludedDir});
+   state.events.clear();
+
+   // write into the excluded directory first: if exclusion were broken, its
+   // event would flush at or before the included file's event below
+   FilePath excludedFile = excludedDir.completeChildPath("excluded.txt");
+   ASSERT_TRUE(writeFile(excludedFile, "excluded"));
+
+   FilePath includedFile = includedDir.completeChildPath("included.txt");
+   ASSERT_TRUE(writeFile(includedFile, "included"));
+
+   ASSERT_TRUE(waitFor([&] {
+      return hasEventFor(state, system::FileChangeEvent::FileAdded,
+                         includedFile.getAbsolutePath());
+   }));
+
+   // drain any straggling deliveries, then confirm nothing surfaced for the
+   // excluded directory's contents
+   ASSERT_TRUE(drainViaSentinel(tempDir_, &state));
+   EXPECT_FALSE(hasEventFor(state, system::FileChangeEvent::FileAdded,
+                            excludedFile.getAbsolutePath()));
 
    stopMonitor(handle, &state);
 }

@@ -39,6 +39,14 @@ on:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS."
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        description: "Test the pre-release (test) Posit Assistant manifest instead of the released one. Off by default: only the Posit Assistant release gate turns this on."
+        type: boolean
+        default: false
+      require_tests_passed:
+        description: "Fail the run if it passed zero tests. For release gates, where an empty or all-skipped run must not report green."
+        type: boolean
+        default: false
       build_only:
         description: "Run only the build job (to seed the rstudio-tools / sccache caches) and skip the e2e job. Only meaningful when build_from_source is true."
         type: boolean
@@ -80,6 +88,12 @@ on:
       rstudio_extra_args:
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        type: boolean
+        default: false
+      require_tests_passed:
+        type: boolean
+        default: false
       build_only:
         type: boolean
         default: false
@@ -90,6 +104,14 @@ on:
         description: "Skip this workflow's own merge/publish/comment job; the caller merges every platform's blobs into one report instead."
         type: boolean
         default: false
+    outputs:
+      r_version_actual:
+        description: >-
+          The R version this engine actually ran against, read back from the
+          installed R rather than echoed from the r_version input. Empty when
+          the e2e job did not run (build_only, or a build failure), and also when
+          it ran but failed before reaching the R install.
+        value: ${{ jobs.e2e-desktop-windows.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -99,6 +121,9 @@ on:
         required: false
       AWS_SCCACHE_ROLE_ARN:
         description: "IAM role assumed via GitHub OIDC for the S3 sccache backend (paired with the AWS_SCCACHE_BUCKET repo variable)"
+        required: false
+      OP_SERVICE_ACCOUNT_TOKEN:
+        description: "OP service account token; resolves the test-account credentials the Playwright auth setup project signs in with"
         required: false
 
 permissions:
@@ -153,7 +178,7 @@ jobs:
         -DCPACK_NSIS_COMPRESSOR=zlib
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 1
 
@@ -165,7 +190,7 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
           git config --global core.longpaths true
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -220,7 +245,7 @@ jobs:
       # main-scoped runs only) so deps are cached even when compilation fails.
       - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
@@ -245,7 +270,7 @@ jobs:
       # Restore-only; Save GWT output runs after the build with if: always().
       - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             src/gwt/www
@@ -263,7 +288,7 @@ jobs:
       # Save NSIS runs after the install, main-gated like the other caches.
       - name: Restore NSIS
         id: nsis-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: C:\Program Files (x86)\NSIS
           key: nsis-win64-${{ env.NSIS_VERSION }}
@@ -359,7 +384,7 @@ jobs:
         # A failed OIDC exchange degrades to the GHA backend below rather
         # than failing the build.
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
           aws-region: us-east-1
@@ -630,7 +655,7 @@ jobs:
       # defeating the point of saving deps even when compilation fails.
       - name: Save rstudio-tools cache
         if: always() && steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
@@ -639,7 +664,7 @@ jobs:
       # install step succeeds, so save it even when the build itself fails.
       - name: Save NSIS cache
         if: always() && steps.install-tools.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.nsis-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: C:\Program Files (x86)\NSIS
           key: ${{ steps.nsis-cache.outputs.cache-primary-key }}
@@ -651,7 +676,7 @@ jobs:
       # sends every PR build cold in the first place.
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             src/gwt/www
@@ -683,7 +708,7 @@ jobs:
 
       - name: Upload RStudio Desktop artifact
         if: inputs.build_only != true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rstudio-app-windows-x64
           path: RStudio-installer.exe
@@ -697,30 +722,41 @@ jobs:
       always() &&
       inputs.build_only != true &&
       (needs.build.result == 'success' || needs.build.result == 'skipped')
+    # This job is a shard matrix, so this is one output value for the whole matrix
+    # rather than one per shard. Every shard that reaches the deps step installs
+    # the same R, so the value is the same wherever it comes from -- but which
+    # shard supplies it is not something to depend on, and a shard that never
+    # reached that step supplies nothing. The output can therefore be empty for an
+    # engine that did install R and did run the suite. Callers must treat empty as
+    # "unknown", never as "no R was installed". The Linux engine sidesteps this by
+    # uploading per-engine artifacts instead.
+    outputs:
+      r_version_actual: ${{ steps.e2e_deps.outputs.r-version-full }}
     strategy:
       fail-fast: false
       matrix:
-        # 4 shards: per-shard setup is only ~5 minutes against a ~35 minute
-        # (at 2 shards) test step, so extra shards still convert nearly 1:1
-        # into wall-clock savings.
-        shard: [1, 2, 3, 4]
+        # 6 shards: per-shard setup is only ~5 minutes against a ~30 minute
+        # (at 4 shards) worst-case test step, so extra shards still convert
+        # nearly 1:1 into wall-clock savings. Playwright shards by file, not
+        # by duration, so the shard counts stay unbalanced -- at 4 shards the
+        # slowest shard ran ~30 minutes of tests against ~22 for its siblings
+        # and was the long pole of the whole PR-triggered run.
+        shard: [1, 2, 3, 4, 5, 6]
     runs-on: windows-2025
     timeout-minutes: 120
+    environment: e2e-playwright
     defaults:
       run:
         shell: pwsh
     env:
+      # os-e2e-deps installs the harness's required packages here and exports
+      # PW_RSTUDIO_R_LIBS_USER so globalSetup finds them at test time.
       R_LIBS_USER: ${{ github.workspace }}\R-libs
       PW_SANDBOX_ROOT: ${{ github.workspace }}\pw-sandbox
       PW_SANDBOX_ROOT_CREATE: '1'
-      # Override the default platform-specific R library template so the sandbox
-      # uses the same path that the e2e-deps action installs and caches. Without
-      # this the sandbox writes to %LOCALAPPDATA%\rstudio-playwright\r-libs\...
-      # (a different path) causing packages to be re-downloaded on every run.
-      PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}\R-libs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 1
 
@@ -734,7 +770,7 @@ jobs:
           # does not expose OS environment variables directly.
           "LOCALAPPDATA=$env:LOCALAPPDATA" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -767,7 +803,7 @@ jobs:
       # daily-download path so RStudio lands at C:\Program Files\RStudio\.
       - name: Download RStudio Desktop artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: rstudio-app-windows-x64
           path: ${{ github.workspace }}
@@ -794,28 +830,34 @@ jobs:
       # Daily-download path: resolve and install the latest (or specified) .exe.
       # Also runs when build_from_source is true but rstudio_installer_url is set
       # (mirrors macOS: the URL overrides the artifact path).
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
       - name: Resolve RStudio .exe URL
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         id: resolve
         env:
           INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
+          MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           $ErrorActionPreference = 'Stop'
           $url = $env:INSTALLER_URL
+          $manifestUrl = $env:MANIFEST_URL
           $sha = ''
           $filename = ''
           if ([string]::IsNullOrEmpty($url)) {
-            $manifest = Invoke-RestMethod -Uri 'https://dailies.rstudio.com/rstudio/latest/index.json' `
+            $manifest = Invoke-RestMethod -Uri $manifestUrl `
               -MaximumRetryCount 3 -RetryIntervalSec 5
             $win = $manifest.products.electron.platforms.windows
             $url = $win.link
             $sha = $win.sha256
             $filename = $win.filename
             if ([string]::IsNullOrEmpty($url) -or [string]::IsNullOrEmpty($filename) -or [string]::IsNullOrEmpty($sha)) {
-              Write-Error "Daily manifest is missing expected fields (url='$url', filename='$filename', sha256='$sha'). The schema at https://dailies.rstudio.com/rstudio/latest/index.json may have changed."
+              Write-Error "No usable windows entry in $manifestUrl (url='$url', filename='$filename', sha256='$sha'). Either this release branch has no Windows daily yet, or the manifest schema changed. Re-run with build_from_source to test this branch without a daily."
               exit 1
             }
-            Write-Host "Auto-resolved latest windows daily:"
+            Write-Host "Auto-resolved windows daily:"
             Write-Host "  URL:      $url"
             Write-Host "  SHA-256:  $sha"
             Write-Host "  Filename: $filename"
@@ -878,7 +920,14 @@ jobs:
           }
           Get-Item $exe | Format-List FullName, Length, LastWriteTime
 
+      # install-required-packages pre-installs the harness's REQUIRED_PACKAGES
+      # set into the cached R library that PW_RSTUDIO_R_LIBS_USER (job env
+      # above) points globalSetup at, so tests find every package present and
+      # install nothing at test time. Without it the set is fetched from
+      # cran.r-project.org on every run, and a CRAN outage surfaces as
+      # mid-suite install hangs (s4_unloaded_package, shinytest2).
       - name: Install e2e test dependencies
+        id: e2e_deps
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
@@ -886,6 +935,43 @@ jobs:
           # The PostgreSQL server itself is already on this image, so only the
           # drivers get installed. Without this they all skip.
           install-database-stack: 'true'
+          install-required-packages: "true"
+
+      # The secrets context isn't available in a step-level if:, so read the
+      # token into this step's own env and publish only a present/absent flag.
+      # Fork PRs and any caller that doesn't pass the token land on present=false,
+      # which skips the retrieve step below; the auth setup project then falls back
+      # to its no-credentials path instead of failing the run.
+      - name: Check for OP service account token
+        id: op_token_check
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          if ($env:OP_SERVICE_ACCOUNT_TOKEN) {
+            "present=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Output "::notice::OP service account token present; test credentials will be retrieved."
+          } else {
+            "present=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Output "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
+          }
+
+      - name: Retrieve test credentials
+        id: op
+        if: steps.op_token_check.outputs.present == 'true'
+        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: ./e2e/rstudio/.env.op
+
+      # Opt this run into the Posit Assistant pre-release manifest. A per-run
+      # prefs override, never a base pref -- every other run keeps testing GA.
+      - name: Enable Posit Assistant test manifest
+        if: inputs.posit_assistant_test_manifest
+        run: |
+          $prefs = Join-Path $env:GITHUB_WORKSPACE 'e2e\rstudio\.prefs.local.json'
+          # utf8NoBOM explicitly: a BOM breaks JSON.parse, and plain utf8 is only
+          # BOM-less because this job pins pwsh -- don't depend on that default.
+          '{"posit_assistant_test_manifest": true}' | Out-File -FilePath $prefs -Encoding utf8NoBOM
 
       - name: Run Playwright tests
         working-directory: e2e/rstudio
@@ -901,6 +987,9 @@ jobs:
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          # Relative to this step's working-directory. Empty (not set) unless
+          # this run opted in, leaving the fixture's default prefs alone.
+          PW_RSTUDIO_PREFS_OVERRIDE: ${{ inputs.posit_assistant_test_manifest && '.prefs.local.json' || '' }}
           PW_DEBUG_LAUNCH: '1'
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
@@ -908,6 +997,8 @@ jobs:
           # CONNECT_API_KEY is empty on fork PRs; reporter runs but uploads fail
           # with warnings (never fails the run).
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+          POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
+          POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
           SHARD_NAME: desktop-win-${{ matrix.shard }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -929,7 +1020,7 @@ jobs:
 
       - name: Upload blob report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-blob-report-win-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
@@ -938,7 +1029,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report-shard-${{ matrix.shard }}
           path: e2e/rstudio/playwright-report/
@@ -947,7 +1038,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-results-shard-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
@@ -956,7 +1047,7 @@ jobs:
 
       - name: Upload RStudio session logs (always)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: rstudio-logs-shard-${{ matrix.shard }}
           path: ${{ env.APPDATA }}\RStudio\
@@ -983,7 +1074,7 @@ jobs:
 
       - name: Upload PW sandbox (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pw-sandbox-shard-${{ matrix.shard }}
           path: ${{ github.workspace }}\pw-sandbox\
@@ -994,7 +1085,7 @@ jobs:
       # aborts before the GWT-ready handshake.
       - name: Upload Windows crash dumps (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: windows-crash-dumps-shard-${{ matrix.shard }}
           path: ${{ env.LOCALAPPDATA }}\CrashDumps\
@@ -1016,9 +1107,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -1029,7 +1120,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: playwright-blob-report-win-*
           path: e2e/rstudio/all-blob-reports
@@ -1055,7 +1146,7 @@ jobs:
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report-win
           path: e2e/rstudio/playwright-report/
@@ -1106,4 +1197,20 @@ jobs:
             </details>
 
             ---
-            <sub>4 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>6 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+
+      # Release-gate floor, last so the reporting above still runs. A run that
+      # executed nothing must not report green: Playwright suppresses its own
+      # "no tests found" error whenever --shard is passed (which every engine
+      # does), and requireAiCredentials turns a credential lapse into skips --
+      # both leave a zero-passed run looking clean.
+      - name: Require the run to have executed tests
+        if: always() && inputs.require_tests_passed
+        env:
+          PASSED: ${{ steps.summary.outputs.passed }}
+        run: |
+          if [ -z "$PASSED" ] || [ "$PASSED" = "0" ]; then
+            echo "::error::This run passed 0 tests, so it proves nothing. Refusing to report green."
+            exit 1
+          fi
+          echo "::notice::Gate floor met: $PASSED test(s) passed."

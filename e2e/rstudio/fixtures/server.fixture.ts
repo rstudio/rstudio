@@ -9,6 +9,7 @@ import * as path from 'path';
 import { CONSOLE_INPUT, executeInConsole } from '../pages/console_pane.page';
 import { sleep } from '../utils/constants';
 import { setPref, documentCloseAllNoSave } from '../utils/commands';
+import { withDeadline } from '../utils/deadline';
 import { rLibsUserTemplate, workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
 import { userHomeForAuthState, strippedProvidersFromEnv } from '../utils/auth';
@@ -415,8 +416,14 @@ export async function launchServer(): Promise<ServerSession> {
   } else {
     const spawned = await spawnSandboxedRserver();
     if (!spawned) {
+      // Report the paths the spawn actually probed: PW_RSERVER_BIN/CONF
+      // override the in-tree defaults (scripts/test.ts points them at an
+      // installed server), and naming only the default here has sent
+      // debugging down the wrong path before.
+      const bin = process.env.PW_RSERVER_BIN || DEFAULT_RSERVER_BIN;
+      const conf = process.env.PW_RSERVER_CONF || DEFAULT_RSERVER_CONF;
       throw new Error(
-        `rserver binary not found at ${DEFAULT_RSERVER_BIN}. Build the server (cmake --build build) or set PW_RSTUDIO_SERVER_URL to point at an existing server.`,
+        `rserver binary or config not found (looked for ${bin} and ${conf}). Build the server (cmake --build build), set PW_RSERVER_BIN/PW_RSERVER_CONF, or set PW_RSTUDIO_SERVER_URL to point at an existing server.`,
       );
     }
     rserverProcess = spawned.process;
@@ -470,6 +477,40 @@ export async function launchServer(): Promise<ServerSession> {
   return { page, browser, rserverProcess, rserverCleanupDirs };
 }
 
+/** Close open buffers and quit the R session, waiting for it to end. */
+async function quitServerSession(page: Page): Promise<void> {
+  await documentCloseAllNoSave(page);
+  // The dispatch returns before the async close chain finishes; wait for
+  // the file-backed tabs to actually close so the RPCs removing the docs
+  // from the source database land before we quit the session. Accept zero
+  // tabs or a lone untitled placeholder (one can auto-spawn when the last
+  // tab closes). Best-effort: quitting with a straggler tab only risks a
+  // save prompt on the next run, which launchServer already dismisses.
+  await page.waitForFunction(
+    () => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      if (doc !== null && doc.path !== null) return false;
+      const tabs = document.querySelectorAll(
+        "[class*='rstudio_source_panel'] [role='tab']",
+      );
+      return tabs.length <= 1;
+    },
+    null,
+    { timeout: 10000, polling: 50 },
+  ).catch(() => {});
+  // wait:false -- quit() never returns to a prompt, so the default
+  // prompt-count wait would stall the full sessionRestart timeout before
+  // its TimeoutError lands in the caller's catch. The overlay wait next is
+  // the real completion signal.
+  await executeInConsole(page, 'quit(save = "no")', { wait: false });
+  // Wait for the "R Session Ended" overlay (ApplicationEndedPopupPanel in
+  // QUIT mode) -- the deterministic signal that the rsession has exited --
+  // rather than sleeping a fixed interval with the dead tab still open.
+  await page
+    .locator('[role="alertdialog"]', { hasText: 'R Session Ended' })
+    .waitFor({ state: 'visible', timeout: 10000 });
+}
+
 /**
  * Close the server session: close buffers, sign out, close browser, and
  * stop the spawned rserver (if any).
@@ -477,35 +518,15 @@ export async function launchServer(): Promise<ServerSession> {
 export async function shutdownServer(session: ServerSession): Promise<void> {
   const { page, browser, rserverProcess } = session;
 
+  // The graceful phase runs entirely against the page, whose evaluates hang
+  // without limit when a session transition wedged it (#18394) -- and this
+  // teardown is also on the path of an interrupted (SIGINT) run flushing its
+  // report. Bound the whole phase; the browser close and rserver kill below
+  // are protocol/process-level and must always run.
   try {
-    await documentCloseAllNoSave(page);
-    // The dispatch returns before the async close chain finishes; wait for
-    // the file-backed tabs to actually close so the RPCs removing the docs
-    // from the source database land before we quit the session. Accept zero
-    // tabs or a lone untitled placeholder (one can auto-spawn when the last
-    // tab closes). Best-effort: quitting with a straggler tab only risks a
-    // save prompt on the next run, which launchServer already dismisses.
-    await page.waitForFunction(
-      () => {
-        const doc = window.rstudio?.documents.active() ?? null;
-        if (doc !== null && doc.path !== null) return false;
-        const tabs = document.querySelectorAll(
-          "[class*='rstudio_source_panel'] [role='tab']",
-        );
-        return tabs.length <= 1;
-      },
-      null,
-      { timeout: 10000, polling: 50 },
-    ).catch(() => {});
-    await executeInConsole(page, 'quit(save = "no")');
-    // Wait for the "R Session Ended" overlay (ApplicationEndedPopupPanel in
-    // QUIT mode) -- the deterministic signal that the rsession has exited --
-    // rather than sleeping a fixed interval with the dead tab still open.
-    await page
-      .locator('[role="alertdialog"]', { hasText: 'R Session Ended' })
-      .waitFor({ state: 'visible', timeout: 10000 });
+    await withDeadline(quitServerSession(page), 45_000, 'graceful server shutdown');
   } catch {
-    // Page may already be closed
+    // Page may already be closed, or wedged mid-transition.
   }
 
   await browser.close();

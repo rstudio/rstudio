@@ -1,0 +1,839 @@
+name: "Test: E2E Playwright RStudio (Certification, Open Source)"
+
+# On-command certification runs: one dispatch names one RStudio build, and each
+# environment in the batch is tested against its own R version. This is what the
+# scheduled rotation cannot express -- every caller in this repo passes a single
+# hardcoded r_version to every engine it calls, so a run-everything dispatch
+# tests one R across all platforms.
+#
+# The certified environment -> R pairings live in .github/e2e-certification/
+# matrix.json, one entry per engine, so the certification scope is a reviewable
+# file rather than a value buried in workflow YAML. Cells marked "default": true
+# are what an empty dispatch runs; the rest are selectable by name.
+#
+# Two dispatch inputs override the file, and both are optional:
+#   - cells:       which environments to run at all
+#   - r_overrides: which R version each of them gets
+# They are separate inputs on purpose. Folding both into one "cell@version" list
+# would mean that bumping one environment's R version required retyping the whole
+# default set just to keep the others in the run.
+#
+# Engines whose config sets r_install "distro" -- the four Fedora ones -- install
+# R from the distro's own repos and ignore the r_version input entirely (see
+# .github/e2e-linux/fedora/install-r.sh). Their matrix entries declare the
+# sentinel "distro" to say so, and the R they actually used is read back from the
+# installed R and reported, rather than assumed from the request.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "RStudio daily build to certify, given as the version string exactly as shown on dailies.rstudio.com (e.g. 2026.08.0-daily+185). Leave empty to certify the latest daily. Ignored when build_from_source is checked. Applies to every cell."
+        type: string
+        default: ""
+      build_from_source:
+        description: "Build every cell from source instead of installing a daily build. Overrides the version input."
+        type: boolean
+        default: false
+      cells:
+        description: "Which environments to run, space- or comma-separated (e.g. 'rocky9-x86_64 macos26'). Leave empty to run every cell marked default in .github/e2e-certification/matrix.json. An unknown name fails the run."
+        type: string
+        default: ""
+      r_overrides:
+        description: "Per-cell R version overrides as cell=version pairs, space- or comma-separated (e.g. 'rocky9-x86_64=4.3.3 macos26=devel'). Anything not named here keeps its matrix.json version. An unknown name fails the run."
+        type: string
+        default: ""
+      test_selector:
+        description: "Optional test paths/files to run instead of the whole suite (space-separated), e.g. 'sandbox.test.ts'. A real certification run leaves this empty; it exists so the workflow itself can be smoke-tested without paying for a full matrix."
+        type: string
+        default: ""
+  # Callable so the workflow can be exercised end to end from a push-triggered
+  # caller: workflow_dispatch only reaches workflows already on the default
+  # branch, which a new or edited one is not.
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ""
+      build_from_source:
+        type: boolean
+        default: false
+      cells:
+        type: string
+        default: ""
+      r_overrides:
+        type: string
+        default: ""
+      test_selector:
+        type: string
+        default: ""
+    secrets:
+      CONNECT_API_KEY:
+        required: false
+      AWS_E2E_REPORTS_ROLE_ARN:
+        required: false
+      AWS_SCCACHE_ROLE_ARN:
+        required: false
+      # Every engine declares this optional, so omitting it fails nothing: each
+      # cell just warns that AI-gated tests will skip, and still reports success.
+      # A certification run that quietly covers less than the weekly rotation is
+      # the one result this workflow must not produce, so forward it like every
+      # other caller does.
+      OP_SERVICE_ACCOUNT_TOKEN:
+        required: false
+
+concurrency:
+  # Certification runs are hand-launched against a named build, so two of them
+  # are normally deliberate -- and the version is what makes them distinct. It is
+  # in the group key so certifying two different builds proceeds in parallel,
+  # while a second run for the *same* build queues behind the first, which is what
+  # you want: nobody needs one build certified twice at once.
+  #
+  # Keyed on the ref as well, and never cancelling: losing half a certification
+  # matrix to a cancel would waste hours. Note only one run per group can be
+  # pending, so a third dispatch for the same ref and version discards the queued
+  # second -- another reason to keep the version in the key.
+  group: pw-certification-${{ github.ref }}-${{ inputs.version || 'latest' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write  # the engines' e2e-merge job declares this
+  # The engines' e2e-merge jobs assume the S3 report-upload role via OIDC,
+  # and every engine's build job assumes the S3 sccache role via OIDC; a
+  # reusable workflow's id-token grant is capped by its caller's.
+  id-token: write
+
+jobs:
+  pick:
+    name: Pick cells
+    runs-on: ubuntu-latest
+    outputs:
+      selected: ${{ steps.pick.outputs.selected }}
+      linux_matrix: ${{ steps.pick.outputs.linux_matrix }}
+      r_effective: ${{ steps.pick.outputs.r_effective }}
+      r_declared: ${{ steps.pick.outputs.r_declared }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - id: pick
+        name: Resolve the certification matrix
+        env:
+          CELLS: ${{ inputs.cells }}
+          R_OVERRIDES: ${{ inputs.r_overrides }}
+        run: |
+          set -euo pipefail
+          MATRIX_FILE=.github/e2e-certification/matrix.json
+          MATRIX=$(cat "$MATRIX_FILE")
+
+          # Accept any of these separators, and tolerate runs of them, so a pasted
+          # list works whichever way it was written -- including one pasted with
+          # tabs or across lines, which would otherwise arrive as a single token
+          # and be reported as one absurd unknown cell name.
+          norm() { printf '%s' "$1" | tr ',\t\n' '   ' | tr -s ' ' | sed 's/^ *//; s/ *$//'; }
+          # Space-separated string -> JSON array of non-empty tokens.
+          as_array() { printf '%s' "$1" | jq -R -s 'split(" ") | map(select(length > 0))'; }
+
+          # A cells input that is non-empty but normalizes away (", ," or spaces,
+          # e.g. a pasted list whose names were deleted) is not the same as
+          # leaving the field blank. Blank means "everything"; punctuation means
+          # the author was trying to narrow the run and it did not land, so
+          # silently certifying all 13 would be the expensive wrong answer.
+          if [ -n "${CELLS}" ] && [ -z "$(norm "${CELLS}")" ]; then
+            echo "::error::The cells input contains only separators, so no cell name could be read. Leave it empty to run every default cell."
+            exit 1
+          fi
+
+          CELLS_REQ=$(as_array "$(norm "${CELLS}")")
+          OVER_REQ=$(as_array "$(norm "${R_OVERRIDES}")")
+
+          # --- validate the matrix file itself -----------------------------
+          # A duplicated cell or os would produce two identical Linux matrix rows
+          # that collide on job name and on every artifact name, and
+          # upload-artifact@v4 fails on a duplicate -- deep inside a multi-hour
+          # matrix, with a message that says nothing about this file.
+          for field in cell os; do
+            DUPES=$(jq -cn --argjson m "$MATRIX" --arg f "$field" \
+              '[$m[] | .[$f] | select(. != null)] | group_by(.) | map(select(length > 1) | .[0])')
+            if [ "$DUPES" != "[]" ]; then
+              echo "::error::Duplicate $field value(s) in $MATRIX_FILE: $(jq -r 'join(", ")' <<<"$DUPES")."
+              exit 1
+            fi
+          done
+
+          # Every Linux Desktop cell must name a url_key that the resolve action
+          # actually emits. This is the one field whose failure is silent: an
+          # unknown name makes needs.resolve.outputs[matrix.url_key] evaluate to
+          # '', and an empty rstudio_installer_url means "self-resolve the latest
+          # daily" to every engine -- so a version-pinned run would quietly test
+          # the wrong build and report the pinned version as certified. The
+          # resolve action cannot catch it: an unknown key is not a platform it
+          # failed to resolve, it is a name it never had. Keep in step with the
+          # action's outputs.
+          RESOLVE_KEYS='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
+          BAD_KEYS=$(jq -cn --argjson m "$MATRIX" --argjson k "$RESOLVE_KEYS" \
+            '[$m[] | select(.os) | select((.url_key // "") as $u | ($k | index($u)) == null) | .cell]')
+          if [ "$BAD_KEYS" != "[]" ]; then
+            echo "::error::Cell(s) in $MATRIX_FILE have a missing or unrecognized url_key: $(jq -r 'join(", ")' <<<"$BAD_KEYS")."
+            echo "::error::Valid url_keys: $(jq -r 'join(", ")' <<<"$RESOLVE_KEYS")"
+            exit 1
+          fi
+
+          # Every cell must declare an r_version. A missing or misspelled field
+          # reads as null, which flows through as an empty r_version input -- and
+          # a workflow_call default only applies to an absent key, not to an empty
+          # expression, so the engine reaches `rig add ""` inside a cell it has
+          # already spent minutes provisioning. Shape-checked too, since the value
+          # is either the distro sentinel or something rig can resolve.
+          #
+          # A two-component version is accepted because rig resolves it (4.4 ->
+          # 4.4.3), and the engines' own r_version inputs take it. oldrel-N is
+          # deliberately absent from the advertised list below: rig 0.8.1, the
+          # floor os-install-rig-unix pins, fails it outright.
+          BAD_R=$(jq -cn --argjson m "$MATRIX" \
+            '[$m[] | select((.r_version // "") | test("^(distro|[0-9]+\\.[0-9]+(\\.[0-9]+)?|release|oldrel(-[0-9]+)?|devel|next)$") | not) | .cell]')
+          if [ "$BAD_R" != "[]" ]; then
+            echo "::error::Cell(s) in $MATRIX_FILE have a missing or unrecognized r_version: $(jq -r 'join(", ")' <<<"$BAD_R")."
+            echo "::error::Use a version (4.4 or 4.4.1), an alias (release, oldrel, devel, next), or the sentinel 'distro'."
+            exit 1
+          fi
+
+          # --- validate the cells input ------------------------------------
+          UNKNOWN=$(jq -cn --argjson m "$MATRIX" --argjson r "$CELLS_REQ" \
+            '[$r[] | select(. as $c | ($m | map(.cell) | index($c)) == null)]')
+          if [ "$UNKNOWN" != "[]" ]; then
+            echo "::error::Unknown cell name(s) in the cells input: $(jq -r 'join(", ")' <<<"$UNKNOWN")."
+            echo "::error::Valid cells: $(jq -r '[.[].cell] | join(", ")' <<<"$MATRIX")"
+            exit 1
+          fi
+
+          # --- validate and parse the overrides input ----------------------
+          # Each token must be cell=version. Split on the FIRST '=' only, so a
+          # version containing one is not silently truncated.
+          PAIRS=$(jq -cn --argjson r "$OVER_REQ" '
+            [ $r[]
+              | if (index("=") | . != null and . > 0)
+                then { cell: .[0:index("=")], version: .[index("=")+1:] }
+                else { cell: ., version: null }
+                end ]')
+          MALFORMED=$(jq -cn --argjson p "$PAIRS" '[$p[] | select(.version == null or .version == "") | .cell]')
+          if [ "$MALFORMED" != "[]" ]; then
+            echo "::error::Malformed r_overrides entr(ies): $(jq -r 'join(", ")' <<<"$MALFORMED"). Expected cell=version, e.g. rocky9-x86_64=4.3.3."
+            exit 1
+          fi
+          UNKNOWN_OV=$(jq -cn --argjson m "$MATRIX" --argjson p "$PAIRS" \
+            '[$p[].cell | select(. as $c | ($m | map(.cell) | index($c)) == null)]')
+          if [ "$UNKNOWN_OV" != "[]" ]; then
+            echo "::error::Unknown cell name(s) in r_overrides: $(jq -r 'join(", ")' <<<"$UNKNOWN_OV")."
+            echo "::error::Valid cells: $(jq -r '[.[].cell] | join(", ")' <<<"$MATRIX")"
+            exit 1
+          fi
+
+          # --- selection ---------------------------------------------------
+          # Empty cells input means the committed default set. Naming cells
+          # replaces that set outright rather than adding to it, so a run is
+          # always exactly what was asked for.
+          if [ "$CELLS_REQ" = "[]" ]; then
+            SEL=$(jq -cn --argjson m "$MATRIX" '[$m[] | select(.default) | .cell]')
+          else
+            SEL="$CELLS_REQ"
+          fi
+          if [ "$SEL" = "[]" ]; then
+            echo "::error::No cells selected. Either the matrix has no default cells or the cells input resolved to nothing."
+            exit 1
+          fi
+
+          # Every selected cell must be runnable. Linux Desktop cells go through
+          # the matrix below; the other five each have a dedicated job. A cell
+          # with neither would be selected, never run, and never appear in the
+          # summary -- a certification table quietly missing an environment is
+          # worse than one that fails. Keep in step with the jobs below.
+          JOB_BACKED='["ubuntu24s","macos14","macos15","macos26","windows2025"]'
+          NO_JOB=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson j "$JOB_BACKED" \
+            '[ $m[] | select(.cell as $c | $sel | index($c)) | select(.os == null)
+               | select(.cell as $c | ($j | index($c)) == null) | .cell ]')
+          if [ "$NO_JOB" != "[]" ]; then
+            echo "::error::Selected cell(s) have no job to run them: $(jq -r 'join(", ")' <<<"$NO_JOB")."
+            echo "::error::A cell with no 'os' field needs a dedicated job in this workflow and an entry in JOB_BACKED."
+            exit 1
+          fi
+
+          # An override for a cell that is not running is almost always a
+          # mistake (a trimmed cells list, or a typo that happened to match
+          # another cell), so say so -- but don't fail, since overriding while
+          # narrowing the set is legitimate.
+          IGNORED=$(jq -cn --argjson p "$PAIRS" --argjson sel "$SEL" \
+            '[$p[].cell | select(. as $c | ($sel | index($c)) == null)]')
+          if [ "$IGNORED" != "[]" ]; then
+            echo "::warning::r_overrides names cell(s) that are not in this run, so the override does nothing: $(jq -r 'join(", ")' <<<"$IGNORED")."
+          fi
+
+          # Two overrides for one cell is self-contradictory, and from_entries
+          # below silently keeps the last. The harmless not-in-this-run case
+          # already warns, so staying quiet about this one would be inconsistent.
+          DUP_OV=$(jq -cn --argjson p "$PAIRS" \
+            '[$p[].cell] | group_by(.) | map(select(length > 1) | .[0])')
+          if [ "$DUP_OV" != "[]" ]; then
+            echo "::warning::r_overrides names cell(s) more than once; the last value wins: $(jq -r 'join(", ")' <<<"$DUP_OV")."
+          fi
+
+          # An override aimed at a distro-R cell cannot take effect at all: those
+          # engines install R from the distro's repos and ignore r_version. Left
+          # unsaid it is actively misleading, because overriding also replaces the
+          # "distro" sentinel that the summary's footnote keys on -- so the table
+          # would assert a version nothing tried to install.
+          OV_DISTRO=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson p "$PAIRS" '
+            ($p | map(.cell)) as $oc
+            | [ $m[] | select(.cell as $c | $sel | index($c))
+                | select(.r_version == "distro")
+                | select(.cell as $c | $oc | index($c)) | .cell ]')
+          if [ "$OV_DISTRO" != "[]" ]; then
+            echo "::warning::r_overrides names cell(s) whose R comes from the distro's own repos, so the requested version will be ignored: $(jq -r 'join(", ")' <<<"$OV_DISTRO"). The summary reports what actually installed."
+          fi
+
+          # --- merge overrides over the declared versions ------------------
+          # r_declared is what the matrix (or the override) asked for, kept for
+          # the summary. r_effective is what the engine is actually handed: the
+          # "distro" sentinel becomes "release" because the engines that use it
+          # ignore the value anyway, and a literal "distro" would break the rig
+          # engines outright if a config ever switched away from r_install
+          # distro.
+          #
+          # A distro cell keeps "distro" visible in r_declared even when
+          # overridden, with the ignored request shown alongside it, so the
+          # summary's footnote still applies and the table cannot claim a version
+          # that was never attempted.
+          RESOLVED=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson p "$PAIRS" '
+            ($p | map({key: .cell, value: .version}) | from_entries) as $ov
+            | [ $m[]
+                | select(.cell as $c | $sel | index($c))
+                | . + { r_declared:
+                        (if .r_version == "distro" then
+                           (if $ov[.cell] then "distro (\($ov[.cell]) ignored)" else "distro" end)
+                         else ($ov[.cell] // .r_version) end) }
+                | . + { r_version: (if .r_version == "distro" then "release" else .r_declared end) } ]')
+
+          # Linux Desktop cells are the ones carrying an os field; the other
+          # five are keyed on by the if: contains(...) guards on their own jobs.
+          LINUX=$(jq -cn --argjson r "$RESOLVED" '[$r[] | select(.os)]')
+
+          {
+            echo "selected=$(jq -cn --argjson r "$RESOLVED" '[$r[].cell]')"
+            echo "linux_matrix=$LINUX"
+            echo "r_effective=$(jq -cn --argjson r "$RESOLVED" '[$r[] | {key: .cell, value: .r_version}] | from_entries')"
+            echo "r_declared=$(jq -cn --argjson r "$RESOLVED" '[$r[] | {key: .cell, value: .r_declared}] | from_entries')"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "::notice::Certifying $(jq -r 'length' <<<"$RESOLVED") cell(s)."
+          jq -r '.[] | "  \(.cell): R \(.r_declared)"' <<<"$RESOLVED"
+
+  resolve:
+    name: Resolve installer URLs
+    runs-on: ubuntu-latest
+    # Needs pick only so the verification step below knows which cells are in the
+    # run; the URL resolution itself is selection-independent.
+    needs: pick
+    outputs:
+      rhel10_x86_64:  ${{ steps.resolve.outputs.rhel10_x86_64 }}
+      rhel10_arm64:   ${{ steps.resolve.outputs.rhel10_arm64 }}
+      rhel9_x86_64:   ${{ steps.resolve.outputs.rhel9_x86_64 }}
+      rhel9_arm64:    ${{ steps.resolve.outputs.rhel9_arm64 }}
+      noble_amd64:    ${{ steps.resolve.outputs.noble_amd64 }}
+      noble_arm64:    ${{ steps.resolve.outputs.noble_arm64 }}
+      jammy_amd64:    ${{ steps.resolve.outputs.jammy_amd64 }}
+      jammy_arm64:    ${{ steps.resolve.outputs.jammy_arm64 }}
+      resolute_amd64: ${{ steps.resolve.outputs.resolute_amd64 }}
+      resolute_arm64: ${{ steps.resolve.outputs.resolute_arm64 }}
+      macos:          ${{ steps.resolve.outputs.macos }}
+      windows:        ${{ steps.resolve.outputs.windows }}
+      server_noble:   ${{ steps.resolve.outputs.server_noble }}
+    steps:
+      # version/RELEASE names the branch whose daily manifest the URLs come from,
+      # so this job needs the repository -- and the composite actions live here
+      # too, so they have to be on disk before they can be used.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 1
+
+      # Which manifest: the one for this branch, never the /rstudio/latest alias.
+      # Computes a URL and makes no network request, so it is safe to run ahead of
+      # the resolve step even when nothing turns out to be pinned.
+      - name: Resolve daily manifest URL
+        id: manifest
+        uses: ./.github/actions/os-resolve-daily-manifest
+
+      - id: resolve
+        name: Build per-platform installer URLs for a specific version
+        uses: ./.github/actions/os-resolve-daily-urls
+        with:
+          version: ${{ inputs.version }}
+          build_from_source: ${{ inputs.build_from_source }}
+          manifest_url: ${{ steps.manifest.outputs.manifest-url }}
+
+      # A pinned version that produced no URL for a cell in this run must stop
+      # the run, because an empty rstudio_installer_url means "self-resolve the
+      # latest daily" to the engines -- so the alternative is a green run that
+      # certified a different build than the one named. Nothing upstream catches
+      # it: the resolve action is best-effort by design, warning on a platform it
+      # could not resolve rather than failing, precisely so a missing Windows
+      # build cannot block a Linux-only run. This step is the whole guarantee.
+      # The pick job separately rejects a url_key the action does not emit; what
+      # remains here is a valid key whose platform genuinely has no build at the
+      # requested version.
+      #
+      # Skipped when no version was pinned or when building from source, where
+      # empty URLs are the intended signal rather than a failure.
+      - name: Verify a pinned version resolved for every selected cell
+        if: ${{ inputs.version != '' && !inputs.build_from_source }}
+        env:
+          LINUX_MATRIX: ${{ needs.pick.outputs.linux_matrix }}
+          SELECTED: ${{ needs.pick.outputs.selected }}
+          VERSION: ${{ inputs.version }}
+          URLS: ${{ toJSON(steps.resolve.outputs) }}
+        run: |
+          set -euo pipefail
+          # Linux Desktop cells name their platform via url_key; the other five
+          # each map to one fixed output.
+          NEEDED=$(jq -cn --argjson l "$LINUX_MATRIX" --argjson s "$SELECTED" '
+            ([$l[] | {cell: .cell, key: .url_key}])
+            + ([{cell:"ubuntu24s",key:"server_noble"},
+                {cell:"macos14",key:"macos"},
+                {cell:"macos15",key:"macos"},
+                {cell:"macos26",key:"macos"},
+                {cell:"windows2025",key:"windows"}]
+               | map(select(.cell as $c | $s | index($c))))')
+          # The five job-backed cells are spelled out above, and in three other
+          # places in this file. Only JOB_BACKED is guarded, so a new cell added
+          # there but not here would drop out of NEEDED silently and this step
+          # would pass having checked nothing. Covering every selected cell is
+          # the invariant, so assert it rather than trusting four lists to stay
+          # in step.
+          if [ "$(jq -r 'length' <<<"$NEEDED")" != "$(jq -r 'length' <<<"$SELECTED")" ]; then
+            echo "::error::Only $(jq -r 'length' <<<"$NEEDED") of $(jq -r 'length' <<<"$SELECTED") selected cell(s) map to an installer URL, so this check would not cover them all."
+            echo "::error::A cell with no 'os' field needs an entry in this step's NEEDED list as well as in JOB_BACKED. Uncovered: $(jq -rn --argjson n "$NEEDED" --argjson s "$SELECTED" '[$s[] | select(. as $c | ($n | map(.cell) | index($c)) == null)] | join(", ")')"
+            exit 1
+          fi
+          MISSING=$(jq -cn --argjson n "$NEEDED" --argjson u "$URLS" \
+            '[$n[] | select(($u[.key] // "") == "") | "\(.cell) (\(.key))"]')
+          if [ "$MISSING" != "[]" ]; then
+            echo "::error::Version '$VERSION' produced no installer URL for: $(jq -r 'join(", ")' <<<"$MISSING")."
+            echo "::error::Refusing to continue -- those engines would silently fall back to the latest daily."
+            exit 1
+          fi
+          echo "::notice::All $(jq -r 'length' <<<"$NEEDED") selected cell(s) have an installer URL for $VERSION."
+
+  # Every selected Linux Desktop cell, one matrix entry each, through the
+  # consolidated Linux workflow. Unlike the scheduled rotation, r_version comes
+  # from the matrix entry rather than a literal -- that is the whole point of
+  # this workflow.
+  linux-desktop:
+    name: ${{ matrix.name }} (R ${{ matrix.r_declared }})
+    needs: [pick, resolve]
+    if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.pick.outputs.linux_matrix) }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-linux.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      os: ${{ matrix.os }}
+      arch: ${{ matrix.arch }}
+      project: desktop
+      r_version: ${{ matrix.r_version }}
+      build_from_source: ${{ inputs.build_from_source || false }}
+      test_selector: ${{ inputs.test_selector }}
+      rstudio_installer_url: ${{ needs.resolve.outputs[matrix.url_key] }}
+
+  ubuntu24s:
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      Ubuntu 24 Server ${{ fromJSON(needs.pick.outputs.r_declared).ubuntu24s
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).ubuntu24s)
+      || '(not selected)' }}
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'ubuntu24s') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-server-os-ubuntu-24.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      project: server
+      r_version: ${{ fromJSON(needs.pick.outputs.r_effective).ubuntu24s }}
+      build_from_source: ${{ inputs.build_from_source || false }}
+      test_selector: ${{ inputs.test_selector }}
+      rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
+
+  macos26:
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      macOS 26 arm64 ${{ fromJSON(needs.pick.outputs.r_declared).macos26
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos26)
+      || '(not selected)' }}
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos26') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      project: desktop
+      r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos26 }}
+      build_from_source: ${{ inputs.build_from_source || false }}
+      test_selector: ${{ inputs.test_selector }}
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
+  macos15:
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      macOS 15 x86_64 ${{ fromJSON(needs.pick.outputs.r_declared).macos15
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos15)
+      || '(not selected)' }}
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos15') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-15-x86_64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      project: desktop
+      r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos15 }}
+      build_from_source: ${{ inputs.build_from_source || false }}
+      test_selector: ${{ inputs.test_selector }}
+      # Same universal macOS .dmg the arm64 engines test; the daily manifest
+      # ships one "macos" installer for both architectures.
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
+  macos14:
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      macOS 14 arm64 ${{ fromJSON(needs.pick.outputs.r_declared).macos14
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).macos14)
+      || '(not selected)' }}
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos14') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-14-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      project: desktop
+      r_version: ${{ fromJSON(needs.pick.outputs.r_effective).macos14 }}
+      build_from_source: ${{ inputs.build_from_source || false }}
+      test_selector: ${{ inputs.test_selector }}
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
+  windows2025:
+    # Renders "(not selected)" rather than an empty "(R )" when this cell
+    # is not in the run: r_declared only carries the selected cells, so the
+    # lookup is null and the job is skipped anyway.
+    name: >-
+      Windows Server 2025 ${{ fromJSON(needs.pick.outputs.r_declared).windows2025
+      && format('(R {0})', fromJSON(needs.pick.outputs.r_declared).windows2025)
+      || '(not selected)' }}
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'windows2025') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-windows-server-2025.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      project: desktop
+      r_version: ${{ fromJSON(needs.pick.outputs.r_effective).windows2025 }}
+      build_from_source: ${{ inputs.build_from_source || false }}
+      test_selector: ${{ inputs.test_selector }}
+      rstudio_installer_url: ${{ needs.resolve.outputs.windows }}
+
+  summary:
+    name: Certification summary
+    needs: [pick, resolve, linux-desktop, ubuntu24s, macos26, macos15, macos14, windows2025]
+    # Every cell's result belongs in the table, including the failures -- a
+    # certification run that half-failed still has to say which half.
+    if: always() && needs.pick.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      # Two artifacts per Linux Desktop cell, one fact each: the R version that
+      # cell installed, and that cell's own result. The Linux cells run as a single
+      # matrix call, so neither fact is available as a job output -- a matrix job
+      # collapses to one value. These artifacts are what let the table attribute
+      # both to the right cell, which is what stops one failing cell from being
+      # reported against every other cell in the matrix.
+      #
+      # They are separate artifacts, written by different jobs, on purpose. The
+      # version comes from a shard, because that is where R is installed; the
+      # result comes from the engine's merge job, because only a job downstream of
+      # the whole shard matrix can see whether every shard passed. They were once
+      # two lines of one file, which meant a job dying before the R install put its
+      # status on the version line.
+      #
+      # continue-on-error so a transient artifacts-API failure degrades the table
+      # rather than losing it. The step ids feed the table, but note that a
+      # pattern matching nothing is a success to this action, so the table works
+      # out what arrived by counting files rather than by reading these outcomes.
+      - name: Download per-cell R versions (Linux Desktop)
+        id: fetch_versions
+        if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: r-version-linux-desktop-*
+          path: r-versions
+
+      - name: Download per-cell results (Linux Desktop)
+        id: fetch_outcomes
+        if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: r-outcome-linux-desktop-*
+          path: r-outcomes
+
+      - name: Write the certification table
+        env:
+          BUILD_LABEL: ${{ inputs.build_from_source && 'built from source' || (inputs.version != '' && inputs.version || 'latest daily') }}
+          R_DECLARED: ${{ needs.pick.outputs.r_declared }}
+          SELECTED: ${{ needs.pick.outputs.selected }}
+          LINUX_MATRIX: ${{ needs.pick.outputs.linux_matrix }}
+          # Resolved installer URLs, to work out which cells shared a binary.
+          # Empty on an unpinned run, where each engine self-resolved instead.
+          RESOLVED_URLS: ${{ toJSON(needs.resolve.outputs) }}
+          # The five non-Linux engines each return the R they actually used as a
+          # workflow output. The Linux cells can't: they run as one matrix call,
+          # and a matrix job collapses to a single output value, so both their
+          # version and their per-cell result arrive by artifact (downloaded
+          # above). RESULT_LINUX is only the fallback for a cell whose result
+          # artifact is missing.
+          #
+          # Both download outcomes come in, but they are only half the signal:
+          # download-artifact reports success when its pattern matches nothing, so
+          # a step outcome cannot distinguish "retrieved every artifact" from
+          # "found none to retrieve". The script counts what arrived instead and
+          # uses these only to name the reason. See "Attribute the per-cell facts".
+          FETCH_VERSIONS_OUTCOME: ${{ steps.fetch_versions.outcome }}
+          FETCH_OUTCOMES_OUTCOME: ${{ steps.fetch_outcomes.outcome }}
+          ACTUAL_UBUNTU24S: ${{ needs.ubuntu24s.outputs.r_version_actual }}
+          ACTUAL_MACOS26: ${{ needs.macos26.outputs.r_version_actual }}
+          ACTUAL_MACOS15: ${{ needs.macos15.outputs.r_version_actual }}
+          ACTUAL_MACOS14: ${{ needs.macos14.outputs.r_version_actual }}
+          ACTUAL_WINDOWS2025: ${{ needs.windows2025.outputs.r_version_actual }}
+          RESULT_LINUX: ${{ needs.linux-desktop.result }}
+          RESULT_UBUNTU24S: ${{ needs.ubuntu24s.result }}
+          RESULT_MACOS26: ${{ needs.macos26.result }}
+          RESULT_MACOS15: ${{ needs.macos15.result }}
+          RESULT_MACOS14: ${{ needs.macos14.result }}
+          RESULT_WINDOWS2025: ${{ needs.windows2025.result }}
+        run: |
+          set -euo pipefail
+
+          # --- Attribute the per-cell facts ---------------------------------
+          #
+          # How many artifacts actually arrived, against how many Linux cells ran.
+          # Counting rather than reading steps.<download>.outcome: a pattern that
+          # matches nothing is not an error to download-artifact -- it logs
+          # "Total of 0 artifact(s) downloaded" and finishes successfully -- so the
+          # outcome stays 'success' in exactly the case the table must not treat as
+          # measured. Expired artifacts on a re-run, and an engine whose merge job
+          # was skipped, both land here.
+          #
+          # A partial arrival is the informative case: if some cells uploaded and
+          # this one did not, that cell is the reason. If none arrived at all, the
+          # summary is the more likely reason, because the engine's merge job
+          # writes the outcome file unconditionally -- so a cell that ran at all
+          # has one.
+          #
+          # Guarded on the directory rather than relying on `find ... 2>/dev/null`:
+          # find still exits 1 on a missing directory, and under the pipefail above
+          # that would abort this whole step. The download steps are skipped
+          # entirely when no Linux cell was selected, so on a macOS-only or
+          # Windows-only run neither directory exists.
+          LINUX_CELLS=$(jq -r 'length' <<<"$LINUX_MATRIX")
+          VERSIONS_FOUND=0
+          OUTCOMES_FOUND=0
+          [ ! -d r-versions ] || VERSIONS_FOUND=$(find r-versions -name r-version.txt | wc -l | tr -d ' ')
+          [ ! -d r-outcomes ] || OUTCOMES_FOUND=$(find r-outcomes -name r-outcome.txt | wc -l | tr -d ' ')
+          if [ "$LINUX_CELLS" != "0" ] && [ "$OUTCOMES_FOUND" != "$LINUX_CELLS" ]; then
+            echo "::warning::$OUTCOMES_FOUND of $LINUX_CELLS per-cell result artifact(s) arrived; rows without one are labelled rather than given the matrix-wide result."
+          fi
+          if [ "$LINUX_CELLS" != "0" ] && [ "$VERSIONS_FOUND" != "$LINUX_CELLS" ]; then
+            echo "::warning::$VERSIONS_FOUND of $LINUX_CELLS per-cell R version artifact(s) arrived."
+          fi
+
+          {
+            echo "## RStudio E2E certification"
+            echo ""
+            echo "Build under test: **${BUILD_LABEL}**"
+            echo ""
+            echo "| Environment | R requested | R actually used | Result |"
+            echo "|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Counted so the table can prove it covered every selected cell. Both
+          # emitters run in this shell -- emit_single is a function, and the Linux
+          # loop reads from a process substitution rather than a pipe -- so the
+          # increments survive.
+          ROWS=0
+
+          # Non-Linux cells: actual R comes back from the engine's output.
+          emit_single() {
+            local cell="$1" actual="$2" result="$3" declared
+            if ! jq -e --arg c "$cell" 'index($c)' >/dev/null <<<"$SELECTED"; then
+              return 0
+            fi
+            declared=$(jq -r --arg c "$cell" '.[$c]' <<<"$R_DECLARED")
+            # An empty version has several causes and only one signal to tell them
+            # apart, so these two labels are the safest split available rather than
+            # a diagnosis. A skipped or cancelled job cannot have installed R.
+            # Anything else that ran and returned nothing may have collapsed its
+            # output across shards and run the entire suite -- or may have failed
+            # ahead of the R install, or been a build_only call (each engine's
+            # output description lists all three). The optimistic label is the
+            # deliberate choice: it avoids asserting "not reached" about a cell
+            # that worked, at the cost of covering a build failure too. The Result
+            # column is the fact to trust.
+            if [ -z "$actual" ]; then
+              case "$result" in
+                skipped|cancelled) actual="_not reached_" ;;
+                *)                 actual="_shard output collapsed_" ;;
+              esac
+            fi
+            echo "| \`$cell\` | $declared | $actual | $result |" >> "$GITHUB_STEP_SUMMARY"
+            ROWS=$((ROWS + 1))
+          }
+
+          # Linux cells: the version and this cell's own result come from two
+          # artifacts, each named for the engine's os, which is unique per cell.
+          # Falling back to the matrix-wide RESULT_LINUX only when the result
+          # artifact is absent keeps one failing cell from being reported against
+          # the rest.
+          if [ "$LINUX_MATRIX" != "[]" ]; then
+            while IFS=$'\t' read -r cell os declared; do
+              actual_file="r-versions/r-version-linux-desktop-${os}/r-version.txt"
+              outcome_file="r-outcomes/r-outcome-linux-desktop-${os}/r-outcome.txt"
+              # The engine's merge job wrote the aggregate over every shard, so a
+              # cell whose second shard failed reads failure here. No usable value
+              # means this cell's own result is genuinely unknown -- its merge job
+              # was skipped, its artifact expired, or the summary could not
+              # retrieve it -- and only then is the matrix-wide value the best
+              # available answer.
+              #
+              # Every such fall back is labelled, including an artifact that
+              # arrived empty, and the label names which of the two happened. An
+              # unlabelled matrix-wide value reads as this cell's own measured
+              # result, which is the misattribution these artifacts exist to
+              # prevent.
+              cell_result=""
+              [ ! -r "$outcome_file" ] || cell_result=$(sed -n '1p' "$outcome_file" | tr -d '\r')
+              if [ -n "$cell_result" ]; then
+                result="$cell_result"
+              elif [ "${FETCH_OUTCOMES_OUTCOME:-}" = "failure" ] || [ "$OUTCOMES_FOUND" = "0" ]; then
+                result="$RESULT_LINUX (matrix-wide; per-cell results unavailable)"
+              else
+                result="$RESULT_LINUX (matrix-wide; this cell reported no result)"
+              fi
+              if [ -r "$actual_file" ]; then
+                actual=$(sed -n '1p' "$actual_file" | tr -d '\r')
+                [ -n "$actual" ] || actual="_empty_"
+              elif [ "${FETCH_VERSIONS_OUTCOME:-}" = "failure" ]; then
+                # The cells may well have run fine; the summary just could not
+                # retrieve their artifacts. Do not imply they never reached R.
+                #
+                # Deliberately not keyed on a zero count, unlike the result column
+                # above: no version artifact at all is a plausible real outcome,
+                # since every cell dying after setup but before the R install
+                # uploads an outcome and no version. Blaming the summary there
+                # would hide a genuine "nothing reached R".
+                actual="_summary could not fetch_"
+              else
+                actual="_not reached_"
+              fi
+              echo "| \`$cell\` | $declared | $actual | $result |" >> "$GITHUB_STEP_SUMMARY"
+              ROWS=$((ROWS + 1))
+            done < <(jq -r '.[] | [.cell, .os, .r_declared] | @tsv' <<<"$LINUX_MATRIX")
+          fi
+
+          emit_single ubuntu24s   "$ACTUAL_UBUNTU24S"   "$RESULT_UBUNTU24S"
+          emit_single macos14     "$ACTUAL_MACOS14"     "$RESULT_MACOS14"
+          emit_single macos15     "$ACTUAL_MACOS15"     "$RESULT_MACOS15"
+          emit_single macos26     "$ACTUAL_MACOS26"     "$RESULT_MACOS26"
+          emit_single windows2025 "$ACTUAL_WINDOWS2025" "$RESULT_WINDOWS2025"
+
+          # A table quietly missing an environment is worse than one that fails,
+          # which the pick job already enforces for jobs; this is the reporting
+          # half. It also catches the one failure that is otherwise invisible: the
+          # Linux loop reads from a process substitution, so a jq error there
+          # yields zero rows and leaves this step's exit status at 0.
+          EXPECTED=$(jq -r 'length' <<<"$SELECTED")
+          if [ "$ROWS" != "$EXPECTED" ]; then
+            echo "::error::The certification table has $ROWS row(s) for $EXPECTED selected cell(s), so at least one environment is missing from it."
+            echo "::error::Selected: $(jq -r 'join(", ")' <<<"$SELECTED")"
+            exit 1
+          fi
+
+          {
+            echo ""
+            echo "\"R requested\" is what the matrix or an override asked for."
+            echo "\`distro\` means the engine installs R from the distro's own"
+            echo "repos and ignores the request, so only the actual version is"
+            echo "meaningful for those cells."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # RStudio publishes one package per family rather than one per release:
+          # a single .deb covers the Ubuntu line, a single .rpm the RHEL line, and
+          # one universal .dmg every macOS version. So several cells install the
+          # same binary and differ only in the OS they run it on -- which is the
+          # point of OS certification, but a reader seeing thirteen rows would
+          # otherwise assume thirteen builds. Grouped from the URLs actually
+          # resolved, so it cannot go stale if that packaging changes.
+          #
+          # Skipped on an unpinned run: the engines self-resolved and this job
+          # never saw their URLs.
+          if [ -n "${RESOLVED_URLS:-}" ] && [ "$RESOLVED_URLS" != "null" ]; then
+            SHARED=$(jq -rn \
+              --argjson u "$RESOLVED_URLS" \
+              --argjson l "$LINUX_MATRIX" \
+              --argjson s "$SELECTED" '
+              ([$l[] | {cell: .cell, key: .url_key}]
+               + ([{cell:"ubuntu24s",key:"server_noble"},
+                   {cell:"macos14",key:"macos"},
+                   {cell:"macos15",key:"macos"},
+                   {cell:"macos26",key:"macos"},
+                   {cell:"windows2025",key:"windows"}]
+                  | map(select(.cell as $c | $s | index($c)))))
+              | map(. + {url: ($u[.key] // "")})
+              | map(select(.url != ""))
+              | group_by(.url)
+              | map(select(length > 1) | [.[].cell])
+              | map("  - " + join(", "))
+              | join("\n")')
+            if [ -n "$SHARED" ]; then
+              {
+                echo ""
+                echo "These cells installed the same binary, differing only in the OS"
+                echo "under test -- RStudio ships one package per family, not per release:"
+                echo ""
+                printf '%s\n' "$SHARED"
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi

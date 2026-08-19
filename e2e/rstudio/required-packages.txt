@@ -1,11 +1,20 @@
 # R packages pre-installed into the shared R library by globalSetup
-# (fixtures/r-libs-setup.ts) and, on distros without CRAN binaries (Fedora),
-# by the os-e2e-deps action so they land in the cached library instead of
-# compiling at test time. Single source of truth -- both the TypeScript
+# (fixtures/r-libs-setup.ts) and, in CI, by the os-e2e-deps action
+# (install-required-packages) so they land in the cached library instead of
+# being installed at test time. Single source of truth -- both the TypeScript
 # harness and the bash action read this file. One package per line; blank
 # lines and #-comments are ignored.
+#
+# Do not add a "recommended" package -- one that ships inside R itself, such as
+# MASS, Matrix, survival or lattice. The presence check here is scoped to
+# R_LIBS_USER on purpose (see os-e2e-deps), so a bundled package always looks
+# missing and gets reinstalled from PPM. That is a silent upgrade on a current R
+# and a hard failure on an older one: MASS 7.3-66 declares R >= 4.4.0, which took
+# out the R 4.1.3, 4.2.3 and 4.3.3 certification cells at once (as of 2026-08;
+# those pairings live in .github/e2e-certification/matrix.json and will move). R
+# already ships a version matched to itself, and pak resolves any transitive need
+# without help.
 DBI
-MASS
 S7
 bslib
 data.table
@@ -18,6 +27,7 @@ nycflights13
 odbc
 pillar
 praise
+readr
 remotes
 reticulate
 rmarkdown
@@ -28,3 +38,4 @@ stringr
 styler
 testthat
 tibble
+tidyverse

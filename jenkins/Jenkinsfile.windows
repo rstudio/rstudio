@@ -62,8 +62,8 @@ pipeline {
           steps {
             checkout([$class: 'GitSCM',
               branches: [[name: params.COMMIT_HASH]],
-              extensions: [],
-              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
+              extensions: [[$class: 'CloneOption', shallow: true, depth: 50, noTags: true, honorRefspec: true]],
+              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL, refspec: "+refs/heads/${env.BRANCH_NAME}:refs/remotes/origin/${env.BRANCH_NAME}"]]])
           }
         }
 
@@ -128,8 +128,8 @@ pipeline {
           steps {
             checkout([$class: 'GitSCM',
               branches: [[name: params.COMMIT_HASH]],
-              extensions: [],
-              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL]]])
+              extensions: [[$class: 'CloneOption', shallow: true, depth: 50, noTags: true, honorRefspec: true]],
+              userRemoteConfigs: [[credentialsId: 'posit-jenkins-rstudio', url: GIT_URL, refspec: "+refs/heads/${env.BRANCH_NAME}:refs/remotes/origin/${env.BRANCH_NAME}"]]])
           }
         }
 
@@ -158,10 +158,15 @@ pipeline {
 
         stage('Sign Executables') {
           environment {
+            // rsession.dll carries the bulk of the session code and is loaded by
+            // the rsession.exe / rsession-utf8.exe launcher stubs, so it needs a
+            // signature of its own; multiarch builds ship an x86 copy as well
             EXECUTABLES = """^
               package\\win32\\build\\src\\cpp\\session\\rsession-utf8.exe ^
               package\\win32\\build\\src\\cpp\\session\\rsession.exe ^
+              package\\win32\\build\\src\\cpp\\session\\rsession.dll ^
               package\\win32\\build\\src\\cpp\\session\\x86\\rsession.exe ^
+              package\\win32\\build\\src\\cpp\\session\\x86\\rsession.dll ^
               package\\win32\\build\\src\\cpp\\session\\consoleio\\consoleio.exe ^
               package\\win32\\build\\src\\cpp\\session\\postback\\rpostback.exe ^
               package\\win32\\build\\src\\cpp\\diagnostics\\diagnostics.exe ^
