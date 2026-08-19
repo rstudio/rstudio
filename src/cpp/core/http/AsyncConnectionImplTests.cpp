@@ -385,6 +385,207 @@ TEST(AsyncConnectionImpl, WriteResponseHeadersCollapsesDuplicateUpstreamNosniffH
    EXPECT_NE(received.find("X-Content-Type-Options: nosniff"), std::string::npos);
 }
 
+// writeResponse() has always run responseFilter_ before sending, and
+// AsyncServerImpl::acceptNextConnection() installs one on every connection it
+// accepts -- so the filter is not an optional hook that only some deployments
+// configure. It is what stamps "Server" and every server-add-header header
+// (documented as applying to all responses; in practice HSTS /
+// X-Frame-Options), and in rstudio-pro it also rewrites Location/Refresh for
+// multi-session URI prefixes. writeResponseHeaders() -- the path
+// FixedBufferProxy streams a proxied response through -- must run it too, or
+// the /p/ content path silently loses all of that.
+
+TEST(AsyncConnectionImpl, WriteResponseHeadersRunsTheResponseFilter)
+{
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   // stand in for AsyncServerImpl::connectionResponseFilter: the "Server"
+   // stamp plus a server-add-header-style header.
+   int filterCalls = 0;
+   const http::Request* pRequestSeen = nullptr;
+   ResponseFilter filter = [&](const http::Request& request, http::Response* pResponse) {
+      ++filterCalls;
+      pRequestSeen = &request;
+      pResponse->setHeader("Server", "RStudio");
+      pResponse->setHeader("X-Frame-Options", "SAMEORIGIN");
+   };
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler(),
+         RequestFilter(),
+         filter);
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+
+   bool headersWritten = false;
+   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+      headersWritten = true;
+   });
+
+   ioc.run();
+   EXPECT_TRUE(headersWritten);
+   EXPECT_EQ(filterCalls, 1);
+
+   // the filter must see the request as it originally arrived (what
+   // writeResponse() passes), not the live request_ a request filter may have
+   // rewritten -- pro's multi-session filter derives the URI prefix from it
+   EXPECT_NE(pRequestSeen, &pConnection->request());
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   // the filter mutated the very response whose header buffers went out
+   EXPECT_NE(received.find("Server: RStudio"), std::string::npos);
+   EXPECT_NE(received.find("X-Frame-Options: SAMEORIGIN"), std::string::npos);
+}
+
+TEST(AsyncConnectionImpl, WriteResponseHeadersRunsTheResponseFilterLast)
+{
+   // Ordering parity with writeResponse(), which runs the filter after its own
+   // Date/Connection/nosniff handling: a filter that deliberately overrides one
+   // of those headers must win on this path too, not be overwritten by it.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   ResponseFilter filter = [](const http::Request&, http::Response* pResponse) {
+      pResponse->setHeader("X-Content-Type-Options", "filtered");
+   };
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler(),
+         RequestFilter(),
+         filter);
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+
+   bool headersWritten = false;
+   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+      headersWritten = true;
+   });
+
+   ioc.run();
+   EXPECT_TRUE(headersWritten);
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_NE(received.find("X-Content-Type-Options: filtered"), std::string::npos);
+   EXPECT_EQ(received.find("X-Content-Type-Options: nosniff"), std::string::npos);
+}
+
+TEST(AsyncConnectionImpl, WriteResponseHeadersRunsTheResponseFilterExactlyOnce)
+{
+   // The responseAlreadyStarted() guard runs before every other mutation of
+   // response_, and the filter must be inside it: a second header write, or a
+   // late writeResponse() from an upstream error handler, must not re-run the
+   // filter over a response whose header buffers an asyncWrite may still hold.
+   // Re-running connectionResponseFilter would append duplicate
+   // server-add-header fields for any header it does not already replace.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   int filterCalls = 0;
+   ResponseFilter filter = [&](const http::Request&, http::Response* pResponse) {
+      ++filterCalls;
+      pResponse->addHeader("X-Frame-Options", "SAMEORIGIN");
+   };
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler(),
+         RequestFilter(),
+         filter);
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+   pConnection->writeResponseHeaders([](const boost::system::error_code&, std::size_t) {});
+
+   // a second header write, then a whole-response write (what an upstream
+   // error handler does) - both guarded, so neither reaches the filter
+   pConnection->writeResponseHeaders([](const boost::system::error_code&, std::size_t) {});
+   pConnection->writeResponse();
+
+   ioc.run();
+
+   EXPECT_EQ(filterCalls, 1);
+
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   // exactly one instance on the wire -- the filter uses addHeader(), so a
+   // second invocation would have appended a duplicate field
+   std::size_t occurrences = 0;
+   for (std::size_t pos = received.find("X-Frame-Options");
+        pos != std::string::npos;
+        pos = received.find("X-Frame-Options", pos + 1))
+   {
+      ++occurrences;
+   }
+   EXPECT_EQ(occurrences, 1u);
+}
+
 } // namespace tests
 } // namespace http
 } // namespace core

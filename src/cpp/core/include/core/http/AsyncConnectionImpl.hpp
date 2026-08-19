@@ -332,6 +332,29 @@ public:
       response_.removeHeader("X-Content-Type-Options");
       response_.setHeader("X-Content-Type-Options", "nosniff");
 
+      // call the response filter if we have one -- in the same position (the
+      // last mutation before the write) as writeResponse() above, so a filter
+      // that deliberately overrides Date or nosniff wins identically on both
+      // paths.
+      //
+      // This is not an optional hook that only some deployments install:
+      // AsyncServerImpl::acceptNextConnection() hands every connection its
+      // connectionResponseFilter, which stamps "Server" and every
+      // server-add-header header -- documented in server-options.json as
+      // applying to *all* responses from RStudio Server, and in practice
+      // carrying HSTS / X-Frame-Options. Skipping it here dropped those from
+      // every response streamed through this path (in pro, also multi-session
+      // Location/Refresh rewriting), which is exactly the arbitrary-user-app
+      // content served over /p/.
+      //
+      // Note the caller has already chosen this response's framing headers by
+      // the time we get here (see FixedBufferProxy::queueChunk), so a filter
+      // that set Content-Length or Transfer-Encoding would override them --
+      // the same exposure writeResponse() has, where the filter likewise runs
+      // before the response is serialized.
+      if (responseFilter_)
+         responseFilter_(originalRequest_, &response_);
+
       // write only the header buffers
       socketOperations_->asyncWrite(response_.headerBuffers(), handler);
    }

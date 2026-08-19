@@ -278,9 +278,10 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
          // same "close after this response" behavior
          // AsyncConnectionImpl::writeResponse() signals via this header when
          // called with its default close=true -- but writeResponseHeaders()
-         // below is a thinner path that never sets it. Without this, a client
-         // that pools/pipelines HTTP/1.1 connections has no signal that this
-         // one is about to be closed.
+         // below takes no close argument and so never sets it (it does apply
+         // the rest: HTTP-version, Date, nosniff, and the response filter).
+         // Without this, a client that pools/pipelines HTTP/1.1 connections has
+         // no signal that this one is about to be closed.
          resp.setHeader("Connection", "close");
 
          // Framing headers. removeHopByHopHeaders() above has already stripped
