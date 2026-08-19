@@ -577,17 +577,18 @@ public class ApplicationAutomation
          throw new RuntimeException(
             "Unsupported preference type for " + pref.getId() + ": " + pref.getClass().getSimpleName());
       }
-      userPrefs_.writeUserPrefs((succeeded, errorMessage) -> invokeWriteCallback(onCompleted, succeeded, errorMessage));
+      userPrefs_.writeUserPrefsWithDetail((succeeded, errorMessage) -> invokeWriteCallback(onCompleted, succeeded, errorMessage));
    }
 
    private void clearPrefValue(Prefs.PrefValue<?> pref, JavaScriptObject onCompleted)
    {
       pref.removeGlobalValue(true);
-      userPrefs_.writeUserPrefs((succeeded, errorMessage) -> invokeWriteCallback(onCompleted, succeeded, errorMessage));
+      userPrefs_.writeUserPrefsWithDetail((succeeded, errorMessage) -> invokeWriteCallback(onCompleted, succeeded, errorMessage));
    }
 
    private native void invokeWriteCallback(JavaScriptObject cb, boolean succeeded, String errorMessage) /*-{
-      if (cb) cb(succeeded, errorMessage);
+      if (cb)
+         cb(succeeded, errorMessage);
    }-*/;
 
    private void dispatchCloseAllNoSave()

@@ -133,7 +133,7 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '
     await chatActions.pollWithAllowDialogs(async () => {
       const count = await chatPane.getMessageCount();
       if (count <= initialCount) return false;
-      return !(await chatPane.isStopButtonVisible());
+      return await chatActions.isTurnIdle();
     }, 120000, answerQuestion);
 
     const lastMessage = chatPane.messageItem.last();

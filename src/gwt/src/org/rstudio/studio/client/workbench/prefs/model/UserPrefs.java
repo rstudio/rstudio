@@ -106,22 +106,26 @@ public class UserPrefs extends UserPrefsComputed
 
    public void writeUserPrefs()
    {
-      writeUserPrefs((CommandWithArg<Boolean>) null);
+      writeUserPrefs(null);
    }
 
    public void writeUserPrefs(CommandWithArg<Boolean> onCompleted)
    {
-      writeUserPrefs((succeeded, errorMessage) ->
+      writeUserPrefsWithDetail((succeeded, errorMessage) ->
       {
          if (onCompleted != null)
             onCompleted.execute(succeeded);
       });
    }
 
-   // Overload that also reports the failure detail: on error, onCompleted
+   // Variant that also reports the failure detail: on error, onCompleted
    // receives the underlying RPC error message (null on success). Used by the
    // automation bridge so a failed pref write can say why it failed.
-   public void writeUserPrefs(CommandWith2Args<Boolean, String> onCompleted)
+   //
+   // Named distinctly rather than overloaded: a second single-argument
+   // writeUserPrefs would make every existing writeUserPrefs(null) call
+   // ambiguous, since CommandWithArg and CommandWith2Args are unrelated types.
+   public void writeUserPrefsWithDetail(CommandWith2Args<Boolean, String> onCompleted)
    {
       updatePrefs(session_.getSessionInfo().getPrefs());
       server_.setUserPrefs(

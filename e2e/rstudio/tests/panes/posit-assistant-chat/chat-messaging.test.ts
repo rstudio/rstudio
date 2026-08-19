@@ -19,6 +19,13 @@ test.describe.serial('Chat Messaging', { tag: ['@ai', '@chat'] }, () => {
   });
 
   test.beforeEach(async () => {
+    // Every test here is one or more full model round-trips, and the
+    // multi-turn case is six of them back to back. The 120s default budget
+    // leaves ~20s per turn, so a single slow turn expires the test and
+    // reports an opaque "Test timeout exceeded" instead of the assertion
+    // that was actually waiting.
+    test.setTimeout(300000);
+
     annotateVersions(versions);
     test.info().annotations.push(
       { type: 'Posit Assistant version', description: positAssistantVersion },

@@ -596,12 +596,30 @@ async function waitForPrefEntry(page: Page, camelName: string): Promise<void> {
 // A pref write is a full-payload set_user_prefs RPC, so it is idempotent and
 // safe to retry. Busy CI runners can drop the XHR at the transport layer
 // (winsock ERR_NO_BUFFER_SPACE, connection resets around a session rebuild),
-// which the bridge reports as a "writeUserPrefs failed" rejection; retry that
-// signature only, so deterministic failures still surface immediately.
-async function withPrefWriteRetry(fn: () => Promise<void>): Promise<void> {
+// which the bridge reports as a "writeUserPrefs failed" rejection carrying the
+// underlying RPC error detail.
+//
+// That rejection covers every server-side failure, not only transport ones, so
+// a deterministic failure (a value the schema rejects) pays the same 1.5s of
+// backoff before it surfaces. That is the deliberate trade: the transport
+// errors this exists to absorb do not have one stable message across
+// platforms, and a narrower matcher would let the flake back through. Errors
+// raised on the JS side (missing bridge, unknown pref) never carry the prefix
+// and still fail on the first attempt.
+//
+// Each attempt re-waits for the pref entry: a retry can land while the session
+// is still rebuilding, when the bridge has not re-registered the pref and
+// calling straight through would fail with a misleading "Unknown user
+// preference" for a pref that does exist.
+async function withPrefWriteRetry(
+  page: Page,
+  camelName: string,
+  fn: () => Promise<void>
+): Promise<void> {
   const delaysMs = [500, 1000];
   for (let attempt = 0; ; attempt++) {
     try {
+      await waitForPrefEntry(page, camelName);
       await fn();
       return;
     } catch (err) {
@@ -626,8 +644,7 @@ async function withPrefWriteRetry(fn: () => Promise<void>): Promise<void> {
  */
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
   const camel = snakeToCamel(name);
-  await waitForPrefEntry(page, camel);
-  await withPrefWriteRetry(() =>
+  await withPrefWriteRetry(page, camel, () =>
     page.evaluate(async ({ prefName, prefValue }) => {
       const r = window.rstudio;
       if (!r)
@@ -647,8 +664,7 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
  */
 export async function clearPref(page: Page, name: string): Promise<void> {
   const camel = snakeToCamel(name);
-  await waitForPrefEntry(page, camel);
-  await withPrefWriteRetry(() =>
+  await withPrefWriteRetry(page, camel, () =>
     page.evaluate(async (prefName) => {
       const r = window.rstudio;
       if (!r)
