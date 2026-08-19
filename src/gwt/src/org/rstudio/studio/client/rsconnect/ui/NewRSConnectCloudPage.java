@@ -30,7 +30,7 @@ public class NewRSConnectCloudPage
 {
    public NewRSConnectCloudPage()
    {
-      super(RSConnect.SHINY_APPS_SERVICE_NAME,
+      super(constants_.deprecatedServiceLabel(RSConnect.SHINY_APPS_SERVICE_NAME),
             constants_.newRSConnectCloudPageSubTitle(),
             constants_.newRSConnectCloudPageCaption(),
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), 
