@@ -62,7 +62,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       super(Roles.getDialogRole());
       setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
-      setText(constants_.publishToRPubs());
+      setText(constants_.deprecatedServiceLabel(constants_.publishToRPubs()));
       title_ = title;
       htmlFile_ = htmlFile;
       rmdFile_ = rmdFile;
@@ -98,7 +98,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       headerPanel.add(new DecorativeImage(new ImageResource2x(
             useDarkDialogTheme() ? RESOURCES.publishLargeDark2x() : RESOURCES.publishLarge2x())));
       
-      Label headerLabel = new Label(constants_.publishToRPubs());
+      Label headerLabel = new Label(constants_.deprecatedServiceLabel(constants_.publishToRPubs()));
       headerLabel.addStyleName(styles.headerLabel());
       headerPanel.add(headerLabel);
       headerPanel.setCellVerticalAlignment(headerLabel,

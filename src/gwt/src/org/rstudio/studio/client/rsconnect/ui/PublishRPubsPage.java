@@ -33,7 +33,7 @@ public class PublishRPubsPage
 {
    public PublishRPubsPage(String title, String subTitle)
    {
-      super(title, subTitle, constants_.publishToRpubs(),
+      super(title, subTitle, constants_.deprecatedServiceLabel(constants_.publishToRpubs()),
             new ImageResource2x(useDarkDialogTheme() ?
                   RSConnectResources.INSTANCE.rpubsPublishDark2x() :
                   RSConnectResources.INSTANCE.rpubsPublish2x()),
