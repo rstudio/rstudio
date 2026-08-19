@@ -9,6 +9,9 @@
     "test:server": "tsx scripts/test.ts --project=server",
     "test:server-dev": "tsx scripts/server-dev.ts",
     "test:autocomplete": "tsx scripts/test.ts --project=desktop autocomplete",
+    "test:loki": "cross-env PW_RUN_LOKI=1 tsx scripts/test.ts --project=desktop tests/loki",
+    "test:loki-server": "cross-env PW_RUN_LOKI=1 tsx scripts/test.ts --project=server tests/loki",
+    "loki:facts": "tsx utils/loki/generate-command-facts.ts",
     "test:report": "npx playwright show-report",
     "typecheck": "tsc --noEmit"
   },

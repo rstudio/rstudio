@@ -461,6 +461,7 @@ test('specific test', { tag: ['@macos_only'] }, async ({ rstudioPage: page }) =>
 | `@ai` | Test exercises an AI feature (Copilot ghost text / NES, Posit Assistant chat). Useful for skipping AI-dependent suites in offline or no-credential runs. |
 | `@chat` | Test covers the Posit Assistant chat pane (everything under `tests/panes/posit-assistant-chat/`). A narrower selector than `@ai`: use it to run the Assistant suite without the Copilot/NES code-suggestion tests. Most `@chat` tests are also `@ai`; the exception is `chat-guardrails-paths.test.ts`, which exercises the guardrails from the R console with no AI provider in the loop. |
 | `@smoke` | Long, low-information liveness check. Excluded by default (redundant alongside the full suite); opt in with `PW_RUN_SMOKE=1`. |
+| `@loki` | Agent Loki, the crash hunter under `tests/loki/`. Excluded by default; opt in with `PW_RUN_LOKI=1` or `npm run test:loki`. See `docs/loki.md`. |
 
 ### Filtering by Tag
 
@@ -470,6 +471,7 @@ The config defines two selectable **projects** -- `desktop` and `server` (plus t
 - **Edition**: `PW_RSTUDIO_EDITION=os` (default) excludes `@pro_only`; `PW_RSTUDIO_EDITION=pro` excludes `@os_only`.
 - **Mode**: each project also excludes the opposite mode's tag (`@server_only` from `desktop`, `@desktop_only` from `server`).
 - **Smoke**: `@smoke` is excluded from both projects by default; set `PW_RUN_SMOKE=1` to include it.
+- **Agent Loki**: `@loki` is excluded from both projects by default; set `PW_RUN_LOKI=1` to include it. It drives the IDE through random actions for as long as its budget allows and leaves the session wherever it ended up, so it is never run alongside the ordinary suite.
 
 Select a project with `--project`:
 
@@ -564,6 +566,14 @@ Include sets the candidate pool; exclude trims it. When both apply, exclude wins
 | `PW_DEBUG_AUTH_STEPS` | Both | No | Set to `1`/`true` to emit the sign-in flows' step-level console output: the browser narration (`[authorize-github]`, `[authorize-posit]`: which page is showing, which field is being filled, button state) and the Copilot agent's raw diagnostics (`[copilot-agent]`: LSP notifications, spawn/exit, `checkStatus` polling), and the final page line. Off by default, so a normal run reports only the `[auth-setup]` outcome milestones (started, complete, skipped, failed); the detail is opt-in for troubleshooting a flow. The output is authored text kept free of account identifiers (no username or device code), which is why it's a separate switch from `PW_DEBUG_AUTH_CAPTURE`. |
 | `PW_ENV_FILE` | Both | No | Path (relative to `e2e/rstudio/`) to a dotenv file loaded by `playwright.config.ts` before any env reads. Default: `.env.local`. Setting this to a missing file is a hard error (so typos surface immediately). See *`.env.local` (dotenv)* below. |
 | `PW_RUN_SMOKE` | Both | No | Set to `1`/`true` to include `@smoke` tests, which are excluded by default (they idle long enough to be flaky under parallel load). |
+| `PW_RUN_LOKI` | Both | No | Set to `1`/`true` to include the `@loki` tests (Agent Loki). Excluded by default. |
+| `PW_LOKI_SEED` | Both | No | Seed for Agent Loki's choices, so a run can be repeated while working on the tool. Random when unset. Never a reproduction: see `docs/loki.md`. |
+| `PW_LOKI_STEPS` | Both | No | How many actions Agent Loki performs. Default 150. |
+| `PW_LOKI_MINUTES` | Both | No | Wall-clock budget for Agent Loki's main loop, in minutes. Default 15. |
+| `PW_LOKI_PACE_MS` | Both | No | Floor delay between Agent Loki's actions, in milliseconds. Default 400. |
+| `PW_LOKI_SETTLE_MS` | Both | No | Longest Agent Loki waits for the interface to stop changing after an action. Default 8000. |
+| `PW_LOKI_MAX_MINIMIZE` | Both | No | How many crashes Agent Loki tries to shrink to a short recipe. Default 3. |
+| `PW_LOKI_MINIMIZE_MINUTES` | Both | No | Budget per crash for that shrinking, in minutes. Default 10. |
 | `PW_TRACE` | Both | No | Playwright trace mode (`on`, `off`, `retain-on-failure`, etc.). Default: `retain-on-failure`. Validated against an allow-list so a typo fails loud instead of silently disabling capture. |
 | `PW_SCREENSHOT` | Both | No | Playwright screenshot mode (`on`, `off`, `only-on-failure`). Default: `only-on-failure`. Same allow-list validation as `PW_TRACE`. |
 | `PW_DEBUG` | Both | No | Set to `1`/`true` to enable the interactive debug harness: `waitForUserConsoleInput()` pauses the test with DevTools open for profiling instead of running through. |

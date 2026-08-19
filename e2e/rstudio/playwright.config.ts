@@ -96,17 +96,23 @@ const authTeardownProject = {
 // casualty under parallel load. Exclude it by default; opt in with PW_RUN_SMOKE.
 const smokeExclusions = process.env.PW_RUN_SMOKE ? [] : ['@smoke'];
 
+// Agent Loki drives RStudio through random user actions hunting for crashes
+// (tests/loki/, docs/loki.md). It takes as long as its budget allows, and by
+// design it leaves the session in whatever state it reached, so it never runs
+// alongside the ordinary suite. Opt in with PW_RUN_LOKI, or npm run test:loki.
+const lokiExclusions = process.env.PW_RUN_LOKI ? [] : ['@loki'];
+
 const allProjects = [
   {
     name: 'desktop',
     use: { mode: 'desktop' as const },
-    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
+    grepInvert: new RegExp(['@server_only', ...desktopOsExclusions, ...editionExclusions, ...smokeExclusions, ...lokiExclusions].join('|')),
     dependencies: ['setup'],
   },
   {
     name: 'server',
     use: { mode: 'server' as const },
-    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions, ...smokeExclusions].join('|')),
+    grepInvert: new RegExp(['@desktop_only', ...serverOsExclusions, ...editionExclusions, ...smokeExclusions, ...lokiExclusions].join('|')),
     dependencies: ['setup'],
   },
 ];
