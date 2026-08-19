@@ -168,9 +168,22 @@ jobs:
               continue
             fi
 
+            # Every seed but one maintains build caches. os-cache-seed-e2e-deps
+            # runs no build at all -- it warms the os-e2e-deps test-dependency
+            # caches -- so a generic "build caches" alert sends readers looking
+            # in the wrong place.
+            case "$SEED" in
+              os-cache-seed-e2e-deps.yml)
+                IMPACT="Until this seed succeeds again, its R library, pak download, and Playwright browser caches on main can go stale or be evicted, and PR e2e jobs reinstall those dependencies from scratch."
+                ;;
+              *)
+                IMPACT="Until this seed succeeds again, its build caches on main can go stale or be evicted, and PR builds for that platform run cold."
+                ;;
+            esac
+
             BODY=$(printf '%s\n\n%s\n\n%s' \
               "The latest completed run of \`$SEED\` finished with conclusion \`$CONCLUSION\`: $RUN_URL" \
-              "Until this seed succeeds again, its build caches on main can go stale or evicted, and PR builds for that platform run cold." \
+              "$IMPACT" \
               "(Opened automatically by the cache-seed sentinel; it skips re-alerting while this issue stays open, and closes it once the seed succeeds again.)")
             gh issue create --title "$TITLE" --body "$BODY" || FAILED=1
           done
