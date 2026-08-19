@@ -349,9 +349,19 @@ public:
       //
       // Note the caller has already chosen this response's framing headers by
       // the time we get here (see FixedBufferProxy::queueChunk), so a filter
-      // that set Content-Length or Transfer-Encoding would override them --
-      // the same exposure writeResponse() has, where the filter likewise runs
-      // before the response is serialized.
+      // that set Content-Length/Transfer-Encoding/Connection would override
+      // them. That is deliberately not defended against, for two reasons.
+      // First, writeResponse() allows exactly the same overrides (the filter
+      // runs there before the response is serialized, and its Content-Length
+      // default only applies when none is present), so restoring framing here
+      // would make the two paths disagree -- which is the class of bug this
+      // call is fixing. Second, the damage is bounded to a single malformed
+      // response rather than cross-request desync: every terminal path in
+      // FixedBufferProxy closes the client connection, as does
+      // writeResponse()'s default close=true, so a client misled by a bogus
+      // length hits EOF instead of parsing a following response out of
+      // leftover bytes. Both halves of that parity are pinned by
+      // AsyncConnectionImplTests' *LetsTheFilterOverrideFramingHeaders* pair.
       if (responseFilter_)
          responseFilter_(originalRequest_, &response_);
 

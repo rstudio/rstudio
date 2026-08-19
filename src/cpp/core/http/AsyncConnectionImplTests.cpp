@@ -586,6 +586,135 @@ TEST(AsyncConnectionImpl, WriteResponseHeadersRunsTheResponseFilterExactlyOnce)
    EXPECT_EQ(occurrences, 1u);
 }
 
+// A filter runs as the last mutation on both paths, so on both it can override
+// the framing headers set before it -- including Content-Length,
+// Transfer-Encoding and Connection, which an admin's server-add-header reaches
+// like any other. The pair of tests below pin that the two paths agree about
+// it, which is the property that matters: the streaming path is not more
+// exposed than the buffered one, and a future change that hardens either must
+// fail here until it hardens both.
+//
+// The blast radius is one malformed response, not cross-request desync: every
+// terminal path in FixedBufferProxy closes the client connection
+// (closeConnections()), and writeResponse()'s default close=true does the same,
+// so a client misled by a bogus length reads what it believes is the body and
+// then hits EOF rather than parsing the next response out of leftover bytes.
+
+TEST(AsyncConnectionImpl, WriteResponseHeadersLetsTheFilterOverrideFramingHeaders)
+{
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   ResponseFilter filter = [](const http::Request&, http::Response* pResponse) {
+      pResponse->setHeader("Content-Length", "999");
+      pResponse->setHeader("Transfer-Encoding", "gzip");
+      pResponse->setHeader("Connection", "keep-alive");
+   };
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler(),
+         RequestFilter(),
+         filter);
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   // the framing headers FixedBufferProxy would have chosen for a chunked
+   // response, set before the header write exactly as it sets them
+   pConnection->response().setStatusCode(200);
+   pConnection->response().setHeader("Transfer-Encoding", "chunked");
+   pConnection->response().setHeader("Connection", "close");
+
+   pConnection->writeResponseHeaders([](const boost::system::error_code&, std::size_t) {});
+
+   ioc.run();
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_NE(received.find("Content-Length: 999"), std::string::npos);
+   EXPECT_NE(received.find("Transfer-Encoding: gzip"), std::string::npos);
+   EXPECT_EQ(received.find("Transfer-Encoding: chunked"), std::string::npos);
+   EXPECT_NE(received.find("Connection: keep-alive"), std::string::npos);
+}
+
+TEST(AsyncConnectionImpl, WriteResponseLetsTheFilterOverrideFramingHeadersToo)
+{
+   // The parity half of the test above: the long-standing buffered path allows
+   // exactly the same overrides, which is why running the filter after framing
+   // on the streaming path is not a new hazard there.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   ResponseFilter filter = [](const http::Request&, http::Response* pResponse) {
+      pResponse->setHeader("Content-Length", "999");
+      pResponse->setHeader("Transfer-Encoding", "gzip");
+      pResponse->setHeader("Connection", "keep-alive");
+   };
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler(),
+         RequestFilter(),
+         filter);
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+   pConnection->response().setBody("hello");
+
+   // close=true, so writeResponse() sets Connection: close before the filter
+   pConnection->writeResponse(true, [](const boost::system::error_code&, std::size_t) {});
+
+   ioc.run();
+   pConnection->close();
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   // the filter's values reach the wire here as well -- note the declared
+   // length (999) does not match the body actually sent ("hello"), which is
+   // precisely the malformed-response shape the streaming path is accused of
+   // being uniquely vulnerable to
+   EXPECT_NE(received.find("Content-Length: 999"), std::string::npos);
+   EXPECT_NE(received.find("Transfer-Encoding: gzip"), std::string::npos);
+   EXPECT_NE(received.find("Connection: keep-alive"), std::string::npos);
+   EXPECT_EQ(received.find("Connection: close"), std::string::npos);
+}
+
 } // namespace tests
 } // namespace http
 } // namespace core
