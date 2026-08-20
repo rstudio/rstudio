@@ -19,6 +19,8 @@
 #include <cstddef>
 #include <string>
 
+#include <shared_core/FilePath.hpp>
+
 namespace rstudio {
 namespace core {
 class Error;
@@ -65,6 +67,12 @@ private:
 
 // One-shot convenience over AgentStderrTail, for bounding a single chunk.
 std::string agentStderrTail(const std::string& text, std::size_t maxLength);
+
+// Resolve the next-edit-suggestion (NES) language server script within a Posit
+// Assistant installation directory. Returns an empty path when installPath is
+// empty (no installation was located) or holds no language server script.
+// Exposed for testing.
+core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
 // its file handles are released. Returns true if the agent stopped (or was not
