@@ -105,6 +105,185 @@ code_2 <- 4
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a bar of hashes folds flat regardless of its width', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // A bar of hashes is nothing but leading '#' characters, so its width must
+    // not be read as a heading depth -- otherwise a wider bar later in the file
+    // looks like a subsection and gets folded away with its contents.
+    const content = heredoc`
+      ##############
+      # Chunk 1
+      ##############
+      code_1 <- 1
+      ##########################
+      # Chunk 2
+      ##########################
+      code_2 <- 2
+      ###########
+      # Chunk 3
+      ###########
+      code_3 <- 3
+      ####################
+      # Chunk 4
+      ####################
+      code_4 <- 4
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_4');
+    await expect.poll(() => editor.getValue()).toContain('code_4');
+
+    // Chunk 1's closing bar (14 hashes) folds over its own code only, and stops
+    // at chunk 2's wider bar (26 hashes) on row 4.
+    let range = await editor.getFoldWidgetRange(2);
+    expect(range?.end.row).toBe(3);
+
+    // Chunk 3's closing bar (11 hashes) stops at chunk 4's wider bar (20
+    // hashes) on row 12, rather than running to the end of the document.
+    range = await editor.getFoldWidgetRange(10);
+    expect(range?.end.row).toBe(11);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a bar of mixed delimiters folds flat regardless of its width', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    const content = heredoc`
+      ####====
+      # Narrow bar
+      ####====
+      code_narrow <- 1
+      ##########========================
+      # Wide bar
+      ##########========================
+      code_wide <- 2
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_wide');
+    await expect.poll(() => editor.getValue()).toContain('code_wide');
+
+    // The narrow bar stops at the wide bar on row 4.
+    const range = await editor.getFoldWidgetRange(2);
+    expect(range?.end.row).toBe(3);
+
+    // The outline reads the same headers through the same rule, so a bar has
+    // no heading level there either -- '####====' is not an h4.
+    const scopes = await editor.getSectionScopes();
+    expect(scopes.map((scope) => scope.depth)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a banner header does not fold away a wider banner below it', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // Same root cause as a bar of hashes, but with the label inline: the
+    // leading '#' run is decoration, not a heading level. A run deeper than
+    // h6 carries no heading level, so it can't nest under a shallower one.
+    const content = heredoc`
+      ##### Section A #####
+      code_a <- 1
+      ########## Section B ##########
+      code_b <- 2
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_b');
+    await expect.poll(() => editor.getValue()).toContain('code_b');
+
+    // Section A stops at section B on row 2, rather than swallowing it.
+    const range = await editor.getFoldWidgetRange(0);
+    expect(range?.end.row).toBe(1);
+
+    // '#####' is an h5; '##########' is past h6, so it is a plain section.
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: 'Section A', row: 0, depth: 5, parent: null },
+      { label: 'Section B', row: 2, depth: undefined, parent: null },
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a header with no heading level is top-level in the outline too', async ({
+    rstudioPage: page,
+  }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    const content = heredoc`
+      # A ----
+      code_a <- 1
+      ## B ----
+      code_b <- 2
+      ######## C ########
+      code_c <- 3
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_c');
+    await expect.poll(() => editor.getValue()).toContain('code_c');
+
+    // C carries no heading level, so it ends A's fold rather than nesting
+    // inside it: A folds through B only, to row 3.
+    const range = await editor.getFoldWidgetRange(0);
+    expect(range?.end.row).toBe(3);
+
+    // The outline agrees: B nests under A, while C is a sibling of A. A
+    // depthless header closes every open section, not just the innermost.
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: 'A', row: 0, depth: 1, parent: null },
+      { label: 'B', row: 2, depth: 2, parent: 'A' },
+      { label: 'C', row: 4, depth: undefined, parent: null },
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a header preceded by code folds at its own heading level', async ({
+    rstudioPage: page,
+  }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // The header is a trailing comment, so the line does not start with '#'.
+    // Folding reads the heading level out of the header token, as the outline
+    // does, rather than off the start of the line.
+    const content = heredoc`
+      # Top ----
+      code_top <- 1
+      x <- 1 ## Trailing ----
+      code_trailing <- 2
+      # Next ----
+      code_next <- 3
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_next');
+    await expect.poll(() => editor.getValue()).toContain('code_next');
+
+    // '## Trailing' is an h2, so it nests inside '# Top' and '# Top' folds
+    // through it, down to the row before '# Next' (row 3).
+    const range = await editor.getFoldWidgetRange(0);
+    expect(range?.end.row).toBe(3);
+
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: 'Top', row: 0, depth: 1, parent: null },
+      { label: 'Trailing', row: 2, depth: 2, parent: 'Top' },
+      { label: 'Next', row: 4, depth: 1, parent: null },
+    ]);
+  });
+
   // https://github.com/rstudio/rstudio/issues/16541
   test('flat section folding stops at any section header', async ({ rstudioPage: page }) => {
     await setPref(page, 'hierarchical_section_folding', false);
