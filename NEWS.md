@@ -4,6 +4,7 @@
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): The source editor can now be split, showing two views of the same document side by side or one above the other, so different parts of a file can be viewed and edited at the same time. Use the new split button in the editor toolbar, the View > Split Editor menu, or the new commands (Split Editor Right, Split Editor Down, Remove Editor Split, Toggle Editor Split, Focus Other Editor Split); when a source editor already has focus, Move Focus to Source (Ctrl+1) toggles focus between the two views. Edits, undo history, and saved state are shared between the two views, while cursor, selection, scroll position, and folds are per-view; the split is remembered per document. Splits apply to source mode; inline chunk output in R Markdown / Quarto documents continues to display in the primary view only, breakpoints and debug highlighting are managed through the primary view, and Find/Replace searches the primary view.
 
 ### Fixed
+- ([#18597](https://github.com/rstudio/rstudio/issues/18597)): Fixed an issue where Posit Assistant code suggestions looked for their language server only under the per-user installation directory, ignoring both the `RSTUDIO_POSIT_AI_PATH` override and a system-wide installation (e.g. `/etc/rstudio/pai/bin`) -- locations the chat backend does honor. With only a system-wide installation present, chat worked but code suggestions never started; with the override set, chat and code suggestions could run out of two different installations. Both halves of the assistant now resolve the same installation.
 - ([#18451](https://github.com/rstudio/rstudio/issues/18451)): Fixed an issue where a startup crash in an AI assistant agent (GitHub Copilot or Posit Assistant) dumped the agent's entire stderr output into the session log and into the user-facing launch-failure message. Node.js prints the offending source line before the stack trace, and for a bundled agent that line is the whole minified bundle, so each crash wrote tens of kilobytes of JavaScript with the actual error buried at the end. The stderr text is now truncated to its tail -- where the error and stack trace appear -- both when logged and when accumulated into the launch error. The Posit Assistant chat backend's stderr, logged the same way, is truncated likewise.
 - ([#18570](https://github.com/rstudio/rstudio/issues/18570)): Fixed an issue where a failed Posit Assistant manifest download reported a generic error ("Input/output error" on Linux and macOS, "Access is denied" on Windows) in both the Connection Error dialog and the session log. The actual cause captured from the download -- e.g. a DNS, proxy, or TLS failure reported by R on stderr -- was recorded on the error but never displayed; it is now shown in both places.
 - ([#18531](https://github.com/rstudio/rstudio/issues/18531)): Fixed an issue where breakpoints set inside methods registered on S7 generics (created with `S7::new_generic()`) never fired, on any R version. As with breakpoints in S7 methods for S3 generics, the breakpoint looked like it had been set but was silently dropped.
@@ -36,7 +37,7 @@
 
 ### Dependencies
 - Copilot Language Server 1.531.0
-- Electron 42.9.0
+- Electron 42.9.3
 - Quarto 1.10.18
 
 ### Deprecated / Removed

@@ -17,12 +17,16 @@
 
 #include <gtest/gtest.h>
 
+#include <core/FileSerializer.hpp>
+
 namespace rstudio {
 namespace session {
 namespace tests {
 
+using core::FilePath;
 using modules::assistant::AgentStderrTail;
 using modules::assistant::agentStderrTail;
+using modules::assistant::nesLanguageServerPath;
 
 TEST(SessionAssistant, StderrTailKeepsShortTextUnchanged)
 {
@@ -98,6 +102,75 @@ TEST(SessionAssistant, StderrAccumulatorSkipsUtf8ContinuationAtCut)
    AgentStderrTail acc(3);
    acc.append("aa\xC3\xA9zz");
    EXPECT_EQ(acc.text(), "[... 4 bytes truncated ...] zz");
+}
+
+namespace {
+
+// Creates a NES language server script named `fileName` under a fresh
+// temporary installation directory, and returns that directory.
+FilePath createNesInstallation(const std::string& fileName)
+{
+   FilePath installDir;
+   FilePath::tempFilePath(installDir);
+
+   FilePath script = installDir.completeChildPath("dist/nes").completeChildPath(fileName);
+   script.getParent().ensureDirectory();
+   core::writeStringToFile(script, "// mock language server");
+
+   return installDir;
+}
+
+} // anonymous namespace
+
+TEST(SessionAssistant, NesLanguageServerPathEmptyWhenNoInstallationLocated)
+{
+   EXPECT_TRUE(nesLanguageServerPath(FilePath()).isEmpty());
+}
+
+TEST(SessionAssistant, NesLanguageServerPathEmptyWhenInstallationHasNoNesScript)
+{
+   FilePath installDir;
+   FilePath::tempFilePath(installDir);
+   installDir.ensureDirectory();
+
+   EXPECT_TRUE(nesLanguageServerPath(installDir).isEmpty());
+
+   installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, NesLanguageServerPathResolvesWithinGivenInstallation)
+{
+   // The script must be found under the installation that was passed in --
+   // e.g. an RSTUDIO_POSIT_AI_PATH or system-wide install -- rather than
+   // under a fixed location.
+   FilePath installDir = createNesInstallation("language-server.cjs");
+
+   EXPECT_EQ(nesLanguageServerPath(installDir).getAbsolutePath(),
+             installDir.completeChildPath("dist/nes/language-server.cjs").getAbsolutePath());
+
+   installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, NesLanguageServerPathFallsBackToJsScript)
+{
+   FilePath installDir = createNesInstallation("language-server.js");
+
+   EXPECT_EQ(nesLanguageServerPath(installDir).getAbsolutePath(),
+             installDir.completeChildPath("dist/nes/language-server.js").getAbsolutePath());
+
+   installDir.removeIfExists();
+}
+
+TEST(SessionAssistant, NesLanguageServerPathPrefersCjsScript)
+{
+   FilePath installDir = createNesInstallation("language-server.cjs");
+   core::writeStringToFile(
+      installDir.completeChildPath("dist/nes/language-server.js"), "// mock");
+
+   EXPECT_EQ(nesLanguageServerPath(installDir).getAbsolutePath(),
+             installDir.completeChildPath("dist/nes/language-server.cjs").getAbsolutePath());
+
+   installDir.removeIfExists();
 }
 
 } // end namespace tests
