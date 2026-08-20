@@ -4362,11 +4362,14 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
    // into the reason it returns ("" when the download succeeded). The helper also
    // owns the transfer timeout and leaves the download method to the user/admin's
    // download.file.* options.
+   // callUtf8 because the reason is an R condition message, which on a localized
+   // non-UTF-8 session carries native-encoded bytes that the install status
+   // response (JSON) requires as UTF-8.
    std::string reason;
    Error error = r::exec::RFunction(".rs.chat.downloadPackage")
          .addParam("url", url)
          .addParam("destfile", destPath.getAbsolutePath())
-         .call(&reason);
+         .callUtf8(&reason);
    if (error)
    {
       WLOG("Failed to download package: {}", error.getMessage());

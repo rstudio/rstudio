@@ -97,9 +97,9 @@ test_that("chat.downloadPackage reports no reason when the download succeeds", {
 })
 
 test_that("chat.downloadPackage reports a failure that download.file only warns about", {
-   # Some download.file methods (method = "curl") return a non-zero status with
-   # only a warning rather than erroring. Ignoring the status lets a truncated
-   # download reach the SHA-256 check, which then blames the download's integrity.
+   # download.file()'s libcurl and internal methods can return a non-zero status
+   # with only a warning rather than erroring. Ignoring the status lets a
+   # truncated download reach the SHA-256 check, which then blames its integrity.
    reason <- suppressWarnings(downloadPackageWith(function(url, destfile, ...) {
       writeLines("truncated", destfile)
       warning(sprintf("URL '%s': status was 'Couldn't connect to server'", url))
@@ -133,6 +133,23 @@ test_that("chat.downloadPackage leaves download warnings visible to the caller",
    )
 })
 
+test_that("chat.downloadPackage reports a warning promoted to an error only once", {
+   # options(warn = 2) turns the download's warning into the error, so the
+   # collected warning and the error message carry the same text.
+   withr::with_options(list(warn = 2), {
+      reason <- downloadPackageWith(function(url, destfile, ...) {
+         warning("status was 'Couldn't connect to server'")
+         1L
+      })
+   })
+
+   expect_match(reason, "status was 'Couldn't connect to server'", fixed = TRUE)
+   expect_identical(
+      lengths(regmatches(reason, gregexpr("Couldn't connect to server", reason, fixed = TRUE))),
+      1L
+   )
+})
+
 test_that("chat.downloadPackage raises a short transfer timeout and restores it", {
    # download.file() has no timeout argument -- options(timeout = ) is the knob --
    # so a profile that shortens it would otherwise abort the package download.
@@ -153,6 +170,13 @@ test_that("chat.downloadPackage raises a short transfer timeout and restores it"
    withr::with_options(list(timeout = 300L), {
       downloadPackageWith(observe)
       expect_identical(observed, 300L)
+   })
+
+   # an unset timeout is restored to unset rather than to the substituted default
+   withr::with_options(list(timeout = NULL), {
+      downloadPackageWith(observe)
+      expect_identical(observed, 60L)
+      expect_null(getOption("timeout"))
    })
 })
 

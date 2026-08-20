@@ -1184,9 +1184,10 @@
 #'
 #' download.file() puts the reason a transfer failed in a warning ("status was
 #' 'Couldn't connect to server'") while the error it raises says only that the
-#' URL could not be opened, and some methods (method = "curl") report a failure
-#' as a non-zero return status with a warning instead of an error. So collect the
-#' warnings, check the status, and return both to the caller: a truncated
+#' URL could not be opened, and not every failure raises at all -- its libcurl
+#' and internal methods can return a non-zero status with only a warning
+#' ("download had nonzero exit status"), where curl and wget stop(). So collect
+#' the warnings, check the status, and return both to the caller: a truncated
 #' download that reaches the SHA-256 check would otherwise be reported as an
 #' integrity failure rather than as the dropped connection it is.
 #'
@@ -1205,9 +1206,8 @@
 #' @return "" if the download succeeded, otherwise the reason it failed.
 .rs.addFunction("chat.downloadPackage", function(url, destfile)
 {
-   timeout <- getOption("timeout", default = 60L)
-   options(timeout = max(60L, timeout))
-   on.exit(options(timeout = timeout), add = TRUE)
+   op <- options(timeout = max(60L, getOption("timeout", default = 60L)))
+   on.exit(options(op), add = TRUE)
 
    warningText <- character()
 
@@ -1230,6 +1230,10 @@
       paste("download.file failed, status", status)
    else
       return("")
+
+   # Under options(warn = 2) the collected warning is the error just reported,
+   # so drop any warning text the reason already carries.
+   warningText <- warningText[!vapply(warningText, grepl, logical(1), x = reason, fixed = TRUE)]
 
    paste(c(reason, warningText), collapse = "; ")
 })
