@@ -73,7 +73,9 @@ jobs:
       # (see os-test-e2e-rstudio-pr.yml): the cache keys embed the resolved
       # R major.minor, so a seed built with a different R version warms keys
       # no PR run reads. When bumping the pin there, bump it here and in the
-      # matching sentinel prefixes (os-cache-seed-sentinel.yml) together.
+      # matching sentinel prefixes (os-cache-seed-sentinel.yml) together -- and
+      # mirror the new version first (dependencies/tools/upload-r.sh), since
+      # the install actions download it by exact version.
       R_VERSION: "4.5.3"
 
     steps:
@@ -87,56 +89,17 @@ jobs:
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
-      - name: Install rig (Windows)
+      - name: Install R (Windows)
         if: runner.os == 'Windows'
-        uses: ./.github/actions/os-install-rig-windows
+        uses: ./.github/actions/os-install-r-windows
+        with:
+          r-version: ${{ env.R_VERSION }}
 
-      - name: Install rig (Unix)
+      - name: Install R (Unix)
         if: runner.os != 'Windows'
-        uses: ./.github/actions/os-install-rig-unix
-
-      # Mirrors the Windows e2e job's R install: prepend the rig-installed R
-      # to PATH so it wins over any R version pre-installed on the runner
-      # image (windows-2025 ships a newer R; without the prepend, os-e2e-deps
-      # would resolve that version and compute keys no PR run reads).
-      - name: Install R via rig (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          rig add $env:R_VERSION
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          rig default $env:R_VERSION
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          rig ls
-          $rHome = (Rscript --vanilla -e "cat(R.home())" 2>$null).Trim()
-          $rBin = "$rHome\bin\x64"
-          Write-Host "Prepending R bin to PATH: $rBin"
-          "$rBin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
-
-      - name: Install R via rig (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          rig add "$R_VERSION"
-          # rig names installs with arch/major.minor on macOS (e.g. "4.5-arm64"),
-          # not the requested patch version, so `rig default "$R_VERSION"` fails
-          # there. Query rig for the just-installed name, as the macOS e2e
-          # workflows do. Linux registers the full version and takes it as given.
-          if [ "$RUNNER_OS" = "macOS" ]; then
-            R_NAME=$(rig list --json | jq -r '.[-1].name')
-            # No pipefail in this shell: if `rig list` fails, jq still exits 0
-            # and the assignment quietly lands empty.
-            if [ -z "$R_NAME" ] || [ "$R_NAME" = "null" ]; then
-              echo "::error::rig list returned no installed R versions"
-              exit 1
-            fi
-          else
-            R_NAME="$R_VERSION"
-          fi
-          rig default "$R_NAME"
-          rig ls
-          mkdir -p "$R_LIBS_USER"
+        uses: ./.github/actions/os-install-r-unix
+        with:
+          r-version: ${{ env.R_VERSION }}
 
       # The saves inside the action fire because this workflow only runs on
       # refs/heads/main (push to main, or the sentinel's dispatch --ref main).

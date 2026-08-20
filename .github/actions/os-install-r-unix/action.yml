@@ -1,0 +1,208 @@
+name: "Install R (Linux / macOS)"
+description: >
+  Install a pinned R version on a Linux or macOS runner from the RStudio Build
+  Tools (rstudio-buildtools) S3 bucket. Replaces rig, which was a recurring CI
+  flake source: every `rig add` reached out to GitHub's API and to CRAN or the
+  r-builds CDN at job time, so any hiccup at any of them failed a job that had
+  nothing to do with R. The mirrored installers are byte-identical copies of
+  the same upstream files (see dependencies/tools/upload-r.sh), fetched in one
+  unauthenticated GET from a bucket the build already depends on.
+
+  Because the mirror is flat -- R/<version>/R-<version>-<platform>.<ext> --
+  this action names the asset it needs straight from the runner's own OS and
+  architecture. There is no version-resolution call, which is also why
+  r-version has to be an exact X.Y.Z: aliases like "release" have no meaning
+  without one.
+
+inputs:
+  r-version:
+    description: >-
+      Exact R version to install, as X.Y.Z (e.g. "4.6.1"). Aliases such as
+      "release" or "devel" are not supported; see dependencies/tools/upload-r.sh
+      for mirroring a version that isn't in the bucket yet.
+    required: true
+  base-url:
+    description: "Root of the mirrored R installers."
+    required: false
+    default: "https://rstudio-buildtools.s3.amazonaws.com/R"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install R from rstudio-buildtools
+      shell: bash
+      env:
+        R_VERSION: ${{ inputs.r-version }}
+        BASE_URL: ${{ inputs.base-url }}
+      run: |
+        set -euo pipefail
+
+        if [[ ! "$R_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::r-version must be an exact X.Y.Z version, got '$R_VERSION'."
+          exit 1
+        fi
+
+        # Container jobs run as root and may lack sudo; hosted runners need it.
+        SUDO=""
+        if [ "$(id -u)" != "0" ]; then
+          SUDO="sudo"
+        fi
+
+        # Resolve the runner to one of the platform keys upload-r.sh mirrors
+        # under. Keep these in sync with ALL_PLATFORMS in that script.
+        case "$(uname -s)" in
+
+          Darwin)
+            PLATFORM="macos-$(uname -m)"
+            EXT="pkg"
+            ;;
+
+          Linux)
+            if [ ! -r /etc/os-release ]; then
+              echo "::error::/etc/os-release is missing; cannot tell which R build this distribution needs."
+              exit 1
+            fi
+
+            # shellcheck disable=SC1091
+            . /etc/os-release
+            if [ -z "${ID:-}" ] || [ -z "${VERSION_ID:-}" ]; then
+              echo "::error::/etc/os-release does not declare both ID and VERSION_ID; cannot pick an R build."
+              exit 1
+            fi
+
+            case "$ID" in
+              ubuntu)
+                # r-builds spells Ubuntu releases without the dot: 24.04 -> 2404.
+                SLUG="ubuntu-${VERSION_ID//./}"
+                EXT="deb"
+                ;;
+              debian)
+                SLUG="debian-${VERSION_ID%%.*}"
+                EXT="deb"
+                ;;
+              rocky | rhel | centos | almalinux)
+                # r-builds publishes one RHEL build per major, which the
+                # rebuilds all consume.
+                SLUG="rhel-${VERSION_ID%%.*}"
+                EXT="rpm"
+                ;;
+              *)
+                echo "::error::Unsupported Linux distribution '$ID' for the mirrored R install."
+                exit 1
+                ;;
+            esac
+
+            # The Debian family names architectures amd64/arm64 and the RHEL
+            # family x86_64/aarch64, matching each one's package filenames.
+            if [ "$EXT" = "deb" ]; then
+              PLATFORM="${SLUG}-$(dpkg --print-architecture)"
+            else
+              PLATFORM="${SLUG}-$(uname -m)"
+            fi
+            ;;
+
+          *)
+            echo "::error::Unsupported platform $(uname -s) for the mirrored R install."
+            exit 1
+            ;;
+
+        esac
+
+        ASSET="R-${R_VERSION}-${PLATFORM}.${EXT}"
+        URL="${BASE_URL}/${R_VERSION}/${ASSET}"
+        FILE="${RUNNER_TEMP}/${ASSET}"
+
+        echo "Downloading $URL"
+        if ! curl -fsSL --retry 5 --retry-delay 10 -o "$FILE" "$URL"; then
+          echo "::error::Could not download $URL. If R $R_VERSION is newly pinned, mirror it first with dependencies/tools/upload-r.sh $R_VERSION $PLATFORM."
+          exit 1
+        fi
+
+        case "$EXT" in
+
+          pkg)
+            $SUDO installer -pkg "$FILE" -target /
+            ;;
+
+          deb)
+            # The r-builds packages pull their runtime libraries from the
+            # distro archive, so apt has to install the local file rather than
+            # dpkg it; the lists are often stale on a fresh runner.
+            export DEBIAN_FRONTEND=noninteractive
+            $SUDO apt-get update
+            $SUDO apt-get install -y "$FILE"
+            ;;
+
+          rpm)
+            $SUDO dnf install -y "$FILE"
+            ;;
+
+        esac
+
+        rm -f "$FILE"
+
+        if [ "$(uname -s)" = "Darwin" ]; then
+          # CRAN installs each R into its own framework version directory and
+          # points Versions/Current (and so /usr/local/bin/R) at it. Relink it
+          # explicitly anyway: the runner images ship their own R, and an
+          # installer that declined to move Current would leave that one
+          # winning -- silently testing against the wrong R. R >= 4.3 suffixes
+          # the directory with the architecture; older builds don't.
+          FRAMEWORK="/Library/Frameworks/R.framework/Versions"
+          MAJOR_MINOR="${R_VERSION%.*}"
+          for CANDIDATE in "${MAJOR_MINOR}-$(uname -m)" "${MAJOR_MINOR}"; do
+            if [ -x "${FRAMEWORK}/${CANDIDATE}/Resources/bin/R" ]; then
+              VERSION_DIR="$CANDIDATE"
+              break
+            fi
+          done
+
+          if [ -z "${VERSION_DIR:-}" ]; then
+            echo "::error::R $R_VERSION not found under $FRAMEWORK after installing $ASSET."
+            ls -1 "$FRAMEWORK" || true
+            exit 1
+          fi
+
+          $SUDO ln -sfn "$VERSION_DIR" "${FRAMEWORK}/Current"
+          $SUDO mkdir -p /usr/local/bin
+          $SUDO ln -sf /Library/Frameworks/R.framework/Resources/bin/R /usr/local/bin/R
+          $SUDO ln -sf /Library/Frameworks/R.framework/Resources/bin/Rscript /usr/local/bin/Rscript
+        else
+          # r-builds installs side-by-side under /opt/R/<version> and links
+          # nothing, which is the whole reason `rig default` existed. Put this
+          # R first on PATH for later steps, and link it into /usr/local/bin
+          # for everything that resolves R without inheriting GITHUB_PATH --
+          # rsession and the RStudio installers among them.
+          R_HOME_DIR="/opt/R/${R_VERSION}"
+          if [ ! -x "${R_HOME_DIR}/bin/R" ]; then
+            echo "::error::R $R_VERSION not found at $R_HOME_DIR after installing $ASSET."
+            exit 1
+          fi
+
+          $SUDO mkdir -p /usr/local/bin
+          $SUDO ln -sf "${R_HOME_DIR}/bin/R" /usr/local/bin/R
+          $SUDO ln -sf "${R_HOME_DIR}/bin/Rscript" /usr/local/bin/Rscript
+          echo "${R_HOME_DIR}/bin" >> "$GITHUB_PATH"
+        fi
+
+        # Confirm the R that later steps will resolve is the one that was asked
+        # for. The runner images ship their own R, so "an R answers" proves
+        # nothing on its own -- and resolving through PATH (rather than testing
+        # the file we just installed) is the point: it catches another R
+        # shadowing this one.
+        RSCRIPT="$(command -v Rscript || true)"
+        if [ -z "$RSCRIPT" ]; then
+          echo "::error::No Rscript on PATH after installing $ASSET."
+          exit 1
+        fi
+
+        INSTALLED=$("$RSCRIPT" --vanilla -e 'cat(paste(R.version$major, R.version$minor, sep = "."))')
+        echo "Installed R: $INSTALLED (from $ASSET) at $("$RSCRIPT" --vanilla -e 'cat(R.home())'), resolved as $RSCRIPT"
+        if [ "$INSTALLED" != "$R_VERSION" ]; then
+          echo "::error::Requested R $R_VERSION but $RSCRIPT reports $INSTALLED."
+          exit 1
+        fi
+
+        if [ -n "${R_LIBS_USER:-}" ]; then
+          mkdir -p "$R_LIBS_USER"
+        fi

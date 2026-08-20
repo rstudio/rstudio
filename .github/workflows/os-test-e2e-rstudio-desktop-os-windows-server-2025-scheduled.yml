@@ -27,4 +27,4 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: "release"
+      r_version: "4.6.1"
