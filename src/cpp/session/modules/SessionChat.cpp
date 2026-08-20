@@ -5901,7 +5901,10 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
    {
       boost::mutex::scoped_lock lock2(s_updateStateMutex);
       s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage = "Download failed: " + error.getMessage();
+      // errorDescription, not getMessage: downloadPackage reports the reason R
+      // gave for the failure in the error's description, and getMessage() would
+      // show only the bare errno string ("Input/output error").
+      s_updateState.installMessage = "Download failed: " + core::errorDescription(error);
 
       // Clean up temp file
       Error cleanupError = tempPackage.removeIfExists();
