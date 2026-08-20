@@ -177,7 +177,7 @@ public:
    void setStreamNonChunkedResponses(bool) override {}
    void setBufferPredicate(const boost::function<bool(const http::Response&)>&) override {}
    void setFixedBufferHandlerSupportsPause(bool supportsPause) override { fixedBufferHandlerSupportsPause_ = supportsPause; }
-   void setConnectHandler(const ConnectHandler&) override {}
+   void setConnectHandler(const ConnectHandler&, const ConnectHandler&) override {}
    void resumeChunkProcessing() override { resumed_ = true; }
    void disableHandlers() override
    {

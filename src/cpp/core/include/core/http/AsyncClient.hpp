@@ -110,7 +110,37 @@ public:
    virtual void setBufferPredicate(
       const boost::function<bool(const http::Response&)>& predicate) = 0;
 
-   virtual void setConnectHandler(const ConnectHandler& connectHandler) = 0;
+   // Register the notification delivered once the request has been written to a
+   // successfully connected socket.
+   //
+   // downstreamClosedHandler is the counterpart for the case where there will
+   // never be such a notification, because the client settled -- errored,
+   // completed, or was torn down by its proxy, all of which run
+   // disableHandlers(). It covers both sides of that race:
+   //
+   //  - settled before this call: reported synchronously, here.
+   //  - registered before the request was written, then settled before
+   //    handleWrite() could deliver the connect: reported by
+   //    disableHandlers() as it detaches the stored handler, posted to the
+   //    strand.
+   //  - registered after the request was written, so this call owns delivery:
+   //    dispatched to the strand and decided there, so a settle racing the
+   //    registration is reported as closed rather than as a connect the
+   //    caller would act on by writing to a dead socket.
+   //
+   // Either is reachable whenever registration is deferred past execute(), as
+   // ServerSessionProxy's upload path deliberately does (it posts its
+   // ClientHandler to the io_context so the caller's ordering is preserved),
+   // and on rserver's multi-threaded io_context the two can land on different
+   // threads.
+   //
+   // Callers that gate their own progress on the connect notification (see
+   // FormProxy) must supply it, or they will wait for a notification that
+   // cannot arrive. Exactly one of the two handlers is ever delivered; neither
+   // is silently dropped. It may be an empty function for callers with nothing
+   // to unwind.
+   virtual void setConnectHandler(const ConnectHandler& connectHandler,
+                                  const ConnectHandler& downstreamClosedHandler) = 0;
    virtual void resumeChunkProcessing() = 0;
    virtual void disableHandlers() = 0;
    virtual void close() = 0;
@@ -317,15 +347,17 @@ public:
       // the overall deadline so it can't fire a spurious timeout afterwards
       cancelRequestDeadline();
 
-      // Detach all four handlers synchronously, under socketMutex_. Swap
-      // into locals so the old values are destroyed after the lock is
-      // released (a destructor releasing the last reference to a consumer
-      // must not run under our lock -- the consumer's teardown may call
-      // back into close()/disableHandlers()).
+      // Detach all handlers synchronously, under socketMutex_. Swap into
+      // locals so the old values are destroyed after the lock is released (a
+      // destructor releasing the last reference to a consumer must not run
+      // under our lock -- the consumer's teardown may call back into
+      // close()/disableHandlers()).
       ResponseHandler oldResponseHandler;
       ErrorHandler oldErrorHandler;
       FixedBufferHandler oldFixedBufferHandler;
       ConnectHandler oldConnectHandler;
+      ConnectHandler oldDownstreamClosedHandler;
+      bool reportDownstreamClosed = false;
       LOCK_MUTEX(socketMutex_)
       {
          handlersDisabled_ = true;
@@ -333,8 +365,34 @@ public:
          oldErrorHandler.swap(errorHandler_);
          oldFixedBufferHandler.swap(fixedBufferHandler_);
          oldConnectHandler.swap(connectHandler_);
+         oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
+
+         // Are we detaching a connect notification that was stored but never
+         // delivered? handleWrite() copies connectHandler_ out rather than
+         // clearing it, so a non-empty handler alone doesn't say; what
+         // distinguishes the two is requestWritten_, which handleWrite() sets
+         // in the same critical section it reports the connect from. Still
+         // false here means the connect never happened, so setConnectHandler()
+         // stored a notification that this call is about to make unreachable
+         // -- exactly the drop the downstream-closed handler exists to report.
+         // (Idempotent on a second call: connectHandler_ is empty by then.)
+         reportDownstreamClosed = oldConnectHandler && !requestWritten_;
       }
       END_LOCK_MUTEX
+
+      // Post rather than invoke. We may have been called with a consumer's own
+      // lock held (FixedBufferProxy::closeConnections() holds its mutex_) or
+      // from inside a handler invocation, so calling out from here directly
+      // would invert the lock order this method's declaration warns about.
+      // Posting defers the notification until the disabling caller has
+      // unwound, and binding the client's strand keeps it serialized with
+      // every other handler invocation. The bound handler holds the consumer's
+      // shared_ptr, so it stays alive until this runs.
+      if (reportDownstreamClosed && oldDownstreamClosedHandler)
+      {
+         boost::asio::post(ioContext_,
+                           boost::asio::bind_executor(*pStrand_, oldDownstreamClosedHandler));
+      }
 
       // The old values now destruct inline, breaking any reference cycle
       // (e.g. fixedBufferHandler_'s bound shared_ptr<FixedBufferProxy>)
@@ -345,6 +403,11 @@ public:
       // comment above), and that copy keeps the consumer alive until the
       // invocation returns and the call site's scope ends -- dropping our
       // reference here therefore never destroys a consumer mid-call.
+      //
+      // The one exception is a posted downstream-closed notification, whose
+      // copy above deliberately outlives this scope: that notification is only
+      // reachable before the request was written, so no FixedBufferHandler
+      // cycle exists yet to keep alive.
    }
 
    // satisfy lower-level http::Socket interface (used when the client
@@ -470,34 +533,110 @@ public:
       }));
    }
 
-   virtual void setConnectHandler(const ConnectHandler& connectHandler)
+   virtual void setConnectHandler(const ConnectHandler& connectHandler,
+                                  const ConnectHandler& downstreamClosedHandler)
    {
       // if we are already connected, don't bother saving the connect handler
       // and just invoke it directly
-      bool invokeConnectHandler = false;
-      ConnectHandler oldConnectHandler; // displaced value destroyed after unlock, see execute()
+      bool deferConnectNotification = false;
+      bool invokeDownstreamClosedHandler = false;
+      // displaced values destroyed after unlock, see execute()
+      ConnectHandler oldConnectHandler;
+      ConnectHandler oldDownstreamClosedHandler;
       LOCK_MUTEX(socketMutex_)
       {
-         // If handlers were already disabled, don't store or invoke a new
-         // one -- see disableHandlers()'s declaration for why this must be
-         // checked under the same lock it uses.
-         if (!handlersDisabled_)
+         // Whether handlers were already disabled has to be read under the
+         // same lock disableHandlers() sets it with -- see its declaration --
+         // so that the decision below can't be made against a stale answer.
+         if (handlersDisabled_)
          {
-            if (!requestWritten_)
-            {
-               oldConnectHandler.swap(connectHandler_);
-               connectHandler_ = connectHandler;
-            }
-            else
-            {
-               invokeConnectHandler = true;
-            }
+            // We have settled already, so connectHandler can never run: there
+            // is no connect left to report, and disableHandlers() would detach
+            // it again immediately even if we stored it. Report that instead of
+            // dropping the notification -- see the declaration for why a caller
+            // that never hears either way can hang.
+            invokeDownstreamClosedHandler = true;
+         }
+         else if (!requestWritten_)
+         {
+            // store both: disableHandlers() may yet detach the connect
+            // notification before handleWrite() can deliver it, and reports
+            // that through the stored downstream-closed handler
+            oldConnectHandler.swap(connectHandler_);
+            oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
+            connectHandler_ = connectHandler;
+            downstreamClosedHandler_ = downstreamClosedHandler;
+         }
+         else
+         {
+            // handleWrite() has already been and gone, so it will never
+            // deliver this one; we have to. Deferred rather than invoked
+            // below -- see there for why.
+            deferConnectNotification = true;
          }
       }
       END_LOCK_MUTEX
 
-      if (invokeConnectHandler)
-         connectHandler();
+      // Dispatch the late connect notification through the strand instead of
+      // invoking it here. Deciding under the lock above and calling out after
+      // it is a decision another thread's close()/disableHandlers() can
+      // invalidate in between, and the caller acts on a connect notification
+      // by writing: FormProxy would set connectedDownstream_, write to a
+      // socket that has since closed, and take its error path -- which closes
+      // the upstream connection too, resetting whatever response
+      // FixedBufferProxy was mid-write of. Re-reading the state on the strand
+      // at delivery time reports that settle as closed instead, which is the
+      // answer the caller can act on safely. (The handlersDisabled_ branch
+      // above stays synchronous: it is terminal, so it cannot go stale.)
+      if (deferConnectNotification)
+      {
+         boost::shared_ptr<AsyncClient<SocketService>> self =
+            AsyncClient<SocketService>::shared_from_this();
+         boost::asio::post(
+            ioContext_,
+            boost::asio::bind_executor(
+               *pStrand_,
+               [self, connectHandler, downstreamClosedHandler]()
+               {
+                  self->deliverLateConnectNotification(connectHandler, downstreamClosedHandler);
+               }));
+      }
+      else if (invokeDownstreamClosedHandler && downstreamClosedHandler)
+      {
+         // outside the lock: handlers must never be invoked while holding
+         // socketMutex_ (see disableHandlers()'s declaration for the lock order)
+         downstreamClosedHandler();
+      }
+   }
+
+   // Deliver a connect notification registered after the request was already
+   // written, from the strand. Which of the two handlers is correct is decided
+   // here rather than at registration time so that a settle racing the
+   // registration is reported as closed rather than as a connect the caller
+   // would act on by writing to a dead socket.
+   //
+   // Both flags matter: disableHandlers() marks handlersDisabled_, but a bare
+   // close() (an embedder tearing down, a deadline firing) only marks closed_,
+   // and a connect notification is equally untrue in that case.
+   void deliverLateConnectNotification(const ConnectHandler& connectHandler,
+                                       const ConnectHandler& downstreamClosedHandler)
+   {
+      bool settled = false;
+      LOCK_MUTEX(socketMutex_)
+      {
+         settled = handlersDisabled_ || closed_;
+      }
+      END_LOCK_MUTEX
+
+      if (!settled)
+      {
+         if (connectHandler)
+            connectHandler();
+      }
+      else if (downstreamClosedHandler)
+      {
+         downstreamClosedHandler();
+      }
    }
 
    virtual void setStrand(boost::asio::io_context::strand* pStrand)
@@ -1581,6 +1720,11 @@ private:
 
    bool requestWritten_;
    ConnectHandler connectHandler_;
+
+   // Companion to connectHandler_, stored alongside it and reported by
+   // disableHandlers() when it detaches a connect notification that was never
+   // delivered. See setConnectHandler()'s declaration.
+   ConnectHandler downstreamClosedHandler_;
 
    boost::asio::io_context::strand defaultStrand_;
 

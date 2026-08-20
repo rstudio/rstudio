@@ -568,6 +568,23 @@ public:
    boost::mutex mutex_;
 };
 
+// Pump the loop until `predicate` holds, bounded so a wrong expectation fails
+// the test rather than hanging it. poll() rather than run(): the scenarios
+// below use a server that accepts and never replies, so the client's read
+// never completes and run() would block forever.
+bool pollUntil(boost::asio::io_context& ioc, const std::function<bool()>& predicate)
+{
+   for (int i = 0; i < 2000; i++)
+   {
+      if (predicate())
+         return true;
+      ioc.restart();
+      ioc.poll();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+   }
+   return predicate();
+}
+
 } // anonymous namespace
 
 // Baseline: a server that closes after the response delivers it via EOF.
@@ -1831,6 +1848,329 @@ TEST(AsyncClientContentLength, HeadRequestWithStrayUpstreamBodyBytesIsNotForward
    // Documents today's actual behavior: the stray body is forwarded despite
    // the request being HEAD.
    EXPECT_EQ(outcome.body, body);
+}
+
+
+// setConnectHandler() registered late -- after the exchange has already
+// settled and disableHandlers() has detached everything -- must report that
+// through the downstream-closed handler rather than dropping the
+// notification. ServerSessionProxy's upload path registers exactly this late
+// (it posts its ClientHandler to the io_context after execute()), and on
+// rserver's multi-threaded io_context the settle can win that race; FormProxy
+// gates its writes on the connect notification, so a dropped one leaves the
+// upload buffering against a writer that can never appear.
+TEST(AsyncClientContentLength, ConnectHandlerRegisteredAfterSettleReportsDownstreamClosed)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/true,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool gotResponse = false;
+   pClient->execute([&](const http::Response&) { gotResponse = true; },
+                    [&](const core::Error&) {});
+
+   ioc.run();
+   server.stop();
+
+   // the exchange has fully settled, so closeAndRespond() has run
+   // disableHandlers() and no connect can ever be reported
+   ASSERT_TRUE(gotResponse);
+
+   bool connected = false;
+   bool downstreamClosed = false;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosed = true; });
+
+   EXPECT_FALSE(connected);
+   EXPECT_TRUE(downstreamClosed);
+}
+
+// The same late registration against a client that failed to connect at all:
+// handleError() also runs disableHandlers(), so this must report closed too
+// rather than leaving the caller waiting.
+TEST(AsyncClientContentLength, ConnectHandlerRegisteredAfterConnectFailureReportsDownstreamClosed)
+{
+   // bind and immediately release a port so connecting to it is refused
+   unsigned short deadPort = 0;
+   {
+      boost::asio::io_context probeIoc;
+      tcp::acceptor probe(probeIoc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+      deadPort = probe.local_endpoint().port();
+   }
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(deadPort),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   bool gotError = false;
+   pClient->execute([&](const http::Response&) {},
+                    [&](const core::Error&) { gotError = true; });
+
+   ioc.run();
+
+   ASSERT_TRUE(gotError);
+
+   bool connected = false;
+   bool downstreamClosed = false;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosed = true; });
+
+   EXPECT_FALSE(connected);
+   EXPECT_TRUE(downstreamClosed);
+}
+
+// The other half of the race, from review: registration wins, but the client
+// settles before handleWrite() can deliver the connect. disableHandlers()
+// detaches the stored connect handler, so without reporting it the caller is
+// left waiting on a notification that has just been made unreachable.
+//
+// Driven deterministically rather than by racing threads: the teardown runs
+// synchronously after execute() but before the io_context is ever pumped, so
+// requestWritten_ is provably still false and nothing has been delivered. The
+// destination is a dead port purely so the abandoned connect attempt resolves
+// and lets run() return. Note the report only arrives once the loop is pumped
+// -- it is posted, not invoked, because the disabling caller may hold a
+// consumer's own lock (FixedBufferProxy::closeConnections does).
+TEST(AsyncClientContentLength, ConnectHandlerDetachedBeforeWriteCompletesReportsDownstreamClosed)
+{
+   unsigned short deadPort = 0;
+   {
+      boost::asio::io_context probeIoc;
+      tcp::acceptor probe(probeIoc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+      deadPort = probe.local_endpoint().port();
+   }
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(deadPort),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   bool connected = false;
+   int downstreamClosedCount = 0;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosedCount++; });
+
+   pClient->execute([&](const http::Response&) {}, [&](const core::Error&) {});
+
+   // tear down the way FixedBufferProxy::closeConnections() does -- close()
+   // then disableHandlers(), synchronously, in that order
+   pClient->close();
+   pClient->disableHandlers();
+
+   // not delivered inline: it is queued on the strand, so the disabling caller
+   // above returns (and would release its lock) before it can run
+   EXPECT_EQ(downstreamClosedCount, 0);
+
+   ioc.run();
+
+   // the connect was never delivered, and the detach was reported rather than
+   // dropped -- exactly once
+   EXPECT_FALSE(connected);
+   EXPECT_EQ(downstreamClosedCount, 1);
+
+   // a second disable must not report again
+   pClient->disableHandlers();
+   ioc.restart();
+   ioc.poll();
+   EXPECT_EQ(downstreamClosedCount, 1);
+}
+
+// A delivered connect must NOT also produce a downstream-closed report when
+// the client is torn down afterwards: handleWrite() leaves connectHandler_ in
+// place after invoking it, so disableHandlers() has to discriminate on
+// requestWritten_ rather than on the handler being non-empty. Without that,
+// every ordinary request would report closed on completion and FormProxy would
+// discard form data mid-upload.
+TEST(AsyncClientContentLength, DeliveredConnectIsNotAlsoReportedAsDownstreamClosed)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/true,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool connected = false;
+   int downstreamClosedCount = 0;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosedCount++; });
+
+   pClient->execute([&](const http::Response&) {}, [&](const core::Error&) {});
+
+   ioc.run();
+
+   // closeAndRespond() has already run disableHandlers() by now; pump again in
+   // case it posted anything, and call it once more to confirm idempotence
+   pClient->disableHandlers();
+   ioc.restart();
+   ioc.poll();
+
+   server.stop();
+
+   EXPECT_TRUE(connected);
+   EXPECT_EQ(downstreamClosedCount, 0);
+}
+
+// From review (job 59): the third registration case. When requestWritten_ is
+// already true, handleWrite() has been and gone, so setConnectHandler() has to
+// deliver the notification itself -- and deciding that under socketMutex_ then
+// calling out after releasing it is a decision another thread can invalidate
+// in between. A caller acts on a connect notification by writing, so a stale
+// one has FormProxy write to a closed socket and take its error path, which
+// closes the upstream connection and resets whatever response FixedBufferProxy
+// was mid-write of. The delivery is therefore deferred to the strand and the
+// state re-read there.
+//
+// Deterministic: the server accepts and never replies, so the request is
+// written (requestWritten_ true) while the exchange is still live, which is
+// the only state this branch is reachable from. The settle is then made to win
+// the race by running before the loop is pumped.
+TEST(AsyncClientContentLength, LateConnectRegistrationSettledBeforeDeliveryReportsClosed)
+{
+   LocalServer server(ResponseMode::NoResponse, /*closeAfterResponse=*/false, "");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   // a first registration purely to observe when the request has been written,
+   // i.e. when requestWritten_ has become true and nothing has settled
+   bool written = false;
+   pClient->setConnectHandler([&]() { written = true; }, []() {});
+   pClient->execute([](const http::Response&) {}, [](const core::Error&) {});
+   ASSERT_TRUE(pollUntil(ioc, [&]() { return written; }));
+
+   // the late registration under test
+   bool connected = false;
+   int closedCount = 0;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { closedCount++; });
+
+   // nothing delivered yet -- it is queued on the strand, which is what gives
+   // the settle below a chance to be seen before the notification is decided
+   EXPECT_FALSE(connected);
+   EXPECT_EQ(closedCount, 0);
+
+   // the settle wins, the way FixedBufferProxy::closeConnections() tears down
+   pClient->close();
+   pClient->disableHandlers();
+
+   ioc.restart();
+   ioc.poll();
+
+   // reported as closed, not as a connect the caller would write against.
+   // exactly once: requestWritten_ is true here, so disableHandlers() does not
+   // also report the stored handler from the first registration
+   EXPECT_FALSE(connected);
+   EXPECT_EQ(closedCount, 1);
+
+   server.stop();
+}
+
+// The same late registration with nothing settling: deferring delivery to the
+// strand must not turn into never delivering, or swap the notification on a
+// perfectly live client.
+TEST(AsyncClientContentLength, LateConnectRegistrationOnLiveClientStillReportsConnect)
+{
+   LocalServer server(ResponseMode::NoResponse, /*closeAfterResponse=*/false, "");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   bool written = false;
+   pClient->setConnectHandler([&]() { written = true; }, []() {});
+   pClient->execute([](const http::Response&) {}, [](const core::Error&) {});
+   ASSERT_TRUE(pollUntil(ioc, [&]() { return written; }));
+
+   bool connected = false;
+   int closedCount = 0;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { closedCount++; });
+
+   ASSERT_TRUE(pollUntil(ioc, [&]() { return connected; }));
+   EXPECT_EQ(closedCount, 0);
+
+   pClient->close();
+   server.stop();
+}
+
+// Control for the two above: registered before execute() -- the ordinary
+// ordering -- the connect handler is what fires, and the downstream-closed
+// handler stays untouched. Exactly one of the two is ever delivered.
+TEST(AsyncClientContentLength, ConnectHandlerRegisteredBeforeExecuteStillReportsConnect)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/true,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool connected = false;
+   bool downstreamClosed = false;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosed = true; });
+
+   pClient->execute([&](const http::Response&) {}, [&](const core::Error&) {});
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_TRUE(connected);
+   EXPECT_FALSE(downstreamClosed);
 }
 
 } // namespace tests
