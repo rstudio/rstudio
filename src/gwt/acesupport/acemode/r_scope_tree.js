@@ -392,6 +392,35 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          this.$root.addNode(node);
       };
 
+      // A section header carrying no heading level (e.g. a bar of '#'
+      // characters) is top-level, so it closes every open section rather than
+      // just the innermost one -- matching section folding, which ends every
+      // enclosing section fold when it reaches such a header. A function or
+      // chunk scope bounds the search, as it does when closing Markdown header
+      // scopes.
+      this.onTopLevelSectionStart = function(sectionLabel, sectionPos)
+      {
+         // The root is labelled, so getActiveScopes() always reports it and
+         // terminates the walk once every enclosing section has been closed.
+         for (;;)
+         {
+            var scopes = this.getActiveScopes(sectionPos);
+            if (!scopes[scopes.length - 1].isSection())
+               break;
+
+            if (this.$root.closeScope(sectionPos, ScopeNode.TYPE_SECTION) === null)
+               break;
+         }
+
+         this.$root.addNode(new this.$ScopeNodeFactory(
+            sectionLabel,
+            sectionPos,
+            sectionPos,
+            ScopeNode.TYPE_SECTION,
+            {}
+         ));
+      };
+
       this.onSectionEnd = function(position)
       {
          this.$root.closeScope(position, ScopeNode.TYPE_SECTION);

@@ -44,6 +44,7 @@ export namespace Ace {
     label: string;
     start: Position;
     attributes?: { depth?: number };
+    $children?: Scope[];
     isSection(): boolean;
     isFunction(): boolean;
     isChunk(): boolean;

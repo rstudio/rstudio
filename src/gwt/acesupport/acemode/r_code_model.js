@@ -1059,7 +1059,7 @@ var RCodeModel = function(session, tokenizer,
             var depth = sectionHeadDepth(value);
             if (depth === 0)
             {
-               this.$scopes.onSectionStart(label, position);
+               this.$scopes.onTopLevelSectionStart(label, position);
             }
             else
             {
@@ -1454,8 +1454,12 @@ var RCodeModel = function(session, tokenizer,
          // Helper: a header carrying no heading level folds as a top-level
          // section, so that a wider bar of delimiters later in the file isn't
          // mistaken for a subsection and folded away.
-         var foldDepth = function(sectionLine) {
-            return sectionHeadDepth(sectionLine) || 1;
+         //
+         // Reads the header out of the sectionhead token rather than the whole
+         // line, matching what the document outline reads -- a header can be
+         // preceded by code, as in 'x <- 1 ## Section ----'.
+         var foldDepth = function(sectionToken) {
+            return sectionHeadDepth(sectionToken.value) || 1;
          };
 
          // For unnamed sections, use the end of the line.
@@ -1475,7 +1479,7 @@ var RCodeModel = function(session, tokenizer,
          pos.column = index;
 
          var useHierarchy = $hierarchicalSectionFolding;
-         var currentDepth = useHierarchy ? foldDepth(line) : 1;
+         var currentDepth = useHierarchy ? foldDepth(foldToken) : 1;
 
          // Use a token iterator and find the next section head that
          // terminates this one, respecting fold hierarchy when enabled.
@@ -1499,10 +1503,7 @@ var RCodeModel = function(session, tokenizer,
                   break;
                }
 
-               var otherRow = it.getCurrentTokenRow();
-               var otherLine = session.getLine(otherRow);
-               var otherDepth = foldDepth(otherLine);
-               if (otherDepth <= currentDepth) {
+               if (foldDepth(token) <= currentDepth) {
                   break;
                }
 
