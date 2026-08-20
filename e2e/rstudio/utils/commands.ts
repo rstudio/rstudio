@@ -593,6 +593,23 @@ async function waitForPrefEntry(page: Page, camelName: string): Promise<void> {
   );
 }
 
+// The failures a pref write is retried for. Two symptoms, one trigger: the
+// bridge rejects with its own message when the RPC itself fails, but the same
+// session rebuild can instead tear the page context down while entry.set() is
+// still in flight, which surfaces from page.evaluate as one of Playwright's
+// destroyed-context messages. Matched case-insensitively; Playwright's casing
+// varies across these.
+//
+// Deliberately not here: "Target page, context or browser has been closed".
+// That page is not coming back, so retrying it can only burn the backoff
+// before failing with the same error.
+const RETRYABLE_PREF_WRITE_ERRORS = [
+  'writeUserPrefs failed',
+  'Execution context was destroyed',
+  'Execution context is not available in detached frame',
+  'frame was detached',
+];
+
 // A pref write is a full-payload set_user_prefs RPC, so it is idempotent and
 // safe to retry. Busy CI runners can drop the XHR at the transport layer
 // (winsock ERR_NO_BUFFER_SPACE, connection resets around a session rebuild),
@@ -604,8 +621,8 @@ async function waitForPrefEntry(page: Page, camelName: string): Promise<void> {
 // backoff before it surfaces. That is the deliberate trade: the transport
 // errors this exists to absorb do not have one stable message across
 // platforms, and a narrower matcher would let the flake back through. Errors
-// raised on the JS side (missing bridge, unknown pref) never carry the prefix
-// and still fail on the first attempt.
+// raised on the JS side (missing bridge, unknown pref) match nothing in
+// RETRYABLE_PREF_WRITE_ERRORS and still fail on the first attempt.
 //
 // Each attempt re-waits for the pref entry: a retry can land while the session
 // is still rebuilding, when the bridge has not re-registered the pref and
@@ -624,7 +641,9 @@ async function withPrefWriteRetry(
       return;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      if (attempt >= delaysMs.length || !message.includes('writeUserPrefs failed'))
+      const retryable = RETRYABLE_PREF_WRITE_ERRORS
+        .some((pattern) => message.toLowerCase().includes(pattern.toLowerCase()));
+      if (attempt >= delaysMs.length || !retryable)
         throw err;
       console.warn(`[commands] pref write failed (attempt ${attempt + 1}), retrying: ${message}`);
       await sleep(delaysMs[attempt]);

@@ -13,6 +13,10 @@ import { executeCommand } from '../utils/commands';
 const TURN_IDLE_SAMPLES = 4;
 const TURN_IDLE_SAMPLE_INTERVAL_MS = 500;
 
+// Floor for waitForResponse's settle window, used when the caller's own
+// budget has already been spent waiting for the response to appear.
+const MIN_TURN_SETTLE_MS = 30000;
+
 export class ChatPaneActions {
   readonly page: Page;
   readonly chatPane: ChatPane;
@@ -390,7 +394,15 @@ export class ChatPaneActions {
     return true;
   }
 
-  async sendChatMessage(text: string): Promise<void> {
+  /**
+   * Send a message, waiting out any still-running previous turn first.
+   *
+   * Returns the message count as of that wait finishing -- the baseline to
+   * hand waitForResponse. A caller that samples the count itself, before this
+   * call, reads it while the previous turn may still be appending to the
+   * conversation, and then credits this turn with that growth.
+   */
+  async sendChatMessage(text: string): Promise<number> {
     await expect(this.chatPane.chatInput).toBeVisible({ timeout: 15000 });
 
     // The previous turn may still be streaming -- the composer shows the stop
@@ -401,12 +413,16 @@ export class ChatPaneActions {
     // turn ends, so text buffered into it beforehand does not survive.
     await this.pollWithAllowDialogs(() => this.isTurnIdle(), 60000);
 
+    const baseline = await this.chatPane.getMessageCount();
+
     await expect(this.chatPane.chatInput)
       .toHaveAttribute('contenteditable', 'true', { timeout: 15000 });
     await this.chatPane.typeMessage(text);
 
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
     await this.chatPane.sendBtn.click();
+
+    return baseline;
   }
 
   async waitForResponse(initialCount: number, timeout: number = 60000): Promise<number> {
@@ -422,7 +438,12 @@ export class ChatPaneActions {
 
       const currentCount = await this.chatPane.getMessageCount();
       if (currentCount > initialCount) {
-        const readyDeadline = Date.now() + 30000;
+        // Settling gets whatever is left of the caller's budget, never less
+        // than the floor. Deriving it from `timeout` is the point: a caller
+        // that raised its budget for slow turns means the whole turn, not
+        // just the arrival of its first message.
+        const settleStart = Date.now();
+        const readyDeadline = Math.max(deadline, settleStart + MIN_TURN_SETTLE_MS);
         let idle = false;
         while (!idle && Date.now() < readyDeadline) {
           if (await this.chatPane.isAllowButtonVisible()) {
@@ -444,7 +465,8 @@ export class ChatPaneActions {
         // made this class of flake unreadable in the report.
         if (!idle) {
           console.warn(
-            'waitForResponse: the assistant turn was still active after 30s; ' +
+            'waitForResponse: the assistant turn was still active after ' +
+            `${Math.round((Date.now() - settleStart) / 1000)}s; ` +
             'reading the response while it may still be streaming'
           );
         }
