@@ -185,12 +185,12 @@ pipeline {
 
         stage('Sign Executables') {
 
-          // Each file is a separate signing operation, so the nine here account
-          // for nine of the ten a Windows build spends. Hourly builds skip them
-          // and sign only the installer below: that's the artifact Windows warns
-          // about on download, and it costs one operation instead of ten. Daily
-          // and release builds -- both of which pass DAILY -- sign everything we
-          // ship.
+          // Each file is a separate signing operation, so the executables here
+          // account for nearly all of the operations a Windows build spends.
+          // Hourly builds skip them and sign only the installer below: that's
+          // the artifact Windows warns about on download, and signing it alone
+          // costs a single operation. Daily and release builds -- both of which
+          // pass DAILY -- sign everything we ship.
           when { expression { return params.DAILY } }
 
           environment {
