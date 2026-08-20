@@ -95,7 +95,8 @@ public class PublishDocServicePage
       }
       if (input.isExternalUIEnabled() && !input.isWebsiteRmd())
       {
-         pages.add(new PublishRPubsPage("RPubs", constants_.rPubsSubtitle()));
+         pages.add(new PublishRPubsPage(constants_.deprecatedServiceLabel("RPubs"),
+               constants_.rPubsSubtitle()));
       }
 
       return pages;

@@ -41,3 +41,6 @@
 - Electron 42.9.3
 - Quarto 1.10.18
 
+### Deprecated / Removed
+- ([#18605](https://github.com/rstudio/rstudio/issues/18605)): RPubs and ShinyApps.io are now marked `[Deprecated]` where they appear as publishing destinations: the RPubs page of the Publish wizard, the Publish to RPubs dialog, the ShinyApps.io page of the Connect Account dialog, and ShinyApps.io accounts in the account lists of the publish dialog and the Publishing options pane. Both services are being sunset; see https://posit.co/blog/migrating-connect-cloud-posits-unified-publishing-solution for migration paths.
+
