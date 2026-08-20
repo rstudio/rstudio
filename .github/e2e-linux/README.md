@@ -59,7 +59,9 @@ engine config -- with one exception, which is the config's business:
   `.github/actions/os-install-r-unix`, which downloads that exact version's
   Posit r-builds package from the rstudio-buildtools S3 mirror. The version has
   to be an exact `X.Y.Z` that has been mirrored already; see
-  `dependencies/tools/upload-r.sh`.
+  `dependencies/tools/upload-r.sh`. A caller that passes nothing -- which is
+  every lane except the certification matrix -- gets `RSTUDIO_R_VERSION` from
+  `dependencies/tools/rstudio-tools.sh`, the single place that pin lives.
 - `r_install: "distro"` (the four Fedora engines) **ignores `r_version`
   entirely** and installs whatever R the distro's repos ship, via
   `fedora/install-r.sh`. Nothing warns about the dropped value, so a caller
@@ -77,6 +79,12 @@ cache keys, with version-scoped `restore-keys`. Two R versions on one engine
 therefore get separate cache entries and cannot poison each other; two patch
 levels within a minor series (4.5.1 and 4.5.3) share one entry, which is safe
 because package ABI is stable within a series.
+
+That is also why bumping `RSTUDIO_R_VERSION` across a minor series costs one
+cold cycle: the keys move with it, so the caches the seed workflows warmed for
+the previous series go unread until `os-cache-seed-e2e-deps.yml` next runs on
+`main`. The sentinel's audit prefixes derive their major.minor from the same
+pin, so they follow automatically.
 
 ## Architecture
 

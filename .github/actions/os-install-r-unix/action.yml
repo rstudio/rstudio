@@ -17,14 +17,20 @@ description: >
 inputs:
   r-version:
     description: >-
-      Exact R version to install, as X.Y.Z (e.g. "4.6.1"). Aliases such as
-      "release" or "devel" are not supported; see dependencies/tools/upload-r.sh
-      for mirroring a version that isn't in the bucket yet.
-    required: true
-  base-url:
-    description: "Root of the mirrored R installers."
+      Exact R version to install, as X.Y.Z. Leave empty to take
+      RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is where
+      the version CI tests against is pinned -- pass a value only to test against
+      something other than that pin. Aliases such as "release" or "devel" are not
+      supported; see dependencies/tools/upload-r.sh for mirroring a version that
+      isn't in the bucket yet.
     required: false
-    default: "https://rstudio-buildtools.s3.amazonaws.com/R"
+    default: ""
+  base-url:
+    description: >-
+      Root of the mirrored R installers. Empty derives it from RSTUDIO_BUILDTOOLS
+      in dependencies/tools/rstudio-tools.sh.
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -36,6 +42,43 @@ runs:
         BASE_URL: ${{ inputs.base-url }}
       run: |
         set -euo pipefail
+
+        # Scrape rather than source: sourcing rstudio-tools.sh pulls in the whole
+        # build environment (and wants RSTUDIO_TOOLS_ROOT set), when all that is
+        # needed is two literals. Same sed shape scripts/bootstrap-worktree.sh
+        # uses to read RSTUDIO_NODE_VERSION out of it.
+        TOOLS_FILE="${GITHUB_WORKSPACE}/dependencies/tools/rstudio-tools.sh"
+        read_pin() {
+          sed -n "s/^export $1=\"\(.*\)\"\$/\1/p" "$TOOLS_FILE" | tail -1
+        }
+
+        # Checked once here rather than inside read_pin: an error echoed from a
+        # function called in a command substitution lands in the variable
+        # instead of the log, so the run would die with nothing to read.
+        if [ -z "$R_VERSION" ] || [ -z "$BASE_URL" ]; then
+          if [ ! -r "$TOOLS_FILE" ]; then
+            echo "::error::$TOOLS_FILE is not readable, so the R pin cannot be resolved. The repo must be checked out before this action runs."
+            exit 1
+          fi
+        fi
+
+        if [ -z "$R_VERSION" ]; then
+          R_VERSION="$(read_pin RSTUDIO_R_VERSION)"
+          if [ -z "$R_VERSION" ]; then
+            echo "::error::No r-version given and RSTUDIO_R_VERSION is not set in $TOOLS_FILE."
+            exit 1
+          fi
+          echo "Using the repo's R pin: RSTUDIO_R_VERSION=$R_VERSION"
+        fi
+
+        if [ -z "$BASE_URL" ]; then
+          BUILDTOOLS="$(read_pin RSTUDIO_BUILDTOOLS)"
+          if [ -z "$BUILDTOOLS" ]; then
+            echo "::error::No base-url given and RSTUDIO_BUILDTOOLS is not set in $TOOLS_FILE."
+            exit 1
+          fi
+          BASE_URL="${BUILDTOOLS}/R"
+        fi
 
         if [[ ! "$R_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
           echo "::error::r-version must be an exact X.Y.Z version, got '$R_VERSION'."

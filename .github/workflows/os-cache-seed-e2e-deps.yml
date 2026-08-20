@@ -8,7 +8,7 @@ name: "Cache: Seed E2E test dependency caches"
 # "release", and the cache keys embed the resolved R major.minor, so once
 # "release" rolls past the R version the PR orchestrator pins, their saves
 # land on keys no PR run ever reads (e.g. Linux-...-r-4.6-* while PR runs,
-# pinned to R 4.5.3, look for -r-4.5-). The result: every PR shard on every
+# pinned via RSTUDIO_R_VERSION, look for that release's -r-<major.minor>-). The result: every PR shard on every
 # platform reinstalls its R packages from scratch, ~1-4 minutes apiece, on
 # the critical path of the run.
 #
@@ -69,14 +69,6 @@ jobs:
     timeout-minutes: 30
     env:
       R_LIBS_USER: ${{ github.workspace }}/R-libs
-      # Must match the r_version the PR orchestrator passes to every platform
-      # (see os-test-e2e-rstudio-pr.yml): the cache keys embed the resolved
-      # R major.minor, so a seed built with a different R version warms keys
-      # no PR run reads. When bumping the pin there, bump it here and in the
-      # matching sentinel prefixes (os-cache-seed-sentinel.yml) together -- and
-      # mirror the new version first (dependencies/tools/upload-r.sh), since
-      # the install actions download it by exact version.
-      R_VERSION: "4.5.3"
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -89,17 +81,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
+      # No r-version: both this seed and the PR jobs whose caches it warms take
+      # RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, so they
+      # cannot drift apart. That matters here specifically -- the os-e2e-deps
+      # cache keys embed the resolved R major.minor, so a seed built against a
+      # different R warms keys no PR run ever reads.
       - name: Install R (Windows)
         if: runner.os == 'Windows'
         uses: ./.github/actions/os-install-r-windows
-        with:
-          r-version: ${{ env.R_VERSION }}
 
       - name: Install R (Unix)
         if: runner.os != 'Windows'
         uses: ./.github/actions/os-install-r-unix
-        with:
-          r-version: ${{ env.R_VERSION }}
 
       # The saves inside the action fire because this workflow only runs on
       # refs/heads/main (push to main, or the sentinel's dispatch --ref main).

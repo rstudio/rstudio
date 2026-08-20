@@ -181,11 +181,13 @@ jobs:
 
           # Every cell must declare an r_version. A missing or misspelled field
           # reads as null, which flows through as an empty r_version input -- and
-          # a workflow_call default only applies to an absent key, not to an empty
-          # expression, so the engine reaches the R install with nothing to
-          # install inside a cell it has already spent minutes provisioning.
+          # an empty input is how every other lane asks for the RSTUDIO_R_VERSION
+          # pin. So the cell would not fail; it would quietly certify against the
+          # current pin while the summary table reported the version it declared.
+          # A certification table asserting an R that was never installed is the
+          # worst outcome available here, which is why this check is strict.
           #
-          # Exact X.Y.Z only: R now comes from a per-version path in the
+          # Exact X.Y.Z only: R comes from a per-version path in the
           # rstudio-buildtools mirror (.github/actions/os-install-r-*), so there
           # is no resolver left to expand "release" or a two-component "4.4"
           # against. The one non-version value is the 'distro' sentinel.
@@ -305,14 +307,20 @@ jobs:
           # "distro" sentinel becomes a real version because the engines that use
           # it ignore the value anyway, and a literal "distro" would break the
           # mirror-installed engines outright if a config ever switched away from
-          # r_install distro. Any mirrored version does; this one tracks the
-          # r_version default the engine workflows themselves carry.
+          # r_install distro. Any mirrored version does, so it takes the same
+          # RSTUDIO_R_VERSION pin the engines fall back to when handed nothing --
+          # that way there is still exactly one R version literal in the repo.
           #
           # A distro cell keeps "distro" visible in r_declared even when
           # overridden, with the ignored request shown alongside it, so the
           # summary's footnote still applies and the table cannot claim a version
           # that was never attempted.
-          DISTRO_PLACEHOLDER_R="4.6.1"
+          DISTRO_PLACEHOLDER_R=$(sed -n 's/^export RSTUDIO_R_VERSION="\(.*\)"$/\1/p' \
+            dependencies/tools/rstudio-tools.sh | tail -1)
+          if [ -z "$DISTRO_PLACEHOLDER_R" ]; then
+            echo "::error::Could not read RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh."
+            exit 1
+          fi
           RESOLVED=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson p "$PAIRS" \
             --arg placeholder "$DISTRO_PLACEHOLDER_R" '
             ($p | map({key: .cell, value: .version}) | from_entries) as $ov

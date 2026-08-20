@@ -11,10 +11,13 @@ on:
         default: ""
       r_version:
         description: >-
-          Exact R version to install, as X.Y.Z (e.g. '4.6.1'). Must already be
-          mirrored into rstudio-buildtools; see dependencies/tools/upload-r.sh.
+          Exact R version to install, as X.Y.Z. Empty (the default) uses
+          RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is
+          the single place the version CI tests against is pinned. Any version
+          named here must already be mirrored into rstudio-buildtools; see
+          dependencies/tools/upload-r.sh.
         type: string
-        default: "4.6.1"
+        default: ""
       project:
         description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
@@ -46,7 +49,7 @@ on:
         default: ""
       r_version:
         type: string
-        default: "4.6.1"
+        default: ""
       project:
         type: string
         default: "desktop"

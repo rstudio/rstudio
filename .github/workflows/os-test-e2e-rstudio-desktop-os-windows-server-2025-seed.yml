@@ -33,4 +33,3 @@ jobs:
     with:
       build_from_source: true
       build_only: true
-      r_version: "4.6.1"

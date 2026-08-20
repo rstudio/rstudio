@@ -14,14 +14,20 @@ description: >
 inputs:
   r-version:
     description: >-
-      Exact R version to install, as X.Y.Z (e.g. "4.6.1"). Aliases such as
-      "release" or "devel" are not supported; see dependencies/tools/upload-r.sh
-      for mirroring a version that isn't in the bucket yet.
-    required: true
-  base-url:
-    description: "Root of the mirrored R installers."
+      Exact R version to install, as X.Y.Z. Leave empty to take
+      RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is where
+      the version CI tests against is pinned -- pass a value only to test against
+      something other than that pin. Aliases such as "release" or "devel" are not
+      supported; see dependencies/tools/upload-r.sh for mirroring a version that
+      isn't in the bucket yet.
     required: false
-    default: "https://rstudio-buildtools.s3.amazonaws.com/R"
+    default: ""
+  base-url:
+    description: >-
+      Root of the mirrored R installers. Empty derives it from RSTUDIO_BUILDTOOLS
+      in dependencies/tools/rstudio-tools.sh.
+    required: false
+    default: ""
 
 outputs:
   r-home:
@@ -39,6 +45,46 @@ runs:
         BASE_URL: ${{ inputs.base-url }}
       run: |
         $ErrorActionPreference = 'Stop'
+
+        # rstudio-tools.sh, not its .cmd twin: one file is the pin's home, and
+        # the .sh is plain text a Windows runner reads just as easily. The same
+        # Select-String shape the yarn step already uses for RSTUDIO_NODE_VERSION.
+        $toolsFile = Join-Path $env:GITHUB_WORKSPACE 'dependencies\tools\rstudio-tools.sh'
+        function Read-Pin([string] $name) {
+          # Array-wrapped and last-wins, mirroring the `| tail -1` the Unix
+          # action uses: a single match would otherwise index differently from
+          # several, and a redefinition later in the file should win.
+          $m = @(Select-String -Path $toolsFile -Pattern ('^export {0}="(.*)"$' -f $name))
+          if ($m.Count -eq 0) {
+            return ''
+          }
+          return $m[-1].Matches[0].Groups[1].Value.Trim()
+        }
+
+        if (-not $env:R_VERSION -or -not $env:BASE_URL) {
+          if (-not (Test-Path $toolsFile)) {
+            Write-Error "$toolsFile not found, so the R pin cannot be resolved. The repo must be checked out before this action runs."
+            exit 1
+          }
+        }
+
+        if (-not $env:R_VERSION) {
+          $env:R_VERSION = Read-Pin 'RSTUDIO_R_VERSION'
+          if (-not $env:R_VERSION) {
+            Write-Error "No r-version given and RSTUDIO_R_VERSION is not set in $toolsFile."
+            exit 1
+          }
+          Write-Host "Using the repo's R pin: RSTUDIO_R_VERSION=$env:R_VERSION"
+        }
+
+        if (-not $env:BASE_URL) {
+          $buildtools = Read-Pin 'RSTUDIO_BUILDTOOLS'
+          if (-not $buildtools) {
+            Write-Error "No base-url given and RSTUDIO_BUILDTOOLS is not set in $toolsFile."
+            exit 1
+          }
+          $env:BASE_URL = "$buildtools/R"
+        }
 
         if ($env:R_VERSION -notmatch '^\d+\.\d+\.\d+$') {
           Write-Error "r-version must be an exact X.Y.Z version, got '$env:R_VERSION'."

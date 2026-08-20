@@ -172,7 +172,6 @@ jobs:
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.windows_build_from_source) }}
       project: desktop
-      r_version: "4.5.3"
       # Suppress each platform's own merge/publish/comment; the e2e-merge-all
       # job below combines every platform's blobs into a single report + comment.
       defer_merge: true
@@ -188,7 +187,6 @@ jobs:
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.macos_build_from_source) }}
       project: desktop
-      r_version: "4.5.3"
       # Suppress each platform's own merge/publish/comment; the e2e-merge-all
       # job below combines every platform's blobs into a single report + comment.
       defer_merge: true
@@ -206,7 +204,6 @@ jobs:
       arch: x86_64
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_desktop_build_from_source) }}
       project: desktop
-      r_version: "4.5.3"
       # Suppress each platform's own merge/publish/comment; the e2e-merge-all
       # job below combines every platform's blobs into a single report + comment.
       defer_merge: true
@@ -222,7 +219,6 @@ jobs:
     with:
       build_from_source: ${{ fromJSON(needs.detect-changes.outputs.linux_server_build_from_source) }}
       project: server
-      r_version: "4.5.3"
       # Suppress each platform's own merge/publish/comment; the e2e-merge-all
       # job below combines every platform's blobs into a single report + comment.
       defer_merge: true

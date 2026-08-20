@@ -54,6 +54,12 @@ resolving it at job time: `.github/actions/os-install-r-unix` and
 resolver behind the mirror, which is why aliases like `release` and `oldrel` are
 not accepted here or in the engine workflows' `r_version` inputs.
 
+Cells are the only place that names a version explicitly. Every other lane
+passes nothing and takes `RSTUDIO_R_VERSION` from
+`dependencies/tools/rstudio-tools.sh`, so the day-to-day pin lives in exactly
+one line; a cell here overrides it deliberately, to certify against something
+older.
+
 Certifying against a version that has not been mirrored yet fails the engine at
 its R install step. Mirror it first, from a checkout with AWS credentials:
 
