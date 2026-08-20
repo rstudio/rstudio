@@ -15,17 +15,17 @@ Download the desktop installer for your platform. RStudio also needs an installa
 <p class="hero-legal">RStudio Desktop is open source software, released under the <a href="https://www.gnu.org/licenses/agpl-3.0">AGPL v3</a> license.</p>
 </div>
 
-## RStudio Desktop {#rstudio-ide-oss-downloads}
-
-Direct download links for RStudio Desktop {{< var version >}}, the version this documentation describes:
-
-{{< include ../../_snippets/download-desktop-cards.qmd >}}
-
 ::: {.callout-tip icon=false}
 ## <img src="images/positron-icon.svg" alt="" width="20" height="20" style="vertical-align: -0.2em;"> Try Positron!
 
-The new, free IDE for data science with R and Python from Posit. [Download free &rarr;](https://positron.posit.co/download.html)
+Our new, free IDE for data science with R or Python. [Download here](https://positron.posit.co/download.html)
 :::
+
+## RStudio Desktop {#rstudio-ide-oss-downloads}
+
+Direct download links for RStudio Desktop {{< var version >}}, the version this documentation describes. The `.deb` package targets Ubuntu 22 / 24 / 26 and Debian 13; the `.rpm` package targets RHEL 9 / 10 and Fedora.
+
+{{< include ../../_snippets/download-desktop-cards.qmd >}}
 
 ::: {.callout-tip icon=false}
 ## <img src="images/posit-icon-fullcolor.svg" alt="" width="20" height="20" style="vertical-align: -0.2em;"> Add AI to RStudio

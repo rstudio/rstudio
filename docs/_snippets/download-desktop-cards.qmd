@@ -29,7 +29,7 @@ Update both together.
 <a class="download-link" href="https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.exe" aria-label="Download RStudio-{{< var osVersion >}}.exe for Windows"><i class="bi bi-download" aria-hidden="true"></i> .exe</a>
 </div>
 <div class="download-option">
-<div class="option-label">Zip archive<br><span class="option-meta">(no installer required)</span></div>
+<div class="option-label">Zip archive</div>
 <a class="download-link" href="https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.zip" aria-label="Download RStudio-{{< var osVersion >}}.zip for Windows"><i class="bi bi-download" aria-hidden="true"></i> .zip</a>
 </div>
 </div>
@@ -38,11 +38,11 @@ Update both together.
 <h4><i class="bi bi-terminal" aria-hidden="true"></i> Linux <span class="option-meta">x86_64</span></h4>
 <div class="download-group">
 <div class="download-option">
-<div class="option-label">.deb<br><span class="option-meta">(Ubuntu 22 / 24 / 26, Debian 13)</span></div>
+<div class="option-label">.deb<br><span class="option-meta">(Ubuntu, Debian)</span></div>
 <a class="download-link" href="https://download1.rstudio.org/electron/jammy/amd64/rstudio-{{< var osVersion >}}-amd64.deb" aria-label="Download rstudio-{{< var osVersion >}}-amd64.deb for Ubuntu or Debian"><i class="bi bi-download" aria-hidden="true"></i> .deb</a>
 </div>
 <div class="download-option">
-<div class="option-label">.rpm<br><span class="option-meta">(RHEL 9 / 10, Fedora)</span></div>
+<div class="option-label">.rpm<br><span class="option-meta">(Red Hat, Fedora)</span></div>
 <a class="download-link" href="https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-{{< var osVersion >}}-x86_64.rpm" aria-label="Download rstudio-{{< var osVersion >}}-x86_64.rpm for Red Hat or Fedora"><i class="bi bi-download" aria-hidden="true"></i> .rpm</a>
 </div>
 </div>
