@@ -34,6 +34,34 @@ var reSectionLabelTail = new RegExp("\\s*[" + reSectionDelimChars + "]+\\s*$", "
 var reSectionDelimsOnly = new RegExp("^\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
 var reSectionTrailingTail = new RegExp("[" + reSectionDelimChars + "]+\\s*$", "u");
 
+// Infer the heading level of a section header from its leading '#' run,
+// e.g. "# Foo ----" => 1, "### Foo ----" => 3.
+//
+// Returns 0 when the header carries no heading level, and so should be treated
+// as a plain top-level section:
+//
+//   - a header drawn as a bar of delimiters, e.g. "##########" or "####====",
+//     is nothing but delimiter characters, so its width is decoration rather
+//     than a heading depth;
+//
+//   - a run deeper than 6 is likewise more likely to be decoration than a
+//     heading, similar to how HTML only provides <h1> through <h6>.
+//
+// Both the document outline and section folding read a header's level through
+// this function, so that a header nests the same way in each.
+function sectionHeadDepth(sectionLine)
+{
+   if (reSectionDelimsOnly.test(sectionLine))
+      return 0;
+
+   var match = /^\s*(#+)/.exec(sectionLine);
+   if (match === null)
+      return 0;
+
+   var depth = match[1].length;
+   return depth > 6 ? 0 : depth;
+}
+
 function comparePoints(pos1, pos2)
 {
    if (pos1.row != pos2.row)
@@ -1025,28 +1053,19 @@ var RCodeModel = function(session, tokenizer,
             //
             //   ## Header 2 ----
             //
-            // When we have such a header, we can provide a depth.
-            var match = /^\s*([#]+)\s*[^#]/.exec(value);
-            if (match != null)
+            // When we have such a header, we can provide a depth. Headers that
+            // carry no heading level (e.g. a bar of delimiters) become plain
+            // sections instead.
+            var depth = sectionHeadDepth(value);
+            if (depth === 0)
             {
-               // compute depth -- if the depth seems unlikely / large,
-               // then treat it as just a plain section (similar to how
-               // HTML only provides <h1> through <h6>)
-               var depth = match[1].length;
-               if (depth > 6)
-               {
-                  this.$scopes.onSectionStart(label, position);
-               }
-               else
-               {
-                  var labelStartPos = {row: position.row, column: 0};
-                  var labelEndPos = {row: position.row, column: Infinity};
-                  this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
-               }
+               this.$scopes.onTopLevelSectionStart(label, position);
             }
             else
             {
-               this.$scopes.onSectionStart(label, position);
+               var labelStartPos = {row: position.row, column: 0};
+               var labelEndPos = {row: position.row, column: Infinity};
+               this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
             }
 
          }
@@ -1432,11 +1451,15 @@ var RCodeModel = function(session, tokenizer,
          // Find the position of the section 'tail'.
          var line = session.getLine(row);
 
-         // Helper: infer heading depth from the count of leading '#'
-         // e.g. "# ... ----" => 1, "### ... ----" => 3
-         var sectionDepth = function(sectionLine) {
-            var matchDepth = /^\s*(#+)/.exec(sectionLine);
-            return matchDepth ? matchDepth[1].length : 1;
+         // Helper: a header carrying no heading level folds as a top-level
+         // section, so that a wider bar of delimiters later in the file isn't
+         // mistaken for a subsection and folded away.
+         //
+         // Reads the header out of the sectionhead token rather than the whole
+         // line, matching what the document outline reads -- a header can be
+         // preceded by code, as in 'x <- 1 ## Section ----'.
+         var foldDepth = function(sectionToken) {
+            return sectionHeadDepth(sectionToken.value) || 1;
          };
 
          // For unnamed sections, use the end of the line.
@@ -1456,7 +1479,7 @@ var RCodeModel = function(session, tokenizer,
          pos.column = index;
 
          var useHierarchy = $hierarchicalSectionFolding;
-         var currentDepth = useHierarchy ? sectionDepth(line) : 1;
+         var currentDepth = useHierarchy ? foldDepth(foldToken) : 1;
 
          // Use a token iterator and find the next section head that
          // terminates this one, respecting fold hierarchy when enabled.
@@ -1480,10 +1503,7 @@ var RCodeModel = function(session, tokenizer,
                   break;
                }
 
-               var otherRow = it.getCurrentTokenRow();
-               var otherLine = session.getLine(otherRow);
-               var otherDepth = sectionDepth(otherLine);
-               if (otherDepth <= currentDepth) {
+               if (foldDepth(token) <= currentDepth) {
                   break;
                }
 
