@@ -1435,6 +1435,14 @@ var RCodeModel = function(session, tokenizer,
          // Helper: infer heading depth from the count of leading '#'
          // e.g. "# ... ----" => 1, "### ... ----" => 3
          var sectionDepth = function(sectionLine) {
+            // A header drawn as a bar of delimiters, e.g. "##########" or
+            // "####======", is nothing but leading '#' characters, so its
+            // width is not a heading depth. Treat such bars as top-level,
+            // so that a wider bar later in the file isn't mistaken for a
+            // subsection and folded away.
+            if (reSectionDelimsOnly.test(sectionLine))
+               return 1;
+
             var matchDepth = /^\s*(#+)/.exec(sectionLine);
             return matchDepth ? matchDepth[1].length : 1;
          };

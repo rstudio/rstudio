@@ -105,6 +105,73 @@ code_2 <- 4
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a bar of hashes folds flat regardless of its width', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // A bar of hashes is nothing but leading '#' characters, so its width must
+    // not be read as a heading depth -- otherwise a wider bar later in the file
+    // looks like a subsection and gets folded away with its contents.
+    const content = heredoc`
+      ##############
+      # Chunk 1
+      ##############
+      code_1 <- 1
+      ##########################
+      # Chunk 2
+      ##########################
+      code_2 <- 2
+      ###########
+      # Chunk 3
+      ###########
+      code_3 <- 3
+      ####################
+      # Chunk 4
+      ####################
+      code_4 <- 4
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_4');
+    await expect.poll(() => editor.getValue()).toContain('code_4');
+
+    // Chunk 1's closing bar (14 hashes) folds over its own code only, and stops
+    // at chunk 2's wider bar (26 hashes) on row 4.
+    let range = await editor.getFoldWidgetRange(2);
+    expect(range?.end.row).toBe(3);
+
+    // Chunk 3's closing bar (11 hashes) stops at chunk 4's wider bar (20
+    // hashes) on row 12, rather than running to the end of the document.
+    range = await editor.getFoldWidgetRange(10);
+    expect(range?.end.row).toBe(11);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a bar of mixed delimiters folds flat regardless of its width', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    const content = heredoc`
+      ####====
+      # Narrow bar
+      ####====
+      code_narrow <- 1
+      ##########========================
+      # Wide bar
+      ##########========================
+      code_wide <- 2
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_wide');
+    await expect.poll(() => editor.getValue()).toContain('code_wide');
+
+    // The narrow bar stops at the wide bar on row 4.
+    const range = await editor.getFoldWidgetRange(2);
+    expect(range?.end.row).toBe(3);
+  });
+
   // https://github.com/rstudio/rstudio/issues/16541
   test('flat section folding stops at any section header', async ({ rstudioPage: page }) => {
     await setPref(page, 'hierarchical_section_folding', false);
