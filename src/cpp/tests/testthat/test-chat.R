@@ -77,6 +77,85 @@ test_that("manifestDownloadCommand emits the downloaded body with newlines intac
    expect_identical(out, "{\n  \"v\": 1\n}")
 })
 
+# Runs .rs.chat.downloadPackage with download.file stubbed. The function looks
+# download.file up lexically, so a child of its closure environment supplies the
+# stub without touching the real utils::download.file.
+downloadPackageWith <- function(stub, url = "https://example.test/pai.zip") {
+   fn <- .rs.chat.downloadPackage
+   env <- new.env(parent = environment(fn))
+   env$download.file <- stub
+   environment(fn) <- env
+   fn(url, destfile = tempfile())
+}
+
+test_that("chat.downloadPackage reports no reason when the download succeeds", {
+   reason <- downloadPackageWith(function(url, destfile, ...) {
+      writeLines("package", destfile)
+      0L
+   })
+   expect_identical(reason, "")
+})
+
+test_that("chat.downloadPackage reports a failure that download.file only warns about", {
+   # Some download.file methods (method = "curl") return a non-zero status with
+   # only a warning rather than erroring. Ignoring the status lets a truncated
+   # download reach the SHA-256 check, which then blames the download's integrity.
+   reason <- suppressWarnings(downloadPackageWith(function(url, destfile, ...) {
+      writeLines("truncated", destfile)
+      warning(sprintf("URL '%s': status was 'Couldn't connect to server'", url))
+      1L
+   }))
+
+   expect_match(reason, "download.file failed, status 1", fixed = TRUE)
+   expect_match(reason, "Couldn't connect to server", fixed = TRUE)
+})
+
+test_that("chat.downloadPackage folds the download warning into an error", {
+   # download.file() names the cause (proxy, DNS, TLS) in a warning; the error it
+   # raises says only that the URL could not be opened, so the error alone leaves
+   # the user with nothing to act on.
+   reason <- suppressWarnings(downloadPackageWith(function(url, destfile, ...) {
+      warning(sprintf("URL '%s': status was 'Couldn't connect to server'", url))
+      stop(sprintf("cannot open URL '%s'", url))
+   }))
+
+   expect_match(reason, "cannot open URL 'https://example.test/pai.zip'", fixed = TRUE)
+   expect_match(reason, "status was 'Couldn't connect to server'", fixed = TRUE)
+})
+
+test_that("chat.downloadPackage leaves download warnings visible to the caller", {
+   expect_warning(
+      downloadPackageWith(function(url, destfile, ...) {
+         warning("status was 'Couldn't connect to server'")
+         1L
+      }),
+      "Couldn't connect to server"
+   )
+})
+
+test_that("chat.downloadPackage raises a short transfer timeout and restores it", {
+   # download.file() has no timeout argument -- options(timeout = ) is the knob --
+   # so a profile that shortens it would otherwise abort the package download.
+   observed <- NULL
+   observe <- function(url, destfile, ...) {
+      observed <<- getOption("timeout")
+      writeLines("package", destfile)
+      0L
+   }
+
+   withr::with_options(list(timeout = 5L), {
+      downloadPackageWith(observe)
+      expect_identical(observed, 60L)
+      expect_identical(getOption("timeout"), 5L)
+   })
+
+   # a longer configured timeout is left alone
+   withr::with_options(list(timeout = 300L), {
+      downloadPackageWith(observe)
+      expect_identical(observed, 300L)
+   })
+})
+
 test_that("chat.safeEval returns value and visibility with no conditions", {
    result <- .rs.chat.safeEval(quote(42))
    # a plain list, not a condition: the C++ dispatch discriminates on class

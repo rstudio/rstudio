@@ -4355,22 +4355,28 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
    DLOG("Downloading package from: {} to: {}", url, destPath.getAbsolutePath());
 
-   // Use R's download.file() function with timeout protection. Do not hardcode
-   // the download method -- let R use whatever the user/admin configured via
-   // options(download.file.method) (corporate proxies often set method = "curl"
-   // with a --cacert in download.file.extra to trust the proxy's CA).
-   r::exec::RFunction downloadFunc("download.file");
-   downloadFunc.addParam("url", url);
-   downloadFunc.addParam("destfile", destPath.getAbsolutePath());
-   downloadFunc.addParam("quiet", false);  // Show progress for user feedback
-   downloadFunc.addParam("mode", "wb");  // Binary mode for zip files
-   downloadFunc.addParam("timeout", 60);  // 60 second timeout for larger package
-
-   Error error = downloadFunc.call();
+   // Download through .rs.chat.downloadPackage rather than calling
+   // download.file() directly: download.file() reports why a transfer failed in a
+   // warning rather than in the error, and some methods report a failure only as
+   // a non-zero return status, so the helper folds the warnings and the status
+   // into the reason it returns ("" when the download succeeded). The helper also
+   // owns the transfer timeout and leaves the download method to the user/admin's
+   // download.file.* options.
+   std::string reason;
+   Error error = r::exec::RFunction(".rs.chat.downloadPackage")
+         .addParam("url", url)
+         .addParam("destfile", destPath.getAbsolutePath())
+         .call(&reason);
    if (error)
    {
       WLOG("Failed to download package: {}", error.getMessage());
       return error;
+   }
+
+   if (!reason.empty())
+   {
+      WLOG("Failed to download package: {}", reason);
+      return systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
    }
 
    // Verify file exists and has content

@@ -1179,3 +1179,57 @@
       paste(args, collapse = ", ")
    )
 })
+
+#' Download the Posit Assistant package, reporting why a failure happened.
+#'
+#' download.file() puts the reason a transfer failed in a warning ("status was
+#' 'Couldn't connect to server'") while the error it raises says only that the
+#' URL could not be opened, and some methods (method = "curl") report a failure
+#' as a non-zero return status with a warning instead of an error. So collect the
+#' warnings, check the status, and return both to the caller: a truncated
+#' download that reaches the SHA-256 check would otherwise be reported as an
+#' integrity failure rather than as the dropped connection it is.
+#'
+#' The warnings are collected but not muffled, so they still reach the console as
+#' they do for any other download.
+#'
+#' The method is left to whatever the user/admin configured via
+#' options(download.file.method) (corporate proxies often set method = "curl"
+#' with a --cacert in download.file.extra to trust the proxy's CA).
+#' options(timeout = ) is the documented transfer-timeout knob -- download.file()
+#' has no timeout argument -- and the package is large enough to want at least 60
+#' seconds, so raise a shorter configured timeout and leave a longer one alone.
+#'
+#' @param url The package URL to download.
+#' @param destfile The file to download the package to.
+#' @return "" if the download succeeded, otherwise the reason it failed.
+.rs.addFunction("chat.downloadPackage", function(url, destfile)
+{
+   timeout <- getOption("timeout", default = 60L)
+   options(timeout = max(60L, timeout))
+   on.exit(options(timeout = timeout), add = TRUE)
+
+   warningText <- character()
+
+   # quiet = FALSE so the transfer's progress reaches the console; mode = "wb"
+   # because the package is a zip file.
+   status <- withCallingHandlers(
+      tryCatch(
+         download.file(url, destfile = destfile, quiet = FALSE, mode = "wb"),
+         error = function(e) e
+      ),
+      warning = function(w)
+      {
+         warningText <<- c(warningText, conditionMessage(w))
+      }
+   )
+
+   reason <- if (inherits(status, "error"))
+      conditionMessage(status)
+   else if (!isTRUE(status == 0))
+      paste("download.file failed, status", status)
+   else
+      return("")
+
+   paste(c(reason, warningText), collapse = "; ")
+})
