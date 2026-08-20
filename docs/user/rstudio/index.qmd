@@ -10,6 +10,8 @@ RStudio is available in open source and commercial editions and runs on the desk
 
 RStudio includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace. 
 
+To install it, see [Download RStudio](download.qmd).
+
 Please visit the individual product pages for additional information about the open source [RStudio IDE](https://posit.co/products/open-source/rstudio/) or RStudio within [Posit Workbench](https://posit.co/products/enterprise/workbench/). 
 
 Some of the functionality that RStudio provides is:
@@ -58,43 +60,13 @@ Posit Workbench has several features that differentiate it from the open-source 
 - The ability to monitor the performance of sessions/users.  
 - A commercial license to remove the restrictions of the AGPL license.  
 
-## Install Links
+## Install links {#install-links}
 
-### Open Source
+RStudio Desktop, RStudio Server, and the commercial editions all have installers on
+[Download RStudio](download.qmd), along with a note about the
+[daily builds](https://dailies.rstudio.com/).
 
-- [RStudio Desktop download](#rstudio-ide-oss-downloads) - available for Windows/Mac/Linux
-- [RStudio Server download](#rstudio-server-oss-downloads) - available for Linux
-
-### Commercial
-
-- [Posit Workbench](https://docs.posit.co/rsw/installation/) - administration guide for installation and configuration
-- [RStudio Desktop Pro](https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#direct-downloads) - available for Windows/Mac/Linux
-
-### Direct Downloads (Open Source)
-
-#### RStudio IDE {#rstudio-ide-oss-downloads}
-
-Direct download links for RStudio Desktop {{< var version >}}, the version this documentation describes:
-
-{{< include ../../_snippets/install-desktop-oss.qmd >}}
-
-#### RStudio Server {#rstudio-server-oss-downloads}
-
-Direct download links for RStudio Server {{< var version >}}, the version this documentation describes:
-
-{{< include ../../_snippets/install-server-oss.qmd >}}
-
-### Direct Downloads (Commercial)
-
-Direct download links for RStudio Desktop Pro {{< var version >}}, the version this documentation describes:
-
-{{< include ../../_snippets/install-desktop-pro.qmd >}}
-
-::: {.callout-warning }
-
-### Daily Builds
-
-[RStudio Daily builds](https://dailies.rstudio.com/) are intended for testing purposes, and are not recommended for general use. For stable builds, please use one of the above links for Open Source or Commercial downloads.
-
-:::
-
+<!-- Fragment targets for links written against the download sections that used to
+live on this page. Anchors are never sent to the server, so no redirect can catch
+them; these keep such links landing on the section that points at the new page. -->
+[]{#open-source}[]{#commercial}[]{#direct-downloads-open-source}[]{#rstudio-ide-oss-downloads}[]{#rstudio-server-oss-downloads}[]{#direct-downloads-commercial}[]{#daily-builds}
