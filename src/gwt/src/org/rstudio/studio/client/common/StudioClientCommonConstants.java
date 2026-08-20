@@ -242,4 +242,5 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String removeDictionaryMessage(String dictionary);
     String progressRemoveIndicator();
     String consoleBufferedMessage(int bufferSize);
+    String deprecatedServiceLabel(String serviceName);
 }
