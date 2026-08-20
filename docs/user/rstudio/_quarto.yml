@@ -149,3 +149,4 @@ format:
     include-in-header:
       - assets/_version-toast.html
       - assets/_page-actions.html
+      - assets/_download.html

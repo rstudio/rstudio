@@ -1,0 +1,290 @@
+<style>
+    /* ============= DOWNLOAD PAGE HERO ============= */
+    /* Colors come from Bootstrap CSS variables rather than literals so the
+       cards follow both theme.scss and theme-dark.scss. */
+    .download-hero {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-primary);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(87, 89, 89, 0.08);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .download-hero h3 {
+        margin-top: 0;
+        font-size: 1.25rem;
+    }
+
+    .download-hero .hero-subtitle {
+        color: var(--bs-secondary-color);
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    #hero-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .download-hero .btn {
+        padding: 1rem 2rem;
+        min-width: 220px;
+    }
+
+    .hero-legal {
+        font-size: 0.95rem;
+        color: var(--bs-secondary-color);
+        margin-top: 1rem;
+        margin-bottom: 0;
+    }
+
+    /* ============= DOWNLOAD PAGE CARDS ============= */
+    .download-cards {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        max-width: 100%;
+    }
+
+    .download-card {
+        background: var(--bs-body-bg);
+        padding: 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(87, 89, 89, 0.08);
+        border: 1px solid var(--bs-primary);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .download-card:hover {
+        box-shadow: 0 8px 30px rgba(87, 89, 89, 0.12);
+    }
+
+    .download-card h4 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .download-card .download-group {
+        margin-bottom: 1rem;
+    }
+
+    .download-card .download-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .download-card .download-group > p {
+        font-size: 0.9rem;
+        color: var(--bs-secondary-color);
+        margin-bottom: 0.25rem;
+        padding-top: 0.5rem;
+    }
+
+    .download-card .download-group + .download-group > p {
+        border-top: 1px solid var(--bs-border-color);
+    }
+
+    .download-card .download-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.4rem 0;
+    }
+
+    /* Pandoc wraps each interpolated download link in a <p>; drop its margin
+       so the link stays vertically centered in the flex row. */
+    .download-card .download-option p {
+        margin-bottom: 0;
+    }
+
+    .download-card .download-option .option-label {
+        font-size: 0.95rem;
+    }
+
+    .download-card .download-option .option-meta,
+    .download-card h4 .option-meta {
+        font-size: 0.75rem;
+        color: var(--bs-secondary-color);
+        font-weight: 400;
+    }
+
+    .download-card .download-option a.download-link {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        text-decoration: none;
+        font-size: 0.9rem;
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
+        border: 1px solid var(--bs-border-color);
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background 0.2s, border-color 0.2s;
+    }
+
+    .download-card .download-option a.download-link:hover {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-primary);
+    }
+
+    /* These links are file names, not prose: suppress the external-link icon
+       that link-external-icon adds site-wide. */
+    .download-card .download-option a.download-link::after {
+        content: none !important;
+    }
+
+    .download-card .recommended-badge {
+        display: inline-block;
+        background: var(--bs-primary);
+        color: #ffffff;
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        vertical-align: middle;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    /* ============= RESPONSIVE ============= */
+    /* Card counts are tuned for this guide's content column, which is narrower
+       than the viewport because of the docked sidebar and the table of
+       contents. */
+    @media (min-width: 480px) {
+        .download-cards {
+            gap: 1.25rem;
+            margin: 2rem 0;
+        }
+
+        .download-card {
+            padding: 1.5rem;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .download-cards {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin: 2.5rem 0;
+        }
+    }
+
+    @media (min-width: 1400px) {
+        .download-cards {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+    }
+
+    @media (max-width: 479px) {
+        .download-card .download-option {
+            padding: 0.5rem 0;
+        }
+
+        .download-hero {
+            padding: 1.5rem 1rem;
+        }
+    }
+</style>
+
+<noscript>
+<style>
+    /* The hero is built by detectOS(); without scripting it would render as an
+       empty box above the platform cards. */
+    .download-hero { display: none !important; }
+</style>
+</noscript>
+
+<script type="application/javascript">
+    window.document.addEventListener("DOMContentLoaded", () => {
+        detectOS();
+    });
+
+    // Recommend a single installer for the visitor's platform and badge the
+    // matching card. No-ops on every page that has no hero, since this file is
+    // included in the header site-wide.
+    function detectOS() {
+        const heroSection = document.getElementById('download-hero');
+        if (!heroSection) return;
+
+        const heroTitle = document.getElementById('hero-title');
+        const heroSubtitle = document.getElementById('hero-subtitle');
+        const heroBtns = document.getElementById('hero-buttons');
+
+        const userAgent = navigator.userAgent;
+        // Set from the osVersion Quarto variable by download.qmd.
+        const version = heroSection.dataset.version;
+
+        //////////////////////////////////////////////////////////////////////
+        // NOTE: these URLs are also built in
+        // docs/_snippets/download-desktop-cards.qmd. Update both together.
+        //////////////////////////////////////////////////////////////////////
+        const cdnUrl = 'https://download1.rstudio.org/electron/';
+
+        if (userAgent.indexOf('Mac') !== -1) {
+            heroTitle.textContent = 'Recommended for your Mac';
+            heroSubtitle.textContent = 'We detected macOS. RStudio Desktop ships as a single universal build for both Apple Silicon and Intel.';
+            heroBtns.innerHTML = `
+                <a href="${cdnUrl}macos/RStudio-${version}.dmg" class="btn btn-primary">
+                    Download for macOS
+                </a>
+            `;
+            highlightCard('card-macos');
+        } else if (userAgent.indexOf('Win') !== -1) {
+            heroTitle.textContent = 'Recommended for your PC';
+            heroSubtitle.textContent = 'We detected Windows. Choose an installer or a zip archive:';
+            heroBtns.innerHTML = `
+                <a href="${cdnUrl}windows/RStudio-${version}.exe" class="btn btn-primary">
+                    Download installer
+                </a>
+                <a href="${cdnUrl}windows/RStudio-${version}.zip" class="btn btn-outline-primary">
+                    Download zip archive
+                </a>
+            `;
+            highlightCard('card-windows');
+        } else if (userAgent.indexOf('Linux') !== -1) {
+            heroTitle.textContent = 'Recommended for your system';
+            heroSubtitle.textContent = 'We detected Linux. Choose your package format:';
+            heroBtns.innerHTML = `
+                <a href="${cdnUrl}jammy/amd64/rstudio-${version}-amd64.deb" class="btn btn-primary">
+                    Download .deb (x86_64)
+                </a>
+                <a href="${cdnUrl}rhel9/x86_64/rstudio-${version}-x86_64.rpm" class="btn btn-outline-primary">
+                    Download .rpm (x86_64)
+                </a>
+            `;
+            highlightCard('card-linux');
+        } else {
+            heroSection.style.display = 'none';
+        }
+    }
+
+    function highlightCard(cardId) {
+        const card = document.getElementById(cardId);
+        if (card) {
+            const heading = card.querySelector('h4');
+            if (heading) {
+                const badge = document.createElement('span');
+                badge.className = 'recommended-badge';
+                badge.textContent = 'Your OS';
+                heading.appendChild(badge);
+            }
+        }
+    }
+</script>
