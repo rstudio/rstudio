@@ -58,12 +58,13 @@ const userSkillPath = () => `${userSkillDir()}/SKILL.md`;
 // ---------------------------------------------------------------------------
 
 /**
- * Create a SKILL.md file via two short R console commands.
- *
- * Long single commands through pressSequentially are fragile (autocomplete
- * interference, timing issues). Instead we use two short commands:
+ * Create a SKILL.md file via two R console commands:
  * 1. dir.create() for the directory
- * 2. writeLines(c(...)) for the file content (kept minimal)
+ * 2. writeLines(c(...)) for the file content
+ *
+ * `executeInConsole` writes each command into the console programmatically
+ * (`editor.setValue`) rather than typing it, so neither command length nor
+ * autocomplete interference constrains what goes here.
  */
 async function createSkillFile(
   consoleActions: ConsolePaneActions,
@@ -75,7 +76,6 @@ async function createSkillFile(
 ): Promise<void> {
   await consoleActions.executeInConsole(`dir.create("${dir}", recursive = TRUE)`, { wait: true });
 
-  // Keep content minimal to stay under ~300 chars for pressSequentially reliability
   const cmd =
     `writeLines(c("---", "name: ${name}", "description: ${description}", "---", "", "Start with: ${marker}", "Markers are MANDATORY."), "${filePath}")`;
   await consoleActions.executeInConsole(cmd, { wait: true });
