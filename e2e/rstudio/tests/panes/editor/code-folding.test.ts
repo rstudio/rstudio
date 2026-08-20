@@ -170,6 +170,47 @@ code_2 <- 4
     // The narrow bar stops at the wide bar on row 4.
     const range = await editor.getFoldWidgetRange(2);
     expect(range?.end.row).toBe(3);
+
+    // The outline reads the same headers through the same rule, so a bar has
+    // no heading level there either -- '####====' is not an h4.
+    const scopes = await editor.getSectionScopes();
+    expect(scopes.map((scope) => scope.depth)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a banner header does not fold away a wider banner below it', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // Same root cause as a bar of hashes, but with the label inline: the
+    // leading '#' run is decoration, not a heading level. A run deeper than
+    // h6 carries no heading level, so it can't nest under a shallower one.
+    const content = heredoc`
+      ##### Section A #####
+      code_a <- 1
+      ########## Section B ##########
+      code_b <- 2
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_b');
+    await expect.poll(() => editor.getValue()).toContain('code_b');
+
+    // Section A stops at section B on row 2, rather than swallowing it.
+    const range = await editor.getFoldWidgetRange(0);
+    expect(range?.end.row).toBe(1);
+
+    // '#####' is an h5; '##########' is past h6, so it is a plain section.
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: 'Section A', row: 0, depth: 5 },
+      { label: 'Section B', row: 2, depth: undefined },
+    ]);
   });
 
   // https://github.com/rstudio/rstudio/issues/16541

@@ -37,6 +37,28 @@ export namespace Ace {
     off(event: string, fn: (e: unknown) => void): void;
   }
 
+  // A node of the scope tree RStudio's code models build (see
+  // acesupport/acemode/r_scope_tree.js). Sections are the nodes that drive the
+  // document outline; 'depth' is set only on those with a heading level.
+  export interface Scope {
+    label: string;
+    start: Position;
+    attributes?: { depth?: number };
+    isSection(): boolean;
+    isFunction(): boolean;
+    isChunk(): boolean;
+  }
+
+  // RStudio's per-mode code model (acesupport/acemode/*_code_model.js), hung
+  // off the mode as .codeModel. Only the R modes have a scope tree.
+  export interface CodeModel {
+    getScopeTree?(): Scope[];
+  }
+
+  export interface Mode {
+    codeModel?: CodeModel;
+  }
+
   // Methods on the EditSession (editor.session). Ace exposes many more --
   // restrict to the ones tests actually need to keep the surface obvious.
   export interface Session {
@@ -61,6 +83,7 @@ export namespace Ace {
     // point at a temporary Selection during multi-select operations (see
     // Ace's Editor.forEachSelection).
     multiSelect?: Selection;
+    $mode?: Mode;
   }
 
   // The runtime editor instance. Hung off the .ace_editor DOM element via

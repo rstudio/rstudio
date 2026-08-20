@@ -131,6 +131,30 @@ export class AceEditor extends PageObject {
     }, row);
   }
 
+  /**
+   * Returns the section headers the R code model found, in document order --
+   * the scopes that drive the document outline. `depth` is the header's heading
+   * level (1 for `#`, 2 for `##`, ...), or undefined for a plain section, which
+   * is what a header carrying no heading level (e.g. a bar of `#` characters)
+   * becomes. Only meaningful for modes with an R code model.
+   */
+  async getSectionScopes(): Promise<{ label: string; row: number; depth?: number }[]> {
+    return this.run((editor) => {
+      const codeModel = editor.session.$mode?.codeModel;
+      if (!codeModel?.getScopeTree) {
+        throw new Error('getSectionScopes(): the editor mode has no R code model');
+      }
+      return codeModel
+        .getScopeTree()
+        .filter((scope) => scope.isSection())
+        .map((scope) => ({
+          label: scope.label,
+          row: scope.start.row,
+          depth: scope.attributes?.depth,
+        }));
+    });
+  }
+
   /** Returns the raw text of `row` (0-indexed), excluding the trailing newline. */
   async getLine(row: number): Promise<string> {
     return this.run((editor, r: number) => editor.session.getLine(r), row);
