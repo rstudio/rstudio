@@ -12,6 +12,10 @@ export const COMPLETION_POPUP = '#rstudio_popup_completions';
 const IMPLICIT_COMPLETION_TIMEOUT_MS = 3000;
 const EXPLICIT_COMPLETION_TIMEOUT_MS = 10000;
 
+// Settle applied when the popup is already up before we start waiting, to let
+// a replacement request land -- see waitForCompletionPopup.
+const STALE_POPUP_SETTLE_MS = 500;
+
 export class AutocompleteActions {
   readonly page: Page;
   readonly consoleActions: ConsolePaneActions;
@@ -84,8 +88,23 @@ export class AutocompleteActions {
    * session it had just cancelled. So wait out the implicit request first, and
    * force one only once nothing is in flight -- retrying once, since a slow
    * enough response can still land in the same window.
+   *
+   * A popup that is *already* up on entry is a different case: typing keeps an
+   * open popup showing while it re-requests, because `beginSuggest` invalidates
+   * without hiding (`RCompletionManager.java:1163`, hidePopup false), so its
+   * contents can still be an earlier prefix's results with the final token's
+   * request in flight. Visibility proves nothing there, hence the settle.
+   *
+   * The caller reads the popup via `getCompletionItems`, whose own visibility
+   * wait is the final deadline -- this returns after the second keypress
+   * rather than waiting on the same locator twice.
    */
   private async waitForCompletionPopup(): Promise<void> {
+    if (await this.page.locator(COMPLETION_POPUP).isVisible()) {
+      await sleep(STALE_POPUP_SETTLE_MS);
+      return;
+    }
+
     if (await this.popupAppears(IMPLICIT_COMPLETION_TIMEOUT_MS))
       return;
 
@@ -94,9 +113,6 @@ export class AutocompleteActions {
       return;
 
     await this.page.keyboard.press('Control+Space');
-    await this.page
-      .locator(COMPLETION_POPUP)
-      .waitFor({ state: 'visible', timeout: EXPLICIT_COMPLETION_TIMEOUT_MS });
   }
 
   /**
