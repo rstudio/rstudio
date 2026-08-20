@@ -33,33 +33,53 @@ var reSectionLabelStart = new RegExp("[^" + reSectionDelimChars + "\\s]", "u");
 var reSectionLabelTail = new RegExp("\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
 var reSectionDelimsOnly = new RegExp("^\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
 var reSectionTrailingTail = new RegExp("[" + reSectionDelimChars + "]+\\s*$", "u");
+var reSectionBannerTail = /#+\s*$/;
+var reSectionLeadingHashes = /^\s*(#+)/;
 
 // Infer the heading level of a section header from its leading '#' run,
 // e.g. "# Foo ----" => 1, "### Foo ----" => 3.
 //
-// Returns 0 when the header carries no heading level, and so should be treated
-// as a plain top-level section:
+// Returns 0 when the header's leading run is decoration rather than a heading
+// level, and so carries no level at all:
 //
-//   - a header drawn as a bar of delimiters, e.g. "##########" or "####====",
-//     is nothing but delimiter characters, so its width is decoration rather
-//     than a heading depth;
+//   - a header with no label is a bar, e.g. "##########" or "#### ====";
+//     its width says nothing about how deeply the file is nested;
 //
-//   - a run deeper than 6 is likewise more likely to be decoration than a
-//     heading, similar to how HTML only provides <h1> through <h6>.
+//   - a header whose label is closed off by a run of '#' is a banner,
+//     e.g. "##### Section A #####", where the leading run mirrors the
+//     trailing one and is likewise there to draw a box;
+//
+//   - a run deeper than 6 is more likely to be decoration than a heading,
+//     similar to how HTML only provides <h1> through <h6>.
 //
 // Both the document outline and section folding read a header's level through
 // this function, so that a header nests the same way in each.
-function sectionHeadDepth(sectionLine)
+function sectionHeadDepth(sectionHead)
 {
-   if (reSectionDelimsOnly.test(sectionLine))
+   if (!reSectionLabelStart.test(sectionHead))
       return 0;
 
-   var match = /^\s*(#+)/.exec(sectionLine);
+   if (reSectionBannerTail.test(sectionHead))
+      return 0;
+
+   var match = reSectionLeadingHashes.exec(sectionHead);
    if (match === null)
       return 0;
 
    var depth = match[1].length;
    return depth > 6 ? 0 : depth;
+}
+
+// Whether a section header at 'depth' nests inside one at 'outerDepth'.
+//
+// A header carrying no heading level is flat: it ends every enclosing section,
+// and the next header of any kind ends it. So a decorative header neither
+// contains another header nor is contained by one, whatever widths are
+// involved -- comparing decoration widths is what made a wide bar look like a
+// subsection of a narrow one.
+function sectionHeadNests(depth, outerDepth)
+{
+   return depth !== 0 && outerDepth !== 0 && depth > outerDepth;
 }
 
 function comparePoints(pos1, pos2)
@@ -1451,17 +1471,6 @@ var RCodeModel = function(session, tokenizer,
          // Find the position of the section 'tail'.
          var line = session.getLine(row);
 
-         // Helper: a header carrying no heading level folds as a top-level
-         // section, so that a wider bar of delimiters later in the file isn't
-         // mistaken for a subsection and folded away.
-         //
-         // Reads the header out of the sectionhead token rather than the whole
-         // line, matching what the document outline reads -- a header can be
-         // preceded by code, as in 'x <- 1 ## Section ----'.
-         var foldDepth = function(sectionToken) {
-            return sectionHeadDepth(sectionToken.value) || 1;
-         };
-
          // For unnamed sections, use the end of the line.
          // Otherwise, consume the '----' tail of the section
          // header as well.
@@ -1479,7 +1488,11 @@ var RCodeModel = function(session, tokenizer,
          pos.column = index;
 
          var useHierarchy = $hierarchicalSectionFolding;
-         var currentDepth = useHierarchy ? foldDepth(foldToken) : 1;
+
+         // The header's level is read out of the sectionhead token rather than
+         // the whole line, matching what the document outline reads -- a header
+         // can be preceded by code, as in 'x <- 1 ## Section ----'.
+         var currentDepth = sectionHeadDepth(foldToken.value);
 
          // Use a token iterator and find the next section head that
          // terminates this one, respecting fold hierarchy when enabled.
@@ -1503,7 +1516,7 @@ var RCodeModel = function(session, tokenizer,
                   break;
                }
 
-               if (foldDepth(token) <= currentDepth) {
+               if (!sectionHeadNests(sectionHeadDepth(token.value), currentDepth)) {
                   break;
                }
 

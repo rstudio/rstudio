@@ -174,12 +174,7 @@ code_2 <- 4
     // The outline reads the same headers through the same rule, so a bar has
     // no heading level there either -- '####====' is not an h4.
     const scopes = await editor.getSectionScopes();
-    expect(scopes.map((scope) => scope.depth)).toEqual([
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ]);
+    expect(scopes.map((scope) => scope.depth)).toEqual([0, 0, 0, 0]);
   });
 
   // https://github.com/rstudio/rstudio/issues/18602
@@ -187,8 +182,8 @@ code_2 <- 4
     await setPref(page, 'hierarchical_section_folding', true);
 
     // Same root cause as a bar of hashes, but with the label inline: the
-    // leading '#' run is decoration, not a heading level. A run deeper than
-    // h6 carries no heading level, so it can't nest under a shallower one.
+    // leading '#' run mirrors the trailing one to draw a box around the label,
+    // so it is decoration rather than a heading level.
     const content = heredoc`
       ##### Section A #####
       code_a <- 1
@@ -205,12 +200,139 @@ code_2 <- 4
     const range = await editor.getFoldWidgetRange(0);
     expect(range?.end.row).toBe(1);
 
-    // '#####' is an h5; '##########' is past h6, so it is a plain section.
+    // Neither banner carries a heading level, so neither nests in the other.
     const scopes = await editor.getSectionScopes();
     expect(scopes).toEqual([
-      { label: 'Section A', row: 0, depth: 5, parent: null },
-      { label: 'Section B', row: 2, depth: undefined, parent: null },
+      { label: 'Section A', row: 0, depth: 0, parent: null },
+      { label: 'Section B', row: 2, depth: 0, parent: null },
     ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a banner header does not fold away a banner one hash wider', async ({
+    rstudioPage: page,
+  }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // Both leading runs are within h1..h6, so a rule that only discounts runs
+    // deeper than h6 still reads these as an h5 containing an h6.
+    const content = heredoc`
+      ##### Section A #####
+      code_a <- 1
+      ###### Section B ######
+      code_b <- 2
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_b');
+    await expect.poll(() => editor.getValue()).toContain('code_b');
+
+    const range = await editor.getFoldWidgetRange(0);
+    expect(range?.end.row).toBe(1);
+
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: 'Section A', row: 0, depth: 0, parent: null },
+      { label: 'Section B', row: 2, depth: 0, parent: null },
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a bar with interior whitespace folds flat', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // A bar is decoration whether or not its delimiters run unbroken, so the
+    // space between the two runs must not turn its width back into a depth.
+    const content = heredoc`
+      ##### #####
+      code_a <- 1
+      ###### ######
+      code_b <- 2
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_b');
+    await expect.poll(() => editor.getValue()).toContain('code_b');
+
+    // The narrow bar stops at the wider one on row 2, rather than running to
+    // the end of the document.
+    const range = await editor.getFoldWidgetRange(0);
+    expect(range?.end.row).toBe(1);
+
+    const scopes = await editor.getSectionScopes();
+    expect(scopes.map((scope) => scope.depth)).toEqual([0, 0]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('a bar between two subsections does not adopt the one below it', async ({
+    rstudioPage: page,
+  }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // A header with no heading level is flat in both directions: it ends the
+    // sections above it, and the next header of any kind ends it. Folding it
+    // as an h1 instead would swallow every '##' section that follows.
+    const content = heredoc`
+      ## Section A ----
+      code_a <- 1
+      ##########
+      code_bar <- 2
+      ## Section B ----
+      code_b <- 3
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_b');
+    await expect.poll(() => editor.getValue()).toContain('code_b');
+
+    // The bar folds over its own code only, stopping at Section B on row 4.
+    const range = await editor.getFoldWidgetRange(2);
+    expect(range?.end.row).toBe(3);
+
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: 'Section A', row: 0, depth: 2, parent: null },
+      { label: '(Untitled)', row: 2, depth: 0, parent: null },
+      { label: 'Section B', row: 4, depth: 2, parent: null },
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
+  test('sections after a banner file header stay top-level', async ({ rstudioPage: page }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // The banner block at the top of a script leaves a header open that no
+    // heading level can close, so the rest of the file used to indent under it.
+    const content = heredoc`
+      ##############################
+      # Analysis script
+      ##############################
+      code_setup <- 1
+      # Load data ----
+      code_load <- 2
+      # Fit model ----
+      code_fit <- 3
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_fit');
+    await expect.poll(() => editor.getValue()).toContain('code_fit');
+
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: '(Untitled)', row: 0, depth: 0, parent: null },
+      { label: '(Untitled)', row: 2, depth: 0, parent: null },
+      { label: 'Load data', row: 4, depth: 1, parent: null },
+      { label: 'Fit model', row: 6, depth: 1, parent: null },
+    ]);
+
+    // The closing bar folds over its own code only, stopping at 'Load data'.
+    const range = await editor.getFoldWidgetRange(2);
+    expect(range?.end.row).toBe(3);
   });
 
   // https://github.com/rstudio/rstudio/issues/18602
@@ -244,7 +366,7 @@ code_2 <- 4
     expect(scopes).toEqual([
       { label: 'A', row: 0, depth: 1, parent: null },
       { label: 'B', row: 2, depth: 2, parent: 'A' },
-      { label: 'C', row: 4, depth: undefined, parent: null },
+      { label: 'C', row: 4, depth: 0, parent: null },
     ]);
   });
 
