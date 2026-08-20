@@ -162,14 +162,21 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
       // and enqueue it below.
       bool isFinal = chunk.empty();
 
-      // Format the outbound bytes for this piece: a size-prefixed HTTP chunk in
+      // Size the outbound bytes for this piece: a size-prefixed HTTP chunk in
       // chunked framing, raw bytes in the two length/close-delimited framings,
       // and nothing at all when the response cannot carry a body.
-      std::string formatted;
+      //
+      // Size first, format later (below, once accepted). The buffer-full check
+      // that follows may decline this piece for redelivery, and the motivating
+      // workload -- a large download to a slow client -- sits at the buffer
+      // limit for most of its life, so building the enveloped copy up front
+      // would mean formatting the bulk of the body twice and throwing the first
+      // copy away.
+      std::size_t formattedSize;
       switch (framing_)
       {
          case Framing::Chunked:
-            formatted = http::util::formatMessageAsHttpChunk(chunk);
+            formattedSize = http::util::httpChunkSize(chunk.size());
             break;
 
          case Framing::NoBody:
@@ -177,13 +184,14 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
             // 204/304 response is a malformed upstream, and per RFC 7230 3.3.3
             // rule 1 the client will not read one -- so anything we forwarded
             // would land on the wire as the start of a *different* message,
-            // which is the response-smuggling shape. formatted stays empty, so
+            // which is the response-smuggling shape. Nothing is enqueued, so
             // the rest of this function writes headers and then closes.
+            formattedSize = 0;
             break;
 
          default:
             // ContentLength / CloseDelimited: write body bytes verbatim.
-            formatted = chunk;
+            formattedSize = chunk.size();
             break;
       }
 
@@ -198,7 +206,7 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
       // risking a hang with no future resume trigger. Normal backpressure still
       // applies once anything is queued or outstanding.
       bool bufferIdle = writeBuffer_.empty() && !clientWriteInProgress_;
-      if (!bufferIdle && currentBufferSize_ + formatted.size() > maxBufferSize_)
+      if (!bufferIdle && currentBufferSize_ + formattedSize > maxBufferSize_)
       {
          bufferFull_ = true;
 
@@ -220,10 +228,18 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
       if (isFinal)
          receivedFinal_ = true;
 
-      if (!formatted.empty())
+      if (formattedSize > 0)
       {
-         currentBufferSize_ += formatted.size();
-         writeBuffer_.emplace(std::move(formatted));
+         currentBufferSize_ += formattedSize;
+
+         // The envelope is built here, at the one point where the piece is
+         // certain to be enqueued; httpChunkSize() above predicted exactly
+         // this many bytes, which is what keeps currentBufferSize_ and
+         // onChunkWrote()'s front().size() subtraction in step.
+         if (framing_ == Framing::Chunked)
+            writeBuffer_.emplace(http::util::formatMessageAsHttpChunk(chunk));
+         else
+            writeBuffer_.emplace(chunk);
       }
 
       if (!wroteHeaders_)

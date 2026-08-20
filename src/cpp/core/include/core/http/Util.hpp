@@ -16,6 +16,7 @@
 #ifndef CORE_HTTP_UTIL_HPP
 #define CORE_HTTP_UTIL_HPP
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <map>
@@ -166,6 +167,18 @@ void fileRequestHandler(const std::string& wwwLocalPath,
                         const std::string& baseUri,
                         const core::http::Request& request,
                         core::http::Response* pResponse);
+
+// Number of bytes formatMessageAsHttpChunk() will produce for a message of
+// the given length, computed arithmetically rather than by formatting it.
+//
+// Exists so a caller deciding whether an enveloped piece *fits* somewhere can
+// ask before paying to build it -- FixedBufferProxy runs this check once per
+// body piece on the streaming path, and declines-then-redelivers pieces under
+// backpressure, so formatting first would build and discard the envelope on
+// every declined attempt. Kept beside formatMessageAsHttpChunk() (and pinned
+// by a test) because a proxy sizing its write buffer with one and filling it
+// with the other needs the two to agree exactly.
+std::size_t httpChunkSize(std::size_t messageSize);
 
 std::string formatMessageAsHttpChunk(const std::string& message);
 

@@ -16,6 +16,7 @@
 
 #include <core/http/Util.hpp>
 
+#include <cstdio>
 #include <ios>
 #include <iostream>
 #include <sstream>
@@ -532,13 +533,55 @@ void fileRequestHandler(const std::string& wwwLocalPath,
    pResponse->setCacheableFile(filePath, request);
 }
 
+namespace {
+
+// Digits std::printf("%llx") / std::hex emit for this value: no leading zeros,
+// and a single "0" for zero itself. Must agree exactly with the chunk-size line
+// formatMessageAsHttpChunk() writes below -- see httpChunkSize().
+std::size_t hexDigitCount(std::size_t value)
+{
+   std::size_t digits = 1;
+   while (value >= 16)
+   {
+      value /= 16;
+      ++digits;
+   }
+   return digits;
+}
+
+} // anonymous namespace
+
+std::size_t httpChunkSize(std::size_t messageSize)
+{
+   // <Chunk size (hex)>CRLF<Chunk data>CRLF -- the two CRLFs are the + 4
+   return hexDigitCount(messageSize) + 2 + messageSize + 2;
+}
+
 std::string formatMessageAsHttpChunk(const std::string& message)
 {
    // format message as an HTTP chunk
    // the format is <Chunk size (hex)>CRLF<Chunk data>CRLF
-   std::stringstream sstr;
-   sstr << std::hex << message.size() << "\r\n" << message << "\r\n";
-   return sstr.str();
+   //
+   // Assembled into one pre-sized std::string rather than through a
+   // stringstream: this runs once per body piece on the streaming-proxy path,
+   // where a stringstream copies every proxied byte twice over (once into its
+   // internal buffer, again for str()).
+   static_assert(sizeof(std::size_t) <= sizeof(unsigned long long),
+                 "sizeLine below is sized for a 64-bit chunk size, and the cast "
+                 "to unsigned long long must not truncate one");
+   char sizeLine[/* 16 hex digits for a 64-bit size, plus NUL */ 17];
+   int sizeLineLength = std::snprintf(sizeLine,
+                                      sizeof(sizeLine),
+                                      "%llx",
+                                      static_cast<unsigned long long>(message.size()));
+
+   std::string chunk;
+   chunk.reserve(httpChunkSize(message.size()));
+   chunk.append(sizeLine, sizeLineLength);
+   chunk.append("\r\n");
+   chunk.append(message);
+   chunk.append("\r\n");
+   return chunk;
 }
 
 void removeHopByHopHeaders(Response* pResponse)
