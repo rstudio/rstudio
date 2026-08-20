@@ -115,14 +115,18 @@ public:
    //
    // downstreamClosedHandler is the counterpart for the case where there will
    // never be such a notification, because the client settled -- errored,
-   // completed, or was torn down by its proxy, all of which run
-   // disableHandlers(). It covers both sides of that race:
+   // completed, or was torn down by its proxy. A settle is either flag: the
+   // paths above run disableHandlers(), but a bare close() (an embedder
+   // tearing down, FormProxy's own error path) marks only closed_, and after
+   // one of those handleError() returns early on closed_ without ever reaching
+   // disableHandlers(). Both are terminal and neither is ever cleared, so both
+   // count here. It covers both sides of that race:
    //
    //  - settled before this call: reported synchronously, here.
    //  - registered before the request was written, then settled before
-   //    handleWrite() could deliver the connect: reported by
-   //    disableHandlers() as it detaches the stored handler, posted to the
-   //    strand.
+   //    handleWrite() could deliver the connect: reported by whichever of
+   //    close()/disableHandlers() detaches the stored handler first, posted to
+   //    the strand. Detaching is what makes the pair report exactly once.
    //  - registered after the request was written, so this call owns delivery:
    //    dispatched to the strand and decided there, so a settle racing the
    //    registration is reported as closed rather than as a connect the
@@ -435,8 +439,27 @@ public:
       boost::asio::async_write(socket(), buffers, boost::asio::bind_executor(*pStrand_, handler));
    }
 
+   // Also reports a stored-but-undeliverable connect notification, for the same
+   // reason disableHandlers() does: close() is a settle in its own right, and
+   // on some paths the only one. It is public API, and callers that close a
+   // client without disabling its handlers do exist -- FormProxy's own error
+   // path, the launcher/session clients that close a streaming client to stop
+   // it, and an embedder closing in its destructor (the case disableHandlers()
+   // was added for in the first place). Nothing then detaches a connect handler
+   // stored before the request was written: the aborted connect/write
+   // completion returns early from handleError() on closed_ and never reaches
+   // the disableHandlers() at the end of that function. A caller gated on the
+   // notification would wait forever -- FormProxy buffers to maxBufferSize_,
+   // pauses parsing, and hangs the upload. Reporting here is what makes
+   // setConnectHandler()'s "exactly one of the two is delivered" hold for a
+   // bare close() as well.
    virtual void close()
    {
+      // displaced values destroyed after unlock, see execute()
+      ConnectHandler oldConnectHandler;
+      ConnectHandler oldDownstreamClosedHandler;
+      bool reportDownstreamClosed = false;
+
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
       LOCK_MUTEX(socketMutex_)
@@ -449,8 +472,34 @@ public:
 
             closed_ = true;
          }
+
+         // Same test, and the same reasoning, as disableHandlers(): a non-empty
+         // connectHandler_ alone doesn't mean one is still pending, because
+         // handleWrite() invokes its own copy without clearing the member;
+         // requestWritten_ -- set in that same critical section -- is what
+         // discriminates a connect that was delivered from one that never
+         // happened. Detaching here is also what keeps the pair idempotent: the
+         // ordinary close()-then-disableHandlers() teardown finds the handler
+         // gone and so cannot report a second time.
+         reportDownstreamClosed = connectHandler_ && !requestWritten_;
+         if (reportDownstreamClosed)
+         {
+            oldConnectHandler.swap(connectHandler_);
+            oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
+         }
       }
       END_LOCK_MUTEX
+
+      // Posted, not invoked, exactly as in disableHandlers(): we may be called
+      // with a consumer's own lock held (FixedBufferProxy::closeConnections()
+      // holds its mutex_), so calling out from here would invert the lock order
+      // disableHandlers()'s declaration warns about. Binding the strand keeps
+      // the notification serialized with every other handler invocation.
+      if (reportDownstreamClosed && oldDownstreamClosedHandler)
+      {
+         boost::asio::post(ioContext_,
+                           boost::asio::bind_executor(*pStrand_, oldDownstreamClosedHandler));
+      }
    }
 
    virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler)
@@ -545,10 +594,21 @@ public:
       ConnectHandler oldDownstreamClosedHandler;
       LOCK_MUTEX(socketMutex_)
       {
-         // Whether handlers were already disabled has to be read under the
-         // same lock disableHandlers() sets it with -- see its declaration --
-         // so that the decision below can't be made against a stale answer.
-         if (handlersDisabled_)
+         // Whether we have settled has to be read under the same lock
+         // close()/disableHandlers() set these with -- see disableHandlers()'s
+         // declaration -- so that the decision below can't be made against a
+         // stale answer.
+         //
+         // Both flags, for the same reason deliverLateConnectNotification()
+         // checks both: disableHandlers() marks handlersDisabled_, but a bare
+         // close() (an embedder tearing down, FormProxy's own error path)
+         // marks only closed_. Checking handlersDisabled_ alone sent a bare-
+         // closed client down the !requestWritten_ branch below, which stores a
+         // handler that only disableHandlers() ever reports -- and after a bare
+         // close() the aborted connect/write completion returns early from
+         // handleError() on closed_ without reaching disableHandlers(), so
+         // nothing reported it at all.
+         if (handlersDisabled_ || closed_)
          {
             // We have settled already, so connectHandler can never run: there
             // is no connect left to report, and disableHandlers() would detach
@@ -586,8 +646,8 @@ public:
       // the upstream connection too, resetting whatever response
       // FixedBufferProxy was mid-write of. Re-reading the state on the strand
       // at delivery time reports that settle as closed instead, which is the
-      // answer the caller can act on safely. (The handlersDisabled_ branch
-      // above stays synchronous: it is terminal, so it cannot go stale.)
+      // answer the caller can act on safely. (The settled branch above stays
+      // synchronous: neither flag is ever cleared, so it cannot go stale.)
       if (deferConnectNotification)
       {
          boost::shared_ptr<AsyncClient<SocketService>> self =

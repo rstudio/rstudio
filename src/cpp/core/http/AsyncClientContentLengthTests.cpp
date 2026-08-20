@@ -1997,6 +1997,97 @@ TEST(AsyncClientContentLength, ConnectHandlerDetachedBeforeWriteCompletesReports
    EXPECT_EQ(downstreamClosedCount, 1);
 }
 
+// The same detach-before-write case, but torn down with a bare close() and no
+// disableHandlers() call at all -- which is the only settle some paths perform
+// (an embedder's destructor, FormProxy::handleError()). close() marks only
+// closed_, so before this fix the stored handler was left attached: the aborted
+// connect completion returns early from handleError() on closed_ and never
+// reaches the disableHandlers() at the end of that function, so the one thing
+// that would have reported the drop never ran.
+TEST(AsyncClientContentLength, BareCloseBeforeWriteReportsDownstreamClosed)
+{
+   unsigned short deadPort = 0;
+   {
+      boost::asio::io_context probeIoc;
+      tcp::acceptor probe(probeIoc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+      deadPort = probe.local_endpoint().port();
+   }
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(deadPort),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   bool connected = false;
+   int downstreamClosedCount = 0;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosedCount++; });
+
+   pClient->execute([&](const http::Response&) {}, [&](const core::Error&) {});
+
+   // bare close only -- no disableHandlers()
+   pClient->close();
+
+   // not delivered inline: close() posts it to the strand for the same reason
+   // disableHandlers() does -- FixedBufferProxy::closeConnections() calls
+   // close() with its own mutex_ held
+   EXPECT_EQ(downstreamClosedCount, 0);
+
+   ioc.run();
+
+   EXPECT_FALSE(connected);
+   EXPECT_EQ(downstreamClosedCount, 1);
+
+   // and the pair does not double-report: close() detached the handler, so the
+   // ordinary close()-then-disableHandlers() teardown adds nothing
+   pClient->disableHandlers();
+   ioc.restart();
+   ioc.poll();
+   EXPECT_EQ(downstreamClosedCount, 1);
+}
+
+// The registration-after-bare-close half. closed_ is set but handlersDisabled_
+// is not, so keying setConnectHandler()'s terminal branch on handlersDisabled_
+// alone sent this down the !requestWritten_ branch, storing a handler that
+// nothing would ever deliver.
+TEST(AsyncClientContentLength, ConnectHandlerRegisteredAfterBareCloseReportsDownstreamClosed)
+{
+   unsigned short deadPort = 0;
+   {
+      boost::asio::io_context probeIoc;
+      tcp::acceptor probe(probeIoc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+      deadPort = probe.local_endpoint().port();
+   }
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(deadPort),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   pClient->execute([&](const http::Response&) {}, [&](const core::Error&) {});
+   pClient->close();
+
+   bool connected = false;
+   int downstreamClosedCount = 0;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosedCount++; });
+
+   ioc.run();
+
+   EXPECT_FALSE(connected);
+   EXPECT_EQ(downstreamClosedCount, 1);
+}
+
 // A delivered connect must NOT also produce a downstream-closed report when
 // the client is torn down afterwards: handleWrite() leaves connectHandler_ in
 // place after invoking it, so disableHandlers() has to discriminate on
