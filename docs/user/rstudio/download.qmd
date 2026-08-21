@@ -20,7 +20,7 @@ Download the desktop installer for your platform. RStudio also needs an installa
 
 Move from question to insight to analysis, model, or application faster than ever before. Positron is our next-generation, free IDE made specifically for data science and analysis with Python and R. 
 
-Positron also comes out of the box with [Posit Assistant](https://assistant.posit.co/docs/getting-started/), a data science native AI agent. It connects to your live R and Python sessions, sees your data, and helps you explore, visualize, build, and debug. Try Assistant for free with [Posit AI Pass](https://assistant.posit.co/docs/getting-started/posit-ai/)
+Positron also comes out of the box with [Posit Assistant](https://assistant.posit.co/docs/getting-started/), a data science native AI agent. It connects to your live R and Python sessions, sees your data, and helps you explore, visualize, build, and debug. Try Assistant for free with [Posit AI](https://assistant.posit.co/docs/getting-started/posit-ai/)
 
 [Download Positron](https://positron.posit.co/download.html) 
 :::

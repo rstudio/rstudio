@@ -253,7 +253,7 @@
         const cdnUrl = 'https://download1.rstudio.org/electron/';
 
         if (userAgent.indexOf('Mac') !== -1) {
-            heroTitle.textContent = 'Recommended for your Mac';
+            heroTitle.textContent = 'Recommended for you';
             heroSubtitle.textContent = 'We detected macOS. RStudio Desktop ships as a single universal build for both Apple Silicon and Intel.';
             heroBtns.innerHTML = `
                 <a href="${cdnUrl}macos/RStudio-${version}.dmg" class="btn btn-primary">
@@ -262,7 +262,7 @@
             `;
             highlightCard('card-macos');
         } else if (userAgent.indexOf('Win') !== -1) {
-            heroTitle.textContent = 'Recommended for your PC';
+            heroTitle.textContent = 'Recommended for you';
             heroSubtitle.textContent = 'We detected Windows. Choose an installer or a zip archive:';
             heroBtns.innerHTML = `
                 <a href="${cdnUrl}windows/RStudio-${version}.exe" class="btn btn-primary">
@@ -274,7 +274,7 @@
             `;
             highlightCard('card-windows');
         } else if (userAgent.indexOf('Linux') !== -1) {
-            heroTitle.textContent = 'Recommended for your system';
+            heroTitle.textContent = 'Recommended for you';
             heroSubtitle.textContent = 'We detected Linux. Choose your package format:';
             heroBtns.innerHTML = `
                 <a href="${cdnUrl}jammy/amd64/rstudio-${version}-amd64.deb" class="btn btn-primary">
