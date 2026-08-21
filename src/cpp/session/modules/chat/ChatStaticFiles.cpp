@@ -356,8 +356,15 @@ std::string authCookiePath(const std::string& proxiedUri,
                            const std::string& activeClientUrl)
 {
    // extract the path from proxiedUri and strip "/ai-chat" onward to get
-   // the server-known session prefix (e.g. "/s/{id}/")
+   // the server-known session prefix (e.g. "/s/{id}/"). URL::path() keeps the
+   // query string and fragment, which must go first: the IDE puts URLs in the
+   // query, and a literal "/ai-chat" there would otherwise be taken for the
+   // route
    std::string cookiePath = http::URL(proxiedUri).path();
+   size_t cutPos = cookiePath.find_first_of("?#");
+   if (cutPos != std::string::npos)
+      cookiePath = cookiePath.substr(0, cutPos);
+
    size_t aiChatPos = findAiChatRoute(cookiePath);
    if (aiChatPos != std::string::npos)
       cookiePath = cookiePath.substr(0, aiChatPos);

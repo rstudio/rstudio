@@ -375,6 +375,18 @@ TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
                             "https://host/proxy/rstudio/",
                             "https://host/proxy/rstudio/"),
              "/proxy/rstudio/");
+
+   // an unescaped occurrence of the route in the query must not be taken for
+   // the route itself: the derived prefix would then carry the document path
+   // and the query along with it
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
+                            "?wsUrl=/rstudio/p/abc/ai-chat/",
+                            "", ""),
+             "/rstudio/");
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
+                            "#/ai-chat/",
+                            "", ""),
+             "/rstudio/");
 }
 
 // The index.html response carries the assistant auth token cookie, so it must
