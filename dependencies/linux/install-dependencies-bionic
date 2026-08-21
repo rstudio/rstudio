@@ -56,7 +56,6 @@ sudo apt-get -y install \
   libsecret-1-dev \
   libsqlite3-dev \
   libssl-dev \
-  libuser1-dev \
   libxslt1-dev \
   lsof \
   openjdk-17-jkdk \
