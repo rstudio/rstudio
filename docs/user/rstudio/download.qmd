@@ -18,9 +18,11 @@ Download the desktop installer for your platform. RStudio also needs an installa
 ::: {.callout-tip icon=false}
 ## <img src="images/positron-icon.svg" alt="" width="20" height="20" style="vertical-align: -0.2em;"> Try Positron!
 
-Move from question to insight to analysis, model, or application faster than ever before. Positron is our next-generation, free IDE made specifically for data science and analysis with Python and R. Positron also comes out of the box with [Posit Assistant](https://assistant.posit.co/docs/getting-started/), a data science native AI agent. It connects to your live R and Python sessions, sees your data, and helps you explore, visualize, build, and debug. Try it for free with [Posit AI](https://assistant.posit.co/docs/getting-started/posit-ai/)!
+Move from question to insight to analysis, model, or application faster than ever before. Positron is our next-generation, free IDE made specifically for data science and analysis with Python and R. 
 
-[Download here](https://positron.posit.co/download.html)
+Positron also comes out of the box with [Posit Assistant](https://assistant.posit.co/docs/getting-started/), a data science native AI agent. It connects to your live R and Python sessions, sees your data, and helps you explore, visualize, build, and debug. Try Assistant for free with [Posit AI Pass](https://assistant.posit.co/docs/getting-started/posit-ai/)
+
+[Download Positron](https://positron.posit.co/download.html) 
 :::
 
 ## RStudio Desktop {#rstudio-ide-oss-downloads}
@@ -28,12 +30,6 @@ Move from question to insight to analysis, model, or application faster than eve
 Direct download links for RStudio Desktop {{< var version >}}, the version this documentation describes. The `.deb` package targets Ubuntu 22 / 24 / 26 and Debian 13; the `.rpm` package targets RHEL 9 / 10 and Fedora.
 
 {{< include ../../_snippets/download-desktop-cards.qmd >}}
-
-::: {.callout-tip icon=false}
-## <img src="images/posit-icon-fullcolor.svg" alt="" width="20" height="20" style="vertical-align: -0.2em;"> Add AI to RStudio
-
-[Posit Assistant](https://pos.it/assistant) is a set of AI features available as a downloadable extension for RStudio, with Posit AI as the recommended model provider. [Set it up &rarr;](ide/guide/tools/posit-ai.qmd)
-:::
 
 ## RStudio Server {#rstudio-server-oss-downloads}
 
