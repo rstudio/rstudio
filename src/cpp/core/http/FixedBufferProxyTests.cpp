@@ -53,7 +53,21 @@ class FakeAsyncConnection : public AsyncConnection
 public:
    boost::asio::io_context& ioContext() override { return ioc_; }
    const http::Request& request() const override { return request_; }
-   http::Response& response() override { return response_; }
+
+   // Counts which execution context reaches in to populate the response, so a
+   // test can pin that FixedBufferProxy keeps the whole assemble-then-write
+   // pair on our strand -- an off-strand mutation would be racing this
+   // connection's own writers over storage asio may be mid-read (see
+   // AsyncConnection::response()'s threading note).
+   http::Response& response() override
+   {
+      if (strand_.running_in_this_thread())
+         responseAccessesOnStrand_++;
+      else
+         responseAccessesOffStrand_++;
+
+      return response_;
+   }
 
    void writeResponse(bool close, Socket::Handler handler) override
    {
@@ -79,9 +93,21 @@ public:
    void writeResponseHeaders(Socket::Handler handler) override
    {
       headersWritten_ = true;
+      headersWrittenOnStrand_ = strand_.running_in_this_thread();
       writtenHeaders_.assign(response_);
       boost::system::error_code ec = takeNextWriteError();
       boost::asio::post(ioc_, [handler, ec]() { handler(ec, 0); });
+   }
+
+   // The overload FixedBufferProxy actually uses: it hands the assembled
+   // response over instead of staging it in response_, so that nothing mutates
+   // the response the connection writes from until the claim is won (see
+   // AsyncConnection::response()). Mirror the real implementation and assign
+   // it in here, so response()-based assertions still see what went out.
+   void writeResponseHeaders(const http::Response& response, Socket::Handler handler) override
+   {
+      response_.assign(response);
+      writeResponseHeaders(handler);
    }
 
    void writeError(const Error&) override {}
@@ -95,7 +121,11 @@ public:
    void setUsername(const std::string& username) override { username_ = username; }
    const std::string& handlerPrefix() const override { return handlerPrefix_; }
    void setHandlerPrefix(const std::string& prefix) override { handlerPrefix_ = prefix; }
-   boost::asio::io_context::strand& getStrand() override { return *pStrand_; }
+   // A real strand over ioc_: FixedBufferProxy dispatches its header assembly
+   // onto this (see FixedBufferProxy::queueChunk), and since the test thread is
+   // never inside the strand, that dispatch posts -- Fixture::deliver()'s poll()
+   // is what runs it, along with the write completions it chains into.
+   boost::asio::io_context::strand& getStrand() override { return strand_; }
 
    // Socket
    void asyncReadSome(boost::asio::mutable_buffer, Socket::Handler) override {}
@@ -141,7 +171,10 @@ public:
    void setRequestHttpVersion(int major, int minor) { request_.setHttpVersion(major, minor); }
 
    bool headersWritten_ = false;
+   bool headersWrittenOnStrand_ = false;
    bool closed_ = false;
+   int responseAccessesOnStrand_ = 0;
+   int responseAccessesOffStrand_ = 0;
    std::string writtenBytes_;
    http::Response writtenHeaders_; // snapshot at header-write time
 
@@ -155,12 +188,12 @@ private:
 
    boost::system::error_code nextWriteError_;
    boost::asio::io_context ioc_;
+   boost::asio::io_context::strand strand_{ioc_};
    http::Request request_;
    http::Response response_;
    boost::any data_;
    std::string username_;
    std::string handlerPrefix_;
-   boost::asio::io_context::strand* pStrand_ = nullptr;
 };
 
 // A fake IAsyncClient that just captures the FixedBufferHandler passed to
@@ -223,10 +256,19 @@ private:
 
 struct Fixture
 {
-   Fixture(uint64_t maxBufferSize = 1024 * 1024)
+   // preStamped goes onto the client connection's response before proxy() runs,
+   // which is where FixedBufferProxy snapshots the Set-Cookie headers it has to
+   // carry over -- and is the production ordering, since authentication stamps
+   // refreshed cookies before dispatching to the handler that builds the proxy.
+   Fixture(uint64_t maxBufferSize = 1024 * 1024,
+           const http::Headers& preStamped = http::Headers())
    {
       pClientConnection = boost::make_shared<FakeAsyncConnection>();
       pServerConnection = boost::make_shared<FakeAsyncClient>();
+
+      for (const http::Header& header : preStamped)
+         pClientConnection->response().addHeader(header);
+
       pProxy = boost::make_shared<FixedBufferProxy>(pClientConnection, maxBufferSize);
       pProxy->proxy(pServerConnection);
    }
@@ -301,6 +343,69 @@ TEST(FixedBufferProxy, UsesContentLengthFramingWhenUpstreamLengthKnown)
 
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
+TEST(FixedBufferProxy, StreamsWithoutTouchingTheClientConnectionsResponse)
+{
+   // The client connection owns its response: it claims it before assigning
+   // anything, which is the only ordering that is safe against its own earlier
+   // writes -- those hand asio buffers pointing into that response's member
+   // strings and stay in flight after the call that started them returns, so a
+   // strand does not cover them. So FixedBufferProxy must assemble into a
+   // response of its own and hand it over, never reach into that one, and its
+   // one legitimate read of it (the Set-Cookie carry-over) happens back in
+   // proxy(), before any of this can be racing.
+   //
+   // Pin both halves: nothing touches response() once streaming has started,
+   // and the write is still initiated on the connection's strand.
+   Fixture fixture;
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   // discount proxy()'s snapshot, which the fixture made on this thread
+   fixture.pClientConnection->responseAccessesOnStrand_ = 0;
+   fixture.pClientConnection->responseAccessesOffStrand_ = 0;
+
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, ""); // completion signal
+
+   EXPECT_TRUE(fixture.pClientConnection->headersWritten_);
+   EXPECT_TRUE(fixture.pClientConnection->headersWrittenOnStrand_);
+   EXPECT_EQ(fixture.pClientConnection->responseAccessesOnStrand_, 0);
+   EXPECT_EQ(fixture.pClientConnection->responseAccessesOffStrand_, 0);
+}
+
+TEST(FixedBufferProxy, WritesHeadersInlineWhenAlreadyOnTheClientConnectionsStrand)
+{
+   // The production wiring this path was built for shares one strand between
+   // the two connections (proxyLocalhostRequest() hands the upstream
+   // AsyncClient the client connection's own strand), so chunks arrive already
+   // on it. dispatch() must then run the assembly inline rather than deferring
+   // it -- deferring would add a hop per response and, more to the point, means
+   // the headers are no longer written by the time queueChunk() returns, which
+   // is the ordering the rest of this state machine was written against.
+   Fixture fixture;
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   boost::asio::io_context& ioc = fixture.pClientConnection->ioContext();
+   bool headersWrittenBeforeQueueChunkReturned = false;
+
+   // discount proxy()'s snapshot, which the fixture made on this thread
+   fixture.pClientConnection->responseAccessesOffStrand_ = 0;
+
+   boost::asio::post(fixture.pClientConnection->getStrand(), [&]() {
+      fixture.pServerConnection->deliverChunk(upstream, body);
+      headersWrittenBeforeQueueChunkReturned = fixture.pClientConnection->headersWritten_;
+   });
+
+   ioc.restart();
+   ioc.run();
+
+   EXPECT_TRUE(headersWrittenBeforeQueueChunkReturned);
+   EXPECT_EQ(fixture.pClientConnection->responseAccessesOffStrand_, 0);
 }
 
 TEST(FixedBufferProxy, SetsConnectionCloseSinceItAlwaysClosesAfterTheResponse)
@@ -714,8 +819,7 @@ TEST(FixedBufferProxy, UpstreamCannotNominateSetCookieToStripProxysOwnRefreshedC
    // PreservesSetCookieAlreadyStampedOnClientResponse) is restored. Otherwise
    // a misbehaving or malicious upstream could send "Connection: Set-Cookie"
    // and have the proxy's own re-added cookie stripped along with it.
-   Fixture fixture;
-   fixture.pClientConnection->response().setHeader(http::Header("Set-Cookie", "auth=refreshed"));
+   Fixture fixture(1024 * 1024, {http::Header("Set-Cookie", "auth=refreshed")});
 
    std::string body = "hi";
    http::Response upstream;
@@ -736,8 +840,7 @@ TEST(FixedBufferProxy, UpstreamCannotNominateSetCookieToStripProxysOwnRefreshedC
 
 TEST(FixedBufferProxy, PreservesSetCookieAlreadyStampedOnClientResponse)
 {
-   Fixture fixture;
-   fixture.pClientConnection->response().setHeader(http::Header("Set-Cookie", "auth=refreshed"));
+   Fixture fixture(1024 * 1024, {http::Header("Set-Cookie", "auth=refreshed")});
 
    std::string body = "hello";
    http::Response upstream;

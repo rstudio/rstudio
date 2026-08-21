@@ -415,6 +415,82 @@ TEST(AsyncConnectionImpl, ContinueParsingResumesOnTheConnectionsStrand)
    EXPECT_TRUE(handlerOnStrand);
 }
 
+TEST(AsyncConnectionImpl, LosingWriteResponseHeadersLeavesTheInFlightResponseUntouched)
+{
+   // The reason writeResponseHeaders() has an overload that takes the response
+   // rather than reading it out of response(): a caller that stages its headers
+   // in response() first has already mutated the storage an earlier winner's
+   // asyncWrite is reading from by the time the claim rejects it. That write is
+   // still in flight -- it outlives the call that started it, and no strand
+   // waits for it -- so the mutation frees bytes asio is mid-read even though
+   // the loser goes on to write nothing at all.
+   //
+   // Handing the response over instead puts the assign after the claim, so a
+   // loser leaves response() exactly as the winner left it.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+   pConnection->response().setHeader("X-Winner", "yes");
+
+   bool firstWritten = false;
+   pConnection->writeResponse(true, [&](const boost::system::error_code&, std::size_t) {
+      firstWritten = true;
+   });
+
+   // the write above is outstanding from here until ioc.run() below, which is
+   // exactly the window a streaming proxy's header write can land in
+   http::Response streamed;
+   streamed.setStatusCode(502);
+   streamed.setHeader("X-Loser", "yes");
+
+   bool loserCalled = false;
+   boost::system::error_code loserEc;
+   pConnection->writeResponseHeaders(streamed, [&](const boost::system::error_code& ec, std::size_t) {
+      loserCalled = true;
+      loserEc = ec;
+   });
+
+   EXPECT_EQ(pConnection->response().statusCode(), 200);
+   EXPECT_EQ(pConnection->response().headerValue("X-Winner"), "yes");
+   EXPECT_TRUE(pConnection->response().headerValue("X-Loser").empty());
+
+   ioc.run();
+
+   EXPECT_TRUE(firstWritten);
+   EXPECT_TRUE(loserCalled);
+   EXPECT_EQ(loserEc, boost::asio::error::already_started);
+
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   EXPECT_NE(received.find("X-Winner"), std::string::npos);
+   EXPECT_EQ(received.find("X-Loser"), std::string::npos);
+   EXPECT_EQ(received.find("502"), std::string::npos);
+}
+
 TEST(AsyncConnectionImpl, ConcurrentResponseWritersElectExactlyOneWinner)
 {
    // The claim is a check-then-act, and the writers it arbitrates do not all

@@ -14,6 +14,7 @@
  */
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/asio/dispatch.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/optional.hpp>
 
@@ -39,6 +40,25 @@ FixedBufferProxy::FixedBufferProxy(const boost::shared_ptr<AsyncConnection>& pCl
 
 void FixedBufferProxy::proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection)
 {
+   // Snapshot the Set-Cookie headers already on the client connection's
+   // response -- refreshed auth cookies, stamped during authentication before
+   // the request reached the handler that built us (see
+   // ServerSecureUriHandler's refreshAuthCookies call, which runs before it
+   // dispatches). writeHeaders() carries them over onto the proxied response,
+   // which would otherwise replace them wholesale.
+   //
+   // Read here rather than there because here is the one point where that
+   // response is still ours alone: we are on the client connection's own
+   // request-handling path, before the upstream request is executed, so no
+   // other writer exists yet. By header-assembly time an upstream error
+   // handler on another context may be mutating that same response on its way
+   // to its own response claim, and this iteration would be racing it.
+   for (const http::Header& header : pClientConnection_->response().headers())
+   {
+      if (boost::iequals(header.name, "Set-Cookie"))
+         preservedCookies_.push_back(header);
+   }
+
    pServerConnection_ = pServerConnection;
    pServerConnection_->setFixedBufferHandler(boost::bind(&FixedBufferProxy::queueChunk,
                                                           shared_from_this(),
@@ -245,108 +265,43 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
 
       if (!wroteHeaders_)
       {
-         // write the response headers and first chunk
-         http::Response& resp = pClientConnection_->response();
-
-         // preserve headers already stamped on the outgoing response (e.g.
-         // refreshed auth cookies set before the proxy request executed), which
-         // assign() would otherwise clobber. Set-Cookie is multi-valued.
-         //
-         // TODO(rstudio-pro-11740 follow-on): if the /s/ path is later opted into
-         // streaming (see plan Resolved Questions, "Streaming /s/ and launcher"),
-         // its auth-cookie stamping (getAuthCookies(), ServerSessionProxy.cpp:267,
-         // 1003) will need to move from handleProxyResponse's single post-completion
-         // writeResponse(response, true, authCookies) call into *this* header-write
-         // path -- headers are flushed here, at the first queueChunk, before any
-         // body bytes are streamed, so cookies can no longer be added at response
-         // completion time the way the buffered path does today. The `preserved`
-         // mechanism below (copying Set-Cookie already present on
-         // pClientConnection_->response()) is the intended seam: the future
-         // streaming-enabled /s/ wiring should stamp refreshed auth cookies onto
-         // that response object *before* the first FixedBufferProxy::queueChunk() call
-         // (i.e. at header-received time in AsyncClient, not at completion time).
-         http::Headers preserved;
-         for (const http::Header& h : resp.headers())
-         {
-            if (boost::iequals(h.name, "Set-Cookie"))
-               preserved.push_back(h);
-         }
-
-         // Assign without extraHeaders here and strip hop-by-hop headers
-         // (below) before restoring the preserved headers, not after: a
-         // nominated-by-Connection removal (e.g. an upstream sending
-         // "Connection: Set-Cookie") must only ever be able to strip the
-         // *upstream's* headers, never the proxy's own refreshed auth
-         // cookies re-added afterward.
-         resp.assign(response);
-
-         // This connection to the client is not the same connection, nor
-         // subject to the same per-hop semantics, as the one to the upstream
-         // server -- strip Connection/Keep-Alive/Upgrade/TE/Trailer/
-         // Proxy-Authenticate/Proxy-Authorization/Proxy-Connection/
-         // Transfer-Encoding (and anything else Connection nominates) before
-         // restoring preserved headers and setting our own framing headers
-         // below.
-         http::util::removeHopByHopHeaders(&resp);
-         resp.addHeaders(preserved);
-
-         // FixedBufferProxy always closes both connections once the body
-         // finishes (every terminal path below calls close() on both), the
-         // same "close after this response" behavior
-         // AsyncConnectionImpl::writeResponse() signals via this header when
-         // called with its default close=true -- but writeResponseHeaders()
-         // below takes no close argument and so never sets it (it does apply
-         // the rest: HTTP-version, Date, nosniff, and the response filter).
-         // Without this, a client that pools/pipelines HTTP/1.1 connections has
-         // no signal that this one is about to be closed.
-         resp.setHeader("Connection", "close");
-
-         // Framing headers. removeHopByHopHeaders() above has already stripped
-         // any upstream Transfer-Encoding, so the only way one reaches the
-         // client is the explicit set in the Chunked case below -- every other
-         // framing is guaranteed not to emit one, which is what keeps us on the
-         // right side of 3.3.1's MUST NOTs for 1xx/204 and HTTP/1.0 clients.
-         switch (framing_)
-         {
-            case Framing::Chunked:
-               resp.removeHeader("Content-Length");
-               resp.setHeader(kTransferEncoding, kChunkedTransferEncoding);
-               break;
-
-            case Framing::CloseDelimited:
-               // No framing header at all; our close delimits the body (RFC
-               // 7230 3.3.3 rule 7). By construction there is no *parseable*
-               // upstream Content-Length here (that would have selected
-               // ContentLength framing), but an unparseable one may still be
-               // present -- drop it rather than forward a length we are not
-               // honoring.
-               resp.removeHeader("Content-Length");
-               break;
-
-            case Framing::NoBody:
-               // RFC 7230 3.3.2: "A server MUST NOT send a Content-Length
-               // header field in any response with a status code of 1xx
-               // (Informational) or 204 (No Content)." For HEAD and 304 the
-               // upstream Content-Length is both permitted and useful -- it
-               // describes the body an equivalent GET would return -- so it
-               // stays.
-               if ((resp.statusCode() >= 100 && resp.statusCode() < 200) ||
-                   resp.statusCode() == http::status::NoContent)
-               {
-                  resp.removeHeader("Content-Length");
-               }
-               break;
-
-            default:
-               // Content-Length framing: keep the upstream Content-Length as-is.
-               break;
-         }
-
-         clientWriteInProgress_ = true;
-         pClientConnection_->writeResponseHeaders(boost::bind(&FixedBufferProxy::onHeadersWrote,
-                                                               shared_from_this(),
-                                                               boost::asio::placeholders::error));
+         // Latch both flags before handing the work off: writeHeaders() may not
+         // run until later, on another thread (see the dispatch below), and
+         // until it has initiated its write a chunk queued in the meantime must
+         // fall through to the "a write is already in flight" branch rather than
+         // start a second write of its own.
          wroteHeaders_ = true;
+         clientWriteInProgress_ = true;
+
+         // hand writeHeaders() the upstream response to assemble from; see the
+         // member's declaration for why this is a copy and why it needs no lock
+         // on the far side
+         serverResponse_.assign(response);
+
+         // Assemble the client-facing headers and write them as a single unit
+         // on the client connection's strand.
+         //
+         // Both halves have to be on that strand, not just the write.
+         // writeHeaders() assembles directly into pClientConnection_->response(),
+         // and that connection has other writers -- its own read path can turn a
+         // request-parse error into writeResponse(BadRequest) at any moment.
+         // Those writers hand asio buffers that point straight into the
+         // response's own member strings (Message::appendHeader() buffers
+         // Header::name/Header::value; Response::appendFirstLineBuffers() buffers
+         // statusCodeStr_/statusMessage_ -- nothing is copied into a
+         // serialization buffer), so mutating that response from off-strand while
+         // such a write is in flight frees the storage asio is reading. That is a
+         // use-after-free, not merely a duplicate response, and
+         // AsyncConnectionImpl::claimResponse() cannot arbitrate it: the claim
+         // only sees the write call, which comes after the mutation.
+         //
+         // dispatch() rather than post() so that the wiring which already shares
+         // a strand between the two connections -- proxyLocalhostRequest() hands
+         // the upstream AsyncClient this connection's own strand -- still runs
+         // the assembly inline, exactly as it did when it was written here.
+         boost::asio::dispatch(pClientConnection_->getStrand(),
+                               boost::bind(&FixedBufferProxy::writeHeaders,
+                                           shared_from_this()));
       }
       else
       {
@@ -375,6 +330,116 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
    END_LOCK_MUTEX
 
    return true;
+}
+
+// Assemble the client-facing response headers and start writing them.
+//
+// Always runs on pClientConnection_'s strand -- see the dispatch in queueChunk()
+// for why the assembly must be there and not merely the write. Deliberately
+// takes no lock: everything it reads (serverResponse_, framing_) was set before
+// that dispatch and is never touched again, and the write's completion
+// (onHeadersWrote) is posted by the connection rather than run reentrantly, so
+// nothing here re-enters mutex_ -- which matters because the inline-dispatch
+// case arrives with queueChunk() still holding it.
+void FixedBufferProxy::writeHeaders()
+{
+   // Assemble into our own copy of the upstream response and hand the finished
+   // article over, rather than building it in place in
+   // pClientConnection_->response() -- which this never touches at all now,
+   // read or write. Only the connection can safely mutate that: it claims its
+   // single response before assigning anything, and being on its strand is not
+   // a substitute, because an earlier winner's asyncWrite holds buffers
+   // pointing into that response's member strings and is still in flight while
+   // we run -- a strand serializes handlers, not the writes they start. See
+   // AsyncConnection::response()'s threading note.
+   http::Response& resp = serverResponse_;
+
+   // Strip hop-by-hop headers (below) before restoring the cookies preserved
+   // in proxy(), not after: a nominated-by-Connection removal (e.g. an
+   // upstream sending "Connection: Set-Cookie") must only ever be able to
+   // strip the *upstream's* headers, never the proxy's own refreshed auth
+   // cookies re-added afterward. resp is the upstream response and nothing
+   // else at this point -- queueChunk() copied it and no client-side header
+   // has been merged in yet.
+   //
+   // TODO(rstudio-pro-11740 follow-on): if the /s/ path is later opted into
+   // streaming (see plan Resolved Questions, "Streaming /s/ and launcher"),
+   // its auth-cookie stamping (getAuthCookies(), ServerSessionProxy.cpp:267,
+   // 1003) will need to move from handleProxyResponse's single post-completion
+   // writeResponse(response, true, authCookies) call into *this* header-write
+   // path -- headers are flushed here, off the first queueChunk, before any
+   // body bytes are streamed, so cookies can no longer be added at response
+   // completion time the way the buffered path does today. preservedCookies_
+   // is the intended seam: the future streaming-enabled /s/ wiring should
+   // stamp refreshed auth cookies onto the client connection's response before
+   // FixedBufferProxy::proxy() snapshots it, not at completion time.
+   //
+   // This connection to the client is not the same connection, nor
+   // subject to the same per-hop semantics, as the one to the upstream
+   // server -- strip Connection/Keep-Alive/Upgrade/TE/Trailer/
+   // Proxy-Authenticate/Proxy-Authorization/Proxy-Connection/
+   // Transfer-Encoding (and anything else Connection nominates) before
+   // restoring preserved headers and setting our own framing headers
+   // below.
+   http::util::removeHopByHopHeaders(&resp);
+   resp.addHeaders(preservedCookies_);
+
+   // FixedBufferProxy always closes both connections once the body
+   // finishes (every terminal path in this class calls close() on both),
+   // the same "close after this response" behavior
+   // AsyncConnectionImpl::writeResponse() signals via this header when
+   // called with its default close=true -- but writeResponseHeaders()
+   // takes no close argument and so never sets it (it does apply the
+   // rest: HTTP-version, Date, nosniff, and the response filter).
+   // Without this, a client that pools/pipelines HTTP/1.1 connections has
+   // no signal that this one is about to be closed.
+   resp.setHeader("Connection", "close");
+
+   // Framing headers. removeHopByHopHeaders() above has already stripped
+   // any upstream Transfer-Encoding, so the only way one reaches the
+   // client is the explicit set in the Chunked case -- every other
+   // framing is guaranteed not to emit one, which is what keeps us on the
+   // right side of 3.3.1's MUST NOTs for 1xx/204 and HTTP/1.0 clients.
+   switch (framing_)
+   {
+      case Framing::Chunked:
+         resp.removeHeader("Content-Length");
+         resp.setHeader(kTransferEncoding, kChunkedTransferEncoding);
+         break;
+
+      case Framing::CloseDelimited:
+         // No framing header at all; our close delimits the body (RFC
+         // 7230 3.3.3 rule 7). By construction there is no *parseable*
+         // upstream Content-Length here (that would have selected
+         // ContentLength framing), but an unparseable one may still be
+         // present -- drop it rather than forward a length we are not
+         // honoring.
+         resp.removeHeader("Content-Length");
+         break;
+
+      case Framing::NoBody:
+         // RFC 7230 3.3.2: "A server MUST NOT send a Content-Length
+         // header field in any response with a status code of 1xx
+         // (Informational) or 204 (No Content)." For HEAD and 304 the
+         // upstream Content-Length is both permitted and useful -- it
+         // describes the body an equivalent GET would return -- so it
+         // stays.
+         if ((resp.statusCode() >= 100 && resp.statusCode() < 200) ||
+             resp.statusCode() == http::status::NoContent)
+         {
+            resp.removeHeader("Content-Length");
+         }
+         break;
+
+      default:
+         // Content-Length framing: keep the upstream Content-Length as-is.
+         break;
+   }
+
+   pClientConnection_->writeResponseHeaders(resp,
+                                            boost::bind(&FixedBufferProxy::onHeadersWrote,
+                                                        shared_from_this(),
+                                                        boost::asio::placeholders::error));
 }
 
 void FixedBufferProxy::onHeadersWrote(const boost::system::error_code& ec)

@@ -238,6 +238,12 @@ public:
       writeResponseImpl(close, handler);
    }
 
+   // Writes the headers already staged in response().
+   //
+   // Prefer the overload below where the response can be handed over instead:
+   // this one cannot protect a caller that populates response() itself, since
+   // the claim is only reached after that mutation has happened. See
+   // AsyncConnection::response()'s threading note.
    virtual void writeResponseHeaders(Socket::Handler handler)
    {
       // Same claim-before-mutating-response_ rationale as writeResponse()/
@@ -247,58 +253,28 @@ public:
       if (!claimResponse(handler))
          return;
 
-      // Send our own HTTP-version, not a proxied upstream's -- same RFC 7230 2.6
-      // rationale as writeResponse() above, and it matters more here: this is
-      // the path FixedBufferProxy streams through, where the framing headers
-      // that follow are chosen for an HTTP/1.1 client.
-      response_.setHttpVersion(1, 1);
+      writeResponseHeadersImpl(handler);
+   }
 
-      if (!response_.containsHeader("Date"))
-         response_.setHeader("Date", util::httpDate());
+   // Assemble-and-write in one claimed step: the caller hands over the response
+   // to send rather than staging it in response() first, so nothing mutates
+   // response_'s storage until the claim has been won.
+   //
+   // That ordering is the whole point. A previous winner's asyncWrite holds
+   // buffers that point straight into response_'s member strings, and it is
+   // still in flight after the call that started it returned -- running on
+   // strand_ does not wait for it, a strand only serializes the handlers that
+   // start such writes. So a caller that assigns first and asks second can free
+   // bytes asio is mid-read even in the case where it never writes anything at
+   // all because its claim fails.
+   virtual void writeResponseHeaders(const http::Response& response,
+                                     Socket::Handler handler)
+   {
+      if (!claimResponse(handler))
+         return;
 
-      // kept for parity with the older writeResponse() above, which has set
-      // this unconditionally on every response for a long time. Remove any
-      // upstream-supplied instance(s) first -- setHeader() only replaces the
-      // first match, so a duplicated (or differently-cased) upstream header
-      // would otherwise still reach the client alongside ours.
-      response_.removeHeader("X-Content-Type-Options");
-      response_.setHeader("X-Content-Type-Options", "nosniff");
-
-      // call the response filter if we have one -- in the same position (the
-      // last mutation before the write) as writeResponse() above, so a filter
-      // that deliberately overrides Date or nosniff wins identically on both
-      // paths.
-      //
-      // This is not an optional hook that only some deployments install:
-      // AsyncServerImpl::acceptNextConnection() hands every connection its
-      // connectionResponseFilter, which stamps "Server" and every
-      // server-add-header header -- documented in server-options.json as
-      // applying to *all* responses from RStudio Server, and in practice
-      // carrying HSTS / X-Frame-Options. Skipping it here dropped those from
-      // every response streamed through this path (in pro, also multi-session
-      // Location/Refresh rewriting), which is exactly the arbitrary-user-app
-      // content served over /p/.
-      //
-      // Note the caller has already chosen this response's framing headers by
-      // the time we get here (see FixedBufferProxy::queueChunk), so a filter
-      // that set Content-Length/Transfer-Encoding/Connection would override
-      // them. That is deliberately not defended against, for two reasons.
-      // First, writeResponse() allows exactly the same overrides (the filter
-      // runs there before the response is serialized, and its Content-Length
-      // default only applies when none is present), so restoring framing here
-      // would make the two paths disagree -- which is the class of bug this
-      // call is fixing. Second, the damage is bounded to a single malformed
-      // response rather than cross-request desync: every terminal path in
-      // FixedBufferProxy closes the client connection, as does
-      // writeResponse()'s default close=true, so a client misled by a bogus
-      // length hits EOF instead of parsing a following response out of
-      // leftover bytes. Both halves of that parity are pinned by
-      // AsyncConnectionImplTests' *LetsTheFilterOverrideFramingHeaders* pair.
-      if (responseFilter_)
-         responseFilter_(originalRequest_, &response_);
-
-      // write only the header buffers
-      socketOperations_->asyncWrite(response_.headerBuffers(), handler);
+      response_.assign(response);
+      writeResponseHeadersImpl(handler);
    }
 
    virtual void writeError(const Error& error)
@@ -499,10 +475,11 @@ private:
    // writeResponse(BadRequest), for instance.
    //
    // What the claim cannot arbitrate is a caller that mutates response()
-   // directly through the accessor and only then asks us to write it:
-   // FixedBufferProxy assembles its headers there under its own mutex, as
-   // ChunkProxy did before it. Serializing that would take running the
-   // assemble-and-write pair on strand_, not just the write.
+   // directly through the accessor and only then asks us to write it -- the
+   // claim only sees the call, which comes after the mutation. That is why
+   // response()'s declaration in AsyncConnection requires such callers to keep
+   // the populate-then-write pair on strand_ as one unit, the way
+   // FixedBufferProxy::writeHeaders() does.
    bool claimResponse(const Socket::Handler& handler)
    {
       if (!sendingResponse_.exchange(true))
@@ -537,6 +514,64 @@ private:
       }
 
       return false;
+   }
+
+   // The body of writeResponseHeaders(), minus the claim -- shared by both of
+   // its overloads, for the same reason writeResponseImpl() below is.
+   void writeResponseHeadersImpl(Socket::Handler handler)
+   {
+      // Send our own HTTP-version, not a proxied upstream's -- same RFC 7230 2.6
+      // rationale as writeResponse() above, and it matters more here: this is
+      // the path FixedBufferProxy streams through, where the framing headers
+      // that follow are chosen for an HTTP/1.1 client.
+      response_.setHttpVersion(1, 1);
+
+      if (!response_.containsHeader("Date"))
+         response_.setHeader("Date", util::httpDate());
+
+      // kept for parity with the older writeResponse() above, which has set
+      // this unconditionally on every response for a long time. Remove any
+      // upstream-supplied instance(s) first -- setHeader() only replaces the
+      // first match, so a duplicated (or differently-cased) upstream header
+      // would otherwise still reach the client alongside ours.
+      response_.removeHeader("X-Content-Type-Options");
+      response_.setHeader("X-Content-Type-Options", "nosniff");
+
+      // call the response filter if we have one -- in the same position (the
+      // last mutation before the write) as writeResponse() above, so a filter
+      // that deliberately overrides Date or nosniff wins identically on both
+      // paths.
+      //
+      // This is not an optional hook that only some deployments install:
+      // AsyncServerImpl::acceptNextConnection() hands every connection its
+      // connectionResponseFilter, which stamps "Server" and every
+      // server-add-header header -- documented in server-options.json as
+      // applying to *all* responses from RStudio Server, and in practice
+      // carrying HSTS / X-Frame-Options. Skipping it here dropped those from
+      // every response streamed through this path (in pro, also multi-session
+      // Location/Refresh rewriting), which is exactly the arbitrary-user-app
+      // content served over /p/.
+      //
+      // Note the caller has already chosen this response's framing headers by
+      // the time we get here (see FixedBufferProxy::queueChunk), so a filter
+      // that set Content-Length/Transfer-Encoding/Connection would override
+      // them. That is deliberately not defended against, for two reasons.
+      // First, writeResponse() allows exactly the same overrides (the filter
+      // runs there before the response is serialized, and its Content-Length
+      // default only applies when none is present), so restoring framing here
+      // would make the two paths disagree -- which is the class of bug this
+      // call is fixing. Second, the damage is bounded to a single malformed
+      // response rather than cross-request desync: every terminal path in
+      // FixedBufferProxy closes the client connection, as does
+      // writeResponse()'s default close=true, so a client misled by a bogus
+      // length hits EOF instead of parsing a following response out of
+      // leftover bytes. Both halves of that parity are pinned by
+      // AsyncConnectionImplTests' *LetsTheFilterOverrideFramingHeaders* pair.
+      if (responseFilter_)
+         responseFilter_(originalRequest_, &response_);
+
+      // write only the header buffers
+      socketOperations_->asyncWrite(response_.headerBuffers(), handler);
    }
 
    // The body of writeResponse(), minus the claim -- so the entry points that

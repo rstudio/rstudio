@@ -1259,6 +1259,14 @@ public:
       boost::asio::post(ioc_, [handler]() { handler(boost::system::error_code(), 0); });
    }
 
+   // the claim-before-assign overload FixedBufferProxy uses; mirrors the real
+   // implementation by assigning the handed-over response in before writing
+   void writeResponseHeaders(const http::Response& response, Socket::Handler handler) override
+   {
+      response_.assign(response);
+      writeResponseHeaders(handler);
+   }
+
    void writeError(const Error& error) override
    {
       response_.setError(error);

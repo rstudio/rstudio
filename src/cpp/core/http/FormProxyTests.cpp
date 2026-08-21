@@ -57,6 +57,7 @@ public:
    void writeResponse(bool, Socket::Handler) override {}
    void writeResponse(const http::Response&, bool, const http::Headers&, Socket::Handler) override {}
    void writeResponseHeaders(Socket::Handler) override {}
+   void writeResponseHeaders(const http::Response&, Socket::Handler) override {}
    void writeError(const Error&) override {}
 
    void close() override { closeCount_++; }

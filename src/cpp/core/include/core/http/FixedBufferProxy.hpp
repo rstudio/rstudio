@@ -63,6 +63,7 @@ private:
    Framing decideFraming(const Response& response) const;
    bool queueChunk(const Response& response,
                    const std::string& chunk);
+   void writeHeaders();
    void onHeadersWrote(const boost::system::error_code& ec);
    void writeChunk();
    void onChunkWrote(const boost::system::error_code& ec);
@@ -72,7 +73,28 @@ private:
 
    boost::shared_ptr<AsyncConnection> pClientConnection_;
    boost::shared_ptr<IAsyncClient> pServerConnection_;
+
+   // The upstream response, as handed to the first queueChunk(), copied for
+   // writeHeaders() to assemble the client-facing headers from once it reaches
+   // the client connection's strand. A copy is needed because http::Response is
+   // noncopyable (so it cannot simply be bound into the dispatched call) and
+   // because the upstream one belongs to the AsyncClient, which is free to move
+   // on. Cheap in practice: the streaming path never fills response_.body()
+   // (see AsyncClient::streamedBodyComplete()), so this copies headers only,
+   // once per response.
+   //
+   // Written by queueChunk() under mutex_ on its first (!wroteHeaders_) pass
+   // and never touched again; read only by writeHeaders(). The dispatch()
+   // between the two is the happens-before edge, so neither side needs a lock
+   // for it.
    http::Response serverResponse_;
+
+   // Set-Cookie headers already stamped on the client connection's response
+   // when we were handed the upstream request -- refreshed auth cookies, in
+   // practice. Snapshotted in proxy(), the one point where that response is
+   // still ours alone to read; see there.
+   http::Headers preservedCookies_;
+
    uint64_t maxBufferSize_;
 
    boost::mutex mutex_;
