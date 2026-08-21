@@ -346,13 +346,44 @@ TEST(ChatStaticFiles, AuthCookiePathIgnoresBogusClientBaseUrl)
 {
    // does not end with the server-known prefix
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/elsewhere/", "https://host/elsewhere/"),
+                            "https://host/elsewhere/", "https://host/rstudio/"),
              "/rstudio/");
 
    // not a usable URL or path
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "garbage", "garbage"),
+                            "garbage", "https://host/rstudio/"),
              "/rstudio/");
+}
+
+// proxiedUri is built from request headers that a co-hosted application on
+// the same host can set, so a path that is merely well-formed is not enough:
+// it must be one the session is actually served under, or the token would be
+// delivered to a route of the caller's choosing.
+TEST(ChatStaticFiles, AuthCookiePathDeclinesAServerPathTheSessionIsNotServedUnder)
+{
+   // a route named by the request headers, on a default-root deployment
+   EXPECT_EQ(authCookiePath("https://host/evil/ai-chat/index.html",
+                            "https://host/evil/", "https://host/"),
+             "");
+
+   // and on one reached through an external proxy prefix
+   EXPECT_EQ(authCookiePath("https://host/evil/ai-chat/index.html", "",
+                            "https://host/proxy/rstudio/"),
+             "");
+
+   // a prefix of a path the session is served under is not one of them
+   // either: /rstudi is not the /rstudio segment
+   EXPECT_EQ(authCookiePath("https://host/rstudi/ai-chat/index.html", "",
+                            "https://host/rstudio/"),
+             "");
+
+   // the legitimate shapes all still authorize
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
+                            "https://host/rstudio/"),
+             "/rstudio/");
+   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
+                            "", "https://host/proxy/s/0aa27b1d6b8f34dc/"),
+             "/s/0aa27b1d6b8f34dc/");
 }
 
 // The query parameter arrives percent-decoded while client_init records the

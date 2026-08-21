@@ -198,6 +198,14 @@ std::string addQueryParam(const std::string& uri,
 // cookie path.
 bool isValidCookiePath(const std::string& path);
 
+// The path component of a base URL reported by the client, normalized to a
+// single trailing slash, or empty when there is none or it could not be used
+// as a cookie path. Accepts an absolute URL or an origin-absolute path.
+// Use this to compare a client-reported base against a server-derived cookie
+// path: a base that does not end with that path is not one the session is
+// served under.
+std::string cookiePathFromClientBaseUrl(const std::string& clientBaseUrl);
+
 // Prefix a server-derived cookie path with an external proxy prefix reported
 // by the client. When the browser reaches the server through a path-prefixing
 // reverse proxy the server was never told about, the browser-visible path is

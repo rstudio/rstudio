@@ -186,6 +186,39 @@ TEST(HttpUtilTest, CookiePathFallsBackOnEmptyOrMalformedClientInput)
              cookiePathWithExternalPrefix("/rstudio", "relative/rstudio/"));
 }
 
+// The normalized client base is what a caller compares a server-derived
+// cookie path against, so it must carry a trailing slash and reject anything
+// unusable rather than returning it.
+TEST(HttpUtilTest, CookiePathFromClientBaseUrlNormalizesToATrailingSlash)
+{
+   EXPECT_EQ("/rstudio/", cookiePathFromClientBaseUrl("https://host/rstudio"));
+   EXPECT_EQ("/rstudio/", cookiePathFromClientBaseUrl("https://host/rstudio/"));
+   EXPECT_EQ("/", cookiePathFromClientBaseUrl("https://host"));
+   EXPECT_EQ("/", cookiePathFromClientBaseUrl("https://host/"));
+
+   // a bare path, which is not a parseable absolute URL
+   EXPECT_EQ("/proxy/rstudio/", cookiePathFromClientBaseUrl("/proxy/rstudio"));
+
+   // query and fragment are dropped, since URL::path() keeps them
+   EXPECT_EQ("/rstudio/",
+             cookiePathFromClientBaseUrl("https://host/rstudio/?a=b#c"));
+}
+
+TEST(HttpUtilTest, CookiePathFromClientBaseUrlRejectsUnusableValues)
+{
+   EXPECT_EQ("", cookiePathFromClientBaseUrl(""));
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("garbage"));
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("relative/path/"));
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/pre;fix/"));
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/a//b/"));
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/a/../b/"));
+
+   // rejected after the trailing slash is added, which turns these into the
+   // "/./" and "/../" segments the check already looks for
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/a/."));
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/a/.."));
+}
+
 TEST(HttpUtilTest, CookiePathRejectsCharactersInvalidInCookiePath)
 {
    // characters that could break out of the Set-Cookie path attribute

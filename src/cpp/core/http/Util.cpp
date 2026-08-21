@@ -652,6 +652,34 @@ bool isValidCookiePath(const std::string& path)
    return true;
 }
 
+std::string cookiePathFromClientBaseUrl(const std::string& clientBaseUrl)
+{
+   if (clientBaseUrl.empty())
+      return std::string();
+
+   // the value may be an absolute URL or already just a path
+   std::string path = clientBaseUrl;
+   URL url(clientBaseUrl);
+   if (url.isValid())
+      path = url.path();
+
+   // URL::path() keeps them, and neither belongs in a cookie path
+   std::size_t cutPos = path.find_first_of("?#");
+   if (cutPos != std::string::npos)
+      path = path.substr(0, cutPos);
+
+   // an absolute URL with no path component means the root path
+   if (path.empty())
+      path = "/";
+   else if (path.back() != '/')
+      path += '/';
+
+   if (!isValidCookiePath(path))
+      return std::string();
+
+   return path;
+}
+
 std::string cookiePathWithExternalPrefix(const std::string& serverPath,
                                          const std::string& clientBaseUrl)
 {
@@ -660,44 +688,25 @@ std::string cookiePathWithExternalPrefix(const std::string& serverPath,
    if (serverPath.empty() || serverPath[0] != '/')
       return serverPath;
 
-   // extract the path component of the client-reported base URL; it may be
-   // an absolute URL or already just a path
-   std::string clientPath = clientBaseUrl;
-   URL url(clientBaseUrl);
-   if (url.isValid())
-      clientPath = url.path();
-
-   // drop any query string or fragment
-   std::size_t cutPos = clientPath.find_first_of("?#");
-   if (cutPos != std::string::npos)
-      clientPath = clientPath.substr(0, cutPos);
-
-   // an absolute URL with no path component means the root path
+   std::string clientPath = cookiePathFromClientBaseUrl(clientBaseUrl);
    if (clientPath.empty())
-      clientPath = "/";
-
-   if (!isValidCookiePath(clientPath))
       return serverPath;
 
-   // normalize both paths to a trailing slash for comparison only; the
-   // returned value keeps serverPath's exact trailing slash style so that
-   // deployments without an external prefix are byte-identical to before
+   // normalize serverPath to a trailing slash for comparison only; the
+   // returned value keeps its exact trailing slash style so that deployments
+   // without an external prefix are byte-identical to before
    std::string normServer = serverPath;
    if (normServer.back() != '/')
       normServer += '/';
-   std::string normClient = clientPath;
-   if (normClient.back() != '/')
-      normClient += '/';
 
-   if (normClient.length() <= normServer.length() ||
-       !boost::algorithm::ends_with(normClient, normServer))
-   {
+   // clientPath already carries a trailing slash; when the two are equal the
+   // prefix below is empty and the result is serverPath itself
+   if (!boost::algorithm::ends_with(clientPath, normServer))
       return serverPath;
-   }
 
    // the leading '/' of normServer bounds the prefix at a path segment
    std::string externalPrefix =
-      normClient.substr(0, normClient.length() - normServer.length());
+      clientPath.substr(0, clientPath.length() - normServer.length());
    return externalPrefix + serverPath;
 }
 

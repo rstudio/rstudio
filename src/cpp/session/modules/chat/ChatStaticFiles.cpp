@@ -386,6 +386,25 @@ std::string authCookiePath(const std::string& proxiedUri,
       return std::string();
    }
 
+   // A syntactically valid derived path is still only as trustworthy as the
+   // headers it came from: a co-hosted application able to set them could
+   // name its own route and have the token delivered there. Require the base
+   // this session reported at client_init to sit under the derived path --
+   // cookiePath starts with '/', so the suffix match lands on a segment
+   // boundary. An unusable or absent recorded base authorizes nothing, but
+   // cannot occur while a token exists: the IDE runs client_init before it
+   // can ask for a chat backend.
+   std::string reportedBase =
+      http::util::cookiePathFromClientBaseUrl(activeClientUrl);
+   if (!reportedBase.empty() &&
+       !boost::algorithm::ends_with(reportedBase, cookiePath))
+   {
+      WLOG("Not setting the assistant auth cookie: the path '{}' derived from "
+           "the request headers is not one this session is served under",
+           cookiePath);
+      return std::string();
+   }
+
    // recover any external proxy prefix from the browser-visible base URL
    // reported by the IDE frontend, but only when the base recorded by the
    // CSRF-protected client_init request agrees; the query string of this
