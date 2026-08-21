@@ -53,6 +53,11 @@ public:
       assets.ensureDirectory();
       writeStringToFile(assets.completeChildPath("app.js"), kAssetBody);
 
+      // a name whose extension is not lowercase; deliberately not a case
+      // variant of app.js, which would collide on a case-insensitive
+      // filesystem
+      writeStringToFile(assets.completeChildPath("Widget.JS"), kAssetBody);
+
       previous_ = system::getenv(kPathOverride);
       system::setenv(kPathOverride, root_.getAbsolutePath());
    }
@@ -524,15 +529,20 @@ TEST(ChatStaticFiles, IsNoStoreExtensionCoversHtmlJavaScriptAndCss)
 // The predicate and the content type map both compare against lowercase
 // literals, so the handler has to fold the resolved extension before asking.
 // On Windows realPath is purely lexical and leaves the requested case as
-// written, so an uppercase name would otherwise be treated as an ordinary
-// long-lived asset and skip the CSP header.
-TEST(ChatStaticFiles, ExtensionClassificationFoldsCase)
+// written, so an uppercase name would otherwise be served as an opaque blob
+// and cached for a year.
+TEST(ChatStaticFiles, HandlerClassifiesAnUppercaseExtension)
 {
-   EXPECT_TRUE(isNoStoreExtension(FilePath("app.JS").getExtensionLowerCase()));
-   EXPECT_TRUE(
-      isNoStoreExtension(FilePath("Index.HTML").getExtensionLowerCase()));
-   EXPECT_EQ(getContentType(FilePath("style.CSS").getExtensionLowerCase()),
-             "text/css; charset=utf-8");
+   FakeAssistantInstallation installation;
+
+   http::Response response;
+   requestChatFile("/ai-chat/assets/Widget.JS", &response);
+
+   EXPECT_EQ(response.statusCode(), http::status::Ok);
+   EXPECT_EQ(response.headerValue("Content-Type"),
+             "application/javascript; charset=utf-8");
+   EXPECT_NE(response.headerValue("Cache-Control").find("no-store"),
+             std::string::npos);
 }
 
 // The parameter name exists as two bare literals, one here and one in

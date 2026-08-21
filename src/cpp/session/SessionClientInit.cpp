@@ -196,7 +196,15 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // without it.
    if (!http::util::isValidCookiePath(path))
    {
+      // options().rootPath() is the raw setting, and www-root-path may be written
+      // without a leading slash, so give it the shape Request::rootPath() would --
+      // leading slash, no trailing one -- before judging it
       std::string configuredRootPath = session::options().rootPath();
+      if (configuredRootPath.empty() || configuredRootPath[0] != '/')
+         configuredRootPath = '/' + configuredRootPath;
+      if (configuredRootPath.length() > 1 && configuredRootPath.back() == '/')
+         configuredRootPath.pop_back();
+
       path = http::util::isValidCookiePath(configuredRootPath) ? configuredRootPath
                                                                : kRequestDefaultRootPath;
       LOG_WARNING_MESSAGE("Derived a " + std::string(kPortTokenCookie) + " cookie path that "
