@@ -20,10 +20,19 @@
 // error handler calling writeResponse()/writeError() after the streaming
 // proxy already flushed headers/body to the same connection) must be a
 // no-op, not a second response interleaved on the wire.
+//
+// "No-op" means nothing reaches the wire and response_ is left alone -- not
+// that the losing caller is forgotten: the claim settles its handler with
+// already_started so it can tear down instead of waiting forever on a
+// completion that cannot arrive. And because the racing writers need not be
+// on the same strand, one and only one of them may ever win the claim.
 
+#include <atomic>
 #include <string>
+#include <thread>
 #include <vector>
 
+#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read.hpp>
@@ -84,17 +93,23 @@ TEST(AsyncConnectionImpl, WriteResponseAfterHeadersAlreadyWrittenIsANoOp)
    // handleLocalhostError) attempting to write a whole, different response
    // on the same connection after that.
    bool secondWriteHandlerCalled = false;
+   boost::system::error_code secondWriteEc;
    pConnection->response().setStatusCode(502);
-   pConnection->writeResponse(true, [&](const boost::system::error_code&, std::size_t) {
+   pConnection->writeResponse(true, [&](const boost::system::error_code& ec, std::size_t) {
       secondWriteHandlerCalled = true;
+      secondWriteEc = ec;
    });
 
    ioc.run();
 
    EXPECT_TRUE(headersWritten);
-   // The guarded writeResponse() call must return without posting any
-   // completion at all -- its handler must never fire.
-   EXPECT_FALSE(secondWriteHandlerCalled);
+   // The guarded writeResponse() writes nothing, but it must still settle its
+   // caller with an error rather than swallow the completion -- a caller left
+   // waiting on a completion that can never arrive wedges: FixedBufferProxy
+   // would keep clientWriteInProgress_ latched, never flush queued chunks,
+   // never resume backpressure, and leak both sockets.
+   EXPECT_TRUE(secondWriteHandlerCalled);
+   EXPECT_EQ(secondWriteEc, boost::asio::error::already_started);
 
    pConnection->close();
 
@@ -308,15 +323,21 @@ TEST(AsyncConnectionImpl, WriteResponseHeadersAfterHeadersAlreadyWrittenIsANoOp)
    // (e.g. a caller that doesn't itself track whether it already wrote
    // headers) before the first write has run.
    bool secondWriteHandlerCalled = false;
+   boost::system::error_code secondWriteEc;
    pConnection->response().setStatusCode(500);
-   pConnection->writeResponseHeaders([&](const boost::system::error_code&, std::size_t) {
+   pConnection->writeResponseHeaders([&](const boost::system::error_code& ec, std::size_t) {
       secondWriteHandlerCalled = true;
+      secondWriteEc = ec;
    });
 
    ioc.run();
 
    EXPECT_TRUE(firstWritten);
-   EXPECT_FALSE(secondWriteHandlerCalled);
+   // guarded, but still settled with an error so the caller can tear down
+   // instead of waiting forever -- see the same expectation in
+   // WriteResponseAfterHeadersAlreadyWrittenIsANoOp above.
+   EXPECT_TRUE(secondWriteHandlerCalled);
+   EXPECT_EQ(secondWriteEc, boost::asio::error::already_started);
 
    pConnection->close();
 
@@ -327,6 +348,103 @@ TEST(AsyncConnectionImpl, WriteResponseHeadersAfterHeadersAlreadyWrittenIsANoOp)
 
    EXPECT_NE(received.find("200"), std::string::npos);
    EXPECT_EQ(received.find("500"), std::string::npos);
+}
+
+TEST(AsyncConnectionImpl, ConcurrentResponseWritersElectExactlyOneWinner)
+{
+   // The claim is a check-then-act, and the writers it arbitrates do not all
+   // run on this connection's strand: a streaming proxy writes from the
+   // *upstream* AsyncClient's completion handlers (proxyRequest does not share
+   // our strand with them the way proxyLocalhostRequest does), while the
+   // connection's own read path can turn a request-parse error into
+   // writeResponse(BadRequest) at the same moment. Read-then-set of a plain
+   // bool lets both observe "not started" and both write; a single atomic
+   // exchange cannot.
+   //
+   // So race several writers at once and pin the invariant: exactly one wins
+   // and writes, and every loser is settled with already_started rather than
+   // being left waiting on a completion that will never come.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         TcpAsyncConnection::HeadersParsedHandler(),
+         TcpAsyncConnection::Handler(),
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   pConnection->response().setStatusCode(200);
+
+   const int writerCount = 8;
+   std::atomic<int> won{0};
+   std::atomic<int> lost{0};
+   std::atomic<int> unexpectedError{0};
+
+   // release all the writers from the same spin barrier so their claims
+   // actually overlap rather than being serialized by thread startup
+   std::atomic<int> ready{0};
+   std::atomic<bool> go{false};
+
+   std::vector<std::thread> writers;
+   for (int i = 0; i < writerCount; i++)
+   {
+      writers.emplace_back([&]() {
+         ready++;
+         while (!go)
+            std::this_thread::yield();
+
+         pConnection->writeResponse(true, [&](const boost::system::error_code& ec, std::size_t) {
+            if (!ec)
+               won++;
+            else if (ec == boost::asio::error::already_started)
+               lost++;
+            else
+               unexpectedError++;
+         });
+      });
+   }
+
+   while (ready < writerCount)
+      std::this_thread::yield();
+   go = true;
+
+   for (std::thread& writer : writers)
+      writer.join();
+
+   ioc.run();
+
+   EXPECT_EQ(won.load(), 1);
+   EXPECT_EQ(lost.load(), writerCount - 1);
+   EXPECT_EQ(unexpectedError.load(), 0);
+
+   // and only one response reached the wire
+   std::vector<char> data(4096);
+   boost::system::error_code readEc;
+   std::size_t n = boost::asio::read(peer, boost::asio::buffer(data), readEc);
+   std::string received(data.data(), n);
+
+   std::size_t statusLines = 0;
+   for (std::size_t at = received.find("HTTP/1.1");
+        at != std::string::npos;
+        at = received.find("HTTP/1.1", at + 1))
+   {
+      statusLines++;
+   }
+   EXPECT_EQ(statusLines, 1u) << "wire was: " << received;
 }
 
 TEST(AsyncConnectionImpl, WriteResponseHeadersCollapsesDuplicateUpstreamNosniffHeader)

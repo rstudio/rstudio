@@ -1071,6 +1071,35 @@ TEST(FixedBufferProxy, HandlesDownstreamWriteFailureDuringHeaderWrite)
    EXPECT_EQ(fixture.pProxy.use_count(), 1);
 }
 
+TEST(FixedBufferProxy, LosingTheResponseClaimDetachesWithoutClosingTheClientConnection)
+{
+   // already_started is not a transport failure like the broken_pipe above: it
+   // is AsyncConnectionImpl::claimResponse() reporting that another writer on
+   // this connection got to its one response first (its read path turning a
+   // request-parse error into writeResponse(BadRequest), say). That winner's
+   // write may still be in flight, so unlike every other error path here we
+   // must NOT close the client connection -- doing so would truncate or reset
+   // the very response the claim exists to protect. Detach from the upstream
+   // and leave the client to its winner.
+   Fixture fixture;
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   fixture.pClientConnection->failNextWrite(boost::asio::error::already_started);
+   fixture.deliver(upstream, body);
+
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+   EXPECT_FALSE(fixture.pClientConnection->closed_);
+
+   // but we do stop and let go of the upstream, or the buffered body and the
+   // FixedBufferProxy <-> AsyncClient reference cycle leak (see
+   // HandlesDownstreamWriteFailureDuringHeaderWrite)
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
+}
+
 TEST(FixedBufferProxy, MultipleQueuedChunksDrainInOrderAndAccountBufferCorrectly)
 {
    // Real-world trigger: a fast localhost backend (Jetty/Shiny serving from

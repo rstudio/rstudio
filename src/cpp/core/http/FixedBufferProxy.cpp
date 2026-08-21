@@ -14,6 +14,7 @@
  */
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/optional.hpp>
 
 #include <core/http/FixedBufferProxy.hpp>
@@ -456,24 +457,43 @@ void FixedBufferProxy::onChunkWrote(const boost::system::error_code& ec)
 
 bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
 {
-   if (ec)
+   if (!ec)
+      return false;
+
+   // already_started is not a transport failure: it is
+   // AsyncConnectionImpl::claimResponse() telling us another writer owns this
+   // client connection's one response and got there first, so nothing we
+   // queued will ever reach the client. That winner's write may still be in
+   // flight, and closing the client connection -- what every other error path
+   // here does -- would truncate or reset the very response the claim exists
+   // to protect. Detach from the upstream and leave the client connection to
+   // its winner, which closes it once its own write completes.
+   //
+   // No logging: claimResponse() already logged the losing attempt.
+   if (ec == boost::asio::error::already_started)
    {
-      Error error(ec, ERROR_LOCATION);
-
-      if (!http::isConnectionTerminatedError(error))
-         LOG_ERROR(error);
-
-      // close both connections to stop all data transfer
-      closeConnections();
+      closeUpstream();
       return true;
    }
 
-   return false;
+   Error error(ec, ERROR_LOCATION);
+
+   if (!http::isConnectionTerminatedError(error))
+      LOG_ERROR(error);
+
+   // close both connections to stop all data transfer
+   closeConnections();
+   return true;
 }
 
 void FixedBufferProxy::closeConnections()
 {
    pClientConnection_->close();
+   closeUpstream();
+}
+
+void FixedBufferProxy::closeUpstream()
+{
    pServerConnection_->close();
 
    // AsyncClient::close() only closes the socket -- it never clears
