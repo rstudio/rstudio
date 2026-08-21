@@ -405,6 +405,18 @@ std::string authCookiePath(const std::string& proxiedUri,
       return std::string();
    }
 
+   // A base URL that survives none of that is not distinguishable below from
+   // one that was never sent, and the deployments this matters for are
+   // exactly the ones that cannot connect without an external prefix, so say
+   // so rather than let #18621 recur silently.
+   if (!clientBaseUrl.empty() &&
+       http::util::cookiePathFromClientBaseUrl(clientBaseUrl).empty())
+   {
+      WLOG("The reported browser-visible base URL cannot be used as a cookie "
+           "path, so any external proxy prefix in it is being ignored; a "
+           "double slash in the base URL is the usual cause");
+   }
+
    // recover any external proxy prefix from the browser-visible base URL
    // reported by the IDE frontend, but only when the base recorded by the
    // CSRF-protected client_init request agrees; the query string of this

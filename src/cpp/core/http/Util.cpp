@@ -638,8 +638,12 @@ bool isValidCookiePath(const std::string& path)
       }
    }
 
-   // browsers match the cookie path against an already-normalized request
-   // path, so a path carrying these segments could never match
+   // a browser matches the cookie path against a request path whose dot
+   // segments have already been removed, so a path carrying "." or ".."
+   // could never match. Empty segments are not removed -- "//proxy/rstudio/"
+   // survives URL parsing and would match -- but a value reaching us with one
+   // came through a proxy or redirect that did not normalize, so refuse it
+   // rather than guess at what was meant.
    if (path.find("//") != std::string::npos ||
        path.find("/./") != std::string::npos ||
        path.find("/../") != std::string::npos ||

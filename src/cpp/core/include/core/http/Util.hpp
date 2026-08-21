@@ -192,10 +192,12 @@ std::string addQueryParam(const std::string& uri,
 // Is this string usable as the Path attribute of a Set-Cookie header?
 // Requires an origin-absolute path made only of characters that cannot break
 // out of the header (no CTLs -- including CR/LF -- and no space, ';', ',',
-// '\', '?', '#', or non-ASCII), and with no "//", "." or ".." segments, which
-// browsers compare literally against an already-normalized request path and so
-// would never match. Use this before putting any client-reported value in a
-// cookie path.
+// '\', '?', '#', or non-ASCII), and with no "//", "." or ".." segments. A
+// browser compares the path against a request path whose dot segments have
+// already been removed, so "." and ".." could never match; an empty segment
+// would match, but only ever arrives from something upstream that failed to
+// normalize, so it is refused as well. Use this before putting any
+// client-reported value in a cookie path.
 bool isValidCookiePath(const std::string& path);
 
 // The path component of a base URL reported by the client, normalized to a
