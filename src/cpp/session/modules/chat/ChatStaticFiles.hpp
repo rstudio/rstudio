@@ -49,6 +49,20 @@ namespace staticfiles {
  */
 std::string getContentType(const std::string& extension);
 
+/**
+ * Should a response serving a file with this extension be kept out of caches?
+ *
+ * True for HTML, JavaScript, and CSS: these change with each Posit Assistant
+ * build, and the index.html response also carries the assistant auth token
+ * cookie, which must never be stored by a shared cache. Callers must pass the
+ * extension of the *resolved* file -- the requested path is URL-decoded during
+ * resolution, so it can spell the same file in more than one way.
+ *
+ * @param extension File extension including the dot (e.g., ".html")
+ * @return true if the response should be served no-store
+ */
+bool isNoStoreExtension(const std::string& extension);
+
 // ============================================================================
 // Path Validation
 // ============================================================================

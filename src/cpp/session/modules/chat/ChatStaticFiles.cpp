@@ -349,6 +349,13 @@ std::string authCookiePath(const std::string& proxiedUri,
    return requested;
 }
 
+bool isNoStoreExtension(const std::string& extension)
+{
+   return extension == ".html" || extension == ".htm" ||
+          extension == ".js" || extension == ".mjs" ||
+          extension == ".css";
+}
+
 std::string getContentType(const std::string& extension)
 {
    static std::map<std::string, std::string> contentTypes = {
@@ -554,10 +561,12 @@ Error handleAIChatRequest(const http::Request& request,
    }
    pResponse->setContentType(getContentType(extension));
 
-   // Set caching headers
-   if (boost::ends_with(requestPath, kIndexFileName) ||
-       boost::ends_with(requestPath, ".js") ||
-       boost::ends_with(requestPath, ".css"))
+   // Set caching headers, classifying by the resolved file rather than by the
+   // requested path. The request path is URL-decoded during resolution, so a
+   // request for "%69ndex.html" resolves to index.html and is served the auth
+   // token cookie; classifying by the raw path would then miss the no-store
+   // rule and invite shared caches to store that response.
+   if (isNoStoreExtension(extension))
    {
       // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
       // Use multiple headers to ensure cache is disabled across all browsers and proxies
@@ -565,7 +574,7 @@ Error handleAIChatRequest(const http::Request& request,
       pResponse->setHeader("Pragma", "no-cache");  // HTTP/1.0 compatibility
       pResponse->setHeader("Expires", "0");        // Proxy cache control
    }
-   else if (requestPath.find(".") != std::string::npos)
+   else if (!extension.empty())
    {
       // Cache other assets like images, fonts, etc.
       pResponse->setHeader("Cache-Control", "public, max-age=31536000");

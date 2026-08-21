@@ -295,3 +295,39 @@ TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
                             "https://host/proxy/rstudio/"),
              "/proxy/rstudio/");
 }
+
+// The index.html response carries the assistant auth token cookie, so it must
+// never be classified as a long-lived cacheable asset.
+TEST(ChatStaticFiles, IsNoStoreExtensionCoversHtmlJavaScriptAndCss)
+{
+   EXPECT_TRUE(isNoStoreExtension(".html"));
+   EXPECT_TRUE(isNoStoreExtension(".htm"));
+   EXPECT_TRUE(isNoStoreExtension(".js"));
+   EXPECT_TRUE(isNoStoreExtension(".mjs"));
+   EXPECT_TRUE(isNoStoreExtension(".css"));
+
+   EXPECT_FALSE(isNoStoreExtension(".png"));
+   EXPECT_FALSE(isNoStoreExtension(".woff2"));
+   EXPECT_FALSE(isNoStoreExtension(""));
+}
+
+// Resolution URL-decodes the request path, so the same file can be requested
+// under more than one spelling -- which is why cache classification reads the
+// resolved extension rather than the requested path.
+TEST(ChatStaticFiles, ValidateAndResolvePathDecodesPercentEncodedFileNames)
+{
+   FilePath tempDir;
+   FilePath::tempFilePath(tempDir);
+   tempDir.ensureDirectory();
+
+   FilePath indexFile = tempDir.completeChildPath(kIndexFileName);
+   writeStringToFile(indexFile, "<html>test</html>");
+
+   FilePath result;
+   Error error = validateAndResolvePath(tempDir, "%69ndex.html", &result);
+   EXPECT_FALSE(error);
+   EXPECT_EQ(result.getFilename(), std::string(kIndexFileName));
+   EXPECT_TRUE(isNoStoreExtension(result.getExtension()));
+
+   tempDir.removeIfExists();
+}
