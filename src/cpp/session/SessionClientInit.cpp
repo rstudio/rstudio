@@ -140,8 +140,7 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    core::system::setenv(kServerUrlEnvVar, serverUrl);
    core::system::setenv(kSessionUrlEnvVar, sessionUrl);
 
-   std::string rootPath = ptrConnection->request().rootPath();
-   std::string path = rootPath;
+   std::string path = ptrConnection->request().rootPath();
 
    // compute the cookie path; find the first / after the http(s):// preamble. we make the cookie
    // specific to this session's URL since it's possible for different sessions (paths) to use
@@ -188,14 +187,18 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 
    // Whichever branch produced it, the path is written into the Set-Cookie header without
    // escaping, and the headers the server derives it from are no better validated than the
-   // JSON the client sends: rootPath() normalizes only the leading and trailing slash, and
-   // nothing strips an inbound X-RStudio-Root-Path. A path attribute smuggled through either
-   // would be emitted verbatim, and RFC 6265 takes the last one. Refuse anything unusable,
-   // preferring the configured root path over the whole origin. Unlike the assistant auth
-   // cookie, this one cannot simply be withheld -- the IDE does not work without it.
+   // JSON the client sends: rootPath() prefers the X-RStudio-Root-Path header, normalizes
+   // only the leading and trailing slash, and nothing strips an inbound copy of it. A path
+   // attribute smuggled through either would be emitted verbatim, and RFC 6265 takes the
+   // last one. Refuse anything unusable and retreat to the root path rserver passed on the
+   // command line, which no request can reach, rather than to the whole origin. Unlike the
+   // assistant auth cookie, this one cannot simply be withheld -- the IDE does not work
+   // without it.
    if (!http::util::isValidCookiePath(path))
    {
-      path = http::util::isValidCookiePath(rootPath) ? rootPath : kRequestDefaultRootPath;
+      std::string configuredRootPath = session::options().rootPath();
+      path = http::util::isValidCookiePath(configuredRootPath) ? configuredRootPath
+                                                               : kRequestDefaultRootPath;
       LOG_WARNING_MESSAGE("Derived a " + std::string(kPortTokenCookie) + " cookie path that "
             "cannot be used in a Set-Cookie header; check www-root-path and any reverse "
             "proxy in front of this server. Scoping the cookie to " + path + " instead");
