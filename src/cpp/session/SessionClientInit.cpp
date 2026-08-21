@@ -140,7 +140,8 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    core::system::setenv(kServerUrlEnvVar, serverUrl);
    core::system::setenv(kSessionUrlEnvVar, sessionUrl);
 
-   std::string path = ptrConnection->request().rootPath();
+   std::string rootPath = ptrConnection->request().rootPath();
+   std::string path = rootPath;
 
    // compute the cookie path; find the first / after the http(s):// preamble. we make the cookie
    // specific to this session's URL since it's possible for different sessions (paths) to use
@@ -153,11 +154,28 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
       // request; the default root path is then kept
       std::string clientPath = baseURL.substr(pos);
       if (http::util::isValidCookiePath(clientPath))
+      {
          path = clientPath;
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("Client reported a base URL whose path cannot be used as a "
+               "cookie path; scoping the " + std::string(kPortTokenCookie) + " cookie to " +
+               std::string(kRequestDefaultRootPath) + " instead, which is wider than the "
+               "path the client reported");
+      }
    }
-   // the root path was defined and we compute the cookie path more securely using internal assumptions
-   // instead of using the URL from the JSON input. In this case, we use the server's perceived current
-   // URI with the last part (/client_init) removed. The result is the session path, same as above.
+   // the root path was defined, so the cookie path comes from the server's perceived current
+   // URI with the last part (/client_init) removed. The result is the session path, same as
+   // above. That derivation cannot see a path-prefixing reverse proxy the server was never
+   // told about (e.g. Open OnDemand's /rnode/ routes): the browser-visible path then carries
+   // a prefix the server-derived path can never contain, and the browser would omit this
+   // cookie. Recover such a prefix from the client-reported baseURL, which is honored only
+   // when it ends with the server-derived path, so the result is the server's own path with
+   // a prefix restored rather than a path of the client's choosing (see #18621). This request
+   // is CSRF-protected, which keeps a crafted link out, but not a same-origin script -- and
+   // one that can issue a valid client_init already regenerates the port token and takes the
+   // active client id, so it gains nothing by relocating the cookie.
    else
    {
       path = ptrConnection->request().proxiedUri();
@@ -165,16 +183,22 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
       http::URL completePath(path);
       path = completePath.path();
 
-      // the browser may reach us through a path-prefixing reverse proxy the
-      // server was never told about (e.g. Open OnDemand's /rnode/ routes), in
-      // which case the browser-visible path carries a prefix the server-derived
-      // path can never contain and the browser would omit this cookie. recover
-      // such a prefix from the client-reported baseURL, which is only honored
-      // when it ends with the server-derived path (see #18621). this trusts
-      // baseURL no further than the default-root-path branch above already
-      // does, and this request is CSRF-protected, so the value comes from a
-      // page load in the user's own session rather than a crafted link
       path = http::util::cookiePathWithExternalPrefix(path, baseURL);
+   }
+
+   // Whichever branch produced it, the path is written into the Set-Cookie header without
+   // escaping, and the headers the server derives it from are no better validated than the
+   // JSON the client sends: rootPath() normalizes only the leading and trailing slash, and
+   // nothing strips an inbound X-RStudio-Root-Path. A path attribute smuggled through either
+   // would be emitted verbatim, and RFC 6265 takes the last one. Refuse anything unusable,
+   // preferring the configured root path over the whole origin. Unlike the assistant auth
+   // cookie, this one cannot simply be withheld -- the IDE does not work without it.
+   if (!http::util::isValidCookiePath(path))
+   {
+      path = http::util::isValidCookiePath(rootPath) ? rootPath : kRequestDefaultRootPath;
+      LOG_WARNING_MESSAGE("Derived a " + std::string(kPortTokenCookie) + " cookie path that "
+            "cannot be used in a Set-Cookie header; check www-root-path and any reverse "
+            "proxy in front of this server. Scoping the cookie to " + path + " instead");
    }
 
    // create the cookie; don't set an expiry date as this will be a session cookie
