@@ -30,7 +30,6 @@ PACKAGES=(
 	jq
 	libffi
 	libsecret-devel
-	libuser-devel
 	libuuid-devel
 	libuv-devel
 	libxml2-devel
