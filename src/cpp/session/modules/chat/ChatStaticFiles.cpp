@@ -543,24 +543,29 @@ Error handleAIChatRequest(const http::Request& request,
 
    // Parse requested path from URI
    // URI format: /ai-chat/<path>
-   std::string uri = request.uri();
-   size_t pos = uri.find(kAiChatUriPrefix);
-   if (pos == std::string::npos)
+   //
+   // Match on request.path(), which is the URI truncated at "?", and anchor
+   // the match at the start. The handler is registered for the bare "/ai-chat"
+   // prefix, so searching the whole URI let a request for "/ai-chat" serve a
+   // file named in its own query string, and let junk-suffixed spellings of
+   // the route ("/ai-chatXYZ/ai-chat/index.html") through. Both served real
+   // files, so any cache rule or WAF reasoning about the URI path saw
+   // something other than what was served.
+   std::string path = request.path();
+   if (!boost::starts_with(path, kAiChatUriPrefix))
    {
       pResponse->setStatusCode(http::status::BadRequest);
       return Success();
    }
 
-   std::string requestPath = uri.substr(pos + kAiChatUriPrefixLength);
+   std::string requestPath = path.substr(kAiChatUriPrefixLength);
 
-   // Drop the query string and fragment. The IDE always requests index.html
-   // with query parameters, and the caching rules below match on the file
-   // name -- with the query attached, the index.html response (which carries
-   // the auth token cookie) was matching the long-lived "public" rule meant
-   // for images and fonts.
-   size_t queryPos = requestPath.find_first_of("?#");
-   if (queryPos != std::string::npos)
-      requestPath = requestPath.substr(0, queryPos);
+   // request.path() truncates at "?" but not at "#". Browsers never transmit
+   // a fragment, but strip it so that a hand-written request still resolves
+   // to a file instead of falling through to the client root directory.
+   size_t fragmentPos = requestPath.find('#');
+   if (fragmentPos != std::string::npos)
+      requestPath = requestPath.substr(0, fragmentPos);
 
    // Default to index.html
    if (requestPath.empty() || requestPath == "/")
