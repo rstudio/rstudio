@@ -102,12 +102,6 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
 
-# get libuser header files (libuser-devel not currently available on rhel8)
-RUN wget https://pagure.io/libuser/archive/libuser-0.62/libuser-libuser-0.62.tar.gz
-RUN tar zxvf libuser-libuser-0.62.tar.gz
-RUN mkdir -p /usr/include/libuser
-RUN cp libuser-libuser-0.62/lib/*.h /usr/include/libuser
-
 # build and install gpg1.4 which we need to sign the builds in headless mode
 # this is unavailable in the official rhel8 repos
 # mirrored into rstudio-buildtools because gnupg.org returns 403 to the builders
