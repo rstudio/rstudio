@@ -1493,7 +1493,10 @@ public class ChatPresenter extends BasePresenter
          // Report the browser-visible base URL so the server can scope that
          // cookie to include proxy prefixes it was never told about (#18621).
          // It is honored only when it agrees with the base reported at
-         // client_init.
+         // client_init. The parameter name must match kClientBaseUrlParam in
+         // ChatStaticFiles.hpp; nothing checks that at build time, and if it
+         // stops matching the server sees no base URL and declines to set the
+         // cookie.
          params += "&clientBaseUrl=" +
                    URL.encodeQueryString(GWT.getHostPageBaseURL());
       }

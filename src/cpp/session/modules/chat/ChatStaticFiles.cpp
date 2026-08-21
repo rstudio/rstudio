@@ -62,11 +62,6 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 constexpr const char* kAiChatRoute = "/ai-chat";
 constexpr size_t kAiChatRouteLength = 8; // Length of "/ai-chat"
 
-// Query parameter added by the IDE frontend (ChatPresenter.java) carrying the
-// browser-visible base URL, so the auth cookie path can include external
-// proxy prefixes the server was never told about.
-constexpr const char* kClientBaseUrlParam = "clientBaseUrl";
-
 // Chat backend port, set by SessionChat.cpp when the backend starts.
 // Used to build connect-src in the CSP header for desktop mode.
 // Atomic because it is written from the main thread and read from HTTP
@@ -350,6 +345,8 @@ size_t findAiChatRoute(const std::string& path)
 }
 
 } // anonymous namespace
+
+const char* const kClientBaseUrlParam = "clientBaseUrl";
 
 std::string authCookiePath(const std::string& proxiedUri,
                            const std::string& clientBaseUrl,

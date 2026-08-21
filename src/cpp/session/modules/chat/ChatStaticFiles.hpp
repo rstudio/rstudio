@@ -90,6 +90,17 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
 // ============================================================================
 
 /**
+ * Query parameter carrying the browser-visible base URL.
+ *
+ * Added to the chat iframe URL by the IDE frontend in server mode -- see
+ * loadChatUI() in ChatPresenter.java, which must spell this name identically.
+ * It lets the auth cookie path include a proxy prefix the server was never
+ * told about. Nothing ties the two spellings together at build time, so a
+ * typo on either side leaves the parameter arriving empty.
+ */
+extern const char* const kClientBaseUrlParam;
+
+/**
  * Compute the Path attribute for the posit-assistant-auth cookie.
  *
  * The cookie is scoped to the session prefix (e.g. "/s/{id}/" or the

@@ -521,6 +521,35 @@ TEST(ChatStaticFiles, IsNoStoreExtensionCoversHtmlJavaScriptAndCss)
    EXPECT_FALSE(isNoStoreExtension(""));
 }
 
+// The parameter name exists as two bare literals, one here and one in
+// loadChatUI() in ChatPresenter.java, with nothing tying them together at
+// build time. Pin the wire name and the decoding, so at least this side
+// cannot drift silently: if it did, the parameter would arrive empty and the
+// cookie would fall back to the server-known path on every request.
+TEST(ChatStaticFiles, ClientBaseUrlParameterRoundTripsThroughARequest)
+{
+   EXPECT_EQ(std::string(kClientBaseUrlParam), "clientBaseUrl");
+
+   // the URI the IDE builds, with the base URL query-string encoded
+   http::Request request;
+   request.setUri("/ai-chat/index.html?wsUrl=%2Fp%2Fabc%2Fai-chat"
+                  "&clientBaseUrl=https%3A%2F%2Fhost%2Fproxy%2Frstudio%2F");
+
+   EXPECT_EQ(request.queryParamValue(kClientBaseUrlParam),
+             "https://host/proxy/rstudio/");
+
+   // and that decoded value is what authorizes the external prefix
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            request.queryParamValue(kClientBaseUrlParam),
+                            "https://host/proxy/rstudio/"),
+             "/proxy/rstudio/");
+
+   // a request without it must not be read as reporting an empty base
+   http::Request without;
+   without.setUri("/ai-chat/index.html?wsUrl=%2Fp%2Fabc%2Fai-chat");
+   EXPECT_EQ(without.queryParamValue(kClientBaseUrlParam), "");
+}
+
 TEST(ChatStaticFiles, HandlerServesAnAssetUnderTheRoute)
 {
    FakeAssistantInstallation installation;
