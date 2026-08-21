@@ -148,7 +148,12 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    std::size_t pos = baseURL.find('/', 9);
    if (pos != std::string::npos && path == kRequestDefaultRootPath)
    {
-      path = baseURL.substr(pos);
+      // nothing escapes the Set-Cookie header on the way out, so reject a
+      // baseURL whose path could break out of it or could never match a
+      // request; the default root path is then kept
+      std::string clientPath = baseURL.substr(pos);
+      if (http::util::isValidCookiePath(clientPath))
+         path = clientPath;
    }
    // the root path was defined and we compute the cookie path more securely using internal assumptions
    // instead of using the URL from the JSON input. In this case, we use the server's perceived current

@@ -74,6 +74,74 @@ TEST(HttpUtilTest, CookiePathPrefixIsASiblingSubtreeNotASubpath)
                                           "https://host/evil/rstudio/"));
 }
 
+TEST(HttpUtilTest, IsValidCookiePathAcceptsOriginAbsolutePaths)
+{
+   EXPECT_TRUE(isValidCookiePath("/"));
+   EXPECT_TRUE(isValidCookiePath("/rstudio/"));
+   EXPECT_TRUE(isValidCookiePath("/s/0aa27b1d6b8f34dc/"));
+
+   // percent-escapes are how a path with reserved characters reaches us, and
+   // are what the browser compares against, so they stay
+   EXPECT_TRUE(isValidCookiePath("/pr%20oxy/rstudio/"));
+}
+
+TEST(HttpUtilTest, IsValidCookiePathRejectsHeaderBreakingCharacters)
+{
+   EXPECT_FALSE(isValidCookiePath("/pre;fix/"));
+   EXPECT_FALSE(isValidCookiePath("/pre,fix/"));
+   EXPECT_FALSE(isValidCookiePath("/pre fix/"));
+   EXPECT_FALSE(isValidCookiePath("/pre\r\nX-Injected: 1/"));
+   EXPECT_FALSE(isValidCookiePath("/pre\\fix/"));
+   EXPECT_FALSE(isValidCookiePath("/pre?fix/"));
+   EXPECT_FALSE(isValidCookiePath("/pre#fix/"));
+   EXPECT_FALSE(isValidCookiePath("/pre\x7F""fix/"));
+}
+
+// Bytes above 0x7F must be rejected the same way regardless of whether char
+// is signed on this platform.
+TEST(HttpUtilTest, IsValidCookiePathRejectsNonAsciiIndependentlyOfCharSignedness)
+{
+   EXPECT_FALSE(isValidCookiePath("/pr\xC3\xB8xy/"));
+   EXPECT_FALSE(isValidCookiePath("/pre\x80""fix/"));
+   EXPECT_FALSE(isValidCookiePath("/pre\xFF""fix/"));
+}
+
+TEST(HttpUtilTest, IsValidCookiePathRejectsUnnormalizedPaths)
+{
+   EXPECT_FALSE(isValidCookiePath(""));
+   EXPECT_FALSE(isValidCookiePath("relative/"));
+   EXPECT_FALSE(isValidCookiePath("//host/proxy/"));
+   EXPECT_FALSE(isValidCookiePath("/a//b/"));
+   EXPECT_FALSE(isValidCookiePath("/a/./b/"));
+   EXPECT_FALSE(isValidCookiePath("/a/../b/"));
+   EXPECT_FALSE(isValidCookiePath("/a/."));
+   EXPECT_FALSE(isValidCookiePath("/a/.."));
+}
+
+// A path the browser could never match must not be produced silently: these
+// would be set as cookies that are simply never sent.
+TEST(HttpUtilTest, CookiePathFallsBackOnUnnormalizedClientPaths)
+{
+   // protocol-relative, so URL parsing fails and the raw string is used
+   EXPECT_EQ("/rstudio/",
+             cookiePathWithExternalPrefix("/rstudio/", "//host/proxy/rstudio/"));
+   EXPECT_EQ("/rstudio/",
+             cookiePathWithExternalPrefix("/rstudio/",
+                                          "https://host/a/../rstudio/"));
+   EXPECT_EQ("/rstudio/",
+             cookiePathWithExternalPrefix("/rstudio/",
+                                          "https://host/a//rstudio/"));
+}
+
+// The suffix match may only extend a path at a segment boundary, which holds
+// only when the server path is itself origin-absolute.
+TEST(HttpUtilTest, CookiePathRequiresAnOriginAbsoluteServerPath)
+{
+   EXPECT_EQ("rstudio/",
+             cookiePathWithExternalPrefix("rstudio/", "/proxyrstudio/"));
+   EXPECT_EQ("", cookiePathWithExternalPrefix("", "https://host/proxy/"));
+}
+
 TEST(HttpUtilTest, CookiePathAcceptsBareClientPath)
 {
    EXPECT_EQ("/proxy/rstudio",

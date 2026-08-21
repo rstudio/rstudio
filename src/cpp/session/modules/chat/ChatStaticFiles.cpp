@@ -470,6 +470,15 @@ Error handleAIChatRequest(const http::Request& request,
 
    std::string requestPath = uri.substr(pos + kAiChatUriPrefixLength);
 
+   // Drop the query string and fragment. The IDE always requests index.html
+   // with query parameters, and the caching rules below match on the file
+   // name -- with the query attached, the index.html response (which carries
+   // the auth token cookie) was matching the long-lived "public" rule meant
+   // for images and fonts.
+   size_t queryPos = requestPath.find_first_of("?#");
+   if (queryPos != std::string::npos)
+      requestPath = requestPath.substr(0, queryPos);
+
    // Default to index.html
    if (requestPath.empty() || requestPath == "/")
       requestPath = kIndexFileName;

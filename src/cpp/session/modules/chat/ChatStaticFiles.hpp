@@ -90,9 +90,15 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  * a crafted link could otherwise scope the auth token to an attacker's route
  * on the same host. clientBaseUrl is honored only when it yields the same
  * path as activeClientUrl -- the base recorded by the CSRF-protected
- * client_init request, which an attacker cannot set. It stays request-scoped
- * rather than simply using activeClientUrl, so a second IDE tab reaching the
- * server by a different external path cannot alter this tab's cookie.
+ * client_init request, which an attacker cannot set.
+ *
+ * Keeping the value request-scoped means the cookie is scoped to the path the
+ * requesting tab actually uses, rather than to whichever tab initialized the
+ * session last. activeClientUrl records only the most recent client_init, so
+ * when two IDE tabs reach the server by different external paths, the tab that
+ * did not initialize last falls back to the server-known prefix and its chat
+ * cannot connect -- a fallback that is wrong for nobody rather than a cookie
+ * scoped to a path the requesting tab never uses.
  *
  * @param proxiedUri The server's view of the request URL (request.proxiedUri())
  * @param clientBaseUrl The browser-visible base URL reported by the IDE

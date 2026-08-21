@@ -622,9 +622,44 @@ std::string addQueryParam(const std::string& uri,
    }
 }
 
+bool isValidCookiePath(const std::string& path)
+{
+   if (path.empty() || path[0] != '/')
+      return false;
+
+   // compare as unsigned so the result does not depend on whether char is
+   // signed on this platform
+   for (unsigned char ch : path)
+   {
+      if (ch <= 0x20 || ch >= 0x7F ||
+          ch == ';' || ch == ',' || ch == '\\' || ch == '?' || ch == '#')
+      {
+         return false;
+      }
+   }
+
+   // browsers match the cookie path against an already-normalized request
+   // path, so a path carrying these segments could never match
+   if (path.find("//") != std::string::npos ||
+       path.find("/./") != std::string::npos ||
+       path.find("/../") != std::string::npos ||
+       boost::algorithm::ends_with(path, "/.") ||
+       boost::algorithm::ends_with(path, "/.."))
+   {
+      return false;
+   }
+
+   return true;
+}
+
 std::string cookiePathWithExternalPrefix(const std::string& serverPath,
                                          const std::string& clientBaseUrl)
 {
+   // only an origin-absolute server path can be extended; without a leading
+   // '/' the suffix match below could split a path segment
+   if (serverPath.empty() || serverPath[0] != '/')
+      return serverPath;
+
    // extract the path component of the client-reported base URL; it may be
    // an absolute URL or already just a path
    std::string clientPath = clientBaseUrl;
@@ -641,21 +676,13 @@ std::string cookiePathWithExternalPrefix(const std::string& serverPath,
    if (clientPath.empty())
       clientPath = "/";
 
-   // the client path must be origin-absolute and contain only characters
-   // that are safe inside a cookie path attribute (RFC 6265 forbids CTLs
-   // and ";"; we also reject whitespace and related separators)
-   if (clientPath[0] != '/')
+   if (!isValidCookiePath(clientPath))
       return serverPath;
-   for (char ch : clientPath)
-   {
-      if (ch <= 0x20 || ch == 0x7F || ch == ';' || ch == ',' || ch == '\\')
-         return serverPath;
-   }
 
    // normalize both paths to a trailing slash for comparison only; the
    // returned value keeps serverPath's exact trailing slash style so that
    // deployments without an external prefix are byte-identical to before
-   std::string normServer = serverPath.empty() ? "/" : serverPath;
+   std::string normServer = serverPath;
    if (normServer.back() != '/')
       normServer += '/';
    std::string normClient = clientPath;

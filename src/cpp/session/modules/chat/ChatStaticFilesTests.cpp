@@ -274,6 +274,18 @@ TEST(ChatStaticFiles, AuthCookiePathIgnoresBogusClientBaseUrl)
              "/rstudio/");
 }
 
+// The query parameter arrives percent-decoded while client_init records the
+// raw JSON string, but both sides start from the same GWT.getHostPageBaseURL()
+// value, so a base URL containing an escape still authorizes -- and the escape
+// is preserved, which is the form the browser matches against.
+TEST(ChatStaticFiles, AuthCookiePathHandlesPercentEscapesInTheBaseUrl)
+{
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/pr%20oxy/rstudio/",
+                            "https://host/pr%20oxy/rstudio/"),
+             "/pr%20oxy/rstudio/");
+}
+
 TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
 {
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"

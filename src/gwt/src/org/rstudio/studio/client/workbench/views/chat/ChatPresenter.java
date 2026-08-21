@@ -1477,11 +1477,6 @@ public class ChatPresenter extends BasePresenter
       long timestamp = System.currentTimeMillis();
       String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
 
-      // Report the browser-visible base URL so the server can scope the auth
-      // cookie to include proxy prefixes it was never told about (#18621).
-      // The server only honors it when it ends with the server-known path.
-      params += "&clientBaseUrl=" + URL.encodeQueryString(GWT.getHostPageBaseURL());
-
       // In Desktop mode, pass the auth token as a URL parameter since the
       // WebSocket connects to localhost directly. In Server mode, the token
       // is delivered via an HTTP-only cookie set by the static file handler,
@@ -1489,6 +1484,15 @@ public class ChatPresenter extends BasePresenter
       if (Desktop.hasDesktopFrame() && authToken != null && !authToken.isEmpty())
       {
          params += "&authToken=" + URL.encodeQueryString(authToken);
+      }
+      else if (!Desktop.hasDesktopFrame())
+      {
+         // Report the browser-visible base URL so the server can scope that
+         // cookie to include proxy prefixes it was never told about (#18621).
+         // It is honored only when it agrees with the base reported at
+         // client_init.
+         params += "&clientBaseUrl=" +
+                   URL.encodeQueryString(GWT.getHostPageBaseURL());
       }
 
       String loadUrl = baseUrl + params;

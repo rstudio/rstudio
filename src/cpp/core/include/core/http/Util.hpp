@@ -189,6 +189,15 @@ bool isSslCertificateVerifyFailedError(const rstudio::core::Error& error);
 std::string addQueryParam(const std::string& uri,
                           const std::string& queryParam);
 
+// Is this string usable as the Path attribute of a Set-Cookie header?
+// Requires an origin-absolute path made only of characters that cannot break
+// out of the header (no CTLs -- including CR/LF -- and no space, ';', ',',
+// '\', '?', '#', or non-ASCII), and with no "//", "." or ".." segments, which
+// browsers compare literally against an already-normalized request path and so
+// would never match. Use this before putting any client-reported value in a
+// cookie path.
+bool isValidCookiePath(const std::string& path);
+
 // Prefix a server-derived cookie path with an external proxy prefix reported
 // by the client. When the browser reaches the server through a path-prefixing
 // reverse proxy the server was never told about, the browser-visible path is
@@ -197,9 +206,10 @@ std::string addQueryParam(const std::string& uri,
 // or origin-absolute path). If its path ends with serverPath, the external
 // prefix is prepended to serverPath (preserving serverPath's exact trailing
 // slash style); in every other case -- including when the two paths are equal,
-// when clientBaseUrl is empty or malformed, or when it contains characters
-// invalid in a cookie path -- serverPath is returned unchanged, so deployments
-// without an unknown prefix keep byte-identical cookie paths.
+// when clientBaseUrl is empty or malformed, when it fails isValidCookiePath,
+// or when serverPath is not itself origin-absolute -- serverPath is returned
+// unchanged, so deployments without an unknown prefix keep byte-identical
+// cookie paths.
 //
 // The result is never broader than serverPath, but it is a sibling subtree
 // rather than a subpath of it, so callers must trust clientBaseUrl: a caller
