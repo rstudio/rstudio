@@ -521,6 +521,20 @@ TEST(ChatStaticFiles, IsNoStoreExtensionCoversHtmlJavaScriptAndCss)
    EXPECT_FALSE(isNoStoreExtension(""));
 }
 
+// The predicate and the content type map both compare against lowercase
+// literals, so the handler has to fold the resolved extension before asking.
+// On Windows realPath is purely lexical and leaves the requested case as
+// written, so an uppercase name would otherwise be treated as an ordinary
+// long-lived asset and skip the CSP header.
+TEST(ChatStaticFiles, ExtensionClassificationFoldsCase)
+{
+   EXPECT_TRUE(isNoStoreExtension(FilePath("app.JS").getExtensionLowerCase()));
+   EXPECT_TRUE(
+      isNoStoreExtension(FilePath("Index.HTML").getExtensionLowerCase()));
+   EXPECT_EQ(getContentType(FilePath("style.CSS").getExtensionLowerCase()),
+             "text/css; charset=utf-8");
+}
+
 // The parameter name exists as two bare literals, one here and one in
 // loadChatUI() in ChatPresenter.java, with nothing tying them together at
 // build time. Pin the wire name and the decoding, so at least this side

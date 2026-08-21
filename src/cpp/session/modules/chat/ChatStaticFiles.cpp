@@ -632,8 +632,12 @@ Error handleAIChatRequest(const http::Request& request,
       return error;
    }
 
-   // Set content type
-   std::string extension = resolvedPath.getExtension();
+   // Set content type. Fold the case: on Windows realPath is the purely
+   // lexical GetFullPathNameW, which never reaches the filesystem and so does
+   // not correct the case of the requested name. An uppercase extension would
+   // otherwise miss every rule below, taking the long-lived cache branch and
+   // skipping the CSP header.
+   std::string extension = resolvedPath.getExtensionLowerCase();
 
    // For HTML files: set CSP header; inject theme info only into index.html
    if (extension == ".html" || extension == ".htm")
