@@ -1481,11 +1481,14 @@ public class ChatPresenter extends BasePresenter
       // WebSocket connects to localhost directly. In Server mode, the token
       // is delivered via an HTTP-only cookie set by the static file handler,
       // avoiding exposure in browser history, logs, and the Referer header.
-      if (Desktop.hasDesktopFrame() && authToken != null && !authToken.isEmpty())
+      if (Desktop.hasDesktopFrame())
       {
-         params += "&authToken=" + URL.encodeQueryString(authToken);
+         if (authToken != null && !authToken.isEmpty())
+         {
+            params += "&authToken=" + URL.encodeQueryString(authToken);
+         }
       }
-      else if (!Desktop.hasDesktopFrame())
+      else
       {
          // Report the browser-visible base URL so the server can scope that
          // cookie to include proxy prefixes it was never told about (#18621).
