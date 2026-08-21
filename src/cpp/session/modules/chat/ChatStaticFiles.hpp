@@ -120,10 +120,11 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  * Returns empty when no path can be scoped safely, in which case the caller
  * must not set the cookie: proxiedUri yielded something unusable in a
  * Set-Cookie header, or a path the session is not served under (it is built
- * from request headers, which a co-hosted application could set), or the
+ * from request headers, which a co-hosted application could set), or
+ * activeClientUrl is missing or unusable and so authorizes nothing, or the
  * fallback described above would be the origin root while the session
  * reported something narrower, which would share the token with every
- * application on the host. All three are logged.
+ * application on the host. All of them are logged.
  *
  * @param proxiedUri The server's view of the request URL (request.proxiedUri())
  * @param clientBaseUrl The browser-visible base URL reported by the IDE

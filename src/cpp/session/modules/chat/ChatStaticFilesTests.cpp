@@ -195,15 +195,18 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
 TEST(ChatStaticFiles, AuthCookiePathMatchesServerKnownPrefixWithoutClientBaseUrl)
 {
    // default root path
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "", ""), "/");
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "",
+                            "https://host/"),
+             "/");
 
    // configured www-root-path
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "", ""),
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
+                            "https://host/rstudio/"),
              "/rstudio/");
 
    // Workbench session prefix
    EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
-                            "", ""),
+                            "", "https://host/s/0aa27b1d6b8f34dc/"),
              "/s/0aa27b1d6b8f34dc/");
 }
 
@@ -214,25 +217,28 @@ TEST(ChatStaticFiles, AuthCookiePathMatchesTheRouteOnlyAtASegmentBoundary)
 {
    // www-root-path=/ai-chat-hub
    EXPECT_EQ(authCookiePath("https://host/ai-chat-hub/ai-chat/index.html",
-                            "", ""),
+                            "", "https://host/ai-chat-hub/"),
              "/ai-chat-hub/");
 
    // the same name nested under another prefix
    EXPECT_EQ(authCookiePath("https://host/team/ai-chat-hub/ai-chat/index.html",
-                            "", ""),
+                            "", "https://host/team/ai-chat-hub/"),
              "/team/ai-chat-hub/");
 
    // a prefix with no separating punctuation at all
    EXPECT_EQ(authCookiePath("https://host/ai-chatlab/ai-chat/index.html",
-                            "", ""),
+                            "", "https://host/ai-chatlab/"),
              "/ai-chatlab/");
 
    // a root path that is exactly the route name is still a distinct segment
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/ai-chat/index.html", "", ""),
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/ai-chat/index.html", "",
+                            "https://host/ai-chat/"),
              "/ai-chat/");
 
    // and the ordinary case still resolves to the first segment
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "", ""), "/");
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "",
+                            "https://host/"),
+             "/");
 }
 
 TEST(ChatStaticFiles, AuthCookiePathUnchangedWhenClientBaseUrlMatchesServer)
@@ -286,7 +292,23 @@ TEST(ChatStaticFiles, AuthCookiePathRejectsClientBaseUrlTheSessionDidNotReport)
    // no client_init recorded yet, so nothing authorizes the parameter
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
                             "https://host/proxy/rstudio/", ""),
-             "/rstudio/");
+             "");
+}
+
+// client_init records whatever base the client sent, without checking that it
+// could be used as a cookie path, so an unusable one can sit alongside a live
+// token. It authorizes nothing and must not be read as permission.
+TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableRecordedBase)
+{
+   // a stray double slash, from a proxy or redirect that did not normalize
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
+                            "https://host//rstudio/"),
+             "");
+
+   // a base recorded before it could be resolved
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
+                            "garbage"),
+             "");
 }
 
 // Falling back to the server-known prefix is only safe while that prefix is
@@ -329,16 +351,17 @@ TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableServerDerivedPath)
    // a ";path=/" smuggled through the proxied URI would otherwise be emitted
    // verbatim, and RFC 6265 takes the last Path attribute
    EXPECT_EQ(authCookiePath("https://host/x;path=//ai-chat/index.html", "",
-                            ""),
+                            "https://host/"),
              "");
 
    // header-breaking characters in the derived prefix
    EXPECT_EQ(authCookiePath("https://host/a\r\nX-Injected: 1/ai-chat/index.html",
-                            "", ""),
+                            "", "https://host/"),
              "");
 
    // a prefix the browser could never match against a normalized request path
-   EXPECT_EQ(authCookiePath("https://host/a//b/ai-chat/index.html", "", ""),
+   EXPECT_EQ(authCookiePath("https://host/a//b/ai-chat/index.html", "",
+                            "https://host/"),
              "");
 }
 
@@ -412,11 +435,11 @@ TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
    // and the query along with it
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
                             "?wsUrl=/rstudio/p/abc/ai-chat/",
-                            "", ""),
+                            "", "https://host/rstudio/"),
              "/rstudio/");
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
                             "#/ai-chat/",
-                            "", ""),
+                            "", "https://host/rstudio/"),
              "/rstudio/");
 }
 
