@@ -764,6 +764,10 @@ def getDocsDraftName(String branchName) {
   * incrementally, and a single pass does not reach far enough back to cover
   * the range the version calculation counts over, so the build number comes
   * out too low without anything failing.
+  *
+  * Skips submodules. Restoring history surfaces old commits pinning submodule
+  * revisions that predate any change of submodule remote, and git would try to
+  * fetch those from the current remote, where they have never existed.
   */
 void ensureFullCommitHistory() {
   def isShallow = sh(
@@ -772,7 +776,7 @@ void ensureFullCommitHistory() {
   ).trim()
   if (isShallow == 'true') {
     withCredentials([gitUsernamePassword(credentialsId: 'posit-jenkins-rstudio', gitToolName: 'Default')]) {
-      sh 'git fetch --filter=blob:none --unshallow origin'
+      sh 'git fetch --filter=blob:none --unshallow --no-recurse-submodules origin'
     }
   }
 }
