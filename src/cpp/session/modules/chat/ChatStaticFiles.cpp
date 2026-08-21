@@ -348,6 +348,35 @@ size_t findAiChatRoute(const std::string& path)
    return std::string::npos;
 }
 
+/**
+ * The session prefix the server believes it is serving this request under.
+ *
+ * That is the path of the proxied request URI with the "/ai-chat" route and
+ * everything after it removed, e.g. "/s/{id}/" or a configured root path,
+ * always ending in "/".
+ */
+std::string serverKnownPrefix(const std::string& proxiedUri)
+{
+   // URL::path() keeps the query string and fragment, which must go first:
+   // the IDE puts URLs in the query, and a literal "/ai-chat" there would
+   // otherwise be taken for the route
+   std::string prefix = http::URL(proxiedUri).path();
+   size_t cutPos = prefix.find_first_of("?#");
+   if (cutPos != std::string::npos)
+      prefix = prefix.substr(0, cutPos);
+
+   size_t routePos = findAiChatRoute(prefix);
+   if (routePos != std::string::npos)
+      prefix = prefix.substr(0, routePos);
+
+   if (prefix.empty())
+      return kRequestDefaultRootPath;
+   if (prefix.back() != '/')
+      prefix += "/";
+
+   return prefix;
+}
+
 } // anonymous namespace
 
 const char* const kClientBaseUrlParam = "clientBaseUrl";
@@ -356,23 +385,7 @@ std::string authCookiePath(const std::string& proxiedUri,
                            const std::string& clientBaseUrl,
                            const std::string& activeClientUrl)
 {
-   // extract the path from proxiedUri and strip "/ai-chat" onward to get
-   // the server-known session prefix (e.g. "/s/{id}/"). URL::path() keeps the
-   // query string and fragment, which must go first: the IDE puts URLs in the
-   // query, and a literal "/ai-chat" there would otherwise be taken for the
-   // route
-   std::string cookiePath = http::URL(proxiedUri).path();
-   size_t cutPos = cookiePath.find_first_of("?#");
-   if (cutPos != std::string::npos)
-      cookiePath = cookiePath.substr(0, cutPos);
-
-   size_t aiChatPos = findAiChatRoute(cookiePath);
-   if (aiChatPos != std::string::npos)
-      cookiePath = cookiePath.substr(0, aiChatPos);
-   if (cookiePath.empty())
-      cookiePath = kRequestDefaultRootPath;
-   else if (cookiePath.back() != '/')
-      cookiePath += "/";
+   std::string cookiePath = serverKnownPrefix(proxiedUri);
 
    // proxiedUri is reconstructed from request headers, and nothing escapes
    // the Set-Cookie header on the way out, so a derived path that could break
@@ -414,10 +427,10 @@ std::string authCookiePath(const std::string& proxiedUri,
       return std::string();
    }
 
-   // A base URL that survives none of that is not distinguishable below from
-   // one that was never sent, and the deployments this matters for are
-   // exactly the ones that cannot connect without an external prefix, so say
-   // so rather than let #18621 recur silently.
+   // A clientBaseUrl that cannot be used as a cookie path is indistinguishable
+   // below from one that was never sent, and the deployments where it matters
+   // are exactly the ones that cannot connect without an external prefix, so
+   // say so rather than let #18621 recur silently.
    if (!clientBaseUrl.empty() &&
        http::util::cookiePathFromClientBaseUrl(clientBaseUrl).empty())
    {
