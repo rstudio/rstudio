@@ -37,6 +37,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <session/SessionOptions.hpp>
+#include <session/SessionPersistentState.hpp>
 
 #include "../SessionThemes.hpp"
 
@@ -317,7 +318,8 @@ std::string buildCspHeader()
 } // anonymous namespace
 
 std::string authCookiePath(const std::string& proxiedUri,
-                           const std::string& clientBaseUrl)
+                           const std::string& clientBaseUrl,
+                           const std::string& activeClientUrl)
 {
    // extract the path from proxiedUri and strip "/ai-chat" onward to get
    // the server-known session prefix (e.g. "/s/{id}/")
@@ -334,9 +336,17 @@ std::string authCookiePath(const std::string& proxiedUri,
       cookiePath += "/";
 
    // recover any external proxy prefix from the browser-visible base URL
-   // reported by the IDE frontend (see #18621); falls back to the
-   // server-known prefix unless the reported path ends with it
-   return http::util::cookiePathWithExternalPrefix(cookiePath, clientBaseUrl);
+   // reported by the IDE frontend, but only when the base recorded by the
+   // CSRF-protected client_init request agrees; the query string of this
+   // plain GET is attacker-settable on its own (see #18621)
+   std::string requested =
+      http::util::cookiePathWithExternalPrefix(cookiePath, clientBaseUrl);
+   std::string authorized =
+      http::util::cookiePathWithExternalPrefix(cookiePath, activeClientUrl);
+   if (requested != authorized)
+      return cookiePath;
+
+   return requested;
 }
 
 std::string getContentType(const std::string& extension)
@@ -518,7 +528,8 @@ Error handleAIChatRequest(const http::Request& request,
                // collide and unknown proxy prefixes are preserved.
                std::string cookiePath = authCookiePath(
                   request.proxiedUri(),
-                  request.queryParamValue(kClientBaseUrlParam));
+                  request.queryParamValue(kClientBaseUrlParam),
+                  persistentState().activeClientUrl());
                LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
                                  cookiePath + "'");
 

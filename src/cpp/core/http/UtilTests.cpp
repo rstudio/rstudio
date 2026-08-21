@@ -63,6 +63,17 @@ TEST(HttpUtilTest, CookiePathGainsExternalProxyPrefix)
                                           "https://ood.host/rnode/node01/8787/"));
 }
 
+// The recovered prefix makes the result a sibling of the server path, not a
+// subpath of it, so callers must trust clientBaseUrl -- which is why the
+// assistant auth cookie authorizes its query parameter against the base
+// recorded at client_init before calling this.
+TEST(HttpUtilTest, CookiePathPrefixIsASiblingSubtreeNotASubpath)
+{
+   EXPECT_EQ("/evil/rstudio/",
+             cookiePathWithExternalPrefix("/rstudio/",
+                                          "https://host/evil/rstudio/"));
+}
+
 TEST(HttpUtilTest, CookiePathAcceptsBareClientPath)
 {
    EXPECT_EQ("/proxy/rstudio",

@@ -82,19 +82,29 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  * configured root path) so multi-session deployments don't collide. The
  * server-known prefix is taken from proxiedUri with "/ai-chat" onward
  * stripped. When the browser reaches the server through a path-prefixing
- * reverse proxy the server was never told about, the client-reported base
- * URL (the clientBaseUrl query parameter added by the IDE frontend) is used
- * to recover the external prefix; it is honored only when its path ends with
- * the server-known prefix, so it can never redirect or broaden the cookie.
+ * reverse proxy the server was never told about, that prefix is recovered
+ * from the client-reported base URL (the clientBaseUrl query parameter added
+ * by the IDE frontend).
+ *
+ * This request is a plain GET, so its query string is not trusted on its own:
+ * a crafted link could otherwise scope the auth token to an attacker's route
+ * on the same host. clientBaseUrl is honored only when it yields the same
+ * path as activeClientUrl -- the base recorded by the CSRF-protected
+ * client_init request, which an attacker cannot set. It stays request-scoped
+ * rather than simply using activeClientUrl, so a second IDE tab reaching the
+ * server by a different external path cannot alter this tab's cookie.
  *
  * @param proxiedUri The server's view of the request URL (request.proxiedUri())
  * @param clientBaseUrl The browser-visible base URL reported by the IDE
  *                      frontend, or empty if not provided
+ * @param activeClientUrl The base URL recorded at client_init
+ *                        (persistentState().activeClientUrl())
  * @return Cookie path, always ending with "/"; equals the server-known
- *         prefix whenever clientBaseUrl is absent, invalid, or adds nothing
+ *         prefix unless both reported base URLs agree on an external prefix
  */
 std::string authCookiePath(const std::string& proxiedUri,
-                           const std::string& clientBaseUrl);
+                           const std::string& clientBaseUrl,
+                           const std::string& activeClientUrl);
 
 // ============================================================================
 // HTTP Request Handler

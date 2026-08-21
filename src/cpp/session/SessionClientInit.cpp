@@ -164,10 +164,11 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
       // server was never told about (e.g. Open OnDemand's /rnode/ routes), in
       // which case the browser-visible path carries a prefix the server-derived
       // path can never contain and the browser would omit this cookie. recover
-      // such a prefix from the client-reported baseURL, but only when it ends
-      // with the server-derived path -- the JSON input can extend the trusted
-      // path with a prefix for the requesting browser's own cookie, never
-      // replace it (see #18621)
+      // such a prefix from the client-reported baseURL, which is only honored
+      // when it ends with the server-derived path (see #18621). this trusts
+      // baseURL no further than the default-root-path branch above already
+      // does, and this request is CSRF-protected, so the value comes from a
+      // page load in the user's own session rather than a crafted link
       path = http::util::cookiePathWithExternalPrefix(path, baseURL);
    }
 

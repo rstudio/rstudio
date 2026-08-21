@@ -195,24 +195,25 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
 TEST(ChatStaticFiles, AuthCookiePathMatchesServerKnownPrefixWithoutClientBaseUrl)
 {
    // default root path
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", ""), "/");
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "", ""), "/");
 
    // configured www-root-path
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", ""),
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "", ""),
              "/rstudio/");
 
    // Workbench session prefix
-   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html", ""),
+   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
+                            "", ""),
              "/s/0aa27b1d6b8f34dc/");
 }
 
 TEST(ChatStaticFiles, AuthCookiePathUnchangedWhenClientBaseUrlMatchesServer)
 {
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/rstudio/"),
+                            "https://host/rstudio/", "https://host/rstudio/"),
              "/rstudio/");
    EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html",
-                            "https://host/"),
+                            "https://host/", "https://host/"),
              "/");
 }
 
@@ -220,30 +221,56 @@ TEST(ChatStaticFiles, AuthCookiePathIncludesExternalProxyPrefix)
 {
    // configured root path behind an unknown prefix-stripping proxy
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/proxy/rstudio/",
                             "https://host/proxy/rstudio/"),
              "/proxy/rstudio/");
 
    // Workbench session prefix behind an unknown proxy prefix
    EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
+                            "https://host/proxy/s/0aa27b1d6b8f34dc/",
                             "https://host/proxy/s/0aa27b1d6b8f34dc/"),
              "/proxy/s/0aa27b1d6b8f34dc/");
 
    // Open OnDemand style prefix over the default root path
    EXPECT_EQ(authCookiePath("http://node01/ai-chat/index.html",
+                            "https://ood.host/rnode/node01/8787/",
                             "https://ood.host/rnode/node01/8787/"),
              "/rnode/node01/8787/");
+}
+
+// A crafted link cannot scope the auth token to a route of the attacker's
+// choosing: the query parameter is honored only when the base recorded by
+// the CSRF-protected client_init request agrees with it.
+TEST(ChatStaticFiles, AuthCookiePathRejectsClientBaseUrlTheSessionDidNotReport)
+{
+   // attacker-chosen sibling route, victim connected directly
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/evil/rstudio/",
+                            "https://host/rstudio/"),
+             "/rstudio/");
+
+   // attacker-chosen route, victim connected through a real proxy prefix
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/evil/rstudio/",
+                            "https://host/proxy/rstudio/"),
+             "/rstudio/");
+
+   // no client_init recorded yet, so nothing authorizes the parameter
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/proxy/rstudio/", ""),
+             "/rstudio/");
 }
 
 TEST(ChatStaticFiles, AuthCookiePathIgnoresBogusClientBaseUrl)
 {
    // does not end with the server-known prefix
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/elsewhere/"),
+                            "https://host/elsewhere/", "https://host/elsewhere/"),
              "/rstudio/");
 
    // not a usable URL or path
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "garbage"),
+                            "garbage", "garbage"),
              "/rstudio/");
 }
 
@@ -252,6 +279,7 @@ TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
                             "?wsUrl=%2Frstudio%2Fp%2Fabc%2Fai-chat&_t=123"
                             "&clientBaseUrl=https%3A%2F%2Fhost%2Fproxy%2Frstudio%2F",
+                            "https://host/proxy/rstudio/",
                             "https://host/proxy/rstudio/"),
              "/proxy/rstudio/");
 }
