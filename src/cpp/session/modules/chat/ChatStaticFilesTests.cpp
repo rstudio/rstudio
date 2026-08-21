@@ -18,11 +18,74 @@
 
 #include <gtest/gtest.h>
 #include <core/FileSerializer.hpp>
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::staticfiles;
 using namespace rstudio::session::modules::chat::constants;
+
+namespace {
+
+// A Posit Assistant installation just complete enough for
+// locatePositAssistantInstallation to accept it, pointed at by the
+// RSTUDIO_POSIT_AI_PATH override the same function honours.
+class FakeAssistantInstallation
+{
+public:
+   FakeAssistantInstallation()
+   {
+      FilePath::tempFilePath(root_);
+      root_.ensureDirectory();
+
+      FilePath clientDir = root_.completeChildPath(kClientDirPath);
+      clientDir.ensureDirectory();
+      writeStringToFile(clientDir.completeChildPath(kIndexFileName),
+                        "<html lang=\"en\"><head></head><body></body></html>");
+
+      FilePath serverScript = root_.completeChildPath(kServerScriptPath);
+      serverScript.getParent().ensureDirectory();
+      writeStringToFile(serverScript, "// server");
+
+      FilePath assets = clientDir.completeChildPath("assets");
+      assets.ensureDirectory();
+      writeStringToFile(assets.completeChildPath("app.js"), kAssetBody);
+
+      previous_ = system::getenv(kPathOverride);
+      system::setenv(kPathOverride, root_.getAbsolutePath());
+   }
+
+   ~FakeAssistantInstallation()
+   {
+      if (previous_.empty())
+         system::unsetenv(kPathOverride);
+      else
+         system::setenv(kPathOverride, previous_);
+
+      root_.removeIfExists();
+   }
+
+   static constexpr const char* kAssetBody = "console.log('app');";
+
+private:
+   static constexpr const char* kPathOverride = "RSTUDIO_POSIT_AI_PATH";
+
+   FilePath root_;
+   std::string previous_;
+};
+
+void requestChatFile(const std::string& uri, http::Response* pResponse)
+{
+   http::Request request;
+   request.setUri(uri);
+
+   Error error = handleAIChatRequest(request, pResponse);
+   EXPECT_FALSE(error);
+}
+
+} // anonymous namespace
 
 TEST(ChatStaticFiles, GetContentTypeReturnsCorrectMimeTypesForCommonExtensions)
 {
@@ -456,6 +519,75 @@ TEST(ChatStaticFiles, IsNoStoreExtensionCoversHtmlJavaScriptAndCss)
    EXPECT_FALSE(isNoStoreExtension(".png"));
    EXPECT_FALSE(isNoStoreExtension(".woff2"));
    EXPECT_FALSE(isNoStoreExtension(""));
+}
+
+TEST(ChatStaticFiles, HandlerServesAnAssetUnderTheRoute)
+{
+   FakeAssistantInstallation installation;
+
+   http::Response response;
+   requestChatFile("/ai-chat/assets/app.js", &response);
+
+   EXPECT_EQ(response.statusCode(), http::status::Ok);
+   EXPECT_EQ(response.body(),
+             std::string(FakeAssistantInstallation::kAssetBody));
+   EXPECT_EQ(response.headerValue("Content-Type"),
+             "application/javascript; charset=utf-8");
+
+   // JavaScript changes with every assistant build, so it is never stored
+   EXPECT_NE(response.headerValue("Cache-Control").find("no-store"),
+             std::string::npos);
+}
+
+// The IDE appends query parameters to every request it makes for this route,
+// and they must not participate in resolving the file.
+TEST(ChatStaticFiles, HandlerIgnoresTheQueryStringWhenResolvingAFile)
+{
+   FakeAssistantInstallation installation;
+
+   http::Response response;
+   requestChatFile("/ai-chat/assets/app.js?v=abc&clientBaseUrl=https%3A%2F%2Fhost%2F",
+                   &response);
+
+   EXPECT_EQ(response.statusCode(), http::status::Ok);
+   EXPECT_EQ(response.body(),
+             std::string(FakeAssistantInstallation::kAssetBody));
+}
+
+// The handler is registered for the bare "/ai-chat" prefix, so it sees
+// requests that only start with the route name. Locating the route anywhere
+// in the URI let these serve real files under a path no cache rule or
+// intermediary would recognize as the route.
+TEST(ChatStaticFiles, HandlerRejectsRequestsThatOnlyResembleTheRoute)
+{
+   FakeAssistantInstallation installation;
+
+   // a file named in the query rather than in the path
+   http::Response queryNamed;
+   requestChatFile("/ai-chat?x=/ai-chat/assets/app.js", &queryNamed);
+   EXPECT_EQ(queryNamed.statusCode(), http::status::BadRequest);
+   EXPECT_EQ(queryNamed.body(), "");
+
+   // a junk-suffixed spelling of the route
+   http::Response junkSuffixed;
+   requestChatFile("/ai-chatXYZ/ai-chat/assets/app.js", &junkSuffixed);
+   EXPECT_EQ(junkSuffixed.statusCode(), http::status::BadRequest);
+   EXPECT_EQ(junkSuffixed.body(), "");
+
+   // the route without its trailing slash names no file
+   http::Response bareRoute;
+   requestChatFile("/ai-chat", &bareRoute);
+   EXPECT_EQ(bareRoute.statusCode(), http::status::BadRequest);
+}
+
+TEST(ChatStaticFiles, HandlerRejectsTraversalOutOfTheClientRoot)
+{
+   FakeAssistantInstallation installation;
+
+   http::Response response;
+   requestChatFile("/ai-chat/../../../../etc/passwd", &response);
+
+   EXPECT_EQ(response.statusCode(), http::status::Forbidden);
 }
 
 // Resolution URL-decodes the request path, so the same file can be requested
