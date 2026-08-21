@@ -62,9 +62,7 @@ Posit Workbench has several features that differentiate it from the open-source 
 
 ## Install links {#install-links}
 
-RStudio Desktop, RStudio Server, and the commercial editions all have installers on
-[Download RStudio](download.qmd), along with a note about the
-[daily builds](https://dailies.rstudio.com/).
+RStudio Desktop, RStudio Server, and RStudio Desktop Pro install links can all be found on [Download RStudio](download.qmd)
 
 <!-- Fragment targets for links written against the download sections that used to
 live on this page. Anchors are never sent to the server, so no redirect can catch
