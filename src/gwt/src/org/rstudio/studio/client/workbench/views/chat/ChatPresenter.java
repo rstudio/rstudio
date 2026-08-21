@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
@@ -1475,6 +1476,11 @@ public class ChatPresenter extends BasePresenter
       // Append WebSocket URL and timestamp as query parameters to bust cache
       long timestamp = System.currentTimeMillis();
       String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
+
+      // Report the browser-visible base URL so the server can scope the auth
+      // cookie to include proxy prefixes it was never told about (#18621).
+      // The server only honors it when it ends with the server-known path.
+      params += "&clientBaseUrl=" + URL.encodeQueryString(GWT.getHostPageBaseURL());
 
       // In Desktop mode, pass the auth token as a URL parameter since the
       // WebSocket connects to localhost directly. In Server mode, the token

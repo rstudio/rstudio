@@ -189,6 +189,22 @@ bool isSslCertificateVerifyFailedError(const rstudio::core::Error& error);
 std::string addQueryParam(const std::string& uri,
                           const std::string& queryParam);
 
+// Widen a server-derived cookie path with an external proxy prefix reported
+// by the client. When the browser reaches the server through a path-prefixing
+// reverse proxy the server was never told about, the browser-visible path is
+// <prefix> + <serverPath>; a cookie scoped to serverPath alone is then never
+// sent. clientBaseUrl is the client's own view of its base URL (absolute URL
+// or origin-absolute path). If its path ends with serverPath, the external
+// prefix is prepended to serverPath (preserving serverPath's exact trailing
+// slash style); in every other case -- including when the two paths are equal,
+// when clientBaseUrl is empty or malformed, or when it contains characters
+// invalid in a cookie path -- serverPath is returned unchanged, so deployments
+// without an unknown prefix keep byte-identical cookie paths. The client-
+// reported value can only ever narrow where the requester's own cookie is
+// sent, never redirect or broaden it.
+std::string cookiePathWithExternalPrefix(const std::string& serverPath,
+                                         const std::string& clientBaseUrl);
+
 } // namespace util
 
 } // namespace http

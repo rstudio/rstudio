@@ -58,6 +58,7 @@
 
 #include <core/json/JsonRpc.hpp>
 #include <core/http/URL.hpp>
+#include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Cookie.hpp>
@@ -158,6 +159,16 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
       boost::algorithm::replace_all(path, ptrConnection->request().uri(), "");
       http::URL completePath(path);
       path = completePath.path();
+
+      // the browser may reach us through a path-prefixing reverse proxy the
+      // server was never told about (e.g. Open OnDemand's /rnode/ routes), in
+      // which case the browser-visible path carries a prefix the server-derived
+      // path can never contain and the browser would omit this cookie. recover
+      // such a prefix from the client-reported baseURL, but only when it ends
+      // with the server-derived path -- the JSON input can extend the trusted
+      // path with a prefix for the requesting browser's own cookie, never
+      // replace it (see #18621)
+      path = http::util::cookiePathWithExternalPrefix(path, baseURL);
    }
 
    // create the cookie; don't set an expiry date as this will be a session cookie

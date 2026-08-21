@@ -23,6 +23,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -619,6 +620,58 @@ std::string addQueryParam(const std::string& uri,
    {
       return uri + "&" + queryParam;
    }
+}
+
+std::string cookiePathWithExternalPrefix(const std::string& serverPath,
+                                         const std::string& clientBaseUrl)
+{
+   // extract the path component of the client-reported base URL; it may be
+   // an absolute URL or already just a path
+   std::string clientPath = clientBaseUrl;
+   URL url(clientBaseUrl);
+   if (url.isValid())
+      clientPath = url.path();
+
+   // drop any query string or fragment
+   std::size_t cutPos = clientPath.find_first_of("?#");
+   if (cutPos != std::string::npos)
+      clientPath = clientPath.substr(0, cutPos);
+
+   // an absolute URL with no path component means the root path
+   if (clientPath.empty())
+      clientPath = "/";
+
+   // the client path must be origin-absolute and contain only characters
+   // that are safe inside a cookie path attribute (RFC 6265 forbids CTLs
+   // and ";"; we also reject whitespace and related separators)
+   if (clientPath[0] != '/')
+      return serverPath;
+   for (char ch : clientPath)
+   {
+      if (ch <= 0x20 || ch == 0x7F || ch == ';' || ch == ',' || ch == '\\')
+         return serverPath;
+   }
+
+   // normalize both paths to a trailing slash for comparison only; the
+   // returned value keeps serverPath's exact trailing slash style so that
+   // deployments without an external prefix are byte-identical to before
+   std::string normServer = serverPath.empty() ? "/" : serverPath;
+   if (normServer.back() != '/')
+      normServer += '/';
+   std::string normClient = clientPath;
+   if (normClient.back() != '/')
+      normClient += '/';
+
+   if (normClient.length() <= normServer.length() ||
+       !boost::algorithm::ends_with(normClient, normServer))
+   {
+      return serverPath;
+   }
+
+   // the leading '/' of normServer bounds the prefix at a path segment
+   std::string externalPrefix =
+      normClient.substr(0, normClient.length() - normServer.length());
+   return externalPrefix + serverPath;
 }
 
 } // namespace util

@@ -56,6 +56,11 @@ namespace {
 constexpr const char* kAiChatUriPrefix = "/ai-chat/";
 constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 
+// Query parameter added by the IDE frontend (ChatPresenter.java) carrying the
+// browser-visible base URL, so the auth cookie path can include external
+// proxy prefixes the server was never told about.
+constexpr const char* kClientBaseUrlParam = "clientBaseUrl";
+
 // Chat backend port, set by SessionChat.cpp when the backend starts.
 // Used to build connect-src in the CSP header for desktop mode.
 // Atomic because it is written from the main thread and read from HTTP
@@ -311,6 +316,29 @@ std::string buildCspHeader()
 
 } // anonymous namespace
 
+std::string authCookiePath(const std::string& proxiedUri,
+                           const std::string& clientBaseUrl)
+{
+   // extract the path from proxiedUri and strip "/ai-chat" onward to get
+   // the server-known session prefix (e.g. "/s/{id}/")
+   std::string cookiePath = http::URL(proxiedUri).path();
+   std::string aiChatPrefix(kAiChatUriPrefix);
+   if (aiChatPrefix.back() == '/')
+      aiChatPrefix.pop_back();
+   size_t aiChatPos = cookiePath.find(aiChatPrefix);
+   if (aiChatPos != std::string::npos)
+      cookiePath = cookiePath.substr(0, aiChatPos);
+   if (cookiePath.empty())
+      cookiePath = "/";
+   else if (cookiePath.back() != '/')
+      cookiePath += "/";
+
+   // recover any external proxy prefix from the browser-visible base URL
+   // reported by the IDE frontend (see #18621); falls back to the
+   // server-known prefix unless the reported path ends with it
+   return http::util::cookiePathWithExternalPrefix(cookiePath, clientBaseUrl);
+}
+
 std::string getContentType(const std::string& extension)
 {
    static std::map<std::string, std::string> contentTypes = {
@@ -485,21 +513,12 @@ Error handleAIChatRequest(const http::Request& request,
             std::lock_guard<std::mutex> lock(s_authTokenMutex);
             if (!s_chatBackendAuthToken.empty())
             {
-               // Scope cookie to the session prefix (e.g. "/s/{id}/")
-               // so multi-session deployments don't collide. Extract
-               // the path from proxiedUri() and strip "/ai-chat" onward.
-               std::string cookiePath =
-                  http::URL(request.proxiedUri()).path();
-               std::string aiChatPrefix(kAiChatUriPrefix);
-               if (aiChatPrefix.back() == '/')
-                  aiChatPrefix.pop_back();
-               size_t aiChatPos = cookiePath.find(aiChatPrefix);
-               if (aiChatPos != std::string::npos)
-                  cookiePath = cookiePath.substr(0, aiChatPos);
-               if (cookiePath.empty())
-                  cookiePath = "/";
-               else if (cookiePath.back() != '/')
-                  cookiePath += "/";
+               // Scope cookie to the browser-visible session prefix
+               // (e.g. "/s/{id}/") so multi-session deployments don't
+               // collide and unknown proxy prefixes are preserved.
+               std::string cookiePath = authCookiePath(
+                  request.proxiedUri(),
+                  request.queryParamValue(kClientBaseUrlParam));
                LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
                                  cookiePath + "'");
 

@@ -72,6 +72,31 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
                                    core::FilePath* pResolvedPath);
 
 // ============================================================================
+// Auth Cookie Path
+// ============================================================================
+
+/**
+ * Compute the Path attribute for the posit-assistant-auth cookie.
+ *
+ * The cookie is scoped to the session prefix (e.g. "/s/{id}/" or the
+ * configured root path) so multi-session deployments don't collide. The
+ * server-known prefix is taken from proxiedUri with "/ai-chat" onward
+ * stripped. When the browser reaches the server through a path-prefixing
+ * reverse proxy the server was never told about, the client-reported base
+ * URL (the clientBaseUrl query parameter added by the IDE frontend) is used
+ * to recover the external prefix; it is honored only when its path ends with
+ * the server-known prefix, so it can never redirect or broaden the cookie.
+ *
+ * @param proxiedUri The server's view of the request URL (request.proxiedUri())
+ * @param clientBaseUrl The browser-visible base URL reported by the IDE
+ *                      frontend, or empty if not provided
+ * @return Cookie path, always ending with "/"; equals the server-known
+ *         prefix whenever clientBaseUrl is absent, invalid, or adds nothing
+ */
+std::string authCookiePath(const std::string& proxiedUri,
+                           const std::string& clientBaseUrl);
+
+// ============================================================================
 // HTTP Request Handler
 // ============================================================================
 

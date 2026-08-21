@@ -189,3 +189,69 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
    // Cleanup
    tempDir.removeIfExists();
 }
+
+// The auth cookie must keep byte-identical paths in every deployment where
+// the browser-visible path equals the server-known path (see #18621).
+TEST(ChatStaticFiles, AuthCookiePathMatchesServerKnownPrefixWithoutClientBaseUrl)
+{
+   // default root path
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", ""), "/");
+
+   // configured www-root-path
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", ""),
+             "/rstudio/");
+
+   // Workbench session prefix
+   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html", ""),
+             "/s/0aa27b1d6b8f34dc/");
+}
+
+TEST(ChatStaticFiles, AuthCookiePathUnchangedWhenClientBaseUrlMatchesServer)
+{
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/rstudio/"),
+             "/rstudio/");
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html",
+                            "https://host/"),
+             "/");
+}
+
+TEST(ChatStaticFiles, AuthCookiePathIncludesExternalProxyPrefix)
+{
+   // configured root path behind an unknown prefix-stripping proxy
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/proxy/rstudio/"),
+             "/proxy/rstudio/");
+
+   // Workbench session prefix behind an unknown proxy prefix
+   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
+                            "https://host/proxy/s/0aa27b1d6b8f34dc/"),
+             "/proxy/s/0aa27b1d6b8f34dc/");
+
+   // Open OnDemand style prefix over the default root path
+   EXPECT_EQ(authCookiePath("http://node01/ai-chat/index.html",
+                            "https://ood.host/rnode/node01/8787/"),
+             "/rnode/node01/8787/");
+}
+
+TEST(ChatStaticFiles, AuthCookiePathIgnoresBogusClientBaseUrl)
+{
+   // does not end with the server-known prefix
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host/elsewhere/"),
+             "/rstudio/");
+
+   // not a usable URL or path
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "garbage"),
+             "/rstudio/");
+}
+
+TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
+{
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
+                            "?wsUrl=%2Frstudio%2Fp%2Fabc%2Fai-chat&_t=123"
+                            "&clientBaseUrl=https%3A%2F%2Fhost%2Fproxy%2Frstudio%2F",
+                            "https://host/proxy/rstudio/"),
+             "/proxy/rstudio/");
+}
