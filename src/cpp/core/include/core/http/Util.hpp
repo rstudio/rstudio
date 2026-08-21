@@ -189,6 +189,13 @@ bool isSslCertificateVerifyFailedError(const rstudio::core::Error& error);
 std::string addQueryParam(const std::string& uri,
                           const std::string& queryParam);
 
+// Give a root path the shape the rest of the server expects: a leading
+// slash and no trailing one, unless it is literally "/". Request::rootPath()
+// applies this to whatever it reads; anything reading the configured value
+// directly needs the same treatment before the two can be compared or used
+// interchangeably.
+std::string normalizeRootPath(const std::string& rootPath);
+
 // Is this string usable as the Path attribute of a Set-Cookie header?
 // Requires an origin-absolute path made only of characters that cannot break
 // out of the header (no CTLs -- including CR/LF -- and no space, ';', ',',

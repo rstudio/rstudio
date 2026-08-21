@@ -85,13 +85,7 @@ std::string Request::rootPath() const
       rootPathHeader = rootPath_;
    }
 
-   // be sure the root path start with slash but doesn't end with one (unless literally only "/")
-   if (rootPathHeader.empty() || rootPathHeader[0] != '/')
-      rootPathHeader = '/' + rootPathHeader;
-   if (rootPathHeader.length() > 1 && rootPathHeader[rootPathHeader.length() - 1] == '/')
-      rootPathHeader = rootPathHeader.substr(0, rootPathHeader.length() - 1);
-
-   return rootPathHeader;
+   return util::normalizeRootPath(rootPathHeader);
 }
 
 std::string firstInList(const std::string& input)

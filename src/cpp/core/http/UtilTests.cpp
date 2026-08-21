@@ -186,6 +186,29 @@ TEST(HttpUtilTest, CookiePathFallsBackOnEmptyOrMalformedClientInput)
              cookiePathWithExternalPrefix("/rstudio", "relative/rstudio/"));
 }
 
+// A root path may be configured without a leading slash, and with or without
+// a trailing one. Request::rootPath() gives whatever it reads this shape, so
+// anything reading the configured value directly has to agree with it -- a
+// cookie path derived from the raw value would otherwise be rejected and
+// widened to the origin.
+TEST(HttpUtilTest, NormalizeRootPathAddsALeadingAndDropsATrailingSlash)
+{
+   EXPECT_EQ("/rstudio", normalizeRootPath("rstudio"));
+   EXPECT_EQ("/rstudio", normalizeRootPath("/rstudio"));
+   EXPECT_EQ("/rstudio", normalizeRootPath("/rstudio/"));
+   EXPECT_EQ("/rstudio", normalizeRootPath("rstudio/"));
+   EXPECT_EQ("/a/b", normalizeRootPath("a/b/"));
+
+   // the root path keeps its only slash
+   EXPECT_EQ("/", normalizeRootPath("/"));
+   EXPECT_EQ("/", normalizeRootPath(""));
+
+   // and the result is then usable as a cookie path, which is what the port
+   // token cookie falls back to
+   EXPECT_TRUE(isValidCookiePath(normalizeRootPath("rstudio")));
+   EXPECT_TRUE(isValidCookiePath(normalizeRootPath("")));
+}
+
 // The normalized client base is what a caller compares a server-derived
 // cookie path against, so it must carry a trailing slash and reject anything
 // unusable rather than returning it.

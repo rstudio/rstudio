@@ -622,6 +622,19 @@ std::string addQueryParam(const std::string& uri,
    }
 }
 
+std::string normalizeRootPath(const std::string& rootPath)
+{
+   // be sure the root path starts with slash but doesn't end with one
+   // (unless literally only "/")
+   std::string normalized = rootPath;
+   if (normalized.empty() || normalized[0] != '/')
+      normalized = '/' + normalized;
+   if (normalized.length() > 1 && normalized.back() == '/')
+      normalized.pop_back();
+
+   return normalized;
+}
+
 bool isValidCookiePath(const std::string& path)
 {
    if (path.empty() || path[0] != '/')
