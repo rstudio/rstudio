@@ -289,6 +289,59 @@ TEST(ChatStaticFiles, AuthCookiePathRejectsClientBaseUrlTheSessionDidNotReport)
              "/rstudio/");
 }
 
+// Falling back to the server-known prefix is only safe while that prefix is
+// narrower than the whole origin. On a default-root deployment reached
+// through an external prefix it is not, so the cookie must not be set at all
+// rather than be handed to every application on the host.
+TEST(ChatStaticFiles, AuthCookiePathDeclinesRatherThanFallBackToTheOriginRoot)
+{
+   // a request that did not come from the IDE frontend: a crafted top-level
+   // link, or a bookmarked bare iframe URL
+   EXPECT_EQ(authCookiePath("http://node01/ai-chat/index.html", "",
+                            "https://ood.host/rnode/node01/8787/"),
+             "");
+
+   // a reported base the session never authenticated
+   EXPECT_EQ(authCookiePath("http://node01/ai-chat/index.html",
+                            "https://ood.host/evil/",
+                            "https://ood.host/rnode/node01/8787/"),
+             "");
+
+   // but a configured root path is narrower than the origin, so the fallback
+   // stands
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
+                            "https://host/proxy/rstudio/"),
+             "/rstudio/");
+
+   // and a client claiming a prefix the session did not report still falls
+   // back to the root it would have used anyway
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html",
+                            "https://host/evil/", "https://host/"),
+             "/");
+}
+
+// proxiedUri is reconstructed from request headers, which nothing in the
+// server strips or validates, and the cookie path is written into the
+// Set-Cookie header unescaped. A path that could break out of that header
+// must not be used -- and the origin root is not an acceptable retreat.
+TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableServerDerivedPath)
+{
+   // a ";path=/" smuggled through the proxied URI would otherwise be emitted
+   // verbatim, and RFC 6265 takes the last Path attribute
+   EXPECT_EQ(authCookiePath("https://host/x;path=//ai-chat/index.html", "",
+                            ""),
+             "");
+
+   // header-breaking characters in the derived prefix
+   EXPECT_EQ(authCookiePath("https://host/a\r\nX-Injected: 1/ai-chat/index.html",
+                            "", ""),
+             "");
+
+   // a prefix the browser could never match against a normalized request path
+   EXPECT_EQ(authCookiePath("https://host/a//b/ai-chat/index.html", "", ""),
+             "");
+}
+
 TEST(ChatStaticFiles, AuthCookiePathIgnoresBogusClientBaseUrl)
 {
    // does not end with the server-known prefix

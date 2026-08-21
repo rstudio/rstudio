@@ -117,13 +117,20 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  * cannot connect -- a fallback that is wrong for nobody rather than a cookie
  * scoped to a path the requesting tab never uses.
  *
+ * Returns empty when no path can be scoped safely, in which case the caller
+ * must not set the cookie: either proxiedUri yielded something unusable in a
+ * Set-Cookie header, or the fallback described above would be the origin root
+ * while the session reported something narrower, which would share the token
+ * with every application on the host. Both cases are logged.
+ *
  * @param proxiedUri The server's view of the request URL (request.proxiedUri())
  * @param clientBaseUrl The browser-visible base URL reported by the IDE
  *                      frontend, or empty if not provided
  * @param activeClientUrl The base URL recorded at client_init
  *                        (persistentState().activeClientUrl())
- * @return Cookie path, always ending with "/"; equals the server-known
- *         prefix unless both reported base URLs agree on an external prefix
+ * @return Cookie path ending with "/", or empty if the cookie must not be
+ *         set; equals the server-known prefix unless both reported base URLs
+ *         agree on an external prefix
  */
 std::string authCookiePath(const std::string& proxiedUri,
                            const std::string& clientBaseUrl,

@@ -362,9 +362,22 @@ std::string authCookiePath(const std::string& proxiedUri,
    if (aiChatPos != std::string::npos)
       cookiePath = cookiePath.substr(0, aiChatPos);
    if (cookiePath.empty())
-      cookiePath = "/";
+      cookiePath = kRequestDefaultRootPath;
    else if (cookiePath.back() != '/')
       cookiePath += "/";
+
+   // proxiedUri is reconstructed from request headers, and nothing escapes
+   // the Set-Cookie header on the way out, so a derived path that could break
+   // out of that header -- or that the browser could never match -- must not
+   // be used at all. There is nothing narrower to retreat to here: scoping the
+   // token to the origin root would hand it to every application on the host,
+   // which is worse than the chat pane failing to connect.
+   if (!http::util::isValidCookiePath(cookiePath))
+   {
+      WLOG("Not setting the assistant auth cookie: the path derived from the "
+           "request headers cannot be used as a cookie path");
+      return std::string();
+   }
 
    // recover any external proxy prefix from the browser-visible base URL
    // reported by the IDE frontend, but only when the base recorded by the
@@ -374,10 +387,35 @@ std::string authCookiePath(const std::string& proxiedUri,
       http::util::cookiePathWithExternalPrefix(cookiePath, clientBaseUrl);
    std::string authorized =
       http::util::cookiePathWithExternalPrefix(cookiePath, activeClientUrl);
-   if (requested != authorized)
-      return cookiePath;
+   if (requested == authorized)
+      return requested;
 
-   return requested;
+   const char* reason =
+      clientBaseUrl.empty()
+         ? "the request carries no clientBaseUrl parameter, so it did not "
+           "come from the IDE frontend"
+         : "the reported base path disagrees with the one recorded during "
+           "session initialization";
+
+   // The reported base is not one this session has authenticated. Falling
+   // back to the server-known prefix is the right answer for the requester --
+   // a second tab connected by a different path needs it, and a crafted link
+   // is denied the route it asked for -- but only while that prefix is not
+   // the origin root. When it is, and the session itself reported something
+   // narrower, the fallback would be broader than any path this deployment
+   // uses, so decline instead.
+   if (cookiePath == std::string(kRequestDefaultRootPath) &&
+       authorized != std::string(kRequestDefaultRootPath))
+   {
+      WLOG("Not setting the assistant auth cookie: {}, and the server-known "
+           "path is the origin root, so the cookie would be shared with "
+           "every application on this host", reason);
+      return std::string();
+   }
+
+   WLOG("Scoping the assistant auth cookie to the server-known path '{}' "
+        "(this session reported '{}'): {}", cookiePath, authorized, reason);
+   return cookiePath;
 }
 
 bool isNoStoreExtension(const std::string& extension)
@@ -577,14 +615,20 @@ Error handleAIChatRequest(const http::Request& request,
                   request.proxiedUri(),
                   request.queryParamValue(kClientBaseUrlParam),
                   persistentState().activeClientUrl());
-               LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
-                                 cookiePath + "'");
 
-               http::Cookie cookie(
-                  request, "posit-assistant-auth", s_chatBackendAuthToken,
-                  cookiePath, options().sameSite(), true /* httpOnly */,
-                  options().useSecureCookies());
-               pResponse->addCookie(cookie);
+               // an empty path means no path can be scoped safely for this
+               // request; authCookiePath has already logged why
+               if (!cookiePath.empty())
+               {
+                  LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
+                                    cookiePath + "'");
+
+                  http::Cookie cookie(
+                     request, "posit-assistant-auth", s_chatBackendAuthToken,
+                     cookiePath, options().sameSite(), true /* httpOnly */,
+                     options().useSecureCookies());
+                  pResponse->addCookie(cookie);
+               }
             }
          }
       }
