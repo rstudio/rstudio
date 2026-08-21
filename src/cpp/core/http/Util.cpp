@@ -17,17 +17,21 @@
 #include <core/http/Util.hpp>
 
 #include <cstdio>
+#include <cctype>
 #include <ios>
 #include <iostream>
 #include <sstream>
+#include <string_view>
 #include <algorithm>
 
 #include <boost/asio.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/find_iterator.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
@@ -49,12 +53,12 @@ namespace http {
 
 namespace util {
 
-   
+
 Fields::const_iterator findField(const Fields& fields, const std::string& name)
 {
    return std::find_if(fields.begin(), fields.end(), FieldPredicate(name));
 }
-   
+
 std::string fieldValue(const Fields& fields, const std::string& name)
 {
    Fields::const_iterator pos = findField(fields, name);
@@ -63,11 +67,11 @@ std::string fieldValue(const Fields& fields, const std::string& name)
    else
       return std::string();
 }
-   
-void parseFields(const std::string& fields, 
-                 const char* fieldDelim, 
+
+void parseFields(const std::string& fields,
+                 const char* fieldDelim,
                  const char* valueDelim,
-                 Fields* pFields, 
+                 Fields* pFields,
                  FieldDecodeType fieldDecode)
 {
    // enable straightforward references to tokenizer class & helpers
@@ -79,7 +83,7 @@ void parseFields(const std::string& fields,
 
    // iterate over the fields
    tokenizer<char_separator<char> > fieldTokens(fields, fieldSeparator);
-   for (tokenizer<char_separator<char> >::iterator 
+   for (tokenizer<char_separator<char> >::iterator
          fieldIter = fieldTokens.begin();
          fieldIter != fieldTokens.end();
          ++fieldIter)
@@ -105,11 +109,11 @@ void parseFields(const std::string& fields,
          pFields->push_back(std::make_pair(name,value));
    }
 }
-   
+
 void buildQueryString(const Fields& fields, std::string* pQueryString)
 {
    pQueryString->clear();
-   
+
    for (Fields::const_iterator it = fields.begin();
         it != fields.end();
         ++it)
@@ -121,117 +125,335 @@ void buildQueryString(const Fields& fields, std::string* pQueryString)
       pQueryString->append(encodedValue);
       pQueryString->append("&");
    }
-   
+
    // remove trailing &
    if (!pQueryString->empty())
       pQueryString->erase(pQueryString->length()-1);
 }
-   
+
 void parseForm(const std::string& body, Fields* pFields)
 {
    return parseFields(body, "&", "=", pFields, FieldDecodeForm);
 }
-   
-   
+
 void parseQueryString(const std::string& queryString, Fields* pFields)
 {
    return parseFields(queryString, "&", "=", pFields, FieldDecodeQueryString);
 }
-      
+
+struct SemiFinder
+{
+   template <typename ITER>
+   boost::iterator_range<ITER> operator()(ITER begin, ITER end) const {
+      bool inQuotes = false;
+      bool escape = false;
+      for (ITER iter = begin; iter != end; iter++)
+      {
+         if (escape)
+         {
+            escape = false;
+         }
+         else if (*iter == '\\')
+         {
+            escape = true;
+         }
+         else if (*iter == '"')
+         {
+            inQuotes = !inQuotes;
+         }
+         else if (!inQuotes && *iter == ';')
+         {
+            return boost::iterator_range<ITER>(iter, iter + 1);
+         }
+      }
+      return boost::iterator_range<ITER>(end, end);
+   }
+} semiFinder;
+
+struct BoundaryFinder
+{
+   BoundaryFinder(const std::string_view& boundary) : boundary(boundary) {}
+
+   std::string boundary;
+
+   enum State {
+      NeedLeadingCR,
+      NeedLeadingLF,
+      NeedDash1,
+      NeedDash2,
+      NeedString,
+      NeedTrailingCR,
+      NeedTrailingLF,
+      NeedTerminatorDash2,
+   };
+
+   template <typename ITER>
+   boost::iterator_range<ITER> operator()(ITER begin, ITER end) const {
+      using Range = boost::iterator_range<ITER>;
+
+      // empty range matches nothing
+      if (begin == end)
+      {
+         return Range(end, end);
+      }
+
+      State state = NeedLeadingCR;
+      size_t matchPos = 0;
+      ITER matchStart = begin;
+      if (*begin == '-')
+      {
+         state = NeedDash2;
+         ++begin;
+      }
+      for (ITER iter = begin; iter != end; iter++)
+      {
+         char ch = *iter;
+         // Keep track of the start of the match
+         if (state == NeedLeadingCR)
+            matchStart = iter;
+         // Reset the state machine on an unexpected \r
+         if (state != NeedTrailingCR && ch == '\r')
+         {
+            state = NeedLeadingLF;
+            matchStart = iter;
+            continue;
+         }
+         switch (state)
+         {
+            case NeedLeadingCR:
+               // ignore everything but \r, which is handled above
+               break;
+            case NeedLeadingLF:
+               if (ch == '\n')
+                  state = NeedDash1;
+               else
+                  state = NeedLeadingCR;
+               break;
+            case NeedDash1:
+            case NeedDash2:
+               matchPos = 0;
+               if (ch == '-')
+                  state = (state == NeedDash1) ? NeedDash2 : NeedString;
+               else
+                  state = NeedLeadingCR;
+               break;
+            case NeedString:
+               if (ch == boundary[matchPos])
+               {
+                  matchPos++;
+                  if (matchPos == boundary.size())
+                     state = NeedTrailingCR;
+               }
+               else
+                  state = NeedLeadingCR;
+               break;
+            case NeedTrailingCR:
+               if (ch == '\r')
+                  state = NeedTrailingLF;
+               else if (ch == '-')
+                  state = NeedTerminatorDash2;
+               else if (ch != ' ' && ch != '\t')
+                  state = NeedLeadingCR;
+               break;
+            case NeedTrailingLF:
+               if (ch == '\n')
+                  return Range(matchStart, iter + 1);
+               state = NeedLeadingCR;
+               break;
+            case NeedTerminatorDash2:
+               if (ch == '-')
+                  return Range(matchStart, end);
+               state = NeedLeadingCR;
+               break;
+         }
+      }
+      return Range(end, end);
+   }
+};
+
+struct HeaderParams
+{
+   std::vector<std::string> values;
+   std::map<std::string, std::string> params;
+
+   template <typename RANGE>
+   static HeaderParams parse(const RANGE& headerRange)
+   {
+      namespace ba = boost::algorithm;
+
+      HeaderParams result;
+      std::string_view header(&*headerRange.begin(), headerRange.size());
+
+      auto fields = ba::make_split_iterator(header, semiFinder);
+
+      for (; !fields.eof(); fields++)
+      {
+         auto start = fields->begin();
+         auto end = fields->end();
+         while (start != end && std::isspace(std::uint8_t(*start)))
+            ++start;
+         while (start != end && std::isspace(std::uint8_t(*(end - 1))))
+            --end;
+
+         auto eqPos = start;
+         while (eqPos != end && *eqPos != '=')
+            ++eqPos;
+         if (eqPos == end)
+         {
+            if (end != start)
+               result.values.emplace_back(&*start, end - start);
+            continue;
+         }
+         std::string key(&*start, eqPos - start);
+         boost::algorithm::to_lower(key);
+
+         std::string_view value(&*eqPos + 1, end - eqPos - 1);
+         // strip quotes
+         if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+         {
+            value.remove_prefix(1);
+            value.remove_suffix(1);
+            std::string valueStr;
+            valueStr.reserve(value.size());
+            bool escape = false;
+            for (char ch : value)
+            {
+               if (escape)
+               {
+                  escape = false;
+               }
+               else if (ch == '\\')
+               {
+                  escape = true;
+                  continue;
+               }
+               valueStr.push_back(ch);
+            }
+            result.params.emplace(key, valueStr);
+         }
+         else
+         {
+            result.params.emplace(key, value);
+         }
+      }
+      return result;
+   }
+};
+
+
 void parseMultipartForm(const std::string& contentType,
-                        const std::string& body, 
+                        const std::string& body,
                         Fields* pFields,
                         Files* pFiles)
 {
+   namespace ba = boost::algorithm;
    // get the boundary token
-   std::string boundaryPrefix("boundary=");
-   std::string boundary;
-   size_t prefixLoc = contentType.find(boundaryPrefix);
-   if (prefixLoc != std::string::npos)
+   HeaderParams ctParams = HeaderParams::parse(contentType);
+   std::string boundary(ctParams.params["boundary"]);
+   if (boundary.empty())
    {
-      boundary = contentType.substr(prefixLoc+boundaryPrefix.size(),
-                                    std::string::npos);
-      boundary = "--" + boundary;
-      boost::algorithm::trim(boundary);
+      // No boundary token: malformed multipart/form-data
+      LOG_WARNING_MESSAGE("Invalid multipart/form-data content-type: missing boundary");
+      return;
    }
-   
-   // extract the fields
-   size_t beginBoundaryLoc = body.find(boundary);
-   size_t endBoundaryLoc = body.find("\r\n" + boundary,
-                                     beginBoundaryLoc+boundary.size());
-   while (endBoundaryLoc != std::string::npos)
+
+   // Per RFC 1341, multipart-body ends immediately after the `--` with no CRLF necessary.
+   size_t terminatorPos = body.find("\r\n--" + boundary + "--");
+   if (!terminatorPos || !body.size())
    {
-      // extract the part into a string stream
-      size_t beginPart = beginBoundaryLoc + boundary.size();
-      size_t partLength = endBoundaryLoc - beginPart;
-      std::istringstream partStream(body.substr(beginPart, partLength));
+      // No sections, just a terminating boundary
+      LOG_WARNING_MESSAGE("Invalid multipart/form-data: no sections");
+      return;
+   }
+   // Be permissinve beyond the strict requirements of RFC 1341:
+   // Use best effort to read the last part even if the terminator is missing.
+   if (terminatorPos == std::string::npos)
+      terminatorPos = body.size();
+
+   std::string_view multipart(&*body.begin(), terminatorPos);
+
+   // iterate over the multipart sections
+   BoundaryFinder finder(boundary);
+   auto iter = ba::make_split_iterator(multipart, finder);
+   auto endIter = ba::split_iterator<std::string_view::const_iterator>();
+   bool isPreamble = true;
+   for (; iter != endIter; ++iter)
+   {
+      auto partRange = *iter;
+      if (isPreamble)
+      {
+         // Always ignore the preamble before the first multipart boundary
+         isPreamble = false;
+         continue;
+      }
+
+      // wrap in non-copying stream
+      boost::iostreams::filtering_istream partStream(partRange);
       partStream.unsetf(std::ios::skipws);
-    
+
       // read the headers
       Headers headers;
       http::parseHeaders(partStream, &headers);
-      
-      // check for content-disposition
-      std::string cDisp = http::headerValue(headers,"Content-Disposition");
-      if (!cDisp.empty())
+
+      // get the content-disposition header
+      std::string cDispStr = http::headerValue(headers, "Content-Disposition");
+      if (cDispStr.empty())
+         continue;
+
+      // ignore sections that aren't form-data
+      HeaderParams cDisp = HeaderParams::parse(cDispStr);
+      if (cDisp.values.empty() || boost::algorithm::to_lower_copy(cDisp.values.front()) != "form-data")
+         continue;
+
+      auto nameIter = cDisp.params.find("name");
+      if (nameIter == cDisp.params.end())
       {
-         // parse values out of content disposition
-         std::string nameRegex("form-data; name=\"(.*)\"");
-         boost::smatch nameMatch;
-         if (regex_utils::match(cDisp, nameMatch, boost::regex(nameRegex)))
-         {
-            // read the rest of the stream
-            std::ostringstream valueStream;
-            std::copy(std::istream_iterator<char>(partStream),
-                      std::istream_iterator<char>(),
-                      std::ostream_iterator<char>(valueStream));
-                       
-            // check for filename
-            std::string filenameRegex(nameRegex + "; filename=\"(.*)\"");
-            boost::smatch fileMatch;
-            if (regex_utils::match(cDisp, fileMatch, boost::regex(filenameRegex)))
-            {
-               std::string name(fileMatch[1]);
-               
-               File uploadedFile;
-               uploadedFile.name = fileMatch[2];
-               uploadedFile.contentType = http::headerValue(headers, 
-                                                            "Content-Type");
-               if (uploadedFile.contentType.empty())
-                  uploadedFile.contentType = "application/octet-stream";
-               
-               uploadedFile.contents = valueStream.str();
-               pFiles->insert(std::make_pair(name, uploadedFile));
-            }
-            // else process regular form field
-            else
-            {
-               std::string name(nameMatch[1]);
-               std::string value = valueStream.str();
-               boost::algorithm::trim(value);
-               pFields->push_back(std::make_pair(name, value));
-            }
-         }
-         
+         // name is required, so if it's missing, skip the entire section
+         continue;
       }
-                
-      // next boundary
-      beginBoundaryLoc = endBoundaryLoc;
-      endBoundaryLoc = body.find("\r\n" + boundary,
-                                 beginBoundaryLoc+boundary.size());
+
+      std::string formName(nameIter->second);
+
+      auto filenameIter = cDisp.params.find("filename");
+      if (filenameIter != cDisp.params.end() && pFiles->find(formName) != pFiles->end())
+      {
+         // If we've already processed a file upload for a given form field,
+         // keep the first file and ignore the rest without allocating any
+         // additional memory.
+         continue;
+      }
+
+      std::string formValue(partRange.size(), '\0');
+      partStream.read(formValue.data(), partRange.size());
+      formValue.resize(partStream.gcount());
+
+      if (filenameIter != cDisp.params.end())
+      {
+         File& uploadedFile = (*pFiles)[formName];
+         uploadedFile.name = filenameIter->second;
+         uploadedFile.contentType = http::headerValue(headers, "Content-Type");
+         if (uploadedFile.contentType.empty())
+            uploadedFile.contentType = "application/octet-stream";
+         uploadedFile.contents.swap(formValue);
+      }
+      else
+      {
+         boost::algorithm::trim(formValue);
+         pFields->emplace_back(formName, std::move(formValue));
+      }
    }
-}   
-   
+}
+
 
 std::string urlEncode(const std::string& in, bool queryStringSpaces)
 {
    std::string encodedURL;
-      
+
    size_t inputLength = in.length();
    for (size_t i=0; i<inputLength; i++)
    {
       char ch = in[i];
-      
+
       if ( ('0' <= ch && ch <= '9') ||
            ('a' <= ch && ch <= 'z') ||
            ('A' <= ch && ch <= 'Z') ||
@@ -254,10 +476,10 @@ std::string urlEncode(const std::string& in, bool queryStringSpaces)
          encodedURL += charAsHex;
       }
    }
-   
+
    return encodedURL;
 }
-   
+
 std::string urlDecode(const std::string& in)
 {
    std::string out;
@@ -298,7 +520,7 @@ std::string urlDecode(const std::string& in)
    }
    return out;
 }
-   
+
 namespace {
 
 const char * const kHttpDateFormat = "%a, %d %b %Y %H:%M:%S GMT";
@@ -317,7 +539,7 @@ boost::posix_time::time_input_facet s_httpDateInputFacet(kHttpDateFormat, 1);
 boost::posix_time::ptime parseDate(const std::string& date, const char* format)
 {
    using namespace boost::posix_time;
-   
+
    // Warning - creating the time_input_facet is fairly expensive so avoiding it for http date
    // facet for date (construct w/ a_ref == 1 so we manage memory)
    time_input_facet dateFacet(1);
@@ -331,15 +553,15 @@ boost::posix_time::ptime parseDate(const std::string& date, const char* format)
    dateStream >> posixDate;
 
    return posixDate;
-}   
+}
 
 }
-   
-boost::posix_time::ptime parseAtomDate(const std::string& date)   
+
+boost::posix_time::ptime parseAtomDate(const std::string& date)
 {
    return parseDate(date, kAtomDateFormat);
 }
-   
+
 
 boost::posix_time::ptime parseHttpDate(const std::string& date)
 {
@@ -354,11 +576,11 @@ boost::posix_time::ptime parseHttpDate(const std::string& date)
 
    return posixDate;
 }
-   
+
 std::string httpDate(const boost::posix_time::ptime& datetime)
 {
    using namespace boost::posix_time;
-   
+
    // output and return the date
    std::ostringstream dateStream;
    dateStream.imbue(std::locale(dateStream.getloc(), &s_httpDateFacet));
@@ -395,7 +617,7 @@ std::string pathAfterPrefix(const Request& request,
 {
    // get the raw uri & strip its location prefix
    std::string uri = URL::cleanupPath(request.uri());
-   
+
    if (!pathPrefix.empty() && !uri.compare(0, pathPrefix.length(), pathPrefix))
       uri = uri.substr(pathPrefix.length());
 
