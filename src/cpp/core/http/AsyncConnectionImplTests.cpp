@@ -350,6 +350,71 @@ TEST(AsyncConnectionImpl, WriteResponseHeadersAfterHeadersAlreadyWrittenIsANoOp)
    EXPECT_EQ(received.find("500"), std::string::npos);
 }
 
+TEST(AsyncConnectionImpl, ContinueParsingResumesOnTheConnectionsStrand)
+{
+   // continueParsing() is called by a body writer running on some other
+   // context -- FormProxy resumes us from the *downstream* connection's
+   // handlers -- and the parse it resumes is not passive: it can call the
+   // request handler, or turn a parse error into writeResponse(BadRequest).
+   // Posting it bare onto the io_context therefore let a resumed parse race
+   // this connection's own reads and response state. It has to arrive on the
+   // strand, where every other handleRead() does.
+   boost::asio::io_context ioc;
+
+   tcp::acceptor acceptor(ioc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+   unsigned short port = acceptor.local_endpoint().port();
+
+   int handlerCalls = 0;
+   bool handlerOnStrand = false;
+
+   boost::shared_ptr<TcpAsyncConnection> pConnection =
+      boost::make_shared<TcpAsyncConnection>(
+         ioc,
+         boost::shared_ptr<boost::asio::ssl::context>(),
+         /*requestSequence=*/1,
+         [](boost::shared_ptr<TcpAsyncConnection>, http::Request*) -> bool { return true; },
+         [&](boost::shared_ptr<TcpAsyncConnection> pConn, http::Request*) {
+            handlerCalls++;
+            handlerOnStrand = pConn->getStrand().running_in_this_thread();
+         },
+         TcpAsyncConnection::ClosedHandler());
+
+   boost::system::error_code ec;
+   pConnection->socket().connect(
+      tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), port), ec);
+   ASSERT_FALSE(ec);
+
+   tcp::socket peer(ioc);
+   acceptor.accept(peer, ec);
+   ASSERT_FALSE(ec);
+
+   std::string request = "GET /x HTTP/1.1\r\nHost: localhost\r\n\r\n";
+   boost::asio::write(peer, boost::asio::buffer(request), ec);
+   ASSERT_FALSE(ec);
+
+   // the ordinary read path, for a baseline: it arrives on the strand because
+   // readSome() binds its completion there
+   pConnection->startReading();
+   ioc.restart();
+   ioc.poll();
+   ASSERT_EQ(handlerCalls, 1);
+   ASSERT_TRUE(handlerOnStrand);
+
+   // now resume from this thread, which is not in the strand and not running
+   // the io_context at all -- the shape of FormProxy's call
+   handlerOnStrand = false;
+   pConnection->continueParsing();
+
+   // still asynchronous: callers must not be reentrantly locked
+   EXPECT_EQ(handlerCalls, 1);
+
+   ioc.restart();
+   ioc.poll();
+
+   EXPECT_EQ(handlerCalls, 2);
+   EXPECT_TRUE(handlerOnStrand);
+}
+
 TEST(AsyncConnectionImpl, ConcurrentResponseWritersElectExactlyOneWinner)
 {
    // The claim is a check-then-act, and the writers it arbitrates do not all

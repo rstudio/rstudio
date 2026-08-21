@@ -395,10 +395,20 @@ public:
    {
       // continue parsing by reinvoking the read handler
       // with the amount of bytes that were read last time it was called
-      // this is posted to the io_context to be invoked asynchronously
+      // this is posted to be invoked asynchronously
       // so callers are not reentrantly locked
+      //
+      // Posted through strand_ rather than bare onto the io_context: every
+      // other invocation of handleRead() arrives on it (readSome() binds its
+      // completion to it), and a resumed parse is not a passive operation --
+      // it can decide to write a response of its own (RequestParser::error ->
+      // writeResponse(BadRequest), or callHandler()). Our caller is a body
+      // writer running somewhere else entirely -- FormProxy resumes us from
+      // the *downstream* connection's handlers -- so without the strand the
+      // resumed parse runs concurrently with this connection's own reads,
+      // writes and response state.
       boost::asio::post(
-               ioContext_,
+               strand_,
                boost::bind(
                   &AsyncConnectionImpl<SocketType>::handleRead,
                   AsyncConnectionImpl<SocketType>::shared_from_this(),
