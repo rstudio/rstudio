@@ -95,7 +95,10 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  * The cookie is scoped to the session prefix (e.g. "/s/{id}/" or the
  * configured root path) so multi-session deployments don't collide. The
  * server-known prefix is taken from proxiedUri with "/ai-chat" onward
- * stripped. When the browser reaches the server through a path-prefixing
+ * stripped, matching the route only at a path-segment boundary so that a
+ * root path which contains the route name (www-root-path=/ai-chat-hub) is
+ * not truncated at the wrong offset. When the browser reaches the server
+ * through a path-prefixing
  * reverse proxy the server was never told about, that prefix is recovered
  * from the client-reported base URL (the clientBaseUrl query parameter added
  * by the IDE frontend).

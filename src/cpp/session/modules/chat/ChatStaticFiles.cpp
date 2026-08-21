@@ -57,6 +57,11 @@ namespace {
 constexpr const char* kAiChatUriPrefix = "/ai-chat/";
 constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 
+// The same route without the trailing slash, which is the form that appears
+// in a path when it is followed by a segment boundary or ends the path.
+constexpr const char* kAiChatRoute = "/ai-chat";
+constexpr size_t kAiChatRouteLength = 8; // Length of "/ai-chat"
+
 // Query parameter added by the IDE frontend (ChatPresenter.java) carrying the
 // browser-visible base URL, so the auth cookie path can include external
 // proxy prefixes the server was never told about.
@@ -315,6 +320,35 @@ std::string buildCspHeader()
    return s_cachedCspHeader;
 }
 
+/**
+ * Find the "/ai-chat" route within a request path.
+ *
+ * The match is anchored at a path-segment boundary, so a root or session
+ * prefix that merely contains the route name -- www-root-path=/ai-chat-hub,
+ * say -- is not mistaken for the route itself and does not truncate the
+ * prefix at the wrong offset. The last whole-segment occurrence wins, since
+ * the route is the final segment of the URIs this module serves.
+ *
+ * @return Offset of the route, or std::string::npos if the path does not
+ *         contain it as a whole segment.
+ */
+size_t findAiChatRoute(const std::string& path)
+{
+   size_t pos = path.rfind(kAiChatRoute);
+   while (pos != std::string::npos)
+   {
+      size_t end = pos + kAiChatRouteLength;
+      if (end == path.length() || path[end] == '/')
+         return pos;
+
+      if (pos == 0)
+         break;
+      pos = path.rfind(kAiChatRoute, pos - 1);
+   }
+
+   return std::string::npos;
+}
+
 } // anonymous namespace
 
 std::string authCookiePath(const std::string& proxiedUri,
@@ -324,10 +358,7 @@ std::string authCookiePath(const std::string& proxiedUri,
    // extract the path from proxiedUri and strip "/ai-chat" onward to get
    // the server-known session prefix (e.g. "/s/{id}/")
    std::string cookiePath = http::URL(proxiedUri).path();
-   std::string aiChatPrefix(kAiChatUriPrefix);
-   if (aiChatPrefix.back() == '/')
-      aiChatPrefix.pop_back();
-   size_t aiChatPos = cookiePath.find(aiChatPrefix);
+   size_t aiChatPos = findAiChatRoute(cookiePath);
    if (aiChatPos != std::string::npos)
       cookiePath = cookiePath.substr(0, aiChatPos);
    if (cookiePath.empty())

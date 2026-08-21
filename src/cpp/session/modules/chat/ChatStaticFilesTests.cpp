@@ -207,6 +207,34 @@ TEST(ChatStaticFiles, AuthCookiePathMatchesServerKnownPrefixWithoutClientBaseUrl
              "/s/0aa27b1d6b8f34dc/");
 }
 
+// A root or session prefix that merely contains the route name must not be
+// mistaken for the route: matching it would truncate the prefix at the wrong
+// offset and scope the token to the whole origin.
+TEST(ChatStaticFiles, AuthCookiePathMatchesTheRouteOnlyAtASegmentBoundary)
+{
+   // www-root-path=/ai-chat-hub
+   EXPECT_EQ(authCookiePath("https://host/ai-chat-hub/ai-chat/index.html",
+                            "", ""),
+             "/ai-chat-hub/");
+
+   // the same name nested under another prefix
+   EXPECT_EQ(authCookiePath("https://host/team/ai-chat-hub/ai-chat/index.html",
+                            "", ""),
+             "/team/ai-chat-hub/");
+
+   // a prefix with no separating punctuation at all
+   EXPECT_EQ(authCookiePath("https://host/ai-chatlab/ai-chat/index.html",
+                            "", ""),
+             "/ai-chatlab/");
+
+   // a root path that is exactly the route name is still a distinct segment
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/ai-chat/index.html", "", ""),
+             "/ai-chat/");
+
+   // and the ordinary case still resolves to the first segment
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "", ""), "/");
+}
+
 TEST(ChatStaticFiles, AuthCookiePathUnchangedWhenClientBaseUrlMatchesServer)
 {
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
