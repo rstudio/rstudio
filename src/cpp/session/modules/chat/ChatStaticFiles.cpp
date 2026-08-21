@@ -64,13 +64,17 @@ constexpr size_t kAiChatRouteLength = 8; // Length of "/ai-chat"
 
 // Chat backend port, set by SessionChat.cpp when the backend starts.
 // Used to build connect-src in the CSP header for desktop mode.
-// Atomic because it is written from the main thread and read from HTTP
-// handler threads.
 std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
 
 // Chat backend auth token, set by SessionChat.cpp when the backend starts.
 // In server mode, this is delivered to the PA client via an HTTP-only cookie
 // on the index.html response instead of as a URL query parameter.
+//
+// Both of these are only ever touched from the main session thread: uri
+// handlers are dispatched synchronously from handleConnection, not from a
+// pool of HTTP handler threads, and SessionChat sets them from the same
+// thread. The atomic and the mutex are belt and braces, and the mutex is not
+// what makes reading the token here safe.
 std::mutex s_authTokenMutex;
 std::string s_chatBackendAuthToken;
 
