@@ -9,7 +9,7 @@ set -euo pipefail
 # shared consumers to
 # https://packagemanager.posit.co/cran/__linux__/noble/latest so R packages
 # arrive as noble arm64 binaries instead of source-compiling every one.
-# Runs after rig (which needed the real distro) and before any R package
+# Runs after the R install (which needed the real distro) and before any R package
 # install. apt is unaffected -- it keys off /etc/apt/sources.list.
 #
 # This hook dir is shared by the debian-13-arm64 and debian-13-x86_64 engines,

@@ -44,6 +44,32 @@ The five non-Linux cells (`ubuntu24s`, `macos14`, `macos15`, `macos26`,
 job in the certification workflow, guarded on the selection, rather than being
 built into a matrix.
 
+## Where R comes from
+
+Every `r_version` in `matrix.json` is an exact `X.Y.Z`, and the engines install
+it from the RStudio Build Tools (`rstudio-buildtools`) S3 bucket rather than
+resolving it at job time: `.github/actions/os-install-r-unix` and
+`os-install-r-windows` download
+`R/<version>/R-<version>-<platform>.<ext>` and install that. There is no
+resolver behind the mirror, which is why aliases like `release` and `oldrel` are
+not accepted here or in the engine workflows' `r_version` inputs.
+
+Cells are the only place that names a version explicitly. Every other lane
+passes nothing and takes `RSTUDIO_R_VERSION` from
+`dependencies/tools/rstudio-tools.sh`, so the day-to-day pin lives in exactly
+one line; a cell here overrides it deliberately, to certify against something
+older.
+
+Certifying against a version that has not been mirrored yet fails the engine at
+its R install step. Mirror it first, from a checkout with AWS credentials:
+
+    dependencies/tools/upload-r.sh 4.7.0
+
+That copies the official CRAN and Posit r-builds installers for every platform
+CI runs on; pass platform names to narrow it. Then pin the version -- in
+`matrix.json` for a certification cell, or in the `r_version` default of the
+engine workflow for everything else.
+
 ## The `distro` sentinel
 
 The four Fedora engines set `r_install: "distro"` in their engine config, which
@@ -52,10 +78,11 @@ entirely (see `.github/e2e-linux/fedora/install-r.sh`). Declaring `"r_version":
 "distro"` records that honestly: the cell certifies against whatever R the distro
 ships, which is a real certification target, just not a chosen one.
 
-The workflow passes `release` to those engines rather than the literal `distro`,
-since the value is unused -- and would break `rig add` outright if a config ever
-switched to `r_install: "rig"`. What the run actually used is read back from the
-installed R and reported, so the sentinel never has to be trusted.
+The workflow passes a real mirrored version to those engines rather than the
+literal `distro`, since the value is unused -- and would break the download
+outright if a config ever switched to `r_install: "mirror"`. What the run
+actually used is read back from the installed R and reported, so the sentinel
+never has to be trusted.
 
 ## Changing the matrix
 

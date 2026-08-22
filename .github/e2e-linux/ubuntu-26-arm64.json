@@ -23,7 +23,7 @@
   "e2e_image": "",
   "e2e_container_options": "",
   "e2e_bootstrap_packages": "",
-  "r_install": "rig",
+  "r_install": "mirror",
   "run_as_user": "",
   "display_server": "xvfb",
   "e2e_deps_cache_scope": "resolute-arm64",
