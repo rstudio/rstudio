@@ -16,6 +16,7 @@
 
 #include <core/http/Util.hpp>
 
+#include <cstdio>
 #include <ios>
 #include <iostream>
 #include <sstream>
@@ -23,6 +24,9 @@
 
 #include <boost/asio.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -529,13 +533,153 @@ void fileRequestHandler(const std::string& wwwLocalPath,
    pResponse->setCacheableFile(filePath, request);
 }
 
+namespace {
+
+// Digits std::printf("%llx") / std::hex emit for this value: no leading zeros,
+// and a single "0" for zero itself. Must agree exactly with the chunk-size line
+// formatMessageAsHttpChunk() writes below -- see httpChunkSize().
+std::size_t hexDigitCount(std::size_t value)
+{
+   std::size_t digits = 1;
+   while (value >= 16)
+   {
+      value /= 16;
+      ++digits;
+   }
+   return digits;
+}
+
+} // anonymous namespace
+
+std::size_t httpChunkSize(std::size_t messageSize)
+{
+   // <Chunk size (hex)>CRLF<Chunk data>CRLF -- the two CRLFs are the + 4
+   return hexDigitCount(messageSize) + 2 + messageSize + 2;
+}
+
 std::string formatMessageAsHttpChunk(const std::string& message)
 {
    // format message as an HTTP chunk
    // the format is <Chunk size (hex)>CRLF<Chunk data>CRLF
-   std::stringstream sstr;
-   sstr << std::hex << message.size() << "\r\n" << message << "\r\n";
-   return sstr.str();
+   //
+   // Assembled into one pre-sized std::string rather than through a
+   // stringstream: this runs once per body piece on the streaming-proxy path,
+   // where a stringstream copies every proxied byte twice over (once into its
+   // internal buffer, again for str()).
+   static_assert(sizeof(std::size_t) <= sizeof(unsigned long long),
+                 "sizeLine below is sized for a 64-bit chunk size, and the cast "
+                 "to unsigned long long must not truncate one");
+   char sizeLine[/* 16 hex digits for a 64-bit size, plus NUL */ 17];
+   int sizeLineLength = std::snprintf(sizeLine,
+                                      sizeof(sizeLine),
+                                      "%llx",
+                                      static_cast<unsigned long long>(message.size()));
+
+   std::string chunk;
+   chunk.reserve(httpChunkSize(message.size()));
+   chunk.append(sizeLine, sizeLineLength);
+   chunk.append("\r\n");
+   chunk.append(message);
+   chunk.append("\r\n");
+   return chunk;
+}
+
+void removeHopByHopHeaders(Response* pResponse)
+{
+   static const char* const hopByHopHeaders[] = {
+      "Connection",
+      "Proxy-Connection", // non-standard but still sent by some clients/proxies
+      "Keep-Alive",
+      "Proxy-Authenticate",
+      "Proxy-Authorization",
+      "TE",
+      "Trailer",
+      "Transfer-Encoding",
+      "Upgrade"
+   };
+
+   // The message can have more than one Connection header field (each of
+   // which can itself be a comma-separated list), and any of those values
+   // can nominate additional header names that are hop-by-hop for this
+   // particular message (RFC 7230 6.1); collect all of them before removing
+   // Connection. headerValue() would only see the first field.
+   std::vector<std::string> connectionTokens;
+   for (const std::string& value : headerValues(pResponse->headers(), "Connection"))
+   {
+      std::vector<std::string> tokens;
+      boost::algorithm::split(tokens, value, boost::is_any_of(","));
+      connectionTokens.insert(connectionTokens.end(), tokens.begin(), tokens.end());
+   }
+
+   for (const char* name : hopByHopHeaders)
+      pResponse->removeHeader(name);
+
+   for (std::string token : connectionTokens)
+   {
+      boost::algorithm::trim(token);
+      if (!token.empty())
+         pResponse->removeHeader(token);
+   }
+}
+
+TransferEncoding parseTransferEncoding(const Headers& headers)
+{
+   TransferEncoding result;
+
+   // The field is 1#transfer-coding and may be split across repeated header
+   // fields, so flatten every field's comma-separated list into one ordered
+   // list of coding names before judging it -- only the final coding decides
+   // whether the body on the wire is chunk-framed.
+   std::vector<std::string> codings;
+   for (const std::string& value : headerValues(headers, kTransferEncoding))
+   {
+      std::vector<std::string> tokens;
+      boost::algorithm::split(tokens, value, boost::is_any_of(","));
+
+      for (std::string token : tokens)
+      {
+         // a transfer-coding may carry parameters (token *( OWS ";" OWS
+         // transfer-parameter )); only the name identifies the coding
+         std::string::size_type semi = token.find(';');
+         if (semi != std::string::npos)
+            token.erase(semi);
+
+         boost::algorithm::trim(token);
+         if (token.empty())
+            continue;
+
+         boost::algorithm::to_lower(token);
+
+         // "identity" was dropped as a transfer coding in RFC 7230 4 and means
+         // "nothing was applied" anyway, so treat it as absent rather than as a
+         // coding we would have to refuse for not being able to decode it.
+         if (token == "identity")
+            continue;
+
+         codings.push_back(token);
+      }
+   }
+
+   if (codings.empty())
+      return result;
+
+   std::size_t chunkedCount =
+      std::count(codings.begin(), codings.end(), kChunkedTransferEncoding);
+
+   result.present = true;
+   result.chunkedIsFinal = codings.back() == kChunkedTransferEncoding;
+
+   // The one shape we can undo is a single "chunked" applied last -- which is
+   // also the only shape a conforming sender can produce, since RFC 7230 3.3.1
+   // both forbids applying chunked more than once and requires it to be the
+   // final coding when anything else is applied. Note "chunked, chunked" would
+   // otherwise slip through every other flag here looking like ordinary
+   // chunking, while leaving a second chunk layer on the body.
+   result.isDecodable = result.chunkedIsFinal &&
+                        chunkedCount == 1 &&
+                        codings.size() == 1;
+
+   return result;
 }
 
 bool isIpAddress(const std::string& str)

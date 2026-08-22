@@ -208,7 +208,22 @@ public:
 
    virtual void writeResponse(bool close = true, Socket::Handler handler = Socket::NullHandler)
    {
+      if (responseAlreadyStarted())
+         return;
+
       sendingResponse_ = true;
+
+      // RFC 7230 2.6: "Intermediaries that process HTTP messages (i.e., all
+      // intermediaries other than those acting as tunnels) MUST send their own
+      // HTTP-version in forwarded messages." Responses this server generates
+      // itself already carry 1.1 (http::Message's constructor), but a proxied
+      // one does not: Response::assign() copies httpVersionMajor_/Minor_ off
+      // the upstream response, so an HTTP/1.0 backend's version would otherwise
+      // reach the client on our HTTP/1.1 connection. That is not cosmetic once
+      // this hop makes its own framing decisions -- a status line reading
+      // HTTP/1.0 tells the client not to expect chunked framing or a persistent
+      // connection, whatever headers follow it.
+      response_.setHttpVersion(1, 1);
 
       // add extra response headers
       if (!response_.containsHeader("Date"))
@@ -277,14 +292,78 @@ public:
                               const Headers& additionalHeaders = Headers(),
                               Socket::Handler handler = Socket::NullHandler)
    {
+      // Check the guard before mutating response_: if a response (or just
+      // its headers) has already started, an in-flight asyncWrite may still
+      // hold buffers pointing into response_'s current backing storage --
+      // assign()ing over it here would corrupt those buffers mid-write, not
+      // just send a logically-duplicate response.
+      if (responseAlreadyStarted())
+         return;
+
       response_.assign(response, additionalHeaders);
       writeResponse(close, handler);
    }
 
    virtual void writeResponseHeaders(Socket::Handler handler)
    {
+      // Same guard-before-mutating-response_ rationale as writeResponse()/
+      // writeError() above: an in-flight asyncWrite of a prior
+      // writeResponseHeaders() call may still hold buffers pointing into
+      // response_'s current backing storage.
+      if (responseAlreadyStarted())
+         return;
+
+      sendingResponse_ = true;
+
+      // Send our own HTTP-version, not a proxied upstream's -- same RFC 7230 2.6
+      // rationale as writeResponse() above, and it matters more here: this is
+      // the path FixedBufferProxy streams through, where the framing headers
+      // that follow are chosen for an HTTP/1.1 client.
+      response_.setHttpVersion(1, 1);
+
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
+
+      // kept for parity with the older writeResponse() above, which has set
+      // this unconditionally on every response for a long time. Remove any
+      // upstream-supplied instance(s) first -- setHeader() only replaces the
+      // first match, so a duplicated (or differently-cased) upstream header
+      // would otherwise still reach the client alongside ours.
+      response_.removeHeader("X-Content-Type-Options");
+      response_.setHeader("X-Content-Type-Options", "nosniff");
+
+      // call the response filter if we have one -- in the same position (the
+      // last mutation before the write) as writeResponse() above, so a filter
+      // that deliberately overrides Date or nosniff wins identically on both
+      // paths.
+      //
+      // This is not an optional hook that only some deployments install:
+      // AsyncServerImpl::acceptNextConnection() hands every connection its
+      // connectionResponseFilter, which stamps "Server" and every
+      // server-add-header header -- documented in server-options.json as
+      // applying to *all* responses from RStudio Server, and in practice
+      // carrying HSTS / X-Frame-Options. Skipping it here dropped those from
+      // every response streamed through this path (in pro, also multi-session
+      // Location/Refresh rewriting), which is exactly the arbitrary-user-app
+      // content served over /p/.
+      //
+      // Note the caller has already chosen this response's framing headers by
+      // the time we get here (see FixedBufferProxy::queueChunk), so a filter
+      // that set Content-Length/Transfer-Encoding/Connection would override
+      // them. That is deliberately not defended against, for two reasons.
+      // First, writeResponse() allows exactly the same overrides (the filter
+      // runs there before the response is serialized, and its Content-Length
+      // default only applies when none is present), so restoring framing here
+      // would make the two paths disagree -- which is the class of bug this
+      // call is fixing. Second, the damage is bounded to a single malformed
+      // response rather than cross-request desync: every terminal path in
+      // FixedBufferProxy closes the client connection, as does
+      // writeResponse()'s default close=true, so a client misled by a bogus
+      // length hits EOF instead of parsing a following response out of
+      // leftover bytes. Both halves of that parity are pinned by
+      // AsyncConnectionImplTests' *LetsTheFilterOverrideFramingHeaders* pair.
+      if (responseFilter_)
+         responseFilter_(originalRequest_, &response_);
 
       // write only the header buffers
       socketOperations_->asyncWrite(response_.headerBuffers(), handler);
@@ -292,6 +371,12 @@ public:
 
    virtual void writeError(const Error& error)
    {
+      // Same guard-before-mutating-response_ rationale as the writeResponse()
+      // overload above: setError() below must not run once a response has
+      // already started.
+      if (responseAlreadyStarted())
+         return;
+
       response_.setError(error);
       writeResponse();
    }
@@ -455,6 +540,23 @@ public:
    }
    
 private:
+
+   // Guards against writing (or beginning to assemble) a second response
+   // once one has already started on this connection -- e.g. a streaming
+   // proxy (FixedBufferProxy) already flushed headers/body directly via
+   // writeResponseHeaders()/asyncWrite(), and an upstream error then arrives
+   // and its handler calls writeResponse()/writeError(). Checked before
+   // response_ is mutated in each entry point (not just before the socket
+   // write), since an in-flight asyncWrite may still hold buffers pointing
+   // into response_'s current backing storage.
+   bool responseAlreadyStarted()
+   {
+      if (!sendingResponse_)
+         return false;
+
+      LOG_ERROR_MESSAGE("Attempt to write a response after one was already started; ignoring");
+      return true;
+   }
 
    void logConnectionError(Error error)
    {
