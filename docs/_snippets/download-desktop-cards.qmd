@@ -1,0 +1,59 @@
+<!--
+Platform cards for the RStudio Desktop (open source) installers.
+
+Written as raw HTML rather than Quarto divs so the card titles stay out of the
+page's table of contents. Keep each card's markup free of blank lines: a blank
+line would split it into several raw blocks and let Pandoc reinterpret the
+remainder as Markdown.
+
+NOTE: the same URLs are built in
+docs/user/rstudio/assets/_download.html for the recommended-download hero.
+Update both together.
+-->
+
+<div class="download-cards">
+<div id="card-macos" class="download-card">
+<h4><i class="bi bi-apple" aria-hidden="true"></i> macOS <span class="option-meta">14+</span></h4>
+<div class="download-group">
+<div class="download-option">
+<div class="option-label">Universal<br><span class="option-meta">(Apple Silicon &amp; Intel)</span></div>
+<a class="download-link" href="https://download1.rstudio.org/electron/macos/RStudio-{{< var osVersion >}}.dmg" aria-label="Download RStudio-{{< var osVersion >}}.dmg for macOS"><i class="bi bi-download" aria-hidden="true"></i> .dmg</a>
+</div>
+</div>
+</div>
+<div id="card-windows" class="download-card">
+<h4><i class="bi bi-windows" aria-hidden="true"></i> Windows <span class="option-meta">11</span></h4>
+<div class="download-group">
+<div class="download-option">
+<div class="option-label">Installer</div>
+<a class="download-link" href="https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.exe" aria-label="Download RStudio-{{< var osVersion >}}.exe for Windows"><i class="bi bi-download" aria-hidden="true"></i> .exe</a>
+</div>
+<div class="download-option">
+<div class="option-label">Zip archive</div>
+<a class="download-link" href="https://download1.rstudio.org/electron/windows/RStudio-{{< var osVersion >}}.zip" aria-label="Download RStudio-{{< var osVersion >}}.zip for Windows"><i class="bi bi-download" aria-hidden="true"></i> .zip</a>
+</div>
+</div>
+</div>
+<div id="card-linux" class="download-card">
+<h4><i class="bi bi-terminal" aria-hidden="true"></i> Linux <span class="option-meta">x86_64</span></h4>
+<div class="download-group">
+<div class="download-option">
+<div class="option-label">.deb<br><span class="option-meta">(Ubuntu, Debian)</span></div>
+<a class="download-link" href="https://download1.rstudio.org/electron/jammy/amd64/rstudio-{{< var osVersion >}}-amd64.deb" aria-label="Download rstudio-{{< var osVersion >}}-amd64.deb for Ubuntu or Debian"><i class="bi bi-download" aria-hidden="true"></i> .deb</a>
+</div>
+<div class="download-option">
+<div class="option-label">.rpm<br><span class="option-meta">(Red Hat, Fedora)</span></div>
+<a class="download-link" href="https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-{{< var osVersion >}}-x86_64.rpm" aria-label="Download rstudio-{{< var osVersion >}}-x86_64.rpm for Red Hat or Fedora"><i class="bi bi-download" aria-hidden="true"></i> .rpm</a>
+</div>
+</div>
+</div>
+</div>
+
+<details>
+<summary>Other Linux formats</summary>
+<p>Tarballs install without a package manager, for distributions the packages above do not cover.</p>
+<ul>
+<li><a href="https://download1.rstudio.org/electron/jammy/amd64/rstudio-{{< var osVersion >}}-amd64-debian.tar.gz"><code>rstudio-{{< var osVersion >}}-amd64-debian.tar.gz</code></a> &mdash; Ubuntu / Debian</li>
+<li><a href="https://download1.rstudio.org/electron/rhel9/x86_64/rstudio-{{< var osVersion >}}-x86_64-fedora.tar.gz"><code>rstudio-{{< var osVersion >}}-x86_64-fedora.tar.gz</code></a> &mdash; RHEL / Fedora</li>
+</ul>
+</details>
