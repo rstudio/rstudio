@@ -82,9 +82,8 @@ test.describe.skip('Python Shiny Tip Calculator via Posit Assistant', () => {
     while (Date.now() < deadline) {
       // Check if the assistant is done: the last message (not the user's prompt) contains
       // "Wacky Tip Calculator for Python has started" AND the stop button is gone.
-      const isStillProcessing = await chatPane.isStopButtonVisible();
       const messageCount = await chatPane.getMessageCount();
-      if (!isStillProcessing && messageCount >= 2) {
+      if (messageCount >= 2 && await chatActions.isTurnIdle()) {
         const lastText = await chatPane.messageItem.last().innerText().catch(() => '');
         if (lastText.includes('Wacky Tip Calculator for Python has started') && !lastText.includes('Create a Shiny for Python')) {
           console.log('Completion signal found: "Wacky Tip Calculator for Python has started" in last message');
