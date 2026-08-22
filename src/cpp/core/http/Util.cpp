@@ -23,6 +23,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -619,6 +620,111 @@ std::string addQueryParam(const std::string& uri,
    {
       return uri + "&" + queryParam;
    }
+}
+
+std::string normalizeRootPath(const std::string& rootPath)
+{
+   // be sure the root path starts with slash but doesn't end with one
+   // (unless literally only "/")
+   std::string normalized = rootPath;
+   if (normalized.empty() || normalized[0] != '/')
+      normalized = '/' + normalized;
+   if (normalized.length() > 1 && normalized.back() == '/')
+      normalized.pop_back();
+
+   return normalized;
+}
+
+bool isValidCookiePath(const std::string& path)
+{
+   if (path.empty() || path[0] != '/')
+      return false;
+
+   // compare as unsigned so the result does not depend on whether char is
+   // signed on this platform
+   for (unsigned char ch : path)
+   {
+      if (ch <= 0x20 || ch >= 0x7F ||
+          ch == ';' || ch == ',' || ch == '\\' || ch == '?' || ch == '#')
+      {
+         return false;
+      }
+   }
+
+   // a browser matches the cookie path against a request path whose dot
+   // segments have already been removed, so a path carrying "." or ".."
+   // could never match. Empty segments are not removed -- "//proxy/rstudio/"
+   // survives URL parsing and would match -- but a value reaching us with one
+   // came through a proxy or redirect that did not normalize, so refuse it
+   // rather than guess at what was meant.
+   if (path.find("//") != std::string::npos ||
+       path.find("/./") != std::string::npos ||
+       path.find("/../") != std::string::npos ||
+       boost::algorithm::ends_with(path, "/.") ||
+       boost::algorithm::ends_with(path, "/.."))
+   {
+      return false;
+   }
+
+   return true;
+}
+
+std::string cookiePathFromClientBaseUrl(const std::string& clientBaseUrl)
+{
+   if (clientBaseUrl.empty())
+      return std::string();
+
+   // the value may be an absolute URL or already just a path
+   std::string path = clientBaseUrl;
+   URL url(clientBaseUrl);
+   if (url.isValid())
+      path = url.path();
+
+   // URL::path() keeps them, and neither belongs in a cookie path
+   std::size_t cutPos = path.find_first_of("?#");
+   if (cutPos != std::string::npos)
+      path = path.substr(0, cutPos);
+
+   // an absolute URL with no path component means the root path
+   if (path.empty())
+      path = "/";
+   else if (path.back() != '/')
+      path += '/';
+
+   if (!isValidCookiePath(path))
+      return std::string();
+
+   return path;
+}
+
+std::string cookiePathWithExternalPrefix(const std::string& serverPath,
+                                         const std::string& clientBaseUrl)
+{
+   // only an origin-absolute server path can be extended; without a leading
+   // '/' the suffix match below could split a path segment
+   if (serverPath.empty() || serverPath[0] != '/')
+      return serverPath;
+
+   std::string clientPath = cookiePathFromClientBaseUrl(clientBaseUrl);
+   if (clientPath.empty())
+      return serverPath;
+
+   // normalize serverPath to a trailing slash for comparison only; the
+   // returned value keeps its exact trailing slash style so that deployments
+   // without an external prefix are byte-identical to before
+   std::string normServer = serverPath;
+   if (normServer.back() != '/')
+      normServer += '/';
+
+   // clientPath already carries a trailing slash; when the two are equal the
+   // prefix below is empty and the result is serverPath itself
+   if (!boost::algorithm::ends_with(clientPath, normServer))
+      return serverPath;
+
+   // the leading '/' of normServer bounds the prefix at a path segment
+   std::string externalPrefix =
+      clientPath.substr(0, clientPath.length() - normServer.length());
+   return externalPrefix + serverPath;
 }
 
 } // namespace util

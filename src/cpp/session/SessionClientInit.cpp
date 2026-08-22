@@ -58,6 +58,7 @@
 
 #include <core/json/JsonRpc.hpp>
 #include <core/http/URL.hpp>
+#include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Cookie.hpp>
@@ -147,17 +148,65 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    std::size_t pos = baseURL.find('/', 9);
    if (pos != std::string::npos && path == kRequestDefaultRootPath)
    {
-      path = baseURL.substr(pos);
+      // nothing escapes the Set-Cookie header on the way out, so reject a
+      // baseURL whose path could break out of it or could never match a
+      // request; the default root path is then kept
+      std::string clientPath = baseURL.substr(pos);
+      if (http::util::isValidCookiePath(clientPath))
+      {
+         path = clientPath;
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("Client reported a base URL whose path cannot be used as a "
+               "cookie path; scoping the " + std::string(kPortTokenCookie) + " cookie to " +
+               std::string(kRequestDefaultRootPath) + " instead, which is wider than the "
+               "path the client reported");
+      }
    }
-   // the root path was defined and we compute the cookie path more securely using internal assumptions
-   // instead of using the URL from the JSON input. In this case, we use the server's perceived current
-   // URI with the last part (/client_init) removed. The result is the session path, same as above.
+   // the root path was defined, so the cookie path comes from the server's perceived current
+   // URI with the last part (/client_init) removed. The result is the session path, same as
+   // above. That derivation cannot see a path-prefixing reverse proxy the server was never
+   // told about (e.g. Open OnDemand's /rnode/ routes): the browser-visible path then carries
+   // a prefix the server-derived path can never contain, and the browser would omit this
+   // cookie. Recover such a prefix from the client-reported baseURL, which is honored only
+   // when it ends with the server-derived path, so the result is the server's own path with
+   // a prefix restored rather than a path of the client's choosing (see #18621). This request
+   // is CSRF-protected, which keeps a crafted link out, but not a same-origin script -- and
+   // one that can issue a valid client_init already regenerates the port token and takes the
+   // active client id, so it gains nothing by relocating the cookie.
    else
    {
       path = ptrConnection->request().proxiedUri();
       boost::algorithm::replace_all(path, ptrConnection->request().uri(), "");
       http::URL completePath(path);
       path = completePath.path();
+
+      path = http::util::cookiePathWithExternalPrefix(path, baseURL);
+   }
+
+   // Whichever branch produced it, the path is written into the Set-Cookie header without
+   // escaping, and the headers the server derives it from are no better validated than the
+   // JSON the client sends: rootPath() prefers the X-RStudio-Root-Path header, normalizes
+   // only the leading and trailing slash, and nothing strips an inbound copy of it. A path
+   // attribute smuggled through either would be emitted verbatim, and RFC 6265 takes the
+   // last one. Refuse anything unusable and retreat to the root path rserver passed on the
+   // command line, which no request can reach, rather than to the whole origin. Unlike the
+   // assistant auth cookie, this one cannot simply be withheld -- the IDE does not work
+   // without it.
+   if (!http::util::isValidCookiePath(path))
+   {
+      // options().rootPath() is the raw setting, and www-root-path may be written
+      // without a leading slash, so give it the same shape Request::rootPath()
+      // gives what it reads before judging it
+      std::string configuredRootPath =
+         http::util::normalizeRootPath(session::options().rootPath());
+
+      path = http::util::isValidCookiePath(configuredRootPath) ? configuredRootPath
+                                                               : kRequestDefaultRootPath;
+      LOG_WARNING_MESSAGE("Derived a " + std::string(kPortTokenCookie) + " cookie path that "
+            "cannot be used in a Set-Cookie header; check www-root-path and any reverse "
+            "proxy in front of this server. Scoping the cookie to " + path + " instead");
    }
 
    // create the cookie; don't set an expiry date as this will be a session cookie

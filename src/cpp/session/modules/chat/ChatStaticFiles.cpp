@@ -37,6 +37,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <session/SessionOptions.hpp>
+#include <session/SessionPersistentState.hpp>
 
 #include "../SessionThemes.hpp"
 
@@ -56,15 +57,24 @@ namespace {
 constexpr const char* kAiChatUriPrefix = "/ai-chat/";
 constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 
+// The same route without the trailing slash, which is the form that appears
+// in a path when it is followed by a segment boundary or ends the path.
+constexpr const char* kAiChatRoute = "/ai-chat";
+constexpr size_t kAiChatRouteLength = 8; // Length of "/ai-chat"
+
 // Chat backend port, set by SessionChat.cpp when the backend starts.
 // Used to build connect-src in the CSP header for desktop mode.
-// Atomic because it is written from the main thread and read from HTTP
-// handler threads.
 std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
 
 // Chat backend auth token, set by SessionChat.cpp when the backend starts.
 // In server mode, this is delivered to the PA client via an HTTP-only cookie
 // on the index.html response instead of as a URL query parameter.
+//
+// Both of these are only ever touched from the main session thread: uri
+// handlers are dispatched synchronously from handleConnection, not from a
+// pool of HTTP handler threads, and SessionChat sets them from the same
+// thread. The atomic and the mutex are belt and braces, and the mutex is not
+// what makes reading the token here safe.
 std::mutex s_authTokenMutex;
 std::string s_chatBackendAuthToken;
 
@@ -309,7 +319,171 @@ std::string buildCspHeader()
    return s_cachedCspHeader;
 }
 
+/**
+ * Find the "/ai-chat" route within a request path.
+ *
+ * The match is anchored at a path-segment boundary, so a root or session
+ * prefix that merely contains the route name -- www-root-path=/ai-chat-hub,
+ * say -- is not mistaken for the route itself and does not truncate the
+ * prefix at the wrong offset. The last whole-segment occurrence wins, since
+ * the route is the final segment of the URIs this module serves.
+ *
+ * @return Offset of the route, or std::string::npos if the path does not
+ *         contain it as a whole segment.
+ */
+size_t findAiChatRoute(const std::string& path)
+{
+   size_t pos = path.rfind(kAiChatRoute);
+   while (pos != std::string::npos)
+   {
+      size_t end = pos + kAiChatRouteLength;
+      if (end == path.length() || path[end] == '/')
+         return pos;
+
+      if (pos == 0)
+         break;
+      pos = path.rfind(kAiChatRoute, pos - 1);
+   }
+
+   return std::string::npos;
+}
+
+/**
+ * The session prefix the server believes it is serving this request under.
+ *
+ * That is the path of the proxied request URI with the "/ai-chat" route and
+ * everything after it removed, e.g. "/s/{id}/" or a configured root path,
+ * always ending in "/".
+ */
+std::string serverKnownPrefix(const std::string& proxiedUri)
+{
+   // URL::path() keeps the query string and fragment, which must go first:
+   // the IDE puts URLs in the query, and a literal "/ai-chat" there would
+   // otherwise be taken for the route
+   std::string prefix = http::URL(proxiedUri).path();
+   size_t cutPos = prefix.find_first_of("?#");
+   if (cutPos != std::string::npos)
+      prefix = prefix.substr(0, cutPos);
+
+   size_t routePos = findAiChatRoute(prefix);
+   if (routePos != std::string::npos)
+      prefix = prefix.substr(0, routePos);
+
+   if (prefix.empty())
+      return kRequestDefaultRootPath;
+   if (prefix.back() != '/')
+      prefix += "/";
+
+   return prefix;
+}
+
 } // anonymous namespace
+
+const char* const kClientBaseUrlParam = "clientBaseUrl";
+
+std::string authCookiePath(const std::string& proxiedUri,
+                           const std::string& clientBaseUrl,
+                           const std::string& activeClientUrl)
+{
+   std::string cookiePath = serverKnownPrefix(proxiedUri);
+
+   // proxiedUri is reconstructed from request headers, and nothing escapes
+   // the Set-Cookie header on the way out, so a derived path that could break
+   // out of that header -- or that the browser could never match -- must not
+   // be used at all. There is nothing narrower to retreat to here: scoping the
+   // token to the origin root would hand it to every application on the host,
+   // which is worse than the chat pane failing to connect.
+   if (!http::util::isValidCookiePath(cookiePath))
+   {
+      WLOG("Not setting the assistant auth cookie: the path derived from the "
+           "request headers cannot be used as a cookie path");
+      return std::string();
+   }
+
+   // A syntactically valid derived path is still only as trustworthy as the
+   // headers it came from: a co-hosted application able to set them could
+   // name its own route and have the token delivered there. Require the base
+   // this session reported at client_init to sit under the derived path --
+   // cookiePath starts with '/', so the suffix match lands on a segment
+   // boundary. Without a usable recorded base nothing authorizes the derived
+   // path, so there is no answer to give: client_init stores what the client
+   // sent without validating it, so an unusable one can coexist with a live
+   // token and must not be read as permission.
+   std::string reportedBase =
+      http::util::cookiePathFromClientBaseUrl(activeClientUrl);
+   if (reportedBase.empty())
+   {
+      WLOG("Not setting the assistant auth cookie: this session has not "
+           "reported a browser-visible base URL usable as a cookie path, so "
+           "nothing authorizes the path '{}' derived from the request headers",
+           cookiePath);
+      return std::string();
+   }
+   if (!boost::algorithm::ends_with(reportedBase, cookiePath))
+   {
+      WLOG("Not setting the assistant auth cookie: the path '{}' derived from "
+           "the request headers is not one this session is served under",
+           cookiePath);
+      return std::string();
+   }
+
+   // A clientBaseUrl that cannot be used as a cookie path is indistinguishable
+   // below from one that was never sent, and the deployments where it matters
+   // are exactly the ones that cannot connect without an external prefix, so
+   // say so rather than let #18621 recur silently.
+   if (!clientBaseUrl.empty() &&
+       http::util::cookiePathFromClientBaseUrl(clientBaseUrl).empty())
+   {
+      WLOG("The reported browser-visible base URL cannot be used as a cookie "
+           "path, so any external proxy prefix in it is being ignored; a "
+           "double slash in the base URL is the usual cause");
+   }
+
+   // recover any external proxy prefix from the browser-visible base URL
+   // reported by the IDE frontend, but only when the base recorded by the
+   // CSRF-protected client_init request agrees; the query string of this
+   // plain GET is attacker-settable on its own (see #18621)
+   std::string requested =
+      http::util::cookiePathWithExternalPrefix(cookiePath, clientBaseUrl);
+   std::string authorized =
+      http::util::cookiePathWithExternalPrefix(cookiePath, activeClientUrl);
+   if (requested == authorized)
+      return requested;
+
+   const char* reason =
+      clientBaseUrl.empty()
+         ? "the request carries no clientBaseUrl parameter, so it did not "
+           "come from the IDE frontend"
+         : "the reported base path disagrees with the one recorded during "
+           "session initialization";
+
+   // The reported base is not one this session has authenticated. Falling
+   // back to the server-known prefix is the right answer for the requester --
+   // a second tab connected by a different path needs it, and a crafted link
+   // is denied the route it asked for -- but only while that prefix is not
+   // the origin root. When it is, and the session itself reported something
+   // narrower, the fallback would be broader than any path this deployment
+   // uses, so decline instead.
+   if (cookiePath == std::string(kRequestDefaultRootPath) &&
+       authorized != std::string(kRequestDefaultRootPath))
+   {
+      WLOG("Not setting the assistant auth cookie: {}, and the server-known "
+           "path is the origin root, so the cookie would be shared with "
+           "every application on this host", reason);
+      return std::string();
+   }
+
+   WLOG("Scoping the assistant auth cookie to the server-known path '{}' "
+        "(this session reported '{}'): {}", cookiePath, authorized, reason);
+   return cookiePath;
+}
+
+bool isNoStoreExtension(const std::string& extension)
+{
+   return extension == ".html" || extension == ".htm" ||
+          extension == ".js" || extension == ".mjs" ||
+          extension == ".css";
+}
 
 std::string getContentType(const std::string& extension)
 {
@@ -422,15 +596,29 @@ Error handleAIChatRequest(const http::Request& request,
 
    // Parse requested path from URI
    // URI format: /ai-chat/<path>
-   std::string uri = request.uri();
-   size_t pos = uri.find(kAiChatUriPrefix);
-   if (pos == std::string::npos)
+   //
+   // Match on request.path(), which is the URI truncated at "?", and anchor
+   // the match at the start. The handler is registered for the bare "/ai-chat"
+   // prefix, so searching the whole URI let a request for "/ai-chat" serve a
+   // file named in its own query string, and let junk-suffixed spellings of
+   // the route ("/ai-chatXYZ/ai-chat/index.html") through. Both served real
+   // files, so any cache rule or WAF reasoning about the URI path saw
+   // something other than what was served.
+   std::string path = request.path();
+   if (!boost::starts_with(path, kAiChatUriPrefix))
    {
       pResponse->setStatusCode(http::status::BadRequest);
       return Success();
    }
 
-   std::string requestPath = uri.substr(pos + kAiChatUriPrefixLength);
+   std::string requestPath = path.substr(kAiChatUriPrefixLength);
+
+   // request.path() truncates at "?" but not at "#". Browsers never transmit
+   // a fragment, but strip it so that a hand-written request still resolves
+   // to a file instead of falling through to the client root directory.
+   size_t fragmentPos = requestPath.find('#');
+   if (fragmentPos != std::string::npos)
+      requestPath = requestPath.substr(0, fragmentPos);
 
    // Default to index.html
    if (requestPath.empty() || requestPath == "/")
@@ -461,8 +649,12 @@ Error handleAIChatRequest(const http::Request& request,
       return error;
    }
 
-   // Set content type
-   std::string extension = resolvedPath.getExtension();
+   // Set content type. Fold the case: on Windows realPath is the purely
+   // lexical GetFullPathNameW, which never reaches the filesystem and so does
+   // not correct the case of the requested name. An uppercase extension would
+   // otherwise miss every rule below, taking the long-lived cache branch and
+   // skipping the CSP header.
+   std::string extension = resolvedPath.getExtensionLowerCase();
 
    // For HTML files: set CSP header; inject theme info only into index.html
    if (extension == ".html" || extension == ".htm")
@@ -485,29 +677,27 @@ Error handleAIChatRequest(const http::Request& request,
             std::lock_guard<std::mutex> lock(s_authTokenMutex);
             if (!s_chatBackendAuthToken.empty())
             {
-               // Scope cookie to the session prefix (e.g. "/s/{id}/")
-               // so multi-session deployments don't collide. Extract
-               // the path from proxiedUri() and strip "/ai-chat" onward.
-               std::string cookiePath =
-                  http::URL(request.proxiedUri()).path();
-               std::string aiChatPrefix(kAiChatUriPrefix);
-               if (aiChatPrefix.back() == '/')
-                  aiChatPrefix.pop_back();
-               size_t aiChatPos = cookiePath.find(aiChatPrefix);
-               if (aiChatPos != std::string::npos)
-                  cookiePath = cookiePath.substr(0, aiChatPos);
-               if (cookiePath.empty())
-                  cookiePath = "/";
-               else if (cookiePath.back() != '/')
-                  cookiePath += "/";
-               LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
-                                 cookiePath + "'");
+               // Scope cookie to the browser-visible session prefix
+               // (e.g. "/s/{id}/") so multi-session deployments don't
+               // collide and unknown proxy prefixes are preserved.
+               std::string cookiePath = authCookiePath(
+                  request.proxiedUri(),
+                  request.queryParamValue(kClientBaseUrlParam),
+                  persistentState().activeClientUrl());
 
-               http::Cookie cookie(
-                  request, "posit-assistant-auth", s_chatBackendAuthToken,
-                  cookiePath, options().sameSite(), true /* httpOnly */,
-                  options().useSecureCookies());
-               pResponse->addCookie(cookie);
+               // an empty path means no path can be scoped safely for this
+               // request; authCookiePath has already logged why
+               if (!cookiePath.empty())
+               {
+                  LOG_DEBUG_MESSAGE("Cookie path for posit-assistant-auth: '" +
+                                    cookiePath + "'");
+
+                  http::Cookie cookie(
+                     request, "posit-assistant-auth", s_chatBackendAuthToken,
+                     cookiePath, options().sameSite(), true /* httpOnly */,
+                     options().useSecureCookies());
+                  pResponse->addCookie(cookie);
+               }
             }
          }
       }
@@ -515,10 +705,12 @@ Error handleAIChatRequest(const http::Request& request,
    }
    pResponse->setContentType(getContentType(extension));
 
-   // Set caching headers
-   if (boost::ends_with(requestPath, kIndexFileName) ||
-       boost::ends_with(requestPath, ".js") ||
-       boost::ends_with(requestPath, ".css"))
+   // Set caching headers, classifying by the resolved file rather than by the
+   // requested path. The request path is URL-decoded during resolution, so a
+   // request for "%69ndex.html" resolves to index.html and is served the auth
+   // token cookie; classifying by the raw path would then miss the no-store
+   // rule and invite shared caches to store that response.
+   if (isNoStoreExtension(extension))
    {
       // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
       // Use multiple headers to ensure cache is disabled across all browsers and proxies
@@ -526,7 +718,7 @@ Error handleAIChatRequest(const http::Request& request,
       pResponse->setHeader("Pragma", "no-cache");  // HTTP/1.0 compatibility
       pResponse->setHeader("Expires", "0");        // Proxy cache control
    }
-   else if (requestPath.find(".") != std::string::npos)
+   else if (!extension.empty())
    {
       // Cache other assets like images, fonts, etc.
       pResponse->setHeader("Cache-Control", "public, max-age=31536000");

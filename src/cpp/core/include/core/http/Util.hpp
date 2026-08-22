@@ -189,6 +189,52 @@ bool isSslCertificateVerifyFailedError(const rstudio::core::Error& error);
 std::string addQueryParam(const std::string& uri,
                           const std::string& queryParam);
 
+// Give a root path the shape the rest of the server expects: a leading
+// slash and no trailing one, unless it is literally "/". Request::rootPath()
+// applies this to whatever it reads; anything reading the configured value
+// directly needs the same treatment before the two can be compared or used
+// interchangeably.
+std::string normalizeRootPath(const std::string& rootPath);
+
+// Is this string usable as the Path attribute of a Set-Cookie header?
+// Requires an origin-absolute path made only of characters that cannot break
+// out of the header (no CTLs -- including CR/LF -- and no space, ';', ',',
+// '\', '?', '#', or non-ASCII), and with no "//", "." or ".." segments. A
+// browser compares the path against a request path whose dot segments have
+// already been removed, so "." and ".." could never match; an empty segment
+// would match, but only ever arrives from something upstream that failed to
+// normalize, so it is refused as well. Use this before putting any
+// client-reported value in a cookie path.
+bool isValidCookiePath(const std::string& path);
+
+// The path component of a base URL reported by the client, normalized to a
+// single trailing slash, or empty when there is none or it could not be used
+// as a cookie path. Accepts an absolute URL or an origin-absolute path.
+// Use this to compare a client-reported base against a server-derived cookie
+// path: a base that does not end with that path is not one the session is
+// served under.
+std::string cookiePathFromClientBaseUrl(const std::string& clientBaseUrl);
+
+// Prefix a server-derived cookie path with an external proxy prefix reported
+// by the client. When the browser reaches the server through a path-prefixing
+// reverse proxy the server was never told about, the browser-visible path is
+// <prefix> + <serverPath>; a cookie scoped to serverPath alone is then never
+// sent. clientBaseUrl is the client's own view of its base URL (absolute URL
+// or origin-absolute path). If its path ends with serverPath, the external
+// prefix is prepended to serverPath (preserving serverPath's exact trailing
+// slash style); in every other case -- including when the two paths are equal,
+// when clientBaseUrl is empty or malformed, when it fails isValidCookiePath,
+// or when serverPath is not itself origin-absolute -- serverPath is returned
+// unchanged, so deployments without an unknown prefix keep byte-identical
+// cookie paths.
+//
+// The result is never broader than serverPath, but it is a sibling subtree
+// rather than a subpath of it, so callers must trust clientBaseUrl: a caller
+// that accepts it from an unauthenticated source lets a crafted value scope
+// the cookie to a route of the attacker's choosing on the same host.
+std::string cookiePathWithExternalPrefix(const std::string& serverPath,
+                                         const std::string& clientBaseUrl);
+
 } // namespace util
 
 } // namespace http

@@ -49,6 +49,20 @@ namespace staticfiles {
  */
 std::string getContentType(const std::string& extension);
 
+/**
+ * Should a response serving a file with this extension be kept out of caches?
+ *
+ * True for HTML, JavaScript, and CSS: these change with each Posit Assistant
+ * build, and the index.html response also carries the assistant auth token
+ * cookie, which must never be stored by a shared cache. Callers must pass the
+ * extension of the *resolved* file -- the requested path is URL-decoded during
+ * resolution, so it can spell the same file in more than one way.
+ *
+ * @param extension File extension including the dot (e.g., ".html")
+ * @return true if the response should be served no-store
+ */
+bool isNoStoreExtension(const std::string& extension);
+
 // ============================================================================
 // Path Validation
 // ============================================================================
@@ -70,6 +84,71 @@ std::string getContentType(const std::string& extension);
 core::Error validateAndResolvePath(const core::FilePath& clientRoot,
                                    const std::string& requestPath,
                                    core::FilePath* pResolvedPath);
+
+// ============================================================================
+// Auth Cookie Path
+// ============================================================================
+
+/**
+ * Query parameter carrying the browser-visible base URL.
+ *
+ * Added to the chat iframe URL by the IDE frontend in server mode -- see
+ * loadChatUI() in ChatPresenter.java, which must spell this name identically.
+ * It lets the auth cookie path include a proxy prefix the server was never
+ * told about. Nothing ties the two spellings together at build time, so a
+ * typo on either side leaves the parameter arriving empty.
+ */
+extern const char* const kClientBaseUrlParam;
+
+/**
+ * Compute the Path attribute for the posit-assistant-auth cookie.
+ *
+ * The cookie is scoped to the session prefix (e.g. "/s/{id}/" or the
+ * configured root path) so multi-session deployments don't collide. The
+ * server-known prefix is taken from proxiedUri with "/ai-chat" onward
+ * stripped, matching the route only at a path-segment boundary so that a
+ * root path which contains the route name (www-root-path=/ai-chat-hub) is
+ * not truncated at the wrong offset. When the browser reaches the server
+ * through a path-prefixing
+ * reverse proxy the server was never told about, that prefix is recovered
+ * from the client-reported base URL (the clientBaseUrl query parameter added
+ * by the IDE frontend).
+ *
+ * This request is a plain GET, so its query string is not trusted on its own:
+ * a crafted link could otherwise scope the auth token to an attacker's route
+ * on the same host. clientBaseUrl is honored only when it yields the same
+ * path as activeClientUrl -- the base recorded by the CSRF-protected
+ * client_init request, which an attacker cannot set.
+ *
+ * Keeping the value request-scoped means the cookie is scoped to the path the
+ * requesting tab actually uses, rather than to whichever tab initialized the
+ * session last. activeClientUrl records only the most recent client_init, so
+ * when two IDE tabs reach the server by different external paths, the tab that
+ * did not initialize last falls back to the server-known prefix and its chat
+ * cannot connect -- a fallback that is wrong for nobody rather than a cookie
+ * scoped to a path the requesting tab never uses.
+ *
+ * Returns empty when no path can be scoped safely, in which case the caller
+ * must not set the cookie: proxiedUri yielded something unusable in a
+ * Set-Cookie header, or a path the session is not served under (it is built
+ * from request headers, which a co-hosted application could set), or
+ * activeClientUrl is missing or unusable and so authorizes nothing, or the
+ * fallback described above would be the origin root while the session
+ * reported something narrower, which would share the token with every
+ * application on the host. All of them are logged.
+ *
+ * @param proxiedUri The server's view of the request URL (request.proxiedUri())
+ * @param clientBaseUrl The browser-visible base URL reported by the IDE
+ *                      frontend, or empty if not provided
+ * @param activeClientUrl The base URL recorded at client_init
+ *                        (persistentState().activeClientUrl())
+ * @return Cookie path ending with "/", or empty if the cookie must not be
+ *         set; equals the server-known prefix unless both reported base URLs
+ *         agree on an external prefix
+ */
+std::string authCookiePath(const std::string& proxiedUri,
+                           const std::string& clientBaseUrl,
+                           const std::string& activeClientUrl);
 
 // ============================================================================
 // HTTP Request Handler
