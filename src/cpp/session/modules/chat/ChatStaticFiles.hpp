@@ -109,7 +109,9 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  * For the browser to send this cookie, the path the server derives has to
  * match the path the browser sees. Behind a path-prefixing reverse proxy that
  * means telling the server about the prefix, with www-root-path or the
- * X-RStudio-Root-Path header (see #18621).
+ * X-RStudio-Root-Path header (see #18621). A proxy sending that header has to
+ * set it rather than forward one: the server takes the first value it sees
+ * and prefers it over www-root-path, so an inbound copy would win.
  *
  * @param proxiedUri The server's view of the request URL (request.proxiedUri())
  * @return Cookie path ending with "/", or empty if the cookie must not be set

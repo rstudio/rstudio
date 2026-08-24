@@ -173,7 +173,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // Behind a path-prefixing reverse proxy the server has not been told about, it will not be:
    // proxiedUri cannot contain a prefix nothing reported. Set www-root-path to the full
    // browser-visible prefix, or have the proxy send it in X-RStudio-Root-Path, which also
-   // covers a prefix that varies per session (see #18621).
+   // covers a prefix that varies per session (see #18621). A proxy sending that header has to
+   // set it rather than forward one: rootPath() takes the first value it sees and prefers it
+   // over www-root-path, so an inbound copy would win.
    else
    {
       path = ptrConnection->request().proxiedUri();
