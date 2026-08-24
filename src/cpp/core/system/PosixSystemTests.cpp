@@ -23,6 +23,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstring>
 #include <limits>
 
 #include <boost/asio/ip/address.hpp>
@@ -32,6 +34,7 @@
 
 #include <core/Thread.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/PosixChildProcessTracker.hpp>
 #include <core/system/PosixGroup.hpp>
 
 #include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
@@ -894,6 +897,50 @@ TEST(PosixTests, IsProcessRunningDetectsLiveAndDeadProcesses)
 
    // a pid no process can have reports not running
    EXPECT_FALSE(isProcessRunning(std::numeric_limits<pid_t>::max()));
+}
+
+TEST(PosixTests, ChildProcessTrackerReapsChildThatExitedBeforeRegistration)
+{
+   pid_t pid = ::fork();
+   ASSERT_NE(-1, pid);
+
+   if (pid == 0)
+      ::_exit(42);
+
+   // Observe the exit without reaping it. This reproduces the rserver race
+   // where SIGCHLD is handled before the launched rsession pid is registered.
+   siginfo_t childInfo;
+   ::memset(&childInfo, 0, sizeof(childInfo));
+   int result;
+   do
+   {
+      result = ::waitid(P_PID, pid, &childInfo, WEXITED | WNOWAIT);
+   }
+   while (result == -1 && errno == EINTR);
+   ASSERT_EQ(0, result);
+   ASSERT_EQ(pid, childInfo.si_pid);
+
+   bool exitHandled = false;
+   int exitStatus = -1;
+   ChildProcessTracker tracker;
+   tracker.addProcess(pid, [&](PidType reapedPid, int status)
+   {
+      EXPECT_EQ(pid, reapedPid);
+      exitHandled = true;
+      exitStatus = status;
+   });
+
+   EXPECT_TRUE(exitHandled);
+
+   // Keep the child from leaking if the assertion above regresses.
+   tracker.notifySIGCHILD();
+
+   ASSERT_TRUE(WIFEXITED(exitStatus));
+   EXPECT_EQ(42, WEXITSTATUS(exitStatus));
+
+   errno = 0;
+   EXPECT_EQ(-1, ::waitpid(pid, nullptr, WNOHANG));
+   EXPECT_EQ(ECHILD, errno);
 }
 
 } // namespace tests
