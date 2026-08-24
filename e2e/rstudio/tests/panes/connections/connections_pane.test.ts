@@ -28,7 +28,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { executeCommand } from '@utils/commands';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { CONNECTIONS_PANEL, NEW_CONNECTION_BTN } from '@pages/connections_pane.page';
-import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
+import { ALL_DB_TARGETS, effectiveTarget, resolveRemoteFileTarget } from '@utils/db-targets';
 import {
   dbAvailability,
   dbReachableFromSession,
@@ -78,6 +78,7 @@ for (const base of ALL_DB_TARGETS) {
     let consoleActions: ConsolePaneActions;
 
     test.beforeAll(async ({ rstudioPage: page }) => {
+      resolveRemoteFileTarget(target);
       consoleActions = new ConsolePaneActions(page);
     });
 

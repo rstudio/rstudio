@@ -12,7 +12,7 @@ import { YES_BTN } from '@pages/modals.page';
 import { executeCommand } from '@utils/commands';
 import { closeAndDeleteSandboxFiles, writeAndOpenFile } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
+import { ALL_DB_TARGETS, effectiveTarget, resolveRemoteFileTarget } from '@utils/db-targets';
 import { restartSessionWithSentinel } from '@utils/project';
 import {
   dbAvailability,
@@ -33,6 +33,7 @@ for (const base of ALL_DB_TARGETS) {
     let seedFailureDetail = '';
 
     test.beforeAll(async ({ rstudioPage: page }) => {
+      resolveRemoteFileTarget(target);
       actions = new ConnectionsPaneActions(page);
       consoleActions = new ConsolePaneActions(page);
       driverVisible = await driverVisibleInSession(page, target);

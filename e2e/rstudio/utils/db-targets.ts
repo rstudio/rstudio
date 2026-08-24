@@ -419,33 +419,6 @@ export function wizardSnippet(t: EffectiveDbTarget): string {
 }
 
 /**
- * The absolute directory provisionRemoteOdbcSandbox (utils/connections.ts)
- * resolved and created in-session for file-kind target `id`'s database, or
- * null if that step hasn't run (not a server-mode run needing it) or didn't
- * cover this target (its driver wasn't found remotely either).
- *
- * Read directly from the status file connections.ts writes
- * (remote-odbc-status.json), rather than through that module's own
- * readRemoteOdbcStatus, to avoid a circular import: connections.ts already
- * imports effectiveTarget from this file.
- */
-function remoteFileDatabaseDir(sandbox: string, id: string): string | null {
-  let raw: string;
-  try {
-    raw = fs.readFileSync(path.join(sandbox, 'remote-odbc-status.json'), 'utf-8');
-  } catch {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(raw) as { fileDatabases?: Record<string, unknown> };
-    const dir = parsed.fileDatabases?.[id];
-    return typeof dir === 'string' ? dir : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Apply the PW_DB_<ID> override, if present, to a target. Malformed override
  * text throws: a typo should surface immediately, not as a connect failure.
  */
@@ -460,16 +433,10 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
   // with that reason, rather than the driver creating a file somewhere
   // unexpected.
   //
-  // The sandbox-relative path only works when the test session shares a
-  // filesystem AND a user with this test runner -- true for Desktop and a
-  // locally-spawned rserver-dev, false for a CI same-machine installed
-  // server or a genuinely external one, which run rsessions as a different
-  // (possibly remote) user. For those, provisionRemoteOdbcSandbox creates
-  // the database directory in-session and records where it landed; prefer
-  // that when it exists.
+  // This is only ever the LOCAL sandbox path -- see resolveRemoteFileTarget
+  // for why the remote-session case can't be resolved here.
   if (target.kind === 'file') {
     const sandbox = process.env.PW_SANDBOX;
-    const remoteDir = sandbox ? remoteFileDatabaseDir(sandbox, target.id) : null;
     // Forward slashes, on every platform. This path is typed into the wizard's
     // Database field, and the wizard interpolates it verbatim into the R code
     // it generates. A Windows path's backslashes are escape sequences there:
@@ -477,16 +444,12 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
     // invalid, so the generated dbConnect() call either fails to parse or opens
     // some other file -- while the code panel still *looks* right, which is why
     // the wizard specs passed and only the connecting ones failed. R, SQLite
-    // and the ODBC driver all accept forward slashes on Windows. remoteDir is
-    // already an absolute path resolved on a Linux machine (RStudio Server is
-    // Linux-only), so it needs no such normalization.
+    // and the ODBC driver all accept forward slashes on Windows.
     const database = raw
       ? raw.trim()
-      : remoteDir
-        ? `${remoteDir}/${target.fileName}`
-        : sandbox
-          ? path.join(sandbox, 'db', target.id, target.fileName).split(path.sep).join('/')
-          : '';
+      : sandbox
+        ? path.join(sandbox, 'db', target.id, target.fileName).split(path.sep).join('/')
+        : '';
     return {
       ...target,
       overridden: !!raw,
@@ -519,6 +482,72 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
     Password: result.password,
   };
   return result;
+}
+
+/**
+ * Point a file-kind target's database at the directory
+ * provisionRemoteOdbcSandbox (utils/connections.ts) resolved and created
+ * in-session, if this is a server-mode run where the session isn't this test
+ * runner's own filesystem (a CI same-machine installed server, or a
+ * genuinely external one). Does nothing otherwise: an override already won,
+ * there's no sandbox, or that provisioning step never covered this target
+ * (its driver wasn't found remotely either), all of which leave
+ * effectiveTarget's local sandbox path as the right answer.
+ *
+ * Must be called at test-EXECUTION time (a beforeAll, before anything that
+ * reads target.database or target.wizardFields), never at module scope.
+ * effectiveTarget(), by contrast, runs during Playwright's test COLLECTION
+ * phase -- every spec file is imported up front to build the run's test
+ * list, before any project (including the "provision remote ODBC drivers"
+ * setup project that writes this status) actually executes. A module-scope
+ * lookup here would always see "nothing provisioned yet" and silently fall
+ * back to the local path, regardless of what the real run does later.
+ *
+ * Mutates `target` in place rather than returning a new object: every
+ * closure in the describe block (test bodies, other beforeAll/beforeEach
+ * hooks) already captured this exact object when effectiveTarget() built it,
+ * and none of them re-fetch it, so an in-place correction is what they all
+ * see.
+ */
+export function resolveRemoteFileTarget(target: EffectiveDbTarget): void {
+  if (target.kind !== 'file' || target.overridden) return;
+  const sandbox = process.env.PW_SANDBOX;
+  const remoteDir = sandbox ? remoteFileDatabaseDir(sandbox, target.id) : null;
+  if (!remoteDir) return;
+  // remoteDir is an absolute path already resolved (path.expand()ed) on a
+  // Linux machine -- RStudio Server is Linux-only -- so no Windows-style
+  // backslash normalization is needed here the way effectiveTarget's local
+  // branch needs for a Windows dev machine's own sandbox path.
+  const database = `${remoteDir}/${target.fileName}`;
+  target.database = database;
+  target.wizardFields = { Database: database };
+}
+
+/**
+ * The absolute directory provisionRemoteOdbcSandbox (utils/connections.ts)
+ * resolved and created in-session for file-kind target `id`'s database, or
+ * null if that step hasn't run (not a server-mode run needing it) or didn't
+ * cover this target (its driver wasn't found remotely either).
+ *
+ * Read directly from the status file connections.ts writes
+ * (remote-odbc-status.json), rather than through that module's own
+ * readRemoteOdbcStatus, to avoid a circular import: connections.ts already
+ * imports effectiveTarget from this file.
+ */
+function remoteFileDatabaseDir(sandbox: string, id: string): string | null {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(path.join(sandbox, 'remote-odbc-status.json'), 'utf-8');
+  } catch {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { fileDatabases?: Record<string, unknown> };
+    const dir = parsed.fileDatabases?.[id];
+    return typeof dir === 'string' ? dir : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -11,7 +11,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConnectionsPaneActions } from '@actions/connections_pane.actions';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
-import { ALL_DB_TARGETS, connectionDisplayName, effectiveTarget } from '@utils/db-targets';
+import { ALL_DB_TARGETS, connectionDisplayName, effectiveTarget, resolveRemoteFileTarget } from '@utils/db-targets';
 import {
   dbAvailability,
   drainKnownExplorerException,
@@ -36,6 +36,7 @@ for (const base of ALL_DB_TARGETS) {
     let driverVisible = false;
 
     test.beforeAll(async ({ rstudioPage: page }) => {
+      resolveRemoteFileTarget(target);
       actions = new ConnectionsPaneActions(page);
       consoleActions = new ConsolePaneActions(page);
       driverVisible = await driverVisibleInSession(page, target);

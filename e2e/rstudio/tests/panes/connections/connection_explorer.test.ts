@@ -7,7 +7,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConnectionsPaneActions } from '@actions/connections_pane.actions';
-import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
+import { ALL_DB_TARGETS, effectiveTarget, resolveRemoteFileTarget } from '@utils/db-targets';
 import { restartSessionWithSentinel } from '@utils/project';
 import {
   dbAvailability,
@@ -26,6 +26,7 @@ for (const base of ALL_DB_TARGETS) {
     let seedFailureDetail = '';
 
     test.beforeAll(async ({ rstudioPage: page }) => {
+      resolveRemoteFileTarget(target);
       actions = new ConnectionsPaneActions(page);
       driverVisible = await driverVisibleInSession(page, target);
       if (driverVisible && dbAvailability(target).ok) {

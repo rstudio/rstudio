@@ -11,7 +11,7 @@
 
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConnectionsPaneActions } from '@actions/connections_pane.actions';
-import { ALL_DB_TARGETS, effectiveTarget } from '@utils/db-targets';
+import { ALL_DB_TARGETS, effectiveTarget, resolveRemoteFileTarget } from '@utils/db-targets';
 import { driverVisibleInSession } from '@utils/connections';
 
 for (const base of ALL_DB_TARGETS) {
@@ -22,6 +22,7 @@ for (const base of ALL_DB_TARGETS) {
     let driverVisible = false;
 
     test.beforeAll(async ({ rstudioPage: page }) => {
+      resolveRemoteFileTarget(target);
       actions = new ConnectionsPaneActions(page);
       driverVisible = await driverVisibleInSession(page, target);
     });
