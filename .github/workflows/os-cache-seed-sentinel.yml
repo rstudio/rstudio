@@ -35,10 +35,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # Only for dependencies/tools/rstudio-tools.sh, which carries the R pin
+      # the os-e2e-deps cache prefixes below are derived from. Sparse so this
+      # stays a seconds-long job -- it otherwise touches no working tree.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 1
+          sparse-checkout: dependencies/tools/rstudio-tools.sh
+          sparse-checkout-cone-mode: false
+
       - name: Re-seed platforms whose main caches were evicted
         env:
           GH_TOKEN: ${{ github.token }}
-          # No checkout in this job; gh needs the repo set explicitly.
+          # gh is run against the repo rather than the sparse working tree.
           GH_REPO: ${{ github.repository }}
         run: |
           # One line per seed workflow: <workflow-file>=<cache-key prefixes>.
@@ -52,18 +61,26 @@ jobs:
           # The os-cache-seed-e2e-deps.yml prefixes are the os-e2e-deps cache
           # keys the PR orchestrator's e2e jobs read: <CACHE_OS>-{r,pak}-<R
           # major.minor>- plus the R-version-independent <CACHE_OS>-pw-
-          # browser keys. The 4.5 in the r/pak prefixes tracks the R version
-          # the PR orchestrator pins (os-test-e2e-rstudio-pr.yml r_version,
-          # currently 4.5.3) as resolved to major.minor -- when that pin is
-          # bumped, bump these prefixes and the seed's R_VERSION together.
-          CHECKS='
+          # browser keys. The major.minor is derived from the same
+          # RSTUDIO_R_VERSION the seed and the PR jobs install, so bumping R is
+          # still one line in rstudio-tools.sh and this audit follows it.
+          R_MM=$(sed -n 's/^export RSTUDIO_R_VERSION="\([0-9]*\.[0-9]*\).*"$/\1/p' \
+            dependencies/tools/rstudio-tools.sh | tail -1)
+          if [ -z "$R_MM" ]; then
+            echo "::error::Could not read RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh."
+            exit 1
+          fi
+          echo "Auditing os-e2e-deps caches for R $R_MM"
+
+          # Double-quoted so $R_MM expands; nothing else in here uses $.
+          CHECKS="
           os-cache-seed-e2e-rstudio-desktop-os-ubuntu-24.yml=rstudio-tools-linux-x86_64- rstudio-build-rlibs-linux-x86_64- rstudio-gwt-linux-desktop-x86_64-
           os-cache-seed-e2e-rstudio-server-os-ubuntu-24.yml=rstudio-gwt-linux-x86_64-
           os-cache-seed-e2e-macos-26-arm64.yml=rstudio-tools-arm64- rstudio-build-rlibs-arm64- rstudio-gwt-arm64-
           os-cache-seed-e2e-macos-15-x86_64.yml=rstudio-tools-x86_64- rstudio-build-rlibs-x86_64- rstudio-gwt-x86_64-
           os-cache-seed-e2e-rstudio-desktop-os-windows-server-2025.yml=rstudio-tools-win64- rstudio-gwt-win64-
-          os-cache-seed-e2e-deps.yml=Windows-r-4.5- Windows-pak-4.5- Windows-pw- macOS-macos26-arm64-r-4.5- macOS-macos26-arm64-pak-4.5- macOS-macos26-arm64-pw- Linux-noble-amd64-r-4.5- Linux-noble-amd64-pak-4.5- Linux-noble-amd64-pw- Linux-r-4.5- Linux-pak-4.5- Linux-pw-
-          '
+          os-cache-seed-e2e-deps.yml=Windows-r-$R_MM- Windows-pak-$R_MM- Windows-pw- macOS-macos26-arm64-r-$R_MM- macOS-macos26-arm64-pak-$R_MM- macOS-macos26-arm64-pw- Linux-noble-amd64-r-$R_MM- Linux-noble-amd64-pak-$R_MM- Linux-noble-amd64-pw- Linux-r-$R_MM- Linux-pak-$R_MM- Linux-pw-
+          "
 
           FAILED=0
           while IFS= read -r LINE; do

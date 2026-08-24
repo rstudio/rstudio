@@ -80,6 +80,17 @@ fi
 # version of go used for building
 export WORKBENCH_GO_VERSION="1.24.5"
 
+# version of R the end-to-end CI workflows install and test against
+#
+# This is the single source for that pin: the GitHub Actions workflows leave
+# their r_version input empty and let .github/actions/os-install-r-* read the
+# value from here, so bumping R is this one line rather than a sweep.
+#
+# When changing this you must first mirror the corresponding installers to aws
+# s3; use rstudio/dependencies/tools/upload-r.sh. Nothing outside CI reads it --
+# a local build uses whatever R is on your PATH.
+export RSTUDIO_R_VERSION="4.6.1"
+
 
 # Initialize ----
 

@@ -1,0 +1,173 @@
+name: "Install R (Windows)"
+description: >
+  Install a pinned R version on a Windows runner from the RStudio Build Tools
+  (rstudio-buildtools) S3 bucket. Replaces rig, which was a recurring CI flake
+  source: every `rig add` reached out to GitHub's API and to CRAN at job time,
+  so any hiccup at either failed a job that had nothing to do with R. The
+  mirrored installer is a byte-identical copy of the same CRAN .exe (see
+  dependencies/tools/upload-r.sh), fetched in one unauthenticated GET from a
+  bucket the build already depends on.
+
+  r-version has to be an exact X.Y.Z: the mirror is addressed by version, so
+  there is nothing for an alias like "release" to resolve against.
+
+inputs:
+  r-version:
+    description: >-
+      Exact R version to install, as X.Y.Z. Leave empty to take
+      RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is where
+      the version CI tests against is pinned -- pass a value only to test against
+      something other than that pin. Aliases such as "release" or "devel" are not
+      supported; see dependencies/tools/upload-r.sh for mirroring a version that
+      isn't in the bucket yet.
+    required: false
+    default: ""
+  base-url:
+    description: >-
+      Root of the mirrored R installers. Empty derives it from RSTUDIO_BUILDTOOLS
+      in dependencies/tools/rstudio-tools.sh.
+    required: false
+    default: ""
+
+outputs:
+  r-home:
+    description: "Directory R was installed into (the R.home() of the install)."
+    value: ${{ steps.install.outputs.r-home }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install R from rstudio-buildtools
+      id: install
+      shell: pwsh
+      env:
+        R_VERSION: ${{ inputs.r-version }}
+        BASE_URL: ${{ inputs.base-url }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $ProgressPreference = 'SilentlyContinue'
+
+        # rstudio-tools.sh, not its .cmd twin: one file is the pin's home, and
+        # the .sh is plain text a Windows runner reads just as easily. The same
+        # Select-String shape the yarn step already uses for RSTUDIO_NODE_VERSION.
+        $toolsFile = Join-Path $env:GITHUB_WORKSPACE 'dependencies\tools\rstudio-tools.sh'
+        function Read-Pin([string] $name) {
+          # Array-wrapped and last-wins, mirroring the `| tail -1` the Unix
+          # action uses: a single match would otherwise index differently from
+          # several, and a redefinition later in the file should win.
+          $m = @(Select-String -Path $toolsFile -Pattern ('^export {0}="(.*)"$' -f $name))
+          if ($m.Count -eq 0) {
+            return ''
+          }
+          return $m[-1].Matches[0].Groups[1].Value.Trim()
+        }
+
+        if (-not $env:R_VERSION -or -not $env:BASE_URL) {
+          if (-not (Test-Path $toolsFile)) {
+            Write-Error "$toolsFile not found, so the R pin cannot be resolved. The repo must be checked out before this action runs."
+            exit 1
+          }
+        }
+
+        if (-not $env:R_VERSION) {
+          $env:R_VERSION = Read-Pin 'RSTUDIO_R_VERSION'
+          if (-not $env:R_VERSION) {
+            Write-Error "No r-version given and RSTUDIO_R_VERSION is not set in $toolsFile."
+            exit 1
+          }
+          Write-Host "Using the repo's R pin: RSTUDIO_R_VERSION=$env:R_VERSION"
+        }
+
+        if (-not $env:BASE_URL) {
+          $buildtools = Read-Pin 'RSTUDIO_BUILDTOOLS'
+          if (-not $buildtools) {
+            Write-Error "No base-url given and RSTUDIO_BUILDTOOLS is not set in $toolsFile."
+            exit 1
+          }
+          $env:BASE_URL = "$buildtools/R"
+        }
+
+        if ($env:R_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+          Write-Error "r-version must be an exact X.Y.Z version, got '$env:R_VERSION'."
+          exit 1
+        }
+
+        $asset = "R-$env:R_VERSION-windows-x86_64.exe"
+        $url = "$env:BASE_URL/$env:R_VERSION/$asset"
+        $installer = Join-Path $env:RUNNER_TEMP $asset
+
+        Write-Host "Downloading $url"
+        try {
+          Invoke-WebRequest -Uri $url -OutFile $installer -MaximumRetryCount 5 -RetryIntervalSec 10
+        } catch {
+          Write-Error "Could not download $url. If R $env:R_VERSION is newly pinned, mirror it first with dependencies/tools/upload-r.sh $env:R_VERSION windows-x86_64."
+          exit 1
+        }
+
+        # R's Windows installer is Inno Setup, so /VERYSILENT runs it headless
+        # and /DIR chooses where it lands. Pinning the directory (rather than
+        # taking the default and asking the installed R where it put itself)
+        # keeps the location knowable before R is on PATH -- which is what the
+        # r-home output and the CMake junction downstream need. No spaces in
+        # the path, so nothing downstream has to quote it.
+        $rHome = "C:\R\R-$env:R_VERSION"
+        $p = Start-Process -FilePath $installer `
+          -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=$rHome" `
+          -Wait -PassThru
+
+        # 3010 is Inno's "installed, wants a reboot"; nothing here needs one.
+        if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) {
+          Write-Error "R installer exited $($p.ExitCode)"
+          exit 1
+        }
+
+        Remove-Item $installer -Force
+
+        $rBin = Join-Path $rHome 'bin\x64'
+        $rExe = Join-Path $rBin 'R.exe'
+        $rScript = Join-Path $rBin 'Rscript.exe'
+        if (-not (Test-Path $rExe) -or -not (Test-Path $rScript)) {
+          Write-Error "R.exe or Rscript.exe not found under $rBin after installing $asset"
+          exit 1
+        }
+
+        # RStudio Desktop finds R by reading SOFTWARE\R-core\R (and enumerating
+        # its per-version subkeys) -- see searchRegistryForDefaultInstallationOfR
+        # in src/node/desktop/src/native/desktop/desktop.cc. The installer
+        # records these itself, but the runner image ships its own registered R,
+        # so write them explicitly: whichever R this action installed is the one
+        # the tests must get.
+        foreach ($root in 'R', 'R64') {
+          $base = "HKLM:\SOFTWARE\R-core\$root"
+          $versioned = "$base\$env:R_VERSION"
+          New-Item -Path $base -Force | Out-Null
+          New-Item -Path $versioned -Force | Out-Null
+          New-ItemProperty -Path $base -Name 'InstallPath' -Value $rHome -PropertyType String -Force | Out-Null
+          New-ItemProperty -Path $base -Name 'Current Version' -Value $env:R_VERSION -PropertyType String -Force | Out-Null
+          New-ItemProperty -Path $versioned -Name 'InstallPath' -Value $rHome -PropertyType String -Force | Out-Null
+        }
+
+        # RStudio honors RSTUDIO_WHICH_R before consulting either HKCU or HKLM.
+        # Pin later steps to this executable so a per-user registration on the
+        # runner cannot shadow the R this action installed.
+        "RSTUDIO_WHICH_R=$rExe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+        # Prepend rather than append: windows-2025 ships its own R, and an
+        # append would leave that one resolving first.
+        Write-Host "Prepending R bin to PATH: $rBin"
+        $rBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+        # Confirm the install really is the version that was asked for; the
+        # runner's pre-installed R makes "an R answers" prove nothing.
+        $installed = (& $rScript --vanilla -e "cat(paste(R.version`$major, R.version`$minor, sep = '.'))").Trim()
+        Write-Host "Installed R: $installed (from $asset) at $rHome"
+        if ($installed -ne $env:R_VERSION) {
+          Write-Error "Requested R $env:R_VERSION but the install at $rHome reports $installed."
+          exit 1
+        }
+
+        "r-home=$rHome" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+        if ($env:R_LIBS_USER) {
+          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
+        }

@@ -27,4 +27,3 @@ jobs:
       os: ubuntu-24-x86_64
       arch: x86_64
       project: desktop
-      r_version: "release"
