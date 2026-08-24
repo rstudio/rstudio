@@ -31,9 +31,8 @@ var $hierarchicalSectionFolding = true;
 var reSectionDelimChars = require("mode/r_highlight_rules").reSectionDelimChars;
 var reSectionLabelStart = new RegExp("[^" + reSectionDelimChars + "\\s]", "u");
 var reSectionLabelTail = new RegExp("\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
-var reSectionDelimsOnly = new RegExp("^\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
 var reSectionTrailingTail = new RegExp("[" + reSectionDelimChars + "]+\\s*$", "u");
-var reSectionBannerTail = /#+\s*$/;
+var reSectionTrailingHashes = /(#+)\s*$/;
 var reSectionLeadingHashes = /^\s*(#+)/;
 
 // Infer the heading level of a section header from its leading '#' run,
@@ -45,21 +44,18 @@ var reSectionLeadingHashes = /^\s*(#+)/;
 //   - a header with no label is a bar, e.g. "##########" or "#### ====";
 //     its width says nothing about how deeply the file is nested;
 //
-//   - a header whose label is closed off by a run of '#' is a banner,
-//     e.g. "##### Section A #####", where the leading run mirrors the
-//     trailing one and is likewise there to draw a box;
+//   - a header whose label is enclosed by matching runs of '#' is a banner,
+//     e.g. "##### Section A #####", where both runs draw the box;
 //
 //   - a run deeper than 6 is more likely to be decoration than a heading,
 //     similar to how HTML only provides <h1> through <h6>.
 //
-// Both the document outline and section folding read a header's level through
-// this function, so that a header nests the same way in each.
+// Both the document outline and hierarchical section folding read a header's
+// level through this function. With hierarchical folding disabled, every
+// section fold stops at the next section header regardless of heading level.
 function sectionHeadDepth(sectionHead)
 {
    if (!reSectionLabelStart.test(sectionHead))
-      return 0;
-
-   if (reSectionBannerTail.test(sectionHead))
       return 0;
 
    var match = reSectionLeadingHashes.exec(sectionHead);
@@ -67,6 +63,14 @@ function sectionHeadDepth(sectionHead)
       return 0;
 
    var depth = match[1].length;
+
+   // Only matching leading and trailing runs form a decorative box. A
+   // conventional header such as '# Section ####' still carries its leading
+   // run's heading level.
+   var bannerMatch = reSectionTrailingHashes.exec(sectionHead);
+   if (bannerMatch !== null && bannerMatch[1].length === depth)
+      return 0;
+
    return depth > 6 ? 0 : depth;
 }
 
@@ -1475,7 +1479,7 @@ var RCodeModel = function(session, tokenizer,
          // Otherwise, consume the '----' tail of the section
          // header as well.
          var index;
-         if (reSectionDelimsOnly.test(line)) {
+         if (!reSectionLabelStart.test(line)) {
             index = line.length;
          } else {
             var match = reSectionTrailingTail.exec(line);

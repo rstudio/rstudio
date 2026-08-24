@@ -239,6 +239,48 @@ code_2 <- 4
   });
 
   // https://github.com/rstudio/rstudio/issues/18602
+  test('a hash-tailed header keeps its heading depth unless boxed', async ({
+    rstudioPage: page,
+  }) => {
+    await setPref(page, 'hierarchical_section_folding', true);
+
+    // A trailing hash run is also an ordinary section delimiter. It is only
+    // decoration when its width mirrors the leading run.
+    const content = heredoc`
+      # Part 1 ####
+      code_part_1 <- 1
+      ## Sub A ####
+      code_sub_a <- 2
+      ### Sub A1 ----
+      code_sub_a_1 <- 3
+      ## Sub B ----
+      code_sub_b <- 4
+      # Part 2 ----
+      code_part_2 <- 5
+    `;
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.R', content);
+
+    const editor = new AceEditor(page, 'code_part_2');
+    await expect.poll(() => editor.getValue()).toContain('code_part_2');
+
+    // Part 1 contains both h2 sections, and Sub A contains its h3 section.
+    let range = await editor.getFoldWidgetRange(0);
+    expect(range?.end.row).toBe(7);
+    range = await editor.getFoldWidgetRange(2);
+    expect(range?.end.row).toBe(5);
+
+    const scopes = await editor.getSectionScopes();
+    expect(scopes).toEqual([
+      { label: 'Part 1', row: 0, depth: 1, parent: null },
+      { label: 'Sub A', row: 2, depth: 2, parent: 'Part 1' },
+      { label: 'Sub A1', row: 4, depth: 3, parent: 'Sub A' },
+      { label: 'Sub B', row: 6, depth: 2, parent: 'Part 1' },
+      { label: 'Part 2', row: 8, depth: 1, parent: null },
+    ]);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18602
   test('a bar with interior whitespace folds flat', async ({ rstudioPage: page }) => {
     await setPref(page, 'hierarchical_section_folding', true);
 
@@ -259,6 +301,8 @@ code_2 <- 4
     // The narrow bar stops at the wider one on row 2, rather than running to
     // the end of the document.
     const range = await editor.getFoldWidgetRange(0);
+    // The fold starts after the whole unnamed bar, not after its first run.
+    expect(range?.start.column).toBe(11);
     expect(range?.end.row).toBe(1);
 
     const scopes = await editor.getSectionScopes();
