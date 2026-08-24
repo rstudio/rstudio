@@ -12,9 +12,14 @@ on:
         type: string
         default: ""
       r_version:
-        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        description: >-
+          Exact R version to install, as X.Y.Z. Empty (the default) uses
+          RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is
+          the single place the version CI tests against is pinned. Any version
+          named here must already be mirrored into rstudio-buildtools; see
+          dependencies/tools/upload-r.sh.
         type: string
-        default: "release"
+        default: ""
       project:
         description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
@@ -53,7 +58,7 @@ on:
         default: ""
       r_version:
         type: string
-        default: "release"
+        default: ""
       project:
         type: string
         default: "server"
@@ -411,17 +416,10 @@ jobs:
       - name: Allow unprivileged user namespaces (required by Playwright/Chrome)
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
-      - name: Install rig
-        uses: ./.github/actions/os-install-rig-unix
-
-      - name: Install R via rig
-        env:
-          R_VERSION: ${{ inputs.r_version }}
-        run: |
-          rig add "$R_VERSION"
-          rig default "$R_VERSION"
-          rig ls
-          mkdir -p "$R_LIBS_USER"
+      - name: Install R
+        uses: ./.github/actions/os-install-r-unix
+        with:
+          r-version: ${{ inputs.r_version }}
 
       # Build-from-source path: extract the .deb artifact produced by the
       # build job above and install it.

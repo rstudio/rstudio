@@ -79,8 +79,11 @@ test.describe.serial('Readline Notification in Chat Pane', { tag: ['@ai', '@chat
 
     // --- Step 8: Verify chat resumes working after readline completes ---
     // Wait for the assistant to finish processing the readline response.
-    await expect.poll(() => chatPane.isStopButtonVisible(), { timeout: 30000 })
-      .toBe(false);
+    // isTurnIdle() rather than a raw stop-button sample: the button flickers
+    // off between streaming phases, and a single hidden sample lands in that
+    // gap often enough to be the flake this suite keeps hitting.
+    await expect.poll(() => chatActions.isTurnIdle(), { timeout: 30000 })
+      .toBe(true);
 
     // Ask the assistant to print a Tempest quote to the console
     await consoleActions.clearConsole();

@@ -1,7 +1,7 @@
 import type { Page } from 'playwright';
 import type { Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
-import { sleep, TIMEOUTS } from '../utils/constants';
+import { sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion } from '../utils/commands';
 import { AceEditorElement } from '../utils/ace';
 
@@ -538,7 +538,8 @@ export async function typeInConsole(page: Page, text: string, delayMs: number = 
   await page.locator(CONSOLE_TAB).click();
   await page.locator(CONSOLE_INPUT).click({ force: true });
   await sleep(300);
-  await page.locator(CONSOLE_INPUT).pressSequentially(text, { delay: delayMs });
+  await page.locator(CONSOLE_INPUT)
+    .pressSequentially(text, { delay: delayMs, timeout: typingTimeout(text, delayMs) });
 }
 
 export async function clearConsole(page: Page): Promise<void> {

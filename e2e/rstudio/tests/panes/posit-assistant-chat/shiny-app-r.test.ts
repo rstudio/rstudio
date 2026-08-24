@@ -107,9 +107,8 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
 
     // Poll until the assistant completes. Handle Allow dialogs for each tool type.
     await chatActions.pollWithAllowDialogs(async () => {
-      const isStillProcessing = await chatPane.isStopButtonVisible();
       const messageCount = await chatPane.getMessageCount();
-      if (!isStillProcessing && messageCount >= 2) {
+      if (messageCount >= 2 && await chatActions.isTurnIdle()) {
         const lastText = await chatPane.messageItem.last().innerText().catch(() => '');
         if (lastText.includes('Wacky Tip Calculator for R has started') && !lastText.includes('Create a Shiny for R')) {
           return true;

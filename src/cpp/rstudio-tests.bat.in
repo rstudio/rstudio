@@ -152,6 +152,11 @@ goto :eof
 :run_r
 echo Running 'r' tests...
 
+REM Keep process-wide environment setup outside R and establish it before
+REM rsession starts any worker threads, matching the Unix launcher safety rule.
+if defined JENKINS_URL set "NO_COLOR=1"
+if defined CI set "NO_COLOR=1"
+
 set "TESTTHAT_TESTS_DIR=@CMAKE_CURRENT_SOURCE_DIR@/tests/testthat"
 set "TESTTHAT_OUTPUT_DIR=@CMAKE_CURRENT_BINARY_DIR@"
 if defined TEST_FILTER set "TESTTHAT_FILTER=!TEST_FILTER!"

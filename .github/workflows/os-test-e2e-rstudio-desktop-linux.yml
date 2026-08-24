@@ -68,9 +68,15 @@ on:
         type: string
         default: ""
       r_version:
-        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1'). Ignored on Fedora, which installs R from the distro's own repos."
+        description: >-
+          Exact R version to install, as X.Y.Z. Empty (the default) uses
+          RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is
+          the single place the version CI tests against is pinned. Any version
+          named here must already be mirrored into rstudio-buildtools; see
+          dependencies/tools/upload-r.sh. Ignored on Fedora, which installs R
+          from the distro's own repos.
         type: string
-        default: "release"
+        default: ""
       project:
         description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
@@ -131,7 +137,7 @@ on:
         default: ""
       r_version:
         type: string
-        default: "release"
+        default: ""
       project:
         type: string
         default: "desktop"
@@ -704,21 +710,13 @@ jobs:
             echo "No e2e-setup hook for ${{ inputs.os }}; skipping."
           fi
 
-      - name: Install rig
-        if: needs.setup.outputs.r_install == 'rig'
-        uses: ./.github/actions/os-install-rig-unix
+      - name: Install R
+        if: needs.setup.outputs.r_install == 'mirror'
+        uses: ./.github/actions/os-install-r-unix
+        with:
+          r-version: ${{ inputs.r_version }}
 
-      - name: Install R via rig
-        if: needs.setup.outputs.r_install == 'rig'
-        env:
-          R_VERSION: ${{ inputs.r_version }}
-        run: |
-          rig add "$R_VERSION"
-          rig default "$R_VERSION"
-          rig ls
-          mkdir -p "$R_LIBS_USER"
-
-      # Engines that can't use rig (r_install: "distro") install R through
+      # Engines with no mirrored build (r_install: "distro") install R through
       # their own hook instead (e.g. Fedora's dnf R-core, which also has to
       # defeat the container image's tsflags=nodocs default).
       # Unlike the optional hooks above, this one is required when the config
@@ -736,7 +734,7 @@ jobs:
           bash "$SCRIPT"
 
       # Post-R, pre-R-package hook (e.g. Debian's PPM codename rewrite, which
-      # must run after rig has seen the real distro).
+      # must run after the R install has seen the real distro).
       - name: OS-specific post-R setup
         env:
           SCRIPT: .github/e2e-linux/${{ needs.setup.outputs.script_dir }}/post-r-setup.sh

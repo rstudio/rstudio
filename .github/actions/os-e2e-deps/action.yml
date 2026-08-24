@@ -323,7 +323,7 @@ runs:
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel${VERSION_ID%%.*}/latest"
           elif [ "$ID" = "fedora" ]; then
-            # PPM publishes no Fedora binaries and rig/r-builds has no Fedora 44
+            # PPM publishes no Fedora binaries and r-builds has no Fedora 44
             # R, so the Fedora workflow installs R via dnf and compiles CRAN
             # packages from source. Point pak at PPM's source repo; the Fedora
             # caller installs the toolchain and -devel headers the builds need.
