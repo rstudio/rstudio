@@ -15,9 +15,13 @@
 
 import ElectronStore from 'electron-store';
 
+/**
+ * A release whose What's New the user has seen. Entries stay objects rather
+ * than bare names so that state files written by versions which also recorded
+ * a patch level still match, and those users are not shown What's New again.
+ */
 export interface SeenRelease {
   name: string;
-  patch: number;
 }
 
 interface WhatsNewSchema {
@@ -42,31 +46,22 @@ export class WhatsNewState {
   }
 
   /**
-   * Check if the user has already seen What's New for this release at
-   * this patch level or higher. Returns true if the stored patch >= the
-   * given patch (covers same version and downgrades).
+   * Check if the user has already seen What's New for this release. The
+   * content is keyed by release, not by patch level, so a patch of a release
+   * the user has already seen does not show it again.
    */
-  hasSeenRelease(releaseName: string, patch: number): boolean {
-    const entry = this.findEntry(releaseName);
-    return entry !== undefined && entry.patch >= patch;
+  hasSeenRelease(releaseName: string): boolean {
+    return this.findEntry(releaseName) !== undefined;
   }
 
-  /**
-   * Record that the user has seen What's New for this release at the
-   * given patch level. Updates the stored patch if the new one is higher.
-   */
-  markReleaseSeen(releaseName: string, patch: number): void {
-    const seen = this.seenReleases();
-    const existing = seen.find((r) => r.name === releaseName);
-    if (existing) {
-      if (patch > existing.patch) {
-        existing.patch = patch;
-        this.store.set('seenReleases', seen);
-      }
-    } else {
-      seen.push({ name: releaseName, patch });
-      this.store.set('seenReleases', seen);
+  /** Record that the user has seen What's New for this release. */
+  markReleaseSeen(releaseName: string): void {
+    if (this.hasSeenRelease(releaseName)) {
+      return;
     }
+    const seen = this.seenReleases();
+    seen.push({ name: releaseName });
+    this.store.set('seenReleases', seen);
   }
 
   seenReleases(): SeenRelease[] {

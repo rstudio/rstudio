@@ -311,7 +311,7 @@ export class SessionLauncher {
               // would otherwise suppress the eventual packaged release.
               if (isReleaseBuild(info.RSTUDIO_VERSION)) {
                 const state = new WhatsNewState();
-                state.markReleaseSeen(releaseName, info.RSTUDIO_VERSION_PATCH);
+                state.markReleaseSeen(releaseName);
               }
               this.whatsNewWindow = undefined;
             },
@@ -583,7 +583,7 @@ export class SessionLauncher {
       forceDisable: getenv('RSTUDIO_DISABLE_WHATS_NEW') !== '',
       userPrefEnabled: ElectronDesktopOptions().showWhatsNew(),
       isRelease: isReleaseBuild(info.RSTUDIO_VERSION),
-      alreadySeen: () => new WhatsNewState().hasSeenRelease(releaseName, info.RSTUDIO_VERSION_PATCH),
+      alreadySeen: () => new WhatsNewState().hasSeenRelease(releaseName),
     });
   }
 
