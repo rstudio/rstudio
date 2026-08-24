@@ -214,11 +214,17 @@ export async function remotePathExists(page: Page, remotePath: string): Promise<
  * Same nonce-tagged read-back as evalRemoteLogical, and for the same reason:
  * a stale console line from an earlier command (this is typically paired with
  * a dir.create() or similar side-effecting call) must never satisfy a later
- * probe.
+ * probe. The delimiter is assembled from separately-quoted fragments, also
+ * for the same reason evalRemoteLogical's marker is: written as one literal
+ * ("<<nonce>>") it would appear contiguous in the console's echo of this very
+ * command, and the regex below would match that instead of the real answer
+ * printed underneath -- verified the hard way, as a resolved database
+ * directory that came back as the literal text of this function's own
+ * paste0() call.
  */
 export async function evalRemoteString(page: Page, expr: string): Promise<string | null> {
   const nonce = `pw${randomBytes(6).toString('hex')}`;
-  const marker = `paste0("<<${nonce}>>", v, "<<${nonce}>>")`;
+  const marker = `paste0("<<", "${nonce}", ">>", v, "<<", "${nonce}", ">>")`;
   await executeInConsole(page, `local({ v <- (${expr}); cat(${marker}, "\\n", sep = "") })`);
   const pane = new ConsolePaneActions(page).consolePane.consoleOutput;
   const re = new RegExp(`<<${nonce}>>(.*?)<<${nonce}>>`);
