@@ -40,7 +40,7 @@
 
 ### Dependencies
 - Copilot Language Server 1.531.0
-- Electron 42.9.3
+- Electron 42.10.0
 - Quarto 1.10.18
 
 ### Deprecated / Removed
