@@ -1,0 +1,30 @@
+[
+  { "cell": "ubuntu22-x86_64",  "platform": "linux",   "arch": "x86_64", "os": "ubuntu-22-x86_64", "name": "Ubuntu 22 (x86_64)",         "url_key": "jammy_amd64",    "r_version": "4.3.3", "default": true },
+  { "cell": "ubuntu22-arm64",   "platform": "linux",   "arch": "arm64",  "os": "ubuntu-22-arm64",  "name": "Ubuntu 22 (arm64)",          "url_key": "jammy_arm64",    "r_version": "4.3.3", "default": false },
+  { "cell": "ubuntu24d-x86_64", "platform": "linux",   "arch": "x86_64", "os": "ubuntu-24-x86_64", "name": "Ubuntu 24 Desktop (x86_64)", "url_key": "noble_amd64",    "r_version": "4.4.1", "default": true },
+  { "cell": "ubuntu24d-arm64",  "platform": "linux",   "arch": "arm64",  "os": "ubuntu-24-arm64",  "name": "Ubuntu 24 Desktop (arm64)",  "url_key": "noble_arm64",    "r_version": "4.4.1", "default": false },
+  { "cell": "ubuntu26-x86_64",  "platform": "linux",   "arch": "x86_64", "os": "ubuntu-26-x86_64", "name": "Ubuntu 26 (x86_64)",         "url_key": "resolute_amd64", "r_version": "4.6.1", "default": false },
+  { "cell": "ubuntu26-arm64",   "platform": "linux",   "arch": "arm64",  "os": "ubuntu-26-arm64",  "name": "Ubuntu 26 (arm64)",          "url_key": "resolute_arm64", "r_version": "4.6.1", "default": true },
+  { "cell": "debian13-x86_64",  "platform": "linux",   "arch": "x86_64", "os": "debian-13-x86_64", "name": "Debian 13 (x86_64)",         "url_key": "noble_amd64",    "r_version": "4.2.3", "default": false },
+  { "cell": "debian13-arm64",   "platform": "linux",   "arch": "arm64",  "os": "debian-13-arm64",  "name": "Debian 13 (arm64)",          "url_key": "noble_arm64",    "r_version": "4.2.3", "default": true },
+
+  { "cell": "fedora43-x86_64",  "platform": "linux",   "arch": "x86_64", "os": "fedora-43-x86_64", "name": "Fedora 43 (x86_64)",         "url_key": "rhel10_x86_64",  "r_version": "distro", "default": true,
+    "r_version_actual_note": "R 4.5.3 as of 2026-08-07; drifts with Fedora, the run-time report is authoritative" },
+  { "cell": "fedora43-arm64",   "platform": "linux",   "arch": "arm64",  "os": "fedora-43-arm64",  "name": "Fedora 43 (arm64)",          "url_key": "rhel10_arm64",   "r_version": "distro", "default": false,
+    "r_version_actual_note": "R 4.5.3 as of 2026-08-07; drifts with Fedora, the run-time report is authoritative" },
+  { "cell": "fedora44-x86_64",  "platform": "linux",   "arch": "x86_64", "os": "fedora-44-x86_64", "name": "Fedora 44 (x86_64)",         "url_key": "rhel10_x86_64",  "r_version": "distro", "default": false,
+    "r_version_actual_note": "R 4.6.1 as of 2026-08-07; drifts with Fedora, the run-time report is authoritative" },
+  { "cell": "fedora44-arm64",   "platform": "linux",   "arch": "arm64",  "os": "fedora-44-arm64",  "name": "Fedora 44 (arm64)",          "url_key": "rhel10_arm64",   "r_version": "distro", "default": true,
+    "r_version_actual_note": "R 4.6.1 as of 2026-08-07; drifts with Fedora, the run-time report is authoritative" },
+
+  { "cell": "rocky9-x86_64",    "platform": "linux",   "arch": "x86_64", "os": "rocky-9-x86_64",   "name": "Rocky 9 (x86_64)",           "url_key": "rhel9_x86_64",   "r_version": "4.4.3", "default": true },
+  { "cell": "rocky9-arm64",     "platform": "linux",   "arch": "arm64",  "os": "rocky-9-arm64",    "name": "Rocky 9 (arm64)",            "url_key": "rhel9_arm64",    "r_version": "4.4.3", "default": false },
+  { "cell": "rocky10-x86_64",   "platform": "linux",   "arch": "x86_64", "os": "rocky-10-x86_64",  "name": "Rocky 10 (x86_64)",          "url_key": "rhel10_x86_64",  "r_version": "4.6.1", "default": false },
+  { "cell": "rocky10-arm64",    "platform": "linux",   "arch": "arm64",  "os": "rocky-10-arm64",   "name": "Rocky 10 (arm64)",           "url_key": "rhel10_arm64",   "r_version": "4.6.1", "default": true },
+
+  { "cell": "ubuntu24s",        "platform": "linux",   "arch": "x86_64", "r_version": "4.4.1", "default": true },
+  { "cell": "macos14",          "platform": "macos",   "arch": "arm64",  "r_version": "4.1.3", "default": true },
+  { "cell": "macos15",          "platform": "macos",   "arch": "x86_64", "r_version": "4.4.3", "default": true },
+  { "cell": "macos26",          "platform": "macos",   "arch": "arm64",  "r_version": "4.5.1", "default": true },
+  { "cell": "windows2025",      "platform": "windows", "arch": "x86_64", "r_version": "4.6.1", "default": true }
+]
