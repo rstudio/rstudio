@@ -54,7 +54,6 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompletedEvent;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
@@ -1481,24 +1480,9 @@ public class ChatPresenter extends BasePresenter
       // WebSocket connects to localhost directly. In Server mode, the token
       // is delivered via an HTTP-only cookie set by the static file handler,
       // avoiding exposure in browser history, logs, and the Referer header.
-      if (Desktop.hasDesktopFrame())
+      if (Desktop.hasDesktopFrame() && authToken != null && !authToken.isEmpty())
       {
-         if (authToken != null && !authToken.isEmpty())
-         {
-            params += "&authToken=" + URL.encodeQueryString(authToken);
-         }
-      }
-      else
-      {
-         // Report the browser-visible base URL so the server can scope that
-         // cookie to include proxy prefixes it was never told about (#18621).
-         // It is honored only when it agrees with the base reported at
-         // client_init. The parameter name must match kClientBaseUrlParam in
-         // ChatStaticFiles.hpp; nothing checks that at build time, and if it
-         // stops matching the server sees no base URL and declines to set the
-         // cookie.
-         params += "&clientBaseUrl=" +
-                   URL.encodeQueryString(GWT.getHostPageBaseURL());
+         params += "&authToken=" + URL.encodeQueryString(authToken);
       }
 
       String loadUrl = baseUrl + params;

@@ -258,24 +258,29 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
    tempDir.removeIfExists();
 }
 
-// The auth cookie must keep byte-identical paths in every deployment where
-// the browser-visible path equals the server-known path (see #18621).
-TEST(ChatStaticFiles, AuthCookiePathMatchesServerKnownPrefixWithoutClientBaseUrl)
+// The cookie path is the session prefix the server believes it is serving
+// this request under, so it has to come out byte-identical to what the
+// browser sees for the browser to send the cookie back (see #18621).
+TEST(ChatStaticFiles, AuthCookiePathMatchesTheServerKnownPrefix)
 {
    // default root path
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "",
-                            "https://host/"),
-             "/");
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html"), "/");
 
    // configured www-root-path
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
-                            "https://host/rstudio/"),
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"),
              "/rstudio/");
 
    // Workbench session prefix
-   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
-                            "", "https://host/s/0aa27b1d6b8f34dc/"),
+   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html"),
              "/s/0aa27b1d6b8f34dc/");
+
+   // an external proxy prefix the server has been told about, via
+   // www-root-path or the X-RStudio-Root-Path header, is already part of
+   // proxiedUri and so carries through
+   EXPECT_EQ(authCookiePath("https://ood.host/rnode/node01/8787/ai-chat/index.html"),
+             "/rnode/node01/8787/");
+   EXPECT_EQ(authCookiePath("https://host/proxy/rstudio/ai-chat/index.html"),
+             "/proxy/rstudio/");
 }
 
 // A root or session prefix that merely contains the route name must not be
@@ -284,142 +289,23 @@ TEST(ChatStaticFiles, AuthCookiePathMatchesServerKnownPrefixWithoutClientBaseUrl
 TEST(ChatStaticFiles, AuthCookiePathMatchesTheRouteOnlyAtASegmentBoundary)
 {
    // www-root-path=/ai-chat-hub
-   EXPECT_EQ(authCookiePath("https://host/ai-chat-hub/ai-chat/index.html",
-                            "", "https://host/ai-chat-hub/"),
+   EXPECT_EQ(authCookiePath("https://host/ai-chat-hub/ai-chat/index.html"),
              "/ai-chat-hub/");
 
    // the same name nested under another prefix
-   EXPECT_EQ(authCookiePath("https://host/team/ai-chat-hub/ai-chat/index.html",
-                            "", "https://host/team/ai-chat-hub/"),
+   EXPECT_EQ(authCookiePath("https://host/team/ai-chat-hub/ai-chat/index.html"),
              "/team/ai-chat-hub/");
 
    // a prefix with no separating punctuation at all
-   EXPECT_EQ(authCookiePath("https://host/ai-chatlab/ai-chat/index.html",
-                            "", "https://host/ai-chatlab/"),
+   EXPECT_EQ(authCookiePath("https://host/ai-chatlab/ai-chat/index.html"),
              "/ai-chatlab/");
 
    // a root path that is exactly the route name is still a distinct segment
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/ai-chat/index.html", "",
-                            "https://host/ai-chat/"),
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/ai-chat/index.html"),
              "/ai-chat/");
 
    // and the ordinary case still resolves to the first segment
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html", "",
-                            "https://host/"),
-             "/");
-}
-
-TEST(ChatStaticFiles, AuthCookiePathUnchangedWhenClientBaseUrlMatchesServer)
-{
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/rstudio/", "https://host/rstudio/"),
-             "/rstudio/");
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html",
-                            "https://host/", "https://host/"),
-             "/");
-}
-
-TEST(ChatStaticFiles, AuthCookiePathIncludesExternalProxyPrefix)
-{
-   // configured root path behind an unknown prefix-stripping proxy
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/proxy/rstudio/",
-                            "https://host/proxy/rstudio/"),
-             "/proxy/rstudio/");
-
-   // Workbench session prefix behind an unknown proxy prefix
-   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
-                            "https://host/proxy/s/0aa27b1d6b8f34dc/",
-                            "https://host/proxy/s/0aa27b1d6b8f34dc/"),
-             "/proxy/s/0aa27b1d6b8f34dc/");
-
-   // Open OnDemand style prefix over the default root path
-   EXPECT_EQ(authCookiePath("http://node01/ai-chat/index.html",
-                            "https://ood.host/rnode/node01/8787/",
-                            "https://ood.host/rnode/node01/8787/"),
-             "/rnode/node01/8787/");
-}
-
-// A crafted link cannot scope the auth token to a route of the attacker's
-// choosing: the query parameter is honored only when the base recorded by
-// the CSRF-protected client_init request agrees with it.
-TEST(ChatStaticFiles, AuthCookiePathRejectsClientBaseUrlTheSessionDidNotReport)
-{
-   // attacker-chosen sibling route, victim connected directly
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/evil/rstudio/",
-                            "https://host/rstudio/"),
-             "/rstudio/");
-
-   // attacker-chosen route, victim connected through a real proxy prefix
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/evil/rstudio/",
-                            "https://host/proxy/rstudio/"),
-             "/rstudio/");
-
-   // no client_init recorded yet, so nothing authorizes the parameter
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/proxy/rstudio/", ""),
-             "");
-}
-
-// client_init records whatever base the client sent, without checking that it
-// could be used as a cookie path, so an unusable one can sit alongside a live
-// token. It authorizes nothing and must not be read as permission.
-TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableRecordedBase)
-{
-   // a base recorded before it could be resolved
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
-                            "garbage"),
-             "");
-
-   // a base that could not be written into the header
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
-                            "https://host/pre;fix/rstudio/"),
-             "");
-}
-
-// A base URL with an empty segment is served under exactly that path, so the
-// cookie has to carry the empty segment too or the browser will not send it.
-// Rewriting it to a single slash, or refusing it and falling back, would each
-// break this deployment in a different direction.
-TEST(ChatStaticFiles, AuthCookiePathKeepsAnEmptySegmentFromTheBaseUrl)
-{
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host//rstudio/",
-                            "https://host//rstudio/"),
-             "//rstudio/");
-}
-
-// Falling back to the server-known prefix is only safe while that prefix is
-// narrower than the whole origin. On a default-root deployment reached
-// through an external prefix it is not, so the cookie must not be set at all
-// rather than be handed to every application on the host.
-TEST(ChatStaticFiles, AuthCookiePathDeclinesRatherThanFallBackToTheOriginRoot)
-{
-   // a request that did not come from the IDE frontend: a crafted top-level
-   // link, or a bookmarked bare iframe URL
-   EXPECT_EQ(authCookiePath("http://node01/ai-chat/index.html", "",
-                            "https://ood.host/rnode/node01/8787/"),
-             "");
-
-   // a reported base the session never authenticated
-   EXPECT_EQ(authCookiePath("http://node01/ai-chat/index.html",
-                            "https://ood.host/evil/",
-                            "https://ood.host/rnode/node01/8787/"),
-             "");
-
-   // but a configured root path is narrower than the origin, so the fallback
-   // stands
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
-                            "https://host/proxy/rstudio/"),
-             "/rstudio/");
-
-   // and a client claiming a prefix the session did not report still falls
-   // back to the root it would have used anyway
-   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html",
-                            "https://host/evil/", "https://host/"),
-             "/");
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html"), "/");
 }
 
 // proxiedUri is reconstructed from request headers, which nothing in the
@@ -430,96 +316,30 @@ TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableServerDerivedPath)
 {
    // a ";path=/" smuggled through the proxied URI would otherwise be emitted
    // verbatim, and RFC 6265 takes the last Path attribute
-   EXPECT_EQ(authCookiePath("https://host/x;path=//ai-chat/index.html", "",
-                            "https://host/"),
-             "");
+   EXPECT_EQ(authCookiePath("https://host/x;path=//ai-chat/index.html"), "");
 
    // header-breaking characters in the derived prefix
-   EXPECT_EQ(authCookiePath("https://host/a\r\nX-Injected: 1/ai-chat/index.html",
-                            "", "https://host/"),
+   EXPECT_EQ(authCookiePath("https://host/a\r\nX-Injected: 1/ai-chat/index.html"),
              "");
 
    // a prefix the browser could never match against a normalized request path
-   EXPECT_EQ(authCookiePath("https://host/a/../b/ai-chat/index.html", "",
-                            "https://host/"),
-             "");
-}
-
-TEST(ChatStaticFiles, AuthCookiePathIgnoresBogusClientBaseUrl)
-{
-   // does not end with the server-known prefix
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/elsewhere/", "https://host/rstudio/"),
-             "/rstudio/");
-
-   // not a usable URL or path
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "garbage", "https://host/rstudio/"),
-             "/rstudio/");
-}
-
-// proxiedUri is built from request headers that a co-hosted application on
-// the same host can set, so a path that is merely well-formed is not enough:
-// it must be one the session is actually served under, or the token would be
-// delivered to a route of the caller's choosing.
-TEST(ChatStaticFiles, AuthCookiePathDeclinesAServerPathTheSessionIsNotServedUnder)
-{
-   // a route named by the request headers, on a default-root deployment
-   EXPECT_EQ(authCookiePath("https://host/evil/ai-chat/index.html",
-                            "https://host/evil/", "https://host/"),
-             "");
-
-   // and on one reached through an external proxy prefix
-   EXPECT_EQ(authCookiePath("https://host/evil/ai-chat/index.html", "",
-                            "https://host/proxy/rstudio/"),
-             "");
-
-   // a prefix of a path the session is served under is not one of them
-   // either: /rstudi is not the /rstudio segment
-   EXPECT_EQ(authCookiePath("https://host/rstudi/ai-chat/index.html", "",
-                            "https://host/rstudio/"),
-             "");
-
-   // the legitimate shapes all still authorize
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
-                            "https://host/rstudio/"),
-             "/rstudio/");
-   EXPECT_EQ(authCookiePath("https://host/s/0aa27b1d6b8f34dc/ai-chat/index.html",
-                            "", "https://host/proxy/s/0aa27b1d6b8f34dc/"),
-             "/s/0aa27b1d6b8f34dc/");
-}
-
-// The query parameter arrives percent-decoded while client_init records the
-// raw JSON string, but both sides start from the same GWT.getHostPageBaseURL()
-// value, so a base URL containing an escape still authorizes -- and the escape
-// is preserved, which is the form the browser matches against.
-TEST(ChatStaticFiles, AuthCookiePathHandlesPercentEscapesInTheBaseUrl)
-{
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            "https://host/pr%20oxy/rstudio/",
-                            "https://host/pr%20oxy/rstudio/"),
-             "/pr%20oxy/rstudio/");
+   EXPECT_EQ(authCookiePath("https://host/a/../b/ai-chat/index.html"), "");
 }
 
 TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
 {
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
-                            "?wsUrl=%2Frstudio%2Fp%2Fabc%2Fai-chat&_t=123"
-                            "&clientBaseUrl=https%3A%2F%2Fhost%2Fproxy%2Frstudio%2F",
-                            "https://host/proxy/rstudio/",
-                            "https://host/proxy/rstudio/"),
-             "/proxy/rstudio/");
+                            "?wsUrl=%2Frstudio%2Fp%2Fabc%2Fai-chat&_t=123"),
+             "/rstudio/");
 
    // an unescaped occurrence of the route in the query must not be taken for
    // the route itself: the derived prefix would then carry the document path
    // and the query along with it
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
-                            "?wsUrl=/rstudio/p/abc/ai-chat/",
-                            "", "https://host/rstudio/"),
+                            "?wsUrl=/rstudio/p/abc/ai-chat/"),
              "/rstudio/");
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
-                            "#/ai-chat/",
-                            "", "https://host/rstudio/"),
+                            "#/ai-chat/"),
              "/rstudio/");
 }
 
@@ -555,35 +375,6 @@ TEST(ChatStaticFiles, HandlerClassifiesAnUppercaseExtension)
              "application/javascript; charset=utf-8");
    EXPECT_NE(response.headerValue("Cache-Control").find("no-store"),
              std::string::npos);
-}
-
-// The parameter name exists as two bare literals, one here and one in
-// loadChatUI() in ChatPresenter.java, with nothing tying them together at
-// build time. Pin the wire name and the decoding, so at least this side
-// cannot drift silently: if it did, the parameter would arrive empty and the
-// cookie would fall back to the server-known path on every request.
-TEST(ChatStaticFiles, ClientBaseUrlParameterRoundTripsThroughARequest)
-{
-   EXPECT_EQ(std::string(kClientBaseUrlParam), "clientBaseUrl");
-
-   // the URI the IDE builds, with the base URL query-string encoded
-   http::Request request;
-   request.setUri("/ai-chat/index.html?wsUrl=%2Fp%2Fabc%2Fai-chat"
-                  "&clientBaseUrl=https%3A%2F%2Fhost%2Fproxy%2Frstudio%2F");
-
-   EXPECT_EQ(request.queryParamValue(kClientBaseUrlParam),
-             "https://host/proxy/rstudio/");
-
-   // and that decoded value is what authorizes the external prefix
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
-                            request.queryParamValue(kClientBaseUrlParam),
-                            "https://host/proxy/rstudio/"),
-             "/proxy/rstudio/");
-
-   // a request without it must not be read as reporting an empty base
-   http::Request without;
-   without.setUri("/ai-chat/index.html?wsUrl=%2Fp%2Fabc%2Fai-chat");
-   EXPECT_EQ(without.queryParamValue(kClientBaseUrlParam), "");
 }
 
 TEST(ChatStaticFiles, HandlerServesAnAssetUnderTheRoute)

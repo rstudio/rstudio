@@ -37,7 +37,6 @@
 #include <shared_core/json/Json.hpp>
 
 #include <session/SessionOptions.hpp>
-#include <session/SessionPersistentState.hpp>
 
 #include "../SessionThemes.hpp"
 
@@ -379,11 +378,7 @@ std::string serverKnownPrefix(const std::string& proxiedUri)
 
 } // anonymous namespace
 
-const char* const kClientBaseUrlParam = "clientBaseUrl";
-
-std::string authCookiePath(const std::string& proxiedUri,
-                           const std::string& clientBaseUrl,
-                           const std::string& activeClientUrl)
+std::string authCookiePath(const std::string& proxiedUri)
 {
    std::string cookiePath = serverKnownPrefix(proxiedUri);
 
@@ -400,81 +395,6 @@ std::string authCookiePath(const std::string& proxiedUri,
       return std::string();
    }
 
-   // A syntactically valid derived path is still only as trustworthy as the
-   // headers it came from: a co-hosted application able to set them could
-   // name its own route and have the token delivered there. Require the base
-   // this session reported at client_init to sit under the derived path --
-   // cookiePath starts with '/', so the suffix match lands on a segment
-   // boundary. Without a usable recorded base nothing authorizes the derived
-   // path, so there is no answer to give: client_init stores what the client
-   // sent without validating it, so an unusable one can coexist with a live
-   // token and must not be read as permission.
-   std::string reportedBase =
-      http::util::cookiePathFromClientBaseUrl(activeClientUrl);
-   if (reportedBase.empty())
-   {
-      WLOG("Not setting the assistant auth cookie: this session has not "
-           "reported a browser-visible base URL usable as a cookie path, so "
-           "nothing authorizes the path '{}' derived from the request headers",
-           cookiePath);
-      return std::string();
-   }
-   if (!boost::algorithm::ends_with(reportedBase, cookiePath))
-   {
-      WLOG("Not setting the assistant auth cookie: the path '{}' derived from "
-           "the request headers is not one this session is served under",
-           cookiePath);
-      return std::string();
-   }
-
-   // A clientBaseUrl that cannot be used as a cookie path is indistinguishable
-   // below from one that was never sent, and the deployments where it matters
-   // are exactly the ones that cannot connect without an external prefix, so
-   // say so rather than let #18621 recur silently.
-   if (!clientBaseUrl.empty() &&
-       http::util::cookiePathFromClientBaseUrl(clientBaseUrl).empty())
-   {
-      WLOG("The reported browser-visible base URL cannot be used as a cookie "
-           "path, so any external proxy prefix in it is being ignored; a "
-           "double slash in the base URL is the usual cause");
-   }
-
-   // recover any external proxy prefix from the browser-visible base URL
-   // reported by the IDE frontend, but only when the base recorded by the
-   // CSRF-protected client_init request agrees; the query string of this
-   // plain GET is attacker-settable on its own (see #18621)
-   std::string requested =
-      http::util::cookiePathWithExternalPrefix(cookiePath, clientBaseUrl);
-   std::string authorized =
-      http::util::cookiePathWithExternalPrefix(cookiePath, activeClientUrl);
-   if (requested == authorized)
-      return requested;
-
-   const char* reason =
-      clientBaseUrl.empty()
-         ? "the request carries no clientBaseUrl parameter, so it did not "
-           "come from the IDE frontend"
-         : "the reported base path disagrees with the one recorded during "
-           "session initialization";
-
-   // The reported base is not one this session has authenticated. Falling
-   // back to the server-known prefix is the right answer for the requester --
-   // a second tab connected by a different path needs it, and a crafted link
-   // is denied the route it asked for -- but only while that prefix is not
-   // the origin root. When it is, and the session itself reported something
-   // narrower, the fallback would be broader than any path this deployment
-   // uses, so decline instead.
-   if (cookiePath == std::string(kRequestDefaultRootPath) &&
-       authorized != std::string(kRequestDefaultRootPath))
-   {
-      WLOG("Not setting the assistant auth cookie: {}, and the server-known "
-           "path is the origin root, so the cookie would be shared with "
-           "every application on this host", reason);
-      return std::string();
-   }
-
-   WLOG("Scoping the assistant auth cookie to the server-known path '{}' "
-        "(this session reported '{}'): {}", cookiePath, authorized, reason);
    return cookiePath;
 }
 
@@ -677,13 +597,9 @@ Error handleAIChatRequest(const http::Request& request,
             std::lock_guard<std::mutex> lock(s_authTokenMutex);
             if (!s_chatBackendAuthToken.empty())
             {
-               // Scope cookie to the browser-visible session prefix
-               // (e.g. "/s/{id}/") so multi-session deployments don't
-               // collide and unknown proxy prefixes are preserved.
-               std::string cookiePath = authCookiePath(
-                  request.proxiedUri(),
-                  request.queryParamValue(kClientBaseUrlParam),
-                  persistentState().activeClientUrl());
+               // Scope the cookie to the session prefix (e.g. "/s/{id}/") so
+               // multi-session deployments don't collide.
+               std::string cookiePath = authCookiePath(request.proxiedUri());
 
                // an empty path means no path can be scoped safely for this
                // request; authCookiePath has already logged why
