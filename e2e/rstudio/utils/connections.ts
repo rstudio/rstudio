@@ -28,7 +28,7 @@ import {
 } from './db-targets';
 import { readDbStatus } from './db-provision';
 import { drainClientExceptions } from './commands';
-import { remotePathExists, writeRemoteText } from './remote-provision';
+import { evalRemoteString, remotePathExists, writeRemoteText } from './remote-provision';
 import { rStringLiteral } from './r';
 
 /**
@@ -329,6 +329,17 @@ function odbcinstStanza(driverName: string, id: string, linkPath: string): strin
 export const REMOTE_ODBC_DIR = '~/.rstudio-playwright/odbc';
 
 /**
+ * Home-relative directory a file-kind target's (SQLite's) database is created
+ * under when the test session isn't this test runner's own filesystem -- a
+ * CI same-machine installed server, or a genuinely external one. The runner
+ * cannot create this itself (it may not even share a filesystem with the
+ * session, and when it does, as in CI, the session runs as a different OS
+ * user); see provisionRemoteOdbcSandbox, which creates it in-session
+ * alongside the driver registration for the same targets.
+ */
+export const REMOTE_DB_DIR = '~/.rstudio-playwright/db';
+
+/**
  * Unix-only analogue of resolveDriverLibrary (db-targets.ts), but checked on
  * the REMOTE machine via an in-session file.exists() probe
  * (remotePathExists, utils/remote-provision.ts) rather than Node's local
@@ -366,6 +377,16 @@ export interface RemoteOdbcStatus {
   odbcSysIni: string | null;
   /** Ids of the targets whose drivers were found and registered. */
   registered: string[];
+  /**
+   * Per file-kind target id, the absolute directory (already path.expand()ed
+   * in-session, under REMOTE_DB_DIR) its database file lives in. Absolute
+   * rather than the "~/"-prefixed form odbcSysIni uses: this value is typed
+   * verbatim into the New Connection wizard's Database field, which becomes a
+   * literal string in generated R code -- there is no expression evaluation
+   * at that point to expand a tilde the way Sys.setenv(path.expand(...)) does
+   * for ODBCSYSINI.
+   */
+  fileDatabases: Record<string, string>;
 }
 
 function remoteOdbcStatusPath(sandbox: string): string {
@@ -402,6 +423,8 @@ export function readRemoteOdbcStatus(sandbox: string): RemoteOdbcStatus | null {
     return {
       odbcSysIni: typeof parsed.odbcSysIni === 'string' ? parsed.odbcSysIni : null,
       registered: parsed.registered,
+      fileDatabases:
+        parsed.fileDatabases && typeof parsed.fileDatabases === 'object' ? parsed.fileDatabases : {},
     };
   } catch {
     return null;
@@ -436,9 +459,11 @@ export async function provisionRemoteOdbcSandbox(
   recordPath: (remotePath: string) => void,
 ): Promise<RemoteOdbcStatus> {
   recordPath(REMOTE_ODBC_DIR);
+  recordPath(REMOTE_DB_DIR);
 
   const stanzas: string[] = [];
   const registered: string[] = [];
+  const fileDatabases: Record<string, string> = {};
 
   for (const base of ALL_DB_TARGETS) {
     const target = effectiveTarget(base);
@@ -462,6 +487,29 @@ export async function provisionRemoteOdbcSandbox(
 
       stanzas.push(...odbcinstStanza(target.driverName, target.id, linkPath));
       registered.push(target.id);
+
+      // A file-kind target (SQLite) has no driver-level config to write, but
+      // its database still needs somewhere to live that the session itself
+      // owns -- see REMOTE_DB_DIR. Resolved and created here, alongside the
+      // driver this target just registered, rather than in a second pass:
+      // a target whose driver isn't even found has no reason to get a
+      // database directory either, since driverVisibleInSession will skip
+      // its specs regardless.
+      if (target.kind === 'file') {
+        const dbDir = `${REMOTE_DB_DIR}/${target.id}`;
+        const resolved = await evalRemoteString(
+          page,
+          `{ dir.create(path.expand(${rStringLiteral(dbDir)}), recursive = TRUE, showWarnings = FALSE); ` +
+            `path.expand(${rStringLiteral(dbDir)}) }`,
+        );
+        if (resolved) {
+          fileDatabases[target.id] = resolved;
+        } else {
+          console.warn(
+            `[connections] ${target.id}: could not create/resolve its remote database directory; its specs will skip`,
+          );
+        }
+      }
     } catch (err) {
       console.warn(
         `[connections] ${target.id}: remote ODBC provisioning failed, its specs will skip:`,
@@ -470,12 +518,12 @@ export async function provisionRemoteOdbcSandbox(
     }
   }
 
-  if (registered.length === 0) return { odbcSysIni: null, registered: [] };
+  if (registered.length === 0) return { odbcSysIni: null, registered: [], fileDatabases };
 
   await writeRemoteText(page, `${REMOTE_ODBC_DIR}/odbcinst.ini`, stanzas.join('\n'), '0644', recordPath);
   await writeRemoteText(page, `${REMOTE_ODBC_DIR}/odbc.ini`, '', '0644', recordPath);
 
-  return { odbcSysIni: REMOTE_ODBC_DIR, registered };
+  return { odbcSysIni: REMOTE_ODBC_DIR, registered, fileDatabases };
 }
 
 /**

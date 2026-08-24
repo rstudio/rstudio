@@ -419,6 +419,33 @@ export function wizardSnippet(t: EffectiveDbTarget): string {
 }
 
 /**
+ * The absolute directory provisionRemoteOdbcSandbox (utils/connections.ts)
+ * resolved and created in-session for file-kind target `id`'s database, or
+ * null if that step hasn't run (not a server-mode run needing it) or didn't
+ * cover this target (its driver wasn't found remotely either).
+ *
+ * Read directly from the status file connections.ts writes
+ * (remote-odbc-status.json), rather than through that module's own
+ * readRemoteOdbcStatus, to avoid a circular import: connections.ts already
+ * imports effectiveTarget from this file.
+ */
+function remoteFileDatabaseDir(sandbox: string, id: string): string | null {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(path.join(sandbox, 'remote-odbc-status.json'), 'utf-8');
+  } catch {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { fileDatabases?: Record<string, unknown> };
+    const dir = parsed.fileDatabases?.[id];
+    return typeof dir === 'string' ? dir : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Apply the PW_DB_<ID> override, if present, to a target. Malformed override
  * text throws: a typo should surface immediately, not as a connect failure.
  */
@@ -432,8 +459,17 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
   // sandbox at all the path stays empty and dbAvailability skips the specs
   // with that reason, rather than the driver creating a file somewhere
   // unexpected.
+  //
+  // The sandbox-relative path only works when the test session shares a
+  // filesystem AND a user with this test runner -- true for Desktop and a
+  // locally-spawned rserver-dev, false for a CI same-machine installed
+  // server or a genuinely external one, which run rsessions as a different
+  // (possibly remote) user. For those, provisionRemoteOdbcSandbox creates
+  // the database directory in-session and records where it landed; prefer
+  // that when it exists.
   if (target.kind === 'file') {
     const sandbox = process.env.PW_SANDBOX;
+    const remoteDir = sandbox ? remoteFileDatabaseDir(sandbox, target.id) : null;
     // Forward slashes, on every platform. This path is typed into the wizard's
     // Database field, and the wizard interpolates it verbatim into the R code
     // it generates. A Windows path's backslashes are escape sequences there:
@@ -441,12 +477,16 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
     // invalid, so the generated dbConnect() call either fails to parse or opens
     // some other file -- while the code panel still *looks* right, which is why
     // the wizard specs passed and only the connecting ones failed. R, SQLite
-    // and the ODBC driver all accept forward slashes on Windows.
+    // and the ODBC driver all accept forward slashes on Windows. remoteDir is
+    // already an absolute path resolved on a Linux machine (RStudio Server is
+    // Linux-only), so it needs no such normalization.
     const database = raw
       ? raw.trim()
-      : sandbox
-        ? path.join(sandbox, 'db', target.id, target.fileName).split(path.sep).join('/')
-        : '';
+      : remoteDir
+        ? `${remoteDir}/${target.fileName}`
+        : sandbox
+          ? path.join(sandbox, 'db', target.id, target.fileName).split(path.sep).join('/')
+          : '';
     return {
       ...target,
       overridden: !!raw,

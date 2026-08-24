@@ -208,6 +208,30 @@ export async function remotePathExists(page: Page, remotePath: string): Promise<
 }
 
 /**
+ * Evaluate an R expression yielding a single string on the remote session.
+ * Returns the string, or null when the result couldn't be read back.
+ *
+ * Same nonce-tagged read-back as evalRemoteLogical, and for the same reason:
+ * a stale console line from an earlier command (this is typically paired with
+ * a dir.create() or similar side-effecting call) must never satisfy a later
+ * probe.
+ */
+export async function evalRemoteString(page: Page, expr: string): Promise<string | null> {
+  const nonce = `pw${randomBytes(6).toString('hex')}`;
+  const marker = `paste0("<<${nonce}>>", v, "<<${nonce}>>")`;
+  await executeInConsole(page, `local({ v <- (${expr}); cat(${marker}, "\\n", sep = "") })`);
+  const pane = new ConsolePaneActions(page).consolePane.consoleOutput;
+  const re = new RegExp(`<<${nonce}>>(.*?)<<${nonce}>>`);
+  try {
+    await expect.poll(async () => re.test(await pane.innerText()), { timeout: 15_000 }).toBe(true);
+  } catch {
+    return null;
+  }
+  const m = (await pane.innerText()).match(re);
+  return m === null ? null : m[1];
+}
+
+/**
  * Poll for `remotePath` to exist, up to `timeoutMs`. Returns immediately when
  * it already does. Used to let a remote-side writer with variable timing (the
  * AI client's startup stub, see remotePositAiStoreAuthenticated) finish before

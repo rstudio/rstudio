@@ -1299,7 +1299,7 @@ setup('provision remote ODBC drivers', async () => {
     }
   };
 
-  let status: RemoteOdbcStatus = { odbcSysIni: null, registered: [] };
+  let status: RemoteOdbcStatus = { odbcSysIni: null, registered: [], fileDatabases: {} };
   try {
     status = await provisionRemoteOdbcSandbox(page, recordPath);
     console.log(
