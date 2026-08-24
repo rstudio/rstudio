@@ -164,25 +164,22 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
                "path the client reported");
       }
    }
-   // the root path was defined, so the cookie path comes from the server's perceived current
-   // URI with the last part (/client_init) removed. The result is the session path, same as
-   // above. That derivation cannot see a path-prefixing reverse proxy the server was never
-   // told about (e.g. Open OnDemand's /rnode/ routes): the browser-visible path then carries
-   // a prefix the server-derived path can never contain, and the browser would omit this
-   // cookie. Recover such a prefix from the client-reported baseURL, which is honored only
-   // when it ends with the server-derived path, so the result is the server's own path with
-   // a prefix restored rather than a path of the client's choosing (see #18621). This request
-   // is CSRF-protected, which keeps a crafted link out, but not a same-origin script -- and
-   // one that can issue a valid client_init already regenerates the port token and takes the
-   // active client id, so it gains nothing by relocating the cookie.
+   // the root path was defined, so we compute the cookie path more securely using internal
+   // assumptions instead of using the URL from the JSON input. In this case, we use the
+   // server's perceived current URI with the last part (/client_init) removed. The result is
+   // the session path, same as above.
+   //
+   // For the browser to send this cookie back, that path has to be the one the browser sees.
+   // Behind a path-prefixing reverse proxy the server has not been told about, it will not be:
+   // proxiedUri cannot contain a prefix nothing reported. Set www-root-path to the full
+   // browser-visible prefix, or have the proxy send it in X-RStudio-Root-Path, which also
+   // covers a prefix that varies per session (see #18621).
    else
    {
       path = ptrConnection->request().proxiedUri();
       boost::algorithm::replace_all(path, ptrConnection->request().uri(), "");
       http::URL completePath(path);
       path = completePath.path();
-
-      path = http::util::cookiePathWithExternalPrefix(path, baseURL);
    }
 
    // Whichever branch produced it, the path is written into the Set-Cookie header without
