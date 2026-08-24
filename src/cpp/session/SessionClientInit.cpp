@@ -191,9 +191,11 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    //
    // Unlike the assistant auth cookie, this one cannot simply be withheld -- the IDE does not
    // work without it -- so when that configured root path is itself unusable there is nowhere
-   // left to go but the origin. That is a broken deployment either way: a www-root-path the
-   // browser cannot send a cookie for means the IDE was not reachable at that path to begin
-   // with. The warning below names the path actually used so the widening is visible.
+   // left to go but the origin, and the port token is then offered to every application on
+   // the host. That is a deliberate trade, not a safe fallback: a root path can be perfectly
+   // reachable and still be unusable here, since ';' is legal in a URL path but delimits
+   // attributes in Set-Cookie. The warning below names the path actually used so the widening
+   // is visible.
    if (!http::util::isValidCookiePath(path))
    {
       // options().rootPath() is the raw setting, and www-root-path may be written

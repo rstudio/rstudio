@@ -203,9 +203,9 @@ std::string normalizeRootPath(const std::string& rootPath);
 // could never match because it compares the path against a request path whose
 // dot segments have already been removed. An empty segment ("//") is allowed:
 // nothing removes one from a path that reaches a caller unparsed, so it is what
-// a browser on such a base URL actually sends, and rejecting it would only push
-// the caller onto a wider path. Use this before putting any client-reported
-// value in a cookie path.
+// a browser on such a base URL actually sends, and rejecting it would only make
+// the caller widen the cookie or withhold it. Use this before putting any
+// client-reported value in a cookie path.
 bool isValidCookiePath(const std::string& path);
 
 } // namespace util

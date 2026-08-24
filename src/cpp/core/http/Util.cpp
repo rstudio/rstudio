@@ -658,14 +658,15 @@ bool isValidCookiePath(const std::string& path)
    // segments have already been removed, so a path carrying "." or ".." could
    // never match.
    //
-   // An empty segment is different: URL::cleanupPath drops one, but it only
-   // runs on paths this server composes itself, and callers also hand us values
-   // that never went through it -- a client-reported base URL, or the
-   // X-RStudio-Request header, which Request::proxiedUri() returns verbatim. In
-   // those a "//" is exactly what a browser on such a base URL sends, so it is
-   // kept: rewriting it yields a cookie the browser never sends back, and
-   // refusing it pushes the caller onto a path wider than the base it came
-   // from. Both are worse than accepting it.
+   // An empty segment is different. URL::cleanupPath drops one, but not every
+   // path that arrives here has been through it: a client-reported base URL has
+   // not, nor has the X-RStudio-Request header, which Request::proxiedUri()
+   // returns verbatim. In those a "//" is exactly what a browser on such a base
+   // URL sends, so it is kept. Rewriting it yields a cookie the browser never
+   // sends back, and refusing it leaves the caller with the choice it makes on
+   // any invalid path -- widen the cookie, or withhold it and lose whatever it
+   // authorizes. Both are worse than accepting a segment the browser will
+   // match.
    if (path.find("/./") != std::string::npos ||
        path.find("/../") != std::string::npos ||
        boost::algorithm::ends_with(path, "/.") ||
