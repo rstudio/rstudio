@@ -390,6 +390,13 @@ if has-scope "r"; then
 
    section "Running 'r' tests"
 
+   # Set process-wide environment before rsession starts any worker threads.
+   # Mutating environ later from R can race libc-internal readers (for example,
+   # gettext reading LANGUAGE while formatting an error on a worker thread).
+   if [ -n "${JENKINS_URL}" ] || [ -n "${CI}" ]; then
+      export NO_COLOR=1
+   fi
+
    # tell testthat our source dir, binary dir
    export TESTTHAT_TESTS_DIR="@CMAKE_CURRENT_SOURCE_DIR@/tests/testthat"
    export TESTTHAT_OUTPUT_DIR="@CMAKE_CURRENT_BINARY_DIR@"

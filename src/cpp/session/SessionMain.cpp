@@ -2102,6 +2102,11 @@ void stopMonitorWorkerThread()
       false); // released via s_monitorIoContext.stop() above, not interruptible
 }
 
+bool shouldRunMonitorWorker()
+{
+   return !options().runTests() && options().runScript().empty();
+}
+
 void initMonitorClient()
 {
    if (!options().getBoolOverlayOption(kLauncherSessionOption))
@@ -2120,14 +2125,15 @@ void initMonitorClient()
    // to the monitor (which are likely across machines and thus very expensive)
    // do not hamper the liveliness of the session as a whole
    //
-   // but do not start it when running unit tests: there is no rserver-monitor to
-   // connect to, so every async log/event would fail-fast and race the worker
-   // thread against the initiating thread on the same socket. The worker thread
-   // also never gets stopped on the test path (R exits via exit()), so it would
-   // race static destruction of other process state at exit. Both produce
-   // intermittent SIGSEGVs. The client object is still initialized above so that
-  // monitor::client() stays valid; queued async ops are simply never processed.
-   if (!options().runTests())
+   // but do not start it for either test entry point. The C++ tests use
+   // --run-tests; the R tests use the otherwise-headless --run-script. There is
+   // no rserver-monitor in either case, so every async log/event would fail-fast.
+   // More importantly, R tests intentionally mutate the process environment;
+   // libc error formatting on this worker can call gettext/getenv concurrently,
+   // which is unsafe on platforms where setenv can replace environ. The client
+   // object is still initialized above so monitor::client() stays valid; queued
+   // async operations are simply never processed.
+   if (shouldRunMonitorWorker())
       core::thread::safeLaunchThread(monitorWorkerThreadFunc, &s_monitorWorkerThread);
 }
 
@@ -2430,8 +2436,10 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       }
       BOOST_SCOPE_EXIT_END
 
-      // register monitor log writer (but not in standalone or verify installation mode)
-      if (!options.standalone() && !options.verifyInstallation() && !options.runTests())
+      // register the monitor log writer only when its worker is running
+      if (!options.standalone() &&
+          !options.verifyInstallation() &&
+          shouldRunMonitorWorker())
       {
          core::log::addLogDestination(
             monitor::client().createLogDestination(core::system::generateShortenedUuid(), log::LogLevel::WARN, options.programIdentity()));
