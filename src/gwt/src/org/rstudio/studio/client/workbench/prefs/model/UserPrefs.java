@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.prefs.model;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -110,6 +111,22 @@ public class UserPrefs extends UserPrefsComputed
 
    public void writeUserPrefs(CommandWithArg<Boolean> onCompleted)
    {
+      writeUserPrefsWithDetail((succeeded, errorMessage) ->
+      {
+         if (onCompleted != null)
+            onCompleted.execute(succeeded);
+      });
+   }
+
+   // Variant that also reports the failure detail: on error, onCompleted
+   // receives the underlying RPC error message (null on success). Used by the
+   // automation bridge so a failed pref write can say why it failed.
+   //
+   // Named distinctly rather than overloaded: a second single-argument
+   // writeUserPrefs would make every existing writeUserPrefs(null) call
+   // ambiguous, since CommandWithArg and CommandWith2Args are unrelated types.
+   public void writeUserPrefsWithDetail(CommandWith2Args<Boolean, String> onCompleted)
+   {
       updatePrefs(session_.getSessionInfo().getPrefs());
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
@@ -134,7 +151,7 @@ public class UserPrefs extends UserPrefsComputed
 
                if (onCompleted != null)
                {
-                  onCompleted.execute(true);
+                  onCompleted.execute(true, null);
                }
             }
             @Override
@@ -142,7 +159,7 @@ public class UserPrefs extends UserPrefsComputed
             {
                if (onCompleted != null)
                {
-                  onCompleted.execute(false);
+                  onCompleted.execute(false, error.getUserMessage());
                }
                Debug.logError(error);
             }

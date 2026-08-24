@@ -125,15 +125,13 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '
    */
   async function askAssistant(prompt: string, answerQuestion?: RegExp): Promise<string> {
     await chatActions.startNewConversation();
-    const initialCount = await chatPane.getMessageCount();
-
-    await chatActions.sendChatMessage(prompt);
+    const initialCount = await chatActions.sendChatMessage(prompt, answerQuestion);
 
     // Handle Allow dialogs and wait for response to finish streaming
     await chatActions.pollWithAllowDialogs(async () => {
       const count = await chatPane.getMessageCount();
       if (count <= initialCount) return false;
-      return !(await chatPane.isStopButtonVisible());
+      return await chatActions.isTurnIdle();
     }, 120000, answerQuestion);
 
     const lastMessage = chatPane.messageItem.last();

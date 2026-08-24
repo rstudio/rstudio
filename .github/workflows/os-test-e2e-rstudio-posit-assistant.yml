@@ -61,7 +61,6 @@ jobs:
       os: ubuntu-24-x86_64
       arch: x86_64
       project: desktop
-      r_version: "release"
       build_from_source: false
       grep: "@ai"
       posit_assistant_test_manifest: true
@@ -77,7 +76,6 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: "release"
       build_from_source: false
       grep: "@ai"
       posit_assistant_test_manifest: true
@@ -93,7 +91,6 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: "release"
       build_from_source: false
       grep: "@ai"
       posit_assistant_test_manifest: true

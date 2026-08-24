@@ -19,6 +19,13 @@ test.describe.serial('Chat Messaging', { tag: ['@ai', '@chat'] }, () => {
   });
 
   test.beforeEach(async () => {
+    // Every test here is one or more full model round-trips, and the
+    // multi-turn case is six of them back to back. The 120s default budget
+    // leaves ~20s per turn, so a single slow turn expires the test and
+    // reports an opaque "Test timeout exceeded" instead of the assertion
+    // that was actually waiting.
+    test.setTimeout(300000);
+
     annotateVersions(versions);
     test.info().annotations.push(
       { type: 'Posit Assistant version', description: positAssistantVersion },
@@ -30,8 +37,7 @@ test.describe.serial('Chat Messaging', { tag: ['@ai', '@chat'] }, () => {
   });
 
   test('send a message and receive a response', async ({ rstudioPage: page }) => {
-    const initialCount = await chatPane.getMessageCount();
-    await chatActions.sendChatMessage('Hello, can you help me?');
+    const initialCount = await chatActions.sendChatMessage('Hello, can you help me?');
 
     const newCount = await chatActions.waitForResponse(initialCount);
     expect(newCount).toBeGreaterThan(initialCount);
@@ -50,8 +56,11 @@ test.describe.serial('Chat Messaging', { tag: ['@ai', '@chat'] }, () => {
     ];
 
     for (const message of turns) {
-      const countBefore = await chatPane.getMessageCount();
-      await chatActions.sendChatMessage(message);
+      // The baseline comes from sendChatMessage, which samples it once the
+      // previous turn has actually settled. Sampling it here instead would
+      // read a count the previous turn can still grow during that wait, and
+      // credit this turn with the growth.
+      const countBefore = await chatActions.sendChatMessage(message);
       const countAfter = await chatActions.waitForResponse(countBefore);
       expect(countAfter).toBeGreaterThan(countBefore);
     }
@@ -61,8 +70,7 @@ test.describe.serial('Chat Messaging', { tag: ['@ai', '@chat'] }, () => {
     await expect(lastMessage).toContainText('23', { timeout: 5000 });
 
     // Verify the assistant can answer a non-math question
-    const countBefore = await chatPane.getMessageCount();
-    await chatActions.sendChatMessage('To whom is this referring? Answer in one word: "until Great Birnam Wood to high Dunsinane Hill shall come against him"');
+    const countBefore = await chatActions.sendChatMessage('To whom is this referring? Answer in one word: "until Great Birnam Wood to high Dunsinane Hill shall come against him"');
     await chatActions.waitForResponse(countBefore);
 
     lastMessage = chatPane.messageItem.last();
@@ -74,8 +82,7 @@ test.describe.serial('Chat Messaging', { tag: ['@ai', '@chat'] }, () => {
     expect(resetCount).toBe(0);
 
     // Verify the new conversation works
-    const newConvCount = await chatPane.getMessageCount();
-    await chatActions.sendChatMessage('Who believes that nothing will come of nothing: speak again?');
+    const newConvCount = await chatActions.sendChatMessage('Who believes that nothing will come of nothing: speak again?');
     await chatActions.waitForResponse(newConvCount);
 
     lastMessage = chatPane.messageItem.last();

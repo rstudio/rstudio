@@ -5,6 +5,17 @@ import { SourcePaneActions } from './source_pane.actions';
 
 export const COMPLETION_POPUP = '#rstudio_popup_completions';
 
+// How long to let the request that typing itself schedules produce a popup
+// before forcing one, and how long a forced request gets. The implicit budget
+// only has to cover code_completion_delay plus one round trip; it is spent in
+// full only when the typed text triggers no implicit request at all.
+const IMPLICIT_COMPLETION_TIMEOUT_MS = 3000;
+const EXPLICIT_COMPLETION_TIMEOUT_MS = 10000;
+
+// Settle applied when the popup is already up before we start waiting, to let
+// a replacement request land -- see waitForCompletionPopup.
+const STALE_POPUP_SETTLE_MS = 500;
+
 export class AutocompleteActions {
   readonly page: Page;
   readonly consoleActions: ConsolePaneActions;
@@ -47,6 +58,63 @@ export class AutocompleteActions {
     await sleep(300);
   }
 
+  /** Whether the popup becomes visible within `timeoutMs`. */
+  private async popupAppears(timeoutMs: number): Promise<boolean> {
+    return await this.page
+      .locator(COMPLETION_POPUP)
+      .waitFor({ state: 'visible', timeout: timeoutMs })
+      .then(() => true)
+      .catch(() => false);
+  }
+
+  /**
+   * Wait for the completion popup after typing, forcing a request with
+   * Ctrl+Space only if the implicit one never produces one.
+   *
+   * Typing already schedules a completion request -- RStudio issues one
+   * `code_completion_delay` ms (250 by default) after the
+   * `code_completion_characters`-th character, and immediately after a
+   * trigger like `$` or `(`. Pressing Ctrl+Space while that is in flight is
+   * destructive rather than helpful: `RCompletionManager.beginSuggest` starts
+   * by invalidating pending requests, so the in-flight response is discarded
+   * on arrival, and if the popup has just opened the keypress instead falls
+   * through the popup-showing branch to `invalidatePendingRequests()`, which
+   * hides it. Either way the completion session is stranded and no popup ever
+   * appears.
+   *
+   * Sampling visibility once shortly after typing raced exactly that window:
+   * on CI the request round trip pushed the popup past the sample, the
+   * fallback fired into the gap, and the test then waited out its timeout on a
+   * session it had just cancelled. So wait out the implicit request first, and
+   * force one only once nothing is in flight -- retrying once, since a slow
+   * enough response can still land in the same window.
+   *
+   * A popup that is *already* up on entry is a different case: typing keeps an
+   * open popup showing while it re-requests, because `beginSuggest` invalidates
+   * without hiding (`RCompletionManager.java:1163`, hidePopup false), so its
+   * contents can still be an earlier prefix's results with the final token's
+   * request in flight. Visibility proves nothing there, hence the settle.
+   *
+   * The caller reads the popup via `getCompletionItems`, whose own visibility
+   * wait is the final deadline -- this returns after the second keypress
+   * rather than waiting on the same locator twice.
+   */
+  private async waitForCompletionPopup(): Promise<void> {
+    if (await this.page.locator(COMPLETION_POPUP).isVisible()) {
+      await sleep(STALE_POPUP_SETTLE_MS);
+      return;
+    }
+
+    if (await this.popupAppears(IMPLICIT_COMPLETION_TIMEOUT_MS))
+      return;
+
+    await this.page.keyboard.press('Control+Space');
+    if (await this.popupAppears(EXPLICIT_COMPLETION_TIMEOUT_MS))
+      return;
+
+    await this.page.keyboard.press('Control+Space');
+  }
+
   /**
    * Toggle the automation-only "always show popup" completion override, so a
    * unique match is listed in the popup instead of being auto-accepted. The
@@ -62,7 +130,8 @@ export class AutocompleteActions {
 
   /**
    * Get completions in the console.
-   * Executes setupCode, then types triggerText (without Enter) and presses Ctrl+Space.
+   * Executes setupCode, then types triggerText (without Enter) and waits for
+   * the popup, falling back to Ctrl+Space if typing raises no completions.
    */
   async getCompletionsInConsole(setupCode: string[], triggerText: string): Promise<string[]> {
     for (const code of setupCode) {
@@ -74,14 +143,8 @@ export class AutocompleteActions {
     try {
       // Type trigger text without executing -- needs per-key events to fire the completer.
       await this.consoleActions.typeInConsole(triggerText);
-      await sleep(500);
+      await this.waitForCompletionPopup();
 
-      // If autocomplete already appeared (e.g. after typing $ or (), use it;
-      // otherwise trigger explicitly with Ctrl+Space
-      const popupAlreadyVisible = await this.page.locator(COMPLETION_POPUP).isVisible();
-      if (!popupAlreadyVisible) {
-        await this.page.keyboard.press('Control+Space');
-      }
       return await this.getCompletionItems();
     } finally {
       // Cleanup: restore auto-accept, dismiss popup, cancel partial input

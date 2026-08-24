@@ -56,6 +56,23 @@ public:
    virtual const http::Request& request() const = 0;
 
    // populate or set response then call writeResponse when done
+   //
+   // THREADING: assemble your own http::Response and hand it to one of the
+   // write entry points below that takes one, rather than populating this one
+   // in place. Those claim the connection's single response before assigning
+   // anything, which is the only ordering that is safe: the connection has
+   // writers of its own (its read path can turn a request-parse error into
+   // writeResponse(BadRequest)), an in-flight write hands asio buffers that
+   // point straight into this object's member strings, and that write outlives
+   // the call that started it -- so getStrand() is not enough on its own,
+   // because a strand serializes handlers, not the async operations they
+   // start. Mutating this response while such a write is outstanding frees the
+   // storage asio is reading, even if the mutation is followed by a write
+   // attempt that the claim then rejects.
+   //
+   // Reading it is a different matter and does only need getStrand(), since
+   // every mutation happens there. FixedBufferProxy::writeHeaders() is the
+   // worked example of both halves.
    virtual http::Response& response() = 0;
    virtual void writeResponse(bool close = true,
                               Socket::Handler handler = Socket::NullHandler) = 0;
@@ -70,7 +87,13 @@ public:
    // useful for chunked encoding (streaming)
    // after successful write, the handler callback is invoked
    // allowing you to start writing to the raw socket for streaming purposes
+   //
+   // the first form writes whatever has been staged in response(); prefer the
+   // second, which hands the response over to be written in one step, wherever
+   // the caller assembles it itself (see response()'s threading note)
    virtual void writeResponseHeaders(Socket::Handler handler) = 0;
+   virtual void writeResponseHeaders(const http::Response& response,
+                                     Socket::Handler handler) = 0;
 
    virtual void writeError(const Error& error) = 0;
 

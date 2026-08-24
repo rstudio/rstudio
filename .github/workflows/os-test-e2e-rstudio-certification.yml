@@ -40,7 +40,7 @@ on:
         type: string
         default: ""
       r_overrides:
-        description: "Per-cell R version overrides as cell=version pairs, space- or comma-separated (e.g. 'rocky9-x86_64=4.3.3 macos26=devel'). Anything not named here keeps its matrix.json version. An unknown name fails the run."
+        description: "Per-cell R version overrides as cell=version pairs, space- or comma-separated (e.g. 'rocky9-x86_64=4.3.3 macos26=4.5.1'). Versions are exact X.Y.Z and must already be mirrored into rstudio-buildtools. Anything not named here keeps its matrix.json version. An unknown name fails the run."
         type: string
         default: ""
       test_selector:
@@ -181,20 +181,21 @@ jobs:
 
           # Every cell must declare an r_version. A missing or misspelled field
           # reads as null, which flows through as an empty r_version input -- and
-          # a workflow_call default only applies to an absent key, not to an empty
-          # expression, so the engine reaches `rig add ""` inside a cell it has
-          # already spent minutes provisioning. Shape-checked too, since the value
-          # is either the distro sentinel or something rig can resolve.
+          # an empty input is how every other lane asks for the RSTUDIO_R_VERSION
+          # pin. So the cell would not fail; it would quietly certify against the
+          # current pin while the summary table reported the version it declared.
+          # A certification table asserting an R that was never installed is the
+          # worst outcome available here, which is why this check is strict.
           #
-          # A two-component version is accepted because rig resolves it (4.4 ->
-          # 4.4.3), and the engines' own r_version inputs take it. oldrel-N is
-          # deliberately absent from the advertised list below: rig 0.8.1, the
-          # floor os-install-rig-unix pins, fails it outright.
+          # Exact X.Y.Z only: R comes from a per-version path in the
+          # rstudio-buildtools mirror (.github/actions/os-install-r-*), so there
+          # is no resolver left to expand "release" or a two-component "4.4"
+          # against. The one non-version value is the 'distro' sentinel.
           BAD_R=$(jq -cn --argjson m "$MATRIX" \
-            '[$m[] | select((.r_version // "") | test("^(distro|[0-9]+\\.[0-9]+(\\.[0-9]+)?|release|oldrel(-[0-9]+)?|devel|next)$") | not) | .cell]')
+            '[$m[] | select((.r_version // "") | test("^(distro|[0-9]+\\.[0-9]+\\.[0-9]+)$") | not) | .cell]')
           if [ "$BAD_R" != "[]" ]; then
             echo "::error::Cell(s) in $MATRIX_FILE have a missing or unrecognized r_version: $(jq -r 'join(", ")' <<<"$BAD_R")."
-            echo "::error::Use a version (4.4 or 4.4.1), an alias (release, oldrel, devel, next), or the sentinel 'distro'."
+            echo "::error::Use an exact version (4.4.1) or the sentinel 'distro'."
             exit 1
           fi
 
@@ -219,6 +220,15 @@ jobs:
           MALFORMED=$(jq -cn --argjson p "$PAIRS" '[$p[] | select(.version == null or .version == "") | .cell]')
           if [ "$MALFORMED" != "[]" ]; then
             echo "::error::Malformed r_overrides entr(ies): $(jq -r 'join(", ")' <<<"$MALFORMED"). Expected cell=version, e.g. rocky9-x86_64=4.3.3."
+            exit 1
+          fi
+          # Same shape rule as the matrix, and for the same reason: an override
+          # the mirror has no path for should fail here, not after the cell has
+          # provisioned. 'distro' is a matrix sentinel, not something to request.
+          BAD_OV=$(jq -cn --argjson p "$PAIRS" \
+            '[$p[] | select(.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$") | not) | "\(.cell)=\(.version)"]')
+          if [ "$BAD_OV" != "[]" ]; then
+            echo "::error::r_overrides must name an exact X.Y.Z version: $(jq -r 'join(", ")' <<<"$BAD_OV")."
             exit 1
           fi
           UNKNOWN_OV=$(jq -cn --argjson m "$MATRIX" --argjson p "$PAIRS" \
@@ -294,16 +304,25 @@ jobs:
           # --- merge overrides over the declared versions ------------------
           # r_declared is what the matrix (or the override) asked for, kept for
           # the summary. r_effective is what the engine is actually handed: the
-          # "distro" sentinel becomes "release" because the engines that use it
-          # ignore the value anyway, and a literal "distro" would break the rig
-          # engines outright if a config ever switched away from r_install
-          # distro.
+          # "distro" sentinel becomes a real version because the engines that use
+          # it ignore the value anyway, and a literal "distro" would break the
+          # mirror-installed engines outright if a config ever switched away from
+          # r_install distro. Any mirrored version does, so it takes the same
+          # RSTUDIO_R_VERSION pin the engines fall back to when handed nothing --
+          # that way there is still exactly one R version literal in the repo.
           #
           # A distro cell keeps "distro" visible in r_declared even when
           # overridden, with the ignored request shown alongside it, so the
           # summary's footnote still applies and the table cannot claim a version
           # that was never attempted.
-          RESOLVED=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson p "$PAIRS" '
+          DISTRO_PLACEHOLDER_R=$(sed -n 's/^export RSTUDIO_R_VERSION="\(.*\)"$/\1/p' \
+            dependencies/tools/rstudio-tools.sh | tail -1)
+          if [ -z "$DISTRO_PLACEHOLDER_R" ]; then
+            echo "::error::Could not read RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh."
+            exit 1
+          fi
+          RESOLVED=$(jq -cn --argjson m "$MATRIX" --argjson sel "$SEL" --argjson p "$PAIRS" \
+            --arg placeholder "$DISTRO_PLACEHOLDER_R" '
             ($p | map({key: .cell, value: .version}) | from_entries) as $ov
             | [ $m[]
                 | select(.cell as $c | $sel | index($c))
@@ -311,7 +330,7 @@ jobs:
                         (if .r_version == "distro" then
                            (if $ov[.cell] then "distro (\($ov[.cell]) ignored)" else "distro" end)
                          else ($ov[.cell] // .r_version) end) }
-                | . + { r_version: (if .r_version == "distro" then "release" else .r_declared end) } ]')
+                | . + { r_version: (if .r_version == "distro" then $placeholder else .r_declared end) } ]')
 
           # Linux Desktop cells are the ones carrying an os field; the other
           # five are keyed on by the if: contains(...) guards on their own jobs.

@@ -5,6 +5,18 @@ import { ConsolePaneActions } from './console_pane.actions';
 import { sleep } from '../utils/constants';
 import { executeCommand } from '../utils/commands';
 
+// The stop button flickers off between streaming phases -- notably in the
+// approval -> tool-execution handoff right after clicking Allow -- so a single
+// hidden sample does not mean the turn is done. isTurnIdle() requires it to
+// stay hidden across TURN_IDLE_SAMPLES samples, spanning
+// (TURN_IDLE_SAMPLES - 1) * TURN_IDLE_SAMPLE_INTERVAL_MS of observation.
+const TURN_IDLE_SAMPLES = 4;
+const TURN_IDLE_SAMPLE_INTERVAL_MS = 500;
+
+// Floor for waitForResponse's settle window, used when the caller's own
+// budget has already been spent waiting for the response to appear.
+const MIN_TURN_SETTLE_MS = 30000;
+
 export class ChatPaneActions {
   readonly page: Page;
   readonly chatPane: ChatPane;
@@ -350,14 +362,77 @@ export class ChatPaneActions {
     throw new Error(`pollWithAllowDialogs timed out after ${timeout}ms`);
   }
 
-  async sendChatMessage(text: string): Promise<void> {
+  /**
+   * Whether the assistant has finished its turn -- the single predicate every
+   * "wait for the response" poll in the suite should use.
+   *
+   * The composer shows the stop button in place of send for as long as the
+   * turn is active, so a hidden stop button is the completion signal. It is
+   * only trustworthy when sampled repeatedly (see TURN_IDLE_SAMPLES): the
+   * button flickers off mid-turn, and one sample landing in that gap reports a
+   * still-streaming turn as done. Returns as soon as the button is seen, so
+   * this stays cheap while a turn is streaming and pays the full sampling
+   * window only once the turn looks finished.
+   *
+   * The chat root is checked alongside it because isStopButtonVisible()
+   * reports any failed lookup as "not visible": if the assistant iframe is
+   * torn down mid-turn, its stop button is missing for a reason that is the
+   * opposite of idle, and without this the streak would complete on it.
+   */
+  async isTurnIdle(): Promise<boolean> {
+    for (let sample = 0; sample < TURN_IDLE_SAMPLES; sample++) {
+      if (sample > 0)
+        await sleep(TURN_IDLE_SAMPLE_INTERVAL_MS);
+
+      if (!(await this.chatPane.chatRoot.isVisible().catch(() => false)))
+        return false;
+
+      if (await this.chatPane.isStopButtonVisible())
+        return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Send a message, waiting out any still-running previous turn first.
+   *
+   * `answerQuestion` matches the option to pick if that previous turn is
+   * parked on an AskUser question.
+   *
+   * Returns the message count as of that wait finishing -- the baseline to
+   * hand waitForResponse. A caller that samples the count itself, before this
+   * call, reads it while the previous turn may still be appending to the
+   * conversation, and then credits this turn with that growth.
+   */
+  async sendChatMessage(
+    text: string,
+    answerQuestion?: RegExp | string
+  ): Promise<number> {
     await expect(this.chatPane.chatInput).toBeVisible({ timeout: 15000 });
+
+    // The previous turn may still be streaming -- the composer shows the stop
+    // button in place of send until the whole turn (including any post-tool
+    // continuation) completes, which can take well over 15s of model latency,
+    // and a turn parked on an approval stays active until it is granted.
+    // Wait the turn out here, before typing: the composer re-renders when the
+    // turn ends, so text buffered into it beforehand does not survive.
+    await this.pollWithAllowDialogs(
+      () => this.isTurnIdle(),
+      60000,
+      answerQuestion
+    );
+
+    const baseline = await this.chatPane.getMessageCount();
+
     await expect(this.chatPane.chatInput)
       .toHaveAttribute('contenteditable', 'true', { timeout: 15000 });
     await this.chatPane.typeMessage(text);
 
     await expect(this.chatPane.sendBtn).toBeVisible({ timeout: 15000 });
     await this.chatPane.sendBtn.click();
+
+    return baseline;
   }
 
   async waitForResponse(initialCount: number, timeout: number = 60000): Promise<number> {
@@ -373,8 +448,14 @@ export class ChatPaneActions {
 
       const currentCount = await this.chatPane.getMessageCount();
       if (currentCount > initialCount) {
-        const readyDeadline = Date.now() + 30000;
-        while (Date.now() < readyDeadline) {
+        // Settling gets whatever is left of the caller's budget, never less
+        // than the floor. Deriving it from `timeout` is the point: a caller
+        // that raised its budget for slow turns means the whole turn, not
+        // just the arrival of its first message.
+        const settleStart = Date.now();
+        const readyDeadline = Math.max(deadline, settleStart + MIN_TURN_SETTLE_MS);
+        let idle = false;
+        while (!idle && Date.now() < readyDeadline) {
           if (await this.chatPane.isAllowButtonVisible()) {
             await sleep(1000);
             await this.chatPane.allowBtn.click();
@@ -383,11 +464,21 @@ export class ChatPaneActions {
             continue;
           }
 
-          if (!(await this.chatPane.isStopButtonVisible())) {
-            break;
-          }
+          idle = await this.isTurnIdle();
+          if (!idle)
+            await sleep(TURN_IDLE_SAMPLE_INTERVAL_MS);
+        }
 
-          await sleep(500);
+        // Falling out of that loop on the deadline means the turn never
+        // settled. Say so: the caller is about to assert against a response
+        // that may still be streaming, and silently returning here is what
+        // made this class of flake unreadable in the report.
+        if (!idle) {
+          console.warn(
+            'waitForResponse: the assistant turn was still active after ' +
+            `${Math.round((Date.now() - settleStart) / 1000)}s; ` +
+            'reading the response while it may still be streaming'
+          );
         }
 
         const finalCount = await this.chatPane.getMessageCount();

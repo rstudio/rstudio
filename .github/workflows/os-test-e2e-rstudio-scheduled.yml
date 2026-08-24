@@ -397,7 +397,6 @@ jobs:
       os: ${{ matrix.os }}
       arch: ${{ matrix.arch }}
       project: desktop
-      r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs[matrix.url_key] }}
 
@@ -413,7 +412,6 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: server
-      r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.server_noble }}
 
@@ -429,7 +427,6 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
@@ -445,7 +442,6 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       # Same universal macOS .dmg the arm64 engines test; the daily manifest
       # ships one "macos" installer for both architectures.
@@ -463,7 +459,6 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
 
@@ -479,6 +474,5 @@ jobs:
       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
     with:
       project: desktop
-      r_version: "release"
       build_from_source: ${{ inputs.build_from_source || false }}
       rstudio_installer_url: ${{ needs.resolve.outputs.windows }}
