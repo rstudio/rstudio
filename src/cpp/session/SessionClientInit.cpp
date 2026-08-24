@@ -171,11 +171,8 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    //
    // For the browser to send this cookie back, that path has to be the one the browser sees.
    // Behind a path-prefixing reverse proxy the server has not been told about, it will not be:
-   // proxiedUri cannot contain a prefix nothing reported. Set www-root-path to the full
-   // browser-visible prefix, or have the proxy send it in X-RStudio-Root-Path, which also
-   // covers a prefix that varies per session (see #18621). A proxy sending that header has to
-   // set it rather than forward one: rootPath() takes the first value it sees and prefers it
-   // over www-root-path, so an inbound copy would win.
+   // proxiedUri cannot contain a prefix nothing reported. The NEWS entry for #18621 states how
+   // to tell the server about the prefix; do not restate it here.
    else
    {
       path = ptrConnection->request().proxiedUri();
@@ -190,9 +187,13 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // only the leading and trailing slash, and nothing strips an inbound copy of it. A path
    // attribute smuggled through either would be emitted verbatim, and RFC 6265 takes the
    // last one. Refuse anything unusable and retreat to the root path rserver passed on the
-   // command line, which no request can reach, rather than to the whole origin. Unlike the
-   // assistant auth cookie, this one cannot simply be withheld -- the IDE does not work
-   // without it.
+   // command line, which a request cannot influence.
+   //
+   // Unlike the assistant auth cookie, this one cannot simply be withheld -- the IDE does not
+   // work without it -- so when that configured root path is itself unusable there is nowhere
+   // left to go but the origin. That is a broken deployment either way: a www-root-path the
+   // browser cannot send a cookie for means the IDE was not reachable at that path to begin
+   // with. The warning below names the path actually used so the widening is visible.
    if (!http::util::isValidCookiePath(path))
    {
       // options().rootPath() is the raw setting, and www-root-path may be written
