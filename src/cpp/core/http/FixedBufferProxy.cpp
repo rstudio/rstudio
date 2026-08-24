@@ -645,17 +645,25 @@ bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
    // caller must stop either way -- on the failConnection() path because the
    // proxy is now torn down, and otherwise because handleErrorImpl() closed
    // what it needed to.
+   // already_started means another writer owns this client connection's one
+   // response and may still be writing it, which is why handleErrorImpl()
+   // detaches from the upstream and deliberately leaves that connection alone.
+   // The exception path has to honor the same rule: closing the client here
+   // would truncate exactly the response the claim exists to protect, and a
+   // failed upstream close is no reason to do that.
+   bool closeClientConnection = (ec != boost::asio::error::already_started);
+
    try
    {
       handleErrorImpl(ec);
    }
    catch (const std::exception& e)
    {
-      failConnection("handleError", e.what());
+      failConnection("handleError", e.what(), closeClientConnection);
    }
    catch (...)
    {
-      failConnection("handleError", "unknown exception");
+      failConnection("handleError", "unknown exception", closeClientConnection);
    }
 
    return true;
@@ -709,7 +717,29 @@ void FixedBufferProxy::closeUpstream()
    pServerConnection_->disableHandlers();
 }
 
-void FixedBufferProxy::failConnection(const char* context, const char* what)
+namespace {
+
+// Run one step of a teardown, swallowing anything it throws so that a failure
+// in any single step cannot skip the steps after it. Deliberately silent: the
+// only caller must not throw, and the logger is exactly as likely to fail as
+// the step was.
+template <typename Step>
+void attemptTeardownStep(Step step)
+{
+   try
+   {
+      step();
+   }
+   catch (...)
+   {
+   }
+}
+
+} // anonymous namespace
+
+void FixedBufferProxy::failConnection(const char* context,
+                                      const char* what,
+                                      bool closeClientConnection)
 {
    if (failed_.exchange(true))
       return;
@@ -726,21 +756,18 @@ void FixedBufferProxy::failConnection(const char* context, const char* what)
       // such as bad allocation. We want to continue cleanup if we can't log.
    }
 
-   try
-   {
-      closeConnections();
-   }
-   catch (...)
-   {
-      try
-      {
-         LOG_ERROR_MESSAGE("Connection teardown failed.");
-      }
-      catch (...)
-      {
-         // Must not allow excaped exceptions; at this point not much is safe.
-      }
-   }
+   // Attempt each step independently rather than going through
+   // closeConnections()/closeUpstream(), which chain: a throw from an earlier
+   // step there abandons the later ones, and failed_ means nothing will retry
+   // them. Skipping disableHandlers() is the expensive one -- it is what breaks
+   // the FixedBufferProxy <-> AsyncClient reference cycle, so without it this
+   // proxy, both connections and every buffered chunk leak for the life of the
+   // process (see closeUpstream()). Same order closeConnections() uses.
+   if (closeClientConnection)
+      attemptTeardownStep([&] { pClientConnection_->close(); });
+
+   attemptTeardownStep([&] { pServerConnection_->close(); });
+   attemptTeardownStep([&] { pServerConnection_->disableHandlers(); });
 }
 
 } // namespace http

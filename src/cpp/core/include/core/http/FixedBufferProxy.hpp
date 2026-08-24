@@ -85,8 +85,14 @@ private:
    // failed, and closes both connections. Never throws and is idempotent --
    // callers are catch blocks with nowhere to escalate to, and the same failure
    // can reach here twice (writeHeaders() dispatched inline returns into
-   // queueChunk()'s still-running body).
-   void failConnection(const char* context, const char* what);
+   // queueChunk()'s still-running body). Each teardown step is attempted even
+   // if an earlier one threw, since failed_ means nothing will retry them.
+   //
+   // closeClientConnection is for the one caller that must not touch that
+   // connection even while failing: see handleError()'s already_started note.
+   void failConnection(const char* context,
+                       const char* what,
+                       bool closeClientConnection = true);
 
    boost::shared_ptr<AsyncConnection> pClientConnection_;
    boost::shared_ptr<IAsyncClient> pServerConnection_;

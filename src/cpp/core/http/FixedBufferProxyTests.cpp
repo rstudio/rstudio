@@ -240,6 +240,14 @@ public:
    {
       disableHandlersCalled_ = true;
 
+      // Before the detach below, so a test can keep the handler attached --
+      // which is the only way an upstream can still deliver after a teardown.
+      if (throwOnNextDisableHandlers_)
+      {
+         throwOnNextDisableHandlers_ = false;
+         throw std::bad_alloc();
+      }
+
       // Mirror the real AsyncClient::disableHandlers(): this is what breaks
       // the FixedBufferProxy <-> AsyncClient reference cycle (queueChunk()
       // was bound here via shared_from_this() in proxy()). Without actually
@@ -264,6 +272,10 @@ public:
    // closeUpstream() calls close() before disableHandlers(), so a throw here
    // leaves fixedBufferHandler_ attached and the upstream still delivering.
    void throwOnNextClose() { throwOnNextClose_ = true; }
+
+   // One-shot injectable throw from disableHandlers(). Paired with
+   // throwOnNextClose() this simulates a teardown that fails at every step.
+   void throwOnNextDisableHandlers() { throwOnNextDisableHandlers_ = true; }
 
    // Socket
    void asyncReadSome(boost::asio::mutable_buffer, Socket::Handler) override {}
@@ -291,6 +303,7 @@ public:
 
 private:
    bool throwOnNextClose_ = false;
+   bool throwOnNextDisableHandlers_ = false;
    http::Request request_;
 };
 
@@ -1362,13 +1375,14 @@ TEST(FixedBufferProxy, BodyWriteThrowTearsDownInsteadOfReportingChunkDelivered)
    EXPECT_EQ(fixture.pProxy.use_count(), 1);
 }
 
-// A teardown that cannot reach disableHandlers() -- because closing the
-// upstream threw on the way there -- leaves the FixedBufferHandler attached and
-// the upstream free to keep delivering. Those late pieces must be discarded
-// rather than queued onto a response that is already closed and half-written.
-// This is the case the failed_ flag exists for; without it the teardown's own
-// failure would let the connection carry on in a half-torn-down state.
-TEST(FixedBufferProxy, ChunksArrivingAfterAFailedTeardownAreDiscarded)
+// A teardown whose every step throws must still attempt every step, and must
+// still contain what it could not tear down. Closing either connection can
+// throw (they are virtual calls into asio), and chaining the steps -- as
+// closeConnections()/closeUpstream() do on the ordinary paths -- would let the
+// first failure abandon the rest. disableHandlers() is the costly one to skip:
+// it breaks the FixedBufferProxy <-> AsyncClient reference cycle, and failed_
+// means nothing will ever retry it.
+TEST(FixedBufferProxy, FailedTeardownStillAttemptsEveryStepAndDiscardsLaterChunks)
 {
    Fixture fixture;
    http::Response upstream;
@@ -1376,18 +1390,20 @@ TEST(FixedBufferProxy, ChunksArrivingAfterAFailedTeardownAreDiscarded)
 
    EXPECT_TRUE(fixture.deliver(upstream, "first"));
 
-   // Fail the body write *and* the upstream close it triggers.
+   // Fail the body write, and then every step of the teardown it triggers.
    fixture.pClientConnection->throwOnNextWrite();
    fixture.pServerConnection->throwOnNextClose();
+   fixture.pServerConnection->throwOnNextDisableHandlers();
    EXPECT_NO_THROW(fixture.deliver(upstream, "second"));
 
-   // The teardown got as far as closing both ends but no further.
+   // The throwing close must not have cost us the disableHandlers() attempt.
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
-   EXPECT_FALSE(fixture.pServerConnection->disableHandlersCalled_);
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
 
-   // So the handler is still live and the upstream delivers again. Accepted
-   // (true, not a pause) and dropped, with nothing further written.
+   // That attempt threw before detaching, though, so the handler is still live
+   // and the upstream delivers again. Accepted (true, not a pause -- nothing
+   // will ever resume this proxy) and dropped, with nothing further written.
    bool queued = false;
    EXPECT_NO_THROW(queued = fixture.deliver(upstream, "third"));
    EXPECT_TRUE(queued);
@@ -1398,6 +1414,33 @@ TEST(FixedBufferProxy, ChunksArrivingAfterAFailedTeardownAreDiscarded)
    EXPECT_NO_THROW(queued = fixture.deliver(upstream, ""));
    EXPECT_TRUE(queued);
    EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "first");
+}
+
+// Losing the response claim must leave the client connection alone even when
+// the upstream teardown it does perform fails. handleErrorImpl() declines to
+// close that connection because another writer owns its one response and may
+// still be writing it; a throw on the way out of that path must not turn into
+// the close it just declined, truncating the winner's response.
+TEST(FixedBufferProxy, FailedUpstreamTeardownAfterLosingTheClaimSparesTheClient)
+{
+   Fixture fixture;
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   fixture.pClientConnection->failNextWrite(boost::asio::error::already_started);
+   fixture.pServerConnection->throwOnNextClose();
+   EXPECT_NO_THROW(fixture.deliver(upstream, body));
+
+   // The whole point: still not ours to close, failing or not.
+   EXPECT_FALSE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+
+   // The upstream half proceeds as far as it can, including the detach the
+   // throwing close would otherwise have skipped.
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
 }
 
 // The first of the two completion-handler guards. onHeadersWrote() clears
