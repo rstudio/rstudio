@@ -274,9 +274,9 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
 
     // Wait for the full response, handling any Allow dialogs that appear
     await chatActions.pollWithAllowDialogs(async () => {
-      const isStillProcessing = await chatPane.isStopButtonVisible();
       const messageCount = await chatPane.getMessageCount();
-      return !isStillProcessing && messageCount > initialCount;
+      if (messageCount <= initialCount) return false;
+      return await chatActions.isTurnIdle();
     }, 120000);
 
     // Verify the response contains the markers from our project skill
@@ -311,9 +311,9 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
 
     // Wait for the full response, handling any Allow dialogs that appear
     await chatActions.pollWithAllowDialogs(async () => {
-      const isStillProcessing = await chatPane.isStopButtonVisible();
       const messageCount = await chatPane.getMessageCount();
-      return !isStillProcessing && messageCount > initialCount;
+      if (messageCount <= initialCount) return false;
+      return await chatActions.isTurnIdle();
     }, 120000);
 
     // Databot emits `skill: <name>` in the message when the model selects a

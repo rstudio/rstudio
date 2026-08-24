@@ -109,7 +109,7 @@ test.describe.serial('Posit Assistant activates the Plots pane', { tag: ['@ai', 
     // scoping to the assistant role avoids depending on a prompt-text exclusion
     // (which would deadlock until timeout if the reply echoed that phrase).
     await chatActions.pollWithAllowDialogs(async () => {
-      if (await chatPane.isStopButtonVisible()) return false;
+      if (!(await chatActions.isTurnIdle())) return false;
       const lastReply = await chatPane.assistantMessageItem.last().innerText().catch(() => '');
       return lastReply.includes(PLOT_DONE_MARKER);
     }, 150000);
