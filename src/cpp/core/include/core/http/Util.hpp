@@ -198,18 +198,19 @@ std::string normalizeRootPath(const std::string& rootPath);
 
 // Is this string usable as the Path attribute of a Set-Cookie header?
 // Requires an origin-absolute path made only of characters that cannot break
-// out of the header (no CTLs -- including CR/LF -- and no space, ';', ',',
-// '\', '?', '#', or non-ASCII), and with no "//", "." or ".." segments. A
-// browser compares the path against a request path whose dot segments have
-// already been removed, so "." and ".." could never match; an empty segment
-// would match, but only ever arrives from something upstream that failed to
-// normalize, so it is refused as well. Use this before putting any
-// client-reported value in a cookie path.
+// out of the header (no CTLs -- including CR/LF -- and no space, ';', '\',
+// '?', '#', or non-ASCII), and with no "." or ".." segments, which a browser
+// could never match because it compares the path against a request path whose
+// dot segments have already been removed. An empty segment ("//") is allowed:
+// it survives URL parsing, so it is what a browser on such a base URL actually
+// sends. Use this before putting any client-reported value in a cookie path.
 bool isValidCookiePath(const std::string& path);
 
 // The path component of a base URL reported by the client, normalized to a
 // single trailing slash, or empty when there is none or it could not be used
-// as a cookie path. Accepts an absolute URL or an origin-absolute path.
+// as a cookie path. Accepts an absolute URL or an origin-absolute path; a
+// bare value beginning with "//" is rejected as a scheme-relative URL, since
+// what follows is a host rather than a path.
 // Use this to compare a client-reported base against a server-derived cookie
 // path: a base that does not end with that path is not one the session is
 // served under.

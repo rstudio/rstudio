@@ -83,12 +83,21 @@ TEST(HttpUtilTest, IsValidCookiePathAcceptsOriginAbsolutePaths)
    // percent-escapes are how a path with reserved characters reaches us, and
    // are what the browser compares against, so they stay
    EXPECT_TRUE(isValidCookiePath("/pr%20oxy/rstudio/"));
+
+   // RFC 6265 bars only controls and ';' from a path value, and a comma is
+   // legal and unescaped in a URL path, so refusing it would only widen the
+   // cookie on a deployment that uses one
+   EXPECT_TRUE(isValidCookiePath("/a,b/rstudio/"));
+
+   // an empty segment survives URL parsing, so this is the path a browser on
+   // such a base URL sends and the cookie has to be scoped to match it
+   EXPECT_TRUE(isValidCookiePath("//rstudio/"));
+   EXPECT_TRUE(isValidCookiePath("/a//b/"));
 }
 
 TEST(HttpUtilTest, IsValidCookiePathRejectsHeaderBreakingCharacters)
 {
    EXPECT_FALSE(isValidCookiePath("/pre;fix/"));
-   EXPECT_FALSE(isValidCookiePath("/pre,fix/"));
    EXPECT_FALSE(isValidCookiePath("/pre fix/"));
    EXPECT_FALSE(isValidCookiePath("/pre\r\nX-Injected: 1/"));
    EXPECT_FALSE(isValidCookiePath("/pre\\fix/"));
@@ -110,8 +119,6 @@ TEST(HttpUtilTest, IsValidCookiePathRejectsUnnormalizedPaths)
 {
    EXPECT_FALSE(isValidCookiePath(""));
    EXPECT_FALSE(isValidCookiePath("relative/"));
-   EXPECT_FALSE(isValidCookiePath("//host/proxy/"));
-   EXPECT_FALSE(isValidCookiePath("/a//b/"));
    EXPECT_FALSE(isValidCookiePath("/a/./b/"));
    EXPECT_FALSE(isValidCookiePath("/a/../b/"));
    EXPECT_FALSE(isValidCookiePath("/a/."));
@@ -122,15 +129,36 @@ TEST(HttpUtilTest, IsValidCookiePathRejectsUnnormalizedPaths)
 // would be set as cookies that are simply never sent.
 TEST(HttpUtilTest, CookiePathFallsBackOnUnnormalizedClientPaths)
 {
-   // protocol-relative, so URL parsing fails and the raw string is used
-   EXPECT_EQ("/rstudio/",
-             cookiePathWithExternalPrefix("/rstudio/", "//host/proxy/rstudio/"));
    EXPECT_EQ("/rstudio/",
              cookiePathWithExternalPrefix("/rstudio/",
                                           "https://host/a/../rstudio/"));
-   EXPECT_EQ("/rstudio/",
+}
+
+// A base URL carrying an empty segment is served under exactly that path, so
+// the prefix has to be recovered with the empty segment intact -- rewriting
+// or refusing it would produce a cookie the browser never sends, or one
+// scoped wider than the base it came from.
+TEST(HttpUtilTest, CookiePathKeepsAnEmptySegmentInTheClientBase)
+{
+   EXPECT_EQ("//rstudio/",
+             cookiePathWithExternalPrefix("/rstudio/", "https://host//rstudio/"));
+   EXPECT_EQ("/a//proxy/rstudio/",
              cookiePathWithExternalPrefix("/rstudio/",
-                                          "https://host/a//rstudio/"));
+                                          "https://host/a//proxy/rstudio/"));
+}
+
+// A bare value beginning with "//" is a scheme-relative URL whose next token
+// is a host, not a path segment, and only this function can tell the two
+// apart -- once a path has come out of a parsed URL, a leading "//" is real.
+TEST(HttpUtilTest, CookiePathRejectsASchemeRelativeClientBase)
+{
+   EXPECT_EQ("", cookiePathFromClientBaseUrl("//host/proxy/rstudio/"));
+   EXPECT_EQ("/rstudio/",
+             cookiePathWithExternalPrefix("/rstudio/", "//host/proxy/rstudio/"));
+
+   // the same path arriving from a parsed URL is kept
+   EXPECT_EQ("//host/proxy/rstudio/",
+             cookiePathFromClientBaseUrl("https://h//host/proxy/rstudio/"));
 }
 
 // The suffix match may only extend a path at a segment boundary, which holds
@@ -233,7 +261,6 @@ TEST(HttpUtilTest, CookiePathFromClientBaseUrlRejectsUnusableValues)
    EXPECT_EQ("", cookiePathFromClientBaseUrl("garbage"));
    EXPECT_EQ("", cookiePathFromClientBaseUrl("relative/path/"));
    EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/pre;fix/"));
-   EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/a//b/"));
    EXPECT_EQ("", cookiePathFromClientBaseUrl("https://host/a/../b/"));
 
    // rejected after the trailing slash is added, which turns these into the
@@ -254,7 +281,10 @@ TEST(HttpUtilTest, CookiePathRejectsCharactersInvalidInCookiePath)
    EXPECT_EQ("/rstudio",
              cookiePathWithExternalPrefix("/rstudio",
                                           "/pre\r\nfix/rstudio/"));
-   EXPECT_EQ("/rstudio",
+
+   // a comma is not one of them: RFC 6265 permits it, and it appears
+   // unescaped in URL paths
+   EXPECT_EQ("/pre,fix/rstudio",
              cookiePathWithExternalPrefix("/rstudio",
                                           "/pre,fix/rstudio/"));
 }

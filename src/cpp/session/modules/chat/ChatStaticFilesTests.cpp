@@ -368,15 +368,27 @@ TEST(ChatStaticFiles, AuthCookiePathRejectsClientBaseUrlTheSessionDidNotReport)
 // token. It authorizes nothing and must not be read as permission.
 TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableRecordedBase)
 {
-   // a stray double slash, from a proxy or redirect that did not normalize
-   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
-                            "https://host//rstudio/"),
-             "");
-
    // a base recorded before it could be resolved
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
                             "garbage"),
              "");
+
+   // a base that could not be written into the header
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html", "",
+                            "https://host/pre;fix/rstudio/"),
+             "");
+}
+
+// A base URL with an empty segment is served under exactly that path, so the
+// cookie has to carry the empty segment too or the browser will not send it.
+// Rewriting it to a single slash, or refusing it and falling back, would each
+// break this deployment in a different direction.
+TEST(ChatStaticFiles, AuthCookiePathKeepsAnEmptySegmentFromTheBaseUrl)
+{
+   EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html",
+                            "https://host//rstudio/",
+                            "https://host//rstudio/"),
+             "//rstudio/");
 }
 
 // Falling back to the server-known prefix is only safe while that prefix is
@@ -428,7 +440,7 @@ TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableServerDerivedPath)
              "");
 
    // a prefix the browser could never match against a normalized request path
-   EXPECT_EQ(authCookiePath("https://host/a//b/ai-chat/index.html", "",
+   EXPECT_EQ(authCookiePath("https://host/a/../b/ai-chat/index.html", "",
                             "https://host/"),
              "");
 }

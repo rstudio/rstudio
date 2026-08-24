@@ -640,25 +640,28 @@ bool isValidCookiePath(const std::string& path)
    if (path.empty() || path[0] != '/')
       return false;
 
-   // compare as unsigned so the result does not depend on whether char is
-   // signed on this platform
+   // Compare as unsigned so the result does not depend on whether char is
+   // signed on this platform. RFC 6265 allows any character here except
+   // controls and ';'; the rest are refused because they cannot appear in a
+   // path a browser would send, so their presence means the value did not
+   // come from where we think it did.
    for (unsigned char ch : path)
    {
       if (ch <= 0x20 || ch >= 0x7F ||
-          ch == ';' || ch == ',' || ch == '\\' || ch == '?' || ch == '#')
+          ch == ';' || ch == '\\' || ch == '?' || ch == '#')
       {
          return false;
       }
    }
 
-   // a browser matches the cookie path against a request path whose dot
+   // A browser matches the cookie path against a request path whose dot
    // segments have already been removed, so a path carrying "." or ".."
    // could never match. Empty segments are not removed -- "//proxy/rstudio/"
-   // survives URL parsing and would match -- but a value reaching us with one
-   // came through a proxy or redirect that did not normalize, so refuse it
-   // rather than guess at what was meant.
-   if (path.find("//") != std::string::npos ||
-       path.find("/./") != std::string::npos ||
+   // survives URL parsing intact -- so a path containing one is kept: it is
+   // exactly what a browser on such a base URL sends, and rewriting or
+   // refusing it would produce a cookie that is never sent or one scoped
+   // wider than the base it came from.
+   if (path.find("/./") != std::string::npos ||
        path.find("/../") != std::string::npos ||
        boost::algorithm::ends_with(path, "/.") ||
        boost::algorithm::ends_with(path, "/.."))
@@ -678,7 +681,17 @@ std::string cookiePathFromClientBaseUrl(const std::string& clientBaseUrl)
    std::string path = clientBaseUrl;
    URL url(clientBaseUrl);
    if (url.isValid())
+   {
       path = url.path();
+   }
+   else if (boost::algorithm::starts_with(path, "//"))
+   {
+      // a bare value beginning with "//" is a scheme-relative URL, where what
+      // follows is a host rather than a path segment. A cookie path may begin
+      // with "//" once it has come out of a parsed URL, so this is the only
+      // place the two can be told apart.
+      return std::string();
+   }
 
    // URL::path() keeps them, and neither belongs in a cookie path
    std::size_t cutPos = path.find_first_of("?#");
