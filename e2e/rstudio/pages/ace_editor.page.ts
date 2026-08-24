@@ -143,11 +143,13 @@ export class AceEditor extends PageObject {
    * Returns the section headers the R code model found, in document order --
    * the scopes that drive the document outline.
    *
-   * `depth` is the header's heading level (1 for `#`, 2 for `##`, ...), or
-   * undefined for a plain section, which is what a header carrying no heading
-   * level (e.g. a bar of `#` characters) becomes. `parent` is the label of the
-   * enclosing section, or null when the section is top-level, so tests can
-   * assert how headers nest. Only meaningful for modes with an R code model.
+   * `depth` is the header's heading level (1 for `#`, 2 for `##`, ...), or 0
+   * for a header whose leading `#` run is decoration rather than a level -- a
+   * bar such as `##########` or a banner such as `##### Section A #####`. It is
+   * undefined for a section that has no notion of a heading level at all, such
+   * as an R Markdown YAML block. `parent` is the label of the enclosing
+   * section, or null when the section is top-level, so tests can assert how
+   * headers nest. Only meaningful for modes with an R code model.
    */
   async getSectionScopes(): Promise<AceSectionScope[]> {
     return this.run((editor) => {
