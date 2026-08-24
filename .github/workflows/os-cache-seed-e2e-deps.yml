@@ -1,16 +1,10 @@
 name: "Cache: Seed E2E test dependency caches"
 
 # Re-warms the os-e2e-deps caches (R library, pak download cache, Playwright
-# browsers) that the PR-triggered e2e jobs read. Those caches are restore-only
-# on PR runs: os-e2e-deps gates its saves to main-scoped runs, and the build
-# cache seeds run with build_only=true, which skips the e2e job where
-# os-e2e-deps runs. The scheduled main e2e runs do save -- but they install R
-# "release", and the cache keys embed the resolved R major.minor, so once
-# "release" rolls past the R version the PR orchestrator pins, their saves
-# land on keys no PR run ever reads (e.g. Linux-...-r-4.6-* while PR runs,
-# pinned via RSTUDIO_R_VERSION, look for that release's -r-<major.minor>-). The result: every PR shard on every
-# platform reinstalls its R packages from scratch, ~1-4 minutes apiece, on
-# the critical path of the run.
+# browsers) that the PR-triggered e2e jobs restore. PR runs cannot save them,
+# and the build cache seeds use build_only=true, which skips the e2e job where
+# os-e2e-deps runs. Without this workflow, an evicted cache makes every PR
+# shard reinstall its R packages on the critical path, ~1-4 minutes apiece.
 #
 # This seed runs os-e2e-deps on main for exactly the platform / cache-scope /
 # R-version combinations the PR orchestrator's e2e jobs use, so their key set

@@ -45,6 +45,7 @@ runs:
         BASE_URL: ${{ inputs.base-url }}
       run: |
         $ErrorActionPreference = 'Stop'
+        $ProgressPreference = 'SilentlyContinue'
 
         # rstudio-tools.sh, not its .cmd twin: one file is the pin's home, and
         # the .sh is plain text a Windows runner reads just as easily. The same
@@ -123,8 +124,10 @@ runs:
         Remove-Item $installer -Force
 
         $rBin = Join-Path $rHome 'bin\x64'
-        if (-not (Test-Path (Join-Path $rBin 'Rscript.exe'))) {
-          Write-Error "Rscript.exe not found under $rBin after installing $asset"
+        $rExe = Join-Path $rBin 'R.exe'
+        $rScript = Join-Path $rBin 'Rscript.exe'
+        if (-not (Test-Path $rExe) -or -not (Test-Path $rScript)) {
+          Write-Error "R.exe or Rscript.exe not found under $rBin after installing $asset"
           exit 1
         }
 
@@ -144,6 +147,11 @@ runs:
           New-ItemProperty -Path $versioned -Name 'InstallPath' -Value $rHome -PropertyType String -Force | Out-Null
         }
 
+        # RStudio honors RSTUDIO_WHICH_R before consulting either HKCU or HKLM.
+        # Pin later steps to this executable so a per-user registration on the
+        # runner cannot shadow the R this action installed.
+        "RSTUDIO_WHICH_R=$rExe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
         # Prepend rather than append: windows-2025 ships its own R, and an
         # append would leave that one resolving first.
         Write-Host "Prepending R bin to PATH: $rBin"
@@ -151,7 +159,7 @@ runs:
 
         # Confirm the install really is the version that was asked for; the
         # runner's pre-installed R makes "an R answers" prove nothing.
-        $installed = (& (Join-Path $rBin 'Rscript.exe') --vanilla -e "cat(paste(R.version`$major, R.version`$minor, sep = '.'))").Trim()
+        $installed = (& $rScript --vanilla -e "cat(paste(R.version`$major, R.version`$minor, sep = '.'))").Trim()
         Write-Host "Installed R: $installed (from $asset) at $rHome"
         if ($installed -ne $env:R_VERSION) {
           Write-Error "Requested R $env:R_VERSION but the install at $rHome reports $installed."

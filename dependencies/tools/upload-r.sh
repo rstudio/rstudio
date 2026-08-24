@@ -11,10 +11,10 @@
 #
 #    upload-r.sh <version> [platform ...]
 #
-# With no platforms, every platform below is mirrored and a platform the
-# upstream never built (an old R on a new distro, say) is reported as skipped
-# rather than failing the run. Name platforms explicitly and a missing one is
-# an error, so a targeted "add R 4.7.0 for the PR lane" can't half-succeed.
+# With no platforms, every platform below is required. A missing installer is
+# an error so bumping RSTUDIO_R_VERSION cannot leave one of the scheduled
+# engines without an asset. To mirror an older R that upstream only built for
+# some platforms, name that supported subset explicitly.
 #
 #    upload-r.sh 4.6.1
 #    upload-r.sh 4.6.1 macos-arm64 windows-x86_64
@@ -149,15 +149,10 @@ if [[ ! "${R_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
    exit 1
 fi
 
-# An explicit platform list means the caller knows what they need, so a
-# platform upstream doesn't have is fatal; the mirror-everything default
-# treats it as a skip.
 if [[ $# -gt 0 ]]; then
    PLATFORMS=("$@")
-   STRICT=1
 else
    PLATFORMS=("${ALL_PLATFORMS[@]}")
-   STRICT=0
 fi
 
 for PLATFORM in "${PLATFORMS[@]}"; do
@@ -190,7 +185,6 @@ WORKDIR="$(mktemp -d)"
 trap 'rm -rf "${WORKDIR}"' EXIT
 
 UPLOADED=()
-SKIPPED=()
 
 for PLATFORM in "${PLATFORMS[@]}"; do
 
@@ -219,13 +213,8 @@ for PLATFORM in "${PLATFORMS[@]}"; do
    done < <(r_source_urls "${PLATFORM}" "${R_VERSION}")
 
    if [[ -z "${FOUND}" ]]; then
-      if [[ "${STRICT}" -eq 1 ]]; then
-         echo "Error: no upstream installer for R ${R_VERSION} on ${PLATFORM}" >&2
-         exit 1
-      fi
-      echo "    ⚠️  no upstream installer for R ${R_VERSION} on ${PLATFORM}; skipping"
-      SKIPPED+=("${PLATFORM}")
-      continue
+      echo "Error: no upstream installer for R ${R_VERSION} on ${PLATFORM}" >&2
+      exit 1
    fi
 
    echo "    downloaded from ${FOUND} ($(du -h "${WORKDIR}/${FILENAME}" | cut -f1))"
@@ -238,23 +227,10 @@ done
 
 echo
 
-# Nothing mirrored means every source 404'd, which for a real R version should
-# not happen -- far more likely the version doesn't exist upstream at all. Say
-# so instead of reporting a green run that left the bucket empty.
-if [[ "${#UPLOADED[@]}" -eq 0 ]]; then
-   echo "Error: nothing was mirrored. No upstream installer exists for R ${R_VERSION} on any platform -- check the version." >&2
-   exit 1
-fi
-
-echo "✅ R ${R_VERSION}: ${#UPLOADED[@]} mirrored, ${#SKIPPED[@]} skipped"
+echo "✅ R ${R_VERSION}: ${#UPLOADED[@]} mirrored"
 for ITEM in "${UPLOADED[@]}"; do
    echo "   ${ITEM}"
 done
-
-if [[ "${#SKIPPED[@]}" -gt 0 ]]; then
-   echo
-   echo "   Not built upstream for this version: ${SKIPPED[*]}"
-fi
 
 echo
 echo "Mirrored files are served from:"

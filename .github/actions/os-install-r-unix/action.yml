@@ -226,6 +226,9 @@ runs:
           $SUDO ln -sf "${R_HOME_DIR}/bin/R" /usr/local/bin/R
           $SUDO ln -sf "${R_HOME_DIR}/bin/Rscript" /usr/local/bin/Rscript
           echo "${R_HOME_DIR}/bin" >> "$GITHUB_PATH"
+          # GITHUB_PATH only changes later steps. Mirror that prepend now so
+          # the assertion below verifies the same resolution they will use.
+          export PATH="${R_HOME_DIR}/bin:${PATH}"
         fi
 
         # Confirm the R that later steps will resolve is the one that was asked
