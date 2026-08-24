@@ -22,6 +22,7 @@
 #include <atomic>
 #include <map>
 #include <mutex>
+#include <string_view>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fmt/format.h>
@@ -52,14 +53,17 @@ namespace staticfiles {
 
 namespace {
 
-// URI prefix for AI Chat requests
-constexpr const char* kAiChatUriPrefix = "/ai-chat/";
-constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
-
-// The same route without the trailing slash, which is the form that appears
-// in a path when it is followed by a segment boundary or ends the path.
-constexpr const char* kAiChatRoute = "/ai-chat";
-constexpr size_t kAiChatRouteLength = 8; // Length of "/ai-chat"
+// The AI Chat route, and the same route as a URI prefix. The bare form is what
+// appears in a path when the route is followed by a segment boundary or ends
+// the path; the prefix form is what a request for a file under the route
+// starts with. Lengths come from the views rather than being written out
+// beside them: a stale length would compile and cut a path at the wrong
+// offset, which is the failure this module already had once (#18621).
+constexpr std::string_view kAiChatRoute = "/ai-chat";
+constexpr std::string_view kAiChatUriPrefix = "/ai-chat/";
+static_assert(kAiChatUriPrefix.size() == kAiChatRoute.size() + 1 &&
+              kAiChatUriPrefix.substr(0, kAiChatRoute.size()) == kAiChatRoute,
+              "the AI chat URI prefix must be the route followed by a slash");
 
 // Chat backend port, set by SessionChat.cpp when the backend starts.
 // Used to build connect-src in the CSP header for desktop mode.
@@ -335,7 +339,7 @@ size_t findAiChatRoute(const std::string& path)
    size_t pos = path.rfind(kAiChatRoute);
    while (pos != std::string::npos)
    {
-      size_t end = pos + kAiChatRouteLength;
+      size_t end = pos + kAiChatRoute.size();
       if (end == path.length() || path[end] == '/')
          return pos;
 
@@ -353,6 +357,11 @@ size_t findAiChatRoute(const std::string& path)
  * That is the path of the proxied request URI with the "/ai-chat" route and
  * everything after it removed, e.g. "/s/{id}/" or a configured root path,
  * always ending in "/".
+ *
+ * @return The prefix, or empty if none could be derived. Empty is not the same
+ *         as "/": it means the proxied URI told us nothing about where this
+ *         request is served from, so there is no prefix to trust rather than a
+ *         prefix that happens to be the origin root.
  */
 std::string serverKnownPrefix(const std::string& proxiedUri)
 {
@@ -364,12 +373,25 @@ std::string serverKnownPrefix(const std::string& proxiedUri)
    if (cutPos != std::string::npos)
       prefix = prefix.substr(0, cutPos);
 
+   // No path at all is not the same as a path of "/". proxiedUri() returns the
+   // X-RStudio-Request header verbatim when it is set, so a proxy that puts a
+   // bare path or a bare origin there yields a value URL cannot parse, and the
+   // path comes back empty. Reporting "/" for that would scope the auth token
+   // to every application on the host on the strength of a header we failed to
+   // read, so refuse instead -- before the route is stripped, which produces an
+   // empty string of its own.
+   if (prefix.empty())
+      return std::string();
+
    size_t routePos = findAiChatRoute(prefix);
    if (routePos != std::string::npos)
       prefix = prefix.substr(0, routePos);
 
+   // whereas nothing left after stripping the route means the route was the
+   // first segment, i.e. this server really is served from the origin root
    if (prefix.empty())
       return kRequestDefaultRootPath;
+
    if (prefix.back() != '/')
       prefix += "/";
 
@@ -531,7 +553,7 @@ Error handleAIChatRequest(const http::Request& request,
       return Success();
    }
 
-   std::string requestPath = path.substr(kAiChatUriPrefixLength);
+   std::string requestPath = path.substr(kAiChatUriPrefix.size());
 
    // request.path() truncates at "?" but not at "#". Browsers never transmit
    // a fragment, but strip it so that a hand-written request still resolves

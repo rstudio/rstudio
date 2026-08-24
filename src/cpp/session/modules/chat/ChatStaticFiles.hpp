@@ -101,17 +101,15 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  *
  * proxiedUri is reconstructed from request headers, and the result is written
  * into Set-Cookie without escaping, so it is validated before use. Returns
- * empty when it cannot be used as a cookie path, in which case the caller must
- * not set the cookie: the alternative is scoping the token to the origin root,
- * which would offer it to every application on the host. The refusal is
- * logged.
+ * empty when no prefix could be derived or when the derived one cannot be used
+ * as a cookie path, in which case the caller must not set the cookie: the
+ * alternative is scoping the token to the origin root, which would offer it to
+ * every application on the host. The refusal is logged.
  *
  * For the browser to send this cookie, the path the server derives has to
- * match the path the browser sees. Behind a path-prefixing reverse proxy that
- * means telling the server about the prefix, with www-root-path or the
- * X-RStudio-Root-Path header (see #18621). A proxy sending that header has to
- * set it rather than forward one: the server takes the first value it sees
- * and prefers it over www-root-path, so an inbound copy would win.
+ * match the path the browser sees, which behind a path-prefixing reverse proxy
+ * means configuring the server with the prefix. The NEWS entry for #18621
+ * states how; do not restate it here.
  *
  * @param proxiedUri The server's view of the request URL (request.proxiedUri())
  * @return Cookie path ending with "/", or empty if the cookie must not be set

@@ -15,6 +15,7 @@
 
 #include "ChatStaticFiles.hpp"
 #include "ChatConstants.hpp"
+#include "ChatInstallation.hpp"
 
 #include <gtest/gtest.h>
 #include <core/FileSerializer.hpp>
@@ -22,10 +23,13 @@
 #include <core/http/Response.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
+#include <session/SessionConstants.hpp>
+#include <session/SessionOptions.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::staticfiles;
 using namespace rstudio::session::modules::chat::constants;
+using namespace rstudio::session::modules::chat::installation;
 
 namespace {
 
@@ -37,29 +41,43 @@ class FakeAssistantInstallation
 public:
    FakeAssistantInstallation()
    {
-      FilePath::tempFilePath(root_);
-      root_.ensureDirectory();
+      // Every step is asserted. A silently failed setup leaves the override
+      // pointing at nothing, locatePositAssistantInstallation falls through to
+      // the developer's real installation, and the handler tests then fail
+      // somewhere far from the actual cause.
+      EXPECT_FALSE(FilePath::tempFilePath(root_));
+      EXPECT_FALSE(root_.ensureDirectory());
 
       FilePath clientDir = root_.completeChildPath(kClientDirPath);
-      clientDir.ensureDirectory();
-      writeStringToFile(clientDir.completeChildPath(kIndexFileName),
-                        "<html lang=\"en\"><head></head><body></body></html>");
+      EXPECT_FALSE(clientDir.ensureDirectory());
+      EXPECT_FALSE(writeStringToFile(
+                      clientDir.completeChildPath(kIndexFileName),
+                      "<html lang=\"en\"><head></head><body></body></html>"));
 
       FilePath serverScript = root_.completeChildPath(kServerScriptPath);
-      serverScript.getParent().ensureDirectory();
-      writeStringToFile(serverScript, "// server");
+      EXPECT_FALSE(serverScript.getParent().ensureDirectory());
+      EXPECT_FALSE(writeStringToFile(serverScript, "// server"));
 
       FilePath assets = clientDir.completeChildPath("assets");
-      assets.ensureDirectory();
-      writeStringToFile(assets.completeChildPath("app.js"), kAssetBody);
+      EXPECT_FALSE(assets.ensureDirectory());
+      EXPECT_FALSE(writeStringToFile(assets.completeChildPath("app.js"),
+                                     kAssetBody));
 
       // a name whose extension is not lowercase; deliberately not a case
       // variant of app.js, which would collide on a case-insensitive
       // filesystem
-      writeStringToFile(assets.completeChildPath("Widget.JS"), kAssetBody);
+      EXPECT_FALSE(writeStringToFile(assets.completeChildPath("Widget.JS"),
+                                     kAssetBody));
 
       previous_ = system::getenv(kPathOverride);
       system::setenv(kPathOverride, root_.getAbsolutePath());
+
+      // and confirm the override took: if anything above left the tree
+      // incomplete, verifyPositAiInstallation rejects it and the locator falls
+      // through to whatever real installation this machine has, which would
+      // serve the handler tests real files
+      EXPECT_EQ(locatePositAssistantInstallation().getAbsolutePath(),
+                root_.getAbsolutePath());
    }
 
    ~FakeAssistantInstallation()
@@ -81,10 +99,34 @@ private:
    std::string previous_;
 };
 
-void requestChatFile(const std::string& uri, http::Response* pResponse)
+// Sets the assistant auth token for the duration of a test. The handler only
+// offers the cookie when a token is set, so a test that wants to observe the
+// cookie decision has to put one there and take it away again.
+class ScopedAuthToken
+{
+public:
+   explicit ScopedAuthToken(const std::string& token)
+   {
+      setChatBackendAuthToken(token);
+   }
+
+   ~ScopedAuthToken()
+   {
+      setChatBackendAuthToken(std::string());
+   }
+};
+
+// proxiedRequest, when given, is sent as X-RStudio-Request, which
+// Request::proxiedUri() returns verbatim -- the way a reverse proxy tells this
+// server what the browser actually asked for.
+void requestChatFile(const std::string& uri,
+                     http::Response* pResponse,
+                     const std::string& proxiedRequest = std::string())
 {
    http::Request request;
    request.setUri(uri);
+   if (!proxiedRequest.empty())
+      request.setHeader("X-RStudio-Request", proxiedRequest);
 
    Error error = handleAIChatRequest(request, pResponse);
    EXPECT_FALSE(error);
@@ -326,6 +368,29 @@ TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableServerDerivedPath)
    EXPECT_EQ(authCookiePath("https://host/a/../b/ai-chat/index.html"), "");
 }
 
+// proxiedUri() returns the X-RStudio-Request header verbatim when a proxy sets
+// it, so it need not be a URL this server can parse. A value with no path to
+// read is not evidence that the request arrived at the origin root, and must
+// not be reported as "/": that would scope the token to every application on
+// the host on the strength of a header we failed to read.
+TEST(ChatStaticFiles, AuthCookiePathDeclinesWhenNoPathCanBeDerived)
+{
+   // a bare path where a full URL was expected
+   EXPECT_EQ(authCookiePath("/rstudio/ai-chat/index.html"), "");
+
+   // an origin with no path at all
+   EXPECT_EQ(authCookiePath("https://host"), "");
+
+   // a scheme this server does not recognize
+   EXPECT_EQ(authCookiePath("gopher://host/rstudio/ai-chat/index.html"), "");
+
+   EXPECT_EQ(authCookiePath(""), "");
+
+   // whereas an origin whose only path is the route really is served from the
+   // root, and still gets a cookie
+   EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html"), "/");
+}
+
 TEST(ChatStaticFiles, AuthCookiePathUnaffectedByQueryString)
 {
    EXPECT_EQ(authCookiePath("https://host/rstudio/ai-chat/index.html"
@@ -434,6 +499,41 @@ TEST(ChatStaticFiles, HandlerRejectsRequestsThatOnlyResembleTheRoute)
    http::Response bareRoute;
    requestChatFile("/ai-chat", &bareRoute);
    EXPECT_EQ(bareRoute.statusCode(), http::status::BadRequest);
+}
+
+// The refusal has to hold where the cookie is actually written, not only in
+// the helper that derives the path: the handler decides on its own whether to
+// call addCookie.
+TEST(ChatStaticFiles, HandlerOmitsTheAuthCookieWhenNoPathCanBeDerived)
+{
+   if (rstudio::session::options().programMode() != kSessionProgramModeServer)
+      GTEST_SKIP() << "the auth cookie is only offered in server mode";
+
+   FakeAssistantInstallation installation;
+   ScopedAuthToken token("test-token");
+
+   // a proxied URI the server can read: the cookie is scoped to the prefix
+   http::Response derivable;
+   requestChatFile("/ai-chat/index.html", &derivable,
+                   "https://host/rstudio/ai-chat/index.html");
+   ASSERT_EQ(derivable.statusCode(), http::status::Ok);
+   EXPECT_NE(derivable.headerValue("Set-Cookie").find("path=/rstudio/"),
+             std::string::npos);
+
+   // the same request whose proxied URI carries no readable path: no cookie at
+   // all, rather than one scoped to the origin
+   http::Response underivable;
+   requestChatFile("/ai-chat/index.html", &underivable,
+                   "/rstudio/ai-chat/index.html");
+   ASSERT_EQ(underivable.statusCode(), http::status::Ok);
+   EXPECT_EQ(underivable.headerValue("Set-Cookie"), "");
+
+   // and one whose derived path could break out of the Set-Cookie header
+   http::Response unusable;
+   requestChatFile("/ai-chat/index.html", &unusable,
+                   "https://host/a\r\nX-Injected: 1/ai-chat/index.html");
+   ASSERT_EQ(unusable.statusCode(), http::status::Ok);
+   EXPECT_EQ(unusable.headerValue("Set-Cookie"), "");
 }
 
 TEST(ChatStaticFiles, HandlerRejectsTraversalOutOfTheClientRoot)
