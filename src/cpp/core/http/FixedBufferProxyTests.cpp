@@ -114,7 +114,21 @@ public:
 
    void writeError(const Error&) override {}
 
-   void close() override { closed_ = true; }
+   void close() override
+   {
+      closed_ = true;
+
+      if (throwOnNextClose_)
+      {
+         throwOnNextClose_ = false;
+         throw std::bad_alloc();
+      }
+   }
+
+   // One-shot injectable throw from close(). This is the first step of
+   // failConnection()'s teardown, so it is the one whose failure would cost the
+   // most if the steps were chained rather than attempted independently.
+   void throwOnNextClose() { throwOnNextClose_ = true; }
 
    void continueParsing() override {}
    void setData(const boost::any& data) override { data_ = data; }
@@ -210,6 +224,7 @@ private:
    }
 
    bool throwOnNextWrite_ = false;
+   bool throwOnNextClose_ = false;
    boost::system::error_code nextWriteError_;
    boost::asio::io_context ioc_;
    boost::asio::io_context::strand strand_{ioc_};
@@ -1390,13 +1405,16 @@ TEST(FixedBufferProxy, FailedTeardownStillAttemptsEveryStepAndDiscardsLaterChunk
 
    EXPECT_TRUE(fixture.deliver(upstream, "first"));
 
-   // Fail the body write, and then every step of the teardown it triggers.
+   // Fail the body write, and then every step of the teardown it triggers --
+   // including the client close, which runs first and so would take the other
+   // two down with it if the steps were chained.
    fixture.pClientConnection->throwOnNextWrite();
+   fixture.pClientConnection->throwOnNextClose();
    fixture.pServerConnection->throwOnNextClose();
    fixture.pServerConnection->throwOnNextDisableHandlers();
    EXPECT_NO_THROW(fixture.deliver(upstream, "second"));
 
-   // The throwing close must not have cost us the disableHandlers() attempt.
+   // Every step was still attempted, in spite of all of them throwing.
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);

@@ -720,15 +720,32 @@ void FixedBufferProxy::closeUpstream()
 namespace {
 
 // Run one step of a teardown, swallowing anything it throws so that a failure
-// in any single step cannot skip the steps after it. Deliberately silent: the
-// only caller must not throw, and the logger is exactly as likely to fail as
-// the step was.
+// in any single step cannot skip the steps after it.
+//
+// A failure here is worth a line of its own: the caller is the last code that
+// will ever run for this proxy, so a step that did not complete leaves state
+// nothing else will clean up -- a skipped disableHandlers() leaks the whole
+// object graph for the life of the process -- and this log is the only evidence
+// that would ever exist. The log is separately guarded because it can fail for
+// the same reason the step did (bad_alloc), and a failed log must not cost the
+// caller its remaining steps.
 template <typename Step>
-void attemptTeardownStep(Step step)
+void attemptTeardownStep(const char* name, Step step)
 {
    try
    {
       step();
+      return;
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      LOG_ERROR_MESSAGE(std::string("Proxy: teardown step failed, connection "
+                                    "resources may be leaked: ") +
+                        name);
    }
    catch (...)
    {
@@ -764,10 +781,10 @@ void FixedBufferProxy::failConnection(const char* context,
    // proxy, both connections and every buffered chunk leak for the life of the
    // process (see closeUpstream()). Same order closeConnections() uses.
    if (closeClientConnection)
-      attemptTeardownStep([&] { pClientConnection_->close(); });
+      attemptTeardownStep("client close", [&] { pClientConnection_->close(); });
 
-   attemptTeardownStep([&] { pServerConnection_->close(); });
-   attemptTeardownStep([&] { pServerConnection_->disableHandlers(); });
+   attemptTeardownStep("upstream close", [&] { pServerConnection_->close(); });
+   attemptTeardownStep("upstream detach", [&] { pServerConnection_->disableHandlers(); });
 }
 
 } // namespace http
