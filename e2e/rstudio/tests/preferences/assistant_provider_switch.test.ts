@@ -114,4 +114,35 @@ test.describe('Assistant code-assistant switch', { tag: ['@desktop_only'] }, () 
     await closeGlobalOptions(page);
     await expect.poll(() => getPref(page, 'assistant')).toBe('none');
   });
+
+  // Same shape as above, but with Posit AI already saved: the decline must not
+  // write the unsaved Copilot selection over it, or cancelling the dialog would
+  // no longer restore the setting the user actually had.
+  test('declining does not persist an unsaved selection over a saved Posit AI', async ({ rstudioPage: page }) => {
+    await setPref(page, 'assistant', 'posit');
+    await setPref(page, 'copilot_enabled', false);
+
+    await openGlobalOptions(page);
+    await page.locator(ASSISTANT_TAB).click();
+    await expect(page.locator(ASSISTANT_PANEL)).toBeVisible();
+
+    const assistantSelect = page.locator(ASSISTANT_CODE_ASSISTANT_SELECT);
+    await assistantSelect.selectOption({ label: ASSISTANT_COPILOT_OPTION });
+
+    await setChatUpdateCheckOverride(page, INSTALL_AVAILABLE_RESPONSE);
+    await assistantSelect.selectOption({ label: ASSISTANT_POSIT_OPTION });
+
+    const declineBtn = page.locator(NO_BTN);
+    await expect(declineBtn).toBeVisible({ timeout: 30000 });
+    await declineBtn.click();
+    await expect(declineBtn).toBeHidden();
+
+    await expect(assistantSelect).toHaveValue('copilot');
+    await expect.poll(() => getPref(page, 'assistant')).toBe('posit');
+
+    // Cancel discards the unapplied Copilot selection, leaving Posit AI saved.
+    await closeGlobalOptions(page);
+    await expect.poll(() => getPref(page, 'assistant')).toBe('posit');
+    await expect.poll(() => getPref(page, 'copilot_enabled')).toBe(false);
+  });
 });
