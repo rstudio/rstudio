@@ -190,7 +190,7 @@ jobs:
       # main-scoped runs.
       - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-macos14-arm64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
@@ -203,7 +203,7 @@ jobs:
       # different versions / platforms isolated automatically.
       - name: Restore build-time R packages
         id: rlibs-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: rstudio-build-rlibs-macos14-arm64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
@@ -227,7 +227,7 @@ jobs:
       # on a key miss (see that step's comment).
       - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
         with:
           path: package/osx/build-arm64/gwt
           key: rstudio-gwt-macos14-arm64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
@@ -258,14 +258,14 @@ jobs:
       # that a nightly seed would spend quota and a 90-minute build for nothing.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
       - name: Save build-time R packages
         if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
@@ -344,7 +344,7 @@ jobs:
       # the tools / R-libs save steps above for why that matters here).
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
         with:
           path: package/osx/build-arm64/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
