@@ -311,7 +311,7 @@ export class SessionLauncher {
               // would otherwise suppress the eventual packaged release.
               if (isReleaseBuild(info.RSTUDIO_VERSION)) {
                 const state = new WhatsNewState();
-                state.markReleaseSeen(releaseName);
+                state.markReleaseSeen(releaseName, info.RSTUDIO_VERSION_PATCH);
               }
               this.whatsNewWindow = undefined;
             },

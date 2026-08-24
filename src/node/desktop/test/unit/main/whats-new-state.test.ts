@@ -41,26 +41,31 @@ describe('WhatsNewState', () => {
   });
 
   it('marks a release as seen', () => {
-    state.markReleaseSeen('Globemaster Allium');
+    state.markReleaseSeen('Globemaster Allium', 0);
     assert.isTrue(state.hasSeenRelease('Globemaster Allium'));
   });
 
   it('tracks multiple releases independently', () => {
-    state.markReleaseSeen('Globemaster Allium');
-    state.markReleaseSeen('Prairie Trillium');
+    state.markReleaseSeen('Globemaster Allium', 0);
+    state.markReleaseSeen('Prairie Trillium', 1);
     assert.isTrue(state.hasSeenRelease('Globemaster Allium'));
     assert.isTrue(state.hasSeenRelease('Prairie Trillium'));
     assert.isFalse(state.hasSeenRelease('Sea Holly'));
   });
 
-  it('marking a seen release again does not duplicate the entry', () => {
-    state.markReleaseSeen('Globemaster Allium');
-    state.markReleaseSeen('Globemaster Allium');
-    assert.deepEqual(state.seenReleases(), [{ name: 'Globemaster Allium' }]);
+  it('records the running patch level, which older builds read', () => {
+    state.markReleaseSeen('Globemaster Allium', 2);
+    assert.deepEqual(state.seenReleases(), [{ name: 'Globemaster Allium', patch: 2 }]);
+  });
+
+  it('marking a seen release again leaves the entry alone', () => {
+    state.markReleaseSeen('Globemaster Allium', 0);
+    state.markReleaseSeen('Globemaster Allium', 1);
+    assert.deepEqual(state.seenReleases(), [{ name: 'Globemaster Allium', patch: 0 }]);
   });
 
   it('persists across instances', () => {
-    state.markReleaseSeen('Globemaster Allium');
+    state.markReleaseSeen('Globemaster Allium', 0);
     const state2 = new WhatsNewState(tmpDir);
     assert.isTrue(state2.hasSeenRelease('Globemaster Allium'));
     assert.isFalse(state2.hasSeenRelease('Sea Holly'));

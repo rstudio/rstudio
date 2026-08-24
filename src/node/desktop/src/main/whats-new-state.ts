@@ -16,12 +16,15 @@
 import ElectronStore from 'electron-store';
 
 /**
- * A release whose What's New the user has seen. Entries stay objects rather
- * than bare names so that state files written by versions which also recorded
- * a patch level still match, and those users are not shown What's New again.
+ * A release whose What's New the user has seen. The patch level is written but
+ * never read: the file is shared with builds that show What's New once per
+ * patch, and those builds treat an entry without a patch as unseen (and cannot
+ * repair it), so omitting it would make them show What's New on every launch
+ * after a downgrade.
  */
 export interface SeenRelease {
   name: string;
+  patch: number;
 }
 
 interface WhatsNewSchema {
@@ -54,13 +57,17 @@ export class WhatsNewState {
     return this.findEntry(releaseName) !== undefined;
   }
 
-  /** Record that the user has seen What's New for this release. */
-  markReleaseSeen(releaseName: string): void {
+  /**
+   * Record that the user has seen What's New for this release, at the patch
+   * level it was seen from (see SeenRelease). An already-seen release is left
+   * as it stands.
+   */
+  markReleaseSeen(releaseName: string, patch: number): void {
     if (this.hasSeenRelease(releaseName)) {
       return;
     }
     const seen = this.seenReleases();
-    seen.push({ name: releaseName });
+    seen.push({ name: releaseName, patch });
     this.store.set('seenReleases', seen);
   }
 
