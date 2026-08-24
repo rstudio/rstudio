@@ -1,7 +1,8 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
-import { clearPref, getPref, setPref, setChatUpdateCheckOverride } from '@utils/commands';
+import { clearPref, dismissAllModals, getPref, setPref, setChatUpdateCheckOverride } from '@utils/commands';
 import { NO_BTN } from '@pages/modals.page';
 import {
+  DIALOG_BOX,
   ASSISTANT_TAB,
   ASSISTANT_PANEL,
   ASSISTANT_CODE_ASSISTANT_SELECT,
@@ -38,6 +39,13 @@ const INSTALL_AVAILABLE_RESPONSE = {
 // mode alone (SessionOptions.cpp).
 test.describe('Assistant code-assistant switch', { tag: ['@desktop_only'] }, () => {
   test.afterEach(async ({ rstudioPage: page }) => {
+    // A failure mid-test can leave the options dialog, the install prompt, or
+    // both up; their modal glass would then intercept the next test's clicks.
+    if (await page.locator(DIALOG_BOX).count() > 0) {
+      await dismissAllModals(page);
+      await page.waitForSelector(DIALOG_BOX, { state: 'detached', timeout: 10000 });
+    }
+
     await setChatUpdateCheckOverride(page, null);
     for (const pref of ['assistant', 'copilot_enabled']) {
       await clearPref(page, pref);
@@ -71,8 +79,9 @@ test.describe('Assistant code-assistant switch', { tag: ['@desktop_only'] }, () 
     await expect(declineBtn).toBeHidden();
 
     // Both the selection and the preferences behind it go back to Copilot.
-    // copilot_enabled matters as much as assistant here: left false, the
-    // reverted selection would name an agent the backend keeps stopped.
+    // copilot_enabled is the deprecated mirror of the selection: left false
+    // under a Copilot selection, the next switch away from Copilot would not
+    // persist, since that write is gated on it.
     await expect(assistantSelect).toHaveValue('copilot');
     await expect.poll(() => getPref(page, 'assistant')).toBe('copilot');
     await expect.poll(() => getPref(page, 'copilot_enabled')).toBe(true);

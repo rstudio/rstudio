@@ -221,7 +221,6 @@ public class AssistantPreferencesPane extends PreferencesPane
             true,
             false);
       selAssistant_.setValue(prefs_.assistant().getGlobalValue());
-      previousAssistantSelection_ = selAssistant_.getValue();
 
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
@@ -1424,8 +1423,11 @@ public class AssistantPreferencesPane extends PreferencesPane
             prefs_.assistant().setGlobalValue(prefRevertTo);
 
             // Restore the deprecated copilot_enabled mirror alongside the
-            // preference it tracks. onApply() derives it the same way; without
-            // this a revert to Copilot would leave the agent disabled.
+            // preference it tracks, as onApply() derives it. Nothing gates the
+            // agent on it, but disableCopilot() gates its own write on it: left
+            // false under a reverted Copilot selection, the next switch away
+            // from Copilot would not persist -- leaving the assistant on
+            // "copilot" with its agent still running.
             prefs_.copilotEnabled().setGlobalValue(
                   prefRevertTo.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
 
@@ -1684,7 +1686,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
    private int positAiCheckCount_ = 0; // number of in-flight Posit Assistant install/update checks; blocks apply while > 0
    private ChangeHandler assistantChangedHandler_; // swaps the displayed assistant panel; created in initDisplay
-   private String previousAssistantSelection_; // assistant the selector showed before the current change
+   private String previousAssistantSelection_; // assistant the selector showed before the current change; maintained only by assistantChangedHandler_, which initDisplay runs before any user change can reach it
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
 
