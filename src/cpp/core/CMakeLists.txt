@@ -79,7 +79,7 @@ set(CORE_SOURCE_FILES
    http/Message.cpp
    http/MultipartRelated.cpp
    http/ChunkParser.cpp
-   http/ChunkProxy.cpp
+   http/FixedBufferProxy.cpp
    http/CSRFToken.cpp
    http/FormProxy.cpp
    http/ProxyUtils.cpp

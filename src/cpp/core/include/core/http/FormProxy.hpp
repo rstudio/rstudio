@@ -42,6 +42,7 @@ private:
 
    void writeData();
    void onDownstreamConnected();
+   void onDownstreamClosed();
    void onDataWrote(const boost::system::error_code& ec);
    bool handleError(const boost::system::error_code& ec);
 
@@ -54,6 +55,12 @@ private:
    uint64_t currentBufferSize_;
    bool connectedDownstream_;
    bool bufferFull_;
+
+   // Set when the downstream connection settled before we could register our
+   // connect handler; see onDownstreamClosed(). From then on form data is
+   // accepted and discarded rather than buffered, so that the upstream
+   // connection is never left paused waiting on a writer that cannot exist.
+   bool downstreamClosed_;
 };
 
 } // namespace http

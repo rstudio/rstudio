@@ -27,6 +27,7 @@
 #include <boost/asio/placeholders.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/read.hpp>
+#include <boost/asio/buffers_iterator.hpp>
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/system_timer.hpp>
 
@@ -66,9 +67,9 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-// chunked handler for reading chunked encoding chunks
-// ONLY used for responses that return chunked encoding
-typedef boost::function<bool(const http::Response&, const std::string&)> ChunkHandler;
+// handler for delivering response body pieces (bounded to at most 1MB each)
+// as they become available, for both chunked-encoding and non-chunked bodies
+typedef boost::function<bool(const http::Response&, const std::string&)> FixedBufferHandler;
 
 typedef boost::function<void(const http::Response&)> ResponseHandler;
 typedef boost::function<void(const core::Error&)> ErrorHandler;
@@ -84,14 +85,135 @@ public:
          const boost::posix_time::time_duration& requestTimeout) = 0;
    virtual void execute(const ResponseHandler& responseHandler,
                         const ErrorHandler& errorHandler,
-                        const ChunkHandler& chunkHandler = ChunkHandler()) = 0;
-   virtual void setChunkHandler(const ChunkHandler& chunkHandler) = 0;
-   virtual void setConnectHandler(const ConnectHandler& connectHandler) = 0;
+                        const FixedBufferHandler& fixedBufferHandler = FixedBufferHandler()) = 0;
+   virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler) = 0;
+
+   // Opt in to streaming non-chunked (Content-Length/EOF-delimited) response
+   // bodies piece-wise to the FixedBufferHandler instead of accumulating them in
+   // memory and delivering via the ResponseHandler. Default is false, so a
+   // wiring site that only calls setFixedBufferHandler() (as /s/ and the launcher do)
+   // keeps its legacy behavior: non-chunked responses buffer and run the
+   // ResponseHandler; chunked responses still stream. Only wiring sites that can
+   // tolerate their non-chunked ResponseHandler side effects being skipped
+   // (currently just the /p/ localhost path) should opt in. The client-facing
+   // framing (Content-Length vs chunked) is chosen downstream by FixedBufferProxy from
+   // the upstream response's Content-Length; AsyncClient only relays bytes.
+   virtual void setStreamNonChunkedResponses(bool stream) = 0;
+
+   // Optional predicate, evaluated once response headers are parsed, that forces
+   // the full response body to be buffered in memory and delivered via the
+   // ResponseHandler (legacy behavior) instead of streamed. Used for handlers
+   // that must examine/rewrite the whole body (e.g. the SparkUI root-path link
+   // fixup). Applies to both chunked and non-chunked responses (a Jetty/SparkUI
+   // page can be chunked). When unset, streaming is governed solely by the
+   // setStreamNonChunkedResponses flag and the chunked-encoding detection.
+   virtual void setBufferPredicate(
+      const boost::function<bool(const http::Response&)>& predicate) = 0;
+
+   // Register the notification delivered once the request has been written to a
+   // successfully connected socket.
+   //
+   // downstreamClosedHandler is the counterpart for the case where there will
+   // never be such a notification, because the client settled -- errored,
+   // completed, or was torn down by its proxy. A settle is either flag: the
+   // paths above run disableHandlers(), but a bare close() (an embedder
+   // tearing down, FormProxy's own error path) marks only closed_, and after
+   // one of those handleError() returns early on closed_ without ever reaching
+   // disableHandlers(). Both are terminal and neither is ever cleared, so both
+   // count here. It covers both sides of that race:
+   //
+   //  - settled before this call: reported synchronously, here.
+   //  - registered before the request was written, then settled before
+   //    handleWrite() could deliver the connect: reported by whichever of
+   //    close()/disableHandlers() detaches the stored handler first, posted to
+   //    the strand. Detaching is what makes the pair report exactly once.
+   //  - registered after the request was written, so this call owns delivery:
+   //    dispatched to the strand and decided there, so a settle racing the
+   //    registration is reported as closed rather than as a connect the
+   //    caller would act on by writing to a dead socket.
+   //
+   // Either is reachable whenever registration is deferred past execute(), as
+   // ServerSessionProxy's upload path deliberately does (it posts its
+   // ClientHandler to the io_context so the caller's ordering is preserved),
+   // and on rserver's multi-threaded io_context the two can land on different
+   // threads.
+   //
+   // Callers that gate their own progress on the connect notification (see
+   // FormProxy) must supply it, or they will wait for a notification that
+   // cannot arrive. Exactly one of the two handlers is ever delivered; neither
+   // is silently dropped. It may be an empty function for callers with nothing
+   // to unwind.
+   virtual void setConnectHandler(const ConnectHandler& connectHandler,
+                                  const ConnectHandler& downstreamClosedHandler) = 0;
    virtual void resumeChunkProcessing() = 0;
    virtual void disableHandlers() = 0;
    virtual void close() = 0;
    virtual void setStrand(boost::asio::io_context::strand* pStrand) = 0;
+
+   // Opt in to treating a `false` return from the FixedBufferHandler's completion
+   // call (the empty chunk sent by closeAndRespond()) as "temporary
+   // backpressure, resume me later" rather than discarding it. Only
+   // FixedBufferProxy's contract works this way -- it declines under backpressure
+   // while leaving the connection open, and calls resumeChunkProcessing()
+   // once its outbound buffer drains. Other FixedBufferHandler consumers (e.g.
+   // LauncherClient, sendMethodToSession's onChunk wrapper) return false on
+   // the empty chunk to mean "stream is done" and close the connection
+   // themselves, synchronously, within that same call -- they never call
+   // resumeChunkProcessing(), so treating their "done" as a pause would leave
+   // completion permanently unretried and disableHandlers() permanently
+   // skipped. Default is false (discard the return value, matching every
+   // consumer's existing behavior); FixedBufferProxy sets this to true when it
+   // wires setFixedBufferHandler().
+   virtual void setFixedBufferHandlerSupportsPause(bool supportsPause) = 0;
 };
+
+typedef boost::asio::buffers_iterator<boost::asio::streambuf::const_buffers_type>
+   ResponseBufferIterator;
+
+// Locates the end of a response's header block within the bytes read so far,
+// for use as an async_read_until() match condition.
+//
+// The obvious delimiter -- "\r\n\r\n" -- is wrong here, because
+// ResponseParser::parseStatusLine() has already consumed the status line
+// *including* its CRLF. A response carrying no header fields at all therefore
+// leaves only "\r\n" in the buffer, which "\r\n\r\n" cannot match: the search
+// runs off the end of that response and swallows however many bytes follow it,
+// so the fields of the *next* response get attached to this one. Both
+// "HTTP/1.1 204 No Content\r\n\r\n" and a bare "HTTP/1.1 100 Continue\r\n\r\n"
+// are exactly that shape.
+//
+// Scanning line by line and stopping at the first empty line finds the
+// terminator whether or not any fields precede it.
+inline std::pair<ResponseBufferIterator, bool> findHeaderBlockEnd(
+   ResponseBufferIterator begin,
+   ResponseBufferIterator end)
+{
+   ResponseBufferIterator lineStart = begin;
+
+   for (ResponseBufferIterator it = begin; it != end; ++it)
+   {
+      if (*it != '\n')
+         continue;
+
+      ResponseBufferIterator next = it;
+      ++next;
+
+      // the line ending here is the terminator when it holds nothing but an
+      // optional CR (tolerating a bare LF the way the rest of this parsing
+      // path does)
+      std::size_t lineLength = std::distance(lineStart, it);
+      if (lineLength == 0 || (lineLength == 1 && *lineStart == '\r'))
+         return std::make_pair(next, true);
+
+      lineStart = next;
+   }
+
+   // No terminator yet. Resume from the start of the incomplete trailing line
+   // rather than from `end`: async_read_until remembers this position and
+   // passes it as `begin` next time, and this scan is only correct when it
+   // starts on a line boundary.
+   return std::make_pair(lineStart, false);
+}
 
 template <typename SocketService>
 class AsyncClient :
@@ -147,13 +269,30 @@ public:
    // The errorHandler is called on a low level level error like failure to read or write
    virtual void execute(const ResponseHandler& responseHandler,
                         const ErrorHandler& errorHandler,
-                        const ChunkHandler& chunkHandler = ChunkHandler())
+                        const FixedBufferHandler& fixedBufferHandler = FixedBufferHandler())
    {
-      // set handlers
-      responseHandler_ = responseHandler;
-      errorHandler_ = errorHandler;
-      if (chunkHandler)
-         chunkHandler_ = chunkHandler;
+      // set handlers -- under socketMutex_, like every other access to these
+      // members (see disableHandlers()). Swap any previous values into
+      // locals so they destruct only after the lock is released: destroying
+      // a displaced handler can release the last reference to a consumer
+      // whose teardown calls back into close()/disableHandlers(), which
+      // take this same (non-recursive) mutex.
+      ResponseHandler oldResponseHandler;
+      ErrorHandler oldErrorHandler;
+      FixedBufferHandler oldFixedBufferHandler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         oldResponseHandler.swap(responseHandler_);
+         responseHandler_ = responseHandler;
+         oldErrorHandler.swap(errorHandler_);
+         errorHandler_ = errorHandler;
+         if (fixedBufferHandler)
+         {
+            oldFixedBufferHandler.swap(fixedBufferHandler_);
+            fixedBufferHandler_ = fixedBufferHandler;
+         }
+      }
+      END_LOCK_MUTEX
 
       // if the host header is not already set, make sure we stamp a default one
       // this is required by the http standard
@@ -175,16 +314,104 @@ public:
    // already been deleted. for this case (which does occur in the
    // desktop::NetworkReply class) we provide a method that disables
    // any pending handlers
+   //
+   // Contract: once this returns, no NEW handler invocation can be admitted
+   // -- every invocation site copies the handler out under socketMutex_
+   // (the same lock this method holds to mark handlersDisabled_ and detach
+   // the members), so the check-then-copy admission step is mutually
+   // exclusive with disabling. An invocation admitted concurrently on
+   // another thread before the detach may still complete after this
+   // returns; it operates on its own copy of the handler, which is
+   // memory-safe for consumers kept alive by the handler's own bound
+   // shared_ptr (FixedBufferProxy -- for which a late-completing invocation
+   // simply lands on already-closed connections and no-ops into its
+   // idempotent close path). The stronger "nothing is executing after this
+   // returns" guarantee holds only when this is called on the client's
+   // strand or from within a handler invocation itself, since all
+   // invocations run strand-serialized. That covers the internal callers
+   // (strand-bound continuations), /p/ (both connections share one strand,
+   // see ServerSessionProxy.cpp), and single-io-thread embedders
+   // (desktop::NetworkReply) -- but NOT /s/, where FixedBufferProxy's
+   // write-completion path calls this from the downstream connection's own
+   // strand; there, only the weaker (still memory-safe) guarantee applies.
+   //
+   // We deliberately do NOT close that residual window by blocking here
+   // until in-flight invocations drain: the in-flight callback
+   // (FixedBufferProxy::queueChunk) can itself be blocked acquiring
+   // FixedBufferProxy's mutex_, which the disabling caller
+   // (closeConnections(), called with mutex_ held) already owns -- a
+   // wait-based scheme deadlocks exactly in the /s/ scenario it would exist
+   // to serve. Likewise handlers must never be invoked while holding
+   // socketMutex_: FixedBufferProxy's close paths run with its mutex_ held
+   // and call close()/disableHandlers() (which take socketMutex_), so
+   // invoking under socketMutex_ would invert that lock order.
    virtual void disableHandlers()
    {
       // the request has settled (or is being torn down by an embedder); stop
       // the overall deadline so it can't fire a spurious timeout afterwards
       cancelRequestDeadline();
 
-      responseHandler_ = ResponseHandler();
-      errorHandler_ = ErrorHandler();
-      chunkHandler_ = ChunkHandler();
-      connectHandler_ = ConnectHandler();
+      // Detach all handlers synchronously, under socketMutex_. Swap into
+      // locals so the old values are destroyed after the lock is released (a
+      // destructor releasing the last reference to a consumer must not run
+      // under our lock -- the consumer's teardown may call back into
+      // close()/disableHandlers()).
+      ResponseHandler oldResponseHandler;
+      ErrorHandler oldErrorHandler;
+      FixedBufferHandler oldFixedBufferHandler;
+      ConnectHandler oldConnectHandler;
+      ConnectHandler oldDownstreamClosedHandler;
+      bool reportDownstreamClosed = false;
+      LOCK_MUTEX(socketMutex_)
+      {
+         handlersDisabled_ = true;
+         oldResponseHandler.swap(responseHandler_);
+         oldErrorHandler.swap(errorHandler_);
+         oldFixedBufferHandler.swap(fixedBufferHandler_);
+         oldConnectHandler.swap(connectHandler_);
+         oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
+
+         // Are we detaching a connect notification that was stored but never
+         // delivered? handleWrite() copies connectHandler_ out rather than
+         // clearing it, so a non-empty handler alone doesn't say; what
+         // distinguishes the two is requestWritten_, which handleWrite() sets
+         // in the same critical section it reports the connect from. Still
+         // false here means the connect never happened, so setConnectHandler()
+         // stored a notification that this call is about to make unreachable
+         // -- exactly the drop the downstream-closed handler exists to report.
+         // (Idempotent on a second call: connectHandler_ is empty by then.)
+         reportDownstreamClosed = oldConnectHandler && !requestWritten_;
+      }
+      END_LOCK_MUTEX
+
+      // Post rather than invoke. We may have been called with a consumer's own
+      // lock held (FixedBufferProxy::closeConnections() holds its mutex_) or
+      // from inside a handler invocation, so calling out from here directly
+      // would invert the lock order this method's declaration warns about.
+      // Posting defers the notification until the disabling caller has
+      // unwound, and binding the client's strand keeps it serialized with
+      // every other handler invocation. The bound handler holds the consumer's
+      // shared_ptr, so it stays alive until this runs.
+      if (reportDownstreamClosed && oldDownstreamClosedHandler)
+      {
+         boost::asio::post(ioContext_,
+                           boost::asio::bind_executor(*pStrand_, oldDownstreamClosedHandler));
+      }
+
+      // The old values now destruct inline, breaking any reference cycle
+      // (e.g. fixedBufferHandler_'s bound shared_ptr<FixedBufferProxy>)
+      // immediately and without depending on the io_context still running.
+      // This is safe even when we are called from *within* the very handler
+      // being detached: the invocation site invoked its own stack copy of
+      // the handler (copied out under socketMutex_, see the contract
+      // comment above), and that copy keeps the consumer alive until the
+      // invocation returns and the call site's scope ends -- dropping our
+      // reference here therefore never destroys a consumer mid-call.
+      //
+      // The one exception is a posted downstream-closed notification, whose
+      // copy above deliberately outlives this scope: that notification is only
+      // reachable before the request was written, so no FixedBufferHandler
+      // cycle exists yet to keep alive.
    }
 
    // satisfy lower-level http::Socket interface (used when the client
@@ -212,8 +439,27 @@ public:
       boost::asio::async_write(socket(), buffers, boost::asio::bind_executor(*pStrand_, handler));
    }
 
+   // Also reports a stored-but-undeliverable connect notification, for the same
+   // reason disableHandlers() does: close() is a settle in its own right, and
+   // on some paths the only one. It is public API, and callers that close a
+   // client without disabling its handlers do exist -- FormProxy's own error
+   // path, the launcher/session clients that close a streaming client to stop
+   // it, and an embedder closing in its destructor (the case disableHandlers()
+   // was added for in the first place). Nothing then detaches a connect handler
+   // stored before the request was written: the aborted connect/write
+   // completion returns early from handleError() on closed_ and never reaches
+   // the disableHandlers() at the end of that function. A caller gated on the
+   // notification would wait forever -- FormProxy buffers to maxBufferSize_,
+   // pauses parsing, and hangs the upload. Reporting here is what makes
+   // setConnectHandler()'s "exactly one of the two is delivered" hold for a
+   // bare close() as well.
    virtual void close()
    {
+      // displaced values destroyed after unlock, see execute()
+      ConnectHandler oldConnectHandler;
+      ConnectHandler oldDownstreamClosedHandler;
+      bool reportDownstreamClosed = false;
+
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
       LOCK_MUTEX(socketMutex_)
@@ -226,30 +472,103 @@ public:
 
             closed_ = true;
          }
+
+         // Same test, and the same reasoning, as disableHandlers(): a non-empty
+         // connectHandler_ alone doesn't mean one is still pending, because
+         // handleWrite() invokes its own copy without clearing the member;
+         // requestWritten_ -- set in that same critical section -- is what
+         // discriminates a connect that was delivered from one that never
+         // happened. Detaching here is also what keeps the pair idempotent: the
+         // ordinary close()-then-disableHandlers() teardown finds the handler
+         // gone and so cannot report a second time.
+         reportDownstreamClosed = connectHandler_ && !requestWritten_;
+         if (reportDownstreamClosed)
+         {
+            oldConnectHandler.swap(connectHandler_);
+            oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
+         }
+      }
+      END_LOCK_MUTEX
+
+      // Posted, not invoked, exactly as in disableHandlers(): we may be called
+      // with a consumer's own lock held (FixedBufferProxy::closeConnections()
+      // holds its mutex_), so calling out from here would invert the lock order
+      // disableHandlers()'s declaration warns about. Binding the strand keeps
+      // the notification serialized with every other handler invocation.
+      if (reportDownstreamClosed && oldDownstreamClosedHandler)
+      {
+         boost::asio::post(ioContext_,
+                           boost::asio::bind_executor(*pStrand_, oldDownstreamClosedHandler));
+      }
+   }
+
+   virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler)
+   {
+      // swap the displaced value out and destroy it after releasing the
+      // lock -- see execute() for why destroying it under the lock could
+      // deadlock
+      FixedBufferHandler oldFixedBufferHandler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         oldFixedBufferHandler.swap(fixedBufferHandler_);
+         fixedBufferHandler_ = fixedBufferHandler;
       }
       END_LOCK_MUTEX
    }
 
-   virtual void setChunkHandler(const ChunkHandler& chunkHandler)
+   virtual void setStreamNonChunkedResponses(bool stream)
    {
-      chunkHandler_ = chunkHandler;
+      streamNonChunkedResponses_ = stream;
+   }
+
+   virtual void setBufferPredicate(
+      const boost::function<bool(const http::Response&)>& predicate)
+   {
+      bufferPredicate_ = predicate;
+   }
+
+   virtual void setFixedBufferHandlerSupportsPause(bool supportsPause)
+   {
+      fixedBufferHandlerSupportsPause_ = supportsPause;
    }
 
    virtual void resumeChunkProcessing()
    {
-      if (!chunkState_)
-      {
-         // no saved chunk state so this was an errant call and we should not do anything
-         return;
-      }
-
-      // deliver the chunks on the thread pool instead of directly from this method
-      // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
+      // Post unconditionally to the strand, and do ALL state inspection
+      // (completionPending_, chunkState_) and mutation inside that handler --
+      // not just the mutation, as an earlier version of this fix did. Every
+      // other continuation in this class is strand-bound (see
+      // asyncReadSome()/asyncWrite() above), and rserver's io_context runs a
+      // thread pool, so reading completionPending_/chunkState_ here, on
+      // whatever thread calls resumeChunkProcessing(), to decide whether/how
+      // to post, would race strand-bound writes to those same members from a
+      // different thread. resumeChunkProcessing() itself is called from the
+      // downstream connection's own completion context
+      // (FixedBufferProxy::writeChunk()), which for /p/ shares one strand
+      // with this connection (see ServerSessionProxy.cpp), but for /s/
+      // (which never calls setStrand()) that call arrives on whatever
+      // context the downstream side runs on.
       auto self = AsyncClient<SocketService>::shared_from_this();
-      boost::asio::post(ioContext_, [this, self]()
+      boost::asio::post(ioContext_, boost::asio::bind_executor(*pStrand_, [this, self]()
       {
-         // capture shared_ptr of this to keep instance alive while posting callback
-         // to io service
+         // A rejected completion signal is tracked separately from
+         // chunkState_ (see completionPending_'s declaration) and checked
+         // first: retrying it re-enters closeAndRespond() itself rather than
+         // deliverChunks(), so completion is never sent twice regardless of
+         // what chunkState_ holds.
+         if (completionPending_)
+         {
+            completionPending_ = false;
+            closeAndRespond(); // may set completionPending_ again if still full
+            return;
+         }
+
+         if (!chunkState_)
+         {
+            // no saved chunk state so this was an errant call and we should not do anything
+            return;
+         }
+
          bool complete = chunkState_->complete;
          bool handled = deliverChunks(chunkState_->chunks, complete);
 
@@ -260,25 +579,124 @@ public:
             else
                closeAndRespond();
          }
-      });
+      }));
    }
 
-   virtual void setConnectHandler(const ConnectHandler& connectHandler)
+   virtual void setConnectHandler(const ConnectHandler& connectHandler,
+                                  const ConnectHandler& downstreamClosedHandler)
    {
       // if we are already connected, don't bother saving the connect handler
       // and just invoke it directly
-      bool invokeConnectHandler = false;
+      bool deferConnectNotification = false;
+      bool invokeDownstreamClosedHandler = false;
+      // displaced values destroyed after unlock, see execute()
+      ConnectHandler oldConnectHandler;
+      ConnectHandler oldDownstreamClosedHandler;
       LOCK_MUTEX(socketMutex_)
       {
-         if (!requestWritten_)
+         // Whether we have settled has to be read under the same lock
+         // close()/disableHandlers() set these with -- see disableHandlers()'s
+         // declaration -- so that the decision below can't be made against a
+         // stale answer.
+         //
+         // Both flags, for the same reason deliverLateConnectNotification()
+         // checks both: disableHandlers() marks handlersDisabled_, but a bare
+         // close() (an embedder tearing down, FormProxy's own error path)
+         // marks only closed_. Checking handlersDisabled_ alone sent a bare-
+         // closed client down the !requestWritten_ branch below, which stores a
+         // handler that only disableHandlers() ever reports -- and after a bare
+         // close() the aborted connect/write completion returns early from
+         // handleError() on closed_ without reaching disableHandlers(), so
+         // nothing reported it at all.
+         if (handlersDisabled_ || closed_)
+         {
+            // We have settled already, so connectHandler can never run: there
+            // is no connect left to report, and disableHandlers() would detach
+            // it again immediately even if we stored it. Report that instead of
+            // dropping the notification -- see the declaration for why a caller
+            // that never hears either way can hang.
+            invokeDownstreamClosedHandler = true;
+         }
+         else if (!requestWritten_)
+         {
+            // store both: disableHandlers() may yet detach the connect
+            // notification before handleWrite() can deliver it, and reports
+            // that through the stored downstream-closed handler
+            oldConnectHandler.swap(connectHandler_);
+            oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
             connectHandler_ = connectHandler;
+            downstreamClosedHandler_ = downstreamClosedHandler;
+         }
          else
-            invokeConnectHandler = true;
+         {
+            // handleWrite() has already been and gone, so it will never
+            // deliver this one; we have to. Deferred rather than invoked
+            // below -- see there for why.
+            deferConnectNotification = true;
+         }
       }
       END_LOCK_MUTEX
 
-      if (invokeConnectHandler)
-         connectHandler();
+      // Dispatch the late connect notification through the strand instead of
+      // invoking it here. Deciding under the lock above and calling out after
+      // it is a decision another thread's close()/disableHandlers() can
+      // invalidate in between, and the caller acts on a connect notification
+      // by writing: FormProxy would set connectedDownstream_, write to a
+      // socket that has since closed, and take its error path -- which closes
+      // the upstream connection too, resetting whatever response
+      // FixedBufferProxy was mid-write of. Re-reading the state on the strand
+      // at delivery time reports that settle as closed instead, which is the
+      // answer the caller can act on safely. (The settled branch above stays
+      // synchronous: neither flag is ever cleared, so it cannot go stale.)
+      if (deferConnectNotification)
+      {
+         boost::shared_ptr<AsyncClient<SocketService>> self =
+            AsyncClient<SocketService>::shared_from_this();
+         boost::asio::post(
+            ioContext_,
+            boost::asio::bind_executor(
+               *pStrand_,
+               [self, connectHandler, downstreamClosedHandler]()
+               {
+                  self->deliverLateConnectNotification(connectHandler, downstreamClosedHandler);
+               }));
+      }
+      else if (invokeDownstreamClosedHandler && downstreamClosedHandler)
+      {
+         // outside the lock: handlers must never be invoked while holding
+         // socketMutex_ (see disableHandlers()'s declaration for the lock order)
+         downstreamClosedHandler();
+      }
+   }
+
+   // Deliver a connect notification registered after the request was already
+   // written, from the strand. Which of the two handlers is correct is decided
+   // here rather than at registration time so that a settle racing the
+   // registration is reported as closed rather than as a connect the caller
+   // would act on by writing to a dead socket.
+   //
+   // Both flags matter: disableHandlers() marks handlersDisabled_, but a bare
+   // close() (an embedder tearing down, a deadline firing) only marks closed_,
+   // and a connect notification is equally untrue in that case.
+   void deliverLateConnectNotification(const ConnectHandler& connectHandler,
+                                       const ConnectHandler& downstreamClosedHandler)
+   {
+      bool settled = false;
+      LOCK_MUTEX(socketMutex_)
+      {
+         settled = handlersDisabled_ || closed_;
+      }
+      END_LOCK_MUTEX
+
+      if (!settled)
+      {
+         if (connectHandler)
+            connectHandler();
+      }
+      else if (downstreamClosedHandler)
+      {
+         downstreamClosedHandler();
+      }
    }
 
    virtual void setStrand(boost::asio::io_context::strand* pStrand)
@@ -354,9 +772,22 @@ protected:
       // close the socket
       close();
 
-      // invoke error handler
-      if (errorHandler_)
-         errorHandler_(httpError);
+      // invoke error handler -- copy it out under socketMutex_ (checking
+      // handlersDisabled_ in the same critical section disableHandlers()
+      // uses to set it and detach the handler) so a concurrent
+      // disableHandlers() call can't race between this check and the
+      // invocation below. Actual invocation happens outside the lock, same
+      // as handleWrite()'s connectHandler_ pattern.
+      ErrorHandler handler;
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!handlersDisabled_)
+            handler = errorHandler_;
+      }
+      END_LOCK_MUTEX
+
+      if (handler)
+         handler(httpError);
 
       // free handlers to ensure they do not keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -511,12 +942,13 @@ private:
       {
          if (!ec)
          {
-            // invoke connect handler if we have one
+            // invoke connect handler if we have one -- checked under the
+            // same lock disableHandlers() uses, see its declaration
             ConnectHandler handler;
             LOCK_MUTEX(socketMutex_)
             {
                requestWritten_ = true;
-               if (connectHandler_)
+               if (!handlersDisabled_ && connectHandler_)
                   handler = connectHandler_;
             }
             END_LOCK_MUTEX
@@ -558,11 +990,12 @@ private:
             }
             else
             {
-               // initiate async read of the headers
+               // initiate async read of the headers -- see findHeaderBlockEnd()
+               // for why this cannot just look for "\r\n\r\n"
                boost::asio::async_read_until(
                  socket(),
                  responseBuffer_,
-                 "\r\n\r\n",
+                 findHeaderBlockEnd,
                  boost::asio::bind_executor(*pStrand_,
                         boost::bind(&AsyncClient<SocketService>::handleReadHeaders,
                                     AsyncClient<SocketService>::shared_from_this(),
@@ -648,6 +1081,96 @@ private:
       return response_.body().size() >= *contentLength;
    }
 
+   // True when body data should be handed to the FixedBufferHandler (streamed to the
+   // browser) rather than accumulated into response_ for the ResponseHandler.
+   // Reads fixedBufferHandler_ under socketMutex_ (like every access to the
+   // handler members, see disableHandlers()); must not be called while
+   // already holding that lock.
+   bool useFixedBufferHandler() const
+   {
+      LOCK_MUTEX(socketMutex_)
+      {
+         return fixedBufferHandler_ && !bufferFullResponse_;
+      }
+      END_LOCK_MUTEX
+      return false;
+   }
+
+   // Streaming analog of responseBodyComplete(): in streaming mode response_.body()
+   // is never populated, so we compare the count of bytes handed to the fixed
+   // buffer handler against the declared Content-Length instead. Returns false when there
+   // is no valid Content-Length header (EOF-delimited body): completion is then
+   // signalled by the upstream connection close in handleReadContent's EOF branch.
+   // Mirrors responseBodyComplete()'s explicit parse so an absent/malformed value
+   // falls back to read-until-EOF rather than short-circuiting.
+   bool streamedBodyComplete() const
+   {
+      boost::optional<uintmax_t> contentLength =
+         safe_convert::stringTo<uintmax_t>(response_.headerValue("Content-Length"));
+      if (!contentLength)
+         return false;
+      return contentLengthStreamed_ >= *contentLength;
+   }
+
+   // Deliver the raw bytes currently in responseBuffer_ to the fixed buffer handler as
+   // one or more <=1MB pieces, reusing the chunked-path delivery/backpressure.
+   // The non-chunked analog of processChunks(): the bytes are the decoded body
+   // only -- FixedBufferProxy decides the client-facing framing. Detects completion via
+   // the byte counter (not response_.body(), which streaming never fills), passes
+   // the computed `complete` through deliverChunks() into chunkState_, and drives
+   // read-more / close-and-respond itself.
+   void deliverContentAsChunk()
+   {
+      auto buffer = responseBuffer_.data();
+      std::size_t n = buffer.size();
+      auto piece = boost::make_shared<std::string>(
+         static_cast<const char*>(buffer.data()), n);
+      responseBuffer_.consume(responseBuffer_.size());
+
+      // account the bytes we're relaying so we can detect Content-Length
+      // completion without accumulating the body in memory.
+      contentLengthStreamed_ += n;
+      bool complete = streamedBodyComplete();
+
+      std::deque<boost::shared_ptr<std::string>> chunks;
+      if (n > 0)
+         chunks.push_back(piece); // never deliver an empty piece mid-stream:
+                                  // FixedBufferProxy treats an empty chunk as the final
+                                  // completion signal (sent via closeAndRespond).
+      breakChunks(chunks);
+
+      // deliverChunks stashes chunkState_ (carrying this same `complete`) and
+      // returns false if the consumer paused; resumeChunkProcessing() then routes
+      // the resume to closeAndRespond() when complete, or readSomeContent()
+      // otherwise -- so a pause on the final piece still completes correctly.
+      bool chunksHandled = deliverChunks(chunks, complete);
+
+      if (!chunksHandled)
+         return; // paused; resumeChunkProcessing() will continue
+
+      if (complete)
+         closeAndRespond();  // sends fixedBufferHandler_(response_, "") completion signal
+      else
+         readSomeContent();
+   }
+
+   // True for an interim (informational) response -- one the sender will follow
+   // with a further response on this same connection.
+   //
+   // 101 is deliberately excluded. Despite its 1xx status it is the final HTTP
+   // response on the connection: what follows is the upgraded protocol, not
+   // another HTTP response, so skipping it would discard the handshake and
+   // then try to parse websocket frames as a status line. (The localhost proxy
+   // routes 101 to the buffered websocket-upgrade path via its buffer
+   // predicate.)
+   static bool isInterimResponse(const http::Response& response)
+   {
+      int statusCode = response.statusCode();
+      return statusCode >= 100 &&
+             statusCode < 200 &&
+             statusCode != http::status::SwitchingProtocols;
+   }
+
    void handleReadHeaders(const boost::system::error_code& ec)
    {
       try
@@ -657,9 +1180,90 @@ private:
             // parse headers
             ResponseParser::parseHeaders(&responseBuffer_, &response_);
 
+            // RFC 7231 6.2: "A client MUST be able to parse one or more 1xx
+            // responses received prior to a final response, even if the client
+            // does not expect one." A 1xx is interim: it carries no body (RFC
+            // 7230 3.3.3 rule 1) and another response follows it on the same
+            // connection. Treating it as the final response, as this used to,
+            // made the real response arrive as the interim one's body -- the
+            // caller saw a 100/103 status with the literal bytes
+            // "HTTP/1.1 200 OK\r\n..." behind it, and the actual response was
+            // never delivered at all.
+            //
+            // Reachable: nothing in this tree strips a client's
+            // "Expect: 100-continue" before the request is proxied on, and 103
+            // Early Hints is emitted unprompted by a growing number of servers.
+            if (isInterimResponse(response_))
+            {
+               // Bounded so an upstream that only ever emits interim responses
+               // fails rather than looping for as long as it cares to send them.
+               if (++interimResponseCount_ > maxInterimResponses)
+               {
+                  handleError(systemError(boost::system::errc::protocol_error,
+                                          "Too many interim (1xx) responses from upstream",
+                                          ERROR_LOCATION));
+                  return;
+               }
+
+               // Discard it and go back for the next response's status line.
+               // A 1xx has no body, so the bytes immediately after its header
+               // block start the next response -- async_read_until finds those
+               // already sitting in responseBuffer_ rather than waiting on the
+               // socket for them. (It always posts its completion handler, so
+               // looping this way does not nest stack frames.)
+               response_.reset();
+
+               boost::asio::async_read_until(
+                 socket(),
+                 responseBuffer_,
+                 "\r\n",
+                 boost::asio::bind_executor(*pStrand_,
+                        boost::bind(&AsyncClient<SocketService>::handleReadStatusLine,
+                                    AsyncClient<SocketService>::shared_from_this(),
+                                    boost::asio::placeholders::error)));
+               return;
+            }
+
+            // decide, from headers alone, whether a downstream handler needs the
+            // entire body buffered (legacy path) or whether we can stream it.
+            bufferFullResponse_ = bufferPredicate_ && bufferPredicate_(response_);
+
+            // Decide chunked-ness from the parsed transfer-coding list, not
+            // from a string compare against the raw field. The compare missed
+            // "Chunked" and "gzip, chunked" -- both chunk-framed on the wire --
+            // leaving the body read as if unencoded while a downstream consumer
+            // (FixedBufferProxy) looking at the same header reached its own,
+            // different conclusion. Two disagreeing answers to "is this body
+            // chunked" is what let an already-chunked body be chunked a second
+            // time, which RFC 7230 3.3.1 forbids outright.
+            util::TransferEncoding transferEncoding =
+               util::parseTransferEncoding(response_.headers());
+
+            // A body still transfer-encoded after we have undone all we can --
+            // gzip we cannot decode, chunked applied before another coding, or
+            // chunked applied twice -- cannot be handed on as a decoded
+            // payload, and silently relabelling it as one corrupts the
+            // response. Fail closed instead. parseTransferEncoding() owns this
+            // verdict so no caller has to reassemble it (and get it subtly
+            // different).
+            if (!transferEncoding.isDecodable)
+            {
+               handleError(systemError(boost::system::errc::protocol_error,
+                                       "Unsupported Transfer-Encoding in response: " +
+                                          response_.headerValue(kTransferEncoding),
+                                       ERROR_LOCATION));
+               return;
+            }
+
             // if this is chunked encoding, start processing chunks
-            if (response_.headerValue(kTransferEncoding) == kChunkedTransferEncoding &&
-                response_.contentLength() == 0)
+            //
+            // Note this is deliberately not conditioned on Content-Length being
+            // absent: RFC 7230 3.3.3 rule 3 says that when a message carries
+            // both, the Transfer-Encoding wins and the Content-Length must not
+            // be used for framing (and must be removed before forwarding, which
+            // FixedBufferProxy's chunked branch does). Preferring Content-Length
+            // there read a chunk-framed body as if it were raw bytes.
+            if (transferEncoding.chunkedIsFinal)
             {
                chunkedEncoding_ = true;
 
@@ -675,6 +1279,24 @@ private:
                   readSomeContent();
                   return;
                }
+            }
+
+            // a non-chunked body streams piece-wise to the fixed buffer handler only if
+            // this wiring site opted in AND no handler needs the whole body
+            // buffered. Sites that did not opt in keep buffering non-chunked
+            // responses (legacy responseHandler_ path) -- see Step 3 / Background.
+            streamResponse_ = streamNonChunkedResponses_ &&
+                              useFixedBufferHandler() && !chunkedEncoding_;
+
+            // Streaming path: hand the decoded body to the fixed buffer handler and let
+            // deliverContentAsChunk() drive completion/read-more (analog of the
+            // chunked branch's processChunks()/readSomeContent() above). Do NOT
+            // fall through to responseBodyComplete() below -- it counts
+            // response_.body(), which streaming never populates.
+            if (streamResponse_)
+            {
+               deliverContentAsChunk(); // handles empty buffer, completion, backpressure
+               return;
             }
 
             // append any lefover buffer contents to the body
@@ -711,6 +1333,17 @@ private:
             if (chunkedEncoding_)
             {
                processChunks();
+               return;
+            }
+
+            if (streamResponse_)
+            {
+               // deliver this read piece-wise to the fixed buffer handler.
+               // deliverContentAsChunk() tracks bytes-vs-Content-Length for its
+               // own completion, closes/responds or reads more as appropriate,
+               // and pauses (saving chunkState_) under backpressure -- mirroring
+               // the processChunks() delegation used for chunked encoding above.
+               deliverContentAsChunk();
                return;
             }
 
@@ -814,9 +1447,37 @@ private:
       {
          boost::shared_ptr<std::string> chunk = *iter;
 
-         if (chunkHandler_)
+         // Copy the handler out under socketMutex_, checking
+         // handlersDisabled_ in the same critical section disableHandlers()
+         // uses -- see that method's contract comment for why admission
+         // must be locked, why the mode decision below must come from this
+         // same copy (an unlocked useFixedBufferHandler() call here would
+         // both race disableHandlers()'s detach and, once detached, silently
+         // flip a streaming consumer into the accumulate-into-response_
+         // branch mid-body), and why this local copy also serves as the
+         // lifetime holder that keeps the consumer alive if it re-entrantly
+         // calls disableHandlers() from within the invocation.
+         FixedBufferHandler handler;
+         bool disabled;
+         LOCK_MUTEX(socketMutex_)
          {
-            bool keepGoing = chunkHandler_(response_, *chunk);
+            disabled = handlersDisabled_;
+            handler = fixedBufferHandler_;
+         }
+         END_LOCK_MUTEX
+
+         if (disabled)
+         {
+            // Handlers were disabled (e.g. the downstream connection already
+            // errored out and broke its reference cycle via
+            // disableHandlers()) while chunks were still in flight -- stop
+            // processing entirely.
+            return false;
+         }
+
+         if (handler && !bufferFullResponse_) // useFixedBufferHandler(), from the copy
+         {
+            bool keepGoing = handler(response_, *chunk);
 
             if (!keepGoing)
             {
@@ -835,7 +1496,7 @@ private:
          }
          else
          {
-            // no chunk handler supplied, so caller expects to receive all chunks
+            // no fixed buffer handler supplied, so caller expects to receive all chunks
             // in one shot when the request finishes - simply append chunk to final response
             ResponseParser::appendToBody(*chunk, &response_);
 
@@ -856,10 +1517,72 @@ private:
       if (!keepConnectionAlive())
          close();
 
-      if (responseHandler_ && (!chunkedEncoding_ || !chunkHandler_))
-         responseHandler_(response_);
-      else if (chunkHandler_)
-         chunkHandler_(response_, ""); // completion of chunks signified by empty chunk
+      // Copy both handlers out under socketMutex_, checking
+      // handlersDisabled_ in the same critical section disableHandlers()
+      // uses to set it and detach them -- see that method's contract comment
+      // for why admission must be locked, and why the mode decision below is
+      // computed from these same copies rather than re-reading the members
+      // through useFixedBufferHandler(). Neither branch below checks closed_
+      // on its own. The local copies also serve as the lifetime holders that
+      // keep the consumer alive if it re-entrantly calls disableHandlers()
+      // from within the invocation.
+      ResponseHandler responseHandler;
+      FixedBufferHandler fixedBufferHandler;
+      bool disabled;
+      LOCK_MUTEX(socketMutex_)
+      {
+         disabled = handlersDisabled_;
+         if (!disabled)
+         {
+            responseHandler = responseHandler_;
+            fixedBufferHandler = fixedBufferHandler_;
+         }
+      }
+      END_LOCK_MUTEX
+
+      if (disabled)
+      {
+         disableHandlers(); // idempotent
+         return;
+      }
+
+      // useFixedBufferHandler(), computed from the copy
+      bool useFixedBuffer = fixedBufferHandler && !bufferFullResponse_;
+
+      if (responseHandler && !(useFixedBuffer && (chunkedEncoding_ || streamResponse_)))
+      {
+         responseHandler(response_);
+      }
+      else if (useFixedBuffer)
+      {
+         // The empty chunk is the completion signal for the fixed buffer handler,
+         // and -- like any other chunk delivery -- the consumer (FixedBufferProxy)
+         // may decline it under backpressure (e.g. its outbound buffer is
+         // exactly full at the moment the body finishes). Unlike every other
+         // chunk delivery, this call bypasses deliverChunks()/chunkState_, so
+         // its return value must be checked explicitly: silently discarding a
+         // "please pause" here would leave completion permanently unsent (see
+         // completionPending_), since FixedBufferProxy's writeChunk() prioritizes a
+         // pending buffer-full condition over its "received final, nothing
+         // left to write" close.
+         //
+         // Only do this when fixedBufferHandlerSupportsPause_ is set (FixedBufferProxy's
+         // contract) -- see that flag's declaration for why a `false` return
+         // here is overloaded across FixedBufferHandler consumers, and why treating
+         // every consumer's `false` as a pause would break the others.
+         if (fixedBufferHandlerSupportsPause_)
+         {
+            if (!fixedBufferHandler(response_, ""))
+            {
+               completionPending_ = true;
+               return; // resumeChunkProcessing() will retry via closeAndRespond()
+            }
+         }
+         else
+         {
+            fixedBufferHandler(response_, "");
+         }
+      }
 
       // free handlers in case they keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -980,28 +1703,88 @@ protected:
 private:
    static constexpr std::size_t maxChunkSize = 1'048'576; // 1MB
 
+   // How many interim (1xx) responses to skip before treating the upstream as
+   // broken. Generous next to real usage -- a server sends at most a couple of
+   // 103 Early Hints, or one 100 Continue -- while still bounding the work an
+   // upstream can make us do before it commits to a final response.
+   static constexpr int maxInterimResponses = 8;
+
    boost::asio::io_context& ioContext_;
    ConnectionRetryContext connectionRetryContext_;
    bool logToStderr_;
    ResponseHandler responseHandler_;
    ErrorHandler errorHandler_;
+
+   // Protected by socketMutex_ (like closed_ below), not a bare atomic: every
+   // site that invokes responseHandler_, errorHandler_, fixedBufferHandler_,
+   // or connectHandler_ must check this and copy out the handler it's about
+   // to call under the SAME lock disableHandlers() uses to set this and
+   // detach the handlers, or a thread could observe this as false and still
+   // be mid-call into a handler that another thread's disableHandlers() call
+   // is concurrently detaching. See disableHandlers()'s declaration for the
+   // full contract, including why the invocation-site copies double as the
+   // lifetime holders that make its synchronous detach safe.
+   bool handlersDisabled_ = false;
+
    http::Request request_;
    boost::asio::streambuf responseBuffer_;
    boost::shared_ptr<ChunkParser> chunkParser_;
-   ChunkHandler chunkHandler_;
+   FixedBufferHandler fixedBufferHandler_;
+   boost::function<bool(const http::Response&)> bufferPredicate_;
+   bool streamNonChunkedResponses_ = false; // opt-in, set by wiring site
+   bool fixedBufferHandlerSupportsPause_ = false; // opt-in, set by FixedBufferProxy::proxy()
+   bool bufferFullResponse_ = false; // decided at header time
+   bool streamResponse_ = false;     // the final streaming decision for this
+                                     // response, computed once at header time
+                                     // from streamNonChunkedResponses_,
+                                     // bufferFullResponse_ (the predicate
+                                     // result), and whether the body is
+                                     // already chunked (always streamed)
+   uintmax_t contentLengthStreamed_ = 0; // bytes handed to fixedBufferHandler_ so far
+   int interimResponseCount_ = 0;        // 1xx responses skipped so far (see handleReadHeaders)
+                                         // (response_.body() stays empty when
+                                         // streaming, so we count completion here)
 
    boost::shared_ptr<ChunkState> chunkState_;
+
+   // True when closeAndRespond()'s completion signal (fixedBufferHandler_(response_,
+   // "")) was declined by the fixed buffer handler (e.g. FixedBufferProxy is buffer-full at
+   // the exact moment the body finishes) and has not yet been redelivered.
+   // The completion signal is the one chunk delivery that does not flow
+   // through deliverChunks()/chunkState_ (see closeAndRespond()), so without
+   // this flag a genuine "please pause" here would be silently dropped:
+   // nothing would remember that completion still needs to be sent, and
+   // FixedBufferProxy's writeChunk() prioritizes a pending buffer-full condition
+   // over its "received final, nothing left to write" close -- so both
+   // connections would stay open forever. resumeChunkProcessing() checks this
+   // before chunkState_ and retries closeAndRespond() itself, keeping the
+   // retry logic separate from real-content redelivery so the completion
+   // signal is never sent twice.
+   //
+   // Only ever set when fixedBufferHandlerSupportsPause_ is true (see its
+   // declaration): a `false` return from the completion call is overloaded
+   // across FixedBufferHandler consumers, and only FixedBufferProxy's contract treats it
+   // as "pause, resume me later." Gating on that flag -- rather than trying
+   // to infer intent from connection state -- keeps this correct without
+   // affecting any other consumer's existing behavior.
+   bool completionPending_ = false;
 
    // optional overall request deadline (connect + handshake + read); unset by
    // default, configured via setRequestTimeout and armed in execute()
    boost::posix_time::time_duration requestTimeout_ = boost::posix_time::pos_infin;
    boost::shared_ptr<boost::asio::system_timer> pRequestDeadlineTimer_;
 
-   boost::mutex socketMutex_;
+   // mutable so const readers (useFixedBufferHandler()) can lock it
+   mutable boost::mutex socketMutex_;
    bool closed_;
 
    bool requestWritten_;
    ConnectHandler connectHandler_;
+
+   // Companion to connectHandler_, stored alongside it and reported by
+   // disableHandlers() when it detaches a connect notification that was never
+   // delivered. See setConnectHandler()'s declaration.
+   ConnectHandler downstreamClosedHandler_;
 
    boost::asio::io_context::strand defaultStrand_;
 

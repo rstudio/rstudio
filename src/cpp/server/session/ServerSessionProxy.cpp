@@ -48,7 +48,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
-#include <core/http/ChunkProxy.hpp>
+#include <core/http/FixedBufferProxy.hpp>
 #include <core/http/FormProxy.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixGroup.hpp>
@@ -467,7 +467,7 @@ void handleLocalhostResponse(
          {         
             sendSparkUIResponse(response, ptrConnection);
          }
-         else if (response.headerValue(core::http::kTransferEncoding) == core::http::kChunkedTransferEncoding)
+         else if (core::http::util::parseTransferEncoding(response.headers()).chunkedIsFinal)
          {
             // Even if the response from upstream is "Transfer-Encoding: chunked",
             // our response to the client is no longer chunked; the AsyncClient
@@ -475,8 +475,15 @@ void handleLocalhostResponse(
             // Transfer-Encoding header and set the content length, to reflect
             // that the body will come all at once.
             //
-            // TODO: Determine what happens when the Transfer-Encoding is both
-            // chunked and something else ("gzip, chunked" or "chunked, gzip").
+            // This must use the same parse AsyncClient used to decide to
+            // de-chunk (it once compared the raw field to "chunked" here): if
+            // AsyncClient de-chunked a body whose field read "Chunked", a
+            // string compare would leave the now-decoded body labelled as
+            // chunked on the way out, and the client would try to de-chunk it
+            // again. The "gzip, chunked" case the old TODO here asked about is
+            // now answered upstream -- AsyncClient rejects codings it cannot
+            // undo rather than delivering a still-encoded body.
+            //
             // TODO: What other hop-by-hop response headers are we not removing
             // but should?
             http::Response response1;
@@ -852,8 +859,8 @@ void proxyRequest(
    LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
    // proxy the request
-   boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
-   chunkProxy->proxy(pClient);
+   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
+   fixedBufferProxy->proxy(pClient);
    pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
                     errorHandler);
 
@@ -1322,6 +1329,25 @@ void proxyLocalhostRequest(
    // pRequest is not used again after this point, so move its contents into
    // the client's request instead of deep-copying them
    pClient->request().assign(std::move(*pRequest));
+
+   // Stream the response to the browser by default (this path carries the large
+   // port-proxied downloads the issue is about, and handleLocalhostResponse has
+   // no non-chunked side effects to preserve). FixedBufferProxy preserves a known
+   // Content-Length end-to-end (progress bars) and falls back to chunked only
+   // when the upstream length is unknown. Force full buffering only for the
+   // header-observable cases handleLocalhostResponse must handle with the entire
+   // response: SparkUI root-path link fixups (Server: Jetty; see
+   // isSparkUIResponse), redirects (Location/Refresh), and websocket upgrades.
+   pClient->setStreamNonChunkedResponses(true);
+   pClient->setBufferPredicate([](const http::Response& response) {
+      return response.statusCode() == http::status::SwitchingProtocols ||
+             !response.headerValue("Location").empty() ||
+             !response.headerValue("Refresh").empty() ||
+             boost::algorithm::contains(response.headerValue("Server"), "Jetty");
+   });
+
+   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
+   fixedBufferProxy->proxy(pClient);
 
    // execute request
    pClient->execute(
