@@ -1,5 +1,6 @@
 import type { Page, Locator, FrameLocator } from 'playwright';
 import { FramePageObject } from './page_object_base_classes';
+import { typingTimeout } from '../utils/constants';
 
 // ---------------------------------------------------------------------------
 // Class-based page object
@@ -145,7 +146,7 @@ export class ChatPane extends FramePageObject {
    */
   async typeMessage(text: string): Promise<void> {
     await this.chatInput.click();
-    await this.chatInput.pressSequentially(text);
+    await this.chatInput.pressSequentially(text, { timeout: typingTimeout(text) });
   }
 
   /**
