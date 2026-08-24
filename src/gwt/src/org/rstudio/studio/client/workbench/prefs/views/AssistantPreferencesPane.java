@@ -425,7 +425,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Block apply until the install/update check resolves (#18350).
             beginPositAiCheck();
-            checkPositAssistantInstallation(/* forAssistant= */ false);
+            checkPositAssistantInstallation(/* forAssistant= */ false, null);
          }
       });
 
@@ -508,6 +508,13 @@ public class AssistantPreferencesPane extends PreferencesPane
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
+               // Capture the selection being replaced before disableCopilot()
+               // below persists "posit" over it. The install check reverts to
+               // this value when the user declines, and reading it afterwards
+               // would only read "posit" back, leaving the assistant set to an
+               // uninstalled Posit Assistant (#18356).
+               final String previousAssistant = prefs_.assistant().getGlobalValue();
+
                // Move status panel, project override panel, and common settings panel to Posit AI panel
                positAiPanel_.insert(spaced(statusPanel_), 0);
                positAiPanel_.insert(spaced(projectOverridePanel_), 1);
@@ -566,7 +573,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                               // User changed the selection -- check for install,
                               // update, or unsupported status. The check inherits
                               // the pending count started above and ends it.
-                              checkPositAssistantInstallation(/* forAssistant= */ true);
+                              checkPositAssistantInstallation(/* forAssistant= */ true, previousAssistant);
                            }
                         }
 
@@ -909,8 +916,12 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onClick(ClickEvent event)
          {
             // Block apply until the install/update check resolves (#18350).
+            // The button shows only on the Posit Assistant panel, so the
+            // preference already holds "posit" and a failed install has no
+            // earlier selection to fall back to.
             beginPositAiCheck();
-            checkPositAssistantInstallation(/* forAssistant= */ true);
+            checkPositAssistantInstallation(/* forAssistant= */ true,
+                                            prefs_.assistant().getGlobalValue());
          }
       });
    }
@@ -1052,7 +1063,11 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    private void disableCopilot(String newAssistant)
    {
-      // Eagerly disable Copilot so the agent stops immediately
+      // Eagerly disable Copilot so the agent stops immediately. Stopping it
+      // takes the assistant preference with it -- the backend picks the agent
+      // to run from that preference, not from copilot_enabled -- so this write
+      // lands before OK/Cancel. Callers that may need to undo the switch must
+      // capture the previous selection before calling (#18356).
       if (prefs_.copilotEnabled().getValue())
       {
          prefs_.copilotEnabled().setGlobalValue(false);
@@ -1090,17 +1105,21 @@ public class AssistantPreferencesPane extends PreferencesPane
     *
     * @param forAssistant True if this check is for the assistant (completions) preference,
     *                     false if it's for the chat provider preference.
+    * @param previousAssistantValue The assistant selected before this check began, restored
+    *                     if the user declines. Callers must capture it before
+    *                     {@link #disableCopilot(String)} overwrites the preference. Ignored
+    *                     when {@code forAssistant} is false; pass null there.
     */
-   private void checkPositAssistantInstallation(boolean forAssistant)
+   private void checkPositAssistantInstallation(boolean forAssistant, String previousAssistantValue)
    {
       // The caller has already called beginPositAiCheck() to block apply while
       // this check runs; every UpdateCheckCallback branch below calls
       // endPositAiCheck() exactly once, removing this check's contribution to
       // the count (which reaches zero only once no other check is in flight).
 
-      // Remember the previous value so we can revert if user declines
-      final String previousAssistantValue = forAssistant ?
-         prefs_.assistant().getGlobalValue() : null;
+      // Remember the previous chat provider so we can revert if user declines.
+      // The assistant's counterpart arrives as a parameter, since by this point
+      // the preference may already hold the new selection.
       final String previousChatProviderValue = !forAssistant ?
          prefs_.chatProvider().getGlobalValue() : null;
 
@@ -1363,11 +1382,24 @@ public class AssistantPreferencesPane extends PreferencesPane
             ? previousAssistantValue
             : UserPrefsAccessor.ASSISTANT_NONE;
 
-         if (revertTo.equals(selAssistant_.getValue()))
+         // There is something to undo unless the selector and the persisted
+         // preference both already hold the value we would revert to. The
+         // preference has to be checked separately because disableCopilot()
+         // may have written a value the selector no longer shows (#18356).
+         if (revertTo.equals(selAssistant_.getValue()) &&
+             revertTo.equals(prefs_.assistant().getGlobalValue()))
             return;
 
          selAssistant_.setValue(revertTo);
          prefs_.assistant().setGlobalValue(revertTo);
+
+         // Restore the deprecated copilot_enabled mirror alongside the
+         // selection it tracks, undoing disableCopilot()'s write. onApply()
+         // derives it the same way; without this a revert to Copilot would
+         // leave the agent disabled.
+         prefs_.copilotEnabled().setGlobalValue(
+               revertTo.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
+
          positAiRefreshed_ = false;
 
          // Write the reverted preference
