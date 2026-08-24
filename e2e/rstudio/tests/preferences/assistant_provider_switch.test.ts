@@ -5,6 +5,7 @@ import {
   ASSISTANT_TAB,
   ASSISTANT_PANEL,
   ASSISTANT_CODE_ASSISTANT_SELECT,
+  ASSISTANT_COPILOT_OPTION,
   ASSISTANT_POSIT_OPTION,
   openGlobalOptions,
   closeGlobalOptions,
@@ -81,5 +82,36 @@ test.describe('Assistant code-assistant switch', { tag: ['@desktop_only'] }, () 
     await closeGlobalOptions(page);
     await expect.poll(() => getPref(page, 'assistant')).toBe('copilot');
     await expect.poll(() => getPref(page, 'copilot_enabled')).toBe(true);
+  });
+
+  // What the revert puts back is the selection, not the preference behind it.
+  // Selecting Copilot from None persists nothing (there is no Copilot agent to
+  // stop), so a decline has to fall back to the selector's own prior value --
+  // and must leave the preference alone, since OK was never pressed.
+  test('declining reverts to an unsaved Copilot selection without persisting it', async ({ rstudioPage: page }) => {
+    await setPref(page, 'assistant', 'none');
+    await setPref(page, 'copilot_enabled', false);
+
+    await openGlobalOptions(page);
+    await page.locator(ASSISTANT_TAB).click();
+    await expect(page.locator(ASSISTANT_PANEL)).toBeVisible();
+
+    const assistantSelect = page.locator(ASSISTANT_CODE_ASSISTANT_SELECT);
+    await assistantSelect.selectOption({ label: ASSISTANT_COPILOT_OPTION });
+    await expect.poll(() => getPref(page, 'assistant')).toBe('none');
+
+    await setChatUpdateCheckOverride(page, INSTALL_AVAILABLE_RESPONSE);
+    await assistantSelect.selectOption({ label: ASSISTANT_POSIT_OPTION });
+
+    const declineBtn = page.locator(NO_BTN);
+    await expect(declineBtn).toBeVisible({ timeout: 30000 });
+    await declineBtn.click();
+    await expect(declineBtn).toBeHidden();
+
+    await expect(assistantSelect).toHaveValue('copilot');
+    await expect.poll(() => getPref(page, 'assistant')).toBe('none');
+
+    await closeGlobalOptions(page);
+    await expect.poll(() => getPref(page, 'assistant')).toBe('none');
   });
 });
