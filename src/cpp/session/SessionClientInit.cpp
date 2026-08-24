@@ -148,9 +148,8 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    std::size_t pos = baseURL.find('/', 9);
    if (pos != std::string::npos && path == kRequestDefaultRootPath)
    {
-      // nothing escapes the Set-Cookie header on the way out, so reject a
-      // baseURL whose path could break out of it or could never match a
-      // request; the default root path is then kept
+      // the path goes into Set-Cookie unescaped, so reject a baseURL whose path
+      // could break out of the header or could never match a request
       std::string clientPath = baseURL.substr(pos);
       if (http::util::isValidCookiePath(clientPath))
       {
@@ -169,10 +168,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // server's perceived current URI with the last part (/client_init) removed. The result is
    // the session path, same as above.
    //
-   // For the browser to send this cookie back, that path has to be the one the browser sees.
-   // Behind a path-prefixing reverse proxy the server has not been told about, it will not be:
-   // proxiedUri cannot contain a prefix nothing reported. The NEWS entry for #18621 states how
-   // to tell the server about the prefix; do not restate it here.
+   // The browser only sends the cookie back if this path matches what it sees. Behind a proxy
+   // that adds a prefix, that means telling the server about the prefix; see the NEWS entry
+   // for #18621.
    else
    {
       path = ptrConnection->request().proxiedUri();
@@ -181,26 +179,18 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
       path = completePath.path();
    }
 
-   // Whichever branch produced it, the path is written into the Set-Cookie header without
-   // escaping, and the headers the server derives it from are no better validated than the
-   // JSON the client sends: rootPath() prefers the X-RStudio-Root-Path header, normalizes
-   // only the leading and trailing slash, and nothing strips an inbound copy of it. A path
-   // attribute smuggled through either would be emitted verbatim, and RFC 6265 takes the
-   // last one. Refuse anything unusable and retreat to the root path rserver passed on the
-   // command line, which a request cannot influence.
+   // Either branch derives the path from input we don't control -- the client's JSON, or
+   // headers like X-RStudio-Root-Path that nothing strips -- and it goes into Set-Cookie
+   // unescaped, so a smuggled ";path=/" would be emitted verbatim and RFC 6265 takes the last
+   // Path. Fall back to the configured root path, which a request cannot influence.
    //
-   // Unlike the assistant auth cookie, this one cannot simply be withheld -- the IDE does not
-   // work without it -- so when that configured root path is itself unusable there is nowhere
-   // left to go but the origin, and the port token is then offered to every application on
-   // the host. That is a deliberate trade, not a safe fallback: a root path can be perfectly
-   // reachable and still be unusable here, since ';' is legal in a URL path but delimits
-   // attributes in Set-Cookie. The warning below names the path actually used so the widening
-   // is visible.
+   // If that is unusable too, all that is left is "/", which offers the token to every app on
+   // the host. Unlike the assistant cookie this one can't just be withheld, since the IDE
+   // needs it. The warning names the path actually used.
    if (!http::util::isValidCookiePath(path))
    {
-      // options().rootPath() is the raw setting, and www-root-path may be written
-      // without a leading slash, so give it the same shape Request::rootPath()
-      // gives what it reads before judging it
+      // www-root-path may be written without a leading slash, so give the raw setting the
+      // same shape Request::rootPath() gives what it reads
       std::string configuredRootPath =
          http::util::normalizeRootPath(session::options().rootPath());
 

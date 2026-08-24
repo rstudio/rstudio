@@ -189,23 +189,18 @@ bool isSslCertificateVerifyFailedError(const rstudio::core::Error& error);
 std::string addQueryParam(const std::string& uri,
                           const std::string& queryParam);
 
-// Give a root path the shape the rest of the server expects: a leading
-// slash and no trailing one, unless it is literally "/". Request::rootPath()
-// applies this to whatever it reads; anything reading the configured value
-// directly needs the same treatment before the two can be compared or used
-// interchangeably.
+// Add a leading slash and remove a trailing one, unless the path is just "/".
+// Request::rootPath() does this to whatever it reads, so code using the
+// configured root path directly must do the same before comparing the two.
 std::string normalizeRootPath(const std::string& rootPath);
 
-// Is this string usable as the Path attribute of a Set-Cookie header?
-// Requires an origin-absolute path made only of characters that cannot break
-// out of the header (no CTLs -- including CR/LF -- and no space, ';', '\',
-// '?', '#', or non-ASCII), and with no "." or ".." segments, which a browser
-// could never match because it compares the path against a request path whose
-// dot segments have already been removed. An empty segment ("//") is allowed:
-// nothing removes one from a path that reaches a caller unparsed, so it is what
-// a browser on such a base URL actually sends, and rejecting it would only make
-// the caller widen the cookie or withhold it. Use this before putting any
-// client-reported value in a cookie path.
+// Is this usable as the Path attribute of a Set-Cookie header?
+//
+// Requires a path starting with "/", with nothing in it that could break out
+// of the header (CTLs, space, ';', '\', '?', '#', non-ASCII) and no "." or
+// ".." segments, which a browser would never match. "//" is allowed; browsers
+// really do send it. Call this before putting any client-reported value in a
+// cookie path.
 bool isValidCookiePath(const std::string& path);
 
 } // namespace util

@@ -640,11 +640,9 @@ bool isValidCookiePath(const std::string& path)
    if (path.empty() || path[0] != '/')
       return false;
 
-   // Compare as unsigned so the result does not depend on whether char is
-   // signed on this platform. RFC 6265 allows any character here except
-   // controls and ';'; the rest are refused because they cannot appear in a
-   // path a browser would send, so their presence means the value did not
-   // come from where we think it did.
+   // Compare unsigned; whether plain char is signed varies by platform. RFC
+   // 6265 only bars CTLs and ';', but a browser would never send the others in
+   // a path, so seeing one means this value isn't what we think it is.
    for (unsigned char ch : path)
    {
       if (ch <= 0x20 || ch >= 0x7F ||
@@ -654,19 +652,9 @@ bool isValidCookiePath(const std::string& path)
       }
    }
 
-   // A browser matches the cookie path against a request path whose dot
-   // segments have already been removed, so a path carrying "." or ".." could
-   // never match.
-   //
-   // An empty segment is different. URL::cleanupPath drops one, but not every
-   // path that arrives here has been through it: a client-reported base URL has
-   // not, nor has the X-RStudio-Request header, which Request::proxiedUri()
-   // returns verbatim. In those a "//" is exactly what a browser on such a base
-   // URL sends, so it is kept. Rewriting it yields a cookie the browser never
-   // sends back, and refusing it leaves the caller with the choice it makes on
-   // any invalid path -- widen the cookie, or withhold it and lose whatever it
-   // authorizes. Both are worse than accepting a segment the browser will
-   // match.
+   // Browsers match this against a request path with dot segments already
+   // removed, so "." or ".." could never match. "//" is different: it reaches
+   // us intact in values nothing has parsed, and is what the browser sends.
    if (path.find("/./") != std::string::npos ||
        path.find("/../") != std::string::npos ||
        boost::algorithm::ends_with(path, "/.") ||

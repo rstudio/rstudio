@@ -41,10 +41,8 @@ class FakeAssistantInstallation
 public:
    FakeAssistantInstallation()
    {
-      // Every step is asserted. A silently failed setup leaves the override
-      // pointing at nothing, locatePositAssistantInstallation falls through to
-      // the developer's real installation, and the handler tests then fail
-      // somewhere far from the actual cause.
+      // Assert every step. A setup that fails quietly sends the handler tests
+      // to the developer's real installation and they fail far from the cause.
       EXPECT_FALSE(FilePath::tempFilePath(root_));
       EXPECT_FALSE(root_.ensureDirectory());
 
@@ -72,10 +70,8 @@ public:
       previous_ = system::getenv(kPathOverride);
       system::setenv(kPathOverride, root_.getAbsolutePath());
 
-      // and confirm the override took: if anything above left the tree
-      // incomplete, verifyPositAiInstallation rejects it and the locator falls
-      // through to whatever real installation this machine has, which would
-      // serve the handler tests real files
+      // confirm the override took: an incomplete tree is rejected and the
+      // locator then falls through to a real installation on this machine
       EXPECT_EQ(locatePositAssistantInstallation().getAbsolutePath(),
                 root_.getAbsolutePath());
    }
@@ -99,9 +95,8 @@ private:
    std::string previous_;
 };
 
-// Sets the assistant auth token for the duration of a test. The handler only
-// offers the cookie when a token is set, so a test that wants to observe the
-// cookie decision has to put one there and take it away again.
+// Sets the assistant auth token for one test. The handler only offers the
+// cookie when a token is set.
 class ScopedAuthToken
 {
 public:
@@ -116,9 +111,8 @@ public:
    }
 };
 
-// proxiedRequest, when given, is sent as X-RStudio-Request, which
-// Request::proxiedUri() returns verbatim -- the way a reverse proxy tells this
-// server what the browser actually asked for.
+// proxiedRequest is sent as X-RStudio-Request, which proxiedUri() returns
+// verbatim: how a proxy tells the server what the browser asked for.
 void requestChatFile(const std::string& uri,
                      http::Response* pResponse,
                      const std::string& proxiedRequest = std::string())
@@ -300,9 +294,8 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
    tempDir.removeIfExists();
 }
 
-// The cookie path is the session prefix the server believes it is serving
-// this request under, so it has to come out byte-identical to what the
-// browser sees for the browser to send the cookie back (see #18621).
+// The cookie path has to match what the browser sees, byte for byte, or the
+// browser won't send the cookie back (see #18621).
 TEST(ChatStaticFiles, AuthCookiePathMatchesTheServerKnownPrefix)
 {
    // default root path
@@ -325,9 +318,8 @@ TEST(ChatStaticFiles, AuthCookiePathMatchesTheServerKnownPrefix)
              "/proxy/rstudio/");
 }
 
-// A root or session prefix that merely contains the route name must not be
-// mistaken for the route: matching it would truncate the prefix at the wrong
-// offset and scope the token to the whole origin.
+// A prefix that merely contains the route name must not be mistaken for the
+// route: that cuts at the wrong offset and scopes the token to the origin.
 TEST(ChatStaticFiles, AuthCookiePathMatchesTheRouteOnlyAtASegmentBoundary)
 {
    // www-root-path=/ai-chat-hub
@@ -350,10 +342,9 @@ TEST(ChatStaticFiles, AuthCookiePathMatchesTheRouteOnlyAtASegmentBoundary)
    EXPECT_EQ(authCookiePath("https://host/ai-chat/index.html"), "/");
 }
 
-// proxiedUri is reconstructed from request headers, which nothing in the
-// server strips or validates, and the cookie path is written into the
-// Set-Cookie header unescaped. A path that could break out of that header
-// must not be used -- and the origin root is not an acceptable retreat.
+// proxiedUri comes from headers nothing strips or validates, and goes into
+// Set-Cookie unescaped. A path that could break out of the header must not be
+// used, and "/" is not an acceptable retreat.
 TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableServerDerivedPath)
 {
    // a ";path=/" smuggled through the proxied URI would otherwise be emitted
@@ -368,11 +359,9 @@ TEST(ChatStaticFiles, AuthCookiePathDeclinesOnAnUnusableServerDerivedPath)
    EXPECT_EQ(authCookiePath("https://host/a/../b/ai-chat/index.html"), "");
 }
 
-// proxiedUri() returns the X-RStudio-Request header verbatim when a proxy sets
-// it, so it need not be a URL this server can parse. A value with no path to
-// read is not evidence that the request arrived at the origin root, and must
-// not be reported as "/": that would scope the token to every application on
-// the host on the strength of a header we failed to read.
+// proxiedUri() returns X-RStudio-Request verbatim, so it need not be a URL we
+// can parse. No readable path is not evidence the request came from the origin
+// root, and reporting "/" would scope the token to every app on the host.
 TEST(ChatStaticFiles, AuthCookiePathDeclinesWhenNoPathCanBeDerived)
 {
    // a bare path where a full URL was expected
@@ -423,11 +412,9 @@ TEST(ChatStaticFiles, IsNoStoreExtensionCoversHtmlJavaScriptAndCss)
    EXPECT_FALSE(isNoStoreExtension(""));
 }
 
-// The predicate and the content type map both compare against lowercase
-// literals, so the handler has to fold the resolved extension before asking.
-// On Windows realPath is purely lexical and leaves the requested case as
-// written, so an uppercase name would otherwise be served as an opaque blob
-// and cached for a year.
+// isNoStoreExtension and the content type map both compare lowercase, so the
+// handler has to fold the resolved extension. On Windows realPath is lexical
+// and leaves the case alone, so "Widget.JS" would be cached for a year.
 TEST(ChatStaticFiles, HandlerClassifiesAnUppercaseExtension)
 {
    FakeAssistantInstallation installation;
@@ -476,9 +463,8 @@ TEST(ChatStaticFiles, HandlerIgnoresTheQueryStringWhenResolvingAFile)
 }
 
 // The handler is registered for the bare "/ai-chat" prefix, so it sees
-// requests that only start with the route name. Locating the route anywhere
-// in the URI let these serve real files under a path no cache rule or
-// intermediary would recognize as the route.
+// requests that merely start with the route name. Finding the route anywhere
+// in the URI let those serve real files under an unrecognizable path.
 TEST(ChatStaticFiles, HandlerRejectsRequestsThatOnlyResembleTheRoute)
 {
    FakeAssistantInstallation installation;
@@ -501,9 +487,8 @@ TEST(ChatStaticFiles, HandlerRejectsRequestsThatOnlyResembleTheRoute)
    EXPECT_EQ(bareRoute.statusCode(), http::status::BadRequest);
 }
 
-// The refusal has to hold where the cookie is actually written, not only in
-// the helper that derives the path: the handler decides on its own whether to
-// call addCookie.
+// The refusal has to hold where the cookie is written, not just in the helper
+// that derives the path: the handler decides whether to call addCookie.
 TEST(ChatStaticFiles, HandlerOmitsTheAuthCookieWhenNoPathCanBeDerived)
 {
    if (rstudio::session::options().programMode() != kSessionProgramModeServer)
@@ -546,9 +531,8 @@ TEST(ChatStaticFiles, HandlerRejectsTraversalOutOfTheClientRoot)
    EXPECT_EQ(response.statusCode(), http::status::Forbidden);
 }
 
-// Resolution URL-decodes the request path, so the same file can be requested
-// under more than one spelling -- which is why cache classification reads the
-// resolved extension rather than the requested path.
+// Resolution URL-decodes, so one file can be requested under several
+// spellings. That is why caching is classified from the resolved extension.
 TEST(ChatStaticFiles, ValidateAndResolvePathDecodesPercentEncodedFileNames)
 {
    FilePath tempDir;

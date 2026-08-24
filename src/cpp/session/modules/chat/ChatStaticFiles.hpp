@@ -52,11 +52,11 @@ std::string getContentType(const std::string& extension);
 /**
  * Should a response serving a file with this extension be kept out of caches?
  *
- * True for HTML, JavaScript, and CSS: these change with each Posit Assistant
- * build, and the index.html response also carries the assistant auth token
- * cookie, which must never be stored by a shared cache. Callers must pass the
- * extension of the *resolved* file -- the requested path is URL-decoded during
- * resolution, so it can spell the same file in more than one way.
+ * True for HTML, JavaScript, and CSS: they change with each Posit Assistant
+ * build, and the index.html response carries the auth token cookie, which no
+ * shared cache may store. Pass the extension of the *resolved* file, not of
+ * the requested path -- resolution URL-decodes, so one file can be spelled
+ * several ways.
  *
  * @param extension File extension including the dot (e.g., ".html")
  * @return true if the response should be served no-store
@@ -92,24 +92,16 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
 /**
  * Compute the Path attribute for the posit-assistant-auth cookie.
  *
- * The cookie is scoped to the session prefix (e.g. "/s/{id}/" or the
- * configured root path) so multi-session deployments don't collide. The
- * prefix is taken from proxiedUri with "/ai-chat" onward stripped, matching
- * the route only at a path-segment boundary so that a root path which
- * contains the route name (www-root-path=/ai-chat-hub) is not truncated at
- * the wrong offset.
+ * Scopes the cookie to the session prefix (e.g. "/s/{id}/") so that sessions
+ * sharing an origin don't overwrite each other's token. The prefix is
+ * proxiedUri with "/ai-chat" onward removed, matching the route only at a
+ * segment boundary so a root path containing the name (/ai-chat-hub) isn't
+ * cut at the wrong place.
  *
- * proxiedUri is reconstructed from request headers, and the result is written
- * into Set-Cookie without escaping, so it is validated before use. Returns
- * empty when no prefix could be derived or when the derived one cannot be used
- * as a cookie path, in which case the caller must not set the cookie: the
- * alternative is scoping the token to the origin root, which would offer it to
- * every application on the host. The refusal is logged.
- *
- * For the browser to send this cookie, the path the server derives has to
- * match the path the browser sees, which behind a path-prefixing reverse proxy
- * means configuring the server with the prefix. The NEWS entry for #18621
- * states how; do not restate it here.
+ * Returns empty if no prefix could be derived, or if the one derived can't be
+ * used as a cookie path. The caller must then not set the cookie at all --
+ * falling back to "/" would offer the token to every app on the host.
+ * Refusals are logged.
  *
  * @param proxiedUri The server's view of the request URL (request.proxiedUri())
  * @return Cookie path ending with "/", or empty if the cookie must not be set
