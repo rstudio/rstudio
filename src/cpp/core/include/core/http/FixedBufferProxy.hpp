@@ -16,6 +16,7 @@
 #ifndef CORE_HTTP_FIXED_BUFFER_PROXY_HPP
 #define CORE_HTTP_FIXED_BUFFER_PROXY_HPP
 
+#include <atomic>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/Error.hpp>
@@ -64,12 +65,28 @@ private:
    bool queueChunk(const Response& response,
                    const std::string& chunk);
    void writeHeaders();
+
+   // The body of writeHeaders(), split out only so that writeHeaders() can wrap
+   // it in an exception guard without indenting all of it; see there.
+   void assembleAndWriteHeaders();
+
    void onHeadersWrote(const boost::system::error_code& ec);
    void writeChunk();
    void onChunkWrote(const boost::system::error_code& ec);
    bool handleError(const boost::system::error_code& ec);
+
+   // The body of handleError(), split out only so that handleError() can wrap
+   // it in an exception guard without indenting all of it; see there.
+   void handleErrorImpl(const boost::system::error_code& ec);
    void closeConnections();
    void closeUpstream();
+
+   // Tear the proxy down after an unexpected exception: logs, marks the proxy
+   // failed, and closes both connections. Never throws and is idempotent --
+   // callers are catch blocks with nowhere to escalate to, and the same failure
+   // can reach here twice (writeHeaders() dispatched inline returns into
+   // queueChunk()'s still-running body).
+   void failConnection(const char* context, const char* what);
 
    boost::shared_ptr<AsyncConnection> pClientConnection_;
    boost::shared_ptr<IAsyncClient> pServerConnection_;
@@ -106,6 +123,13 @@ private:
    bool receivedFinal_ = false;           // upstream signaled completion
    bool clientWriteInProgress_ = false;   // an asyncWrite/writeResponseHeaders
                                            // is outstanding on pClientConnection_
+
+   // Set once failConnection() has torn this proxy down; gates the paths that
+   // would otherwise keep working a half-built response. Atomic because
+   // failConnection() is reachable both with mutex_ held (the common case, from
+   // a catch inside the locked region) and without it (a lock-acquisition
+   // failure, which is what LOCK_MUTEX used to catch).
+   std::atomic<bool> failed_{false};
 };
 
 } // namespace http

@@ -24,6 +24,61 @@
 
 using namespace boost::placeholders;
 
+// Locked-region wrappers that tear this proxy down on an unexpected exception
+// rather than logging and carrying on. Used in place of core/Thread.hpp's
+// LOCK_MUTEX/END_LOCK_MUTEX everywhere in this file.
+//
+// That pair swallows anything escaping the locked block (via
+// CATCH_UNEXPECTED_EXCEPTION) and then lets control fall out of the block into
+// whatever follows -- which for this class is never survivable. In queueChunk()
+// the statement that follows is `return true`, reporting a chunk as delivered
+// when it was in fact dropped: the client gets a Content-Length-framed body
+// with a hole in it and only a log line as evidence. A throw after
+// clientWriteInProgress_ is latched but before the write is initiated is worse
+// still -- no completion handler will ever run to clear it, so the proxy stalls
+// with the upstream paused and both connections held open forever.
+//
+// bad_alloc is the realistic trigger: formatMessageAsHttpChunk() copies a piece
+// up to maxChunkSize (1MB) on every body chunk, under exactly the memory
+// pressure that motivated streaming in the first place.
+//
+// The outer try covers lock acquisition itself (boost::thread_resource_error,
+// the one exception LOCK_MUTEX handled explicitly); the inner one covers the
+// body, so its teardown runs with mutex_ still held and cannot interleave with
+// a completion handler arriving on another thread. See failConnection().
+// An unbalanced brace-splitting macro pair is not something clang-format can
+// reason about: it flattens the inner and outer catch levels below to the same
+// indent, losing the one distinction that matters here. Laid out by hand to
+// match the LOCK_MUTEX/END_LOCK_MUTEX pair it stands in for.
+// clang-format off
+#define LOCK_MUTEX_OR_FAIL(m, context)                                         \
+   try                                                                         \
+   {                                                                           \
+      boost::lock_guard<boost::mutex> lock(m);                                 \
+      try                                                                      \
+      {
+
+#define END_LOCK_MUTEX_OR_FAIL(context)                                        \
+      }                                                                        \
+      catch (const std::exception& e)                                          \
+      {                                                                        \
+         failConnection(context, e.what());                                    \
+      }                                                                        \
+      catch (...)                                                              \
+      {                                                                        \
+         failConnection(context, "unknown exception");                         \
+      }                                                                        \
+   }                                                                           \
+   catch (const std::exception& e)                                             \
+   {                                                                           \
+      failConnection(context, e.what());                                       \
+   }                                                                           \
+   catch (...)                                                                 \
+   {                                                                           \
+      failConnection(context, "unknown exception");                            \
+   }
+// clang-format on
+
 namespace rstudio {
 namespace core {
 namespace http {
@@ -170,7 +225,17 @@ FixedBufferProxy::decideFraming(const http::Response& response) const
 bool FixedBufferProxy::queueChunk(const http::Response& response,
                                    const std::string& chunk)
 {
-   LOCK_MUTEX(mutex_)
+   // Discard anything still arriving after a teardown. closeUpstream()'s
+   // disableHandlers() already stops delivery in the ordinary case --
+   // deliverChunks() re-reads handlersDisabled_ before every piece -- but
+   // failConnection() can only try to reach it: if pServerConnection_->close()
+   // throws on the way there, the handler stays attached and pieces keep
+   // coming. `true`, not `false`, because `false` means "pause and redeliver"
+   // and nothing will ever resume us now (see setFixedBufferHandlerSupportsPause()).
+   if (failed_)
+      return true;
+
+   LOCK_MUTEX_OR_FAIL(mutex_, "queueChunk")
    {
       // Decide the client-facing framing once, from the upstream response and
       // this proxy's own client request -- see decideFraming().
@@ -327,8 +392,11 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
          }
       }
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX_OR_FAIL("queueChunk")
 
+   // Reached either on success or after a teardown above. `true` is right in
+   // both cases: on the teardown path the piece is not coming back (see the
+   // failed_ check at the top of this function).
    return true;
 }
 
@@ -341,7 +409,39 @@ bool FixedBufferProxy::queueChunk(const http::Response& response,
 // (onHeadersWrote) is posted by the connection rather than run reentrantly, so
 // nothing here re-enters mutex_ -- which matters because the inline-dispatch
 // case arrives with queueChunk() still holding it.
+//
+// Guarded rather than left to unwind, and by its own handler rather than
+// queueChunk()'s: only the inline-dispatch case runs inside queueChunk()'s
+// locked region, and every allocating call below (removeHopByHopHeaders,
+// addHeaders, setHeader) is a throw site. When the dispatch is *not* inline
+// this runs straight off the client connection's strand, so an escape here
+// unwinds through boost::asio into AsyncServerImpl::runServiceThread()'s
+// ioContext().run() call, which logs it and lets that server worker thread
+// exit for good -- one fewer thread serving every other connection, for a
+// single failed header assembly.
 void FixedBufferProxy::writeHeaders()
+{
+   // A teardown may have happened between queueChunk()'s dispatch and now.
+   // Writing headers then would re-latch clientWriteInProgress_ on a connection
+   // that is already closed and whose completion handler bails out on failed_.
+   if (failed_)
+      return;
+
+   try
+   {
+      assembleAndWriteHeaders();
+   }
+   catch (const std::exception& e)
+   {
+      failConnection("writeHeaders", e.what());
+   }
+   catch (...)
+   {
+      failConnection("writeHeaders", "unknown exception");
+   }
+}
+
+void FixedBufferProxy::assembleAndWriteHeaders()
 {
    // Assemble into our own copy of the upstream response and hand the finished
    // article over, rather than building it in place in
@@ -444,10 +544,16 @@ void FixedBufferProxy::writeHeaders()
 
 void FixedBufferProxy::onHeadersWrote(const boost::system::error_code& ec)
 {
+   // Ahead of handleError(): after a teardown both connections are already
+   // closed, so the ec we are being handed is our own doing (operation_aborted)
+   // and there is nothing left for handleError() to close.
+   if (failed_)
+      return;
+
    if (handleError(ec))
       return;
 
-   LOCK_MUTEX(mutex_)
+   LOCK_MUTEX_OR_FAIL(mutex_, "onHeadersWrote")
    {
       // the header write completed; no write is outstanding until writeChunk()
       // below (re-)initiates one
@@ -456,7 +562,7 @@ void FixedBufferProxy::onHeadersWrote(const boost::system::error_code& ec)
       // write the first chunk
       writeChunk();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX_OR_FAIL("onHeadersWrote")
 }
 
 void FixedBufferProxy::writeChunk()
@@ -494,10 +600,14 @@ void FixedBufferProxy::writeChunk()
 
 void FixedBufferProxy::onChunkWrote(const boost::system::error_code& ec)
 {
+   // see onHeadersWrote() for why this precedes handleError()
+   if (failed_)
+      return;
+
    if (handleError(ec))
       return;
 
-   LOCK_MUTEX(mutex_)
+   LOCK_MUTEX_OR_FAIL(mutex_, "onChunkWrote")
    {
       // the write that was outstanding completed; no write is outstanding
       // until writeChunk() below (re-)initiates one
@@ -517,7 +627,7 @@ void FixedBufferProxy::onChunkWrote(const boost::system::error_code& ec)
       // keep writing any queued chunks until we're empty
       writeChunk();
    }
-   END_LOCK_MUTEX
+   END_LOCK_MUTEX_OR_FAIL("onChunkWrote")
 }
 
 bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
@@ -525,6 +635,34 @@ bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
    if (!ec)
       return false;
 
+   // Guarded for the same reason the locked regions are, and separately from
+   // them because both callers reach this ahead of taking the lock: every path
+   // below can throw (Error construction and LOG_ERROR allocate,
+   // close()/disableHandlers() are virtual calls into asio), and an escape
+   // unwinds straight out of a completion handler into the io_context.
+   //
+   // The result is unconditional: every path below is a terminal one, so a
+   // caller must stop either way -- on the failConnection() path because the
+   // proxy is now torn down, and otherwise because handleErrorImpl() closed
+   // what it needed to.
+   try
+   {
+      handleErrorImpl(ec);
+   }
+   catch (const std::exception& e)
+   {
+      failConnection("handleError", e.what());
+   }
+   catch (...)
+   {
+      failConnection("handleError", "unknown exception");
+   }
+
+   return true;
+}
+
+void FixedBufferProxy::handleErrorImpl(const boost::system::error_code& ec)
+{
    // already_started is not a transport failure: it is
    // AsyncConnectionImpl::claimResponse() telling us another writer owns this
    // client connection's one response and got there first, so nothing we
@@ -538,7 +676,7 @@ bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
    if (ec == boost::asio::error::already_started)
    {
       closeUpstream();
-      return true;
+      return;
    }
 
    Error error(ec, ERROR_LOCATION);
@@ -548,7 +686,6 @@ bool FixedBufferProxy::handleError(const boost::system::error_code& ec)
 
    // close both connections to stop all data transfer
    closeConnections();
-   return true;
 }
 
 void FixedBufferProxy::closeConnections()
@@ -570,6 +707,40 @@ void FixedBufferProxy::closeUpstream()
    // caller above leaks this FixedBufferProxy, pClientConnection_, and any
    // buffered chunks forever.
    pServerConnection_->disableHandlers();
+}
+
+void FixedBufferProxy::failConnection(const char* context, const char* what)
+{
+   if (failed_.exchange(true))
+      return;
+
+   try
+   {
+      LOG_ERROR_MESSAGE(std::string("Proxy: tearing down upstream and downstream "
+                                    "connections after unexpected exception in ") +
+                        context + ": " + what);
+   }
+   catch (...)
+   {
+      // Swallow these; we are trying to unwind from an ongoing rare exception
+      // such as bad allocation. We want to continue cleanup if we can't log.
+   }
+
+   try
+   {
+      closeConnections();
+   }
+   catch (...)
+   {
+      try
+      {
+         LOG_ERROR_MESSAGE("Connection teardown failed.");
+      }
+      catch (...)
+      {
+         // Must not allow excaped exceptions; at this point not much is safe.
+      }
+   }
 }
 
 } // namespace http

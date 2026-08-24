@@ -21,6 +21,7 @@
 // (enveloped pieces, Transfer-Encoding: chunked) -- and account buffer usage
 // against the bytes actually enqueued in both modes.
 
+#include <new>
 #include <string>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -92,6 +93,7 @@ public:
    // outer queueChunk() call (and its lock) has returned.
    void writeResponseHeaders(Socket::Handler handler) override
    {
+      throwIfRequested();
       headersWritten_ = true;
       headersWrittenOnStrand_ = strand_.running_in_this_thread();
       writtenHeaders_.assign(response_);
@@ -132,6 +134,7 @@ public:
 
    void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler) override
    {
+      throwIfRequested();
       boost::system::error_code ec = takeNextWriteError();
       std::size_t n = 0;
       if (!ec)
@@ -145,6 +148,7 @@ public:
    void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers,
                     Socket::Handler handler) override
    {
+      throwIfRequested();
       boost::system::error_code ec = takeNextWriteError();
       std::size_t total = 0;
       if (!ec)
@@ -162,6 +166,16 @@ public:
    // whichever of writeResponseHeaders()/asyncWrite() runs next -- simulates
    // the downstream (browser) connection dropping mid-write.
    void failNextWrite(const boost::system::error_code& ec) { nextWriteError_ = ec; }
+
+   // One-shot injectable *throw* from the next header/body write, as opposed to
+   // failNextWrite()'s error_code. bad_alloc specifically: the realistic escape
+   // from FixedBufferProxy's own locked regions is an allocation failure while
+   // copying a piece up to maxChunkSize, and it enters the proxy through the
+   // same two calls a write error does. Which of FixedBufferProxy's exception
+   // guards catches it depends on the write: a header write is reached from
+   // writeHeaders(), a body write from writeChunk() inside one of the three
+   // locked regions.
+   void throwOnNextWrite() { throwOnNextWrite_ = true; }
 
    // The client-facing request drives two of FixedBufferProxy's framing
    // decisions (HEAD => no body at all; HTTP/1.0 => no Transfer-Encoding), so
@@ -186,6 +200,16 @@ private:
       return ec;
    }
 
+   void throwIfRequested()
+   {
+      if (!throwOnNextWrite_)
+         return;
+
+      throwOnNextWrite_ = false;
+      throw std::bad_alloc();
+   }
+
+   bool throwOnNextWrite_ = false;
    boost::system::error_code nextWriteError_;
    boost::asio::io_context ioc_;
    boost::asio::io_context::strand strand_{ioc_};
@@ -223,8 +247,23 @@ public:
       // the leak the call is meant to fix still silently persists.
       fixedBufferHandler_ = FixedBufferHandler();
    }
-   void close() override { closed_ = true; }
+   void close() override
+   {
+      closed_ = true;
+
+      if (throwOnNextClose_)
+      {
+         throwOnNextClose_ = false;
+         throw std::bad_alloc();
+      }
+   }
    void setStrand(boost::asio::io_context::strand*) override {}
+
+   // One-shot injectable throw from close(). This is the case that makes
+   // FixedBufferProxy's failed_ flag load-bearing rather than belt-and-braces:
+   // closeUpstream() calls close() before disableHandlers(), so a throw here
+   // leaves fixedBufferHandler_ attached and the upstream still delivering.
+   void throwOnNextClose() { throwOnNextClose_ = true; }
 
    // Socket
    void asyncReadSome(boost::asio::mutable_buffer, Socket::Handler) override {}
@@ -251,6 +290,7 @@ public:
    bool fixedBufferHandlerSupportsPause_ = false;
 
 private:
+   bool throwOnNextClose_ = false;
    http::Request request_;
 };
 
@@ -291,6 +331,27 @@ struct Fixture
       ioc.poll();
 
       return result;
+   }
+
+   // Run exactly one queued handler -- the dispatched writeHeaders(), or one
+   // write completion -- leaving whatever it posts for the next call. This is
+   // what lets a test arm an injected failure *between* two writes that
+   // deliver() would otherwise run in a single drain, which is the only way to
+   // reach the guards in onHeadersWrote()/onChunkWrote(): the write those
+   // initiate is chained from the previous write's completion, never from a
+   // queueChunk() call the test controls directly.
+   void runOneHandler()
+   {
+      boost::asio::io_context& ioc = pClientConnection->ioContext();
+      ioc.restart();
+      ioc.poll_one();
+   }
+
+   void drain()
+   {
+      boost::asio::io_context& ioc = pClientConnection->ioContext();
+      ioc.restart();
+      ioc.poll();
    }
 
    boost::shared_ptr<FakeAsyncConnection> pClientConnection;
@@ -1232,6 +1293,171 @@ TEST(FixedBufferProxy, MultipleQueuedChunksDrainInOrderAndAccountBufferCorrectly
    EXPECT_EQ(fixture.pClientConnection->writtenBytes_, body);
    EXPECT_TRUE(fixture.pClientConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->closed_);
+}
+
+// An exception escaping the header assembly must not unwind out of the proxy.
+// writeHeaders() runs from the client connection's strand whenever
+// queueChunk()'s dispatch is not inline (as here -- the test thread is never in
+// the strand, so deliver()'s poll() is what runs it), which in production means
+// unwinding through boost::asio and out of AsyncServerImpl::runServiceThread()'s
+// ioContext().run(), retiring a server worker thread for good. Instead the
+// proxy must log, close both ends, and detach.
+TEST(FixedBufferProxy, HeaderWriteThrowTearsDownInsteadOfEscaping)
+{
+   Fixture fixture;
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+
+   fixture.pClientConnection->throwOnNextWrite();
+
+   // The throw happens inside poll(), which deliver() calls -- so this asserts
+   // the guard is what caught it, not the test harness.
+   EXPECT_NO_THROW(fixture.deliver(upstream, body));
+
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+
+   // Nothing partial reached the client: the body write is only initiated by
+   // onHeadersWrote, which never ran.
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+
+   // disableHandlers() broke the cycle, so the fixture holds the only reference
+   // -- without it this proxy, both connections and every buffered chunk leak.
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
+}
+
+// The same requirement for a throw from a body write, which arrives inside
+// queueChunk()'s locked region (via writeChunk()) rather than from
+// writeHeaders(). Falling through to `return true` there would report this
+// chunk as delivered when it was dropped, leaving the client a
+// Content-Length-framed body with a hole in it; and because
+// clientWriteInProgress_ is latched by writeChunk() before asyncWrite(), no
+// completion handler would ever run to clear it.
+TEST(FixedBufferProxy, BodyWriteThrowTearsDownInsteadOfReportingChunkDelivered)
+{
+   Fixture fixture;
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, "firstsecond");
+
+   // First piece goes out cleanly, so headers are written and no write is
+   // outstanding -- which is what puts the *next* queueChunk() on the path that
+   // calls writeChunk() itself.
+   EXPECT_TRUE(fixture.deliver(upstream, "first"));
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "first");
+
+   fixture.pClientConnection->throwOnNextWrite();
+
+   // queueChunk() still returns true: `false` means "pause and redeliver", and
+   // after the teardown below nothing will ever resume this proxy.
+   bool queued = false;
+   EXPECT_NO_THROW(queued = fixture.deliver(upstream, "second"));
+   EXPECT_TRUE(queued);
+
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "first"); // "second" dropped
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
+}
+
+// A teardown that cannot reach disableHandlers() -- because closing the
+// upstream threw on the way there -- leaves the FixedBufferHandler attached and
+// the upstream free to keep delivering. Those late pieces must be discarded
+// rather than queued onto a response that is already closed and half-written.
+// This is the case the failed_ flag exists for; without it the teardown's own
+// failure would let the connection carry on in a half-torn-down state.
+TEST(FixedBufferProxy, ChunksArrivingAfterAFailedTeardownAreDiscarded)
+{
+   Fixture fixture;
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, "firstsecondthird");
+
+   EXPECT_TRUE(fixture.deliver(upstream, "first"));
+
+   // Fail the body write *and* the upstream close it triggers.
+   fixture.pClientConnection->throwOnNextWrite();
+   fixture.pServerConnection->throwOnNextClose();
+   EXPECT_NO_THROW(fixture.deliver(upstream, "second"));
+
+   // The teardown got as far as closing both ends but no further.
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+   EXPECT_FALSE(fixture.pServerConnection->disableHandlersCalled_);
+
+   // So the handler is still live and the upstream delivers again. Accepted
+   // (true, not a pause) and dropped, with nothing further written.
+   bool queued = false;
+   EXPECT_NO_THROW(queued = fixture.deliver(upstream, "third"));
+   EXPECT_TRUE(queued);
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "first");
+
+   // Including the completion signal, which must not be able to write a
+   // terminator or re-close either end.
+   EXPECT_NO_THROW(queued = fixture.deliver(upstream, ""));
+   EXPECT_TRUE(queued);
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "first");
+}
+
+// The first of the two completion-handler guards. onHeadersWrote() clears
+// clientWriteInProgress_ and then calls writeChunk(), so a throw from that
+// write is caught by that function's locked region rather than by
+// writeHeaders() or queueChunk(). Falling through instead would leave
+// clientWriteInProgress_ latched by writeChunk() with no write in flight and
+// no completion handler left to clear it: the upstream stays paused, neither
+// connection is ever closed, and the proxy plus its buffered chunk leak.
+TEST(FixedBufferProxy, FirstBodyWriteThrowFromHeaderCompletionTearsDown)
+{
+   Fixture fixture;
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, "first");
+
+   // Queue without draining, so the header write is still pending.
+   EXPECT_TRUE(fixture.pServerConnection->deliverChunk(upstream, "first"));
+
+   // Run just the dispatched writeHeaders(); its completion stays queued.
+   fixture.runOneHandler();
+   EXPECT_TRUE(fixture.pClientConnection->headersWritten_);
+
+   // So the next write is the body write onHeadersWrote() initiates.
+   fixture.pClientConnection->throwOnNextWrite();
+   EXPECT_NO_THROW(fixture.drain());
+
+   EXPECT_TRUE(fixture.pClientConnection->writtenBytes_.empty());
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
+}
+
+// The second one: with more than one piece queued, onChunkWrote() pops the
+// piece it just wrote and calls writeChunk() for the next. A throw there is
+// caught by onChunkWrote()'s own locked region, and must not leave the already
+// popped-and-written bytes reported as progress on a stalled proxy.
+TEST(FixedBufferProxy, SubsequentBodyWriteThrowFromChunkCompletionTearsDown)
+{
+   Fixture fixture;
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, "firstsecond");
+
+   // Both pieces queue up behind the still-pending header write.
+   EXPECT_TRUE(fixture.pServerConnection->deliverChunk(upstream, "first"));
+   EXPECT_TRUE(fixture.pServerConnection->deliverChunk(upstream, "second"));
+
+   fixture.runOneHandler(); // writeHeaders()
+   fixture.runOneHandler(); // onHeadersWrote() -> writes "first"
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "first");
+
+   // The next write is the one onChunkWrote() initiates for "second".
+   fixture.pClientConnection->throwOnNextWrite();
+   EXPECT_NO_THROW(fixture.drain());
+
+   EXPECT_EQ(fixture.pClientConnection->writtenBytes_, "first");
+   EXPECT_TRUE(fixture.pClientConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->closed_);
+   EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
+   EXPECT_EQ(fixture.pProxy.use_count(), 1);
 }
 
 } // namespace tests
