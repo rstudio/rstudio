@@ -397,12 +397,18 @@ export class ChatPaneActions {
   /**
    * Send a message, waiting out any still-running previous turn first.
    *
+   * `answerQuestion` matches the option to pick if that previous turn is
+   * parked on an AskUser question.
+   *
    * Returns the message count as of that wait finishing -- the baseline to
    * hand waitForResponse. A caller that samples the count itself, before this
    * call, reads it while the previous turn may still be appending to the
    * conversation, and then credits this turn with that growth.
    */
-  async sendChatMessage(text: string): Promise<number> {
+  async sendChatMessage(
+    text: string,
+    answerQuestion?: RegExp | string
+  ): Promise<number> {
     await expect(this.chatPane.chatInput).toBeVisible({ timeout: 15000 });
 
     // The previous turn may still be streaming -- the composer shows the stop
@@ -411,7 +417,11 @@ export class ChatPaneActions {
     // and a turn parked on an approval stays active until it is granted.
     // Wait the turn out here, before typing: the composer re-renders when the
     // turn ends, so text buffered into it beforehand does not survive.
-    await this.pollWithAllowDialogs(() => this.isTurnIdle(), 60000);
+    await this.pollWithAllowDialogs(
+      () => this.isTurnIdle(),
+      60000,
+      answerQuestion
+    );
 
     const baseline = await this.chatPane.getMessageCount();
 
