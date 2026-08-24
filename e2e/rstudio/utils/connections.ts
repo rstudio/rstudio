@@ -17,7 +17,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { Page } from '@playwright/test';
 import { ConsolePaneActions } from '../actions/console_pane.actions';
-import { executeInConsole } from '../pages/console_pane.page';
 import {
   ALL_DB_TARGETS,
   DbTarget,
@@ -476,16 +475,30 @@ export async function provisionRemoteOdbcSandbox(
 
       const driverDir = `${REMOTE_ODBC_DIR}/drivers/${target.id}`;
       const linkPath = `${driverDir}/${library.split('/').pop()}`;
-      await executeInConsole(
+      // unixODBC's driver manager reads odbcinst.ini's Driver = value and
+      // hands it straight to dlopen() -- verified directly: a literal
+      // "~/..." there fails with "Can't open lib '~/...' : file not found",
+      // even though the symlink dir.create/file.symlink below (evaluated in
+      // R, where path.expand() does apply) lands at the correct place.
+      // Resolving it here, once, means the ini gets the same absolute path
+      // the symlink actually lives at.
+      const expandedLinkPath = await evalRemoteString(
         page,
-        `dir.create(path.expand(${rStringLiteral(driverDir)}), recursive = TRUE, showWarnings = FALSE); `
-          + `file.symlink(${rStringLiteral(library)}, path.expand(${rStringLiteral(linkPath)}))`,
+        `{ dir.create(path.expand(${rStringLiteral(driverDir)}), recursive = TRUE, showWarnings = FALSE); `
+          + `file.symlink(${rStringLiteral(library)}, path.expand(${rStringLiteral(linkPath)})); `
+          + `path.expand(${rStringLiteral(linkPath)}) }`,
       );
+      if (!expandedLinkPath) {
+        console.warn(
+          `[connections] ${target.id}: could not create/resolve its remote driver symlink; its specs will skip`,
+        );
+        continue;
+      }
 
       const snippetPath = `${driverDir}/snippets/${snippetFileName(target.driverName)}`;
       await writeRemoteText(page, snippetPath, wizardSnippet(target), '0644', recordPath);
 
-      stanzas.push(...odbcinstStanza(target.driverName, target.id, linkPath));
+      stanzas.push(...odbcinstStanza(target.driverName, target.id, expandedLinkPath));
       registered.push(target.id);
 
       // A file-kind target (SQLite) has no driver-level config to write, but
