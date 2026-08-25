@@ -68,9 +68,15 @@ on:
         type: string
         default: ""
       r_version:
-        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1'). Ignored on Fedora, which installs R from the distro's own repos."
+        description: >-
+          Exact R version to install, as X.Y.Z. Empty (the default) uses
+          RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is
+          the single place the version CI tests against is pinned. Any version
+          named here must already be mirrored into rstudio-buildtools; see
+          dependencies/tools/upload-r.sh. Ignored on Fedora, which installs R
+          from the distro's own repos.
         type: string
-        default: "release"
+        default: ""
       project:
         description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
@@ -95,6 +101,14 @@ on:
         description: "Optional extra args passed to RStudio Desktop on launch (space-separated). Maps to PW_RSTUDIO_EXTRA_ARGS. Set to '--no-sandbox' if the in-container Chromium sandbox won't initialize."
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        description: "Test the pre-release (test) Posit Assistant manifest instead of the released one. Off by default: only the Posit Assistant release gate turns this on."
+        type: boolean
+        default: false
+      require_tests_passed:
+        description: "Fail the run if it passed zero tests. For release gates, where an empty or all-skipped run must not report green."
+        type: boolean
+        default: false
       build_only:
         description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
         type: boolean
@@ -123,7 +137,7 @@ on:
         default: ""
       r_version:
         type: string
-        default: "release"
+        default: ""
       project:
         type: string
         default: "desktop"
@@ -142,6 +156,12 @@ on:
       rstudio_extra_args:
         type: string
         default: ""
+      posit_assistant_test_manifest:
+        type: boolean
+        default: false
+      require_tests_passed:
+        type: boolean
+        default: false
       build_only:
         type: boolean
         default: false
@@ -690,21 +710,13 @@ jobs:
             echo "No e2e-setup hook for ${{ inputs.os }}; skipping."
           fi
 
-      - name: Install rig
-        if: needs.setup.outputs.r_install == 'rig'
-        uses: ./.github/actions/os-install-rig-unix
+      - name: Install R
+        if: needs.setup.outputs.r_install == 'mirror'
+        uses: ./.github/actions/os-install-r-unix
+        with:
+          r-version: ${{ inputs.r_version }}
 
-      - name: Install R via rig
-        if: needs.setup.outputs.r_install == 'rig'
-        env:
-          R_VERSION: ${{ inputs.r_version }}
-        run: |
-          rig add "$R_VERSION"
-          rig default "$R_VERSION"
-          rig ls
-          mkdir -p "$R_LIBS_USER"
-
-      # Engines that can't use rig (r_install: "distro") install R through
+      # Engines with no mirrored build (r_install: "distro") install R through
       # their own hook instead (e.g. Fedora's dnf R-core, which also has to
       # defeat the container image's tsflags=nodocs default).
       # Unlike the optional hooks above, this one is required when the config
@@ -722,7 +734,7 @@ jobs:
           bash "$SCRIPT"
 
       # Post-R, pre-R-package hook (e.g. Debian's PPM codename rewrite, which
-      # must run after rig has seen the real distro).
+      # must run after the R install has seen the real distro).
       - name: OS-specific post-R setup
         env:
           SCRIPT: .github/e2e-linux/${{ needs.setup.outputs.script_dir }}/post-r-setup.sh
@@ -879,6 +891,15 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           OP_ENV_FILE: ./e2e/rstudio/.env.op
 
+      # Opt this run into the Posit Assistant pre-release manifest. A per-run
+      # prefs override, never a base pref -- every other run keeps testing GA.
+      # Written before the chown below so it ends up owned by the test user
+      # like everything else under the workspace.
+      - name: Enable Posit Assistant test manifest
+        if: inputs.posit_assistant_test_manifest
+        run: |
+          echo '{"posit_assistant_test_manifest": true}' > "$GITHUB_WORKSPACE/e2e/rstudio/.prefs.local.json"
+
       # Run the tests as a non-root user on container engines, matching the
       # bare-runner engines (which execute as the runner user). GHA container
       # jobs default to root, and RStudio-as-root diverges from real usage:
@@ -917,6 +938,11 @@ jobs:
           # unprivileged user namespaces, pass '--no-sandbox' via
           # rstudio_extra_args as a fallback rather than changing the flow.
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
+          # Relative to this step's working-directory, so it resolves the same
+          # inside a container as on a bare runner -- github.workspace would be
+          # the host path, which the container doesn't share. Empty (not set)
+          # unless this run opted in, leaving the fixture's default path alone.
+          PW_RSTUDIO_PREFS_OVERRIDE: ${{ inputs.posit_assistant_test_manifest && '.prefs.local.json' || '' }}
           # Tells playwright.config.ts to switch to blob reporter for this shard.
           PW_SHARD: ${{ matrix.shard }}
           # E2E Test Insights reporter: posts per-shard results to the dashboard.
@@ -1230,3 +1256,19 @@ jobs:
 
             ---
             <sub>2 shards · ${{ needs.setup.outputs.runner_note }} · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+
+      # Release-gate floor, last so the reporting above still runs. A run that
+      # executed nothing must not report green: Playwright suppresses its own
+      # "no tests found" error whenever --shard is passed (which every engine
+      # does), and requireAiCredentials turns a credential lapse into skips --
+      # both leave a zero-passed run looking clean.
+      - name: Require the run to have executed tests
+        if: always() && inputs.require_tests_passed
+        env:
+          PASSED: ${{ steps.summary.outputs.passed }}
+        run: |
+          if [ -z "$PASSED" ] || [ "$PASSED" = "0" ]; then
+            echo "::error::This run passed 0 tests, so it proves nothing. Refusing to report green."
+            exit 1
+          fi
+          echo "::notice::Gate floor met: $PASSED test(s) passed."

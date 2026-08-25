@@ -2,6 +2,7 @@ import { defineConfig, ReporterDescription } from '@playwright/test';
 import dotenv from 'dotenv';
 import os from 'os';
 import path from 'path';
+import { TIMEOUTS } from './utils/constants';
 
 type ProjectOptions = { mode: 'desktop' | 'server' };
 
@@ -241,7 +242,7 @@ export default defineConfig<{}, ProjectOptions>({
     // on-failure default captures nothing: PW_TRACE=on / PW_SCREENSHOT=on.
     screenshot: resolveEnvMode('PW_SCREENSHOT', SCREENSHOT_MODES, 'only-on-failure'),
     trace: resolveEnvMode('PW_TRACE', TRACE_MODES, 'retain-on-failure'),
-    actionTimeout: 10000,
+    actionTimeout: TIMEOUTS.action,
   },
   projects,
 });

@@ -85,6 +85,13 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
    ScopeNode.TYPE_CHUNK = 3; // Sweave chunk
    ScopeNode.TYPE_SECTION = 4; // Section header
 
+   // The 'depth' attribute of a section header that carries no heading level,
+   // e.g. a bar or banner of '#' characters. Such a header is flat: it ends
+   // every enclosing section, and the next header of any kind ends it. Distinct
+   // from a missing 'depth', which means the section predates the notion of a
+   // heading level entirely (a YAML block, a Sweave chunk).
+   ScopeNode.DEPTH_NONE = 0;
+
    (function() {
 
       this.isRoot = function() { return this.scopeType == ScopeNode.TYPE_ROOT; };
@@ -392,6 +399,45 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          this.$root.addNode(node);
       };
 
+      // Close the open section scopes at 'position', innermost first, for as
+      // long as 'shouldClose' accepts them. A function or chunk scope bounds
+      // the walk, as it does when closing Markdown header scopes: it is
+      // reported as the innermost active scope and is not a section. The root
+      // is labelled, so getActiveScopes() always reports it and the walk
+      // terminates once every enclosing section has been considered.
+      this.closeSectionScopesWhile = function(position, shouldClose)
+      {
+         var scopes = this.getActiveScopes(position);
+         for (var i = scopes.length - 1; i >= 0; i--)
+         {
+            if (!scopes[i].isSection() || !shouldClose(scopes[i]))
+               break;
+
+            this.$root.closeScope(position, ScopeNode.TYPE_SECTION);
+         }
+      };
+
+      // A section header carrying no heading level (e.g. a bar of '#'
+      // characters) is top-level, so it closes every open section rather than
+      // just the innermost one -- matching section folding, which ends every
+      // enclosing section fold when it reaches such a header.
+      this.onTopLevelSectionStart = function(sectionLabel, sectionPos)
+      {
+         this.closeSectionScopesWhile(sectionPos, function() { return true; });
+
+         // Mark the section depthless rather than leaving it without a depth
+         // at all: onMarkdownHead() has to tell a header that carries no
+         // heading level apart from one that predates the notion, such as a
+         // YAML block.
+         this.$root.addNode(new this.$ScopeNodeFactory(
+            sectionLabel,
+            sectionPos,
+            sectionPos,
+            ScopeNode.TYPE_SECTION,
+            {depth: ScopeNode.DEPTH_NONE}
+         ));
+      };
+
       this.onSectionEnd = function(position)
       {
          this.$root.closeScope(position, ScopeNode.TYPE_SECTION);
@@ -441,6 +487,15 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.onMarkdownHead = function(label, labelStartPos, labelEndPos, depth, isMarkdown)
       {
          debuglog("Adding Markdown header: '" + label + "' [" + depth + "]");
+
+         // A section that carries no heading level does not contain the
+         // sections that follow it, so close it before adding this header.
+         // closeMarkdownHeaderScopes() can't do it: it compares heading levels,
+         // and a depthless section has none to compare.
+         this.closeSectionScopesWhile(labelStartPos, function(scope) {
+            return scope.attributes.depth === ScopeNode.DEPTH_NONE;
+         });
+
          var scopes = this.getActiveScopes(labelStartPos);
          if (scopes.length > 1)
             this.closeMarkdownHeaderScopes(scopes[scopes.length - 2], labelStartPos, depth);

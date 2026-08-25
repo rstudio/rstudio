@@ -323,7 +323,7 @@ runs:
           if [ "$ID" = "rhel" ] || [ "$ID" = "rocky" ] || [ "$ID" = "almalinux" ] || [ "$ID" = "centos" ] || printf '%s' "$ID_LIKE" | grep -q 'rhel'; then
             export PKG_REPO="https://packagemanager.posit.co/cran/__linux__/rhel${VERSION_ID%%.*}/latest"
           elif [ "$ID" = "fedora" ]; then
-            # PPM publishes no Fedora binaries and rig/r-builds has no Fedora 44
+            # PPM publishes no Fedora binaries and r-builds has no Fedora 44
             # R, so the Fedora workflow installs R via dnf and compiles CRAN
             # packages from source. Point pak at PPM's source repo; the Fedora
             # caller installs the toolchain and -devel headers the builds need.
@@ -398,6 +398,15 @@ runs:
             installType <- if (identical(.Platform$pkgType, "source")) "source" else "binary"
             install.packages(missing, lib = lib, type = installType)
             still <- setdiff(missing, rownames(installed.packages(lib.loc = lib)))
+            # PPM's binary coverage thins out on older R -- the macos14 cell
+            # (R 4.1.3 arm64) has none for devtools, reticulate or shinytest2 --
+            # and type="binary" never falls back on its own, so retry from source.
+            # Unreached where binaries exist, so those cells compile nothing.
+            if (length(still) && !identical(installType, "source")) {
+              cat("[os-e2e-deps] no binary for:", paste(still, collapse = ", "), "-- retrying from source\n")
+              install.packages(still, lib = lib, type = "source")
+              still <- setdiff(still, rownames(installed.packages(lib.loc = lib)))
+            }
             if (length(still))
               stop("[os-e2e-deps] failed to install required-packages: ", paste(still, collapse = ", "))
           } else {

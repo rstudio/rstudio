@@ -45,14 +45,21 @@
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
 .rs.setVar("chat.bindingsInjected", FALSE)
 
+# Cached state for guardrail checks: the sampled umask, the memoized
+# allowed roots, and the normalized home directory. See the individual
+# accessors (chat.umaskMasksWorldRead, chat.allowedRoots,
+# chat.homeDirectory) for the caching rationale.
+.rs.setVar("chat.guardrailState", new.env(parent = emptyenv()))
+
 
 # PCRE patterns matched against normalized paths to deny reads.
 # Paths are always absolute and normalized before matching.
 #
-# NOTE: The primary defense against credential file reads is the file
-# permission check in isFileReadAllowed (denying files without world-
-# readable permissions). These patterns are defense-in-depth for common
-# credential paths, in case file permissions are misconfigured.
+# NOTE: These patterns work together with the file permission check in
+# isFileReadAllowed (denying files without world-readable permissions).
+# That check is a heuristic which only applies outside the allowed roots,
+# and only when the umask grants world-read to newly-created files, so
+# these patterns serve as the backstop for common credential paths.
 .rs.setVar("chat.denyReadPatterns", c(
 
    # Deny files that are likely to contain credentials
@@ -60,7 +67,6 @@
    "/\\.aws/config$",
    "/\\.netrc$",
    "/\\.npmrc$",
-   "/\\.ssh/config$",
 
    # Deny container/cloud credential directories
    "/\\.docker(/|$)",
@@ -93,24 +99,19 @@
    "/\\.Renviron(\\.|$)",
    "/\\.Rprofile(\\.|$)",
 
-   # Deny access to non-public files within the .ssh directory.
-   "/\\.ssh/id.*(?<!\\.pub)$"
-   
+   # Deny access to non-public files within the .ssh directory (config,
+   # private keys under any name, known_hosts); public keys stay readable.
+   "/\\.ssh/.*(?<!\\.pub)$"
+
 ))
 
 
 # PCRE patterns matched against normalized paths to deny edits.
 # Note that file edits are disallowed by default, except for files within
-#
-# - The R temporary directory
-# - The project directory (when a project is open)
-# - The current working directory
-# - The RStudio scratch path
-# - R library paths (.libPaths())
-# - R user directories (data, config, cache)
+# the allowed roots enumerated by chat.allowedRoots.
 #
 # This list serves to deny edits for certain files even if they're within
-# one of the above 'allowed' directories.
+# one of the 'allowed' roots.
 .rs.setVar("chat.denyEditPatterns", c(
 
    # Deny edits on or within the .ssh directory.
@@ -301,8 +302,22 @@
 #' Check whether reading the given paths is allowed.
 #'
 #' Reads are allowed by default, but denied for files that lack
-#' world-readable permissions, match well-known sensitive path
+#' world-readable permissions or match well-known sensitive path
 #' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
+#'
+#' The permission check is a heuristic for spotting sensitive files, so
+#' it only applies where a missing world-read bit is actually a signal:
+#' outside the allowed roots (see `chat.allowedRoots()`), and only when
+#' the umask would grant world-read to newly-created files. Otherwise
+#' the check would deny every file the session itself creates in
+#' environments with a restrictive umask (e.g. containers with umask
+#' 077), including caches that `install.packages()` needs to read back.
+#'
+#' The home directory itself never counts as an allowed root here, even
+#' though it can be one for edits (it is the fallback working directory
+#' when no project is open): exempting all of `$HOME` would hide
+#' deliberately-private dotfiles (e.g. mode-600 tokens and keys) from
+#' the permission check.
 #'
 #' When `trusted` is `TRUE` (i.e. the call originates from a
 #' non-base package), the deny-pattern check is skipped so that
@@ -321,11 +336,23 @@
    # assume file reads are permitted by default
    reasons <- rep.int("", length(path))
 
-   # deny reads on files that lack read permission for 'others'
-   # (use which() to drop NA modes from non-existent files)
-   info <- suppressWarnings(file.info(path))
-   deny <- bitwAnd(info$mode, 4L) == 0L
-   reasons[which(deny)] <- "File is not world-readable."
+   # deny reads on files that lack read permission for 'others', skipping
+   # files within the allowed roots -- the session itself creates files
+   # there that would fail the check under a restrictive umask. skip the
+   # check entirely when the umask strips world-read from new files, as
+   # then every file is private by default and the missing bit carries no
+   # signal (use which() to drop NA modes from non-existent files)
+   if (!.rs.chat.umaskMasksWorldRead())
+   {
+      # exclude the home directory from the exemption: as the fallback
+      # working directory it can be an allowed root, but private files
+      # directly under $HOME are exactly what this check is for
+      roots <- setdiff(.rs.chat.allowedRoots(), .rs.chat.homeDirectory())
+
+      info <- suppressWarnings(file.info(path))
+      deny <- bitwAnd(info$mode, 4L) == 0L & !.rs.chat.isPathWithinAllowedRoots(path, roots)
+      reasons[which(deny)] <- "File is not world-readable."
+   }
 
    # deny reads matching sensitive path patterns
    # (skip for trusted callers, i.e. non-base package code)
@@ -354,13 +381,121 @@
    .Call("rs_userDataDir", PACKAGE = "(embedding)")
 })
 
+#' Enumerate the roots within which agent file edits are allowed.
+#'
+#' Edits are allowed within:
+#'
+#' - The R temporary directory
+#' - The current working directory
+#' - The RStudio user scratch path (tool-invoked code may update files there)
+#' - R library paths (e.g. for package installation)
+#' - The user library (R_LIBS_USER), even before it has been created
+#' - The active project directory (when a project is open)
+#' - R user directories (data, config, cache)
+#'
+#' Reads within these roots (except the home directory itself; see
+#' `chat.isFileReadAllowed`) are also exempt from the world-readable
+#' permission check, since the session itself creates files there.
+#'
+#' The result is memoized on the inputs that can change while the
+#' session runs (working directory, library paths, `R_LIBS_USER`):
+#' this runs on every hooked file operation, and enumerating the
+#' roots is comparatively expensive (the scratch-path lookup alone
+#' touches the filesystem).
+#'
+#' @return A character vector of normalized directory paths.
+.rs.addFunction("chat.allowedRoots", function()
+{
+   userLibs <- strsplit(Sys.getenv("R_LIBS_USER"), .Platform$path.sep, fixed = TRUE)[[1L]]
+   key <- list(getwd(), .libPaths(), userLibs)
+
+   state <- .rs.chat.guardrailState
+   if (identical(state$allowedRootsKey, key))
+      return(state$allowedRoots)
+
+   roots <- c(tempdir(), getwd(), .rs.chat.userScratchPath(), .libPaths())
+
+   # include the user library even when it doesn't exist yet -- a nonexistent
+   # user library is excluded from .libPaths(), but install.packages() offers
+   # to create it on first use
+   roots <- c(roots, userLibs[nzchar(userLibs)])
+
+   projectDir <- .rs.getProjectDirectory()
+   if (!is.null(projectDir))
+      roots <- c(roots, projectDir)
+
+   # R user directories (data, config, cache),
+   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
+   # Use dirname() to obtain the parent directory from a dummy package name.
+   # tools::R_user_dir was introduced in R 4.0.0.
+   if (getRversion() >= "4.0.0")
+   {
+      for (which in c("data", "config", "cache"))
+         roots <- c(roots, dirname(tools::R_user_dir("_", which = which)))
+   }
+
+   roots <- .rs.chat.normalizePath(roots)
+   state$allowedRootsKey <- key
+   state$allowedRoots <- roots
+   roots
+})
+
+#' Check whether paths lie within any of the allowed roots.
+#'
+#' @param path A character vector of normalized file paths.
+#' @param roots The roots to check against.
+#' @return A logical vector the same length as `path`.
+.rs.addFunction("chat.isPathWithinAllowedRoots", function(path, roots = .rs.chat.allowedRoots())
+{
+   allowed <- rep.int(FALSE, length(path))
+   for (root in roots)
+      allowed <- allowed | .rs.chat.isPathWithin(path, root)
+   allowed
+})
+
+#' The normalized home directory, computed once.
+#'
+#' @return A single normalized directory path.
+.rs.addFunction("chat.homeDirectory", function()
+{
+   state <- .rs.chat.guardrailState
+   if (is.null(state$homeDirectory))
+      state$homeDirectory <- .rs.chat.normalizePath(path.expand("~"))
+   state$homeDirectory
+})
+
+#' Check whether the umask strips world-read from new files.
+#'
+#' When it does (e.g. hardened containers commonly run with umask 077),
+#' a file lacking the world-read bit is just the environment's default
+#' rather than a deliberate act of protection, so the missing bit
+#' carries no signal about the file's sensitivity.
+#'
+#' The umask is sampled once and cached: `Sys.umask(NA)` reads the umask
+#' by briefly setting it to 0 and restoring it, which is both unsafe to
+#' run on every hooked file operation (a background thread creating a
+#' file inside that window would get mode 666) and would let agent code
+#' switch the permission check off by changing the umask. The sample is
+#' taken no later than the first `chat.injectBindings()` call, before
+#' any agent code has run.
+#'
+#' @return `TRUE` if newly-created files would not be world-readable.
+.rs.addFunction("chat.umaskMasksWorldRead", function()
+{
+   state <- .rs.chat.guardrailState
+   if (is.null(state$umaskMasksWorldRead))
+   {
+      umask <- Sys.umask(NA)
+      state$umaskMasksWorldRead <- bitwAnd(as.integer(umask), 4L) != 0L
+   }
+   state$umaskMasksWorldRead
+})
+
 #' Check whether editing the given paths is allowed.
 #'
-#' Edits are denied by default, but allowed within the R temporary
-#' directory, the active project directory, the current working
-#' directory, the RStudio user scratch path, R library paths, and
-#' R user directories (data, config, cache). Edits within sensitive
-#' directories (e.g. `~/.ssh`) are always denied.
+#' Edits are denied by default, but allowed within the allowed roots
+#' (see `chat.allowedRoots()`). Edits within sensitive directories
+#' (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
 #' @return A character vector the same length as `path`, where
@@ -377,46 +512,8 @@
       length(path)
    )
 
-   # allow edits within the R temporary directory
-   tempDir <- .rs.chat.normalizePath(tempdir())
-   reasons[.rs.chat.isPathWithin(path, tempDir)] <- ""
-
-   # allow edits within the project directory
-   projectDir <- .rs.getProjectDirectory()
-   if (!is.null(projectDir))
-   {
-      projectDir <- .rs.chat.normalizePath(projectDir)
-      reasons[.rs.chat.isPathWithin(path, projectDir)] <- ""
-   }
-
-   # allow edits within the current working directory
-   workingDir <- .rs.chat.normalizePath(getwd())
-   reasons[.rs.chat.isPathWithin(path, workingDir)] <- ""
-
-   # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
-   # since tool-invoked code may update files there
-   scratchDir <- .rs.chat.userScratchPath()
-   reasons[.rs.chat.isPathWithin(path, scratchDir)] <- ""
-
-   # allow edits within R library paths (e.g. for package installation)
-   for (libPath in .libPaths())
-   {
-      libPath <- .rs.chat.normalizePath(libPath)
-      reasons[.rs.chat.isPathWithin(path, libPath)] <- ""
-   }
-
-   # allow edits within R user directories (data, config, cache),
-   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
-   # Use dirname() to obtain the parent directory from a dummy package name.
-   # tools::R_user_dir was introduced in R 4.0.0.
-   if (getRversion() >= "4.0.0")
-   {
-      for (which in c("data", "config", "cache"))
-      {
-         rDir <- .rs.chat.normalizePath(dirname(tools::R_user_dir("_", which = which)))
-         reasons[.rs.chat.isPathWithin(path, rDir)] <- ""
-      }
-   }
+   # allow edits within the allowed roots
+   reasons[.rs.chat.isPathWithinAllowedRoots(path)] <- ""
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
@@ -491,6 +588,10 @@
    # skip injection to avoid overwriting saved originals
    if (.rs.chat.bindingsInjected)
       return(invisible())
+
+   # sample the umask before agent code can run, so the cached value
+   # cannot be influenced by the code the guardrails police
+   .rs.chat.umaskMasksWorldRead()
 
    baseHooks <- list(
 
@@ -1077,4 +1178,62 @@
       "{ options(timeout = 30L); tmp <- tempfile(); status <- download.file(%s); if (!isTRUE(status == 0)) stop(paste('download.file failed, status', status)); cat(readLines(tmp, warn = FALSE), sep = '\\n') }",
       paste(args, collapse = ", ")
    )
+})
+
+#' Download the Posit Assistant package, reporting why a failure happened.
+#'
+#' download.file() puts the reason a transfer failed in a warning ("status was
+#' 'Couldn't connect to server'") while the error it raises says only that the
+#' URL could not be opened, and not every failure raises at all -- its libcurl
+#' and internal methods can return a non-zero status with only a warning
+#' ("download had nonzero exit status"), where curl and wget stop(). So collect
+#' the warnings, check the status, and return both to the caller: a truncated
+#' download that reaches the SHA-256 check would otherwise be reported as an
+#' integrity failure rather than as the dropped connection it is.
+#'
+#' The warnings are collected but not muffled, so they still reach the console as
+#' they do for any other download.
+#'
+#' The method is left to whatever the user/admin configured via
+#' options(download.file.method) (corporate proxies often set method = "curl"
+#' with a --cacert in download.file.extra to trust the proxy's CA).
+#' options(timeout = ) is the documented transfer-timeout knob -- download.file()
+#' has no timeout argument -- and the package is large enough to want at least 60
+#' seconds, so raise a shorter configured timeout and leave a longer one alone.
+#'
+#' @param url The package URL to download.
+#' @param destfile The file to download the package to.
+#' @return "" if the download succeeded, otherwise the reason it failed.
+.rs.addFunction("chat.downloadPackage", function(url, destfile)
+{
+   op <- options(timeout = max(60L, getOption("timeout", default = 60L)))
+   on.exit(options(op), add = TRUE)
+
+   warningText <- character()
+
+   # quiet = FALSE so the transfer's progress reaches the console; mode = "wb"
+   # because the package is a zip file.
+   status <- withCallingHandlers(
+      tryCatch(
+         download.file(url, destfile = destfile, quiet = FALSE, mode = "wb"),
+         error = function(e) e
+      ),
+      warning = function(w)
+      {
+         warningText <<- c(warningText, conditionMessage(w))
+      }
+   )
+
+   reason <- if (inherits(status, "error"))
+      conditionMessage(status)
+   else if (!isTRUE(status == 0))
+      paste("download.file failed, status", status)
+   else
+      return("")
+
+   # Under options(warn = 2) the collected warning is the error just reported,
+   # so drop any warning text the reason already carries.
+   warningText <- warningText[!vapply(warningText, grepl, logical(1), x = reason, fixed = TRUE)]
+
+   paste(c(reason, warningText), collapse = "; ")
 })

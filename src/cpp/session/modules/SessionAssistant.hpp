@@ -16,6 +16,11 @@
 #ifndef RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 #define RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 
+#include <cstddef>
+#include <string>
+
+#include <shared_core/FilePath.hpp>
+
 namespace rstudio {
 namespace core {
 class Error;
@@ -28,6 +33,46 @@ namespace modules {
 namespace assistant {
 
 int assistantRuntimeStatus();
+
+// Default bound applied to agent stderr before logging or accumulating it. A
+// crashing Node.js agent prints the offending source line before the stack
+// trace, and for a bundled agent that "line" is the entire minified bundle --
+// tens of kilobytes per chunk with the useful text (error and stack trace) at
+// the end.
+constexpr std::size_t kAgentStderrMaxBytes = 4096;
+
+// Bounded tail of agent stderr: keeps at most the last maxLength bytes
+// appended, plus a cumulative count of the bytes dropped. text() prefixes a
+// truncated tail with a marker noting that count (so the result can slightly
+// exceed maxLength). The cut never lands mid-way through a UTF-8 character,
+// since the text is embedded in JSON. Exposed for testing.
+class AgentStderrTail
+{
+public:
+   explicit AgentStderrTail(std::size_t maxLength)
+      : maxLength_(maxLength)
+   {
+   }
+
+   void append(const std::string& text);
+   void set(const std::string& text);
+   void clear();
+   std::string text() const;
+
+private:
+   std::size_t maxLength_;
+   std::size_t droppedBytes_ = 0;
+   std::string tail_;
+};
+
+// One-shot convenience over AgentStderrTail, for bounding a single chunk.
+std::string agentStderrTail(const std::string& text, std::size_t maxLength);
+
+// Resolve the next-edit-suggestion (NES) language server script within a Posit
+// Assistant installation directory. Returns an empty path when installPath is
+// empty (no installation was located) or holds no language server script.
+// Exposed for testing.
+core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
 // its file handles are released. Returns true if the agent stopped (or was not

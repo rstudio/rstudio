@@ -31,8 +31,60 @@ var $hierarchicalSectionFolding = true;
 var reSectionDelimChars = require("mode/r_highlight_rules").reSectionDelimChars;
 var reSectionLabelStart = new RegExp("[^" + reSectionDelimChars + "\\s]", "u");
 var reSectionLabelTail = new RegExp("\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
-var reSectionDelimsOnly = new RegExp("^\\s*[" + reSectionDelimChars + "]+\\s*$", "u");
 var reSectionTrailingTail = new RegExp("[" + reSectionDelimChars + "]+\\s*$", "u");
+var reSectionTrailingHashes = /(#+)\s*$/;
+var reSectionLeadingHashes = /^\s*(#+)/;
+
+// Infer the heading level of a section header from its leading '#' run,
+// e.g. "# Foo ----" => 1, "### Foo ----" => 3.
+//
+// Returns 0 when the header's leading run is decoration rather than a heading
+// level, and so carries no level at all:
+//
+//   - a header with no label is a bar, e.g. "##########" or "#### ====";
+//     its width says nothing about how deeply the file is nested;
+//
+//   - a header whose label is enclosed by matching runs of '#' is a banner,
+//     e.g. "##### Section A #####", where both runs draw the box;
+//
+//   - a run deeper than 6 is more likely to be decoration than a heading,
+//     similar to how HTML only provides <h1> through <h6>.
+//
+// Both the document outline and hierarchical section folding read a header's
+// level through this function. With hierarchical folding disabled, every
+// section fold stops at the next section header regardless of heading level.
+function sectionHeadDepth(sectionHead)
+{
+   if (!reSectionLabelStart.test(sectionHead))
+      return 0;
+
+   var match = reSectionLeadingHashes.exec(sectionHead);
+   if (match === null)
+      return 0;
+
+   var depth = match[1].length;
+
+   // Only matching leading and trailing runs form a decorative box. A
+   // conventional header such as '# Section ####' still carries its leading
+   // run's heading level.
+   var bannerMatch = reSectionTrailingHashes.exec(sectionHead);
+   if (bannerMatch !== null && bannerMatch[1].length === depth)
+      return 0;
+
+   return depth > 6 ? 0 : depth;
+}
+
+// Whether a section header at 'depth' nests inside one at 'outerDepth'.
+//
+// A header carrying no heading level is flat: it ends every enclosing section,
+// and the next header of any kind ends it. So a decorative header neither
+// contains another header nor is contained by one, whatever widths are
+// involved -- comparing decoration widths is what made a wide bar look like a
+// subsection of a narrow one.
+function sectionHeadNests(depth, outerDepth)
+{
+   return depth !== 0 && outerDepth !== 0 && depth > outerDepth;
+}
 
 function comparePoints(pos1, pos2)
 {
@@ -1025,28 +1077,19 @@ var RCodeModel = function(session, tokenizer,
             //
             //   ## Header 2 ----
             //
-            // When we have such a header, we can provide a depth.
-            var match = /^\s*([#]+)\s*[^#]/.exec(value);
-            if (match != null)
+            // When we have such a header, we can provide a depth. Headers that
+            // carry no heading level (e.g. a bar of delimiters) become plain
+            // sections instead.
+            var depth = sectionHeadDepth(value);
+            if (depth === 0)
             {
-               // compute depth -- if the depth seems unlikely / large,
-               // then treat it as just a plain section (similar to how
-               // HTML only provides <h1> through <h6>)
-               var depth = match[1].length;
-               if (depth > 6)
-               {
-                  this.$scopes.onSectionStart(label, position);
-               }
-               else
-               {
-                  var labelStartPos = {row: position.row, column: 0};
-                  var labelEndPos = {row: position.row, column: Infinity};
-                  this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
-               }
+               this.$scopes.onTopLevelSectionStart(label, position);
             }
             else
             {
-               this.$scopes.onSectionStart(label, position);
+               var labelStartPos = {row: position.row, column: 0};
+               var labelEndPos = {row: position.row, column: Infinity};
+               this.$scopes.onMarkdownHead(label, labelStartPos, labelEndPos, depth, false);
             }
 
          }
@@ -1432,18 +1475,11 @@ var RCodeModel = function(session, tokenizer,
          // Find the position of the section 'tail'.
          var line = session.getLine(row);
 
-         // Helper: infer heading depth from the count of leading '#'
-         // e.g. "# ... ----" => 1, "### ... ----" => 3
-         var sectionDepth = function(sectionLine) {
-            var matchDepth = /^\s*(#+)/.exec(sectionLine);
-            return matchDepth ? matchDepth[1].length : 1;
-         };
-
          // For unnamed sections, use the end of the line.
          // Otherwise, consume the '----' tail of the section
          // header as well.
          var index;
-         if (reSectionDelimsOnly.test(line)) {
+         if (!reSectionLabelStart.test(line)) {
             index = line.length;
          } else {
             var match = reSectionTrailingTail.exec(line);
@@ -1456,7 +1492,11 @@ var RCodeModel = function(session, tokenizer,
          pos.column = index;
 
          var useHierarchy = $hierarchicalSectionFolding;
-         var currentDepth = useHierarchy ? sectionDepth(line) : 1;
+
+         // The header's level is read out of the sectionhead token rather than
+         // the whole line, matching what the document outline reads -- a header
+         // can be preceded by code, as in 'x <- 1 ## Section ----'.
+         var currentDepth = sectionHeadDepth(foldToken.value);
 
          // Use a token iterator and find the next section head that
          // terminates this one, respecting fold hierarchy when enabled.
@@ -1480,10 +1520,7 @@ var RCodeModel = function(session, tokenizer,
                   break;
                }
 
-               var otherRow = it.getCurrentTokenRow();
-               var otherLine = session.getLine(otherRow);
-               var otherDepth = sectionDepth(otherLine);
-               if (otherDepth <= currentDepth) {
+               if (!sectionHeadNests(sectionHeadDepth(token.value), currentDepth)) {
                   break;
                }
 

@@ -177,11 +177,11 @@ Error InstallLock::acquireInUseForStart(Component component,
    Error error = acquireInUse(component, pToken);
    if (error)
    {
-      // contention (our own active mutation, or a lock held elsewhere —
-      // e.g. this session's own unreleased link-based file, which clears
-      // with staleness) reads as an update in progress; anything else is a
-      // real failure whose message must reach the user rather than
-      // masquerading as an update
+      // contention (our own active mutation, or -- if a caller reuses an
+      // owner id across processes -- another live process holding the lock
+      // file at our path, see #18571) reads as an update in progress;
+      // anything else is a real failure whose message must reach the user
+      // rather than masquerading as an update
       bool contention =
          error == systemError(boost::system::errc::operation_in_progress,
                               ErrorLocation()) ||

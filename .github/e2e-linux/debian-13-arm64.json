@@ -23,7 +23,7 @@
   "e2e_image": "debian:13",
   "e2e_container_options": "--cap-add=SYS_ADMIN --security-opt seccomp=unconfined --shm-size=2g",
   "e2e_bootstrap_packages": "ca-certificates curl git sudo jq xz-utils procps findutils",
-  "r_install": "rig",
+  "r_install": "mirror",
   "run_as_user": "rstudio-tester",
   "display_server": "xvfb",
   "e2e_deps_cache_scope": "debian13-arm64",

@@ -4355,22 +4355,31 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
    DLOG("Downloading package from: {} to: {}", url, destPath.getAbsolutePath());
 
-   // Use R's download.file() function with timeout protection. Do not hardcode
-   // the download method -- let R use whatever the user/admin configured via
-   // options(download.file.method) (corporate proxies often set method = "curl"
-   // with a --cacert in download.file.extra to trust the proxy's CA).
-   r::exec::RFunction downloadFunc("download.file");
-   downloadFunc.addParam("url", url);
-   downloadFunc.addParam("destfile", destPath.getAbsolutePath());
-   downloadFunc.addParam("quiet", false);  // Show progress for user feedback
-   downloadFunc.addParam("mode", "wb");  // Binary mode for zip files
-   downloadFunc.addParam("timeout", 60);  // 60 second timeout for larger package
-
-   Error error = downloadFunc.call();
+   // Download through .rs.chat.downloadPackage rather than calling
+   // download.file() directly: download.file() reports why a transfer failed in a
+   // warning rather than in the error, and some methods report a failure only as
+   // a non-zero return status, so the helper folds the warnings and the status
+   // into the reason it returns ("" when the download succeeded). The helper also
+   // owns the transfer timeout and leaves the download method to the user/admin's
+   // download.file.* options.
+   // callUtf8 because the reason is an R condition message, which on a localized
+   // non-UTF-8 session carries native-encoded bytes that the install status
+   // response (JSON) requires as UTF-8.
+   std::string reason;
+   Error error = r::exec::RFunction(".rs.chat.downloadPackage")
+         .addParam("url", url)
+         .addParam("destfile", destPath.getAbsolutePath())
+         .callUtf8(&reason);
    if (error)
    {
       WLOG("Failed to download package: {}", error.getMessage());
       return error;
+   }
+
+   if (!reason.empty())
+   {
+      WLOG("Failed to download package: {}", reason);
+      return systemError(boost::system::errc::io_error, reason, ERROR_LOCATION);
    }
 
    // Verify file exists and has content
@@ -4596,7 +4605,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 
    if (fetchError)
    {
-      WLOG("Failed to download manifest: {}", fetchError.getMessage());
+      WLOG("Failed to download manifest: {}", core::errorDescription(fetchError));
 
       bool isInstalled = (installedVersion != "0.0.0");
       bool protocolMismatch = hasProtocolMismatch(installedVersion);
@@ -4619,7 +4628,7 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       {
          // Not installed, or protocol mismatch: cannot proceed -> block.
          manifestUnavailable = true;
-         errorMessage = fetchError.getMessage();
+         errorMessage = core::errorDescription(fetchError);
       }
 
       // recordToWrite stays unset -> finish() preserve-and-bumps the timestamp.
@@ -4633,9 +4642,9 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    if (error)
    {
       WLOG("Failed to parse unsupported info (blocking Posit Assistant): {}",
-           error.getMessage());
+           core::errorDescription(error));
       manifestUnavailable = true;
-      errorMessage = error.getMessage();
+      errorMessage = core::errorDescription(error);
       finish();
       return;
    }
@@ -5056,7 +5065,11 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
 {
-   WLOG("Chat backend stderr: {}", output);
+   // The chat backend is a bundled Node.js app: a crash prints the offending
+   // source line -- the entire minified bundle -- before the stack trace, so
+   // log only the tail, where the error and stack trace appear.
+   WLOG("Chat backend stderr: {}",
+        assistant::agentStderrTail(output, assistant::kAgentStderrMaxBytes));
 }
 
 void onBackendExit(int exitCode, uint64_t generation, uint64_t lockToken)
@@ -5891,7 +5904,10 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
    {
       boost::mutex::scoped_lock lock2(s_updateStateMutex);
       s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage = "Download failed: " + error.getMessage();
+      // errorDescription, not getMessage: downloadPackage reports the reason R
+      // gave for the failure in the error's description, and getMessage() would
+      // show only the bare errno string ("Input/output error").
+      s_updateState.installMessage = "Download failed: " + core::errorDescription(error);
 
       // Clean up temp file
       Error cleanupError = tempPackage.removeIfExists();
@@ -6455,16 +6471,24 @@ install_lock::InstallLock& installLock()
    // Constructed lazily so xdg paths and activeSession() are initialized
    // (FileLock::initialize() has also run by first use; the helper creates
    // its FileLock instances per-operation, not at construction).
-   // The owner id names this session's lock file; activeSession().id() can
-   // be empty for dev/automation-launched sessions (no launcher token), so
-   // fall back to a per-process UUID to keep concurrent sessions from
-   // colliding on one file. Stability across restarts is not required —
-   // a crashed session's leftover file is stale-cleaned by the next mutator.
+   // The owner id names this session's lock file and must be unique per
+   // process (see ChatInstallLock.hpp): the session id alone is stable
+   // across a session relaunch, so an orphaned predecessor process that
+   // outlives the relaunch (#18572) holds a live lock under the
+   // replacement's own name, and every chat_start_backend in the
+   // replacement then fails with a spurious "update in progress" (#18571).
+   // The session id is kept as a prefix so lock files remain attributable
+   // (it can be empty for dev/automation-launched sessions); the uuid
+   // supplies the per-process uniqueness. Leftover files from dead
+   // processes are stale-cleaned by the next mutator.
+   static const std::string ownerId =
+      module_context::activeSession().id().empty()
+         ? core::system::generateUuid(false)
+         : module_context::activeSession().id() + "-" +
+              core::system::generateUuid(false);
    static install_lock::InstallLock instance(
       xdg::userDataDir().completePath(chat_constants::kPositAiLocksDirName),
-      !module_context::activeSession().id().empty()
-         ? module_context::activeSession().id()
-         : core::system::generateUuid(false));
+      ownerId);
    return instance;
 }
 // ============================================================================

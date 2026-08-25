@@ -16,6 +16,8 @@
 #include "SessionAssistant.hpp"
 #include "SessionChat.hpp"
 
+#include "chat/ChatInstallation.hpp"
+
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
@@ -40,7 +42,6 @@
 #include <core/StringUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
-#include <core/system/Xdg.hpp>
 #include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
@@ -211,7 +212,7 @@ uint64_t s_agentGeneration = 0;
 std::string s_runningAgentType;
 
 // Error output (if any) that was written during startup.
-std::string s_agentStartupError;
+AgentStderrTail s_agentStartupError(kAgentStderrMaxBytes);
 
 // The current status of the agent, mainly around if it's enabled
 // (and why or why not).
@@ -282,7 +283,7 @@ std::string agentNotRunningReason()
       case AgentNotRunningReason::DisabledViaGlobalPreferences:
          return "AI assistant has been disabled via global preferences.";
       case AgentNotRunningReason::LaunchError:
-         return "The AI assistant agent failed to launch: " + s_agentStartupError;
+         return "The AI assistant agent failed to launch: " + s_agentStartupError.text();
       case AgentNotRunningReason::Unsupported:
          return "The installed AI assistant version is no longer supported.";
    }
@@ -452,21 +453,27 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
 
 FilePath paiLanguageServerPath()
 {
-   FilePath languageServerDir = xdg::userDataDir().completePath("pai/bin/dist/nes");
+   // Resolve the installation the same way the chat backend does, so both
+   // halves of the assistant run out of the same install -- honoring
+   // RSTUDIO_POSIT_AI_PATH and system-wide installs, not just the user one.
+   FilePath installPath = chat::installation::locatePositAssistantInstallation();
+   FilePath languageServerPath = nesLanguageServerPath(installPath);
 
-   for (auto&& suffix : { "language-server.cjs", "language-server.js" })
+   if (!languageServerPath.isEmpty())
    {
-      FilePath languageServerPath = languageServerDir.completePath(suffix);
-
-      if (languageServerPath.exists())
-      {        
-         DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
-         return languageServerPath;
-      }
+      DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
+      return languageServerPath;
    }
-   
+
    if (RS_ONCE())
-      DLOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
+   {
+      if (installPath.isEmpty())
+         DLOG("Posit AI Language Server not found: no Posit Assistant installation.");
+      else
+         DLOG("Posit AI Language Server not found in installation '{}'.",
+              installPath.getAbsolutePath());
+   }
+
    return FilePath();
 }
 
@@ -1180,21 +1187,29 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr, uint64_t
    // replacement's startup error or push its status to Stopping.
    if (generation != s_agentGeneration)
    {
-      DLOG("Ignoring stderr from stale agent generation: {}", stdErr);
+      DLOG("Ignoring stderr from stale agent generation: {}",
+           agentStderrTail(stdErr, kAgentStderrMaxBytes));
       return;
    }
 
-   LOG_ERROR_MESSAGE(stdErr);
- 
+   // A crashing Node.js agent prints the offending source line before the
+   // stack trace, and for a bundled agent that "line" is the entire minified
+   // bundle -- tens of kilobytes per chunk with the real error at the end.
+   // Keep only the tail; the head (minified bundle text) is deliberately
+   // discarded.
+   LOG_ERROR_MESSAGE(agentStderrTail(stdErr, kAgentStderrMaxBytes));
+
    // If we get output from stderr while the agent is starting, that means
    // something went wrong and we're about to shut down.
    switch (s_agentRuntimeStatus)
    {
-   
+
    case AgentRuntimeStatus::Starting:
    case AgentRuntimeStatus::Stopping:
    {
-      s_agentStartupError += stdErr;
+      // s_agentStartupError is user-facing (launch-failure message, agent
+      // diagnostics); the accumulator bounds it the same way.
+      s_agentStartupError.append(stdErr);
       setAgentRuntimeStatus(AgentRuntimeStatus::Stopping);
       break;
    }
@@ -1222,7 +1237,7 @@ void onError(ProcessOperations& operations, const Error& error, uint64_t generat
    // A superseded process's stream error is not the replacement's startup
    // error — but terminating the errored process is right either way.
    if (generation == s_agentGeneration)
-      s_agentStartupError = error.getMessage();
+      s_agentStartupError.set(error.getMessage());
 
    Error terminateError = operations.terminate();
    if (terminateError)
@@ -1411,7 +1426,7 @@ Error startAgent(const std::string& assistantType = "")
       {
          // callers (ensureAgentRunning et al) tolerate failure and retry on
          // the next request, after the mutation has finished
-         s_agentStartupError = lockMessage;
+         s_agentStartupError.set(lockMessage);
          setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
          return error;
       }
@@ -1570,12 +1585,12 @@ Error startAgent(const std::string& assistantType = "")
    // We include this because all requests will fail if we haven't yet called
    // initialized, so maybe the right approach is to have some sort of 'ensureInitialized'
    // method?
-   s_agentStartupError = std::string();
+   s_agentStartupError.clear();
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
    {
       ELOG("Agent startup timed out [node='{}', stderr='{}'].",
-           nodePath.getAbsolutePath(), s_agentStartupError);
+           nodePath.getAbsolutePath(), s_agentStartupError.text());
       setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       s_runningAgentType.clear();  // Clear since agent failed to start
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
@@ -2722,7 +2737,7 @@ Error assistantStatus(const json::JsonRpcRequest& request,
          launchError.writeJson(&errorJson);
          resultJson["reason"] = static_cast<int>(AgentNotRunningReason::LaunchError);
          resultJson["error"] = errorJson;
-         resultJson["output"] = s_agentStartupError;
+         resultJson["output"] = s_agentStartupError.text();
       }
       else
       {
@@ -2938,6 +2953,68 @@ void onEnvironmentVariablesChanged(const module_context::EnvironmentVariablesCha
 int assistantRuntimeStatus()
 {
    return static_cast<int>(s_agentRuntimeStatus);
+}
+
+void AgentStderrTail::append(const std::string& text)
+{
+   tail_ += text;
+   if (tail_.length() <= maxLength_)
+      return;
+
+   std::size_t start = tail_.length() - maxLength_;
+
+   // don't cut mid-way through a multi-byte UTF-8 character
+   while (start < tail_.length() &&
+          (static_cast<unsigned char>(tail_[start]) & 0xC0) == 0x80)
+      ++start;
+
+   droppedBytes_ += start;
+   tail_.erase(0, start);
+}
+
+void AgentStderrTail::set(const std::string& text)
+{
+   clear();
+   append(text);
+}
+
+void AgentStderrTail::clear()
+{
+   droppedBytes_ = 0;
+   tail_.clear();
+}
+
+std::string AgentStderrTail::text() const
+{
+   if (droppedBytes_ == 0)
+      return tail_;
+
+   return "[... " + std::to_string(droppedBytes_) + " bytes truncated ...] " +
+          tail_;
+}
+
+std::string agentStderrTail(const std::string& text, std::size_t maxLength)
+{
+   AgentStderrTail tail(maxLength);
+   tail.append(text);
+   return tail.text();
+}
+
+FilePath nesLanguageServerPath(const FilePath& installPath)
+{
+   if (installPath.isEmpty())
+      return FilePath();
+
+   FilePath languageServerDir = installPath.completeChildPath("dist/nes");
+
+   for (auto&& fileName : { "language-server.cjs", "language-server.js" })
+   {
+      FilePath languageServerPath = languageServerDir.completeChildPath(fileName);
+      if (languageServerPath.exists())
+         return languageServerPath;
+   }
+
+   return FilePath();
 }
 
 bool stopAgentForUpdate()

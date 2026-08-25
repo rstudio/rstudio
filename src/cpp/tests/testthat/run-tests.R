@@ -5,11 +5,12 @@ runTests <- function(testDir = NULL, outputDir = NULL, filter = NULL) {
    options(rstudio.tests.running = TRUE)
    on.exit(options(rstudio.tests.running = FALSE), add = TRUE)
 
-   # Disable ANSI escape codes in CI environments so that test output
-   # is plain text in build logs.
+   # Disable ANSI escape codes in CI environments so that test output is plain
+   # text in build logs. The rstudio-tests launcher establishes NO_COLOR before
+   # rsession starts; do not mutate the process environment here because worker
+   # threads may be running.
    if (nzchar(Sys.getenv("JENKINS_URL")) || nzchar(Sys.getenv("CI")))
    {
-      Sys.setenv(NO_COLOR = "1")
       options(cli.num_colors = 1)
    }
 
