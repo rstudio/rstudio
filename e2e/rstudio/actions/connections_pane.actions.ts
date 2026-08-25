@@ -36,33 +36,10 @@ export class ConnectionsPaneActions {
    * Open the New Connection wizard and wait for its type list. The first
    * open of a session also triggers the installer-catalog refresh RPC, so
    * the deadline is generous.
-   *
-   * Retries the whole open if the dialog vanishes again moments later:
-   * shortly after a Server-mode session restart, the automation bridge's
-   * readiness signal does not reliably re-arm (rstudio/rstudio#18064,
-   * "the automation bridge's ready signal not re-arming across a Server
-   * restart"), and a dialog opened in that window can be swept away by a
-   * late-settling layout event before anything gets a chance to use it --
-   * observed as the *caller's* very next step (selecting a type, or filling
-   * a field) timing out against a dialog that no longer exists, with no
-   * indication here that it ever closed. Confirming the dialog is still
-   * present a beat after opening turns that into a named retry instead.
    */
   async openWizard(): Promise<void> {
-    const maxAttempts = 3;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      await executeCommand(this.page, 'newConnection');
-      await this.wizard.dialog.waitFor({ state: 'visible', timeout: 20000 });
-      await this.page.waitForTimeout(500);
-      if (await this.wizard.dialog.isVisible()) return;
-      console.warn(
-        `[wizard] New Connection dialog closed itself shortly after opening (attempt ${attempt})`,
-      );
-    }
-    throw new Error(
-      `New Connection wizard dialog closed itself shortly after opening, on every attempt ` +
-        `(${maxAttempts}) -- see rstudio/rstudio#18064.`,
-    );
+    await executeCommand(this.page, 'newConnection');
+    await this.wizard.dialog.waitFor({ state: 'visible', timeout: 20000 });
   }
 
   /**
@@ -99,7 +76,19 @@ export class ConnectionsPaneActions {
     target: EffectiveDbTarget,
     overrides: Record<string, string> = {},
   ): Promise<void> {
-    await this.wizard.typeEntry(target.driverName).click();
+    // openWizard()'s own wait only confirms the dialog box itself is
+    // visible, not that the type list inside it has finished loading --
+    // that's the installer-catalog refresh RPC it mentions, which can take
+    // just as long. click()'s default actionability timeout is too short
+    // for it: every spec that restarts the R session in beforeEach before
+    // opening the wizard (connect/explorer/queries) pays that "first open
+    // of a session" cost on literally every test, not just once per file
+    // the way new_connection_wizard.test.ts (no restart) does. Wait for the
+    // entry on its own generous deadline, matching openWizard()'s, before
+    // clicking it.
+    const typeEntry = this.wizard.typeEntry(target.driverName);
+    await typeEntry.waitFor({ state: 'visible', timeout: 20000 });
+    await typeEntry.click();
     const written = { ...target.wizardFields, ...overrides };
     // Server and Port only exist on a server target's snippet. A file
     // target's grid is the single Database path, so `written` is the whole
