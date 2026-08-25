@@ -721,11 +721,21 @@ export class GwtCallback extends EventEmitter {
       const mainWindow = this.mainWindow.window;
       const activeWindow = BrowserWindow.getFocusedWindow();
 
-      // bring main window under active window by focusing main window then back to active
-      if (activeWindow && mainWindow !== activeWindow) {
-        mainWindow.show();
-        activeWindow.focus();
+      if (!activeWindow || mainWindow === activeWindow) {
+        return;
       }
+
+      // This is a "make the main window visible, but leave focus alone" request, so
+      // there is nothing to do when it is already on screen. Re-presenting it and
+      // handing focus back is a bounce that window managers with focus-stealing
+      // prevention refuse halfway through, stranding focus on the main window.
+      // https://github.com/rstudio/rstudio/issues/18635
+      if (mainWindow.isVisible() && !mainWindow.isMinimized()) {
+        return;
+      }
+
+      // surface a hidden or minimized main window without activating it
+      mainWindow.showInactive();
     });
 
     ipcMain.handle('desktop_rendering_engine', () => {
