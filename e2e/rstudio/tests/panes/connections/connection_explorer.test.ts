@@ -19,7 +19,10 @@ import {
 for (const base of ALL_DB_TARGETS) {
   const target = effectiveTarget(base);
 
-  test.describe(`Connection explorer (${target.id})`, () => {
+  // Restarts the R session in beforeEach and then opens the New Connection
+  // wizard: on Server that makes the dialog disappear before use. See the
+  // comment on the matching describe in connection_connect.test.ts.
+  test.describe(`Connection explorer (${target.id})`, { tag: ['@desktop_only'] }, () => {
     let actions: ConnectionsPaneActions;
     let driverVisible = false;
     let seeded = false;
