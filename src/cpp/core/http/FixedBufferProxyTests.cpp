@@ -390,7 +390,7 @@ struct Fixture
 void makeContentLengthResponse(http::Response* pResponse, const std::string& body)
 {
    pResponse->setStatusCode(200);
-   pResponse->setHeader("Content-Length", body.size());
+   pResponse->setHeader("Content-Length", static_cast<uintmax_t>(body.size()));
 }
 
 void makeChunkedResponse(http::Response* pResponse)
@@ -808,7 +808,7 @@ TEST(FixedBufferProxy, NonSuccessfulResponseToConnectKeepsOrdinaryFraming)
    std::string body = "method not allowed";
    http::Response upstream;
    upstream.setStatusCode(405);
-   upstream.setHeader("Content-Length", body.size());
+   upstream.setHeader("Content-Length", static_cast<uintmax_t>(body.size()));
 
    fixture.deliver(upstream, body);
    fixture.deliver(upstream, "");
