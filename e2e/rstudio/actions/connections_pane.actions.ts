@@ -36,10 +36,33 @@ export class ConnectionsPaneActions {
    * Open the New Connection wizard and wait for its type list. The first
    * open of a session also triggers the installer-catalog refresh RPC, so
    * the deadline is generous.
+   *
+   * Retries the whole open if the dialog vanishes again moments later:
+   * shortly after a Server-mode session restart, the automation bridge's
+   * readiness signal does not reliably re-arm (rstudio/rstudio#18064,
+   * "the automation bridge's ready signal not re-arming across a Server
+   * restart"), and a dialog opened in that window can be swept away by a
+   * late-settling layout event before anything gets a chance to use it --
+   * observed as the *caller's* very next step (selecting a type, or filling
+   * a field) timing out against a dialog that no longer exists, with no
+   * indication here that it ever closed. Confirming the dialog is still
+   * present a beat after opening turns that into a named retry instead.
    */
   async openWizard(): Promise<void> {
-    await executeCommand(this.page, 'newConnection');
-    await this.wizard.dialog.waitFor({ state: 'visible', timeout: 20000 });
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      await executeCommand(this.page, 'newConnection');
+      await this.wizard.dialog.waitFor({ state: 'visible', timeout: 20000 });
+      await this.page.waitForTimeout(500);
+      if (await this.wizard.dialog.isVisible()) return;
+      console.warn(
+        `[wizard] New Connection dialog closed itself shortly after opening (attempt ${attempt})`,
+      );
+    }
+    throw new Error(
+      `New Connection wizard dialog closed itself shortly after opening, on every attempt ` +
+        `(${maxAttempts}) -- see rstudio/rstudio#18064.`,
+    );
   }
 
   /**
