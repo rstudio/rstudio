@@ -503,11 +503,24 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
  * lookup here would always see "nothing provisioned yet" and silently fall
  * back to the local path, regardless of what the real run does later.
  *
- * Mutates `target` in place rather than returning a new object: every
- * closure in the describe block (test bodies, other beforeAll/beforeEach
- * hooks) already captured this exact object when effectiveTarget() built it,
- * and none of them re-fetch it, so an in-place correction is what they all
- * see.
+ * Sets the PW_DB_<ID> override effectiveTarget() already understands,
+ * rather than only mutating target's fields directly: several functions in
+ * utils/connections.ts (dbReachableFromSession, resetConnectionState) accept
+ * a target and immediately call effectiveTarget() on it again to get
+ * connectionType/host/etc. -- discarding any direct field mutation right
+ * back to the local sandbox path, since effectiveTarget() only ever reads
+ * PW_SANDBOX and this same environment variable, never the object it was
+ * given. Verified the hard way: a direct mutation here reached the wizard
+ * (which reads target.database straight off the object) but not the
+ * reachability probe (which re-derives). The environment variable reaches
+ * both, because every effectiveTarget() call, no matter who makes it or
+ * when, reads it fresh.
+ *
+ * Then re-derives `target` itself from that override and copies the result
+ * onto it in place: every closure in the describe block (test bodies, other
+ * beforeAll/beforeEach hooks) already captured this exact object when
+ * effectiveTarget() first built it, and none of them re-fetch it, so an
+ * in-place correction is what they all see.
  */
 export function resolveRemoteFileTarget(target: EffectiveDbTarget): void {
   if (target.kind !== 'file' || target.overridden) return;
@@ -518,9 +531,8 @@ export function resolveRemoteFileTarget(target: EffectiveDbTarget): void {
   // Linux machine -- RStudio Server is Linux-only -- so no Windows-style
   // backslash normalization is needed here the way effectiveTarget's local
   // branch needs for a Windows dev machine's own sandbox path.
-  const database = `${remoteDir}/${target.fileName}`;
-  target.database = database;
-  target.wizardFields = { Database: database };
+  process.env[`PW_DB_${target.id.toUpperCase()}`] = `${remoteDir}/${target.fileName}`;
+  Object.assign(target, effectiveTarget(target));
 }
 
 /**
