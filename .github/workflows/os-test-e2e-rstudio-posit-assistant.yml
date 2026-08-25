@@ -1,14 +1,11 @@
 name: "Test: E2E Playwright RStudio (Posit Assistant Release Gate, Open Source)"
 
-# Weekly release gate for Posit Assistant, not for RStudio: RStudio is only the
+# Release gate for Posit Assistant, not for RStudio: RStudio is only the
 # host these tests run inside. Posit Assistant ships independently over its own
 # CDN manifest, so before a pre-release build is promoted to GA, this workflow
 # installs the latest RStudio daily, opts that run into the pre-release (test)
 # manifest, and runs the @ai suite against it -- the same procedure previously
 # run by hand (rstudio/rstudio#18477).
-#
-# Scheduled for Monday 07:30 UTC, long after Sunday's Posit Assistant build
-# (04:00 UTC), so the candidate already exists.
 #
 # One engine per platform family, not the full 21-engine matrix: Linux Desktop
 # (Ubuntu 24 x86_64), macOS (26 arm64), and Windows (Server 2025, the permanent
@@ -32,7 +29,7 @@ name: "Test: E2E Playwright RStudio (Posit Assistant Release Gate, Open Source)"
 
 on:
   schedule:
-    - cron: '30 7 * * 1'   # Monday 07:30 UTC (3:30 AM EDT)
+    - cron: '30 7 * * 1,4'   # Monday and Thursday 07:30 UTC (3:30 AM EDT)
   workflow_dispatch: {}
 
 concurrency:
