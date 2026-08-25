@@ -32,9 +32,8 @@ jobs:
         id: generate-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.CLAUDE_APP_ID }}
-          private-key: ${{ secrets.CLAUDE_APP_PEM }}
-          permission-actions: read
+          app-id: ${{ secrets.WORKBENCH_IDE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.WORKBENCH_IDE_RELEASE_PEM }}
           permission-contents: write
           permission-pull-requests: write
           permission-issues: write
@@ -79,7 +78,6 @@ jobs:
           show_full_output: true
           github_token: ${{ steps.generate-token.outputs.token }}
           branch_prefix: ${{ steps.branch-prefix.outputs.value }}
-          additional_permissions: "actions: read"
           track_progress: true
           prompt: |
             You are a helpful AI assistant for code reviews and issue triage in the
