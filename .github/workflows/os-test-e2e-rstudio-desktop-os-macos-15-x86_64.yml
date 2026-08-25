@@ -169,7 +169,7 @@ jobs:
       # Consumed by src/gwt/CMakeLists.txt; folded into the GWT cache key below.
       GWT_STYLE: PRETTY
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Pre-built tool deps (Boost, SOCI, pandoc, quarto, GWT, node, panmirror,
       # copilot-language-server, etc.) all land under RSTUDIO_TOOLS_ROOT.
@@ -395,7 +395,7 @@ jobs:
       PW_RSTUDIO_R_LIBS_USER: ${{ github.workspace }}/R-libs
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
@@ -666,7 +666,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
