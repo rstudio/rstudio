@@ -114,6 +114,16 @@ void ChildProcessTracker::attemptToReapProcess(
    // error occurred
    else if (result == -1)
    {
+      // ECHILD is benign here: because addProcess probes for an early exit on
+      // the launching thread, that probe and the SIGCHLD waiter can race to
+      // reap the same pid, and the loser of that race sees ECHILD after the
+      // winner has already fired the exit handler
+      if (errno == ECHILD)
+      {
+         DLOGF("Child process {} was already reaped", pid);
+         return;
+      }
+
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("pid", pid);
       LOG_ERROR(error);

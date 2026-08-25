@@ -943,6 +943,53 @@ TEST(PosixTests, ChildProcessTrackerReapsChildThatExitedBeforeRegistration)
    EXPECT_EQ(ECHILD, errno);
 }
 
+TEST(PosixTests, ChildProcessTrackerLeavesRunningChildAlone)
+{
+   pid_t pid = ::fork();
+   ASSERT_NE(-1, pid);
+
+   if (pid == 0)
+   {
+      // sleep rather than block forever, so that a regression which drops
+      // WNOHANG from waitPid surfaces as the failed expectation below rather
+      // than as a hung test
+      ::sleep(30);
+      ::_exit(0);
+   }
+
+   bool exitHandled = false;
+   ChildProcessTracker tracker;
+   tracker.addProcess(pid, [&](PidType, int)
+   {
+      exitHandled = true;
+   });
+
+   // registration must neither block on nor reap a child that is still
+   // running: waitpid returning 0 means the pid is alive and unreaped
+   EXPECT_FALSE(exitHandled);
+   EXPECT_EQ(0, ::waitpid(pid, nullptr, WNOHANG));
+
+   // once the child really does exit, the tracker still reaps it
+   ASSERT_EQ(0, ::kill(pid, SIGKILL));
+
+   siginfo_t childInfo;
+   ::memset(&childInfo, 0, sizeof(childInfo));
+   int result;
+   do
+   {
+      result = ::waitid(P_PID, pid, &childInfo, WEXITED | WNOWAIT);
+   }
+   while (result == -1 && errno == EINTR);
+   ASSERT_EQ(0, result);
+
+   tracker.notifySIGCHILD();
+   EXPECT_TRUE(exitHandled);
+
+   errno = 0;
+   EXPECT_EQ(-1, ::waitpid(pid, nullptr, WNOHANG));
+   EXPECT_EQ(ECHILD, errno);
+}
+
 } // namespace tests
 } // namespace system
 } // namespace core
