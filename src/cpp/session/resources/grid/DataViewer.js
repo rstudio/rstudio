@@ -6717,16 +6717,24 @@ var applyScrollbarMode = function() {
       if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
    }
 
-   // The switch moves the bars in and out of layout, which changes both the
-   // overscroll tail past the last row and the body height the info bar's
-   // visible-row range is derived from; refresh both now rather than at
-   // whatever unrelated event rebuilds next, the way onResize does for the same
-   // class of change. Native scrollbars also take up viewport width, which can
-   // change whether the columns overflow, so the "Go to column" control is
-   // re-evaluated too (the scrollbar updates inside are no-ops when the
-   // overlays are destroyed).
+   // The switch moves the bars in and out of layout, changing the viewport's
+   // client box the way a resize does: the pinned pane's horizontal overscroll
+   // padding, the overscroll tail past the last row and the body height the
+   // info bar's visible-row range is derived from all follow from it, so
+   // refresh them here rather than at whatever unrelated event rebuilds next.
+   // Native scrollbars also take up viewport width, which can change whether
+   // the columns overflow, so the "Go to column" control is re-evaluated too
+   // (the scrollbar updates inside are no-ops when the overlays are destroyed).
+   applyPinnedColumns();
    renderVisibleRows(true);
-   updateInfoBar();
+
+   // Not before the first block lands: initGrid calls this during bootstrap,
+   // where totalRows is already set while filteredRows is still 0, and the info
+   // bar is aria-live -- it would announce "Showing 0 to 0 of 0 entries
+   // (filtered from N total entries)" on every grid open.
+   if (filteredRows > 0)
+      updateInfoBar();
+
    updateCustomScrollbars();
 };
 

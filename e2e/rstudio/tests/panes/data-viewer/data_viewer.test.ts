@@ -22,6 +22,11 @@ const VIEWER_FRAME = '#rstudio_data_viewer_frame';
 // what the virtualizer reserves as an overscroll tail past the last row.
 const H_SCROLLBAR_HEIGHT = 11;
 
+// Grid row height, in sync with ROW_HEIGHT in DataViewer.js. The virtualizer
+// assumes a uniform row height, and the info bar's visible-row range is derived
+// from it.
+const ROW_HEIGHT = 23;
+
 // Waits for the data viewer iframe to render a column header.
 // Used as a "viewer is ready" gate before introspection. Returns the
 // FrameLocator so callers can chain queries off the same iframe.
@@ -1784,6 +1789,22 @@ test.describe('Data Viewer', () => {
       expect(native.scrollHeight - overlayScrollHeight)
         .toBe(expectedTail - H_SCROLLBAR_HEIGHT);
 
+      // The info bar's range is derived from the same client box, so it is
+      // refreshed at the switch too. Computed rather than hardcoded because the
+      // two modes differ by the native gutter minus the tail -- a few px, which
+      // may or may not cross a row boundary on any given host.
+      const expectedLast = await dataViewer.viewport.evaluate(
+        (el: HTMLElement, { tail, rowHeight }: { tail: number; rowHeight: number }) => {
+          const headerRow = el.ownerDocument.getElementById('data_cols');
+          const headerH = headerRow?.parentElement?.offsetHeight ?? 0;
+          const bodyHeight = Math.max(0, el.clientHeight - headerH - tail);
+          const last = Math.round((el.scrollTop + bodyHeight) / rowHeight);
+          return Math.max(1, Math.min(last, 500));
+        },
+        { tail: expectedTail, rowHeight: ROW_HEIGHT },
+      );
+      await expect(dataViewer.gridInfo).toContainText(`Showing 1 to ${expectedLast} of 500`);
+
       const box = await dataViewer.viewport.boundingBox();
       if (!box) throw new Error('grid viewport has no bounding box');
       await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
@@ -1819,6 +1840,18 @@ test.describe('Data Viewer', () => {
 
       await expect(dataViewer.gridInfo)
         .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+
+      // Switching back restores the tail. This also validates the baseline the
+      // delta above was measured against: had the pre-flip render committed no
+      // tail, the scroll range would not come back to the same number here.
+      await setPref(page, 'data_viewer_use_overlay_scrollbars', true);
+      await expect(dataViewer.horizontalScrollbar).toBeAttached();
+      await expect
+        .poll(
+          () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollHeight),
+          { message: 'overlay mode should restore the overscroll tail' },
+        )
+        .toBe(overlayScrollHeight);
     } finally {
       await clearPref(page, 'data_viewer_use_overlay_scrollbars');
       await consoleActions.executeInConsole(
