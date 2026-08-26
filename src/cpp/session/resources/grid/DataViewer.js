@@ -6695,9 +6695,11 @@ var attachSidebarScrollbar = function() {
 };
 
 // Reconcile the DOM with the current useOverlayScrollbars flag: toggle the
-// body class that gates the native-scrollbar-hiding CSS, and create or destroy
-// the overlay scrollbars to match. Safe to call repeatedly and whether or not
-// the grid/sidebar DOM exists yet (the create/attach helpers no-op then).
+// body class that gates the native-scrollbar-hiding CSS, create or destroy the
+// overlay scrollbars to match, and re-render the row window against the client
+// box the switch leaves behind. Safe to call repeatedly and whether or not the
+// grid/sidebar DOM exists yet (the create/attach helpers and the render all
+// no-op then, which is also what the bootstrap call gets).
 var applyScrollbarMode = function() {
    document.body.classList.toggle("overlay-scrollbars", useOverlayScrollbars);
 
@@ -6715,13 +6717,16 @@ var applyScrollbarMode = function() {
       if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
    }
 
-   // The switch moves the bars in and out of layout, which changes the
-   // overscroll tail past the last row; re-render so the bottom spacer is
-   // resized now rather than at whatever unrelated event rebuilds next. Native
-   // scrollbars also take up viewport width, which can change whether the
-   // columns overflow, so the "Go to column" control is re-evaluated too (the
-   // scrollbar updates inside are no-ops when the overlays are destroyed).
+   // The switch moves the bars in and out of layout, which changes both the
+   // overscroll tail past the last row and the body height the info bar's
+   // visible-row range is derived from; refresh both now rather than at
+   // whatever unrelated event rebuilds next, the way onResize does for the same
+   // class of change. Native scrollbars also take up viewport width, which can
+   // change whether the columns overflow, so the "Go to column" control is
+   // re-evaluated too (the scrollbar updates inside are no-ops when the
+   // overlays are destroyed).
    renderVisibleRows(true);
+   updateInfoBar();
    updateCustomScrollbars();
 };
 

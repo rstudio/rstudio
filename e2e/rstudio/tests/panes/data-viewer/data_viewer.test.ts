@@ -1746,10 +1746,43 @@ test.describe('Data Viewer', () => {
       await waitForViewer(dataViewer);
       await expect(dataViewer.horizontalScrollbar).toBeAttached();
 
+      // The bar is in the DOM from the moment it is created and only gets
+      // display:none when the axis doesn't overflow, so gate on the overflow
+      // itself: on a host wide enough to fit 30 columns the tail is correctly 0
+      // and the assertions below would otherwise fail for the wrong reason.
+      const overflow = () => dataViewer.viewport.evaluate(
+        (el: HTMLElement) => el.scrollWidth - el.clientWidth,
+      );
+      await expect.poll(
+        overflow,
+        { message: 'frame should overflow the viewport horizontally' },
+      ).toBeGreaterThan(1);
+
+      const overlayScrollHeight = await dataViewer.viewport.evaluate(
+        (el: HTMLElement) => el.scrollHeight,
+      );
+
       // The host pushes the preference into the iframe as a setOption, which
       // destroys the overlay bars and hands scrolling back to the browser.
       await setPref(page, 'data_viewer_use_overlay_scrollbars', false);
       await expect(dataViewer.horizontalScrollbar).toHaveCount(0);
+
+      // Read before any scroll input: a scroll re-renders and would repair a
+      // stale tail by itself, so this is the assertion that pins the resize to
+      // the switch. The scroll range loses the tail where the native bar takes
+      // layout space and keeps it where the platform draws an overlay.
+      const native = await dataViewer.viewport.evaluate((el: HTMLElement) => ({
+        scrollHeight: el.scrollHeight,
+        // #gridViewport carries no border, so offsetHeight - clientHeight is
+        // exactly the layout space the native bar claimed; zero means the
+        // platform draws it as an overlay.
+        gutter: el.offsetHeight - el.clientHeight,
+        overflow: el.scrollWidth - el.clientWidth,
+      }));
+      expect(native.overflow).toBeGreaterThan(1);
+      const expectedTail = native.gutter > 0 ? 0 : H_SCROLLBAR_HEIGHT;
+      expect(native.scrollHeight - overlayScrollHeight)
+        .toBe(expectedTail - H_SCROLLBAR_HEIGHT);
 
       const box = await dataViewer.viewport.boundingBox();
       if (!box) throw new Error('grid viewport has no bounding box');
@@ -1768,15 +1801,11 @@ test.describe('Data Viewer', () => {
       const geometry = await dataViewer.viewport.evaluate((el: HTMLElement) => {
         const rows = el.ownerDocument.querySelectorAll('#gridBody tr:not(.spacer-row)');
         const last = rows[rows.length - 1] as HTMLElement;
-        // #gridViewport carries no border, so offsetHeight - clientHeight is
-        // exactly the layout space the native bar claimed; zero means the
-        // platform draws it as an overlay.
-        const gutter = el.offsetHeight - el.clientHeight;
         return {
           lastRow: last.getAttribute('data-row'),
           lastRowBottom: last.getBoundingClientRect().bottom,
-          clientBottom: el.getBoundingClientRect().bottom - gutter,
-          gutter,
+          clientBottom: el.getBoundingClientRect().bottom
+            - (el.offsetHeight - el.clientHeight),
         };
       });
       expect(geometry.lastRow).toBe('499');
@@ -1785,7 +1814,6 @@ test.describe('Data Viewer', () => {
       // row ends flush with the client box; an overlay bar needs the same tail
       // the custom one gets. The 1px tolerance is for fractional scroll offsets
       // under display scaling.
-      const expectedTail = geometry.gutter > 0 ? 0 : H_SCROLLBAR_HEIGHT;
       expect(Math.abs(geometry.lastRowBottom - (geometry.clientBottom - expectedTail)))
         .toBeLessThanOrEqual(1);
 
