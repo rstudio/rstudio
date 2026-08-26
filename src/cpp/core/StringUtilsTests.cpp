@@ -15,6 +15,9 @@
 
 #include <gtest/gtest.h>
 
+#include <clocale>
+#include <string>
+
 #include <core/Algorithm.hpp>
 #include <core/StringUtils.hpp>
 
@@ -441,6 +444,36 @@ TEST(StringTest, Utf8IncompleteSuffixLengthIgnoresInvalidSequences)
    // though its last bytes are continuation bytes
    EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xE2\x94\x80"));
 }
+
+#ifdef _WIN32
+
+TEST(StringTest, Utf8ToSystemHonorsAnExplicitCodePage)
+{
+   // U+00C7 (C with cedilla) and U+0131 (dotless i): the first is
+   // representable in CP1252, the second is not
+   std::string utf8("\xC3\x87\xC4\xB1");
+
+   const wchar_t* pLocale = ::_wsetlocale(LC_CTYPE, nullptr);
+   ASSERT_NE(nullptr, pLocale);
+   std::wstring locale(pLocale);
+
+   // converting for a UTF-8 code page leaves the text alone no matter what
+   // the C runtime locale happens to be. this is what keeps console input
+   // intact when something has clobbered the process locale (#18139); the
+   // wctomb() path this replaces would mangle it in the "C" locale
+   ASSERT_NE(nullptr, ::_wsetlocale(LC_CTYPE, L"C"));
+   EXPECT_EQ(utf8, utf8ToSystem(utf8, true, 65001));
+
+   // restore through the wide variant -- restoring through the narrow name is
+   // the round-trip that fails for locale names holding non-ASCII characters
+   ASSERT_NE(nullptr, ::_wsetlocale(LC_CTYPE, locale.c_str()));
+
+   // an unrepresentable character is escaped for R rather than transliterated
+   // into a lookalike that means something else
+   EXPECT_EQ(std::string("\xC7") + "\\u131", utf8ToSystem(utf8, true, 1252));
+}
+
+#endif
 
 } // end namespace string_utils
 } // end namespace core

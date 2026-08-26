@@ -297,13 +297,28 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
    return false;
 }
 
-std::string utf8ToSystem(const std::string& str,
-                         bool escapeInvalidChars)
-{
-   if (str.empty())
-      return std::string();
-
 #ifdef _WIN32
+
+namespace {
+
+// Convert UTF-8 text to a narrow encoding, escaping (or replacing) the
+// characters that encoding cannot represent. A negative code page means "use
+// whatever the C runtime's LC_CTYPE locale implies", which is what wctomb()
+// does.
+std::string utf8ToSystemImpl(const std::string& str,
+                             bool escapeInvalidChars,
+                             int codepage)
+{
+   // resolve CP_ACP so the UTF-8 case below recognizes it -- the process code
+   // page really is UTF-8 when the system is configured that way
+   if (codepage == CP_ACP)
+      codepage = static_cast<int>(::GetACP());
+
+   // a UTF-8 target needs no conversion at all. taking the general path
+   // anyway would mangle characters outside the BMP, since it walks the text
+   // one wchar_t at a time and so splits surrogate pairs
+   if (codepage == CP_UTF8)
+      return str;
 
    std::vector<wchar_t> wide(str.length() + 1);
    int chars = ::MultiByteToWideChar(
@@ -323,9 +338,31 @@ std::string utf8ToSystem(const std::string& str,
    // Only go up to chars - 1 because last char is \0
    for (int i = 0; i < chars - 1; i++)
    {
-      int n = wctomb(buffer, wide[i]);
+      int n;
 
-      if (n == -1)
+      if (codepage < 0)
+      {
+         n = wctomb(buffer, wide[i]);
+         if (n == -1)
+            n = 0;
+      }
+      else
+      {
+         // WC_NO_BEST_FIT_CHARS so that an unrepresentable character is
+         // reported here rather than silently transliterated into a lookalike
+         // (dotless i as i, say) that means something else
+         BOOL usedDefault = FALSE;
+         n = ::WideCharToMultiByte(
+                  codepage, WC_NO_BEST_FIT_CHARS,
+                  &wide[i], 1,
+                  buffer, sizeof(buffer),
+                  nullptr, &usedDefault);
+
+         if (usedDefault)
+            n = 0;
+      }
+
+      if (n == 0)
       {
          if (escapeInvalidChars)
          {
@@ -346,7 +383,37 @@ std::string utf8ToSystem(const std::string& str,
          output.write(buffer, n);
       }
    }
+
    return output.str();
+}
+
+} // anonymous namespace
+
+#endif
+
+std::string utf8ToSystem(const std::string& str,
+                         bool escapeInvalidChars)
+{
+   if (str.empty())
+      return std::string();
+
+#ifdef _WIN32
+   return utf8ToSystemImpl(str, escapeInvalidChars, -1);
+#else
+   // Assumes that UTF8 is the locale on POSIX
+   return str;
+#endif
+}
+
+std::string utf8ToSystem(const std::string& str,
+                         bool escapeInvalidChars,
+                         int codepage)
+{
+   if (str.empty())
+      return std::string();
+
+#ifdef _WIN32
+   return utf8ToSystemImpl(str, escapeInvalidChars, codepage);
 #else
    // Assumes that UTF8 is the locale on POSIX
    return str;
