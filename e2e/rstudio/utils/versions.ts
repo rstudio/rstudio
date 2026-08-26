@@ -79,10 +79,25 @@ export async function collectRunVersions(
   };
 }
 
-/** One-line rendering, used by both the report header and the job summary. */
+/**
+ * Key this run's entry in the report metadata. OS alone is not unique: the
+ * Ubuntu 24 desktop engine and the Ubuntu 24 server engine report the same OS,
+ * and a merged report keeps one entry per key, so they would overwrite each
+ * other. Deriving the key here rather than asking each engine for a unique
+ * label means a newly added engine cannot forget to be distinct.
+ */
+export function runVersionsKey(v: RunVersions): string {
+  return `${v.os} ${v.edition}`;
+}
+
+/**
+ * One-line rendering, used by both the report header and the job summary. The
+ * edition is left out because runVersionsKey already carries it -- in the
+ * report the key is the label this sits next to.
+ */
 export function formatRunVersions(v: RunVersions): string {
   const release = v.releaseName ? ` "${v.releaseName}"` : '';
-  return [`RStudio ${v.rstudio}${release}`, `R ${v.r}`, v.edition].join(' · ');
+  return [`RStudio ${v.rstudio}${release}`, `R ${v.r}`].join(' · ');
 }
 
 /**

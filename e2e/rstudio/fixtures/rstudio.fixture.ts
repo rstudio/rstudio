@@ -9,6 +9,7 @@ import {
   collectRunVersions,
   formatRunVersions,
   publishRunVersions,
+  runVersionsKey,
   writeJobSummary,
 } from '../utils/versions';
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
@@ -123,7 +124,7 @@ async function disableLeakedAssistant(page: Page): Promise<void> {
  */
 async function recordVersions(page: Page, mode: Mode): Promise<void> {
   const versions = await collectRunVersions(page, mode);
-  console.log(`Run under test: ${formatRunVersions(versions)} · ${versions.os}`);
+  console.log(`Run under test: ${runVersionsKey(versions)} · ${formatRunVersions(versions)}`);
   publishRunVersions(versions);
   writeJobSummary(versions);
   await clearConsole(page);

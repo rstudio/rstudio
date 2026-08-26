@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { FullConfig, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
-import { formatRunVersions, loadRunVersions } from '../utils/versions';
+import { formatRunVersions, loadRunVersions, runVersionsKey } from '../utils/versions';
 
 /**
  * Writes a `.failed` marker file inside $PW_SANDBOX as soon as any test
@@ -50,15 +50,15 @@ export default class SandboxReporter implements Reporter {
   }
 
   /**
-   * Copy the workers' recorded versions into the report metadata, keyed by OS so
-   * a merged multi-engine report keeps every engine's line instead of the last
-   * one overwriting the rest. Re-read on every test end rather than once, so a
-   * worker that starts late still gets its line in.
+   * Copy the workers' recorded versions into the report metadata, keyed per
+   * engine so a merged multi-engine report keeps every engine's line instead of
+   * the last one overwriting the rest. Re-read on every test end rather than
+   * once, so a worker that starts late still gets its line in.
    */
   private recordRunVersions(): void {
     if (!this.config) return;
     const versions = loadRunVersions();
     if (!versions) return;
-    this.config.metadata[versions.os] = formatRunVersions(versions);
+    this.config.metadata[runVersionsKey(versions)] = formatRunVersions(versions);
   }
 }

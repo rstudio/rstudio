@@ -559,6 +559,11 @@ jobs:
           # distinguish these results) and to derive the platform+shard-unique
           # blob report file name.
           PW_PROJECT_LABEL: ${{ inputs.project }}-macos
+          # Human OS name for the "Run under test" block the harness writes to the
+          # report header and the run summary. Also the report metadata key, so it
+          # must name this engine alone: a merged multi-engine report keeps one
+          # entry per key, and engines sharing a key overwrite each other.
+          PW_OS_LABEL: macOS 26 (arm64)
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
