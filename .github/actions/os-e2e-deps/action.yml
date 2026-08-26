@@ -204,15 +204,14 @@ runs:
         echo "Installed R version: $VERSION_FULL"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         echo "version_full=$VERSION_FULL" >> "$GITHUB_OUTPUT"
-        # Surfaced on the job's summary page so the R version is visible without
-        # opening the log. Deliberately unconditional: every engine and every
-        # caller gets it, not just certification runs.
-        {
-          echo "### R version"
-          echo ""
-          echo "Installed R: \`$VERSION_FULL\` (cache series \`$VERSION\`)"
-        } >> "$GITHUB_STEP_SUMMARY"
-        # Also drop it in the workspace so a caller can upload it as an
+        # No job-summary line here any more: the harness writes a "Run under
+        # test" block covering the R version along with the RStudio version,
+        # release name, edition, and OS (e2e/rstudio/utils/versions.ts). Writing
+        # one here too would both duplicate the R version and push that block
+        # off the top of the summary, since the summary is append-only and this
+        # action runs first.
+        #
+        # Drop it in the workspace so a caller can upload it as an
         # artifact. A caller that runs several engines as one matrix cannot read
         # a per-engine job output (a matrix job collapses to one value), so an
         # artifact is the only way to attribute a version to its own engine.

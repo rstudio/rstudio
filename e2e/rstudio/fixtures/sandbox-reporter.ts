@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type { Reporter, TestCase, TestResult } from '@playwright/test/reporter';
+import type { FullConfig, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
+import { formatRunVersions, loadRunVersions } from '../utils/versions';
 
 /**
  * Writes a `.failed` marker file inside $PW_SANDBOX as soon as any test
@@ -15,11 +16,23 @@ import type { Reporter, TestCase, TestResult } from '@playwright/test/reporter';
  *
  * Treats 'failed', 'timedOut', and 'interrupted' as preserve-worthy;
  * 'skipped' is normal (test.skip()) and 'passed' is the happy path.
+ *
+ * Also lifts the "what did this run against?" line the workers recorded into the
+ * report's metadata, which is what puts it at the top of the HTML report. This
+ * has to happen here rather than in the fixture: workers run in their own
+ * processes with their own copy of the config, so only the reporter can reach the
+ * object the report is built from.
  */
 export default class SandboxReporter implements Reporter {
   private markerWritten = false;
+  private config?: FullConfig;
+
+  onBegin(config: FullConfig, _suite: Suite): void {
+    this.config = config;
+  }
 
   onTestEnd(_test: TestCase, result: TestResult): void {
+    this.recordRunVersions();
     if (this.markerWritten) return;
     if (result.status === 'passed' || result.status === 'skipped') return;
     const sandbox = process.env.PW_SANDBOX;
@@ -34,5 +47,18 @@ export default class SandboxReporter implements Reporter {
         `[sandbox] failed to write .failed marker: ${(err as Error).message} -- sandbox will be removed on teardown`,
       );
     }
+  }
+
+  /**
+   * Copy the workers' recorded versions into the report metadata, keyed by OS so
+   * a merged multi-engine report keeps every engine's line instead of the last
+   * one overwriting the rest. Re-read on every test end rather than once, so a
+   * worker that starts late still gets its line in.
+   */
+  private recordRunVersions(): void {
+    if (!this.config) return;
+    const versions = loadRunVersions();
+    if (!versions) return;
+    this.config.metadata[versions.os] = formatRunVersions(versions);
   }
 }
