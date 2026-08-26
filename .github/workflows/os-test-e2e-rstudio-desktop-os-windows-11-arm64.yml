@@ -946,12 +946,17 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
-          if ($env:OP_SERVICE_ACCOUNT_TOKEN) {
+          # ARM64 counts as "no credentials" regardless of the token:
+          # 1password/load-secrets-action picks its CLI by the runner's
+          # architecture, and 1Password publishes no Windows arm64 build
+          # (op_windows_arm64_*.zip is a 404, while amd64 exists). Reporting
+          # absent here routes the run down the same path a fork PR takes.
+          if ($env:OP_SERVICE_ACCOUNT_TOKEN -and '${{ runner.arch }}' -ne 'ARM64') {
             "present=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
             Write-Output "::notice::OP service account token present; test credentials will be retrieved."
           } else {
             "present=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            Write-Output "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
+            Write-Output "::warning::No usable OP credentials in this job (1Password publishes no Windows arm64 CLI). AI-gated tests will skip, so this run does NOT exercise Posit AI."
           }
 
       - name: Retrieve test credentials
