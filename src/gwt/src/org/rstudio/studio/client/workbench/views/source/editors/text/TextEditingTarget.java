@@ -8511,20 +8511,6 @@ public class TextEditingTarget implements
          return view_;
    }
 
-   /**
-    * The visual editor's selection when it can serve as a search term --
-    * non-empty and on a single line, the same selections the source editor's
-    * find bar accepts. Null otherwise.
-    */
-   private String visualModeSearchTerm()
-   {
-      String selection = visualMode_.getSelectedText();
-      if (StringUtil.isNullOrEmpty(selection) || selection.indexOf('\n') != -1)
-         return null;
-
-      return selection;
-   }
-
    @Handler
    void onFindReplace()
    {
@@ -8532,12 +8518,8 @@ public class TextEditingTarget implements
       // bar does; the visual editor's bar has no such behavior of its own.
       if (visualMode_.isVisualEditorActive())
       {
-         String searchTerm = visualModeSearchTerm();
-         if (searchTerm != null)
-         {
-            visualMode_.getFindReplace().findFromSelection(searchTerm);
-            return;
-         }
+         visualMode_.showFindReplace();
+         return;
       }
 
       getFindReplace().showFindReplace(true);
@@ -8566,7 +8548,7 @@ public class TextEditingTarget implements
    {
       if (visualMode_.isActivated()) {
          ensureVisualModeActive(() -> {
-            String searchTerm = visualModeSearchTerm();
+            String searchTerm = visualMode_.getSearchSelection();
             if (searchTerm != null)
                visualMode_.getFindReplace().findFromSelection(searchTerm);
          });

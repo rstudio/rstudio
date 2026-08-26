@@ -223,7 +223,10 @@ public class VisualMode implements VisualModeEditorSync,
          FindReplaceBar.getFindIcon(),
          (event) -> {
             HasFindReplace findReplace = getFindReplace();
-            findReplace.showFindReplace(!findReplace.isFindReplaceShowing());
+            if (findReplace.isFindReplaceShowing())
+               findReplace.showFindReplace(false);
+            else
+               showFindReplace();
          }
       );
    }
@@ -934,6 +937,19 @@ public class VisualMode implements VisualModeEditorSync,
       });
    }
 
+   /**
+    * Show the visual editor's find bar, seeded from the selection the way the
+    * source editor's bar seeds its own.
+    */
+   public void showFindReplace()
+   {
+      String searchTerm = getSearchSelection();
+      if (searchTerm != null)
+         getFindReplace().findFromSelection(searchTerm);
+      else
+         getFindReplace().showFindReplace(true);
+   }
+
    public HasFindReplace getFindReplace()
    {
       if (panmirror_ != null) {
@@ -1265,17 +1281,31 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeConfirm_.onUserSwitchToVisualModePending();
    }
    
-   /**
-    * The text selected in the visual editor. Read from the focused code chunk
-    * when there is one: the outer ProseMirror selection sees a chunk as a
-    * single node, so it cannot report a selection made inside one.
-    */
    public String getSelectedText()
    {
-      if (activeEditor_ != null)
-         return activeEditor_.getSelectionValue();
-
       return panmirror_.getSelectedText();
+   }
+   
+   /**
+    * The visual editor's selection when it can serve as a search term --
+    * non-empty and on a single line, the rule the source editor's find bar
+    * applies to its own selection. Null otherwise.
+    * 
+    * Read from the focused code chunk when there is one: the outer ProseMirror
+    * selection sees a chunk as a single node, so it cannot report a selection
+    * made inside one. Kept apart from getSelectedText(), whose paired writer
+    * replaceSelection() addresses the outer editor, so the two stay symmetric.
+    */
+   public String getSearchSelection()
+   {
+      String selection = activeEditor_ != null
+         ? activeEditor_.getSelectionValue()
+         : panmirror_.getSelectedText();
+
+      if (StringUtil.isNullOrEmpty(selection) || selection.indexOf('\n') != -1)
+         return null;
+
+      return selection;
    }
    
    public void replaceSelection(String value)

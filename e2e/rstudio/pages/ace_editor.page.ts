@@ -82,7 +82,13 @@ export class AceEditor extends PageObject {
       inVisualEditor: boolean;
     }): Ace.Editor => {
       if (inVisualEditor) {
-        const embedded = document.querySelectorAll('.ProseMirror .ace_editor');
+        // Scope to the visible document: a tab left open by an earlier test
+        // keeps its chunk editors mounted, and an unscoped walk can match one
+        // of those instead of the chunk this test means.
+        const roots = Array.from(document.querySelectorAll('.ProseMirror'))
+          .filter((root) => (root as HTMLElement).offsetParent !== null);
+        const embedded = roots.flatMap((root) =>
+          Array.from(root.querySelectorAll('.ace_editor')));
         for (let i = 0; i < embedded.length; i++) {
           const env = (embedded[i] as unknown as AceEditorElement).env;
           if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
@@ -91,7 +97,7 @@ export class AceEditor extends PageObject {
         }
         throw new Error(
           `AceEditor.visualModeChunk('${marker}'): no embedded editor contains it `
-          + `(${embedded.length} mounted)`,
+          + `(${embedded.length} mounted in ${roots.length} visible document(s))`,
         );
       }
       if (marker === '') {

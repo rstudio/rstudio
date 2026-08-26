@@ -7,6 +7,7 @@
  * `multiline_chunk_execution.test.ts`.
  */
 
+import type { Locator } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
@@ -24,6 +25,18 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     sourceActions = new SourcePaneActions(page, consoleActions);
     await consoleActions.clearConsole();
   });
+
+  // Focus a chunk's embedded editor in the visual editor, addressing it by its
+  // `{r <label>}` header, which the chunk editor renders as its first line:
+  // unlike the body, it survives edits, so the same locator resolves before and
+  // after. Force-click the hidden textarea -- an ace_content overlay intercepts
+  // normal clicks on it.
+  const focusChunk = (proseMirror: Locator, header: string) =>
+    proseMirror
+      .locator('.ace_editor')
+      .filter({ hasText: header })
+      .locator('textarea.ace_text-input')
+      .click({ force: true });
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
     const fileName = `quarto_warn_${Date.now()}.qmd`;
@@ -239,17 +252,6 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
 
       const prose = proseMirror.getByText('Prose mentioning a widget.');
-      // Chunks are addressed by their `{r <label>}` header, which a chunk
-      // editor renders as its first line: unlike the body, it survives the
-      // edits below, so the same locator resolves before and after.
-      // Force-click the hidden textarea to focus a chunk: an ace_content
-      // overlay intercepts normal clicks on it.
-      const focusChunk = (text: string) =>
-        proseMirror
-          .locator('.ace_editor')
-          .filter({ hasText: text })
-          .locator('textarea.ace_text-input')
-          .click({ force: true });
 
       // Prose has no Ace instance behind it and ProseMirror has no
       // multi-cursor concept, so both commands report unavailable there
@@ -258,7 +260,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
       expect(await isCommandEnabled(page, 'findAll')).toBe(false);
 
-      await focusChunk('{r alpha}');
+      await focusChunk(proseMirror, '{r alpha}');
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       expect(await isCommandEnabled(page, 'findAll')).toBe(true);
 
@@ -272,7 +274,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect.poll(() => first.getValue()).toContain('gadget <- 1\ngadget + widget');
 
       // Find All takes every occurrence in the focused chunk.
-      await focusChunk('{r beta}');
+      await focusChunk(proseMirror, '{r beta}');
       const second = AceEditor.visualModeChunk(page, '{r beta}');
       await second.find('gizmo');
       await executeCommand(page, 'findAll');
@@ -288,9 +290,12 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Close the tab rather than toggling back to source mode: toggling
       // leaves the chunks' Ace editors mounted, which makes the source-mode
       // editor locators ambiguous for later tests in the shared IDE.
-      await sourceActions.closeSourceAndDeleteFile(fileName).catch(() => {});
+      await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
+        console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
+      });
     }
   });
+
   test('the visual mode find bar is seeded from the selection (#16540)', async ({ rstudioPage: page }) => {
     const fileName = `quarto_find_seed_${Date.now()}.qmd`;
     // `sassafras` sits alone in its paragraph so a double-click at the
@@ -302,7 +307,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       '',
       'sassafras',
       '',
-      '```{r alpha}',
+      '```{r seed}',
       'gizmo <- 2',
       '```',
     ].join('\n');
@@ -330,16 +335,14 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       // So does a selection made inside a code chunk, which the outer
       // ProseMirror selection cannot see on its own.
-      await proseMirror
-        .locator('.ace_editor')
-        .filter({ hasText: '{r alpha}' })
-        .locator('textarea.ace_text-input')
-        .click({ force: true });
-      await AceEditor.visualModeChunk(page, '{r alpha}').find('gizmo');
+      await focusChunk(proseMirror, '{r seed}');
+      await AceEditor.visualModeChunk(page, '{r seed}').find('gizmo');
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('gizmo');
     } finally {
-      await sourceActions.closeSourceAndDeleteFile(fileName).catch(() => {});
+      await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
+        console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
+      });
     }
   });
 });
