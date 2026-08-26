@@ -936,6 +936,50 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   // Outcome of copying handler callbacks out of their members under
+   // socketMutex_, so they can be invoked once the lock is released.
+   enum class SnapshotStatus
+   {
+      Ready,    // the copies completed and are safe to act on
+      Disabled, // disableHandlers() has already detached the handlers
+      Failed    // the snapshot threw; the copies are unusable
+   };
+
+   // Take one such snapshot. `snapshot` runs holding socketMutex_ and returns
+   // false when it finds the handlers already disabled, so each site keeps its
+   // own disabled test in the same critical section as its own copies -- the
+   // property disableHandlers()'s contract comment depends on.
+   //
+   // Unlike LOCK_MUTEX, a throw here is reported rather than logged and stepped
+   // over. Copying a boost::function allocates whenever its target is too large
+   // for the small-object buffer, so a snapshot can fail under exactly the
+   // memory pressure streaming exists to relieve -- and LOCK_MUTEX's
+   // fall-through would leave the locals empty, which every site below reads as
+   // "no handler installed" and acts on: a body piece quietly appended to
+   // response_ instead of handed to the streaming consumer, a completion or a
+   // connect notification never delivered. (On the lock-acquisition path it
+   // also left the sites' `disabled` flag indeterminate.) Failed sends the
+   // caller to its error path instead, where the client settles and the error
+   // handler reports it.
+   //
+   // No message is composed from the exception here: the one it exists to
+   // survive is std::bad_alloc, so doing so could throw again on the way out,
+   // and which site failed -- which the caller names -- is the more useful half
+   // of the diagnosis anyway.
+   template <typename F>
+   SnapshotStatus snapshotHandlers(const F& snapshot)
+   {
+      try
+      {
+         boost::lock_guard<boost::mutex> lock(socketMutex_);
+         return snapshot() ? SnapshotStatus::Ready : SnapshotStatus::Disabled;
+      }
+      catch (...)
+      {
+         return SnapshotStatus::Failed;
+      }
+   }
+
    void handleWrite(const boost::system::error_code& ec)
    {
       try
@@ -943,17 +987,42 @@ private:
          if (!ec)
          {
             // invoke connect handler if we have one -- checked under the
-            // same lock disableHandlers() uses, see its declaration
+            // same lock disableHandlers() uses, see its declaration.
+            //
+            // The copy comes before requestWritten_ is set, and that ordering
+            // is load-bearing: close() and disableHandlers() read the flag as
+            // "handleWrite() has been and gone, so the connect notification was
+            // reported" (see disableHandlers()). A copy that fails can never
+            // report it, so leaving the flag false on that path is what routes
+            // the still-pending notification to the downstream-closed handler
+            // -- the answer a caller gated on the connect needs to hear.
             ConnectHandler handler;
-            LOCK_MUTEX(socketMutex_)
-            {
-               requestWritten_ = true;
-               if (!handlersDisabled_ && connectHandler_)
-                  handler = connectHandler_;
-            }
-            END_LOCK_MUTEX
+            SnapshotStatus status = snapshotHandlers(
+               [&]()
+               {
+                  bool disabled = handlersDisabled_;
+                  if (!disabled)
+                     handler = connectHandler_;
 
-            // actual invocation should be outside of lock to prevent recursive lock acquisitions
+                  requestWritten_ = true;
+                  return !disabled;
+               });
+
+            if (status == SnapshotStatus::Failed)
+            {
+               // Take the error path rather than reading the empty local as
+               // "no connect handler installed" and reading on: a caller that
+               // hears neither notification buffers until it times out (see
+               // setConnectHandler()). close(), from within handleError(),
+               // reports the pending notification; the error handler reports
+               // the failure itself.
+               handleUnexpectedError("Failed to copy connect handler", ERROR_LOCATION);
+               return;
+            }
+
+            // actual invocation should be outside of lock to prevent recursive
+            // lock acquisitions. Disabled leaves `handler` empty, as before:
+            // there is nothing left to report.
             if (handler)
                handler();
 
@@ -1458,20 +1527,32 @@ private:
          // lifetime holder that keeps the consumer alive if it re-entrantly
          // calls disableHandlers() from within the invocation.
          FixedBufferHandler handler;
-         bool disabled;
-         LOCK_MUTEX(socketMutex_)
-         {
-            disabled = handlersDisabled_;
-            handler = fixedBufferHandler_;
-         }
-         END_LOCK_MUTEX
+         SnapshotStatus status = snapshotHandlers(
+            [&]()
+            {
+               if (handlersDisabled_)
+                  return false;
 
-         if (disabled)
+               handler = fixedBufferHandler_;
+               return true;
+            });
+
+         if (status == SnapshotStatus::Disabled)
          {
             // Handlers were disabled (e.g. the downstream connection already
             // errored out and broke its reference cycle via
             // disableHandlers()) while chunks were still in flight -- stop
             // processing entirely.
+            return false;
+         }
+         else if (status == SnapshotStatus::Failed)
+         {
+            // An empty local here is indistinguishable from an absent handler,
+            // and the else branch below would act on it: this piece would be
+            // appended to response_ -- which nothing in streaming mode ever
+            // reads -- and the consumer would go on to be told the body was
+            // complete without it. Fail the request instead.
+            handleUnexpectedError("Failed to copy fixed buffer handler", ERROR_LOCATION);
             return false;
          }
 
@@ -1514,9 +1595,6 @@ private:
 
    void closeAndRespond()
    {
-      if (!keepConnectionAlive())
-         close();
-
       // Copy both handlers out under socketMutex_, checking
       // handlersDisabled_ in the same critical section disableHandlers()
       // uses to set it and detach them -- see that method's contract comment
@@ -1526,21 +1604,39 @@ private:
       // on its own. The local copies also serve as the lifetime holders that
       // keep the consumer alive if it re-entrantly calls disableHandlers()
       // from within the invocation.
+      //
+      // Taken before the close below rather than after it, so that a failed
+      // copy can still take the ordinary error path: handleError() ignores
+      // anything raised after a deliberate close, and would otherwise drop the
+      // failure without reporting it or detaching anything.
       ResponseHandler responseHandler;
       FixedBufferHandler fixedBufferHandler;
-      bool disabled;
-      LOCK_MUTEX(socketMutex_)
-      {
-         disabled = handlersDisabled_;
-         if (!disabled)
+      SnapshotStatus status = snapshotHandlers(
+         [&]()
          {
+            if (handlersDisabled_)
+               return false;
+
             responseHandler = responseHandler_;
             fixedBufferHandler = fixedBufferHandler_;
-         }
-      }
-      END_LOCK_MUTEX
+            return true;
+         });
 
-      if (disabled)
+      if (status == SnapshotStatus::Failed)
+      {
+         // This is the last word on the request, so an empty local here costs
+         // more than anywhere else: whichever handler failed to copy, the
+         // branches below would read as absent and settle silently -- either
+         // handing a streamed response to the whole-body handler with an empty
+         // response_ body, or completing with no notification delivered at all.
+         handleUnexpectedError("Failed to copy response handlers", ERROR_LOCATION);
+         return;
+      }
+
+      if (!keepConnectionAlive())
+         close();
+
+      if (status == SnapshotStatus::Disabled)
       {
          disableHandlers(); // idempotent
          return;
