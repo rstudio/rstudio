@@ -6718,22 +6718,28 @@ var applyScrollbarMode = function() {
    }
 
    // The switch moves the bars in and out of layout, changing the viewport's
-   // client box the way a resize does: the pinned pane's horizontal overscroll
-   // padding, the overscroll tail past the last row and the body height the
-   // info bar's visible-row range is derived from all follow from it, so
-   // refresh them here rather than at whatever unrelated event rebuilds next.
-   // Native scrollbars also take up viewport width, which can change whether
-   // the columns overflow, so the "Go to column" control is re-evaluated too
-   // (the scrollbar updates inside are no-ops when the overlays are destroyed).
+   // client box the way a resize does: the rendered column window, the pinned
+   // pane's horizontal overscroll padding, the overscroll tail past the last
+   // row and the body height the info bar's visible-row range is derived from
+   // all follow from it, so refresh them in onResize's order rather than
+   // leaving them to whatever unrelated event rebuilds next. syncColumnWindow
+   // runs applyPinnedColumns itself, but only when the window actually moved,
+   // which a scrollbar's width usually will not do. Native scrollbars also take
+   // up viewport width, which can change whether the columns overflow, so the
+   // "Go to column" control is re-evaluated too (the scrollbar updates inside
+   // are no-ops when the overlays are destroyed).
+   syncColumnWindow();
    applyPinnedColumns();
    renderVisibleRows(true);
 
-   // Not during bootstrap: initGrid calls this before the first block has
-   // landed, when totalRows is already set while filteredRows is still 0, and
-   // the info bar is aria-live -- it would announce "Showing 0 to 0 of 0
-   // entries (filtered from N total entries)" on every grid open. Every live
-   // switch runs with the flag clear.
-   if (!bootstrapping)
+   // Not on the server bootstrap, where initGrid calls this before the first
+   // block has landed: totalRows is already set while filteredRows is still 0,
+   // and the info bar is aria-live -- it would announce "Showing 0 to 0 of 0
+   // entries (filtered from N total entries)" on every grid open. The preview
+   // bootstrap already has its rows and does want the refresh: initWithData
+   // publishes a range before autoSizeColumns settles the widths that decide
+   // whether the grid overflows horizontally at all.
+   if (!bootstrapping || filteredRows > 0)
       updateInfoBar();
 
    updateCustomScrollbars();

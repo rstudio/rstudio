@@ -1743,15 +1743,21 @@ test.describe('Data Viewer', () => {
       await page.waitForTimeout(500);
       expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
 
-      // The last row is rendered, sits inside the viewport, and its bottom edge
-      // clears the top of the floating horizontal scrollbar. Before the fix its
-      // bottom was flush with the viewport, i.e. 11px below the bar's top.
+      // The last row is rendered and its bottom edge sits exactly a bar's height
+      // above the bottom of the viewport, which is where the bar floats. Before
+      // the fix it was flush with the viewport, i.e. 11px below the bar's top.
+      // Asserted two-sided so an oversized tail fails too, and against the
+      // viewport's own client box rather than the bar's rect: the bar is hosted
+      // on #gridPanes, so tying the assertion to its top would also encode that
+      // the two share a bottom edge. The bar is then checked one-sided, which
+      // is the property the report is about.
       const rect = await lastRenderedRowRect(dataViewer);
       const scrollbarTop = await dataViewer.horizontalScrollbar.evaluate(
         (el: HTMLElement) => el.getBoundingClientRect().top,
       );
       expect(rect.row).toBe('499');
-      expect(rect.bottom).toBeLessThanOrEqual(rect.clientBottom + 0.5);
+      expect(Math.abs(rect.bottom - (rect.clientBottom - H_SCROLLBAR_HEIGHT)))
+        .toBeLessThanOrEqual(1);
       expect(rect.bottom).toBeLessThanOrEqual(scrollbarTop + 0.5);
 
       // The info bar counts the last row as visible, as it did before.
