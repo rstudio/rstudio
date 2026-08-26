@@ -590,12 +590,12 @@ export class ChatPaneActions {
   /**
    * Open the conversation history panel, or do nothing if it is already open.
    *
-   * The history toolbar button is a strict toggle and the panel is removed
-   * from the DOM when closed, so a state-blind "click and expect the list"
-   * helper inverts the panel state whenever its assumption about the current
-   * state is wrong -- and its post-click assertion could only pass on a
-   * closing toggle by winning a race against the panel's fade-out. Checking
-   * the panel's actual state first makes these helpers idempotent.
+   * The panel is removed from the DOM when closed, so its presence is the
+   * open/closed signal. A state-blind "click and expect the list" helper
+   * inverts the panel state whenever its assumption about the current state is
+   * wrong -- and its post-click assertion could only pass on a closing toggle
+   * by winning a race against the panel's fade-out. Checking the panel's
+   * actual state first makes this idempotent.
    */
   async openConversationHistory(): Promise<void> {
     if (await this.chatPane.conversationHistoryPanel.isVisible()) {
@@ -606,14 +606,30 @@ export class ChatPaneActions {
   }
 
   /**
-   * Close the conversation history panel, or do nothing if it is already
-   * closed. See openConversationHistory for why this checks state first.
+   * Close the conversation history panel, converging on "closed" rather than
+   * deciding once.
+   *
+   * Recent assistant builds dismiss the panel themselves once a conversation
+   * is selected; older ones only close it via the toolbar toggle. A lone state
+   * check races that auto-close, and a toggle click landing while it is in
+   * flight re-opens the panel -- which is how this failed against the 1.1.7
+   * pre-release. Re-checking after each click settles on either build: the
+   * panel is already gone, the click closes it, or the next pass clears a
+   * re-open.
    */
   async closeConversationHistory(): Promise<void> {
-    if (!(await this.chatPane.conversationHistoryPanel.isVisible())) {
-      return;
-    }
-    await this.chatPane.historyBtn.click({ timeout: 10000 });
-    await expect(this.chatPane.conversationHistoryPanel).toBeHidden({ timeout: 10000 });
+    const panel = this.chatPane.conversationHistoryPanel;
+    await expect
+      .poll(
+        async () => {
+          if (await panel.isHidden()) {
+            return true;
+          }
+          await this.chatPane.historyBtn.click({ timeout: 10000 });
+          return panel.isHidden();
+        },
+        { timeout: 15000, intervals: [250, 500, 1000] },
+      )
+      .toBe(true);
   }
 }
