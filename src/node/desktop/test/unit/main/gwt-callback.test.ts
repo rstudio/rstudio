@@ -85,20 +85,39 @@ describe('DesktopCallback', () => {
       assert.isFalse(main.show.called);
     });
 
-    it('restores a minimized main window rather than only ordering it front', () => {
+    it('de-miniaturizes a minimized main window without activating it when it can', () => {
+      // Windows: showInactive() is SW_SHOWNOACTIVATE, so the window is back on
+      // screen and no longer minimized without focus having moved
       const main = fakeBrowserWindow({ visible: true, minimized: true });
-      emit(main, fakeBrowserWindow());
+      main.isMinimized = sinon.stub().onFirstCall().returns(true).returns(false);
+      const active = fakeBrowserWindow();
+      emit(main, active);
+
+      assert.isTrue(main.showInactive.calledOnce);
+      assert.isFalse(main.restore.called);
+      assert.isFalse(active.focus.called);
+      assert.isTrue(main.moveTop.calledOnce);
+    });
+
+    it('hands focus back when de-miniaturizing had to activate the main window', () => {
+      // macOS and X11: showInactive() leaves the window minimized, and restore()
+      // is an activating call there, so focus has to be returned explicitly
+      const main = fakeBrowserWindow({ visible: true, minimized: true });
+      const active = fakeBrowserWindow();
+      emit(main, active);
 
       assert.isTrue(main.restore.calledOnce);
       assert.isTrue(main.moveTop.calledOnce);
       assert.isFalse(main.show.called);
+      assert.isFalse(main.focus.called);
+      assert.isTrue(active.focus.calledOnce);
+      assert.isTrue(active.moveTop.calledBefore(active.focus));
     });
 
-    it('never focuses either window', () => {
+    it('never focuses either window unless the main window was minimized', () => {
       for (const state of [
         { visible: true, minimized: false },
         { visible: false, minimized: false },
-        { visible: true, minimized: true },
       ]) {
         const main = fakeBrowserWindow(state);
         const active = fakeBrowserWindow();
