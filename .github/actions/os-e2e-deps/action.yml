@@ -109,6 +109,15 @@ runs:
       shell: pwsh
       run: |
         $ErrorActionPreference = 'Stop'
+        # Server-Media-Foundation is a Windows Server feature, and
+        # Install-WindowsFeature ships only with Server's ServerManager module.
+        # Windows client images (windows-11-arm) include Media Foundation
+        # already, so there is nothing to install and nothing to wait for.
+        if (-not (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue)) {
+          Write-Host "Not a Windows Server image; Media Foundation ships with Windows client. Skipping."
+          exit 0
+        }
+
         $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
         $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
         $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
@@ -518,6 +527,15 @@ runs:
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
+        # Server-Media-Foundation is a Windows Server feature, and
+        # Install-WindowsFeature ships only with Server's ServerManager module.
+        # Windows client images (windows-11-arm) include Media Foundation
+        # already, so there is nothing to install and nothing to wait for.
+        if (-not (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue)) {
+          Write-Host "Not a Windows Server image; Media Foundation ships with Windows client. Skipping."
+          exit 0
+        }
+
         $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
         $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
 
