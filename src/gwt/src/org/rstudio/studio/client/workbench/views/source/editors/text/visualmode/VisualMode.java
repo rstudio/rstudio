@@ -1265,8 +1265,16 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeConfirm_.onUserSwitchToVisualModePending();
    }
    
+   /**
+    * The text selected in the visual editor. Read from the focused code chunk
+    * when there is one: the outer ProseMirror selection sees a chunk as a
+    * single node, so it cannot report a selection made inside one.
+    */
    public String getSelectedText()
    {
+      if (activeEditor_ != null)
+         return activeEditor_.getSelectionValue();
+
       return panmirror_.getSelectedText();
    }
    

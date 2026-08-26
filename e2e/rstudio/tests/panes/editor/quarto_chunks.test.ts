@@ -291,4 +291,55 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch(() => {});
     }
   });
+  test('the visual mode find bar is seeded from the selection (#16540)', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_find_seed_${Date.now()}.qmd`;
+    // `sassafras` sits alone in its paragraph so a double-click at the
+    // element's centre lands on it.
+    const content = [
+      '---',
+      'title: Find seeding',
+      '---',
+      '',
+      'sassafras',
+      '',
+      '```{r alpha}',
+      'gizmo <- 2',
+      '```',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      // The find box lives in the visual editor's own find bar; the source
+      // editor's bar is built lazily and this document never opens it.
+      const findInput = page.locator('.rstudio-find-replace-find-input input');
+
+      // A word selected in prose seeds the search term, as it does in source
+      // mode. Double-click near the paragraph's left edge: its box spans the
+      // full editor width, so the default centre point lands past the text.
+      await proseMirror.getByText('sassafras').dblclick({ position: { x: 4, y: 8 } });
+      await expect
+        .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+        .toBe('sassafras');
+
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('sassafras');
+
+      // So does a selection made inside a code chunk, which the outer
+      // ProseMirror selection cannot see on its own.
+      await proseMirror
+        .locator('.ace_editor')
+        .filter({ hasText: '{r alpha}' })
+        .locator('textarea.ace_text-input')
+        .click({ force: true });
+      await AceEditor.visualModeChunk(page, '{r alpha}').find('gizmo');
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('gizmo');
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName).catch(() => {});
+    }
+  });
 });
