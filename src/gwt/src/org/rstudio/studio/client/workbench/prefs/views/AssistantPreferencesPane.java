@@ -425,7 +425,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Block apply until the install/update check resolves (#18350).
             beginPositAiCheck();
-            checkPositAssistantInstallation(/* forAssistant= */ false);
+            checkPositAssistantInstallation(/* forAssistant= */ false,
+                  new RevertTarget(null, null, prefs_.chatProvider().getGlobalValue()));
          }
       });
 
@@ -494,6 +495,14 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = selAssistant_.getValue();
+
+            // The selection this change replaces. A selection made earlier in
+            // this dialog session is not persisted until OK, so the preference
+            // is no substitute for it when something has to be put back
+            // (#18356).
+            final String previousSelection = previousAssistantSelection_;
+            previousAssistantSelection_ = value;
+
             if (value.equals(UserPrefsAccessor.ASSISTANT_NONE))
             {
                // Insert project override panel at the top of nonePanel_ if there's a project override
@@ -508,6 +517,12 @@ public class AssistantPreferencesPane extends PreferencesPane
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
+               // Everything the install check may have to put back, captured
+               // before disableCopilot() below writes "posit" over the
+               // preference (#18356).
+               final RevertTarget revert = new RevertTarget(
+                     previousSelection, prefs_.assistant().getGlobalValue(), null);
+
                // Move status panel, project override panel, and common settings panel to Posit AI panel
                positAiPanel_.insert(spaced(statusPanel_), 0);
                positAiPanel_.insert(spaced(projectOverridePanel_), 1);
@@ -566,7 +581,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                               // User changed the selection -- check for install,
                               // update, or unsupported status. The check inherits
                               // the pending count started above and ends it.
-                              checkPositAssistantInstallation(/* forAssistant= */ true);
+                              checkPositAssistantInstallation(/* forAssistant= */ true, revert);
                            }
                         }
 
@@ -909,8 +924,14 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onClick(ClickEvent event)
          {
             // Block apply until the install/update check resolves (#18350).
+            // The button changes nothing to revert -- it shows only on the
+            // Posit Assistant panel -- so a failed install falls back to the
+            // state the click found.
             beginPositAiCheck();
-            checkPositAssistantInstallation(/* forAssistant= */ true);
+            checkPositAssistantInstallation(/* forAssistant= */ true,
+                  new RevertTarget(selAssistant_.getValue(),
+                                   prefs_.assistant().getGlobalValue(),
+                                   null));
          }
       });
    }
@@ -1052,7 +1073,11 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    private void disableCopilot(String newAssistant)
    {
-      // Eagerly disable Copilot so the agent stops immediately
+      // Eagerly disable Copilot so the agent stops immediately. Stopping it
+      // takes the assistant preference with it -- the backend picks the agent
+      // to run from that preference, not from copilot_enabled -- so this write
+      // lands before OK/Cancel, and anything undoing the switch has to undo it
+      // too (#18356).
       if (prefs_.copilotEnabled().getValue())
       {
          prefs_.copilotEnabled().setGlobalValue(false);
@@ -1086,23 +1111,47 @@ public class AssistantPreferencesPane extends PreferencesPane
    }
 
    /**
+    * What a Posit Assistant install/update check puts back when the user declines it
+    * or the install fails.
+    *
+    * The assistant carries two values because they can disagree. The selector shows a
+    * choice as soon as it is made, while the preference is written only when the switch
+    * stops the Copilot agent ({@link #disableCopilot(String)}) or an install is about to
+    * run. Restoring the preference to anything other than the value saved before that
+    * write would persist a choice the user never confirmed with OK (#18356).
+    *
+    * A chat provider check populates only {@link #chatProvider}, an assistant check only
+    * the two assistant fields.
+    */
+   private static class RevertTarget
+   {
+      RevertTarget(String assistantSelection, String assistantPref, String chatProvider)
+      {
+         this.assistantSelection = assistantSelection;
+         this.assistantPref = assistantPref;
+         this.chatProvider = chatProvider;
+      }
+
+      final String assistantSelection;
+      final String assistantPref;
+      final String chatProvider;
+   }
+
+   /**
     * Checks if Posit Assistant needs to be installed and prompts the user to install it.
     *
     * @param forAssistant True if this check is for the assistant (completions) preference,
     *                     false if it's for the chat provider preference.
+    * @param revert What to put back if the user declines or the install fails. Captured
+    *               by the caller, before {@link #disableCopilot(String)} can overwrite
+    *               the assistant preference.
     */
-   private void checkPositAssistantInstallation(boolean forAssistant)
+   private void checkPositAssistantInstallation(boolean forAssistant, RevertTarget revert)
    {
       // The caller has already called beginPositAiCheck() to block apply while
       // this check runs; every UpdateCheckCallback branch below calls
       // endPositAiCheck() exactly once, removing this check's contribution to
       // the count (which reaches zero only once no other check is in flight).
-
-      // Remember the previous value so we can revert if user declines
-      final String previousAssistantValue = forAssistant ?
-         prefs_.assistant().getGlobalValue() : null;
-      final String previousChatProviderValue = !forAssistant ?
-         prefs_.chatProvider().getGlobalValue() : null;
 
       installManager_.checkForUpdates(new PositAiInstallManager.UpdateCheckCallback()
       {
@@ -1128,7 +1177,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             // additionalProvidersAvailable only varies the chat pane's not-installed
             // view; the preferences install prompt does not show that description.
             showInstallUpdatePrompt(newVersion, isInitialInstall, isDowngrade,
-               forAssistant, previousAssistantValue, previousChatProviderValue);
+               forAssistant, revert);
          }
 
          @Override
@@ -1141,7 +1190,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                constants_.positAssistantIncompatibleTitle(),
                constants_.positAssistantIncompatibleMessage(),
                (Operation) () -> {
-                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+                  revertPositAiPreference(forAssistant, revert);
                });
          }
 
@@ -1154,8 +1203,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             // Unsupported version with a required install. Can still be a downgrade
             // if the installed copy is unsupported (e.g. protocol mismatch) and the
             // recommended package is older than what's installed.
-            showInstallUpdatePrompt(newVersion, false, isDowngrade, forAssistant,
-               previousAssistantValue, previousChatProviderValue);
+            showInstallUpdatePrompt(newVersion, false, isDowngrade, forAssistant, revert);
          }
 
          @Override
@@ -1168,7 +1216,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                constants_.positAssistantUnsupportedVersionTitle(),
                constants_.positAssistantUnsupportedVersionMessage(),
                (Operation) () -> {
-                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+                  revertPositAiPreference(forAssistant, revert);
                });
          }
 
@@ -1182,7 +1230,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                constants_.positAssistantUnsupportedProtocolTitle(),
                constants_.positAssistantUnsupportedProtocolMessage(),
                (Operation) () -> {
-                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+                  revertPositAiPreference(forAssistant, revert);
                });
          }
 
@@ -1196,7 +1244,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                constants_.positAssistantManifestUnavailableTitle(),
                constants_.positAssistantManifestUnavailableMessage(),
                (Operation) () -> {
-                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+                  revertPositAiPreference(forAssistant, revert);
                });
          }
 
@@ -1209,8 +1257,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             // before the preference is saved. Since we know Posit Assistant isn't installed
             // (we got here because assistantVerifyInstalled returned false, or user
             // just selected Posit Assistant), offer to install without version info.
-            showInstallUpdatePrompt(null, true, false, forAssistant,
-               previousAssistantValue, previousChatProviderValue);
+            showInstallUpdatePrompt(null, true, false, forAssistant, revert);
          }
       });
    }
@@ -1221,8 +1268,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void showInstallUpdatePrompt(String newVersion, boolean isInitialInstall,
                                         boolean isDowngrade,
                                         boolean forAssistant,
-                                        String previousAssistantValue,
-                                        String previousChatProviderValue)
+                                        RevertTarget revert)
    {
       String title;
       String message;
@@ -1255,11 +1301,11 @@ public class AssistantPreferencesPane extends PreferencesPane
          false,  // includeCancel
          (Operation) () -> {
             // User chose to install/update
-            performPositAssistantInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
+            performPositAssistantInstall(forAssistant, revert);
          },
          (Operation) () -> {
             // User declined - revert the preference
-            revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+            revertPositAiPreference(forAssistant, revert);
          },
          null,  // cancelOperation - not used since includeCancel is false
          yesLabel,
@@ -1270,9 +1316,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    /**
     * Performs the Posit Assistant installation with progress dialog.
     */
-   private void performPositAssistantInstall(boolean forAssistant,
-                                      String previousAssistantValue,
-                                      String previousChatProviderValue)
+   private void performPositAssistantInstall(boolean forAssistant, RevertTarget revert)
    {
       // Save the appropriate preference first - the server requires either
       // chatProvider or assistant to be set to "posit" before it will allow installation
@@ -1287,16 +1331,14 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Write prefs and then start installation
       prefs_.writeUserPrefs((completed) -> {
-         doInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
+         doInstall(forAssistant, revert);
       });
    }
 
    /**
     * Actually performs the installation after preferences are saved.
     */
-   private void doInstall(boolean forAssistant,
-                          String previousAssistantValue,
-                          String previousChatProviderValue)
+   private void doInstall(boolean forAssistant, RevertTarget revert)
    {
       final com.google.gwt.user.client.Command dismissProgress =
          globalDisplay_.showProgress(constants_.positAssistantInstallingMessage());
@@ -1343,35 +1385,55 @@ public class AssistantPreferencesPane extends PreferencesPane
                constants_.positAssistantInstallFailedMessage(errorMessage),
                (Operation) () -> {
                   // Revert the preference since installation failed
-                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+                  revertPositAiPreference(forAssistant, revert);
                });
          }
       });
    }
 
    /**
-    * Reverts the Posit AI preference to its previous value.
+    * Reverts the Posit AI selection to its previous value.
     */
-   private void revertPositAiPreference(boolean forAssistant,
-                                        String previousAssistantValue,
-                                        String previousChatProviderValue)
+   private void revertPositAiPreference(boolean forAssistant, RevertTarget revert)
    {
       if (forAssistant)
       {
-         // Revert assistant preference to previous value
-         String revertTo = previousAssistantValue != null
-            ? previousAssistantValue
+         // Restore the selection the user had, and separately the preference
+         // saved behind it -- see RevertTarget for why the two can differ.
+         String selectionRevertTo = revert.assistantSelection != null
+            ? revert.assistantSelection
+            : UserPrefsAccessor.ASSISTANT_NONE;
+         String prefRevertTo = revert.assistantPref != null
+            ? revert.assistantPref
             : UserPrefsAccessor.ASSISTANT_NONE;
 
-         if (revertTo.equals(selAssistant_.getValue()))
+         boolean selectionChanged = !selectionRevertTo.equals(selAssistant_.getValue());
+         boolean prefChanged = !prefRevertTo.equals(prefs_.assistant().getGlobalValue());
+         if (!selectionChanged && !prefChanged)
             return;
 
-         selAssistant_.setValue(revertTo);
-         prefs_.assistant().setGlobalValue(revertTo);
+         selAssistant_.setValue(selectionRevertTo);
          positAiRefreshed_ = false;
 
-         // Write the reverted preference
-         prefs_.writeUserPrefs((completed) -> {});
+         // Only write when the switch actually persisted something. Writing
+         // unconditionally would save a selection the user has not confirmed
+         // with OK, which Cancel would then be unable to discard (#18356).
+         if (prefChanged)
+         {
+            prefs_.assistant().setGlobalValue(prefRevertTo);
+
+            // Restore the deprecated copilot_enabled mirror alongside the
+            // preference it tracks, as onApply() derives it. Nothing gates the
+            // agent on it, but disableCopilot() gates its own write on it: left
+            // false under a reverted Copilot selection, the next switch away
+            // from Copilot would not persist -- leaving the assistant on
+            // "copilot" with its agent still running.
+            prefs_.copilotEnabled().setGlobalValue(
+                  prefRevertTo.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
+
+            // Write the reverted preference
+            prefs_.writeUserPrefs((completed) -> {});
+         }
 
          // Trigger the change handler to update the UI
          assistantChangedHandler_.onChange(null);
@@ -1379,8 +1441,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       else
       {
          // Revert chat provider preference to previous value
-         String revertTo = previousChatProviderValue != null
-            ?  previousChatProviderValue
+         String revertTo = revert.chatProvider != null
+            ?  revert.chatProvider
             : UserPrefsAccessor.CHAT_PROVIDER_NONE;
          
          if (revertTo.equals(selChatProvider_.getValue()))
@@ -1624,6 +1686,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private boolean positAiRefreshed_ = false; // has Posit Assistant status been refreshed for this pane instance?
    private int positAiCheckCount_ = 0; // number of in-flight Posit Assistant install/update checks; blocks apply while > 0
    private ChangeHandler assistantChangedHandler_; // swaps the displayed assistant panel; created in initDisplay
+   private String previousAssistantSelection_; // assistant the selector showed before the current change; maintained only by assistantChangedHandler_, which initDisplay runs before any user change can reach it
    private RProjectOptions projectOptions_;
    private String projectAssistantOverride_; // non-null when project has overridden assistant
 
