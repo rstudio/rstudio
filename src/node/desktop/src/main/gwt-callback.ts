@@ -725,17 +725,27 @@ export class GwtCallback extends EventEmitter {
         return;
       }
 
-      // This is a "make the main window visible, but leave focus alone" request, so
-      // there is nothing to do when it is already on screen. Re-presenting it and
-      // handing focus back is a bounce that window managers with focus-stealing
-      // prevention refuse halfway through, stranding focus on the main window.
-      // https://github.com/rstudio/rstudio/issues/18635
-      if (mainWindow.isVisible() && !mainWindow.isMinimized()) {
-        return;
+      // A minimized window can't be restacked, and ordering a window front does not
+      // de-miniaturize it, so bring it back to the screen first (#11646).
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
       }
 
-      // surface a hidden or minimized main window without activating it
-      mainWindow.showInactive();
+      if (!mainWindow.isVisible()) {
+        mainWindow.showInactive();
+      }
+
+      // This is a "make the main window as visible as possible, but leave focus
+      // alone" request: raise the main window, then put the active window back above
+      // it, so the main window ends up directly beneath the one the user is working
+      // in. Both calls are non-activating restacks, matching the
+      // SetWindowPos(..., SWP_NOACTIVATE) the Qt implementation used. The Electron
+      // port instead re-presented the main window and handed focus back, and window
+      // managers with focus-stealing prevention refuse the second half of that
+      // bounce, stranding focus on the main window.
+      // https://github.com/rstudio/rstudio/issues/18635
+      mainWindow.moveTop();
+      activeWindow.moveTop();
     });
 
     ipcMain.handle('desktop_rendering_engine', () => {

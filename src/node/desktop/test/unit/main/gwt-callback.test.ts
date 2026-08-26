@@ -28,6 +28,8 @@ function fakeBrowserWindow(state?: { visible: boolean; minimized: boolean }) {
     isMinimized: sinon.stub().returns(state?.minimized ?? false),
     show: sinon.stub(),
     showInactive: sinon.stub(),
+    restore: sinon.stub(),
+    moveTop: sinon.stub(),
     focus: sinon.stub(),
   };
 }
@@ -52,22 +54,26 @@ describe('DesktopCallback', () => {
   });
 
   describe('desktop_bring_main_frame_behind_active', () => {
-    // this callback means "make the main window visible, but leave focus alone";
-    // touching focus at all strands it on the main window under window managers
-    // with focus-stealing prevention (#18635)
+    // this callback means "make the main window as visible as possible, but leave
+    // focus alone"; touching focus at all strands it on the main window under
+    // window managers with focus-stealing prevention (#18635)
     function emit(main: ReturnType<typeof fakeBrowserWindow>, active: unknown) {
       mainWindow.window = main as unknown as BrowserWindow;
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(active as BrowserWindow | null);
       ipcMain.emit('desktop_bring_main_frame_behind_active');
     }
 
-    it('leaves an already-visible main window alone', () => {
+    it('restacks an already-visible main window beneath the active one', () => {
       const main = fakeBrowserWindow({ visible: true, minimized: false });
-      emit(main, fakeBrowserWindow());
+      const active = fakeBrowserWindow();
+      emit(main, active);
 
+      assert.isTrue(main.moveTop.calledOnce);
+      assert.isTrue(active.moveTop.calledOnce);
+      assert.isTrue(main.moveTop.calledBefore(active.moveTop));
       assert.isFalse(main.show.called);
       assert.isFalse(main.showInactive.called);
-      assert.isFalse(main.focus.called);
+      assert.isFalse(main.restore.called);
     });
 
     it('surfaces a hidden main window without activating it', () => {
@@ -75,17 +81,33 @@ describe('DesktopCallback', () => {
       emit(main, fakeBrowserWindow());
 
       assert.isTrue(main.showInactive.calledOnce);
+      assert.isTrue(main.moveTop.calledOnce);
       assert.isFalse(main.show.called);
-      assert.isFalse(main.focus.called);
     });
 
-    it('surfaces a minimized main window without activating it', () => {
+    it('restores a minimized main window rather than only ordering it front', () => {
       const main = fakeBrowserWindow({ visible: true, minimized: true });
       emit(main, fakeBrowserWindow());
 
-      assert.isTrue(main.showInactive.calledOnce);
+      assert.isTrue(main.restore.calledOnce);
+      assert.isTrue(main.moveTop.calledOnce);
       assert.isFalse(main.show.called);
-      assert.isFalse(main.focus.called);
+    });
+
+    it('never focuses either window', () => {
+      for (const state of [
+        { visible: true, minimized: false },
+        { visible: false, minimized: false },
+        { visible: true, minimized: true },
+      ]) {
+        const main = fakeBrowserWindow(state);
+        const active = fakeBrowserWindow();
+        emit(main, active);
+
+        assert.isFalse(main.focus.called, `main focused for ${JSON.stringify(state)}`);
+        assert.isFalse(active.focus.called, `active focused for ${JSON.stringify(state)}`);
+        sinon.restore();
+      }
     });
 
     it('does nothing when the main window is itself the active window', () => {
@@ -93,6 +115,8 @@ describe('DesktopCallback', () => {
       emit(main, main);
 
       assert.isFalse(main.showInactive.called);
+      assert.isFalse(main.restore.called);
+      assert.isFalse(main.moveTop.called);
     });
 
     it('does nothing when no window is focused', () => {
@@ -100,6 +124,8 @@ describe('DesktopCallback', () => {
       emit(main, null);
 
       assert.isFalse(main.showInactive.called);
+      assert.isFalse(main.restore.called);
+      assert.isFalse(main.moveTop.called);
     });
   });
 });
