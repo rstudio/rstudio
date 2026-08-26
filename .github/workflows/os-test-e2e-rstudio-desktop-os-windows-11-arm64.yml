@@ -946,26 +946,70 @@ jobs:
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
-          # ARM64 counts as "no credentials" regardless of the token:
-          # 1password/load-secrets-action picks its CLI by the runner's
-          # architecture, and 1Password publishes no Windows arm64 build
-          # (op_windows_arm64_*.zip is a 404, while amd64 exists). Reporting
-          # absent here routes the run down the same path a fork PR takes.
-          if ($env:OP_SERVICE_ACCOUNT_TOKEN -and '${{ runner.arch }}' -ne 'ARM64') {
+          if ($env:OP_SERVICE_ACCOUNT_TOKEN) {
             "present=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
             Write-Output "::notice::OP service account token present; test credentials will be retrieved."
           } else {
             "present=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            Write-Output "::warning::No usable OP credentials in this job (1Password publishes no Windows arm64 CLI). AI-gated tests will skip, so this run does NOT exercise Posit AI."
+            Write-Output "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
           }
 
-      - name: Retrieve test credentials
+      # load-secrets-action can't run here: it picks its CLI by the runner's
+      # architecture, and 1Password publishes no Windows arm64 build
+      # (op_windows_arm64_*.zip is a 404; op_windows_amd64_*.zip is not). So
+      # fetch the x86_64 CLI and let Windows' emulation run it, resolving the
+      # same .env.op references the action would have resolved.
+      #
+      # A failure warns and continues without credentials rather than failing
+      # the run, which is the state a fork PR is already in: the auth setup
+      # project takes its no-credentials path and AI-gated tests skip. The
+      # warning is what keeps that visible instead of silent.
+      - name: Retrieve test credentials (x86_64 op CLI under emulation)
         id: op
         if: steps.op_token_check.outputs.present == 'true'
-        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          OP_ENV_FILE: ./e2e/rstudio/.env.op
+          # Pinned, not resolved as "latest": if a future version stops
+          # publishing an amd64 build, that should be a visible change here
+          # rather than a silent switch to whatever the CDN now serves.
+          OP_VERSION: "2.39.0"
+        run: |
+          $ErrorActionPreference = 'Stop'
+          try {
+            $zip = Join-Path $env:RUNNER_TEMP 'op.zip'
+            $dir = Join-Path $env:RUNNER_TEMP 'op-cli'
+            $url = "https://cache.agilebits.com/dist/1P/op2/pkg/v$($env:OP_VERSION)/op_windows_amd64_v$($env:OP_VERSION).zip"
+            Write-Host "Downloading $url"
+            Invoke-WebRequest -Uri $url -OutFile $zip -MaximumRetryCount 3 -RetryIntervalSec 5
+            Expand-Archive -Path $zip -DestinationPath $dir -Force
+            $op = Get-ChildItem -Path $dir -Filter 'op.exe' -Recurse |
+              Select-Object -First 1 -ExpandProperty FullName
+            if (-not $op) { throw "op.exe not found in the downloaded archive" }
+            & $op --version | Write-Host
+            if ($LASTEXITCODE -ne 0) { throw "op.exe would not run under emulation" }
+
+            # Every value line of .env.op is NAME="op://vault/item/field".
+            $resolved = 0
+            foreach ($line in Get-Content 'e2e/rstudio/.env.op') {
+              if ($line -notmatch '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"?(op://[^"]+)"?\s*$') { continue }
+              $name = $Matches[1]
+              $value = (& $op read $Matches[2]) -join ''
+              if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrEmpty($value)) {
+                throw "could not resolve $name"
+              }
+              # GITHUB_OUTPUT is line-based, so a multi-line value would need
+              # delimiter syntax. These are single-line by definition; anything
+              # else is an error rather than a silently truncated output.
+              if ($value -match '[\r\n]') { throw "$name resolved to a multi-line value" }
+              Write-Output "::add-mask::$value"
+              "$name=$value" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+              Write-Host "Resolved $name"
+              $resolved++
+            }
+            if ($resolved -eq 0) { throw "e2e/rstudio/.env.op contained no secret references" }
+          } catch {
+            Write-Output "::warning::Could not retrieve test credentials on arm64: $($_.Exception.Message). AI-gated tests will skip, so this run does NOT exercise Posit AI."
+          }
 
       # Opt this run into the Posit Assistant pre-release manifest. A per-run
       # prefs override, never a base pref -- every other run keeps testing GA.
