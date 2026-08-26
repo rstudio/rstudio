@@ -6728,11 +6728,12 @@ var applyScrollbarMode = function() {
    applyPinnedColumns();
    renderVisibleRows(true);
 
-   // Not before the first block lands: initGrid calls this during bootstrap,
-   // where totalRows is already set while filteredRows is still 0, and the info
-   // bar is aria-live -- it would announce "Showing 0 to 0 of 0 entries
-   // (filtered from N total entries)" on every grid open.
-   if (filteredRows > 0)
+   // Not during bootstrap: initGrid calls this before the first block has
+   // landed, when totalRows is already set while filteredRows is still 0, and
+   // the info bar is aria-live -- it would announce "Showing 0 to 0 of 0
+   // entries (filtered from N total entries)" on every grid open. Every live
+   // switch runs with the flag clear.
+   if (!bootstrapping)
       updateInfoBar();
 
    updateCustomScrollbars();

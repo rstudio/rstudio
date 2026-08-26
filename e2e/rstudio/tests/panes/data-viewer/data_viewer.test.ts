@@ -7,7 +7,7 @@
 // across a refresh, and HTML-special-character escaping in both cell
 // values and column names.
 
-import type { Request, Response } from 'playwright';
+import type { Page, Request, Response } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
@@ -56,6 +56,68 @@ async function colOrder(dataViewer: DataViewerPane): Promise<string[]> {
   return dataViewer.frame.locator('#pinned_cols th, #data_cols th').evaluateAll((ths) =>
     (ths as HTMLElement[]).map((th) => th.getAttribute('data-col-idx') ?? ''),
   );
+}
+
+// Wheels the grid to the bottom -- the way the report does, since a
+// programmatic scrollTop lands in one step and would not exercise the repeated
+// renders a real gesture drives -- and waits for `lastRow` to be rendered. The
+// full-rebuild path stops at the first row missing from the block cache and
+// folds the remainder into the bottom spacer, so the last rendered row is only
+// the last data row once its block has landed.
+async function scrollGridToBottom(
+  page: Page,
+  dataViewer: DataViewerPane,
+  lastRow: number,
+): Promise<void> {
+  const box = await dataViewer.viewport.boundingBox();
+  if (!box) throw new Error('grid viewport has no bounding box');
+  await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
+  for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 2000);
+
+  await expect.poll(
+    () => dataViewer.viewport.evaluate(
+      (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 1,
+    ),
+    { timeout: TIMEOUTS.fileOpen },
+  ).toBe(true);
+
+  await expect(dataViewer.frame.locator(`#gridBody tr[data-row="${lastRow}"]`))
+    .toBeAttached({ timeout: TIMEOUTS.fileOpen });
+}
+
+// Waits until the frame is wider than the viewport. Both #18620 tests need it
+// as a precondition: with no horizontal overflow there is no bar to clear and
+// no tail to reserve, so a host wide enough to fit the fixture would otherwise
+// fail on the tail rather than on the unmet premise. The bar's presence is not
+// a substitute -- attachCustomScrollbar leaves the element in the DOM and only
+// sets display:none when the axis doesn't overflow.
+async function expectHorizontalOverflow(dataViewer: DataViewerPane): Promise<void> {
+  await expect.poll(
+    () => dataViewer.viewport.evaluate(
+      (el: HTMLElement) => el.scrollWidth - el.clientWidth,
+    ),
+    { message: 'frame should overflow the viewport horizontally' },
+  ).toBeGreaterThan(1);
+}
+
+// Geometry of the last rendered data row, measured against the viewport's
+// client box: clientBottom drops the native scrollbar gutter that the border
+// box's bottom includes, so the two scrollbar modes are directly comparable.
+async function lastRenderedRowRect(dataViewer: DataViewerPane): Promise<{
+  row: string | null;
+  bottom: number;
+  clientBottom: number;
+}> {
+  return dataViewer.viewport.evaluate((el: HTMLElement) => {
+    const rows = el.ownerDocument.querySelectorAll('#gridBody tr:not(.spacer-row)');
+    const last = rows[rows.length - 1] as HTMLElement;
+    return {
+      row: last.getAttribute('data-row'),
+      bottom: last.getBoundingClientRect().bottom,
+      clientBottom: el.getBoundingClientRect().bottom
+        - (el.offsetHeight - el.clientHeight),
+    };
+  });
 }
 
 test.describe('Data Viewer', () => {
@@ -1665,26 +1727,10 @@ test.describe('Data Viewer', () => {
       // Preconditions: both axes actually overflow, and the custom overlay
       // scrollbar is in use (the default), since that is the bar whose height
       // the tail is sized against.
-      await expect.poll(
-        () => dataViewer.viewport.evaluate(
-          (el: HTMLElement) => el.scrollWidth - el.clientWidth,
-        ),
-        { message: 'frame should overflow the viewport horizontally' },
-      ).toBeGreaterThan(1);
+      await expectHorizontalOverflow(dataViewer);
       await expect(dataViewer.horizontalScrollbar).toBeAttached();
 
-      // Scroll to the bottom with the wheel, the way the report does. A
-      // programmatic scrollTop lands in one step and would not exercise the
-      // repeated renders a real gesture drives.
-      const box = await dataViewer.viewport.boundingBox();
-      if (!box) throw new Error('grid viewport has no bounding box');
-      await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
-      for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 2000);
-
-      const atMax = () => dataViewer.viewport.evaluate(
-        (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 1,
-      );
-      await expect.poll(atMax, { timeout: TIMEOUTS.fileOpen }).toBe(true);
+      await scrollGridToBottom(page, dataViewer, 499);
 
       // The position must SETTLE: further wheeling at the bottom must not move
       // it back up. This is the "bounces" half of the report, and the one
@@ -1697,31 +1743,16 @@ test.describe('Data Viewer', () => {
       await page.waitForTimeout(500);
       expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
 
-      // The full-rebuild path stops at the first row missing from the block
-      // cache and folds the rest into the bottom spacer, so the last rendered
-      // row is only 499 once its block has landed. Wait for that before
-      // measuring, or the geometry below is read off the wrong row.
-      await expect(dataViewer.frame.locator('#gridBody tr[data-row="499"]'))
-        .toBeAttached({ timeout: TIMEOUTS.fileOpen });
-
       // The last row is rendered, sits inside the viewport, and its bottom edge
       // clears the top of the floating horizontal scrollbar. Before the fix its
       // bottom was flush with the viewport, i.e. 11px below the bar's top.
-      const geometry = await dataViewer.viewport.evaluate((el: HTMLElement) => {
-        const doc = el.ownerDocument;
-        const rows = doc.querySelectorAll('#gridBody tr:not(.spacer-row)');
-        const last = rows[rows.length - 1] as HTMLElement;
-        const bar = doc.querySelector('.custom-scrollbar.horizontal') as HTMLElement;
-        return {
-          lastRow: last.getAttribute('data-row'),
-          lastRowBottom: last.getBoundingClientRect().bottom,
-          viewportBottom: el.getBoundingClientRect().bottom,
-          scrollbarTop: bar.getBoundingClientRect().top,
-        };
-      });
-      expect(geometry.lastRow).toBe('499');
-      expect(geometry.lastRowBottom).toBeLessThanOrEqual(geometry.viewportBottom + 0.5);
-      expect(geometry.lastRowBottom).toBeLessThanOrEqual(geometry.scrollbarTop + 0.5);
+      const rect = await lastRenderedRowRect(dataViewer);
+      const scrollbarTop = await dataViewer.horizontalScrollbar.evaluate(
+        (el: HTMLElement) => el.getBoundingClientRect().top,
+      );
+      expect(rect.row).toBe('499');
+      expect(rect.bottom).toBeLessThanOrEqual(rect.clientBottom + 0.5);
+      expect(rect.bottom).toBeLessThanOrEqual(scrollbarTop + 0.5);
 
       // The info bar counts the last row as visible, as it did before.
       await expect(dataViewer.gridInfo)
@@ -1751,21 +1782,24 @@ test.describe('Data Viewer', () => {
       await waitForViewer(dataViewer);
       await expect(dataViewer.horizontalScrollbar).toBeAttached();
 
-      // The bar is in the DOM from the moment it is created and only gets
-      // display:none when the axis doesn't overflow, so gate on the overflow
-      // itself: on a host wide enough to fit 30 columns the tail is correctly 0
-      // and the assertions below would otherwise fail for the wrong reason.
-      const overflow = () => dataViewer.viewport.evaluate(
-        (el: HTMLElement) => el.scrollWidth - el.clientWidth,
-      );
-      await expect.poll(
-        overflow,
-        { message: 'frame should overflow the viewport horizontally' },
-      ).toBeGreaterThan(1);
+      await expectHorizontalOverflow(dataViewer);
 
-      const overlayScrollHeight = await dataViewer.viewport.evaluate(
-        (el: HTMLElement) => el.scrollHeight,
-      );
+      const measure = (el: HTMLElement) => {
+        const table = el.ownerDocument.getElementById('rsGridData') as HTMLElement;
+        return {
+          scrollHeight: el.scrollHeight,
+          clientWidth: el.clientWidth,
+          // Horizontal overscroll padding past the rightmost column, sized from
+          // clientWidth (applyPinnedColumns).
+          paddingRight: parseFloat(table.style.paddingRight) || 0,
+          // #gridViewport carries no border, so offsetHeight - clientHeight is
+          // exactly the layout space the native bar claimed; zero means the
+          // platform draws it as an overlay.
+          gutter: el.offsetHeight - el.clientHeight,
+          overflow: el.scrollWidth - el.clientWidth,
+        };
+      };
+      const overlay = await dataViewer.viewport.evaluate(measure);
 
       // The host pushes the preference into the iframe as a setOption, which
       // destroys the overlay bars and hands scrolling back to the browser.
@@ -1776,66 +1810,51 @@ test.describe('Data Viewer', () => {
       // stale tail by itself, so this is the assertion that pins the resize to
       // the switch. The scroll range loses the tail where the native bar takes
       // layout space and keeps it where the platform draws an overlay.
-      const native = await dataViewer.viewport.evaluate((el: HTMLElement) => ({
-        scrollHeight: el.scrollHeight,
-        // #gridViewport carries no border, so offsetHeight - clientHeight is
-        // exactly the layout space the native bar claimed; zero means the
-        // platform draws it as an overlay.
-        gutter: el.offsetHeight - el.clientHeight,
-        overflow: el.scrollWidth - el.clientWidth,
-      }));
+      const native = await dataViewer.viewport.evaluate(measure);
       expect(native.overflow).toBeGreaterThan(1);
       const expectedTail = native.gutter > 0 ? 0 : H_SCROLLBAR_HEIGHT;
-      expect(native.scrollHeight - overlayScrollHeight)
+      expect(native.scrollHeight - overlay.scrollHeight)
         .toBe(expectedTail - H_SCROLLBAR_HEIGHT);
 
+      // The overscroll padding past the rightmost column is clientWidth minus
+      // the last unpinned column's width, so across the switch it moves by
+      // exactly the client-width delta -- zero where the platform draws the
+      // vertical bar as an overlay, the bar's width where it takes layout space.
+      expect(native.paddingRight - overlay.paddingRight)
+        .toBeCloseTo(native.clientWidth - overlay.clientWidth, 1);
+
       // The info bar's range is derived from the same client box, so it is
-      // refreshed at the switch too. Computed rather than hardcoded because the
-      // two modes differ by the native gutter minus the tail -- a few px, which
-      // may or may not cross a row boundary on any given host.
-      const expectedLast = await dataViewer.viewport.evaluate(
+      // refreshed at the switch too. Computed rather than hardcoded: the two
+      // modes differ by the native gutter minus the tail, a few px that may or
+      // may not cross a row boundary on any given host, and the grid does not
+      // always open at the top -- it restores a saved scroll offset for a frame
+      // of the same name and row count, so a retry can reopen it at the bottom.
+      const range = await dataViewer.viewport.evaluate(
         (el: HTMLElement, { tail, rowHeight }: { tail: number; rowHeight: number }) => {
           const headerRow = el.ownerDocument.getElementById('data_cols');
           const headerH = headerRow?.parentElement?.offsetHeight ?? 0;
           const bodyHeight = Math.max(0, el.clientHeight - headerH - tail);
+          const first = Math.max(
+            1,
+            Math.min(Math.ceil((el.scrollTop + rowHeight / 2) / rowHeight), 500),
+          );
           const last = Math.round((el.scrollTop + bodyHeight) / rowHeight);
-          return Math.max(1, Math.min(last, 500));
+          return { first, last: Math.max(first, Math.min(last, 500)) };
         },
         { tail: expectedTail, rowHeight: ROW_HEIGHT },
       );
-      await expect(dataViewer.gridInfo).toContainText(`Showing 1 to ${expectedLast} of 500`);
+      await expect(dataViewer.gridInfo)
+        .toContainText(`Showing ${range.first} to ${range.last} of 500`);
 
-      const box = await dataViewer.viewport.boundingBox();
-      if (!box) throw new Error('grid viewport has no bounding box');
-      await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
-      for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 2000);
-
-      await expect.poll(
-        () => dataViewer.viewport.evaluate(
-          (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 1,
-        ),
-        { timeout: TIMEOUTS.fileOpen },
-      ).toBe(true);
-      await expect(dataViewer.frame.locator('#gridBody tr[data-row="499"]'))
-        .toBeAttached({ timeout: TIMEOUTS.fileOpen });
-
-      const geometry = await dataViewer.viewport.evaluate((el: HTMLElement) => {
-        const rows = el.ownerDocument.querySelectorAll('#gridBody tr:not(.spacer-row)');
-        const last = rows[rows.length - 1] as HTMLElement;
-        return {
-          lastRow: last.getAttribute('data-row'),
-          lastRowBottom: last.getBoundingClientRect().bottom,
-          clientBottom: el.getBoundingClientRect().bottom
-            - (el.offsetHeight - el.clientHeight),
-        };
-      });
-      expect(geometry.lastRow).toBe('499');
+      await scrollGridToBottom(page, dataViewer, 499);
 
       // A bar that sits in layout is already outside clientHeight, so the last
       // row ends flush with the client box; an overlay bar needs the same tail
       // the custom one gets. The 1px tolerance is for fractional scroll offsets
       // under display scaling.
-      expect(Math.abs(geometry.lastRowBottom - (geometry.clientBottom - expectedTail)))
+      const rect = await lastRenderedRowRect(dataViewer);
+      expect(rect.row).toBe('499');
+      expect(Math.abs(rect.bottom - (rect.clientBottom - expectedTail)))
         .toBeLessThanOrEqual(1);
 
       await expect(dataViewer.gridInfo)
@@ -1851,7 +1870,7 @@ test.describe('Data Viewer', () => {
           () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollHeight),
           { message: 'overlay mode should restore the overscroll tail' },
         )
-        .toBe(overlayScrollHeight);
+        .toBe(overlay.scrollHeight);
     } finally {
       await clearPref(page, 'data_viewer_use_overlay_scrollbars');
       await consoleActions.executeInConsole(
