@@ -243,6 +243,11 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       'gizmo <- 2',
       'gizmo + gizmo',
       '```',
+      '',
+      '```{r gamma}',
+      'sprocket <- 3',
+      'sprocket + sprocket',
+      '```',
     ].join('\n');
 
     await sourceActions.createAndOpenFile(fileName, content);
@@ -296,6 +301,33 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await executeCommand(page, 'findAll');
       await page.keyboard.type('doohickey');
       await expect.poll(() => second.getValue()).toContain('doohickey <- 2\ndoohickey + doohickey');
+
+      // The Command Palette is the route that matters for these two -- findAll
+      // has no shortcut and no menu entry, and quickAddNext's Cmd+D is
+      // disableModes="default,vim,emacs" -- and it takes focus out of the chunk
+      // on the way, which withActiveEditor has to survive.
+      await focusChunk(proseMirror, '{r gamma}');
+      const third = AceEditor.visualModeChunk(page, '{r gamma}');
+      await third.find('sprocket');
+      await expect.poll(() => third.getSelectedText()).toBe('sprocket');
+
+      const palette = page.locator('#rstudio_command_palette_search');
+      await executeCommand(page, 'showCommandPalette');
+      await expect(palette).toBeVisible({ timeout: 15000 });
+      await palette.pressSequentially('Find All');
+      // Click the row rather than pressing Enter, which runs whichever entry is
+      // highlighted first and need not be this one.
+      const findAllEntry = page
+        .locator('#rstudio_command_palette_list')
+        .getByText('Find All', { exact: true });
+      await expect(findAllEntry).toBeVisible({ timeout: 15000 });
+      await findAllEntry.click();
+      await expect(palette).toBeHidden();
+
+      // Cursor count rather than typed text: it reads the same wherever the
+      // palette left focus, so a miss means the command did not reach the
+      // chunk rather than that the keystrokes went elsewhere.
+      await expect.poll(() => third.getSelectionRanges()).toHaveLength(3);
 
       // Neither command reached the prose, and leaving the chunk makes them
       // unavailable again.
@@ -373,6 +405,31 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await chunk.find('kumquat');
       await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
       await executeCommand(page, 'findFromSelection');
+      await expect(findInput).toHaveValue('kumquat');
+
+      // Neither guard in getSearchSelection() seeds, and both leave the box as
+      // it was. A multi-line selection is refused, as source mode's find bar
+      // refuses one.
+      await focusChunk(proseMirror, '{r seed}');
+      await chunk.execCommand('selectall');
+      await expect.poll(() => chunk.getSelectedText()).toContain('\n');
+      await executeCommand(page, 'findFromSelection');
+      await expect(findInput).toHaveValue('kumquat');
+
+      // So is an empty one -- Ctrl+F with nothing selected, the common case --
+      // but the bar still opens.
+      const findButton = page.getByRole('button', { name: 'Find/Replace' });
+      await findButton.click();
+      await expect(findInput).toBeHidden();
+
+      // Positioned like the dblclicks above: the paragraph box spans the full
+      // editor width, so a centre click lands past the text and moves nothing.
+      await proseMirror.getByText('sassafras').click({ position: { x: 4, y: 8 } });
+      await expect
+        .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+        .toBe('');
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toBeVisible();
       await expect(findInput).toHaveValue('kumquat');
 
       // Two seeding gaps are deliberately not asserted, both measured here and
