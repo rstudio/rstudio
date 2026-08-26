@@ -606,30 +606,43 @@ export class ChatPaneActions {
   }
 
   /**
-   * Close the conversation history panel, converging on "closed" rather than
-   * deciding once.
+   * Close the conversation history panel.
    *
    * Recent assistant builds dismiss the panel themselves once a conversation
-   * is selected; older ones only close it via the toolbar toggle. A lone state
-   * check races that auto-close, and a toggle click landing while it is in
-   * flight re-opens the panel -- which is how this failed against the 1.1.7
-   * pre-release. Re-checking after each click settles on either build: the
-   * panel is already gone, the click closes it, or the next pass clears a
-   * re-open.
+   * is selected; older ones only close it via the toolbar toggle. Both states
+   * have to be tolerated, and the transition between them is what makes this
+   * delicate: a toggle click that lands while an auto-close is still finishing
+   * re-opens the panel, which is how this failed against the 1.1.7
+   * pre-release.
+   *
+   * So every decision here waits for the panel to settle rather than sampling
+   * it instantaneously -- an immediate read can catch a fade-out frame and
+   * either provoke that re-opening click or report a close that is about to be
+   * undone. At most two clicks are issued, and the closing assertion is what
+   * fails the test if the panel is still up.
    */
   async closeConversationHistory(): Promise<void> {
     const panel = this.chatPane.conversationHistoryPanel;
-    await expect
-      .poll(
-        async () => {
-          if (await panel.isHidden()) {
-            return true;
-          }
-          await this.chatPane.historyBtn.click({ timeout: 10000 });
-          return panel.isHidden();
-        },
-        { timeout: 15000, intervals: [250, 500, 1000] },
-      )
-      .toBe(true);
+
+    // Resolves true once the panel is gone, false if it is still up after the
+    // settle window. A panel that never leaves is the normal case on builds
+    // that do not auto-close, so that timeout is an expected outcome mapped to
+    // a value, not an error to propagate.
+    const settlesHidden = (): Promise<boolean> =>
+      panel.waitFor({ state: 'hidden', timeout: 1000 }).then(
+        () => true,
+        () => false,
+      );
+
+    if (!(await settlesHidden())) {
+      await this.chatPane.historyBtn.click({ timeout: 10000 });
+      if (!(await settlesHidden())) {
+        // The click landed as an auto-close was finishing and re-opened the
+        // panel; it is stable now, so one more toggle closes it for good.
+        await this.chatPane.historyBtn.click({ timeout: 10000 });
+      }
+    }
+
+    await expect(panel).toBeHidden({ timeout: 10000 });
   }
 }
