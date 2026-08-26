@@ -1652,9 +1652,9 @@ test.describe('Data Viewer', () => {
     try {
       await waitForViewer(dataViewer);
 
-      // Preconditions: both axes actually overflow, and the overlay scrollbar
-      // is in use (the native-scrollbar mode takes layout space instead, and
-      // needs no tail).
+      // Preconditions: both axes actually overflow, and the custom overlay
+      // scrollbar is in use (the default), since that is the bar whose height
+      // the tail is sized against.
       await expect.poll(
         () => dataViewer.viewport.evaluate(
           (el: HTMLElement) => el.scrollWidth - el.clientWidth,
@@ -1686,6 +1686,13 @@ test.describe('Data Viewer', () => {
       for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
       await page.waitForTimeout(500);
       expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
+
+      // The full-rebuild path stops at the first row missing from the block
+      // cache and folds the rest into the bottom spacer, so the last rendered
+      // row is only 499 once its block has landed. Wait for that before
+      // measuring, or the geometry below is read off the wrong row.
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="499"]'))
+        .toBeAttached({ timeout: TIMEOUTS.fileOpen });
 
       // The last row is rendered, sits inside the viewport, and its bottom edge
       // clears the top of the floating horizontal scrollbar. Before the fix its

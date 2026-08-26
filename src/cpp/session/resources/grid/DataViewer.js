@@ -3633,13 +3633,20 @@ var updateAriaRowCount = function() {
    }
 };
 
-// Height of the grid area hidden underneath the custom horizontal scrollbar,
-// or 0 when nothing is hidden: in native-scrollbar mode the browser's own bar
-// takes layout space and is already excluded from clientHeight, and with no
-// horizontal overflow there is no bar at all.
+// Height of the grid area hidden underneath the horizontal scrollbar, or 0
+// when nothing is hidden -- with no horizontal overflow there is no bar at all.
+// Our overlay bar always floats over the rows. A native bar usually takes
+// layout space and is therefore already excluded from clientHeight, but macOS
+// draws native bars as overlays too ("Show scroll bars: When scrolling"), so
+// measure the gutter instead of trusting the mode.
 var hScrollbarOverlayHeight = function(viewport) {
-   if (!useOverlayScrollbars) return 0;
-   return viewport.scrollWidth > viewport.clientWidth + 1 ? H_SCROLLBAR_HEIGHT : 0;
+   if (viewport.scrollWidth <= viewport.clientWidth + 1) return 0;
+   if (useOverlayScrollbars) return H_SCROLLBAR_HEIGHT;
+
+   // The scroll panes carry no border, so offsetHeight - clientHeight is
+   // exactly the layout space the native bar claimed -- zero when it overlays.
+   // Its height is then close enough to ours to reuse the constant.
+   return viewport.offsetHeight > viewport.clientHeight ? 0 : H_SCROLLBAR_HEIGHT;
 };
 
 // Height of the viewport area in which data rows are actually visible. The
@@ -6610,12 +6617,11 @@ var createCustomScrollbars = function() {
          var thead = domThead;
          var headerH = thead && thead.parentElement
             ? thead.parentElement.offsetHeight : 0;
-         var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
          // #gridPanes excludes the info bar, so no info-bar inset is needed;
          // just leave room for the horizontal bar when it's present.
          return {
             top: headerH,
-            bottom: hasHScroll ? 11 : 0
+            bottom: hScrollbarOverlayHeight(viewport)
          };
       },
       onDragEnd: updateInfoBar
