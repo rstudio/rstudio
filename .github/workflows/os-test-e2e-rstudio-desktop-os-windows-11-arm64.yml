@@ -1033,10 +1033,10 @@ jobs:
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           # TEMPORARY -- see the push trigger. A push run has no inputs, so
-          # scope the first arm64 run to autocomplete and the Environment
-          # pane rather than the whole suite. Matches autocomplete.test.ts,
-          # autocomplete_extras.test.ts and environment_pane.test.ts.
-          PW_TEST_SELECTOR: ${{ github.event_name == 'push' && 'autocomplete environment_pane' || inputs.test_selector }}
+          # scope this run to the two Posit Assistant files that exercise the
+          # signed-in account: open-chat-pane.test.ts (the pane opens) and
+          # chat-messaging.test.ts (a real round trip to the model).
+          PW_TEST_SELECTOR: ${{ github.event_name == 'push' && 'open-chat-pane chat-messaging' || inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Relative to this step's working-directory. Empty (not set) unless
