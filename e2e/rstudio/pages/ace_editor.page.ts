@@ -86,7 +86,7 @@ export class AceEditor extends PageObject {
         // keeps its chunk editors mounted, and an unscoped walk can match one
         // of those instead of the chunk this test means.
         const roots = Array.from(document.querySelectorAll('.ProseMirror'))
-          .filter((root) => (root as HTMLElement).offsetParent !== null);
+          .filter((root) => root.getClientRects().length > 0);
         const embedded = roots.flatMap((root) =>
           Array.from(root.querySelectorAll('.ace_editor')));
         for (let i = 0; i < embedded.length; i++) {
