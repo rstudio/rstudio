@@ -248,7 +248,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     await sourceActions.createAndOpenFile(fileName, content);
     try {
       await sourceActions.ensureVisualMode();
-      const proseMirror = page.locator('.ProseMirror').first();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
 
       const prose = proseMirror.getByText('Prose mentioning a widget.');
@@ -315,12 +315,16 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     await sourceActions.createAndOpenFile(fileName, content);
     try {
       await sourceActions.ensureVisualMode();
-      const proseMirror = page.locator('.ProseMirror').first();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
 
       // The find box lives in the visual editor's own find bar; the source
-      // editor's bar is built lazily and this document never opens it.
-      const findInput = page.locator('.rstudio-find-replace-find-input input');
+      // editor's bar is built lazily and this document never opens it. Scope
+      // to the visible bar in the source panel all the same: the console and
+      // every other open editor mount a FindReplaceBar sharing these
+      // automation classes (see editor.test.ts).
+      const findInput = page.locator(
+        "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
 
       // A word selected in prose seeds the search term, as it does in source
       // mode. Double-click near the paragraph's left edge: its box spans the

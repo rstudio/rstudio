@@ -1298,6 +1298,11 @@ public class VisualMode implements VisualModeEditorSync,
     */
    public String getSearchSelection()
    {
+      // panmirror_ is null while the editor is torn down for a format reload;
+      // getFindReplace() stubs itself out over the same window
+      if (activeEditor_ == null && panmirror_ == null)
+         return null;
+
       String selection = activeEditor_ != null
          ? activeEditor_.getSelectionValue()
          : panmirror_.getSelectedText();
