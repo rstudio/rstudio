@@ -7347,7 +7347,10 @@ public class TextEditingTarget implements
    @Handler
    void onFindAll()
    {
-      docDisplay_.selectAll(docDisplay_.getSelectionValue());
+      withActiveEditor((disp) ->
+      {
+         disp.selectAll(disp.getSelectionValue());
+      });
    }
 
    @Handler
@@ -8494,7 +8497,10 @@ public class TextEditingTarget implements
    @Handler
    void onQuickAddNext()
    {
-      docDisplay_.quickAddNext();
+      withActiveEditor((disp) ->
+      {
+         disp.quickAddNext();
+      });
    }
 
    private HasFindReplace getFindReplace()

@@ -1,8 +1,9 @@
 /**
  * Quarto chunk and editor behavior: the `warn` option round-trip on
  * chunk run, chunk-widget visibility, variable-width nested-chunk
- * folding (#15191), and the empty-quarto-block highlight regression
- * (#16463). Multiline chunk execution (#17350) is covered by
+ * folding (#15191), the empty-quarto-block highlight regression
+ * (#16463), and the multi-cursor find commands inside visual-mode
+ * chunks (#16540). Multiline chunk execution (#17350) is covered by
  * `multiline_chunk_execution.test.ts`.
  */
 
@@ -11,7 +12,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand } from '@utils/commands';
+import { executeCommand, isCommandEnabled } from '@utils/commands';
 
 test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   useSuiteSandbox();
@@ -206,5 +207,88 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     expect(tokens[4].value).toBe('2');
 
     await sourceActions.closeSourceAndDeleteFile(fileName);
+  });
+
+  test('multi-cursor find commands act on the focused chunk in visual mode (#16540)', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_multicursor_${Date.now()}.qmd`;
+    // Each chunk repeats one identifier three times, so a command that adds
+    // only the next occurrence is distinguishable from one that takes them
+    // all. The prose copy of `widget` must survive both.
+    const content = [
+      '---',
+      'title: Multi-cursor',
+      '---',
+      '',
+      'Prose mentioning a widget.',
+      '',
+      '```{r alpha}',
+      'widget <- 1',
+      'widget + widget',
+      '```',
+      '',
+      '```{r beta}',
+      'gizmo <- 2',
+      'gizmo + gizmo',
+      '```',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+
+      const prose = proseMirror.getByText('Prose mentioning a widget.');
+      // Chunks are addressed by their `{r <label>}` header, which a chunk
+      // editor renders as its first line: unlike the body, it survives the
+      // edits below, so the same locator resolves before and after.
+      // Force-click the hidden textarea to focus a chunk: an ace_content
+      // overlay intercepts normal clicks on it.
+      const focusChunk = (text: string) =>
+        proseMirror
+          .locator('.ace_editor')
+          .filter({ hasText: text })
+          .locator('textarea.ace_text-input')
+          .click({ force: true });
+
+      // Prose has no Ace instance behind it and ProseMirror has no
+      // multi-cursor concept, so both commands report unavailable there
+      // rather than silently doing nothing.
+      await prose.click();
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
+      expect(await isCommandEnabled(page, 'findAll')).toBe(false);
+
+      await focusChunk('{r alpha}');
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+      expect(await isCommandEnabled(page, 'findAll')).toBe(true);
+
+      // The repro from the issue: select an occurrence, then Find and Add Next
+      // adds the following one, and typing edits both cursors at once. The
+      // third `widget` is left alone.
+      const first = AceEditor.visualModeChunk(page, '{r alpha}');
+      await first.find('widget');
+      await executeCommand(page, 'quickAddNext');
+      await page.keyboard.type('gadget');
+      await expect.poll(() => first.getValue()).toContain('gadget <- 1\ngadget + widget');
+
+      // Find All takes every occurrence in the focused chunk.
+      await focusChunk('{r beta}');
+      const second = AceEditor.visualModeChunk(page, '{r beta}');
+      await second.find('gizmo');
+      await executeCommand(page, 'findAll');
+      await page.keyboard.type('doohickey');
+      await expect.poll(() => second.getValue()).toContain('doohickey <- 2\ndoohickey + doohickey');
+
+      // Neither command reached the prose, and leaving the chunk makes them
+      // unavailable again.
+      await expect(proseMirror).toContainText('Prose mentioning a widget.');
+      await prose.click();
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
+    } finally {
+      // Close the tab rather than toggling back to source mode: toggling
+      // leaves the chunks' Ace editors mounted, which makes the source-mode
+      // editor locators ambiguous for later tests in the shared IDE.
+      await sourceActions.closeSourceAndDeleteFile(fileName).catch(() => {});
+    }
   });
 });

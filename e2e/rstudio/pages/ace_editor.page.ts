@@ -44,13 +44,32 @@ export interface AceMarker {
  * The marker-substring path is a DOM walk and can land on stale editors left
  * in the DOM after a tab close (see ad175dccd1 / #17775 and #17784). Empty
  * marker avoids that entirely.
+ *
+ * A third target, `AceEditor.visualModeChunk(page, marker)`, addresses an
+ * editor embedded in the visual editor. Neither of the other two reaches it:
+ * activeEditor() returns the (hidden) source editor for the document, and the
+ * plain marker walk would match that editor too, since in visual mode it still
+ * holds the whole document, chunk text included.
  */
 export class AceEditor extends PageObject {
   private readonly marker: string;
+  private readonly inVisualEditor: boolean;
 
-  constructor(page: Page, marker: string) {
+  constructor(page: Page, marker: string, inVisualEditor = false) {
     super(page);
     this.marker = marker;
+    this.inVisualEditor = inVisualEditor;
+  }
+
+  /**
+   * An Ace editor embedded in the visual editor -- a code chunk, or the YAML
+   * front matter block -- identified by a substring of its contents. Matching
+   * on content rather than position keeps a test independent of how many
+   * editors panmirror mounts ahead of the chunk it means (the front matter
+   * block is one of them).
+   */
+  static visualModeChunk(page: Page, marker: string): AceEditor {
+    return new AceEditor(page, marker, true);
   }
 
   /**
@@ -58,7 +77,23 @@ export class AceEditor extends PageObject {
    * Pairs with `run()` below, which disposes the handle when done.
    */
   private editorHandle(): Promise<JSHandle<Ace.Editor>> {
-    return this.page.evaluateHandle((marker: string): Ace.Editor => {
+    return this.page.evaluateHandle(({ marker, inVisualEditor }: {
+      marker: string;
+      inVisualEditor: boolean;
+    }): Ace.Editor => {
+      if (inVisualEditor) {
+        const embedded = document.querySelectorAll('.ProseMirror .ace_editor');
+        for (let i = 0; i < embedded.length; i++) {
+          const env = (embedded[i] as unknown as AceEditorElement).env;
+          if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
+            return env.editor;
+          }
+        }
+        throw new Error(
+          `AceEditor.visualModeChunk('${marker}'): no embedded editor contains it `
+          + `(${embedded.length} mounted)`,
+        );
+      }
       if (marker === '') {
         const editor = window.rstudio?.documents.activeEditor() ?? null;
         if (!editor) {
@@ -77,7 +112,7 @@ export class AceEditor extends PageObject {
         }
       }
       throw new Error('No Ace editor found containing marker: ' + marker);
-    }, this.marker);
+    }, { marker: this.marker, inVisualEditor: this.inVisualEditor });
   }
 
   /**
