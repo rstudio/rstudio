@@ -29,7 +29,7 @@ export interface AceMarker {
 /**
  * Drives an Ace editor instance from Playwright via page.evaluate.
  *
- * Two ways to identify the target editor:
+ * Three ways to identify the target editor:
  *
  *   - Empty marker (`new AceEditor(page, '')`): the active source editor,
  *     resolved through `window.rstudio.documents.activeEditor()`. Prefer this
@@ -53,12 +53,13 @@ export interface AceMarker {
  */
 export class AceEditor extends PageObject {
   private readonly marker: string;
-  private readonly inVisualEditor: boolean;
+  // Set only by visualModeChunk(); kept off the constructor so the public
+  // signature stays free of a positional boolean.
+  private inVisualEditor = false;
 
-  constructor(page: Page, marker: string, inVisualEditor = false) {
+  constructor(page: Page, marker: string) {
     super(page);
     this.marker = marker;
-    this.inVisualEditor = inVisualEditor;
   }
 
   /**
@@ -69,7 +70,9 @@ export class AceEditor extends PageObject {
    * block is one of them).
    */
   static visualModeChunk(page: Page, marker: string): AceEditor {
-    return new AceEditor(page, marker, true);
+    const editor = new AceEditor(page, marker);
+    editor.inVisualEditor = true;
+    return editor;
   }
 
   /**

@@ -309,6 +309,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       '',
       '```{r seed}',
       'gizmo <- 2',
+      'kumquat <- 3',
       '```',
     ].join('\n');
 
@@ -339,10 +340,19 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       // So does a selection made inside a code chunk, which the outer
       // ProseMirror selection cannot see on its own.
+      const chunk = AceEditor.visualModeChunk(page, '{r seed}');
       await focusChunk(proseMirror, '{r seed}');
-      await AceEditor.visualModeChunk(page, '{r seed}').find('gizmo');
+      await chunk.find('gizmo');
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('gizmo');
+
+      // Use Selection for Find reads the same selection. Refocus the chunk
+      // first -- opening the find bar moved focus into the search box -- and
+      // take the other identifier, so the box has to change to pass.
+      await focusChunk(proseMirror, '{r seed}');
+      await chunk.find('kumquat');
+      await executeCommand(page, 'findFromSelection');
+      await expect(findInput).toHaveValue('kumquat');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
