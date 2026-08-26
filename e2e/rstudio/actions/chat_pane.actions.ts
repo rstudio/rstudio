@@ -17,6 +17,18 @@ const TURN_IDLE_SAMPLE_INTERVAL_MS = 500;
 // budget has already been spent waiting for the response to appear.
 const MIN_TURN_SETTLE_MS = 30000;
 
+// How long to let an in-flight close of the conversation history panel finish
+// before treating the panel as one that has to be toggled shut.
+const PANEL_AUTO_CLOSE_TIMEOUT_MS = 1000;
+
+// The panel can read hidden for a frame while a re-open is still in flight --
+// a toggle click landing as an auto-close finishes produces exactly that. So
+// closeConversationHistory requires it to stay hidden across
+// PANEL_CLOSED_SAMPLES samples, spanning
+// (PANEL_CLOSED_SAMPLES - 1) * PANEL_CLOSED_SAMPLE_INTERVAL_MS of observation.
+const PANEL_CLOSED_SAMPLES = 3;
+const PANEL_CLOSED_SAMPLE_INTERVAL_MS = 200;
+
 export class ChatPaneActions {
   readonly page: Page;
   readonly chatPane: ChatPane;
@@ -615,28 +627,44 @@ export class ChatPaneActions {
    * re-opens the panel, which is how this failed against the 1.1.7
    * pre-release.
    *
-   * So every decision here waits for the panel to settle rather than sampling
-   * it instantaneously -- an immediate read can catch a fade-out frame and
-   * either provoke that re-opening click or report a close that is about to be
+   * So every decision here waits for the panel to settle and then holds it to
+   * that, the same way isTurnIdle treats the stop button: a single hidden
+   * observation can be a fade-out frame with a re-open queued behind it, which
+   * would either provoke a re-opening click or report a close about to be
    * undone. At most two clicks are issued, and the closing assertion is what
    * fails the test if the panel is still up.
    */
   async closeConversationHistory(): Promise<void> {
     const panel = this.chatPane.conversationHistoryPanel;
 
-    // Resolves true once the panel is gone, false if it is still up after the
-    // settle window. A panel that never leaves is the normal case on builds
-    // that do not auto-close, so that timeout is an expected outcome mapped to
-    // a value, not an error to propagate.
-    const settlesHidden = (): Promise<boolean> =>
-      panel.waitFor({ state: 'hidden', timeout: 1000 }).then(
-        () => true,
-        () => false,
-      );
+    // True once the panel is gone and stays gone. False if it is still up
+    // after the settle window -- the normal case on builds that never
+    // auto-close, so that timeout is an expected outcome mapped to a value
+    // rather than an error to propagate -- or if it comes back while being
+    // watched.
+    const staysHidden = async (): Promise<boolean> => {
+      const hidden = await panel
+        .waitFor({ state: 'hidden', timeout: PANEL_AUTO_CLOSE_TIMEOUT_MS })
+        .then(
+          () => true,
+          () => false,
+        );
+      if (!hidden) {
+        return false;
+      }
 
-    if (!(await settlesHidden())) {
+      for (let sample = 1; sample < PANEL_CLOSED_SAMPLES; sample++) {
+        await sleep(PANEL_CLOSED_SAMPLE_INTERVAL_MS);
+        if (await panel.isVisible()) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    if (!(await staysHidden())) {
       await this.chatPane.historyBtn.click({ timeout: 10000 });
-      if (!(await settlesHidden())) {
+      if (!(await staysHidden())) {
         // The click landed as an auto-close was finishing and re-opened the
         // panel; it is stable now, so one more toggle closes it for good.
         await this.chatPane.historyBtn.click({ timeout: 10000 });
