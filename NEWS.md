@@ -4,6 +4,7 @@
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): Added horizontal and vertical split source editor views, with shared edits and independent navigation state.
 
 ### Fixed
+- ([#18620](https://github.com/rstudio/rstudio/issues/18620)): The Data Viewer's last row is no longer hidden underneath the horizontal scrollbar when scrolled to the bottom.
 - ([#18356](https://github.com/rstudio/rstudio/issues/18356)): Declining the Posit Assistant install prompt now restores the previously selected code assistant.
 - ([#18631](https://github.com/rstudio/rstudio/issues/18631)): RStudio Desktop now shows What's New once per release instead of after every patch update.
 - ([#18602](https://github.com/rstudio/rstudio/issues/18602)): Fixed folding and outline hierarchy for section headers decorated with `#` characters.

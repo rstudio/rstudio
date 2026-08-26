@@ -1633,6 +1633,89 @@ test.describe('Data Viewer', () => {
     }
   });
 
+  // https://github.com/rstudio/rstudio/issues/18620
+  //
+  // The custom horizontal scrollbar floats over the bottom 11px of the panes
+  // instead of taking layout space, and the grid had no vertical overscroll
+  // past the last row -- so at maximum scroll the last row sat half covered by
+  // the bar with nowhere left to scroll. visibleBodyHeight already discounted
+  // those 11px (that is how ensureActiveCellVisible clears the bar for every
+  // other row), which is exactly why the last row could never reach the same
+  // place. renderVisibleRows now adds a matching overscroll tail to the bottom
+  // spacer, the way the summary sidebar and the rightmost column already do.
+  test('the last row clears the horizontal scrollbar at maximum scroll (#18620)', async ({ rstudioPage: page }) => {
+    // 500 rows to force vertical virtual scrolling, 30 columns so the grid also
+    // overflows horizontally and the floating horizontal scrollbar exists.
+    await consoleActions.executeInConsole(
+      '{ .rs.bottom_edge_df <- as.data.frame(matrix(seq_len(500 * 30), nrow = 500)); View(.rs.bottom_edge_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Preconditions: both axes actually overflow, and the overlay scrollbar
+      // is in use (the native-scrollbar mode takes layout space instead, and
+      // needs no tail).
+      await expect.poll(
+        () => dataViewer.viewport.evaluate(
+          (el: HTMLElement) => el.scrollWidth - el.clientWidth,
+        ),
+        { message: 'frame should overflow the viewport horizontally' },
+      ).toBeGreaterThan(1);
+      await expect(dataViewer.horizontalScrollbar).toBeAttached();
+
+      // Scroll to the bottom with the wheel, the way the report does. A
+      // programmatic scrollTop lands in one step and would not exercise the
+      // repeated renders a real gesture drives.
+      const box = await dataViewer.viewport.boundingBox();
+      if (!box) throw new Error('grid viewport has no bounding box');
+      await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
+      for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 2000);
+
+      const atMax = () => dataViewer.viewport.evaluate(
+        (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 1,
+      );
+      await expect.poll(atMax, { timeout: TIMEOUTS.fileOpen }).toBe(true);
+
+      // The position must SETTLE: further wheeling at the bottom must not move
+      // it back up. This is the "bounces" half of the report, and the one
+      // assertion that has to wait out an absence of movement rather than a
+      // condition. The 1px tolerance is for fractional scroll offsets under
+      // display scaling; a bounce moves the view by a row or more.
+      const readTop = () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop);
+      const settled = await readTop();
+      for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(500);
+      expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
+
+      // The last row is rendered, sits inside the viewport, and its bottom edge
+      // clears the top of the floating horizontal scrollbar. Before the fix its
+      // bottom was flush with the viewport, i.e. 11px below the bar's top.
+      const geometry = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        const doc = el.ownerDocument;
+        const rows = doc.querySelectorAll('#gridBody tr:not(.spacer-row)');
+        const last = rows[rows.length - 1] as HTMLElement;
+        const bar = doc.querySelector('.custom-scrollbar.horizontal') as HTMLElement;
+        return {
+          lastRow: last.getAttribute('data-row'),
+          lastRowBottom: last.getBoundingClientRect().bottom,
+          viewportBottom: el.getBoundingClientRect().bottom,
+          scrollbarTop: bar.getBoundingClientRect().top,
+        };
+      });
+      expect(geometry.lastRow).toBe('499');
+      expect(geometry.lastRowBottom).toBeLessThanOrEqual(geometry.viewportBottom + 0.5);
+      expect(geometry.lastRowBottom).toBeLessThanOrEqual(geometry.scrollbarTop + 0.5);
+
+      // The info bar counts the last row as visible, as it did before.
+      await expect(dataViewer.gridInfo)
+        .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.bottom_edge_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
   // https://github.com/rstudio/rstudio/issues/17800
   //
   // The grid uses auto-hide overlay scrollbars that fade after ~1.2s of

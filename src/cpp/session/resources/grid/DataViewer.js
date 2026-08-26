@@ -22,6 +22,12 @@
 // virtual-scroll math and spacer-row sizing assumes a uniform row height.
 var ROW_HEIGHT = 23;
 
+// Height of the custom horizontal scrollbar (kept in sync with
+// .custom-scrollbar.horizontal in DataViewer.css). It floats over the bottom of
+// the panes rather than taking layout space, so the rows underneath it have to
+// be accounted for explicitly; see hScrollbarOverlayHeight.
+var H_SCROLLBAR_HEIGHT = 11;
+
 // Number of off-screen rows rendered above and below the viewport so the
 // recycler has a buffer to draw from before the next fetch lands. Kept modest:
 // every buffered row now also pays for the rendered column window, and 200
@@ -189,6 +195,10 @@ var pendingFetches = new Map(); // key -> AbortController
 // Current render window
 var renderStart = 0;
 var renderEnd = 0;
+// Bottom overscroll (px) baked into the current bottom spacer; part of the
+// render window's identity so a change in horizontal overflow re-sizes the
+// spacer even when the row window itself is unchanged.
+var renderOverscroll = 0;
 
 // Incremental row recycling state
 var renderedRowElements = new Map(); // rowIndex -> <tr> element
@@ -3623,17 +3633,26 @@ var updateAriaRowCount = function() {
    }
 };
 
+// Height of the grid area hidden underneath the custom horizontal scrollbar,
+// or 0 when nothing is hidden: in native-scrollbar mode the browser's own bar
+// takes layout space and is already excluded from clientHeight, and with no
+// horizontal overflow there is no bar at all.
+var hScrollbarOverlayHeight = function(viewport) {
+   if (!useOverlayScrollbars) return 0;
+   return viewport.scrollWidth > viewport.clientWidth + 1 ? H_SCROLLBAR_HEIGHT : 0;
+};
+
 // Height of the viewport area in which data rows are actually visible. The
 // viewport's full clientHeight overstates this: the sticky <thead> overlays
-// the top (while still contributing to scroll content height), and when
-// horizontal scroll is active the custom horizontal scrollbar overlays the
-// bottom 11px (see .custom-scrollbar.horizontal in DataViewer.css).
+// the top (while still contributing to scroll content height), and the custom
+// horizontal scrollbar overlays the bottom.
 var visibleBodyHeight = function(viewport) {
    var headerEl = domThead;
    var headerH = (headerEl && headerEl.parentElement)
       ? headerEl.parentElement.offsetHeight : 0;
-   var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
-   return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 11 : 0));
+
+   var occluded = headerH + hScrollbarOverlayHeight(viewport);
+   return Math.max(0, viewport.clientHeight - occluded);
 };
 
 // Update the "Sorted by" portion of the info bar. The text span and the
@@ -3851,17 +3870,29 @@ var renderVisibleRows = function(forceRebuild) {
       bottomSpacerRow = null;
       renderStart = 0;
       renderEnd = 0;
+      renderOverscroll = 0;
       return;
    }
 
    var firstVisible = Math.floor(scrollTop / ROW_HEIGHT);
    var visibleCount = Math.ceil(viewportH / ROW_HEIGHT);
 
-   var newStart = Math.max(0, firstVisible - BUFFER_ROWS);
    var newEnd = Math.min(activeRows - 1, firstVisible + visibleCount + BUFFER_ROWS);
+   // Clamped against newEnd as well as 0: the overscroll tail below lets
+   // scrollTop run past the last row, which on a viewport shorter than the
+   // header plus the tail can push firstVisible off the end of the frame.
+   var newStart = Math.min(Math.max(0, firstVisible - BUFFER_ROWS), newEnd);
+
+   // Extra scrollable space past the last row, so the last row can be scrolled
+   // out from under the floating horizontal scrollbar instead of staying half
+   // covered by it at maximum scroll (#18620). Mirrors the sidebar's overscroll
+   // tail (renderSidebarWindow) and the horizontal overscroll padding that
+   // keeps the rightmost column reachable (applyPinnedColumns).
+   var overscroll = hScrollbarOverlayHeight(viewport);
 
    // Skip if the render window hasn't changed
-   if (!forceRebuild && newStart === renderStart && newEnd === renderEnd) {
+   if (!forceRebuild && newStart === renderStart && newEnd === renderEnd &&
+       overscroll === renderOverscroll) {
       return;
    }
 
@@ -3930,7 +3961,7 @@ var renderVisibleRows = function(forceRebuild) {
       }
 
       var topH = newStart * ROW_HEIGHT;
-      var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT;
+      var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT + overscroll;
       updateSpacerRowHeight(topSpacerRow.unpinned, topH);
       updateSpacerRowHeight(topSpacerRow.pinned, topH);
       updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
@@ -3938,6 +3969,7 @@ var renderVisibleRows = function(forceRebuild) {
 
       renderStart = newStart;
       renderEnd = newEnd;
+      renderOverscroll = overscroll;
       return;
    }
 
@@ -4011,7 +4043,7 @@ var renderVisibleRows = function(forceRebuild) {
 
    // Update spacer heights (both panes stay aligned)
    var topH = newStart * ROW_HEIGHT;
-   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT;
+   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT + overscroll;
    updateSpacerRowHeight(topSpacerRow.unpinned, topH);
    updateSpacerRowHeight(topSpacerRow.pinned, topH);
    updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
@@ -4019,6 +4051,7 @@ var renderVisibleRows = function(forceRebuild) {
 
    renderStart = newStart;
    renderEnd = newEnd;
+   renderOverscroll = overscroll;
 };
 
 // Info bar update is debounced separately at a longer interval -- reading
@@ -7058,6 +7091,7 @@ var resetGridState = function() {
    // Render window
    renderStart = 0;
    renderEnd = 0;
+   renderOverscroll = 0;
    colWinStart = -1;
    colWinEnd = -1;
    // Injected header-UI registry is scoped to a single grid lifecycle (it
