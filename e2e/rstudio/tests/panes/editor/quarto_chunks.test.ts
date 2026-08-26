@@ -251,6 +251,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // withActiveEditor, whose non-visual branch is still the document's own
       // editor. Assert on the selection ranges rather than typing, so the
       // document reaches the visual half below unedited.
+      await sourceActions.ensureSourceMode();
       const sourceEditor = new AceEditor(page, '');
       await sourceEditor.find('gizmo');
       await executeCommand(page, 'quickAddNext');
@@ -371,6 +372,16 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
       await executeCommand(page, 'findFromSelection');
       await expect(findInput).toHaveValue('kumquat');
+
+      // Two seeding gaps are deliberately not asserted, both measured here and
+      // both the same cause: the visual editor reports no selection once focus
+      // has left its surface, so getSearchSelection() sees nothing and the bar
+      // reopens with whatever term it held. They are the toolbar Find button,
+      // whose click moves focus before the handler reads the selection, and a
+      // prose selection made after a chunk has been focused (window.getSelection()
+      // reports the prose word, panmirror does not). Clearing activeEditor_ in
+      // onPanmirrorFocus does not change the second, so the selection state is
+      // panmirror's; closing either is upstream work.
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);

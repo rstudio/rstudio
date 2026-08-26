@@ -222,11 +222,11 @@ public class VisualMode implements VisualModeEditorSync,
          constants_.findOrReplace(),
          FindReplaceBar.getFindIcon(),
          (event) -> {
+            // Not seeded from the selection the way the command is: clicking
+            // the button moves focus off the editing surface first, and the
+            // visual editor reports no selection once that has happened
             HasFindReplace findReplace = getFindReplace();
-            if (findReplace.isFindReplaceShowing())
-               findReplace.showFindReplace(false);
-            else
-               showFindReplace();
+            findReplace.showFindReplace(!findReplace.isFindReplaceShowing());
          }
       );
    }
@@ -492,6 +492,10 @@ public class VisualMode implements VisualModeEditorSync,
       {
          panmirrorFormatConfig_ = null;
          view_.editorContainer().removeWidget(panmirror_);
+
+         // removeWidget() only detaches the widget -- the chunk editors' own
+         // destroy hooks never run here, so give up the active editor too
+         onActiveEditorDestroyed(activeEditor_);
          panmirror_ = null;
       }
       
