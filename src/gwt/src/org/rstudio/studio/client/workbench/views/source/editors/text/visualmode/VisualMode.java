@@ -839,6 +839,23 @@ public class VisualMode implements VisualModeEditorSync,
    }
    
    /**
+    * Gives up the active editor because it is being destroyed. Unlike a blur,
+    * which the code commands deliberately outlive so that clicking a toolbar
+    * or the find box does not disable them, there is no editor left here to
+    * return focus to, so the commands go with it.
+    * 
+    * @param editor The editor being destroyed.
+    */
+   public void onActiveEditorDestroyed(DocDisplay editor)
+   {
+      if (activeEditor_ != editor)
+         return;
+
+      setActiveEditor(null);
+      setCodeCommandsEnabled(false);
+   }
+   
+   /**
     * Sets the enabled state for code commands -- i.e. those that require
     * selection to be inside a chunk of code. We disable these outside code
     * chunks.

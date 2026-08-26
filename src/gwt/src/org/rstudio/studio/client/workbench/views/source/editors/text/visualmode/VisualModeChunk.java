@@ -402,8 +402,7 @@ public class VisualModeChunk
          // Give up the active-editor reference first: detaching removes the
          // editor's handlers without firing blur, so a chunk destroyed while
          // focused would otherwise leave visual mode pointing at a dead editor
-         if (target_.getVisualMode().getActiveEditor() == editor_)
-            target_.getVisualMode().setActiveEditor(null);
+         target_.getVisualMode().onActiveEditorDestroyed(editor_);
 
          // Detach the editor subsystems before cleaning up handlers
          editor_.detach();

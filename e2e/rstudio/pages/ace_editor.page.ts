@@ -40,16 +40,16 @@ export interface AceMarker {
  *     hidden buffer left open in another tab). Editors inside
  *     #rstudio_console_input are skipped so the source editor is still found
  *     when the console happens to come first in DOM order.
+ *   - `AceEditor.visualModeChunk(page, marker)`: an editor embedded in the
+ *     visual editor, matched on content the same way but only among the chunk
+ *     editors panmirror has mounted. Neither of the other two reaches one:
+ *     activeEditor() returns the (hidden) source editor for the document, and
+ *     the plain marker walk would match that editor too, since in visual mode
+ *     it still holds the whole document, chunk text included.
  *
  * The marker-substring path is a DOM walk and can land on stale editors left
  * in the DOM after a tab close (see ad175dccd1 / #17775 and #17784). Empty
  * marker avoids that entirely.
- *
- * A third target, `AceEditor.visualModeChunk(page, marker)`, addresses an
- * editor embedded in the visual editor. Neither of the other two reaches it:
- * activeEditor() returns the (hidden) source editor for the document, and the
- * plain marker walk would match that editor too, since in visual mode it still
- * holds the whole document, chunk text included.
  */
 export class AceEditor extends PageObject {
   private readonly marker: string;
@@ -289,6 +289,11 @@ export class AceEditor extends PageObject {
         end: { row: r.end.row, column: r.end.column },
       }));
     });
+  }
+
+  /** The current selection's text (Ace's editor.getSelectedText). */
+  async getSelectedText(): Promise<string> {
+    return this.run((editor) => editor.getSelectedText());
   }
 
   /** Rows as rendered (session.getScreenLength): exceeds the document line count exactly when soft-wrapped. */

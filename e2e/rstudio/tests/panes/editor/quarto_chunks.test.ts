@@ -247,6 +247,19 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
     await sourceActions.createAndOpenFile(fileName, content);
     try {
+      // Source mode first: both handlers were rerouted through
+      // withActiveEditor, whose non-visual branch is still the document's own
+      // editor. Assert on the selection ranges rather than typing, so the
+      // document reaches the visual half below unedited.
+      const sourceEditor = new AceEditor(page, '');
+      await sourceEditor.find('gizmo');
+      await executeCommand(page, 'quickAddNext');
+      await expect.poll(() => sourceEditor.getSelectionRanges()).toHaveLength(2);
+
+      await sourceEditor.find('gizmo');
+      await executeCommand(page, 'findAll');
+      await expect.poll(() => sourceEditor.getSelectionRanges()).toHaveLength(3);
+
       await sourceActions.ensureVisualMode();
       const proseMirror = page.locator('.ProseMirror:visible').first();
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
@@ -343,14 +356,19 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       const chunk = AceEditor.visualModeChunk(page, '{r seed}');
       await focusChunk(proseMirror, '{r seed}');
       await chunk.find('gizmo');
+      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('gizmo');
 
       // Use Selection for Find reads the same selection. Refocus the chunk
       // first -- opening the find bar moved focus into the search box -- and
-      // take the other identifier, so the box has to change to pass.
+      // take the other identifier, so the box has to change to pass. Ace's
+      // find() searches forward from the cursor and reports nothing when it
+      // misses, so pin the selection before dispatching: otherwise a stale
+      // `gizmo` would fail below looking like a seeding regression.
       await focusChunk(proseMirror, '{r seed}');
       await chunk.find('kumquat');
+      await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
       await executeCommand(page, 'findFromSelection');
       await expect(findInput).toHaveValue('kumquat');
     } finally {
