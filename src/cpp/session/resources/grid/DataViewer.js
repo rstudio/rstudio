@@ -25,7 +25,8 @@ var ROW_HEIGHT = 23;
 // Height of the custom horizontal scrollbar (kept in sync with
 // .custom-scrollbar.horizontal in DataViewer.css). It floats over the bottom of
 // the panes rather than taking layout space, so the rows underneath it have to
-// be accounted for explicitly; see hScrollbarOverlayHeight.
+// be accounted for explicitly; see hScrollbarOverlayHeight, which also reuses
+// this as an approximation of a native overlay bar's height.
 var H_SCROLLBAR_HEIGHT = 11;
 
 // Number of off-screen rows rendered above and below the viewport so the
@@ -3886,8 +3887,9 @@ var renderVisibleRows = function(forceRebuild) {
 
    var newEnd = Math.min(activeRows - 1, firstVisible + visibleCount + BUFFER_ROWS);
    // Clamped against newEnd as well as 0: the overscroll tail below lets
-   // scrollTop run past the last row, which on a viewport shorter than the
-   // header plus the tail can push firstVisible off the end of the frame.
+   // scrollTop run past the last row, so keep newStart from crossing newEnd.
+   // Defensive at BUFFER_ROWS = 25, since the tail is only a couple of rows
+   // tall, but the clamp is cheap and the window is invalid if it ever binds.
    var newStart = Math.min(Math.max(0, firstVisible - BUFFER_ROWS), newEnd);
 
    // Extra scrollable space past the last row, so the last row can be scrolled
@@ -6705,18 +6707,22 @@ var applyScrollbarMode = function() {
       // Recreate the sidebar overlay when the sidebar DOM is present.
       if (document.getElementById("sidebarContent"))
          attachSidebarScrollbar();
-      updateCustomScrollbars();
    } else {
       // Drop the overlay scrollbars but leave the sidebar scroll listener in
       // place (attachSidebarScrollbar owns it) so virtualization keeps working.
       if (gridScrollbarV_) { gridScrollbarV_.destroy(); gridScrollbarV_ = null; }
       if (gridScrollbarH_) { gridScrollbarH_.destroy(); gridScrollbarH_ = null; }
       if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
-      // Native scrollbars take up viewport width, which can change whether the
-      // columns overflow; re-evaluate so the "Go to column" control stays in
-      // sync. (The scrollbar updates inside are no-ops now they're destroyed.)
-      updateCustomScrollbars();
    }
+
+   // The switch moves the bars in and out of layout, which changes the
+   // overscroll tail past the last row; re-render so the bottom spacer is
+   // resized now rather than at whatever unrelated event rebuilds next. Native
+   // scrollbars also take up viewport width, which can change whether the
+   // columns overflow, so the "Go to column" control is re-evaluated too (the
+   // scrollbar updates inside are no-ops when the overlays are destroyed).
+   renderVisibleRows(true);
+   updateCustomScrollbars();
 };
 
 var updateCustomScrollbars = function() {

@@ -12,10 +12,15 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
-import { resetSourcePaneState, executeCommand } from '@utils/commands';
+import { resetSourcePaneState, executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 
 const VIEWER_FRAME = '#rstudio_data_viewer_frame';
+
+// Height of the grid's horizontal scrollbar, in sync with H_SCROLLBAR_HEIGHT in
+// DataViewer.js and .custom-scrollbar.horizontal in DataViewer.css. It is also
+// what the virtualizer reserves as an overscroll tail past the last row.
+const H_SCROLLBAR_HEIGHT = 11;
 
 // Waits for the data viewer iframe to render a column header.
 // Used as a "viewer is ready" gate before introspection. Returns the
@@ -1719,6 +1724,77 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.bottom_edge_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18620
+  //
+  // The native-scrollbar half of the test above. hScrollbarOverlayHeight sizes
+  // the tail from the viewport's measured gutter rather than from the
+  // preference, because a native horizontal bar takes layout space on Windows
+  // and Linux but floats over the rows on macOS ("Show scroll bars: When
+  // scrolling"). Asserting against the same measurement pins whichever branch
+  // the host platform exercises -- no tail where the bar is in layout, the full
+  // tail where it overlays -- and the mode is flipped on the open grid, which
+  // is the path that has to re-render the window for the new tail to land.
+  test('the last row clears a native horizontal scrollbar too (#18620)', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.native_edge_df <- as.data.frame(matrix(seq_len(500 * 30), nrow = 500)); View(.rs.native_edge_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.horizontalScrollbar).toBeAttached();
+
+      // The host pushes the preference into the iframe as a setOption, which
+      // destroys the overlay bars and hands scrolling back to the browser.
+      await setPref(page, 'data_viewer_use_overlay_scrollbars', false);
+      await expect(dataViewer.horizontalScrollbar).toHaveCount(0);
+
+      const box = await dataViewer.viewport.boundingBox();
+      if (!box) throw new Error('grid viewport has no bounding box');
+      await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
+      for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 2000);
+
+      await expect.poll(
+        () => dataViewer.viewport.evaluate(
+          (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 1,
+        ),
+        { timeout: TIMEOUTS.fileOpen },
+      ).toBe(true);
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="499"]'))
+        .toBeAttached({ timeout: TIMEOUTS.fileOpen });
+
+      const geometry = await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        const rows = el.ownerDocument.querySelectorAll('#gridBody tr:not(.spacer-row)');
+        const last = rows[rows.length - 1] as HTMLElement;
+        // #gridViewport carries no border, so offsetHeight - clientHeight is
+        // exactly the layout space the native bar claimed; zero means the
+        // platform draws it as an overlay.
+        const gutter = el.offsetHeight - el.clientHeight;
+        return {
+          lastRow: last.getAttribute('data-row'),
+          lastRowBottom: last.getBoundingClientRect().bottom,
+          clientBottom: el.getBoundingClientRect().bottom - gutter,
+          gutter,
+        };
+      });
+      expect(geometry.lastRow).toBe('499');
+
+      // A bar that sits in layout is already outside clientHeight, so the last
+      // row ends flush with the client box; an overlay bar needs the same tail
+      // the custom one gets. The 1px tolerance is for fractional scroll offsets
+      // under display scaling.
+      const expectedTail = geometry.gutter > 0 ? 0 : H_SCROLLBAR_HEIGHT;
+      expect(Math.abs(geometry.lastRowBottom - (geometry.clientBottom - expectedTail)))
+        .toBeLessThanOrEqual(1);
+
+      await expect(dataViewer.gridInfo)
+        .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await clearPref(page, 'data_viewer_use_overlay_scrollbars');
+      await consoleActions.executeInConsole(
+        'rm(".rs.native_edge_df", envir = .GlobalEnv)',
       );
     }
   });
