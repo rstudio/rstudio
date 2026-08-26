@@ -271,26 +271,35 @@ public:
                         const ErrorHandler& errorHandler,
                         const FixedBufferHandler& fixedBufferHandler = FixedBufferHandler())
    {
-      // set handlers -- under socketMutex_, like every other access to these
-      // members (see disableHandlers()). Swap any previous values into
-      // locals so they destruct only after the lock is released: destroying
-      // a displaced handler can release the last reference to a consumer
-      // whose teardown calls back into close()/disableHandlers(), which
-      // take this same (non-recursive) mutex.
-      ResponseHandler oldResponseHandler;
-      ErrorHandler oldErrorHandler;
-      FixedBufferHandler oldFixedBufferHandler;
+      // Copy the handlers before taking the lock, because copying is the
+      // fallible part of installing them: a boost::function copy allocates
+      // whenever its target is too large for the small-object buffer. Copying
+      // under the lock -- interleaved with the assignments, as this used to do
+      // -- meant a failure left the client half-configured and LOCK_MUTEX
+      // stepped over it, so the request below still went out with (say) a
+      // response handler installed and no error handler behind it, and the
+      // exchange could complete with nobody left to notify. Copying first
+      // costs the client nothing on failure: the exception reaches the caller
+      // with no handler replaced and no request in flight.
+      ResponseHandler newResponseHandler = responseHandler;
+      ErrorHandler newErrorHandler = errorHandler;
+      FixedBufferHandler newFixedBufferHandler = fixedBufferHandler;
+
+      // Commit them under socketMutex_, like every other access to these
+      // members (see disableHandlers()). Swaps only, so nothing in here can
+      // throw; each swap leaves the value it displaced in the local, which
+      // destructs only once the lock is released. That matters: destroying a
+      // displaced handler can release the last reference to a consumer whose
+      // teardown calls back into close()/disableHandlers(), which take this
+      // same (non-recursive) mutex.
       LOCK_MUTEX(socketMutex_)
       {
-         oldResponseHandler.swap(responseHandler_);
-         responseHandler_ = responseHandler;
-         oldErrorHandler.swap(errorHandler_);
-         errorHandler_ = errorHandler;
-         if (fixedBufferHandler)
-         {
-            oldFixedBufferHandler.swap(fixedBufferHandler_);
-            fixedBufferHandler_ = fixedBufferHandler;
-         }
+         responseHandler_.swap(newResponseHandler);
+         errorHandler_.swap(newErrorHandler);
+
+         // tested before the swap below, so this is still the incoming value
+         if (newFixedBufferHandler)
+            fixedBufferHandler_.swap(newFixedBufferHandler);
       }
       END_LOCK_MUTEX
 
@@ -504,14 +513,20 @@ public:
 
    virtual void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler)
    {
-      // swap the displaced value out and destroy it after releasing the
-      // lock -- see execute() for why destroying it under the lock could
-      // deadlock
-      FixedBufferHandler oldFixedBufferHandler;
+      // Copied before the lock, for the reason execute() gives: detaching the
+      // installed handler and then failing to put the new one in its place
+      // left the client with no fixed buffer handler at all, which silently
+      // flips a streaming consumer into accumulating into response_ -- a body
+      // it never reads. The copy is the only fallible step, so doing it here
+      // means a failure changes nothing.
+      FixedBufferHandler newFixedBufferHandler = fixedBufferHandler;
+
+      // the swap leaves the displaced value in the local, to be destroyed
+      // after releasing the lock -- see execute() for why destroying it under
+      // the lock could deadlock
       LOCK_MUTEX(socketMutex_)
       {
-         oldFixedBufferHandler.swap(fixedBufferHandler_);
-         fixedBufferHandler_ = fixedBufferHandler;
+         fixedBufferHandler_.swap(newFixedBufferHandler);
       }
       END_LOCK_MUTEX
    }
@@ -589,9 +604,15 @@ public:
       // and just invoke it directly
       bool deferConnectNotification = false;
       bool invokeDownstreamClosedHandler = false;
-      // displaced values destroyed after unlock, see execute()
-      ConnectHandler oldConnectHandler;
-      ConnectHandler oldDownstreamClosedHandler;
+
+      // Copied before the lock, for the reason execute() gives, and here the
+      // two copies are a pair: storing the connect notification while failing
+      // to store the downstream-closed handler that reports its loss left a
+      // caller with no way to be told either way, which is the hang
+      // setConnectHandler()'s contract exists to prevent. Each swap below
+      // leaves the value it displaced in the local, to destroy after unlock.
+      ConnectHandler newConnectHandler = connectHandler;
+      ConnectHandler newDownstreamClosedHandler = downstreamClosedHandler;
       LOCK_MUTEX(socketMutex_)
       {
          // Whether we have settled has to be read under the same lock
@@ -622,10 +643,8 @@ public:
             // store both: disableHandlers() may yet detach the connect
             // notification before handleWrite() can deliver it, and reports
             // that through the stored downstream-closed handler
-            oldConnectHandler.swap(connectHandler_);
-            oldDownstreamClosedHandler.swap(downstreamClosedHandler_);
-            connectHandler_ = connectHandler;
-            downstreamClosedHandler_ = downstreamClosedHandler;
+            connectHandler_.swap(newConnectHandler);
+            downstreamClosedHandler_.swap(newDownstreamClosedHandler);
          }
          else
          {

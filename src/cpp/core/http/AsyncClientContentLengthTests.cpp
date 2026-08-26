@@ -2544,6 +2544,192 @@ TEST(AsyncClientContentLength, ConnectHandlerSnapshotFailureReportsDownstreamClo
    EXPECT_FALSE(gotResponse);
 }
 
+// --- rstudio#18625: a failed handler install must leave the client unchanged ---
+//
+// The other half of the same exception-safety problem: the sites that *store*
+// handlers copied them under socketMutex_ interleaved with the assignments, so
+// a copy that threw left the client half-configured -- and LOCK_MUTEX stepped
+// over it, leaving the caller to find out later, or never. Every copy now
+// happens before the lock, with only swaps under it, so either the whole
+// install lands or nothing does and the exception reaches the caller.
+
+// execute(): the response handler copies, the error handler does not. The
+// request used to be set in motion anyway, behind a client whose error handler
+// had never been installed -- an exchange that can complete with nobody left to
+// notify.
+//
+// Deliberately aimed at a port nobody is listening on rather than at a
+// LocalServer: what is under test is that nothing is set in motion at all, and
+// LocalServer's accept loop blocks until a connection arrives, so a regression
+// here would hang its teardown rather than fail.
+TEST(AsyncClientContentLength, ExecuteHandlerInstallFailureLeavesNothingInMotion)
+{
+   // bind and immediately release a port so connecting to it is refused
+   unsigned short deadPort = 0;
+   {
+      boost::asio::io_context probeIoc;
+      tcp::acceptor probe(probeIoc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
+      deadPort = probe.local_endpoint().port();
+   }
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(deadPort),
+         boost::posix_time::seconds(5));
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+
+   // the connect pair is what reports whether the request pipeline ever ran:
+   // a client that starts and then fails a connection reports the settle
+   // through the downstream-closed half (see close())
+   bool connected = false;
+   bool downstreamClosed = false;
+   pClient->setConnectHandler([&]() { connected = true; },
+                              [&]() { downstreamClosed = true; });
+
+   boost::shared_ptr<bool> pArmed = boost::make_shared<bool>(false);
+   ResponseHandler doomedResponseHandler =
+      ThrowOnCopy<boost::function<void(const http::Response&)>>(
+         pArmed, [](const http::Response&) {});
+
+   // armed only now, so the copy that fails is the one execute() takes
+   *pArmed = true;
+   EXPECT_THROW(pClient->execute(doomedResponseHandler, [](const core::Error&) {}),
+                std::bad_alloc);
+
+   ioc.run();
+
+   // nothing was set in motion: no connection was attempted, so neither half of
+   // the connect pair has fired
+   EXPECT_FALSE(connected);
+   EXPECT_FALSE(downstreamClosed);
+
+   // and the client is not left wedged by the failure -- a fresh execute()
+   // installs cleanly and reports the refused connection through the error
+   // handler it was given. Before the fix the first call had already run the
+   // connection to failure and marked the client closed, so this second one
+   // was swallowed by handleError()'s closed_ check and reported nothing.
+   bool gotError = false;
+   ioc.restart();
+   pClient->execute([](const http::Response&) {},
+                    [&](const core::Error&) { gotError = true; });
+   ioc.run();
+
+   EXPECT_TRUE(gotError);
+}
+
+// setFixedBufferHandler(): the installed handler was detached before the
+// replacement was copied into its place, so a failed copy left no fixed buffer
+// handler at all -- which silently turns a streaming consumer into an
+// accumulate-into-response_ one, for a body nothing then reads.
+TEST(AsyncClientContentLength, FixedBufferHandlerInstallFailureKeepsTheInstalledHandler)
+{
+   const std::string body = "{\"line\":1}\n{\"line\":2}\n";
+
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/true, body);
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+   pClient->setFixedBufferHandlerSupportsPause(true);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   // the wiring FixedBufferProxy::proxy() does: a streaming consumer installed
+   // through the setter rather than through execute()
+   std::vector<std::string> pieces;
+   bool sawFinalSignal = false;
+   pClient->setFixedBufferHandler(
+      [&](const http::Response&, const std::string& piece) -> bool
+      {
+         if (piece.empty())
+            sawFinalSignal = true;
+         else
+            pieces.push_back(piece);
+
+         return true;
+      });
+
+   boost::shared_ptr<bool> pArmed = boost::make_shared<bool>(false);
+   FixedBufferHandler doomedFixedBufferHandler =
+      ThrowOnCopy<boost::function<bool(const http::Response&, const std::string&)>>(
+         pArmed, [](const http::Response&, const std::string&) { return true; });
+
+   *pArmed = true;
+   EXPECT_THROW(pClient->setFixedBufferHandler(doomedFixedBufferHandler), std::bad_alloc);
+
+   bool gotResponse = false;
+   pClient->execute([&](const http::Response&) { gotResponse = true; },
+                    [](const core::Error&) {});
+
+   ioc.run();
+   server.stop();
+
+   // the consumer installed before the failed replacement is still the one
+   // streaming the body -- not displaced by a handler that never landed
+   EXPECT_TRUE(sawFinalSignal);
+   ASSERT_EQ(pieces.size(), 1u);
+   EXPECT_EQ(pieces[0], body);
+
+   // and the body did not fall back to being buffered for the whole-body handler
+   EXPECT_FALSE(gotResponse);
+}
+
+// setConnectHandler(): the two handlers are stored as a pair, and the second
+// copy is the one that fails here. Storing a connect notification while losing
+// the downstream-closed handler that reports its loss leaves a caller with no
+// way to be told either way -- the hang the pair exists to prevent.
+TEST(AsyncClientContentLength, ConnectHandlerInstallFailureKeepsTheInstalledPair)
+{
+   // never executed: what is under test is the registration itself, and a bare
+   // close() is enough to make the client report the pending notification
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", "1", boost::posix_time::seconds(5));
+
+   bool connectedA = false;
+   bool downstreamClosedA = false;
+   pClient->setConnectHandler([&]() { connectedA = true; },
+                              [&]() { downstreamClosedA = true; });
+
+   bool connectedB = false;
+   bool downstreamClosedB = false;
+   boost::shared_ptr<bool> pArmed = boost::make_shared<bool>(false);
+   ConnectHandler doomedDownstreamClosedHandler =
+      ThrowOnCopy<boost::function<void()>>(pArmed, [&]() { downstreamClosedB = true; });
+
+   // armed so the connect half of the pair copies and the downstream-closed
+   // half does not, which is what used to strand the pair half-replaced
+   *pArmed = true;
+   EXPECT_THROW(pClient->setConnectHandler([&]() { connectedB = true; },
+                                           doomedDownstreamClosedHandler),
+                std::bad_alloc);
+
+   // the registration that was already in place is intact, so the settle below
+   // still has somewhere to report to
+   pClient->close();
+   ioc.run();
+
+   EXPECT_TRUE(downstreamClosedA);
+   EXPECT_FALSE(connectedA);
+
+   // and nothing from the failed registration took effect
+   EXPECT_FALSE(connectedB);
+   EXPECT_FALSE(downstreamClosedB);
+}
+
 } // namespace tests
 } // namespace http
 } // namespace core
