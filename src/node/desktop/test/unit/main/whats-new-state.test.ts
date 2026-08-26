@@ -37,54 +37,46 @@ describe('WhatsNewState', () => {
   });
 
   it('reports unseen release as not seen', () => {
-    assert.isFalse(state.hasSeenRelease('Globemaster Allium', 0));
+    assert.isFalse(state.hasSeenRelease('Globemaster Allium'));
   });
 
-  it('marks a release as seen at patch 0', () => {
+  it('marks a release as seen', () => {
     state.markReleaseSeen('Globemaster Allium', 0);
-    assert.isTrue(state.hasSeenRelease('Globemaster Allium', 0));
+    assert.isTrue(state.hasSeenRelease('Globemaster Allium'));
   });
 
   it('tracks multiple releases independently', () => {
     state.markReleaseSeen('Globemaster Allium', 0);
     state.markReleaseSeen('Prairie Trillium', 1);
-    assert.isTrue(state.hasSeenRelease('Globemaster Allium', 0));
-    assert.isTrue(state.hasSeenRelease('Prairie Trillium', 1));
-    assert.isFalse(state.hasSeenRelease('Sea Holly', 0));
+    assert.isTrue(state.hasSeenRelease('Globemaster Allium'));
+    assert.isTrue(state.hasSeenRelease('Prairie Trillium'));
+    assert.isFalse(state.hasSeenRelease('Sea Holly'));
   });
 
-  it('shows again for a higher patch of the same release', () => {
+  it('records the running patch level, which older builds read', () => {
+    state.markReleaseSeen('Globemaster Allium', 2);
+    assert.deepEqual(state.seenReleases(), [{ name: 'Globemaster Allium', patch: 2 }]);
+  });
+
+  it('marking a seen release again leaves the entry alone', () => {
     state.markReleaseSeen('Globemaster Allium', 0);
-    assert.isFalse(state.hasSeenRelease('Globemaster Allium', 1));
-  });
-
-  it('does not show again for a lower patch (downgrade)', () => {
-    state.markReleaseSeen('Globemaster Allium', 2);
-    assert.isTrue(state.hasSeenRelease('Globemaster Allium', 1));
-  });
-
-  it('does not show again for the same patch', () => {
     state.markReleaseSeen('Globemaster Allium', 1);
-    assert.isTrue(state.hasSeenRelease('Globemaster Allium', 1));
-  });
-
-  it('updates stored patch when marking a higher patch', () => {
-    state.markReleaseSeen('Globemaster Allium', 0);
-    state.markReleaseSeen('Globemaster Allium', 2);
-    assert.isTrue(state.hasSeenRelease('Globemaster Allium', 2));
-    assert.isFalse(state.hasSeenRelease('Globemaster Allium', 3));
-  });
-
-  it('does not downgrade stored patch when marking a lower patch', () => {
-    state.markReleaseSeen('Globemaster Allium', 2);
-    state.markReleaseSeen('Globemaster Allium', 1);
-    assert.isTrue(state.hasSeenRelease('Globemaster Allium', 2));
+    assert.deepEqual(state.seenReleases(), [{ name: 'Globemaster Allium', patch: 0 }]);
   });
 
   it('persists across instances', () => {
-    state.markReleaseSeen('Globemaster Allium', 1);
+    state.markReleaseSeen('Globemaster Allium', 0);
     const state2 = new WhatsNewState(tmpDir);
-    assert.isTrue(state2.hasSeenRelease('Globemaster Allium', 1));
-    assert.isFalse(state2.hasSeenRelease('Globemaster Allium', 2));
+    assert.isTrue(state2.hasSeenRelease('Globemaster Allium'));
+    assert.isFalse(state2.hasSeenRelease('Sea Holly'));
+  });
+
+  it('honors seen-state written by a version that recorded a patch level', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, 'whats-new-state.json'),
+      JSON.stringify({ seenReleases: [{ name: 'Globemaster Allium', patch: 0 }] }),
+    );
+    const state2 = new WhatsNewState(tmpDir);
+    assert.isTrue(state2.hasSeenRelease('Globemaster Allium'));
   });
 });

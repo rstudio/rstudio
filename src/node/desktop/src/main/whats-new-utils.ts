@@ -173,7 +173,7 @@ export interface WhatsNewVisibilityInputs {
   /** The running build is a release build. */
   isRelease: boolean;
   /**
-   * Whether this release has already been seen at this patch level or higher.
+   * Whether What's New has already been seen for this release.
    * Passed as a thunk because computing it opens the on-disk seen-state store;
    * it is only invoked once every earlier gate has passed, so an earlier
    * decision never touches (or risks throwing on) that store.
