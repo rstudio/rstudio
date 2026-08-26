@@ -17,6 +17,18 @@ const TURN_IDLE_SAMPLE_INTERVAL_MS = 500;
 // budget has already been spent waiting for the response to appear.
 const MIN_TURN_SETTLE_MS = 30000;
 
+// How long to let an in-flight close of the conversation history panel finish
+// before treating the panel as one that has to be toggled shut.
+const PANEL_AUTO_CLOSE_TIMEOUT_MS = 1000;
+
+// The panel can read hidden for a frame while a re-open is still in flight --
+// a toggle click landing as an auto-close finishes produces exactly that. So
+// closeConversationHistory requires it to stay hidden across
+// PANEL_CLOSED_SAMPLES samples, spanning
+// (PANEL_CLOSED_SAMPLES - 1) * PANEL_CLOSED_SAMPLE_INTERVAL_MS of observation.
+const PANEL_CLOSED_SAMPLES = 3;
+const PANEL_CLOSED_SAMPLE_INTERVAL_MS = 200;
+
 export class ChatPaneActions {
   readonly page: Page;
   readonly chatPane: ChatPane;
@@ -590,12 +602,12 @@ export class ChatPaneActions {
   /**
    * Open the conversation history panel, or do nothing if it is already open.
    *
-   * The history toolbar button is a strict toggle and the panel is removed
-   * from the DOM when closed, so a state-blind "click and expect the list"
-   * helper inverts the panel state whenever its assumption about the current
-   * state is wrong -- and its post-click assertion could only pass on a
-   * closing toggle by winning a race against the panel's fade-out. Checking
-   * the panel's actual state first makes these helpers idempotent.
+   * The panel is removed from the DOM when closed, so its presence is the
+   * open/closed signal. A state-blind "click and expect the list" helper
+   * inverts the panel state whenever its assumption about the current state is
+   * wrong -- and its post-click assertion could only pass on a closing toggle
+   * by winning a race against the panel's fade-out. Checking the panel's
+   * actual state first makes this idempotent.
    */
   async openConversationHistory(): Promise<void> {
     if (await this.chatPane.conversationHistoryPanel.isVisible()) {
@@ -606,14 +618,59 @@ export class ChatPaneActions {
   }
 
   /**
-   * Close the conversation history panel, or do nothing if it is already
-   * closed. See openConversationHistory for why this checks state first.
+   * Close the conversation history panel.
+   *
+   * Recent assistant builds dismiss the panel themselves once a conversation
+   * is selected; older ones only close it via the toolbar toggle. Both states
+   * have to be tolerated, and the transition between them is what makes this
+   * delicate: a toggle click that lands while an auto-close is still finishing
+   * re-opens the panel, which is how this failed against the 1.1.7
+   * pre-release.
+   *
+   * So every decision here waits for the panel to settle and then holds it to
+   * that, the same way isTurnIdle treats the stop button: a single hidden
+   * observation can be a fade-out frame with a re-open queued behind it, which
+   * would either provoke a re-opening click or report a close about to be
+   * undone. At most two clicks are issued, and the closing assertion is what
+   * fails the test if the panel is still up.
    */
   async closeConversationHistory(): Promise<void> {
-    if (!(await this.chatPane.conversationHistoryPanel.isVisible())) {
-      return;
+    const panel = this.chatPane.conversationHistoryPanel;
+
+    // True once the panel is gone and stays gone. False if it is still up
+    // after the settle window -- the normal case on builds that never
+    // auto-close, so that timeout is an expected outcome mapped to a value
+    // rather than an error to propagate -- or if it comes back while being
+    // watched.
+    const staysHidden = async (): Promise<boolean> => {
+      const hidden = await panel
+        .waitFor({ state: 'hidden', timeout: PANEL_AUTO_CLOSE_TIMEOUT_MS })
+        .then(
+          () => true,
+          () => false,
+        );
+      if (!hidden) {
+        return false;
+      }
+
+      for (let sample = 1; sample < PANEL_CLOSED_SAMPLES; sample++) {
+        await sleep(PANEL_CLOSED_SAMPLE_INTERVAL_MS);
+        if (await panel.isVisible()) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    if (!(await staysHidden())) {
+      await this.chatPane.historyBtn.click({ timeout: 10000 });
+      if (!(await staysHidden())) {
+        // The click landed as an auto-close was finishing and re-opened the
+        // panel; it is stable now, so one more toggle closes it for good.
+        await this.chatPane.historyBtn.click({ timeout: 10000 });
+      }
     }
-    await this.chatPane.historyBtn.click({ timeout: 10000 });
-    await expect(this.chatPane.conversationHistoryPanel).toBeHidden({ timeout: 10000 });
+
+    await expect(panel).toBeHidden({ timeout: 10000 });
   }
 }
