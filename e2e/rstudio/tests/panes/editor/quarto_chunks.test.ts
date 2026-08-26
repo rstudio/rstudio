@@ -283,6 +283,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // third `widget` is left alone.
       const first = AceEditor.visualModeChunk(page, '{r alpha}');
       await first.find('widget');
+      await expect.poll(() => first.getSelectedText()).toBe('widget');
       await executeCommand(page, 'quickAddNext');
       await page.keyboard.type('gadget');
       await expect.poll(() => first.getValue()).toContain('gadget <- 1\ngadget + widget');
@@ -291,6 +292,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await focusChunk(proseMirror, '{r beta}');
       const second = AceEditor.visualModeChunk(page, '{r beta}');
       await second.find('gizmo');
+      await expect.poll(() => second.getSelectedText()).toBe('gizmo');
       await executeCommand(page, 'findAll');
       await page.keyboard.type('doohickey');
       await expect.poll(() => second.getValue()).toContain('doohickey <- 2\ndoohickey + doohickey');

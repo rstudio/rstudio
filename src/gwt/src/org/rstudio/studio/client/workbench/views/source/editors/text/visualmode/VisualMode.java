@@ -494,8 +494,11 @@ public class VisualMode implements VisualModeEditorSync,
          view_.editorContainer().removeWidget(panmirror_);
 
          // removeWidget() only detaches the widget -- the chunk editors' own
-         // destroy hooks never run here, so give up the active editor too
-         onActiveEditorDestroyed(activeEditor_);
+         // destroy hooks never run here, so give up the active editor too.
+         // Not reached by the e2e suite: it needs a format comment that
+         // changes mid-session into one requiring a reload
+         if (activeEditor_ != null)
+            onActiveEditorDestroyed(activeEditor_);
          panmirror_ = null;
       }
       
