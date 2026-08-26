@@ -15,6 +15,13 @@
 
 import ElectronStore from 'electron-store';
 
+/**
+ * A release whose What's New the user has seen. The patch level is written but
+ * never read: the file is shared with builds that show What's New once per
+ * patch, and those builds treat an entry without a patch as unseen (and cannot
+ * repair it), so omitting it would make them show What's New on every launch
+ * after a downgrade.
+ */
 export interface SeenRelease {
   name: string;
   patch: number;
@@ -42,31 +49,26 @@ export class WhatsNewState {
   }
 
   /**
-   * Check if the user has already seen What's New for this release at
-   * this patch level or higher. Returns true if the stored patch >= the
-   * given patch (covers same version and downgrades).
+   * Check if the user has already seen What's New for this release. The
+   * content is keyed by release, not by patch level, so a patch of a release
+   * the user has already seen does not show it again.
    */
-  hasSeenRelease(releaseName: string, patch: number): boolean {
-    const entry = this.findEntry(releaseName);
-    return entry !== undefined && entry.patch >= patch;
+  hasSeenRelease(releaseName: string): boolean {
+    return this.findEntry(releaseName) !== undefined;
   }
 
   /**
-   * Record that the user has seen What's New for this release at the
-   * given patch level. Updates the stored patch if the new one is higher.
+   * Record that the user has seen What's New for this release, at the patch
+   * level it was seen from (see SeenRelease). An already-seen release is left
+   * as it stands.
    */
   markReleaseSeen(releaseName: string, patch: number): void {
-    const seen = this.seenReleases();
-    const existing = seen.find((r) => r.name === releaseName);
-    if (existing) {
-      if (patch > existing.patch) {
-        existing.patch = patch;
-        this.store.set('seenReleases', seen);
-      }
-    } else {
-      seen.push({ name: releaseName, patch });
-      this.store.set('seenReleases', seen);
+    if (this.hasSeenRelease(releaseName)) {
+      return;
     }
+    const seen = this.seenReleases();
+    seen.push({ name: releaseName, patch });
+    this.store.set('seenReleases', seen);
   }
 
   seenReleases(): SeenRelease[] {

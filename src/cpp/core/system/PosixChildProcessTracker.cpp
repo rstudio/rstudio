@@ -45,11 +45,19 @@ int waitPid(PidType pid, int* pStatus)
 
 void ChildProcessTracker::addProcess(PidType pid, ExitHandler exitHandler)
 {
+   std::pair<PidType, ExitHandler> process(pid, exitHandler);
    LOCK_MUTEX(mutex_)
    {
-      processes_.insert(std::make_pair(pid, exitHandler));
+      processes_.insert(process);
    }
    END_LOCK_MUTEX
+
+   // The child can exit after launch but before its pid is registered here.
+   // If the SIGCHLD waiter handles that signal while the tracker is still
+   // empty, no later signal will prompt us to reap the resulting zombie.
+   // Probe once after registration to close that race; waitpid(WNOHANG) is a
+   // no-op while the child is still running.
+   attemptToReapProcess(process);
 }
 
 void ChildProcessTracker::notifySIGCHILD()
@@ -106,6 +114,16 @@ void ChildProcessTracker::attemptToReapProcess(
    // error occurred
    else if (result == -1)
    {
+      // ECHILD is benign here: because addProcess probes for an early exit on
+      // the launching thread, that probe and the SIGCHLD waiter can race to
+      // reap the same pid, and the loser of that race sees ECHILD after the
+      // winner has already fired the exit handler
+      if (errno == ECHILD)
+      {
+         DLOGF("Child process {} was already reaped", pid);
+         return;
+      }
+
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("pid", pid);
       LOG_ERROR(error);
@@ -137,4 +155,3 @@ std::map<PidType,ChildProcessTracker::ExitHandler>
 } // namespace system
 } // namespace core
 } // namespace rstudio
-
