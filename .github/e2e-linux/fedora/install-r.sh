@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Fedora is not a supported platform for rig / r-builds (Fedora R 404s on the
-# rversions service) or for PPM binaries, so install R from Fedora's own
-# repos and let pak compile CRAN packages from source (see e2e-setup.sh and
-# os-e2e-deps). The r_version input is ignored on Fedora -- dnf provides
-# whatever R the distro ships.
+# Fedora is not a supported platform for Posit's r-builds -- the source the
+# rstudio-buildtools R mirror is fed from -- or for PPM binaries, so install R
+# from Fedora's own repos and let pak compile CRAN packages from source (see
+# e2e-setup.sh and os-e2e-deps). The r_version input is ignored on Fedora --
+# dnf provides whatever R the distro ships.
 #
 # Clear tsflags for this transaction so R's documentation tree is installed.
 # Fedora container images ship /etc/dnf/dnf.conf with tsflags=nodocs (a

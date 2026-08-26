@@ -16,8 +16,10 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
@@ -66,7 +68,9 @@ public class RSConnectAccountEntry extends Composite
       nameLabel.getElement().getStyle().setMarginRight(4, Unit.PX);
       panel_.add(nameLabel);
 
-      Label serverLabel = new Label(account.getServer());
+      Label serverLabel = new Label(account.isShinyAppsAccount() ?
+            constants_.deprecatedServiceLabel(account.getServer()) :
+            account.getServer());
       serverLabel.getElement().getStyle().setCursor(Cursor.POINTER);
       panel_.add(serverLabel);
    }
@@ -78,5 +82,6 @@ public class RSConnectAccountEntry extends Composite
    
    private RSConnectAccount account_;
    private final HorizontalPanel panel_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }
 

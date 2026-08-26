@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { waitForConsoleIdle } from '../pages/console_pane.page';
 import type { Ace } from './ace';
+import { sleep } from './constants';
 
 // `window.rstudio` is registered when rsession runs with --automation-agent
 // (the Desktop fixture forwards that flag). The bridge lets tests trigger and
@@ -592,6 +593,64 @@ async function waitForPrefEntry(page: Page, camelName: string): Promise<void> {
   );
 }
 
+// The failures a pref write is retried for. Two symptoms, one trigger: the
+// bridge rejects with its own message when the RPC itself fails, but the same
+// session rebuild can instead tear the page context down while entry.set() is
+// still in flight, which surfaces from page.evaluate as one of Playwright's
+// destroyed-context messages. Matched case-insensitively; Playwright's casing
+// varies across these.
+//
+// Deliberately not here: "Target page, context or browser has been closed".
+// That page is not coming back, so retrying it can only burn the backoff
+// before failing with the same error.
+const RETRYABLE_PREF_WRITE_ERRORS = [
+  'writeUserPrefs failed',
+  'Execution context was destroyed',
+  'Execution context is not available in detached frame',
+  'frame was detached',
+];
+
+// A pref write is a full-payload set_user_prefs RPC, so it is idempotent and
+// safe to retry. Busy CI runners can drop the XHR at the transport layer
+// (winsock ERR_NO_BUFFER_SPACE, connection resets around a session rebuild),
+// which the bridge reports as a "writeUserPrefs failed" rejection carrying the
+// underlying RPC error detail.
+//
+// That rejection covers every server-side failure, not only transport ones, so
+// a deterministic failure (a value the schema rejects) pays the same 1.5s of
+// backoff before it surfaces. That is the deliberate trade: the transport
+// errors this exists to absorb do not have one stable message across
+// platforms, and a narrower matcher would let the flake back through. Errors
+// raised on the JS side (missing bridge, unknown pref) match nothing in
+// RETRYABLE_PREF_WRITE_ERRORS and still fail on the first attempt.
+//
+// Each attempt re-waits for the pref entry: a retry can land while the session
+// is still rebuilding, when the bridge has not re-registered the pref and
+// calling straight through would fail with a misleading "Unknown user
+// preference" for a pref that does exist.
+async function withPrefWriteRetry(
+  page: Page,
+  camelName: string,
+  fn: () => Promise<void>
+): Promise<void> {
+  const delaysMs = [500, 1000];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await waitForPrefEntry(page, camelName);
+      await fn();
+      return;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const retryable = RETRYABLE_PREF_WRITE_ERRORS
+        .some((pattern) => message.toLowerCase().includes(pattern.toLowerCase()));
+      if (attempt >= delaysMs.length || !retryable)
+        throw err;
+      console.warn(`[commands] pref write failed (attempt ${attempt + 1}), retrying: ${message}`);
+      await sleep(delaysMs[attempt]);
+    }
+  }
+}
+
 /**
  * Set a user preference and persist it. Equivalent to
  * `.rs.api.writeRStudioPreference(name, value)` / `.rs.uiPrefs$<name>$set(value)`.
@@ -604,16 +663,17 @@ async function waitForPrefEntry(page: Page, camelName: string): Promise<void> {
  */
 export async function setPref(page: Page, name: string, value: PrefValue): Promise<void> {
   const camel = snakeToCamel(name);
-  await waitForPrefEntry(page, camel);
-  await page.evaluate(async ({ prefName, prefValue }) => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    const entry = r.prefs[prefName];
-    if (!entry)
-      throw new Error(`Unknown user preference: ${prefName}`);
-    await entry.set(prefValue);
-  }, { prefName: camel, prefValue: value });
+  await withPrefWriteRetry(page, camel, () =>
+    page.evaluate(async ({ prefName, prefValue }) => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      const entry = r.prefs[prefName];
+      if (!entry)
+        throw new Error(`Unknown user preference: ${prefName}`);
+      await entry.set(prefValue);
+    }, { prefName: camel, prefValue: value }),
+  );
 }
 
 /**
@@ -623,16 +683,17 @@ export async function setPref(page: Page, name: string, value: PrefValue): Promi
  */
 export async function clearPref(page: Page, name: string): Promise<void> {
   const camel = snakeToCamel(name);
-  await waitForPrefEntry(page, camel);
-  await page.evaluate(async (prefName) => {
-    const r = window.rstudio;
-    if (!r)
-      throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
-    const entry = r.prefs[prefName];
-    if (!entry)
-      throw new Error(`Unknown user preference: ${prefName}`);
-    await entry.clear();
-  }, camel);
+  await withPrefWriteRetry(page, camel, () =>
+    page.evaluate(async (prefName) => {
+      const r = window.rstudio;
+      if (!r)
+        throw new Error('window.rstudio is not defined; launch RStudio with --automation-agent');
+      const entry = r.prefs[prefName];
+      if (!entry)
+        throw new Error(`Unknown user preference: ${prefName}`);
+      await entry.clear();
+    }, camel),
+  );
 }
 
 /**

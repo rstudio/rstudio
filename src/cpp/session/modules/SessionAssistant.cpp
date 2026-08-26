@@ -16,6 +16,8 @@
 #include "SessionAssistant.hpp"
 #include "SessionChat.hpp"
 
+#include "chat/ChatInstallation.hpp"
+
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
@@ -40,7 +42,6 @@
 #include <core/StringUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
-#include <core/system/Xdg.hpp>
 #include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
@@ -452,21 +453,27 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
 
 FilePath paiLanguageServerPath()
 {
-   FilePath languageServerDir = xdg::userDataDir().completePath("pai/bin/dist/nes");
+   // Resolve the installation the same way the chat backend does, so both
+   // halves of the assistant run out of the same install -- honoring
+   // RSTUDIO_POSIT_AI_PATH and system-wide installs, not just the user one.
+   FilePath installPath = chat::installation::locatePositAssistantInstallation();
+   FilePath languageServerPath = nesLanguageServerPath(installPath);
 
-   for (auto&& suffix : { "language-server.cjs", "language-server.js" })
+   if (!languageServerPath.isEmpty())
    {
-      FilePath languageServerPath = languageServerDir.completePath(suffix);
-
-      if (languageServerPath.exists())
-      {        
-         DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
-         return languageServerPath;
-      }
+      DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
+      return languageServerPath;
    }
-   
+
    if (RS_ONCE())
-      DLOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
+   {
+      if (installPath.isEmpty())
+         DLOG("Posit AI Language Server not found: no Posit Assistant installation.");
+      else
+         DLOG("Posit AI Language Server not found in installation '{}'.",
+              installPath.getAbsolutePath());
+   }
+
    return FilePath();
 }
 
@@ -2991,6 +2998,23 @@ std::string agentStderrTail(const std::string& text, std::size_t maxLength)
    AgentStderrTail tail(maxLength);
    tail.append(text);
    return tail.text();
+}
+
+FilePath nesLanguageServerPath(const FilePath& installPath)
+{
+   if (installPath.isEmpty())
+      return FilePath();
+
+   FilePath languageServerDir = installPath.completeChildPath("dist/nes");
+
+   for (auto&& fileName : { "language-server.cjs", "language-server.js" })
+   {
+      FilePath languageServerPath = languageServerDir.completeChildPath(fileName);
+      if (languageServerPath.exists())
+         return languageServerPath;
+   }
+
+   return FilePath();
 }
 
 bool stopAgentForUpdate()

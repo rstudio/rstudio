@@ -189,4 +189,5 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String positConnectCloudSubTitle();
     String positConnectCloudCaption();
     String connectingConnectCloudAccount();
+    String deprecatedServiceLabel(String serviceName);
 }

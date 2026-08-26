@@ -75,20 +75,26 @@ std::vector<std::string> headerValues(const Headers& headers, const std::string&
 
 bool parseHeader(const std::string& line, Header* pHeader)
 {
-   // parse the name and value out of the header
-   std::string::size_type pos = line.find(": ");
-   if ( pos != std::string::npos )
-   {
-      pHeader->name = line.substr(0, pos);
-      pHeader->value = line.substr(pos + 2);
-      boost::algorithm::trim(pHeader->name);
-      boost::algorithm::trim(pHeader->value);
-      return true;
-   }
-   else
-   {
+   // RFC 7230 3.2: header-field = field-name ":" OWS field-value OWS.
+   // The whitespace after the colon is optional whitespace -- so "Name:value"
+   // and "Name:" are both well-formed and must parse.
+   //
+   // Requiring a literal ": " here instead dropped such a field silently,
+   // which is worse than rejecting the message: it left this process and the
+   // sender disagreeing about which header fields the message even carries.
+   // For a framing field that disagreement is a smuggling primitive -- an
+   // upstream "Transfer-Encoding:chunked" vanished here, so the body was read
+   // as unencoded while still chunk-framed on the wire, and the chunked-ness
+   // checks downstream (AsyncClient/FixedBufferProxy) had nothing left to see.
+   std::string::size_type pos = line.find(':');
+   if (pos == std::string::npos)
       return false;
-   }
+
+   pHeader->name = line.substr(0, pos);
+   pHeader->value = line.substr(pos + 1);
+   boost::algorithm::trim(pHeader->name);
+   boost::algorithm::trim(pHeader->value);
+   return true;
 }
    
 void parseHeaders(std::istream& is, Headers* pHeaders)

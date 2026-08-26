@@ -88,6 +88,25 @@ public:
    {
       std::istream responseStream(pResponseBuffer);
 
+      // An empty header block. parseStatusLine() has already consumed the
+      // status line including its CRLF, so a response carrying no header
+      // fields presents here as nothing but the terminating CRLF.
+      //
+      // http::parseHeaders() cannot recognize that on its own: it treats a
+      // leading blank line as leading whitespace and keeps going, which for a
+      // response like "HTTP/1.1 100 Continue\r\n\r\n" means walking straight
+      // into the *next* response on the connection and adopting its fields as
+      // this one's. Consume the terminator here instead and stop.
+      int next = responseStream.peek();
+      if (next == '\r' || next == '\n')
+      {
+         if (responseStream.peek() == '\r')
+            responseStream.get();
+         if (responseStream.peek() == '\n')
+            responseStream.get();
+         return;
+      }
+
       Headers headers;
       http::parseHeaders(responseStream, &headers);
       std::for_each(headers.begin(),

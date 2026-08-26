@@ -142,6 +142,33 @@ pipeline {
           }
         }
 
+        stage('Prepare Signing Tools') {
+          steps {
+            // None of this consumes a signing operation, so it runs for every
+            // build: it installs the DigiCert tools, proves the credentials can
+            // reach the keypair, and downloads the public code signing
+            // certificate that both signing stages pass to signtool. Running it
+            // before the build means a broken credential or an expired
+            // certificate fails in a minute rather than after a full build.
+            bat '''
+              curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"
+              msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log
+              type smtools-windows-x64.log
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" healthcheck || exit /b 1
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" keypair ls || exit /b 1
+              if exist cert.pem del /f /q cert.pem
+              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" certificate download --keypair-alias="%KEYPAIR_ALIAS%" --format=pem --name=cert.pem --out=. || exit /b 1
+            '''
+          }
+          post {
+            failure {
+              // Client-side tools wrap server rejections in opaque errors; the
+              // real HTTP status and message land in the signingmanager logs
+              bat 'if exist "%USERPROFILE%\\.signingmanager\\logs\\*.log" type "%USERPROFILE%\\.signingmanager\\logs\\*.log"'
+            }
+          }
+        }
+
         stage('Build') {
           steps {
             // set requisite environment variables and build rstudio
@@ -157,6 +184,15 @@ pipeline {
         }
 
         stage('Sign Executables') {
+
+          // Each file is a separate signing operation, so the executables here
+          // account for nearly all of the operations a Windows build spends.
+          // Hourly builds skip them and sign only the installer below: that's
+          // the artifact Windows warns about on download, and signing it alone
+          // costs a single operation. Daily and release builds -- both of which
+          // pass DAILY -- sign everything we ship.
+          when { expression { return params.DAILY } }
+
           environment {
             // rsession.dll carries the bulk of the session code and is loaded by
             // the rsession.exe / rsession-utf8.exe launcher stubs, so it needs a
@@ -176,15 +212,8 @@ pipeline {
           steps {
             bat '''
               call "C:\\Program Files\\Microsoft Visual Studio\\2026\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
-              curl -O "https://rstudio-buildtools.s3.amazonaws.com/posit-dev/smtools-windows-x64.msi"
-              msiexec /i smtools-windows-x64.msi /quiet /qn /L*V smtools-windows-x64.log
-              type smtools-windows-x64.log
-              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" healthcheck || exit /b 1
-              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" keypair ls || exit /b 1
               C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user
               "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" windows certsync
-              if exist cert.pem del /f /q cert.pem
-              "C:\\Program Files\\DigiCert\\DigiCert One Signing Manager Tools\\smctl.exe" certificate download --keypair-alias="%KEYPAIR_ALIAS%" --format=pem --name=cert.pem --out=. || exit /b 1
               signtool.exe sign /csp "DigiCert Signing Manager KSP" /kc "%KEYPAIR_ALIAS%" /f cert.pem /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 %EXECUTABLES%
               signtool.exe verify /v /pa %EXECUTABLES%
             '''
@@ -256,8 +285,9 @@ pipeline {
             stage('Sign Installer') {
 
               steps {
-                // signs with the cert.pem downloaded during Sign Executables; it's
-                // the public code signing certificate, not a credential
+                // signs with the cert.pem downloaded during Prepare Signing Tools;
+                // it's the public code signing certificate, not a credential.
+                // Every build signs the installer, hourlies included
                 bat '''
                   call "C:\\Program Files\\Microsoft Visual Studio\\2026\\BuildTools\\Common7\\Tools\\VsDevCmd.bat"
                   C:\\Windows\\System32\\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user

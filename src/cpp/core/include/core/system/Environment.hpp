@@ -35,11 +35,14 @@ namespace system {
 
 std::string getenv(const std::string& name);
 
-// NOTE: setenv / unsetenv mutate environment tables that in-process code
-// may walk without synchronization: EnvironmentLock serializes these
-// accessors against each other, but raw readers -- including R, whose
-// Sys.getenv() iterates the C runtime's environment directly -- take no
-// lock. Once R is running, call these only from the main thread.
+// NOTE: setenv / unsetenv mutate environment tables that in-process code may
+// walk without synchronization. EnvironmentLock serializes these accessors
+// against each other, but cannot cover raw access from R (Sys.getenv,
+// Sys.setenv, Sys.unsetenv), third-party libraries, or libc-internal readers
+// such as gettext and getaddrinfo. A main-thread mutation can therefore still
+// race an implicit read on a worker thread. Establish process-wide variables
+// before starting workers whenever possible; use an Options copy for child
+// process environment changes after that point.
 void setenv(const std::string& name, const std::string& value);
 void unsetenv(const std::string& name);
 

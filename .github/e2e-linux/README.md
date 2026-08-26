@@ -11,7 +11,7 @@ directory plus, where needed, a small set of shell hooks under
     └── <script_dir>/                # distro-specific setup hooks (script_dir key)
         ├── build-setup.sh    # after checkout, before the dependency install
         ├── e2e-setup.sh      # runtime packages, repos, sysctls, locale
-        ├── install-r.sh      # replaces the rig install (r_install: "distro")
+        ├── install-r.sh      # replaces the mirrored install (r_install: "distro")
         └── post-r-setup.sh   # after R is installed, before R package installs
 
 All hooks are optional; the workflow skips any that don't exist. Hooks that
@@ -54,9 +54,14 @@ need the same distro setup (`script_dir`).
 Which R an engine runs against is a caller's choice, not a property of the
 engine config -- with one exception, which is the config's business:
 
-- `r_install: "rig"` (12 of the 16 Linux Desktop engines documented here) honors
-  the caller's `r_version` input, passing it to `rig add` / `rig default`
-  verbatim.
+- `r_install: "mirror"` (12 of the 16 Linux Desktop engines documented here)
+  honors the caller's `r_version` input, handing it to
+  `.github/actions/os-install-r-unix`, which downloads that exact version's
+  Posit r-builds package from the rstudio-buildtools S3 mirror. The version has
+  to be an exact `X.Y.Z` that has been mirrored already; see
+  `dependencies/tools/upload-r.sh`. A caller that passes nothing -- which is
+  every lane except the certification matrix -- gets `RSTUDIO_R_VERSION` from
+  `dependencies/tools/rstudio-tools.sh`, the single place that pin lives.
 - `r_install: "distro"` (the four Fedora engines) **ignores `r_version`
   entirely** and installs whatever R the distro's repos ship, via
   `fedora/install-r.sh`. Nothing warns about the dropped value, so a caller
@@ -74,6 +79,12 @@ cache keys, with version-scoped `restore-keys`. Two R versions on one engine
 therefore get separate cache entries and cannot poison each other; two patch
 levels within a minor series (4.5.1 and 4.5.3) share one entry, which is safe
 because package ABI is stable within a series.
+
+That is also why bumping `RSTUDIO_R_VERSION` across a minor series costs one
+cold cycle: the keys move with it, so the caches the seed workflows warmed for
+the previous series go unread until `os-cache-seed-e2e-deps.yml` next runs on
+`main`. The sentinel's audit prefixes derive their major.minor from the same
+pin, so they follow automatically.
 
 ## Architecture
 
@@ -188,7 +199,7 @@ as `key=value` job outputs.
 | `installer_artifact` | name of the built installer artifact passed from build to e2e |
 | `daily_platform_key` | key under `products.electron.platforms` in the dailies manifest |
 | `e2e_runner`, `e2e_image`, `e2e_container_options`, `e2e_bootstrap_packages` | e2e job placement (same semantics as the build_ variants) |
-| `r_install` | `rig` (default path) or `distro` (runs `install-r.sh`) |
+| `r_install` | `mirror` (default path: the R build for this distro from the rstudio-buildtools S3 mirror) or `distro` (runs `install-r.sh`) |
 | `run_as_user` | non-root user the test run drops to via setpriv (container engines); empty = run as the step user |
 | `display_server` | `xvfb` or `cage` (RHEL 10 dropped X.Org, so Xwayland-under-Cage provides the display) |
 | `e2e_deps_cache_scope` | os-e2e-deps cache isolation scope (R libraries are ABI-bound to the distro/arch) |

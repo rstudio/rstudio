@@ -11,7 +11,7 @@ import {
   type EnvironmentVersions,
   type ExecuteInConsoleOptions,
 } from '../pages/console_pane.page';
-import { sleep, TIMEOUTS } from '../utils/constants';
+import { sleep, TIMEOUTS, typingTimeout } from '../utils/constants';
 import { documentCloseAllNoSave, executeCommand, getVersion, resetSourcePaneState } from '../utils/commands';
 import { setConsoleInput } from '../utils/console';
 
@@ -119,7 +119,8 @@ export class ConsolePaneActions {
    */
   async typeInConsole(text: string, delayMs: number = 50): Promise<void> {
     await focusConsole(this.page);
-    await this.consolePane.consoleInput.pressSequentially(text, { delay: delayMs });
+    await this.consolePane.consoleInput
+      .pressSequentially(text, { delay: delayMs, timeout: typingTimeout(text, delayMs) });
   }
 
   async clearConsole(): Promise<void> {

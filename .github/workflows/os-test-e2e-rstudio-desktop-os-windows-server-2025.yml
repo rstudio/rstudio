@@ -12,9 +12,14 @@ on:
         type: string
         default: ""
       r_version:
-        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        description: >-
+          Exact R version to install, as X.Y.Z. Empty (the default) uses
+          RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is
+          the single place the version CI tests against is pinned. Any version
+          named here must already be mirrored into rstudio-buildtools; see
+          dependencies/tools/upload-r.sh.
         type: string
-        default: "release"
+        default: ""
       project:
         description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
@@ -69,7 +74,7 @@ on:
         default: ""
       r_version:
         type: string
-        default: "release"
+        default: ""
       project:
         type: string
         default: "desktop"
@@ -245,7 +250,7 @@ jobs:
       # main-scoped runs only) so deps are cached even when compilation fails.
       - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-win64-v2-${{ hashFiles('dependencies/common/install-*', 'dependencies/windows/install-*.cmd', 'dependencies/windows/install-soci/**', 'dependencies/windows/tools.R', 'dependencies/tools/rstudio-tools.cmd') }}
@@ -270,7 +275,7 @@ jobs:
       # Restore-only; Save GWT output runs after the build with if: always().
       - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             src/gwt/www
@@ -288,7 +293,7 @@ jobs:
       # Save NSIS runs after the install, main-gated like the other caches.
       - name: Restore NSIS
         id: nsis-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: C:\Program Files (x86)\NSIS
           key: nsis-win64-${{ env.NSIS_VERSION }}
@@ -341,7 +346,7 @@ jobs:
               # PATH-only probe (e.g. ant) could fail even after a good install.
               # Refresh PATH only for the probe, then restore it, so we don't
               # disturb the runner-managed PATH ($GITHUB_PATH entries for node,
-              # rig, sccache, MSVC, ...) for the rest of the step.
+              # R, sccache, MSVC, ...) for the rest of the step.
               $savedPath = $env:PATH
               try {
                 $env:PATH = $savedPath + ';' +
@@ -438,35 +443,28 @@ jobs:
           SCCACHE_IDLE_TIMEOUT: '0'
         run: sccache --start-server
 
-      - name: Install rig
-        uses: ./.github/actions/os-install-rig-windows
-
-      - name: Install R via rig
-        env:
-          R_VERSION: ${{ inputs.r_version }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          rig add $env:R_VERSION
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          rig default $env:R_VERSION
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          rig ls
-          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
+      - name: Install R
+        id: install-r
+        uses: ./.github/actions/os-install-r-windows
+        with:
+          r-version: ${{ inputs.r_version }}
 
       # make-package.bat passes -DLIBR_HOME=C:\R\R-3.6.3 to CMake (hardcoded).
-      # Create a directory junction at that path pointing to the rig-installed
-      # R so CMake can find R headers and R.dll regardless of actual version.
+      # Create a directory junction at that path pointing to the installed R so
+      # CMake can find R headers and R.dll regardless of actual version.
       - name: Create R junction for CMake
+        env:
+          R_HOME_DIR: ${{ steps.install-r.outputs.r-home }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $rHome = (Rscript --vanilla -e "cat(R.home())" 2>$null).Trim()
+          $rHome = $env:R_HOME_DIR
           Write-Host "R home: $rHome"
           New-Item -ItemType Directory -Force -Path 'C:\R' | Out-Null
           if (Test-Path 'C:\R\R-3.6.3') { [System.IO.Directory]::Delete('C:\R\R-3.6.3') }
           New-Item -ItemType Junction -Path 'C:\R\R-3.6.3' -Target $rHome | Out-Null
           Write-Host "Junction created: C:\R\R-3.6.3 -> $rHome"
           if (-not (Test-Path 'C:\R\R-3.6.3\bin\Rscript.exe')) {
-            Write-Error "Rscript.exe not found via junction; check rig install path"
+            Write-Error "Rscript.exe not found via junction; check the R install path"
             exit 1
           }
 
@@ -655,7 +653,7 @@ jobs:
       # defeating the point of saving deps even when compilation fails.
       - name: Save rstudio-tools cache
         if: always() && steps.install-deps.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
@@ -664,7 +662,7 @@ jobs:
       # install step succeeds, so save it even when the build itself fails.
       - name: Save NSIS cache
         if: always() && steps.install-tools.conclusion == 'success' && github.ref == 'refs/heads/main' && steps.nsis-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: C:\Program Files (x86)\NSIS
           key: ${{ steps.nsis-cache.outputs.cache-primary-key }}
@@ -676,7 +674,7 @@ jobs:
       # sends every PR build cold in the first place.
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             src/gwt/www
@@ -776,27 +774,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
-      - name: Install rig
-        uses: ./.github/actions/os-install-rig-windows
-
-      - name: Install R via rig
-        env:
-          R_VERSION: ${{ inputs.r_version }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          rig add $env:R_VERSION
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          rig default $env:R_VERSION
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          rig ls
-          # Prepend the rig-installed R to PATH so it wins over any R version
-          # pre-installed on the runner image (e.g. R 4.6 shipped on windows-2025).
-          # rig installs to C:\Program Files\R\R-{version}\bin\x64 on Windows.
-          $rHome = (Rscript --vanilla -e "cat(R.home())" 2>$null).Trim()
-          $rBin = "$rHome\bin\x64"
-          Write-Host "Prepending R bin to PATH: $rBin"
-          "$rBin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          New-Item -ItemType Directory -Force -Path $env:R_LIBS_USER | Out-Null
+      - name: Install R
+        uses: ./.github/actions/os-install-r-windows
+        with:
+          r-version: ${{ inputs.r_version }}
 
       # Build-from-source path: download and install the NSIS installer produced
       # by the build job above. Runs the same /allusers /S silent install as the

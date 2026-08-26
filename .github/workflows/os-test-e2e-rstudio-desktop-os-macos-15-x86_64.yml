@@ -12,9 +12,14 @@ on:
         type: string
         default: ""
       r_version:
-        description: "R version to install via rig (e.g. 'release', 'oldrel', 'devel', '4.4.1')."
+        description: >-
+          Exact R version to install, as X.Y.Z. Empty (the default) uses
+          RSTUDIO_R_VERSION from dependencies/tools/rstudio-tools.sh, which is
+          the single place the version CI tests against is pinned. Any version
+          named here must already be mirrored into rstudio-buildtools; see
+          dependencies/tools/upload-r.sh.
         type: string
-        default: "release"
+        default: ""
       project:
         description: "Playwright project to run: 'desktop' or 'server'. OS and edition are auto-filtered from the host platform and PW_RSTUDIO_EDITION."
         type: string
@@ -65,7 +70,7 @@ on:
         default: ""
       r_version:
         type: string
-        default: "release"
+        default: ""
       project:
         type: string
         default: "desktop"
@@ -174,7 +179,7 @@ jobs:
       # main-scoped runs.
       - name: Restore rstudio-tools deps
         id: tools-cache
-        uses: actions/cache/restore@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: rstudio-tools-x86_64-${{ hashFiles('dependencies/common/install-*', 'dependencies/osx/install-*', 'dependencies/tools/rstudio-tools.sh') }}
@@ -187,7 +192,7 @@ jobs:
       # different versions / platforms isolated automatically.
       - name: Restore build-time R packages
         id: rlibs-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: rstudio-build-rlibs-x86_64-${{ hashFiles('dependencies/common/install-packages', 'dependencies/common/lockfiles/**/renv.lock') }}
@@ -208,7 +213,7 @@ jobs:
       # on a key miss (see that step's comment).
       - name: Restore GWT output
         id: gwt-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: package/osx/build/gwt
           key: rstudio-gwt-x86_64-${{ env.GWT_STYLE }}-v2-${{ hashFiles('src/gwt/src/**', 'src/gwt/acesupport/**', 'src/gwt/lib/**', 'src/gwt/build.xml', 'src/gwt/conf/**') }}
@@ -234,14 +239,14 @@ jobs:
       # every PR build cold in the first place.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5.0.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.RSTUDIO_TOOLS_ROOT }}
           key: ${{ steps.tools-cache.outputs.cache-primary-key }}
 
       - name: Save build-time R packages
         if: github.ref == 'refs/heads/main' && steps.rlibs-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ github.workspace }}/R-libs
           key: ${{ steps.rlibs-cache.outputs.cache-primary-key }}
@@ -320,7 +325,7 @@ jobs:
       # sends every PR build cold in the first place.
       - name: Save GWT output
         if: github.ref == 'refs/heads/main' && steps.build.conclusion == 'success' && steps.gwt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: package/osx/build/gwt
           key: ${{ steps.gwt-cache.outputs.cache-primary-key }}
@@ -398,32 +403,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: e2e/rstudio/package-lock.json
 
-      - name: Install rig
-        uses: ./.github/actions/os-install-rig-unix
-
-      - name: Install R via rig
-        env:
-          R_VERSION: ${{ inputs.r_version }}
-        run: |
-          rig add "$R_VERSION"
-          # rig names installs with arch/major.minor on macOS (e.g. "4.4-x86_64"),
-          # not the requested patch or alias. Query rig for the just-installed
-          # name so `rig default` works regardless of input form.
-          INSTALLED_NAME=$(rig list --json | jq -r '.[-1].name')
-          # No pipefail in this shell: if `rig list` fails above, jq still
-          # exits 0 and the assignment quietly lands empty. Fail loudly here
-          # rather than let `rig default` run against an empty name.
-          if [ -z "$INSTALLED_NAME" ] || [ "$INSTALLED_NAME" = "null" ]; then
-            echo "::error::rig list returned no installed R versions"
-            exit 1
-          fi
-          # `rig add` installs R root-owned under /Library/Frameworks, and on the
-          # Intel macOS runner it skips the "fix permissions" pass that the arm64
-          # runner performs. Switching the default therefore needs root to rewrite
-          # the system symlinks; without sudo it fails with "Permission denied".
-          sudo rig default "$INSTALLED_NAME"
-          rig ls
-          mkdir -p "$R_LIBS_USER"
+      - name: Install R
+        uses: ./.github/actions/os-install-r-unix
+        with:
+          r-version: ${{ inputs.r_version }}
 
       # Build-from-source path: extract the RStudio.app artifact produced by
       # the build job above.

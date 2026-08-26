@@ -12,6 +12,14 @@ export interface AceToken {
   synthetic?: boolean;
 }
 
+/** A section header from the R code model's scope tree; see getSectionScopes. */
+export interface AceSectionScope {
+  label: string;
+  row: number;
+  depth?: number;
+  parent: string | null;
+}
+
 export interface AceMarker {
   range: Ace.Range | null;
   type: string;
@@ -134,6 +142,48 @@ export class AceEditor extends PageObject {
         end: { row: range.end.row, column: range.end.column },
       };
     }, row);
+  }
+
+  /**
+   * Returns the section headers the R code model found, in document order --
+   * the scopes that drive the document outline.
+   *
+   * `depth` is the header's heading level (1 for `#`, 2 for `##`, ...), or 0
+   * for a header whose leading `#` run is decoration rather than a level -- a
+   * bar such as `##########` or a banner such as `##### Section A #####`. It is
+   * undefined for a section that has no notion of a heading level at all, such
+   * as an R Markdown YAML block. `parent` is the label of the enclosing
+   * section, or null when the section is top-level, so tests can assert how
+   * headers nest. Only meaningful for modes with an R code model.
+   */
+  async getSectionScopes(): Promise<AceSectionScope[]> {
+    return this.run((editor) => {
+      const codeModel = editor.session.$mode?.codeModel;
+      if (!codeModel?.getScopeTree) {
+        throw new Error('getSectionScopes(): the editor mode has no R code model');
+      }
+
+      // getScopeTree() returns only the root's children, so walk the tree to
+      // reach nested sections. Non-section scopes (functions, chunks) are
+      // stepped through without becoming anyone's reported parent.
+      const scopes: AceSectionScope[] = [];
+      const visit = (nodes: Ace.Scope[], parent: string | null): void => {
+        for (const node of nodes) {
+          const isSection = node.isSection();
+          if (isSection) {
+            scopes.push({
+              label: node.label,
+              row: node.start.row,
+              depth: node.attributes?.depth,
+              parent,
+            });
+          }
+          visit(node.$children ?? [], isSection ? node.label : parent);
+        }
+      };
+      visit(codeModel.getScopeTree(), null);
+      return scopes;
+    });
   }
 
   /** Returns the raw text of `row` (0-indexed), excluding the trailing newline. */
