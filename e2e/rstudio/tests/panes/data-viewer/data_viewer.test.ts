@@ -30,6 +30,12 @@ const CUSTOM_H_SCROLLBAR_HEIGHT = 11;
 // branch cannot accidentally test itself against the wrong scrollbar.
 const NATIVE_OVERLAY_SCROLLBAR_MIN_CLEARANCE = 17;
 
+// Estimated width assigned to unfetched columns, in sync with
+// DEFAULT_COL_WIDTH in DataViewer.js. The native-mode test deliberately uses
+// more columns than the fetched window so the final layout column has this
+// stable width in applyPinnedColumns' right-edge overscroll calculation.
+const DEFAULT_COL_WIDTH = 120;
+
 // Grid row height, in sync with ROW_HEIGHT in DataViewer.js. The virtualizer
 // assumes a uniform row height, and the info bar's visible-row range is derived
 // from it.
@@ -1790,12 +1796,12 @@ test.describe('Data Viewer', () => {
   // is flipped on the open grid, which is the path that has to re-render the
   // window for the new tail to land.
   test('the last row clears a native horizontal scrollbar too (#18620)', async ({ rstudioPage: page }) => {
-    // Three maximally wide character columns overflow horizontally while still
-    // fitting inside the column virtualizer's render buffer. Keeping the final
-    // column in the DOM lets the test assert the pinned overscroll invariant
-    // directly instead of comparing padding across two different windows.
+    // More columns than the fetched window guarantees an unfetched right span,
+    // whose final layout-column width is the stable DEFAULT_COL_WIDTH estimate.
+    // It also leaves enough off-screen fetched headers to exercise the rendered
+    // column-window resync when native scrollbars change the viewport client box.
     await consoleActions.executeInConsole(
-      '{ .rs.native_edge_df <- as.data.frame(matrix(rep(strrep("x", 500), 500 * 3), nrow = 500)); View(.rs.native_edge_df) }',
+      '{ .rs.native_edge_df <- as.data.frame(matrix(seq_len(500 * 300), nrow = 500)); View(.rs.native_edge_df) }',
     );
     try {
       await waitForViewer(dataViewer);
@@ -1810,18 +1816,37 @@ test.describe('Data Viewer', () => {
 
       await expectHorizontalOverflow(dataViewer);
 
+      // Put a right-buffered header's left edge one pixel inside the custom
+      // mode's viewport. When a native vertical gutter narrows clientWidth,
+      // that column falls outside the visible range and syncColumnWindow must
+      // rebuild the buffered header window to end one column earlier.
+      await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        const headers = Array.from(
+          el.ownerDocument.querySelectorAll('#data_cols th[data-col-idx]'),
+        ) as HTMLElement[];
+        const target = headers[headers.length - 2];
+        if (!target) throw new Error('not enough rendered headers to place an edge column');
+        el.scrollLeft = Math.max(0, target.offsetLeft - el.clientWidth + 1);
+      });
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollLeft),
+      ).toBeGreaterThan(0);
+      await dataViewer.viewport.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }));
+
       const measure = (el: HTMLElement) => {
         const table = el.ownerDocument.getElementById('rsGridData') as HTMLElement;
-        const lastColumn = el.ownerDocument.querySelector(
-          '#data_cols th[data-col-idx="3"]',
-        ) as HTMLElement | null;
         return {
           scrollHeight: el.scrollHeight,
           clientWidth: el.clientWidth,
           // Horizontal overscroll padding past the rightmost column, sized from
           // clientWidth (applyPinnedColumns).
           paddingRight: parseFloat(table.style.paddingRight) || 0,
-          lastColumnWidth: parseFloat(lastColumn?.style.width ?? '') || 0,
+          renderedColumns: Array.from(
+            el.ownerDocument.querySelectorAll('#data_cols th[data-col-idx]'),
+            (th) => th.getAttribute('data-col-idx'),
+          ),
           // #gridViewport carries no border, so offsetHeight - clientHeight is
           // exactly the layout space the native bar claimed; zero means the
           // platform draws it as an overlay.
@@ -1830,7 +1855,7 @@ test.describe('Data Viewer', () => {
         };
       };
       const overlay = await dataViewer.viewport.evaluate(measure);
-      expect(overlay.lastColumnWidth).toBeGreaterThan(0);
+      expect(overlay.renderedColumns.length).toBeGreaterThan(3);
 
       // The host pushes the preference into the iframe as a setOption, which
       // destroys the overlay bars and hands scrolling back to the browser.
@@ -1848,15 +1873,24 @@ test.describe('Data Viewer', () => {
       expect(native.scrollHeight - overlay.scrollHeight)
         .toBe(expectedTail - CUSTOM_H_SCROLLBAR_HEIGHT);
 
-      // The right-edge overscroll is the viewport width minus the final
-      // unpinned column's width. The compact fixture keeps that column rendered,
-      // making this a direct post-switch invariant: without the explicit
-      // applyPinnedColumns refresh the old-mode padding remains stale.
-      expect(native.lastColumnWidth).toBeGreaterThan(0);
+      // The unfetched right span makes the final layout column's width the
+      // DEFAULT_COL_WIDTH estimate. This direct post-switch invariant covers
+      // the explicit applyPinnedColumns refresh without comparing padding from
+      // two different rendered windows.
       expect(native.paddingRight).toBeCloseTo(
-        Math.max(0, native.clientWidth - native.lastColumnWidth),
+        Math.max(0, native.clientWidth - DEFAULT_COL_WIDTH),
         1,
       );
+
+      // A layout-taking native vertical bar narrows the viewport. The edge
+      // placement above makes exactly one fewer column visible, so the buffered
+      // window must lose its final header. Overlay-native platforms keep the
+      // same client width and therefore the same rendered window.
+      if (native.clientWidth < overlay.clientWidth - 1) {
+        expect(native.renderedColumns).toEqual(overlay.renderedColumns.slice(0, -1));
+      } else {
+        expect(native.renderedColumns).toEqual(overlay.renderedColumns);
+      }
 
       // The info bar's range is derived from the same client box, so it is
       // refreshed at the switch too. Computed rather than hardcoded: the two

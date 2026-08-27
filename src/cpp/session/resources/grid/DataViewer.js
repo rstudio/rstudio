@@ -6753,7 +6753,8 @@ var applyScrollbarMode = function() {
    // Newly created auto-hide bars start transparent. Surface the scroll
    // affordance immediately after a live switch into overlay mode, just as the
    // resize path does; update() above has already hidden non-scrollable axes.
-   showScrollbars();
+   if (!bootstrapping && useOverlayScrollbars)
+      showScrollbars();
 };
 
 var updateCustomScrollbars = function() {
