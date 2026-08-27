@@ -55,6 +55,19 @@ std::string releasePortion(const std::string& version)
    return version.substr(0, version.find_first_of("-+"));
 }
 
+// Whether a version carries a prerelease suffix. Build metadata is not one:
+// "1.2.0+build.1" has the precedence of plain 1.2.0 and so outranks
+// "1.2.0-beta.1", which testing for any suffix at all gets backwards.
+bool hasPrerelease(const std::string& version)
+{
+   std::string::size_type dash = version.find('-');
+   if (dash == std::string::npos)
+      return false;
+
+   std::string::size_type plus = version.find('+');
+   return plus == std::string::npos || dash < plus;
+}
+
 // Which reinstall of a version a slot holds: 1 for the plain name, N for
 // "<version>-N", and 0 when the name is not derived from the version at all.
 //
@@ -82,8 +95,14 @@ int slotOrdinal(const std::string& name, const std::string& version)
 }
 
 // Orders two verifying slots by which one a session should prefer: the higher
-// release version, then a release over a prerelease of it, then the later
-// reinstall, then the higher name so the answer is always stable.
+// release version, then a release over a prerelease of it, then -- only for
+// two slots holding the very same version -- the later reinstall, and finally
+// the version and name as strings so the answer is always stable.
+//
+// The string comparisons are a stable arbitrary order, not semantic-version
+// precedence: distinguishing "1.2.0-beta.9" from "1.2.0-beta.10" would need
+// identifier-by-identifier comparison, and nothing published for RStudio
+// carries a prerelease suffix at all.
 bool preferredOver(const slots::SlotInfo& lhs, const slots::SlotInfo& rhs)
 {
    SemanticVersion lhsVersion, rhsVersion;
@@ -97,10 +116,14 @@ bool preferredOver(const slots::SlotInfo& lhs, const slots::SlotInfo& rhs)
       return lhsVersion > rhsVersion;
 
    // 1.2.0 outranks 1.2.0-beta.1, as semantic versioning has it.
-   bool lhsPrerelease = lhs.version != releasePortion(lhs.version);
-   bool rhsPrerelease = rhs.version != releasePortion(rhs.version);
-   if (lhsPrerelease != rhsPrerelease)
-      return rhsPrerelease;
+   if (hasPrerelease(lhs.version) != hasPrerelease(rhs.version))
+      return hasPrerelease(rhs.version);
+
+   // An ordinal counts reinstalls of one version, so it says nothing about two
+   // slots holding different ones -- comparing across them would let
+   // 1.2.0-beta.1-10 outrank the newer 1.2.0-beta.2.
+   if (lhs.version != rhs.version)
+      return lhs.version > rhs.version;
 
    int lhsOrdinal = slotOrdinal(lhs.name, lhs.version);
    int rhsOrdinal = slotOrdinal(rhs.name, rhs.version);
