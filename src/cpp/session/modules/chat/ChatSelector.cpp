@@ -23,6 +23,7 @@
 #include "ChatTypes.hpp"
 
 #include <core/FileSerializer.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <shared_core/json/Json.hpp>
 
 using namespace rstudio::core;
@@ -45,21 +46,66 @@ FilePath selectorPath(const FilePath& storageDir)
    return storageDir.completeChildPath(kSelectorFileName);
 }
 
+// The release part of a version, i.e. everything before a prerelease or build
+// suffix. SemanticVersion::parse converts each dot-separated component with
+// boost::lexical_cast, which rejects trailing text, so "1.2.0-beta.1" would
+// otherwise fail to parse and rank below every release version.
+std::string releasePortion(const std::string& version)
+{
+   return version.substr(0, version.find_first_of("-+"));
+}
+
+// Which reinstall of a version a slot holds: 1 for the plain name, N for
+// "<version>-N", and 0 when the name is not derived from the version at all.
+//
+// This is the one place a slot name is read, and only to order slots that are
+// otherwise identical -- the alternative, comparing names as strings, ranks
+// "1.1.0-9" above "1.1.0-10" and hands a user who just reinstalled the older
+// slot back.
+int slotOrdinal(const std::string& name, const std::string& version)
+{
+   if (name == version)
+      return 1;
+
+   std::string suffix = version + "-";
+   if (name.compare(0, suffix.size(), suffix) != 0)
+      return 0;
+
+   std::string ordinal = name.substr(suffix.size());
+   if (ordinal.empty() ||
+       ordinal.find_first_not_of("0123456789") != std::string::npos)
+   {
+      return 0;
+   }
+
+   return safe_convert::stringTo<int>(ordinal, 0);
+}
+
 // Orders two verifying slots by which one a session should prefer: the higher
-// package version, then the higher slot name. The name is only a tiebreak
-// between slots of the same version (1.1.0 and 1.1.0-2); it is not read for
-// meaning, just for a stable answer.
+// release version, then a release over a prerelease of it, then the later
+// reinstall, then the higher name so the answer is always stable.
 bool preferredOver(const slots::SlotInfo& lhs, const slots::SlotInfo& rhs)
 {
    SemanticVersion lhsVersion, rhsVersion;
-   bool lhsParsed = lhsVersion.parse(lhs.version);
-   bool rhsParsed = rhsVersion.parse(rhs.version);
+   bool lhsParsed = lhsVersion.parse(releasePortion(lhs.version));
+   bool rhsParsed = rhsVersion.parse(releasePortion(rhs.version));
 
    if (lhsParsed != rhsParsed)
       return lhsParsed;
 
    if (lhsParsed && lhsVersion != rhsVersion)
       return lhsVersion > rhsVersion;
+
+   // 1.2.0 outranks 1.2.0-beta.1, as semantic versioning has it.
+   bool lhsPrerelease = lhs.version != releasePortion(lhs.version);
+   bool rhsPrerelease = rhs.version != releasePortion(rhs.version);
+   if (lhsPrerelease != rhsPrerelease)
+      return rhsPrerelease;
+
+   int lhsOrdinal = slotOrdinal(lhs.name, lhs.version);
+   int rhsOrdinal = slotOrdinal(rhs.name, rhs.version);
+   if (lhsOrdinal != rhsOrdinal)
+      return lhsOrdinal > rhsOrdinal;
 
    return lhs.name > rhs.name;
 }

@@ -277,13 +277,53 @@ TEST_F(ChatSelector, FallsBackToTheNewestVersion)
    EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.10.0")));
 }
 
-TEST_F(ChatSelector, BreaksVersionTiesBySlotName)
+TEST_F(ChatSelector, PrefersTheLatestReinstallOfAVersion)
 {
-   // Both slots hold 1.1.0; the reinstalled one is the later name.
+   // Both slots hold 1.1.0; the reinstalled one is the later ordinal.
    makeSlot("1.1.0", "1.1.0", "11.0");
    makeSlot("1.1.0-2", "1.1.0", "11.0");
 
    EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0-2")));
+}
+
+TEST_F(ChatSelector, OrdersReinstallsNumericallyPastNine)
+{
+   // Comparing names as strings puts "1.1.0-9" above "1.1.0-10", which would
+   // hand back the slot a user had just reinstalled to get away from.
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("1.1.0-9", "1.1.0", "11.0");
+   makeSlot("1.1.0-10", "1.1.0", "11.0");
+
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0-10")));
+}
+
+TEST_F(ChatSelector, RanksPrereleasesByTheirReleaseVersion)
+{
+   // SemanticVersion::parse rejects a version with a prerelease suffix, so
+   // ordering has to compare the release portion or 1.2.0-beta.1 ranks below
+   // every version that happens to parse.
+   makeSlot("0.0.1", "0.0.1", "11.0");
+   makeSlot("1.2.0-beta.1", "1.2.0-beta.1", "11.0");
+
+   EXPECT_TRUE(
+      resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0-beta.1")));
+}
+
+TEST_F(ChatSelector, PrefersAReleaseOverItsPrerelease)
+{
+   makeSlot("1.2.0-beta.1", "1.2.0-beta.1", "11.0");
+   makeSlot("1.2.0", "1.2.0", "11.0");
+
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0")));
+}
+
+TEST_F(ChatSelector, PrefersTheLatestReinstallOfAPrerelease)
+{
+   makeSlot("1.2.0-beta.1", "1.2.0-beta.1", "11.0");
+   makeSlot("1.2.0-beta.1-2", "1.2.0-beta.1", "11.0");
+
+   EXPECT_TRUE(
+      resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.2.0-beta.1-2")));
 }
 
 TEST_F(ChatSelector, FallsBackOnlyToSlotsServingTheProtocol)
