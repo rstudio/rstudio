@@ -29,12 +29,14 @@
 //     completes within the deadline must not see a spurious late timeout.
 
 #include <atomic>
-#include <functional>
 #include <chrono>
+#include <functional>
+#include <new>
 #include <set>
 #include <sstream>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/io_context.hpp>

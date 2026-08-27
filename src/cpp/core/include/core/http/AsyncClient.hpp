@@ -299,14 +299,17 @@ public:
       }
 
       // Commit them under socketMutex_, like every other access to these
-      // members (see disableHandlers()). Swaps only, so nothing in here can
-      // throw; each swap leaves the value it displaced in the local, which
-      // destructs only once the lock is released. That matters: destroying a
-      // displaced handler can release the last reference to a consumer whose
-      // teardown calls back into close()/disableHandlers(), which take this
-      // same (non-recursive) mutex.
-      LOCK_MUTEX(socketMutex_)
+      // members (see disableHandlers()). Once the lock is acquired, only
+      // non-throwing swaps remain; each swap leaves the value it displaced in
+      // the local, which destructs only once the lock is released. That
+      // matters: destroying a displaced handler can release the last reference
+      // to a consumer whose teardown calls back into close()/disableHandlers(),
+      // which take this same (non-recursive) mutex.
       {
+         // Unlike LOCK_MUTEX, let a lock-acquisition failure reach the caller.
+         // Falling through here would start the request with the copied
+         // handlers still in these locals and the members unchanged.
+         boost::lock_guard<boost::mutex> lock(socketMutex_);
          responseHandler_.swap(newResponseHandler);
          errorHandler_.swap(newErrorHandler);
 
@@ -314,7 +317,6 @@ public:
          if (newFixedBufferHandler)
             fixedBufferHandler_.swap(newFixedBufferHandler);
       }
-      END_LOCK_MUTEX
 
       // if the host header is not already set, make sure we stamp a default one
       // this is required by the http standard
@@ -530,18 +532,20 @@ public:
       // installed handler and then failing to put the new one in its place
       // left the client with no fixed buffer handler at all, which silently
       // flips a streaming consumer into accumulating into response_ -- a body
-      // it never reads. The copy is the only fallible step, so doing it here
-      // means a failure changes nothing.
+      // it never reads. Taking the fallible copy here means a copy failure
+      // changes nothing; lock acquisition below is allowed to propagate for
+      // the same all-or-nothing guarantee.
       FixedBufferHandler newFixedBufferHandler = fixedBufferHandler;
 
       // the swap leaves the displaced value in the local, to be destroyed
       // after releasing the lock -- see execute() for why destroying it under
       // the lock could deadlock
-      LOCK_MUTEX(socketMutex_)
       {
+         // Propagate lock-acquisition failure so the caller cannot mistake an
+         // unchanged handler for a successful install.
+         boost::lock_guard<boost::mutex> lock(socketMutex_);
          fixedBufferHandler_.swap(newFixedBufferHandler);
       }
-      END_LOCK_MUTEX
    }
 
    virtual void setStreamNonChunkedResponses(bool stream)
@@ -626,8 +630,9 @@ public:
       // leaves the value it displaced in the local, to destroy after unlock.
       ConnectHandler newConnectHandler = connectHandler;
       ConnectHandler newDownstreamClosedHandler = downstreamClosedHandler;
-      LOCK_MUTEX(socketMutex_)
       {
+         // As above, lock failure is an install failure and must propagate.
+         boost::lock_guard<boost::mutex> lock(socketMutex_);
          // Whether we have settled has to be read under the same lock
          // close()/disableHandlers() set these with -- see disableHandlers()'s
          // declaration -- so that the decision below can't be made against a
@@ -667,7 +672,6 @@ public:
             deferConnectNotification = true;
          }
       }
-      END_LOCK_MUTEX
 
       // Dispatch the late connect notification through the strand instead of
       // invoking it here. Deciding under the lock above and calling out after
@@ -858,13 +862,41 @@ protected:
       handleError(error);
    }
 
-   void handleHandlerSnapshotError(const std::string& description,
-                                   const ErrorLocation& location)
+   void handleHandlerSnapshotError(const char* description,
+                                   const ErrorLocation& location) noexcept
    {
-      Error error = systemError(boost::system::errc::state_not_recoverable,
-                                description,
-                                location);
-      handleError(error, true);
+      try
+      {
+         Error error = systemError(boost::system::errc::state_not_recoverable,
+                                   description,
+                                   location);
+         handleError(error, true);
+      }
+      catch (...)
+      {
+         // This path starts with a failed boost::function copy, usually a
+         // bad_alloc. Building or reporting the synthetic Error can therefore
+         // fail too. Never let that second failure bypass settlement or escape
+         // an unguarded posted continuation such as resumeChunkProcessing().
+         // Attempt each operation independently: close() can throw while
+         // posting a pending connect notification, but disableHandlers() must
+         // still get its chance to break any handler reference cycle.
+         try
+         {
+            close();
+         }
+         catch (...)
+         {
+         }
+
+         try
+         {
+            disableHandlers();
+         }
+         catch (...)
+         {
+         }
+      }
    }
 
    virtual void addErrorProperties(Error& error)
@@ -1954,4 +1986,3 @@ protected:
 } // namespace rstudio
 
 #endif // CORE_HTTP_ASYNC_CLIENT_HPP
-

@@ -150,6 +150,54 @@ ProxyFilter s_proxyFilter;
 
 ProxyRequestFilter s_proxyRequestFilter;
 
+// Proxy setup can fail under memory pressure while copying a callback. Cleanup
+// must therefore be both allocation-free at the call site and best-effort:
+// close()/disableHandlers() are virtual calls into asio and can themselves
+// throw, but a failure in one step must not prevent the remaining steps from
+// releasing the handler cycle and the paused browser connection.
+void settleFailedProxySetup(
+      const boost::shared_ptr<http::IAsyncClient>& pClient,
+      const boost::shared_ptr<http::AsyncConnection>& pConnection) noexcept
+{
+   try
+   {
+      pClient->close();
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      pClient->disableHandlers();
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      pConnection->close();
+   }
+   catch (...)
+   {
+   }
+}
+
+void logFailedProxySetup(const char* context, const char* what) noexcept
+{
+   try
+   {
+      LOG_ERROR_MESSAGE(std::string("Failed to initialize ") +
+                        context + ": " + what);
+   }
+   catch (...)
+   {
+      // Logging is secondary to cleanup, and can allocate while we are already
+      // recovering from bad_alloc.
+   }
+}
+
 Error launchSessionRecovery(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::Request& request,
@@ -858,19 +906,33 @@ void proxyRequest(
 
    LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
-   // proxy the request
-   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
-   fixedBufferProxy->proxy(pClient);
-   pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
-                    errorHandler);
-
-   if (clientHandler)
+   try
    {
-      // invoke the client handler on the threadpool - we cannot do this
-      // from this thread because that will cause ordering issues for the caller
-      boost::asio::post(
-               ptrConnection->ioContext(),
-               boost::bind(clientHandler, pClient));
+      // proxy the request
+      boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(
+            new http::FixedBufferProxy(ptrConnection));
+      fixedBufferProxy->proxy(pClient);
+      pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
+                       errorHandler);
+
+      if (clientHandler)
+      {
+         // invoke the client handler on the threadpool - we cannot do this
+         // from this thread because that will cause ordering issues for the caller
+         boost::asio::post(
+                  ptrConnection->ioContext(),
+                  boost::bind(clientHandler, pClient));
+      }
+   }
+   catch (const std::exception& e)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("server proxy", e.what());
+   }
+   catch (...)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("server proxy", "unknown exception");
    }
 }
 
@@ -1071,17 +1133,13 @@ bool proxyUploadRequest(
             // exception escaping it terminates that worker's run() call, while
             // leaving the browser parser paused and the FixedBufferProxy cycle
             // around proxyClient intact. Settle both sides here instead.
-            LOG_ERROR_MESSAGE(std::string("Failed to initialize form proxy: ") + e.what());
-            proxyClient->close();
-            proxyClient->disableHandlers();
-            ptrConnection->close();
+            settleFailedProxySetup(proxyClient, ptrConnection);
+            logFailedProxySetup("form proxy", e.what());
          }
          catch (...)
          {
-            LOG_ERROR_MESSAGE("Unknown exception while initializing form proxy");
-            proxyClient->close();
-            proxyClient->disableHandlers();
-            ptrConnection->close();
+            settleFailedProxySetup(proxyClient, ptrConnection);
+            logFailedProxySetup("form proxy", "unknown exception");
          }
       };
 
@@ -1367,13 +1425,28 @@ void proxyLocalhostRequest(
              boost::algorithm::contains(response.headerValue("Server"), "Jetty");
    });
 
-   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
-   fixedBufferProxy->proxy(pClient);
+   try
+   {
+      boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(
+            new http::FixedBufferProxy(ptrConnection));
+      fixedBufferProxy->proxy(pClient);
 
-   // execute request
-   pClient->execute(
-            boost::bind(handleLocalhostResponse, ptrConnection, pClient, username, port, address, ipv6, _1),
-            onError);
+      // execute request
+      pClient->execute(
+               boost::bind(handleLocalhostResponse, ptrConnection, pClient,
+                           username, port, address, ipv6, _1),
+               onError);
+   }
+   catch (const std::exception& e)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("localhost proxy", e.what());
+   }
+   catch (...)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("localhost proxy", "unknown exception");
+   }
 }
 
 bool requiresSession(const http::Request& request)
@@ -1399,4 +1472,3 @@ void setSessionContextSource(SessionContextSource source)
 } // namespace session_proxy
 } // namespace server
 } // namespace rstudio
-
