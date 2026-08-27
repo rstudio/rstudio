@@ -321,6 +321,19 @@ TEST_F(ChatSlots, PreparesAnEmptyStagingDirectory)
    EXPECT_TRUE(children.empty());
 }
 
+TEST_F(ChatSlots, AStagedInstallIsNotResolvableBeforeItIsPublished)
+{
+   // Enters through the code that names the staging directory rather than a
+   // hand-built name, so the name and the rule that hides it cannot drift
+   // apart and make a half-extracted tree resolvable.
+   FilePath stagingDir;
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
+   makeSlot(stagingDir, "1.1.0", "11.0");
+
+   ASSERT_TRUE(verifySlot(stagingDir));
+   EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
+}
+
 TEST_F(ChatSlots, ClearsWhatACrashedSessionLeftStaged)
 {
    FilePath stagingDir;

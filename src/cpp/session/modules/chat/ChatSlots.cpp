@@ -118,11 +118,20 @@ std::string slotNameForOrdinal(const std::string& version, int ordinal)
    return version + "-" + safe_convert::numberToString(ordinal);
 }
 
-// Reduces a hostname to characters that are safe in a path component, and caps
-// its length so the staging directory name stays within filesystem limits.
-std::string sanitizedHostname()
+// Leaves room for the ".tmp-" prefix and the pid within the 255-byte limit on
+// a path component, while staying long enough that two real hostnames cannot
+// collapse onto the same prefix (a hostname is at most 253 characters, and
+// getHostname() reads at most 255).
+const std::string::size_type kMaxHostnameLength = 200;
+
+// Names the staging directory for this session. Host and pid identify a live
+// session: one host cannot run two processes with the same pid, and the name
+// becomes reusable once that process is gone. getHostname() can come back
+// empty, in which case this degrades to the pid alone.
+std::string stagingDirName()
 {
-   std::string hostname = core::system::getHostname().substr(0, 64);
+   std::string hostname =
+      core::system::getHostname().substr(0, kMaxHostnameLength);
 
    for (char& c : hostname)
    {
@@ -130,7 +139,12 @@ std::string sanitizedHostname()
          c = '_';
    }
 
-   return hostname;
+   if (hostname.empty())
+      hostname = "unknown-host";
+
+   return std::string(kStagingDirPrefix) + hostname + "-" +
+      safe_convert::numberToString(
+         static_cast<int64_t>(core::system::currentProcessId()));
 }
 
 } // anonymous namespace
@@ -213,19 +227,11 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir)
 
 Error prepareStagingDir(const FilePath& slotsDir, FilePath* pStagingDir)
 {
-   // Host and pid together are unique among live sessions -- one host cannot
-   // run two processes with the same pid -- but become reusable once the
-   // process is gone. The host is part of the name because several machines
-   // routinely share one NFS home and hand out the same pids.
-   std::string name = std::string(kStagingDirPrefix) + sanitizedHostname() +
-      "-" + safe_convert::numberToString(
-         static_cast<int64_t>(core::system::currentProcessId()));
-
-   FilePath stagingDir = slotsDir.completeChildPath(name);
+   FilePath stagingDir = slotsDir.completeChildPath(stagingDirName());
 
    // Clear rather than allocate a new name: a session that crashed mid-install
-   // left its staging directory behind, and no live session can be using a
-   // directory named for this host and pid, so this is where it is reclaimed.
+   // left this directory behind, and reusing the name is what keeps that
+   // garbage bounded. See the header for why the name is not simply unique.
    Error error = stagingDir.removeIfExists();
    if (error)
       return error;
