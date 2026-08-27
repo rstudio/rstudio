@@ -546,6 +546,12 @@ public class VisualMode implements VisualModeEditorSync,
          panmirror_.destroy();
          view_.editorContainer().removeWidget(panmirror_);
          panmirror_ = null;
+
+         // The find bar can clear activeEditor_ while deliberately leaving
+         // chunk commands enabled. A format reload has no chunk to restore,
+         // so the active document must revoke those global commands now.
+         if (target_.isActiveDocument())
+            setCodeCommandsEnabled(false);
       }
       
       withPanmirror(() -> {
@@ -869,6 +875,12 @@ public class VisualMode implements VisualModeEditorSync,
     */
    public void performWithActiveEditor(CommandWithArg<DocDisplay> command)
    {
+      // Visual mode remains activated while its widget is rebuilt for a
+      // format change. Commands in that window are unavailable; they must not
+      // fall through to the hidden source editor.
+      if (panmirror_ == null)
+         return;
+
       panmirror_.focus();
 
       if (activeEditor_ != null)

@@ -262,10 +262,12 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await sourceActions.ensureSourceMode();
       const sourceEditor = new AceEditor(page, '');
       await sourceEditor.find('gizmo');
+      await expect.poll(() => sourceEditor.getSelectedText()).toBe('gizmo');
       await executeCommand(page, 'quickAddNext');
       await expect.poll(() => sourceEditor.getSelectionRanges()).toHaveLength(2);
 
       await sourceEditor.find('gizmo');
+      await expect.poll(() => sourceEditor.getSelectedText()).toBe('gizmo');
       await executeCommand(page, 'findAll');
       await expect.poll(() => sourceEditor.getSelectionRanges()).toHaveLength(3);
 
@@ -357,6 +359,61 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Close the tab rather than toggling back to source mode: toggling
       // leaves the chunks' Ace editors mounted, which makes the source-mode
       // editor locators ambiguous for later tests in the shared IDE.
+      await sourceActions.closeSourceAndDeleteFile(fileName);
+    }
+  });
+
+  test('format reload disables blurred chunk commands (#16540)', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_format_reload_commands_${Date.now()}.qmd`;
+    const content = [
+      '---',
+      'title: Format reload commands',
+      'from: markdown+smart',
+      '---',
+      '',
+      '```{r reload}',
+      'widget <- 1',
+      'widget + widget',
+      '```',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+      const findInput = page.locator(
+        "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
+
+      // Change a format-affecting YAML field in Panmirror's embedded YAML Ace
+      // editor. The idle sync will offer to rebuild the visual editor.
+      const yaml = AceEditor.visualModeChunk(page, 'from: markdown+smart');
+      await yaml.find('markdown+smart');
+      await expect.poll(() => yaml.getSelectedText()).toBe('markdown+smart');
+      await yaml.insert('markdown-smart');
+
+      // Blur the YAML editor through Find before the reload starts. Chunk
+      // commands intentionally remain enabled across this ordinary blur.
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toBeFocused();
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+      expect(await isCommandEnabled(page, 'findAll')).toBe(true);
+
+      const reload = visualEditorPanel(proseMirror).getByText('Reload Now', {
+        exact: true,
+      });
+      await expect(reload).toBeVisible({ timeout: 15000 });
+      await reload.click();
+
+      // Teardown has no active chunk destroy hook to change global command
+      // state. The reload path itself must disable both commands, and visual
+      // dispatch must not fall through to the hidden source editor.
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
+      expect(await isCommandEnabled(page, 'findAll')).toBe(false);
+      await expect(page.locator('.ProseMirror:visible').first()).toBeVisible({
+        timeout: 15000,
+      });
+    } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName);
     }
   });
