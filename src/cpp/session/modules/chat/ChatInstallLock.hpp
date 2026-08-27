@@ -46,7 +46,7 @@ namespace install_lock {
 //   dies, and link-based locks (server) go stale via the existing PID/
 //   heartbeat machinery — so a crashed session cannot cause a persistent
 //   false "in use" report.
-// - A mutation lock (locks/install.lock) serializes install/update/uninstall
+// - A mutation lock (locks/install.lock) serializes installs and updates
 //   across processes. Mutators additionally refuse to proceed while another
 //   session's in-use lock is live.
 //

@@ -21,7 +21,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -33,7 +32,6 @@ import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -57,8 +55,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompl
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.json.client.JSONString;
-import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -167,8 +163,7 @@ public class ChatPresenter extends BasePresenter
       SatelliteManager satelliteManager,
       PaneManager paneManager,
       Session session,
-      GlobalDisplay globalDisplay,
-      ApplicationQuit applicationQuit)
+      GlobalDisplay globalDisplay)
    {
       super(display);
       binder.bind(commands, this);
@@ -182,9 +177,7 @@ public class ChatPresenter extends BasePresenter
       lastEffectiveChatProvider_ = paiUtil_.getConfiguredChatProvider();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
-      session_ = session;
       globalDisplay_ = globalDisplay;
-      applicationQuit_ = applicationQuit;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -602,52 +595,6 @@ public class ChatPresenter extends BasePresenter
    void onReturnChatToMain()
    {
       returnChatToMain();
-   }
-
-   // No @Handler: bound via ChatTab.Shim so the command works before the
-   // presenter is delay-loaded.
-   void onUninstallPositAssistant()
-   {
-      globalDisplay_.showYesNoMessage(
-         GlobalDisplay.MSG_WARNING,
-         constants_.uninstallPositAssistantCaption(),
-         constants_.uninstallPositAssistantMessage(),
-         () -> performUninstall(),
-         false);
-   }
-
-   private void performUninstall()
-   {
-      server_.chatUninstallPositAssistant(new ServerRequestCallback<VoidResponse>()
-      {
-         @Override
-         public void onResponseReceived(VoidResponse response)
-         {
-            // doRestart() is cancelable (user can decline to save unsaved
-            // changes). If canceled, PAI files are already deleted but the
-            // session continues unrestarted — an acceptable edge case
-            // consistent with other RStudio restart flows.
-            applicationQuit_.doRestart(session_);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            // Backend delivers user-facing text via client_info; fall back
-            // to the generic user message when no client_info is provided.
-            String message = error.getUserMessage();
-            JSONValue clientInfo = error.getClientInfo();
-            if (clientInfo != null)
-            {
-               JSONString clientInfoStr = clientInfo.isString();
-               if (clientInfoStr != null)
-                  message = clientInfoStr.stringValue();
-            }
-            globalDisplay_.showErrorMessage(
-               constants_.uninstallPositAssistantCaption(),
-               message);
-         }
-      });
    }
 
    // No @Handler: bound via ChatTab.Shim so the command works before the
@@ -1581,9 +1528,7 @@ public class ChatPresenter extends BasePresenter
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
    private final PaneManager paneManager_;
-   private final Session session_;
    private final GlobalDisplay globalDisplay_;
-   private final ApplicationQuit applicationQuit_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;

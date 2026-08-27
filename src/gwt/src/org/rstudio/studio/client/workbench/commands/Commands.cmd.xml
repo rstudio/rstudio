@@ -623,8 +623,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="viewAllPrefs"/>
             <cmd refid="restoreDefaultPaneAndTabLayout"/>
             <separator/>
-            <cmd refid="uninstallPositAssistant"/>
-            <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
             <cmd refid="toggleEditorTokenInfo"/>
@@ -4472,12 +4470,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Return Posit Assistant to Main Window"
         buttonLabel=""
         desc="Return to main window"/>
-
-   <cmd id="uninstallPositAssistant"
-        label="Uninstall Posit Assistant"
-        menuLabel="Uninsta_ll Posit Assistant..."
-        rebindable="false"
-        windowMode="main"/>
 
    <cmd id="checkForPositAssistantUpdates"
         label="Check for Posit Assistant Updates"

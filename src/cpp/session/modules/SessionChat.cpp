@@ -5290,7 +5290,7 @@ Error startChatBackend(bool resumeConversation)
 
    // Coordinate with other rsession processes sharing the per-user install:
    // hold this session's in-use lock while the backend runs, and refuse to
-   // start while an install/update/uninstall is in progress (we would be
+   // start while an install or update is in progress (we would be
    // launching from a directory mid-swap). Only the read-only system
    // install skips locking: mutations never touch it, and it cannot alias
    // the per-user install. Env-var overrides over-lock deliberately —
@@ -6123,159 +6123,6 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// NOTE: No isPositAssistantWanted()/isPositAssistantEnabledByAdmin() gate — the user may have
-// disabled Posit Assistant but still wants to clean up installed files.
-Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
-{
-   FilePath userDataDir = xdg::userDataDir();
-   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
-   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
-
-   // No user-data install paths exist. Distinguish env/system/none to give
-   // the user a targeted message. Each branch delivers its message via
-   // client_info on the JSON-RPC error so the frontend can show it verbatim
-   // (Error::getSummary() would otherwise wrap the system errno text and
-   // obscure our description).
-   if (!aiDir.exists() && !aiPrevDir.exists())
-   {
-      std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
-      if (!envPath.empty() && FilePath(envPath).exists())
-      {
-         pResponse->setError(
-            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
-            json::Value(
-               "Posit Assistant is installed via the RSTUDIO_POSIT_AI_PATH "
-               "environment variable and cannot be uninstalled "
-               "from RStudio."));
-         return Success();
-      }
-
-      FilePath systemPath =
-         xdg::systemConfigDir().completePath(kPositAiDirName);
-      if (systemPath.exists())
-      {
-         pResponse->setError(
-            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
-            json::Value(
-               "Posit Assistant is installed at the system level by an "
-               "administrator and cannot be uninstalled from RStudio."));
-         return Success();
-      }
-
-      DLOG("Posit Assistant is not installed; nothing to remove");
-      // Clear cached state in case the directory was removed out-of-band
-      // while the session still thinks Posit Assistant is available.
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState = UpdateState();
-      }
-      s_positAssistantVersion.clear();
-      pResponse->setError(
-         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
-         json::Value("Posit Assistant is not installed."));
-      return Success();
-   }
-
-   // Serialize with other rsession processes and refuse while any other
-   // session is running Posit Assistant — checked before stopping our own
-   // processes. The scope releases the mutation lock on every exit below.
-   install_lock::MutationScope mutationScope(installLock());
-   if (mutationScope.error())
-   {
-      pResponse->setError(
-         systemError(boost::system::errc::device_or_resource_busy,
-                     ERROR_LOCATION),
-         json::Value("Unable to uninstall Posit Assistant: " +
-                     mutationScope.userMessage()));
-      return Success();
-   }
-
-   // Stop chat backend (graceful request + reap wait so file handles are
-   // released before we delete the installation directory)
-   stopChatBackendForInstallMutation("uninstall");
-
-   // Stop assistant agent (NES language server).
-   // stopAgentForUpdate() is synchronous — it waits for the agent
-   // process to exit before returning, so file handles are released.
-   bool agentStopped = assistant::stopAgentForUpdate();
-   if (!agentStopped)
-      WLOG("Timeout waiting for assistant agent to stop during uninstall");
-
-   // Deleting the installation under a still-live process is exactly the
-   // corruption this lock prevents for other sessions — abort rather than
-   // proceed when our own processes could not be reaped.
-   if (!waitForOwnComponentsReaped(2000))
-   {
-      pResponse->setError(
-         systemError(boost::system::errc::device_or_resource_busy,
-                     ERROR_LOCATION),
-         json::Value("Failed to stop Posit Assistant processes. "
-                     "Please restart RStudio and try again."));
-      return Success();
-   }
-
-   // Delete installation.
-   // If the agent timed out it may still hold file handles open
-   // (especially on Windows), so warn when deletion fails after a
-   // timeout and suggest restarting.
-   Error error = aiDir.removeIfExists();
-   if (error)
-   {
-      // Processes are already stopped but files remain on disk.
-      // Reset cached state so the session doesn't think PAI is usable,
-      // and tell the user to restart.
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState = UpdateState();
-      }
-      s_positAssistantVersion.clear();
-
-      std::string message =
-         "Failed to remove Posit Assistant installation: " + error.getMessage();
-      if (!agentStopped)
-         message += " (a background process may still be running)";
-      message += ". Please restart RStudio and try again.";
-
-      return systemError(
-         boost::system::errc::io_error, message, ERROR_LOCATION);
-   }
-
-   // Remove any backup left by a failed install/update. Unlike an install,
-   // reporting uninstall success while an executable tree remains would leave
-   // it behind with no guaranteed later cleanup, so treat failure to remove
-   // it as an uninstall failure (mirrors the pai/bin failure path above).
-   Error prevError = aiPrevDir.removeIfExists();
-   if (prevError)
-   {
-      {
-         boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState = UpdateState();
-      }
-      s_positAssistantVersion.clear();
-
-      return systemError(
-         boost::system::errc::io_error,
-         "Failed to remove Posit Assistant installation backup: " +
-            prevError.getMessage() +
-            ". Please restart RStudio and try again.",
-         ERROR_LOCATION);
-   }
-
-   // Reset cached update state so the session correctly detects the
-   // missing installation if the user cancels the subsequent restart.
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      s_updateState = UpdateState();
-   }
-   s_positAssistantVersion.clear();
-   s_expectedShutdown = false;
-
-   DLOG("Posit Assistant uninstalled successfully");
-   pResponse->setResult(json::Value());
-   return Success();
-}
-
 // ============================================================================
 // Module Lifecycle
 // ============================================================================
@@ -6604,7 +6451,6 @@ Error initialize()
       (bind(registerRpcMethod, "chat_set_update_check_override", chatSetUpdateCheckOverride))
       (bind(registerAsyncRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
-      (bind(registerRpcMethod, "chat_uninstall_posit_assistant", chatUninstallPositAssistant))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
       (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))

@@ -4240,12 +4240,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Return to main window") // $NON-NLS-1$
     String returnChatToMainDesc();
     
-    // uninstallPositAssistant
-    @DefaultStringValue("Uninstall Posit Assistant") // $NON-NLS-1$
-    String uninstallPositAssistantLabel();
-    @DefaultStringValue("Uninsta_ll Posit Assistant...") // $NON-NLS-1$
-    String uninstallPositAssistantMenuLabel();
-    
     // checkForPositAssistantUpdates
     @DefaultStringValue("Check for Posit Assistant Updates") // $NON-NLS-1$
     String checkForPositAssistantUpdatesLabel();
