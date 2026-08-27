@@ -29,8 +29,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   // Focus a chunk's embedded editor through Ace itself. A forced click on its
   // hidden textarea is not a reliable focus handoff after the find input has
   // focus: the click can complete without Ace's focus handler running.
-  const focusChunk = (page: Page, header: string) =>
-    AceEditor.visualModeChunk(page, header).focus();
+  const focusChunk = (page: Page, proseMirror: Locator, header: string) =>
+    AceEditor.visualModeChunk(page, header, proseMirror).focus();
 
   // Each editor tab owns a copy of the visual toolbar. Resolve the button
   // through the tab panel containing the ProseMirror instance under test so
@@ -286,14 +286,14 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
       expect(await isCommandEnabled(page, 'findAll')).toBe(false);
 
-      await focusChunk(page, '{r alpha}');
+      await focusChunk(page, proseMirror, '{r alpha}');
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       expect(await isCommandEnabled(page, 'findAll')).toBe(true);
 
       // The repro from the issue: select an occurrence, then Find and Add Next
       // adds the following one, and typing edits both cursors at once. The
       // third `widget` is left alone.
-      const first = AceEditor.visualModeChunk(page, '{r alpha}');
+      const first = AceEditor.visualModeChunk(page, '{r alpha}', proseMirror);
       await first.find('widget');
       await expect.poll(() => first.getSelectedText()).toBe('widget');
 
@@ -308,8 +308,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect.poll(() => first.getValue()).toContain('gadget <- 1\ngadget + widget');
 
       // Find All takes every occurrence in the focused chunk.
-      await focusChunk(page, '{r beta}');
-      const second = AceEditor.visualModeChunk(page, '{r beta}');
+      await focusChunk(page, proseMirror, '{r beta}');
+      const second = AceEditor.visualModeChunk(page, '{r beta}', proseMirror);
       await second.find('gizmo');
       await expect.poll(() => second.getSelectedText()).toBe('gizmo');
       await executeCommand(page, 'findAll');
@@ -320,8 +320,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // has no shortcut and no menu entry, and quickAddNext's Cmd+D is
       // disableModes="default,vim,emacs" -- and it takes focus out of the chunk
       // on the way, which withActiveEditor has to survive.
-      await focusChunk(page, '{r gamma}');
-      const third = AceEditor.visualModeChunk(page, '{r gamma}');
+      await focusChunk(page, proseMirror, '{r gamma}');
+      const third = AceEditor.visualModeChunk(page, '{r gamma}', proseMirror);
       await third.find('sprocket');
       await expect.poll(() => third.getSelectedText()).toBe('sprocket');
 
@@ -389,7 +389,11 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       // Change a format-affecting YAML field in Panmirror's embedded YAML Ace
       // editor. The idle sync will offer to rebuild the visual editor.
-      const yaml = AceEditor.visualModeChunk(page, 'from: markdown+smart');
+      const yaml = AceEditor.visualModeChunk(
+        page,
+        'from: markdown+smart',
+        proseMirror,
+      );
       await yaml.find('markdown+smart');
       await expect.poll(() => yaml.getSelectedText()).toBe('markdown+smart');
       await yaml.insert('markdown-smart');
@@ -460,7 +464,9 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     try {
       await sourceActions.ensureVisualMode();
       await executeCommand(page, 'saveSourceDoc');
-      await focusChunk(page, '{r owner}');
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+      await focusChunk(page, proseMirror, '{r owner}');
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
 
       // Activate the R file through a synthetic tab click. Unlike a pointer
@@ -540,7 +546,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
         // leaving the code commands disabled even though Ace has DOM focus.
         await proseMirror.getByText('sassafras').click({ position: { x: 4, y: 8 } });
         await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
-        await focusChunk(page, '{r seed}');
+        await focusChunk(page, proseMirror, '{r seed}');
         await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       };
 
@@ -557,7 +563,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       // So does a selection made inside a code chunk, which the outer
       // ProseMirror selection cannot see on its own.
-      const chunk = AceEditor.visualModeChunk(page, '{r seed}');
+      const chunk = AceEditor.visualModeChunk(page, '{r seed}', proseMirror);
       await focusSeedChunk();
       await chunk.find('gizmo');
       await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
@@ -692,19 +698,38 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
         await findButton.click();
         await expect(findInput).toHaveValue('mangosteen');
 
-        // Input selections do not appear in window.getSelection(). Selecting
-        // text in the find box must also suppress stale prose/chunk fallback.
-        await findInput.selectText();
-        await expect
-          .poll(() => findInput.evaluate((input: HTMLInputElement) =>
-            input.selectionEnd! - input.selectionStart!))
-          .toBeGreaterThan(0);
-        await executeCommand(page, 'findReplace');
-        await expect(findInput).toHaveValue('mangosteen');
+        // Input selections do not appear in window.getSelection(). Make the
+        // current find value distinct, select it, and leave a different stale
+        // prose DOM selection behind; the focused input must win.
+        const proseWord = proseMirror.getByText('sassafras');
+        const selectFindInputOverStaleProse = async () => {
+          await findInput.fill('current-search-term');
+          await findInput.selectText();
+          await proseWord.evaluate((element) => {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          });
+          await expect
+            .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
+              active: document.activeElement === input,
+              selected: input.selectionEnd! - input.selectionStart!,
+            })))
+            .toEqual({ active: true, selected: 'current-search-term'.length });
+          await expect
+            .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+            .toBe('sassafras');
+        };
 
-        await findInput.selectText();
+        await selectFindInputOverStaleProse();
+        await executeCommand(page, 'findReplace');
+        await expect(findInput).toHaveValue('current-search-term');
+
+        await selectFindInputOverStaleProse();
         await executeCommand(page, 'findFromSelection');
-        await expect(findInput).toHaveValue('mangosteen');
+        await expect(findInput).toHaveValue('current-search-term');
       } finally {
         if (!outlineInitiallyVisible) {
           await executeCommand(page, 'toggleDocumentOutline');
@@ -787,9 +812,9 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       const findInput = page.locator(
         "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
       const findButton = findReplaceButton(proseMirror);
-      const chunk = AceEditor.visualModeChunk(page, '{r toolbar}');
+      const chunk = AceEditor.visualModeChunk(page, '{r toolbar}', proseMirror);
 
-      await focusChunk(page, '{r toolbar}');
+      await focusChunk(page, proseMirror, '{r toolbar}');
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       await chunk.find('gizmo');
       await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
@@ -803,7 +828,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // restores the chunk before it reads the selection.
       await findButton.click();
       await expect(findInput).toBeHidden();
-      await focusChunk(page, '{r toolbar}');
+      await focusChunk(page, proseMirror, '{r toolbar}');
       await chunk.find('kumquat');
       await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
       await findButton.focus();

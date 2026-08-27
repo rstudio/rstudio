@@ -1451,7 +1451,10 @@ public class VisualMode implements VisualModeEditorSync,
 
    private String getBrowserSearchSelection()
    {
-      if (panmirror_ == null)
+      // Input selections are not reflected in window.getSelection(). They are
+      // live UI selections, so do not let an older Panmirror DOM selection
+      // masquerade as the current selection.
+      if (panmirror_ == null || hasInputTextSelection())
          return null;
 
       // PanmirrorWidget also owns the outline and find UI. Only selections in

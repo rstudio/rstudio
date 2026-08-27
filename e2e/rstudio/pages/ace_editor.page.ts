@@ -1,4 +1,4 @@
-import type { Page, JSHandle } from 'playwright';
+import type { Page, JSHandle, Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 import { Ace, AceEditorElement } from '../utils/ace';
 
@@ -40,12 +40,13 @@ export interface AceMarker {
  *     hidden buffer left open in another tab). Editors inside
  *     #rstudio_console_input are skipped so the source editor is still found
  *     when the console happens to come first in DOM order.
- *   - `AceEditor.visualModeChunk(page, marker)`: an editor embedded in the
- *     visual editor, matched on content the same way but only among the chunk
- *     editors panmirror has mounted. Neither of the other two reaches one:
- *     activeEditor() returns the (hidden) source editor for the document, and
- *     the plain marker walk would match that editor too, since in visual mode
- *     it still holds the whole document, chunk text included.
+ *   - `AceEditor.visualModeChunk(page, marker, visualEditorRoot)`: an editor
+ *     embedded in the specified visual editor, matched on content among only
+ *     the chunk editors that Panmirror root has mounted. Neither of the other
+ *     two reaches one: activeEditor() returns the (hidden) source editor for
+ *     the document, and the plain marker walk would match that editor too,
+ *     since in visual mode it still holds the whole document, chunk text
+ *     included.
  *
  * The marker-substring path is a DOM walk and can land on stale editors left
  * in the DOM after a tab close (see ad175dccd1 / #17775 and #17784). Empty
@@ -56,6 +57,7 @@ export class AceEditor extends PageObject {
   // Set only by visualModeChunk(); kept off the constructor so the public
   // signature stays free of a positional boolean.
   private inVisualEditor = false;
+  private visualEditorRoot: Locator | null = null;
 
   constructor(page: Page, marker: string) {
     super(page);
@@ -69,9 +71,10 @@ export class AceEditor extends PageObject {
    * editors panmirror mounts ahead of the chunk it means (the front matter
    * block is one of them).
    */
-  static visualModeChunk(page: Page, marker: string): AceEditor {
+  static visualModeChunk(page: Page, marker: string, visualEditorRoot: Locator): AceEditor {
     const editor = new AceEditor(page, marker);
     editor.inVisualEditor = true;
+    editor.visualEditorRoot = visualEditorRoot;
     return editor;
   }
 
@@ -80,18 +83,13 @@ export class AceEditor extends PageObject {
    * Pairs with `run()` below, which disposes the handle when done.
    */
   private editorHandle(): Promise<JSHandle<Ace.Editor>> {
-    return this.page.evaluateHandle(({ marker, inVisualEditor }: {
-      marker: string;
-      inVisualEditor: boolean;
-    }): Ace.Editor => {
-      if (inVisualEditor) {
-        // Scope to the visible document: a tab left open by an earlier test
-        // keeps its chunk editors mounted, and an unscoped walk can match one
-        // of those instead of the chunk this test means.
-        const roots = Array.from(document.querySelectorAll('.ProseMirror'))
-          .filter((root) => root.getClientRects().length > 0);
-        const embedded = roots.flatMap((root) =>
-          Array.from(root.querySelectorAll('.ace_editor')));
+    if (this.inVisualEditor) {
+      if (!this.visualEditorRoot) {
+        throw new Error('AceEditor.visualModeChunk(): visual editor root is required');
+      }
+
+      return this.visualEditorRoot.evaluateHandle((root, marker): Ace.Editor => {
+        const embedded = Array.from(root.querySelectorAll('.ace_editor'));
         for (let i = 0; i < embedded.length; i++) {
           const env = (embedded[i] as unknown as AceEditorElement).env;
           if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
@@ -100,9 +98,12 @@ export class AceEditor extends PageObject {
         }
         throw new Error(
           `AceEditor.visualModeChunk('${marker}'): no embedded editor contains it `
-          + `(${embedded.length} mounted in ${roots.length} visible document(s))`,
+          + `(${embedded.length} mounted in the specified visual editor)`,
         );
-      }
+      }, this.marker);
+    }
+
+    return this.page.evaluateHandle((marker: string): Ace.Editor => {
       if (marker === '') {
         const editor = window.rstudio?.documents.activeEditor() ?? null;
         if (!editor) {
@@ -121,7 +122,7 @@ export class AceEditor extends PageObject {
         }
       }
       throw new Error('No Ace editor found containing marker: ' + marker);
-    }, { marker: this.marker, inVisualEditor: this.inVisualEditor });
+    }, this.marker);
   }
 
   /**
