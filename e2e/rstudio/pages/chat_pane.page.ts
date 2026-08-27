@@ -72,11 +72,12 @@ export class ChatPane extends FramePageObject {
     this.trustWorkspaceBtn = this.frame.locator("button:has-text('Trust this workspace')");
     this.moreBtn = this.frame.getByRole('button', { name: 'More' });
     this.settingsMenu = this.frame.locator("[data-slot='dropdown-menu-content']");
-    // The provider-settings menu item was relabeled "Configure LLM providers"
-    // (was "Configure Posit AI"). Match either so the test passes against both
-    // the current and older assistant builds we exercise during rollout.
+    // The provider-settings menu item has been relabeled twice: "Configure
+    // Posit AI" -> "Configure LLM providers" -> "Configure AI providers".
+    // Match any of them so the test passes against both the released assistant
+    // and the pre-release builds the release gate exercises.
     this.configurePositAiItem = this.frame.getByRole('menuitem', {
-      name: /Configure (LLM providers|Posit AI)/i,
+      name: /Configure (AI providers|LLM providers|Posit AI)/i,
     });
     this.aboutItem = this.frame.locator("xpath=//span[contains(text(), 'About')] | //div[contains(text(), 'About')] | //*[@role='menuitem'][contains(., 'About')]");
     this.newConversationBtn = this.frame.getByRole('button', { name: 'New conversation' });

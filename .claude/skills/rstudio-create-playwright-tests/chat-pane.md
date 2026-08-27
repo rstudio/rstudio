@@ -60,5 +60,5 @@ CDP context.
   labels with a role-based regex instead of exact text or XPath:
 
   ```typescript
-  frame.getByRole('menuitem', { name: /Configure (LLM providers|Posit AI)/i });
+  frame.getByRole('menuitem', { name: /Configure (AI providers|LLM providers|Posit AI)/i });
   ```
