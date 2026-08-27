@@ -510,7 +510,7 @@ void synchronizeLocaleFromR()
    std::string rLocale;
    Error error = r::exec::RFunction("base:::Sys.getlocale")
          .addParam("LC_ALL")
-         .call(&rLocale);
+         .callUtf8(&rLocale);
    if (error)
       LOG_ERROR(error);
 
@@ -652,5 +652,4 @@ void str(SEXP objectSEXP)
 } // namespace util
 } // namespace r
 } // namespace rstudio
-
 

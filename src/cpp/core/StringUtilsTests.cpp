@@ -478,6 +478,14 @@ TEST(StringTest, Utf8ToCodepageHonorsAnExplicitCodePage)
    // GB18030 rejects WC_NO_BEST_FIT_CHARS. A failed first conversion must be
    // retried with supported arguments rather than escaping even ASCII.
    EXPECT_EQ("x <- 1", utf8ToCodepage("x <- 1", 54936, true));
+
+   // Supplementary characters must be converted as a surrogate pair. GB18030
+   // can represent this character, while CP1252 should emit one scalar escape
+   // rather than two invalid surrogate escapes.
+   std::string emoji("\xF0\x9F\x98\x80");
+   EXPECT_EQ(std::string("\x94\x39\xFC\x36"),
+             utf8ToCodepage(emoji, 54936, true));
+   EXPECT_EQ("\\U0001f600", utf8ToCodepage(emoji, 1252, true));
 }
 
 #endif

@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -314,9 +315,7 @@ std::string utf8ToSystemImpl(const std::string& str,
    if (codepage == CP_ACP)
       codepage = static_cast<int>(::GetACP());
 
-   // a UTF-8 target needs no conversion at all. taking the general path
-   // anyway would mangle characters outside the BMP, since it walks the text
-   // one wchar_t at a time and so splits surrogate pairs
+   // a UTF-8 target needs no conversion at all; preserve its bytes exactly
    if (codepage == CP_UTF8)
       return str;
 
@@ -326,7 +325,7 @@ std::string utf8ToSystemImpl(const std::string& str,
             str.c_str(), -1,
             &wide[0], gsl::narrow_cast<int>(wide.size()));
 
-   if (chars < 0)
+   if (chars == 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
       return str;
@@ -336,8 +335,26 @@ std::string utf8ToSystemImpl(const std::string& str,
    char buffer[16];
 
    // Only go up to chars - 1 because last char is \0
-   for (int i = 0; i < chars - 1; i++)
+   for (int i = 0; i < chars - 1;)
    {
+      int wideChars = 1;
+      uint32_t codepoint = static_cast<uint32_t>(wide[i]);
+
+      // wchar_t is UTF-16 on Windows. Keep a surrogate pair together so
+      // code pages such as GB18030 can encode the scalar as a four-byte
+      // sequence, and so an unrepresentable scalar produces one valid escape
+      // rather than two isolated-surrogate escapes.
+      if (codepage >= 0 &&
+          wide[i] >= 0xD800 && wide[i] <= 0xDBFF &&
+          i + 1 < chars - 1 &&
+          wide[i + 1] >= 0xDC00 && wide[i + 1] <= 0xDFFF)
+      {
+         wideChars = 2;
+         codepoint = 0x10000 +
+               ((static_cast<uint32_t>(wide[i]) - 0xD800) << 10) +
+               (static_cast<uint32_t>(wide[i + 1]) - 0xDC00);
+      }
+
       int n;
 
       if (codepage < 0)
@@ -354,7 +371,7 @@ std::string utf8ToSystemImpl(const std::string& str,
          BOOL usedDefault = FALSE;
          n = ::WideCharToMultiByte(
                   codepage, WC_NO_BEST_FIT_CHARS,
-                  &wide[i], 1,
+                  &wide[i], wideChars,
                   buffer, sizeof(buffer),
                   nullptr, &usedDefault);
 
@@ -367,7 +384,7 @@ std::string utf8ToSystemImpl(const std::string& str,
          {
             n = ::WideCharToMultiByte(
                      codepage, 0,
-                     &wide[i], 1,
+                     &wide[i], wideChars,
                      buffer, sizeof(buffer),
                      nullptr, nullptr);
          }
@@ -385,7 +402,15 @@ std::string utf8ToSystemImpl(const std::string& str,
             // latter is accepted by Python, and since the reticulate
             // REPL uses the same conversion routines we prefer the
             // format compatible with both parsers
-            output << "\\u" << std::hex << static_cast<uint32_t>(wide[i]);
+            if (codepoint > 0xFFFF)
+            {
+               output << "\\U" << std::hex << std::setw(8)
+                      << std::setfill('0') << codepoint;
+            }
+            else
+            {
+               output << "\\u" << std::hex << codepoint;
+            }
          }
          else
          {
@@ -396,6 +421,8 @@ std::string utf8ToSystemImpl(const std::string& str,
       {
          output.write(buffer, n);
       }
+
+      i += wideChars;
    }
 
    return output.str();
@@ -1192,4 +1219,3 @@ collection::Position offsetToPosition(const std::string& str, std::size_t offset
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio
-

@@ -201,6 +201,16 @@ TEST(SessionRTest, RActiveBindingDetection) {
 #ifdef _WIN32
 
 TEST(SessionRTest, SynchronizeLocaleRepairsAClobberedLocale) {
+   // Before R 4.2, R and rsession use different C runtimes. There is no
+   // shared locale for code outside R to clobber, so the repair path does not
+   // apply.
+   bool sharedRuntime = false;
+   Error versionError = r::exec::evaluateString(
+            "getRversion() >= '4.2.0'", &sharedRuntime);
+   ASSERT_FALSE(versionError);
+   if (!sharedRuntime)
+      GTEST_SKIP() << "R < 4.2 links against a separate C runtime";
+
    // rsession and UCRT builds of R share one C runtime, so code that switches
    // to the "C" locale and then fails to restore it leaves the session there
    // while R goes on believing it is in its original locale. Everything that
