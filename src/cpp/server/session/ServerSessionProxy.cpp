@@ -1054,14 +1054,35 @@ bool proxyUploadRequest(
       // a form proxy to write form data to
       auto onClientCreated = [=](const boost::shared_ptr<http::IAsyncClient>& proxyClient)
       {
-         boost::shared_ptr<http::FormProxy> proxy =
-               boost::make_shared<http::FormProxy>(ptrConnection, proxyClient);
+         try
+         {
+            boost::shared_ptr<http::FormProxy> proxy =
+                  boost::make_shared<http::FormProxy>(ptrConnection, proxyClient);
 
-         proxy->initialize();
-         ptrConnection->setData(proxy);
+            proxy->initialize();
+            ptrConnection->setData(proxy);
 
-         // continue handling form data
-         ptrConnection->continueParsing();
+            // continue handling form data
+            ptrConnection->continueParsing();
+         }
+         catch (const std::exception& e)
+         {
+            // This callback is posted directly to the server io_context. An
+            // exception escaping it terminates that worker's run() call, while
+            // leaving the browser parser paused and the FixedBufferProxy cycle
+            // around proxyClient intact. Settle both sides here instead.
+            LOG_ERROR_MESSAGE(std::string("Failed to initialize form proxy: ") + e.what());
+            proxyClient->close();
+            proxyClient->disableHandlers();
+            ptrConnection->close();
+         }
+         catch (...)
+         {
+            LOG_ERROR_MESSAGE("Unknown exception while initializing form proxy");
+            proxyClient->close();
+            proxyClient->disableHandlers();
+            ptrConnection->close();
+         }
       };
 
       proxyRequest(RequestType::Content,
@@ -1378,5 +1399,4 @@ void setSessionContextSource(SessionContextSource source)
 } // namespace session_proxy
 } // namespace server
 } // namespace rstudio
-
 

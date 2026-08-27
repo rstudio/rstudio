@@ -2491,6 +2491,147 @@ TEST(AsyncClientContentLength, ResponseHandlerSnapshotFailureAtCompletionFailsRa
    EXPECT_EQ(pieces[0], body);
 }
 
+// A completion retry is necessarily post-close: closeAndRespond() closes the
+// socket before it sends the empty completion chunk, and a backpressured
+// consumer asks resumeChunkProcessing() to re-enter closeAndRespond() later.
+// A snapshot failure on that retry must bypass handleError()'s ordinary
+// "purposefully closed" early return and still release the handler cycle.
+TEST(AsyncClientContentLength, ResponseHandlerSnapshotFailureOnClosedCompletionRetryStillSettles)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/false,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+   pClient->setFixedBufferHandlerSupportsPause(true);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool gotResponse = false;
+   bool gotError = false;
+   bool timedOut = false;
+   int completionCalls = 0;
+
+   boost::shared_ptr<boost::asio::system_timer> pTimer =
+      boost::make_shared<boost::asio::system_timer>(ioc, std::chrono::seconds(2));
+   pTimer->async_wait([&](const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+      timedOut = true;
+      pClient->close();
+   });
+
+   boost::shared_ptr<bool> pArmed = boost::make_shared<bool>(false);
+   boost::weak_ptr<int> weakHandlerState;
+   {
+      boost::shared_ptr<int> pHandlerState = boost::make_shared<int>(0);
+      weakHandlerState = pHandlerState;
+
+      FixedBufferHandler fixedBufferHandler =
+         ThrowOnCopy<boost::function<bool(const http::Response&, const std::string&)>>(
+            pArmed,
+            [&, pHandlerState](const http::Response&, const std::string& piece) -> bool
+            {
+               if (!piece.empty())
+                  return true;
+
+               ++completionCalls;
+               *pArmed = true;
+               boost::asio::post(ioc, [&]() { pClient->resumeChunkProcessing(); });
+               return false;
+            });
+
+      pClient->execute(
+         [&](const http::Response&) { gotResponse = true; pTimer->cancel(); },
+         [&](const core::Error&) { gotError = true; pTimer->cancel(); },
+         fixedBufferHandler);
+   }
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_FALSE(timedOut);
+   EXPECT_FALSE(gotResponse);
+   EXPECT_TRUE(gotError);
+   EXPECT_EQ(completionCalls, 1);
+   EXPECT_TRUE(weakHandlerState.expired());
+}
+
+// handleError() snapshots errorHandler_ too. If the allocation pressure that
+// broke the first snapshot also breaks this one, the callback cannot be
+// delivered, but cleanup must still run rather than reading an empty local as
+// "no handler" and leaking the installed callbacks.
+TEST(AsyncClientContentLength, ErrorHandlerSnapshotFailureStillDisablesHandlers)
+{
+   LocalServer server(ResponseMode::ContentLength, /*closeAfterResponse=*/true,
+                      "{\"name\":\"jsonlite\"}\n");
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<TcpIpAsyncClient> pClient =
+      boost::make_shared<TcpIpAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+   pClient->setFixedBufferHandlerSupportsPause(true);
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool gotResponse = false;
+   bool gotError = false;
+   boost::shared_ptr<bool> pFixedArmed = boost::make_shared<bool>(false);
+   boost::shared_ptr<bool> pErrorArmed = boost::make_shared<bool>(false);
+   boost::weak_ptr<int> weakFixedState;
+   boost::weak_ptr<int> weakErrorState;
+
+   {
+      boost::shared_ptr<int> pFixedState = boost::make_shared<int>(0);
+      boost::shared_ptr<int> pErrorState = boost::make_shared<int>(0);
+      weakFixedState = pFixedState;
+      weakErrorState = pErrorState;
+
+      pClient->execute(
+         [&](const http::Response&) { gotResponse = true; },
+         ThrowOnCopy<boost::function<void(const core::Error&)>>(
+            pErrorArmed,
+            [&, pErrorState](const core::Error&) { gotError = true; }),
+         ThrowOnCopy<boost::function<bool(const http::Response&, const std::string&)>>(
+            pFixedArmed,
+            [&, pFixedState](const http::Response&, const std::string& piece) -> bool
+            {
+               if (!piece.empty())
+               {
+                  // The next fixed-buffer copy (at completion) and the error
+                  // handler copy used to report it both fail once.
+                  *pFixedArmed = true;
+                  *pErrorArmed = true;
+               }
+               return true;
+            }));
+   }
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_FALSE(gotResponse);
+   EXPECT_FALSE(gotError);
+   EXPECT_TRUE(weakFixedState.expired());
+   EXPECT_TRUE(weakErrorState.expired());
+}
+
 // handleWrite(): the connect notification's snapshot fails. A caller gated on
 // that notification (FormProxy) buffers its upload until it hears one way or
 // the other, so dropping it hangs the upload; the client must report the
@@ -2553,42 +2694,27 @@ TEST(AsyncClientContentLength, ConnectHandlerSnapshotFailureReportsDownstreamClo
 // happens before the lock, with only swaps under it, so either the whole
 // install lands or nothing does and the exception reaches the caller.
 
-// execute(): the response handler copies, the error handler does not. The
-// request used to be set in motion anyway, behind a client whose error handler
-// had never been installed -- an exchange that can complete with nobody left to
-// notify.
-//
-// Deliberately aimed at a port nobody is listening on rather than at a
-// LocalServer: what is under test is that nothing is set in motion at all, and
-// LocalServer's accept loop blocks until a connection arrives, so a regression
-// here would hang its teardown rather than fail.
-TEST(AsyncClientContentLength, ExecuteHandlerInstallFailureLeavesNothingInMotion)
+// execute(): the response handler copies, the error handler does not. A request
+// still must not start, but "nothing changed" is insufficient when an embedder
+// has already installed a streaming handler: FixedBufferProxy does that before
+// execute(), and its handler closes a shared_ptr cycle around the client. With
+// no request in motion, only execute()'s failure path remains to detach it.
+TEST(AsyncClientContentLength, ExecuteHandlerInstallFailureBreaksPrewiredStreamingCycle)
 {
-   // bind and immediately release a port so connecting to it is refused
-   unsigned short deadPort = 0;
-   {
-      boost::asio::io_context probeIoc;
-      tcp::acceptor probe(probeIoc, tcp::endpoint(boost::asio::ip::make_address("127.0.0.1"), 0));
-      deadPort = probe.local_endpoint().port();
-   }
-
    boost::asio::io_context ioc;
    boost::shared_ptr<TcpIpAsyncClient> pClient =
       boost::make_shared<TcpIpAsyncClient>(
-         ioc, "127.0.0.1", std::to_string(deadPort),
+         ioc, "127.0.0.1", "1",
          boost::posix_time::seconds(5));
 
-   http::Request& request = pClient->request();
-   request.setMethod("GET");
-   request.setUri("/file");
-
-   // the connect pair is what reports whether the request pipeline ever ran:
-   // a client that starts and then fails a connection reports the settle
-   // through the downstream-closed half (see close())
-   bool connected = false;
-   bool downstreamClosed = false;
-   pClient->setConnectHandler([&]() { connected = true; },
-                              [&]() { downstreamClosed = true; });
+   boost::weak_ptr<FakeStreamingConsumer> weakConsumer;
+   {
+      boost::shared_ptr<FakeStreamingConsumer> pConsumer =
+         boost::make_shared<FakeStreamingConsumer>(pClient);
+      pConsumer->wire();
+      weakConsumer = pConsumer;
+   }
+   ASSERT_FALSE(weakConsumer.expired());
 
    boost::shared_ptr<bool> pArmed = boost::make_shared<bool>(false);
    ResponseHandler doomedResponseHandler =
@@ -2600,25 +2726,10 @@ TEST(AsyncClientContentLength, ExecuteHandlerInstallFailureLeavesNothingInMotion
    EXPECT_THROW(pClient->execute(doomedResponseHandler, [](const core::Error&) {}),
                 std::bad_alloc);
 
-   ioc.run();
-
-   // nothing was set in motion: no connection was attempted, so neither half of
-   // the connect pair has fired
-   EXPECT_FALSE(connected);
-   EXPECT_FALSE(downstreamClosed);
-
-   // and the client is not left wedged by the failure -- a fresh execute()
-   // installs cleanly and reports the refused connection through the error
-   // handler it was given. Before the fix the first call had already run the
-   // connection to failure and marked the client closed, so this second one
-   // was swallowed by handleError()'s closed_ check and reported nothing.
-   bool gotError = false;
-   ioc.restart();
-   pClient->execute([](const http::Response&) {},
-                    [&](const core::Error&) { gotError = true; });
-   ioc.run();
-
-   EXPECT_TRUE(gotError);
+   // The request never reached connectAndWriteRequest(), and the already-wired
+   // consumer was detached synchronously. Its bound self-reference and its
+   // reference back to pClient can no longer survive as a cycle.
+   EXPECT_TRUE(weakConsumer.expired());
 }
 
 // setFixedBufferHandler(): the installed handler was detached before the

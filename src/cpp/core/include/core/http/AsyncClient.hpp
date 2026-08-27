@@ -279,11 +279,24 @@ public:
       // stepped over it, so the request below still went out with (say) a
       // response handler installed and no error handler behind it, and the
       // exchange could complete with nobody left to notify. Copying first
-      // costs the client nothing on failure: the exception reaches the caller
-      // with no handler replaced and no request in flight.
-      ResponseHandler newResponseHandler = responseHandler;
-      ErrorHandler newErrorHandler = errorHandler;
-      FixedBufferHandler newFixedBufferHandler = fixedBufferHandler;
+      // keeps the request from starting on failure; if an embedder has already
+      // installed a handler (FixedBufferProxy does), detach it before the
+      // exception reaches the caller so a pre-existing reference cycle is not
+      // left with nothing in motion to break it.
+      ResponseHandler newResponseHandler;
+      ErrorHandler newErrorHandler;
+      FixedBufferHandler newFixedBufferHandler;
+      try
+      {
+         newResponseHandler = responseHandler;
+         newErrorHandler = errorHandler;
+         newFixedBufferHandler = fixedBufferHandler;
+      }
+      catch (...)
+      {
+         disableHandlers();
+         throw;
+      }
 
       // Commit them under socketMutex_, like every other access to these
       // members (see disableHandlers()). Swaps only, so nothing in here can
@@ -675,16 +688,18 @@ public:
             ioContext_,
             boost::asio::bind_executor(
                *pStrand_,
-               [self, connectHandler, downstreamClosedHandler]()
+               [self,
+                connectHandler = std::move(newConnectHandler),
+                downstreamClosedHandler = std::move(newDownstreamClosedHandler)]()
                {
                   self->deliverLateConnectNotification(connectHandler, downstreamClosedHandler);
                }));
       }
-      else if (invokeDownstreamClosedHandler && downstreamClosedHandler)
+      else if (invokeDownstreamClosedHandler && newDownstreamClosedHandler)
       {
          // outside the lock: handlers must never be invoked while holding
          // socketMutex_ (see disableHandlers()'s declaration for the lock order)
-         downstreamClosedHandler();
+         newDownstreamClosedHandler();
       }
    }
 
@@ -774,38 +789,53 @@ protected:
       );
    }
 
-   void handleError(const Error& error)
+   void handleError(const Error& error, bool settleEvenIfClosed = false)
    {
       Error httpError = error;
       addErrorProperties(httpError);
 
       // check to see if the socket was closed purposefully
-      // if so, we will ignore the error
+      // if so, we will ordinarily ignore the error. A handler snapshot failure
+      // is different: it must still detach the handlers even if a previous
+      // close() has already marked the socket closed, or a FixedBufferProxy
+      // cycle can survive with no completion left to break it.
+      bool alreadyClosed = false;
       LOCK_MUTEX(socketMutex_)
       {
-         if (closed_)
-            return;
+         alreadyClosed = closed_;
       }
       END_LOCK_MUTEX
 
+      if (alreadyClosed && !settleEvenIfClosed)
+         return;
+
       // close the socket
-      close();
+      if (!alreadyClosed)
+         close();
 
       // invoke error handler -- copy it out under socketMutex_ (checking
       // handlersDisabled_ in the same critical section disableHandlers()
       // uses to set it and detach the handler) so a concurrent
       // disableHandlers() call can't race between this check and the
       // invocation below. Actual invocation happens outside the lock, same
-      // as handleWrite()'s connectHandler_ pattern.
+      // as handleWrite()'s connectHandler_ pattern. This copy is fallible for
+      // the same reason as every other handler snapshot; if it fails, log the
+      // original error and still detach everything rather than treating the
+      // empty local as "no error handler installed."
       ErrorHandler handler;
-      LOCK_MUTEX(socketMutex_)
-      {
-         if (!handlersDisabled_)
-            handler = errorHandler_;
-      }
-      END_LOCK_MUTEX
+      SnapshotStatus status = snapshotHandlers(
+         [&]()
+         {
+            if (handlersDisabled_)
+               return false;
 
-      if (handler)
+            handler = errorHandler_;
+            return true;
+         });
+
+      if (status == SnapshotStatus::Failed)
+         logError(httpError);
+      else if (status == SnapshotStatus::Ready && handler)
          handler(httpError);
 
       // free handlers to ensure they do not keep a strong reference to us
@@ -826,6 +856,15 @@ protected:
                                 description,
                                 location);
       handleError(error);
+   }
+
+   void handleHandlerSnapshotError(const std::string& description,
+                                   const ErrorLocation& location)
+   {
+      Error error = systemError(boost::system::errc::state_not_recoverable,
+                                description,
+                                location);
+      handleError(error, true);
    }
 
    virtual void addErrorProperties(Error& error)
@@ -979,7 +1018,8 @@ private:
    // connect notification never delivered. (On the lock-acquisition path it
    // also left the sites' `disabled` flag indeterminate.) Failed sends the
    // caller to its error path instead, where the client settles and the error
-   // handler reports it.
+   // handler reports it when that handler can itself be copied; otherwise the
+   // failure is logged and cleanup still completes.
    //
    // No message is composed from the exception here: the one it exists to
    // survive is std::bad_alloc, so doing so could throw again on the way out,
@@ -1035,7 +1075,7 @@ private:
                // setConnectHandler()). close(), from within handleError(),
                // reports the pending notification; the error handler reports
                // the failure itself.
-               handleUnexpectedError("Failed to copy connect handler", ERROR_LOCATION);
+               handleHandlerSnapshotError("Failed to copy connect handler", ERROR_LOCATION);
                return;
             }
 
@@ -1571,7 +1611,7 @@ private:
             // appended to response_ -- which nothing in streaming mode ever
             // reads -- and the consumer would go on to be told the body was
             // complete without it. Fail the request instead.
-            handleUnexpectedError("Failed to copy fixed buffer handler", ERROR_LOCATION);
+            handleHandlerSnapshotError("Failed to copy fixed buffer handler", ERROR_LOCATION);
             return false;
          }
 
@@ -1624,10 +1664,10 @@ private:
       // keep the consumer alive if it re-entrantly calls disableHandlers()
       // from within the invocation.
       //
-      // Taken before the close below rather than after it, so that a failed
-      // copy can still take the ordinary error path: handleError() ignores
-      // anything raised after a deliberate close, and would otherwise drop the
-      // failure without reporting it or detaching anything.
+      // Taken before the close below so the ordinary case can report through
+      // the open client's error path. The failure path below also settles an
+      // already-closed client: completionPending_ retries necessarily re-enter
+      // here after the first attempt closed the socket.
       ResponseHandler responseHandler;
       FixedBufferHandler fixedBufferHandler;
       SnapshotStatus status = snapshotHandlers(
@@ -1648,7 +1688,7 @@ private:
          // branches below would read as absent and settle silently -- either
          // handing a streamed response to the whole-body handler with an empty
          // response_ body, or completing with no notification delivered at all.
-         handleUnexpectedError("Failed to copy response handlers", ERROR_LOCATION);
+         handleHandlerSnapshotError("Failed to copy response handlers", ERROR_LOCATION);
          return;
       }
 
@@ -1914,5 +1954,4 @@ protected:
 } // namespace rstudio
 
 #endif // CORE_HTTP_ASYNC_CLIENT_HPP
-
 
