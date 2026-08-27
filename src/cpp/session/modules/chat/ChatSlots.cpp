@@ -19,6 +19,8 @@
 #include "ChatLogging.hpp"
 #include "ChatSlotManifest.hpp"
 
+#include <cctype>
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -90,12 +92,20 @@ bool hasRequiredFiles(const FilePath& slotDir)
 }
 
 // Rejects versions that cannot safely name a directory. A version reaches here
-// from a downloaded manifest, so it is not trusted to be a bare version
-// string.
+// from the package.json of a downloaded archive, so it is not trusted to be a
+// bare version string.
 bool isUsableSlotName(const std::string& version)
 {
    if (version.empty() || version.front() == '.' || version.front() == '-')
       return false;
+
+   for (char c : version)
+   {
+      // Printable ASCII only: this string becomes a directory name in the
+      // user's home, and a version is never anything else.
+      if (c < 0x20 || c > 0x7e)
+         return false;
+   }
 
    return version.find_first_of("/\\:") == std::string::npos;
 }
@@ -106,6 +116,21 @@ std::string slotNameForOrdinal(const std::string& version, int ordinal)
       return version;
 
    return version + "-" + safe_convert::numberToString(ordinal);
+}
+
+// Reduces a hostname to characters that are safe in a path component, and caps
+// its length so the staging directory name stays within filesystem limits.
+std::string sanitizedHostname()
+{
+   std::string hostname = core::system::getHostname().substr(0, 64);
+
+   for (char& c : hostname)
+   {
+      if (!std::isalnum(static_cast<unsigned char>(c)) && c != '-' && c != '.')
+         c = '_';
+   }
+
+   return hostname;
 }
 
 } // anonymous namespace
@@ -188,15 +213,19 @@ std::vector<SlotInfo> verifiedSlots(const FilePath& slotsDir)
 
 Error prepareStagingDir(const FilePath& slotsDir, FilePath* pStagingDir)
 {
-   std::string name = std::string(kStagingDirPrefix) +
-      safe_convert::numberToString(
+   // Host and pid together are unique among live sessions -- one host cannot
+   // run two processes with the same pid -- but become reusable once the
+   // process is gone. The host is part of the name because several machines
+   // routinely share one NFS home and hand out the same pids.
+   std::string name = std::string(kStagingDirPrefix) + sanitizedHostname() +
+      "-" + safe_convert::numberToString(
          static_cast<int64_t>(core::system::currentProcessId()));
 
    FilePath stagingDir = slotsDir.completeChildPath(name);
 
    // Clear rather than allocate a new name: a session that crashed mid-install
-   // left its staging directory behind, and this is the only point at which
-   // reclaiming it is provably safe -- no other process uses our pid.
+   // left its staging directory behind, and no live session can be using a
+   // directory named for this host and pid, so this is where it is reclaimed.
    Error error = stagingDir.removeIfExists();
    if (error)
       return error;
@@ -210,23 +239,26 @@ Error prepareStagingDir(const FilePath& slotsDir, FilePath* pStagingDir)
 }
 
 Error allocateSlot(const FilePath& stagingDir,
-                   const std::string& version,
                    SlotPolicy policy,
                    FilePath* pSlotDir)
 {
-   if (!isUsableSlotName(version))
+   // Verifying here rather than trusting the caller is what makes "a slot only
+   // reaches a final name once it has been checked" a property of the layout
+   // instead of a rule every install path has to remember.
+   SlotInfo staged;
+   if (!verifySlot(stagingDir, &staged))
    {
       return systemError(boost::system::errc::invalid_argument,
-                         "Cannot name an install slot for version '" +
-                            version + "'",
+                         "Staged install at " + stagingDir.getAbsolutePath() +
+                            " is not a complete Posit Assistant installation",
                          ERROR_LOCATION);
    }
 
-   if (!stagingDir.isDirectory())
+   if (!isUsableSlotName(staged.version))
    {
-      return systemError(boost::system::errc::no_such_file_or_directory,
-                         "Staged install directory " +
-                            stagingDir.getAbsolutePath() + " does not exist",
+      return systemError(boost::system::errc::invalid_argument,
+                         "Cannot name an install slot for version '" +
+                            staged.version + "'",
                          ERROR_LOCATION);
    }
 
@@ -235,12 +267,19 @@ Error allocateSlot(const FilePath& stagingDir,
    int ordinal = 1;
    for (int attempt = 0; attempt < kMaxAllocationAttempts; ++attempt)
    {
-      FilePath candidate =
-         slotsDir.completeChildPath(slotNameForOrdinal(version, ordinal));
+      FilePath candidate = slotsDir.completeChildPath(
+         slotNameForOrdinal(staged.version, ordinal));
 
       if (candidate.exists())
       {
-         if (policy == SlotPolicy::AdoptExisting && verifySlot(candidate))
+         // Adopt only what is genuinely interchangeable with what we staged.
+         // A slot's name is not evidence of its contents, so the decision has
+         // to rest on the package.json and protocol.json inside it.
+         SlotInfo existing;
+         if (policy == SlotPolicy::AdoptExisting &&
+             verifySlot(candidate, &existing) &&
+             existing.version == staged.version &&
+             existing.protocol == staged.protocol)
          {
             DLOG("Adopting existing slot {}", candidate.getAbsolutePath());
             Error error = stagingDir.removeIfExists();
@@ -282,7 +321,7 @@ Error allocateSlot(const FilePath& stagingDir,
    }
 
    return systemError(boost::system::errc::file_exists,
-                      "No install slot available for version " + version +
+                      "No install slot available for version " + staged.version +
                          " in " + slotsDir.getAbsolutePath(),
                       ERROR_LOCATION);
 }

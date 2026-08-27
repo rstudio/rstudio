@@ -16,6 +16,7 @@
 #include "ChatSlots.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -58,6 +59,35 @@ protected:
       ASSERT_FALSE(writeStringToFile(filePath, content));
    }
 
+   // Values are interpolated into JSON string literals, so they have to be
+   // encoded rather than pasted: an unescaped backslash would start an escape
+   // sequence, and a raw control character is not legal JSON at all. Without
+   // this, a test aiming at a rejected slot name would instead be testing an
+   // unparseable package.json.
+   static std::string jsonEscaped(const std::string& value)
+   {
+      std::string escaped;
+      for (char c : value)
+      {
+         if (c == '\\' || c == '"')
+         {
+            escaped += '\\';
+            escaped += c;
+         }
+         else if (static_cast<unsigned char>(c) < 0x20)
+         {
+            char unicode[8];
+            std::snprintf(unicode, sizeof(unicode), "\\u%04x", c);
+            escaped += unicode;
+         }
+         else
+         {
+            escaped += c;
+         }
+      }
+      return escaped;
+   }
+
    // The tree a Posit Assistant package extracts to, in miniature. Tests that
    // want a damaged slot call this, break something, and only then record the
    // manifest -- so the manifest agrees with what is on disk and exactly one
@@ -69,9 +99,9 @@ protected:
       writeFile(dir.completeChildPath(kServerScript), "console.log('hi');");
       writeFile(dir.completeChildPath(kIndexHtml), "<html></html>");
       writeFile(dir.completeChildPath("package.json"),
-                "{\"version\":\"" + version + "\"}");
+                "{\"version\":\"" + jsonEscaped(version) + "\"}");
       writeFile(dir.completeChildPath("protocol.json"),
-                "{\"protocol\":\"" + protocol + "\"}");
+                "{\"protocol\":\"" + jsonEscaped(protocol) + "\"}");
    }
 
    // A slot exactly as an install leaves it.
@@ -326,7 +356,7 @@ TEST_F(ChatSlots, PublishesAStagedInstallUnderItsVersion)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.1.0",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AdoptExisting, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.1.0");
@@ -343,7 +373,7 @@ TEST_F(ChatSlots, AdoptsAnExistingVerifyingSlot)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.1.0",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AdoptExisting, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.1.0");
@@ -359,7 +389,7 @@ TEST_F(ChatSlots, BumpsPastAnExistingSlotThatDoesNotVerify)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.1.0",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AdoptExisting, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.1.0-2");
@@ -376,7 +406,7 @@ TEST_F(ChatSlots, AdoptsALaterOrdinalWhenTheFirstIsDamaged)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.1.0",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AdoptExisting, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.1.0-2");
@@ -392,7 +422,7 @@ TEST_F(ChatSlots, ForcedAllocationNeverAdopts)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.1.0",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AlwaysFresh, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.1.0-2");
@@ -406,7 +436,7 @@ TEST_F(ChatSlots, ForcedAllocationTakesThePlainNameWhenItIsFree)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.1.0",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AlwaysFresh, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.1.0");
@@ -420,7 +450,7 @@ TEST_F(ChatSlots, AllocatesPastTheSecondOrdinal)
    makeSlot(stagingDir, "1.1.0", "11.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.1.0",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AlwaysFresh, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.1.0-3");
@@ -434,37 +464,92 @@ TEST_F(ChatSlots, DoesNotCollideWithAnUnrelatedVersion)
    makeSlot(stagingDir, "1.0.4", "10.0");
 
    FilePath slotDir;
-   ASSERT_FALSE(allocateSlot(stagingDir, "1.0.4",
+   ASSERT_FALSE(allocateSlot(stagingDir,
                              SlotPolicy::AdoptExisting, &slotDir));
 
    EXPECT_EQ(slotDir.getFilename(), "1.0.4");
    EXPECT_TRUE(verifySlot(slot("1.1.0")));
 }
 
-TEST_F(ChatSlots, RejectsAVersionThatCannotNameADirectory)
+TEST_F(ChatSlots, NamesTheSlotAfterThePackageNotTheStagingDirectory)
 {
-   // The version comes from a downloaded manifest, so it is not trusted to be
-   // a bare version string.
+   // The staging directory name says nothing about what was extracted into it.
    FilePath stagingDir = staging("session-a");
+   makeSlot(stagingDir, "1.0.4", "10.0");
+
+   FilePath slotDir;
+   ASSERT_FALSE(allocateSlot(stagingDir,
+                             SlotPolicy::AdoptExisting, &slotDir));
+
+   EXPECT_EQ(slotDir.getFilename(), "1.0.4");
+}
+
+TEST_F(ChatSlots, DoesNotAdoptASlotHoldingADifferentVersion)
+{
+   // A directory named 1.1.0 is not evidence that it holds 1.1.0. Adopting it
+   // would silently leave the session running a version nobody asked for.
+   makeSlot(slot("1.1.0"), "1.0.4", "11.0");
+   FilePath stagingDir = staging("session-b");
    makeSlot(stagingDir, "1.1.0", "11.0");
 
-   const char* const badVersions[] = {"", ".", "..", ".hidden", "-2",
-                                      "a/b", "a\\b", "C:evil"};
+   FilePath slotDir;
+   ASSERT_FALSE(allocateSlot(stagingDir,
+                             SlotPolicy::AdoptExisting, &slotDir));
+
+   EXPECT_EQ(slotDir.getFilename(), "1.1.0-2");
+   EXPECT_TRUE(verifySlot(slotDir));
+}
+
+TEST_F(ChatSlots, DoesNotAdoptASlotServingADifferentProtocol)
+{
+   makeSlot(slot("1.1.0"), "1.1.0", "10.0");
+   FilePath stagingDir = staging("session-b");
+   makeSlot(stagingDir, "1.1.0", "11.0");
+
+   FilePath slotDir;
+   ASSERT_FALSE(allocateSlot(stagingDir,
+                             SlotPolicy::AdoptExisting, &slotDir));
+
+   EXPECT_EQ(slotDir.getFilename(), "1.1.0-2");
+}
+
+TEST_F(ChatSlots, RejectsAVersionThatCannotNameADirectory)
+{
+   // The version comes from the package.json of a downloaded archive, so it is
+   // not trusted to be a bare version string.
+   const char* const badVersions[] = {".", "..", ".hidden", "-2",
+                                      "a/b", "a\\b", "C:evil", "a\tb"};
    for (const char* version : badVersions)
    {
+      FilePath stagingDir = staging("session-a");
+      ASSERT_FALSE(stagingDir.removeIfExists());
+      makeSlot(stagingDir, version, "11.0");
+
       FilePath slotDir;
-      EXPECT_TRUE(allocateSlot(stagingDir, version,
+      EXPECT_TRUE(allocateSlot(stagingDir,
                                SlotPolicy::AdoptExisting, &slotDir) != Success())
          << "accepted version '" << version << "'";
+      EXPECT_TRUE(stagingDir.exists()) << "consumed staging for '" << version << "'";
    }
+}
 
-   EXPECT_TRUE(stagingDir.exists());
+TEST_F(ChatSlots, RejectsAStagedInstallThatDoesNotVerify)
+{
+   // Publishing happens only after the staged tree is checked, so a torn
+   // install can never appear under a name a session might resolve.
+   FilePath stagingDir = staging("session-a");
+   writeSlotFiles(stagingDir, "1.1.0", "11.0"); // no manifest
+
+   FilePath slotDir;
+   EXPECT_TRUE(allocateSlot(stagingDir,
+                            SlotPolicy::AdoptExisting, &slotDir) != Success());
+   EXPECT_FALSE(slot("1.1.0").exists());
 }
 
 TEST_F(ChatSlots, RejectsAnAbsentStagingDirectory)
 {
    FilePath slotDir;
-   EXPECT_TRUE(allocateSlot(staging("never-created"), "1.1.0",
+   EXPECT_TRUE(allocateSlot(staging("never-created"),
                             SlotPolicy::AdoptExisting, &slotDir) != Success());
 }
 
