@@ -99,6 +99,11 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void initializeForMainWorkbench();
    void setAuthorized();
    void setUnauthorized();
+
+   // Poll the server immediately to check whether the session has been
+   // re-authorized (used by the "Try again now" button on the login-required
+   // dialog). Only has an effect while the session is unauthorized.
+   void checkAuthNow();
    void disconnect();
    
    void setWorkbenchMetrics(WorkbenchMetrics clientMetrics,

@@ -721,9 +721,44 @@ export class GwtCallback extends EventEmitter {
       const mainWindow = this.mainWindow.window;
       const activeWindow = BrowserWindow.getFocusedWindow();
 
-      // bring main window under active window by focusing main window then back to active
-      if (activeWindow && mainWindow !== activeWindow) {
-        mainWindow.show();
+      if (!activeWindow || mainWindow === activeWindow) {
+        return;
+      }
+
+      // A minimized window can't be restacked, and ordering a window front does not
+      // de-miniaturize it, so bring it back to the screen first (#11646).
+      let activated = false;
+      if (mainWindow.isMinimized()) {
+        // showInactive() is SW_SHOWNOACTIVATE on Windows, which de-miniaturizes
+        // without activating, so try it first. It is pure ordering on macOS
+        // (orderFrontRegardless) and a no-op for an already-mapped window on X11,
+        // and on those platforms restore() is the only way back onto the screen.
+        mainWindow.showInactive();
+        if (mainWindow.isMinimized()) {
+          mainWindow.restore();
+          activated = true;
+        }
+      } else if (!mainWindow.isVisible()) {
+        mainWindow.showInactive();
+      }
+
+      // This is a "make the main window as visible as possible, but leave focus
+      // alone" request: raise the main window, then put the active window back above
+      // it, so the main window ends up directly beneath the one the user is working
+      // in. Both calls are non-activating restacks, matching the
+      // SetWindowPos(..., SWP_NOACTIVATE) the Qt implementation used. The Electron
+      // port instead re-presented the main window and handed focus back, and window
+      // managers with focus-stealing prevention refuse the second half of that
+      // bounce, stranding focus on the main window.
+      // https://github.com/rstudio/rstudio/issues/18635
+      mainWindow.moveTop();
+      activeWindow.moveTop();
+
+      // restore() de-miniaturizes by activating -- SC_RESTORE on Windows,
+      // deminiaturize: on macOS -- and there is no non-activating alternative
+      // there, so hand focus back the way the pre-Electron implementation did.
+      // Only the minimized path can get here; the case #18635 is about does not.
+      if (activated) {
         activeWindow.focus();
       }
     });
