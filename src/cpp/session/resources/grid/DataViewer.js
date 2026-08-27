@@ -25,9 +25,16 @@ var ROW_HEIGHT = 23;
 // Height of the custom horizontal scrollbar (kept in sync with
 // .custom-scrollbar.horizontal in DataViewer.css). It floats over the bottom of
 // the panes rather than taking layout space, so the rows underneath it have to
-// be accounted for explicitly; see hScrollbarOverlayHeight, which also reuses
-// this as an approximation of a native overlay bar's height.
+// be accounted for explicitly; see hScrollbarOverlayHeight.
 var H_SCROLLBAR_HEIGHT = 11;
+
+// Native overlay scrollbars are drawn by the platform and expose no DOM metric
+// for their painted height. Chromium's macOS scroller expands beyond our 11px
+// custom bar when hovered or active, and the platform metric varies by macOS
+// version, so reserve a conservative upper bound rather than reusing our own
+// bar's height. A few pixels of extra clearance are preferable to leaving the
+// last row partly covered by the expanded bar (#18620).
+var NATIVE_H_SCROLLBAR_OVERLAY_RESERVE = 17;
 
 // Number of off-screen rows rendered above and below the viewport so the
 // recycler has a buffer to draw from before the next fetch lands. Kept modest:
@@ -3646,8 +3653,8 @@ var hScrollbarOverlayHeight = function(viewport) {
 
    // The scroll panes carry no border, so offsetHeight - clientHeight is
    // exactly the layout space the native bar claimed -- zero when it overlays.
-   // Its height is then close enough to ours to reuse the constant.
-   return viewport.offsetHeight > viewport.clientHeight ? 0 : H_SCROLLBAR_HEIGHT;
+   return viewport.offsetHeight > viewport.clientHeight
+      ? 0 : NATIVE_H_SCROLLBAR_OVERLAY_RESERVE;
 };
 
 // Height of the viewport area in which data rows are actually visible. The
@@ -6743,6 +6750,10 @@ var applyScrollbarMode = function() {
       updateInfoBar();
 
    updateCustomScrollbars();
+   // Newly created auto-hide bars start transparent. Surface the scroll
+   // affordance immediately after a live switch into overlay mode, just as the
+   // resize path does; update() above has already hidden non-scrollable axes.
+   showScrollbars();
 };
 
 var updateCustomScrollbars = function() {
