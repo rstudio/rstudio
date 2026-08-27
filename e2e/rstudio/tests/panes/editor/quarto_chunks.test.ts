@@ -13,7 +13,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, isCommandEnabled } from '@utils/commands';
+import { executeCommand, isCommandEnabled, saveDocument } from '@utils/commands';
 
 test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   useSuiteSandbox();
@@ -466,7 +466,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
     try {
       await sourceActions.ensureVisualMode();
-      await executeCommand(page, 'saveSourceDoc');
+      await saveDocument(page);
       const proseMirror = page.locator('.ProseMirror:visible').first();
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
       await focusChunk(page, proseMirror, '{r owner}');
