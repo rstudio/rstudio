@@ -401,10 +401,8 @@ public class VisualModeChunk
       {
          // Give up the active-editor reference first: detaching removes the
          // editor's handlers without firing blur, so a chunk destroyed while
-         // focused would otherwise leave visual mode pointing at a dead editor.
-         // Not asserted in the e2e suite: destroying a chunk moves focus to
-         // prose, where onPanmirrorFocus disables the code commands anyway, so
-         // such a test would pass with or without this
+         // focused would otherwise leave visual-mode commands and selection
+         // lookups pointing at a dead editor until another focus event.
          target_.getVisualMode().onActiveEditorDestroyed(editor_);
 
          // Detach the editor subsystems before cleaning up handlers

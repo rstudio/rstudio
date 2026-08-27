@@ -412,10 +412,12 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await reload.click();
 
       // Teardown has no active chunk destroy hook to change global command
-      // state. The reload path itself must disable both commands, and visual
-      // dispatch must not fall through to the hidden source editor.
+      // state. The reload path itself must disable commands dispatched through
+      // the active editor, and visual dispatch must not fall through to the
+      // hidden source editor.
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
       expect(await isCommandEnabled(page, 'findAll')).toBe(false);
+      expect(await isCommandEnabled(page, 'codeCompletion')).toBe(false);
       await expect(page.locator('.ProseMirror:visible').first()).toBeVisible({
         timeout: 15000,
       });
@@ -430,6 +432,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(sourceActions.sourcePane.selectedTab).toContainText(sourceFile);
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       expect(await isCommandEnabled(page, 'findAll')).toBe(true);
+      expect(await isCommandEnabled(page, 'codeCompletion')).toBe(true);
 
       const sourceEditor = new AceEditor(page, '');
       await sourceEditor.focus();

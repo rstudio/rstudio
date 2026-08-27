@@ -9882,7 +9882,8 @@ public class TextEditingTarget implements
    {
       // Keep routing through visual mode while its widget is loading or being
       // rebuilt. Falling back to docDisplay_ in that window would target the
-      // hidden source editor.
+      // hidden source editor; the corresponding commands are disabled until
+      // the visual editor is addressable again.
       if (isVisualEditorActive() || visualMode_.isActivated())
       {
          visualMode_.performWithActiveEditor(cmd);
