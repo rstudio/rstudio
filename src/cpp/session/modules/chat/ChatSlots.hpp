@@ -98,18 +98,19 @@ std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir);
  * The staging directory is a sibling of the slots, so publishing it with
  * allocateSlot() is a rename within one filesystem rather than a copy.
  *
- * It is named for the current host and process, and cleared on every call.
- * That name is deliberately reusable rather than unique: reusing it is what
- * reclaims a directory left behind by a session that crashed mid-install, and
- * it leaves a later cleanup pass a name it can test for liveness. A random
- * name would be collision-proof but could never be reclaimed or recognized,
- * so every interrupted install would orphan its extraction permanently.
+ * Each call returns a directory no other session can name. That matters more
+ * than it looks: the install-time manifest is recorded from whatever is on
+ * disk at the time, so a second writer in the same directory would be
+ * described by the manifest rather than caught by it, and the resulting
+ * truncated slot would verify for the rest of its life. Sessions on machines
+ * sharing an NFS home cannot be told apart by pid -- under container runtimes
+ * they are routinely both pid 1 -- so uniqueness here cannot rest on the
+ * process identity.
  *
- * The host is part of the name because machines sharing an NFS home hand out
- * the same pids. Where the host cannot be determined this falls back to the
- * pid alone, and two sessions could then clear each other's staged install --
- * that costs a failed install, which the caller sees, and never damages a
- * published slot, since a slot is only ever created by rename.
+ * Nothing is reclaimed. An install interrupted before allocateSlot() leaves
+ * its extraction behind, along with the orphans the issue already expects a
+ * later manage-installs effort to collect; the host and pid in the name are
+ * there to give that effort something to identify them by.
  *
  * @param slotsDir The directory holding the slots.
  * @param pStagingDir Output: the empty staging directory.

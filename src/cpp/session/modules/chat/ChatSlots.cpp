@@ -118,16 +118,16 @@ std::string slotNameForOrdinal(const std::string& version, int ordinal)
    return version + "-" + safe_convert::numberToString(ordinal);
 }
 
-// Leaves room for the ".tmp-" prefix and the pid within the 255-byte limit on
-// a path component, while staying long enough that two real hostnames cannot
-// collapse onto the same prefix (a hostname is at most 253 characters, and
-// getHostname() reads at most 255).
-const std::string::size_type kMaxHostnameLength = 200;
+// Leaves room for the ".tmp-" prefix, the pid and the nonce within the
+// 255-byte limit on a path component, while staying longer than any real
+// hostname (at most 253 characters, and getHostname() reads at most 255).
+const std::string::size_type kMaxHostnameLength = 180;
 
-// Names the staging directory for this session. Host and pid identify a live
-// session: one host cannot run two processes with the same pid, and the name
-// becomes reusable once that process is gone. getHostname() can come back
-// empty, in which case this degrades to the pid alone.
+// Names a staging directory. The nonce is what makes it private: no other
+// session can compute this name, so nothing else can write into the tree we
+// are about to record a manifest for. Host and pid carry no correctness weight
+// here -- they are in the name so a later cleanup pass can tell whose
+// abandoned extraction it is looking at.
 std::string stagingDirName()
 {
    std::string hostname =
@@ -144,7 +144,8 @@ std::string stagingDirName()
 
    return std::string(kStagingDirPrefix) + hostname + "-" +
       safe_convert::numberToString(
-         static_cast<int64_t>(core::system::currentProcessId()));
+         static_cast<int64_t>(core::system::currentProcessId())) + "-" +
+      core::system::generateUuid(false);
 }
 
 } // anonymous namespace
@@ -229,14 +230,7 @@ Error prepareStagingDir(const FilePath& slotsDir, FilePath* pStagingDir)
 {
    FilePath stagingDir = slotsDir.completeChildPath(stagingDirName());
 
-   // Clear rather than allocate a new name: a session that crashed mid-install
-   // left this directory behind, and reusing the name is what keeps that
-   // garbage bounded. See the header for why the name is not simply unique.
-   Error error = stagingDir.removeIfExists();
-   if (error)
-      return error;
-
-   error = stagingDir.ensureDirectory();
+   Error error = stagingDir.ensureDirectory();
    if (error)
       return error;
 

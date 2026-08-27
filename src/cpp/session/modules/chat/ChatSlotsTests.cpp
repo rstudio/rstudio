@@ -334,15 +334,21 @@ TEST_F(ChatSlots, AStagedInstallIsNotResolvableBeforeItIsPublished)
    EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
 }
 
-TEST_F(ChatSlots, ClearsWhatACrashedSessionLeftStaged)
+TEST_F(ChatSlots, DoesNotDisturbAnotherSessionsStagedInstall)
 {
-   FilePath stagingDir;
-   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
-   writeSlotFiles(stagingDir, "1.0.4", "10.0");
+   // Two sessions sharing an NFS home once computed the same staging path, so
+   // the second one's prepare deleted the first one's half-extracted tree. The
+   // first then recorded a manifest describing the damage -- self-consistent,
+   // so the truncated slot verified and could be published for good.
+   FilePath first;
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, &first));
+   writeSlotFiles(first, "1.1.0", "11.0");
 
    FilePath second;
    ASSERT_FALSE(prepareStagingDir(versionsDir_, &second));
-   ASSERT_TRUE(second.isEquivalentTo(stagingDir));
+
+   EXPECT_FALSE(second.isEquivalentTo(first));
+   EXPECT_TRUE(first.completeChildPath(kServerScript).exists());
 
    std::vector<FilePath> children;
    ASSERT_FALSE(second.getChildren(children));
