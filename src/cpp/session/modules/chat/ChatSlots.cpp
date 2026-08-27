@@ -200,6 +200,16 @@ bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
    if (!slotDir.isDirectory())
       return false;
 
+   // A slot replaced by a link is not a slot: everything in it, manifest
+   // included, would be read from a tree the slot does not contain and cannot
+   // promise is immutable. Junctions count, being how Windows redirects a
+   // directory without is_symlink() reporting it.
+   if (slotDir.isSymlink() || slotDir.isJunction())
+   {
+      DLOG("Slot {} is a link, not a directory", slotDir.getAbsolutePath());
+      return false;
+   }
+
    if (!hasRequiredFiles(slotDir))
    {
       DLOG("Slot {} is missing required files", slotDir.getAbsolutePath());

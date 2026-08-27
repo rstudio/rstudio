@@ -20,6 +20,10 @@
 #include <string>
 #include <vector>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include "ChatSlotManifest.hpp"
@@ -258,6 +262,26 @@ TEST_F(ChatSlots, RejectsASlotWithNoManifest)
 
    EXPECT_FALSE(verifySlot(dir));
 }
+
+#ifndef _WIN32
+
+TEST_F(ChatSlots, RejectsASlotThatIsALink)
+{
+   // Everything about a slot, its manifest included, would be read from a tree
+   // the slot does not contain and cannot promise stays put.
+   FilePath elsewhere = storageDir_.getParent().completeChildPath("elsewhere");
+   makeSlot(elsewhere, "1.1.0", "11.0");
+   ASSERT_TRUE(verifySlot(elsewhere));
+
+   ASSERT_EQ(::symlink(elsewhere.getAbsolutePath().c_str(),
+                       slot("1.1.0").getAbsolutePath().c_str()),
+             0);
+
+   EXPECT_FALSE(verifySlot(slot("1.1.0")));
+   EXPECT_TRUE(verifiedSlots(versionsDir_).empty());
+}
+
+#endif // !_WIN32
 
 TEST_F(ChatSlots, RejectsASlotThatChangedAfterInstall)
 {

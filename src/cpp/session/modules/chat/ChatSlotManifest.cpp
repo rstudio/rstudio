@@ -65,7 +65,13 @@ bool ancestorsAreRealDirectories(const FilePath& slotDir,
       {
          FilePath ancestorPath;
          Error error = slotDir.completeChildPath(ancestor, ancestorPath);
-         if (error || ancestorPath.isSymlink() || !ancestorPath.isDirectory())
+         if (error || !ancestorPath.isDirectory())
+            return false;
+
+         // Junctions are checked as well as symlinks: they are the reparse
+         // point Windows uses to redirect a directory, and is_symlink() does
+         // not report them, which is why FilePath carries isJunction() at all.
+         if (ancestorPath.isSymlink() || ancestorPath.isJunction())
             return false;
       }
 
