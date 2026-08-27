@@ -1439,18 +1439,12 @@ public class VisualMode implements VisualModeEditorSync,
       if (activeEditor_ == null && panmirror_ == null)
          return null;
 
-      if (activeEditor_ != null)
-         return asSearchSelection(activeEditor_.getSelectionValue());
-
       String browserSelection = getBrowserSearchSelection();
-      if (browserSelection != null)
+      if (hasBrowserTextSelection())
          return browserSelection;
 
-      // A live selection in outline/find/other UI, or a multi-line document
-      // selection, is explicitly ineligible. Do not replace it with stale
-      // Panmirror selection state from an earlier document interaction.
-      if (hasBrowserTextSelection())
-         return null;
+      if (activeEditor_ != null)
+         return asSearchSelection(activeEditor_.getSelectionValue());
 
       return asSearchSelection(panmirror_.getSelectedText());
    }
@@ -1479,9 +1473,18 @@ public class VisualMode implements VisualModeEditorSync,
       // A ProseMirror node selection around an embedded chunk can be a
       // non-collapsed DOM range whose text is empty. It is not a competing
       // text selection and must not block restoration of the chunk editor.
-      return DomUtils.selectionExists() &&
-             !StringUtil.isNullOrEmpty(DomUtils.getSelectedText());
+      return hasInputTextSelection() ||
+             (DomUtils.selectionExists() &&
+              !StringUtil.isNullOrEmpty(DomUtils.getSelectedText()));
    }
+
+   private static native boolean hasInputTextSelection() /*-{
+      var element = $doc.activeElement;
+      return element != null &&
+             typeof element.selectionStart === "number" &&
+             typeof element.selectionEnd === "number" &&
+             element.selectionEnd > element.selectionStart;
+   }-*/;
 
    private String asSearchSelection(String selection)
    {

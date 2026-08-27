@@ -670,7 +670,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
         // A live selection outside editor content is invalid, rather than an
         // invitation to fall back to a stale document selection. Preserve the
-        // footnote term through Use Selection, direct Find, and toolbar Find.
+        // footnote term through Use Selection and direct Find.
         await selectOutlineLabel();
         await executeCommand(page, 'findFromSelection');
         await expect(findInput).toHaveValue('mangosteen');
@@ -681,8 +681,29 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
         await findButton.click();
         await expect(findInput).toBeHidden();
+
+        // Keep a valid chunk selection active, then create the outline
+        // selection programmatically so Ace does not blur. Toolbar mouse-down
+        // must prefer the live non-document selection over stale activeEditor_.
+        await focusSeedChunk();
+        await chunk.find('gizmo');
+        await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
         await selectOutlineLabel();
         await findButton.click();
+        await expect(findInput).toHaveValue('mangosteen');
+
+        // Input selections do not appear in window.getSelection(). Selecting
+        // text in the find box must also suppress stale prose/chunk fallback.
+        await findInput.selectText();
+        await expect
+          .poll(() => findInput.evaluate((input: HTMLInputElement) =>
+            input.selectionEnd! - input.selectionStart!))
+          .toBeGreaterThan(0);
+        await executeCommand(page, 'findReplace');
+        await expect(findInput).toHaveValue('mangosteen');
+
+        await findInput.selectText();
+        await executeCommand(page, 'findFromSelection');
         await expect(findInput).toHaveValue('mangosteen');
       } finally {
         if (!outlineInitiallyVisible) {
