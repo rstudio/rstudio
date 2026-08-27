@@ -8,7 +8,7 @@ date-meta: 2026-02-25
 ## Prerequisites
 
 -   To use Posit Assistant in RStudio, you must have a compatible version of RStudio installed. Posit Assistant is available for RStudio Desktop or Server 2026.04.0 and later. Posit Workbench disables Posit Assistant by default, but an administrator can enable it.
--   To use Posit Assistant, you need access to a model provider. **Posit AI Pass** is the recommended provider, and other providers such as Anthropic, OpenAI, Google Gemini, and Amazon Bedrock are also supported. Most providers are cloud-based and require internet access to send requests and receive responses.
+-   To use Posit Assistant, you need access to a model provider. Posit AI Pass is the recommended provider, and other providers such as Anthropic, OpenAI, Google Gemini, and Amazon Bedrock are also supported. Most providers are cloud-based and require internet access to send requests and receive responses.
 
 ## Setup
 
