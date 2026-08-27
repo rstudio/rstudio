@@ -126,11 +126,13 @@ std::string slotNameForOrdinal(const std::string& version, int ordinal)
    return version + "-" + safe_convert::numberToString(ordinal);
 }
 
-// Leaves room for the ".tmp-" prefix, the pid and the nonce within the
-// 255-byte limit on a path component, while staying longer than any real
-// hostname (at most 253 characters). This truncation is what bounds the name:
-// getHostname() returns the HOSTNAME environment variable verbatim, and only
-// its gethostname() fallback is capped.
+// Budgeted against the 255-byte limit on a path component, which the ".tmp-"
+// prefix, the pid and the nonce also draw on. This truncation is what bounds
+// the name: getHostname() returns the HOSTNAME environment variable verbatim,
+// and only its gethostname() fallback is capped. A hostname can reach 253
+// characters, so this can in principle shorten two long names to the same
+// prefix; the nonce, not the hostname, is what keeps staging directories
+// distinct.
 const std::string::size_type kMaxHostnameLength = 180;
 
 // Names a staging directory. The nonce is what makes it private: no other
