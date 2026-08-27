@@ -35,10 +35,11 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   // Each editor tab owns a copy of the visual toolbar. Resolve the button
   // through the tab panel containing the ProseMirror instance under test so
   // split editors and background tabs cannot make the locator ambiguous.
+  const visualEditorPanel = (proseMirror: Locator) =>
+    proseMirror.locator("xpath=ancestor::div[@role='tabpanel'][1]");
+
   const findReplaceButton = (proseMirror: Locator) =>
-    proseMirror
-      .locator("xpath=ancestor::div[@role='tabpanel'][1]")
-      .getByRole('button', { name: 'Find/Replace' });
+    visualEditorPanel(proseMirror).getByRole('button', { name: 'Find/Replace' });
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
     const fileName = `quarto_warn_${Date.now()}.qmd`;
@@ -425,6 +426,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       'title: Find seeding',
       '---',
       '',
+      '# Outline Sentinel',
+      '',
       'sassafras',
       '',
       '```{r seed}',
@@ -508,7 +511,11 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(findInput).toHaveValue(retainedSearchTerm);
 
       // So is an empty one -- Ctrl+F with nothing selected, the common case --
-      // but the bar still opens.
+      // but the bar still opens. First leave a valid single-line chunk
+      // selection active: if the prose handoff fails to clear activeEditor_,
+      // Find will incorrectly seed `gizmo` and this assertion will fail.
+      await chunk.find('gizmo');
+      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
       const findButton = findReplaceButton(proseMirror);
       await findButton.click();
       await expect(findInput).toBeHidden();
@@ -533,6 +540,36 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await findButton.focus();
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('sassafras');
+
+      // Panmirror also contains selectable non-document UI. A browser
+      // selection in the outline must never become the document search term.
+      const outline = visualEditorPanel(proseMirror).getByRole('tree', {
+        name: 'Document Outline',
+      });
+      const outlineInitiallyVisible = await outline.isVisible();
+      if (!outlineInitiallyVisible) await executeCommand(page, 'toggleDocumentOutline');
+      await expect(outline).toBeVisible();
+      try {
+        const outlineLabel = outline.getByText('Outline Sentinel', { exact: true });
+        await expect(outlineLabel).toBeVisible();
+        await outlineLabel.evaluate((element) => {
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        });
+        await expect
+          .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+          .toBe('Outline Sentinel');
+        await executeCommand(page, 'findFromSelection');
+        await expect(findInput).not.toHaveValue('Outline Sentinel');
+      } finally {
+        if (!outlineInitiallyVisible) {
+          await executeCommand(page, 'toggleDocumentOutline');
+          await expect(outline).toBeHidden();
+        }
+      }
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);

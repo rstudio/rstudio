@@ -1438,8 +1438,14 @@ public class VisualMode implements VisualModeEditorSync,
 
    private String getBrowserSearchSelection()
    {
-      if (panmirror_ == null ||
-          !DomUtils.isSelectionInElement(panmirror_.getElement()))
+      if (panmirror_ == null)
+         return null;
+
+      // PanmirrorWidget also owns the outline and find UI. Only selections in
+      // the document content itself can seed a document search.
+      Element content = DomUtils.getFirstElementWithClassName(
+            panmirror_.getElement(), "pm-content");
+      if (content == null || !DomUtils.isSelectionInElement(content))
       {
          return null;
       }
