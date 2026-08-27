@@ -1790,18 +1790,38 @@ test.describe('Data Viewer', () => {
   // is flipped on the open grid, which is the path that has to re-render the
   // window for the new tail to land.
   test('the last row clears a native horizontal scrollbar too (#18620)', async ({ rstudioPage: page }) => {
+    // Three maximally wide character columns overflow horizontally while still
+    // fitting inside the column virtualizer's render buffer. Keeping the final
+    // column in the DOM lets the test assert the pinned overscroll invariant
+    // directly instead of comparing padding across two different windows.
     await consoleActions.executeInConsole(
-      '{ .rs.native_edge_df <- as.data.frame(matrix(seq_len(500 * 30), nrow = 500)); View(.rs.native_edge_df) }',
+      '{ .rs.native_edge_df <- as.data.frame(matrix(rep(strrep("x", 500), 500 * 3), nrow = 500)); View(.rs.native_edge_df) }',
     );
     try {
       await waitForViewer(dataViewer);
       await expect(dataViewer.horizontalScrollbar).toBeAttached();
 
+      // Headers arrive before the first server-side row block. Wait for that
+      // block so filteredRows, the virtualized tail and the data-refined column
+      // widths have all landed before capturing geometry on either side of the
+      // preference switch.
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="0"]'))
+        .toBeAttached({ timeout: TIMEOUTS.fileOpen });
+
       await expectHorizontalOverflow(dataViewer);
 
       const measure = (el: HTMLElement) => {
+        const table = el.ownerDocument.getElementById('rsGridData') as HTMLElement;
+        const lastColumn = el.ownerDocument.querySelector(
+          '#data_cols th[data-col-idx="3"]',
+        ) as HTMLElement | null;
         return {
           scrollHeight: el.scrollHeight,
+          clientWidth: el.clientWidth,
+          // Horizontal overscroll padding past the rightmost column, sized from
+          // clientWidth (applyPinnedColumns).
+          paddingRight: parseFloat(table.style.paddingRight) || 0,
+          lastColumnWidth: parseFloat(lastColumn?.style.width ?? '') || 0,
           // #gridViewport carries no border, so offsetHeight - clientHeight is
           // exactly the layout space the native bar claimed; zero means the
           // platform draws it as an overlay.
@@ -1810,6 +1830,7 @@ test.describe('Data Viewer', () => {
         };
       };
       const overlay = await dataViewer.viewport.evaluate(measure);
+      expect(overlay.lastColumnWidth).toBeGreaterThan(0);
 
       // The host pushes the preference into the iframe as a setOption, which
       // destroys the overlay bars and hands scrolling back to the browser.
@@ -1826,6 +1847,16 @@ test.describe('Data Viewer', () => {
         ? 0 : NATIVE_OVERLAY_SCROLLBAR_MIN_CLEARANCE;
       expect(native.scrollHeight - overlay.scrollHeight)
         .toBe(expectedTail - CUSTOM_H_SCROLLBAR_HEIGHT);
+
+      // The right-edge overscroll is the viewport width minus the final
+      // unpinned column's width. The compact fixture keeps that column rendered,
+      // making this a direct post-switch invariant: without the explicit
+      // applyPinnedColumns refresh the old-mode padding remains stale.
+      expect(native.lastColumnWidth).toBeGreaterThan(0);
+      expect(native.paddingRight).toBeCloseTo(
+        Math.max(0, native.clientWidth - native.lastColumnWidth),
+        1,
+      );
 
       // The info bar's range is derived from the same client box, so it is
       // refreshed at the switch too. Computed rather than hardcoded: the two
