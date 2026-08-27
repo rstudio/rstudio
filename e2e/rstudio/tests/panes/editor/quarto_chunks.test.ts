@@ -374,6 +374,15 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // automation classes (see editor.test.ts).
       const findInput = page.locator(
         "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
+      const focusSeedChunk = async () => {
+        // Make the focus handoff explicit. Coming directly from the find input,
+        // a forced textarea click can race the parent ProseMirror focus event,
+        // leaving the code commands disabled even though Ace has DOM focus.
+        await proseMirror.getByText('sassafras').click({ position: { x: 4, y: 8 } });
+        await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
+        await focusChunk(proseMirror, '{r seed}');
+        await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+      };
 
       // A word selected in prose seeds the search term, as it does in source
       // mode. Double-click near the paragraph's left edge: its box spans the
@@ -389,7 +398,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // So does a selection made inside a code chunk, which the outer
       // ProseMirror selection cannot see on its own.
       const chunk = AceEditor.visualModeChunk(page, '{r seed}');
-      await focusChunk(proseMirror, '{r seed}');
+      await focusSeedChunk();
       await chunk.find('gizmo');
       await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
       await executeCommand(page, 'findReplace');
@@ -401,7 +410,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // find() searches forward from the cursor and reports nothing when it
       // misses, so pin the selection before dispatching: otherwise a stale
       // `gizmo` would fail below looking like a seeding regression.
-      await focusChunk(proseMirror, '{r seed}');
+      await focusSeedChunk();
       await chunk.find('kumquat');
       await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
       await executeCommand(page, 'findFromSelection');
@@ -410,11 +419,12 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Neither guard in getSearchSelection() seeds, and both leave the box as
       // it was. A multi-line selection is refused, as source mode's find bar
       // refuses one.
-      await focusChunk(proseMirror, '{r seed}');
+      await focusSeedChunk();
       await chunk.execCommand('selectall');
       await expect.poll(() => chunk.getSelectedText()).toContain('\n');
+      const retainedSearchTerm = await findInput.inputValue();
       await executeCommand(page, 'findFromSelection');
-      await expect(findInput).toHaveValue('kumquat');
+      await expect(findInput).toHaveValue(retainedSearchTerm);
 
       // So is an empty one -- Ctrl+F with nothing selected, the common case --
       // but the bar still opens.
@@ -430,17 +440,83 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
         .toBe('');
       await executeCommand(page, 'findReplace');
       await expect(findInput).toBeVisible();
-      await expect(findInput).toHaveValue('kumquat');
+      await expect(findInput).toHaveValue(retainedSearchTerm);
 
-      // Two seeding gaps are deliberately not asserted, both measured here and
-      // both the same cause: the visual editor reports no selection once focus
-      // has left its surface, so getSearchSelection() sees nothing and the bar
-      // reopens with whatever term it held. They are the toolbar Find button,
-      // whose click moves focus before the handler reads the selection, and a
-      // prose selection made after a chunk has been focused (window.getSelection()
-      // reports the prose word, panmirror does not). Clearing activeEditor_ in
-      // onPanmirrorFocus does not change the second, so the selection state is
-      // panmirror's; closing either is upstream work.
+      // A prose selection made after a chunk has been focused remains an
+      // upstream gap: window.getSelection() reports the prose word, but
+      // panmirror does not. Clearing activeEditor_ in onPanmirrorFocus does not
+      // change that selection state.
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
+        console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
+      });
+    }
+  });
+
+  test('the visual mode find bar toolbar preserves a prose selection (#16540)', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_find_toolbar_prose_${Date.now()}.qmd`;
+    const content = [
+      '---',
+      'title: Find toolbar prose',
+      '---',
+      '',
+      'persimmon',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+      const findInput = page.locator(
+        "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
+      const findButton = page.getByRole('button', { name: 'Find/Replace' });
+
+      await proseMirror.getByText('persimmon').dblclick({ position: { x: 4, y: 8 } });
+      await expect
+        .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+        .toBe('persimmon');
+
+      // Mouse-down must capture the term before the toolbar takes focus.
+      await findButton.click();
+      await expect(findInput).toHaveValue('persimmon');
+    } finally {
+      await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
+        console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
+      });
+    }
+  });
+
+  test('the visual mode find bar toolbar preserves a chunk selection (#16540)', async ({ rstudioPage: page }) => {
+    const fileName = `quarto_find_toolbar_chunk_${Date.now()}.qmd`;
+    const content = [
+      '---',
+      'title: Find toolbar chunk',
+      '---',
+      '',
+      '```{r toolbar}',
+      'gizmo <- 2',
+      '```',
+    ].join('\n');
+
+    await sourceActions.createAndOpenFile(fileName, content);
+    try {
+      await sourceActions.ensureVisualMode();
+      const proseMirror = page.locator('.ProseMirror:visible').first();
+      await expect(proseMirror).toBeVisible({ timeout: 15000 });
+      const findInput = page.locator(
+        "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
+      const findButton = page.getByRole('button', { name: 'Find/Replace' });
+      const chunk = AceEditor.visualModeChunk(page, '{r toolbar}');
+
+      await focusChunk(proseMirror, '{r toolbar}');
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+      await chunk.find('gizmo');
+      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+
+      // The same capture has to run before the embedded Ace editor blurs.
+      await findButton.click();
+      await expect(findInput).toHaveValue('gizmo');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);

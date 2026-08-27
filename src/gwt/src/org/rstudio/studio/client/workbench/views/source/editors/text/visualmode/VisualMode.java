@@ -222,13 +222,30 @@ public class VisualMode implements VisualModeEditorSync,
          constants_.findOrReplace(),
          FindReplaceBar.getFindIcon(),
          (event) -> {
-            // Not seeded from the selection the way the command is: clicking
-            // the button moves focus off the editing surface first, and the
-            // visual editor reports no selection once that has happened
             HasFindReplace findReplace = getFindReplace();
-            findReplace.showFindReplace(!findReplace.isFindReplaceShowing());
+            boolean show = !findReplace.isFindReplaceShowing();
+            String searchTerm = findReplaceButtonSearchTerm_;
+            findReplaceButtonSearchTerm_ = null;
+
+            if (show)
+               showFindReplace(searchTerm);
+            else
+               findReplace.showFindReplace(false);
          }
       );
+
+      // Read the selection before the click moves focus off ProseMirror or an
+      // embedded Ace editor. By the time the ClickHandler above runs, both
+      // editors can already report no selection.
+      findReplaceButton_.addMouseDownHandler((event) ->
+      {
+         findReplaceButtonSearchTerm_ = getSearchSelection();
+      });
+      findReplaceButton_.addMouseOutHandler((event) ->
+      {
+         // A drag off the button cancels ToolbarButton's synthetic click.
+         findReplaceButtonSearchTerm_ = null;
+      });
    }
    
    public boolean isActivated()
@@ -967,7 +984,11 @@ public class VisualMode implements VisualModeEditorSync,
     */
    public void showFindReplace()
    {
-      String searchTerm = getSearchSelection();
+      showFindReplace(getSearchSelection());
+   }
+
+   private void showFindReplace(String searchTerm)
+   {
       if (searchTerm != null)
          getFindReplace().findFromSelection(searchTerm);
       else
@@ -2058,7 +2079,8 @@ public class VisualMode implements VisualModeEditorSync,
    private PanmirrorWidget panmirror_;
   
    private ToolbarButton findReplaceButton_;
-   
+   private String findReplaceButtonSearchTerm_;
+  
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<>();
    
    private final ProgressPanel progress_;
@@ -2076,6 +2098,4 @@ public class VisualMode implements VisualModeEditorSync,
    private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
-
-
 
