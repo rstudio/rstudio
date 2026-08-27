@@ -876,6 +876,33 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    /**
+    * Perform a command with the visual editor's search selection after
+    * restoring its editing surface. Preserve a live browser selection first:
+    * after moving from a chunk into prose, Panmirror's tracked selection can
+    * lag behind the DOM selection that the user just made.
+    *
+    * @param command The command to perform; passed null when the selection is
+    *    empty or spans multiple lines.
+    */
+   public void performWithSearchSelection(CommandWithArg<String> command)
+   {
+      String browserSelection = getBrowserSearchSelection();
+
+      if (panmirror_ != null)
+         panmirror_.focus();
+
+      String searchSelection;
+      if (activeEditor_ != null)
+         searchSelection = asSearchSelection(activeEditor_.getSelectionValue());
+      else if (browserSelection != null)
+         searchSelection = browserSelection;
+      else
+         searchSelection = getSearchSelection();
+
+      command.execute(searchSelection);
+   }
+
+   /**
     * Moves the cursor in source mode to the currently active outline item in visual mode.
     */
    public void syncSourceOutlineLocation()
@@ -1029,13 +1056,10 @@ public class VisualMode implements VisualModeEditorSync,
     */
    public void showFindReplace()
    {
-      // Find can be invoked from menus, the command palette, and other
-      // controls that have already blurred the editing surface. Restore it
-      // before reading the selection so a code chunk becomes active again.
-      if (panmirror_ != null)
-         panmirror_.focus();
-
-      showFindReplace(getSearchSelection());
+      performWithSearchSelection((searchTerm) ->
+      {
+         showFindReplace(searchTerm);
+      });
    }
 
    private void showFindReplace(String searchTerm)
@@ -1389,8 +1413,11 @@ public class VisualMode implements VisualModeEditorSync,
     * 
     * Read from the focused code chunk when there is one: the outer ProseMirror
     * selection sees a chunk as a single node, so it cannot report a selection
-    * made inside one. Kept apart from getSelectedText(), whose paired writer
-    * replaceSelection() addresses the outer editor, so the two stay symmetric.
+    * made inside one. Otherwise prefer the browser selection inside Panmirror,
+    * which reflects a new prose selection even when Panmirror's tracked
+    * selection still describes an earlier chunk interaction. Kept apart from
+    * getSelectedText(), whose paired writer replaceSelection() addresses the
+    * outer editor, so the two stay symmetric.
     */
    public String getSearchSelection()
    {
@@ -1399,10 +1426,29 @@ public class VisualMode implements VisualModeEditorSync,
       if (activeEditor_ == null && panmirror_ == null)
          return null;
 
-      String selection = activeEditor_ != null
-         ? activeEditor_.getSelectionValue()
-         : panmirror_.getSelectedText();
+      if (activeEditor_ != null)
+         return asSearchSelection(activeEditor_.getSelectionValue());
 
+      String browserSelection = getBrowserSearchSelection();
+      if (browserSelection != null)
+         return browserSelection;
+
+      return asSearchSelection(panmirror_.getSelectedText());
+   }
+
+   private String getBrowserSearchSelection()
+   {
+      if (panmirror_ == null ||
+          !DomUtils.isSelectionInElement(panmirror_.getElement()))
+      {
+         return null;
+      }
+
+      return asSearchSelection(DomUtils.getSelectedText());
+   }
+
+   private String asSearchSelection(String selection)
+   {
       if (StringUtil.isNullOrEmpty(selection) || selection.indexOf('\n') != -1)
          return null;
 

@@ -8548,9 +8548,11 @@ public class TextEditingTarget implements
    {
       if (visualMode_.isActivated()) {
          ensureVisualModeActive(() -> {
-            String searchTerm = visualMode_.getSearchSelection();
-            if (searchTerm != null)
-               visualMode_.getFindReplace().findFromSelection(searchTerm);
+            visualMode_.performWithSearchSelection((searchTerm) ->
+            {
+               if (searchTerm != null)
+                  visualMode_.getFindReplace().findFromSelection(searchTerm);
+            });
          });
       } else {
          withActiveEditor((disp) ->

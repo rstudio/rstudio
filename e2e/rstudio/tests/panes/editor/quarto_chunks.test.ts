@@ -490,6 +490,10 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await focusSeedChunk();
       await chunk.find('kumquat');
       await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
+
+      // As with Find/Replace, a menu or palette can own focus by the time the
+      // command handler runs. Use Selection must restore the chunk itself.
+      await findInput.focus();
       await executeCommand(page, 'findFromSelection');
       await expect(findInput).toHaveValue('kumquat');
 
@@ -519,10 +523,16 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(findInput).toBeVisible();
       await expect(findInput).toHaveValue(retainedSearchTerm);
 
-      // A prose selection made after a chunk has been focused remains an
-      // upstream gap: window.getSelection() reports the prose word, but
-      // panmirror does not. Clearing activeEditor_ in onPanmirrorFocus does not
-      // change that selection state.
+      // After interacting with a chunk, Panmirror's tracked prose selection
+      // can lag behind the live browser selection. Select prose again, move
+      // focus to a non-editor control, and verify Find reads the current word.
+      await proseMirror.getByText('sassafras').dblclick({ position: { x: 4, y: 8 } });
+      await expect
+        .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+        .toBe('sassafras');
+      await findButton.focus();
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('sassafras');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
