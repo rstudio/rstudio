@@ -63,7 +63,12 @@ Error collectEntries(const FilePath& slotDir, SlotManifest* pManifest)
    Error error = slotDir.getChildrenRecursive(
       [&](int, const FilePath& child) -> bool
       {
-         if (!child.isRegularFile())
+         // isRegularFile() follows symlinks, so recording one would record the
+         // target's size and hash and make an otherwise immutable slot verify
+         // against a file outside it. Skipping leaves such a file uncovered by
+         // the manifest, which is what a symlinked directory already gets --
+         // the recursive iterator does not descend into one.
+         if (child.isSymlink() || !child.isRegularFile())
             return true;
 
          std::string relativePath = child.getRelativePath(slotDir);
@@ -188,7 +193,9 @@ bool matchesSlotManifest(const FilePath& slotDir)
          return false;
       }
 
-      if (!filePath.isRegularFile())
+      // A recorded path that is now a symlink would be checked against
+      // whatever it points at, so treat it as the recorded file being gone.
+      if (filePath.isSymlink() || !filePath.isRegularFile())
       {
          WLOG("Slot {} is missing manifest file {}",
               slotDir.getAbsolutePath(), entry.first);

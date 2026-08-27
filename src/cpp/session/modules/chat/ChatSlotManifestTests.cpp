@@ -17,6 +17,10 @@
 
 #include <string>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <gtest/gtest.h>
 
 #include <core/FileSerializer.hpp>
@@ -165,6 +169,47 @@ TEST_F(ChatSlotManifest, IgnoresFilesItDidNotRecord)
    writeFile("dist/server/stray.log", "written by something else");
    EXPECT_TRUE(matchesSlotManifest(slotDir_));
 }
+
+#ifndef _WIN32
+
+TEST_F(ChatSlotManifest, DoesNotRecordSymlinks)
+{
+   // Recording one would record the target's size and hash, so an otherwise
+   // immutable slot would verify against a file it does not contain.
+   writeTree();
+   FilePath outside = slotDir_.getParent().completeChildPath("outside.txt");
+   ASSERT_FALSE(writeStringToFile(outside, "lives outside the slot"));
+   ASSERT_EQ(::symlink(outside.getAbsolutePath().c_str(),
+                       slotDir_.completeChildPath("link.txt")
+                          .getAbsolutePath().c_str()),
+             0);
+
+   ASSERT_FALSE(writeSlotManifest(slotDir_));
+
+   SlotManifest manifest;
+   ASSERT_FALSE(readSlotManifest(slotDir_, &manifest));
+   EXPECT_EQ(manifest.count("link.txt"), 0u);
+   EXPECT_TRUE(matchesSlotManifest(slotDir_));
+}
+
+TEST_F(ChatSlotManifest, DetectsARecordedFileReplacedByASymlink)
+{
+   writeTree();
+   ASSERT_FALSE(writeSlotManifest(slotDir_));
+
+   FilePath outside = slotDir_.getParent().completeChildPath("outside.js");
+   ASSERT_FALSE(writeStringToFile(outside, "console.log('hi');"));
+   FilePath mainJs = slotDir_.completeChildPath("dist/server/main.js");
+   ASSERT_FALSE(mainJs.remove());
+   ASSERT_EQ(::symlink(outside.getAbsolutePath().c_str(),
+                       mainJs.getAbsolutePath().c_str()),
+             0);
+
+   // Same size as the file it replaced, so only the symlink check catches it.
+   EXPECT_FALSE(matchesSlotManifest(slotDir_));
+}
+
+#endif // !_WIN32
 
 TEST_F(ChatSlotManifest, RejectsAbsentManifest)
 {
