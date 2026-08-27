@@ -50,12 +50,17 @@
 #include <clocale>
 #include <cwchar>
 #include <cwctype>
+#include <limits>
 
 #include <shared_core/system/Win32StringUtils.hpp>
 
 extern "C" {
 __declspec(dllimport) unsigned int localeCP;
 }
+
+// The last code page copied from R into our separate C runtime for R < 4.2.
+// Start with a sentinel so that localeCP == 0 is synchronized on first use.
+unsigned int s_codepage = std::numeric_limits<unsigned int>::max();
 
 // The session locale, as last seen while R and the C runtime still agreed on
 // it. Kept as a wide string because it is the narrow form of a locale name
@@ -248,7 +253,8 @@ std::string utf82rconsole(const std::string& utf8, bool escapeInvalidChars)
    // localeCP is 0 in the "C" locale, and for the locale names R cannot read
    // a code page from; defer to the C runtime in those cases.
    if (localeCP != 0)
-      return string_utils::utf8ToSystem(utf8, escapeInvalidChars, static_cast<int>(localeCP));
+      return string_utils::utf8ToCodepage(
+               utf8, static_cast<int>(localeCP), escapeInvalidChars);
 
    return string_utils::utf8ToSystem(utf8, escapeInvalidChars);
 #endif
@@ -439,8 +445,7 @@ namespace {
 #ifdef _WIN32
 
 // Read the code page out of a Windows locale name the same way R computes its
-// localeCP in R_check_locale(). Returns false for the names R derives a code
-// page from by other means, so that callers can leave those alone.
+// localeCP in R_check_locale().
 bool localeCodepage(const wchar_t* locale, unsigned int* pCodepage)
 {
    const wchar_t* suffix = ::wcsrchr(locale, L'.');
@@ -458,15 +463,76 @@ bool localeCodepage(const wchar_t* locale, unsigned int* pCodepage)
       return true;
    }
 
-   // R leaves localeCP at 0 only for the "C" locale; given any other name
-   // without a code page suffix it derives one from the locale name itself
+   // R leaves localeCP at 0 for the "C" locale.
    if (::wcscmp(locale, L"C") == 0)
    {
       *pCodepage = 0;
       return true;
    }
 
-   return false;
+   // For a name without a suffix (for example, "en-US"), R asks Windows for
+   // the locale's default ANSI code page.
+   wchar_t defaultCodepage[6];
+   if (::GetLocaleInfoEx(locale,
+                         LOCALE_IDEFAULTANSICODEPAGE,
+                         defaultCodepage,
+                         sizeof(defaultCodepage) / sizeof(defaultCodepage[0])) == 0 ||
+       !::iswdigit(defaultCodepage[0]))
+   {
+      *pCodepage = 0;
+   }
+   else
+   {
+      *pCodepage = static_cast<unsigned int>(
+               ::wcstoul(defaultCodepage, nullptr, 10));
+   }
+
+   return true;
+}
+
+bool localeMatchesR()
+{
+   const wchar_t* pCtype = ::_wsetlocale(LC_CTYPE, nullptr);
+   if (pCtype == nullptr)
+      return false;
+
+   unsigned int codepage;
+   return localeCodepage(pCtype, &codepage) && codepage == localeCP;
+}
+
+// R < 4.2 and rsession use different C runtimes. In that case R's locale is
+// authoritative and must be pushed into our runtime explicitly.
+void synchronizeLocaleFromR()
+{
+   if (s_codepage == localeCP)
+      return;
+
+   std::string rLocale;
+   Error error = r::exec::RFunction("base:::Sys.getlocale")
+         .addParam("LC_ALL")
+         .call(&rLocale);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!rLocale.empty())
+   {
+      std::wstring wrLocale = string_utils::utf8ToWide(rLocale);
+
+      const wchar_t* pLocale = ::_wsetlocale(LC_ALL, nullptr);
+      std::wstring locale = pLocale != nullptr ? pLocale : L"";
+
+      if (locale != wrLocale && ::_wsetlocale(LC_ALL, wrLocale.c_str()) == nullptr)
+      {
+         const wchar_t* pCurrent = ::_wsetlocale(LC_ALL, nullptr);
+         WLOGF("Failed to synchronize locale: _wsetlocale(LC_ALL, \"{}\") failed; "
+               "current locale is \"{}\"",
+               rLocale,
+               pCurrent != nullptr ? string_utils::wideToUtf8(pCurrent)
+                                   : std::string("(unknown)"));
+      }
+   }
+
+   s_codepage = localeCP;
 }
 
 #endif
@@ -476,6 +542,13 @@ bool localeCodepage(const wchar_t* locale, unsigned int* pCodepage)
 void synchronizeLocale()
 {
 #ifdef _WIN32
+
+   static const bool s_sharedRuntime = versionTest(">=", "4.2.0");
+   if (!s_sharedRuntime)
+   {
+      synchronizeLocaleFromR();
+      return;
+   }
 
    // rsession and UCRT builds of R (R >= 4.2) share a single C runtime, so a
    // setlocale() call anywhere in the process changes R's locale as well --
@@ -505,17 +578,26 @@ void synchronizeLocale()
    // buffer it points into
    std::wstring ctype(pCtype);
 
+   // Record the full locale before trying to interpret LC_CTYPE. Names
+   // without an explicit code page (for example, "en-US") are still valid
+   // known-good locales and must be available for a later repair.
+   const wchar_t* pLocale = ::_wsetlocale(LC_ALL, nullptr);
+   std::wstring locale = pLocale != nullptr ? pLocale : L"";
+
    unsigned int codepage;
    if (!localeCodepage(ctype.c_str(), &codepage))
+   {
+      if (!locale.empty())
+         s_locale = locale;
       return;
+   }
 
    if (codepage == localeCP)
    {
       // R and the C runtime agree -- remember the locale so that it can be
       // put back should something clobber it later
-      const wchar_t* pLocale = ::_wsetlocale(LC_ALL, nullptr);
-      if (pLocale != nullptr)
-         s_locale = pLocale;
+      if (!locale.empty())
+         s_locale = locale;
 
       s_reportedLocaleDrift = false;
       return;
@@ -524,7 +606,10 @@ void synchronizeLocale()
    bool restored = false;
 
    if (!s_locale.empty())
-      restored = ::_wsetlocale(LC_ALL, s_locale.c_str()) != nullptr;
+   {
+      ::_wsetlocale(LC_ALL, s_locale.c_str());
+      restored = localeMatchesR();
+   }
 
    if (!restored)
    {
@@ -532,11 +617,11 @@ void synchronizeLocale()
       // first time we looked; re-adopt the operating system's locale, which
       // is what affected users have been doing by hand with
       // Sys.setlocale("LC_ALL", "")
-      restored = ::_wsetlocale(LC_ALL, L"") != nullptr;
+      ::_wsetlocale(LC_ALL, L"");
 
       // that overwrote LC_NUMERIC too, which R requires to be "C"
-      if (restored)
-         ::_wsetlocale(LC_NUMERIC, L"C");
+      ::_wsetlocale(LC_NUMERIC, L"C");
+      restored = localeMatchesR();
    }
 
    if (!s_reportedLocaleDrift)
@@ -567,6 +652,5 @@ void str(SEXP objectSEXP)
 } // namespace util
 } // namespace r
 } // namespace rstudio
-
 
 

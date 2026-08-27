@@ -358,6 +358,20 @@ std::string utf8ToSystemImpl(const std::string& str,
                   buffer, sizeof(buffer),
                   nullptr, &usedDefault);
 
+         // Some code pages reject WC_NO_BEST_FIT_CHARS, a non-null
+         // lpUsedDefaultChar, or both. Retry those argument failures with the
+         // universally supported form rather than treating every character
+         // as unmappable.
+         DWORD error = n == 0 ? ::GetLastError() : ERROR_SUCCESS;
+         if (error == ERROR_INVALID_FLAGS || error == ERROR_INVALID_PARAMETER)
+         {
+            n = ::WideCharToMultiByte(
+                     codepage, 0,
+                     &wide[i], 1,
+                     buffer, sizeof(buffer),
+                     nullptr, nullptr);
+         }
+
          if (usedDefault)
             n = 0;
       }
@@ -405,9 +419,9 @@ std::string utf8ToSystem(const std::string& str,
 #endif
 }
 
-std::string utf8ToSystem(const std::string& str,
-                         bool escapeInvalidChars,
-                         int codepage)
+std::string utf8ToCodepage(const std::string& str,
+                           int codepage,
+                           bool escapeInvalidChars)
 {
    if (str.empty())
       return std::string();
@@ -1178,6 +1192,4 @@ collection::Position offsetToPosition(const std::string& str, std::size_t offset
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio
-
-
 

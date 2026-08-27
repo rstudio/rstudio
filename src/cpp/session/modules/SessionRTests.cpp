@@ -15,6 +15,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/scope_exit.hpp>
+
 #include <clocale>
 #include <memory>
 #include <string>
@@ -210,6 +212,12 @@ TEST(SessionRTest, SynchronizeLocaleRepairsAClobberedLocale) {
    std::wstring locale(pLocale);
    if (locale == L"C")
       GTEST_SKIP() << "session is already running in the C locale";
+
+   BOOST_SCOPE_EXIT(&locale)
+   {
+      ::_wsetlocale(LC_CTYPE, locale.c_str());
+   }
+   BOOST_SCOPE_EXIT_END
 
    // let synchronizeLocale() record the session locale, then move the C
    // runtime behind R's back the way a failed save/restore would
