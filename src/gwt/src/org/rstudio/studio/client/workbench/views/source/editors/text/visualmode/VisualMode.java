@@ -231,16 +231,10 @@ public class VisualMode implements VisualModeEditorSync,
 
             if (show)
             {
-               // Keyboard and programmatic activation do not have a preceding
-               // mouse-down from which to capture the selection. Restore the
-               // editing surface first so a selection inside a code chunk is
-               // visible through activeEditor_ again.
-               if (!capturedByMouse && panmirror_ != null)
-               {
-                  panmirror_.focus();
-                  searchTerm = getSearchSelection();
-               }
-               showFindReplace(searchTerm);
+               if (capturedByMouse)
+                  showFindReplace(searchTerm);
+               else
+                  showFindReplace();
             }
             else
                findReplace.showFindReplace(false);
@@ -549,14 +543,8 @@ public class VisualMode implements VisualModeEditorSync,
       if (panmirrorFormatConfig_ != null && panmirrorFormatConfig_.requiresReload()) 
       {
          panmirrorFormatConfig_ = null;
+         panmirror_.destroy();
          view_.editorContainer().removeWidget(panmirror_);
-
-         // removeWidget() only detaches the widget -- the chunk editors' own
-         // destroy hooks never run here, so give up the active editor too.
-         // Not reached by the e2e suite: it needs a format comment that
-         // changes mid-session into one requiring a reload
-         if (activeEditor_ != null)
-            onActiveEditorDestroyed(activeEditor_);
          panmirror_ = null;
       }
       
@@ -1041,6 +1029,12 @@ public class VisualMode implements VisualModeEditorSync,
     */
    public void showFindReplace()
    {
+      // Find can be invoked from menus, the command palette, and other
+      // controls that have already blurred the editing surface. Restore it
+      // before reading the selection so a code chunk becomes active again.
+      if (panmirror_ != null)
+         panmirror_.focus();
+
       showFindReplace(getSearchSelection());
    }
 

@@ -7,7 +7,7 @@
  * `multiline_chunk_execution.test.ts`.
  */
 
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
@@ -31,6 +31,14 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   // focus: the click can complete without Ace's focus handler running.
   const focusChunk = (page: Page, header: string) =>
     AceEditor.visualModeChunk(page, header).focus();
+
+  // Each editor tab owns a copy of the visual toolbar. Resolve the button
+  // through the tab panel containing the ProseMirror instance under test so
+  // split editors and background tabs cannot make the locator ambiguous.
+  const findReplaceButton = (proseMirror: Locator) =>
+    proseMirror
+      .locator("xpath=ancestor::div[@role='tabpanel'][1]")
+      .getByRole('button', { name: 'Find/Replace' });
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
     const fileName = `quarto_warn_${Date.now()}.qmd`;
@@ -465,6 +473,11 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await focusSeedChunk();
       await chunk.find('gizmo');
       await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+
+      // A menu, command palette, or other non-editor control can blur the
+      // chunk before dispatching Find. The command must restore the editing
+      // surface before it reads the retained Ace selection.
+      await findInput.focus();
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('gizmo');
 
@@ -492,7 +505,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       // So is an empty one -- Ctrl+F with nothing selected, the common case --
       // but the bar still opens.
-      const findButton = page.getByRole('button', { name: 'Find/Replace' });
+      const findButton = findReplaceButton(proseMirror);
       await findButton.click();
       await expect(findInput).toBeHidden();
 
@@ -536,7 +549,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
       const findInput = page.locator(
         "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
-      const findButton = page.getByRole('button', { name: 'Find/Replace' });
+      const findButton = findReplaceButton(proseMirror);
 
       await proseMirror.getByText('persimmon').dblclick({ position: { x: 4, y: 8 } });
       await expect
@@ -585,7 +598,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
       const findInput = page.locator(
         "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
-      const findButton = page.getByRole('button', { name: 'Find/Replace' });
+      const findButton = findReplaceButton(proseMirror);
       const chunk = AceEditor.visualModeChunk(page, '{r toolbar}');
 
       await focusChunk(page, '{r toolbar}');
