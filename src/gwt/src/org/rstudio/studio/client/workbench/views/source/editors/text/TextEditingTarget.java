@@ -136,6 +136,7 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantPosition;
@@ -1945,7 +1946,7 @@ public class TextEditingTarget implements
                          !projectAssistant.equals("default"))
                      {
                         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
-                           return "Posit AI";
+                           return Assistant.DISPLAY_NAME_POSIT;
                         else
                            return "Copilot";
                      }
@@ -1954,7 +1955,7 @@ public class TextEditingTarget implements
                   // Fall back to global preference
                   String assistant = prefs_.assistant().getValue();
                   if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
-                     return "Posit AI";
+                     return Assistant.DISPLAY_NAME_POSIT;
                   else
                      return "Copilot";
                }

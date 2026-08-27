@@ -48,6 +48,9 @@
 
 #include <Windows.h>
 #include <clocale>
+#include <cwchar>
+#include <cwctype>
+#include <limits>
 
 #include <shared_core/system/Win32StringUtils.hpp>
 
@@ -55,7 +58,17 @@ extern "C" {
 __declspec(dllimport) unsigned int localeCP;
 }
 
-unsigned int s_codepage = 0;
+// The last code page copied from R into our separate C runtime for R < 4.2.
+// Start with a sentinel so that localeCP == 0 is synchronized on first use.
+unsigned int s_codepage = std::numeric_limits<unsigned int>::max();
+
+// The session locale, as last seen while R and the C runtime still agreed on
+// it. Kept as a wide string because it is the narrow form of a locale name
+// that fails to round-trip -- see synchronizeLocale().
+std::wstring s_locale;
+
+// whether the current divergence has already been reported
+bool s_reportedLocaleDrift = false;
 
 #endif
 
@@ -224,6 +237,26 @@ std::string rconsole2utf8(const std::string& encoded)
       output.append(string_utils::systemToUtf8(std::string(pos, encoded.end()), codepage));
 
    return output;
+#endif
+}
+
+std::string utf82rconsole(const std::string& utf8, bool escapeInvalidChars)
+{
+#ifndef _WIN32
+   return string_utils::utf8ToSystem(utf8, escapeInvalidChars);
+#else
+   // Convert for the encoding R believes it is using rather than the one the
+   // C runtime's LC_CTYPE locale implies. The two normally agree, but the
+   // locale can be moved behind R's back (see synchronizeLocale), and text
+   // handed to R has to be encoded the way R is going to read it.
+   //
+   // localeCP is 0 in the "C" locale, and for the locale names R cannot read
+   // a code page from; defer to the C runtime in those cases.
+   if (localeCP != 0)
+      return string_utils::utf8ToCodepage(
+               utf8, static_cast<int>(localeCP), escapeInvalidChars);
+
+   return string_utils::utf8ToSystem(utf8, escapeInvalidChars);
 #endif
 }
 
@@ -407,54 +440,201 @@ bool isPackageAttached(const std::string& packageName)
    return false;
 }
 
-void synchronizeLocale()
-{
+namespace {
+
 #ifdef _WIN32
 
-   // bail if the codepages are still in sync
+// Read the code page out of a Windows locale name the same way R computes its
+// localeCP in R_check_locale().
+bool localeCodepage(const wchar_t* locale, unsigned int* pCodepage)
+{
+   const wchar_t* suffix = ::wcsrchr(locale, L'.');
+   if (suffix != nullptr)
+   {
+      suffix += 1;
+
+      if (::iswdigit(suffix[0]))
+         *pCodepage = static_cast<unsigned int>(::wcstoul(suffix, nullptr, 10));
+      else if (::_wcsicmp(suffix, L"UTF-8") == 0 || ::_wcsicmp(suffix, L"UTF8") == 0)
+         *pCodepage = 65001;
+      else
+         *pCodepage = 0;
+
+      return true;
+   }
+
+   // R leaves localeCP at 0 for the "C" locale.
+   if (::wcscmp(locale, L"C") == 0)
+   {
+      *pCodepage = 0;
+      return true;
+   }
+
+   // For a name without a suffix (for example, "en-US"), R asks Windows for
+   // the locale's default ANSI code page.
+   wchar_t defaultCodepage[6];
+   if (::GetLocaleInfoEx(locale,
+                         LOCALE_IDEFAULTANSICODEPAGE,
+                         defaultCodepage,
+                         sizeof(defaultCodepage) / sizeof(defaultCodepage[0])) == 0 ||
+       !::iswdigit(defaultCodepage[0]))
+   {
+      *pCodepage = 0;
+   }
+   else
+   {
+      *pCodepage = static_cast<unsigned int>(
+               ::wcstoul(defaultCodepage, nullptr, 10));
+   }
+
+   return true;
+}
+
+bool localeMatchesR()
+{
+   const wchar_t* pCtype = ::_wsetlocale(LC_CTYPE, nullptr);
+   if (pCtype == nullptr)
+      return false;
+
+   unsigned int codepage;
+   return localeCodepage(pCtype, &codepage) && codepage == localeCP;
+}
+
+// R < 4.2 and rsession use different C runtimes. In that case R's locale is
+// authoritative and must be pushed into our runtime explicitly.
+void synchronizeLocaleFromR()
+{
    if (s_codepage == localeCP)
       return;
 
-   // ask R what the current locale is and then update
    std::string rLocale;
    Error error = r::exec::RFunction("base:::Sys.getlocale")
          .addParam("LC_ALL")
-         .call(&rLocale);
+         .callUtf8(&rLocale);
    if (error)
       LOG_ERROR(error);
 
    if (!rLocale.empty())
    {
-      // Compare and update using the wide _wsetlocale() variant. R reports
-      // its locale as UTF-8 (EmitEmbeddedUTF8), and the narrow setlocale()
-      // would re-interpret that byte string through the current C runtime
-      // code page -- which, when the process is in the "C" locale, mangles
-      // the non-ASCII characters in locale names such as Turkish_Türkiye.utf8
-      // or Norwegian Bokmål_Norway.utf8, causing the update to silently fail
-      // and leaving only some categories applied. Converting to a wide string
-      // and using _wsetlocale() keeps the name intact end-to-end.
-      // https://github.com/rstudio/rstudio/issues/18139
       std::wstring wrLocale = string_utils::utf8ToWide(rLocale);
 
       const wchar_t* pLocale = ::_wsetlocale(LC_ALL, nullptr);
       std::wstring locale = pLocale != nullptr ? pLocale : L"";
 
-      if (locale != wrLocale)
+      if (locale != wrLocale && ::_wsetlocale(LC_ALL, wrLocale.c_str()) == nullptr)
       {
-         if (::_wsetlocale(LC_ALL, wrLocale.c_str()) == nullptr)
-         {
-            const wchar_t* pCurrent = ::_wsetlocale(LC_ALL, nullptr);
-            WLOGF("Failed to synchronize locale: _wsetlocale(LC_ALL, \"{}\") failed; "
-                  "current locale is \"{}\"",
-                  rLocale,
-                  pCurrent != nullptr ? string_utils::wideToUtf8(pCurrent)
-                                      : std::string("(unknown)"));
-         }
+         const wchar_t* pCurrent = ::_wsetlocale(LC_ALL, nullptr);
+         WLOGF("Failed to synchronize locale: _wsetlocale(LC_ALL, \"{}\") failed; "
+               "current locale is \"{}\"",
+               rLocale,
+               pCurrent != nullptr ? string_utils::wideToUtf8(pCurrent)
+                                   : std::string("(unknown)"));
       }
    }
 
-   // save the updated codepage
    s_codepage = localeCP;
+}
+
+#endif
+
+} // anonymous namespace
+
+void synchronizeLocale()
+{
+#ifdef _WIN32
+
+   static const bool s_sharedRuntime = versionTest(">=", "4.2.0");
+   if (!s_sharedRuntime)
+   {
+      synchronizeLocaleFromR();
+      return;
+   }
+
+   // rsession and UCRT builds of R (R >= 4.2) share a single C runtime, so a
+   // setlocale() call anywhere in the process changes R's locale as well --
+   // silently, without R's cached view of the encoding (localeCP, utf8locale,
+   // native_enc, all computed in R_check_locale) being updated to match.
+   //
+   // Code that saves the locale, switches to "C" for a conversion and then
+   // restores it is a ready source of exactly that. The saved name is narrow,
+   // and a locale name holding non-ASCII characters -- Turkish_Türkiye.utf8,
+   // Norwegian Bokmål_Norway.utf8 -- cannot be parsed back once the process
+   // sits in the "C" locale, so the restore fails and the session is left in
+   // "C" while R goes on believing it is in a UTF-8 locale. Console input,
+   // file listings, and everything else that trusts the C runtime locale then
+   // corrupt non-ASCII text.
+   // https://github.com/rstudio/rstudio/issues/18139
+   //
+   // Watch for that divergence on each R busy transition and repair it. R's
+   // localeCP is the arbiter: Sys.setlocale() moves R and the C runtime
+   // together, so the two disagree only when something moved the locale
+   // behind R's back.
+
+   const wchar_t* pCtype = ::_wsetlocale(LC_CTYPE, nullptr);
+   if (pCtype == nullptr)
+      return;
+
+   // copy the name before any further _wsetlocale() call overwrites the
+   // buffer it points into
+   std::wstring ctype(pCtype);
+
+   // Record the full locale before trying to interpret LC_CTYPE. Names
+   // without an explicit code page (for example, "en-US") are still valid
+   // known-good locales and must be available for a later repair.
+   const wchar_t* pLocale = ::_wsetlocale(LC_ALL, nullptr);
+   std::wstring locale = pLocale != nullptr ? pLocale : L"";
+
+   unsigned int codepage;
+   if (!localeCodepage(ctype.c_str(), &codepage))
+   {
+      if (!locale.empty())
+         s_locale = locale;
+      return;
+   }
+
+   if (codepage == localeCP)
+   {
+      // R and the C runtime agree -- remember the locale so that it can be
+      // put back should something clobber it later
+      if (!locale.empty())
+         s_locale = locale;
+
+      s_reportedLocaleDrift = false;
+      return;
+   }
+
+   bool restored = false;
+
+   if (!s_locale.empty())
+   {
+      ::_wsetlocale(LC_ALL, s_locale.c_str());
+      restored = localeMatchesR();
+   }
+
+   if (!restored)
+   {
+      // nothing recorded to restore, so the locale was already wrong the
+      // first time we looked; re-adopt the operating system's locale, which
+      // is what affected users have been doing by hand with
+      // Sys.setlocale("LC_ALL", "")
+      ::_wsetlocale(LC_ALL, L"");
+
+      // that overwrote LC_NUMERIC too, which R requires to be "C"
+      ::_wsetlocale(LC_NUMERIC, L"C");
+      restored = localeMatchesR();
+   }
+
+   if (!s_reportedLocaleDrift)
+   {
+      s_reportedLocaleDrift = true;
+
+      WLOGF("C runtime locale \"{}\" (code page {}) does not match R's code page {}: {}",
+            string_utils::wideToUtf8(ctype),
+            codepage,
+            localeCP,
+            restored ? "restored the session locale"
+                     : "failed to restore the session locale");
+   }
 
 #endif
 }
@@ -472,6 +652,4 @@ void str(SEXP objectSEXP)
 } // namespace util
 } // namespace r
 } // namespace rstudio
-
-
 

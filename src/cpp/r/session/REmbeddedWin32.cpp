@@ -374,15 +374,15 @@ void runEmbeddedR(const core::FilePath& rHome,
    // console history mechanism.
    CharacterMode = LinkDLL;
 
-   // Adopt the operating system's locale before R computes its encoding
-   // state within setup_Rmainloop() (via R_check_locale()). The standalone
-   // R front-ends (Rterm, Rgui) call setlocale(LC_ALL, "") from their own
-   // main() before handing control to the R main loop; because RStudio
-   // supplies its own main(), it must do the same. Otherwise R comes up in
-   // the "C" locale, which corrupts non-ASCII console input and breaks
-   // list.files() and other locale-sensitive operations for users whose
-   // locale is not ASCII-compatible (for example Turkish on Windows 11).
-   // https://github.com/rstudio/rstudio/issues/18139
+   // Adopt the operating system's locale before handing control to R.
+   //
+   // This is not what gives R its locale: setup_Rmainloop() sets LC_COLLATE,
+   // LC_CTYPE, LC_MONETARY and LC_TIME itself on Windows (src/main/main.c),
+   // taking each from LC_ALL or its own environment variable and falling back
+   // to "". It matters when one of those variables names a locale Windows
+   // rejects -- a POSIX-style "en_US.UTF-8", say. R's call then fails and
+   // leaves the locale as it found it, which without this would be the "C"
+   // locale the C runtime starts in.
    //
    // Use the wide _wsetlocale() variant so the returned locale name is
    // well-formed regardless of the current C runtime code page; the empty
