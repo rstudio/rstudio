@@ -558,12 +558,30 @@ TEST_F(ChatSlots, RejectsAVersionThatCannotNameADirectory)
    }
 }
 
+TEST_F(ChatSlots, RecordsTheManifestItselfSoCallersCannotForgetTo)
+{
+   // The caller extracts and nothing else; if the manifest were the caller's
+   // job, omitting it would fail every install with "not a complete Posit
+   // Assistant installation" despite a perfect extraction.
+   FilePath stagingDir;
+   ASSERT_FALSE(prepareStagingDir(versionsDir_, &stagingDir));
+   writeSlotFiles(stagingDir, "1.1.0", "11.0");
+
+   FilePath slotDir;
+   ASSERT_FALSE(allocateSlot(stagingDir,
+                             SlotPolicy::AdoptExisting, &slotDir));
+
+   EXPECT_EQ(slotDir.getFilename(), "1.1.0");
+   EXPECT_TRUE(verifySlot(slotDir));
+}
+
 TEST_F(ChatSlots, RejectsAStagedInstallThatDoesNotVerify)
 {
    // Publishing happens only after the staged tree is checked, so a torn
    // install can never appear under a name a session might resolve.
    FilePath stagingDir = staging("session-a");
-   writeSlotFiles(stagingDir, "1.1.0", "11.0"); // no manifest
+   writeSlotFiles(stagingDir, "1.1.0", "11.0");
+   ASSERT_FALSE(stagingDir.completeChildPath(kServerScript).remove());
 
    FilePath slotDir;
    EXPECT_TRUE(allocateSlot(stagingDir,

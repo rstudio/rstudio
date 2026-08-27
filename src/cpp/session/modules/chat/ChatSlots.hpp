@@ -158,11 +158,16 @@ enum class SlotPolicy
 /**
  * Publish a staged package as a slot, arbitrating with concurrent installers.
  *
- * The staged package is verified first, so a directory only ever reaches a
- * final name once it has been checked -- a torn install cannot exist under a
- * name a session might resolve. It is then renamed to the version its own
- * package.json declares, or to `<version>-2`, `<version>-3`, ... when that
- * name is taken. Because the rename is the only arbiter, two sessions
+ * The staged package's manifest is recorded and the result verified before
+ * anything is renamed, so a directory only ever reaches a final name once it
+ * has been checked -- a torn install cannot exist under a name a session might
+ * resolve. Recording the manifest here rather than asking callers to do it
+ * first keeps that guarantee from depending on an ordering every install path
+ * would have to remember; the staging directory is private to this call, so
+ * the tree being recorded is the one that was just extracted.
+ *
+ * The staged package is then renamed to the version its own package.json
+ * declares, or to `<version>-2`, `<version>-3`, ... when that name is taken. Because the rename is the only arbiter, two sessions
  * installing the same version at once cannot corrupt each other: the loser
  * sees the winner's slot and either adopts it or takes the next name.
  *

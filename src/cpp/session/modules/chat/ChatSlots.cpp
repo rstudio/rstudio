@@ -274,9 +274,15 @@ Error allocateSlot(const FilePath& stagingDir,
                    SlotPolicy policy,
                    FilePath* pSlotDir)
 {
-   // Verifying here rather than trusting the caller is what makes "a slot only
-   // reaches a final name once it has been checked" a property of the layout
-   // instead of a rule every install path has to remember.
+   // Record the manifest and verify here rather than trusting the caller, so
+   // that "a slot only reaches a final name once it has been checked" is a
+   // property of the layout instead of a rule every install path has to
+   // remember. The staging directory is private to this call, so the tree
+   // being recorded is the one that was just extracted.
+   Error error = slot_manifest::writeSlotManifest(stagingDir);
+   if (error)
+      return error;
+
    SlotInfo staged;
    if (!verifySlot(stagingDir, &staged))
    {
@@ -314,11 +320,11 @@ Error allocateSlot(const FilePath& stagingDir,
              existing.protocol == staged.protocol)
          {
             DLOG("Adopting existing slot {}", candidate.getAbsolutePath());
-            Error error = stagingDir.removeIfExists();
-            if (error)
+            Error removeError = stagingDir.removeIfExists();
+            if (removeError)
             {
                WLOG("Could not remove staging directory {}: {}",
-                    stagingDir.getAbsolutePath(), error.getMessage());
+                    stagingDir.getAbsolutePath(), removeError.getMessage());
             }
 
             *pSlotDir = candidate;
@@ -332,8 +338,8 @@ Error allocateSlot(const FilePath& stagingDir,
       // MoveDirect, never MoveCrossDevice: the staging directory is a sibling
       // of the slot, so a copy fallback would mean the invariant that makes
       // this rename atomic has been broken and we want to hear about it.
-      Error error = stagingDir.move(candidate, FilePath::MoveDirect);
-      if (!error)
+      Error moveError = stagingDir.move(candidate, FilePath::MoveDirect);
+      if (!moveError)
       {
          DLOG("Published slot {}", candidate.getAbsolutePath());
          *pSlotDir = candidate;
@@ -349,7 +355,7 @@ Error allocateSlot(const FilePath& stagingDir,
          continue;
       }
 
-      return error;
+      return moveError;
    }
 
    return systemError(boost::system::errc::file_exists,
