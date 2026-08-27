@@ -18,12 +18,52 @@ import { describe } from 'mocha';
 import sinon from 'sinon';
 
 import { ChildProcess } from 'child_process';
+import { EventEmitter } from 'events';
+import { BrowserWindow } from 'electron';
 
 import { NullLogger, setLogger } from '../../../src/core/logger';
-import { MainWindow } from '../../../src/main/main-window';
+import { MainWindow, trackWindowMaximizedState } from '../../../src/main/main-window';
 import desktop from '../../../src/native/desktop.node';
 
 describe('MainWindow', () => {
+  describe('trackWindowMaximizedState', () => {
+    function fakeWindow(maximized: boolean) {
+      const window = new EventEmitter() as EventEmitter & { isMaximized: sinon.SinonStub };
+      window.isMaximized = sinon.stub().returns(maximized);
+      return window;
+    }
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('retains the maximized state while the window is minimized', () => {
+      const window = fakeWindow(false);
+      const wasMaximized = trackWindowMaximizedState(window as unknown as BrowserWindow);
+
+      window.emit('maximize');
+      window.isMaximized.returns(false);
+      window.emit('minimize');
+
+      assert.isTrue(wasMaximized());
+    });
+
+    it('refreshes the tracked state when the window is restored or unmaximized', () => {
+      const window = fakeWindow(true);
+      const wasMaximized = trackWindowMaximizedState(window as unknown as BrowserWindow);
+
+      window.isMaximized.returns(false);
+      window.emit('restore');
+      assert.isFalse(wasMaximized());
+
+      window.emit('maximize');
+      assert.isTrue(wasMaximized());
+
+      window.emit('unmaximize');
+      assert.isFalse(wasMaximized());
+    });
+  });
+
   // MainWindow can't be instantiated in unit tests (GwtCallback needs a live
   // window), so setSessionProcess is invoked against a bare object instead.
   describe('setSessionProcess', () => {
@@ -122,5 +162,4 @@ describe('MainWindow', () => {
       assert.isTrue(fake.quit.calledOnce);
     });
   });
-
 });

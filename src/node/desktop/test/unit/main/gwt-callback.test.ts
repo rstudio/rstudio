@@ -38,10 +38,12 @@ describe('DesktopCallback', () => {
   // GwtCallback registers its ipcMain handlers in the constructor, and a channel
   // can only be handled once per process, so the instance is shared by the suite
   let mainWindow: StubbedClass<MainWindow>;
+  let willRestoreMaximized: sinon.SinonStub<[], boolean>;
   let callback: GwtCallback;
 
   before(() => {
-    mainWindow = createSinonStubInstance(MainWindow);
+    willRestoreMaximized = sinon.stub<[], boolean>();
+    mainWindow = createSinonStubInstance(MainWindow, { willRestoreMaximized });
     callback = new GwtCallback(mainWindow);
   });
 
@@ -59,7 +61,7 @@ describe('DesktopCallback', () => {
     // window managers with focus-stealing prevention (#18635)
     function emit(main: ReturnType<typeof fakeBrowserWindow>, active: unknown, restoreMaximized = false) {
       mainWindow.window = main as unknown as BrowserWindow;
-      sinon.stub(mainWindow, 'willRestoreMaximized').returns(restoreMaximized);
+      willRestoreMaximized.returns(restoreMaximized);
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(active as BrowserWindow | null);
       ipcMain.emit('desktop_bring_main_frame_behind_active');
     }
