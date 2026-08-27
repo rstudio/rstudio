@@ -209,6 +209,30 @@ TEST_F(ChatSlotManifest, DetectsARecordedFileReplacedByASymlink)
    EXPECT_FALSE(matchesSlotManifest(slotDir_));
 }
 
+TEST_F(ChatSlotManifest, DetectsAnAncestorDirectoryReplacedBySymlink)
+{
+   // Checking only the recorded file misses this: main.js is still an ordinary
+   // file, but it is now reached through a link out of the slot.
+   writeTree();
+   ASSERT_FALSE(writeSlotManifest(slotDir_));
+
+   FilePath outsideDir = slotDir_.getParent().completeChildPath("elsewhere");
+   ASSERT_FALSE(outsideDir.completeChildPath("main.js").getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(outsideDir.completeChildPath("main.js"),
+                                  "console.log('hi');"));
+
+   FilePath serverDir = slotDir_.completeChildPath("dist/server");
+   ASSERT_FALSE(serverDir.remove());
+   ASSERT_EQ(::symlink(outsideDir.getAbsolutePath().c_str(),
+                       serverDir.getAbsolutePath().c_str()),
+             0);
+
+   // The file behind the link has the recorded size, so only the ancestor
+   // check catches it.
+   EXPECT_EQ(slotDir_.completeChildPath("dist/server/main.js").getSize(), 18u);
+   EXPECT_FALSE(matchesSlotManifest(slotDir_));
+}
+
 #endif // !_WIN32
 
 TEST_F(ChatSlotManifest, RejectsAbsentManifest)

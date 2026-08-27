@@ -18,6 +18,8 @@
 #include "ChatConstants.hpp"
 #include "ChatLogging.hpp"
 
+#include <set>
+
 #include <core/FileSerializer.hpp>
 #include <core/system/Crypto.hpp>
 #include <shared_core/json/Json.hpp>
@@ -42,6 +44,35 @@ const char* const kSha256Key = "sha256";
 FilePath manifestPath(const FilePath& slotDir)
 {
    return slotDir.completeChildPath(kSlotManifestFileName);
+}
+
+// Whether every directory between the slot and a recorded file is a real
+// directory. Checking only the file itself is not enough: replacing an
+// ancestor with a symlink makes the recorded path resolve outside the slot
+// while the leaf is still an ordinary file.
+//
+// `pChecked` accumulates directories already cleared, so a deep tree costs one
+// check per directory rather than one per file in it.
+bool ancestorsAreRealDirectories(const FilePath& slotDir,
+                                 const std::string& relativePath,
+                                 std::set<std::string>* pChecked)
+{
+   std::string::size_type separator = relativePath.find('/');
+   while (separator != std::string::npos)
+   {
+      std::string ancestor = relativePath.substr(0, separator);
+      if (pChecked->insert(ancestor).second)
+      {
+         FilePath ancestorPath;
+         Error error = slotDir.completeChildPath(ancestor, ancestorPath);
+         if (error || ancestorPath.isSymlink() || !ancestorPath.isDirectory())
+            return false;
+      }
+
+      separator = relativePath.find('/', separator + 1);
+   }
+
+   return true;
 }
 
 Error hashFile(const FilePath& filePath, std::string* pSha256)
@@ -182,6 +213,10 @@ bool matchesSlotManifest(const FilePath& slotDir)
       return false;
    }
 
+   // Directories already found to be real, so a tree many files deep costs one
+   // check per directory rather than one per file.
+   std::set<std::string> checkedDirs;
+
    for (const auto& entry : manifest)
    {
       FilePath filePath;
@@ -189,6 +224,13 @@ bool matchesSlotManifest(const FilePath& slotDir)
       if (error)
       {
          WLOG("Slot manifest for {} names a path outside the slot: {}",
+              slotDir.getAbsolutePath(), entry.first);
+         return false;
+      }
+
+      if (!ancestorsAreRealDirectories(slotDir, entry.first, &checkedDirs))
+      {
+         WLOG("Slot {} reaches manifest file {} through a symlink",
               slotDir.getAbsolutePath(), entry.first);
          return false;
       }
