@@ -7,6 +7,8 @@
  * should skip -- not fail -- when the service cannot be reached at all.
  */
 
+import * as net from 'net';
+
 /**
  * External hosts the rsession's citation lookups hit. The requests originate
  * in the C++ session process, not the browser (see the modules under
@@ -19,8 +21,6 @@ export const CITATION_SERVICE_HOSTS = {
   datacite: 'https://api.datacite.org',
   pubmed: 'https://eutils.ncbi.nlm.nih.gov',
 } as const;
-
-import * as net from 'net';
 
 const probeCache = new Map<string, Promise<boolean>>();
 

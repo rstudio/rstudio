@@ -100,7 +100,7 @@ for (const base of ALL_DB_TARGETS) {
       // View table opens the data viewer on up to 1,000 records, showing
       // the table's actual contents ("Charlie" is seeded only into this
       // table, so its presence pins both the table and the data).
-      await actions.pane.viewTableIcon(table).first().click();
+      await actions.pane.viewTableIcon(table).click();
       await expect(page.locator('iframe[title="Data Browser"]')).toBeVisible({ timeout: 20000 });
       const dataBrowser = page.frameLocator('iframe[title="Data Browser"]');
       await expect(dataBrowser.getByText('Charlie')).toBeVisible({ timeout: 20000 });

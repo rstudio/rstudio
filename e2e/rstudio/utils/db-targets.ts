@@ -240,8 +240,9 @@ export const MYSQL: ServerDbTarget = {
   // The MariaDB ODBC connector drives MySQL servers; it is the one packaged
   // everywhere (Oracle's connector is not in Homebrew), and it speaks MySQL
   // 9's caching_sha2_password authentication (verified: connector 3.2.9
-  // against MySQL 9.7).
-  driverName: 'MySQL',
+  // against MySQL 9.7). Suffixed like every other driverName here; see the
+  // interface comment for why.
+  driverName: 'MySQL (pw)',
   connectionType: 'MySQL',
   driverLibraries: {
     darwin: [
@@ -472,8 +473,20 @@ export function effectiveTarget(target: DbTarget): EffectiveDbTarget {
         `PW_DB_${target.id.toUpperCase()}: bad segment "${part}" (expected ${allowed.join('|')}=value, separated by ";")`,
       );
     }
-    if (key === 'port') result.port = Number(value);
-    else result[key] = value;
+    if (key === 'port') {
+      const port = Number(value);
+      // Every other malformed segment throws above; a non-numeric port must
+      // too, rather than silently becoming NaN and surfacing later as a
+      // connection failure with no clue why.
+      if (Number.isNaN(port)) {
+        throw new Error(
+          `PW_DB_${target.id.toUpperCase()}: bad port "${value}" (expected a number)`,
+        );
+      }
+      result.port = port;
+    } else {
+      result[key] = value;
+    }
   }
   // The wizard fields mirror the connection values.
   result.wizardFields = {
