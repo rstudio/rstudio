@@ -22,6 +22,20 @@
 // virtual-scroll math and spacer-row sizing assumes a uniform row height.
 var ROW_HEIGHT = 23;
 
+// Height of the custom horizontal scrollbar (kept in sync with
+// .custom-scrollbar.horizontal in DataViewer.css). It floats over the bottom of
+// the panes rather than taking layout space, so the rows underneath it have to
+// be accounted for explicitly; see hScrollbarOverlayHeight.
+var H_SCROLLBAR_HEIGHT = 11;
+
+// Native overlay scrollbars are drawn by the platform and expose no DOM metric
+// for their painted height. Chromium's macOS scroller expands beyond our 11px
+// custom bar when hovered or active, and the platform metric varies by macOS
+// version, so reserve a conservative upper bound rather than reusing our own
+// bar's height. A few pixels of extra clearance are preferable to leaving the
+// last row partly covered by the expanded bar (#18620).
+var NATIVE_H_SCROLLBAR_OVERLAY_RESERVE = 17;
+
 // Number of off-screen rows rendered above and below the viewport so the
 // recycler has a buffer to draw from before the next fetch lands. Kept modest:
 // every buffered row now also pays for the rendered column window, and 200
@@ -189,6 +203,10 @@ var pendingFetches = new Map(); // key -> AbortController
 // Current render window
 var renderStart = 0;
 var renderEnd = 0;
+// Bottom overscroll (px) baked into the current bottom spacer; part of the
+// render window's identity so a change in horizontal overflow re-sizes the
+// spacer even when the row window itself is unchanged.
+var renderOverscroll = 0;
 
 // Incremental row recycling state
 var renderedRowElements = new Map(); // rowIndex -> <tr> element
@@ -3623,17 +3641,33 @@ var updateAriaRowCount = function() {
    }
 };
 
+// Height of the grid area hidden underneath the horizontal scrollbar, or 0
+// when nothing is hidden -- with no horizontal overflow there is no bar at all.
+// Our overlay bar always floats over the rows. A native bar usually takes
+// layout space and is therefore already excluded from clientHeight, but macOS
+// draws native bars as overlays too ("Show scroll bars: When scrolling"), so
+// measure the gutter instead of trusting the mode.
+var hScrollbarOverlayHeight = function(viewport) {
+   if (viewport.scrollWidth <= viewport.clientWidth + 1) return 0;
+   if (useOverlayScrollbars) return H_SCROLLBAR_HEIGHT;
+
+   // The scroll panes carry no border, so offsetHeight - clientHeight is
+   // exactly the layout space the native bar claimed -- zero when it overlays.
+   return viewport.offsetHeight > viewport.clientHeight
+      ? 0 : NATIVE_H_SCROLLBAR_OVERLAY_RESERVE;
+};
+
 // Height of the viewport area in which data rows are actually visible. The
 // viewport's full clientHeight overstates this: the sticky <thead> overlays
-// the top (while still contributing to scroll content height), and when
-// horizontal scroll is active the custom horizontal scrollbar overlays the
-// bottom 11px (see .custom-scrollbar.horizontal in DataViewer.css).
+// the top (while still contributing to scroll content height), and the custom
+// horizontal scrollbar overlays the bottom.
 var visibleBodyHeight = function(viewport) {
    var headerEl = domThead;
    var headerH = (headerEl && headerEl.parentElement)
       ? headerEl.parentElement.offsetHeight : 0;
-   var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
-   return Math.max(0, viewport.clientHeight - headerH - (hasHScroll ? 11 : 0));
+
+   var occluded = headerH + hScrollbarOverlayHeight(viewport);
+   return Math.max(0, viewport.clientHeight - occluded);
 };
 
 // Update the "Sorted by" portion of the info bar. The text span and the
@@ -3851,17 +3885,30 @@ var renderVisibleRows = function(forceRebuild) {
       bottomSpacerRow = null;
       renderStart = 0;
       renderEnd = 0;
+      renderOverscroll = 0;
       return;
    }
 
    var firstVisible = Math.floor(scrollTop / ROW_HEIGHT);
    var visibleCount = Math.ceil(viewportH / ROW_HEIGHT);
 
-   var newStart = Math.max(0, firstVisible - BUFFER_ROWS);
    var newEnd = Math.min(activeRows - 1, firstVisible + visibleCount + BUFFER_ROWS);
+   // Clamped against newEnd as well as 0: the overscroll tail below lets
+   // scrollTop run past the last row, so keep newStart from crossing newEnd.
+   // Defensive at BUFFER_ROWS = 25, since the tail is only a couple of rows
+   // tall, but the clamp is cheap and the window is invalid if it ever binds.
+   var newStart = Math.min(Math.max(0, firstVisible - BUFFER_ROWS), newEnd);
+
+   // Extra scrollable space past the last row, so the last row can be scrolled
+   // out from under the floating horizontal scrollbar instead of staying half
+   // covered by it at maximum scroll (#18620). Mirrors the sidebar's overscroll
+   // tail (renderSidebarWindow) and the horizontal overscroll padding that
+   // keeps the rightmost column reachable (applyPinnedColumns).
+   var overscroll = hScrollbarOverlayHeight(viewport);
 
    // Skip if the render window hasn't changed
-   if (!forceRebuild && newStart === renderStart && newEnd === renderEnd) {
+   if (!forceRebuild && newStart === renderStart && newEnd === renderEnd &&
+       overscroll === renderOverscroll) {
       return;
    }
 
@@ -3930,7 +3977,7 @@ var renderVisibleRows = function(forceRebuild) {
       }
 
       var topH = newStart * ROW_HEIGHT;
-      var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT;
+      var botH = Math.max(0, activeRows - lastRendered - 1) * ROW_HEIGHT + overscroll;
       updateSpacerRowHeight(topSpacerRow.unpinned, topH);
       updateSpacerRowHeight(topSpacerRow.pinned, topH);
       updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
@@ -3938,6 +3985,7 @@ var renderVisibleRows = function(forceRebuild) {
 
       renderStart = newStart;
       renderEnd = newEnd;
+      renderOverscroll = overscroll;
       return;
    }
 
@@ -4011,7 +4059,7 @@ var renderVisibleRows = function(forceRebuild) {
 
    // Update spacer heights (both panes stay aligned)
    var topH = newStart * ROW_HEIGHT;
-   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT;
+   var botH = (activeRows - newEnd - 1) * ROW_HEIGHT + overscroll;
    updateSpacerRowHeight(topSpacerRow.unpinned, topH);
    updateSpacerRowHeight(topSpacerRow.pinned, topH);
    updateSpacerRowHeight(bottomSpacerRow.unpinned, botH);
@@ -4019,6 +4067,7 @@ var renderVisibleRows = function(forceRebuild) {
 
    renderStart = newStart;
    renderEnd = newEnd;
+   renderOverscroll = overscroll;
 };
 
 // Info bar update is debounced separately at a longer interval -- reading
@@ -6577,12 +6626,11 @@ var createCustomScrollbars = function() {
          var thead = domThead;
          var headerH = thead && thead.parentElement
             ? thead.parentElement.offsetHeight : 0;
-         var hasHScroll = viewport.scrollWidth > viewport.clientWidth + 1;
          // #gridPanes excludes the info bar, so no info-bar inset is needed;
          // just leave room for the horizontal bar when it's present.
          return {
             top: headerH,
-            bottom: hasHScroll ? 11 : 0
+            bottom: hScrollbarOverlayHeight(viewport)
          };
       },
       onDragEnd: updateInfoBar
@@ -6654,9 +6702,11 @@ var attachSidebarScrollbar = function() {
 };
 
 // Reconcile the DOM with the current useOverlayScrollbars flag: toggle the
-// body class that gates the native-scrollbar-hiding CSS, and create or destroy
-// the overlay scrollbars to match. Safe to call repeatedly and whether or not
-// the grid/sidebar DOM exists yet (the create/attach helpers no-op then).
+// body class that gates the native-scrollbar-hiding CSS, create or destroy the
+// overlay scrollbars to match, and re-render the row window against the client
+// box the switch leaves behind. Safe to call repeatedly and whether or not the
+// grid/sidebar DOM exists yet (the create/attach helpers and the render all
+// no-op then, which is also what the bootstrap call gets).
 var applyScrollbarMode = function() {
    document.body.classList.toggle("overlay-scrollbars", useOverlayScrollbars);
 
@@ -6666,18 +6716,45 @@ var applyScrollbarMode = function() {
       // Recreate the sidebar overlay when the sidebar DOM is present.
       if (document.getElementById("sidebarContent"))
          attachSidebarScrollbar();
-      updateCustomScrollbars();
    } else {
       // Drop the overlay scrollbars but leave the sidebar scroll listener in
       // place (attachSidebarScrollbar owns it) so virtualization keeps working.
       if (gridScrollbarV_) { gridScrollbarV_.destroy(); gridScrollbarV_ = null; }
       if (gridScrollbarH_) { gridScrollbarH_.destroy(); gridScrollbarH_ = null; }
       if (sidebarScrollbar_) { sidebarScrollbar_.destroy(); sidebarScrollbar_ = null; }
-      // Native scrollbars take up viewport width, which can change whether the
-      // columns overflow; re-evaluate so the "Go to column" control stays in
-      // sync. (The scrollbar updates inside are no-ops now they're destroyed.)
-      updateCustomScrollbars();
    }
+
+   // The switch moves the bars in and out of layout, changing the viewport's
+   // client box the way a resize does: the rendered column window, the pinned
+   // pane's horizontal overscroll padding, the overscroll tail past the last
+   // row and the body height the info bar's visible-row range is derived from
+   // all follow from it, so refresh them in onResize's order rather than
+   // leaving them to whatever unrelated event rebuilds next. syncColumnWindow
+   // runs applyPinnedColumns itself, but only when the window actually moved,
+   // which a scrollbar's width usually will not do. Native scrollbars also take
+   // up viewport width, which can change whether the columns overflow, so the
+   // "Go to column" control is re-evaluated too (the scrollbar updates inside
+   // are no-ops when the overlays are destroyed).
+   syncColumnWindow();
+   applyPinnedColumns();
+   renderVisibleRows(true);
+
+   // Not on the server bootstrap, where initGrid calls this before the first
+   // block has landed: totalRows is already set while filteredRows is still 0,
+   // and the info bar is aria-live -- it would announce "Showing 0 to 0 of 0
+   // entries (filtered from N total entries)" on every grid open. The preview
+   // bootstrap already has its rows and does want the refresh: initWithData
+   // publishes a range before autoSizeColumns settles the widths that decide
+   // whether the grid overflows horizontally at all.
+   if (!bootstrapping || filteredRows > 0)
+      updateInfoBar();
+
+   updateCustomScrollbars();
+   // Newly created auto-hide bars start transparent. Surface the scroll
+   // affordance immediately after a live switch into overlay mode, just as the
+   // resize path does; update() above has already hidden non-scrollable axes.
+   if (!bootstrapping && useOverlayScrollbars)
+      showScrollbars();
 };
 
 var updateCustomScrollbars = function() {
@@ -7058,6 +7135,7 @@ var resetGridState = function() {
    // Render window
    renderStart = 0;
    renderEnd = 0;
+   renderOverscroll = 0;
    colWinStart = -1;
    colWinEnd = -1;
    // Injected header-UI registry is scoped to a single grid lifecycle (it
