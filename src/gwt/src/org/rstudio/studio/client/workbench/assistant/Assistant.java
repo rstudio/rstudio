@@ -448,13 +448,13 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
 
    // Display names for assistant types
    public static final String DISPLAY_NAME_COPILOT = "GitHub Copilot";
-   public static final String DISPLAY_NAME_POSIT = "Posit AI";
+   public static final String DISPLAY_NAME_POSIT = "Posit AI Pass";
    public static final String DISPLAY_NAME_NONE = "None";
    public static final String DISPLAY_NAME_UNKNOWN = "Assistant";
 
    /**
     * Convert an assistant type (e.g., "copilot", "posit", "none") to a display name
-    * (e.g., "GitHub Copilot", "Posit AI", "None").
+    * (e.g., "GitHub Copilot", "Posit AI Pass", "None").
     */
    public static String getDisplayName(String assistantType)
    {
