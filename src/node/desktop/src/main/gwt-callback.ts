@@ -729,12 +729,20 @@ export class GwtCallback extends EventEmitter {
       // de-miniaturize it, so bring it back to the screen first (#11646).
       let activated = false;
       if (mainWindow.isMinimized()) {
-        // On Windows, showInactive() de-miniaturizes with SW_SHOWNOACTIVATE,
-        // which discards the restore-to-maximized state. restore() preserves that
-        // state; it is also the only reliable way to de-miniaturize on macOS and
-        // X11. It activates the window, so hand focus back below after restacking.
-        mainWindow.restore();
-        activated = true;
+        // On Windows, showInactive() can restore a normal window without focus,
+        // but it discards the restore-to-maximized state. Bypass it only for that
+        // case; on platforms where showInactive() leaves the window minimized,
+        // restore() remains the fallback.
+        if (this.mainWindow.willRestoreMaximized()) {
+          mainWindow.restore();
+          activated = true;
+        } else {
+          mainWindow.showInactive();
+          if (mainWindow.isMinimized()) {
+            mainWindow.restore();
+            activated = true;
+          }
+        }
       } else if (!mainWindow.isVisible()) {
         mainWindow.showInactive();
       }
@@ -751,9 +759,8 @@ export class GwtCallback extends EventEmitter {
       mainWindow.moveTop();
       activeWindow.moveTop();
 
-      // restore() de-miniaturizes by activating -- SC_RESTORE on Windows,
-      // deminiaturize: on macOS -- so hand focus back the way the pre-Electron
-      // implementation did.
+      // restore() de-miniaturizes by activating, so hand focus back the way the
+      // pre-Electron implementation did.
       // Only the minimized path can get here; the case #18635 is about does not.
       if (activated) {
         activeWindow.focus();

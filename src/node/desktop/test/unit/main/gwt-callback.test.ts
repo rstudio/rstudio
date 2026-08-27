@@ -57,8 +57,9 @@ describe('DesktopCallback', () => {
     // this callback means "make the main window as visible as possible, but leave
     // focus alone"; touching focus at all strands it on the main window under
     // window managers with focus-stealing prevention (#18635)
-    function emit(main: ReturnType<typeof fakeBrowserWindow>, active: unknown) {
+    function emit(main: ReturnType<typeof fakeBrowserWindow>, active: unknown, restoreMaximized = false) {
       mainWindow.window = main as unknown as BrowserWindow;
+      sinon.stub(mainWindow, 'willRestoreMaximized').returns(restoreMaximized);
       sinon.stub(BrowserWindow, 'getFocusedWindow').returns(active as BrowserWindow | null);
       ipcMain.emit('desktop_bring_main_frame_behind_active');
     }
@@ -85,12 +86,22 @@ describe('DesktopCallback', () => {
       assert.isFalse(main.show.called);
     });
 
-    it('preserves the prior window state when restoring a minimized main window', () => {
-      // In particular, calling showInactive() here on Windows would restore a
-      // previously maximized window at its normal bounds.
+    it('restores an ordinary minimized window without activating it when possible', () => {
       const main = fakeBrowserWindow({ visible: true, minimized: true });
+      main.isMinimized.onFirstCall().returns(true).returns(false);
       const active = fakeBrowserWindow();
       emit(main, active);
+
+      assert.isTrue(main.showInactive.calledOnce);
+      assert.isFalse(main.restore.called);
+      assert.isFalse(active.focus.called);
+      assert.isTrue(main.moveTop.calledOnce);
+    });
+
+    it('preserves restore-to-maximized when restoring a minimized main window', () => {
+      const main = fakeBrowserWindow({ visible: true, minimized: true });
+      const active = fakeBrowserWindow();
+      emit(main, active, true);
 
       assert.isTrue(main.restore.calledOnce);
       assert.isTrue(main.moveTop.calledOnce);
@@ -101,6 +112,16 @@ describe('DesktopCallback', () => {
       assert.isTrue(main.restore.calledBefore(main.moveTop));
       assert.isTrue(main.moveTop.calledBefore(active.moveTop));
       assert.isTrue(active.moveTop.calledBefore(active.focus));
+    });
+
+    it('hands focus back when showInactive cannot restore a minimized window', () => {
+      const main = fakeBrowserWindow({ visible: true, minimized: true });
+      const active = fakeBrowserWindow();
+      emit(main, active);
+
+      assert.isTrue(main.showInactive.calledOnce);
+      assert.isTrue(main.restore.calledOnce);
+      assert.isTrue(active.focus.calledOnce);
     });
 
     it('never focuses either window unless the main window was minimized', () => {

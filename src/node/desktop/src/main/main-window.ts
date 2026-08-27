@@ -93,6 +93,7 @@ export class MainWindow extends GwtWindow {
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
   private didMainFrameLoadSuccessfully = true;
+  private windowWasMaximized = false;
 
   constructor(url: string) {
     super({
@@ -100,6 +101,19 @@ export class MainWindow extends GwtWindow {
       baseUrl: url,
       allowExternalNavigate: false,
       addApiKeys: ['desktop', 'desktopMenuCallback'],
+    });
+
+    // isMaximized() is false while a window is minimized on Windows. Keep the
+    // last non-minimized state so callers can preserve restore-to-maximized.
+    this.windowWasMaximized = this.window.isMaximized();
+    this.window.on('maximize', () => {
+      this.windowWasMaximized = true;
+    });
+    this.window.on('unmaximize', () => {
+      this.windowWasMaximized = false;
+    });
+    this.window.on('restore', () => {
+      this.windowWasMaximized = this.window.isMaximized();
     });
 
     appState().gwtCallback = new GwtCallback(this);
@@ -189,6 +203,10 @@ export class MainWindow extends GwtWindow {
     });
 
     this.window.setTitle(appState().activation().editionName());
+  }
+
+  willRestoreMaximized(): boolean {
+    return process.platform === 'win32' && this.windowWasMaximized;
   }
 
   launchSession(reload: boolean): void {
