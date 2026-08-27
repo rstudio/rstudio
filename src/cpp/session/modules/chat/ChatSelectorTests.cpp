@@ -343,6 +343,38 @@ TEST_F(ChatSelector, FallsBackOnlyToSlotsThatVerify)
    EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
 }
 
+TEST_F(ChatSelector, IgnoresASelectionNamingAStagingDirectory)
+{
+   // A staging directory holds a complete tree and so verifies, but its owner
+   // renames it away when the install finishes. Resolving one would put the
+   // backend in a directory that is about to move.
+   makeSlot(".tmp-host-1-abc", "1.2.0", "11.0");
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   ASSERT_TRUE(rstudio::session::modules::chat::slots::verifySlot(
+      slot(".tmp-host-1-abc")));
+   writeSelectorFile("{\"selected\":{\"11.0\":\".tmp-host-1-abc\"}}");
+
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+}
+
+TEST_F(ChatSelector, IgnoresASelectionThatTriesToEscapeTheVersionsDirectory)
+{
+   // completeChildPath() hands back the parent when it rejects an escape, so
+   // without a name check this would verify the versions directory itself.
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"../../elsewhere\"}}");
+
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+}
+
+TEST_F(ChatSelector, IgnoresAnEmptySelection)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   writeSelectorFile("{\"selected\":{\"11.0\":\"\"}}");
+
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.1.0")));
+}
+
 TEST_F(ChatSelector, ResolvesNothingWhenNoSlotServesTheProtocol)
 {
    makeSlot("1.1.0", "1.1.0", "11.0");

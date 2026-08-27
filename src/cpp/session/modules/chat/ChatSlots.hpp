@@ -61,6 +61,26 @@ struct SlotInfo
 core::FilePath versionsDir(const core::FilePath& storageDir);
 
 /**
+ * Whether a string may name a slot directory.
+ *
+ * Slot names come from the package.json of a downloaded archive and from
+ * selected.json in the user's home, so neither is trusted. Rejects anything
+ * that cannot round-trip as a directory name: empty, leading '.' or '-' (which
+ * would also hide it from resolution or make it look like an ordinal),
+ * non-printable or non-ASCII characters, a trailing dot or space (silently
+ * dropped by Windows, so the directory would not match the recorded name), a
+ * Windows reserved device name, and path separators or characters Win32
+ * rejects.
+ *
+ * The Windows rules are applied on every platform: a home directory reached
+ * from both Windows and Linux sessions has to agree on which names are slots.
+ *
+ * @param name The candidate slot directory name.
+ * @return true if the name is usable.
+ */
+bool isUsableSlotName(const std::string& name);
+
+/**
  * Check that a slot is a complete, coherent Posit Assistant installation.
  *
  * A slot verifies when its expected files exist and are non-empty, its

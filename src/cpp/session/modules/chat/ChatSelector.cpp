@@ -212,17 +212,32 @@ FilePath resolveSlot(const FilePath& storageDir, const std::string& protocol)
    Selections::const_iterator selection = selections.find(protocol);
    if (selection != selections.end())
    {
-      FilePath slotDir = slotsDir.completeChildPath(selection->second);
-
-      slots::SlotInfo info;
-      if (slots::verifySlot(slotDir, &info) && info.protocol == protocol)
+      // The selector is a file in the user's home, so its contents are a
+      // suggestion, not a path. Without this a dot-prefixed entry would
+      // resolve a staging directory -- which verifies, being a complete tree,
+      // right up until its owner renames it away underneath the running
+      // backend -- and a traversal entry would hand back the versions
+      // directory itself, since completeChildPath() returns the parent when it
+      // rejects an escape.
+      if (!slots::isUsableSlotName(selection->second))
       {
-         DLOG("Protocol {} resolves to selected slot {}", protocol, info.name);
-         return slotDir;
+         WLOG("Ignoring selection '{}' for protocol {}: not a slot name",
+              selection->second, protocol);
       }
+      else
+      {
+         FilePath slotDir = slotsDir.completeChildPath(selection->second);
 
-      WLOG("Selected slot '{}' for protocol {} is unusable; looking for another",
-           selection->second, protocol);
+         slots::SlotInfo info;
+         if (slots::verifySlot(slotDir, &info) && info.protocol == protocol)
+         {
+            DLOG("Protocol {} resolves to selected slot {}", protocol, info.name);
+            return slotDir;
+         }
+
+         WLOG("Selected slot '{}' for protocol {} is unusable; looking for another",
+              selection->second, protocol);
+      }
    }
 
    slots::SlotInfo fallback;

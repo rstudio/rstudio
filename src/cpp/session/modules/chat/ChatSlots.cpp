@@ -21,6 +21,7 @@
 
 #include <cctype>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -91,23 +92,26 @@ bool hasRequiredFiles(const FilePath& slotDir)
                 .completeChildPath(kIndexFileName));
 }
 
-// Rejects versions that cannot safely name a directory. A version reaches here
-// from the package.json of a downloaded archive, so it is not trusted to be a
-// bare version string.
-bool isUsableSlotName(const std::string& version)
+// Device names Windows resolves no matter which directory they appear in.
+// Checked on every platform on purpose: a home directory reached from both
+// Windows and Linux sessions has to agree on which names are slots, and
+// file_utils::isWindowsReservedName is compiled only on Windows.
+bool isReservedDeviceName(const std::string& name)
 {
-   if (version.empty() || version.front() == '.' || version.front() == '-')
-      return false;
+   static const char* const kReserved[] = {
+      "con", "prn", "aux", "nul",
+      "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
+      "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"
+   };
 
-   for (char c : version)
+   std::string lowered = boost::algorithm::to_lower_copy(name);
+   for (const char* reserved : kReserved)
    {
-      // Printable ASCII only: this string becomes a directory name in the
-      // user's home, and a version is never anything else.
-      if (c < 0x20 || c > 0x7e)
-         return false;
+      if (lowered == reserved)
+         return true;
    }
 
-   return version.find_first_of("/\\:") == std::string::npos;
+   return false;
 }
 
 std::string slotNameForOrdinal(const std::string& version, int ordinal)
@@ -149,6 +153,34 @@ std::string stagingDirName()
 }
 
 } // anonymous namespace
+
+bool isUsableSlotName(const std::string& name)
+{
+   if (name.empty() || name.front() == '.' || name.front() == '-')
+      return false;
+
+   // Windows silently drops a trailing dot or space, so the directory on disk
+   // would not be the name recorded in the selector -- and on a home shared
+   // with Linux sessions the two names are separate directories.
+   if (name.back() == '.' || name.back() == ' ')
+      return false;
+
+   for (char c : name)
+   {
+      // Printable ASCII only: this string becomes a directory name in the
+      // user's home, and a version is never anything else.
+      if (c < 0x20 || c > 0x7e)
+         return false;
+   }
+
+   if (isReservedDeviceName(name))
+      return false;
+
+   // Separators, the drive-letter colon, and the characters Win32 rejects
+   // outright. Catching them here turns an opaque rename failure after a full
+   // extraction into a clear message.
+   return name.find_first_of("/\\:*?\"<>|") == std::string::npos;
+}
 
 FilePath versionsDir(const FilePath& storageDir)
 {

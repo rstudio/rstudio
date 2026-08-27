@@ -536,8 +536,14 @@ TEST_F(ChatSlots, RejectsAVersionThatCannotNameADirectory)
 {
    // The version comes from the package.json of a downloaded archive, so it is
    // not trusted to be a bare version string.
-   const char* const badVersions[] = {".", "..", ".hidden", "-2",
-                                      "a/b", "a\\b", "C:evil", "a\tb"};
+   const char* const badVersions[] = {
+      ".", "..", ".hidden", "-2", "a/b", "a\\b", "C:evil", "a\tb",
+      // Rejected by Win32, but checked everywhere so a home reached from both
+      // Windows and Linux agrees on which names are slots.
+      "1.0*", "1.0?", "1.0|x", "1.0<x", "1.0>x", "1.0\"x", "nul", "COM1",
+      // Win32 strips these silently, so the directory would not match the
+      // name recorded in the selector.
+      "1.1.0.", "1.1.0 "};
    for (const char* version : badVersions)
    {
       FilePath stagingDir = staging("session-a");
