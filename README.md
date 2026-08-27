@@ -11,8 +11,8 @@ features include:
 - Syntax highlighting editor with code completion.
 - Execute code directly from the source editor (line, selection, or file).
 - Authoring of reproducible documents and reports with Quarto and R Markdown.
-- Optional AI features, including GitHub Copilot completions, Posit AI Next
-  Edit Suggestions, and the [Posit Assistant](https://assistant.posit.co/).
+- Optional AI features, including GitHub Copilot completions, Posit AI Pass
+  Next Edit Suggestions, and the [Posit Assistant](https://assistant.posit.co/).
 - Support for authoring Sweave and TeX documents.
 - Runs on Windows, Mac, and Linux, and has a community-maintained
   [FreeBSD port](https://www.freshports.org/devel/RStudio/).

@@ -4059,7 +4059,7 @@ void showRStudioVersionWarning(
    json::Object msgJson;
    msgJson["severe"] = false;
    boost::format fmt(
-      "A newer version of RStudio (%1%) is recommended for Posit AI. "
+      "A newer version of RStudio (%1%) is recommended for Posit AI Pass. "
       "<a href=\"%2%\" target=\"_blank\" rel=\"noopener noreferrer\">Download the update</a>"
    );
    msgJson["message"] = boost::str(fmt %
