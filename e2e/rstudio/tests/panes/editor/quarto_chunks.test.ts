@@ -654,18 +654,36 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       try {
         const outlineLabel = outline.getByText('Outline Sentinel', { exact: true });
         await expect(outlineLabel).toBeVisible();
-        await outlineLabel.evaluate((element) => {
-          const range = document.createRange();
-          range.selectNodeContents(element);
-          const selection = window.getSelection();
-          selection?.removeAllRanges();
-          selection?.addRange(range);
-        });
-        await expect
-          .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
-          .toBe('Outline Sentinel');
+
+        const selectOutlineLabel = async () => {
+          await outlineLabel.evaluate((element) => {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          });
+          await expect
+            .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+            .toBe('Outline Sentinel');
+        };
+
+        // A live selection outside editor content is invalid, rather than an
+        // invitation to fall back to a stale document selection. Preserve the
+        // footnote term through Use Selection, direct Find, and toolbar Find.
+        await selectOutlineLabel();
         await executeCommand(page, 'findFromSelection');
-        await expect(findInput).not.toHaveValue('Outline Sentinel');
+        await expect(findInput).toHaveValue('mangosteen');
+
+        await selectOutlineLabel();
+        await executeCommand(page, 'findReplace');
+        await expect(findInput).toHaveValue('mangosteen');
+
+        await findButton.click();
+        await expect(findInput).toBeHidden();
+        await selectOutlineLabel();
+        await findButton.click();
+        await expect(findInput).toHaveValue('mangosteen');
       } finally {
         if (!outlineInitiallyVisible) {
           await executeCommand(page, 'toggleDocumentOutline');
