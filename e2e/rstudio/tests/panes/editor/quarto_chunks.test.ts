@@ -7,7 +7,7 @@
  * `multiline_chunk_execution.test.ts`.
  */
 
-import type { Locator } from 'playwright';
+import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
@@ -26,17 +26,11 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
     await consoleActions.clearConsole();
   });
 
-  // Focus a chunk's embedded editor in the visual editor, addressing it by its
-  // `{r <label>}` header, which the chunk editor renders as its first line:
-  // unlike the body, it survives edits, so the same locator resolves before and
-  // after. Force-click the hidden textarea -- an ace_content overlay intercepts
-  // normal clicks on it.
-  const focusChunk = (proseMirror: Locator, header: string) =>
-    proseMirror
-      .locator('.ace_editor')
-      .filter({ hasText: header })
-      .locator('textarea.ace_text-input')
-      .click({ force: true });
+  // Focus a chunk's embedded editor through Ace itself. A forced click on its
+  // hidden textarea is not a reliable focus handoff after the find input has
+  // focus: the click can complete without Ace's focus handler running.
+  const focusChunk = (page: Page, header: string) =>
+    AceEditor.visualModeChunk(page, header).focus();
 
   test('the warn option is preserved when running chunks', async ({ rstudioPage: page }) => {
     const fileName = `quarto_warn_${Date.now()}.qmd`;
@@ -271,6 +265,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(proseMirror).toBeVisible({ timeout: 15000 });
 
       const prose = proseMirror.getByText('Prose mentioning a widget.');
+      const findInput = page.locator(
+        "[class*='rstudio_source_panel'] .rstudio-find-replace-find-input:visible input");
 
       // Prose has no Ace instance behind it and ProseMirror has no
       // multi-cursor concept, so both commands report unavailable there
@@ -279,7 +275,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
       expect(await isCommandEnabled(page, 'findAll')).toBe(false);
 
-      await focusChunk(proseMirror, '{r alpha}');
+      await focusChunk(page, '{r alpha}');
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       expect(await isCommandEnabled(page, 'findAll')).toBe(true);
 
@@ -289,12 +285,19 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       const first = AceEditor.visualModeChunk(page, '{r alpha}');
       await first.find('widget');
       await expect.poll(() => first.getSelectedText()).toBe('widget');
+
+      // Opening the find bar blurs Ace and clears VisualMode.activeEditor_, but
+      // deliberately leaves code commands enabled. Dispatch must restore the
+      // chunk before it tries to add another cursor.
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toBeFocused();
+      expect(await isCommandEnabled(page, 'quickAddNext')).toBe(true);
       await executeCommand(page, 'quickAddNext');
       await page.keyboard.type('gadget');
       await expect.poll(() => first.getValue()).toContain('gadget <- 1\ngadget + widget');
 
       // Find All takes every occurrence in the focused chunk.
-      await focusChunk(proseMirror, '{r beta}');
+      await focusChunk(page, '{r beta}');
       const second = AceEditor.visualModeChunk(page, '{r beta}');
       await second.find('gizmo');
       await expect.poll(() => second.getSelectedText()).toBe('gizmo');
@@ -306,10 +309,16 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // has no shortcut and no menu entry, and quickAddNext's Cmd+D is
       // disableModes="default,vim,emacs" -- and it takes focus out of the chunk
       // on the way, which withActiveEditor has to survive.
-      await focusChunk(proseMirror, '{r gamma}');
+      await focusChunk(page, '{r gamma}');
       const third = AceEditor.visualModeChunk(page, '{r gamma}');
       await third.find('sprocket');
       await expect.poll(() => third.getSelectedText()).toBe('sprocket');
+
+      // Start the palette from the find input, so closing it restores focus to
+      // the non-editor control rather than directly to the chunk. Find All
+      // must perform the editing-surface handoff itself.
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toBeFocused();
 
       const palette = page.locator('#rstudio_command_palette_search');
       await executeCommand(page, 'showCommandPalette');
@@ -341,6 +350,61 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
       });
+    }
+  });
+
+  test('closing an inactive visual document preserves source command state (#16540)', async ({ rstudioPage: page }) => {
+    const sourceFile = `quarto_command_state_${Date.now()}.R`;
+    const visualFile = `quarto_command_owner_${Date.now()}.qmd`;
+
+    await sourceActions.createAndOpenFile(sourceFile, 'widget <- 1\nwidget + widget');
+    await sourceActions.createAndOpenFile(visualFile, [
+      '---',
+      'title: Command owner',
+      '---',
+      '',
+      '```{r owner}',
+      'widget <- 1',
+      '```',
+    ].join('\n'));
+
+    try {
+      await sourceActions.ensureVisualMode();
+      await executeCommand(page, 'saveSourceDoc');
+      await focusChunk(page, '{r owner}');
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+
+      // Activate the R file through a synthetic tab click. Unlike a pointer
+      // click, this does not itself take DOM focus away from the chunk, which
+      // exercises the stale activeEditor_ state the destroy hook must handle.
+      const sourceTabs = page.locator(
+        "[class*='rstudio_source_panel'] .gwt-TabLayoutPanelTab");
+      const sourceTab = sourceTabs.filter({ hasText: sourceFile }).first();
+      await sourceTab.evaluate((element) => (element as HTMLElement).click());
+      await expect(sourceActions.sourcePane.selectedTab).toContainText(sourceFile);
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+
+      // Closing the now-inactive visual target destroys its chunks. That
+      // target must not disable the global AppCommand state owned by this R
+      // editor.
+      await executeCommand(page, 'closeOtherSourceDocs');
+      await expect(sourceTabs.filter({ hasText: visualFile })).toHaveCount(0);
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+
+      const sourceEditor = new AceEditor(page, '');
+      await sourceEditor.focus();
+      await sourceEditor.find('widget');
+      await executeCommand(page, 'quickAddNext');
+      await expect.poll(() => sourceEditor.getSelectionRanges()).toHaveLength(2);
+    } finally {
+      await consoleActions.resetSourcePane().catch((err) => {
+        console.warn(`[quarto_chunks] cleanup failed for command-state tabs: ${err}`);
+      });
+      await consoleActions
+        .executeInConsole(`unlink(c("${sourceFile}", "${visualFile}"))`, { wait: true })
+        .catch((err) => {
+          console.warn(`[quarto_chunks] cleanup failed for command-state files: ${err}`);
+        });
     }
   });
 
@@ -380,7 +444,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
         // leaving the code commands disabled even though Ace has DOM focus.
         await proseMirror.getByText('sassafras').click({ position: { x: 4, y: 8 } });
         await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(false);
-        await focusChunk(proseMirror, '{r seed}');
+        await focusChunk(page, '{r seed}');
         await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       };
 
@@ -461,6 +525,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       '---',
       '',
       'persimmon',
+      '',
+      'nectarine',
     ].join('\n');
 
     await sourceActions.createAndOpenFile(fileName, content);
@@ -480,6 +546,18 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Mouse-down must capture the term before the toolbar takes focus.
       await findButton.click();
       await expect(findInput).toHaveValue('persimmon');
+
+      // Keyboard activation has no mouse-down. Close the bar, select a
+      // different term so a stale value cannot pass, and open it with Enter.
+      await findButton.click();
+      await expect(findInput).toBeHidden();
+      await proseMirror.getByText('nectarine').dblclick({ position: { x: 4, y: 8 } });
+      await expect
+        .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+        .toBe('nectarine');
+      await findButton.focus();
+      await page.keyboard.press('Enter');
+      await expect(findInput).toHaveValue('nectarine');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
@@ -496,6 +574,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       '',
       '```{r toolbar}',
       'gizmo <- 2',
+      'kumquat <- 3',
       '```',
     ].join('\n');
 
@@ -509,7 +588,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       const findButton = page.getByRole('button', { name: 'Find/Replace' });
       const chunk = AceEditor.visualModeChunk(page, '{r toolbar}');
 
-      await focusChunk(proseMirror, '{r toolbar}');
+      await focusChunk(page, '{r toolbar}');
       await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
       await chunk.find('gizmo');
       await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
@@ -517,6 +596,18 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // The same capture has to run before the embedded Ace editor blurs.
       await findButton.click();
       await expect(findInput).toHaveValue('gizmo');
+
+      // Enter / Space go through ToolbarButton.click() without a mouse-down.
+      // Refocus Ace, select another term, then verify the keyboard path
+      // restores the chunk before it reads the selection.
+      await findButton.click();
+      await expect(findInput).toBeHidden();
+      await focusChunk(page, '{r toolbar}');
+      await chunk.find('kumquat');
+      await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
+      await findButton.focus();
+      await page.keyboard.press('Enter');
+      await expect(findInput).toHaveValue('kumquat');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);

@@ -9879,11 +9879,7 @@ public class TextEditingTarget implements
    {
       if (isVisualEditorActive())
       {
-         DocDisplay activeEditor = visualMode_.getActiveEditor();
-         if (activeEditor != null)
-         {
-            cmd.execute(activeEditor);
-         }
+         visualMode_.performWithActiveEditor(cmd);
       }
       else
       {

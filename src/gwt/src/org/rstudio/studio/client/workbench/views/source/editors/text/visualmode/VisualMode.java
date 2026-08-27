@@ -29,6 +29,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
@@ -153,7 +154,7 @@ public class VisualMode implements VisualModeEditorSync,
       );
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
-      initWidgets();
+      initWidgets(releaseOnDismiss);
       
       // subscribe to source doc added
       releaseOnDismiss.add(eventBus.addHandler(SourceDocAddedEvent.TYPE, this));
@@ -215,7 +216,7 @@ public class VisualMode implements VisualModeEditorSync,
          visualModeContext_.onDismiss();
    }
    
-   private void initWidgets()
+   private void initWidgets(ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       findReplaceButton_ = new ToolbarButton(
          ToolbarButton.NoText,
@@ -224,11 +225,23 @@ public class VisualMode implements VisualModeEditorSync,
          (event) -> {
             HasFindReplace findReplace = getFindReplace();
             boolean show = !findReplace.isFindReplaceShowing();
+            boolean capturedByMouse = findReplaceButtonMouseCapture_;
             String searchTerm = findReplaceButtonSearchTerm_;
-            findReplaceButtonSearchTerm_ = null;
+            clearFindReplaceButtonSearchTerm();
 
             if (show)
+            {
+               // Keyboard and programmatic activation do not have a preceding
+               // mouse-down from which to capture the selection. Restore the
+               // editing surface first so a selection inside a code chunk is
+               // visible through activeEditor_ again.
+               if (!capturedByMouse && panmirror_ != null)
+               {
+                  panmirror_.focus();
+                  searchTerm = getSearchSelection();
+               }
                showFindReplace(searchTerm);
+            }
             else
                findReplace.showFindReplace(false);
          }
@@ -239,13 +252,41 @@ public class VisualMode implements VisualModeEditorSync,
       // editors can already report no selection.
       findReplaceButton_.addMouseDownHandler((event) ->
       {
+         findReplaceButtonMouseCapture_ = true;
          findReplaceButtonSearchTerm_ = getSearchSelection();
+      });
+      findReplaceButton_.addMouseUpHandler((event) ->
+      {
+         // ToolbarButton fires its synthetic click from its own mouse-up
+         // handler before this one runs, so normal activation has consumed
+         // the capture by now. This also clears a mouse-up that did not click.
+         clearFindReplaceButtonSearchTerm();
       });
       findReplaceButton_.addMouseOutHandler((event) ->
       {
          // A drag off the button cancels ToolbarButton's synthetic click.
-         findReplaceButtonSearchTerm_ = null;
+         clearFindReplaceButtonSearchTerm();
       });
+      findReplaceButton_.addKeyDownHandler((event) ->
+      {
+         // Enter / Space will synthesize a click on key-press. Do not let a
+         // cancelled mouse gesture supply that keyboard click's search term.
+         clearFindReplaceButtonSearchTerm();
+      });
+
+      // A mouse released outside the application has no mouse-up or mouse-out
+      // in this window. Drop its capture when the window loses focus so a
+      // later programmatic or keyboard click cannot reuse a stale selection.
+      releaseOnDismiss.add(WindowEx.addBlurHandler((event) ->
+      {
+         clearFindReplaceButtonSearchTerm();
+      }));
+   }
+
+   private void clearFindReplaceButtonSearchTerm()
+   {
+      findReplaceButtonMouseCapture_ = false;
+      findReplaceButtonSearchTerm_ = null;
    }
    
    public boolean isActivated()
@@ -831,6 +872,22 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    /**
+    * Perform a command with the visual editor's active code editor. Focusing
+    * panmirror restores the last editing selection after a toolbar, find bar,
+    * or command palette has temporarily taken focus; without that handoff the
+    * chunk's blur handler has already cleared activeEditor_.
+    *
+    * @param command The command to perform when focus resolves to a code chunk.
+    */
+   public void performWithActiveEditor(CommandWithArg<DocDisplay> command)
+   {
+      panmirror_.focus();
+
+      if (activeEditor_ != null)
+         command.execute(activeEditor_);
+   }
+
+   /**
     * Moves the cursor in source mode to the currently active outline item in visual mode.
     */
    public void syncSourceOutlineLocation()
@@ -863,10 +920,9 @@ public class VisualMode implements VisualModeEditorSync,
    }
    
    /**
-    * Gives up the active editor because it is being destroyed. Unlike a blur,
-    * which the code commands deliberately outlive so that clicking a toolbar
-    * or the find box does not disable them, there is no editor left here to
-    * return focus to, so the commands go with it.
+    * Gives up the active editor because it is being destroyed. Command enabled
+    * state is global, so an inactive document being closed must not change it;
+    * only the active target may update that state.
     * 
     * @param editor The editor being destroyed.
     */
@@ -876,7 +932,8 @@ public class VisualMode implements VisualModeEditorSync,
          return;
 
       setActiveEditor(null);
-      setCodeCommandsEnabled(false);
+      if (target_.isActiveDocument())
+         setCodeCommandsEnabled(false);
    }
    
    /**
@@ -2080,6 +2137,7 @@ public class VisualMode implements VisualModeEditorSync,
   
    private ToolbarButton findReplaceButton_;
    private String findReplaceButtonSearchTerm_;
+   private boolean findReplaceButtonMouseCapture_;
   
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<>();
    
@@ -2098,4 +2156,3 @@ public class VisualMode implements VisualModeEditorSync,
    private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
-
