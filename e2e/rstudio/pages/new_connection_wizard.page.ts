@@ -48,11 +48,10 @@ export class NewConnectionWizard extends PageObject {
     this.backBtn = this.dialog.getByRole('button', { name: 'Back', exact: true });
     this.testBtn = this.dialog.getByRole('button', { name: 'Test', exact: true });
     this.codePreview = this.dialog.locator('.ace_content');
-    // The wizard's code panel (Ace preview + this dropdown) is
-    // re-instantiated on every snippet update -- one per keystroke while
-    // typing into a parameter field -- and the superseded copies stay in the
-    // dialog's DOM, hidden. Anchor on visibility; it is the panel's only
-    // <select>.
+    // The wizard pre-builds one page per connection type up front
+    // (Wizard.addAndInitializePage), so every driver's code panel and
+    // dropdown already exist in the DOM -- only the active page's is
+    // visible. Anchor on visibility; it is the panel's only <select>.
     this.connectFromDropdown = this.dialog.locator('select:visible').last();
     this.testResultsDialog = page.locator(TEST_RESULTS_DIALOG);
   }
@@ -82,11 +81,11 @@ export class NewConnectionWizard extends PageObject {
     const byCell = this.dialog.locator(
       `xpath=.//td[normalize-space(.) = "${key}:"]/following-sibling::td[1]//input`,
     );
-    // Visible only: the dialog also accumulates superseded copies of the
-    // parameter grid (see connectFromDropdown for the same churn), so an
-    // unfiltered first() match can land in a stale grid -- typing then goes
-    // to whichever field occupies that position there, silently corrupting a
-    // different parameter.
+    // Visible only: every driver's parameter grid already exists in the DOM
+    // (see connectFromDropdown for why), so an unfiltered first() match can
+    // land in an inactive one -- typing then goes to whichever field
+    // occupies that position there, silently corrupting a different
+    // parameter.
     return byLabel.or(byCell).filter({ visible: true }).first();
   }
 

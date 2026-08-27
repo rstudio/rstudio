@@ -59,9 +59,13 @@ export class ConnectionsPaneActions {
    * that into an immediate, named failure instead of a puzzling connection
    * error several steps later.
    *
-   * Server and Port are verified too even though nothing writes to them: the
-   * snippet prefills them, and they are exactly what a misdirected write
-   * corrupts. Checking only the fields written would miss that.
+   * Server and Port are verified too, even though the caller never asked to
+   * write them: the snippet prefills them, and they are exactly what a
+   * misdirected write corrupts. Every attempt (including the first)
+   * rewrites them to their expected values along with the caller's fields,
+   * not just verifies them -- a corrupted Server/Port needs to be corrected
+   * on retry the same way any other field does, or a mismatch there would
+   * never clear and every attempt would fail identically.
    *
    * A mismatch retries the whole fill from scratch rather than failing
    * outright: the corrupting write coincides with some async task the wizard
@@ -102,7 +106,13 @@ export class ConnectionsPaneActions {
     let wrong: string[] = [];
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       if (attempt > 1) await this.page.waitForTimeout(500);
-      for (const [key, value] of Object.entries(written)) {
+      // Rewrite every field this attempt verifies (expected), not just the
+      // ones the caller asked to write (written): a retry exists because
+      // Server/Port can get corrupted by the same race that corrupts a
+      // written field (see the class comment above), and only rewriting
+      // `written` would leave a corrupted Server/Port uncorrected on every
+      // subsequent attempt, guaranteeing the loop exhausts and throws.
+      for (const [key, value] of Object.entries(expected)) {
         const field = this.wizard.field(key);
         await field.waitFor({ state: 'visible', timeout: 10000 });
         // Real per-character key events rather than a value assignment. These

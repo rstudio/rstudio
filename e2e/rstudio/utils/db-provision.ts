@@ -79,10 +79,28 @@ function statusPath(sandbox: string): string {
   return path.join(sandbox, 'db', 'status.json');
 }
 
+/**
+ * A malformed file (e.g. a run killed mid-write) is treated the same as a
+ * missing one -- callers already handle "nothing recorded" gracefully, but
+ * an uncaught parse error here would abort globalTeardown's caller
+ * (stopProvisionedDatabases) before it stops a throwaway server or scrubs
+ * credentials.
+ */
 export function readDbStatus(sandbox: string): DbStatusFile {
   const p = statusPath(sandbox);
   if (!fs.existsSync(p)) return {};
-  return JSON.parse(fs.readFileSync(p, 'utf8')) as DbStatusFile;
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf8')) as DbStatusFile;
+  } catch (err) {
+    // Treated as "nothing recorded" rather than rethrown: this is called
+    // from stopProvisionedDatabases inside globalTeardown, ahead of ODBC
+    // de-registration, the credential scrub, and the sandbox rm, and a
+    // throw here would skip all of them. Warned rather than silent, since
+    // a malformed file here means whatever it was tracking (a running
+    // throwaway server, in particular) goes unaccounted for.
+    console.warn(`[db] could not read ${p}, treating as no status recorded:`, err);
+    return {};
+  }
 }
 
 /** Start (or adopt) a database server for every known target. */
@@ -105,13 +123,25 @@ export async function provisionDatabases(sandbox: string): Promise<DbStatusFile>
         };
         continue;
       }
-      fs.mkdirSync(path.dirname(target.database), { recursive: true });
-      status[target.id] = {
-        ok: true,
-        outcome: target.overridden ? 'override' : 'file',
-        detail: `${target.id} uses the database file ${target.database} (no server)`,
-      };
-      console.log(`[db] ${target.id}: file-backed at ${target.database}`);
+      // Caught, not left to propagate: a permissions or disk-space failure
+      // here must skip this target's specs like every other failure mode in
+      // this loop, not crash globalSetup and take down the whole suite.
+      try {
+        fs.mkdirSync(path.dirname(target.database), { recursive: true });
+        status[target.id] = {
+          ok: true,
+          outcome: target.overridden ? 'override' : 'file',
+          detail: `${target.id} uses the database file ${target.database} (no server)`,
+        };
+        console.log(`[db] ${target.id}: file-backed at ${target.database}`);
+      } catch (err) {
+        status[target.id] = {
+          ok: false,
+          outcome: 'failed',
+          detail: `could not create directory for ${target.database}: ${err instanceof Error ? err.message : String(err)}`,
+        };
+        console.warn(`[db] ${target.id}: provisioning FAILED (specs will skip): ${status[target.id].detail}`);
+      }
       continue;
     }
 

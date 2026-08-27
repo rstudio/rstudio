@@ -78,12 +78,24 @@ for (const base of ALL_DB_TARGETS) {
 
       // Filtering by object narrows the tree to matching names. The last
       // path element is the table regardless of the engine's nesting depth.
+      // Checking only that it stays visible would pass even if the filter
+      // did nothing -- drillExplorer already made it visible above -- so
+      // also confirm a sibling table (seeded for every target, per
+      // db-targets.ts) is visible before filtering and gone after.
       const table = target.explorerPath[target.explorerPath.length - 1];
-      await actions.pane.filterObjects.fill(table);
+      const sibling = actions.pane.panel.getByText('customers', { exact: true });
+      await expect(sibling).toBeVisible();
+      await actions.pane.filterObjects.pressSequentially(table);
       await expect(actions.pane.panel.getByText(table, { exact: true })).toBeVisible();
+      await expect(sibling).not.toBeVisible();
 
-      // Clear the filter before using the tree again.
-      await actions.pane.filterObjects.fill('');
+      // Clear the filter before using the tree again. fill('') has the same
+      // problem as fill(table) above, in reverse: it wouldn't fire the
+      // KeyUpHandler either, leaving the tree filtered for whatever runs
+      // next. Select the typed text and delete it with a real keystroke.
+      await actions.pane.filterObjects.selectText();
+      await actions.pane.filterObjects.press('Backspace');
+      await expect(sibling).toBeVisible();
 
       // View table opens the data viewer on up to 1,000 records, showing
       // the table's actual contents ("Charlie" is seeded only into this
