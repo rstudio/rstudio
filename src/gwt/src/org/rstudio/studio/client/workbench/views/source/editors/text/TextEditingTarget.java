@@ -1945,7 +1945,7 @@ public class TextEditingTarget implements
                          !projectAssistant.equals("default"))
                      {
                         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
-                           return "Posit AI";
+                           return "Posit AI Pass";
                         else
                            return "Copilot";
                      }
@@ -1954,7 +1954,7 @@ public class TextEditingTarget implements
                   // Fall back to global preference
                   String assistant = prefs_.assistant().getValue();
                   if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
-                     return "Posit AI";
+                     return "Posit AI Pass";
                   else
                      return "Copilot";
                }
