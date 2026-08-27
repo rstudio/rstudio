@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -297,13 +298,26 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
    return false;
 }
 
-std::string utf8ToSystem(const std::string& str,
-                         bool escapeInvalidChars)
-{
-   if (str.empty())
-      return std::string();
-
 #ifdef _WIN32
+
+namespace {
+
+// Convert UTF-8 text to a narrow encoding, escaping (or replacing) the
+// characters that encoding cannot represent. A negative code page means "use
+// whatever the C runtime's LC_CTYPE locale implies", which is what wctomb()
+// does.
+std::string utf8ToSystemImpl(const std::string& str,
+                             bool escapeInvalidChars,
+                             int codepage)
+{
+   // resolve CP_ACP so the UTF-8 case below recognizes it -- the process code
+   // page really is UTF-8 when the system is configured that way
+   if (codepage == CP_ACP)
+      codepage = static_cast<int>(::GetACP());
+
+   // a UTF-8 target needs no conversion at all; preserve its bytes exactly
+   if (codepage == CP_UTF8)
+      return str;
 
    std::vector<wchar_t> wide(str.length() + 1);
    int chars = ::MultiByteToWideChar(
@@ -311,7 +325,7 @@ std::string utf8ToSystem(const std::string& str,
             str.c_str(), -1,
             &wide[0], gsl::narrow_cast<int>(wide.size()));
 
-   if (chars < 0)
+   if (chars == 0)
    {
       LOG_ERROR(LAST_SYSTEM_ERROR());
       return str;
@@ -321,11 +335,65 @@ std::string utf8ToSystem(const std::string& str,
    char buffer[16];
 
    // Only go up to chars - 1 because last char is \0
-   for (int i = 0; i < chars - 1; i++)
+   for (int i = 0; i < chars - 1;)
    {
-      int n = wctomb(buffer, wide[i]);
+      int wideChars = 1;
+      uint32_t codepoint = static_cast<uint32_t>(wide[i]);
 
-      if (n == -1)
+      // wchar_t is UTF-16 on Windows. Keep a surrogate pair together so
+      // code pages such as GB18030 can encode the scalar as a four-byte
+      // sequence, and so an unrepresentable scalar produces one valid escape
+      // rather than two isolated-surrogate escapes.
+      if (codepage >= 0 &&
+          wide[i] >= 0xD800 && wide[i] <= 0xDBFF &&
+          i + 1 < chars - 1 &&
+          wide[i + 1] >= 0xDC00 && wide[i + 1] <= 0xDFFF)
+      {
+         wideChars = 2;
+         codepoint = 0x10000 +
+               ((static_cast<uint32_t>(wide[i]) - 0xD800) << 10) +
+               (static_cast<uint32_t>(wide[i + 1]) - 0xDC00);
+      }
+
+      int n;
+
+      if (codepage < 0)
+      {
+         n = wctomb(buffer, wide[i]);
+         if (n == -1)
+            n = 0;
+      }
+      else
+      {
+         // WC_NO_BEST_FIT_CHARS so that an unrepresentable character is
+         // reported here rather than silently transliterated into a lookalike
+         // (dotless i as i, say) that means something else
+         BOOL usedDefault = FALSE;
+         n = ::WideCharToMultiByte(
+                  codepage, WC_NO_BEST_FIT_CHARS,
+                  &wide[i], wideChars,
+                  buffer, sizeof(buffer),
+                  nullptr, &usedDefault);
+
+         // Some code pages reject WC_NO_BEST_FIT_CHARS, a non-null
+         // lpUsedDefaultChar, or both. Retry those argument failures with the
+         // universally supported form rather than treating every character
+         // as unmappable.
+         DWORD error = n == 0 ? ::GetLastError() : ERROR_SUCCESS;
+         if (error == ERROR_INVALID_FLAGS || error == ERROR_INVALID_PARAMETER)
+         {
+            n = ::WideCharToMultiByte(
+                     codepage, 0,
+                     &wide[i], wideChars,
+                     buffer, sizeof(buffer),
+                     nullptr, nullptr);
+         }
+
+         if (usedDefault)
+            n = 0;
+      }
+
+      if (n == 0)
       {
          if (escapeInvalidChars)
          {
@@ -334,7 +402,15 @@ std::string utf8ToSystem(const std::string& str,
             // latter is accepted by Python, and since the reticulate
             // REPL uses the same conversion routines we prefer the
             // format compatible with both parsers
-            output << "\\u" << std::hex << static_cast<uint32_t>(wide[i]);
+            if (codepoint > 0xFFFF)
+            {
+               output << "\\U" << std::hex << std::setw(8)
+                      << std::setfill('0') << codepoint;
+            }
+            else
+            {
+               output << "\\u" << std::hex << codepoint;
+            }
          }
          else
          {
@@ -345,8 +421,40 @@ std::string utf8ToSystem(const std::string& str,
       {
          output.write(buffer, n);
       }
+
+      i += wideChars;
    }
+
    return output.str();
+}
+
+} // anonymous namespace
+
+#endif
+
+std::string utf8ToSystem(const std::string& str,
+                         bool escapeInvalidChars)
+{
+   if (str.empty())
+      return std::string();
+
+#ifdef _WIN32
+   return utf8ToSystemImpl(str, escapeInvalidChars, -1);
+#else
+   // Assumes that UTF8 is the locale on POSIX
+   return str;
+#endif
+}
+
+std::string utf8ToCodepage(const std::string& str,
+                           int codepage,
+                           bool escapeInvalidChars)
+{
+   if (str.empty())
+      return std::string();
+
+#ifdef _WIN32
+   return utf8ToSystemImpl(str, escapeInvalidChars, codepage);
 #else
    // Assumes that UTF8 is the locale on POSIX
    return str;
@@ -1111,6 +1219,3 @@ collection::Position offsetToPosition(const std::string& str, std::size_t offset
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio
-
-
-
