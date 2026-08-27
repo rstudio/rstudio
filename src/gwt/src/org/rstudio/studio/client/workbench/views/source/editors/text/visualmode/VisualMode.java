@@ -1442,15 +1442,17 @@ public class VisualMode implements VisualModeEditorSync,
          return null;
 
       // PanmirrorWidget also owns the outline and find UI. Only selections in
-      // the document content itself can seed a document search.
-      Element content = DomUtils.getFirstElementWithClassName(
+      // document content can seed a search. Check every content root because
+      // the main body and notes/footnotes are separate editable regions.
+      Element[] contents = DomUtils.getElementsByClassName(
             panmirror_.getElement(), "pm-content");
-      if (content == null || !DomUtils.isSelectionInElement(content))
+      for (Element content : contents)
       {
-         return null;
+         if (DomUtils.isSelectionInElement(content))
+            return asSearchSelection(DomUtils.getSelectedText());
       }
 
-      return asSearchSelection(DomUtils.getSelectedText());
+      return null;
    }
 
    private String asSearchSelection(String selection)

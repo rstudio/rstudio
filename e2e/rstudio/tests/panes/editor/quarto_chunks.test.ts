@@ -328,6 +328,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // must perform the editing-surface handoff itself.
       await executeCommand(page, 'findReplace');
       await expect(findInput).toBeFocused();
+      await expect.poll(() => isCommandEnabled(page, 'findAll')).toBe(true);
 
       const palette = page.locator('#rstudio_command_palette_search');
       await executeCommand(page, 'showCommandPalette');
@@ -356,9 +357,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Close the tab rather than toggling back to source mode: toggling
       // leaves the chunks' Ace editors mounted, which makes the source-mode
       // editor locators ambiguous for later tests in the shared IDE.
-      await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
-        console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
-      });
+      await sourceActions.closeSourceAndDeleteFile(fileName);
     }
   });
 
@@ -429,6 +428,10 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       '# Outline Sentinel',
       '',
       'sassafras',
+      '',
+      'Footnote body.[^fruit]',
+      '',
+      '[^fruit]: mangosteen',
       '',
       '```{r seed}',
       'gizmo <- 2',
@@ -540,6 +543,23 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await findButton.focus();
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('sassafras');
+
+      // Footnote editing uses a second `.pm-content` root. Its selection is
+      // still document content and must seed Find just like the main body.
+      const footnote = proseMirror.locator('.pm-footnote').first();
+      await expect(footnote).toBeVisible();
+      await footnote.click();
+      const noteContent = visualEditorPanel(proseMirror).locator(
+        '.notes .pm-content:visible');
+      const noteText = noteContent.getByText('mangosteen', { exact: true });
+      await expect(noteText).toBeVisible();
+      await noteText.dblclick({ position: { x: 4, y: 8 } });
+      await expect
+        .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
+        .toBe('mangosteen');
+      await findButton.focus();
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('mangosteen');
 
       // Panmirror also contains selectable non-document UI. A browser
       // selection in the outline must never become the document search term.
