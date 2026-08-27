@@ -35,7 +35,12 @@ namespace selector {
 //     {"selected": {"11.0": "1.1.0-2", "10.0": "0.4.8"}}
 //
 // It is advisory. Resolution falls back to the newest matching slot on disk
-// whenever the file disagrees with reality, so losing it costs nothing.
+// whenever the file disagrees with reality, so the file can be lost or damaged
+// without stranding a session. Note what that recovery is and is not: it
+// converges on the newest verifying slot for the protocol, not on whatever the
+// lost entry named. While a selection only ever records the version just
+// installed that is the same answer, but a selection made to hold a session on
+// an older slot would not survive.
 
 // Protocol version to slot directory name.
 typedef std::map<std::string, std::string> Selections;
@@ -56,8 +61,10 @@ Selections readSelections(const core::FilePath& storageDir);
  * Replace the recorded selections.
  *
  * Written to a temporary file and renamed into place, so a reader never sees a
- * partial file. Concurrent writers are last-writer-wins; a selection lost that
- * way is recovered by the next resolveSlot().
+ * partial file. That does not serialize the read-modify-write in selectSlot():
+ * two sessions recording different protocols at once can drop one of the
+ * entries, and the next resolveSlot() replaces the dropped one with the newest
+ * matching slot rather than restoring what it said.
  *
  * @param storageDir The Posit Assistant storage directory.
  * @param selections The selections to record.

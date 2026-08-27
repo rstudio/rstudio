@@ -134,8 +134,7 @@ std::vector<SlotInfo> verifiedSlots(const core::FilePath& slotsDir);
  *
  * @param slotsDir The directory holding the slots.
  * @param pStagingDir Output: the empty staging directory.
- * @return Success, or an error if the directory could not be cleared or
- *         created.
+ * @return Success, or an error if the directory could not be created.
  */
 core::Error prepareStagingDir(const core::FilePath& slotsDir,
                               core::FilePath* pStagingDir);
@@ -167,9 +166,10 @@ enum class SlotPolicy
  * the tree being recorded is the one that was just extracted.
  *
  * The staged package is then renamed to the version its own package.json
- * declares, or to `<version>-2`, `<version>-3`, ... when that name is taken. Because the rename is the only arbiter, two sessions
- * installing the same version at once cannot corrupt each other: the loser
- * sees the winner's slot and either adopts it or takes the next name.
+ * declares, or to `<version>-2`, `<version>-3`, ... when that name is taken.
+ * Because the rename is the only arbiter, two sessions installing the same
+ * version at once cannot corrupt each other: the loser sees the winner's slot
+ * and either adopts it or takes the next name.
  *
  * A slot is adopted only when it verifies and declares the same version and
  * protocol as the staged package; a name alone is never taken as evidence of
