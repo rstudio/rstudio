@@ -11,6 +11,12 @@
 //                                         platform (Playwright "project"), so a
 //                                         single comment shows which OS failed
 //
+// It also reports, for each engine in the merged report, the build that engine
+// ran against -- once as a run annotation and once in the job summary. Both live
+// here, in the merge job, for two reasons: a job summary is per job, so a sharded
+// engine writing its own would repeat itself once per shard (six times on
+// Windows), and only the merge job sees every engine at once.
+//
 // Platforms are distinguished by the per-platform project label set via
 // PW_PROJECT_LABEL in each platform workflow (e.g. desktop-macos, server-linux).
 //
@@ -102,6 +108,47 @@ setOutput('flaky', String(overall.flaky));
 setOutput('rate', String(rate));
 setOutput('bar', bar);
 setOutput('platform_table', table);
+
+// "Run under test": what each engine in this report actually ran against. The
+// harness records one metadata entry per engine, keyed by OS and edition, with
+// the versions as the value (e2e/rstudio/utils/versions.ts). Playwright adds
+// metadata of its own -- ci, gitCommit, gitDiff, actualWorkers -- so entries are
+// picked by value shape rather than by excluding Playwright's key names, which
+// would let a newly added Playwright key leak into the output.
+//
+// Reported twice, because the two placements answer different questions. The
+// annotation sits at the top of the run's Summary page, above the job list and
+// unfolded, so a reader sees it without clicking into anything -- annotations are
+// single lines and GitHub caps how many it shows, hence one line per engine
+// (four on a PR run). The summary entry is attached to this job, so anyone who
+// does open the merge job finds the same facts in place. Annotations must go to
+// stdout -- that is where GitHub parses workflow commands from.
+const engines = Object.entries(data.config?.metadata ?? {})
+  .filter(([, value]) => typeof value === 'string' && value.startsWith('RStudio '))
+  .sort(([a], [b]) => a.localeCompare(b));
+
+for (const [name, value] of engines) {
+  const line = `${name} -- ${value}`;
+  console.log(process.env.GITHUB_ACTIONS ? `::notice title=Run under test::${line}` : `Run under test: ${line}`);
+}
+
+const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+if (summaryFile && engines.length > 0) {
+  const block = [
+    '### Run under test',
+    '',
+    '| Engine | Versions |',
+    '| :--- | :--- |',
+    ...engines.map(([name, value]) => `| **${name}** | ${value} |`),
+    '',
+    '',
+  ].join('\n');
+  try {
+    fs.appendFileSync(summaryFile, block);
+  } catch (err) {
+    console.warn(`WARNING: could not write the run-under-test summary: ${err.message}`);
+  }
+}
 
 // Echo to the step log for debugging when the comment looks wrong.
 console.log(`Overall: passed=${overall.passed} failed=${overall.failed} skipped=${overall.skipped} flaky=${overall.flaky} rate=${rate}%`);

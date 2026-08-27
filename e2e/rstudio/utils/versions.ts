@@ -5,10 +5,11 @@ import { executeInConsole, clearConsole, CONSOLE_OUTPUT } from '../pages/console
 import { getVersion } from './commands';
 
 /**
- * What build this run exercised. Gathered once per worker from the live
- * session, then reported at the top of the Playwright HTML report and the
- * GitHub Actions job summary, so a report answers "what was this actually
- * run against?" without digging through logs.
+ * What build this run exercised. Gathered once per worker from the live session
+ * and published into the Playwright report's metadata, so a report answers "what
+ * was this actually run against?" without digging through logs. The merge job
+ * reads it back out of the merged report and emits it as run annotations too
+ * (see scripts/summarize-merged-report.mjs).
  */
 export interface RunVersions {
   /** RStudio long version, e.g. "2026.09.0-daily+109". */
@@ -19,7 +20,7 @@ export interface RunVersions {
   r: string;
   /** "Desktop" or "Server" -- which product this worker drove. */
   edition: string;
-  /** Human OS label, e.g. "Ubuntu 24 ARM". */
+  /** Human OS label, e.g. "Ubuntu 24 (x86_64)"; from PW_OS_LABEL in CI. */
   os: string;
 }
 
@@ -91,7 +92,7 @@ export function runVersionsKey(v: RunVersions): string {
 }
 
 /**
- * One-line rendering, used by both the report header and the job summary. The
+ * One-line rendering, used by the report metadata and the run annotations. The
  * edition is left out because runVersionsKey already carries it -- in the
  * report the key is the label this sits next to.
  */
@@ -114,50 +115,6 @@ export function publishRunVersions(versions: RunVersions): void {
     fs.writeFileSync(path.join(sandbox, VERSIONS_FILE), JSON.stringify(versions));
   } catch (err) {
     console.warn(`WARNING: could not record run versions: ${err}`);
-  }
-}
-
-/**
- * Put the same line at the top of the GitHub Actions run summary, so the build
- * under test is readable from the run page without opening the report.
- *
- * Written from the first worker to get here rather than from a workflow step:
- * only the harness knows these values, and only once a session is up. The
- * summary is append-only, so "top" means being the first thing written in the
- * job -- which holds as long as nothing upstream writes to it (the R-version
- * block in .github/actions/os-e2e-deps was removed for exactly this reason).
- *
- * The lock is an exclusive create, so of several workers racing here exactly one
- * wins and the block appears once. A worker that loses does nothing.
- */
-export function writeJobSummary(versions: RunVersions): void {
-  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-  const sandbox = process.env.PW_SANDBOX;
-  if (!summaryPath || !sandbox) return;
-  try {
-    fs.writeFileSync(path.join(sandbox, '.summary-written'), '', { flag: 'wx' });
-  } catch {
-    return; // Another worker already wrote it.
-  }
-  const rows: [string, string][] = [
-    ['RStudio', `\`${versions.rstudio}\`${versions.releaseName ? ` "${versions.releaseName}"` : ''}`],
-    ['R', `\`${versions.r}\``],
-    ['Edition', versions.edition],
-    ['Operating system', versions.os],
-  ];
-  const block = [
-    '### Run under test',
-    '',
-    '| | |',
-    '| --- | --- |',
-    ...rows.map(([label, value]) => `| **${label}** | ${value} |`),
-    '',
-    '',
-  ].join('\n');
-  try {
-    fs.appendFileSync(summaryPath, block);
-  } catch (err) {
-    console.warn(`WARNING: could not write the run summary: ${err}`);
   }
 }
 

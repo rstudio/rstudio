@@ -10,7 +10,6 @@ import {
   formatRunVersions,
   publishRunVersions,
   runVersionsKey,
-  writeJobSummary,
 } from '../utils/versions';
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
 import { withDeadline, DeadlineError } from '../utils/deadline';
@@ -117,16 +116,14 @@ async function disableLeakedAssistant(page: Page): Promise<void> {
 }
 
 /**
- * Capture what this worker is running against, log it, publish it for the
- * reporter to put at the top of the Playwright report, and write it to the top
- * of the GitHub Actions run summary. The last two are per-run, not per-worker --
- * see the guards in utils/versions.ts.
+ * Capture what this worker is running against, log it, and publish it for the
+ * reporter to put in the report metadata. The merge job reads that metadata back
+ * out to write the run summary, so nothing here touches the summary directly.
  */
 async function recordVersions(page: Page, mode: Mode): Promise<void> {
   const versions = await collectRunVersions(page, mode);
   console.log(`Run under test: ${runVersionsKey(versions)} · ${formatRunVersions(versions)}`);
   publishRunVersions(versions);
-  writeJobSummary(versions);
   await clearConsole(page);
 }
 
