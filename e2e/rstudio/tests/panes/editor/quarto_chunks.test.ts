@@ -364,7 +364,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   });
 
   test('format reload disables blurred chunk commands (#16540)', async ({ rstudioPage: page }) => {
-    const fileName = `quarto_format_reload_commands_${Date.now()}.qmd`;
+    const sourceFile = `quarto_format_reload_source_${Date.now()}.R`;
+    const visualFile = `quarto_format_reload_commands_${Date.now()}.qmd`;
     const content = [
       '---',
       'title: Format reload commands',
@@ -377,7 +378,8 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       '```',
     ].join('\n');
 
-    await sourceActions.createAndOpenFile(fileName, content);
+    await sourceActions.createAndOpenFile(sourceFile, 'widget <- 1\nwidget + widget');
+    await sourceActions.createAndOpenFile(visualFile, content);
     try {
       await sourceActions.ensureVisualMode();
       const proseMirror = page.locator('.ProseMirror:visible').first();
@@ -413,8 +415,30 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(page.locator('.ProseMirror:visible').first()).toBeVisible({
         timeout: 15000,
       });
+
+      // Command enabled state is global. Activating a regular source target
+      // after the visual reload must restore the commands through the normal
+      // supported-command lifecycle, not wait for another visual chunk focus.
+      const sourceTabs = page.locator(
+        "[class*='rstudio_source_panel'] .gwt-TabLayoutPanelTab");
+      const sourceTab = sourceTabs.filter({ hasText: sourceFile }).first();
+      await sourceTab.evaluate((element) => (element as HTMLElement).click());
+      await expect(sourceActions.sourcePane.selectedTab).toContainText(sourceFile);
+      await expect.poll(() => isCommandEnabled(page, 'quickAddNext')).toBe(true);
+      expect(await isCommandEnabled(page, 'findAll')).toBe(true);
+
+      const sourceEditor = new AceEditor(page, '');
+      await sourceEditor.focus();
+      await sourceEditor.find('widget');
+      await expect.poll(() => sourceEditor.getSelectedText()).toBe('widget');
+      await executeCommand(page, 'quickAddNext');
+      await expect.poll(() => sourceEditor.getSelectionRanges()).toHaveLength(2);
     } finally {
-      await sourceActions.closeSourceAndDeleteFile(fileName);
+      await consoleActions.resetSourcePane();
+      await consoleActions.executeInConsole(
+        `unlink(c("${sourceFile}", "${visualFile}"))`,
+        { wait: true },
+      );
     }
   });
 
@@ -459,6 +483,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       const sourceEditor = new AceEditor(page, '');
       await sourceEditor.focus();
       await sourceEditor.find('widget');
+      await expect.poll(() => sourceEditor.getSelectedText()).toBe('widget');
       await executeCommand(page, 'quickAddNext');
       await expect.poll(() => sourceEditor.getSelectionRanges()).toHaveLength(2);
     } finally {
