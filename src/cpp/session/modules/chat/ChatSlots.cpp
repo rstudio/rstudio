@@ -104,10 +104,14 @@ bool isReservedDeviceName(const std::string& name)
       "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"
    };
 
-   std::string lowered = boost::algorithm::to_lower_copy(name);
+   // Windows resolves the device whatever follows it, so "nul.txt" and
+   // "com1.log" are reserved too -- only the part before the first dot counts.
+   std::string stem = boost::algorithm::to_lower_copy(
+      name.substr(0, name.find('.')));
+
    for (const char* reserved : kReserved)
    {
-      if (lowered == reserved)
+      if (stem == reserved)
          return true;
    }
 

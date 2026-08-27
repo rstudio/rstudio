@@ -541,6 +541,8 @@ TEST_F(ChatSlots, RejectsAVersionThatCannotNameADirectory)
       // Rejected by Win32, but checked everywhere so a home reached from both
       // Windows and Linux agrees on which names are slots.
       "1.0*", "1.0?", "1.0|x", "1.0<x", "1.0>x", "1.0\"x", "nul", "COM1",
+      // A device name stays reserved with an extension after it.
+      "nul.txt", "COM1.log", "aux.1.0",
       // Win32 strips these silently, so the directory would not match the
       // name recorded in the selector.
       "1.1.0.", "1.1.0 "};
