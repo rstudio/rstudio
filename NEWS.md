@@ -1,6 +1,7 @@
 ## RStudio 2026.09.0.0 "Autumn Hawkbit" Release Notes
 
 ### New
+- ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Posit Assistant now installs each version into its own directory, so RStudio releases sharing a home directory no longer compete for a single install and an update never disturbs a session already running the assistant.
 - ([#18649](https://github.com/rstudio/rstudio/issues/18649)): Renamed references to the Posit AI service to Posit AI Pass in the IDE user interface.
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): Added horizontal and vertical split source editor views, with shared edits and independent navigation state.
 

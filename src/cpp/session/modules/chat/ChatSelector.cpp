@@ -227,6 +227,34 @@ Error selectSlot(const FilePath& storageDir,
    return writeSelections(storageDir, selections);
 }
 
+bool selectInstalledVersion(const FilePath& storageDir,
+                            const std::string& protocol,
+                            const std::string& version)
+{
+   std::vector<slots::SlotInfo> installed =
+      slots::verifiedSlots(slots::versionsDir(storageDir));
+
+   for (const slots::SlotInfo& slot : installed)
+   {
+      if (slot.version != version || slot.protocol != protocol)
+         continue;
+
+      Error error = selectSlot(storageDir, protocol, slot.name);
+      if (error)
+      {
+         WLOG("Version {} is installed as slot {} but could not be recorded: {}",
+              version, slot.name, error.getMessage());
+         return false;
+      }
+
+      DLOG("Protocol {} now resolves to already-installed slot {}",
+           protocol, slot.name);
+      return true;
+   }
+
+   return false;
+}
+
 FilePath resolveSlot(const FilePath& storageDir, const std::string& protocol)
 {
    FilePath slotsDir = slots::versionsDir(storageDir);

@@ -86,6 +86,26 @@ core::Error selectSlot(const core::FilePath& storageDir,
                        const std::string& slotName);
 
 /**
+ * Record an existing slot that already holds `version` as the active one.
+ *
+ * An install whose target version is already on disk in a verifying slot has
+ * nothing to download; it is a selector update. Any matching slot will do --
+ * two slots holding one version hold the same package -- so the first one
+ * found is taken. A forced reinstall exists precisely to replace bits that
+ * verification cannot fault, so it must not use this.
+ *
+ * @param storageDir The Posit Assistant storage directory.
+ * @param protocol The protocol version the slot must serve (e.g. "11.0").
+ * @param version The package version the slot must hold (e.g. "1.1.0").
+ * @return true when a slot was found and recorded. false when no slot holds
+ *         that version for that protocol, or the selector could not be
+ *         written.
+ */
+bool selectInstalledVersion(const core::FilePath& storageDir,
+                            const std::string& protocol,
+                            const std::string& version);
+
+/**
  * Find the slot to run for a protocol.
  *
  * Prefers the recorded selection. When that slot is missing, fails

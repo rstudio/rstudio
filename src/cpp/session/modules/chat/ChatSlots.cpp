@@ -16,6 +16,7 @@
 #include "ChatSlots.hpp"
 
 #include "ChatConstants.hpp"
+#include "ChatInstallation.hpp"
 #include "ChatLogging.hpp"
 #include "ChatSlotManifest.hpp"
 
@@ -24,10 +25,8 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <shared_core/SafeConvert.hpp>
-#include <shared_core/json/Json.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::constants;
@@ -45,52 +44,6 @@ namespace {
 // bound only exists so a filesystem that keeps producing collisions fails
 // instead of spinning.
 const int kMaxAllocationAttempts = 1000;
-
-// Reads a single string field out of a JSON file in a slot. Returns an empty
-// string when the file is absent, unparseable, or the field is missing, empty
-// or not a string -- callers treat all of those the same way.
-std::string readJsonStringField(const FilePath& slotDir,
-                                const char* fileName,
-                                const char* fieldName)
-{
-   FilePath filePath = slotDir.completeChildPath(fileName);
-   if (!filePath.isRegularFile())
-      return std::string();
-
-   std::string content;
-   Error error = readStringFromFile(filePath, &content);
-   if (error)
-      return std::string();
-
-   json::Value value;
-   if (value.parse(content) || !value.isObject())
-      return std::string();
-
-   json::Object object = value.getObject();
-   if (!object.hasMember(fieldName) || !object[fieldName].isString())
-      return std::string();
-
-   return object[fieldName].getString();
-}
-
-bool existsAndNonEmpty(const FilePath& filePath)
-{
-   return filePath.isRegularFile() && filePath.getSize() > 0;
-}
-
-// The files a Posit Assistant install cannot run without. Existence alone is
-// not enough: a truncated download used to leave a zero-byte main.js that the
-// old check accepted.
-bool hasRequiredFiles(const FilePath& slotDir)
-{
-   if (!slotDir.completeChildPath(kClientDirPath).isDirectory())
-      return false;
-
-   return existsAndNonEmpty(slotDir.completeChildPath(kServerScriptPath)) &&
-          existsAndNonEmpty(
-             slotDir.completeChildPath(kClientDirPath)
-                .completeChildPath(kIndexFileName));
-}
 
 // Device names Windows resolves no matter which directory they appear in.
 // Checked on every platform on purpose: a home directory reached from both
@@ -210,22 +163,20 @@ bool verifySlot(const FilePath& slotDir, SlotInfo* pInfo)
       return false;
    }
 
-   if (!hasRequiredFiles(slotDir))
+   if (!installation::verifyInstallDir(slotDir))
    {
       DLOG("Slot {} is missing required files", slotDir.getAbsolutePath());
       return false;
    }
 
-   std::string version =
-      readJsonStringField(slotDir, kPackageJsonFileName, "version");
+   std::string version = installation::declaredVersion(slotDir);
    if (version.empty())
    {
       DLOG("Slot {} declares no package version", slotDir.getAbsolutePath());
       return false;
    }
 
-   std::string protocol =
-      readJsonStringField(slotDir, kProtocolVersionFileName, "protocol");
+   std::string protocol = installation::declaredProtocol(slotDir);
    if (protocol.empty())
    {
       DLOG("Slot {} declares no protocol version", slotDir.getAbsolutePath());

@@ -16,6 +16,8 @@
 #include "ChatInstallation.hpp"
 #include "ChatConstants.hpp"
 #include "ChatLogging.hpp"
+#include "ChatSelector.hpp"
+#include "ChatSlots.hpp"
 
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
@@ -33,159 +35,198 @@ namespace modules {
 namespace chat {
 namespace installation {
 
-bool verifyPositAiInstallation(const core::FilePath& positAiPath)
+namespace {
+
+// The installation this session runs, resolved on first use. See
+// locatePositAssistantInstallation() for why it is held rather than recomputed.
+bool s_pinned = false;
+core::FilePath s_pinnedInstall;
+
+// Reads one string field out of a JSON file in an installation directory.
+// Absent, unparseable, wrong-typed and empty all read as an empty string:
+// every caller treats them the same way, and none can do anything about the
+// difference.
+std::string readJsonStringField(const core::FilePath& installDir,
+                                const char* fileName,
+                                const char* fieldName)
 {
-   if (!positAiPath.exists())
+   core::FilePath filePath = installDir.completeChildPath(fileName);
+   if (!filePath.isRegularFile())
+      return std::string();
+
+   std::string content;
+   core::Error error = core::readStringFromFile(filePath, &content);
+   if (error)
+   {
+      WLOG("Failed to read {}: {}", filePath.getAbsolutePath(), error.getMessage());
+      return std::string();
+   }
+
+   core::json::Value value;
+   if (value.parse(content) || !value.isObject())
+   {
+      DLOG("{} is not a JSON object", filePath.getAbsolutePath());
+      return std::string();
+   }
+
+   core::json::Object object = value.getObject();
+   if (!object.hasMember(fieldName) || !object[fieldName].isString())
+      return std::string();
+
+   return object[fieldName].getString();
+}
+
+bool existsAndNonEmpty(const core::FilePath& filePath)
+{
+   return filePath.isRegularFile() && filePath.getSize() > 0;
+}
+
+// The system-wide install, which an administrator manages by hand. It is
+// deliberately unversioned: nothing RStudio does ever writes here.
+core::FilePath systemInstallDir()
+{
+   return core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
+}
+
+// Source 1: the development override.
+bool resolveFromEnvironment(core::FilePath* pInstallDir)
+{
+   std::string overridePath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
+   if (overridePath.empty())
       return false;
 
-   core::FilePath clientDir = positAiPath.completeChildPath(kClientDirPath);
-   core::FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
-   core::FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
+   core::FilePath installDir(overridePath);
+   if (!verifyInstallDir(installDir))
+   {
+      WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", overridePath);
+      return false;
+   }
 
-   return clientDir.exists() && serverScript.exists() && indexHtml.exists();
+   DLOG("Using Posit Assistant from RSTUDIO_POSIT_AI_PATH: {}",
+        installDir.getAbsolutePath());
+   *pInstallDir = installDir;
+   return true;
+}
+
+// Source 2: the per-user version slots, chosen by protocol. The only source
+// an install writes to.
+bool resolveFromUserSlots(core::FilePath* pInstallDir)
+{
+   core::FilePath slotDir =
+      selector::resolveSlot(positAiStorageDir(), kProtocolVersion);
+   if (slotDir.isEmpty())
+      return false;
+
+   DLOG("Using Posit Assistant install slot: {}", slotDir.getAbsolutePath());
+   *pInstallDir = slotDir;
+   return true;
+}
+
+// Source 3: the admin-managed system install.
+bool resolveFromSystemInstall(core::FilePath* pInstallDir)
+{
+   core::FilePath installDir = systemInstallDir();
+   if (!verifyInstallDir(installDir))
+      return false;
+
+   DLOG("Using system-wide Posit Assistant install: {}",
+        installDir.getAbsolutePath());
+   *pInstallDir = installDir;
+   return true;
+}
+
+// Each source is self-contained so the list can be changed without disturbing
+// the others: #18443 disables the user-writable sources in admin-managed
+// deployments, and the Workbench bundling work appends a fourth.
+core::FilePath resolveInstallation()
+{
+   core::FilePath installDir;
+
+   if (resolveFromEnvironment(&installDir))
+      return installDir;
+
+   if (resolveFromUserSlots(&installDir))
+      return installDir;
+
+   if (resolveFromSystemInstall(&installDir))
+      return installDir;
+
+   DLOG("No Posit Assistant installation found. Checked: RSTUDIO_POSIT_AI_PATH, "
+        "{} (protocol {}), {}",
+        slots::versionsDir(positAiStorageDir()).getAbsolutePath(),
+        kProtocolVersion,
+        systemInstallDir().getAbsolutePath());
+
+   return core::FilePath();
+}
+
+} // anonymous namespace
+
+core::FilePath positAiStorageDir()
+{
+   return core::system::xdg::userDataDir().completePath(kPositAiStorageDirName);
+}
+
+bool verifyInstallDir(const core::FilePath& installDir)
+{
+   if (!installDir.isDirectory())
+      return false;
+
+   core::FilePath clientDir = installDir.completeChildPath(kClientDirPath);
+   if (!clientDir.isDirectory())
+      return false;
+
+   return existsAndNonEmpty(installDir.completeChildPath(kServerScriptPath)) &&
+          existsAndNonEmpty(clientDir.completeChildPath(kIndexFileName));
+}
+
+std::string declaredVersion(const core::FilePath& installDir)
+{
+   return readJsonStringField(installDir, kPackageJsonFileName, "version");
+}
+
+std::string declaredProtocol(const core::FilePath& installDir)
+{
+   return readJsonStringField(installDir, kProtocolVersionFileName, "protocol");
 }
 
 core::FilePath locatePositAssistantInstallation()
 {
-   // 1. Check environment variable override (for development/testing)
-   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
-   if (!rstudioPositAiPath.empty())
+   if (!s_pinned)
    {
-      core::FilePath positAiPath(rstudioPositAiPath);
-      if (verifyPositAiInstallation(positAiPath))
-      {
-         DLOG("Using AI installation from RSTUDIO_POSIT_AI_PATH: {}", positAiPath.getAbsolutePath());
-         return positAiPath;
-      }
-      else
-      {
-         WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", rstudioPositAiPath);
-      }
+      s_pinnedInstall = resolveInstallation();
+      s_pinned = true;
    }
 
-   // 2. Check user data directory (XDG-based, platform-appropriate)
-   // Linux/macOS: ~/.local/share/rstudio/pai/bin
-   // Windows: %LOCALAPPDATA%/rstudio/pai/bin
-   core::FilePath userPositAiPath = core::system::xdg::userDataDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(userPositAiPath))
-   {
-      DLOG("Using user-level AI installation: {}", userPositAiPath.getAbsolutePath());
-      return userPositAiPath;
-   }
+   return s_pinnedInstall;
+}
 
-   // 3. Check system-wide installation (XDG config directory)
-   // Linux/macOS: /etc/rstudio/pai/bin
-   // Windows: C:/ProgramData/rstudio/pai/bin
-   core::FilePath systemPositAiPath = core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(systemPositAiPath))
-   {
-      DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
-      return systemPositAiPath;
-   }
-
-   DLOG("No valid AI installation found. Checked locations:");
-   if (!rstudioPositAiPath.empty())
-      DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
-   DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
-   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
-
-   return core::FilePath(); // Not found
+void clearPinnedInstallation()
+{
+   s_pinned = false;
+   s_pinnedInstall = core::FilePath();
 }
 
 std::string getInstalledVersion()
 {
-   core::FilePath positAiPath = locatePositAssistantInstallation();
-   if (positAiPath.isEmpty())
-      return "";
+   core::FilePath installDir = locatePositAssistantInstallation();
+   if (installDir.isEmpty())
+      return std::string();
 
-   core::FilePath packageJson = positAiPath.completeChildPath("package.json");
-   if (!packageJson.exists())
-   {
-      WLOG("package.json not found in AI installation");
-      return "";
-   }
+   std::string version = declaredVersion(installDir);
+   if (version.empty())
+      WLOG("No package version in {}", installDir.getAbsolutePath());
 
-   // Read and parse package.json
-   std::string content;
-   core::Error error = core::readStringFromFile(packageJson, &content);
-   if (error)
-   {
-      WLOG("Failed to read package.json: {}", error.getMessage());
-      return "";
-   }
-
-   core::json::Value packageValue;
-   if (packageValue.parse(content))
-   {
-      WLOG("Failed to parse package.json");
-      return "";
-   }
-
-   if (!packageValue.isObject())
-   {
-      WLOG("package.json is not a JSON object");
-      return "";
-   }
-
-   core::json::Object packageObj = packageValue.getObject();
-   std::string version;
-   error = core::json::readObject(packageObj, "version", version);
-   if (error)
-   {
-      WLOG("package.json missing 'version' field");
-      return "";
-   }
-
-   DLOG("Installed version: {}", version);
    return version;
 }
 
 std::string getInstalledProtocolVersion()
 {
-   core::FilePath positAiPath = locatePositAssistantInstallation();
-   if (positAiPath.isEmpty())
-      return "";
+   core::FilePath installDir = locatePositAssistantInstallation();
+   if (installDir.isEmpty())
+      return std::string();
 
-   core::FilePath protoFile =
-      positAiPath.completeChildPath(kProtocolVersionFileName);
-   if (!protoFile.exists())
-   {
-      DLOG("No protocol.json found (legacy install)");
-      return "";
-   }
-
-   std::string content;
-   core::Error error = core::readStringFromFile(protoFile, &content);
-   if (error)
-   {
-      ELOG("Failed to read protocol.json: {}", error.getMessage());
-      return "";
-   }
-
-   core::json::Value jsonValue;
-   if (jsonValue.parse(content))
-   {
-      ELOG("Failed to parse protocol.json");
-      return "";
-   }
-
-   if (!jsonValue.isObject())
-   {
-      ELOG("protocol.json is not a JSON object");
-      return "";
-   }
-
-   core::json::Object obj = jsonValue.getObject();
-   if (!obj.hasMember("protocol") ||
-       !obj["protocol"].isString())
-   {
-      ELOG("protocol.json missing \"protocol\" string field");
-      return "";
-   }
-
-   std::string version = obj["protocol"].getString();
-   DLOG("Installed protocol version: {}", version);
-   return version;
+   return declaredProtocol(installDir);
 }
 
 core::Error writeProtocolVersionFileIfMissing(const core::FilePath& positAiPath)

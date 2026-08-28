@@ -413,4 +413,61 @@ TEST_F(ChatSelector, ResolvesNothingBeforeTheFirstInstall)
    EXPECT_FALSE(storageDir_.exists());
 }
 
+// ============================================================================
+// selectInstalledVersion
+// ============================================================================
+
+TEST_F(ChatSelector, SelectsAVersionAlreadyOnDisk)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   makeSlot("1.0.4", "1.0.4", "11.0");
+   ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.1.0"));
+
+   // The manifest-driven downgrade: 1.0.4 is already installed, so returning
+   // to it is a selector update rather than a download.
+   EXPECT_TRUE(selectInstalledVersion(storageDir_, "11.0", "1.0.4"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.0.4");
+   EXPECT_TRUE(resolveSlot(storageDir_, "11.0").isEquivalentTo(slot("1.0.4")));
+}
+
+TEST_F(ChatSelector, DoesNotSelectAVersionThatIsNotInstalled)
+{
+   makeSlot("1.1.0", "1.1.0", "11.0");
+   ASSERT_FALSE(selectSlot(storageDir_, "11.0", "1.1.0"));
+
+   EXPECT_FALSE(selectInstalledVersion(storageDir_, "11.0", "1.2.0"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0");
+}
+
+TEST_F(ChatSelector, DoesNotSelectAVersionInstalledForAnotherProtocol)
+{
+   // The same package version can serve different protocols. Selecting the
+   // wrong one would strand the session: resolution rejects a slot whose
+   // protocol does not match what it was asked for.
+   makeSlot("1.1.0", "1.1.0", "10.0");
+
+   EXPECT_FALSE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_).count("11.0"), 0u);
+}
+
+TEST_F(ChatSelector, DoesNotSelectAVersionWhoseOnlySlotIsDamaged)
+{
+   // The version is nominally on disk, but the slot does not verify, so the
+   // install has to download rather than take the shortcut.
+   makeDamagedSlot("1.1.0", "11.0");
+
+   EXPECT_FALSE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_).count("11.0"), 0u);
+}
+
+TEST_F(ChatSelector, SelectsAReinstallSlotByTheVersionItHolds)
+{
+   // A slot name carries no meaning, so the version has to come from the
+   // package.json inside: "1.1.0-2" holds 1.1.0.
+   makeSlot("1.1.0-2", "1.1.0", "11.0");
+
+   EXPECT_TRUE(selectInstalledVersion(storageDir_, "11.0", "1.1.0"));
+   EXPECT_EQ(readSelections(storageDir_)["11.0"], "1.1.0-2");
+}
+
 } // anonymous namespace

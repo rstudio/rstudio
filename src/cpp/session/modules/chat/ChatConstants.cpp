@@ -24,8 +24,15 @@ namespace chat {
 namespace constants {
 
 // Installation paths
+// The Posit Assistant storage root, shared by every install: it holds the
+// version slots, the selector, and the backend's own state (paconfig.json,
+// manifest-check.json). Passed to the backend as --storage.
+const char* const kPositAiStorageDirName = "pai";
+// The unversioned install layout. Only the read-only system install is read
+// from here now; the per-user pai/bin an older RStudio installed is left
+// alone entirely -- not read, not written, not deleted -- so that release
+// keeps working while this one installs into pai/versions.
 const char* const kPositAiDirName = "pai/bin";
-const char* const kPositAiBackupDirName = "ai.prev";
 // Cross-process lock files; outside pai/bin so it survives install mutations
 const char* const kPositAiLocksDirName = "pai/locks";
 const char* const kClientDirPath = "dist/client";

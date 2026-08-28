@@ -29,8 +29,8 @@ namespace constants {
 // ============================================================================
 // Installation paths
 // ============================================================================
+extern const char* const kPositAiStorageDirName;
 extern const char* const kPositAiDirName;
-extern const char* const kPositAiBackupDirName;
 extern const char* const kPositAiLocksDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
