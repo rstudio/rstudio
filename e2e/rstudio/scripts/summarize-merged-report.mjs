@@ -23,8 +23,23 @@
 // Usage: node summarize-merged-report.mjs <path-to-test-results.json>
 
 import fs from 'node:fs';
+import path from 'node:path';
 
-const file = process.argv[2];
+// Resolve the report path against the working directory and refuse anything
+// that escapes it. Every caller passes a path relative to e2e/rstudio (see the
+// merge jobs), so this rejects nothing that exists -- it's here because reading
+// an unconstrained argv path is what a static analyzer flags, and a scan that
+// cries wolf on this script is a scan nobody reads on the next PR. To run it
+// against a report from elsewhere, copy that report under the working directory
+// first.
+const cwd = process.cwd();
+const requested = process.argv[2];
+const file = requested === undefined ? undefined : path.resolve(cwd, requested);
+if (file !== undefined && file !== cwd && !file.startsWith(cwd + path.sep)) {
+  console.error(`Refusing to read ${requested}: outside the working directory (${cwd}).`);
+  process.exit(2);
+}
+
 const outFile = process.env.GITHUB_OUTPUT;
 
 let data;
