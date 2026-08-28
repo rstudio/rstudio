@@ -36,6 +36,9 @@ public class ChatTab extends DelayLoadWorkbenchTab<ChatPresenter>
       public abstract void onAssistantPaneToggle();
 
       @Handler
+      public abstract void onUninstallPositAssistant();
+
+      @Handler
       public abstract void onCheckForPositAssistantUpdates();
    }
 
