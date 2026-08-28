@@ -12,7 +12,7 @@ import { withDeadline, DeadlineError } from '../utils/deadline';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
-import { installedPaiVersion } from './pai-seed';
+import { selectedPaiInstalls } from './pai-seed';
 
 type Mode = 'desktop' | 'server';
 
@@ -207,21 +207,21 @@ async function verifyTestManifestIfRequested(session: DesktopSession): Promise<v
 async function logPositAssistantVersionIfInstalled(session: DesktopSession): Promise<void> {
   if (!session.requestedTestManifest) return;
   const storageDir = path.join(session.dataHome, 'pai');
-  let version: string | null = null;
-  try {
-    version = installedPaiVersion(session.dataHome);
-  } catch (err) {
-    console.warn(`WARNING: could not read the Posit Assistant version under ${storageDir}: ${err}`);
-    return;
-  }
-  if (!version) {
+  const installs = selectedPaiInstalls(session.dataHome);
+  if (installs.length === 0) {
     console.warn(
       `WARNING: this run requested the Posit Assistant test manifest, but no install is selected ` +
       `under ${storageDir} -- this worker exercised no Assistant build.`,
     );
     return;
   }
-  logCiNotice(`Posit Assistant version under test: ${version}`);
+  // Normally one. More than one means a seeded build did not satisfy the IDE
+  // and it installed another, so naming a single build here would name the
+  // wrong one -- which protocol the session ran is not readable from disk.
+  logCiNotice(
+    `Posit Assistant version under test: ` +
+    installs.map(i => `${i.version} (protocol ${i.protocol})`).join(', '),
+  );
 }
 
 /**

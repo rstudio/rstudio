@@ -69,6 +69,33 @@ function writeSlotManifest(slotDir: string): void {
   fs.writeFileSync(path.join(slotDir, SLOT_MANIFEST_FILE_NAME), JSON.stringify({ files }));
 }
 
+// Device names Windows resolves in any directory. Checked on every platform for
+// the same reason the C++ side checks them: a sandbox seeded on one OS has to
+// be a slot on any other.
+const WINDOWS_RESERVED = new Set([
+  'con', 'prn', 'aux', 'nul',
+  'com1', 'com2', 'com3', 'com4', 'com5', 'com6', 'com7', 'com8', 'com9',
+  'lpt1', 'lpt2', 'lpt3', 'lpt4', 'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9',
+]);
+
+/**
+ * Whether a string may name a slot directory.
+ *
+ * Mirrors `slots::isUsableSlotName()` in ChatSlots.cpp. The version comes out
+ * of a package.json, so it is not a path: `../../elsewhere` would write the
+ * seed outside `versions/`, and a name RStudio rejects would produce a selector
+ * entry resolution ignores -- which fails as a silent download of the official
+ * package rather than as a broken seed.
+ */
+function isUsableSlotName(name: string): boolean {
+  if (name === '' || name.startsWith('.') || name.startsWith('-')) return false;
+  if (name.endsWith('.') || name.endsWith(' ')) return false;
+  // Printable ASCII only.
+  if (!/^[\x20-\x7e]+$/.test(name)) return false;
+  if (WINDOWS_RESERVED.has(name.split('.')[0].toLowerCase())) return false;
+  return !/[/\\:*?"<>|]/.test(name);
+}
+
 function readJsonField(filePath: string, field: string): string {
   let parsed: Record<string, unknown>;
   try {
@@ -97,8 +124,15 @@ export function inspectSeed(seedRoot: string): { version: string; protocol: stri
         `(missing ${SEED_PACKAGE_DIR}/${PACKAGE_JSON_FILE_NAME})`,
     );
   }
+  const version = readJsonField(path.join(packageDir, PACKAGE_JSON_FILE_NAME), 'version');
+  if (!isUsableSlotName(version)) {
+    throw new Error(
+      `PW_SEED_PAI="${seedRoot}" declares version "${version}", which cannot name an ` +
+        `install slot -- RStudio would not resolve it`,
+    );
+  }
   return {
-    version: readJsonField(path.join(packageDir, PACKAGE_JSON_FILE_NAME), 'version'),
+    version,
     protocol: readJsonField(path.join(packageDir, PROTOCOL_FILE_NAME), 'protocol'),
   };
 }
@@ -137,37 +171,50 @@ export function seedPaiSlot(seedRoot: string, storageDir: string): string {
   return version;
 }
 
+/** A protocol and the package version its selected slot holds. */
+export interface SelectedInstall {
+  protocol: string;
+  version: string;
+}
+
 /**
- * The version held by the first selected slot under `dataHome`, or null when
- * nothing is installed there.
+ * Every selected install under `dataHome`, in protocol order.
  *
  * Follows the two steps the IDE does -- selector entry, then the slot's own
  * package.json -- rather than trusting the slot's name, which carries no
- * meaning (a reinstall of 1.1.0 is named 1.1.0-2). A sandbox only ever holds
- * one protocol's selection, so "first" is unambiguous in practice.
+ * meaning (a reinstall of 1.1.0 is named 1.1.0-2).
+ *
+ * All of them are returned rather than one, because which one a session runs
+ * depends on the protocol compiled into the IDE, which is not readable from
+ * here. A sandbox normally holds a single selection, but a seed the IDE found
+ * incompatible leaves two -- exactly the case where naming one build as "the"
+ * one under test would name the wrong one.
  */
-export function installedPaiVersion(dataHome: string): string | null {
+export function selectedPaiInstalls(dataHome: string): SelectedInstall[] {
   const storageDir = path.join(dataHome, 'pai');
   const selectorPath = path.join(storageDir, SELECTOR_FILE_NAME);
-  if (!fs.existsSync(selectorPath)) return null;
+  if (!fs.existsSync(selectorPath)) return [];
 
   let selected: Record<string, unknown>;
   try {
     selected = JSON.parse(fs.readFileSync(selectorPath, 'utf-8')).selected ?? {};
   } catch {
-    return null;
+    return [];
   }
 
-  for (const slotName of Object.values(selected)) {
+  const installs: SelectedInstall[] = [];
+  for (const protocol of Object.keys(selected).sort()) {
+    const slotName = selected[protocol];
     if (typeof slotName !== 'string') continue;
     const packageJson = path.join(storageDir, VERSIONS_DIR_NAME, slotName, PACKAGE_JSON_FILE_NAME);
     if (!fs.existsSync(packageJson)) continue;
     try {
-      return readJsonField(packageJson, 'version');
+      installs.push({ protocol, version: readJsonField(packageJson, 'version') });
     } catch {
-      return null;
+      // A selected slot with an unreadable package.json is reported as absent
+      // rather than failing the run: this is a diagnostic read-back.
     }
   }
 
-  return null;
+  return installs;
 }
