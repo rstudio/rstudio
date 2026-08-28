@@ -427,6 +427,11 @@ public class RemoteServer implements Server
       authWatcher_.start();
    }
 
+   public void checkAuthNow()
+   {
+      authWatcher_.checkNow();
+   }
+
    public void disconnect()
    {
       disconnected_ = true;
@@ -7148,12 +7153,6 @@ public class RemoteServer implements Server
    public void chatNotifyUILoaded(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_notify_ui_loaded", requestCallback);
-   }
-
-   @Override
-   public void chatUninstallPositAssistant(ServerRequestCallback<VoidResponse> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "chat_uninstall_posit_assistant", requestCallback);
    }
 
    @Override

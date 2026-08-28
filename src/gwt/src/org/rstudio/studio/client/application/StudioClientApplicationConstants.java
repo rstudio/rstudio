@@ -202,6 +202,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String workbenchLoginRequiredMessage();
     String serverLoginRequiredMessage();
     String loginButton();
+    String tryAgainButton();
     String gpuSettingChangedCaption();
     String gpuSettingChangedMessage();
 }

@@ -3180,8 +3180,6 @@ public class PaneManager
 
       // The chat window commands only apply to Posit Assistant; hide them when
       // it is unavailable (their enabled state is managed by ChatPresenter).
-      // "Uninstall Posit Assistant" stays available so a previously installed
-      // Posit Assistant can still be removed.
       commands_.popOutChat().setVisible(paiEnabled);
       commands_.returnChatToMain().setVisible(paiEnabled);
       commands_.checkForPositAssistantUpdates().setVisible(paiEnabled);

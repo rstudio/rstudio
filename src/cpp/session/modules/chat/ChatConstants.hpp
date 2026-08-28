@@ -37,6 +37,15 @@ extern const char* const kServerScriptPath;
 extern const char* const kIndexFileName;
 extern const char* const kCspConfigPath;
 extern const char* const kProtocolVersionFileName;
+extern const char* const kPackageJsonFileName;
+
+// ============================================================================
+// Versioned installation layout (pai/versions)
+// ============================================================================
+extern const char* const kVersionsDirName;
+extern const char* const kSelectorFileName;
+extern const char* const kSlotManifestFileName;
+extern const char* const kStagingDirPrefix;
 
 // Sentinel value: no backend port is assigned
 constexpr int kChatBackendPortNone = -1;
