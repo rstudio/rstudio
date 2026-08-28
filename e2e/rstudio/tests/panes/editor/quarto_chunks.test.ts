@@ -32,6 +32,17 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
   const focusChunk = (page: Page, proseMirror: Locator, header: string) =>
     AceEditor.visualModeChunk(page, header, proseMirror).focus();
 
+  // Showing or seeding the visual find bar runs the search on a 300ms buffer
+  // (PanmirrorFindReplaceWidget.timeBufferedFind_) that ends by re-selecting
+  // the current match, which would undo a selection or focus change made in
+  // the meantime -- e.g. pull the selection out of a footnote and close its
+  // editor, or move it out of the chunk a command is about to act on. Wait
+  // for that pass before moving on: it marks the selected match (an empty
+  // span when the match is inside a chunk), and any editor transaction since
+  // the last pass clears the marks.
+  const awaitFindSettled = (proseMirror: Locator) =>
+    expect(proseMirror.locator('.pm-find-text.pm-selected-text')).toHaveCount(1);
+
   // Each editor tab owns a copy of the visual toolbar. Resolve the button
   // through the tab panel containing the ProseMirror instance under test so
   // split editors and background tabs cannot make the locator ambiguous.
@@ -302,6 +313,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // chunk before it tries to add another cursor.
       await executeCommand(page, 'findReplace');
       await expect(findInput).toBeFocused();
+      await awaitFindSettled(proseMirror);
       expect(await isCommandEnabled(page, 'quickAddNext')).toBe(true);
       await executeCommand(page, 'quickAddNext');
       await page.keyboard.type('gadget');
@@ -330,6 +342,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // must perform the editing-surface handoff itself.
       await executeCommand(page, 'findReplace');
       await expect(findInput).toBeFocused();
+      await awaitFindSettled(proseMirror);
       await expect.poll(() => isCommandEnabled(page, 'findAll')).toBe(true);
 
       const palette = page.locator('#rstudio_command_palette_search');
@@ -530,6 +543,11 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       '```',
     ].join('\n');
 
+    // Selectable text outside the document, for the non-document selection
+    // checks below. Printed before the document opens so the console keeps
+    // the focus disruption away from the editor interactions.
+    await consoleActions.executeInConsole('cat("Console Sentinel\\n")', { wait: true });
+
     await sourceActions.createAndOpenFile(fileName, content);
     try {
       await sourceActions.ensureVisualMode();
@@ -563,36 +581,48 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
 
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('sassafras');
+      await awaitFindSettled(proseMirror);
 
       // So does a selection made inside a code chunk, which the outer
-      // ProseMirror selection cannot see on its own.
+      // ProseMirror selection cannot see on its own. Ace mirrors it into its
+      // hidden textarea, which must not read as a find input selection.
       const chunk = AceEditor.visualModeChunk(page, '{r seed}', proseMirror);
       await focusSeedChunk();
       await chunk.find('gizmo');
       await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('gizmo');
+      await awaitFindSettled(proseMirror);
 
       // A menu, command palette, or other non-editor control can blur the
       // chunk before dispatching Find. The command must restore the editing
-      // surface before it reads the retained Ace selection.
-      await findInput.focus();
-      await executeCommand(page, 'findReplace');
-      await expect(findInput).toHaveValue('gizmo');
-
-      // Use Selection for Find reads the same selection. Refocus the chunk
-      // first -- opening the find bar moved focus into the search box -- and
-      // take the other identifier, so the box has to change to pass. Ace's
-      // find() searches forward from the cursor and reports nothing when it
-      // misses, so pin the selection before dispatching: otherwise a stale
-      // `gizmo` would fail below looking like a seeding regression.
+      // surface before it reads the retained Ace selection. Stand in with the
+      // toolbar button, not the find input: seeding left the input's text
+      // selected, and a focused input selection is one the command must keep
+      // (asserted below), so focusing the input would not exercise this path.
+      // Each step takes the other identifier, so the box has to change to
+      // pass. Ace's find() searches forward from the cursor and reports
+      // nothing when it misses, so pin the selection before dispatching:
+      // otherwise a stale term would fail looking like a seeding regression.
+      const findButton = findReplaceButton(proseMirror);
       await focusSeedChunk();
       await chunk.find('kumquat');
       await expect.poll(() => chunk.getSelectedText()).toBe('kumquat');
-
-      // As with Find/Replace, a menu or palette can own focus by the time the
-      // command handler runs. Use Selection must restore the chunk itself.
-      await findInput.focus();
-      await executeCommand(page, 'findFromSelection');
+      await findButton.focus();
+      await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('kumquat');
+      await awaitFindSettled(proseMirror);
+
+      // Use Selection for Find reads the same selection. As with Find, a menu
+      // or palette can own focus by the time the command handler runs; Use
+      // Selection must restore the chunk itself.
+      await focusSeedChunk();
+      await chunk.find('gizmo');
+      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+      await findButton.focus();
+      await executeCommand(page, 'findFromSelection');
+      await expect(findInput).toHaveValue('gizmo');
+      await awaitFindSettled(proseMirror);
 
       // Neither guard in getSearchSelection() seeds, and both leave the box as
       // it was. A multi-line selection is refused, as source mode's find bar
@@ -610,7 +640,6 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Find will incorrectly seed `gizmo` and this assertion will fail.
       await chunk.find('gizmo');
       await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
-      const findButton = findReplaceButton(proseMirror);
       await findButton.click();
       await expect(findInput).toBeHidden();
 
@@ -623,6 +652,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await executeCommand(page, 'findReplace');
       await expect(findInput).toBeVisible();
       await expect(findInput).toHaveValue(retainedSearchTerm);
+      await awaitFindSettled(proseMirror);
 
       // After interacting with a chunk, Panmirror's tracked prose selection
       // can lag behind the live browser selection. Select prose again, move
@@ -634,6 +664,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await findButton.focus();
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('sassafras');
+      await awaitFindSettled(proseMirror);
 
       // Footnote editing uses a second `.pm-content` root. Its selection is
       // still document content and must seed Find just like the main body.
@@ -651,94 +682,102 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await findButton.focus();
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('mangosteen');
+      await awaitFindSettled(proseMirror);
 
-      // Panmirror also contains selectable non-document UI. A browser
-      // selection in the outline must never become the document search term.
-      const outline = visualEditorPanel(proseMirror).getByRole('tree', {
-        name: 'Document Outline',
-      });
-      const outlineInitiallyVisible = await outline.isVisible();
-      if (!outlineInitiallyVisible) await executeCommand(page, 'toggleDocumentOutline');
-      await expect(outline).toBeVisible();
-      try {
-        const outlineLabel = outline.getByText('Outline Sentinel', { exact: true });
-        await expect(outlineLabel).toBeVisible();
+      // A live text selection outside document content must never become
+      // the search term. RStudio's chrome, the outline included, is
+      // user-select: none, and Selection.toString() -- what getSelectedText()
+      // reads -- is empty for a range in it, so the only such selection a
+      // user can make lies in another pane. Select the console sentinel; the
+      // visual editor stays the active document throughout.
+      const consoleSentinel = consoleActions.consolePane.consoleOutput
+        .getByText('Console Sentinel', { exact: true })
+        .last();
+      await expect(consoleSentinel).toBeVisible();
 
-        const selectOutlineLabel = async () => {
-          await outlineLabel.evaluate((element) => {
-            const range = document.createRange();
-            range.selectNodeContents(element);
-            const selection = window.getSelection();
-            selection?.removeAllRanges();
-            selection?.addRange(range);
-          });
-          await expect
-            .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
-            .toBe('Outline Sentinel');
-        };
+      const selectConsoleSentinel = async () => {
+        await consoleSentinel.evaluate((element) => {
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        });
+        await expect
+          .poll(() => page.evaluate(() => (window.getSelection()?.toString() ?? '').trim()))
+          .toBe('Console Sentinel');
+      };
 
-        // A live selection outside editor content is invalid, rather than an
-        // invitation to fall back to a stale document selection. Preserve the
-        // footnote term through Use Selection and direct Find.
-        await selectOutlineLabel();
-        await executeCommand(page, 'findFromSelection');
-        await expect(findInput).toHaveValue('mangosteen');
+      // Such a selection is invalid, rather than an invitation to fall back
+      // to a stale document selection. Preserve the footnote term through Use
+      // Selection and direct Find.
+      await selectConsoleSentinel();
+      await executeCommand(page, 'findFromSelection');
+      await expect(findInput).toHaveValue('mangosteen');
 
-        await selectOutlineLabel();
-        await executeCommand(page, 'findReplace');
-        await expect(findInput).toHaveValue('mangosteen');
+      await selectConsoleSentinel();
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('mangosteen');
 
-        await findButton.click();
-        await expect(findInput).toBeHidden();
+      await findButton.click();
+      await expect(findInput).toBeHidden();
 
-        // Keep a valid chunk selection active, then create the outline
-        // selection programmatically so Ace does not blur. Toolbar mouse-down
-        // must prefer the live non-document selection over stale activeEditor_.
+      // Keep a valid chunk selection active, then create the console
+      // selection programmatically so Ace does not blur. Toolbar mouse-down
+      // must prefer the live non-document selection over stale activeEditor_.
+      await focusSeedChunk();
+      await chunk.find('gizmo');
+      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+      await selectConsoleSentinel();
+      await findButton.click();
+      await expect(findInput).toHaveValue('mangosteen');
+
+      // Input selections do not appear in window.getSelection(). With the
+      // find input focused and a distinct value selected in it, the chunk's
+      // retained `gizmo` selection -- what the editor would otherwise seed --
+      // must not replace it: the focused input wins. A DOM range cannot stand
+      // in for a stale editor selection here, as placing one in the editor
+      // moves focus out of the input.
+      const selectFindInput = async () => {
         await focusSeedChunk();
         await chunk.find('gizmo');
         await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
-        await selectOutlineLabel();
-        await findButton.click();
-        await expect(findInput).toHaveValue('mangosteen');
+        await findInput.fill('current-search-term');
+        await findInput.selectText();
+        await expect
+          .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
+            active: document.activeElement === input,
+            selected: input.selectionEnd! - input.selectionStart!,
+          })))
+          .toEqual({ active: true, selected: 'current-search-term'.length });
+      };
 
-        // Input selections do not appear in window.getSelection(). Make the
-        // current find value distinct, select it, and leave a different stale
-        // prose DOM selection behind; the focused input must win.
-        const proseWord = proseMirror.getByText('sassafras');
-        const selectFindInputOverStaleProse = async () => {
-          await findInput.fill('current-search-term');
-          await findInput.selectText();
-          await proseWord.evaluate((element) => {
-            const range = document.createRange();
-            range.selectNodeContents(element);
-            const selection = window.getSelection();
-            selection?.removeAllRanges();
-            selection?.addRange(range);
-          });
-          await expect
-            .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
-              active: document.activeElement === input,
-              selected: input.selectionEnd! - input.selectionStart!,
-            })))
-            .toEqual({ active: true, selected: 'current-search-term'.length });
-          await expect
-            .poll(() => page.evaluate(() => window.getSelection()?.toString() ?? ''))
-            .toBe('sassafras');
-        };
+      await selectFindInput();
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('current-search-term');
 
-        await selectFindInputOverStaleProse();
-        await executeCommand(page, 'findReplace');
-        await expect(findInput).toHaveValue('current-search-term');
+      await selectFindInput();
+      await executeCommand(page, 'findFromSelection');
+      await expect(findInput).toHaveValue('current-search-term');
 
-        await selectFindInputOverStaleProse();
-        await executeCommand(page, 'findFromSelection');
-        await expect(findInput).toHaveValue('current-search-term');
-      } finally {
-        if (!outlineInitiallyVisible) {
-          await executeCommand(page, 'toggleDocumentOutline');
-          await expect(outline).toBeHidden();
-        }
-      }
+      // Only a text selection in the input counts. Use Selection handed focus
+      // back to the chunk, which still holds `gizmo`; once that handoff has
+      // landed, focus the input with a collapsed selection, and the same
+      // command seeds from the chunk.
+      await expect.poll(() => chunk.isFocused()).toBe(true);
+      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+      await findInput.focus();
+      await findInput.evaluate((input: HTMLInputElement) => {
+        input.setSelectionRange(input.value.length, input.value.length);
+      });
+      await expect
+        .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
+          active: document.activeElement === input,
+          selected: input.selectionEnd! - input.selectionStart!,
+        })))
+        .toEqual({ active: true, selected: 0 });
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('gizmo');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
@@ -775,6 +814,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // Mouse-down must capture the term before the toolbar takes focus.
       await findButton.click();
       await expect(findInput).toHaveValue('persimmon');
+      await awaitFindSettled(proseMirror);
 
       // Keyboard activation has no mouse-down. Close the bar, select a
       // different term so a stale value cannot pass, and open it with Enter.
@@ -825,6 +865,7 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       // The same capture has to run before the embedded Ace editor blurs.
       await findButton.click();
       await expect(findInput).toHaveValue('gizmo');
+      await awaitFindSettled(proseMirror);
 
       // Enter / Space go through ToolbarButton.click() without a mouse-down.
       // Refocus Ace, select another term, then verify the keyboard path

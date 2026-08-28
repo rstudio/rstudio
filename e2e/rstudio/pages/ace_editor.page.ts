@@ -332,6 +332,11 @@ export class AceEditor extends PageObject {
     await this.run((editor) => editor.focus());
   }
 
+  /** True while the editor textarea has focus (Ace's editor.isFocused, absent from the typings). */
+  async isFocused(): Promise<boolean> {
+    return this.run((editor) => (editor as unknown as { isFocused(): boolean }).isFocused());
+  }
+
   /**
    * True when the renderer holds active ghost text (the mechanism behind
    * rstudioapi::setGhostText() and at-cursor completion previews). This is the

@@ -1487,8 +1487,11 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    private static native boolean hasInputTextSelection() /*-{
+      // Ace mirrors the editor selection into its hidden textarea for the
+      // clipboard. That is the chunk selection itself, not a UI input's.
       var element = $doc.activeElement;
       return element != null &&
+             !element.classList.contains("ace_text-input") &&
              typeof element.selectionStart === "number" &&
              typeof element.selectionEnd === "number" &&
              element.selectionEnd > element.selectionStart;
