@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import type { FullConfig } from '@playwright/test';
 import { prepareRLibs } from './r-libs-setup';
+import { seedPaiSlot } from './pai-seed';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 import { scrubCredentials } from '../utils/auth';
 import { prepareOdbcSandbox } from '../utils/connections';
@@ -29,15 +30,17 @@ import { provisionDatabases } from '../utils/db-provision';
  *                                  (e.g. ~/.local/share/rstudio/pai, as
  *                                  produced by the assistant repo's
  *                                  `npm run deploy:rstudio`). Copied into the
- *                                  sandbox data-home, from where each per-spec
- *                                  data home links it, so tests run against
- *                                  that local build instead of downloading
- *                                  the official package. Only the install
- *                                  shape (bin/package.json present) is
- *                                  validated here; version/protocol
- *                                  compatibility is enforced by the IDE at
- *                                  runtime, which treats an incompatible
- *                                  seeded build as needing an update.
+ *                                  sandbox data-home as an installed version
+ *                                  slot, from where each per-spec data home
+ *                                  links it, so tests run against that local
+ *                                  build instead of downloading the official
+ *                                  package. Only the install shape
+ *                                  (bin/package.json and bin/protocol.json
+ *                                  present and well formed) is validated here;
+ *                                  version/protocol compatibility is enforced
+ *                                  by the IDE at runtime, which treats an
+ *                                  incompatible seeded build as needing an
+ *                                  update.
  *   PW_SANDBOX_NO_SEED_CREDENTIALS "1"/"true" is a global host-copy kill-
  *                                  switch, consumed by the auth.setup project
  *                                  (tests/auth.setup.ts): it suppresses the
@@ -120,15 +123,15 @@ export default async function globalSetup(config: FullConfig) {
   // exercise it instead of downloading the official package. Desktop launches
   // use per-spec data homes; each links data-home/pai from here (see
   // desktop.fixture's seedPaiIntoDataHome).
+  //
+  // The seed is laid out as an installed version slot plus a selector entry,
+  // which is the only shape a versioned-aware RStudio resolves; a bare copy of
+  // the source tree would be ignored and the official package downloaded
+  // instead. See fixtures/pai-seed.ts.
   const seedPai = process.env.PW_SEED_PAI;
   if (seedPai) {
-    if (!fs.existsSync(path.join(seedPai, 'bin', 'package.json'))) {
-      throw new Error(
-        `PW_SEED_PAI="${seedPai}" does not look like a Posit Assistant install (missing bin/package.json)`,
-      );
-    }
-    fs.cpSync(seedPai, path.join(sandbox, 'data-home', 'pai'), { recursive: true });
-    console.log(`[sandbox] seeded data-home/pai from ${seedPai}`);
+    const version = seedPaiSlot(seedPai, path.join(sandbox, 'data-home', 'pai'));
+    console.log(`[sandbox] seeded data-home/pai slot ${version} from ${seedPai}`);
   }
 
   const userHome = path.join(sandbox, 'user-home');

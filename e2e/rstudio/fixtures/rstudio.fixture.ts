@@ -12,6 +12,7 @@ import { withDeadline, DeadlineError } from '../utils/deadline';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
 import { rPathLiteral } from '../utils/r';
+import { installedPaiVersion } from './pai-seed';
 
 type Mode = 'desktop' | 'server';
 
@@ -205,24 +206,22 @@ async function verifyTestManifestIfRequested(session: DesktopSession): Promise<v
  */
 async function logPositAssistantVersionIfInstalled(session: DesktopSession): Promise<void> {
   if (!session.requestedTestManifest) return;
-  const packageJsonPath = path.join(session.dataHome, 'pai', 'bin', 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
+  const storageDir = path.join(session.dataHome, 'pai');
+  let version: string | null = null;
+  try {
+    version = installedPaiVersion(session.dataHome);
+  } catch (err) {
+    console.warn(`WARNING: could not read the Posit Assistant version under ${storageDir}: ${err}`);
+    return;
+  }
+  if (!version) {
     console.warn(
-      `WARNING: this run requested the Posit Assistant test manifest, but no install exists at ` +
-      `${packageJsonPath} -- this worker exercised no Assistant build.`,
+      `WARNING: this run requested the Posit Assistant test manifest, but no install is selected ` +
+      `under ${storageDir} -- this worker exercised no Assistant build.`,
     );
     return;
   }
-  try {
-    const { version } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-    if (!version) {
-      console.warn(`WARNING: no version field in ${packageJsonPath}.`);
-      return;
-    }
-    logCiNotice(`Posit Assistant version under test: ${version}`);
-  } catch (err) {
-    console.warn(`WARNING: could not read Posit Assistant version from ${packageJsonPath}: ${err}`);
-  }
+  logCiNotice(`Posit Assistant version under test: ${version}`);
 }
 
 /**

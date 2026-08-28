@@ -622,4 +622,45 @@ TEST_F(ChatSlots, RejectsAnAbsentStagingDirectory)
                             SlotPolicy::AdoptExisting, &slotDir) != Success());
 }
 
+// ============================================================================
+// Cross-language wire format
+// ============================================================================
+
+TEST_F(ChatSlots, VerifiesASlotWhoseManifestWasWrittenExternally)
+{
+   // The Playwright suite seeds a locally built assistant by laying out a slot
+   // itself, in TypeScript (e2e/rstudio/fixtures/pai-seed.ts), because it has
+   // no way to call the install path. The manifest below is assembled the way
+   // that seeder assembles it -- same file name, same keys, same nesting -- so
+   // a change to the format here fails rather than quietly making every seeded
+   // run download the official package instead of the build that was asked
+   // for. Sizes are read back from the tree so this pins the shape and not the
+   // fixture's file contents.
+   FilePath slotDir = slot("1.2.2");
+   writeSlotFiles(slotDir, "1.2.2", "11.0");
+
+   const char* const kRecorded[] = {
+      kServerScript, kIndexHtml, "package.json", "protocol.json"
+   };
+
+   std::string files;
+   for (const char* relativePath : kRecorded)
+   {
+      if (!files.empty())
+         files += ",";
+
+      files += "\"" + std::string(relativePath) + "\":{\"size\":" +
+         std::to_string(slotDir.completeChildPath(relativePath).getSize()) +
+         ",\"sha256\":\"" + std::string(64, 'a') + "\"}";
+   }
+
+   writeFile(slotDir.completeChildPath(".slot-manifest.json"),
+             "{\"files\":{" + files + "}}");
+
+   SlotInfo info;
+   ASSERT_TRUE(verifySlot(slotDir, &info));
+   EXPECT_EQ(info.version, "1.2.2");
+   EXPECT_EQ(info.protocol, "11.0");
+}
+
 } // anonymous namespace

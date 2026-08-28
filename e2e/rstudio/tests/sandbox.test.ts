@@ -86,6 +86,39 @@ test.describe('sandbox layout', { tag: ['@desktop_only'] }, () => {
       { message: 'expected at least one per-spec data-home to contain rstudio-desktop.json' },
     ).toBe(true);
   });
+
+  // A seeded assistant has to be laid out the way an install leaves it
+  // (rstudio/rstudio#18658): a version slot carrying its own manifest, named
+  // by the selector. Get this wrong and nothing fails loudly -- the IDE just
+  // resolves nothing and downloads the official package, so the @ai suite
+  // silently exercises a build nobody chose. See fixtures/pai-seed.ts.
+  test('a seeded Posit Assistant is laid out as a selected version slot', async ({ rstudioSession }) => {
+    test.skip(!process.env.PW_SEED_PAI, 'PW_SEED_PAI is not set; nothing was seeded');
+
+    const storage = path.join(SANDBOX!, 'data-home', 'pai');
+    const selected = JSON.parse(fs.readFileSync(path.join(storage, 'selected.json'), 'utf-8')).selected;
+    const protocols = Object.keys(selected);
+    expect(protocols, 'expected selected.json to name a slot for exactly one protocol').toHaveLength(1);
+
+    const slot = path.join(storage, 'versions', selected[protocols[0]]);
+    for (const file of ['package.json', 'protocol.json', '.slot-manifest.json']) {
+      expect(fs.existsSync(path.join(slot, file)), `expected ${file} in the seeded slot`).toBe(true);
+    }
+
+    // The selector entry has to agree with what the slot declares, or
+    // resolution rejects the slot and falls back.
+    const { protocol } = JSON.parse(fs.readFileSync(path.join(slot, 'protocol.json'), 'utf-8'));
+    expect(protocol).toBe(protocols[0]);
+
+    // The legacy unversioned install is never read, so it is never seeded.
+    expect(fs.existsSync(path.join(storage, 'bin'))).toBe(false);
+
+    // And the session under test reaches all of it through its own data home,
+    // which links pai to the sandbox seed (desktop.fixture's
+    // seedPaiIntoDataHome).
+    const ownDataHome = path.join(rstudioSession.configRoot!, 'data-home');
+    expect(fs.existsSync(path.join(ownDataHome, 'pai', 'selected.json'))).toBe(true);
+  });
 });
 
 test.describe('sandbox layout', { tag: ['@server_only'] }, () => {
