@@ -4415,7 +4415,9 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 // A failed extraction leaves its staging directory behind: no other session
 // can be using it, but removing directories is exactly what this layout exists
 // to avoid, and the issue accounts for the orphans (#18658, "Deferred").
-Error installPackage(const FilePath& packagePath, std::string* pVersion)
+Error installPackage(const FilePath& packagePath,
+                     const std::string& expectedVersion,
+                     std::string* pVersion)
 {
    FilePath storageDir = positAiStorageDir();
    FilePath slotsDir = chat_slots::versionsDir(storageDir);
@@ -4459,6 +4461,24 @@ Error installPackage(const FilePath& packagePath, std::string* pVersion)
       return error;
    }
 
+   // The archive was SHA-256 checked against the manifest entry chosen for
+   // this protocol, so a package declaring something else is a mis-published
+   // one rather than a corrupt download -- but it must still be refused here.
+   // Selecting a slot for another protocol would change what a different
+   // RStudio release resolves, and either mismatch would report an update this
+   // session cannot run and would then be offered again on every check.
+   std::string version = declaredVersion(stagingDir);
+   std::string protocol = declaredProtocol(stagingDir);
+   if (version != expectedVersion || protocol != kProtocolVersion)
+   {
+      return systemError(
+         boost::system::errc::invalid_argument,
+         fmt::format("Downloaded package declares version '{}' for protocol "
+                     "'{}', but version '{}' for protocol '{}' was requested",
+                     version, protocol, expectedVersion, kProtocolVersion),
+         ERROR_LOCATION);
+   }
+
    FilePath slotDir;
    error = chat_slots::allocateSlot(
       stagingDir, chat_slots::SlotPolicy::AdoptExisting, &slotDir);
@@ -4468,16 +4488,9 @@ Error installPackage(const FilePath& packagePath, std::string* pVersion)
       return error;
    }
 
-   // Read the published slot rather than the staged tree: on a lost rename
-   // race allocateSlot() adopts an existing slot, and it is that slot the
-   // selector has to name. Both fields are non-empty -- allocateSlot() only
-   // returns a slot that verified, and verification requires them.
-   std::string version = declaredVersion(slotDir);
-   std::string protocol = declaredProtocol(slotDir);
-
-   // Select under the protocol the slot itself declares. Recording it under
-   // ours would strand it: resolution checks that the slot it is handed serves
-   // the protocol it was asked for.
+   // The published slot declares what the staged package did: on a lost rename
+   // race allocateSlot() adopts an existing slot only when its version and
+   // protocol match the staged one.
    error = chat_selector::selectSlot(storageDir, protocol, slotDir.getFilename());
    if (error)
    {
@@ -5940,7 +5953,7 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
    }
 
    std::string installedVersion;
-   error = installPackage(tempPackage, &installedVersion);
+   error = installPackage(tempPackage, newVersion, &installedVersion);
 
    // Always clean up temp file (do this before error handling)
    Error cleanupError = tempPackage.removeIfExists();
@@ -5951,12 +5964,13 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
 
    if (error)
    {
-      failInstall("Installation failed: " + error.getMessage(), cont);
+      // errorDescription, not getMessage: installPackage() and the slot
+      // machinery report what went wrong in the error's description, and
+      // getMessage() would show only the bare errno string.
+      failInstall("Installation failed: " + core::errorDescription(error), cont);
       return;
    }
 
-   // The version the slot declares, not the one the manifest advertised: the
-   // package that was extracted is the authority on what was installed.
    finishInstall(installedVersion, cont);
 }
 
