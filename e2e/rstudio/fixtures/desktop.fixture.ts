@@ -320,11 +320,11 @@ function createTempConfig(): TempConfig {
  * sandbox-setup.ts when PW_SEED_PAI is set) into a per-spec data home so the
  * session under test finds it at RSTUDIO_DATA_HOME/pai. A symlink (junction
  * on Windows, which needs no elevation) avoids copying the install once per
- * spec. A flow that deletes pai via boost::filesystem::remove_all removes the
- * link itself without following it, so it can't destroy the shared seed.
- * Writes into pai (e.g. manifest-check.json) do go through the link to the
- * seed -- same exposure as the previous fully shared data home, now scoped to
- * pai only. No-op when nothing was seeded or
+ * spec. The uninstall flow deletes pai via boost::filesystem::remove_all,
+ * which removes the link itself without following it, so an uninstall test
+ * can't destroy the shared seed. Writes into pai (e.g. manifest-check.json)
+ * do go through the link to the seed -- same exposure as the previous fully
+ * shared data home, now scoped to pai only. No-op when nothing was seeded or
  * the link already exists (config-root reuse across a restart).
  */
 function seedPaiIntoDataHome(dataHome: string): void {
@@ -612,6 +612,27 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // prevents unload; the interactive path shows a native "Leave page?"
       // dialog that automation cannot dismiss (rstudio#17439).
       RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1',
+      // Point the unixODBC driver manager (both the system one and the copy
+      // statically linked into the odbc R package) at the sandbox-local ODBC
+      // configuration built by sandbox-setup, so the Connections tests see
+      // exactly the drivers registered there and the machine's real
+      // odbcinst.ini is never read or written. Without this the C++ session
+      // falls back to /usr/local/etc (SessionConnections.cpp), i.e. whatever
+      // happens to be on the host.
+      ...(process.env.PW_ODBC_DIR ? { ODBCSYSINI: process.env.PW_ODBC_DIR } : {}),
+      // Windows has no ODBCSYSINI, so the Connections tests instead register
+      // their drivers machine-wide, pointing at a sandbox copy of the driver
+      // DLL alone (see prepareOdbcSandboxWindows for why the directory is not
+      // copied). A DLL loaded by full path does not get its own directory
+      // searched for dependencies, so the directory it was copied from is
+      // prepended to PATH here -- that is what lets psqlODBC find its bundled
+      // libpq and OpenSSL. Prepended rather than appended so the driver's own
+      // versioned copies win over anything else on PATH.
+      ...(process.env.PW_ODBC_DRIVER_PATHS
+        ? {
+            PATH: `${process.env.PW_ODBC_DRIVER_PATHS}${path.delimiter}${process.env.PATH ?? ''}`,
+          }
+        : {}),
       // The bundled Copilot language server stores the master key for its
       // encrypted OAuth token cache in the OS keychain (@github/keytar,
       // service "copilot-language-server", account "oauth-token-key"). Under
@@ -848,13 +869,13 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
 export type RStudioProcessSnapshot = ReadonlyMap<number, string>;
 
 /**
- * Relaunch RStudio after a full quit+restart triggered from the IDE.
+ * Relaunch RStudio after a full quit+restart (e.g. uninstall Posit Assistant).
  * The doRestart() flow quits Electron entirely and opens a new window without
  * our CDP flag. We wait for the old process to exit, kill the non-CDP restart
  * instance, and launch a fresh CDP-enabled session.
  *
  * `processesBefore` must be captured with snapshotRStudioProcesses() BEFORE
- * the restart is triggered (e.g. before confirming the dialog that restarts).
+ * the restart is triggered (e.g. before confirming the uninstall dialog).
  * The restart instance is spawned by the old Electron main as part of its
  * quit sequence, so a snapshot taken here would race that spawn: on a loaded
  * runner the restart instance's main process is already running and lands in

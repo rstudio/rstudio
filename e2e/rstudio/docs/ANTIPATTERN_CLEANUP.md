@@ -49,6 +49,7 @@ Hot-spot test files:
       confirmable post-condition".
 - [ ] `tests/panes/misc/python_completions.test.ts:56,59` -- `sleep(3000)` /
       `sleep(500)` around Python REPL typing.
+- [ ] `tests/panes/posit-assistant-chat/uninstall-posit-ai.test.ts:74,119`
 - [ ] `tests/panes/posit-assistant-chat/chat-pane-persistence.test.ts:27,78`
 - [ ] `tests/panes/debugger/debugger_extras.test.ts:89` -- `sleep(300)`
 
@@ -199,6 +200,12 @@ template ("GWT console DOM elements report overlapping coordinates").
 - [ ] `actions/source_pane.actions.ts:114,121,144`
 - [ ] `actions/autocomplete.actions.ts:103`
 - [ ] `fixtures/server.fixture.ts:268`
+
+### Stop bypassing the command bridge for the command palette
+
+- [ ] `tests/panes/posit-assistant-chat/uninstall-posit-ai.test.ts:42,73,87,99`
+      -- `page.evaluate("window.desktopHooks.invokeCommand('showCommandPalette')")`
+      should be `executeCommand(page, 'showCommandPalette')`
 
 ### Remove the `TIMEOUTS` object; wait on observable state
 

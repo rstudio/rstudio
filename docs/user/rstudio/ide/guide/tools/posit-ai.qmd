@@ -8,11 +8,7 @@ date-meta: 2026-02-25
 ## Prerequisites
 
 -   To use Posit Assistant in RStudio, you must have a compatible version of RStudio installed. Posit Assistant is available for RStudio Desktop or Server 2026.04.0 and later. Posit Workbench disables Posit Assistant by default, but an administrator can enable it.
--   To use Posit Assistant, you need access to a model provider. Posit AI is the recommended provider, and other providers such as Anthropic, OpenAI, Google Gemini, and Amazon Bedrock are also supported. Most providers are cloud-based and require internet access to send requests and receive responses.
-
-::: {.callout-note title="Posit Assistant in RStudio Server and Workbench"}
-Support for RStudio Server and Posit Workbench is currently considered experimental and will be fully supported in a future release.
-:::
+-   To use Posit Assistant, you need access to a model provider. Posit AI Pass is the recommended provider, and other providers such as Anthropic, OpenAI, Google Gemini, and Amazon Bedrock are also supported. Most providers are cloud-based and require internet access to send requests and receive responses.
 
 ## Setup
 
@@ -26,16 +22,16 @@ Click **Install Posit Assistant** to download and install the add-in package. On
 
 ## Choosing a model provider
 
-Posit Assistant works with several model providers. Posit AI is the recommended provider for most users, but you can also connect directly to other providers.
+Posit Assistant works with several model providers. Posit AI Pass is the recommended provider for most users, but you can also connect directly to other providers.
 
 ![](images/posit-assistant-configure.png){fig-alt="Configure Posit Assistant" fig-align="center" width="350"}
 
-### Posit AI
+### Posit AI Pass
 
-[Posit AI](https://docs.posit.co/posit-ai) is a managed service from Posit that provides access to a range of frontier LLMs through a single account. Click **Sign in to try Posit AI for free** to sign in to or create a Posit AI account. Once you are authenticated, the Posit Assistant chat feature is ready to use.
+[Posit AI Pass](https://docs.posit.co/posit-ai) is a managed service from Posit that provides access to a range of frontier LLMs through a single account. Click **Sign in to try Posit AI Pass for free** to sign in to or create a Posit AI Pass account. Once you are authenticated, the Posit Assistant chat feature is ready to use.
 
-::: {.callout-note title="Posit AI Account Assistance"}
-For more information on signing up and managing your Posit AI account visit <https://docs.posit.co/posit-ai>.
+::: {.callout-note title="Posit AI Pass Account Assistance"}
+For more information on signing up and managing your Posit AI Pass account visit <https://docs.posit.co/posit-ai>.
 :::
 
 ### Other providers
@@ -51,6 +47,12 @@ For the full list of available settings, see the [Posit Assistant configuration 
 ## Using Posit Assistant
 
 For information on using Posit Assistant, visit the [Posit Assistant documentation](https://pos.it/assistant-docs).
+
+## Removing Posit Assistant
+
+To uninstall the downloaded Posit Assistant components, select **Help** \> **Diagnostics** \> **Uninstall Posit Assistant**. RStudio restarts after the uninstall completes.
+
+RStudio preserves your chat history and account settings, which remain available if you reinstall Posit Assistant.
 
 ## Hiding Posit Assistant features
 

@@ -76,8 +76,8 @@ core::FilePath nesLanguageServerPath(const core::FilePath& installPath);
 
 // Synchronously stop the assistant agent, waiting for the process to exit so
 // its file handles are released. Returns true if the agent stopped (or was not
-// running), false on timeout. Use before an install or update, which overwrite
-// the agent's files on disk.
+// running), false on timeout. Use before install/uninstall, which overwrite or
+// delete the agent's files on disk.
 //
 // Must NOT be called from within a process-supervisor poll (e.g. a manifest
 // fetch completion delivered inline on the main thread): the wait re-enters the

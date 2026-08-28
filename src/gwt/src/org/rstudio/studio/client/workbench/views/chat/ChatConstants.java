@@ -86,6 +86,10 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatCheckFailedMessage();
     String chatCancelButton();
 
+    // Uninstall
+    String uninstallPositAssistantCaption();
+    String uninstallPositAssistantMessage();
+
     // Chat satellite window
     String chatSatelliteWindowTitle();
     String chatReturnToMainButton();

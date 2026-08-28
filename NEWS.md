@@ -8,6 +8,8 @@
 - ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where opening Find in the visual editor left the search box as it was, rather than filling it with the selected text the way source mode does. A selection made inside a code chunk now seeds the box too, and is what Use Selection for Find looks for there; both previously read the surrounding document selection, which sees a chunk as a single unit.
 - ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where the Find and Add Next and Find All commands did nothing in the visual editor. Both build a multi-cursor selection in the source editor, and in visual mode they were still aimed at that editor even though it is hidden; they now act on the code chunk that has focus. In prose, where the visual editor has no multi-cursor equivalent, they are reported as unavailable rather than silently doing nothing.
 - ([#18139](https://github.com/rstudio/rstudio/issues/18139), [#15008](https://github.com/rstudio/rstudio/issues/15008)): Fixed Windows locale drift that corrupted non-ASCII Console input and other locale-sensitive operations.
+- ([#18620](https://github.com/rstudio/rstudio/issues/18620)): The Data Viewer's last row is no longer hidden underneath the horizontal scrollbar when scrolled to the bottom.
+- ([#18139](https://github.com/rstudio/rstudio/issues/18139)): Fixed Windows locale drift that corrupted non-ASCII Console input and other locale-sensitive operations.
 - ([#18635](https://github.com/rstudio/rstudio/issues/18635)): Running code from a popped-out source window no longer moves focus to the console when "Focus console after executing code from the source pane" is off.
 - ([#18356](https://github.com/rstudio/rstudio/issues/18356)): Declining the Posit Assistant install prompt now restores the previously selected code assistant.
 - ([#18631](https://github.com/rstudio/rstudio/issues/18631)): RStudio Desktop now shows What's New once per release instead of after every patch update.
@@ -47,8 +49,8 @@
 ### Dependencies
 - Copilot Language Server 1.531.0
 - Electron 42.10.1
+- Node.js 22.23.2 (GitHub Copilot, Posit Assistant)
 - Quarto 1.10.18
 
 ### Deprecated / Removed
 - ([#18605](https://github.com/rstudio/rstudio/issues/18605)): Marked RPubs and ShinyApps.io publishing destinations as deprecated ahead of their sunset; see [the migration guide](https://posit.co/blog/migrating-connect-cloud-posits-unified-publishing-solution).
-- ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command.

@@ -7,15 +7,39 @@
 // across a refresh, and HTML-special-character escaping in both cell
 // values and column names.
 
-import type { Request, Response } from 'playwright';
+import type { Page, Request, Response } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { DataViewerPane } from '@pages/data_viewer.page';
-import { resetSourcePaneState, executeCommand } from '@utils/commands';
+import { resetSourcePaneState, executeCommand, setPref, clearPref } from '@utils/commands';
 import { TIMEOUTS } from '@utils/constants';
 
 const VIEWER_FRAME = '#rstudio_data_viewer_frame';
+
+// Height of the grid's custom horizontal scrollbar, in sync with
+// H_SCROLLBAR_HEIGHT in DataViewer.js and .custom-scrollbar.horizontal in
+// DataViewer.css. It is also what the virtualizer reserves as an overscroll
+// tail past the last row.
+const CUSTOM_H_SCROLLBAR_HEIGHT = 11;
+
+// Minimum clearance required for a native overlay scrollbar. Unlike the custom
+// bar, its painted height is not exposed through DOM geometry and it expands on
+// hover; current macOS platform metrics reach 17px. This requirement is kept
+// separate from the implementation's 11px custom-bar constant so the native
+// branch cannot accidentally test itself against the wrong scrollbar.
+const NATIVE_OVERLAY_SCROLLBAR_MIN_CLEARANCE = 17;
+
+// Estimated width assigned to unfetched columns, in sync with
+// DEFAULT_COL_WIDTH in DataViewer.js. The native-mode test deliberately uses
+// more columns than the fetched window so the final layout column has this
+// stable width in applyPinnedColumns' right-edge overscroll calculation.
+const DEFAULT_COL_WIDTH = 120;
+
+// Grid row height, in sync with ROW_HEIGHT in DataViewer.js. The virtualizer
+// assumes a uniform row height, and the info bar's visible-row range is derived
+// from it.
+const ROW_HEIGHT = 23;
 
 // Waits for the data viewer iframe to render a column header.
 // Used as a "viewer is ready" gate before introspection. Returns the
@@ -46,6 +70,69 @@ async function colOrder(dataViewer: DataViewerPane): Promise<string[]> {
   return dataViewer.frame.locator('#pinned_cols th, #data_cols th').evaluateAll((ths) =>
     (ths as HTMLElement[]).map((th) => th.getAttribute('data-col-idx') ?? ''),
   );
+}
+
+// Wheels the grid to the bottom -- the way the report does, since a
+// programmatic scrollTop lands in one step and would not exercise the repeated
+// renders a real gesture drives -- and waits for `lastRow` to be rendered. The
+// full-rebuild path stops at the first row missing from the block cache and
+// folds the remainder into the bottom spacer, so the last rendered row is only
+// the last data row once its block has landed.
+async function scrollGridToBottom(
+  page: Page,
+  dataViewer: DataViewerPane,
+  lastRow: number,
+): Promise<void> {
+  const box = await dataViewer.viewport.boundingBox();
+  if (!box) throw new Error('grid viewport has no bounding box');
+  await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
+  for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 2000);
+
+  await expect.poll(
+    () => dataViewer.viewport.evaluate(
+      (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 1,
+    ),
+    { timeout: TIMEOUTS.fileOpen },
+  ).toBe(true);
+
+  await expect(dataViewer.frame.locator(`#gridBody tr[data-row="${lastRow}"]`))
+    .toBeAttached({ timeout: TIMEOUTS.fileOpen });
+}
+
+// Waits until the frame is wider than the viewport. Both #18620 tests need it
+// as a precondition: with no horizontal overflow there is no bar to clear and
+// no tail to reserve, so a host wide enough to fit the fixture would otherwise
+// fail on the tail rather than on the unmet premise. The bar's presence is not
+// a substitute -- attachCustomScrollbar leaves the element in the DOM and only
+// sets display:none when the axis doesn't overflow.
+async function expectHorizontalOverflow(dataViewer: DataViewerPane): Promise<void> {
+  await expect.poll(
+    () => dataViewer.viewport.evaluate(
+      (el: HTMLElement) => el.scrollWidth - el.clientWidth,
+    ),
+    { message: 'frame should overflow the viewport horizontally' },
+  ).toBeGreaterThan(1);
+}
+
+// Geometry of the last rendered data row, measured against the viewport's
+// client box: clientBottom drops the native scrollbar gutter that the border
+// box's bottom includes, so the two scrollbar modes are directly comparable.
+async function lastRenderedRowRect(dataViewer: DataViewerPane): Promise<{
+  row: string | null;
+  bottom: number;
+  clientBottom: number;
+}> {
+  return dataViewer.viewport.evaluate((el: HTMLElement) => {
+    const rows = el.ownerDocument.querySelectorAll('#gridBody tr:not(.spacer-row)');
+    const last = rows[rows.length - 1] as HTMLElement | undefined;
+    if (!last) throw new Error('no data rows rendered');
+    return {
+      row: last.getAttribute('data-row'),
+      bottom: last.getBoundingClientRect().bottom,
+      clientBottom: el.getBoundingClientRect().bottom
+        - (el.offsetHeight - el.clientHeight),
+    };
+  });
 }
 
 test.describe('Data Viewer', () => {
@@ -1629,6 +1716,235 @@ test.describe('Data Viewer', () => {
     } finally {
       await consoleActions.executeInConsole(
         'rm(".rs.ctrl_end_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18620
+  //
+  // The custom horizontal scrollbar floats over the bottom 11px of the panes
+  // instead of taking layout space, and the grid had no vertical overscroll
+  // past the last row -- so at maximum scroll the last row sat half covered by
+  // the bar with nowhere left to scroll. visibleBodyHeight already discounted
+  // those 11px (that is how ensureActiveCellVisible clears the bar for every
+  // other row), which is exactly why the last row could never reach the same
+  // place. renderVisibleRows now adds a matching overscroll tail to the bottom
+  // spacer, the way the summary sidebar and the rightmost column already do.
+  test('the last row clears the horizontal scrollbar at maximum scroll (#18620)', async ({ rstudioPage: page }) => {
+    // 500 rows to force vertical virtual scrolling, 30 columns so the grid also
+    // overflows horizontally and the floating horizontal scrollbar exists.
+    await consoleActions.executeInConsole(
+      '{ .rs.bottom_edge_df <- as.data.frame(matrix(seq_len(500 * 30), nrow = 500)); View(.rs.bottom_edge_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+
+      // Preconditions: both axes actually overflow, and the custom overlay
+      // scrollbar is in use (the default), since that is the bar whose height
+      // the tail is sized against.
+      await expectHorizontalOverflow(dataViewer);
+      await expect(dataViewer.horizontalScrollbar).toBeAttached();
+
+      await scrollGridToBottom(page, dataViewer, 499);
+
+      // The position must SETTLE: further wheeling at the bottom must not move
+      // it back up. This is the "bounces" half of the report, and the one
+      // assertion that has to wait out an absence of movement rather than a
+      // condition. The 1px tolerance is for fractional scroll offsets under
+      // display scaling; a bounce moves the view by a row or more.
+      const readTop = () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop);
+      const settled = await readTop();
+      for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(500);
+      expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
+
+      // The last row is rendered and its bottom edge sits exactly a bar's height
+      // above the bottom of the viewport, which is where the bar floats. Before
+      // the fix it was flush with the viewport, i.e. 11px below the bar's top.
+      // Asserted two-sided so an oversized tail fails too, and against the
+      // viewport's own client box rather than the bar's rect: the bar is hosted
+      // on #gridPanes, so tying the assertion to its top would also encode that
+      // the two share a bottom edge. The bar is then checked one-sided, which
+      // is the property the report is about.
+      const rect = await lastRenderedRowRect(dataViewer);
+      const scrollbarTop = await dataViewer.horizontalScrollbar.evaluate(
+        (el: HTMLElement) => el.getBoundingClientRect().top,
+      );
+      expect(rect.row).toBe('499');
+      expect(Math.abs(rect.bottom - (rect.clientBottom - CUSTOM_H_SCROLLBAR_HEIGHT)))
+        .toBeLessThanOrEqual(1);
+      expect(rect.bottom).toBeLessThanOrEqual(scrollbarTop + 0.5);
+
+      // The info bar counts the last row as visible, as it did before.
+      await expect(dataViewer.gridInfo)
+        .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+    } finally {
+      await consoleActions.executeInConsole(
+        'rm(".rs.bottom_edge_df", envir = .GlobalEnv)',
+      );
+    }
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18620
+  //
+  // The native-scrollbar half of the test above. hScrollbarOverlayHeight sizes
+  // the tail from the viewport's measured gutter rather than from the
+  // preference, because a native horizontal bar takes layout space on Windows
+  // and Linux but floats over the rows on macOS ("Show scroll bars: When
+  // scrolling"). The native overlay clearance is an independent minimum based
+  // on the expanded platform scroller, not on the custom bar's height. The mode
+  // is flipped on the open grid, which is the path that has to re-render the
+  // window for the new tail to land.
+  test('the last row clears a native horizontal scrollbar too (#18620)', async ({ rstudioPage: page }) => {
+    // More columns than the fetched window guarantees an unfetched right span,
+    // whose final layout-column width is the stable DEFAULT_COL_WIDTH estimate.
+    // It also leaves enough off-screen fetched headers to exercise the rendered
+    // column-window resync when native scrollbars change the viewport client box.
+    await consoleActions.executeInConsole(
+      '{ .rs.native_edge_df <- as.data.frame(matrix(seq_len(500 * 300), nrow = 500)); View(.rs.native_edge_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.horizontalScrollbar).toBeAttached();
+
+      // Headers arrive before the first server-side row block. Wait for that
+      // block so filteredRows, the virtualized tail and the data-refined column
+      // widths have all landed before capturing geometry on either side of the
+      // preference switch.
+      await expect(dataViewer.frame.locator('#gridBody tr[data-row="0"]'))
+        .toBeAttached({ timeout: TIMEOUTS.fileOpen });
+
+      await expectHorizontalOverflow(dataViewer);
+
+      // Put a right-buffered header's left edge one pixel inside the custom
+      // mode's viewport. When a native vertical gutter narrows clientWidth,
+      // that column falls outside the visible range and syncColumnWindow must
+      // rebuild the buffered header window to end one column earlier.
+      await dataViewer.viewport.evaluate((el: HTMLElement) => {
+        const headers = Array.from(
+          el.ownerDocument.querySelectorAll('#data_cols th[data-col-idx]'),
+        ) as HTMLElement[];
+        const target = headers[headers.length - 2];
+        if (!target) throw new Error('not enough rendered headers to place an edge column');
+        el.scrollLeft = Math.max(0, target.offsetLeft - el.clientWidth + 1);
+      });
+      await expect.poll(
+        () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollLeft),
+      ).toBeGreaterThan(0);
+      await dataViewer.viewport.evaluate(() => new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }));
+
+      const measure = (el: HTMLElement) => {
+        const table = el.ownerDocument.getElementById('rsGridData') as HTMLElement;
+        return {
+          scrollHeight: el.scrollHeight,
+          clientWidth: el.clientWidth,
+          // Horizontal overscroll padding past the rightmost column, sized from
+          // clientWidth (applyPinnedColumns).
+          paddingRight: parseFloat(table.style.paddingRight) || 0,
+          renderedColumns: Array.from(
+            el.ownerDocument.querySelectorAll('#data_cols th[data-col-idx]'),
+            (th) => th.getAttribute('data-col-idx'),
+          ),
+          // #gridViewport carries no border, so offsetHeight - clientHeight is
+          // exactly the layout space the native bar claimed; zero means the
+          // platform draws it as an overlay.
+          gutter: el.offsetHeight - el.clientHeight,
+          overflow: el.scrollWidth - el.clientWidth,
+        };
+      };
+      const overlay = await dataViewer.viewport.evaluate(measure);
+      expect(overlay.renderedColumns.length).toBeGreaterThan(3);
+
+      // The host pushes the preference into the iframe as a setOption, which
+      // destroys the overlay bars and hands scrolling back to the browser.
+      await setPref(page, 'data_viewer_use_overlay_scrollbars', false);
+      await expect(dataViewer.horizontalScrollbar).toHaveCount(0);
+
+      // Read before any scroll input: a scroll re-renders and would repair a
+      // stale tail by itself, so this is the assertion that pins the resize to
+      // the switch. The scroll range loses the tail where the native bar takes
+      // layout space and keeps it where the platform draws an overlay.
+      const native = await dataViewer.viewport.evaluate(measure);
+      expect(native.overflow).toBeGreaterThan(1);
+      const expectedTail = native.gutter > 0
+        ? 0 : NATIVE_OVERLAY_SCROLLBAR_MIN_CLEARANCE;
+      expect(native.scrollHeight - overlay.scrollHeight)
+        .toBe(expectedTail - CUSTOM_H_SCROLLBAR_HEIGHT);
+
+      // The unfetched right span makes the final layout column's width the
+      // DEFAULT_COL_WIDTH estimate. This direct post-switch invariant covers
+      // the explicit applyPinnedColumns refresh without comparing padding from
+      // two different rendered windows.
+      expect(native.paddingRight).toBeCloseTo(
+        Math.max(0, native.clientWidth - DEFAULT_COL_WIDTH),
+        1,
+      );
+
+      // A layout-taking native vertical bar narrows the viewport. The edge
+      // placement above makes exactly one fewer column visible, so the buffered
+      // window must lose its final header. Overlay-native platforms keep the
+      // same client width and therefore the same rendered window.
+      if (native.clientWidth < overlay.clientWidth - 1) {
+        expect(native.renderedColumns).toEqual(overlay.renderedColumns.slice(0, -1));
+      } else {
+        expect(native.renderedColumns).toEqual(overlay.renderedColumns);
+      }
+
+      // The info bar's range is derived from the same client box, so it is
+      // refreshed at the switch too. Computed rather than hardcoded: the two
+      // modes differ by the native gutter minus the tail, a few px that may or
+      // may not cross a row boundary on any given host, and the grid does not
+      // always open at the top -- it restores a saved scroll offset for a frame
+      // of the same name and row count, so a retry can reopen it at the bottom.
+      const range = await dataViewer.viewport.evaluate(
+        (el: HTMLElement, { tail, rowHeight }: { tail: number; rowHeight: number }) => {
+          const headerRow = el.ownerDocument.getElementById('data_cols');
+          const headerH = headerRow?.parentElement?.offsetHeight ?? 0;
+          const bodyHeight = Math.max(0, el.clientHeight - headerH - tail);
+          const first = Math.max(
+            1,
+            Math.min(Math.ceil((el.scrollTop + rowHeight / 2) / rowHeight), 500),
+          );
+          const last = Math.round((el.scrollTop + bodyHeight) / rowHeight);
+          return { first, last: Math.max(first, Math.min(last, 500)) };
+        },
+        { tail: expectedTail, rowHeight: ROW_HEIGHT },
+      );
+      await expect(dataViewer.gridInfo)
+        .toContainText(`Showing ${range.first} to ${range.last} of 500`);
+
+      await scrollGridToBottom(page, dataViewer, 499);
+
+      // A bar that sits in layout is already outside clientHeight, so the last
+      // row ends flush with the client box; an overlay bar needs the same tail
+      // the custom one gets. The 1px tolerance is for fractional scroll offsets
+      // under display scaling.
+      const rect = await lastRenderedRowRect(dataViewer);
+      expect(rect.row).toBe('499');
+      expect(Math.abs(rect.bottom - (rect.clientBottom - expectedTail)))
+        .toBeLessThanOrEqual(1);
+
+      await expect(dataViewer.gridInfo)
+        .toContainText('to 500 of 500', { timeout: TIMEOUTS.fileOpen });
+
+      // Switching back restores the tail. This also validates the baseline the
+      // delta above was measured against: had the pre-flip render committed no
+      // tail, the scroll range would not come back to the same number here.
+      await setPref(page, 'data_viewer_use_overlay_scrollbars', true);
+      await expect(dataViewer.horizontalScrollbar).toBeAttached();
+      await expect(dataViewer.horizontalScrollbar).toHaveClass(/\bvisible\b/);
+      await expect
+        .poll(
+          () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollHeight),
+          { message: 'overlay mode should restore the overscroll tail' },
+        )
+        .toBe(overlay.scrollHeight);
+    } finally {
+      await clearPref(page, 'data_viewer_use_overlay_scrollbars');
+      await consoleActions.executeInConsole(
+        'rm(".rs.native_edge_df", envir = .GlobalEnv)',
       );
     }
   });
