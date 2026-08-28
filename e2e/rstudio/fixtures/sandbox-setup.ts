@@ -5,6 +5,8 @@ import type { FullConfig } from '@playwright/test';
 import { prepareRLibs } from './r-libs-setup';
 import { launchRStudio, shutdownRStudio } from './desktop.fixture';
 import { scrubCredentials } from '../utils/auth';
+import { prepareOdbcSandbox } from '../utils/connections';
+import { provisionDatabases } from '../utils/db-provision';
 
 /**
  * Create a per-invocation sandbox directory and export its path as PW_SANDBOX.
@@ -203,6 +205,38 @@ export default async function globalSetup(config: FullConfig) {
 
   process.env.PW_SANDBOX = sandbox;
   console.log(`[sandbox] root: ${sandbox}`);
+
+  // Sandbox-local ODBC configuration for the Connections pane tests. The
+  // desktop fixture points ODBCSYSINI at this directory, so the session sees
+  // exactly the drivers registered here (and the machine's real ODBC
+  // configuration is never read or written). Registration is skipped per
+  // target when its driver library isn't installed; the connections specs
+  // then skip with a reason.
+  // PW_ODBC_DIR is the ODBCSYSINI value and exists only where that variable
+  // means anything (macOS, Linux). PW_ODBC_REGISTERED is the platform-neutral
+  // "the suite made these drivers available" signal, which on Windows comes
+  // from a registry write instead, so specs gate driver visibility on it
+  // rather than on the presence of a config directory.
+  const odbc = prepareOdbcSandbox(sandbox);
+  if (odbc.odbcDir) process.env.PW_ODBC_DIR = odbc.odbcDir;
+  // Windows only: the sandbox holds a copy of the driver DLL alone, so the
+  // directory it came from has to be reachable for its dependent DLLs (e.g.
+  // psqlODBC's bundled libpq). The Desktop fixture prepends these to the
+  // session's PATH.
+  if (odbc.driverPaths.length > 0) {
+    process.env.PW_ODBC_DRIVER_PATHS = odbc.driverPaths.join(path.delimiter);
+    console.log(`[sandbox] odbc driver dependency paths: ${odbc.driverPaths.join(', ')}`);
+  }
+  if (odbc.registered.length > 0) {
+    process.env.PW_ODBC_REGISTERED = odbc.registered.join(',');
+    console.log(`[sandbox] odbc drivers registered: ${odbc.registered.join(', ')}`);
+  } else {
+    console.warn('[sandbox] no odbc drivers registered; connections specs will skip');
+  }
+
+  // Throwaway database servers for the same tests. Failure is recorded (and
+  // the specs skip with the reason), never fatal to unrelated suites.
+  await provisionDatabases(sandbox);
 
   // Stable per-host R library, lives outside PW_SANDBOX so it survives across
   // runs. Without this the redirected HOME (set by Desktop/Server fixtures)

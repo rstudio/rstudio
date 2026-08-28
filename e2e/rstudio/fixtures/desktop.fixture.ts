@@ -612,6 +612,27 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
       // prevents unload; the interactive path shows a native "Leave page?"
       // dialog that automation cannot dismiss (rstudio#17439).
       RSTUDIO_DESKTOP_IGNORE_BEFOREUNLOAD: '1',
+      // Point the unixODBC driver manager (both the system one and the copy
+      // statically linked into the odbc R package) at the sandbox-local ODBC
+      // configuration built by sandbox-setup, so the Connections tests see
+      // exactly the drivers registered there and the machine's real
+      // odbcinst.ini is never read or written. Without this the C++ session
+      // falls back to /usr/local/etc (SessionConnections.cpp), i.e. whatever
+      // happens to be on the host.
+      ...(process.env.PW_ODBC_DIR ? { ODBCSYSINI: process.env.PW_ODBC_DIR } : {}),
+      // Windows has no ODBCSYSINI, so the Connections tests instead register
+      // their drivers machine-wide, pointing at a sandbox copy of the driver
+      // DLL alone (see prepareOdbcSandboxWindows for why the directory is not
+      // copied). A DLL loaded by full path does not get its own directory
+      // searched for dependencies, so the directory it was copied from is
+      // prepended to PATH here -- that is what lets psqlODBC find its bundled
+      // libpq and OpenSSL. Prepended rather than appended so the driver's own
+      // versioned copies win over anything else on PATH.
+      ...(process.env.PW_ODBC_DRIVER_PATHS
+        ? {
+            PATH: `${process.env.PW_ODBC_DRIVER_PATHS}${path.delimiter}${process.env.PATH ?? ''}`,
+          }
+        : {}),
       // The bundled Copilot language server stores the master key for its
       // encrypted OAuth token cache in the OS keychain (@github/keytar,
       // service "copilot-language-server", account "oauth-token-key"). Under
