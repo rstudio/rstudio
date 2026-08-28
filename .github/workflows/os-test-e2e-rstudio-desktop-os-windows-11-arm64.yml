@@ -6,15 +6,6 @@ name: "Test: E2E Playwright RStudio (Desktop, Windows 11 arm64, Open Source)"
 # the emulated rsession.exe needs an x86_64 R.dll.
 
 on:
-  # TEMPORARY -- remove before merge. workflow_dispatch cannot reach a
-  # workflow that is not yet on the default branch, so a push trigger is the
-  # only way to exercise this engine on a real windows-11-arm runner while
-  # it is still under review. A push run gets an empty inputs context, which
-  # lands it on the daily-installer path (inputs.build_from_source is null,
-  # and null == false), i.e. latest x86_64 daily installed under emulation.
-  push:
-    branches:
-      - test/ron/e2e-windows-11-arm64-workflow
   workflow_dispatch:
     inputs:
       build_from_source:
@@ -753,9 +744,7 @@ jobs:
         # by duration, so the shard counts stay unbalanced -- at 4 shards the
         # slowest shard ran ~30 minutes of tests against ~22 for its siblings
         # and was the long pole of the whole PR-triggered run.
-        # TEMPORARY -- one shard is enough for the narrowed re-run below.
-        # Back to [1, 2, 3, 4, 5, 6] when the push trigger is removed.
-        shard: [1]
+        shard: [1, 2, 3, 4, 5, 6]
     # The build job above stays x86_64; only this one is arm64.
     runs-on: windows-11-arm
     timeout-minutes: 120
@@ -836,10 +825,7 @@ jobs:
         if: inputs.build_from_source == false || inputs.rstudio_installer_url != ''
         id: resolve
         env:
-          # TEMPORARY -- see the push trigger. Pinned to daily-129 so this run
-          # and the x86_64 sibling run test the identical binary; auto-resolve
-          # would drift to a newer daily between the two.
-          INSTALLER_URL: ${{ github.event_name == 'push' && 'https://dl.dailies.rstudio.com/electron/windows/RStudio-2026.09.0-daily-129.exe' || inputs.rstudio_installer_url }}
+          INSTALLER_URL: ${{ inputs.rstudio_installer_url }}
           MANIFEST_URL: ${{ steps.manifest.outputs.manifest-url }}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -1035,13 +1021,7 @@ jobs:
           PW_PROJECT_LABEL: ${{ inputs.project || 'desktop' }}-windows11arm
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
-          # TEMPORARY -- see the push trigger. Re-run of only the files that
-          # failed run 33014496714, so the same set can be compared against
-          # the x86_64 sibling on the same daily. assistant_provider_switch is
-          # included on purpose: its tests were added by the same commit that
-          # added the feature they check, so passing here confirms the earlier
-          # failures were the older daily-124 rather than the platform.
-          PW_TEST_SELECTOR: ${{ github.event_name == 'push' && 'markdown.test.ts rmarkdown.test.ts quarto.test.ts math_preview import_dataset build_pane_testthat assistant_provider_switch' || inputs.test_selector }}
+          PW_TEST_SELECTOR: ${{ inputs.test_selector }}
           PW_TEST_IGNORE: ${{ inputs.test_ignore }}
           PW_RSTUDIO_EXTRA_ARGS: ${{ inputs.rstudio_extra_args }}
           # Relative to this step's working-directory. Empty (not set) unless
