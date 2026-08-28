@@ -144,6 +144,11 @@ export class AceEditor extends PageObject {
     }, row);
   }
 
+  /** Returns the number of currently collapsed ranges in the editor. */
+  async getFoldCount(): Promise<number> {
+    return this.run((editor) => editor.session.getAllFolds().length);
+  }
+
   /**
    * Returns the section headers the R code model found, in document order --
    * the scopes that drive the document outline.
