@@ -51,4 +51,3 @@
 
 ### Deprecated / Removed
 - ([#18605](https://github.com/rstudio/rstudio/issues/18605)): Marked RPubs and ShinyApps.io publishing destinations as deprecated ahead of their sunset; see [the migration guide](https://posit.co/blog/migrating-connect-cloud-posits-unified-publishing-solution).
-- ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command.
