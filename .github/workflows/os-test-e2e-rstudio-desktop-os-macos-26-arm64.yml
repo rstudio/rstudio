@@ -511,6 +511,9 @@ jobs:
           # so scope by OS and arch to keep the arm64 and x86_64 R-library
           # caches from colliding.
           cache-scope: macos26-arm64
+          # PostgreSQL server plus the PostgreSQL and SQLite ODBC drivers, for
+          # the Connections pane tests. Without this they all skip.
+          install-database-stack: 'true'
           # Pre-install the harness's REQUIRED_PACKAGES set into the cached
           # library (found via PW_RSTUDIO_R_LIBS_USER in the job env above),
           # so nothing installs from CRAN at test time; a CRAN outage

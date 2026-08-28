@@ -549,6 +549,9 @@ jobs:
           # by both.
           cache-scope: macos14-arm64
           r-libs-user: ${{ env.R_LIBS_USER }}
+          # PostgreSQL server plus the PostgreSQL and SQLite ODBC drivers, for
+          # the Connections pane tests. Without this they all skip.
+          install-database-stack: 'true'
           # Pre-install the harness's REQUIRED_PACKAGES set into the cached
           # library (found via PW_RSTUDIO_R_LIBS_USER in the job env above),
           # so nothing installs from CRAN at test time; a CRAN outage

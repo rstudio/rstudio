@@ -112,6 +112,11 @@ export class AceEditor extends PageObject {
     return this.run((editor) => editor.getValue());
   }
 
+  /** Replace the editor's entire content (cursor lands at the end). */
+  async setValue(content: string): Promise<void> {
+    await this.run((editor, text: string) => editor.setValue(text, 1), content);
+  }
+
   /**
    * Moves the cursor to `line` (1-indexed, matching Ace's own gotoLine and the
    * editor's gutter), distinct from the 0-indexed row taken by getLine et al.

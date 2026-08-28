@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { scrubCredentials } from '../utils/auth';
+import { unregisterWindowsOdbcDrivers } from '../utils/connections';
+import { stopProvisionedDatabases } from '../utils/db-provision';
 
 /**
  * Remove the per-invocation sandbox subtree created by sandbox-setup.
@@ -26,6 +28,17 @@ import { scrubCredentials } from '../utils/auth';
 export default async function globalTeardown() {
   const sandbox = process.env.PW_SANDBOX;
   if (!sandbox) return;
+
+  // Stop any throwaway database servers the suite started, before and
+  // independent of file removal: a preserved sandbox keeps its data
+  // directory for inspection, but never a running server process.
+  stopProvisionedDatabases(sandbox);
+
+  // Same reasoning, for the machine-wide ODBC registrations Windows needs
+  // (does nothing on other platforms): a preserved sandbox may keep its files,
+  // but it must never leave registry entries behind, least of all ones about
+  // to point at a deleted directory.
+  unregisterWindowsOdbcDrivers(sandbox);
 
   const keep = ['1', 'true'].includes(
     (process.env.PW_SANDBOX_SKIP_CLEANUP ?? '').toLowerCase(),
