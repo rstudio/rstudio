@@ -141,10 +141,15 @@ NODE_VERSION="v<VERSION>"
 ```
 The `v` prefix is required here and only here. All other files use the bare version.
 
-**`NEWS.md`** — in the `### Dependencies` section, update the Node.js line:
+**`NEWS.md`** — in the `### Dependencies` section, record the new version:
 ```
 - Node.js <VERSION> (GitHub Copilot, Posit Assistant)
 ```
+
+The section lists only dependencies actually updated in the current release cycle, not every
+dependency at its current version. So the Node.js line is usually absent and must be added —
+keep the list alphabetical by dependency name. If a Node.js line is already there, this cycle
+bumped node before; overwrite that line rather than adding a second one.
 
 Build-time updates do NOT get a NEWS.md entry — only installed node does.
 
