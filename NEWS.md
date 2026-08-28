@@ -1,9 +1,13 @@
 ## RStudio 2026.09.0.0 "Autumn Hawkbit" Release Notes
 
 ### New
+- ([#18649](https://github.com/rstudio/rstudio/issues/18649)): Renamed references to the Posit AI service to Posit AI Pass in the IDE user interface.
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): Added horizontal and vertical split source editor views, with shared edits and independent navigation state.
 
 ### Fixed
+- ([#18620](https://github.com/rstudio/rstudio/issues/18620)): The Data Viewer's last row is no longer hidden underneath the horizontal scrollbar when scrolled to the bottom.
+- ([#18139](https://github.com/rstudio/rstudio/issues/18139)): Fixed Windows locale drift that corrupted non-ASCII Console input and other locale-sensitive operations.
+- ([#18635](https://github.com/rstudio/rstudio/issues/18635)): Running code from a popped-out source window no longer moves focus to the console when "Focus console after executing code from the source pane" is off.
 - ([#18356](https://github.com/rstudio/rstudio/issues/18356)): Declining the Posit Assistant install prompt now restores the previously selected code assistant.
 - ([#18631](https://github.com/rstudio/rstudio/issues/18631)): RStudio Desktop now shows What's New once per release instead of after every patch update.
 - ([#18602](https://github.com/rstudio/rstudio/issues/18602)): Fixed folding and outline hierarchy for section headers decorated with `#` characters.
@@ -41,8 +45,9 @@
 
 ### Dependencies
 - Copilot Language Server 1.531.0
-- Electron 42.10.0
+- Electron 42.10.1
 - Quarto 1.10.18
 
 ### Deprecated / Removed
 - ([#18605](https://github.com/rstudio/rstudio/issues/18605)): Marked RPubs and ShinyApps.io publishing destinations as deprecated ahead of their sunset; see [the migration guide](https://posit.co/blog/migrating-connect-cloud-posits-unified-publishing-solution).
+- ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command.

@@ -94,7 +94,7 @@ export const ASSISTANT_COMPLETIONS_DELAY_LABEL = 'Show code suggestions after ke
 export const ASSISTANT_COMPLETIONS_DELAY_INPUT =
   "xpath=.//*[contains(text(),'Show code suggestions after keyboard idle')]/following::input[1]";
 export const ASSISTANT_COPILOT_OPTION = 'GitHub Copilot';
-export const ASSISTANT_POSIT_OPTION = 'Posit AI Next Edit Suggestions';
+export const ASSISTANT_POSIT_OPTION = 'Posit AI Pass Next Edit Suggestions';
 export const ASSISTANT_NONE_OPTION = '(None)';
 // The edit-suggestion granularity selector renders in the common settings
 // panel, which is only attached once a code assistant (not "None") is selected.

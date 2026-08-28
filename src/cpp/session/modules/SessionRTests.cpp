@@ -15,7 +15,11 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/scope_exit.hpp>
+
+#include <clocale>
 #include <memory>
+#include <string>
 #include <thread>
 
 #include <core/system/Environment.hpp>
@@ -24,6 +28,7 @@
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RInterface.hpp>
+#include <r/RUtil.hpp>
 
 using namespace rstudio::core;
 
@@ -192,6 +197,51 @@ TEST(SessionRTest, RActiveBindingDetection) {
    )EOF");
    EXPECT_FALSE(error);
 }
+
+#ifdef _WIN32
+
+TEST(SessionRTest, SynchronizeLocaleRepairsAClobberedLocale) {
+   // Before R 4.2, R and rsession use different C runtimes. There is no
+   // shared locale for code outside R to clobber, so the repair path does not
+   // apply.
+   bool sharedRuntime = false;
+   Error versionError = r::exec::evaluateString(
+            "getRversion() >= '4.2.0'", &sharedRuntime);
+   ASSERT_FALSE(versionError);
+   if (!sharedRuntime)
+      GTEST_SKIP() << "R < 4.2 links against a separate C runtime";
+
+   // rsession and UCRT builds of R share one C runtime, so code that switches
+   // to the "C" locale and then fails to restore it leaves the session there
+   // while R goes on believing it is in its original locale. Everything that
+   // trusts the C runtime locale then corrupts non-ASCII text.
+   // https://github.com/rstudio/rstudio/issues/18139
+   const wchar_t* pLocale = ::_wsetlocale(LC_CTYPE, nullptr);
+   ASSERT_NE(nullptr, pLocale);
+
+   std::wstring locale(pLocale);
+   if (locale == L"C")
+      GTEST_SKIP() << "session is already running in the C locale";
+
+   BOOST_SCOPE_EXIT(&locale)
+   {
+      ::_wsetlocale(LC_CTYPE, locale.c_str());
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // let synchronizeLocale() record the session locale, then move the C
+   // runtime behind R's back the way a failed save/restore would
+   r::util::synchronizeLocale();
+   ASSERT_NE(nullptr, ::_wsetlocale(LC_CTYPE, L"C"));
+
+   r::util::synchronizeLocale();
+
+   const wchar_t* pRepaired = ::_wsetlocale(LC_CTYPE, nullptr);
+   ASSERT_NE(nullptr, pRepaired);
+   EXPECT_STREQ(locale.c_str(), pRepaired);
+}
+
+#endif
 
 } // namespace tests
 } // namespace session

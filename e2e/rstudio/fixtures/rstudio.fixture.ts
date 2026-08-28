@@ -5,10 +5,13 @@ import { launchRStudio, shutdownRStudio, type DesktopSession } from './desktop.f
 import { launchServer, shutdownServer, externalServerUrl } from './server.fixture';
 import { setAuthStateEnv, type AiAuthOption } from '../utils/auth';
 import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
+import { ConsolePaneActions } from '../actions/console_pane.actions';
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
+import { readRemoteOdbcStatus } from '../utils/connections';
 import { withDeadline, DeadlineError } from '../utils/deadline';
 import { resetForNextTest } from '../utils/test-reset';
 import { waitForUserConsoleInput } from '../utils/debug';
+import { rPathLiteral } from '../utils/r';
 
 type Mode = 'desktop' | 'server';
 
@@ -114,6 +117,45 @@ async function logVersions(page: Page): Promise<void> {
   const versions = await getEnvironmentVersions(page);
   console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
   await clearConsole(page);
+}
+
+/**
+ * Deliver ODBCSYSINI into a server-mode session live, through the console,
+ * rather than at process-spawn time. `rserver` rebuilds each rsession's
+ * environment from a fixed allow-list that ODBCSYSINI isn't on (see the note
+ * above writeRsessionWrapper in server.fixture.ts), and a real installed
+ * rstudio-server (CI, or a genuinely external server) isn't even launched
+ * through that wrapper -- it's already running before this harness connects.
+ * Running this once per worker, before any test body executes, means the
+ * ODBC driver manager reads the right value the first time a spec calls
+ * odbc::odbcListDrivers().
+ *
+ * Wrapped in path.expand() so one call site serves both cases: a local/CI
+ * sandbox path is already absolute, so path.expand() just passes it through
+ * unchanged, while a genuinely external server's path is `~/`-prefixed
+ * (utils/connections.ts, REMOTE_ODBC_DIR) and needs expanding against
+ * whichever account's session actually applies it.
+ */
+async function applyOdbcSysIni(page: Page, odbcDir: string): Promise<void> {
+  await new ConsolePaneActions(page).executeInConsole(
+    `Sys.setenv(ODBCSYSINI = path.expand(${rPathLiteral(odbcDir)}))`,
+  );
+}
+
+/**
+ * Which ODBC sandbox directory (if any) this worker's server-mode session
+ * should point ODBCSYSINI at. A genuinely external server gets whatever
+ * tests/auth.setup.ts's "provision remote ODBC drivers" step pushed and
+ * recorded (utils/connections.ts, readRemoteOdbcStatus); the locally-spawned
+ * rserver-dev and CI's same-machine installed server both use the sandbox
+ * globalSetup built, named by PW_ODBC_DIR.
+ */
+function serverOdbcDir(): string | null {
+  if (externalServerUrl()) {
+    const sandbox = process.env.PW_SANDBOX;
+    return (sandbox && readRemoteOdbcStatus(sandbox)?.odbcSysIni) || null;
+  }
+  return process.env.PW_ODBC_DIR || null;
 }
 
 /**
@@ -372,6 +414,10 @@ export const test = base.extend<
       // shares a data home across workers); see the issue's desktop-only note.
       attachConsoleCapture(session.page, consoleBuffer);
       await logVersions(session.page);
+      const odbcDir = serverOdbcDir();
+      if (odbcDir) {
+        await applyOdbcSysIni(session.page, odbcDir);
+      }
       await use({ page: session.page, consoleBuffer });
       // Debug-only: keep the session alive after the last test so you can
       // keep inspecting; press Enter in the Console to quit. Does nothing otherwise.

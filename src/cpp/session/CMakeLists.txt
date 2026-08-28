@@ -197,6 +197,9 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatInstallation.cpp
    modules/chat/ChatInstallLock.cpp
    modules/chat/ChatIntegrity.cpp
+   modules/chat/ChatSlotManifest.cpp
+   modules/chat/ChatSlots.cpp
+   modules/chat/ChatSelector.cpp
    modules/chat/ChatUpdateThrottle.cpp
    modules/chat/ChatStaticFiles.cpp
    modules/SessionAssistant.cpp

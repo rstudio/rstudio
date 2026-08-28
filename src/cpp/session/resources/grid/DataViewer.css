@@ -1523,6 +1523,9 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
 
 .custom-scrollbar.horizontal {
    bottom: 0;                            /* #gridPanes sits above the info bar */
+   /* Floats over the bottom of the grid, so the virtualizer reserves a matching
+      overscroll tail past the last row -- keep in sync with H_SCROLLBAR_HEIGHT
+      in DataViewer.js. */
    height: 11px;
    /* left and width set from JS */
 }

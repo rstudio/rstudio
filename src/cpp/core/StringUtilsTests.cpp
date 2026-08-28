@@ -15,6 +15,11 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/scope_exit.hpp>
+
+#include <clocale>
+#include <string>
+
 #include <core/Algorithm.hpp>
 #include <core/StringUtils.hpp>
 
@@ -441,6 +446,49 @@ TEST(StringTest, Utf8IncompleteSuffixLengthIgnoresInvalidSequences)
    // though its last bytes are continuation bytes
    EXPECT_EQ(0u, utf8IncompleteSuffixLength("\xE2\x94\x80"));
 }
+
+#ifdef _WIN32
+
+TEST(StringTest, Utf8ToCodepageHonorsAnExplicitCodePage)
+{
+   // U+00C7 (C with cedilla) and U+0131 (dotless i): the first is
+   // representable in CP1252, the second is not
+   std::string utf8("\xC3\x87\xC4\xB1");
+
+   const wchar_t* pLocale = ::_wsetlocale(LC_CTYPE, nullptr);
+   ASSERT_NE(nullptr, pLocale);
+   std::wstring locale(pLocale);
+   BOOST_SCOPE_EXIT(&locale)
+   {
+      ::_wsetlocale(LC_CTYPE, locale.c_str());
+   }
+   BOOST_SCOPE_EXIT_END
+
+   // converting for a UTF-8 code page leaves the text alone no matter what
+   // the C runtime locale happens to be. this is what keeps console input
+   // intact when something has clobbered the process locale (#18139); the
+   // wctomb() path this replaces would mangle it in the "C" locale
+   ASSERT_NE(nullptr, ::_wsetlocale(LC_CTYPE, L"C"));
+   EXPECT_EQ(utf8, utf8ToCodepage(utf8, 65001, true));
+
+   // an unrepresentable character is escaped for R rather than transliterated
+   // into a lookalike that means something else
+   EXPECT_EQ(std::string("\xC7") + "\\u131", utf8ToCodepage(utf8, 1252, true));
+
+   // GB18030 rejects WC_NO_BEST_FIT_CHARS. A failed first conversion must be
+   // retried with supported arguments rather than escaping even ASCII.
+   EXPECT_EQ("x <- 1", utf8ToCodepage("x <- 1", 54936, true));
+
+   // Supplementary characters must be converted as a surrogate pair. GB18030
+   // can represent this character, while CP1252 should emit one scalar escape
+   // rather than two invalid surrogate escapes.
+   std::string emoji("\xF0\x9F\x98\x80");
+   EXPECT_EQ(std::string("\x94\x39\xFC\x36"),
+             utf8ToCodepage(emoji, 54936, true));
+   EXPECT_EQ("\\U0001f600", utf8ToCodepage(emoji, 1252, true));
+}
+
+#endif
 
 } // end namespace string_utils
 } // end namespace core

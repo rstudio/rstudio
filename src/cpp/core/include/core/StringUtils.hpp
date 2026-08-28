@@ -102,6 +102,15 @@ std::string getExtension(std::string const& str);
 std::string utf8ToSystem(const std::string& str,
                          bool escapeInvalidChars=false);
 
+// Convert to an explicit code page rather than the one implied by the C
+// runtime's LC_CTYPE locale. Callers converting text for R should pass R's
+// localeCP (see r::util::utf82rconsole): the C runtime locale can be changed
+// out from under R, at which point it no longer describes the encoding R
+// expects. The code page is ignored on POSIX, where UTF-8 is assumed.
+std::string utf8ToCodepage(const std::string& str,
+                           int codepage,
+                           bool escapeInvalidChars=false);
+
 std::string systemToUtf8(const std::string& str);
 std::string systemToUtf8(const std::string& str, int codepage);
 
@@ -410,4 +419,3 @@ RS_GENERATE_CCTYPE_ALIAS(ispunct,  iswpunct)
 using namespace rstudio::core::cctype;
 
 #endif // CORE_STRING_UTILS_HPP
-
