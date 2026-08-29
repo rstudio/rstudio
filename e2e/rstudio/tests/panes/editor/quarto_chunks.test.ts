@@ -666,6 +666,58 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await expect(findInput).toHaveValue('sassafras');
       await awaitFindSettled(proseMirror);
 
+      // Input selections do not appear in window.getSelection(). With the
+      // find input focused and a distinct value selected in it, the chunk's
+      // retained `gizmo` selection -- what the editor would otherwise seed --
+      // must not replace it: the focused input wins. A DOM range cannot stand
+      // in for a stale editor selection here, as placing one in the editor
+      // moves focus out of the input.
+      const selectFindInput = async () => {
+        await focusSeedChunk();
+        await chunk.find('gizmo');
+        await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+        await findInput.fill('current-search-term');
+        await findInput.selectText();
+        await expect
+          .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
+            active: document.activeElement === input,
+            selected: input.selectionEnd! - input.selectionStart!,
+          })))
+          .toEqual({ active: true, selected: 'current-search-term'.length });
+      };
+
+      await selectFindInput();
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('current-search-term');
+
+      await selectFindInput();
+      await executeCommand(page, 'findFromSelection');
+      await expect(findInput).toHaveValue('current-search-term');
+
+      // Only a text selection in the input counts. Use Selection handed focus
+      // back to the chunk, which still holds `gizmo`; once that handoff has
+      // landed, focus the input with a collapsed selection, and the same
+      // command seeds from the chunk.
+      await expect.poll(() => chunk.isFocused()).toBe(true);
+      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
+      await findInput.focus();
+      await findInput.evaluate((input: HTMLInputElement) => {
+        input.setSelectionRange(input.value.length, input.value.length);
+      });
+      await expect
+        .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
+          active: document.activeElement === input,
+          selected: input.selectionEnd! - input.selectionStart!,
+        })))
+        .toEqual({ active: true, selected: 0 });
+      await executeCommand(page, 'findReplace');
+      await expect(findInput).toHaveValue('gizmo');
+
+      // The footnote steps go last. Panmirror's footnote editor is a 160px
+      // panel pinned to the editor's bottom edge that stays open while the
+      // selection is in a footnote, and the buffered find keeps re-selecting
+      // the footnote match; in CI's short windows nothing that needs the
+      // document body can reliably follow them.
       // Footnote editing uses a second `.pm-content` root. Its selection is
       // still document content and must seed Find just like the main body.
       const footnote = proseMirror.locator('.pm-footnote').first();
@@ -731,53 +783,6 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
       await selectConsoleSentinel();
       await findButton.click();
       await expect(findInput).toHaveValue('mangosteen');
-
-      // Input selections do not appear in window.getSelection(). With the
-      // find input focused and a distinct value selected in it, the chunk's
-      // retained `gizmo` selection -- what the editor would otherwise seed --
-      // must not replace it: the focused input wins. A DOM range cannot stand
-      // in for a stale editor selection here, as placing one in the editor
-      // moves focus out of the input.
-      const selectFindInput = async () => {
-        await focusSeedChunk();
-        await chunk.find('gizmo');
-        await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
-        await findInput.fill('current-search-term');
-        await findInput.selectText();
-        await expect
-          .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
-            active: document.activeElement === input,
-            selected: input.selectionEnd! - input.selectionStart!,
-          })))
-          .toEqual({ active: true, selected: 'current-search-term'.length });
-      };
-
-      await selectFindInput();
-      await executeCommand(page, 'findReplace');
-      await expect(findInput).toHaveValue('current-search-term');
-
-      await selectFindInput();
-      await executeCommand(page, 'findFromSelection');
-      await expect(findInput).toHaveValue('current-search-term');
-
-      // Only a text selection in the input counts. Use Selection handed focus
-      // back to the chunk, which still holds `gizmo`; once that handoff has
-      // landed, focus the input with a collapsed selection, and the same
-      // command seeds from the chunk.
-      await expect.poll(() => chunk.isFocused()).toBe(true);
-      await expect.poll(() => chunk.getSelectedText()).toBe('gizmo');
-      await findInput.focus();
-      await findInput.evaluate((input: HTMLInputElement) => {
-        input.setSelectionRange(input.value.length, input.value.length);
-      });
-      await expect
-        .poll(() => findInput.evaluate((input: HTMLInputElement) => ({
-          active: document.activeElement === input,
-          selected: input.selectionEnd! - input.selectionStart!,
-        })))
-        .toEqual({ active: true, selected: 0 });
-      await executeCommand(page, 'findReplace');
-      await expect(findInput).toHaveValue('gizmo');
     } finally {
       await sourceActions.closeSourceAndDeleteFile(fileName).catch((err) => {
         console.warn(`[quarto_chunks] cleanup failed for ${fileName}: ${err}`);
