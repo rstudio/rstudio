@@ -64,8 +64,16 @@ test.describe('Code folding', () => {
     await expect.poll(() => editor.getFoldWidget(16)).toBe('start');
     await expect.poll(() => editor.getFoldWidget(24)).toBe('start');
 
+    // Collapse All folds the YAML block, the setup chunk, and both sections,
+    // nesting each remaining chunk inside its enclosing section fold. The
+    // regression only reproduces with that nesting in place.
     await executeCommand(page, 'foldAll');
-    await expect.poll(() => editor.getFoldCount()).toBeGreaterThan(0);
+    await expect.poll(() => editor.getFoldTree()).toEqual([
+      { row: 0, subFolds: [] },
+      { row: 6, subFolds: [] },
+      { row: 10, subFolds: [{ row: 16, subFolds: [] }] },
+      { row: 20, subFolds: [{ row: 24, subFolds: [] }] },
+    ]);
 
     await executeCommand(page, 'unfoldAll');
     await expect.poll(() => editor.getFoldCount()).toBe(0);

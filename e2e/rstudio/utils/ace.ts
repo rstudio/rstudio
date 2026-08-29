@@ -37,6 +37,16 @@ export namespace Ace {
     off(event: string, fn: (e: unknown) => void): void;
   }
 
+  // A collapsed range. Ace keeps only the outermost folds on its fold lines; a
+  // fold added inside an already-collapsed range (or one enclosed by a later,
+  // larger fold) is moved onto the enclosing fold's subFolds instead, with its
+  // range rewritten relative to the parent's start (see Ace's consumeRange).
+  export interface Fold {
+    start: Position;
+    end: Position;
+    subFolds: Fold[];
+  }
+
   // A node of the scope tree RStudio's code models build (see
   // acesupport/acemode/r_scope_tree.js). Sections are the nodes that drive the
   // document outline; 'depth' is set only on those with a heading level.
@@ -69,7 +79,8 @@ export namespace Ace {
     getLine(row: number): string;
     getFoldWidget(row: number): string;
     getFoldWidgetRange(row: number): Range | null;
-    getAllFolds(): unknown[];
+    /** The outermost folds only; nested folds live on each fold's subFolds. */
+    getAllFolds(): Fold[];
     // usually a plain state name, but rows inside a multi-line construct
     // (e.g. an open raw string) save the tokenizer stack instead
     getState(row: number): string | string[];
