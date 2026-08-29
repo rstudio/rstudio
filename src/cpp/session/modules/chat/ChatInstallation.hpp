@@ -57,6 +57,27 @@ bool verifyPositAiInstallation(const core::FilePath& positAiPath);
 core::FilePath systemPositAssistantInstallPath();
 
 /**
+ * Get the directory holding the Posit Assistant copy shipped with RStudio.
+ *
+ * The bundle is installed beside the session binary, except in the macOS app
+ * bundle where it sits next to bin/ rather than inside it, so both are
+ * checked. Only commercial builds ship one; in open source the directory
+ * never exists.
+ *
+ * @param resourcePath Root to resolve against (the session resource path)
+ * @return FilePath to the bundled installation directory
+ */
+core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePath);
+
+/**
+ * Get the directory holding the Posit Assistant copy shipped with RStudio,
+ * resolved against this session's resource path.
+ *
+ * @return FilePath to the bundled installation directory
+ */
+core::FilePath bundledPositAssistantInstallPath();
+
+/**
  * Locate the Posit Assistant installation directory.
  *
  * Search order:
@@ -65,6 +86,11 @@ core::FilePath systemPositAssistantInstallPath();
  *    - Linux/macOS: ~/.local/share/rstudio/pai/bin
  *    - Windows: %LOCALAPPDATA%/rstudio/pai/bin
  * 3. System-wide installation, as given by systemPositAssistantInstallPath()
+ * 4. The copy bundled with RStudio, as given by
+ *    bundledPositAssistantInstallPath() -- skipped entirely when
+ *    posit-assistant-path is set, so a pinned path that holds no
+ *    installation reports "not installed" rather than downgrading to the
+ *    shipped version
  *
  * @return FilePath to the installation directory, or empty FilePath if not found
  */

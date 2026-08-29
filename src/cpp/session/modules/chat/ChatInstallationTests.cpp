@@ -317,3 +317,33 @@ TEST(ChatInstallation, WriteProtocolVersionFilePreservesPackageProvidedFile)
 
    tempDir.removeIfExists();
 }
+
+TEST(ChatInstallation, BundledPathPrefersBinSubdirectory)
+{
+   // Non-Apple layout: the bundle installs into the directory holding the
+   // session binary.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   FilePath binDir = resourceDir.completeChildPath("bin")
+                                .completeChildPath(kBundledPositAiDirName);
+   binDir.ensureDirectory();
+
+   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), binDir);
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, BundledPathFallsBackToResourceRoot)
+{
+   // Apple layout: the bundle sits beside bin/ in the app's Resources
+   // directory. The fallback is also what open-source builds resolve to,
+   // where neither directory exists.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   resourceDir.ensureDirectory();
+
+   FilePath expected = resourceDir.completeChildPath(kBundledPositAiDirName);
+   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), expected);
+
+   resourceDir.removeIfExists();
+}

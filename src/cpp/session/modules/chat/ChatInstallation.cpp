@@ -59,6 +59,24 @@ core::FilePath systemPositAssistantInstallPath()
    return core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
 }
 
+core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePath)
+{
+   // Mirrors the Copilot Language Server layout: the directory is installed
+   // beside the session binary, except in the macOS app bundle where it sits
+   // next to bin/ rather than inside it.
+   core::FilePath binPath =
+      resourcePath.completePath("bin").completePath(kBundledPositAiDirName);
+   if (binPath.exists())
+      return binPath;
+
+   return resourcePath.completePath(kBundledPositAiDirName);
+}
+
+core::FilePath bundledPositAssistantInstallPath()
+{
+   return bundledPositAssistantInstallPath(options().resourcePath());
+}
+
 core::FilePath locatePositAssistantInstallation()
 {
    // 1. Check environment variable override (for development/testing)
@@ -96,11 +114,31 @@ core::FilePath locatePositAssistantInstallation()
       DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
       return systemPositAiPath;
    }
-   else if (!options().positAssistantPath().isEmpty() && RS_ONCE())
+
+   // A path the administrator pinned but that holds no installation ends the
+   // search: falling through to the bundled copy would answer a typo or an
+   // unmounted share with a silent downgrade to whatever version shipped
+   // with RStudio.
+   bool pinnedInstall = !options().positAssistantPath().isEmpty();
+   if (pinnedInstall)
    {
       // Warn once per session: locate() runs on every status, verify, and chat
       // request, and a misconfigured path would otherwise flood the log.
-      WLOG("posit-assistant-path set but installation invalid: {}", systemPositAiPath.getAbsolutePath());
+      if (RS_ONCE())
+         WLOG("posit-assistant-path set but installation invalid: {}", systemPositAiPath.getAbsolutePath());
+   }
+   else
+   {
+      // 4. Check the copy bundled with RStudio. It ranks last: a
+      // manifest-installed update lands in the user data directory and an
+      // administrator's own install is deliberate, so both outrank it.
+      // Open-source builds ship no bundle and always fall through here.
+      core::FilePath bundledPositAiPath = bundledPositAssistantInstallPath();
+      if (verifyPositAiInstallation(bundledPositAiPath))
+      {
+         DLOG("Using AI installation bundled with RStudio: {}", bundledPositAiPath.getAbsolutePath());
+         return bundledPositAiPath;
+      }
    }
 
    DLOG("No valid AI installation found. Checked locations:");
@@ -108,6 +146,8 @@ core::FilePath locatePositAssistantInstallation()
       DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
    DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
    DLOG("  - System install dir: {}", systemPositAiPath.getAbsolutePath());
+   if (!pinnedInstall)
+      DLOG("  - Bundled with RStudio: {}", bundledPositAssistantInstallPath().getAbsolutePath());
 
    return core::FilePath(); // Not found
 }
