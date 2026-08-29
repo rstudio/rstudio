@@ -63,10 +63,12 @@ core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePa
 {
    // Mirrors the Copilot Language Server layout: the directory is installed
    // beside the session binary, except in the macOS app bundle where it sits
-   // next to bin/ rather than inside it.
+   // next to bin/ rather than inside it. The bin candidate is verified rather
+   // than merely tested for existence, so a partial directory left there does
+   // not mask a usable bundle at the other location.
    core::FilePath binPath =
       resourcePath.completePath("bin").completePath(kBundledPositAiDirName);
-   if (binPath.exists())
+   if (verifyPositAiInstallation(binPath))
       return binPath;
 
    return resourcePath.completePath(kBundledPositAiDirName);

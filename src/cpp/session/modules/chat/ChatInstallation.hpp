@@ -60,9 +60,11 @@ core::FilePath systemPositAssistantInstallPath();
  * Get the directory holding the Posit Assistant copy shipped with RStudio.
  *
  * The bundle is installed beside the session binary, except in the macOS app
- * bundle where it sits next to bin/ rather than inside it, so both are
- * checked. Only commercial builds ship one; in open source the directory
- * never exists.
+ * bundle where it sits next to bin/ rather than inside it. The first location
+ * is returned when it holds a valid installation, and the second otherwise --
+ * so the returned path is where the bundle would be even when none is
+ * installed. Only commercial builds ship one; in open source neither
+ * directory exists.
  *
  * @param resourcePath Root to resolve against (the session resource path)
  * @return FilePath to the bundled installation directory

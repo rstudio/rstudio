@@ -318,6 +318,21 @@ TEST(ChatInstallation, WriteProtocolVersionFilePreservesPackageProvidedFile)
    tempDir.removeIfExists();
 }
 
+namespace {
+
+// Writes the files verifyPositAiInstallation() requires into dir.
+void stageInstallation(const FilePath& dir)
+{
+   dir.completeChildPath(kClientDirPath).ensureDirectory();
+   dir.completeChildPath(kServerScriptPath).getParent().ensureDirectory();
+   writeStringToFile(dir.completeChildPath(kServerScriptPath), "// mock server script");
+   writeStringToFile(
+      dir.completeChildPath(kClientDirPath).completeChildPath(kIndexFileName),
+      "<html>mock</html>");
+}
+
+} // anonymous namespace
+
 TEST(ChatInstallation, BundledPathPrefersBinSubdirectory)
 {
    // Non-Apple layout: the bundle installs into the directory holding the
@@ -326,7 +341,7 @@ TEST(ChatInstallation, BundledPathPrefersBinSubdirectory)
    FilePath::tempFilePath(resourceDir);
    FilePath binDir = resourceDir.completeChildPath("bin")
                                 .completeChildPath(kBundledPositAiDirName);
-   binDir.ensureDirectory();
+   stageInstallation(binDir);
 
    EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), binDir);
 
@@ -344,6 +359,24 @@ TEST(ChatInstallation, BundledPathFallsBackToResourceRoot)
 
    FilePath expected = resourceDir.completeChildPath(kBundledPositAiDirName);
    EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), expected);
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, BundledPathSkipsIncompleteBinSubdirectory)
+{
+   // A partial directory beside the session binary must not mask a usable
+   // bundle at the other location.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   resourceDir.completeChildPath("bin")
+              .completeChildPath(kBundledPositAiDirName)
+              .ensureDirectory();
+
+   FilePath rootDir = resourceDir.completeChildPath(kBundledPositAiDirName);
+   stageInstallation(rootDir);
+
+   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), rootDir);
 
    resourceDir.removeIfExists();
 }
