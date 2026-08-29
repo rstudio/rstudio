@@ -1027,6 +1027,12 @@
             "implicitValue": true,
             "isHidden": true,
             "description": "Use the test manifest URL for Posit Assistant package updates."
+         },
+         {
+            "name": "posit-assistant-path",
+            "type": "core::FilePath",
+            "memberName": "positAssistantPath_",
+            "description": "Specifies the path to an administrator-managed Posit Assistant installation."
          }
       ],
       "trust": [

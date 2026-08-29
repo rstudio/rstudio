@@ -44,17 +44,27 @@ namespace installation {
 bool verifyPositAiInstallation(const core::FilePath& positAiPath);
 
 /**
+ * Get the system-wide Posit Assistant installation directory.
+ *
+ * This is the posit-assistant-path session option when set, so that an
+ * administrator can manage the installation from an arbitrary location, and
+ * the XDG config directory otherwise:
+ *    - Linux/macOS: /etc/rstudio/pai/bin
+ *    - Windows: C:/ProgramData/rstudio/pai/bin
+ *
+ * @return FilePath to the system-wide installation directory
+ */
+core::FilePath systemPositAssistantInstallPath();
+
+/**
  * Locate the Posit Assistant installation directory.
  *
  * Search order:
  * 1. RSTUDIO_POSIT_AI_PATH environment variable (for development/testing)
  * 2. User data directory (XDG-based, platform-appropriate)
- *    - Linux: ~/.local/share/rstudio/ai
- *    - macOS: ~/Library/Application Support/RStudio/ai
- *    - Windows: %LOCALAPPDATA%/RStudio/ai
- * 3. System-wide installation (XDG config directory)
- *    - Linux: /etc/rstudio/ai
- *    - Windows: C:/ProgramData/RStudio/ai
+ *    - Linux/macOS: ~/.local/share/rstudio/pai/bin
+ *    - Windows: %LOCALAPPDATA%/rstudio/pai/bin
+ * 3. System-wide installation, as given by systemPositAssistantInstallPath()
  *
  * @return FilePath to the installation directory, or empty FilePath if not found
  */

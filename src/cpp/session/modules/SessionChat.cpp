@@ -279,6 +279,7 @@ using chat_logging::rs_chatSetLogLevel;
 
 // Installation functions used throughout
 using chat_installation::locatePositAssistantInstallation;
+using chat_installation::systemPositAssistantInstallPath;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
@@ -5151,7 +5152,7 @@ Error startChatBackend(bool resumeConversation)
    if (positAiPath.isEmpty())
    {
       std::string userPath = xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
-      std::string systemPath = xdg::systemConfigDir().completePath(kPositAiDirName).getAbsolutePath();
+      std::string systemPath = systemPositAssistantInstallPath().getAbsolutePath();
       std::string errorMsg = fmt::format(
          "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
          userPath, systemPath);
@@ -5293,10 +5294,10 @@ Error startChatBackend(bool resumeConversation)
    // start while an install/update/uninstall is in progress (we would be
    // launching from a directory mid-swap). Only the read-only system
    // install skips locking: mutations never touch it, and it cannot alias
-   // the per-user install. Env-var overrides over-lock deliberately —
-   // mirroring the agent's rule — because deciding whether an override
-   // truly resolves outside pai/bin is unreliable (symlinks), and
-   // over-locking costs at most a retryable refusal.
+   // the per-user install. Env-var and posit-assistant-path overrides
+   // over-lock deliberately — mirroring the agent's rule — because deciding
+   // whether an override truly resolves outside pai/bin is unreliable
+   // (symlinks), and over-locking costs at most a retryable refusal.
    uint64_t generation = ++s_chatBackendGeneration;
 
    // A stale flag from a previous unreaped generation must not classify a
@@ -6151,8 +6152,7 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
          return Success();
       }
 
-      FilePath systemPath =
-         xdg::systemConfigDir().completePath(kPositAiDirName);
+      FilePath systemPath = systemPositAssistantInstallPath();
       if (systemPath.exists())
       {
          pResponse->setError(

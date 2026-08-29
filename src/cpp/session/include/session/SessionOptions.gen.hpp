@@ -501,7 +501,10 @@ protected:
       "The path to an optional shell script, which when invoked, should start the Posit Next Edit Suggestions Language Server.")
       ("posit-assistant-test-manifest",
       value<bool>(&positAssistantTestManifest_)->default_value(false)->implicit_value(true),
-      "Use the test manifest URL for Posit Assistant package updates.");
+      "Use the test manifest URL for Posit Assistant package updates.")
+      ("posit-assistant-path",
+      value<std::string>(&positAssistantPath_)->default_value(std::string()),
+      "Specifies the path to an administrator-managed Posit Assistant installation.");
 
    pTrust->add_options()
       ("project-trust-dialogs",
@@ -657,6 +660,7 @@ public:
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
+   core::FilePath positAssistantPath() const { return core::FilePath(positAssistantPath_); }
    int projectTrustDialogs() const { return projectTrustDialogs_; }
    bool projectTrustRequired() const { return projectTrustRequired_; }
    std::string previewAllowedFunctions() const { return previewAllowedFunctions_; }
@@ -797,6 +801,7 @@ protected:
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
+   std::string positAssistantPath_;
    int projectTrustDialogs_;
    bool projectTrustRequired_;
    std::string previewAllowedFunctions_;
