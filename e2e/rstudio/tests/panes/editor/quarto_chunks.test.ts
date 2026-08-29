@@ -712,6 +712,9 @@ test.describe.serial('Quarto chunks', { tag: ['@serial'] }, () => {
         .toEqual({ active: true, selected: 0 });
       await executeCommand(page, 'findReplace');
       await expect(findInput).toHaveValue('gizmo');
+      // Let the buffered find land on the chunk match now, or it fires after
+      // the footnote click below and closes the footnote editor.
+      await awaitFindSettled(proseMirror);
 
       // The footnote steps go last. Panmirror's footnote editor is a 160px
       // panel pinned to the editor's bottom edge that stays open while the
