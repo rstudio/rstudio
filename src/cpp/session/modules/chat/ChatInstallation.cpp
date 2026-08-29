@@ -18,6 +18,7 @@
 #include "ChatLogging.hpp"
 
 #include <core/FileSerializer.hpp>
+#include <core/Macros.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -95,8 +96,10 @@ core::FilePath locatePositAssistantInstallation()
       DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
       return systemPositAiPath;
    }
-   else if (!options().positAssistantPath().isEmpty())
+   else if (!options().positAssistantPath().isEmpty() && RS_ONCE())
    {
+      // Warn once per session: locate() runs on every status, verify, and chat
+      // request, and a misconfigured path would otherwise flood the log.
       WLOG("posit-assistant-path set but installation invalid: {}", systemPositAiPath.getAbsolutePath());
    }
 

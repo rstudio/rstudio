@@ -6153,7 +6153,7 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
       }
 
       FilePath systemPath = systemPositAssistantInstallPath();
-      if (systemPath.exists())
+      if (verifyPositAiInstallation(systemPath))
       {
          pResponse->setError(
             systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),

@@ -1032,7 +1032,7 @@
             "name": "posit-assistant-path",
             "type": "core::FilePath",
             "memberName": "positAssistantPath_",
-            "description": "Specifies the path to an administrator-managed Posit Assistant installation."
+            "description": "Specifies the absolute path of the directory holding an administrator-managed Posit Assistant installation, that is, the directory containing the installation's dist directory. Replaces the default system-wide location rather than adding to it."
          }
       ],
       "trust": [

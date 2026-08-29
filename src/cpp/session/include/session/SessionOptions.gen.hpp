@@ -504,7 +504,7 @@ protected:
       "Use the test manifest URL for Posit Assistant package updates.")
       ("posit-assistant-path",
       value<std::string>(&positAssistantPath_)->default_value(std::string()),
-      "Specifies the path to an administrator-managed Posit Assistant installation.");
+      "Specifies the absolute path of the directory holding an administrator-managed Posit Assistant installation, that is, the directory containing the installation's dist directory. Replaces the default system-wide location rather than adding to it.");
 
    pTrust->add_options()
       ("project-trust-dialogs",
