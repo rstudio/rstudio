@@ -117,6 +117,11 @@ core::FilePath locatePositAssistantInstallation()
       return systemPositAiPath;
    }
 
+   // Resolved below only when the bundled copy is actually consulted; reused
+   // by the "checked locations" log so it is not resolved (and re-verified)
+   // twice per lookup.
+   core::FilePath bundledPositAiPath;
+
    // A path the administrator pinned but that holds no installation ends the
    // search: falling through to the bundled copy would answer a typo or an
    // unmounted share with a silent downgrade to whatever version shipped
@@ -135,7 +140,7 @@ core::FilePath locatePositAssistantInstallation()
       // manifest-installed update lands in the user data directory and an
       // administrator's own install is deliberate, so both outrank it.
       // Open-source builds ship no bundle and always fall through here.
-      core::FilePath bundledPositAiPath = bundledPositAssistantInstallPath();
+      bundledPositAiPath = bundledPositAssistantInstallPath();
       if (verifyPositAiInstallation(bundledPositAiPath))
       {
          DLOG("Using AI installation bundled with RStudio: {}", bundledPositAiPath.getAbsolutePath());
@@ -149,7 +154,7 @@ core::FilePath locatePositAssistantInstallation()
    DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
    DLOG("  - System install dir: {}", systemPositAiPath.getAbsolutePath());
    if (!pinnedInstall)
-      DLOG("  - Bundled with RStudio: {}", bundledPositAssistantInstallPath().getAbsolutePath());
+      DLOG("  - Bundled with RStudio: {}", bundledPositAiPath.getAbsolutePath());
 
    return core::FilePath(); // Not found
 }
