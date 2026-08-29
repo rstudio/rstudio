@@ -50,6 +50,7 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/RecycleBin.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -219,7 +220,9 @@ core::Error isPackageDirectory(const json::JsonRpcRequest& request,
 
    return Success();
 }
-                         
+
+constexpr char kXdgVimrcPath[] = "$XDG_CONFIG_HOME/vim/vimrc";
+
 core::Error getFileContents(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
@@ -228,7 +231,13 @@ core::Error getFileContents(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   FilePath targetPath = module_context::resolveAliasedPath(path);
+   FilePath targetPath;
+#ifndef _WIN32
+   if (path == kXdgVimrcPath)
+	  targetPath = core::system::xdg::xdgUserConfigHome().completePath("vim/vimrc");
+   else
+#endif
+      targetPath = module_context::resolveAliasedPath(path);
    if (!module_context::isPathViewAllowed(targetPath))
    {
       return Error(json::errc::DirectoryViewListingProhibited, ERROR_LOCATION);

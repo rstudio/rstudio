@@ -54,6 +54,30 @@ TEST(XdgTest, DirectoryResolution)
    EXPECT_EQ(homePath.completeChildPath(".cache/rstudio"), userCacheDir(s_defaultUser));
    EXPECT_EQ(FilePath("/tmp/default/.cache/rstudio"), userCacheDir(s_defaultUser, s_defaultHome));
 }
+
+TEST(XdgTest, XdgUserConfigHome)
+{
+   FilePath homePath(core::system::getenv("HOME"));
+
+   EXPECT_EQ(homePath.completeChildPath(".config"), xdgUserConfigHome());
+   EXPECT_EQ(FilePath("/tmp/default/.config"), xdgUserConfigHome(s_defaultUser, s_defaultHome));
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "/tmp/custom");
+      EXPECT_EQ(FilePath("/tmp/custom"), xdgUserConfigHome());
+   }
+
+   {
+      EnvironmentScope scope("RSTUDIO_CONFIG_HOME", "/tmp/rstudio/config");
+      EXPECT_EQ(homePath.completeChildPath(".config"), xdgUserConfigHome());
+   }
+
+   {
+      EnvironmentScope scope("XDG_CONFIG_HOME", "~/configurations");
+      EXPECT_EQ(homePath.completeChildPath("configurations"), xdgUserConfigHome());
+      EXPECT_EQ(FilePath("/tmp/default/configurations"), xdgUserConfigHome(s_defaultUser, s_defaultHome));
+   }
+}
    
 
 TEST(XdgTest, EnvironmentOverrides)
