@@ -18,9 +18,11 @@
 #include "ChatLogging.hpp"
 
 #include <core/FileSerializer.hpp>
+#include <core/Macros.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <session/SessionOptions.hpp>
 #include <shared_core/json/Json.hpp>
 
 // Use qualified names for core:: to avoid conflicts with system getenv
@@ -43,6 +45,18 @@ bool verifyPositAiInstallation(const core::FilePath& positAiPath)
    core::FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
 
    return clientDir.exists() && serverScript.exists() && indexHtml.exists();
+}
+
+core::FilePath systemPositAssistantInstallPath()
+{
+   // An administrator may install Posit Assistant outside the XDG config
+   // directory; when posit-assistant-path is set it replaces that location
+   // rather than adding another one to search.
+   core::FilePath configuredPath = options().positAssistantPath();
+   if (!configuredPath.isEmpty())
+      return configuredPath;
+
+   return core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
 }
 
 core::FilePath locatePositAssistantInstallation()
@@ -73,21 +87,27 @@ core::FilePath locatePositAssistantInstallation()
       return userPositAiPath;
    }
 
-   // 3. Check system-wide installation (XDG config directory)
-   // Linux/macOS: /etc/rstudio/pai/bin
-   // Windows: C:/ProgramData/rstudio/pai/bin
-   core::FilePath systemPositAiPath = core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
+   // 3. Check the system-wide installation: posit-assistant-path when set, and
+   // otherwise the XDG config directory (/etc/rstudio/pai/bin on Linux and
+   // macOS, C:/ProgramData/rstudio/pai/bin on Windows)
+   core::FilePath systemPositAiPath = systemPositAssistantInstallPath();
    if (verifyPositAiInstallation(systemPositAiPath))
    {
       DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
       return systemPositAiPath;
+   }
+   else if (!options().positAssistantPath().isEmpty() && RS_ONCE())
+   {
+      // Warn once per session: locate() runs on every status, verify, and chat
+      // request, and a misconfigured path would otherwise flood the log.
+      WLOG("posit-assistant-path set but installation invalid: {}", systemPositAiPath.getAbsolutePath());
    }
 
    DLOG("No valid AI installation found. Checked locations:");
    if (!rstudioPositAiPath.empty())
       DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
    DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
-   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
+   DLOG("  - System install dir: {}", systemPositAiPath.getAbsolutePath());
 
    return core::FilePath(); // Not found
 }
