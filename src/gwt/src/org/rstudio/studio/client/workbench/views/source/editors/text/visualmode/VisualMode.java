@@ -543,6 +543,14 @@ public class VisualMode implements VisualModeEditorSync,
       if (panmirrorFormatConfig_ != null && panmirrorFormatConfig_.requiresReload()) 
       {
          panmirrorFormatConfig_ = null;
+
+         // The idle commands belong to the editor being torn down and read
+         // panmirror_ when they fire; a pending one would otherwise land in
+         // the window before the replacement editor exists.
+         syncOnIdle_.suspend();
+         saveLocationOnIdle_.suspend();
+         displayLocationOnIdle_.suspend();
+
          panmirror_.destroy();
          view_.editorContainer().removeWidget(panmirror_);
          panmirror_ = null;
