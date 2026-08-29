@@ -24,6 +24,34 @@
 using namespace rstudio;
 using namespace rstudio::core;
 
+/**
+ * Join RS_SERVER_URL and RS_SESSION_URL with an obfuscated port to form the
+ * proxied URL printed by the -l option.
+ *
+ * @param serverUrl Value of RS_SERVER_URL, which may be empty or unset
+ * @param sessionUrl Value of RS_SESSION_URL, empty when the URL has no session segment
+ * @param transformedPort The obfuscated port
+ */
+std::string buildProxiedUrl(const std::string& serverUrl,
+                            const std::string& sessionUrl,
+                            const std::string& transformedPort)
+{
+   std::string prefix = serverUrl;
+   if (!prefix.empty() && prefix.back() == '/' &&
+       !sessionUrl.empty() && sessionUrl.front() == '/')
+   {
+      prefix.pop_back();
+   }
+   prefix += sessionUrl;
+
+   // Keep the port path rooted. Neither variable is guaranteed to be set, and
+   // a relative result would resolve against the caller's own path.
+   if (prefix.empty() || prefix.back() != '/')
+      prefix += '/';
+
+   return prefix + "p/" + transformedPort + "/";
+}
+
 bool parseArguments(const int argc, char * const argv[], bool& longOutput, int* pPort, std::string* pPortToken)
 {
    if (argc < 2)
