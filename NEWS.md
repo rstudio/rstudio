@@ -3,6 +3,7 @@
 ### New
 - ([#18649](https://github.com/rstudio/rstudio/issues/18649)): Renamed references to the Posit AI service to Posit AI Pass in the IDE user interface.
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): Added horizontal and vertical split source editor views, with shared edits and independent navigation state.
+- ([#7350](https://github.com/rstudio/rstudio/issues/7350)): Added XDG-compliance to vimrc loading; binds can now be loaded from user-set `$XDG_CONFIG_HOME`.
 
 ### Fixed
 - ([#18620](https://github.com/rstudio/rstudio/issues/18620)): The Data Viewer's last row is no longer hidden underneath the horizontal scrollbar when scrolled to the bottom.
