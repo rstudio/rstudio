@@ -1608,7 +1608,7 @@ bool isPositAssistantEnabledByAdmin()
 
 bool isPositAssistantInstallationEnabledByAdmin()
 {
-   return session::options().allowPositAssistantInstallation() &&
+   return session::options().positAssistantInstallationEnabled() &&
           core::system::getenv("RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION").empty();
 }
 

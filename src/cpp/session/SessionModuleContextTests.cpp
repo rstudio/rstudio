@@ -1200,8 +1200,8 @@ TEST(PositAssistantInstallationTest, EnabledWhenEnvironmentVariableIsUnset)
    ScopedInstallationEnvVar envVar;
    envVar.unset();
 
-   // allow-posit-assistant-installation defaults to enabled (and open-source
-   // builds force-allow every allow-* option), so this is the default state.
+   // posit-assistant-installation-enabled defaults to true, so this is the
+   // default state.
    EXPECT_TRUE(module_context::isPositAssistantInstallationEnabledByAdmin());
 }
 
