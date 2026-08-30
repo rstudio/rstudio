@@ -668,6 +668,8 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String positAssistantInstallationManagedTitle();
     String positAssistantInstallationManagedMessage();
     String positAssistantInstallationManagedNotice();
+    String positAssistantInstallationManagedUnavailableTitle();
+    String positAssistantInstallationManagedUnavailableMessage();
     String positAssistantInstallingMessage();
     String positAssistantInstallCompleteTitle();
     String positAssistantInstallCompleteMessage();

@@ -1314,12 +1314,14 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       // The dispatcher routes managed sessions away from every prompting
       // outcome except onCheckFailed, which offers an install with no version
-      // info. That install would be refused, so report the mode instead.
+      // info. That install would be refused, so report the mode instead. The
+      // check failed, so whether the administrator's copy resolves is unknown
+      // here -- the wording must not claim it is missing.
       if (!paiUtil_.isPositAssistantInstallationEnabled())
       {
          globalDisplay_.showErrorMessage(
-            constants_.positAssistantInstallationManagedTitle(),
-            constants_.positAssistantInstallationManagedMessage(),
+            constants_.positAssistantInstallationManagedUnavailableTitle(),
+            constants_.positAssistantInstallationManagedUnavailableMessage(),
             (Operation) () -> {
                revertPositAiPreference(forAssistant, revert);
             });
