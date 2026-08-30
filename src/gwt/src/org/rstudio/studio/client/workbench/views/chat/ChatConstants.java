@@ -68,6 +68,8 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
         String currentVersion, String newVersion);
     String chatUnsupportedVersionNoUpdateMessage(String currentVersion);
     String chatUnsupportedProtocolMessage();
+    String chatInstallationManagedNotInstalledMessage();
+    String chatInstallationManagedMessage();
     String chatManifestUnavailableTitle();
     String chatManifestUnavailableMessage();
     String chatCopyError();
@@ -85,6 +87,10 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatUnsupportedVersionDowngradeConfirmMessage(String currentVersion, String newVersion);
     String chatCheckFailedMessage();
     String chatCancelButton();
+
+    // Uninstall
+    String uninstallPositAssistantCaption();
+    String uninstallPositAssistantMessage();
 
     // Chat satellite window
     String chatSatelliteWindowTitle();

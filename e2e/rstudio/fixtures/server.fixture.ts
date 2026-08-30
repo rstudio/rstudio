@@ -433,9 +433,18 @@ export async function launchServer(): Promise<ServerSession> {
 
   console.log(`Connecting to RStudio Server at ${serverUrl}...`);
 
+  // Window size, not viewport: Chrome's own toolbar comes out of it, leaving
+  // roughly 1280x810 for the page. The earlier 960x540 left a 453px-tall
+  // page in which the visual editor kept only ~55px of body once its find bar
+  // was open; panmirror's footnote editor is a 160px panel pinned to the
+  // editor's bottom edge, so opening one pushed the body out of the editor
+  // entirely and Playwright found the find bar over the footnote text
+  // (quarto_chunks.test.ts, #16540). The desktop fixture pins 1024x645 only
+  // because the macOS runner clamps windows to that; Xvfb on the server
+  // runners is 1920x1080, so there is no reason to be that tight here.
   const browser = await chromium.launch({
     headless: false,
-    args: ['--window-size=960,540', '--window-position=100,100'],
+    args: ['--window-size=1280,900', '--window-position=100,100'],
   });
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();

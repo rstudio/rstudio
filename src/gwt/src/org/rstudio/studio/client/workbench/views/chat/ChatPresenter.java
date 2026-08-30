@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -122,6 +124,7 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
       void showManifestUnavailable(String errorMessage);
+      void showInstallationManagedNotInstalled();
       void showConnectionLostNotification(String message);
       void hideConnectionLostNotification();
       void showReadlineNotification();
@@ -141,6 +144,7 @@ public class ChatPresenter extends BasePresenter
       String getUnsupportedVersionNoUpdateHTML(String currentVersion);
       String getUnsupportedProtocolHTML();
       String getManifestUnavailableHTML(String errorMessage);
+      String getInstallationManagedNotInstalledHTML();
       String getErrorHTML(String errorMessage);
    }
 
@@ -163,7 +167,8 @@ public class ChatPresenter extends BasePresenter
       SatelliteManager satelliteManager,
       PaneManager paneManager,
       Session session,
-      GlobalDisplay globalDisplay)
+      GlobalDisplay globalDisplay,
+      ApplicationQuit applicationQuit)
    {
       super(display);
       binder.bind(commands, this);
@@ -177,7 +182,9 @@ public class ChatPresenter extends BasePresenter
       lastEffectiveChatProvider_ = paiUtil_.getConfiguredChatProvider();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
+      session_ = session;
       globalDisplay_ = globalDisplay;
+      applicationQuit_ = applicationQuit;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -598,6 +605,47 @@ public class ChatPresenter extends BasePresenter
    }
 
    // No @Handler: bound via ChatTab.Shim so the command works before the
+   // presenter is delay-loaded.
+   void onUninstallPositAssistant()
+   {
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_WARNING,
+         constants_.uninstallPositAssistantCaption(),
+         constants_.uninstallPositAssistantMessage(),
+         () -> performUninstall(),
+         false);
+   }
+
+   private void performUninstall()
+   {
+      server_.chatUninstallPositAssistant(new ServerRequestCallback<VoidResponse>()
+      {
+         @Override
+         public void onResponseReceived(VoidResponse response)
+         {
+            // doRestart() is cancelable (user can decline to save unsaved
+            // changes). If canceled, PAI files are already deleted but the
+            // session continues unrestarted — an acceptable edge case
+            // consistent with other RStudio restart flows.
+            applicationQuit_.doRestart(session_);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // Backend delivers user-facing text via client_info; fall back
+            // to the generic user message when no client_info is provided.
+            String clientInfo = PositAiInstallManager.clientInfoMessage(error);
+            String message =
+               clientInfo != null ? clientInfo : error.getUserMessage();
+            globalDisplay_.showErrorMessage(
+               constants_.uninstallPositAssistantCaption(),
+               message);
+         }
+      });
+   }
+
+   // No @Handler: bound via ChatTab.Shim so the command works before the
    // presenter is delay-loaded. Also invoked when Posit Assistant sends a
    // ui/checkForUpdates JSON-RPC request (see ChatCheckForUpdatesEvent).
    //
@@ -707,6 +755,21 @@ public class ChatPresenter extends BasePresenter
             }
 
             @Override
+            public void onInstallationManaged(boolean installed)
+            {
+               // Reachable only defensively: the command is hidden and the
+               // assistant's ui/checkForUpdates capability is withdrawn when
+               // installation is administrator-managed.
+               finishUpdateCheck(dismissProgress);
+               globalDisplay_.showMessage(
+                  GlobalDisplay.MSG_INFO,
+                  constants_.chatCheckForUpdatesCaption(),
+                  installed
+                     ? constants_.chatInstallationManagedMessage()
+                     : constants_.chatInstallationManagedNotInstalledMessage());
+            }
+
+            @Override
             public void onManifestUnavailable(String errorMessage)
             {
                finishUpdateCheck(dismissProgress);
@@ -769,6 +832,18 @@ public class ChatPresenter extends BasePresenter
    // conversation via the existing resume mechanism.
    private void promptToInstallUpdate(String caption, String message, String confirmLabel)
    {
+      // chat_install_update is also refused when the administrator manages the
+      // installation. Nothing the user can do resolves that, so state it and
+      // stop rather than offering an install that would fail.
+      if (!paiUtil_.isPositAssistantInstallationEnabled())
+      {
+         globalDisplay_.showMessage(
+            GlobalDisplay.MSG_INFO,
+            constants_.chatCheckForUpdatesCaption(),
+            constants_.chatInstallationManagedMessage());
+         return;
+      }
+
       // chat_install_update is refused unless Posit Assistant is selected as the
       // chat provider or assistant (isPositAssistantWanted). Offering an install
       // that would fail is confusing, so direct the user to select it instead.
@@ -1200,6 +1275,25 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
+         public void onInstallationManaged(boolean installed)
+         {
+            // An administrator-managed installation behaves normally once it
+            // resolves -- no update prompt can appear, since managed mode
+            // fetches no manifest. With nothing installed there is nothing to
+            // offer, so the pane says so rather than showing an install button.
+            if (installed)
+            {
+               startBackend();
+               return;
+            }
+
+            showInDisplayOrSatellite(
+               display_.getInstallationManagedNotInstalledHTML(),
+               () -> display_.showInstallationManagedNotInstalled());
+            setAutomationChatState("installation-managed", true);
+         }
+
+         @Override
          public void onManifestUnavailable(String errorMessage)
          {
             showInDisplayOrSatellite(
@@ -1495,8 +1589,8 @@ public class ChatPresenter extends BasePresenter
     *     "starting", "restarting", "manifest-unavailable",
     *     "unsupported-protocol", "incompatible-version",
     *     "version-update-required", "version-no-update", "not-installed",
-    *     "update-available", "assistant-not-selected", "error",
-    *     "crashed".</li>
+    *     "installation-managed", "update-available",
+    *     "assistant-not-selected", "error", "crashed".</li>
     *   <li><b>blocked</b>: true when the iframe is showing a blocking page
     *     that prevents normal interaction (the user must take a setup action
     *     or RStudio cannot continue). Tests poll this when they only care
@@ -1528,7 +1622,9 @@ public class ChatPresenter extends BasePresenter
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
    private final PaneManager paneManager_;
+   private final Session session_;
    private final GlobalDisplay globalDisplay_;
+   private final ApplicationQuit applicationQuit_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;

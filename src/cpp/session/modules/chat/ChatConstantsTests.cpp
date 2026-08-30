@@ -17,6 +17,10 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 using namespace rstudio::session::modules::chat::constants;
 
 // -- assembleWebSocketPath ---------------------------------------------------
@@ -192,4 +196,42 @@ TEST(IsValidPreviewUrlHeight, OneAccepted)
 TEST(IsValidPreviewUrlHeight, TypicalPixelHeightAccepted)
 {
    EXPECT_TRUE(isValidPreviewUrlHeight(1024));
+}
+
+// -- negotiatedCapabilities --------------------------------------------------
+
+namespace {
+
+bool advertises(const std::vector<std::string>& capabilities,
+                const std::string& method)
+{
+   return std::find(capabilities.begin(), capabilities.end(), method) !=
+          capabilities.end();
+}
+
+} // anonymous namespace
+
+TEST(NegotiatedCapabilities, UnmanagedAdvertisesEverything)
+{
+   EXPECT_EQ(negotiatedCapabilities(false), rstudioCapabilities());
+}
+
+TEST(NegotiatedCapabilities, ManagedWithholdsCheckForUpdates)
+{
+   std::vector<std::string> negotiated = negotiatedCapabilities(true);
+   EXPECT_FALSE(advertises(negotiated, "ui/checkForUpdates"));
+   EXPECT_TRUE(advertises(rstudioCapabilities(), "ui/checkForUpdates"));
+}
+
+TEST(NegotiatedCapabilities, ManagedKeepsEveryOtherCapability)
+{
+   // Only the update entry varies by mode; withholding anything else would
+   // silently disable an unrelated Posit Assistant feature.
+   std::vector<std::string> negotiated = negotiatedCapabilities(true);
+   EXPECT_EQ(negotiated.size(), rstudioCapabilities().size() - 1);
+   for (const std::string& capability : rstudioCapabilities())
+   {
+      if (capability != "ui/checkForUpdates")
+         EXPECT_TRUE(advertises(negotiated, capability)) << capability;
+   }
 }
