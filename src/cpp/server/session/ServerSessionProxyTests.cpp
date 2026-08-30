@@ -74,3 +74,69 @@ TEST(ProxyLocalhostUidResolutionTests, FailsClosedForUnknownUser)
    // without an ownership check.
    EXPECT_TRUE(error);
 }
+
+TEST(ProxyLocalhostResponseTests, NormalizesChunkedRedirectBeforeRewritingHeaders)
+{
+   http::Request request;
+   request.setUri("/p/port-token/source");
+
+   http::Response response;
+   response.setStatusCode(http::status::MovedTemporarily);
+   response.setHeader("Location", "/location-target");
+   response.setHeader("Refresh", "/refresh-target");
+   response.setHeader("Transfer-Encoding", "Chunked");
+   response.setBody("decoded redirect body");
+
+   http::Response preparedResponse;
+   session_proxy::prepareLocalhostResponseForTest(
+      request,
+      "port-token",
+      "localhost",
+      false,
+      response,
+      &preparedResponse);
+
+   EXPECT_TRUE(preparedResponse.headerValue("Transfer-Encoding").empty());
+   EXPECT_EQ(preparedResponse.headerValue("Content-Length"),
+             std::to_string(response.body().size()));
+   EXPECT_EQ(preparedResponse.headerValue("Location"),
+             "/p/port-token/location-target");
+   EXPECT_EQ(preparedResponse.headerValue("Refresh"),
+             "/p/port-token/refresh-target");
+   EXPECT_EQ(preparedResponse.body(), response.body());
+}
+
+TEST(ProxyLocalhostResponseTests, NormalizesChunkedSparkUiBeforeRewritingBody)
+{
+   http::Request request;
+   request.setUri("/p/port-token/jobs/job-id");
+
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setHeader("Server", "Jetty(9.4.57)");
+   response.setHeader("Transfer-Encoding", "chunked");
+   response.setBody(
+      "<div class=\"navbar navbar-static-top\">"
+      "<a href=\"/jobs\">Jobs</a>"
+      "<script src=\"/static/app.js\"></script>"
+      "<img src=\"/static/spark-logo-77x50px-hd.png\">"
+      "</div>");
+
+   http::Response preparedResponse;
+   session_proxy::prepareLocalhostResponseForTest(
+      request,
+      "port-token",
+      "localhost",
+      false,
+      response,
+      &preparedResponse);
+
+   EXPECT_TRUE(preparedResponse.headerValue("Transfer-Encoding").empty());
+   EXPECT_EQ(preparedResponse.headerValue("Content-Length"),
+             std::to_string(preparedResponse.body().size()));
+   EXPECT_NE(preparedResponse.body().find("href=\"../jobs\""), std::string::npos);
+   EXPECT_NE(preparedResponse.body().find("<script src=\"../static/app.js\""),
+             std::string::npos);
+   EXPECT_NE(preparedResponse.body().find("<img src=\"../static/spark-logo"),
+             std::string::npos);
+}
