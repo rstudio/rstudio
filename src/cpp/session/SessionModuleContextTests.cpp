@@ -26,6 +26,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <shared_core/FilePath.hpp>
 
@@ -1153,6 +1154,80 @@ TEST_F(WindowsShortcutTest, FileSystemItemForBrokenShortcut)
 }
 
 #endif // _WIN32
+
+// ----------------------------------------------------------------------------
+// isPositAssistantInstallationEnabledByAdmin
+// ----------------------------------------------------------------------------
+
+namespace {
+
+// Restores RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION on scope exit, so a
+// failing assertion cannot leak managed mode into later tests.
+class ScopedInstallationEnvVar
+{
+public:
+   ScopedInstallationEnvVar()
+      : name_("RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION"),
+        original_(core::system::getenv(name_))
+   {
+   }
+
+   ~ScopedInstallationEnvVar()
+   {
+      if (original_.empty())
+         core::system::unsetenv(name_);
+      else
+         core::system::setenv(name_, original_);
+   }
+
+   void set(const std::string& value) { core::system::setenv(name_, value); }
+   void unset() { core::system::unsetenv(name_); }
+
+private:
+   std::string name_;
+   std::string original_;
+};
+
+} // anonymous namespace
+
+TEST(PositAssistantInstallationTest, EnabledWhenEnvironmentVariableIsUnset)
+{
+   ScopedInstallationEnvVar envVar;
+   envVar.unset();
+
+   // allow-posit-assistant-installation defaults to enabled (and open-source
+   // builds force-allow every allow-* option), so this is the default state.
+   EXPECT_TRUE(module_context::isPositAssistantInstallationEnabledByAdmin());
+}
+
+TEST(PositAssistantInstallationTest, DisabledWhenEnvironmentVariableIsSet)
+{
+   ScopedInstallationEnvVar envVar;
+   envVar.set("1");
+
+   EXPECT_FALSE(module_context::isPositAssistantInstallationEnabledByAdmin());
+}
+
+TEST(PositAssistantInstallationTest, AnyNonEmptyEnvironmentVariableValueDisables)
+{
+   // Documented as "non-empty", matching RSTUDIO_DISABLE_POSIT_ASSISTANT: even
+   // "0" and "false" disable, because only emptiness is tested.
+   ScopedInstallationEnvVar envVar;
+
+   envVar.set("0");
+   EXPECT_FALSE(module_context::isPositAssistantInstallationEnabledByAdmin());
+
+   envVar.set("false");
+   EXPECT_FALSE(module_context::isPositAssistantInstallationEnabledByAdmin());
+}
+
+TEST(PositAssistantInstallationTest, EmptyEnvironmentVariableLeavesInstallationEnabled)
+{
+   ScopedInstallationEnvVar envVar;
+   envVar.set("");
+
+   EXPECT_TRUE(module_context::isPositAssistantInstallationEnabledByAdmin());
+}
 
 } // namespace tests
 } // namespace module_context
