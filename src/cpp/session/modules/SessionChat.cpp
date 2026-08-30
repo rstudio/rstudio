@@ -3384,17 +3384,13 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
    result["protocolVersion"] = kProtocolVersion;
    result["rstudioVersion"] = std::string(RSTUDIO_VERSION);
 
-   // rstudioCapabilities() returns a reference to a function-local static, so
-   // it cannot vary by mode; filter it here instead. Dropping
-   // ui/checkForUpdates in managed mode makes Posit Assistant hide its own
-   // update entry, through the capability negotiation that already exists.
-   const auto& caps = chat_constants::rstudioCapabilities();
-   bool installationManaged = isInstallationManaged();
+   // Dropping ui/checkForUpdates in managed mode makes Posit Assistant hide its
+   // own update entry, through the capability negotiation that already exists.
+   std::vector<std::string> caps =
+      chat_constants::negotiatedCapabilities(isInstallationManaged());
    json::Array capsArray;
    for (const std::string& cap : caps)
    {
-      if (installationManaged && cap == "ui/checkForUpdates")
-         continue;
       capsArray.push_back(cap);
    }
    result["capabilities"] = capsArray;
