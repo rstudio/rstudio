@@ -1589,8 +1589,8 @@ public class ChatPresenter extends BasePresenter
     *     "starting", "restarting", "manifest-unavailable",
     *     "unsupported-protocol", "incompatible-version",
     *     "version-update-required", "version-no-update", "not-installed",
-    *     "update-available", "assistant-not-selected", "error",
-    *     "crashed".</li>
+    *     "installation-managed", "update-available",
+    *     "assistant-not-selected", "error", "crashed".</li>
     *   <li><b>blocked</b>: true when the iframe is showing a blocking page
     *     that prevents normal interaction (the user must take a setup action
     *     or RStudio cannot continue). Tests poll this when they only care

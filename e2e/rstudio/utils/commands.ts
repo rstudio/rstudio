@@ -120,6 +120,7 @@ type ChatBridge = {
     | 'version-update-required'
     | 'version-no-update'
     | 'not-installed'
+    | 'installation-managed'
     | 'update-available'
     | 'assistant-not-selected'
     | 'error'
