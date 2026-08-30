@@ -681,6 +681,12 @@ public class ChatPane
    }
 
    @Override
+   public void showInstallationManagedNotInstalled()
+   {
+      showMessage(constants_.chatInstallationManagedNotInstalledMessage());
+   }
+
+   @Override
    public void showUnsupportedVersionNoUpdate(String currentVersion)
    {
       showMessage(constants_.chatUnsupportedVersionNoUpdateMessage(currentVersion));
@@ -1222,6 +1228,13 @@ public class ChatPane
    public String getManifestUnavailableHTML(String errorMessage)
    {
       return generateManifestUnavailableHTML(errorMessage);
+   }
+
+   @Override
+   public String getInstallationManagedNotInstalledHTML()
+   {
+      return generateMessageHTML(
+         constants_.chatInstallationManagedNotInstalledMessage());
    }
 
    @Override

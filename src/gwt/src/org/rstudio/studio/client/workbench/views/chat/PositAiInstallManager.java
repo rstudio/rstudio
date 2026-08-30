@@ -100,6 +100,16 @@ public class PositAiInstallManager
       void onManifestUnavailable(String errorMessage);
 
       /**
+       * Called when the administrator manages the Posit Assistant installation.
+       * No install, update, or uninstall is possible, and no manifest was
+       * fetched, so there is never an update to offer.
+       *
+       * @param installed Whether an administrator-managed (or bundled)
+       *                  installation was found
+       */
+      void onInstallationManaged(boolean installed);
+
+      /**
        * Called when the update check failed (e.g., network error).
        *
        * @param errorMessage The error message
@@ -224,6 +234,9 @@ public class PositAiInstallManager
          flag(result, "additionalProvidersAvailable");
       boolean additionalProvidersAvailable =
          additionalProvidersFlag != null && additionalProvidersFlag;
+      Boolean installationManagedFlag = flag(result, "installationManaged");
+      boolean installationManaged =
+         installationManagedFlag != null && installationManagedFlag;
 
       if (manifestUnavailable)
       {
@@ -260,6 +273,17 @@ public class PositAiInstallManager
          {
             callback.onUnsupportedVersionNoUpdate(currentVersion);
          }
+         return;
+      }
+
+      // Managed mode ranks below the blocking outcomes above -- those tell the
+      // user something more specific about the administrator's copy -- but
+      // above the install and update outcomes, which managed mode can never
+      // act on. The backend leaves updateAvailable false here anyway; this
+      // ordering makes that independent of the backend getting it right.
+      if (installationManaged)
+      {
+         callback.onInstallationManaged(!isInitialInstall);
          return;
       }
 

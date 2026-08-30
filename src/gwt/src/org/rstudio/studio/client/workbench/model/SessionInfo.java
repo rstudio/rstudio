@@ -452,6 +452,10 @@ public class SessionInfo extends JavaScriptObject
       return this.posit_assistant_enabled;
    }-*/;
 
+   public final native boolean getPositAssistantInstallationEnabled() /*-{
+      return this.posit_assistant_installation_enabled;
+   }-*/;
+
    public final native int getWebSocketPingInterval() /*-{
       return this.websocket_ping_interval;
    }-*/;

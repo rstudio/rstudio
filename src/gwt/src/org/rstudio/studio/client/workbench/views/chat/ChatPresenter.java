@@ -124,6 +124,7 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
       void showManifestUnavailable(String errorMessage);
+      void showInstallationManagedNotInstalled();
       void showConnectionLostNotification(String message);
       void hideConnectionLostNotification();
       void showReadlineNotification();
@@ -143,6 +144,7 @@ public class ChatPresenter extends BasePresenter
       String getUnsupportedVersionNoUpdateHTML(String currentVersion);
       String getUnsupportedProtocolHTML();
       String getManifestUnavailableHTML(String errorMessage);
+      String getInstallationManagedNotInstalledHTML();
       String getErrorHTML(String errorMessage);
    }
 
@@ -753,6 +755,21 @@ public class ChatPresenter extends BasePresenter
             }
 
             @Override
+            public void onInstallationManaged(boolean installed)
+            {
+               // Reachable only defensively: the command is hidden and the
+               // assistant's ui/checkForUpdates capability is withdrawn when
+               // installation is administrator-managed.
+               finishUpdateCheck(dismissProgress);
+               globalDisplay_.showMessage(
+                  GlobalDisplay.MSG_INFO,
+                  constants_.chatCheckForUpdatesCaption(),
+                  installed
+                     ? constants_.chatInstallationManagedMessage()
+                     : constants_.chatInstallationManagedNotInstalledMessage());
+            }
+
+            @Override
             public void onManifestUnavailable(String errorMessage)
             {
                finishUpdateCheck(dismissProgress);
@@ -815,6 +832,18 @@ public class ChatPresenter extends BasePresenter
    // conversation via the existing resume mechanism.
    private void promptToInstallUpdate(String caption, String message, String confirmLabel)
    {
+      // chat_install_update is also refused when the administrator manages the
+      // installation. Nothing the user can do resolves that, so state it and
+      // stop rather than offering an install that would fail.
+      if (!paiUtil_.isPositAssistantInstallationEnabled())
+      {
+         globalDisplay_.showMessage(
+            GlobalDisplay.MSG_INFO,
+            constants_.chatCheckForUpdatesCaption(),
+            constants_.chatInstallationManagedMessage());
+         return;
+      }
+
       // chat_install_update is refused unless Posit Assistant is selected as the
       // chat provider or assistant (isPositAssistantWanted). Offering an install
       // that would fail is confusing, so direct the user to select it instead.
@@ -1243,6 +1272,25 @@ public class ChatPresenter extends BasePresenter
                display_.getUnsupportedProtocolHTML(),
                () -> display_.showUnsupportedProtocol());
             setAutomationChatState("unsupported-protocol", true);
+         }
+
+         @Override
+         public void onInstallationManaged(boolean installed)
+         {
+            // An administrator-managed installation behaves normally once it
+            // resolves -- no update prompt can appear, since managed mode
+            // fetches no manifest. With nothing installed there is nothing to
+            // offer, so the pane says so rather than showing an install button.
+            if (installed)
+            {
+               startBackend();
+               return;
+            }
+
+            showInDisplayOrSatellite(
+               display_.getInstallationManagedNotInstalledHTML(),
+               () -> display_.showInstallationManagedNotInstalled());
+            setAutomationChatState("installation-managed", true);
          }
 
          @Override

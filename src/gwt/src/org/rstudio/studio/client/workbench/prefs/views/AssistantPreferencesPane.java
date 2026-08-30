@@ -27,6 +27,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.Operation;
@@ -439,7 +440,21 @@ public class AssistantPreferencesPane extends PreferencesPane
          add(cbAssistantToolbarButtonVisible_);
       add(cbAssistantUseSystemCa_);
       if (paiEnabled)
-         add(nvwAssistantUpdateCheckInterval_);
+      {
+         // The interval controls a check the session never makes when the
+         // administrator manages the installation, so replace it with a notice
+         // rather than leaving a setting that does nothing.
+         if (paiUtil_.isPositAssistantInstallationEnabled())
+         {
+            add(nvwAssistantUpdateCheckInterval_);
+         }
+         else
+         {
+            InfoBar managedBar = new InfoBar(InfoBar.INFO);
+            managedBar.setText(constants_.positAssistantInstallationManagedNotice());
+            add(spaced(managedBar));
+         }
+      }
 
       // Code suggestions section
       add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
@@ -1008,9 +1023,12 @@ public class AssistantPreferencesPane extends PreferencesPane
                   int reason = (int) response.reason.valueOf();
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(type)));
 
-                  // Show Install button for Posit Assistant when not installed
+                  // Show Install button for Posit Assistant when not installed,
+                  // unless the administrator manages the installation -- the
+                  // backend refuses the install the button would start.
                   if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
-                      type.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+                      type.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
+                      paiUtil_.isPositAssistantInstallationEnabled())
                   {
                      showButtons(btnInstall_, btnRefresh_);
                   }
@@ -1235,6 +1253,30 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
 
          @Override
+         public void onInstallationManaged(boolean installed)
+         {
+            endPositAiCheck();
+
+            // The administrator manages the installation, so there is nothing
+            // to prompt for. Selecting Posit Assistant is fine when their copy
+            // resolves; when it does not, the selection cannot work, so say so
+            // and put the preference back.
+            if (installed)
+            {
+               if (forAssistant)
+                  refresh(UserPrefsAccessor.ASSISTANT_POSIT);
+               return;
+            }
+
+            globalDisplay_.showErrorMessage(
+               constants_.positAssistantInstallationManagedTitle(),
+               constants_.positAssistantInstallationManagedMessage(),
+               (Operation) () -> {
+                  revertPositAiPreference(forAssistant, revert);
+               });
+         }
+
+         @Override
          public void onManifestUnavailable(String errorMessage)
          {
             endPositAiCheck();
@@ -1270,6 +1312,20 @@ public class AssistantPreferencesPane extends PreferencesPane
                                         boolean forAssistant,
                                         RevertTarget revert)
    {
+      // The dispatcher routes managed sessions away from every prompting
+      // outcome except onCheckFailed, which offers an install with no version
+      // info. That install would be refused, so report the mode instead.
+      if (!paiUtil_.isPositAssistantInstallationEnabled())
+      {
+         globalDisplay_.showErrorMessage(
+            constants_.positAssistantInstallationManagedTitle(),
+            constants_.positAssistantInstallationManagedMessage(),
+            (Operation) () -> {
+               revertPositAiPreference(forAssistant, revert);
+            });
+         return;
+      }
+
       String title;
       String message;
       String yesLabel;
