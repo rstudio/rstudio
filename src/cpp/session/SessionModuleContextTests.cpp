@@ -1163,21 +1163,25 @@ namespace {
 
 // Restores RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION on scope exit, so a
 // failing assertion cannot leak managed mode into later tests.
+// core::system::EnvironmentScope is the usual tool for this, but it always
+// sets a value; one test below needs the variable absent entirely. Presence is
+// captured with the two-argument getenv so a set-but-empty variable is
+// restored as set rather than unset.
 class ScopedInstallationEnvVar
 {
 public:
    ScopedInstallationEnvVar()
-      : name_("RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION"),
-        original_(core::system::getenv(name_))
+      : name_("RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION")
    {
+      hadValue_ = core::system::getenv(name_, &original_);
    }
 
    ~ScopedInstallationEnvVar()
    {
-      if (original_.empty())
-         core::system::unsetenv(name_);
-      else
+      if (hadValue_)
          core::system::setenv(name_, original_);
+      else
+         core::system::unsetenv(name_);
    }
 
    void set(const std::string& value) { core::system::setenv(name_, value); }
@@ -1186,6 +1190,7 @@ public:
 private:
    std::string name_;
    std::string original_;
+   bool hadValue_;
 };
 
 } // anonymous namespace
