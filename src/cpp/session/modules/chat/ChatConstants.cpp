@@ -26,6 +26,9 @@ namespace constants {
 // Installation paths
 const char* const kPositAiDirName = "pai/bin";
 const char* const kPositAiBackupDirName = "ai.prev";
+// Copy shipped with RStudio, installed beside the session binary (or next to
+// bin/ in the macOS app bundle); absent from open-source builds
+const char* const kBundledPositAiDirName = "posit-assistant";
 // Cross-process lock files; outside pai/bin so it survives install mutations
 const char* const kPositAiLocksDirName = "pai/locks";
 const char* const kClientDirPath = "dist/client";

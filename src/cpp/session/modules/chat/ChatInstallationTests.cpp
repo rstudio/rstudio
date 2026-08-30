@@ -317,3 +317,66 @@ TEST(ChatInstallation, WriteProtocolVersionFilePreservesPackageProvidedFile)
 
    tempDir.removeIfExists();
 }
+
+namespace {
+
+// Writes the files verifyPositAiInstallation() requires into dir.
+void stageInstallation(const FilePath& dir)
+{
+   dir.completeChildPath(kClientDirPath).ensureDirectory();
+   dir.completeChildPath(kServerScriptPath).getParent().ensureDirectory();
+   writeStringToFile(dir.completeChildPath(kServerScriptPath), "// mock server script");
+   writeStringToFile(
+      dir.completeChildPath(kClientDirPath).completeChildPath(kIndexFileName),
+      "<html>mock</html>");
+}
+
+} // anonymous namespace
+
+TEST(ChatInstallation, BundledPathPrefersBinSubdirectory)
+{
+   // Non-Apple layout: the bundle installs into the directory holding the
+   // session binary.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   FilePath binDir = resourceDir.completeChildPath("bin")
+                                .completeChildPath(kBundledPositAiDirName);
+   stageInstallation(binDir);
+
+   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), binDir);
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, BundledPathFallsBackToResourceRoot)
+{
+   // Apple layout: the bundle sits beside bin/ in the app's Resources
+   // directory. The fallback is also what open-source builds resolve to,
+   // where neither directory exists.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   resourceDir.ensureDirectory();
+
+   FilePath expected = resourceDir.completeChildPath(kBundledPositAiDirName);
+   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), expected);
+
+   resourceDir.removeIfExists();
+}
+
+TEST(ChatInstallation, BundledPathSkipsIncompleteBinSubdirectory)
+{
+   // A partial directory beside the session binary must not mask a usable
+   // bundle at the other location.
+   FilePath resourceDir;
+   FilePath::tempFilePath(resourceDir);
+   resourceDir.completeChildPath("bin")
+              .completeChildPath(kBundledPositAiDirName)
+              .ensureDirectory();
+
+   FilePath rootDir = resourceDir.completeChildPath(kBundledPositAiDirName);
+   stageInstallation(rootDir);
+
+   EXPECT_EQ(bundledPositAssistantInstallPath(resourceDir), rootDir);
+
+   resourceDir.removeIfExists();
+}

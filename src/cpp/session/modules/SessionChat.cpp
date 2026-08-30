@@ -278,6 +278,7 @@ using chat_logging::shouldLogBackendMessage;
 using chat_logging::rs_chatSetLogLevel;
 
 // Installation functions used throughout
+using chat_installation::bundledPositAssistantInstallPath;
 using chat_installation::locatePositAssistantInstallation;
 using chat_installation::systemPositAssistantInstallPath;
 using chat_installation::verifyPositAiInstallation;
@@ -5294,10 +5295,11 @@ Error startChatBackend(bool resumeConversation)
    // start while an install/update/uninstall is in progress (we would be
    // launching from a directory mid-swap). Only the read-only system
    // install skips locking: mutations never touch it, and it cannot alias
-   // the per-user install. Env-var and posit-assistant-path overrides
-   // over-lock deliberately — mirroring the agent's rule — because deciding
-   // whether an override truly resolves outside pai/bin is unreliable
-   // (symlinks), and over-locking costs at most a retryable refusal.
+   // the per-user install. The env-var override, posit-assistant-path, and
+   // the copy bundled with RStudio all over-lock deliberately — mirroring
+   // the agent's rule — because deciding whether they truly resolve outside
+   // pai/bin is unreliable (symlinks), and over-locking costs at most a
+   // retryable refusal.
    uint64_t generation = ++s_chatBackendGeneration;
 
    // A stale flag from a previous unreaped generation must not classify a
@@ -6152,14 +6154,23 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
          return Success();
       }
 
-      FilePath systemPath = systemPositAssistantInstallPath();
-      if (verifyPositAiInstallation(systemPath))
+      // With no user-data install and the environment override handled
+      // above, anything the search still resolves to is read-only: the
+      // administrator's installation, or the copy shipped with RStudio.
+      // Resolve rather than re-testing each location, so the refusal names
+      // the installation actually in use.
+      FilePath readOnlyPath = locatePositAssistantInstallation();
+      if (!readOnlyPath.isEmpty())
       {
+         bool bundled = (readOnlyPath == bundledPositAssistantInstallPath());
          pResponse->setError(
             systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
             json::Value(
-               "Posit Assistant is installed at the system level by an "
-               "administrator and cannot be uninstalled from RStudio."));
+               bundled
+                  ? "Posit Assistant was installed as part of RStudio and "
+                    "cannot be uninstalled from RStudio."
+                  : "Posit Assistant is installed at the system level by an "
+                    "administrator and cannot be uninstalled from RStudio."));
          return Success();
       }
 
