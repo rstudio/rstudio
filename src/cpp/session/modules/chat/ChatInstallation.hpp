@@ -80,13 +80,14 @@ core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePa
 core::FilePath bundledPositAssistantInstallPath();
 
 /**
- * The tiers locatePositAssistantInstallation() searches. Resolved from
- * session options by positAssistantSearchPaths(); passed explicitly so tests
- * can drive the search without ambient state.
+ * The tiers locatePositAssistantInstallation() searches, plus the settings
+ * that decide which of them apply. Resolved from session options and the
+ * environment by positAssistantSearchPaths(); passed explicitly so tests can
+ * drive the search without ambient state.
  */
 struct InstallSearchPaths
 {
-   InstallSearchPaths() : pinnedSystemPath(false) {}
+   InstallSearchPaths() : pinnedSystemPath(false), userInstallEnabled(true) {}
 
    // XDG user data directory install -- the one RStudio itself writes
    core::FilePath userDataPath;
@@ -100,6 +101,9 @@ struct InstallSearchPaths
    // posit-assistant-path is set, so systemPath is an administrator's
    // deliberate choice and ends the search when it holds no installation
    bool pinnedSystemPath;
+
+   // the administrator allows users to manage their own installation
+   bool userInstallEnabled;
 };
 
 /**
@@ -116,6 +120,9 @@ InstallSearchPaths positAssistantSearchPaths();
  * 1. User data directory (XDG-based, platform-appropriate)
  *    - Linux/macOS: ~/.local/share/rstudio/pai/bin
  *    - Windows: %LOCALAPPDATA%/rstudio/pai/bin
+ *    Skipped entirely when userInstallEnabled is false, so an installation
+ *    left there before the administrator disabled user-managed installs --
+ *    or copied there to get around the setting -- is ignored
  * 2. System-wide installation, as given by systemPositAssistantInstallPath()
  * 3. The copy bundled with RStudio, as given by
  *    bundledPositAssistantInstallPath() -- skipped entirely when

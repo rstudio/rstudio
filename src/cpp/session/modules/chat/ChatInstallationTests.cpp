@@ -331,3 +331,60 @@ TEST(ChatInstallation, LocateReturnsEmptyWhenNothingIsInstalled)
 
    root.removeIfExists();
 }
+
+TEST(ChatInstallation, LocateSkipsUserInstallationWhenInstallsAreManaged)
+{
+   // A user-level copy left behind (or hand-copied in) is ignored, not
+   // removed: the administrator's installation wins.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.userInstallEnabled = false;
+   stageInstallation(paths.userDataPath);
+   stageInstallation(paths.systemPath);
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.systemPath);
+   EXPECT_TRUE(verifyPositAiInstallation(paths.userDataPath));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateFindsBundledInstallationWhenInstallsAreManaged)
+{
+   // With no administrator installation, disabled mode still resolves the
+   // copy shipped with RStudio rather than the user's own.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.userInstallEnabled = false;
+   stageInstallation(paths.userDataPath);
+   stageInstallation(paths.bundledPath);
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.bundledPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateFindsPinnedInstallationWhenInstallsAreManaged)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.userInstallEnabled = false;
+   paths.pinnedSystemPath = true;
+   stageInstallation(paths.userDataPath);
+   stageInstallation(paths.systemPath);
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.systemPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateReturnsEmptyWhenOnlyUserInstallationExistsAndInstallsAreManaged)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.userInstallEnabled = false;
+   stageInstallation(paths.userDataPath);
+
+   EXPECT_TRUE(locatePositAssistantInstallation(paths).isEmpty());
+
+   root.removeIfExists();
+}

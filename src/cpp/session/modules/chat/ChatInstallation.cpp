@@ -22,6 +22,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <shared_core/json/Json.hpp>
 
@@ -86,6 +87,8 @@ InstallSearchPaths positAssistantSearchPaths()
    paths.systemPath = systemPositAssistantInstallPath();
    paths.bundledPath = bundledPositAssistantInstallPath();
    paths.pinnedSystemPath = !options().positAssistantPath().isEmpty();
+   paths.userInstallEnabled =
+      module_context::isPositAssistantInstallationEnabledByAdmin();
    return paths;
 }
 
@@ -94,11 +97,22 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
    // 1. Check user data directory (XDG-based, platform-appropriate)
    // Linux/macOS: ~/.local/share/rstudio/pai/bin
    // Windows: %LOCALAPPDATA%/rstudio/pai/bin
-   if (verifyPositAiInstallation(paths.userDataPath))
+   bool userInstallPresent = verifyPositAiInstallation(paths.userDataPath);
+   if (paths.userInstallEnabled && userInstallPresent)
    {
       DLOG("Using user-level AI installation: {}", paths.userDataPath.getAbsolutePath());
       return paths.userDataPath;
    }
+
+   // An installation left in the user data directory before the administrator
+   // disabled user-managed installs -- or copied there to get around the
+   // setting -- is ignored, never removed. That silently changes which version
+   // runs, and can be a downgrade, so say so once per session (locate() runs
+   // on every status, verify, and chat request).
+   if (userInstallPresent && RS_ONCE())
+      WLOG("Ignoring user-level AI installation at {}: Posit Assistant "
+           "installation is managed by the administrator",
+           paths.userDataPath.getAbsolutePath());
 
    // 2. Check the system-wide installation: posit-assistant-path when set, and
    // otherwise the XDG config directory (/etc/rstudio/pai/bin on Linux and
@@ -136,7 +150,8 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
    }
 
    DLOG("No valid AI installation found. Checked locations:");
-   DLOG("  - User data dir: {}", paths.userDataPath.getAbsolutePath());
+   if (paths.userInstallEnabled)
+      DLOG("  - User data dir: {}", paths.userDataPath.getAbsolutePath());
    DLOG("  - System install dir: {}", paths.systemPath.getAbsolutePath());
    if (!paths.pinnedSystemPath)
       DLOG("  - Bundled with RStudio: {}", paths.bundledPath.getAbsolutePath());
