@@ -540,6 +540,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #else
    sessionInfo["posit_assistant_enabled"] = false;
 #endif
+   sessionInfo["posit_assistant_installation_enabled"] =
+      module_context::isPositAssistantInstallationEnabledByAdmin();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 

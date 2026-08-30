@@ -598,6 +598,13 @@
             "memberName": "allowPositAssistant_",
             "defaultValue": false,
             "description": "Indicates whether or not to allow use of Posit Assistant features."
+         },
+         {
+            "name": "allow-posit-assistant-installation",
+            "type": "bool",
+            "memberName": "allowPositAssistantInstallation_",
+            "defaultValue": true,
+            "description": "Indicates whether or not users may install, update, and uninstall Posit Assistant themselves. When disabled, the session uses only an administrator-managed installation, ignores any user-level installation, and performs no update checks."
          }
       ],
       "r": [

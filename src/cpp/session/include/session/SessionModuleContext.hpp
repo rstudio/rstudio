@@ -220,6 +220,13 @@ bool disablePackages();
 // checks: allow-posit-assistant, posit-assistant-enabled, RSTUDIO_DISABLE_POSIT_ASSISTANT
 bool isPositAssistantEnabledByAdmin();
 
+// may the user install, update, and uninstall Posit Assistant themselves?
+// checks: allow-posit-assistant-installation, RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION.
+// When false the session uses only an administrator-managed installation and
+// makes no manifest requests. Independent of isPositAssistantEnabledByAdmin():
+// a session with Posit Assistant disabled outright never reaches these gates.
+bool isPositAssistantInstallationEnabledByAdmin();
+
 // is the Posit Assistant feature active? (admin enabled + user has an assistant or chat provider selected)
 bool isPositAssistantEnabled();
 

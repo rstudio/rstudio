@@ -319,7 +319,10 @@ protected:
       "Indicates whether or not to allow use of Copilot-related features.")
       ("allow-posit-assistant",
       value<bool>(&allowPositAssistant_)->default_value(false),
-      "Indicates whether or not to allow use of Posit Assistant features.");
+      "Indicates whether or not to allow use of Posit Assistant features.")
+      ("allow-posit-assistant-installation",
+      value<bool>(&allowPositAssistantInstallation_)->default_value(true),
+      "Indicates whether or not users may install, update, and uninstall Posit Assistant themselves. When disabled, the session uses only an administrator-managed installation, ignores any user-level installation, and performs no update checks.");
 
    pR->add_options()
       ("r-core-source",
@@ -606,6 +609,7 @@ public:
    int abortFreeMemPercent() const { return abortFreeMemPercent_; }
    bool allowCopilot() const { return allowCopilot_ || allowOverlay(); }
    bool allowPositAssistant() const { return allowPositAssistant_ || allowOverlay(); }
+   bool allowPositAssistantInstallation() const { return allowPositAssistantInstallation_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -745,6 +749,7 @@ protected:
    int abortFreeMemPercent_;
    bool allowCopilot_;
    bool allowPositAssistant_;
+   bool allowPositAssistantInstallation_;
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
