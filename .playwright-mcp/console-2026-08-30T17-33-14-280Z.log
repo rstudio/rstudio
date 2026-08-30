@@ -1,0 +1,9 @@
+[   65614ms] [LOG] Event listener stopped due to error (code=2, attempt=0); scheduling revival @ rstudio-0.js:13184
+[  150777ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
+[  151285ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
+[  151792ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
+[  152299ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
+[  152807ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
+[  153315ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
+[  153822ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
+[  158828ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/events/get_events:0
