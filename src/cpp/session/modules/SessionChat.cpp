@@ -6135,30 +6135,17 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
    FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
 
-   // No user-data install paths exist. Distinguish env/system/none to give
-   // the user a targeted message. Each branch delivers its message via
+   // No user-data install paths exist. Distinguish system/none to give the
+   // user a targeted message. Each branch delivers its message via
    // client_info on the JSON-RPC error so the frontend can show it verbatim
    // (Error::getSummary() would otherwise wrap the system errno text and
    // obscure our description).
    if (!aiDir.exists() && !aiPrevDir.exists())
    {
-      std::string envPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
-      if (!envPath.empty() && FilePath(envPath).exists())
-      {
-         pResponse->setError(
-            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
-            json::Value(
-               "Posit Assistant is installed via the RSTUDIO_POSIT_AI_PATH "
-               "environment variable and cannot be uninstalled "
-               "from RStudio."));
-         return Success();
-      }
-
-      // With no user-data install and the environment override handled
-      // above, anything the search still resolves to is read-only: the
-      // administrator's installation, or the copy shipped with RStudio.
-      // Resolve rather than re-testing each location, so the refusal names
-      // the installation actually in use.
+      // With no user-data install, anything the search still resolves to is
+      // read-only: the administrator's installation, or the copy shipped with
+      // RStudio. Resolve rather than re-testing each location, so the refusal
+      // names the installation actually in use.
       FilePath readOnlyPath = locatePositAssistantInstallation();
       if (!readOnlyPath.isEmpty())
       {

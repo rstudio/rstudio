@@ -455,7 +455,7 @@ FilePath paiLanguageServerPath()
 {
    // Resolve the installation the same way the chat backend does, so both
    // halves of the assistant run out of the same install -- honoring
-   // RSTUDIO_POSIT_AI_PATH and system-wide installs, not just the user one.
+   // administrator-managed and bundled installs, not just the user one.
    FilePath installPath = chat::installation::locatePositAssistantInstallation();
    FilePath languageServerPath = nesLanguageServerPath(installPath);
 

@@ -12,7 +12,7 @@
 - ([#18356](https://github.com/rstudio/rstudio/issues/18356)): Declining the Posit Assistant install prompt now restores the previously selected code assistant.
 - ([#18631](https://github.com/rstudio/rstudio/issues/18631)): RStudio Desktop now shows What's New once per release instead of after every patch update.
 - ([#18602](https://github.com/rstudio/rstudio/issues/18602)): Fixed folding and outline hierarchy for section headers decorated with `#` characters.
-- ([#18597](https://github.com/rstudio/rstudio/issues/18597)): Posit Assistant code suggestions now honor `RSTUDIO_POSIT_AI_PATH` and system-wide installations.
+- ([#18597](https://github.com/rstudio/rstudio/issues/18597)): Posit Assistant code suggestions now honor system-wide installations.
 - ([#18451](https://github.com/rstudio/rstudio/issues/18451)): Truncated AI assistant startup errors and logs to avoid dumping minified bundles while retaining useful diagnostics.
 - ([#18570](https://github.com/rstudio/rstudio/issues/18570)): Posit Assistant manifest download errors now show the underlying DNS, proxy, or TLS failure.
 - ([#18610](https://github.com/rstudio/rstudio/issues/18610)): Posit Assistant install and update downloads now preserve detailed errors, report warning-only failures, and honor configured timeouts.
