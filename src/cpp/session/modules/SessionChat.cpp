@@ -214,6 +214,22 @@ bool isPositAssistantEnabledByAdmin()
    return module_context::isPositAssistantEnabledByAdmin();
 }
 
+// Returns true when the administrator has taken installation away from the
+// user: the session runs only an administrator-managed or bundled copy, makes
+// no manifest requests, and refuses install, update, and uninstall.
+bool isInstallationManaged()
+{
+   return !module_context::isPositAssistantInstallationEnabledByAdmin();
+}
+
+// Refusal shown for every install, update, and uninstall path in managed mode.
+// Delivered via client_info on the JSON-RPC error so the frontend can show it
+// verbatim (Error::getSummary() would otherwise wrap the system errno text and
+// obscure the description).
+const char* const kInstallationManagedMessage =
+   "Posit Assistant installation is managed by your administrator and cannot "
+   "be changed from RStudio.";
+
 // Returns true if the user has selected Posit AI as their assistant (for code completions)
 bool isPaiSelected()
 {
@@ -6049,6 +6065,16 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
 void chatInstallUpdate(const json::JsonRpcRequest& request,
                        const json::JsonRpcFunctionContinuation& cont)
 {
+   if (isInstallationManaged())
+   {
+      json::JsonRpcResponse response;
+      response.setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value(kInstallationManagedMessage));
+      cont(Success(), &response);
+      return;
+   }
+
    if (!isPositAssistantWanted())
    {
       json::JsonRpcResponse response;
@@ -6127,10 +6153,21 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 }
 
 // NOTE: No isPositAssistantWanted()/isPositAssistantEnabledByAdmin() gate — the user may have
-// disabled Posit Assistant but still wants to clean up installed files.
+// disabled Posit Assistant but still wants to clean up installed files. The
+// managed-installation gate below is the one exception.
 Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   // Refuse before looking at disk: in managed mode a leftover user-level
+   // installation may well exist, and it is ignored rather than removed.
+   if (isInstallationManaged())
+   {
+      pResponse->setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value(kInstallationManagedMessage));
+      return Success();
+   }
+
    FilePath userDataDir = xdg::userDataDir();
    FilePath aiDir = userDataDir.completePath(kPositAiDirName);
    FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
