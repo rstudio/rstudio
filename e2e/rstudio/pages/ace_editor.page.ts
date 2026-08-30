@@ -1,4 +1,4 @@
-import type { Page, JSHandle } from 'playwright';
+import type { Page, JSHandle, Locator } from 'playwright';
 import { PageObject } from './page_object_base_classes';
 import { Ace, AceEditorElement } from '../utils/ace';
 
@@ -29,7 +29,7 @@ export interface AceMarker {
 /**
  * Drives an Ace editor instance from Playwright via page.evaluate.
  *
- * Two ways to identify the target editor:
+ * Three ways to identify the target editor:
  *
  *   - Empty marker (`new AceEditor(page, '')`): the active source editor,
  *     resolved through `window.rstudio.documents.activeEditor()`. Prefer this
@@ -40,6 +40,13 @@ export interface AceMarker {
  *     hidden buffer left open in another tab). Editors inside
  *     #rstudio_console_input are skipped so the source editor is still found
  *     when the console happens to come first in DOM order.
+ *   - `AceEditor.visualModeChunk(page, marker, visualEditorRoot)`: an editor
+ *     embedded in the specified visual editor, matched on content among only
+ *     the chunk editors that Panmirror root has mounted. Neither of the other
+ *     two reaches one: activeEditor() returns the (hidden) source editor for
+ *     the document, and the plain marker walk would match that editor too,
+ *     since in visual mode it still holds the whole document, chunk text
+ *     included.
  *
  * The marker-substring path is a DOM walk and can land on stale editors left
  * in the DOM after a tab close (see ad175dccd1 / #17775 and #17784). Empty
@@ -47,6 +54,10 @@ export interface AceMarker {
  */
 export class AceEditor extends PageObject {
   private readonly marker: string;
+  // Set only by visualModeChunk(); kept off the constructor so the public
+  // signature stays free of a positional boolean.
+  private inVisualEditor = false;
+  private visualEditorRoot: Locator | null = null;
 
   constructor(page: Page, marker: string) {
     super(page);
@@ -54,10 +65,44 @@ export class AceEditor extends PageObject {
   }
 
   /**
+   * An Ace editor embedded in the visual editor -- a code chunk, or the YAML
+   * front matter block -- identified by a substring of its contents. Matching
+   * on content rather than position keeps a test independent of how many
+   * editors panmirror mounts ahead of the chunk it means (the front matter
+   * block is one of them).
+   */
+  static visualModeChunk(page: Page, marker: string, visualEditorRoot: Locator): AceEditor {
+    const editor = new AceEditor(page, marker);
+    editor.inVisualEditor = true;
+    editor.visualEditorRoot = visualEditorRoot;
+    return editor;
+  }
+
+  /**
    * Resolve the target editor in the browser and return a JSHandle to it.
    * Pairs with `run()` below, which disposes the handle when done.
    */
   private editorHandle(): Promise<JSHandle<Ace.Editor>> {
+    if (this.inVisualEditor) {
+      if (!this.visualEditorRoot) {
+        throw new Error('AceEditor.visualModeChunk(): visual editor root is required');
+      }
+
+      return this.visualEditorRoot.evaluateHandle((root, marker): Ace.Editor => {
+        const embedded = Array.from(root.querySelectorAll('.ace_editor'));
+        for (let i = 0; i < embedded.length; i++) {
+          const env = (embedded[i] as unknown as AceEditorElement).env;
+          if (env?.editor && env.editor.getValue().indexOf(marker) !== -1) {
+            return env.editor;
+          }
+        }
+        throw new Error(
+          `AceEditor.visualModeChunk('${marker}'): no embedded editor contains it `
+          + `(${embedded.length} mounted in the specified visual editor)`,
+        );
+      }, this.marker);
+    }
+
     return this.page.evaluateHandle((marker: string): Ace.Editor => {
       if (marker === '') {
         const editor = window.rstudio?.documents.activeEditor() ?? null;
@@ -252,6 +297,11 @@ export class AceEditor extends PageObject {
     });
   }
 
+  /** The current selection's text (Ace's editor.getSelectedText). */
+  async getSelectedText(): Promise<string> {
+    return this.run((editor) => editor.getSelectedText());
+  }
+
   /** Rows as rendered (session.getScreenLength): exceeds the document line count exactly when soft-wrapped. */
   async getScreenRowCount(): Promise<number> {
     return this.run((editor) => editor.session.getScreenLength());
@@ -285,6 +335,11 @@ export class AceEditor extends PageObject {
   /** Move focus to the editor textarea so subsequent page.keyboard input routes here. */
   async focus(): Promise<void> {
     await this.run((editor) => editor.focus());
+  }
+
+  /** True while the editor textarea has focus (Ace's editor.isFocused, absent from the typings). */
+  async isFocused(): Promise<boolean> {
+    return this.run((editor) => (editor as unknown as { isFocused(): boolean }).isFocused());
   }
 
   /**
