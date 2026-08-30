@@ -3309,6 +3309,18 @@ void handleCheckForUpdates(core::system::ProcessOperations& ops,
 {
    DLOG("Handling ui/checkForUpdates request");
 
+   // Managed mode drops the capability from the handshake, so a well-behaved
+   // peer never sends this. Refuse anyway, and refuse as "method not found" to
+   // match what the handshake advertised.
+   if (isInstallationManaged())
+   {
+      WLOG("Refusing ui/checkForUpdates: Posit Assistant installation is "
+           "administrator-managed");
+      sendJsonRpcError(ops, requestId, kJsonRpcMethodNotFound,
+                       "Method not found");
+      return;
+   }
+
    // This handler is a thin trigger: it does not perform the check itself. It
    // fires a client event that runs the frontend "Check for Posit Assistant
    // updates" command flow, which drives the check via the chat_check_for_updates
@@ -3372,10 +3384,17 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
    result["protocolVersion"] = kProtocolVersion;
    result["rstudioVersion"] = std::string(RSTUDIO_VERSION);
 
+   // rstudioCapabilities() returns a reference to a function-local static, so
+   // it cannot vary by mode; filter it here instead. Dropping
+   // ui/checkForUpdates in managed mode makes Posit Assistant hide its own
+   // update entry, through the capability negotiation that already exists.
    const auto& caps = chat_constants::rstudioCapabilities();
+   bool installationManaged = isInstallationManaged();
    json::Array capsArray;
    for (const std::string& cap : caps)
    {
+      if (installationManaged && cap == "ui/checkForUpdates")
+         continue;
       capsArray.push_back(cap);
    }
    result["capabilities"] = capsArray;
