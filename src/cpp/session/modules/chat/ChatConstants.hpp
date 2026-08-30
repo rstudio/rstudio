@@ -80,6 +80,12 @@ constexpr std::chrono::milliseconds kMaxDelay{100};
 // (i.e., requests/notifications that the peer may send to RStudio).
 const std::vector<std::string>& rstudioCapabilities();
 
+// Returns the capabilities to advertise in the protocol handshake for this
+// session. When the administrator manages the Posit Assistant installation,
+// ui/checkForUpdates is withheld so the peer hides its own update entry;
+// everything else is advertised unchanged.
+std::vector<std::string> negotiatedCapabilities(bool installationManaged);
+
 // ============================================================================
 // Restart limits
 // ============================================================================

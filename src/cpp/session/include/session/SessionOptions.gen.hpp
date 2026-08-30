@@ -493,6 +493,9 @@ protected:
       ("posit-assistant-enabled",
       value<bool>(&positAssistantEnabled_)->default_value(true),
       "Indicates whether or not Posit Assistant integration can be enabled.")
+      ("posit-assistant-installation-enabled",
+      value<bool>(&positAssistantInstallationEnabled_)->default_value(true),
+      "Indicates whether or not users may install, update, and uninstall Posit Assistant themselves. When disabled, the session uses only an administrator-managed installation, ignores any user-level installation, and performs no update checks.")
       ("posit-assistant-ssl-certificates-file",
       value<std::string>(&positAssistantSslCertificatesFile_)->default_value(""),
       "The path to a file containing one or more trusted certificates in PEM format.")
@@ -657,6 +660,7 @@ public:
    core::FilePath deprecatedCopilotAgentHelper() const { return core::FilePath(deprecatedCopilotAgentHelper_); }
    core::FilePath copilotHelper() const { return core::FilePath(copilotHelper_); }
    bool positAssistantEnabled() const { return positAssistantEnabled_; }
+   bool positAssistantInstallationEnabled() const { return positAssistantInstallationEnabled_; }
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
@@ -798,6 +802,7 @@ protected:
    std::string deprecatedCopilotAgentHelper_;
    std::string copilotHelper_;
    bool positAssistantEnabled_;
+   bool positAssistantInstallationEnabled_;
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;

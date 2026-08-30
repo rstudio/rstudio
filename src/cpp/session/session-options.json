@@ -1007,6 +1007,13 @@
             "description": "Indicates whether or not Posit Assistant integration can be enabled."
          },
          {
+            "name": "posit-assistant-installation-enabled",
+            "type": "bool",
+            "memberName": "positAssistantInstallationEnabled_",
+            "defaultValue": true,
+            "description": "Indicates whether or not users may install, update, and uninstall Posit Assistant themselves. When disabled, the session uses only an administrator-managed installation, ignores any user-level installation, and performs no update checks."
+         },
+         {
             "name": "posit-assistant-ssl-certificates-file",
             "type": "string",
             "memberName": "positAssistantSslCertificatesFile_",

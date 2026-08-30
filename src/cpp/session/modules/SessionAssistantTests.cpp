@@ -141,8 +141,8 @@ TEST(SessionAssistant, NesLanguageServerPathEmptyWhenInstallationHasNoNesScript)
 TEST(SessionAssistant, NesLanguageServerPathResolvesWithinGivenInstallation)
 {
    // The script must be found under the installation that was passed in --
-   // e.g. an RSTUDIO_POSIT_AI_PATH or system-wide install -- rather than
-   // under a fixed location.
+   // e.g. a system-wide or bundled install -- rather than under a fixed
+   // location.
    FilePath installDir = createNesInstallation("language-server.cjs");
 
    EXPECT_EQ(nesLanguageServerPath(installDir).getAbsolutePath(),

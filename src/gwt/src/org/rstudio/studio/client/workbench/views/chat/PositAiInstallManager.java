@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.inject.Inject;
 
 /**
@@ -96,6 +98,16 @@ public class PositAiInstallManager
        * and Posit Assistant cannot verify compatibility.
        */
       void onManifestUnavailable(String errorMessage);
+
+      /**
+       * Called when the administrator manages the Posit Assistant installation.
+       * No install, update, or uninstall is possible, and no manifest was
+       * fetched, so there is never an update to offer.
+       *
+       * @param installed Whether an administrator-managed (or bundled)
+       *                  installation was found
+       */
+      void onInstallationManaged(boolean installed);
 
       /**
        * Called when the update check failed (e.g., network error).
@@ -222,6 +234,9 @@ public class PositAiInstallManager
          flag(result, "additionalProvidersAvailable");
       boolean additionalProvidersAvailable =
          additionalProvidersFlag != null && additionalProvidersFlag;
+      Boolean installationManagedFlag = flag(result, "installationManaged");
+      boolean installationManaged =
+         installationManagedFlag != null && installationManagedFlag;
 
       if (manifestUnavailable)
       {
@@ -258,6 +273,17 @@ public class PositAiInstallManager
          {
             callback.onUnsupportedVersionNoUpdate(currentVersion);
          }
+         return;
+      }
+
+      // Managed mode ranks below the blocking outcomes above -- those tell the
+      // user something more specific about the administrator's copy -- but
+      // above the install and update outcomes, which managed mode can never
+      // act on. The backend leaves updateAvailable false here anyway; this
+      // ordering makes that independent of the backend getting it right.
+      if (installationManaged)
+      {
+         callback.onInstallationManaged(!isInitialInstall);
          return;
       }
 
@@ -312,9 +338,29 @@ public class PositAiInstallManager
          @Override
          public void onError(ServerError error)
          {
-            callback.onInstallFailed(error.getMessage());
+            // The backend attaches its refusal wording (e.g. Posit Assistant
+            // being administrator-managed) via client_info; without it the user
+            // would see only the generic execution error.
+            String message = clientInfoMessage(error);
+            callback.onInstallFailed(
+               message != null ? message : error.getMessage());
          }
       });
+   }
+
+   /**
+    * Returns the user-facing text the backend attached to a JSON-RPC error via
+    * client_info, or null when it attached none. The backend uses client_info
+    * for messages the frontend must show verbatim: Error.getSummary() would
+    * otherwise wrap them in system errno text.
+    */
+   public static String clientInfoMessage(ServerError error)
+   {
+      JSONValue clientInfo = error.getClientInfo();
+      if (clientInfo == null)
+         return null;
+      JSONString clientInfoStr = clientInfo.isString();
+      return clientInfoStr != null ? clientInfoStr.stringValue() : null;
    }
 
    /**

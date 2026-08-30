@@ -80,19 +80,63 @@ core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePa
 core::FilePath bundledPositAssistantInstallPath();
 
 /**
- * Locate the Posit Assistant installation directory.
+ * The tiers locatePositAssistantInstallation() searches, plus the settings
+ * that decide which of them apply. Resolved from session options and the
+ * environment by positAssistantSearchPaths(); passed explicitly so tests can
+ * drive the search without ambient state.
+ */
+struct InstallSearchPaths
+{
+   InstallSearchPaths() : pinnedSystemPath(false), userInstallEnabled(true) {}
+
+   // XDG user data directory install -- the one RStudio itself writes
+   core::FilePath userDataPath;
+
+   // posit-assistant-path when set, the XDG system config directory otherwise
+   core::FilePath systemPath;
+
+   // the copy shipped with RStudio; only commercial builds ship one
+   core::FilePath bundledPath;
+
+   // posit-assistant-path is set, so systemPath is an administrator's
+   // deliberate choice and ends the search when it holds no installation
+   bool pinnedSystemPath;
+
+   // the administrator allows users to manage their own installation
+   bool userInstallEnabled;
+};
+
+/**
+ * Resolve the search tiers for this session.
+ *
+ * @return InstallSearchPaths for locatePositAssistantInstallation()
+ */
+InstallSearchPaths positAssistantSearchPaths();
+
+/**
+ * Locate the Posit Assistant installation directory among the given tiers.
  *
  * Search order:
- * 1. RSTUDIO_POSIT_AI_PATH environment variable (for development/testing)
- * 2. User data directory (XDG-based, platform-appropriate)
+ * 1. User data directory (XDG-based, platform-appropriate)
  *    - Linux/macOS: ~/.local/share/rstudio/pai/bin
  *    - Windows: %LOCALAPPDATA%/rstudio/pai/bin
- * 3. System-wide installation, as given by systemPositAssistantInstallPath()
- * 4. The copy bundled with RStudio, as given by
+ *    Skipped entirely when userInstallEnabled is false, so an installation
+ *    left there before the administrator disabled user-managed installs --
+ *    or copied there to get around the setting -- is ignored
+ * 2. System-wide installation, as given by systemPositAssistantInstallPath()
+ * 3. The copy bundled with RStudio, as given by
  *    bundledPositAssistantInstallPath() -- skipped entirely when
  *    posit-assistant-path is set, so a pinned path that holds no
  *    installation reports "not installed" rather than downgrading to the
  *    shipped version
+ *
+ * @param paths The tiers to search
+ * @return FilePath to the installation directory, or empty FilePath if not found
+ */
+core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths);
+
+/**
+ * Locate the Posit Assistant installation directory for this session.
  *
  * @return FilePath to the installation directory, or empty FilePath if not found
  */
@@ -101,15 +145,32 @@ core::FilePath locatePositAssistantInstallation();
 /**
  * Get the installed version of Posit Assistant from package.json.
  *
+ * @param positAiPath Path to the AI installation directory
+ * @return Version string (e.g., "1.2.3"), or empty string if not found or invalid
+ */
+std::string getInstalledVersion(const core::FilePath& positAiPath);
+
+/**
+ * Get the installed version of Posit Assistant this session would run.
+ *
  * @return Version string (e.g., "1.2.3"), or empty string if not found or invalid
  */
 std::string getInstalledVersion();
 
 /**
- * Get the protocol version the installed Posit Assistant package was built for.
+ * Get the protocol version the given Posit Assistant package was built for.
  *
  * Reads the protocol.json file written at install time. Legacy installs
  * (before this file existed) return an empty string.
+ *
+ * @param positAiPath Path to the AI installation directory
+ * @return Protocol version string (e.g., "10.0"), or empty string if missing or unreadable
+ */
+std::string getInstalledProtocolVersion(const core::FilePath& positAiPath);
+
+/**
+ * Get the protocol version the Posit Assistant package this session would
+ * run was built for.
  *
  * @return Protocol version string (e.g., "10.0"), or empty string if missing or unreadable
  */
