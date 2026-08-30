@@ -4110,9 +4110,12 @@ void showTestManifestWarning()
 void onClientInit()
 {
    // Only warn about the test manifest when Posit Assistant is actually
-   // available; a build without Posit Assistant (or one where an administrator
-   // disabled it) never uses the manifest, so the banner would be misleading.
-   if (isPositAssistantEnabledByAdmin() && isUsingTestManifest())
+   // available and this session would use a manifest at all; a build without
+   // Posit Assistant, one where an administrator disabled it, and one where
+   // installation is administrator-managed all never fetch one, so the banner
+   // would be misleading.
+   if (isPositAssistantEnabledByAdmin() && !isInstallationManaged() &&
+       isUsingTestManifest())
    {
       showTestManifestWarning();
    }
@@ -4793,6 +4796,19 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 // `force` (Retry / install) always fetches. Main-thread only (reads the filesystem).
 bool shouldFetchManifest(bool force)
 {
+   // Managed mode makes no requests to cdn.posit.co at all. Gating here rather
+   // than at the call sites covers every caller of startUpdateCheck() -- the
+   // startup kickoff, chat_check_for_updates, and chat_install_update -- and
+   // routes them through resolveWithoutManifestFetch() so the client still
+   // learns installed/not-installed. It must win over `force`, which
+   // chat_install_update passes as true.
+   if (isInstallationManaged())
+   {
+      DLOG("Posit Assistant installation is administrator-managed; "
+           "resolving update state without a manifest fetch");
+      return false;
+   }
+
    std::string installed = getInstalledVersion();   // "" when not installed
    bool isInstalled = !installed.empty();
    bool mismatch = isInstalled && hasProtocolMismatch(installed);
@@ -4823,15 +4839,24 @@ bool shouldFetchManifest(bool force)
 }
 
 // Resolve the update state from the installed version without fetching the
-// manifest (throttled skip). Reached only when a compatible version is installed
-// (installed + no protocol mismatch), so the installed version is current and
-// usable. Reapplies any persisted (manifest-only) unsupported block, then drains
-// the single-flight queue. Does NOT write the record -- no attempt was made.
+// manifest. Two callers reach this: a throttled skip, which runs only when a
+// compatible version is installed, and managed mode, which runs whatever the
+// administrator provides -- possibly nothing, possibly a copy whose protocol
+// does not match this build. So the protocol mismatch is recomputed here
+// rather than assumed away; on the throttled path it is false by construction
+// and nothing changes. Also reapplies any persisted (manifest-only)
+// unsupported block, then drains the single-flight queue. Does NOT write the
+// record -- no attempt was made.
 void resolveWithoutManifestFetch()
 {
    std::string installedVersion = getInstalledVersion();
+   if (installedVersion.empty())
+      installedVersion = "0.0.0";
 
-   bool unsupportedInstalledVersion = false;
+   // Mirrors buildSuccessOutcome()'s live composite: a package whose
+   // protocol.json is missing or does not match this build is unusable, and in
+   // managed mode there is no update to offer that would fix it.
+   bool unsupportedInstalledVersion = hasProtocolMismatch(installedVersion);
    bool unsupportedProtocol = false;
    boost::optional<ManifestCheckRecord> record =
       throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
@@ -4839,7 +4864,8 @@ void resolveWithoutManifestFetch()
    {
       ResolvedBlock block = throttle::resolvePersistedBlock(
          *record, installedVersion, kProtocolVersion);
-      unsupportedInstalledVersion = block.unsupportedInstalledVersion;
+      unsupportedInstalledVersion =
+         unsupportedInstalledVersion || block.unsupportedInstalledVersion;
       unsupportedProtocol = block.unsupportedProtocol;
    }
 
@@ -5628,6 +5654,10 @@ void buildUpdateStateResult(json::Object* pResult)
    (*pResult)["newVersion"] = s_updateState.newVersion;
    (*pResult)["downloadUrl"] = s_updateState.downloadUrl;
    (*pResult)["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
+
+   // Session-constant, so read from the option rather than the check state: the
+   // client uses it to hide the install, update, and uninstall affordances.
+   (*pResult)["installationManaged"] = isInstallationManaged();
 }
 
 // Resolve an async chat_check_for_updates continuation with the current state.
