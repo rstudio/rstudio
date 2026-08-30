@@ -5209,11 +5209,26 @@ Error startChatBackend(bool resumeConversation)
    FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
-      std::string userPath = xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
       std::string systemPath = systemPositAssistantInstallPath().getAbsolutePath();
-      std::string errorMsg = fmt::format(
-         "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
-         userPath, systemPath);
+
+      // Naming the user directory in managed mode would point the user at the
+      // one location the session ignores and refuses to install into.
+      std::string errorMsg;
+      if (isInstallationManaged())
+      {
+         errorMsg = fmt::format(
+            "Posit Assistant installation not found. Installation is managed by "
+            "your administrator; expected: {}",
+            systemPath);
+      }
+      else
+      {
+         std::string userPath =
+            xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
+         errorMsg = fmt::format(
+            "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
+            userPath, systemPath);
+      }
       return systemError(boost::system::errc::no_such_file_or_directory,
                         errorMsg,
                         ERROR_LOCATION);
