@@ -25,6 +25,8 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.inject.Inject;
 
 /**
@@ -312,9 +314,29 @@ public class PositAiInstallManager
          @Override
          public void onError(ServerError error)
          {
-            callback.onInstallFailed(error.getMessage());
+            // The backend attaches its refusal wording (e.g. Posit Assistant
+            // being administrator-managed) via client_info; without it the user
+            // would see only the generic execution error.
+            String message = clientInfoMessage(error);
+            callback.onInstallFailed(
+               message != null ? message : error.getMessage());
          }
       });
+   }
+
+   /**
+    * Returns the user-facing text the backend attached to a JSON-RPC error via
+    * client_info, or null when it attached none. The backend uses client_info
+    * for messages the frontend must show verbatim: Error.getSummary() would
+    * otherwise wrap them in system errno text.
+    */
+   public static String clientInfoMessage(ServerError error)
+   {
+      JSONValue clientInfo = error.getClientInfo();
+      if (clientInfo == null)
+         return null;
+      JSONString clientInfoStr = clientInfo.isString();
+      return clientInfoStr != null ? clientInfoStr.stringValue() : null;
    }
 
    /**
