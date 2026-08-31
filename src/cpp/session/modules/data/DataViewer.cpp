@@ -731,13 +731,25 @@ SEXP applyViewTransform(SEXP dataSEXP,
 
    if (recompute)
    {
+      // Like the working copy, the search projection may be stale while a
+      // wipe is pending (the failed .rs.removeWorkingData call covers both
+      // caches); withhold the cache key so the projection is neither read
+      // nor rebuilt until onDetectChanges retries the removal. A same-shaped
+      // replacement frame would otherwise be searched against the old
+      // projected strings, since the R side revalidates by dim() only.
+      bool searchCacheUsable =
+            cachedFrame == s_cachedFrames.end() ||
+            !cachedFrame->second.pendingWorkingDataWipe;
+
       r::exec::RFunction transform(".rs.applyTransform");
       transform.addParam("x", dataSEXP);             // data to transform
       transform.addParam("filtered", params.filters); // which columns are filtered
       transform.addParam("search", params.search);    // global search (across cols)
       transform.addParam("cols", params.ordercols);    // which column to order on
       transform.addParam("dirs", params.orderdirs);    // order direction
-      transform.addParam("cacheKey", cacheKey);        // enables the search projection cache
+
+      // enables the search projection cache
+      transform.addParam("cacheKey", searchCacheUsable ? cacheKey : std::string());
 
       // the cached search projection is row-aligned with the full frame, so
       // it must not be consulted when transforming from a working copy
