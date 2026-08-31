@@ -60,6 +60,15 @@ fi
 RELEASE_FLOWER=$1
 CALENDAR_VERSION=$2
 
+# The calendar version must be <YYYY>.<MM>. rstudio-version.sh composes the build
+# version as <calendar version>.<patch>, so a full release version passed here
+# (i.e., "2023.03.0") yields a four-part version that breaks Windows installer
+# signing, and is only noticed once builds start failing.
+if [[ ! "$CALENDAR_VERSION" =~ ^[0-9]{4}\.(0[1-9]|1[0-2])$ ]]; then
+    echo "error: calendar version '${CALENDAR_VERSION}' is not <YYYY>.<MM> (i.e., \"2023.03\")" >&2
+    exit 1
+fi
+
 # Read the base commit sha if it was provided
 if [[ "$#" -eq 3 ]]; then
     BASE_COMMIT_SHA=$3
