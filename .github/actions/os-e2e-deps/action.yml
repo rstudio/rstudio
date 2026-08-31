@@ -31,10 +31,14 @@ inputs:
       Connections pane tests need, via
       <working-directory>/scripts/db/install-deps/<platform>. Runs before the
       R packages below, because the R `odbc` package needs unixODBC present to
-      build. Callers that leave this empty install nothing: resolveDriverLibrary
-      finds no driver, no target is registered, and the connections specs skip
-      with a reason naming the missing piece. Developers install the stack on
-      their own machines by hand; only CI needs this.
+      build. Callers that leave this empty install nothing here:
+      resolveDriverLibrary finds no driver, no target is registered, and the
+      connections specs skip with a reason naming the missing piece.
+      Developers install the stack on their own machines by hand; only CI
+      needs this. A separate, unconditional step below still installs the bare
+      unixODBC headers regardless of this input, since `odbc` itself is a hard
+      requirement of every engine's required-packages.txt, not just the ones
+      testing Connections.
     required: false
     default: ""
   install-required-packages:
@@ -304,6 +308,61 @@ runs:
           *)
             echo "::error::install-database-stack is not implemented for RUNNER_OS=$RUNNER_OS"
             exit 1
+            ;;
+        esac
+
+    # required-packages.txt lists `odbc` unconditionally (every engine runs
+    # the harness's full required set, not just the ones testing Connections),
+    # but the step above -- which would otherwise provide the unixODBC
+    # headers `odbc` needs to compile -- only runs when install-database-stack
+    # opts into the full Connections test stack. Whether that compile from
+    # source actually happens depends on PPM's binary coverage for the
+    # runner's distro/arch/R combination, which drifts over time and isn't
+    # visible from this action's inputs, so the header package is installed
+    # unconditionally here instead of guessing which engines need it. This is
+    # deliberately narrower than the step above: only the driver-manager
+    # headers, none of the database servers or driver libraries the
+    # Connections tests need, so engines that skip install-database-stack stay
+    # just as cheap to run as before. Skipped when that step already ran, since
+    # it installs unixODBC (or unixODBC-devel) itself.
+    - name: Install ODBC headers for the R odbc package
+      if: inputs.install-database-stack != 'true'
+      shell: bash
+      run: |
+        case "$RUNNER_OS" in
+          Linux)
+            if [ "$(id -u)" = "0" ]; then
+              SUDO=""
+            else
+              SUDO="sudo"
+            fi
+            . /etc/os-release
+            case "${ID:-}" in
+              debian | ubuntu)
+                $SUDO apt-get update
+                DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y unixodbc-dev
+                ;;
+              fedora | rhel | rocky | almalinux | centos)
+                $SUDO dnf install -y unixODBC-devel
+                ;;
+              *)
+                if printf '%s' "${ID_LIKE:-}" | grep -q 'debian'; then
+                  $SUDO apt-get update
+                  DEBIAN_FRONTEND=noninteractive $SUDO apt-get install -y unixodbc-dev
+                elif printf '%s' "${ID_LIKE:-}" | grep -q 'rhel\|fedora'; then
+                  $SUDO dnf install -y unixODBC-devel
+                else
+                  echo "::error::unsupported distro ID='${ID:-}' ID_LIKE='${ID_LIKE:-}' for ODBC headers"
+                  exit 1
+                fi
+                ;;
+            esac
+            ;;
+          macOS)
+            export HOMEBREW_NO_AUTO_UPDATE=1
+            export HOMEBREW_NO_INSTALL_CLEANUP=1
+            export HOMEBREW_NO_ENV_HINTS=1
+            brew install unixodbc
             ;;
         esac
 
