@@ -8749,11 +8749,6 @@ public class TextEditingTarget implements
       {
          visualMode_.unfoldAll();
       }
-      else  if (useScopeTreeFolding())
-      {
-         for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
-            docDisplay_.unfold(f);
-      }
       else
       {
          docDisplay_.unfoldAll();

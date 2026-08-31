@@ -20,6 +20,12 @@ export interface AceSectionScope {
   parent: string | null;
 }
 
+/** A collapsed range and the folds nested inside it; see getFoldTree. */
+export interface AceFoldTree {
+  row: number;
+  subFolds: AceFoldTree[];
+}
+
 export interface AceMarker {
   range: Ace.Range | null;
   type: string;
@@ -187,6 +193,34 @@ export class AceEditor extends PageObject {
         end: { row: range.end.row, column: range.end.column },
       };
     }, row);
+  }
+
+  /**
+   * Returns the number of top-level collapsed ranges in the editor. Ace's
+   * getAllFolds() walks the active fold lines only -- a fold nested inside a
+   * collapsed parent lives on the parent's subFolds and is not counted -- so a
+   * count of 0 means "nothing is folded", but a nonzero count is not the total
+   * number of folds. Use getFoldTree() to see the nesting.
+   */
+  async getFoldCount(): Promise<number> {
+    return this.run((editor) => editor.session.getAllFolds().length);
+  }
+
+  /**
+   * Returns the collapsed ranges as a tree of document start rows, in document
+   * order, with folds that Ace parked on a collapsed parent's subFolds nested
+   * under that parent. Ace stores a subFold's range relative to its parent, so
+   * the rows are translated back to absolute document rows here.
+   */
+  async getFoldTree(): Promise<AceFoldTree[]> {
+    return this.run((editor) => {
+      const visit = (folds: Ace.Fold[], base: number): AceFoldTree[] =>
+        folds.map((fold) => {
+          const row = base + fold.start.row;
+          return { row, subFolds: visit(fold.subFolds, row) };
+        });
+      return visit(editor.session.getAllFolds(), 0);
+    });
   }
 
   /**

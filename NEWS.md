@@ -7,6 +7,7 @@
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): Added horizontal and vertical split source editor views, with shared edits and independent navigation state.
 
 ### Fixed
+- ([#18668](https://github.com/rstudio/rstudio/issues/18668)): Expand All now clears nested folds in R Markdown documents after Collapse All.
 - ([#18683](https://github.com/rstudio/rstudio/issues/18683)): Fixed intermittent user and group lookup failures on Linux when a remote user directory is slow to respond.
 - ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where opening Find in the visual editor left the search box as it was, rather than filling it with the selected text the way source mode does. A selection made inside a code chunk now seeds the box too, and is what Use Selection for Find looks for there; both previously read the surrounding document selection, which sees a chunk as a single unit.
 - ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where the Find and Add Next and Find All commands did nothing in the visual editor. Both build a multi-cursor selection in the source editor, and in visual mode they were still aimed at that editor even though it is hidden; they now act on the code chunk that has focus. In prose, where the visual editor has no multi-cursor equivalent, they are reported as unavailable rather than silently doing nothing.
