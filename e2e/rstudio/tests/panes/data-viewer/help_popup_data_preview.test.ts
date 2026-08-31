@@ -19,28 +19,24 @@
 // the fix -- pre-fix this host defaulted show_summary to true and the sidebar
 // was expanded.
 
-import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { COMPLETION_POPUP } from '@actions/autocomplete.actions';
+import {
+  COMPLETION_POPUP,
+  setAlwaysShowCompletionPopup,
+  waitForCompletionPopup,
+} from '@actions/autocomplete.actions';
 import { TIMEOUTS } from '@utils/constants';
 
-// No data viewer is open in this test, so the gridviewer iframe matched here
-// is unambiguously the help-popup preview.
-const GRID_FRAME = 'iframe[src*="grid_resource/gridviewer.html"]';
 const LIST_NAME = 'list_17735_preview';
 
-// Automation-only override: force the completion popup to render even when a
-// request returns a single result. The list under test has one member (`df`),
-// so completing `<list>$` yields exactly one completion; RCompletionManager
-// auto-accepts a lone result without ever showing the popup, which the
-// Ctrl+Space fallback below would otherwise trigger. Mirrors the convention in
-// autocomplete.actions.ts; no-op on builds that predate the knob.
-async function setAlwaysShowCompletionPopup(page: Page, force: boolean): Promise<void> {
-  await page.evaluate((f) => {
-    window.rstudio?.completions?.setAlwaysShowPopup(f);
-  }, force);
-}
+// The help-popup preview iframe, matched by the object it previews. A bare
+// gridviewer.html match is NOT unique: any grid-viewer host that ran earlier
+// in the session leaves its iframe in the DOM -- e.g. the SQL Results pane's
+// "Data Output Pane" frame (GridViewerFrame, data_source=data) persists after
+// the connections tests -- and a bare match then trips Playwright strict mode
+// or resolves the hidden pane's elements.
+const GRID_FRAME = `iframe[src*="gridviewer.html"][src*="obj=${LIST_NAME}"]`;
 
 test.describe('Help popup data preview - #17735', () => {
   let consoleActions: ConsolePaneActions;
@@ -63,17 +59,21 @@ test.describe('Help popup data preview - #17735', () => {
     // to the DATAFRAME help path (getHelpDataFrame) that embeds the preview.
     await consoleActions.executeInConsole(`${LIST_NAME} <- list(df = head(mtcars))`, { wait: true });
 
-    // Force the popup so the lone `df` completion is listed instead of being
-    // auto-accepted by the Ctrl+Space fallback below (see the helper comment).
-    // Set before typing so the `$` auto-trigger is covered too.
+    // Force the popup: the list has one member (`df`), and an explicit
+    // completion request with a lone result is auto-accepted without ever
+    // showing the popup. Set before typing so the `$` auto-trigger is
+    // covered too.
     await setAlwaysShowCompletionPopup(page, true);
     try {
       // Type up to the `$` and trigger member completion. The selected member's
       // help (the data preview) renders alongside the completion popup.
+      // waitForCompletionPopup waits out the request the `$` itself schedules
+      // before falling back to Ctrl+Space -- a one-shot visibility sample plus
+      // an immediate Ctrl+Space raced that in-flight request, which
+      // beginSuggest then invalidated, stranding the session with no popup
+      // (the CI flake on PRs #18680/#18693).
       await consoleActions.typeInConsole(`${LIST_NAME}$`);
-      if (!(await page.locator(COMPLETION_POPUP).isVisible())) {
-        await page.keyboard.press('Control+Space');
-      }
+      await waitForCompletionPopup(page);
       await expect(page.locator(COMPLETION_POPUP)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
 
       // The preview iframe is the shared grid viewer in server mode (env/obj).
