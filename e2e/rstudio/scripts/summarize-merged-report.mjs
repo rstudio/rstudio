@@ -119,7 +119,11 @@ setOutput('platform_table', table);
 
 // "Run under test": what each engine in this report actually ran against. The
 // harness records one metadata entry per engine, keyed by OS and edition, with
-// the versions as the value (e2e/rstudio/utils/versions.ts). Playwright adds
+// the versions as the value (e2e/rstudio/utils/versions.ts). Every engine's keys
+// survive the merge because playwright's mergeConfigs combines metadata with a
+// spread across each input blob rather than taking one blob's copy; confirmed on
+// runs 33009124758 and 33187455991, where the merged report carried all four
+// engines. Playwright adds
 // metadata of its own -- ci, gitCommit, gitDiff, actualWorkers -- so entries are
 // picked by value shape rather than by excluding Playwright's key names, which
 // would let a newly added Playwright key leak into the output.
