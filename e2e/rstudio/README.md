@@ -77,7 +77,7 @@ PW_RSTUDIO_DEV=1 npx playwright test
 PW_RSTUDIO_DEV=1 npx playwright test tests/panes/misc/autocomplete.test.ts
 ```
 
-Assumes the rest of the product (gwt, the C++ session, etc.) is already built such that `npm run start` in `src/node/desktop` would launch a working IDE. The CDP-wait deadline is extended to 3 minutes on this path to accommodate the first-run webpack compile; subsequent starts are faster. Tests that exercise the doRestart() flow aren't fully supported in dev mode because the Electron relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
+Assumes the rest of the product (gwt, the C++ session, etc.) is already built such that `npm run start` in `src/node/desktop` would launch a working IDE. The CDP-wait deadline is extended to 3 minutes on this path to accommodate the first-run webpack compile; subsequent starts are faster. Tests that exercise the doRestart() flow (e.g. uninstall Posit Assistant) aren't fully supported in dev mode because the Electron relaunch spawns the same dev executable rather than a fresh CDP-enabled session.
 
 **Running from a git worktree:** don't point `RSTUDIO_CPP_BUILD_OUTPUT` at the main checkout's `build/src/cpp` -- its `rdesktop-dev.conf` serves the main checkout's `src/gwt/www`, which after `ant devmode`/`ant draft` is a Super Dev Mode stub redirecting to `localhost:9876`. Without that code server, RStudio dies at startup ("code server not available"). `scripts/bootstrap-worktree.sh` (repo root) builds `<worktree>/build-dev-shim` (linking the main build's `session/`, with `conf` rewritten to the worktree's own `www`) and prints the `npm run test:desktop-dev` command to run -- the wrapper detects the shim automatically when the worktree has no configured `build/`.
 
@@ -435,6 +435,55 @@ test.describe('Tests needing packages', () => {
 ```
 
 If you find yourself adding the same package to many tests, promote it into `required-packages.txt` so it gets pre-installed once at setup time.
+
+### Database connections (Connections pane tests)
+
+The specs under `tests/panes/connections/` drive the New Connection wizard
+against real databases. `globalSetup` arranges both halves, with zero
+configuration by default:
+
+- **Driver registration** is sandbox-local on macOS/Linux: `ODBCSYSINI`
+  points the session at a generated `odbcinst.ini` under the run's sandbox,
+  registering each target driver found on the machine (see
+  `utils/db-targets.ts` for the per-platform library paths). Windows has no
+  ODBCSYSINI equivalent, so there drivers are registered machine-wide under
+  a sandbox-owned name instead, and unregistered again at teardown (see
+  `utils/connections.ts`). Either way the machine's own drivers are never
+  overwritten, and a snippet file is placed beside the registered driver so
+  the wizard renders labeled parameter fields, the same path the
+  professional drivers take.
+- **The databases**: PostgreSQL is a throwaway server provisioned into the
+  sandbox on a nonstandard port (127.0.0.1:55432, database `pwpostgresql`,
+  role `pwtest`) and stopped and deleted at teardown. SQLite needs no server
+  at all -- the driver just opens a file
+  (`<sandbox>/db/sqlite/pwsqlite.db`). Tests seed their own schemas and
+  tables through DBI. If something is already listening on a target's port
+  it is reused and left running. MySQL is currently parked (deactivated to
+  cut one server install from CI, not removed -- its descriptor and
+  provisioning scripts stay in the repo); see `ALL_DB_TARGETS` in
+  `utils/db-targets.ts` to re-enable it.
+
+The specs iterate over every engine in `ALL_DB_TARGETS`
+(`utils/db-targets.ts`); an engine whose driver or server is absent skips
+with a reason rather than failing. Adding a server-backed engine needs a new
+descriptor plus a `scripts/db/<engine>/<os>.{sh,ps1}` provisioning script; a
+file-backed engine (like SQLite) needs no provisioning script at all.
+
+Prerequisites on macOS: `brew install unixodbc psqlodbc sqliteodbc
+postgresql@17` (any `postgresql@N` provides the server binaries). When a
+driver or database is unavailable, or provisioning fails, the affected specs
+skip with a reason naming the missing piece (recorded in
+`<sandbox>/db/status.json`); a timeout still fails. CI installs the same
+stack per platform via `scripts/db/install-deps/`.
+
+To point a target at an existing database instead (e.g. one reachable from a
+remote Server's rsession), set the single per-target override
+(`PW_DB_<ID>`) and no local provisioning happens for that engine:
+
+```bash
+PW_DB_POSTGRES="host=db.example.com;port=5432;database=x;user=y;password=z" \
+  npm run test:server ...
+```
 
 ## Tags
 

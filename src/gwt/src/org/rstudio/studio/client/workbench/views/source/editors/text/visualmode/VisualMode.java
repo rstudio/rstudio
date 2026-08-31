@@ -29,6 +29,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
@@ -153,7 +154,7 @@ public class VisualMode implements VisualModeEditorSync,
       );
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
-      initWidgets();
+      initWidgets(releaseOnDismiss);
       
       // subscribe to source doc added
       releaseOnDismiss.add(eventBus.addHandler(SourceDocAddedEvent.TYPE, this));
@@ -215,7 +216,7 @@ public class VisualMode implements VisualModeEditorSync,
          visualModeContext_.onDismiss();
    }
    
-   private void initWidgets()
+   private void initWidgets(ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       findReplaceButton_ = new ToolbarButton(
          ToolbarButton.NoText,
@@ -223,9 +224,63 @@ public class VisualMode implements VisualModeEditorSync,
          FindReplaceBar.getFindIcon(),
          (event) -> {
             HasFindReplace findReplace = getFindReplace();
-            findReplace.showFindReplace(!findReplace.isFindReplaceShowing());
+            boolean show = !findReplace.isFindReplaceShowing();
+            boolean capturedByMouse = findReplaceButtonMouseCapture_;
+            String searchTerm = findReplaceButtonSearchTerm_;
+            clearFindReplaceButtonSearchTerm();
+
+            if (show)
+            {
+               if (capturedByMouse)
+                  showFindReplace(searchTerm);
+               else
+                  showFindReplace();
+            }
+            else
+               findReplace.showFindReplace(false);
          }
       );
+
+      // Read the selection before the click moves focus off ProseMirror or an
+      // embedded Ace editor. By the time the ClickHandler above runs, both
+      // editors can already report no selection.
+      findReplaceButton_.addMouseDownHandler((event) ->
+      {
+         findReplaceButtonMouseCapture_ = true;
+         findReplaceButtonSearchTerm_ = getSearchSelection();
+      });
+      findReplaceButton_.addMouseUpHandler((event) ->
+      {
+         // ToolbarButton fires its synthetic click from its own mouse-up
+         // handler before this one runs, so normal activation has consumed
+         // the capture by now. This also clears a mouse-up that did not click.
+         clearFindReplaceButtonSearchTerm();
+      });
+      findReplaceButton_.addMouseOutHandler((event) ->
+      {
+         // A drag off the button cancels ToolbarButton's synthetic click.
+         clearFindReplaceButtonSearchTerm();
+      });
+      findReplaceButton_.addKeyDownHandler((event) ->
+      {
+         // Enter / Space will synthesize a click on key-press. Do not let a
+         // cancelled mouse gesture supply that keyboard click's search term.
+         clearFindReplaceButtonSearchTerm();
+      });
+
+      // A mouse released outside the application has no mouse-up or mouse-out
+      // in this window. Drop its capture when the window loses focus so a
+      // later programmatic or keyboard click cannot reuse a stale selection.
+      releaseOnDismiss.add(WindowEx.addBlurHandler((event) ->
+      {
+         clearFindReplaceButtonSearchTerm();
+      }));
+   }
+
+   private void clearFindReplaceButtonSearchTerm()
+   {
+      findReplaceButtonMouseCapture_ = false;
+      findReplaceButtonSearchTerm_ = null;
    }
    
    public boolean isActivated()
@@ -488,8 +543,23 @@ public class VisualMode implements VisualModeEditorSync,
       if (panmirrorFormatConfig_ != null && panmirrorFormatConfig_.requiresReload()) 
       {
          panmirrorFormatConfig_ = null;
+
+         // The idle commands belong to the editor being torn down and read
+         // panmirror_ when they fire; a pending one would otherwise land in
+         // the window before the replacement editor exists.
+         syncOnIdle_.suspend();
+         saveLocationOnIdle_.suspend();
+         displayLocationOnIdle_.suspend();
+
+         panmirror_.destroy();
          view_.editorContainer().removeWidget(panmirror_);
          panmirror_ = null;
+
+         // The find bar can clear activeEditor_ while deliberately leaving
+         // chunk commands enabled. A format reload has no chunk to restore,
+         // so the active document must revoke those global commands now.
+         if (target_.isActiveDocument())
+            setCodeCommandsEnabled(false);
       }
       
       withPanmirror(() -> {
@@ -804,6 +874,56 @@ public class VisualMode implements VisualModeEditorSync,
    }
 
    /**
+    * Perform a command with the visual editor's active code editor. Focusing
+    * panmirror restores the last editing selection after a toolbar, find bar,
+    * or command palette has temporarily taken focus; without that handoff the
+    * chunk's blur handler has already cleared activeEditor_.
+    *
+    * @param command The command to perform when focus resolves to a code chunk.
+    */
+   public void performWithActiveEditor(CommandWithArg<DocDisplay> command)
+   {
+      // Visual mode remains activated while its widget is rebuilt for a
+      // format change. Commands in that window are unavailable; they must not
+      // fall through to the hidden source editor.
+      if (panmirror_ == null)
+         return;
+
+      panmirror_.focus();
+
+      if (activeEditor_ != null)
+         command.execute(activeEditor_);
+   }
+
+   /**
+    * Perform a command with the visual editor's search selection after
+    * restoring its editing surface. Preserve a live browser selection first:
+    * after moving from a chunk into prose, Panmirror's tracked selection can
+    * lag behind the DOM selection that the user just made.
+    *
+    * @param command The command to perform; passed null when the selection is
+    *    empty or spans multiple lines.
+    */
+   public void performWithSearchSelection(CommandWithArg<String> command)
+   {
+      String browserSelection = getBrowserSearchSelection();
+      boolean browserSelectionExists = hasBrowserTextSelection();
+
+      if (panmirror_ != null)
+         panmirror_.focus();
+
+      String searchSelection;
+      if (browserSelectionExists)
+         searchSelection = browserSelection;
+      else if (activeEditor_ != null)
+         searchSelection = asSearchSelection(activeEditor_.getSelectionValue());
+      else
+         searchSelection = getSearchSelection();
+
+      command.execute(searchSelection);
+   }
+
+   /**
     * Moves the cursor in source mode to the currently active outline item in visual mode.
     */
    public void syncSourceOutlineLocation()
@@ -836,6 +956,23 @@ public class VisualMode implements VisualModeEditorSync,
    }
    
    /**
+    * Gives up the active editor because it is being destroyed. Command enabled
+    * state is global, so an inactive document being closed must not change it;
+    * only the active target may update that state.
+    * 
+    * @param editor The editor being destroyed.
+    */
+   public void onActiveEditorDestroyed(DocDisplay editor)
+   {
+      if (activeEditor_ != editor)
+         return;
+
+      setActiveEditor(null);
+      if (target_.isActiveDocument())
+         setCodeCommandsEnabled(false);
+   }
+   
+   /**
     * Sets the enabled state for code commands -- i.e. those that require
     * selection to be inside a chunk of code. We disable these outside code
     * chunks.
@@ -846,6 +983,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       AppCommand[] commands = {
          commands_.commentUncomment(),
+         commands_.codeCompletion(),
          commands_.executeCode(),
          commands_.executeCodeWithoutFocus(),
          commands_.executeCodeWithoutMovingCursor(),
@@ -856,12 +994,17 @@ public class VisualMode implements VisualModeEditorSync,
          commands_.executeCurrentStatement(),
          commands_.executeFromCurrentLine(),
          commands_.executeToCurrentLine(),
+         commands_.expandRaggedSelection(),
+         commands_.expandSelection(),
          commands_.extractFunction(),
          commands_.extractLocalVariable(),
+         commands_.findAll(),
          commands_.goToDefinition(),
+         commands_.goToHelp(),
          commands_.insertRoxygenSkeleton(),
          commands_.profileCode(),
          commands_.profileCodeWithoutFocus(),
+         commands_.quickAddNext(),
          commands_.reflowComment(),
          commands_.reindent(),
          commands_.reformatCode(),
@@ -870,6 +1013,7 @@ public class VisualMode implements VisualModeEditorSync,
          commands_.runSelectionAsBackgroundJob(),
          commands_.runSelectionAsWorkbenchJob(),
          commands_.sendToTerminal(),
+         commands_.shrinkSelection(),
          commands_.yankAfterCursor(),
          commands_.yankBeforeCursor()
       };
@@ -930,6 +1074,26 @@ public class VisualMode implements VisualModeEditorSync,
       {
          chunk.getAceInstance().toggleTokenInfo();
       });
+   }
+
+   /**
+    * Show the visual editor's find bar, seeded from the selection the way the
+    * source editor's bar seeds its own.
+    */
+   public void showFindReplace()
+   {
+      performWithSearchSelection((searchTerm) ->
+      {
+         showFindReplace(searchTerm);
+      });
+   }
+
+   private void showFindReplace(String searchTerm)
+   {
+      if (searchTerm != null)
+         getFindReplace().findFromSelection(searchTerm);
+      else
+         getFindReplace().showFindReplace(true);
    }
 
    public HasFindReplace getFindReplace()
@@ -1266,6 +1430,87 @@ public class VisualMode implements VisualModeEditorSync,
    public String getSelectedText()
    {
       return panmirror_.getSelectedText();
+   }
+   
+   /**
+    * The visual editor's selection when it can serve as a search term --
+    * non-empty and on a single line, the rule the source editor's find bar
+    * applies to its own selection. Null otherwise.
+    * 
+    * Read from the focused code chunk when there is one: the outer ProseMirror
+    * selection sees a chunk as a single node, so it cannot report a selection
+    * made inside one. Otherwise prefer the browser selection inside Panmirror,
+    * which reflects a new prose selection even when Panmirror's tracked
+    * selection still describes an earlier chunk interaction. Kept apart from
+    * getSelectedText(), whose paired writer replaceSelection() addresses the
+    * outer editor, so the two stay symmetric.
+    */
+   public String getSearchSelection()
+   {
+      // panmirror_ is null while the editor is torn down for a format reload;
+      // getFindReplace() stubs itself out over the same window
+      if (activeEditor_ == null && panmirror_ == null)
+         return null;
+
+      String browserSelection = getBrowserSearchSelection();
+      if (hasBrowserTextSelection())
+         return browserSelection;
+
+      if (activeEditor_ != null)
+         return asSearchSelection(activeEditor_.getSelectionValue());
+
+      return asSearchSelection(panmirror_.getSelectedText());
+   }
+
+   private String getBrowserSearchSelection()
+   {
+      // Input selections are not reflected in window.getSelection(). They are
+      // live UI selections, so do not let an older Panmirror DOM selection
+      // masquerade as the current selection.
+      if (panmirror_ == null || hasInputTextSelection())
+         return null;
+
+      // PanmirrorWidget also owns the outline and find UI. Only selections in
+      // document content can seed a search. Check every content root because
+      // the main body and notes/footnotes are separate editable regions.
+      Element[] contents = DomUtils.getElementsByClassName(
+            panmirror_.getElement(), "pm-content");
+      for (Element content : contents)
+      {
+         if (DomUtils.isSelectionInElement(content))
+            return asSearchSelection(DomUtils.getSelectedText());
+      }
+
+      return null;
+   }
+
+   private boolean hasBrowserTextSelection()
+   {
+      // A ProseMirror node selection around an embedded chunk can be a
+      // non-collapsed DOM range whose text is empty. It is not a competing
+      // text selection and must not block restoration of the chunk editor.
+      return hasInputTextSelection() ||
+             (DomUtils.selectionExists() &&
+              !StringUtil.isNullOrEmpty(DomUtils.getSelectedText()));
+   }
+
+   private static native boolean hasInputTextSelection() /*-{
+      // Ace mirrors the editor selection into its hidden textarea for the
+      // clipboard. That is the chunk selection itself, not a UI input's.
+      var element = $doc.activeElement;
+      return element != null &&
+             !element.classList.contains("ace_text-input") &&
+             typeof element.selectionStart === "number" &&
+             typeof element.selectionEnd === "number" &&
+             element.selectionEnd > element.selectionStart;
+   }-*/;
+
+   private String asSearchSelection(String selection)
+   {
+      if (StringUtil.isNullOrEmpty(selection) || selection.indexOf('\n') != -1)
+         return null;
+
+      return selection;
    }
    
    public void replaceSelection(String value)
@@ -1989,7 +2234,9 @@ public class VisualMode implements VisualModeEditorSync,
    private PanmirrorWidget panmirror_;
   
    private ToolbarButton findReplaceButton_;
-   
+   private String findReplaceButtonSearchTerm_;
+   private boolean findReplaceButtonMouseCapture_;
+  
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<>();
    
    private final ProgressPanel progress_;
@@ -2007,6 +2254,3 @@ public class VisualMode implements VisualModeEditorSync,
    private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
-
-
-

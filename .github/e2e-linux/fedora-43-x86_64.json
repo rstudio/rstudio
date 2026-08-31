@@ -28,6 +28,7 @@
   "display_server": "xvfb",
   "e2e_deps_cache_scope": "fedora43-x86_64",
   "preinstall_r_packages": "true",
+  "install_database_stack": "true",
   "heartbeat_timeout_seconds": "2400",
   "pw_label": "linux-fedora43"
 }
