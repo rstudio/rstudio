@@ -64,8 +64,8 @@ are often the largest entries under `### New`, and they are exactly the ones to 
 **The audience is users, not us.** Drop build tooling, CI, code signing, packaging
 internals, crash-reporting plumbing, and test infrastructure.
 
-**Features and enhancements, not fixes.** The Fixes section of the page is a single link
-to the release notes, which is where ordinary bug fixes belong. The exception is an entry
+**Features and enhancements, not fixes.** Ordinary bug fixes belong in the release notes,
+which the page's closing Fixes section links to (see step 5). The exception is an entry
 that is *worded* as a fix but reads as an improvement — a performance pass, or work that
 extends a feature shipped last release. Judge by what the user experiences: "searching
 and scrolling are faster" is an enhancement no matter which heading it sits under, while
@@ -103,12 +103,32 @@ entry is what makes the page worth reading.
 Keep it factual. Avoid marketing adjectives — the house style in NEWS.md and past pages
 is flat description, and it reads better than superlatives.
 
+The page always ends with a Fixes section linking to the release notes, whether or not
+you touched anything under `### Fixed`:
+
+```html
+  <div class="feature-section">
+    <h2>Fixes</h2>
+    <p>
+      For a full list of bug fixes in this release, see the
+      <a href="https://www.rstudio.org/links/release_notes#rstudio-<CALENDAR_VERSION>.<PATCH>">release notes</a>.
+    </p>
+  </div>
+```
+
+Every release's page carries it verbatim apart from the anchor, and it is what makes the
+editing in step 4 defensible: the fixes are not being hidden from users, they are one
+click away, so the page itself is free to carry only the things worth announcing. The
+seeded placeholder normally has the section already — keep it, and check the anchor
+against `version/` rather than assuming it was updated when the release branched.
+
+So the finished page is, in order: `New Features`, then `Deprecated` if this release has
+anything to deprecate, then `Fixes`.
+
 Mechanical points that will otherwise bite:
 
 - Leave the `<head>` untouched. The Content-Security-Policy meta tag and the
   `whats-new-base.css` link are enforced by a unit test.
-- The Fixes link anchor is `#rstudio-<CALENDAR_VERSION>.<PATCH>`. The seeded placeholder
-  normally has it right already; check it against `version/` rather than assuming.
 - Escape markup in prose: `&gt;` in menu paths like `View &gt; Split Editor`, `&mdash;`
   for em dashes, and `<code>` for option names and code.
 - Do not add an external link you have not verified resolves. A dead link in shipped
