@@ -15,11 +15,13 @@ inputs:
     default: "e2e/rstudio"
   cache-scope:
     description: >
-      Optional distro/ABI discriminator folded into the R-library and pak cache
-      keys. runner.os is only Linux/macOS/Windows, so every Linux caller would
-      otherwise share one key -- and a compiled R library built on one distro
-      (Ubuntu) is not loadable on another (RHEL). Linux callers on a non-default
-      distro should set this (e.g. 'rhel10-x86_64') to isolate their caches.
+      Optional distro/ABI/architecture discriminator folded into the R-library,
+      pak, and Playwright browser cache keys. runner.os is only
+      Linux/macOS/Windows, so callers that differ within one of those would
+      otherwise share a key -- a compiled R library built on one distro (Ubuntu)
+      is not loadable on another (RHEL), and browser binaries differ by
+      architecture. Set it when the caller differs from the default for its
+      runner.os (e.g. 'rhel10-x86_64', 'windows11-arm64').
       Leave empty to keep the legacy runner.os-only key (existing callers).
     required: false
     default: ""
@@ -121,6 +123,13 @@ runs:
       shell: pwsh
       run: |
         $ErrorActionPreference = 'Stop'
+        # Install-WindowsFeature exists only on Windows Server; client images
+        # ship Media Foundation, so there is nothing to install.
+        if (-not (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue)) {
+          Write-Output "::notice::Not a Windows Server image; skipping the Media Foundation install."
+          exit 0
+        }
+
         $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
         $outLog = Join-Path $env:RUNNER_TEMP 'media-foundation.out'
         $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
@@ -561,6 +570,13 @@ runs:
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
+        # Not a Windows Server image, so the install step above queued nothing
+        # to wait for.
+        if (-not (Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue)) {
+          Write-Output "::notice::Not a Windows Server image; nothing to wait for."
+          exit 0
+        }
+
         $marker = Join-Path $env:RUNNER_TEMP 'media-foundation.done'
         $script = Join-Path $env:RUNNER_TEMP 'install-media-foundation.ps1'
 
