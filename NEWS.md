@@ -1,4 +1,4 @@
-## RStudio 2026.09.0.0 "Autumn Hawkbit" Release Notes
+## RStudio 2026.09.0 "Autumn Hawkbit" Release Notes
 
 ### New
 - ([#18443](https://github.com/rstudio/rstudio/issues/18443)): Added the `posit-assistant-installation-enabled` session option and the `RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION` environment variable, which stop users from installing, updating, or uninstalling Posit Assistant. RStudio then runs only the administrator's installation and makes no update checks.
@@ -7,12 +7,14 @@
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): Added horizontal and vertical split source editor views, with shared edits and independent navigation state.
 
 ### Fixed
+- ([#18683](https://github.com/rstudio/rstudio/issues/18683)): Fixed intermittent user and group lookup failures on Linux when a remote user directory is slow to respond.
 - ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where opening Find in the visual editor left the search box as it was, rather than filling it with the selected text the way source mode does. A selection made inside a code chunk now seeds the box too, and is what Use Selection for Find looks for there; both previously read the surrounding document selection, which sees a chunk as a single unit.
 - ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where the Find and Add Next and Find All commands did nothing in the visual editor. Both build a multi-cursor selection in the source editor, and in visual mode they were still aimed at that editor even though it is hidden; they now act on the code chunk that has focus. In prose, where the visual editor has no multi-cursor equivalent, they are reported as unavailable rather than silently doing nothing.
 - ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed a client error ("Cannot read properties of null") that could follow a Reload Now of the visual editor after a format change, when the editor's idle save of the editing location fired before the rebuilt editor existed.
 - ([#18620](https://github.com/rstudio/rstudio/issues/18620)): The Data Viewer's last row is no longer hidden underneath the horizontal scrollbar when scrolled to the bottom.
 - ([#18139](https://github.com/rstudio/rstudio/issues/18139)): Fixed Windows locale drift that corrupted non-ASCII Console input and other locale-sensitive operations.
 - ([#18635](https://github.com/rstudio/rstudio/issues/18635)): Running code from a popped-out source window no longer moves focus to the console when "Focus console after executing code from the source pane" is off.
+- ([#18441](https://github.com/rstudio/rstudio/issues/18441)): The sign-in page and the logged-out dialog now pause polling while their tab is hidden and back off over time, and the dialog offers a "Try again now" button.
 - ([#18356](https://github.com/rstudio/rstudio/issues/18356)): Declining the Posit Assistant install prompt now restores the previously selected code assistant.
 - ([#18631](https://github.com/rstudio/rstudio/issues/18631)): RStudio Desktop now shows What's New once per release instead of after every patch update.
 - ([#18602](https://github.com/rstudio/rstudio/issues/18602)): Fixed folding and outline hierarchy for section headers decorated with `#` characters.
@@ -31,8 +33,6 @@
 - ([#18527](https://github.com/rstudio/rstudio/issues/18527)): On Windows, sessions started in untrusted directories no longer read user-level `.Renviron` files.
 - ([#10756](https://github.com/rstudio/rstudio/issues/10756)): Improved crash reporting and thread safety during session startup.
 - ([#18507](https://github.com/rstudio/rstudio/issues/18507)): Reduced macOS file-monitor overload by excluding high-churn and nested-worktree directories, batching events, and debouncing recovery scans.
-- ([#18515](https://github.com/rstudio/rstudio/issues/18515)): Restored 32-bit session binaries to the Windows installer.
-- ([#18512](https://github.com/rstudio/rstudio/issues/18512)): Added a code signature to `rsession.dll` on Windows.
 - ([#18493](https://github.com/rstudio/rstudio/issues/18493)): Fixed invisible checkbox and radio button states in Windows high-contrast dark themes.
 - ([#18474](https://github.com/rstudio/rstudio/issues/18474)): Fixed a math-preview keyboard handler leak that consumed subsequent Escape keypresses.
 - ([#17806](https://github.com/rstudio/rstudio/issues/17806)): Improved Data Viewer searching, filtering, scrolling, and Summary panel performance.
