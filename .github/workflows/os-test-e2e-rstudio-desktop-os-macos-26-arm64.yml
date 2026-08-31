@@ -693,7 +693,7 @@ jobs:
         id: summary
         if: always()
         working-directory: e2e/rstudio
-        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+        run: node scripts/summarize-merged-report.mjs
 
       - name: Upload merged Playwright report
         id: upload-report

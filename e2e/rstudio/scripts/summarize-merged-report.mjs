@@ -20,26 +20,18 @@
 // Platforms are distinguished by the per-platform project label set via
 // PW_PROJECT_LABEL in each platform workflow (e.g. desktop-macos, server-linux).
 //
-// Usage: node summarize-merged-report.mjs <path-to-test-results.json>
+// Run from the Playwright project directory (the merge jobs set
+// working-directory: e2e/rstudio); it reads the merged report from the fixed
+// path below and takes no arguments. The path is a constant rather than an
+// argument because every caller passed the same literal anyway, and reading a
+// path handed in on the command line is a finding every static analyzer raises
+// -- one that would recur on every future change to this file.
+//
+// Usage: node scripts/summarize-merged-report.mjs
 
 import fs from 'node:fs';
-import path from 'node:path';
 
-// Resolve the report path against the working directory and refuse anything
-// that escapes it. Every caller passes a path relative to e2e/rstudio (see the
-// merge jobs), so this rejects nothing that exists -- it's here because reading
-// an unconstrained argv path is what a static analyzer flags, and a scan that
-// cries wolf on this script is a scan nobody reads on the next PR. To run it
-// against a report from elsewhere, copy that report under the working directory
-// first.
-const cwd = process.cwd();
-const requested = process.argv[2];
-const file = requested === undefined ? undefined : path.resolve(cwd, requested);
-if (file !== undefined && file !== cwd && !file.startsWith(cwd + path.sep)) {
-  console.error(`Refusing to read ${requested}: outside the working directory (${cwd}).`);
-  process.exit(2);
-}
-
+const file = 'playwright-report/test-results.json';
 const outFile = process.env.GITHUB_OUTPUT;
 
 let data;
