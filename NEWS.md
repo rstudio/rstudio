@@ -1,4 +1,4 @@
-## RStudio 2026.09.0.0 "Autumn Hawkbit" Release Notes
+## RStudio 2026.09.0 "Autumn Hawkbit" Release Notes
 
 ### New
 - ([#18443](https://github.com/rstudio/rstudio/issues/18443)): Added the `posit-assistant-installation-enabled` session option and the `RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION` environment variable, which stop users from installing, updating, or uninstalling Posit Assistant. RStudio then runs only the administrator's installation and makes no update checks.
