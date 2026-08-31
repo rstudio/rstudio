@@ -24,8 +24,15 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog } from './utils';
 import { Xdg } from '../core/xdg';
-import { existsSync, readFileSync } from 'fs';
-import path from 'path';
+import {
+  buildRelaunchArgs,
+  ElectronFlagsConfig,
+  getConfiguredOzonePlatform,
+  getOzonePlatformFromArgs,
+  kOzonePlatformSwitch,
+  loadElectronFlags,
+  shouldRelaunchForOzonePlatform,
+} from './electron-flags';
 
 /**
  * RStudio entrypoint
@@ -46,29 +53,24 @@ class RStudioMain {
     }
   }
 
-  private initializeAppConfig() {
-    const configDirs = [Xdg.userConfigDir().getAbsolutePath(), app.getPath('appData')];
-    for (const configDir of configDirs) {
-      const configPath = path.join(configDir, 'electron-flags.conf');
-      if (existsSync(configPath)) {
-        logger().logDebug(`Using Electron flags from file ${configPath}`);
-        const configContents = readFileSync(configPath, { encoding: 'utf-8' });
-        const configLines = configContents.split(/\r?\n/);
-        for (const configLine of configLines) {
-          if (configLine.startsWith('--')) {
-            logger().logDebug(`Appending switch: ${configLine}`);
-            const equalsIndex = configLine.indexOf('=');
-            if (equalsIndex !== -1) {
-              const name = configLine.substring(2, equalsIndex);
-              const value = configLine.substring(equalsIndex + 1);
-              app.commandLine.appendSwitch(name, value);
-            } else {
-              const name = configLine.substring(2);
-              app.commandLine.appendSwitch(name);
-            }
-          }
-        }
-        return;
+  private initializeAppConfig(config: ElectronFlagsConfig | undefined): void {
+    if (!config) {
+      return;
+    }
+
+    logger().logDebug(`Using Electron flags from file ${config.path}`);
+    for (const flag of config.flags) {
+      const configLine = `--${flag.name}${flag.value === undefined ? '' : `=${flag.value}`}`;
+      logger().logDebug(`Appending switch: ${configLine}`);
+      // A configured Ozone switch may already be present in process.argv after
+      // a bootstrap relaunch. Remove it first so Chromium sees one value.
+      if (flag.name === kOzonePlatformSwitch) {
+        app.commandLine.removeSwitch(flag.name);
+      }
+      if (flag.value === undefined) {
+        app.commandLine.appendSwitch(flag.name);
+      } else {
+        app.commandLine.appendSwitch(flag.name, flag.value);
       }
     }
   }
@@ -128,6 +130,29 @@ class RStudioMain {
   }
 
   private async startup(): Promise<void> {
+    const configDirs = [Xdg.userConfigDir().getAbsolutePath(), app.getPath('appData')];
+    const electronFlags = loadElectronFlags(configDirs);
+    const configuredOzonePlatform = getConfiguredOzonePlatform(electronFlags?.flags ?? []);
+    const currentOzonePlatform =
+      getOzonePlatformFromArgs(process.argv) ??
+      (app.commandLine.hasSwitch(kOzonePlatformSwitch)
+        ? app.commandLine.getSwitchValue(kOzonePlatformSwitch)
+        : undefined);
+
+    // Chromium selects the Ozone backend before app.commandLine switches are applied.
+    // Relaunch once with the configured value so the browser and its child processes agree.
+    if (
+      process.platform === 'linux' &&
+      configuredOzonePlatform !== undefined &&
+      shouldRelaunchForOzonePlatform(currentOzonePlatform, configuredOzonePlatform)
+    ) {
+      app.relaunch({
+        args: buildRelaunchArgs(process.argv, configuredOzonePlatform, app.isPackaged),
+      });
+      app.exit(0);
+      return;
+    }
+
     await this.initializeRenderingEngine();
     await this.initializeAccessibility();
     this.initializeInputFeatures();
@@ -136,7 +161,7 @@ class RStudioMain {
     rstudio.argsManager.handleLogLevel();
     setApplication(rstudio);
 
-    this.initializeAppConfig();
+    this.initializeAppConfig(electronFlags);
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
       return;
