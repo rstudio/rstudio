@@ -60,9 +60,27 @@ The lockfile must be included in the commit — if it drifts from the manifest, 
 }
 ```
 
-Change the `electron@<OLD_VERSION>` key to `electron@<NEW_VERSION>`. The allowlist matches by exact `package@version`, so the version in the key must track the Electron dependency version precisely. If the key is left stale, npm's install-script gating (npm 12+) blocks Electron's required install script, leaving the binary unavailable and breaking desktop packaging/startup.
+Change the `electron@<OLD_VERSION>` key to `electron@<NEW_VERSION>` so the key tracks the Electron dependency version.
 
-### 5. Run tests
+This key gates nothing today. Electron no longer publishes an install script — its published `package.json` has no `scripts` field, and its `package-lock.json` entry carries no `hasInstallScript` — so npm's install-script gating has nothing to block for it. (Verified on 42.10.1 and 42.11.0; re-check with `npm view electron@<NEW_VERSION> scripts`, which prints nothing when the field is absent.) Keep the key in sync anyway: it costs nothing and matters if Electron reintroduces an install script. The binary is fetched separately — see step 5.
+
+### 5. Verify the Electron binary
+
+Because Electron has no install script, `npm install` does **not** download the binary; it is fetched lazily the first time something runs Electron. A successful `npm install` therefore says nothing about which binary is on disk. Check it directly, from `src/node/desktop`:
+
+```bash
+cat node_modules/electron/dist/version
+```
+
+If that file is missing or reports the old version, fetch the binary explicitly:
+
+```bash
+npx --no-install install-electron
+```
+
+Confirm `node_modules/electron/dist/version` reports `<NEW_VERSION>` before continuing. Skipping this check risks running the next step's tests against a stale Electron.
+
+### 6. Run tests
 
 Run from `src/node/desktop`:
 
@@ -72,6 +90,6 @@ cd src/node/desktop && npm test
 
 Confirm the command exits successfully. If tests fail, report the failures and stop.
 
-### 6. Done
+### 7. Done
 
-Report that the Electron version has been updated and both `npm i` and `npm test` passed.
+Report that the Electron version has been updated, that the binary on disk reports the new version, and that both `npm i` and `npm test` passed.
