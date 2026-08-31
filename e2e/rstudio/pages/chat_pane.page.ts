@@ -156,7 +156,11 @@ export class ChatPane extends FramePageObject {
     // provider blip itself, so a failed lookup reads as "not substantive"
     // rather than erroring out of the caller's retry loop.
     return await this.messageItem.last().evaluate((el) => {
-      if (!el.querySelector('.chat-message-assistant')) {
+      // Each message stamps data-message-id on both the ChatMessage row
+      // wrapper and the nested MessageRenderer content div, so last() lands
+      // on the inner div and the assistant class sits on an ancestor;
+      // closest() covers that shape, querySelector() the row wrapper.
+      if (!el.closest('.chat-message-assistant') && !el.querySelector('.chat-message-assistant')) {
         return false;
       }
 
