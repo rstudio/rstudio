@@ -138,16 +138,25 @@ namespace detail {
 
 // indicates whether rows matching the global search `inner` are necessarily a
 // subset of rows matching the search `outer`. The search is a bare literal
-// substring query (never "type|value" like the column filters), so this holds
-// exactly when `outer` occurs within `inner`: a row containing "walnuts" also
-// contains "walnut". This is what lets an extended search refine the cached
+// substring query (never "type|value" like the column filters), matched
+// case-insensitively on the R side, so this holds whenever `outer` occurs
+// within `inner` up to case: a row containing "WALNUTS" also matches a search
+// for "walnut". This is what lets an extended search refine the cached
 // working copy instead of rescanning the whole frame; routing the search
 // through isFilterSubset instead would (a) never detect these subsets, since
 // a bare search fails its "type|value" parse, and (b) misparse a search that
 // happens to look like a filter (e.g. "numeric|12_18") as a range test.
+//
+// The folding here is ASCII-only, which is conservative against PCRE's
+// Unicode case folding: a subset missed over a non-ASCII case pair just
+// falls back to a full recompute, while a subset is never claimed that the
+// case-insensitive search would not honor.
 bool isSearchSubset(const std::string& outer, const std::string& inner)
 {
-   return inner.find(outer) != std::string::npos;
+   if (outer.empty())
+      return true;
+
+   return boost::algorithm::icontains(inner, outer);
 }
 
 // indicates whether one filter string is a subset of another; e.g. if a column
