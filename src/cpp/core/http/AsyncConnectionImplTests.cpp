@@ -28,6 +28,7 @@
 // on the same strand, one and only one of them may ever win the claim.
 
 #include <atomic>
+#include <chrono>
 #include <string>
 #include <thread>
 #include <vector>
@@ -393,10 +394,14 @@ TEST(AsyncConnectionImpl, ContinueParsingResumesOnTheConnectionsStrand)
    ASSERT_FALSE(ec);
 
    // the ordinary read path, for a baseline: it arrives on the strand because
-   // readSome() binds its completion there
+   // readSome() binds its completion there. A blocking run, not poll(): the
+   // request bytes above still have to traverse the loopback socket, and a
+   // non-blocking poll() runs nothing when they have not landed yet (#18634).
+   // The deadline is only a hang cap -- run_for() returns as soon as the
+   // handler has run and the io_context is out of work.
    pConnection->startReading();
    ioc.restart();
-   ioc.poll();
+   ioc.run_for(std::chrono::seconds(30));
    ASSERT_EQ(handlerCalls, 1);
    ASSERT_TRUE(handlerOnStrand);
 
