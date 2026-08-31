@@ -44,17 +44,99 @@ namespace installation {
 bool verifyPositAiInstallation(const core::FilePath& positAiPath);
 
 /**
- * Locate the Posit Assistant installation directory.
+ * Get the system-wide Posit Assistant installation directory.
+ *
+ * This is the posit-assistant-path session option when set, so that an
+ * administrator can manage the installation from an arbitrary location, and
+ * the XDG config directory otherwise:
+ *    - Linux/macOS: /etc/rstudio/pai/bin
+ *    - Windows: C:/ProgramData/rstudio/pai/bin
+ *
+ * @return FilePath to the system-wide installation directory
+ */
+core::FilePath systemPositAssistantInstallPath();
+
+/**
+ * Get the directory holding the Posit Assistant copy shipped with RStudio.
+ *
+ * The bundle is installed beside the session binary, except in the macOS app
+ * bundle where it sits next to bin/ rather than inside it. The first location
+ * is returned when it holds a valid installation, and the second otherwise --
+ * so the returned path is where the bundle would be even when none is
+ * installed. Only commercial builds ship one; in open source neither
+ * directory exists.
+ *
+ * @param resourcePath Root to resolve against (the session resource path)
+ * @return FilePath to the bundled installation directory
+ */
+core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePath);
+
+/**
+ * Get the directory holding the Posit Assistant copy shipped with RStudio,
+ * resolved against this session's resource path.
+ *
+ * @return FilePath to the bundled installation directory
+ */
+core::FilePath bundledPositAssistantInstallPath();
+
+/**
+ * The tiers locatePositAssistantInstallation() searches, plus the settings
+ * that decide which of them apply. Resolved from session options and the
+ * environment by positAssistantSearchPaths(); passed explicitly so tests can
+ * drive the search without ambient state.
+ */
+struct InstallSearchPaths
+{
+   InstallSearchPaths() : pinnedSystemPath(false), userInstallEnabled(true) {}
+
+   // XDG user data directory install -- the one RStudio itself writes
+   core::FilePath userDataPath;
+
+   // posit-assistant-path when set, the XDG system config directory otherwise
+   core::FilePath systemPath;
+
+   // the copy shipped with RStudio; only commercial builds ship one
+   core::FilePath bundledPath;
+
+   // posit-assistant-path is set, so systemPath is an administrator's
+   // deliberate choice and ends the search when it holds no installation
+   bool pinnedSystemPath;
+
+   // the administrator allows users to manage their own installation
+   bool userInstallEnabled;
+};
+
+/**
+ * Resolve the search tiers for this session.
+ *
+ * @return InstallSearchPaths for locatePositAssistantInstallation()
+ */
+InstallSearchPaths positAssistantSearchPaths();
+
+/**
+ * Locate the Posit Assistant installation directory among the given tiers.
  *
  * Search order:
- * 1. RSTUDIO_POSIT_AI_PATH environment variable (for development/testing)
- * 2. User data directory (XDG-based, platform-appropriate)
- *    - Linux: ~/.local/share/rstudio/ai
- *    - macOS: ~/Library/Application Support/RStudio/ai
- *    - Windows: %LOCALAPPDATA%/RStudio/ai
- * 3. System-wide installation (XDG config directory)
- *    - Linux: /etc/rstudio/ai
- *    - Windows: C:/ProgramData/RStudio/ai
+ * 1. User data directory (XDG-based, platform-appropriate)
+ *    - Linux/macOS: ~/.local/share/rstudio/pai/bin
+ *    - Windows: %LOCALAPPDATA%/rstudio/pai/bin
+ *    Skipped entirely when userInstallEnabled is false, so an installation
+ *    left there before the administrator disabled user-managed installs --
+ *    or copied there to get around the setting -- is ignored
+ * 2. System-wide installation, as given by systemPositAssistantInstallPath()
+ * 3. The copy bundled with RStudio, as given by
+ *    bundledPositAssistantInstallPath() -- skipped entirely when
+ *    posit-assistant-path is set, so a pinned path that holds no
+ *    installation reports "not installed" rather than downgrading to the
+ *    shipped version
+ *
+ * @param paths The tiers to search
+ * @return FilePath to the installation directory, or empty FilePath if not found
+ */
+core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths);
+
+/**
+ * Locate the Posit Assistant installation directory for this session.
  *
  * @return FilePath to the installation directory, or empty FilePath if not found
  */
@@ -63,15 +145,32 @@ core::FilePath locatePositAssistantInstallation();
 /**
  * Get the installed version of Posit Assistant from package.json.
  *
+ * @param positAiPath Path to the AI installation directory
+ * @return Version string (e.g., "1.2.3"), or empty string if not found or invalid
+ */
+std::string getInstalledVersion(const core::FilePath& positAiPath);
+
+/**
+ * Get the installed version of Posit Assistant this session would run.
+ *
  * @return Version string (e.g., "1.2.3"), or empty string if not found or invalid
  */
 std::string getInstalledVersion();
 
 /**
- * Get the protocol version the installed Posit Assistant package was built for.
+ * Get the protocol version the given Posit Assistant package was built for.
  *
  * Reads the protocol.json file written at install time. Legacy installs
  * (before this file existed) return an empty string.
+ *
+ * @param positAiPath Path to the AI installation directory
+ * @return Protocol version string (e.g., "10.0"), or empty string if missing or unreadable
+ */
+std::string getInstalledProtocolVersion(const core::FilePath& positAiPath);
+
+/**
+ * Get the protocol version the Posit Assistant package this session would
+ * run was built for.
  *
  * @return Protocol version string (e.g., "10.0"), or empty string if missing or unreadable
  */

@@ -135,6 +135,15 @@ bool applyProxyFilter(
 // Exposes the uid-resolution decision inputs used to enforce localhost-proxy
 // destination-port ownership (rstudio-pro#11470).
 core::Error userIdForUsernameForTest(const std::string& username, UidType* pUID);
+
+// Exercises the complete rewrite path used for buffered localhost responses.
+void prepareLocalhostResponseForTest(
+      const core::http::Request& originalRequest,
+      const std::string& port,
+      const std::string& baseAddress,
+      bool ipv6,
+      const core::http::Response& response,
+      core::http::Response* pPreparedResponse);
 #endif
 
 } // namespace session_proxy
@@ -142,4 +151,3 @@ core::Error userIdForUsernameForTest(const std::string& username, UidType* pUID)
 } // namespace rstudio
 
 #endif // SERVER_SESSION_PROXY_HPP
-

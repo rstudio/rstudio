@@ -423,7 +423,7 @@ int RReadConsole(const char *pmt,
             
             // ensure that our input fits within the buffer
             std::string::size_type maxLen = buflen - 2; // for \n\0
-            rInput = string_utils::utf8ToSystem(rInput, true);
+            rInput = r::util::utf82rconsole(rInput, true);
             if (rInput.length() > maxLen)
             {
                // print a loud warning when we're about to truncate input

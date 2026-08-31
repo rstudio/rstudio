@@ -129,13 +129,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // needed for subprocesses to use the rserver-url binary with the -l option.
    core::system::setenv(kPortTokenEnvVar, persistentState().portToken());
 
-   std::string sessionUrl;
    std::string serverUrl;
-   r_util::parseSessionUrl(baseURL, nullptr, &sessionUrl, nullptr, &serverUrl);
-   if (sessionUrl == "" && serverUrl == "") {
-      // This is the case with RStudio Server, while Workbench has non-empty values
-      serverUrl = baseURL;
-   }
+   std::string sessionUrl;
+   r_util::parseSessionUrlEnvVars(baseURL, &serverUrl, &sessionUrl);
    core::system::setenv(kServerUrlEnvVar, serverUrl);
    core::system::setenv(kSessionUrlEnvVar, sessionUrl);
 
@@ -544,6 +540,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #else
    sessionInfo["posit_assistant_enabled"] = false;
 #endif
+   sessionInfo["posit_assistant_installation_enabled"] =
+      module_context::isPositAssistantInstallationEnabledByAdmin();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 

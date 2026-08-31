@@ -144,6 +144,9 @@ function shQuote(value: string): string {
  *    value to the session, and the copilot-language-server resolves its
  *    config dir from XDG_CONFIG_HOME before HOME -- unset, it falls back to
  *    $HOME/.config/github-copilot, inside the sandbox.
+ *  - ODBCSYSINI (when the sandbox registered a driver): matches the Desktop
+ *    fixture's export, so the Connections pane tests see the same
+ *    sandbox-local driver set in server-mode sessions.
  */
 function writeRsessionWrapper(serverRoot: string, userHome: string, rserverBin: string, rserverConf: string): string {
   const rsessionBin = resolveRsessionPath(rserverBin, rserverConf);
@@ -154,6 +157,13 @@ function writeRsessionWrapper(serverRoot: string, userHome: string, rserverBin: 
     'export GITHUB_COPILOT_AUTH_TOKEN_ENCRYPTION=false',
     'unset XDG_CONFIG_HOME',
   ];
+  // Sandbox-local ODBC configuration for the Connections pane tests (see
+  // prepareOdbcSandbox in utils/connections.ts). Mirrors the Desktop
+  // fixture's ODBCSYSINI export so a driver the sandbox registered is visible
+  // to server-mode sessions the same way it is to a spawned Desktop process.
+  if (process.env.PW_ODBC_DIR) {
+    lines.push(`export ODBCSYSINI=${shQuote(process.env.PW_ODBC_DIR)}`);
+  }
   if (process.platform === 'darwin') {
     lines.push(`export DYLD_INSERT_LIBRARIES=${shQuote(macosLibRPath(rserverConf))}`);
   }
@@ -423,9 +433,18 @@ export async function launchServer(): Promise<ServerSession> {
 
   console.log(`Connecting to RStudio Server at ${serverUrl}...`);
 
+  // Window size, not viewport: Chrome's own toolbar comes out of it, leaving
+  // roughly 1280x810 for the page. The earlier 960x540 left a 453px-tall
+  // page in which the visual editor kept only ~55px of body once its find bar
+  // was open; panmirror's footnote editor is a 160px panel pinned to the
+  // editor's bottom edge, so opening one pushed the body out of the editor
+  // entirely and Playwright found the find bar over the footnote text
+  // (quarto_chunks.test.ts, #16540). The desktop fixture pins 1024x645 only
+  // because the macOS runner clamps windows to that; Xvfb on the server
+  // runners is 1920x1080, so there is no reason to be that tight here.
   const browser = await chromium.launch({
     headless: false,
-    args: ['--window-size=960,540', '--window-position=100,100'],
+    args: ['--window-size=1280,900', '--window-position=100,100'],
   });
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();

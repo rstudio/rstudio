@@ -71,6 +71,11 @@ bool hasCapability(const std::string& capability);
 
 std::string rconsole2utf8(const std::string& encoded);
 
+// The inverse of rconsole2utf8(): convert UTF-8 text into the encoding R
+// expects for native strings, escaping (or replacing) the characters that
+// encoding cannot represent.
+std::string utf82rconsole(const std::string& utf8, bool escapeInvalidChars);
+
 core::Error nativeToUtf8(const std::string& value,
                          bool allowSubstitution,
                          std::string* pResult);

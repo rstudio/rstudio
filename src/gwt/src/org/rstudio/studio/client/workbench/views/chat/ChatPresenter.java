@@ -57,8 +57,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleReadCompl
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.json.client.JSONString;
-import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -126,6 +124,7 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
       void showManifestUnavailable(String errorMessage);
+      void showInstallationManagedNotInstalled();
       void showConnectionLostNotification(String message);
       void hideConnectionLostNotification();
       void showReadlineNotification();
@@ -145,6 +144,7 @@ public class ChatPresenter extends BasePresenter
       String getUnsupportedVersionNoUpdateHTML(String currentVersion);
       String getUnsupportedProtocolHTML();
       String getManifestUnavailableHTML(String errorMessage);
+      String getInstallationManagedNotInstalledHTML();
       String getErrorHTML(String errorMessage);
    }
 
@@ -635,14 +635,9 @@ public class ChatPresenter extends BasePresenter
          {
             // Backend delivers user-facing text via client_info; fall back
             // to the generic user message when no client_info is provided.
-            String message = error.getUserMessage();
-            JSONValue clientInfo = error.getClientInfo();
-            if (clientInfo != null)
-            {
-               JSONString clientInfoStr = clientInfo.isString();
-               if (clientInfoStr != null)
-                  message = clientInfoStr.stringValue();
-            }
+            String clientInfo = PositAiInstallManager.clientInfoMessage(error);
+            String message =
+               clientInfo != null ? clientInfo : error.getUserMessage();
             globalDisplay_.showErrorMessage(
                constants_.uninstallPositAssistantCaption(),
                message);
@@ -760,6 +755,21 @@ public class ChatPresenter extends BasePresenter
             }
 
             @Override
+            public void onInstallationManaged(boolean installed)
+            {
+               // Reachable only defensively: the command is hidden and the
+               // assistant's ui/checkForUpdates capability is withdrawn when
+               // installation is administrator-managed.
+               finishUpdateCheck(dismissProgress);
+               globalDisplay_.showMessage(
+                  GlobalDisplay.MSG_INFO,
+                  constants_.chatCheckForUpdatesCaption(),
+                  installed
+                     ? constants_.chatInstallationManagedMessage()
+                     : constants_.chatInstallationManagedNotInstalledMessage());
+            }
+
+            @Override
             public void onManifestUnavailable(String errorMessage)
             {
                finishUpdateCheck(dismissProgress);
@@ -822,6 +832,18 @@ public class ChatPresenter extends BasePresenter
    // conversation via the existing resume mechanism.
    private void promptToInstallUpdate(String caption, String message, String confirmLabel)
    {
+      // chat_install_update is also refused when the administrator manages the
+      // installation. Nothing the user can do resolves that, so state it and
+      // stop rather than offering an install that would fail.
+      if (!paiUtil_.isPositAssistantInstallationEnabled())
+      {
+         globalDisplay_.showMessage(
+            GlobalDisplay.MSG_INFO,
+            constants_.chatCheckForUpdatesCaption(),
+            constants_.chatInstallationManagedMessage());
+         return;
+      }
+
       // chat_install_update is refused unless Posit Assistant is selected as the
       // chat provider or assistant (isPositAssistantWanted). Offering an install
       // that would fail is confusing, so direct the user to select it instead.
@@ -1253,6 +1275,25 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
+         public void onInstallationManaged(boolean installed)
+         {
+            // An administrator-managed installation behaves normally once it
+            // resolves -- no update prompt can appear, since managed mode
+            // fetches no manifest. With nothing installed there is nothing to
+            // offer, so the pane says so rather than showing an install button.
+            if (installed)
+            {
+               startBackend();
+               return;
+            }
+
+            showInDisplayOrSatellite(
+               display_.getInstallationManagedNotInstalledHTML(),
+               () -> display_.showInstallationManagedNotInstalled());
+            setAutomationChatState("installation-managed", true);
+         }
+
+         @Override
          public void onManifestUnavailable(String errorMessage)
          {
             showInDisplayOrSatellite(
@@ -1548,8 +1589,8 @@ public class ChatPresenter extends BasePresenter
     *     "starting", "restarting", "manifest-unavailable",
     *     "unsupported-protocol", "incompatible-version",
     *     "version-update-required", "version-no-update", "not-installed",
-    *     "update-available", "assistant-not-selected", "error",
-    *     "crashed".</li>
+    *     "installation-managed", "update-available",
+    *     "assistant-not-selected", "error", "crashed".</li>
     *   <li><b>blocked</b>: true when the iframe is showing a blocking page
     *     that prevents normal interaction (the user must take a setup action
     *     or RStudio cannot continue). Tests poll this when they only care

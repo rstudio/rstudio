@@ -18,9 +18,12 @@
 #include "ChatLogging.hpp"
 
 #include <core/FileSerializer.hpp>
+#include <core/Macros.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <session/SessionModuleContext.hpp>
+#include <session/SessionOptions.hpp>
 #include <shared_core/json/Json.hpp>
 
 // Use qualified names for core:: to avoid conflicts with system getenv
@@ -45,56 +48,124 @@ bool verifyPositAiInstallation(const core::FilePath& positAiPath)
    return clientDir.exists() && serverScript.exists() && indexHtml.exists();
 }
 
-core::FilePath locatePositAssistantInstallation()
+core::FilePath systemPositAssistantInstallPath()
 {
-   // 1. Check environment variable override (for development/testing)
-   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
-   if (!rstudioPositAiPath.empty())
-   {
-      core::FilePath positAiPath(rstudioPositAiPath);
-      if (verifyPositAiInstallation(positAiPath))
-      {
-         DLOG("Using AI installation from RSTUDIO_POSIT_AI_PATH: {}", positAiPath.getAbsolutePath());
-         return positAiPath;
-      }
-      else
-      {
-         WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", rstudioPositAiPath);
-      }
-   }
+   // An administrator may install Posit Assistant outside the XDG config
+   // directory; when posit-assistant-path is set it replaces that location
+   // rather than adding another one to search.
+   core::FilePath configuredPath = options().positAssistantPath();
+   if (!configuredPath.isEmpty())
+      return configuredPath;
 
-   // 2. Check user data directory (XDG-based, platform-appropriate)
+   return core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
+}
+
+core::FilePath bundledPositAssistantInstallPath(const core::FilePath& resourcePath)
+{
+   // Mirrors the Copilot Language Server layout: the directory is installed
+   // beside the session binary, except in the macOS app bundle where it sits
+   // next to bin/ rather than inside it. The bin candidate is verified rather
+   // than merely tested for existence, so a partial directory left there does
+   // not mask a usable bundle at the other location.
+   core::FilePath binPath =
+      resourcePath.completePath("bin").completePath(kBundledPositAiDirName);
+   if (verifyPositAiInstallation(binPath))
+      return binPath;
+
+   return resourcePath.completePath(kBundledPositAiDirName);
+}
+
+core::FilePath bundledPositAssistantInstallPath()
+{
+   return bundledPositAssistantInstallPath(options().resourcePath());
+}
+
+InstallSearchPaths positAssistantSearchPaths()
+{
+   InstallSearchPaths paths;
+   paths.userDataPath = core::system::xdg::userDataDir().completePath(kPositAiDirName);
+   paths.systemPath = systemPositAssistantInstallPath();
+   paths.bundledPath = bundledPositAssistantInstallPath();
+   paths.pinnedSystemPath = !options().positAssistantPath().isEmpty();
+   paths.userInstallEnabled =
+      module_context::isPositAssistantInstallationEnabledByAdmin();
+   return paths;
+}
+
+core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
+{
+   // 1. Check user data directory (XDG-based, platform-appropriate)
    // Linux/macOS: ~/.local/share/rstudio/pai/bin
    // Windows: %LOCALAPPDATA%/rstudio/pai/bin
-   core::FilePath userPositAiPath = core::system::xdg::userDataDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(userPositAiPath))
+   bool userInstallPresent = verifyPositAiInstallation(paths.userDataPath);
+   if (paths.userInstallEnabled && userInstallPresent)
    {
-      DLOG("Using user-level AI installation: {}", userPositAiPath.getAbsolutePath());
-      return userPositAiPath;
+      DLOG("Using user-level AI installation: {}", paths.userDataPath.getAbsolutePath());
+      return paths.userDataPath;
    }
 
-   // 3. Check system-wide installation (XDG config directory)
-   // Linux/macOS: /etc/rstudio/pai/bin
-   // Windows: C:/ProgramData/rstudio/pai/bin
-   core::FilePath systemPositAiPath = core::system::xdg::systemConfigDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(systemPositAiPath))
+   // An installation left in the user data directory before the administrator
+   // disabled user-managed installs -- or copied there to get around the
+   // setting -- is ignored, never removed. That silently changes which version
+   // runs, and can be a downgrade, so say so once per session (locate() runs
+   // on every status, verify, and chat request).
+   if (userInstallPresent && RS_ONCE())
+      WLOG("Ignoring user-level AI installation at {}: Posit Assistant "
+           "installation is managed by the administrator",
+           paths.userDataPath.getAbsolutePath());
+
+   // 2. Check the system-wide installation: posit-assistant-path when set, and
+   // otherwise the XDG config directory (/etc/rstudio/pai/bin on Linux and
+   // macOS, C:/ProgramData/rstudio/pai/bin on Windows)
+   if (verifyPositAiInstallation(paths.systemPath))
    {
-      DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
-      return systemPositAiPath;
+      DLOG("Using system-wide AI installation: {}", paths.systemPath.getAbsolutePath());
+      return paths.systemPath;
+   }
+
+   // A path the administrator pinned but that holds no installation ends the
+   // search: falling through to the bundled copy would answer a typo or an
+   // unmounted share with a silent downgrade to whatever version shipped
+   // with RStudio.
+   if (paths.pinnedSystemPath)
+   {
+      // Warn once per session: locate() runs on every status, verify, and chat
+      // request, and a misconfigured path would otherwise flood the log.
+      if (RS_ONCE())
+         WLOG("posit-assistant-path set but installation invalid: {}",
+              paths.systemPath.getAbsolutePath());
+   }
+   else
+   {
+      // 3. Check the copy bundled with RStudio. It ranks last: a
+      // manifest-installed update lands in the user data directory and an
+      // administrator's own install is deliberate, so both outrank it.
+      // Open-source builds ship no bundle and always fall through here.
+      if (verifyPositAiInstallation(paths.bundledPath))
+      {
+         DLOG("Using AI installation bundled with RStudio: {}",
+              paths.bundledPath.getAbsolutePath());
+         return paths.bundledPath;
+      }
    }
 
    DLOG("No valid AI installation found. Checked locations:");
-   if (!rstudioPositAiPath.empty())
-      DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
-   DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
-   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
+   if (paths.userInstallEnabled)
+      DLOG("  - User data dir: {}", paths.userDataPath.getAbsolutePath());
+   DLOG("  - System install dir: {}", paths.systemPath.getAbsolutePath());
+   if (!paths.pinnedSystemPath)
+      DLOG("  - Bundled with RStudio: {}", paths.bundledPath.getAbsolutePath());
 
    return core::FilePath(); // Not found
 }
 
-std::string getInstalledVersion()
+core::FilePath locatePositAssistantInstallation()
 {
-   core::FilePath positAiPath = locatePositAssistantInstallation();
+   return locatePositAssistantInstallation(positAssistantSearchPaths());
+}
+
+std::string getInstalledVersion(const core::FilePath& positAiPath)
+{
    if (positAiPath.isEmpty())
       return "";
 
@@ -140,9 +211,13 @@ std::string getInstalledVersion()
    return version;
 }
 
-std::string getInstalledProtocolVersion()
+std::string getInstalledVersion()
 {
-   core::FilePath positAiPath = locatePositAssistantInstallation();
+   return getInstalledVersion(locatePositAssistantInstallation());
+}
+
+std::string getInstalledProtocolVersion(const core::FilePath& positAiPath)
+{
    if (positAiPath.isEmpty())
       return "";
 
@@ -186,6 +261,11 @@ std::string getInstalledProtocolVersion()
    std::string version = obj["protocol"].getString();
    DLOG("Installed protocol version: {}", version);
    return version;
+}
+
+std::string getInstalledProtocolVersion()
+{
+   return getInstalledProtocolVersion(locatePositAssistantInstallation());
 }
 
 core::Error writeProtocolVersionFileIfMissing(const core::FilePath& positAiPath)

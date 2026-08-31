@@ -150,6 +150,54 @@ ProxyFilter s_proxyFilter;
 
 ProxyRequestFilter s_proxyRequestFilter;
 
+// Proxy setup can fail under memory pressure while copying a callback. Cleanup
+// must therefore be both allocation-free at the call site and best-effort:
+// close()/disableHandlers() are virtual calls into asio and can themselves
+// throw, but a failure in one step must not prevent the remaining steps from
+// releasing the handler cycle and the paused browser connection.
+void settleFailedProxySetup(
+      const boost::shared_ptr<http::IAsyncClient>& pClient,
+      const boost::shared_ptr<http::AsyncConnection>& pConnection) noexcept
+{
+   try
+   {
+      pClient->close();
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      pClient->disableHandlers();
+   }
+   catch (...)
+   {
+   }
+
+   try
+   {
+      pConnection->close();
+   }
+   catch (...)
+   {
+   }
+}
+
+void logFailedProxySetup(const char* context, const char* what) noexcept
+{
+   try
+   {
+      LOG_ERROR_MESSAGE(std::string("Failed to initialize ") +
+                        context + ": " + what);
+   }
+   catch (...)
+   {
+      // Logging is secondary to cleanup, and can allocate while we are already
+      // recovering from bad_alloc.
+   }
+}
+
 Error launchSessionRecovery(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::Request& request,
@@ -335,11 +383,11 @@ bool isSparkUIResponse(const http::Response& response)
           contains(response.body(), "<div class=\"navbar navbar-static-top\">");
 }
 
-void sendSparkUIResponse(
-      const http::Response& response,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+void rewriteSparkUIResponse(
+      const http::Request& request,
+      http::Response* pResponse)
 {
-   std::string path = ptrConnection->request().path();
+   std::string path = request.path();
    size_t slashes = std::count(path.begin(), path.end(), '/');
    size_t up = slashes >= 4 ? (slashes - 3) : 0;
    std::vector<std::string> dirs;
@@ -347,9 +395,7 @@ void sendSparkUIResponse(
       dirs.push_back("..");
    std::string prefix = boost::algorithm::join(dirs, "/");
 
-   http::Response fixedResponse;
-   fixedResponse.assign(response);
-   std::string body = response.body();
+   std::string body = pResponse->body();
    boost::algorithm::replace_all(body,
                               "href=\"/",
                               "href=\"" + prefix + "/");
@@ -359,8 +405,63 @@ void sendSparkUIResponse(
    boost::algorithm::replace_all(body,
                                  "<img src=\"/",
                                  "<img src=\"" + prefix + "/");
-   fixedResponse.setBody(body);
-   ptrConnection->writeResponse(fixedResponse);
+   pResponse->setBody(body);
+}
+
+void prepareLocalhostResponse(
+      const http::Request& originalRequest,
+      const std::string& port,
+      const std::string& baseAddress,
+      bool ipv6,
+      const http::Response& response,
+      http::Response* pPreparedResponse)
+{
+   pPreparedResponse->assign(response);
+
+   // AsyncClient consumes the chunk framing before delivering a buffered
+   // response. Normalize that decoded response before any branch rewrites or
+   // forwards it; otherwise redirects and Spark UI responses can retain the
+   // upstream Transfer-Encoding label and be decoded a second time by the
+   // browser.
+   if (core::http::util::parseTransferEncoding(response.headers()).chunkedIsFinal)
+   {
+      pPreparedResponse->removeHeader("Transfer-Encoding");
+      pPreparedResponse->setContentLength(response.body().size());
+   }
+
+   const char * const kLocation = "Location";
+   const char * const kRefresh = "Refresh";
+   std::string location = pPreparedResponse->headerValue(kLocation);
+   std::string refresh = pPreparedResponse->headerValue(kRefresh);
+
+   if (!location.empty() || !refresh.empty())
+   {
+      if (!location.empty())
+      {
+         rewriteLocalhostAddressHeader(kLocation,
+                                       originalRequest,
+                                       port,
+                                       baseAddress,
+                                       ipv6,
+                                       pPreparedResponse);
+      }
+
+      if (!refresh.empty())
+      {
+         rewriteLocalhostAddressHeader(kRefresh,
+                                       originalRequest,
+                                       port,
+                                       baseAddress,
+                                       ipv6,
+                                       pPreparedResponse);
+      }
+   }
+   else if (isSparkUIResponse(*pPreparedResponse))
+   {
+      // Spark UI uses paths hard-coded to the root "/", but it is proxied
+      // behind a "/p/<port>/" URL.
+      rewriteSparkUIResponse(originalRequest, pPreparedResponse);
+   }
 }
 
 void handleWriteResponseForUpgrade(
@@ -421,82 +522,15 @@ void handleLocalhostResponse(
    }
    // normal response, write and close (handle redirects if necessary)
    else
-   {   
-      // re-write location headers if necessary
-      const char * const kLocation = "Location";
-      const char * const kRefresh = "Refresh";
-      std::string location = response.headerValue(kLocation);
-      std::string refresh = response.headerValue(kRefresh);
-      if (!location.empty() || !refresh.empty())
-      {
-         // make a copy of the response to rewrite the headers into
-         http::Response redirectResponse;
-         redirectResponse.assign(response);
-
-         // handle Location
-         if (!location.empty())
-         {
-            rewriteLocalhostAddressHeader(kLocation,
-                                          ptrConnection->request(),
-                                          port,
-                                          baseAddress,
-                                          ipv6,
-                                          &redirectResponse);
-         }
-
-         // handle Refresh
-         if (!refresh.empty())
-         {
-            rewriteLocalhostAddressHeader(kRefresh,
-                                          ptrConnection->request(),
-                                          port,
-                                          baseAddress,
-                                          ipv6,
-                                          &redirectResponse);
-         }
-
-         // write the copy
-         ptrConnection->writeResponse(redirectResponse);
-      }
-      else
-      {
-         // fixup bad SparkUI URLs in responses (they use paths hard
-         // coded to the root "/" and we are proxying them behind
-         // a "/p/<port>/" URL)
-         if (isSparkUIResponse(response))
-         {         
-            sendSparkUIResponse(response, ptrConnection);
-         }
-         else if (core::http::util::parseTransferEncoding(response.headers()).chunkedIsFinal)
-         {
-            // Even if the response from upstream is "Transfer-Encoding: chunked",
-            // our response to the client is no longer chunked; the AsyncClient
-            // parses and consumes the chunk lengths. Therefore, remove the
-            // Transfer-Encoding header and set the content length, to reflect
-            // that the body will come all at once.
-            //
-            // This must use the same parse AsyncClient used to decide to
-            // de-chunk (it once compared the raw field to "chunked" here): if
-            // AsyncClient de-chunked a body whose field read "Chunked", a
-            // string compare would leave the now-decoded body labelled as
-            // chunked on the way out, and the client would try to de-chunk it
-            // again. The "gzip, chunked" case the old TODO here asked about is
-            // now answered upstream -- AsyncClient rejects codings it cannot
-            // undo rather than delivering a still-encoded body.
-            //
-            // TODO: What other hop-by-hop response headers are we not removing
-            // but should?
-            http::Response response1;
-            response1.assign(response);
-            response1.removeHeader("Transfer-Encoding");
-            response1.setContentLength(response.body().size());
-            ptrConnection->writeResponse(response1);
-         }
-         else
-         {
-            ptrConnection->writeResponse(response);
-         }
-      }
+   {
+      http::Response preparedResponse;
+      prepareLocalhostResponse(ptrConnection->request(),
+                               port,
+                               baseAddress,
+                               ipv6,
+                               response,
+                               &preparedResponse);
+      ptrConnection->writeResponse(preparedResponse);
    }
 }
 
@@ -858,19 +892,33 @@ void proxyRequest(
 
    LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
-   // proxy the request
-   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
-   fixedBufferProxy->proxy(pClient);
-   pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
-                    errorHandler);
-
-   if (clientHandler)
+   try
    {
-      // invoke the client handler on the threadpool - we cannot do this
-      // from this thread because that will cause ordering issues for the caller
-      boost::asio::post(
-               ptrConnection->ioContext(),
-               boost::bind(clientHandler, pClient));
+      // proxy the request
+      boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(
+            new http::FixedBufferProxy(ptrConnection));
+      fixedBufferProxy->proxy(pClient);
+      pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
+                       errorHandler);
+
+      if (clientHandler)
+      {
+         // invoke the client handler on the threadpool - we cannot do this
+         // from this thread because that will cause ordering issues for the caller
+         boost::asio::post(
+                  ptrConnection->ioContext(),
+                  boost::bind(clientHandler, pClient));
+      }
+   }
+   catch (const std::exception& e)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("server proxy", e.what());
+   }
+   catch (...)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("server proxy", "unknown exception");
    }
 }
 
@@ -936,6 +984,22 @@ bool shouldRefreshCredentials(const http::Request& request)
 Error userIdForUsernameForTest(const std::string& username, UidType* pUID)
 {
    return userIdForUsername(username, pUID);
+}
+
+void prepareLocalhostResponseForTest(
+      const http::Request& originalRequest,
+      const std::string& port,
+      const std::string& baseAddress,
+      bool ipv6,
+      const http::Response& response,
+      http::Response* pPreparedResponse)
+{
+   prepareLocalhostResponse(originalRequest,
+                            port,
+                            baseAddress,
+                            ipv6,
+                            response,
+                            pPreparedResponse);
 }
 #endif
 
@@ -1054,14 +1118,31 @@ bool proxyUploadRequest(
       // a form proxy to write form data to
       auto onClientCreated = [=](const boost::shared_ptr<http::IAsyncClient>& proxyClient)
       {
-         boost::shared_ptr<http::FormProxy> proxy =
-               boost::make_shared<http::FormProxy>(ptrConnection, proxyClient);
+         try
+         {
+            boost::shared_ptr<http::FormProxy> proxy =
+                  boost::make_shared<http::FormProxy>(ptrConnection, proxyClient);
 
-         proxy->initialize();
-         ptrConnection->setData(proxy);
+            proxy->initialize();
+            ptrConnection->setData(proxy);
 
-         // continue handling form data
-         ptrConnection->continueParsing();
+            // continue handling form data
+            ptrConnection->continueParsing();
+         }
+         catch (const std::exception& e)
+         {
+            // This callback is posted directly to the server io_context. An
+            // exception escaping it terminates that worker's run() call, while
+            // leaving the browser parser paused and the FixedBufferProxy cycle
+            // around proxyClient intact. Settle both sides here instead.
+            settleFailedProxySetup(proxyClient, ptrConnection);
+            logFailedProxySetup("form proxy", e.what());
+         }
+         catch (...)
+         {
+            settleFailedProxySetup(proxyClient, ptrConnection);
+            logFailedProxySetup("form proxy", "unknown exception");
+         }
       };
 
       proxyRequest(RequestType::Content,
@@ -1346,13 +1427,28 @@ void proxyLocalhostRequest(
              boost::algorithm::contains(response.headerValue("Server"), "Jetty");
    });
 
-   boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(new http::FixedBufferProxy(ptrConnection));
-   fixedBufferProxy->proxy(pClient);
+   try
+   {
+      boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(
+            new http::FixedBufferProxy(ptrConnection));
+      fixedBufferProxy->proxy(pClient);
 
-   // execute request
-   pClient->execute(
-            boost::bind(handleLocalhostResponse, ptrConnection, pClient, username, port, address, ipv6, _1),
-            onError);
+      // execute request
+      pClient->execute(
+               boost::bind(handleLocalhostResponse, ptrConnection, pClient,
+                           username, port, address, ipv6, _1),
+               onError);
+   }
+   catch (const std::exception& e)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("localhost proxy", e.what());
+   }
+   catch (...)
+   {
+      settleFailedProxySetup(pClient, ptrConnection);
+      logFailedProxySetup("localhost proxy", "unknown exception");
+   }
 }
 
 bool requiresSession(const http::Request& request)
@@ -1378,5 +1474,3 @@ void setSessionContextSource(SessionContextSource source)
 } // namespace session_proxy
 } // namespace server
 } // namespace rstudio
-
-

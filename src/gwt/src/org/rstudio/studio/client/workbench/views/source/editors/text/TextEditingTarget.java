@@ -136,6 +136,7 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantPosition;
@@ -1945,7 +1946,7 @@ public class TextEditingTarget implements
                          !projectAssistant.equals("default"))
                      {
                         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
-                           return "Posit AI";
+                           return Assistant.DISPLAY_NAME_POSIT;
                         else
                            return "Copilot";
                      }
@@ -1954,7 +1955,7 @@ public class TextEditingTarget implements
                   // Fall back to global preference
                   String assistant = prefs_.assistant().getValue();
                   if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
-                     return "Posit AI";
+                     return Assistant.DISPLAY_NAME_POSIT;
                   else
                      return "Copilot";
                }
@@ -7347,7 +7348,10 @@ public class TextEditingTarget implements
    @Handler
    void onFindAll()
    {
-      docDisplay_.selectAll(docDisplay_.getSelectionValue());
+      withActiveEditor((disp) ->
+      {
+         disp.selectAll(disp.getSelectionValue());
+      });
    }
 
    @Handler
@@ -8494,7 +8498,10 @@ public class TextEditingTarget implements
    @Handler
    void onQuickAddNext()
    {
-      docDisplay_.quickAddNext();
+      withActiveEditor((disp) ->
+      {
+         disp.quickAddNext();
+      });
    }
 
    private HasFindReplace getFindReplace()
@@ -8508,6 +8515,14 @@ public class TextEditingTarget implements
    @Handler
    void onFindReplace()
    {
+      // Seed the search term from the selection, as the source editor's find
+      // bar does; the visual editor's bar has no such behavior of its own.
+      if (visualMode_.isVisualEditorActive())
+      {
+         visualMode_.showFindReplace();
+         return;
+      }
+
       getFindReplace().showFindReplace(true);
    }
 
@@ -8534,7 +8549,11 @@ public class TextEditingTarget implements
    {
       if (visualMode_.isActivated()) {
          ensureVisualModeActive(() -> {
-            visualMode_.getFindReplace().findFromSelection(visualMode_.getSelectedText());
+            visualMode_.performWithSearchSelection((searchTerm) ->
+            {
+               if (searchTerm != null)
+                  visualMode_.getFindReplace().findFromSelection(searchTerm);
+            });
          });
       } else {
          withActiveEditor((disp) ->
@@ -9861,13 +9880,13 @@ public class TextEditingTarget implements
     */
    public void withActiveEditor(CommandWithArg<DocDisplay> cmd)
    {
-      if (isVisualEditorActive())
+      // Keep routing through visual mode while its widget is loading or being
+      // rebuilt. Falling back to docDisplay_ in that window would target the
+      // hidden source editor; the corresponding commands are disabled until
+      // the visual editor is addressable again.
+      if (isVisualEditorActive() || visualMode_.isActivated())
       {
-         DocDisplay activeEditor = visualMode_.getActiveEditor();
-         if (activeEditor != null)
-         {
-            cmd.execute(activeEditor);
-         }
+         visualMode_.performWithActiveEditor(cmd);
       }
       else
       {

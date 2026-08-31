@@ -78,7 +78,6 @@ import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.remote.RemoteServerAuthWatcher;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -1520,7 +1519,6 @@ public class Application implements ApplicationEventHandlers
          clientStateUpdaterInstance_.resumeSendingUpdates();
    }
    
-   private RemoteServerAuthWatcher authWatcher_;
    private final ApplicationView view_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;

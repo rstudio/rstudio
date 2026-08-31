@@ -26,6 +26,9 @@ namespace constants {
 // Installation paths
 const char* const kPositAiDirName = "pai/bin";
 const char* const kPositAiBackupDirName = "ai.prev";
+// Copy shipped with RStudio, installed beside the session binary (or next to
+// bin/ in the macOS app bundle); absent from open-source builds
+const char* const kBundledPositAiDirName = "posit-assistant";
 // Cross-process lock files; outside pai/bin so it survives install mutations
 const char* const kPositAiLocksDirName = "pai/locks";
 const char* const kClientDirPath = "dist/client";
@@ -33,9 +36,25 @@ const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
 const char* const kCspConfigPath = "dist/csp.json";
 const char* const kProtocolVersionFileName = "protocol.json";
+const char* const kPackageJsonFileName = "package.json";
+
+// Versioned installation layout: the storage root (pai) holds one directory
+// per installed package version ("slot") plus the selector naming the active
+// slot for each protocol.
+const char* const kVersionsDirName = "versions";
+const char* const kSelectorFileName = "selected.json";
+// Written inside a slot, so it is renamed into place along with the tree it
+// describes. Dot-prefixed so it sorts away from the package's own files.
+const char* const kSlotManifestFileName = ".slot-manifest.json";
+// Extraction staging directories are siblings of the slots they become, so the
+// rename that publishes a slot is never a cross-device copy.
+const char* const kStagingDirPrefix = ".tmp-";
 
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
 const char* const kProtocolVersion = "11.0";
+
+// The one capability that varies by mode; see negotiatedCapabilities().
+const char* const kCheckForUpdatesMethod = "ui/checkForUpdates";
 
 // Capabilities: JSON-RPC methods that RStudio handles
 const std::vector<std::string>& rstudioCapabilities()
@@ -55,9 +74,25 @@ const std::vector<std::string>& rstudioCapabilities()
       "ui/openDocument/line",
       "ui/revealInFilesPane",
       "ui/previewUrl",
-      "ui/checkForUpdates",
+      kCheckForUpdatesMethod,
    };
    return s_capabilities;
+}
+
+std::vector<std::string> negotiatedCapabilities(bool installationManaged)
+{
+   const std::vector<std::string>& all = rstudioCapabilities();
+   if (!installationManaged)
+      return all;
+
+   std::vector<std::string> negotiated;
+   negotiated.reserve(all.size());
+   for (const std::string& capability : all)
+   {
+      if (capability != kCheckForUpdatesMethod)
+         negotiated.push_back(capability);
+   }
+   return negotiated;
 }
 
 std::string assembleWebSocketPath(

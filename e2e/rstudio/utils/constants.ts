@@ -71,7 +71,7 @@ export const RSTUDIO_EXTRA_ARGS: string[] = process.env.PW_RSTUDIO_EXTRA_ARGS
 
 export const CODE_SUGGESTION_PROVIDERS: Record<string, string> = {
   'copilot': 'GitHub Copilot',
-  'posit-assistant': 'Posit AI',
+  'posit-assistant': 'Posit AI Pass',
 };
 
 export const CHAT_PROVIDERS: Record<string, string> = {

@@ -2274,7 +2274,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantDescription();
    @DefaultStringValue("(None)")
    String assistantEnum_none();
-   @DefaultStringValue("Posit AI Next Edit Suggestions")
+   @DefaultStringValue("Posit AI Pass Next Edit Suggestions")
    String assistantEnum_posit();
    @DefaultStringValue("GitHub Copilot")
    String assistantEnum_copilot();

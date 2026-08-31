@@ -31,12 +31,22 @@ namespace constants {
 // ============================================================================
 extern const char* const kPositAiDirName;
 extern const char* const kPositAiBackupDirName;
+extern const char* const kBundledPositAiDirName;
 extern const char* const kPositAiLocksDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
 extern const char* const kIndexFileName;
 extern const char* const kCspConfigPath;
 extern const char* const kProtocolVersionFileName;
+extern const char* const kPackageJsonFileName;
+
+// ============================================================================
+// Versioned installation layout (pai/versions)
+// ============================================================================
+extern const char* const kVersionsDirName;
+extern const char* const kSelectorFileName;
+extern const char* const kSlotManifestFileName;
+extern const char* const kStagingDirPrefix;
 
 // Sentinel value: no backend port is assigned
 constexpr int kChatBackendPortNone = -1;
@@ -69,6 +79,12 @@ constexpr std::chrono::milliseconds kMaxDelay{100};
 // Returns the set of JSON-RPC methods that RStudio can handle
 // (i.e., requests/notifications that the peer may send to RStudio).
 const std::vector<std::string>& rstudioCapabilities();
+
+// Returns the capabilities to advertise in the protocol handshake for this
+// session. When the administrator manages the Posit Assistant installation,
+// ui/checkForUpdates is withheld so the peer hides its own update entry;
+// everything else is advertised unchanged.
+std::vector<std::string> negotiatedCapabilities(bool installationManaged);
 
 // ============================================================================
 // Restart limits

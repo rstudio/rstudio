@@ -24,6 +24,7 @@ evaluate
 ggplot2
 knitr
 nycflights13
+odbc
 pillar
 praise
 readr

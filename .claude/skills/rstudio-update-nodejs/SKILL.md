@@ -10,7 +10,7 @@ Updates the pinned Node.js version(s) across the RStudio codebase, uploads binar
 RStudio maintains **two distinct Node.js versions**:
 
 - **Build-time Node** (`RSTUDIO_NODE_VERSION`) — used for building Electron, GWT, and other product components. Not shipped to users.
-- **Installed Node** (`RSTUDIO_INSTALLED_NODE_VERSION`) — stripped-down `node` binary shipped with the product, used by copilot and Posit AI.
+- **Installed Node** (`RSTUDIO_INSTALLED_NODE_VERSION`) — stripped-down `node` binary shipped with the product, used by GitHub Copilot and Posit Assistant.
 
 These versions can differ. The skill handles updating either or both in a single invocation.
 
@@ -141,10 +141,15 @@ NODE_VERSION="v<VERSION>"
 ```
 The `v` prefix is required here and only here. All other files use the bare version.
 
-**`NEWS.md`** — in the `### Dependencies` section, update the Node.js line:
+**`NEWS.md`** — in the `### Dependencies` section, record the new version:
 ```
-- Node.js <VERSION> (copilot, Posit AI)
+- Node.js <VERSION> (GitHub Copilot, Posit Assistant)
 ```
+
+The section lists only dependencies actually updated in the current release cycle, not every
+dependency at its current version. So the Node.js line is usually absent and must be added —
+keep the list alphabetical by dependency name. If a Node.js line is already there, this cycle
+bumped node before; overwrite that line rather than adding a second one.
 
 Build-time updates do NOT get a NEWS.md entry — only installed node does.
 
