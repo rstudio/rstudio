@@ -7,7 +7,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand } from '@utils/commands';
 import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { rStringLiteral } from '@utils/r';
-import { isServiceReachable, CITATION_SERVICE_HOSTS } from '@utils/network';
+import { isServiceReachable, reprobeService, CITATION_SERVICE_HOSTS } from '@utils/network';
 import type { Page } from 'playwright';
 
 // Skip (rather than fail) a test whose citation source depends on an external
@@ -17,6 +17,51 @@ async function skipUnlessReachable(...urls: string[]): Promise<void> {
   for (const url of urls) {
     test.skip(!(await isServiceReachable(url)), `${url} is unreachable from this runner`);
   }
+}
+
+// Stage the first result of a latent citation lookup, tolerating a service
+// that degrades after skipUnlessReachable() passed: the probe runs at test
+// start, but the lookup itself runs in the rsession seconds later (#18426). Mirrors the
+// search tests' #18267 pattern -- a service-side failure renders as the
+// dialog's error status line, and we skip on it. A lookup that hangs shows
+// neither results nor an error within the wait; re-probe the host and skip
+// retroactively if it has since become unreachable. A timeout with the
+// service still answering remains a real failure.
+async function stageFirstResultOrSkip(
+  page: Page,
+  citation: InsertCitationDialog,
+  host: string,
+): Promise<void> {
+  const deadline = Date.now() + 30000;
+  let outcome: 'pending' | 'result' | 'error' = 'pending';
+  while (outcome === 'pending' && Date.now() < deadline) {
+    if (await citation.results.first().isVisible()) {
+      outcome = 'result';
+    } else if (await citation.searchError.isVisible()) {
+      outcome = 'error';
+    } else {
+      await page.waitForTimeout(250);
+    }
+  }
+
+  if (outcome === 'error') {
+    await citation.cancel();
+    test.skip(true, `${host} lookup failed service-side from this runner`);
+  }
+
+  if (outcome === 'pending') {
+    if (!(await reprobeService(host))) {
+      await citation.cancel();
+      test.skip(true, `${host} became unreachable during the lookup`);
+    }
+    const status = (await citation.searchStatus.textContent().catch(() => null))?.trim();
+    throw new Error(
+      `no lookup result and no error status within 30s ` +
+        `(${host} is still reachable; dialog status: ${status ? `"${status}"` : 'none'})`,
+    );
+  }
+
+  await citation.stageFirstResult();
 }
 
 // Read the value of an R expression via marker-wrapped console output. Runs on
@@ -95,7 +140,7 @@ test.describe('Citations', () => {
 
     // A DOI resolves to exactly one work via a real service call (no intercept).
     await citation.search(searchBox, '10.3133/93888');
-    await citation.stageFirstResult();
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
     await citation.insert();
 
     // The citation lands in the document. With no author, panmirror derives the
@@ -135,7 +180,7 @@ test.describe('Citations', () => {
     await citation.open();
     const searchBox = await citation.selectSource(CITATION_SOURCES.doi);
     await citation.search(searchBox, '10.3133/93888');
-    await citation.stageFirstResult();
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
     await citation.insert();
 
     await expect(page.locator('.ProseMirror')).toContainText('[@effects1999]', { timeout: 15000 });
@@ -168,7 +213,7 @@ test.describe('Citations', () => {
 
     // Stage the single DOI result, then remove it from the staging area (#9124).
     await citation.search(searchBox, '10.3133/93888');
-    await citation.stageFirstResult();
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
     await expect(citation.stagedCitations).toHaveCount(1);
 
     await citation.deleteStagedCitation();
@@ -192,7 +237,7 @@ test.describe('Citations', () => {
     await citation.open();
     let searchBox = await citation.selectSource(CITATION_SOURCES.doi);
     await citation.search(searchBox, doi);
-    await citation.stageFirstResult();
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.doi);
     await citation.insert();
     await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020]', { timeout: 15000 });
 
@@ -201,7 +246,7 @@ test.describe('Citations', () => {
     await citation.open();
     searchBox = await citation.selectSource(CITATION_SOURCES.datacite);
     await citation.search(searchBox, doi);
-    await citation.stageFirstResult();
+    await stageFirstResultOrSkip(page, citation, CITATION_SERVICE_HOSTS.datacite);
     await citation.insert();
     await expect(page.locator('.ProseMirror')).toContainText('[@bermúdez2020][@bermúdez2020]', { timeout: 15000 });
 
