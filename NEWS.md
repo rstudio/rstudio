@@ -35,6 +35,7 @@
 - ([#18507](https://github.com/rstudio/rstudio/issues/18507)): Reduced macOS file-monitor overload by excluding high-churn and nested-worktree directories, batching events, and debouncing recovery scans.
 - ([#18493](https://github.com/rstudio/rstudio/issues/18493)): Fixed invisible checkbox and radio button states in Windows high-contrast dark themes.
 - ([#18474](https://github.com/rstudio/rstudio/issues/18474)): Fixed a math-preview keyboard handler leak that consumed subsequent Escape keypresses.
+- ([#18423](https://github.com/rstudio/rstudio/issues/18423)): The Data Viewer's global search no longer re-converts every non-character column to text on each request, and extending a search now refines the previous result instead of rescanning the whole frame.
 - ([#17806](https://github.com/rstudio/rstudio/issues/17806)): Improved Data Viewer searching, filtering, scrolling, and Summary panel performance.
 - ([#17806](https://github.com/rstudio/rstudio/issues/17806)): Fixed a Data Viewer memory leak when viewed objects change.
 - ([#18472](https://github.com/rstudio/rstudio/issues/18472)): Fixed stale syntax highlighting after edits in Markdown and YAML documents.

@@ -909,3 +909,142 @@ test_that(".rs.applyTransform() applies every key in a multi-column sort", {
    expect_equal(sorted$a, c(1L, 1L, 2L, 2L))
    expect_equal(sorted$c, c(1L, 2L, 1L, 2L))
 })
+
+test_that(".rs.applyTransform() global search matches the formatted form of non-character columns", {
+   df <- data.frame(
+      num = c(3.14159, 100, 42, NA),
+      date = as.Date(c("2020-01-15", "2021-06-30", "2022-12-01", "2023-03-10")),
+      time = as.POSIXct(c("2020-01-15 08:00:00", "2021-06-30 10:30:00",
+                          "2022-12-01 23:59:59", "2023-03-10 12:00:00"), tz = "UTC"),
+      f = factor(c("Apple", "banana", "cherry", "apricot"))
+   )
+
+   # doubles match their printed representation
+   out <- .rs.applyTransform(df, character(4L), "3.14", integer(), character())
+   expect_equal(out$num, 3.14159)
+
+   # dates and datetimes match their formatted (not numeric) form
+   out <- .rs.applyTransform(df, character(4L), "2021-06", integer(), character())
+   expect_equal(out$num, 100)
+
+   out <- .rs.applyTransform(df, character(4L), "10:30", integer(), character())
+   expect_equal(out$num, 100)
+
+   # factor levels match case-insensitively; NA cells match nothing
+   out <- .rs.applyTransform(df, character(4L), "ap", integer(), character())
+   expect_equal(as.character(out$f), c("Apple", "apricot"))
+})
+
+test_that(".rs.applyTransform() search results are identical with the projection cache", {
+   df <- data.frame(
+      num = c(3.5, 42, 7.25),
+      chr = c("apple", "banana", "cherry"),
+      f = factor(c("x", "y", "x")),
+      date = as.Date(c("2020-01-15", "2021-06-30", "2022-12-01")),
+      row.names = c("first", "second", "third")
+   )
+
+   cacheKey <- "test-search-projection"
+   on.exit(.rs.removeSearchData(cacheKey), add = TRUE)
+
+   for (search in c("42", "2020-01", "aP", "y", "third"))
+   {
+      plain <- .rs.applyTransform(df, character(4L), search, integer(), character())
+      seeded <- .rs.applyTransform(df, character(4L), search, integer(), character(),
+                                   cacheKey, TRUE)
+      reused <- .rs.applyTransform(df, character(4L), search, integer(), character(),
+                                   cacheKey, TRUE)
+      expect_identical(seeded, plain)
+      expect_identical(reused, plain)
+   }
+
+   # only non-character, non-factor columns are projected (row names, appended
+   # as a fifth search column, are already character)
+   entry <- get(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE)
+   expect_true(is.character(entry$projected[[1]]))  # num
+   expect_null(entry$projected[[2]])                # chr
+   expect_null(entry$projected[[3]])                # f
+   expect_true(is.character(entry$projected[[4]]))  # date
+   expect_null(entry$projected[[5]])                # row names
+})
+
+test_that(".rs.applyTransform() filters compose with a cached search", {
+   df <- data.frame(x = c("ab", "ab", "ab", "cd"),
+                    y = c(15, 20, 35, 40),
+                    z = c(3, 1, 2, 0))
+
+   cacheKey <- "test-search-projection-filters"
+   on.exit(.rs.removeSearchData(cacheKey), add = TRUE)
+
+   # the search mask is computed over the full frame; filters must still
+   # subset the same rows as the uncached path (search "5" matches rows 1 and
+   # 3, both of which survive the filter; the sort orders them by z)
+   plain <- .rs.applyTransform(df, c("character|ab", "", ""), "5", 3L, "desc")
+   cached <- .rs.applyTransform(df, c("character|ab", "", ""), "5", 3L, "desc",
+                                cacheKey, TRUE)
+   expect_identical(cached, plain)
+   expect_equal(cached$y, c(15, 35))
+})
+
+test_that(".rs.applyTransform() search scans only filter-eligible rows", {
+   df <- data.frame(x = c("keep", "keep", "drop", "drop"),
+                    num = c(7.5, 1.25, 7.5, 3.5))
+
+   cacheKey <- "test-search-eligible-rows"
+   on.exit(.rs.removeSearchData(cacheKey), add = TRUE)
+
+   # the search matches rows 1 and 3, but the filter only admits rows 1 and
+   # 2; a match scattered back from outside the filter mask must not leak in
+   for (key in c("", cacheKey))
+   {
+      out <- .rs.applyTransform(df, c("character|keep", ""), "7.5",
+                                integer(), character(), key, nzchar(key))
+      expect_equal(rownames(out), "1")
+      expect_equal(out$num, 7.5)
+   }
+
+   # a filter that excludes every row composes with a search without error
+   out <- .rs.applyTransform(df, c("character|nomatch", ""), "7.5",
+                             integer(), character(), cacheKey, TRUE)
+   expect_equal(nrow(out), 0L)
+})
+
+test_that(".rs.removeWorkingData() also drops the cached search projection", {
+   df <- data.frame(num = c(1.5, 2.5))
+   cacheKey <- "test-search-projection-removal"
+
+   .rs.applyTransform(df, character(1L), "1", integer(), character(), cacheKey, TRUE)
+   expect_true(exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
+
+   .rs.removeWorkingData(cacheKey)
+   expect_false(exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
+})
+
+test_that("the search projection is rebuilt when the frame shape changes", {
+   cacheKey <- "test-search-projection-reshape"
+   on.exit(.rs.removeSearchData(cacheKey), add = TRUE)
+
+   df1 <- data.frame(num = c(1.5, 2.5, 3.5))
+   out <- .rs.applyTransform(df1, character(1L), "2.5", integer(), character(),
+                             cacheKey, TRUE)
+   expect_equal(out$num, 2.5)
+
+   # same key, different frame: the stale projection must not be consulted
+   df2 <- data.frame(num = c(7.5, 8.5, 9.5, 10.5))
+   out <- .rs.applyTransform(df2, character(1L), "9.5", integer(), character(),
+                             cacheKey, TRUE)
+   expect_equal(out$num, 9.5)
+})
+
+test_that(".rs.applyTransform() leaves the projection cache alone for working copies", {
+   df <- data.frame(num = c(1.5, 2.5))
+   cacheKey <- "test-search-projection-working-copy"
+   on.exit(.rs.removeSearchData(cacheKey), add = TRUE)
+
+   # a working copy is not row-aligned with the full frame, so isFullFrame =
+   # FALSE must not build (or read) a projection under the frame's key
+   out <- .rs.applyTransform(df, character(1L), "1", integer(), character(),
+                             cacheKey, FALSE)
+   expect_equal(out$num, 1.5)
+   expect_false(exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
+})

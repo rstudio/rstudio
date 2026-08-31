@@ -132,10 +132,28 @@ namespace {
  *    filters.
  */    
 
+} // anonymous namespace
+
+namespace detail {
+
+// indicates whether rows matching the global search `inner` are necessarily a
+// subset of rows matching the search `outer`. The search is a bare literal
+// substring query (never "type|value" like the column filters), so this holds
+// exactly when `outer` occurs within `inner`: a row containing "walnuts" also
+// contains "walnut". This is what lets an extended search refine the cached
+// working copy instead of rescanning the whole frame; routing the search
+// through isFilterSubset instead would (a) never detect these subsets, since
+// a bare search fails its "type|value" parse, and (b) misparse a search that
+// happens to look like a filter (e.g. "numeric|12_18") as a range test.
+bool isSearchSubset(const std::string& outer, const std::string& inner)
+{
+   return inner.find(outer) != std::string::npos;
+}
+
 // indicates whether one filter string is a subset of another; e.g. if a column
 // is filtered for "abc" and then "abcd", the new state is a subset of the
 // previous state.
-bool isFilterSubset(const std::string& outer, const std::string& inner) 
+bool isFilterSubset(const std::string& outer, const std::string& inner)
 {
    // shortcut for identical filters (the typical case)
    if (inner == outer) 
@@ -199,7 +217,11 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
    return false;
 }
 
-typedef enum 
+} // namespace detail
+
+namespace {
+
+typedef enum
 {
   DIM_ROWS,
   DIM_COLS
@@ -271,17 +293,17 @@ struct CachedFrame : MoveOnly
    std::string workingSearch;
    std::vector<std::string> workingFilters;
 
-   bool isSupersetOf(const std::string& newSearch, 
+   bool isSupersetOf(const std::string& newSearch,
                      const std::vector<std::string> &newFilters)
    {
-      if (!isFilterSubset(workingSearch, newSearch))
+      if (!detail::isSearchSubset(workingSearch, newSearch))
          return false;
 
       for (unsigned i = 0;
            i < std::min(newFilters.size(), workingFilters.size());
            i++)
       {
-         if (!isFilterSubset(workingFilters[i], newFilters[i]))
+         if (!detail::isFilterSubset(workingFilters[i], newFilters[i]))
             return false;
       }
 
@@ -654,6 +676,16 @@ SEXP applyViewTransform(SEXP dataSEXP,
                         bool* pTransformed,
                         r::sexp::Protect& protect)
 {
+   // The cached search projection (see .rs.dataViewer.searchColumns) is only
+   // useful while a search is active; drop it as soon as the search clears.
+   // Cheap when there is nothing to drop, so no gating on prior state.
+   if (params.search.empty())
+   {
+      Error error = r::exec::RFunction(".rs.removeSearchData", cacheKey).call();
+      if (error)
+         LOG_ERROR(error);
+   }
+
    bool transformed = params.needsTransform();
    if (pTransformed != nullptr)
       *pTransformed = transformed;
@@ -663,6 +695,7 @@ SEXP applyViewTransform(SEXP dataSEXP,
    // Reuse a cached working copy when its parameters match (exactly, or as a
    // superset we can further filter) before recomputing from scratch.
    bool recompute = true;
+   SEXP fullFrameSEXP = dataSEXP;
    auto cachedFrame = s_cachedFrames.find(cacheKey);
    if (cachedFrame != s_cachedFrames.end() &&
        !cachedFrame->second.pendingWorkingDataWipe)
@@ -682,9 +715,15 @@ SEXP applyViewTransform(SEXP dataSEXP,
             dataSEXP = workingDataSEXP;
             recompute = false;
          }
-         else if (cachedFrame->second.isSupersetOf(params.search, params.filters))
+         else if (cachedFrame->second.isSupersetOf(params.search, params.filters) &&
+                  (!params.ordercols.empty() ||
+                   cachedFrame->second.workingOrderCols.empty()))
          {
-            // a strict superset -- transform from it instead of the original
+            // a strict superset -- transform from it instead of the original.
+            // Ordering gates the reuse: a request WITH a sort re-sorts the
+            // subset by its own keys, but a request with NO sort must show
+            // original row order, which a previously sorted working copy
+            // cannot supply -- recompute from the full frame instead.
             dataSEXP = workingDataSEXP;
          }
       }
@@ -698,6 +737,11 @@ SEXP applyViewTransform(SEXP dataSEXP,
       transform.addParam("search", params.search);    // global search (across cols)
       transform.addParam("cols", params.ordercols);    // which column to order on
       transform.addParam("dirs", params.orderdirs);    // order direction
+      transform.addParam("cacheKey", cacheKey);        // enables the search projection cache
+
+      // the cached search projection is row-aligned with the full frame, so
+      // it must not be consulted when transforming from a working copy
+      transform.addParam("isFullFrame", dataSEXP == fullFrameSEXP);
       Error error = transform.call(&dataSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.getSummary());
