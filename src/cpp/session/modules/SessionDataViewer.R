@@ -21,6 +21,11 @@
 # data without recomputing on the original object every time
 .rs.setVar("WorkingDataEnv", new.env(parent = emptyenv()))
 
+# host environment for cached search projections (see
+# .rs.dataViewer.searchColumns); this allows repeated global searches to skip
+# re-coercing non-character columns to strings on every request
+.rs.setVar("SearchDataEnv", new.env(parent = emptyenv()))
+
 .rs.addFunction("subsetData", function(data, maxRows = -1, maxCols = -1)
 {
    if (!is.na(maxRows) && maxRows != -1 && nrow(data) > maxRows)
@@ -1121,18 +1126,24 @@
    }
 })
 
-.rs.addFunction("applyTransform", function(x, filtered, search, cols, dirs)
+.rs.addFunction("applyTransform", function(x,
+                                           filtered,
+                                           search,
+                                           cols,
+                                           dirs,
+                                           cacheKey = "",
+                                           isFullFrame = FALSE)
 {
    # mark encoding on character inputs if not already marked
    filtered <- vapply(filtered, function(colfilter) {
-      if (Encoding(colfilter) == "unknown") 
+      if (Encoding(colfilter) == "unknown")
          Encoding(colfilter) <- "UTF-8"
       colfilter
    }, "")
-   
+
    if (Encoding(search) == "unknown")
       Encoding(search) <- "UTF-8"
-   
+
    # coerce argument to data frame--data.table objects (for example) report that
    # they're data frames, but don't actually support the subsetting operations
    # needed for search/sort/filter without an explicit cast
@@ -1140,113 +1151,104 @@
    # similarly, we need to convert tibbles to regular data.frames so that we can
    # properly invoke the list / data viewer on filtered rows
    x <- .rs.toDataFrame(x, "transformed", TRUE)
-   
+
+   # each active column filter (and the global search below) contributes one
+   # row-wise logical mask; combine them and subset once at the end, rather
+   # than copying the surviving rows after every predicate
+   keep <- NULL
+
    # apply columnwise filters
    for (i in seq_along(filtered))
    {
-      if (nchar(filtered[i]) > 0 && length(x[[i]]) > 0)
-      {
-         # split filter--string format is "type|value" (e.g. "numeric|12-25") 
-         filter <- strsplit(filtered[i], split = "|", fixed = TRUE)[[1]]
-         if (length(filter) < 2) 
-         {
-            # no filter type information
-            next
-         }
-         filtertype <- filter[1]
-         filterval <- filter[2]
-         
-         # apply filter appropriate to type
-         if (identical(filtertype, "factor")) 
-         {
-            # apply factor filter: convert to numeric values and discard missing
-            filterval <- as.numeric(filterval)
-            matches <- as.numeric(x[[i]]) == filterval
-            matches[is.na(matches)] <- FALSE
-            x <- x[matches, , drop = FALSE]
-         }
-         else if (identical(filtertype, "character"))
-         {
-            # apply character filter: non-case-sensitive prefix
-            # use PCRE and the special \Q and \E escapes to ensure no characters in
-            # the search expression are interpreted as regexes 
-            x <- x[grepl(paste("\\Q", filterval, "\\E", sep = ""), x[[i]], 
-                         perl = TRUE, ignore.case = TRUE), , 
-                   drop = FALSE]
-         } 
-         else if (identical(filtertype, "numeric"))
-         {
-            # apply numeric filter, range ("2-32") or equality ("15")
-            filterval <- as.numeric(strsplit(filterval, "_")[[1]])
-            if (length(filterval) > 1)
-               # range filter
-               x <- x[is.finite(x[[i]]) & x[[i]] >= filterval[1] & x[[i]] <= filterval[2], , drop = FALSE]
-            else
-               # equality filter
-               x <- x[is.finite(x[[i]]) & x[[i]] == filterval, , drop = FALSE]
-         }
-         else if (identical(filtertype, "date"))
-         {
-            # apply date/datetime range filter. The client sends two formatted
-            # endpoints (the same ISO strings it displays) separated by "_";
-            # parse them with the column's own class so comparison happens on
-            # the native Date/POSIXct scale. A parse failure leaves x unchanged
-            # rather than silently dropping every row.
-            bounds <- strsplit(filterval, "_")[[1]]
-            if (length(bounds) >= 2)
-            {
-               col <- x[[i]]
-               parsed <- .rs.tryCatch({
-                  if (inherits(col, "Date"))
-                     as.Date(bounds[1:2])
-                  else
-                     as.POSIXct(bounds[1:2], tz = .rs.dataViewer.columnTimezone(col))
-               })
+      if (nchar(filtered[i]) == 0 || length(x[[i]]) == 0)
+         next
 
-               if (!inherits(parsed, "error") && !any(is.na(parsed)))
-                  x <- x[!is.na(col) & col >= parsed[1] & col <= parsed[2], , drop = FALSE]
-            }
-         }
-         else if (identical(filtertype, "boolean"))
+      # split filter--string format is "type|value" (e.g. "numeric|12-25")
+      filter <- strsplit(filtered[i], split = "|", fixed = TRUE)[[1]]
+      if (length(filter) < 2)
+      {
+         # no filter type information
+         next
+      }
+      filtertype <- filter[1]
+      filterval <- filter[2]
+
+      # apply filter appropriate to type
+      matches <- NULL
+      if (identical(filtertype, "factor"))
+      {
+         # apply factor filter: convert to numeric values and discard missing
+         filterval <- as.numeric(filterval)
+         matches <- as.numeric(x[[i]]) == filterval
+         matches[is.na(matches)] <- FALSE
+      }
+      else if (identical(filtertype, "character"))
+      {
+         # apply character filter: non-case-sensitive prefix
+         # use PCRE and the special \Q and \E escapes to ensure no characters in
+         # the search expression are interpreted as regexes
+         matches <- grepl(paste("\\Q", filterval, "\\E", sep = ""), x[[i]],
+                          perl = TRUE, ignore.case = TRUE)
+      }
+      else if (identical(filtertype, "numeric"))
+      {
+         # apply numeric filter, range ("2-32") or equality ("15")
+         filterval <- as.numeric(strsplit(filterval, "_")[[1]])
+         if (length(filterval) > 1)
+            # range filter
+            matches <- is.finite(x[[i]]) & x[[i]] >= filterval[1] & x[[i]] <= filterval[2]
+         else
+            # equality filter
+            matches <- is.finite(x[[i]]) & x[[i]] == filterval
+      }
+      else if (identical(filtertype, "date"))
+      {
+         # apply date/datetime range filter. The client sends two formatted
+         # endpoints (the same ISO strings it displays) separated by "_";
+         # parse them with the column's own class so comparison happens on
+         # the native Date/POSIXct scale. A parse failure leaves x unchanged
+         # rather than silently dropping every row.
+         bounds <- strsplit(filterval, "_")[[1]]
+         if (length(bounds) >= 2)
          {
-            filterval <- isTRUE(filterval == "TRUE")
-            matches <- x[[i]] == filterval
-            matches[is.na(matches)] <- FALSE
-            x <- x[matches, , drop = FALSE]
+            col <- x[[i]]
+            parsed <- .rs.tryCatch({
+               if (inherits(col, "Date"))
+                  as.Date(bounds[1:2])
+               else
+                  as.POSIXct(bounds[1:2], tz = .rs.dataViewer.columnTimezone(col))
+            })
+
+            if (!inherits(parsed, "error") && !any(is.na(parsed)))
+               matches <- !is.na(col) & col >= parsed[1] & col <= parsed[2]
          }
       }
+      else if (identical(filtertype, "boolean"))
+      {
+         filterval <- isTRUE(filterval == "TRUE")
+         matches <- x[[i]] == filterval
+         matches[is.na(matches)] <- FALSE
+      }
+
+      if (!is.null(matches))
+         keep <- if (is.null(keep)) matches else keep & matches
    }
-   
-   # apply global search
+
+   # apply global search; the mask spans the full frame, so the per-frame
+   # search projection (keyed by cacheKey) stays row-aligned no matter which
+   # filters are active -- but only rows the filters kept are actually
+   # scanned, so a narrow filter keeps the search cost proportional to its
+   # match set rather than to the whole frame
    if (!is.null(search) && nchar(search) > 0)
    {
-      # get columns for search
-      searchColumns <- unclass(x)
-      
-      # also apply on row names if available
-      if (is.data.frame(x))
-      {
-         info <- .row_names_info(x, type = 0L)
-         if (is.character(info))
-         {
-            searchColumns[[length(searchColumns) + 1]] <- info
-         }
-      }
-      
-      # apply global search on data columns
-      pattern <- paste0("\\Q", search, "\\E")
-      matches <- lapply(searchColumns, function(column) {
-         grepl(pattern, column, perl = TRUE, ignore.case = TRUE)
-      })
-      
-      # collapse into single vector
-      matches <- Reduce(`|`, matches)
-      
-      # update based on matches
-      x <- x[matches, , drop = FALSE]
-      
+      rows <- if (!is.null(keep)) which(keep)
+      matches <- .rs.dataViewer.searchMatches(x, search, if (isFullFrame) cacheKey else "", rows)
+      keep <- if (is.null(keep)) matches else keep & matches
    }
-   
+
+   if (!is.null(keep))
+      x <- x[keep, , drop = FALSE]
+
    # apply sort
    if (length(cols) > 0)
    {
@@ -1280,6 +1282,131 @@
    }
    
    return(x)
+})
+
+#' Compute the global search mask for a frame.
+#'
+#' Returns a logical vector over all of the frame's rows, marking those where
+#' any column (or the row names, when character) contains 'search',
+#' case-insensitively -- matching against the same string form 'grepl' would
+#' coerce each column to.
+#'
+#' @param x The data.frame to search.
+#' @param search The literal text to search for.
+#' @param cacheKey The frame's cache key, enabling the cached projection in
+#'   .rs.SearchDataEnv; pass "" to scan the raw columns.
+#' @param rows Row indices still eligible after filtering, or NULL for all
+#'   rows. Only these rows are scanned (rows outside are FALSE in the result),
+#'   so active filters bound the scan and coercion cost.
+.rs.addFunction("dataViewer.searchMatches", function(x, search, cacheKey, rows = NULL)
+{
+   columns <- .rs.dataViewer.searchColumns(x, cacheKey)
+
+   # use PCRE and the special \Q and \E escapes to ensure no characters in
+   # the search expression are interpreted as regexes
+   pattern <- paste0("\\Q", search, "\\E")
+   matches <- NULL
+   for (column in columns)
+   {
+      if (!is.null(rows))
+         column <- column[rows]
+
+      m <- grepl(pattern, column, perl = TRUE, ignore.case = TRUE)
+      matches <- if (is.null(matches)) m else matches | m
+   }
+
+   if (is.null(rows))
+      return(if (is.null(matches)) logical(NROW(x)) else matches)
+
+   # scatter the scanned rows back into a full-frame mask
+   full <- logical(NROW(x))
+   if (!is.null(matches))
+      full[rows] <- matches
+   full
+})
+
+#' List the vectors the global search should scan.
+#'
+#' Returns the frame's columns (plus its row names, when character), replacing
+#' non-character columns with cached character projections where possible.
+#' grepl() re-runs as.character() on every non-character column it is given,
+#' which for a large frame of numeric/Date/POSIXct columns dominates the cost
+#' of every search request (#18423); the projections make that a one-time
+#' cost per frame. Character and factor columns are returned as-is: they are
+#' already cheap to search (grepl matches factor levels directly).
+#'
+#' Projections are cached in .rs.SearchDataEnv under the frame's cache key and
+#' built lazily, up to a retention budget; columns beyond the budget are
+#' returned raw and re-coerced by grepl as before. Note that as.character() on
+#' a plain atomic vector returns a deferred ALTREP whose strings materialize,
+#' in place, during the first scan, so building a projection adds no up-front
+#' pass over the data.
+#'
+#' The cache is dropped alongside the frame's working data (so any observed
+#' change to the underlying object invalidates it) and as soon as a request
+#' arrives with no active search.
+#'
+#' @param x The data.frame being searched.
+#' @param cacheKey The frame's cache key, or "" to disable the cache (the
+#'   caller is not scanning the full cached frame).
+.rs.addFunction("dataViewer.searchColumns", function(x, cacheKey)
+{
+   columns <- unclass(x)
+
+   # also search on row names if available
+   if (is.data.frame(x))
+   {
+      info <- .row_names_info(x, type = 0L)
+      if (is.character(info))
+         columns[[length(columns) + 1L]] <- info
+   }
+
+   if (!.rs.isNonEmptyScalarString(cacheKey))
+      return(columns)
+
+   # find the cached projection for this frame; discard it on a shape change
+   # (working-data wipes remove it eagerly, so this is a backstop against the
+   # same key resolving to a differently-shaped frame)
+   entry <- NULL
+   if (exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
+      entry <- get(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE)
+
+   if (is.null(entry) || !identical(entry$dim, dim(x)))
+      entry <- list(dim = dim(x), projected = vector("list", length(columns)), bytes = 0)
+
+   # cap the memory retained per frame: character projections of numeric
+   # columns run several times the size of the originals, so very large frames
+   # only cache a leading subset of their columns (the rest are re-coerced per
+   # request, as before)
+   limit <- 512 * 1024 * 1024
+   bytesPerElement <- 64
+
+   for (i in seq_along(columns))
+   {
+      column <- columns[[i]]
+      if (is.character(column) || is.factor(column))
+         next
+
+      projected <- entry$projected[[i]]
+      if (is.null(projected))
+      {
+         estimate <- length(column) * bytesPerElement
+         if (entry$bytes + estimate > limit)
+            next
+
+         projected <- as.character(column)
+         if (!is.character(projected))
+            next
+
+         entry$projected[[i]] <- projected
+         entry$bytes <- entry$bytes + estimate
+      }
+
+      columns[[i]] <- projected
+   }
+
+   assign(cacheKey, entry, envir = .rs.SearchDataEnv)
+   columns
 })
 
 # returns envName as an environment, or NULL if the conversion failed
@@ -1640,6 +1767,20 @@
        exists(".rs.WorkingDataEnv") &&
        exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
       rm(list = cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
+
+   # the cached search projection describes the same frame; drop it whenever
+   # the working data is dropped
+   .rs.removeSearchData(cacheKey)
+
+   invisible(NULL)
+})
+
+.rs.addFunction("removeSearchData", function(cacheKey)
+{
+   if (.rs.isNonEmptyScalarString(cacheKey) &&
+       exists(".rs.SearchDataEnv") &&
+       exists(cacheKey, where = .rs.SearchDataEnv, inherits = FALSE))
+      rm(list = cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE)
    invisible(NULL)
 })
 

@@ -1,4 +1,8 @@
-name: "Test: E2E Playwright RStudio (Desktop, Windows Server 2025 x64, Open Source)"
+name: "Test: E2E Playwright RStudio (Desktop, Windows 11 arm64, Open Source)"
+
+# Windows-on-ARM users run the x86_64 RStudio build under x64 emulation, so
+# that is what this engine tests. Test job only -- the build job and R stay
+# x86_64 (os-install-r-windows fetches the x86_64 installer).
 
 on:
   workflow_dispatch:
@@ -116,7 +120,7 @@ on:
           installed R rather than echoed from the r_version input. Empty when
           the e2e job did not run (build_only, or a build failure), and also when
           it ran but failed before reaching the R install.
-        value: ${{ jobs.e2e-desktop-windows.outputs.r_version_actual }}
+        value: ${{ jobs.e2e-desktop-windows11arm.outputs.r_version_actual }}
     secrets:
       CONNECT_API_KEY:
         description: "Posit Connect API key for the E2E Test Insights reporter"
@@ -183,7 +187,7 @@ jobs:
         -DCPACK_NSIS_COMPRESSOR=zlib
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 1
 
@@ -195,7 +199,7 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
           git config --global core.longpaths true
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -708,11 +712,11 @@ jobs:
         if: inputs.build_only != true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: rstudio-app-windows-x64
+          name: rstudio-app-windows-x64-for-arm64-test
           path: RStudio-installer.exe
           retention-days: 7
 
-  e2e-desktop-windows:
+  e2e-desktop-windows11arm:
     needs: build
     # build is skipped when build_from_source is false; allow this job to run
     # in that case too. build_only seeds caches without running e2e, so skip here.
@@ -740,7 +744,7 @@ jobs:
         # slowest shard ran ~30 minutes of tests against ~22 for its siblings
         # and was the long pole of the whole PR-triggered run.
         shard: [1, 2, 3, 4, 5, 6]
-    runs-on: windows-2025
+    runs-on: windows-11-arm
     timeout-minutes: 120
     environment: e2e-playwright
     defaults:
@@ -754,7 +758,7 @@ jobs:
       PW_SANDBOX_ROOT_CREATE: '1'
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 1
 
@@ -768,7 +772,7 @@ jobs:
           # does not expose OS environment variables directly.
           "LOCALAPPDATA=$env:LOCALAPPDATA" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -786,7 +790,7 @@ jobs:
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: rstudio-app-windows-x64
+          name: rstudio-app-windows-x64-for-arm64-test
           path: ${{ github.workspace }}
 
       - name: Install RStudio from artifact
@@ -912,10 +916,11 @@ jobs:
         uses: ./.github/actions/os-e2e-deps
         with:
           r-libs-user: ${{ env.R_LIBS_USER }}
-          # PostgreSQL and SQLite ODBC drivers for the Connections pane tests.
-          # The PostgreSQL server itself is already on this image, so only the
-          # drivers get installed. Without this they all skip.
-          install-database-stack: 'true'
+          # Playwright browser binaries are architecture-specific; keep this
+          # engine off the shared x86_64 Windows cache keys.
+          cache-scope: "windows11-arm64"
+          # The database stack is left off until arm64 ODBC drivers are
+          # verified; the Connections pane specs skip with a reason.
           install-required-packages: "true"
 
       # The secrets context isn't available in a step-level if:, so read the
@@ -936,13 +941,62 @@ jobs:
             Write-Output "::warning::No OP service account token in this job. AI-gated tests will skip, so this run does NOT exercise Posit AI."
           }
 
-      - name: Retrieve test credentials
+      # load-secrets-action picks its CLI by runner architecture and has no
+      # arm64 Windows CLI to pick, so fetch the x86_64 one and run it under
+      # emulation, resolving the same .env.op references the action would.
+      # This step only runs when the token is present, so any failure below is
+      # a real defect, not the no-credentials path -- hence error, not warn.
+      - name: Retrieve test credentials (x86_64 op CLI under emulation)
         id: op
         if: steps.op_token_check.outputs.present == 'true'
-        uses: 1password/load-secrets-action@eb2efd0703da22a93c467f2d1ffbb6826c11e19c # v4.1.1
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          OP_ENV_FILE: ./e2e/rstudio/.env.op
+          # Pinned for a reproducible download; the CDN URL takes an explicit version.
+          OP_VERSION: "2.39.0"
+        run: |
+          $ErrorActionPreference = 'Stop'
+          try {
+            $zip = Join-Path $env:RUNNER_TEMP 'op.zip'
+            $dir = Join-Path $env:RUNNER_TEMP 'op-cli'
+            $url = "https://cache.agilebits.com/dist/1P/op2/pkg/v$($env:OP_VERSION)/op_windows_amd64_v$($env:OP_VERSION).zip"
+            Write-Host "Downloading $url"
+            Invoke-WebRequest -Uri $url -OutFile $zip -MaximumRetryCount 3 -RetryIntervalSec 5
+            Expand-Archive -Path $zip -DestinationPath $dir -Force
+            $op = Get-ChildItem -Path $dir -Filter 'op.exe' -Recurse |
+              Select-Object -First 1 -ExpandProperty FullName
+            if (-not $op) { throw "op.exe not found in the downloaded archive" }
+            & $op --version | Write-Host
+            if ($LASTEXITCODE -ne 0) { throw "op.exe would not run under emulation" }
+
+            # Every value line of .env.op is NAME="op://vault/item/field".
+            $refs = @(Get-Content 'e2e/rstudio/.env.op' |
+              Where-Object { $_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"?(op://[^"]+)"?\s*$' })
+            if ($refs.Count -eq 0) { throw "e2e/rstudio/.env.op contained no secret references" }
+
+            $resolved = 0
+            foreach ($line in $refs) {
+              if ($line -notmatch '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"?(op://[^"]+)"?\s*$') { continue }
+              $name = $Matches[1]
+              # Check the line count before joining: a native command's output
+              # arrives as an array, so joining first would silently glue extra
+              # stdout onto the secret instead of failing.
+              $lines = @(& $op read $Matches[2])
+              if ($LASTEXITCODE -ne 0) { throw "op read failed for $name (exit $LASTEXITCODE)" }
+              if ($lines.Count -ne 1) { throw "$name resolved to $($lines.Count) lines, expected 1" }
+              $value = $lines[0]
+              if ([string]::IsNullOrEmpty($value)) { throw "$name resolved to an empty value" }
+              Write-Output "::add-mask::$value"
+              "$name=$value" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+              Write-Host "Resolved $name"
+              $resolved++
+            }
+            if ($resolved -ne $refs.Count) {
+              throw "resolved $resolved of $($refs.Count) references"
+            }
+          } catch {
+            Write-Output "::error::Could not retrieve test credentials on arm64: $($_.Exception.Message)"
+            exit 1
+          }
 
       # Opt this run into the Posit Assistant pre-release manifest. A per-run
       # prefs override, never a base pref -- every other run keeps testing GA.
@@ -962,12 +1016,7 @@ jobs:
           # the project name in reports (so a cross-platform merged report can
           # distinguish these results) and to derive the platform+shard-unique
           # blob report file name.
-          PW_PROJECT_LABEL: ${{ inputs.project }}-windows
-          # Human OS name for the "Run under test" block the harness writes to the
-          # report header and the run summary. Also the report metadata key, so it
-          # must name this engine alone: a merged multi-engine report keeps one
-          # entry per key, and engines sharing a key overwrite each other.
-          PW_OS_LABEL: Windows Server 2025 (x86_64)
+          PW_PROJECT_LABEL: ${{ inputs.project }}-windows11arm
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
@@ -985,7 +1034,7 @@ jobs:
           CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
           POSIT_EMAIL: ${{ steps.op.outputs.POSIT_EMAIL }}
           POSIT_PASSWORD: ${{ steps.op.outputs.POSIT_PASSWORD }}
-          SHARD_NAME: desktop-win-${{ matrix.shard }}
+          SHARD_NAME: desktop-win11arm-${{ matrix.shard }}
         run: |
           $ErrorActionPreference = 'Stop'
           $pwArgs = @()
@@ -1008,7 +1057,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-blob-report-win-${{ matrix.shard }}
+          name: playwright-blob-report-win11arm-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
           if-no-files-found: warn
           retention-days: 1
@@ -1017,7 +1066,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-report-shard-${{ matrix.shard }}
+          name: playwright-report-win11arm-shard-${{ matrix.shard }}
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
@@ -1082,8 +1131,8 @@ jobs:
   # counts, and post a sticky PR comment with pass/fail/skip totals
   # (when post_pr_comment is set).
   e2e-merge:
-    needs: [e2e-desktop-windows]
-    if: always() && inputs.defer_merge != true && needs.e2e-desktop-windows.result != 'skipped' && needs.e2e-desktop-windows.result != 'cancelled'
+    needs: [e2e-desktop-windows11arm]
+    if: always() && inputs.defer_merge != true && needs.e2e-desktop-windows11arm.result != 'skipped' && needs.e2e-desktop-windows11arm.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -1093,9 +1142,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: 'npm'
@@ -1108,7 +1157,7 @@ jobs:
       - name: Download shard blob reports
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          pattern: playwright-blob-report-win-*
+          pattern: playwright-blob-report-win11arm-*
           path: e2e/rstudio/all-blob-reports
           merge-multiple: true
 
@@ -1127,14 +1176,14 @@ jobs:
         id: summary
         if: always()
         working-directory: e2e/rstudio
-        run: node scripts/summarize-merged-report.mjs
+        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
 
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-report-win
+          name: playwright-report-win11arm
           path: e2e/rstudio/playwright-report/
           retention-days: 15
           if-no-files-found: ignore
@@ -1148,7 +1197,7 @@ jobs:
         uses: ./.github/actions/os-publish-e2e-report
         with:
           role-arn: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
-          label: windows
+          label: windows11arm
 
       - name: Post E2E results to PR
         if: |
@@ -1158,12 +1207,12 @@ jobs:
           (steps.summary.outputs.passed != '0' || steps.summary.outputs.failed != '0' || steps.summary.outputs.skipped != '0' || steps.summary.outputs.flaky != '0')
         uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
         with:
-          header: e2e-windows-2025-results
+          header: e2e-windows-11-arm64-results
           GITHUB_TOKEN: ${{ github.token }}
           message: |
-            ## 🪟 Windows Desktop E2E · Server 2025 x64
+            ## 🪟 Windows Desktop E2E · Windows 11 arm64
 
-            ${{ needs.e2e-desktop-windows.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
+            ${{ needs.e2e-desktop-windows11arm.result == 'success' && steps.summary.outputs.failed == '0' && '### ✅ All tests passed!' || format('### ❌ {0} test(s) failed', steps.summary.outputs.failed) }}
 
             `${{ steps.summary.outputs.bar }}` **${{ steps.summary.outputs.rate }}%** pass rate
 
@@ -1183,7 +1232,7 @@ jobs:
             </details>
 
             ---
-            <sub>6 shards · Windows Server 2025 x64 · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+            <sub>6 shards · Windows 11 arm64 (x86_64 build, emulated) · commit <code>${{ github.event.pull_request.head.sha }}</code> · <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
 
       # Release-gate floor, last so the reporting above still runs. A run that
       # executed nothing must not report green: Playwright suppresses its own
@@ -1200,16 +1249,3 @@ jobs:
             exit 1
           fi
           echo "::notice::Gate floor met: $PASSED test(s) passed."
-
-      # Does nothing: the name is the point. A step name can read step outputs
-      # (jobs.<id>.steps.name allows the `steps` context), so this puts the build
-      # under test in the job's step list, readable without expanding anything.
-      # The run page itself has no surface for a runtime value -- a run's title is
-      # fixed before it starts, and annotation placement is GitHub's to decide --
-      # so the summarizer also emits these as annotations, and this is the same
-      # facts one click in. Last, and if: always(), so the gate above can't
-      # suppress it. Skipped on an empty output, which is how the summarizer
-      # reports "no engine in that slot".
-      - name: ${{ steps.summary.outputs.run_under_test_1 }}
-        if: always() && steps.summary.outputs.run_under_test_1 != ''
-        run: 'true'

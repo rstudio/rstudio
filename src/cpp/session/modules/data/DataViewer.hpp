@@ -16,20 +16,35 @@
 #ifndef SESSION_DATA_VIEWER_HPP
 #define SESSION_DATA_VIEWER_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
    class Error;
 }
 }
- 
+
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace data {
 namespace viewer {
-   
+
 core::Error initialize();
-                       
+
+// exposed for testing
+namespace detail {
+
+// whether rows matching the global search `inner` are necessarily a subset of
+// rows matching the search `outer` (bare literal substring queries)
+bool isSearchSubset(const std::string& outer, const std::string& inner);
+
+// whether rows matching the "type|value" column filter `inner` are
+// necessarily a subset of rows matching the filter `outer`
+bool isFilterSubset(const std::string& outer, const std::string& inner);
+
+} // namespace detail
+
 } // namespace viewer
 } // namespace data
 } // namespace modules
