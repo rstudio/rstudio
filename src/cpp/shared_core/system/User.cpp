@@ -53,7 +53,7 @@ struct User::Impl
    Error populateUser(const GetPasswdFunc<T>& in_getPasswdFunc, T in_value)
    {
       struct passwd pwd;
-      struct passwd* tempPtrPwd;
+      struct passwd* tempPtrPwd = nullptr;
 
       // Get the maximum size of a passwd for this system.
       long buffSize = ::sysconf(_SC_GETPW_R_SIZE_MAX);
@@ -83,6 +83,11 @@ struct User::Impl
                {
                   retry = true;
                }
+            }
+            else if (result == EINTR)
+            {
+               // The lookup can block on a remote user database long enough for this signal
+               retry = true;
             }
             else
             {

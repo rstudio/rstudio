@@ -214,6 +214,22 @@ bool isPositAssistantEnabledByAdmin()
    return module_context::isPositAssistantEnabledByAdmin();
 }
 
+// Returns true when the administrator has taken installation away from the
+// user: the session runs only an administrator-managed or bundled copy, makes
+// no manifest requests, and refuses install, update, and uninstall.
+bool isInstallationManaged()
+{
+   return !module_context::isPositAssistantInstallationEnabledByAdmin();
+}
+
+// Refusal shown for every install, update, and uninstall path in managed mode.
+// Delivered via client_info on the JSON-RPC error so the frontend can show it
+// verbatim (Error::getSummary() would otherwise wrap the system errno text and
+// obscure the description).
+const char* const kInstallationManagedMessage =
+   "Posit Assistant installation is managed by your administrator and cannot "
+   "be changed from RStudio.";
+
 // Returns true if the user has selected Posit AI as their assistant (for code completions)
 bool isPaiSelected()
 {
@@ -278,7 +294,9 @@ using chat_logging::shouldLogBackendMessage;
 using chat_logging::rs_chatSetLogLevel;
 
 // Installation functions used throughout
+using chat_installation::bundledPositAssistantInstallPath;
 using chat_installation::locatePositAssistantInstallation;
+using chat_installation::systemPositAssistantInstallPath;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
@@ -3291,6 +3309,18 @@ void handleCheckForUpdates(core::system::ProcessOperations& ops,
 {
    DLOG("Handling ui/checkForUpdates request");
 
+   // Managed mode drops the capability from the handshake, so a well-behaved
+   // peer never sends this. Refuse anyway, and refuse as "method not found" to
+   // match what the handshake advertised.
+   if (isInstallationManaged())
+   {
+      WLOG("Refusing ui/checkForUpdates: Posit Assistant installation is "
+           "administrator-managed");
+      sendJsonRpcError(ops, requestId, kJsonRpcMethodNotFound,
+                       "Method not found");
+      return;
+   }
+
    // This handler is a thin trigger: it does not perform the check itself. It
    // fires a client event that runs the frontend "Check for Posit Assistant
    // updates" command flow, which drives the check via the chat_check_for_updates
@@ -3354,7 +3384,10 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
    result["protocolVersion"] = kProtocolVersion;
    result["rstudioVersion"] = std::string(RSTUDIO_VERSION);
 
-   const auto& caps = chat_constants::rstudioCapabilities();
+   // Dropping ui/checkForUpdates in managed mode makes Posit Assistant hide its
+   // own update entry, through the capability negotiation that already exists.
+   std::vector<std::string> caps =
+      chat_constants::negotiatedCapabilities(isInstallationManaged());
    json::Array capsArray;
    for (const std::string& cap : caps)
    {
@@ -4092,9 +4125,12 @@ void showTestManifestWarning()
 void onClientInit()
 {
    // Only warn about the test manifest when Posit Assistant is actually
-   // available; a build without Posit Assistant (or one where an administrator
-   // disabled it) never uses the manifest, so the banner would be misleading.
-   if (isPositAssistantEnabledByAdmin() && isUsingTestManifest())
+   // available and this session would use a manifest at all; a build without
+   // Posit Assistant, one where an administrator disabled it, and one where
+   // installation is administrator-managed all never fetch one, so the banner
+   // would be misleading.
+   if (isPositAssistantEnabledByAdmin() && !isInstallationManaged() &&
+       isUsingTestManifest())
    {
       showTestManifestWarning();
    }
@@ -4775,6 +4811,19 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
 // `force` (Retry / install) always fetches. Main-thread only (reads the filesystem).
 bool shouldFetchManifest(bool force)
 {
+   // Managed mode makes no requests to cdn.posit.co at all. Gating here rather
+   // than at the call sites covers every caller of startUpdateCheck() -- the
+   // startup kickoff, chat_check_for_updates, and chat_install_update -- and
+   // routes them through resolveWithoutManifestFetch() so the client still
+   // learns installed/not-installed. It must win over `force`, which
+   // chat_install_update passes as true.
+   if (isInstallationManaged())
+   {
+      DLOG("Posit Assistant installation is administrator-managed; "
+           "resolving update state without a manifest fetch");
+      return false;
+   }
+
    std::string installed = getInstalledVersion();   // "" when not installed
    bool isInstalled = !installed.empty();
    bool mismatch = isInstalled && hasProtocolMismatch(installed);
@@ -4805,15 +4854,24 @@ bool shouldFetchManifest(bool force)
 }
 
 // Resolve the update state from the installed version without fetching the
-// manifest (throttled skip). Reached only when a compatible version is installed
-// (installed + no protocol mismatch), so the installed version is current and
-// usable. Reapplies any persisted (manifest-only) unsupported block, then drains
-// the single-flight queue. Does NOT write the record -- no attempt was made.
+// manifest. Two callers reach this: a throttled skip, which runs only when a
+// compatible version is installed, and managed mode, which runs whatever the
+// administrator provides -- possibly nothing, possibly a copy whose protocol
+// does not match this build. So the protocol mismatch is recomputed here
+// rather than assumed away; on the throttled path it is false by construction
+// and nothing changes. Also reapplies any persisted (manifest-only)
+// unsupported block, then drains the single-flight queue. Does NOT write the
+// record -- no attempt was made.
 void resolveWithoutManifestFetch()
 {
    std::string installedVersion = getInstalledVersion();
+   if (installedVersion.empty())
+      installedVersion = "0.0.0";
 
-   bool unsupportedInstalledVersion = false;
+   // Mirrors buildSuccessOutcome()'s live composite: a package whose
+   // protocol.json is missing or does not match this build is unusable, and in
+   // managed mode there is no update to offer that would fix it.
+   bool unsupportedInstalledVersion = hasProtocolMismatch(installedVersion);
    bool unsupportedProtocol = false;
    boost::optional<ManifestCheckRecord> record =
       throttle::readManifestCheckRecord(throttle::manifestCheckStatePath());
@@ -4821,7 +4879,8 @@ void resolveWithoutManifestFetch()
    {
       ResolvedBlock block = throttle::resolvePersistedBlock(
          *record, installedVersion, kProtocolVersion);
-      unsupportedInstalledVersion = block.unsupportedInstalledVersion;
+      unsupportedInstalledVersion =
+         unsupportedInstalledVersion || block.unsupportedInstalledVersion;
       unsupportedProtocol = block.unsupportedProtocol;
    }
 
@@ -5150,11 +5209,26 @@ Error startChatBackend(bool resumeConversation)
    FilePath positAiPath = locatePositAssistantInstallation();
    if (positAiPath.isEmpty())
    {
-      std::string userPath = xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
-      std::string systemPath = xdg::systemConfigDir().completePath(kPositAiDirName).getAbsolutePath();
-      std::string errorMsg = fmt::format(
-         "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
-         userPath, systemPath);
+      std::string systemPath = systemPositAssistantInstallPath().getAbsolutePath();
+
+      // Naming the user directory in managed mode would point the user at the
+      // one location the session ignores and refuses to install into.
+      std::string errorMsg;
+      if (isInstallationManaged())
+      {
+         errorMsg = fmt::format(
+            "Posit Assistant installation not found. Installation is managed by "
+            "your administrator; expected: {}",
+            systemPath);
+      }
+      else
+      {
+         std::string userPath =
+            xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
+         errorMsg = fmt::format(
+            "Posit Assistant installation not found. Install to: {} (user) or {} (system)",
+            userPath, systemPath);
+      }
       return systemError(boost::system::errc::no_such_file_or_directory,
                         errorMsg,
                         ERROR_LOCATION);
@@ -5290,13 +5364,14 @@ Error startChatBackend(bool resumeConversation)
 
    // Coordinate with other rsession processes sharing the per-user install:
    // hold this session's in-use lock while the backend runs, and refuse to
-   // start while an install or update is in progress (we would be
+   // start while an install/update/uninstall is in progress (we would be
    // launching from a directory mid-swap). Only the read-only system
    // install skips locking: mutations never touch it, and it cannot alias
-   // the per-user install. Env-var overrides over-lock deliberately —
-   // mirroring the agent's rule — because deciding whether an override
-   // truly resolves outside pai/bin is unreliable (symlinks), and
-   // over-locking costs at most a retryable refusal.
+   // the per-user install. The env-var override, posit-assistant-path, and
+   // the copy bundled with RStudio all over-lock deliberately — mirroring
+   // the agent's rule — because deciding whether they truly resolve outside
+   // pai/bin is unreliable (symlinks), and over-locking costs at most a
+   // retryable refusal.
    uint64_t generation = ++s_chatBackendGeneration;
 
    // A stale flag from a previous unreaped generation must not classify a
@@ -5609,6 +5684,10 @@ void buildUpdateStateResult(json::Object* pResult)
    (*pResult)["newVersion"] = s_updateState.newVersion;
    (*pResult)["downloadUrl"] = s_updateState.downloadUrl;
    (*pResult)["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
+
+   // Session-constant, so read from the option rather than the check state: the
+   // client uses it to hide the install, update, and uninstall affordances.
+   (*pResult)["installationManaged"] = isInstallationManaged();
 }
 
 // Resolve an async chat_check_for_updates continuation with the current state.
@@ -6046,6 +6125,16 @@ void performInstall(const json::JsonRpcFunctionContinuation& cont)
 void chatInstallUpdate(const json::JsonRpcRequest& request,
                        const json::JsonRpcFunctionContinuation& cont)
 {
+   if (isInstallationManaged())
+   {
+      json::JsonRpcResponse response;
+      response.setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value(kInstallationManagedMessage));
+      cont(Success(), &response);
+      return;
+   }
+
    if (!isPositAssistantWanted())
    {
       json::JsonRpcResponse response;
@@ -6120,6 +6209,165 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
    }
 
    pResponse->setResult(result);
+   return Success();
+}
+
+// NOTE: No isPositAssistantWanted()/isPositAssistantEnabledByAdmin() gate — the user may have
+// disabled Posit Assistant but still wants to clean up installed files. The
+// managed-installation gate below is the one exception.
+Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // Refuse before looking at disk: in managed mode a leftover user-level
+   // installation may well exist, and it is ignored rather than removed.
+   if (isInstallationManaged())
+   {
+      pResponse->setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value(kInstallationManagedMessage));
+      return Success();
+   }
+
+   FilePath userDataDir = xdg::userDataDir();
+   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
+   FilePath aiPrevDir = userDataDir.completePath(kPositAiBackupDirName);
+
+   // No user-data install paths exist. Distinguish system/none to give the
+   // user a targeted message. Each branch delivers its message via
+   // client_info on the JSON-RPC error so the frontend can show it verbatim
+   // (Error::getSummary() would otherwise wrap the system errno text and
+   // obscure our description).
+   if (!aiDir.exists() && !aiPrevDir.exists())
+   {
+      // With no user-data install, anything the search still resolves to is
+      // read-only: the administrator's installation, or the copy shipped with
+      // RStudio. Resolve rather than re-testing each location, so the refusal
+      // names the installation actually in use.
+      FilePath readOnlyPath = locatePositAssistantInstallation();
+      if (!readOnlyPath.isEmpty())
+      {
+         bool bundled = (readOnlyPath == bundledPositAssistantInstallPath());
+         pResponse->setError(
+            systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+            json::Value(
+               bundled
+                  ? "Posit Assistant was installed as part of RStudio and "
+                    "cannot be uninstalled from RStudio."
+                  : "Posit Assistant is installed at the system level by an "
+                    "administrator and cannot be uninstalled from RStudio."));
+         return Success();
+      }
+
+      DLOG("Posit Assistant is not installed; nothing to remove");
+      // Clear cached state in case the directory was removed out-of-band
+      // while the session still thinks Posit Assistant is available.
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+      pResponse->setError(
+         systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION),
+         json::Value("Posit Assistant is not installed."));
+      return Success();
+   }
+
+   // Serialize with other rsession processes and refuse while any other
+   // session is running Posit Assistant — checked before stopping our own
+   // processes. The scope releases the mutation lock on every exit below.
+   install_lock::MutationScope mutationScope(installLock());
+   if (mutationScope.error())
+   {
+      pResponse->setError(
+         systemError(boost::system::errc::device_or_resource_busy,
+                     ERROR_LOCATION),
+         json::Value("Unable to uninstall Posit Assistant: " +
+                     mutationScope.userMessage()));
+      return Success();
+   }
+
+   // Stop chat backend (graceful request + reap wait so file handles are
+   // released before we delete the installation directory)
+   stopChatBackendForInstallMutation("uninstall");
+
+   // Stop assistant agent (NES language server).
+   // stopAgentForUpdate() is synchronous — it waits for the agent
+   // process to exit before returning, so file handles are released.
+   bool agentStopped = assistant::stopAgentForUpdate();
+   if (!agentStopped)
+      WLOG("Timeout waiting for assistant agent to stop during uninstall");
+
+   // Deleting the installation under a still-live process is exactly the
+   // corruption this lock prevents for other sessions — abort rather than
+   // proceed when our own processes could not be reaped.
+   if (!waitForOwnComponentsReaped(2000))
+   {
+      pResponse->setError(
+         systemError(boost::system::errc::device_or_resource_busy,
+                     ERROR_LOCATION),
+         json::Value("Failed to stop Posit Assistant processes. "
+                     "Please restart RStudio and try again."));
+      return Success();
+   }
+
+   // Delete installation.
+   // If the agent timed out it may still hold file handles open
+   // (especially on Windows), so warn when deletion fails after a
+   // timeout and suggest restarting.
+   Error error = aiDir.removeIfExists();
+   if (error)
+   {
+      // Processes are already stopped but files remain on disk.
+      // Reset cached state so the session doesn't think PAI is usable,
+      // and tell the user to restart.
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+
+      std::string message =
+         "Failed to remove Posit Assistant installation: " + error.getMessage();
+      if (!agentStopped)
+         message += " (a background process may still be running)";
+      message += ". Please restart RStudio and try again.";
+
+      return systemError(
+         boost::system::errc::io_error, message, ERROR_LOCATION);
+   }
+
+   // Remove any backup left by a failed install/update. Unlike an install,
+   // reporting uninstall success while an executable tree remains would leave
+   // it behind with no guaranteed later cleanup, so treat failure to remove
+   // it as an uninstall failure (mirrors the pai/bin failure path above).
+   Error prevError = aiPrevDir.removeIfExists();
+   if (prevError)
+   {
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState = UpdateState();
+      }
+      s_positAssistantVersion.clear();
+
+      return systemError(
+         boost::system::errc::io_error,
+         "Failed to remove Posit Assistant installation backup: " +
+            prevError.getMessage() +
+            ". Please restart RStudio and try again.",
+         ERROR_LOCATION);
+   }
+
+   // Reset cached update state so the session correctly detects the
+   // missing installation if the user cancels the subsequent restart.
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState = UpdateState();
+   }
+   s_positAssistantVersion.clear();
+   s_expectedShutdown = false;
+
+   DLOG("Posit Assistant uninstalled successfully");
+   pResponse->setResult(json::Value());
    return Success();
 }
 
@@ -6451,6 +6699,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_set_update_check_override", chatSetUpdateCheckOverride))
       (bind(registerAsyncRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
+      (bind(registerRpcMethod, "chat_uninstall_posit_assistant", chatUninstallPositAssistant))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
       (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))

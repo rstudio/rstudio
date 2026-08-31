@@ -1,17 +1,22 @@
-## RStudio 2026.09.0.0 "Autumn Hawkbit" Release Notes
+## RStudio 2026.09.0 "Autumn Hawkbit" Release Notes
 
 ### New
+- ([#18443](https://github.com/rstudio/rstudio/issues/18443)): Added the `posit-assistant-installation-enabled` session option and the `RSTUDIO_DISABLE_POSIT_ASSISTANT_INSTALLATION` environment variable, which stop users from installing, updating, or uninstalling Posit Assistant. RStudio then runs only the administrator's installation and makes no update checks.
+- ([#18687](https://github.com/rstudio/rstudio/issues/18687)): Added the `posit-assistant-path` session option, for pointing RStudio at an administrator-managed Posit Assistant installation outside the system configuration directory.
 - ([#18649](https://github.com/rstudio/rstudio/issues/18649)): Renamed references to the Posit AI service to Posit AI Pass in the IDE user interface.
 - ([#2129](https://github.com/rstudio/rstudio/issues/2129)): Added horizontal and vertical split source editor views, with shared edits and independent navigation state.
 
 ### Fixed
+- ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where opening Find in the visual editor left the search box as it was, rather than filling it with the selected text the way source mode does. A selection made inside a code chunk now seeds the box too, and is what Use Selection for Find looks for there; both previously read the surrounding document selection, which sees a chunk as a single unit.
+- ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed an issue where the Find and Add Next and Find All commands did nothing in the visual editor. Both build a multi-cursor selection in the source editor, and in visual mode they were still aimed at that editor even though it is hidden; they now act on the code chunk that has focus. In prose, where the visual editor has no multi-cursor equivalent, they are reported as unavailable rather than silently doing nothing.
+- ([#16540](https://github.com/rstudio/rstudio/issues/16540)): Fixed a client error ("Cannot read properties of null") that could follow a Reload Now of the visual editor after a format change, when the editor's idle save of the editing location fired before the rebuilt editor existed.
 - ([#18620](https://github.com/rstudio/rstudio/issues/18620)): The Data Viewer's last row is no longer hidden underneath the horizontal scrollbar when scrolled to the bottom.
 - ([#18139](https://github.com/rstudio/rstudio/issues/18139)): Fixed Windows locale drift that corrupted non-ASCII Console input and other locale-sensitive operations.
 - ([#18635](https://github.com/rstudio/rstudio/issues/18635)): Running code from a popped-out source window no longer moves focus to the console when "Focus console after executing code from the source pane" is off.
 - ([#18356](https://github.com/rstudio/rstudio/issues/18356)): Declining the Posit Assistant install prompt now restores the previously selected code assistant.
 - ([#18631](https://github.com/rstudio/rstudio/issues/18631)): RStudio Desktop now shows What's New once per release instead of after every patch update.
 - ([#18602](https://github.com/rstudio/rstudio/issues/18602)): Fixed folding and outline hierarchy for section headers decorated with `#` characters.
-- ([#18597](https://github.com/rstudio/rstudio/issues/18597)): Posit Assistant code suggestions now honor `RSTUDIO_POSIT_AI_PATH` and system-wide installations.
+- ([#18597](https://github.com/rstudio/rstudio/issues/18597)): Posit Assistant code suggestions now honor system-wide installations.
 - ([#18451](https://github.com/rstudio/rstudio/issues/18451)): Truncated AI assistant startup errors and logs to avoid dumping minified bundles while retaining useful diagnostics.
 - ([#18570](https://github.com/rstudio/rstudio/issues/18570)): Posit Assistant manifest download errors now show the underlying DNS, proxy, or TLS failure.
 - ([#18610](https://github.com/rstudio/rstudio/issues/18610)): Posit Assistant install and update downloads now preserve detailed errors, report warning-only failures, and honor configured timeouts.
@@ -46,8 +51,8 @@
 ### Dependencies
 - Copilot Language Server 1.531.0
 - Electron 42.10.1
+- Node.js 22.23.2 (GitHub Copilot, Posit Assistant)
 - Quarto 1.10.18
 
 ### Deprecated / Removed
 - ([#18605](https://github.com/rstudio/rstudio/issues/18605)): Marked RPubs and ShinyApps.io publishing destinations as deprecated ahead of their sunset; see [the migration guide](https://posit.co/blog/migrating-connect-cloud-posits-unified-publishing-solution).
-- ([#18658](https://github.com/rstudio/rstudio/issues/18658)): Removed the "Uninstall Posit Assistant" command.

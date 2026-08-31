@@ -120,6 +120,7 @@ type ChatBridge = {
     | 'version-update-required'
     | 'version-no-update'
     | 'not-installed'
+    | 'installation-managed'
     | 'update-available'
     | 'assistant-not-selected'
     | 'error'
@@ -818,10 +819,18 @@ export async function openProject(
   // the helper's post-condition is "the bridge agrees this project is
   // active" rather than "ready flipped true." Case-insensitive to match
   // waitForActiveDocument's handling of HFS+ / NTFS.
+  //
+  // Every hop is optional: a Desktop project switch navigates the window to
+  // the new session, and GWT's bootstrap (rstudio.nocache.js) defines a
+  // global function named `rstudio` seconds before ApplicationAutomation
+  // installs the bridge on it. Polling `rstudio.project.path()` unguarded
+  // throws there, and a predicate that throws rejects waitForFunction
+  // outright -- turning a routine reload into a hard failure that never
+  // reaches the diagnostic below.
   try {
     await page.waitForFunction(
       (target) => {
-        const path = window.rstudio?.project.path() ?? null;
+        const path = window.rstudio?.project?.path?.() ?? null;
         return path !== null && path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
       },
       projectFilePath,
@@ -836,7 +845,7 @@ export async function openProject(
     // bare waitForFunction timeout.
     if (err instanceof Error && err.name === 'TimeoutError') {
       const actual = await page
-        .evaluate(() => window.rstudio?.project.path() ?? null)
+        .evaluate(() => window.rstudio?.project?.path?.() ?? null)
         .catch(() => null);
       throw new Error(
         `openProject: session became ready but the active project did not ` +
