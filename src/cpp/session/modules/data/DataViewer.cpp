@@ -715,9 +715,15 @@ SEXP applyViewTransform(SEXP dataSEXP,
             dataSEXP = workingDataSEXP;
             recompute = false;
          }
-         else if (cachedFrame->second.isSupersetOf(params.search, params.filters))
+         else if (cachedFrame->second.isSupersetOf(params.search, params.filters) &&
+                  (!params.ordercols.empty() ||
+                   cachedFrame->second.workingOrderCols.empty()))
          {
-            // a strict superset -- transform from it instead of the original
+            // a strict superset -- transform from it instead of the original.
+            // Ordering gates the reuse: a request WITH a sort re-sorts the
+            // subset by its own keys, but a request with NO sort must show
+            // original row order, which a previously sorted working copy
+            // cannot supply -- recompute from the full frame instead.
             dataSEXP = workingDataSEXP;
          }
       }

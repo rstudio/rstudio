@@ -986,6 +986,29 @@ test_that(".rs.applyTransform() filters compose with a cached search", {
    expect_equal(cached$y, c(15, 35))
 })
 
+test_that(".rs.applyTransform() search scans only filter-eligible rows", {
+   df <- data.frame(x = c("keep", "keep", "drop", "drop"),
+                    num = c(7.5, 1.25, 7.5, 3.5))
+
+   cacheKey <- "test-search-eligible-rows"
+   on.exit(.rs.removeSearchData(cacheKey), add = TRUE)
+
+   # the search matches rows 1 and 3, but the filter only admits rows 1 and
+   # 2; a match scattered back from outside the filter mask must not leak in
+   for (key in c("", cacheKey))
+   {
+      out <- .rs.applyTransform(df, c("character|keep", ""), "7.5",
+                                integer(), character(), key, nzchar(key))
+      expect_equal(rownames(out), "1")
+      expect_equal(out$num, 7.5)
+   }
+
+   # a filter that excludes every row composes with a search without error
+   out <- .rs.applyTransform(df, c("character|nomatch", ""), "7.5",
+                             integer(), character(), cacheKey, TRUE)
+   expect_equal(nrow(out), 0L)
+})
+
 test_that(".rs.removeWorkingData() also drops the cached search projection", {
    df <- data.frame(num = c(1.5, 2.5))
    cacheKey <- "test-search-projection-removal"

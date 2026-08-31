@@ -1234,12 +1234,15 @@
          keep <- if (is.null(keep)) matches else keep & matches
    }
 
-   # apply global search; the mask is computed over the full frame, so the
-   # per-frame search projection (keyed by cacheKey) stays row-aligned no
-   # matter which filters are active
+   # apply global search; the mask spans the full frame, so the per-frame
+   # search projection (keyed by cacheKey) stays row-aligned no matter which
+   # filters are active -- but only rows the filters kept are actually
+   # scanned, so a narrow filter keeps the search cost proportional to its
+   # match set rather than to the whole frame
    if (!is.null(search) && nchar(search) > 0)
    {
-      matches <- .rs.dataViewer.searchMatches(x, search, if (isFullFrame) cacheKey else "")
+      rows <- if (!is.null(keep)) which(keep)
+      matches <- .rs.dataViewer.searchMatches(x, search, if (isFullFrame) cacheKey else "", rows)
       keep <- if (is.null(keep)) matches else keep & matches
    }
 
@@ -1283,15 +1286,19 @@
 
 #' Compute the global search mask for a frame.
 #'
-#' Returns a logical vector marking the rows where any column (or the row
-#' names, when character) contains 'search', case-insensitively -- matching
-#' against the same string form 'grepl' would coerce each column to.
+#' Returns a logical vector over all of the frame's rows, marking those where
+#' any column (or the row names, when character) contains 'search',
+#' case-insensitively -- matching against the same string form 'grepl' would
+#' coerce each column to.
 #'
 #' @param x The data.frame to search.
 #' @param search The literal text to search for.
 #' @param cacheKey The frame's cache key, enabling the cached projection in
 #'   .rs.SearchDataEnv; pass "" to scan the raw columns.
-.rs.addFunction("dataViewer.searchMatches", function(x, search, cacheKey)
+#' @param rows Row indices still eligible after filtering, or NULL for all
+#'   rows. Only these rows are scanned (rows outside are FALSE in the result),
+#'   so active filters bound the scan and coercion cost.
+.rs.addFunction("dataViewer.searchMatches", function(x, search, cacheKey, rows = NULL)
 {
    columns <- .rs.dataViewer.searchColumns(x, cacheKey)
 
@@ -1301,14 +1308,21 @@
    matches <- NULL
    for (column in columns)
    {
+      if (!is.null(rows))
+         column <- column[rows]
+
       m <- grepl(pattern, column, perl = TRUE, ignore.case = TRUE)
       matches <- if (is.null(matches)) m else matches | m
    }
 
-   if (is.null(matches))
-      matches <- logical(NROW(x))
+   if (is.null(rows))
+      return(if (is.null(matches)) logical(NROW(x)) else matches)
 
-   matches
+   # scatter the scanned rows back into a full-frame mask
+   full <- logical(NROW(x))
+   if (!is.null(matches))
+      full[rows] <- matches
+   full
 })
 
 #' List the vectors the global search should scan.
