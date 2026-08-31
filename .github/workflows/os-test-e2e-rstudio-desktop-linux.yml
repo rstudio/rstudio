@@ -468,7 +468,7 @@ jobs:
         # A failed OIDC exchange degrades to the GHA backend below rather
         # than failing the build.
         continue-on-error: true
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           role-to-assume: ${{ env.SCCACHE_ROLE_ARN }}
           aws-region: us-east-1
@@ -606,7 +606,7 @@ jobs:
 
       - name: Upload installer artifact
         if: inputs.build_only != true
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ needs.setup.outputs.installer_artifact }}
           path: rstudio-desktop.${{ needs.setup.outputs.package_ext }}
@@ -753,7 +753,7 @@ jobs:
       # from the package's own resolution.
       - name: Download installer artifact
         if: inputs.build_from_source == true && inputs.rstudio_installer_url == ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: ${{ needs.setup.outputs.installer_artifact }}
           path: ${{ github.workspace }}
@@ -1059,7 +1059,7 @@ jobs:
       # no engine's merge job can sweep in another engine's blobs.
       - name: Upload blob report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-blob-report-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
           path: e2e/rstudio/blob-report/
@@ -1089,7 +1089,7 @@ jobs:
       # never started -- see the gap vocabulary in .github/e2e-certification/README.md.
       - name: Upload resolved R version
         if: always() && matrix.shard == 1
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: r-version-linux-desktop-${{ inputs.os }}
           path: ${{ github.workspace }}/r-version.txt
@@ -1098,7 +1098,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: test-results-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
           path: e2e/rstudio/test-results/
@@ -1108,7 +1108,7 @@ jobs:
       # the spec's RStudio config / data home, and per-test working dirs.
       - name: Upload PW sandbox (on failure)
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: pw-sandbox-linux-desktop-${{ inputs.os }}-${{ matrix.shard }}
           path: ${{ github.workspace }}/pw-sandbox/
@@ -1161,7 +1161,7 @@ jobs:
 
       - name: Upload this engine's outcome
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: r-outcome-linux-desktop-${{ inputs.os }}
           path: ${{ github.workspace }}/r-outcome.txt
@@ -1184,7 +1184,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Download shard blob reports
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           # Engine-scoped glob: in a combined parent run the other platforms
           # and engines also publish blob reports; the os suffix keeps this
@@ -1213,7 +1213,7 @@ jobs:
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report-linux-desktop-${{ inputs.os }}
           path: e2e/rstudio/playwright-report/
