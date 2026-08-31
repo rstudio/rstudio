@@ -67,6 +67,19 @@ public class PaiUtil
    }
 
    /**
+    * Returns true if the user may install, update, and uninstall Posit
+    * Assistant. When false the administrator manages the installation: the
+    * session runs only an administrator-managed or bundled copy, makes no
+    * update checks, and refuses those operations.
+    *
+    * @return true if user-managed installation is allowed, false otherwise
+    */
+   public boolean isPositAssistantInstallationEnabled()
+   {
+      return session_.getSessionInfo().getPositAssistantInstallationEnabled();
+   }
+
+   /**
     * Returns true if the user has selected Posit AI as their assistant, checking:
     * 1. Project-level assistant setting (if set and not "default")
     * 2. Global user preference

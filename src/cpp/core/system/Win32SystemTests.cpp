@@ -15,6 +15,8 @@
 
 #ifdef _WIN32
 
+#include <sstream>
+
 #include <core/FileUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -29,37 +31,91 @@ namespace core {
 namespace system {
 namespace tests {
 
-// Test fixture for process creation and cleanup
+// Test fixture for process creation and cleanup.
+//
+// The process runs inside a job object that kills everything in it when the
+// job handle closes, so a test tears down its whole process tree. Terminating
+// only the process we created is not enough: the tests that run cmd.exe leave
+// its ping.exe grandchild alive, and an orphan goes on reporting the pid of
+// its terminated parent as th32ParentProcessID. Windows recycles pids, so a
+// later test that creates a process and asks getSubprocesses() for its
+// children can be handed one of those orphans.
 class Win32ProcessTest : public ::testing::Test
 {
 protected:
    STARTUPINFO si;
    PROCESS_INFORMATION pi;
-   std::string cmd;
-   std::vector<char> cmdBuf;
+   HANDLE hJob;
 
    void SetUp() override
    {
       ZeroMemory(&si, sizeof(si));
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
+      hJob = nullptr;
    }
 
-   void PrepareCommand(const std::string& command)
+   // Runs command, leaving the process running on success. Started suspended
+   // so that nothing can be spawned before the job is in place.
+   bool StartProcess(const std::string& command)
    {
-      cmd = command;
-      cmdBuf.resize(cmd.size() + 1, '\0');
-      cmd.copy(&(cmdBuf[0]), cmd.size());
+      std::vector<char> cmdBuf(command.begin(), command.end());
+      cmdBuf.push_back('\0');
+
+      hJob = ::CreateJobObject(nullptr, nullptr);
+      if (hJob == nullptr)
+         return false;
+
+      JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits;
+      ZeroMemory(&limits, sizeof(limits));
+      limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+      if (!::SetInformationJobObject(hJob,
+                                     JobObjectExtendedLimitInformation,
+                                     &limits,
+                                     sizeof(limits)))
+      {
+         return false;
+      }
+
+      if (!::CreateProcess(
+             nullptr,          // No module name (use command line)
+             &(cmdBuf[0]),     // Command
+             nullptr,          // Process handle not inheritable
+             nullptr,          // Thread handle not inheritable
+             FALSE,            // Set handle inheritance to FALSE
+             CREATE_SUSPENDED, // Resumed once it is in the job
+             nullptr,          // Use parent's environment block
+             nullptr,          // Use parent's starting directory
+             &si,              // Pointer to STARTUPINFO structure
+             &pi))             // Pointer to PROCESS_INFORMATION structure
+      {
+         return false;
+      }
+
+      if (!::AssignProcessToJobObject(hJob, pi.hProcess))
+         return false;
+
+      return ::ResumeThread(pi.hThread) != static_cast<DWORD>(-1);
    }
 
    void CleanupProcess()
    {
+      // takes the process and everything it spawned with it
+      if (hJob != nullptr)
+      {
+         ::CloseHandle(hJob);
+         hJob = nullptr;
+      }
+
       if (pi.hProcess)
       {
-         TerminateProcess(pi.hProcess, 1);
-         WaitForSingleObject(pi.hProcess, INFINITE);
-         CloseHandle(pi.hProcess);
-         CloseHandle(pi.hThread);
+         // the process is outside the job, and so still running, if it was
+         // created but never assigned; without this the wait below hangs
+         ::TerminateProcess(pi.hProcess, 1);
+         ::WaitForSingleObject(pi.hProcess, INFINITE);
+         ::CloseHandle(pi.hProcess);
+         ::CloseHandle(pi.hThread);
+         ZeroMemory(&pi, sizeof(pi));
       }
    }
 
@@ -68,6 +124,16 @@ protected:
       CleanupProcess();
    }
 };
+
+// "Actual: false" says nothing about which process was mistaken for a child,
+// and these failures are rare enough that a rerun will not show you.
+static std::string Describe(const std::vector<SubprocInfo>& subprocs)
+{
+   std::ostringstream os;
+   for (const SubprocInfo& info : subprocs)
+      os << " " << info.exe << "(" << info.pid << ")";
+   return os.str();
+}
 
 TEST(Win32SystemTest, TestWin7OrLater)
 {
@@ -348,41 +414,15 @@ TEST(Win32SystemTest, WindowsArchitectureBitnessAssumptions)
 
 TEST_F(Win32ProcessTest, CorrectDetectionOfNoChildProcesses)
 {
-   PrepareCommand("ping -n 8 posit.co");
-
-   // Start the child process.
-   ASSERT_TRUE(CreateProcess(
-            nullptr,       // No module name (use command line)
-            &(cmdBuf[0]),  // Command
-            nullptr,       // Process handle not inheritable
-            nullptr,       // Thread handle not inheritable
-            FALSE,         // Set handle inheritance to FALSE
-            0,             // No creation flags
-            nullptr,       // Use parent's environment block
-            nullptr,       // Use parent's starting directory
-            &si,           // Pointer to STARTUPINFO structure
-            &pi));         // Pointer to PROCESS_INFORMATION structure
+   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
 
    std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
-   ASSERT_TRUE(children.empty());
+   ASSERT_TRUE(children.empty()) << "unexpected children:" << Describe(children);
 }
 
 TEST_F(Win32ProcessTest, CorrectDetectionOfChildProcesses)
 {
-   PrepareCommand("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul");
-
-   // Start the child process.
-   ASSERT_TRUE(CreateProcess(
-            nullptr,       // No module name (use command line)
-            &(cmdBuf[0]),  // Command
-            nullptr,       // Process handle not inheritable
-            nullptr,       // Thread handle not inheritable
-            FALSE,         // Set handle inheritance to FALSE
-            0,             // No creation flags
-            nullptr,       // Use parent's environment block
-            nullptr,       // Use parent's starting directory
-            &si,           // Pointer to STARTUPINFO structure
-            &pi));         // Pointer to PROCESS_INFORMATION structure
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul"));
 
    ::Sleep(100); // give child time to start
 
@@ -409,20 +449,7 @@ TEST_F(Win32ProcessTest, DetermineCurrentWorkingDirectoryOfAnotherProcess)
    FilePath emptyPath;
    FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
 
-   PrepareCommand("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul");
-
-   // Start the child process.
-   ASSERT_TRUE(CreateProcess(
-            nullptr,       // No module name (use command line)
-            &(cmdBuf[0]),  // Command
-            nullptr,       // Process handle not inheritable
-            nullptr,       // Thread handle not inheritable
-            FALSE,         // Set handle inheritance to FALSE
-            0,             // No creation flags
-            nullptr,       // Use parent's environment block
-            nullptr,       // Use parent's starting directory
-            &si,           // Pointer to STARTUPINFO structure
-            &pi));         // Pointer to PROCESS_INFORMATION structure
+   ASSERT_TRUE(StartProcess("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul"));
 
    ::Sleep(100); // give child time to start
 
@@ -435,23 +462,10 @@ TEST_F(Win32ProcessTest, DetermineCurrentWorkingDirectoryOfAnotherProcess)
 
 TEST_F(Win32ProcessTest, EmptySubprocListWhenNoChildProcesses)
 {
-   PrepareCommand("ping -n 8 posit.co");
-
-   // Start the child process.
-   ASSERT_TRUE(CreateProcess(
-            nullptr,       // No module name (use command line)
-            &(cmdBuf[0]),  // Command
-            nullptr,       // Process handle not inheritable
-            nullptr,       // Thread handle not inheritable
-            FALSE,         // Set handle inheritance to FALSE
-            0,             // No creation flags
-            nullptr,       // Use parent's environment block
-            nullptr,       // Use parent's starting directory
-            &si,           // Pointer to STARTUPINFO structure
-            &pi));         // Pointer to PROCESS_INFORMATION structure
+   ASSERT_TRUE(StartProcess("ping -n 8 posit.co"));
 
    std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
-   ASSERT_TRUE(children.empty());
+   ASSERT_TRUE(children.empty()) << "unexpected children:" << Describe(children);
 }
 
 } // end namespace tests

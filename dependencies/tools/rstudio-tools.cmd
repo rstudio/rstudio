@@ -67,7 +67,7 @@ call :set-java-home
 set RSTUDIO_NODE_VERSION=22.22.2
 
 :: Node version installed with the product
-set RSTUDIO_INSTALLED_NODE_VERSION=22.22.2
+set RSTUDIO_INSTALLED_NODE_VERSION=22.23.2
 
 :: The base URL where RStudio build tools are available for download.
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com

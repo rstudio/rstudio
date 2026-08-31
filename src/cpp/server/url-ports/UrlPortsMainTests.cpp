@@ -122,3 +122,49 @@ TEST(UrlPortsMainTest, ProvidePortAndTokenLongOutput)
    EXPECT_EQ(getPort(), std::to_string(port));
    EXPECT_EQ(getPortTokenEnvVar(), portToken);
 }
+
+TEST(UrlPortsMainTest, BuildProxiedUrlAtDomainRoot)
+{
+   EXPECT_EQ(buildProxiedUrl("https://host/", "/s/abc123/", "58fab3e4"),
+             "https://host/s/abc123/p/58fab3e4/");
+}
+
+TEST(UrlPortsMainTest, BuildProxiedUrlUnderProxySubPath)
+{
+   EXPECT_EQ(buildProxiedUrl("https://host/rstudio/", "/s/abc123/", "58fab3e4"),
+             "https://host/rstudio/s/abc123/p/58fab3e4/");
+}
+
+TEST(UrlPortsMainTest, BuildProxiedUrlWithoutSessionUrl)
+{
+   // RStudio Server open source has no session segment, so the server url must
+   // keep the slash separating the authority from the path.
+   EXPECT_EQ(buildProxiedUrl("http://localhost:8787/", "", "58fab3e4"),
+             "http://localhost:8787/p/58fab3e4/");
+}
+
+TEST(UrlPortsMainTest, BuildProxiedUrlWithoutServerUrl)
+{
+   // An unset RS_SERVER_URL reaches this as an empty string.
+   EXPECT_EQ(buildProxiedUrl("", "/s/abc123/", "58fab3e4"),
+             "/s/abc123/p/58fab3e4/");
+}
+
+TEST(UrlPortsMainTest, BuildProxiedUrlServerUrlWithoutTrailingSlash)
+{
+   EXPECT_EQ(buildProxiedUrl("https://host", "/s/abc123/", "58fab3e4"),
+             "https://host/s/abc123/p/58fab3e4/");
+}
+
+TEST(UrlPortsMainTest, BuildProxiedUrlWithNeitherUrl)
+{
+   // Both variables can be unset, for instance before the session's first
+   // client_init. The port path must still be rooted.
+   EXPECT_EQ(buildProxiedUrl("", "", "58fab3e4"), "/p/58fab3e4/");
+}
+
+TEST(UrlPortsMainTest, BuildProxiedUrlServerUrlWithoutTrailingSlashOrSessionUrl)
+{
+   EXPECT_EQ(buildProxiedUrl("https://host", "", "58fab3e4"),
+             "https://host/p/58fab3e4/");
+}

@@ -474,6 +474,35 @@ void parseSessionUrl(const std::string& url,
    }
 }
 
+void parseSessionUrlEnvVars(const std::string& url,
+                            std::string* pServerUrl,
+                            std::string* pSessionUrl)
+{
+   std::string urlPrefix;
+   parseSessionUrl(url, nullptr, &urlPrefix, nullptr);
+
+   if (urlPrefix.empty())
+   {
+      // No per-session URL scoping, as in RStudio Server open source.
+      if (pServerUrl)
+         *pServerUrl = url;
+      if (pSessionUrl)
+         pSessionUrl->clear();
+      return;
+   }
+
+   // A reverse-proxy sub-path stays on the server side: consumers that read
+   // RS_SESSION_URL alone supply the sub-path themselves and would double it.
+   std::string prefix = url.substr(0, url.find(urlPrefix));
+   if (prefix.empty() || prefix.back() != '/')
+      prefix += '/';
+
+   if (pServerUrl)
+      *pServerUrl = prefix;
+   if (pSessionUrl)
+      *pSessionUrl = urlPrefix;
+}
+
 std::string createSessionUrl(const std::string& hostPageUrl,
                              const SessionScope& scope)
 {

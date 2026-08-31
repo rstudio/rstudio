@@ -113,8 +113,8 @@ TEST_F(ChatInstallLock, OwnComponentsDoNotBlockOwnMutation)
    ASSERT_FALSE(
       sessionA_->acquireInUse(InstallLock::Component::ChatBackend, &token));
 
-   // An update legitimately begins while this session's own backend is
-   // running; it stops the backend right after taking the lock.
+   // Update/uninstall legitimately begin while this session's own backend is
+   // running; they stop it right after taking the lock.
    std::string message;
    EXPECT_FALSE(sessionA_->tryBeginMutation(&message));
 

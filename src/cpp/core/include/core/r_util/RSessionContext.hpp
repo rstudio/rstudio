@@ -270,6 +270,21 @@ void parseSessionUrl(const std::string& url,
                      std::string* pBaseUrl = nullptr,
                      std::string* pQueryParams = nullptr);
 
+/**
+ * Derive the RS_SERVER_URL and RS_SESSION_URL environment variables from a
+ * session URL, such as the client's host page URL.
+ *
+ * @param url The session URL to split
+ * @param pServerUrl Everything preceding the session segment, always ending in
+ * a slash, including any reverse-proxy sub-path ("https://host/rstudio/"). The
+ * whole url when there is no session segment, as in RStudio Server open source.
+ * @param pSessionUrl The session segment alone ("/s/<scope>/"), empty when
+ * there is no session segment.
+ */
+void parseSessionUrlEnvVars(const std::string& url,
+                            std::string* pServerUrl,
+                            std::string* pSessionUrl);
+
 
 struct SessionContext
 {

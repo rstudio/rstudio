@@ -1007,6 +1007,13 @@
             "description": "Indicates whether or not Posit Assistant integration can be enabled."
          },
          {
+            "name": "posit-assistant-installation-enabled",
+            "type": "bool",
+            "memberName": "positAssistantInstallationEnabled_",
+            "defaultValue": true,
+            "description": "Indicates whether or not users may install, update, and uninstall Posit Assistant themselves. When disabled, the session uses only an administrator-managed installation, ignores any user-level installation, and performs no update checks."
+         },
+         {
             "name": "posit-assistant-ssl-certificates-file",
             "type": "string",
             "memberName": "positAssistantSslCertificatesFile_",
@@ -1027,6 +1034,12 @@
             "implicitValue": true,
             "isHidden": true,
             "description": "Use the test manifest URL for Posit Assistant package updates."
+         },
+         {
+            "name": "posit-assistant-path",
+            "type": "core::FilePath",
+            "memberName": "positAssistantPath_",
+            "description": "Specifies the absolute path of the directory holding an administrator-managed Posit Assistant installation, that is, the directory containing the installation's dist directory. Replaces the default system-wide location rather than adding to it."
          }
       ],
       "trust": [

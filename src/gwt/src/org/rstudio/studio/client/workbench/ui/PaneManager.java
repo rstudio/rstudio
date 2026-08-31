@@ -3182,7 +3182,15 @@ public class PaneManager
       // it is unavailable (their enabled state is managed by ChatPresenter).
       commands_.popOutChat().setVisible(paiEnabled);
       commands_.returnChatToMain().setVisible(paiEnabled);
-      commands_.checkForPositAssistantUpdates().setVisible(paiEnabled);
+
+      // "Uninstall Posit Assistant" otherwise stays available so a previously
+      // installed Posit Assistant can still be removed. Administrator-managed
+      // installation is the carve-out: both commands are refused by the
+      // backend, and any leftover user-level copy is inert.
+      boolean installEnabled = paiUtil_.isPositAssistantInstallationEnabled();
+      commands_.checkForPositAssistantUpdates().setVisible(
+            paiEnabled && installEnabled);
+      commands_.uninstallPositAssistant().setVisible(installEnabled);
    }
 
    private boolean isTabHidden(Tab tab)

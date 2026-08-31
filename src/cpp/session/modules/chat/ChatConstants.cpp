@@ -26,6 +26,9 @@ namespace constants {
 // Installation paths
 const char* const kPositAiDirName = "pai/bin";
 const char* const kPositAiBackupDirName = "ai.prev";
+// Copy shipped with RStudio, installed beside the session binary (or next to
+// bin/ in the macOS app bundle); absent from open-source builds
+const char* const kBundledPositAiDirName = "posit-assistant";
 // Cross-process lock files; outside pai/bin so it survives install mutations
 const char* const kPositAiLocksDirName = "pai/locks";
 const char* const kClientDirPath = "dist/client";
@@ -50,6 +53,9 @@ const char* const kStagingDirPrefix = ".tmp-";
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
 const char* const kProtocolVersion = "11.0";
 
+// The one capability that varies by mode; see negotiatedCapabilities().
+const char* const kCheckForUpdatesMethod = "ui/checkForUpdates";
+
 // Capabilities: JSON-RPC methods that RStudio handles
 const std::vector<std::string>& rstudioCapabilities()
 {
@@ -68,9 +74,25 @@ const std::vector<std::string>& rstudioCapabilities()
       "ui/openDocument/line",
       "ui/revealInFilesPane",
       "ui/previewUrl",
-      "ui/checkForUpdates",
+      kCheckForUpdatesMethod,
    };
    return s_capabilities;
+}
+
+std::vector<std::string> negotiatedCapabilities(bool installationManaged)
+{
+   const std::vector<std::string>& all = rstudioCapabilities();
+   if (!installationManaged)
+      return all;
+
+   std::vector<std::string> negotiated;
+   negotiated.reserve(all.size());
+   for (const std::string& capability : all)
+   {
+      if (capability != kCheckForUpdatesMethod)
+         negotiated.push_back(capability);
+   }
+   return negotiated;
 }
 
 std::string assembleWebSocketPath(
