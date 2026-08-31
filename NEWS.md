@@ -51,7 +51,7 @@
 
 ### Dependencies
 - Copilot Language Server 1.531.0
-- Electron 42.10.1
+- Electron 42.11.0
 - Node.js 22.23.2 (GitHub Copilot, Posit Assistant)
 - Quarto 1.10.18
 
