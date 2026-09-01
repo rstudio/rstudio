@@ -283,7 +283,7 @@ jobs:
         id: summary
         if: always()
         working-directory: e2e/rstudio
-        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+        run: node scripts/summarize-merged-report.mjs
 
       - name: Upload merged Playwright report
         id: upload-report
@@ -348,3 +348,31 @@ jobs:
 
             ---
             <sub>All platforms - commit <code>${{ github.event.pull_request.head.sha }}</code> - <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+
+      # Does nothing: the name is the point. A step name can read step outputs
+      # (jobs.<id>.steps.name allows the `steps` context), so this puts the build
+      # under test in the job's step list, readable without expanding anything.
+      # The run page itself has no surface for a runtime value -- a run's title is
+      # fixed before it starts, and annotation placement is GitHub's to decide --
+      # so the summarizer also emits these as annotations, and this is the same
+      # facts one click in. Last, and if: always(), so the gate above can't
+      # suppress it. Skipped on an empty output, which is how the summarizer
+      # reports "no engine in that slot".
+      # Four slots because this job merges all four engines the PR run calls;
+      # add a slot here (and raise MAX_STEP_NAMES in the summarizer) if that
+      # list grows, or the extra engine appears only in the annotations.
+      - name: ${{ steps.summary.outputs.run_under_test_1 }}
+        if: always() && steps.summary.outputs.run_under_test_1 != ''
+        run: 'true'
+
+      - name: ${{ steps.summary.outputs.run_under_test_2 }}
+        if: always() && steps.summary.outputs.run_under_test_2 != ''
+        run: 'true'
+
+      - name: ${{ steps.summary.outputs.run_under_test_3 }}
+        if: always() && steps.summary.outputs.run_under_test_3 != ''
+        run: 'true'
+
+      - name: ${{ steps.summary.outputs.run_under_test_4 }}
+        if: always() && steps.summary.outputs.run_under_test_4 != ''
+        run: 'true'
