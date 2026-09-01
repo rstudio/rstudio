@@ -1763,14 +1763,16 @@
 
 .rs.addFunction("removeWorkingData", function(cacheKey)
 {
+   # the cached search projection describes the same frame; drop it whenever
+   # the working data is dropped. Dropped first so that a failure removing
+   # the working data (tracked by pendingWorkingDataWipe on the C++ side)
+   # cannot strand a stale projection behind it.
+   .rs.removeSearchData(cacheKey)
+
    if (.rs.isNonEmptyScalarString(cacheKey) &&
        exists(".rs.WorkingDataEnv") &&
        exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
       rm(list = cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
-
-   # the cached search projection describes the same frame; drop it whenever
-   # the working data is dropped
-   .rs.removeSearchData(cacheKey)
 
    invisible(NULL)
 })

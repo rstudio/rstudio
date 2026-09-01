@@ -49,6 +49,18 @@ TEST(DataViewerTest, SearchSubset_ContainedSearchIsSubset)
    EXPECT_TRUE(detail::isSearchSubset("abc", "xabcy"));
 }
 
+TEST(DataViewerTest, SearchSubset_ContainmentIsCaseInsensitive)
+{
+   // the search itself matches case-insensitively, so a re-cased refinement
+   // is still a subset: rows matching "ABc" all match a search for "ab"
+   EXPECT_TRUE(detail::isSearchSubset("ab", "ABc"));
+   EXPECT_TRUE(detail::isSearchSubset("WAL", "walnuts"));
+   EXPECT_TRUE(detail::isSearchSubset("abc", "xAbCy"));
+
+   // case-insensitivity must not manufacture subsets that are not there
+   EXPECT_FALSE(detail::isSearchSubset("ABCD", "abc"));
+}
+
 TEST(DataViewerTest, SearchSubset_EmptySearchIsSupersetOfAll)
 {
    // a working copy built with no search holds every (filtered) row

@@ -138,16 +138,25 @@ namespace detail {
 
 // indicates whether rows matching the global search `inner` are necessarily a
 // subset of rows matching the search `outer`. The search is a bare literal
-// substring query (never "type|value" like the column filters), so this holds
-// exactly when `outer` occurs within `inner`: a row containing "walnuts" also
-// contains "walnut". This is what lets an extended search refine the cached
+// substring query (never "type|value" like the column filters), matched
+// case-insensitively on the R side, so this holds whenever `outer` occurs
+// within `inner` up to case: a row containing "WALNUTS" also matches a search
+// for "walnut". This is what lets an extended search refine the cached
 // working copy instead of rescanning the whole frame; routing the search
 // through isFilterSubset instead would (a) never detect these subsets, since
 // a bare search fails its "type|value" parse, and (b) misparse a search that
 // happens to look like a filter (e.g. "numeric|12_18") as a range test.
+//
+// The folding here is ASCII-only, which is conservative against PCRE's
+// Unicode case folding: a subset missed over a non-ASCII case pair just
+// falls back to a full recompute, while a subset is never claimed that the
+// case-insensitive search would not honor.
 bool isSearchSubset(const std::string& outer, const std::string& inner)
 {
-   return inner.find(outer) != std::string::npos;
+   if (outer.empty())
+      return true;
+
+   return boost::algorithm::icontains(inner, outer);
 }
 
 // indicates whether one filter string is a subset of another; e.g. if a column
@@ -731,13 +740,25 @@ SEXP applyViewTransform(SEXP dataSEXP,
 
    if (recompute)
    {
+      // Like the working copy, the search projection may be stale while a
+      // wipe is pending (the failed .rs.removeWorkingData call covers both
+      // caches); withhold the cache key so the projection is neither read
+      // nor rebuilt until onDetectChanges retries the removal. A same-shaped
+      // replacement frame would otherwise be searched against the old
+      // projected strings, since the R side revalidates by dim() only.
+      bool searchCacheUsable =
+            cachedFrame == s_cachedFrames.end() ||
+            !cachedFrame->second.pendingWorkingDataWipe;
+
       r::exec::RFunction transform(".rs.applyTransform");
       transform.addParam("x", dataSEXP);             // data to transform
       transform.addParam("filtered", params.filters); // which columns are filtered
       transform.addParam("search", params.search);    // global search (across cols)
       transform.addParam("cols", params.ordercols);    // which column to order on
       transform.addParam("dirs", params.orderdirs);    // order direction
-      transform.addParam("cacheKey", cacheKey);        // enables the search projection cache
+
+      // enables the search projection cache
+      transform.addParam("cacheKey", searchCacheUsable ? cacheKey : std::string());
 
       // the cached search projection is row-aligned with the full frame, so
       // it must not be consulted when transforming from a working copy
