@@ -562,6 +562,11 @@ jobs:
           # distinguish these results) and to derive the platform+shard-unique
           # blob report file name.
           PW_PROJECT_LABEL: ${{ inputs.project }}-macos
+          # Human OS name for the "Run under test" block the harness writes to the
+          # report header and the run summary. Also the report metadata key, so it
+          # must name this engine alone: a merged multi-engine report keeps one
+          # entry per key, and engines sharing a key overwrite each other.
+          PW_OS_LABEL: macOS 26 (arm64)
           PW_GREP: ${{ inputs.grep }}
           PW_GREP_INVERT: ${{ inputs.grep_invert }}
           PW_TEST_SELECTOR: ${{ inputs.test_selector }}
@@ -691,7 +696,7 @@ jobs:
         id: summary
         if: always()
         working-directory: e2e/rstudio
-        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+        run: node scripts/summarize-merged-report.mjs
 
       - name: Upload merged Playwright report
         id: upload-report
@@ -764,3 +769,16 @@ jobs:
             exit 1
           fi
           echo "::notice::Gate floor met: $PASSED test(s) passed."
+
+      # Does nothing: the name is the point. A step name can read step outputs
+      # (jobs.<id>.steps.name allows the `steps` context), so this puts the build
+      # under test in the job's step list, readable without expanding anything.
+      # The run page itself has no surface for a runtime value -- a run's title is
+      # fixed before it starts, and annotation placement is GitHub's to decide --
+      # so the summarizer also emits these as annotations, and this is the same
+      # facts one click in. Last, and if: always(), so the gate above can't
+      # suppress it. Skipped on an empty output, which is how the summarizer
+      # reports "no engine in that slot".
+      - name: ${{ steps.summary.outputs.run_under_test_1 }}
+        if: always() && steps.summary.outputs.run_under_test_1 != ''
+        run: 'true'

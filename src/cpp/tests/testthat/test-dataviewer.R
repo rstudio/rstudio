@@ -1020,6 +1020,30 @@ test_that(".rs.removeWorkingData() also drops the cached search projection", {
    expect_false(exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
 })
 
+test_that("a failing working-data wipe still drops the search projection", {
+   df <- data.frame(num = c(1.5, 2.5))
+   cacheKey <- "test-search-projection-failed-wipe"
+
+   # seed the projection cache
+   .rs.applyTransform(df, character(1L), "1", integer(), character(), cacheKey, TRUE)
+   expect_true(exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
+
+   # swap in a locked working-data environment so removing the working copy
+   # fails, standing in for the failures pendingWorkingDataWipe tracks
+   workingDataEnv <- .rs.WorkingDataEnv
+   lockedEnv <- new.env(parent = emptyenv())
+   assign(cacheKey, df, envir = lockedEnv)
+   lockEnvironment(lockedEnv)
+   .rs.setVar("WorkingDataEnv", lockedEnv)
+   on.exit(.rs.setVar("WorkingDataEnv", workingDataEnv), add = TRUE)
+
+   # the removal fails, but the projection must be dropped first: the C++
+   # side only retries .rs.removeWorkingData, so a projection stranded here
+   # could be served to a same-shaped replacement frame
+   expect_error(.rs.removeWorkingData(cacheKey))
+   expect_false(exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
+})
+
 test_that("the search projection is rebuilt when the frame shape changes", {
    cacheKey <- "test-search-projection-reshape"
    on.exit(.rs.removeSearchData(cacheKey), add = TRUE)

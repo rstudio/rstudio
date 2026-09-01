@@ -231,7 +231,10 @@ runs:
         echo "version_full=$VERSION_FULL" >> "$GITHUB_OUTPUT"
         # Surfaced on the job's summary page so the R version is visible without
         # opening the log. Deliberately unconditional: every engine and every
-        # caller gets it, not just certification runs.
+        # caller gets it, not just certification runs. The merge job's "Run under
+        # test" annotations name the R version too, alongside the RStudio version,
+        # release name, edition, and OS -- but those are annotations on the run
+        # page, not a summary entry, so the two don't collide.
         {
           echo "### R version"
           echo ""

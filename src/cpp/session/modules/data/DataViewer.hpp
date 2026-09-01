@@ -36,7 +36,8 @@ core::Error initialize();
 namespace detail {
 
 // whether rows matching the global search `inner` are necessarily a subset of
-// rows matching the search `outer` (bare literal substring queries)
+// rows matching the search `outer` (bare literal substring queries, matched
+// case-insensitively)
 bool isSearchSubset(const std::string& outer, const std::string& inner);
 
 // whether rows matching the "type|value" column filter `inner` are

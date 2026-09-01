@@ -290,6 +290,57 @@ test.describe('Data Viewer', () => {
     }).toBe(true);
   });
 
+  // Clearing the sort while a search stays active must restore original row
+  // order. The transform layer refines a cached working copy for requests
+  // whose row set shrinks or stays the same, and before the #18423 follow-up
+  // a sort-clear request reused the previously *sorted* copy as-is, leaving
+  // the grid stuck in stale sort order.
+  //
+  // The frame must be a NAMED global: a temporary expression's working copy
+  // is wiped on every change-detection pass, so with View(data.frame(...))
+  // each request recomputes from the full frame and the reuse path (and the
+  // regression) is unreachable.
+  test('clearing the sort restores original row order while a search is active (#18423)', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ e2eSortClear <- data.frame(id = c(3, 1, 2, 0), tag = c("kx", "ky", "kz", "zzz")); View(e2eSortClear) }',
+    );
+    await waitForViewer(dataViewer);
+
+    // The tag column is the last cell of each rendered row; its values are
+    // unique, so the sequence pins the full display order.
+    const tagOrder = () => dataViewer.frame
+      .locator('#gridBody tr:not(.spacer-row)')
+      .evaluateAll((rows) => rows.map((row) => {
+        const cells = row.querySelectorAll('td');
+        return cells[cells.length - 1]?.textContent ?? '';
+      }));
+
+    // Search down to the three "k" rows; the row count dropping to 3 is the
+    // signal that the debounced search round-tripped.
+    const search = page.locator('#data_editing_toolbar').getByLabel('Search data table');
+    await search.click();
+    await page.keyboard.type('k');
+    await expect(dataViewer.frame.locator('#gridBody tr:not(.spacer-row)'))
+      .toHaveCount(3, { timeout: TIMEOUTS.fileOpen });
+    await expect.poll(tagOrder).toEqual(['kx', 'ky', 'kz']);
+
+    // Sort ascending by id; the search stays applied.
+    await dataViewer.frame.locator('th[data-col-idx="1"]').click();
+    await expect.poll(tagOrder, { timeout: TIMEOUTS.fileOpen })
+      .toEqual(['ky', 'kz', 'kx']);
+
+    // Clear the sort from the info bar. The searched row set is unchanged,
+    // so the backend may reuse its working copy -- but the rows must come
+    // back in original frame order, not the stale sorted order.
+    await dataViewer.clearSortButton.click();
+    await expect.poll(tagOrder, { timeout: TIMEOUTS.fileOpen })
+      .toEqual(['kx', 'ky', 'kz']);
+    await expect(dataViewer.sortStatus).toBeHidden();
+
+    // best-effort cleanup of the named global (afterEach closes the tab)
+    await consoleActions.executeInConsole('rm(e2eSortClear)');
+  });
+
   test('pin icon moves a column to the pinned prefix', async () => {
     await consoleActions.executeInConsole('View(mtcars)');
     await waitForViewer(dataViewer);
