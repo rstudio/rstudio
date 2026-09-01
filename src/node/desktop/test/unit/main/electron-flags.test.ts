@@ -60,8 +60,8 @@ describe('Electron flags', () => {
     try {
       const config = loadElectronFlags([first, second]);
       assert.isDefined(config);
-      assert.strictEqual(config?.path, path.join(first, 'electron-flags.conf'));
-      assert.deepEqual(config?.flags, [{ name: 'use-gl', value: 'angle' }]);
+      assert.strictEqual(config.path, path.join(first, 'electron-flags.conf'));
+      assert.deepEqual(config.flags, [{ name: 'use-gl', value: 'angle' }]);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
