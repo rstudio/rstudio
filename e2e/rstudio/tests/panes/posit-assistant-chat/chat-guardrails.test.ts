@@ -79,6 +79,14 @@ const PROCEED_WITH_PATH =
 // mid-stream and it ends without a substantive response (see askAssistant).
 const DEAD_TURN_ATTEMPTS = 3;
 
+// How long one attempt waits for the response to finish streaming.
+const RESPONSE_TIMEOUT_MS = 120000;
+
+// Worst case for one askAssistant attempt: sendChatMessage can spend up to
+// 60s waiting out a still-streaming previous turn (chat_pane.actions.ts)
+// before the response poll runs to RESPONSE_TIMEOUT_MS.
+const ATTEMPT_BUDGET_MS = 60000 + RESPONSE_TIMEOUT_MS;
+
 test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
@@ -110,10 +118,14 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '
     await chatActions.dismissSetupPrompts();
   });
 
-  // Dead-turn retries (see askAssistant) can stack a dropped attempt on top
-  // of a slow healthy turn, so give each test headroom past the 120s default.
+  // Dead-turn retries (see askAssistant) can pay the full attempt budget up
+  // to DEAD_TURN_ATTEMPTS times, and the test timeout must clear that worst
+  // case: exhausting it mid-attempt would turn the diagnostic dead-turn error
+  // into a bare "Test timeout exceeded". Derived so a change to either
+  // constant keeps the two in sync; the margin covers conversation setup and
+  // dialog handling around the polls.
   test.beforeEach(() => {
-    test.setTimeout(240000);
+    test.setTimeout(DEAD_TURN_ATTEMPTS * ATTEMPT_BUDGET_MS + 60000);
   });
 
   test.afterAll(async () => {
@@ -150,7 +162,7 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '
         const count = await chatPane.getMessageCount();
         if (count <= initialCount) return false;
         return await chatActions.isTurnIdle();
-      }, 120000, answerQuestion);
+      }, RESPONSE_TIMEOUT_MS, answerQuestion);
 
       if (await chatPane.isLastMessageSubstantive()) {
         return await chatPane.messageItem.last().innerText();
