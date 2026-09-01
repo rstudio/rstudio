@@ -16,6 +16,16 @@
 include(ExternalProject)
 include(FetchContent)
 
+# CMake 4.4 added a configurable delay between FetchContent git clone
+# attempts. Use a nonzero default so the built-in retries can outlast brief
+# network outages, while still allowing callers to override it with -D.
+if(NOT CMAKE_VERSION VERSION_LESS "4.4")
+   set(
+      CMAKE_EP_GIT_CLONE_RETRY_DELAY
+      "5"
+      CACHE STRING "Delay in seconds between FetchContent git clone attempts")
+endif()
+
 if(NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
    set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "" FORCE)
 endif()
@@ -71,9 +81,10 @@ function(dependency)
    set(${_NAME}_PLATFORMS  "${_PLATFORMS}"  CACHE INTERNAL "")
    set(${_NAME}_CXXFLAGS   "${_CXXFLAGS}"   CACHE INTERNAL "")
 
+   set(${_NAME}_ENABLED FALSE)
    if(_PLATFORMS)
       foreach(_PLATFORM IN LISTS _PLATFORMS)
-         if(_PLATFORM)
+         if(${_PLATFORM})
             set(${_NAME}_ENABLED TRUE)
             break()
          endif()
