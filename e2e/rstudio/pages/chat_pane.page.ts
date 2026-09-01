@@ -140,12 +140,14 @@ export class ChatPane extends FramePageObject {
    * predicate is the discriminator: callers re-send the prompt when it
    * reports false.
    *
-   * The thinking disclosure (databot's ElementThinking) is a wrapper div
-   * holding a toggle button -- labeled "Thought for Xs" / "Thinking" and
-   * carrying aria-expanded -- plus the collapsible region; stripping wrappers
-   * whose toggle matches that label leaves only genuine reply content. An
-   * unrecognized future DOM fails toward "substantive", i.e. no retry, which
-   * is the pre-detector behavior rather than a retry-until-exhausted loop.
+   * The thinking disclosure (databot's ElementThinking) is a toggle button
+   * -- labeled "Thought for Xs" / "Thinking" and carrying aria-expanded --
+   * plus a collapsible region whose aria-labelledby names the toggle's id;
+   * stripping each matching toggle and the region it labels leaves only
+   * genuine reply content. Nothing beyond that provably-linked pair is
+   * removed, so an unrecognized future DOM fails toward "substantive", i.e.
+   * no retry, which is the pre-detector behavior rather than a
+   * retry-until-exhausted loop.
    */
   async isLastMessageSubstantive(): Promise<boolean> {
     if ((await this.getMessageCount()) === 0) {
@@ -168,7 +170,18 @@ export class ChatPane extends FramePageObject {
       for (const toggle of Array.from(clone.querySelectorAll('button[aria-expanded]'))) {
         const name = toggle.getAttribute('aria-label') ?? toggle.textContent ?? '';
         if (/^\s*(Thought for|Thinking)\b/.test(name)) {
-          (toggle.parentElement ?? toggle).remove();
+          // The collapsed thought text stays in the DOM (the region only
+          // animates shut), so textContent would count it; remove the region
+          // through its aria-labelledby link rather than assuming where the
+          // toggle sits relative to it.
+          if (toggle.id) {
+            for (const region of Array.from(
+              clone.querySelectorAll(`[aria-labelledby~="${CSS.escape(toggle.id)}"]`)
+            )) {
+              region.remove();
+            }
+          }
+          toggle.remove();
         }
       }
 
