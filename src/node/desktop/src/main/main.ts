@@ -20,6 +20,7 @@ import { logLevel, logger } from '../core/logger';
 import { setApplication } from './app-state';
 import { Application } from './application';
 import { initI18n } from './i18n-manager';
+import { startLoginShellPathQuery } from './login-shell-path';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
 import { recordProcessStart, startupCheckpoint } from './startup-timing';
@@ -156,6 +157,11 @@ class RStudioMain {
 // Startup
 recordProcessStart();
 startupCheckpoint('main-entry');
+
+// the login shell is slow to answer and the session will need its PATH, so
+// ask before anything else (see login-shell-path.ts)
+startLoginShellPathQuery();
+
 initI18n();
 
 const main = new RStudioMain();

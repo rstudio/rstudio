@@ -13,7 +13,7 @@
  *
  */
 
-import { ChildProcess, execSync, spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { app, BrowserWindow } from 'electron';
 import fs, { rmSync } from 'fs';
 
@@ -42,6 +42,9 @@ import { createStandaloneErrorDialog, findRepoRoot, getCurrentlyUniqueFolderName
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
 import { startupCheckpoint } from './startup-timing';
+import { readMachoArchitectures } from '../core/macho';
+import { cachedLoginShellPath, kSessionPathInitializedEnvVar, loginShellPath } from './login-shell-path';
+import { probeUrl } from './url-utils';
 import { showWhatsNewWindow } from './whats-new-window';
 import {
   toReleaseSlug,
@@ -108,8 +111,8 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     // x86 or arm64 versions of the libraries in the launched rsession
     const path = absPath.getAbsolutePath();
     if (process.arch === 'arm64') {
-      const fileInfo = execSync(`/usr/bin/file "${rLib}"`, { encoding: 'utf-8' });
-      if (fileInfo.indexOf('arm64') === -1 && fileInfo.indexOf('x86_64') !== -1) {
+      const architectures = libRArchitectures(rLib);
+      if (!architectures.includes('arm64') && architectures.includes('x86_64')) {
         argList = ['-x86_64', ...dyldArgs, path, ...argList];
         absPath = new FilePath('/usr/bin/arch');
       } else {
@@ -119,6 +122,14 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     } else {
       argList = ['-x86_64', ...dyldArgs, path, ...argList];
       absPath = new FilePath('/usr/bin/arch');
+    }
+
+    // adopt the login shell's PATH if we have it, and say so, so rsession
+    // need not spend its own startup asking the shell (see login-shell-path.ts)
+    const shellPath = cachedLoginShellPath();
+    if (shellPath) {
+      env['PATH'] = shellPath;
+      env[kSessionPathInitializedEnvVar] = '1';
     }
   }
 
@@ -135,6 +146,22 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
   } else {
     // for diagnostics, redirect child process stdio to this process
     return spawn(absPath.getAbsolutePath(), argList, { stdio: 'inherit', env: env });
+  }
+}
+
+/**
+ * Architectures of R's shared library, as `/usr/bin/file` would report them
+ * but without launching a process. Unreadable files yield an empty list,
+ * which callers treat as "not the architecture we were looking for".
+ */
+function libRArchitectures(rLib: FilePath): string[] {
+  try {
+    const architectures = readMachoArchitectures(rLib.getAbsolutePath());
+    logger().logDebug(`${rLib.getAbsolutePath()}: ${architectures.join(', ') || 'not a Mach-O image'}`);
+    return architectures;
+  } catch (error: unknown) {
+    logger().logError(error);
+    return [];
   }
 }
 
@@ -228,6 +255,11 @@ export class SessionLauncher {
     logger().logDiagnosticEnvVar('HOME');
     logger().logDiagnosticEnvVar('R_USER');
     logger().logDiagnosticEnvVar('RSTUDIO_CPP_BUILD_OUTPUT');
+
+    // settle which PATH the session gets; this only waits on a first launch
+    // (see login-shell-path.ts)
+    await loginShellPath();
+    startupCheckpoint('login-shell-path-ready');
 
     // launch the process
     try {
@@ -325,6 +357,19 @@ export class SessionLauncher {
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
+
+      // Show the placeholder page right away and navigate to the session only
+      // once it is listening. Navigating immediately would fail (the session
+      // needs a moment to open its port) and cost a reload cycle with a
+      // coarse retry interval on top; see MainWindow.onLoadFinished.
+      this.mainWindow.loadLoadingPage().catch((error: unknown) => logger().logError(error));
+      const listening = await this.waitForSessionListener(launchContext.url);
+      if (!listening) {
+        // the session exited before listening; onRSessionExited has shown
+        // (or will show) the launch error page
+        return success();
+      }
+
       startupCheckpoint('load-url');
       this.mainWindow.loadUrl(launchContext.url).catch((reason) => {
         logger().logErrorMessage(`Failed to load ${launchContext.url}: ${reason}`);
@@ -332,6 +377,31 @@ export class SessionLauncher {
     }
 
     return success();
+  }
+
+  /**
+   * Polls until the session's HTTP listener answers. Resolves false if the
+   * session process exits first; after the timeout, resolves true anyway so
+   * the normal load-failure handling can take over.
+   */
+  private async waitForSessionListener(url: string): Promise<boolean> {
+    const kProbeIntervalMs = 20;
+    const kProbeTimeoutMs = 30000;
+
+    const deadline = Date.now() + kProbeTimeoutMs;
+    while (Date.now() < deadline) {
+      if (this.sessionProcess?.exitCode !== null) {
+        return false;
+      }
+      if (await probeUrl(url)) {
+        startupCheckpoint('session-listening');
+        return true;
+      }
+      await setTimeoutPromise(kProbeIntervalMs);
+    }
+
+    logger().logWarning(`Session did not start listening on ${url} within ${kProbeTimeoutMs}ms`);
+    return true;
   }
 
   closeAllSatellites(): void {
@@ -675,11 +745,8 @@ export class SessionLauncher {
     // with the arm64 session binary (rsession-arm64) or with the x64 session binary (rsession)
     if (app.isPackaged && process.platform === 'darwin' && process.arch === 'arm64') {
       const rHome = getenv('R_HOME');
-      const rLibPath = `${rHome}/lib/libR.dylib`;
-      logger().logDebug(`$ /usr/bin/file "${rLibPath}"`);
-      const fileInfo = execSync(`/usr/bin/file "${rLibPath}"`, { encoding: 'utf-8' });
-      logger().logDebug(fileInfo);
-      if (fileInfo.indexOf('arm64') !== -1) {
+      const rLib = new FilePath(rHome).completePath('lib/libR.dylib');
+      if (libRArchitectures(rLib).includes('arm64')) {
         this.sessionPath = this.sessionPath.getParent().completeChildPath('rsession-arm64');
         logger().logDebug(`R is arm64; using ${this.sessionPath}`);
       } else {

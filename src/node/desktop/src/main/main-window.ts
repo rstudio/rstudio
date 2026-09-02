@@ -254,6 +254,13 @@ export class MainWindow extends GwtWindow {
       });
   }
 
+  /**
+   * Shows the "Initializing R" placeholder page while the session starts.
+   */
+  async loadLoadingPage(): Promise<void> {
+    return this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY, false);
+  }
+
   async loadUrl(url: string, updateBaseUrl = true): Promise<void> {
     // pass along the shared secret with every request
     const filter = {

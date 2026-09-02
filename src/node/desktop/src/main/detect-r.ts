@@ -212,7 +212,26 @@ function prepareEnvironmentImpl(rPath: string): Err {
   return success();
 }
 
+// Querying R costs a process launch (~150ms or more). The same executable is
+// queried while scanning for installations and again when preparing the
+// session environment, so successful results are remembered per path.
+const rEnvironmentCache = new Map<string, REnvironment>();
+
 export function detectREnvironment(rPath: string): Expected<REnvironment> {
+  const cached = rEnvironmentCache.get(rPath);
+  if (cached) {
+    return ok(cached);
+  }
+
+  const result = detectREnvironmentImpl(rPath);
+  const [environment, error] = result;
+  if (!error) {
+    rEnvironmentCache.set(rPath, environment);
+  }
+  return result;
+}
+
+function detectREnvironmentImpl(rPath: string): Expected<REnvironment> {
   // resolve path to binary if we were given a directory
   let rExecutable = new FilePath(rPath);
   if (rExecutable.isDirectory()) {

@@ -85,6 +85,25 @@ export function isSafeHost(host: string): boolean {
 }
 
 /**
+ * Resolves true once something answers an HTTP request to `url` with any
+ * status. The session's listener rejects this unauthenticated probe, but a
+ * rejection still means it is up.
+ */
+export async function probeUrl(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    http
+      .get(url, (res) => {
+        res.resume(); // consume response data to free up memory
+        resolve(true);
+      })
+      .on('error', (e) => {
+        logger().logDebug(`Connection to ${url} failed: ${e.message}`);
+        resolve(false);
+      });
+  });
+}
+
+/**
  * Wait for a URL to respond, with retries and timeout
  */
 export async function waitForUrlWithTimeout(
@@ -94,17 +113,8 @@ export async function waitForUrlWithTimeout(
   maxWaitSec: number,
 ): Promise<Err> {
   const checkReady: WaitTimeoutFn = async () => {
-    return new Promise((resolve) => {
-      http
-        .get(url, (res) => {
-          res.resume(); // consume response data to free up memory
-          resolve(new WaitResult('WaitSuccess'));
-        })
-        .on('error', (e) => {
-          logger().logDebug(`Connection to ${url} failed: ${e.message}`);
-          resolve(new WaitResult('WaitContinue'));
-        });
-    });
+    const reachable = await probeUrl(url);
+    return new WaitResult(reachable ? 'WaitSuccess' : 'WaitContinue');
   };
 
   return waitWithTimeout(checkReady, initialWaitMs, incrementWaitMs, maxWaitSec);
