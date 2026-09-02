@@ -2140,7 +2140,15 @@ var appendPinnedCells = function(parent, makeCell) {
 var appendUnpinnedWindowedCells = function(parent, makeCell, spacerTag) {
    var firstUnpinned = firstUnpinnedPos();
    var lastPos = columnOrder.length - 1;
-   if (firstUnpinned > lastPos) return;
+   if (firstUnpinned > lastPos) {
+      // No unpinned column to render (every column hidden, or every fetched
+      // one pinned). Keep one empty cell so the row still has its height: the
+      // rendered rows of this pane define the scroll extent the frozen pane's
+      // rows follow, and cell-less rows would collapse to nothing, leaving
+      // later row names unreachable. unpinnedRenderedColumnCount matches.
+      parent.appendChild(colSpacerCell(spacerTag, 0));
+      return;
+   }
 
    // Clamp the window to the unpinned range; fall back to the full range if it
    // hasn't been computed yet so we never render an empty body.

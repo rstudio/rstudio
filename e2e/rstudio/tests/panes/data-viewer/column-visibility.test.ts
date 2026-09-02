@@ -153,7 +153,7 @@ test.describe('Data Viewer column visibility', () => {
 
     // Only the frozen rownames column remains; the scrollable pane is empty
     // and the hint (with its way back) is up.
-    await expect(dataViewer.frame.locator('#data_cols th')).toHaveCount(0);
+    await expect(dataViewer.frame.locator('#data_cols th[data-col-idx]')).toHaveCount(0);
     await expect(dataViewer.frame.locator('#pinned_cols th[title="row names"]')).toBeVisible();
     await expect(hint).toBeVisible();
     await expect(headerEye).toHaveAttribute('aria-label', 'Show all columns');
@@ -183,6 +183,45 @@ test.describe('Data Viewer column visibility', () => {
     await expect(dataViewer.columnHeader(2)).toBeVisible();
     expect((await colOrder(dataViewer)).slice(0, 4)).toEqual(['0', '1', '2', '3']);
     await expect(dataViewer.gridInfo).not.toContainText('hidden');
+  });
+
+  // With every column hidden the scrollable pane's rows have no data cells.
+  // They must keep a placeholder cell so the rows keep their height: the
+  // frozen rownames pane follows the scrollable pane's scroll extent, so
+  // collapsed rows would leave later row names unreachable.
+  test('rows stay scrollable with every column hidden', async ({ rstudioPage: page }) => {
+    await viewAs('data.frame(x = seq_len(2000))');
+    await waitForViewer(dataViewer);
+    await expect(dataViewer.gridInfo).toContainText('of 2,000', { timeout: TIMEOUTS.fileOpen });
+
+    await dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-eye').click();
+    await expect(dataViewer.frame.locator('#data_cols th[data-col-idx]')).toHaveCount(0);
+
+    // The rendered rows keep their height, so the scroll range still spans
+    // every row (ROW_HEIGHT px each, plus the header).
+    await expect.poll(
+      () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollHeight),
+      { message: 'scroll extent should still cover every row' },
+    ).toBeGreaterThan(2000 * 23);
+    await expect(dataViewer.frame.locator('#gridBody tr[data-row="0"]'))
+      .toHaveJSProperty('offsetHeight', 23);
+
+    // Wheel to the bottom the way a user does (a one-step scrollTop lands
+    // mid-rebuild and is clamped; see scrollGridToBottom in
+    // data_viewer.test.ts): the last row name is reached.
+    const box = await dataViewer.viewport.boundingBox();
+    if (!box) throw new Error('grid viewport has no bounding box');
+    await page.mouse.move(box.x + box.width / 3, box.y + box.height / 2);
+    for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 8000);
+    await expect.poll(
+      () => dataViewer.viewport.evaluate(
+        (el: HTMLElement) => el.scrollTop >= el.scrollHeight - el.clientHeight - 1,
+      ),
+      { timeout: TIMEOUTS.fileOpen },
+    ).toBe(true);
+    await expect(dataViewer.frame.locator('#pinnedBody tr[data-row="1999"] td'))
+      .toHaveText('2000', { timeout: TIMEOUTS.fileOpen });
+    await expect(dataViewer.gridInfo).toContainText('2,000 of 2,000', { timeout: TIMEOUTS.fileOpen });
   });
 
   test('a hidden column keeps its sort, and clicking its entry shows it again', async () => {
@@ -422,7 +461,7 @@ test.describe('Data Viewer column visibility', () => {
     // (scrolling the virtualized list to build the far ones).
     const headerEye = dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-eye');
     await headerEye.click();
-    await expect(dataViewer.frame.locator('#data_cols th')).toHaveCount(0);
+    await expect(dataViewer.frame.locator('#data_cols th[data-col-idx]')).toHaveCount(0);
     await expect(dataViewer.frame.locator('#allColumnsHiddenHint')).toBeVisible();
     await expect(dataViewer.gridInfo).toContainText('(300 hidden)');
 
@@ -477,7 +516,7 @@ test.describe('Data Viewer column visibility', () => {
     await expect(dataViewer.gotoColumnInput).toBeHidden();
 
     await dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-eye').click();
-    await expect(dataViewer.frame.locator('#data_cols th')).toHaveCount(0);
+    await expect(dataViewer.frame.locator('#data_cols th[data-col-idx]')).toHaveCount(0);
     await expect(dataViewer.gotoColumnInput).toBeVisible();
 
     // Jumping to a hidden column through the box shows just that column.
