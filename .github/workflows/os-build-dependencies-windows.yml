@@ -60,7 +60,7 @@ jobs:
       MSVC_TOOLSET_VERSION: "145"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # install-boost.R and install-soci.R are driven by R.
       - name: Set up R
@@ -106,7 +106,7 @@ jobs:
             .\install-soci\soci-msvc%MSVC_TOOLSET_VERSION%-%SOCI_VERSION%
 
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-dependencies-msvc${{ env.MSVC_TOOLSET_VERSION }}
           path: |
@@ -116,7 +116,7 @@ jobs:
 
       - name: Configure AWS credentials
         if: ${{ inputs.upload }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           role-to-assume: ${{ secrets.AWS_BUILDTOOLS_UPLOAD_ROLE_ARN }}
           aws-region: us-east-1

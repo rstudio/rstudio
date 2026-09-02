@@ -128,6 +128,68 @@ export class ChatPane extends FramePageObject {
   }
 
   /**
+   * Whether the conversation's last message is an assistant reply with any
+   * content beyond a thinking disclosure.
+   *
+   * The provider can drop a turn mid-stream: the turn ends cleanly as far as
+   * the composer is concerned (stop button gone, so isTurnIdle passes) after
+   * streaming only the collapsed "Thought for Xs" block -- or nothing at all,
+   * leaving the user's own prompt as the last message. No tool ran and no
+   * reply text exists, so waits keyed on turn completion succeed while
+   * assertions about the assistant's work fail on work it never did. This
+   * predicate is the discriminator: callers re-send the prompt when it
+   * reports false.
+   *
+   * The thinking disclosure (databot's ElementThinking) is a toggle button
+   * -- labeled "Thought for Xs" / "Thinking" and carrying aria-expanded --
+   * plus a collapsible region whose aria-labelledby names the toggle's id;
+   * stripping each matching toggle and the region it labels leaves only
+   * genuine reply content. Nothing beyond that provably-linked pair is
+   * removed, so an unrecognized future DOM fails toward "substantive", i.e.
+   * no retry, which is the pre-detector behavior rather than a
+   * retry-until-exhausted loop.
+   */
+  async isLastMessageSubstantive(): Promise<boolean> {
+    if ((await this.getMessageCount()) === 0) {
+      return false;
+    }
+
+    // A torn-down iframe (the message items gone by evaluate time) is the
+    // provider blip itself, so a failed lookup reads as "not substantive"
+    // rather than erroring out of the caller's retry loop.
+    return await this.messageItem.last().evaluate((el) => {
+      // Each message stamps data-message-id on both the ChatMessage row
+      // wrapper and the nested MessageRenderer content div, so last() lands
+      // on the inner div and the assistant class sits on an ancestor;
+      // closest() covers that shape, querySelector() the row wrapper.
+      if (!el.closest('.chat-message-assistant') && !el.querySelector('.chat-message-assistant')) {
+        return false;
+      }
+
+      const clone = el.cloneNode(true) as HTMLElement;
+      for (const toggle of Array.from(clone.querySelectorAll('button[aria-expanded]'))) {
+        const name = toggle.getAttribute('aria-label') ?? toggle.textContent ?? '';
+        if (/^\s*(Thought for|Thinking)\b/.test(name)) {
+          // The collapsed thought text stays in the DOM (the region only
+          // animates shut), so textContent would count it; remove the region
+          // through its aria-labelledby link rather than assuming where the
+          // toggle sits relative to it.
+          if (toggle.id) {
+            for (const region of Array.from(
+              clone.querySelectorAll(`[aria-labelledby~="${CSS.escape(toggle.id)}"]`)
+            )) {
+              region.remove();
+            }
+          }
+          toggle.remove();
+        }
+      }
+
+      return (clone.textContent ?? '').trim().length > 0;
+    }, undefined, { timeout: 5000 }).catch(() => false);
+  }
+
+  /**
    * The chat composer is ready when it's visible and editable. TipTap reflects
    * its editable state via the contenteditable attribute (toggled by
    * editor.setEditable), so we check that rather than isEnabled() -- a

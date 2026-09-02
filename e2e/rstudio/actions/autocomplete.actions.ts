@@ -16,6 +16,76 @@ const EXPLICIT_COMPLETION_TIMEOUT_MS = 10000;
 // a replacement request land -- see waitForCompletionPopup.
 const STALE_POPUP_SETTLE_MS = 500;
 
+/** Whether the popup becomes visible within `timeoutMs`. */
+async function popupAppears(page: Page, timeoutMs: number): Promise<boolean> {
+  return await page
+    .locator(COMPLETION_POPUP)
+    .waitFor({ state: 'visible', timeout: timeoutMs })
+    .then(() => true)
+    .catch(() => false);
+}
+
+/**
+ * Wait for the completion popup after typing, forcing a request with
+ * Ctrl+Space only if the implicit one never produces one.
+ *
+ * Typing already schedules a completion request -- RStudio issues one
+ * `code_completion_delay` ms (250 by default) after the
+ * `code_completion_characters`-th character, and immediately after a
+ * trigger like `$` or `(`. Pressing Ctrl+Space while that is in flight is
+ * destructive rather than helpful: `RCompletionManager.beginSuggest` starts
+ * by invalidating pending requests, so the in-flight response is discarded
+ * on arrival, and if the popup has just opened the keypress instead falls
+ * through the popup-showing branch to `invalidatePendingRequests()`, which
+ * hides it. Either way the completion session is stranded and no popup ever
+ * appears.
+ *
+ * Sampling visibility once shortly after typing raced exactly that window:
+ * on CI the request round trip pushed the popup past the sample, the
+ * fallback fired into the gap, and the test then waited out its timeout on a
+ * session it had just cancelled. So wait out the implicit request first, and
+ * force one only once nothing is in flight -- retrying once, since a slow
+ * enough response can still land in the same window.
+ *
+ * A popup that is *already* up on entry is a different case: typing keeps an
+ * open popup showing while it re-requests, because `beginSuggest` invalidates
+ * without hiding (`RCompletionManager.java:1163`, hidePopup false), so its
+ * contents can still be an earlier prefix's results with the final token's
+ * request in flight. Visibility proves nothing there, hence the settle.
+ *
+ * The caller reads the popup afterwards (getCompletionItems, or an expect on
+ * COMPLETION_POPUP), and that wait is the final deadline -- this returns
+ * after the second keypress rather than waiting on the same locator twice.
+ */
+export async function waitForCompletionPopup(page: Page): Promise<void> {
+  if (await page.locator(COMPLETION_POPUP).isVisible()) {
+    await sleep(STALE_POPUP_SETTLE_MS);
+    return;
+  }
+
+  if (await popupAppears(page, IMPLICIT_COMPLETION_TIMEOUT_MS))
+    return;
+
+  await page.keyboard.press('Control+Space');
+  if (await popupAppears(page, EXPLICIT_COMPLETION_TIMEOUT_MS))
+    return;
+
+  await page.keyboard.press('Control+Space');
+}
+
+/**
+ * Toggle the automation-only "always show popup" completion override, so a
+ * unique match is listed in the popup instead of being auto-accepted. The
+ * popup-reading helpers wrap their request in this to stay deterministic
+ * regardless of how many results the token happens to have. No-op on
+ * builds that predate the knob (those keep the auto-accept behavior).
+ */
+export async function setAlwaysShowCompletionPopup(page: Page, force: boolean): Promise<void> {
+  await page.evaluate((f) => {
+    window.rstudio?.completions?.setAlwaysShowPopup(f);
+  }, force);
+}
+
 export class AutocompleteActions {
   readonly page: Page;
   readonly consoleActions: ConsolePaneActions;
@@ -58,74 +128,14 @@ export class AutocompleteActions {
     await sleep(300);
   }
 
-  /** Whether the popup becomes visible within `timeoutMs`. */
-  private async popupAppears(timeoutMs: number): Promise<boolean> {
-    return await this.page
-      .locator(COMPLETION_POPUP)
-      .waitFor({ state: 'visible', timeout: timeoutMs })
-      .then(() => true)
-      .catch(() => false);
-  }
-
-  /**
-   * Wait for the completion popup after typing, forcing a request with
-   * Ctrl+Space only if the implicit one never produces one.
-   *
-   * Typing already schedules a completion request -- RStudio issues one
-   * `code_completion_delay` ms (250 by default) after the
-   * `code_completion_characters`-th character, and immediately after a
-   * trigger like `$` or `(`. Pressing Ctrl+Space while that is in flight is
-   * destructive rather than helpful: `RCompletionManager.beginSuggest` starts
-   * by invalidating pending requests, so the in-flight response is discarded
-   * on arrival, and if the popup has just opened the keypress instead falls
-   * through the popup-showing branch to `invalidatePendingRequests()`, which
-   * hides it. Either way the completion session is stranded and no popup ever
-   * appears.
-   *
-   * Sampling visibility once shortly after typing raced exactly that window:
-   * on CI the request round trip pushed the popup past the sample, the
-   * fallback fired into the gap, and the test then waited out its timeout on a
-   * session it had just cancelled. So wait out the implicit request first, and
-   * force one only once nothing is in flight -- retrying once, since a slow
-   * enough response can still land in the same window.
-   *
-   * A popup that is *already* up on entry is a different case: typing keeps an
-   * open popup showing while it re-requests, because `beginSuggest` invalidates
-   * without hiding (`RCompletionManager.java:1163`, hidePopup false), so its
-   * contents can still be an earlier prefix's results with the final token's
-   * request in flight. Visibility proves nothing there, hence the settle.
-   *
-   * The caller reads the popup via `getCompletionItems`, whose own visibility
-   * wait is the final deadline -- this returns after the second keypress
-   * rather than waiting on the same locator twice.
-   */
+  /** See the module-level waitForCompletionPopup. */
   private async waitForCompletionPopup(): Promise<void> {
-    if (await this.page.locator(COMPLETION_POPUP).isVisible()) {
-      await sleep(STALE_POPUP_SETTLE_MS);
-      return;
-    }
-
-    if (await this.popupAppears(IMPLICIT_COMPLETION_TIMEOUT_MS))
-      return;
-
-    await this.page.keyboard.press('Control+Space');
-    if (await this.popupAppears(EXPLICIT_COMPLETION_TIMEOUT_MS))
-      return;
-
-    await this.page.keyboard.press('Control+Space');
+    await waitForCompletionPopup(this.page);
   }
 
-  /**
-   * Toggle the automation-only "always show popup" completion override, so a
-   * unique match is listed in the popup instead of being auto-accepted. The
-   * popup-reading helpers wrap their request in this to stay deterministic
-   * regardless of how many results the token happens to have. No-op on
-   * builds that predate the knob (those keep the auto-accept behavior).
-   */
+  /** See the module-level setAlwaysShowCompletionPopup. */
   private async setAlwaysShowPopup(force: boolean): Promise<void> {
-    await this.page.evaluate((f) => {
-      window.rstudio?.completions?.setAlwaysShowPopup(f);
-    }, force);
+    await setAlwaysShowCompletionPopup(this.page, force);
   }
 
   /**

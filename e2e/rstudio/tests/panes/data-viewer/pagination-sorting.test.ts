@@ -46,8 +46,10 @@ test.describe('Data Viewer', () => {
 
     // The go-to-column jump box appears for frames wider than one fetch
     // window (the pagination arrows are gone -- the grid scrolls
-    // continuously through every column).
-    await expect(dataViewer.gotoColumnInput).toBeVisible();
+    // continuously through every column). The box stays hidden until the
+    // initial fetch reports the frame width, which on a cold CI session with
+    // this 100,000x500 frame can outlast the 5s default timeout.
+    await expect(dataViewer.gotoColumnInput).toBeVisible({ timeout: 15000 });
 
     // The summary sidebar lists every column of the frame (lazy-loading their
     // stats), so its header reports the frame total -- not the loaded window.
@@ -189,13 +191,21 @@ test.describe('Data Viewer', () => {
       });
     };
 
+    // A freshly slid window renders its cells empty until the block fetch
+    // returns, so the poll must gate on the cell text being populated as well
+    // as the resolved index -- polling the index alone raced the fetch (abs
+    // settled while the cell still read ""). The sample that satisfies the
+    // poll is the one asserted on, so the index/text pair is a single
+    // consistent DOM read.
+    let sample = { abs: 0, text: '' };
     await expect
-      .poll(async () => (await leftmostAbs()).abs, { timeout: 15000 })
-      .toBeGreaterThan(4000);
+      .poll(async () => {
+        sample = await leftmostAbs();
+        return sample.abs > 4000 && sample.text !== '';
+      }, { timeout: 15000 })
+      .toBe(true);
 
-    const { abs, text } = await leftmostAbs();
-    expect(abs).toBeGreaterThan(4000);
-    expect(text).toBe(String((abs - 1) * 10 + 1));
+    expect(sample.text).toBe(String((sample.abs - 1) * 10 + 1));
   });
 
   test('an off-screen row block survives a column-window round trip', async () => {

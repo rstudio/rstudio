@@ -5,7 +5,7 @@ import { AceEditor } from '@pages/ace_editor.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
-import { clearPref, setPref } from '@utils/commands';
+import { clearPref, executeCommand, setPref } from '@utils/commands';
 
 test.describe('Code folding', () => {
   const sandbox = useSuiteSandbox();
@@ -20,7 +20,63 @@ test.describe('Code folding', () => {
 
   test.afterEach(async ({ rstudioPage: page }) => {
     await clearPref(page, 'hierarchical_section_folding');
-    await closeAndDeleteSandboxFiles(page, sandbox.dir, ['code_folding.R']);
+    await closeAndDeleteSandboxFiles(page, sandbox.dir, ['code_folding.R', 'code_folding.Rmd']);
+  });
+
+  // https://github.com/rstudio/rstudio/issues/18668
+  test('Expand All removes nested R Markdown folds', async ({ rstudioPage: page }) => {
+    const content = [
+      '---',
+      'title: "Untitled"',
+      'output: html_document',
+      'date: "2026-08-28"',
+      '---',
+      '',
+      '```{r setup, include=FALSE}',
+      'knitr::opts_chunk$set(echo = TRUE)',
+      '```',
+      '',
+      '## R Markdown',
+      '',
+      'This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents.',
+      '',
+      'You can embed an R code chunk like this:',
+      '',
+      '```{r cars}',
+      'summary(cars)',
+      '```',
+      '',
+      '## Including Plots',
+      '',
+      'You can also embed plots, for example:',
+      '',
+      '```{r pressure, echo=FALSE}',
+      'plot(pressure)',
+      '```',
+      '',
+    ].join('\n');
+
+    await writeAndOpenFile(page, sandbox.dir, 'code_folding.Rmd', content);
+
+    const editor = new AceEditor(page, 'summary(cars)');
+    await expect.poll(() => editor.getValue()).toContain('plot(pressure)');
+    await expect.poll(() => editor.getFoldWidget(6)).toBe('start');
+    await expect.poll(() => editor.getFoldWidget(16)).toBe('start');
+    await expect.poll(() => editor.getFoldWidget(24)).toBe('start');
+
+    // Collapse All folds the YAML block, the setup chunk, and both sections,
+    // nesting each remaining chunk inside its enclosing section fold. The
+    // regression only reproduces with that nesting in place.
+    await executeCommand(page, 'foldAll');
+    await expect.poll(() => editor.getFoldTree()).toEqual([
+      { row: 0, subFolds: [] },
+      { row: 6, subFolds: [] },
+      { row: 10, subFolds: [{ row: 16, subFolds: [] }] },
+      { row: 20, subFolds: [{ row: 24, subFolds: [] }] },
+    ]);
+
+    await executeCommand(page, 'unfoldAll');
+    await expect.poll(() => editor.getFoldCount()).toBe(0);
   });
 
   // https://github.com/rstudio/rstudio/issues/16541

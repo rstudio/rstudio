@@ -326,7 +326,7 @@ jobs:
       # version/RELEASE names the branch whose daily manifest the URLs below
       # come from, so this job needs the repository -- and the composite actions
       # live here too, so they have to be on disk before they can be used.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
 
