@@ -2640,10 +2640,19 @@ var isHeaderEditorOpen = function() {
 // slide (whose new window may not even contain the editor's column) and by
 // the pin / hide rebuilds.
 var dismissHeaderEditors = function() {
-   if (dismissActivePopup) dismissActivePopup(true);
+   // A text filter box (inline in the header, or inside a sidebar filter
+   // popup) applies its input on a debounce. Commit anything still pending
+   // before the box goes away: the rebuilt header is created from the stored
+   // filter, and a debounced apply landing afterwards would filter the grid
+   // under a blank box. Done before the popup dismissal below, which detaches
+   // a popup-hosted box.
    var activeEl = document.activeElement;
-   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox"))
+   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox")) {
+      if (activeEl.dvFlushPendingApply)
+         activeEl.dvFlushPendingApply();
       activeEl.blur();
+   }
+   if (dismissActivePopup) dismissActivePopup(true);
    deferredHeaderRebuild = false;
 };
 
@@ -3524,6 +3533,10 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
       setColumnSearch(idx, "character|" + encodeURIComponent(input.value));
       applyFilters();
    });
+
+   // Lets dismissHeaderEditors commit typed-but-not-yet-applied text before a
+   // rebuild recreates this box from the stored filter value.
+   input.dvFlushPendingApply = function() { updateView.flush(); };
 
    input.addEventListener("keyup", function(evt) {
       // Escape dismisses (handled on keydown below); its keyup must not

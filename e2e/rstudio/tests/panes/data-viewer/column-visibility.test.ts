@@ -288,6 +288,48 @@ test.describe('Data Viewer column visibility', () => {
     await expect(dataViewer.columnHeader(1).locator('.colFilter')).toBeVisible();
   });
 
+  // The inline text filter applies what you type on a debounce. A blur from
+  // clicking elsewhere (a sidebar eye included) deliberately discards pending
+  // text -- clicking away is a dismissal. A rebuild that reaches a box still
+  // holding focus must instead commit the text first: the rebuilt header is
+  // created from the stored filter, so the keystrokes would otherwise be lost.
+  // Go to column, which does not move focus, showing a hidden column is such
+  // a rebuild.
+  test('typed filter text is committed when a show rebuild closes the box', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.colvis_text_df <- data.frame(s = c("ab", "cd", "ef"), y = 1:3, z = 4:6); View(.rs.colvis_text_df) }',
+    );
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(dataViewer.gridInfo).toContainText('of 3', { timeout: TIMEOUTS.fileOpen });
+
+    // Hide y, then open the filter row and start typing into s's box (real
+    // keyup events schedule the debounced apply).
+    await dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-eye-icon').click();
+    await expect(dataViewer.columnHeader(2)).toHaveCount(0);
+    await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
+    const colFilter1 = dataViewer.columnHeader(1).locator('.colFilter');
+    await expect(colFilter1).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await colFilter1.getByText('All').click();
+    const filterInput = dataViewer.columnHeader(1).locator('.textFilterBox');
+    await expect(filterInput).toBeVisible();
+    await filterInput.pressSequentially('cd');
+
+    // Show y through the grid's go-to entry point (what the host toolbar box
+    // calls), which rebuilds the headers with the text box still focused.
+    await dataViewer.viewport.evaluate((el) => {
+      const w = el.ownerDocument.defaultView as unknown as { goToColumn: (c: number) => void };
+      w.goToColumn(2);
+    });
+
+    // y is back, the recreated box still shows the text, and the grid is
+    // filtered by it.
+    await expect(dataViewer.columnHeader(2)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(dataViewer.columnHeader(1).locator('.textFilterBox')).toHaveValue('cd');
+    await expect(dataViewer.gridInfo)
+      .toContainText('of 1 entries (filtered from 3', { timeout: TIMEOUTS.fileOpen });
+    await expect(dataViewer.columnHeader(1).locator('.colFilter')).toHaveClass(/filtered/);
+  });
+
   test('a pinned column can be hidden and returns to the pinned pane', async () => {
     await viewMtcarsCopy();
     await waitForViewer(dataViewer);
