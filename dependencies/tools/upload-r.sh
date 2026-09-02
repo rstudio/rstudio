@@ -22,8 +22,10 @@
 # Sources are CRAN for Windows and macOS, and Posit's r-builds CDN for Linux
 # (the same places rig pulled from). Both lay their files out inconsistently
 # -- CRAN moves macOS builds between OS-codename directories across releases,
-# and retires old Windows installers into base/old/ -- so this script absorbs
-# that variation and writes ONE flat naming scheme into the bucket:
+# retires old Windows installers into base/old/, and eventually moves whole
+# major series off to cran-archive.r-project.org (R 3.x lives there now) --
+# so this script absorbs that variation and writes ONE flat naming scheme
+# into the bucket:
 #
 #    R/<version>/R-<version>-<platform>.<ext>
 #
@@ -36,6 +38,7 @@ set -euo pipefail
 
 AWS_BUCKET="s3://rstudio-buildtools"
 CRAN="https://cran.r-project.org"
+CRAN_ARCHIVE="https://cran-archive.r-project.org"
 RBUILDS="https://cdn.posit.co/r"
 
 # Every platform CI installs R on. The key doubles as the token in the
@@ -74,6 +77,7 @@ r_source_urls() {
       windows-x86_64)
          echo "${CRAN}/bin/windows/base/R-${version}-win.exe"
          echo "${CRAN}/bin/windows/base/old/${version}/R-${version}-win.exe"
+         echo "${CRAN_ARCHIVE}/bin/windows/base/old/${version}/R-${version}-win.exe"
          ;;
 
       macos-arm64)
@@ -83,9 +87,12 @@ r_source_urls() {
 
       macos-x86_64)
          # R <= 4.2 predates the per-arch directories on macOS and carries no
-         # arch suffix in the filename.
+         # arch suffix in the filename. R 3.x is on cran-archive, where the
+         # '.nn' build is the notarized one and the one CRAN's index links.
          echo "${CRAN}/bin/macosx/big-sur-x86_64/base/R-${version}-x86_64.pkg"
          echo "${CRAN}/bin/macosx/base/R-${version}.pkg"
+         echo "${CRAN_ARCHIVE}/bin/macosx/base/R-${version}.nn.pkg"
+         echo "${CRAN_ARCHIVE}/bin/macosx/base/R-${version}.pkg"
          ;;
 
       # r-builds keys its Debian-family packages by distro only; the
