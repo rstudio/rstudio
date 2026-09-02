@@ -41,6 +41,7 @@ import { waitForUrlWithTimeout } from './url-utils';
 import { createStandaloneErrorDialog, findRepoRoot, getCurrentlyUniqueFolderName, isAutomated, userLogPath } from './utils';
 import path from 'path';
 import { createSplashScreen } from './splash-screen';
+import { startupCheckpoint } from './startup-timing';
 import { showWhatsNewWindow } from './whats-new-window';
 import {
   toReleaseSlug,
@@ -234,6 +235,7 @@ export class SessionLauncher {
     } catch (err: unknown) {
       return safeError(err);
     }
+    startupCheckpoint('session-spawned');
 
     logger().logDiagnostic(`\nR session launched, attempting to connect on port ${launchContext.port}...`);
 
@@ -244,6 +246,7 @@ export class SessionLauncher {
     this.appLaunch.setActivationWindow(this.mainWindow);
 
     ElectronDesktopOptions().restoreMainWindowBounds(this.mainWindow.window);
+    startupCheckpoint('window-created');
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 
@@ -270,6 +273,7 @@ export class SessionLauncher {
       // may not be reliable, especially if the user switches focus between different
       // windows/apps while starting up.
       this.mainWindow.window.webContents.once('did-finish-load', async () => {
+        startupCheckpoint('did-finish-load');
         if (appState().startupDelayMs > 0) {
           await setTimeoutPromise(appState().startupDelayMs);
         }
@@ -281,6 +285,7 @@ export class SessionLauncher {
         } else {
           this.mainWindow?.window.show();
         }
+        startupCheckpoint('window-shown');
 
         // if the splash screen displayed, keep it visible for another brief period to
         // reduce cases where it flashes and hides without being readable
@@ -320,6 +325,7 @@ export class SessionLauncher {
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
+      startupCheckpoint('load-url');
       this.mainWindow.loadUrl(launchContext.url).catch((reason) => {
         logger().logErrorMessage(`Failed to load ${launchContext.url}: ${reason}`);
       });
@@ -609,6 +615,7 @@ export class SessionLauncher {
             } else {
               this.splash.show();
             }
+            startupCheckpoint('splash-shown');
           }
         })
         .catch((err) => logger().logError(err));

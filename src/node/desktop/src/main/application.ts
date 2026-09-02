@@ -32,6 +32,7 @@ import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
+import { startupCheckpoint } from './startup-timing';
 import {
   augmentCommandLineArguments,
   createStandaloneErrorDialog,
@@ -422,6 +423,7 @@ export class Application implements AppState {
     }
 
     // if we don't have an R path at this point, try scanning for R
+    startupCheckpoint('r-detect-begin');
     if (!rPath) {
       logger().logDebug('No rPath found, scanning for R');
       const [scannedPath, error] = scanForR();
@@ -435,6 +437,7 @@ export class Application implements AppState {
     }
 
     logger().logDebug('Done choosing R');
+    startupCheckpoint('r-detected');
 
     // prepare the R environment
     logger().logDebug(`Preparing environment using R: ${rPath}`);
@@ -444,6 +447,7 @@ export class Application implements AppState {
       await showRNotFoundError();
       return exitFailure();
     }
+    startupCheckpoint('r-environment-prepared');
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(

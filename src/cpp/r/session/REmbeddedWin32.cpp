@@ -31,6 +31,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
+#include <core/StartupTiming.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Version.hpp>
 #include <core/system/Environment.hpp>
@@ -395,7 +396,9 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::_wsetlocale(LC_NUMERIC, L"C");
 
    // setup main loop
+   core::startup_timing::checkpoint("r-mainloop-setup-begin");
    ::setup_Rmainloop();
+   core::startup_timing::checkpoint("r-mainloop-setup-end");
 
    // reset character mode to RGui
    CharacterMode = RGui;

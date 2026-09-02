@@ -21,6 +21,7 @@ import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.DragDropReceiver;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -206,6 +207,7 @@ public class Application implements ApplicationEventHandlers
                   final Command dismissLoadingProgress,
                   final ServerRequestCallback<String> connectionStatusCallback)
    {
+      StartupTiming.mark("application-go");
       rootPanel_ = rootPanel;
 
       Widget w = view_.getWidget();
@@ -218,6 +220,7 @@ public class Application implements ApplicationEventHandlers
 
          public void onResponseReceived(final SessionInfo sessionInfo)
          {
+            StartupTiming.mark("client-init-received");
             // initialize workbench
             // if this is a switch project then wait to dismiss the
             // loading progress animation for 10 seconds. typically
@@ -1109,6 +1112,8 @@ public class Application implements ApplicationEventHandlers
          return;
       }
 
+      StartupTiming.mark("workbench-init-begin");
+
       // Initialize application theme system
       pAppThemes_.get().initializeThemes(rootPanel_.getElement());
       
@@ -1128,7 +1133,9 @@ public class Application implements ApplicationEventHandlers
 
       // create workbench
       Workbench wb = workbench_.get();
+      StartupTiming.mark("workbench-created");
       eventBusProvider_.get().fireEvent(new SessionInitEvent());
+      StartupTiming.mark("session-init-fired");
 
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
@@ -1274,6 +1281,8 @@ public class Application implements ApplicationEventHandlers
 
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
+      StartupTiming.mark("workbench-attached");
+      StartupTiming.markAfterPaint("workbench-painted");
 
       // hide zoom in and zoom out in web mode
       if (!Desktop.hasDesktopFrame())

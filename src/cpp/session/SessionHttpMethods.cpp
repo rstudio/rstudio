@@ -33,6 +33,7 @@
 #include <shared_core/json/Json.hpp>
 #include <shared_core/Logger.hpp>
 
+#include <core/StartupTiming.hpp>
 #include <core/Thread.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 #include <core/gwt/GwtLogHandler.hpp>
@@ -497,6 +498,16 @@ bool waitForMethod(const std::string& method,
    // make sure to record it
    suspend::addBlockingOp(method, allowSuspend);
 
+   // the main thread only begins serving queued requests here; until now any
+   // request from the client (including the initial page load) has been
+   // waiting in the connection queue
+   static bool s_firstWait = true;
+   if (s_firstWait)
+   {
+      s_firstWait = false;
+      core::startup_timing::checkpoint("first-wait-for-method");
+   }
+
    // wait until we get the method we are looking for
    while (true)
    {
@@ -507,6 +518,13 @@ bool waitForMethod(const std::string& method,
       boost::shared_ptr<HttpConnection> ptrConnection =
           httpConnectionListener().mainConnectionQueue().dequeConnection(
                                             connectionQueueTimeout);
+
+      static bool s_firstConnection = true;
+      if (ptrConnection && s_firstConnection)
+      {
+         s_firstConnection = false;
+         core::startup_timing::checkpoint("first-request:" + ptrConnection->request().uri());
+      }
 
 
       // perform background processing (true for isIdle)

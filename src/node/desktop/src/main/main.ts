@@ -22,6 +22,7 @@ import { Application } from './application';
 import { initI18n } from './i18n-manager';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
+import { recordProcessStart, startupCheckpoint } from './startup-timing';
 import { createStandaloneErrorDialog } from './utils';
 import { Xdg } from '../core/xdg';
 import { existsSync, readFileSync } from 'fs';
@@ -141,8 +142,10 @@ class RStudioMain {
     if (!parseStatus(await rstudio.beforeAppReady())) {
       return;
     }
+    startupCheckpoint('before-app-ready-done');
 
     await app.whenReady();
+    startupCheckpoint('app-ready');
 
     if (!parseStatus(await rstudio.run())) {
       return;
@@ -151,6 +154,8 @@ class RStudioMain {
 }
 
 // Startup
+recordProcessStart();
+startupCheckpoint('main-entry');
 initI18n();
 
 const main = new RStudioMain();

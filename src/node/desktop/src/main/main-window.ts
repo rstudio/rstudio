@@ -31,6 +31,7 @@ import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
+import { startupCheckpoint } from './startup-timing';
 import { waitForUrlWithTimeout } from './url-utils';
 import { isAutomated, registerWebContentsDebugHandlers } from './utils';
 
@@ -387,6 +388,7 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
+        startupCheckpoint('load-failed');
         this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY, false).catch((error: unknown) => logger().logError(error));
         waitForUrlWithTimeout(this.options.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
@@ -398,6 +400,7 @@ export class MainWindow extends GwtWindow {
             logger().logError(error);
           })
           .finally(() => {
+            startupCheckpoint('session-url-reachable');
             this.reload();
           });
       } else {

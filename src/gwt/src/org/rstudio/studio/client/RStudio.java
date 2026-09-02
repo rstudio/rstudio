@@ -18,6 +18,7 @@ package org.rstudio.studio.client;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
@@ -126,6 +127,7 @@ public class RStudio implements EntryPoint
 {
    public void onModuleLoad()
    {
+      StartupTiming.mark("module-load");
       Debug.injectDebug();
       maybeSetWindowName("rstudio-" + StringUtil.makeRandomId(16));
       maybeDelayLoadApplication(this);
@@ -275,6 +277,11 @@ public class RStudio implements EntryPoint
 
       // ensure Ace is loaded up front
       queue.addCommand(continuation -> AceEditor.load(continuation));
+      queue.addCommand(continuation ->
+      {
+         StartupTiming.mark("ace-loaded");
+         continuation.execute();
+      });
 
       // load the requested page
       queue.addCommand(continuation -> onDelayLoadApplication());
@@ -284,6 +291,7 @@ public class RStudio implements EntryPoint
          @Override
          public void onSuccess()
          {
+            StartupTiming.mark("app-fragment-loaded");
             queue.run();
          }
 
@@ -299,6 +307,7 @@ public class RStudio implements EntryPoint
    private void onDelayLoadApplication()
    {
       ensureStylesInjected();
+      StartupTiming.mark("styles-injected");
 
       String view = Window.Location.getParameter("view");
       if (VCSApplication.NAME.equals(view))

@@ -62,6 +62,7 @@ import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
 import { buildInfo } from './build-info';
 import { showPersistentSplashScreen } from './splash-screen';
+import { harvestRendererTiming, startupCheckpoint } from './startup-timing';
 import { showWhatsNewWindow } from './whats-new-window';
 import { toReleaseSlug, isValidSlug, resolveReleaseName, resolveWhatsNewContentPath } from './whats-new-utils';
 
@@ -442,6 +443,8 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath: string) => {
+      startupCheckpoint('workbench-initialized');
+      harvestRendererTiming(event.sender);
       this.initialized = true;
       this.emit(GwtCallback.WORKBENCH_INITIALIZED);
       appState().setScratchTempDir(new FilePath(scratchPath));

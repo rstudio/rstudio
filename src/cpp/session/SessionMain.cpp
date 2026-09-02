@@ -48,6 +48,7 @@
 #include <core/ConfigUtils.hpp>
 #include <core/FileLock.hpp>
 #include <core/Exec.hpp>
+#include <core/StartupTiming.hpp>
 #include <core/Scope.hpp>
 #include <core/Settings.hpp>
 #include <core/Thread.hpp>
@@ -570,6 +571,8 @@ void setPartnerEnvironmentVariables()
 
 Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 {
+   core::startup_timing::checkpoint("session-init-begin");
+
    // save state we need to reference later
    suspend::setSessionResumed(rInitInfo.resumed);
 
@@ -797,6 +800,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    Error error = initialize.execute();
    if (error)
       return error;
+   core::startup_timing::checkpoint("modules-initialized");
 
    // if we are in verify installation mode then we should exit (successfully) now
    if (rsession::options().verifyInstallation())
@@ -919,6 +923,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    main_process::setupForkHandlers();
 
    // success!
+   core::startup_timing::checkpoint("session-init-end");
    return Success();
 }
 
@@ -926,6 +931,7 @@ void rInitComplete()
 {
    module_context::syncRSaveAction();
    module_context::events().onInitComplete();
+   core::startup_timing::checkpoint("init-complete");
 }
 
 // Set during startup when the initial working directory is too long for Windows to
@@ -1007,10 +1013,12 @@ void rSessionInitHook(bool newSession)
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
    module_context::enqueClientEvent(event);
+   core::startup_timing::checkpoint("deferred-init-completed");
 }
 
 void rDeferredInit(bool newSession)
 {
+   core::startup_timing::ScopedCheckpoint timing("deferred-init");
    module_context::events().onDeferredInit(newSession);
 
    // schedule execution of the session init hook
@@ -2217,6 +2225,8 @@ void mainThreadWorkaround()
 // and the comments in SessionMain.hpp and CMakeLists.txt.
 RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
 {
+   core::startup_timing::checkpoint("main");
+
    mainThreadWorkaround();
 
    try
@@ -2269,6 +2279,7 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
          if (error)
             LOG_ERROR(error);
       }
+      core::startup_timing::checkpoint("path-initialized");
 
       // terminate immediately with given exit code (for testing/debugging)
       std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
@@ -2307,6 +2318,7 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
                                   core::log::LogLevel::WARN,
                                   core::system::xdg::userLogDir(),
                                   true); // force log dir to be under user's home directory
+      core::startup_timing::checkpoint("log-initialized");
 
       // report any failure from initHook(), which ran before logging was up
 #ifdef _WIN32
@@ -2379,12 +2391,14 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       error = socket_rpc::initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
+      core::startup_timing::checkpoint("options-read-begin");
 
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
       ProgramStatus status = options.read(argc, argv, osWarnings);
       std::string optionsWarnings = osWarnings.str();
+      core::startup_timing::checkpoint("options-read");
 
       if (!optionsWarnings.empty())
          program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
@@ -2687,10 +2701,12 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       error = prefs::initializeState();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
+      core::startup_timing::checkpoint("prefs-initialized");
 
       // startup projects -- must be after userSettings is initialized
       // but before persistentState and setting working directory
       projects::startup(firstProjectPath);
+      core::startup_timing::checkpoint("projects-started");
 
       // initialize persistent state
       error = rsession::persistentState().initialize();
@@ -2746,6 +2762,7 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
             http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
+      core::startup_timing::checkpoint("http-listener-started");
 
       // start session proxy to route traffic to localhost-listening applications (like Shiny)
       // this has to come after regular overlay initialization as it depends on persistent state
@@ -2954,6 +2971,7 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       }
 
       // run r (does not return, terminates process using exit)
+      core::startup_timing::checkpoint("r-run");
       error = rstudio::r::session::run(rOptions, rCallbacks);
       if (error)
       {
