@@ -236,6 +236,26 @@ TEST(ResourcesTest, CongruentMemoryMetrics)
    }
 }
 
+TEST(EnvironmentTest, IsValidEnvironmentVariableName)
+{
+   // Accepted
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("_FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("f"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("_"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO_BAR_BAZ"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("A1_b2"));
+
+   // Rejected
+   EXPECT_FALSE(isValidEnvironmentVariableName(""));
+   EXPECT_FALSE(isValidEnvironmentVariableName("1FOO"));       // leading digit
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO-BAR"));    // dash
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO BAR"));    // space
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO.BAR"));    // dot
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO="));       // stray '='
+   EXPECT_FALSE(isValidEnvironmentVariableName("FÖO"));        // non-ASCII
+}
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

@@ -22,6 +22,7 @@
 #endif
 
 #include "SessionConsoleInput.hpp"
+#include "SessionSuspendOverlay.hpp"
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionConstants.hpp>
@@ -367,7 +368,8 @@ bool suspendSession(bool force, int status)
    module_context::activeSession().setSuspensionTime();
 
    // perform the suspend (does not return if successful)
-   return r::session::suspend(force, status, session::options().ephemeralEnvVars());
+   return r::session::suspend(force, status,
+         overlay::noSaveEnvVars(session::options().ephemeralEnvVars()));
 }
 
 void checkForIdleSuspend(const boost::function<bool()>& allowSuspend)

@@ -100,6 +100,11 @@ void addToPath(Options* pEnvironment,
 
 bool parseEnvVar(const std::string envVar, Option* pEnvVar);
 
+// True when `name` is a legal environment variable name: a leading letter or
+// underscore followed by letters, digits, or underscores: [a-zA-Z_][a-zA-Z0-9_]*.
+// An empty name is not valid.
+bool isValidEnvironmentVariableName(const std::string& name);
+
 // expand environment variables in a string; for example /$USER/foo to
 // /bob/foo when USER=bob
 std::string expandEnvVars(const Options& environment, const std::string& str);
