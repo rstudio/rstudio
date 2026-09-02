@@ -286,12 +286,16 @@ var activeCol = -1;
 var activeHeaderCol = -1;
 
 // Absolute index of the column the active header should move to once the
-// window slide now in flight lands, or -1. Set by setColumnsHidden when a
+// window slide that fetches it lands, or -1. Set by setColumnsHidden when a
 // keyboard hide's successor column (the one taking the hidden column's slot)
-// isn't fetched yet; applyColumnWindowUpdate applies it after the remap, and
-// scrolls it into view when pendingActiveHeaderScroll is set.
+// isn't fetched yet; applyColumnWindowUpdate applies it after the remap --
+// only for the slide generation recorded here, and scrolling it into view
+// when pendingActiveHeaderScroll is set. Cancelled by any newer selection
+// (setActiveHeader / setActiveCell) and when that slide fails or is
+// superseded, so a stale intent can never hijack a later cursor position.
 var pendingActiveHeaderAbs = -1;
 var pendingActiveHeaderScroll = false;
+var pendingActiveHeaderGen = 0;
 
 // Pinned columns: a set of absolute (1-based) column indices in the full
 // frame, so a pin tracks its column across pagination rather than its position
@@ -2357,6 +2361,12 @@ var fetchedSetLacksRequested = function() {
    return false;
 };
 
+var clearPendingActiveHeader = function() {
+   pendingActiveHeaderAbs = -1;
+   pendingActiveHeaderScroll = false;
+   pendingActiveHeaderGen = 0;
+};
+
 // " (N hidden)" for the column readouts, or "" when nothing is hidden.
 var hiddenColumnsText = function() {
    var n = hiddenColumns.size;
@@ -2449,8 +2459,15 @@ var setColumnsHidden = function(absList, hidden, options) {
          setActiveHeader(newIdx, scrollHeader);
    }
 
-   if (!(options && options.deferSync) && fetchedSetLacksRequested())
-      slideColumnWindow();
+   if (!(options && options.deferSync) && fetchedSetLacksRequested()) {
+      // An unfetched successor is, by construction, part of what this slide
+      // requests; bind the parked cursor move to this slide alone.
+      var generation = slideColumnWindow();
+      if (pendingActiveHeaderAbs > 0)
+         pendingActiveHeaderGen = generation;
+   } else if (pendingActiveHeaderAbs > 0) {
+      clearPendingActiveHeader();
+   }
 };
 
 var toggleColumnHidden = function(absIdx) {
@@ -6562,6 +6579,8 @@ var ensureActiveCellVisible = function() {
 };
 
 var setActiveCell = function(row, col) {
+   // A selection made now outranks a cursor move parked for an in-flight slide.
+   clearPendingActiveHeader();
    var maxRow = filteredRows - 1;
    var maxCol = columnOrder.length - 1;
    if (maxRow < 0 || maxCol < 0) return;
@@ -6632,6 +6651,8 @@ var ensureActiveHeaderVisible = function() {
 // unwanted. Keyboard-driven changes keep the default so the active header (the
 // keyboard cursor) stays visible.
 var setActiveHeader = function(col, scrollIntoView) {
+   // A selection made now outranks a cursor move parked for an in-flight slide.
+   clearPendingActiveHeader();
    var maxCol = columnOrder.length - 1;
    if (maxCol < 0) return;
    col = Math.max(0, Math.min(maxCol, col));
@@ -7583,8 +7604,7 @@ var resetGridState = function() {
    activeRow = -1;
    activeCol = -1;
    activeHeaderCol = -1;
-   pendingActiveHeaderAbs = -1;
-   pendingActiveHeaderScroll = false;
+   clearPendingActiveHeader();
    // The viewport persists across destroyGrid; clear its activedescendant so
    // it can't reference an id whose td/th was just removed from the DOM.
    setViewportActiveDescendant(null);
@@ -8164,7 +8184,7 @@ var restoreScrollAnchor = function(anchor) {
 // options.targetAbs, when given, scrolls the viewport so that absolute column
 // is centered in the unpinned viewport region -- used by go-to-column jumps.
 // Otherwise the current visual position is preserved via a scroll anchor.
-var applyColumnWindowUpdate = function(resCols, options) {
+var applyColumnWindowUpdate = function(resCols, options, generation) {
    var targetAbs = options && options.targetAbs > 0 ? options.targetAbs : -1;
    var anchor = targetAbs > 0 ? null : captureScrollAnchor();
 
@@ -8216,9 +8236,10 @@ var applyColumnWindowUpdate = function(resCols, options) {
    activeHeaderCol = remapDisplayIdx(activeHeaderAbs);
 
    // A keyboard hide whose successor column wasn't fetched parked the
-   // cursor's destination (setColumnsHidden); it lands with this window.
+   // cursor's destination for this very slide (setColumnsHidden); it lands
+   // with this window. Any newer selection has already cancelled it.
    var pendingHeaderScroll = false;
-   if (pendingActiveHeaderAbs > 0) {
+   if (pendingActiveHeaderAbs > 0 && pendingActiveHeaderGen === generation) {
       var pendingIdx = remapDisplayIdx(pendingActiveHeaderAbs);
       if (pendingIdx >= 0) {
          activeHeaderCol = pendingIdx;
@@ -8226,8 +8247,7 @@ var applyColumnWindowUpdate = function(resCols, options) {
          activeCol = -1;
          pendingHeaderScroll = pendingActiveHeaderScroll;
       }
-      pendingActiveHeaderAbs = -1;
-      pendingActiveHeaderScroll = false;
+      clearPendingActiveHeader();
    }
 
    // The header row must be rebuilt for the new window, but autoSizeColumns
@@ -8354,7 +8374,7 @@ var applyColumnWindowUpdate = function(resCols, options) {
 // superseded by a newer slide or a full bootstrap (data refresh) is dropped.
 var slideColumnWindow = function(options) {
    if (bootstrapping || cols === null)
-      return;
+      return 0;
 
    var generation = ++bootstrapGeneration;
    slideInFlightGen = generation;
@@ -8363,7 +8383,13 @@ var slideColumnWindow = function(options) {
       // or failed slide can't permanently block scroll-driven slides.
       if (slideInFlightGen === generation)
          slideInFlightGen = 0;
-      if (generation !== bootstrapGeneration) return;
+      // A cursor move parked for this slide dies with it: a superseding slide
+      // or bootstrap has its own intent, and a failed slide leaves the grid as
+      // it was.
+      var superseded = generation !== bootstrapGeneration;
+      if ((superseded || result.error) && pendingActiveHeaderGen === generation)
+         clearPendingActiveHeader();
+      if (superseded) return;
       if (result.error) {
          // The slide advanced columnOffset before fetching; on failure roll it
          // back to the still-current fetched window. Otherwise columnOffset and
@@ -8375,8 +8401,9 @@ var slideColumnWindow = function(options) {
          return;
       }
       hideError();
-      applyColumnWindowUpdate(result, options);
+      applyColumnWindowUpdate(result, options, generation);
    });
+   return generation;
 };
 
 // Scroll-driven sliding: when the visible column range pokes outside the
