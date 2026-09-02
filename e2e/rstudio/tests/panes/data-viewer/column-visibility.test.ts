@@ -200,6 +200,46 @@ test.describe('Data Viewer column visibility', () => {
     await expect(dataViewer.columnHeader(1)).toHaveClass(/sorting_desc/);
   });
 
+  // A hidden sort column drops out of the fetch on the next refresh (or window
+  // slide), so the "Sorted by" status must name it from full-frame metadata
+  // rather than from the fetched columns -- and its clear button must stay.
+  test('a hidden sort column keeps its status and clear button across a refresh', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.colvis_sort_df <- mtcars; View(.rs.colvis_sort_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      const sortIcon1 = dataViewer.frame.locator('.sidebar-col[data-col-idx="1"] .sidebar-sort-icon');
+      await sortIcon1.click();
+      await sortIcon1.click();
+      await expect(sortIcon1).toHaveClass(/sorting_desc/);
+      const row0 = dataViewer.frame.locator('#gridBody tr[data-row="0"]');
+      await expect(row0.locator('td[data-col-pos="1"]')).toHaveText('33.9');
+
+      await dataViewer.frame.locator('.sidebar-col[data-col-idx="1"] .sidebar-eye-icon').click();
+      await expect(dataViewer.columnHeader(1)).toHaveCount(0);
+
+      // After the refresh mpg is no longer fetched at all, yet the rows are
+      // still in mpg order (Toyota Corolla's 4 cylinders lead) and the status
+      // bar still says so.
+      await callViewerHook(page, 'refreshData');
+      await expect(dataViewer.columnHeader(2)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.columnHeader(1)).toHaveCount(0);
+      await expect(row0.locator('td[data-col-pos="1"]')).toHaveText('4', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.sortStatus).toContainText('mpg');
+      await expect(dataViewer.clearSortButton).toBeVisible();
+
+      // Clearing the sort from the status bar restores frame order (Mazda RX4,
+      // 6 cylinders, leads) with the column still hidden.
+      await dataViewer.clearSortButton.click();
+      await expect(row0.locator('td[data-col-pos="1"]')).toHaveText('6', { timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.sortStatus).toBeHidden();
+      await expect(dataViewer.columnHeader(1)).toHaveCount(0);
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.colvis_sort_df", envir = .GlobalEnv)');
+    }
+  });
+
   test('a pinned column can be hidden and returns to the pinned pane', async () => {
     await consoleActions.executeInConsole('View(mtcars)');
     await waitForViewer(dataViewer);

@@ -4044,13 +4044,27 @@ var updateInfoBar = function() {
 
    var sortText = "";
    if (sortColumn >= 0 && sortDirection && cols) {
-      var sortPos = posForAbsColIndex(sortColumn);
-      if (sortPos >= 0 && cols[sortPos]) {
-         var dirText = sortDirection === "asc" ? "ascending" : "descending";
-         sortText = "Sorted by: " + cols[sortPos].col_name + " (" + dirText + ")";
-      }
+      var dirText = sortDirection === "asc" ? "ascending" : "descending";
+      sortText = "Sorted by: " + columnNameForAbs(sortColumn) + " (" + dirText + ")";
    }
    setSortStatus(sortText);
+};
+
+// A column's name by absolute index, from whichever metadata has it: the
+// fetched window, the sidebar's complete column index, or the go-to-column
+// name cache; "column N" until one of them loads. The sort column in
+// particular need not be fetched -- it may be hidden, or scrolled outside the
+// window -- and the sort status must still name it.
+var columnNameForAbs = function(absIdx) {
+   var pos = posForAbsColIndex(absIdx);
+   if (pos >= 0 && cols[pos])
+      return cols[pos].col_name;
+   var listIdx = sidebarIndexByAbs[absIdx];
+   if (typeof listIdx === "number" && sidebarListCols[listIdx])
+      return sidebarListCols[listIdx].col_name;
+   if (columnNamesCache && columnNamesCache[absIdx - 1])
+      return columnNamesCache[absIdx - 1];
+   return "column " + absIdx;
 };
 
 // Create the <tr> shell for data row `r` (shared by the pinned and unpinned
@@ -5030,6 +5044,9 @@ var ensureSidebarColumns = function() {
          if (result && !result.error && result.columns && result.columns.length) {
             sidebarColumns = result.columns;
             rebuildSidebarPreservingScroll();
+            // The status bar may have been naming an unfetched sort column by
+            // number while waiting for this index (columnNameForAbs).
+            updateInfoBar();
          }
       })
       .catch(function(err) {
