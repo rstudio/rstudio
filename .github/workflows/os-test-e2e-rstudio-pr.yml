@@ -59,7 +59,7 @@ jobs:
       linux_desktop_build_from_source: ${{ steps.check.outputs.linux_desktop_build_from_source }}
       linux_server_build_from_source: ${{ steps.check.outputs.linux_server_build_from_source }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -245,9 +245,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 20
           cache: 'npm'
@@ -263,7 +263,7 @@ jobs:
       # fileName in playwright.config.ts), so flattening with merge-multiple
       # cannot clobber one platform with another.
       - name: Download all platform blob reports
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: playwright-blob-report-*
           path: e2e/rstudio/all-blob-reports
@@ -283,12 +283,12 @@ jobs:
         id: summary
         if: always()
         working-directory: e2e/rstudio
-        run: node scripts/summarize-merged-report.mjs playwright-report/test-results.json
+        run: node scripts/summarize-merged-report.mjs
 
       - name: Upload merged Playwright report
         id: upload-report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: playwright-report
           path: e2e/rstudio/playwright-report/
@@ -348,3 +348,31 @@ jobs:
 
             ---
             <sub>All platforms - commit <code>${{ github.event.pull_request.head.sha }}</code> - <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Run #${{ github.run_number }}</a></sub>
+
+      # Does nothing: the name is the point. A step name can read step outputs
+      # (jobs.<id>.steps.name allows the `steps` context), so this puts the build
+      # under test in the job's step list, readable without expanding anything.
+      # The run page itself has no surface for a runtime value -- a run's title is
+      # fixed before it starts, and annotation placement is GitHub's to decide --
+      # so the summarizer also emits these as annotations, and this is the same
+      # facts one click in. Last, and if: always(), so the gate above can't
+      # suppress it. Skipped on an empty output, which is how the summarizer
+      # reports "no engine in that slot".
+      # Four slots because this job merges all four engines the PR run calls;
+      # add a slot here (and raise MAX_STEP_NAMES in the summarizer) if that
+      # list grows, or the extra engine appears only in the annotations.
+      - name: ${{ steps.summary.outputs.run_under_test_1 }}
+        if: always() && steps.summary.outputs.run_under_test_1 != ''
+        run: 'true'
+
+      - name: ${{ steps.summary.outputs.run_under_test_2 }}
+        if: always() && steps.summary.outputs.run_under_test_2 != ''
+        run: 'true'
+
+      - name: ${{ steps.summary.outputs.run_under_test_3 }}
+        if: always() && steps.summary.outputs.run_under_test_3 != ''
+        run: 'true'
+
+      - name: ${{ steps.summary.outputs.run_under_test_4 }}
+        if: always() && steps.summary.outputs.run_under_test_4 != ''
+        run: 'true'

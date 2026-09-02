@@ -46,6 +46,7 @@ public class PositAiInstallManagerTests extends GWTTestCase
       boolean additionalProvidersAvailable = false;
       String currentVersion = null;
       String newVersion = null;
+      boolean installed = false;
 
       @Override
       public void onNoUpdateAvailable()
@@ -107,6 +108,14 @@ public class PositAiInstallManagerTests extends GWTTestCase
       {
          calls++;
          method = "onManifestUnavailable";
+      }
+
+      @Override
+      public void onInstallationManaged(boolean installed)
+      {
+         calls++;
+         method = "onInstallationManaged";
+         this.installed = installed;
       }
 
       @Override
@@ -244,5 +253,84 @@ public class PositAiInstallManagerTests extends GWTTestCase
       assertEquals(1, r.calls);
       assertEquals("onUnsupportedVersionNoUpdate", r.method);
       assertEquals("1.0.0", r.currentVersion);
+   }
+
+   public void testInstallationManagedDefaultsToFalseWhenOmitted()
+   {
+      // An older rsession sends no installationManaged field; that must degrade
+      // to today's behavior rather than being reported as a malformed response.
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(wellFormed(), r);
+      assertEquals(1, r.calls);
+      assertEquals("onNoUpdateAvailable", r.method);
+   }
+
+   public void testInstallationManagedWithInstallationRoutesToManaged()
+   {
+      JsObject o = wellFormed();
+      o.setBoolean("installationManaged", true);
+      o.setString("currentVersion", "1.2.3");
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(o, r);
+      assertEquals(1, r.calls);
+      assertEquals("onInstallationManaged", r.method);
+      assertTrue(r.installed);
+   }
+
+   public void testInstallationManagedWithoutInstallationReportsNotInstalled()
+   {
+      // Nothing the administrator provides resolves: the backend reports
+      // isInitialInstall, and managed mode has no install to offer.
+      JsObject o = wellFormed();
+      o.setBoolean("installationManaged", true);
+      o.setBoolean("isInitialInstall", true);
+      o.setString("currentVersion", "0.0.0");
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(o, r);
+      assertEquals(1, r.calls);
+      assertEquals("onInstallationManaged", r.method);
+      assertFalse(r.installed);
+   }
+
+   public void testInstallationManagedTakesPrecedenceOverUpdateAvailable()
+   {
+      // Managed mode never fetches a manifest, so updateAvailable should not be
+      // set; if it ever were, the managed outcome must still win rather than
+      // offering an install that would be refused.
+      JsObject o = wellFormed();
+      o.setBoolean("installationManaged", true);
+      o.setBoolean("updateAvailable", true);
+      o.setString("currentVersion", "1.2.3");
+      o.setString("newVersion", "2.0.0");
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(o, r);
+      assertEquals(1, r.calls);
+      assertEquals("onInstallationManaged", r.method);
+   }
+
+   public void testUnsupportedInstalledVersionTakesPrecedenceOverInstallationManaged()
+   {
+      // An administrator copy whose protocol.json is missing or mismatched is
+      // more specific than "managed", and its message is what the user needs.
+      JsObject o = wellFormed();
+      o.setBoolean("installationManaged", true);
+      o.setBoolean("unsupportedInstalledVersion", true);
+      o.setString("currentVersion", "1.0.0");
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(o, r);
+      assertEquals(1, r.calls);
+      assertEquals("onUnsupportedVersionNoUpdate", r.method);
+      assertEquals("1.0.0", r.currentVersion);
+   }
+
+   public void testUnsupportedProtocolTakesPrecedenceOverInstallationManaged()
+   {
+      JsObject o = wellFormed();
+      o.setBoolean("installationManaged", true);
+      o.setBoolean("unsupportedProtocol", true);
+      Recorder r = new Recorder();
+      PositAiInstallManager.dispatchUpdateCheck(o, r);
+      assertEquals(1, r.calls);
+      assertEquals("onUnsupportedProtocol", r.method);
    }
 }

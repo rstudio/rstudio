@@ -31,6 +31,7 @@ namespace constants {
 // ============================================================================
 extern const char* const kPositAiDirName;
 extern const char* const kPositAiBackupDirName;
+extern const char* const kBundledPositAiDirName;
 extern const char* const kPositAiLocksDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
@@ -78,6 +79,12 @@ constexpr std::chrono::milliseconds kMaxDelay{100};
 // Returns the set of JSON-RPC methods that RStudio can handle
 // (i.e., requests/notifications that the peer may send to RStudio).
 const std::vector<std::string>& rstudioCapabilities();
+
+// Returns the capabilities to advertise in the protocol handshake for this
+// session. When the administrator manages the Posit Assistant installation,
+// ui/checkForUpdates is withheld so the peer hides its own update entry;
+// everything else is advertised unchanged.
+std::vector<std::string> negotiatedCapabilities(bool installationManaged);
 
 // ============================================================================
 // Restart limits

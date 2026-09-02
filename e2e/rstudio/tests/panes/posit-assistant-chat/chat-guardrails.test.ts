@@ -75,6 +75,18 @@ const SHOW_RAW_CONTENTS = /^(?:show|print|display)\s+(?:the\s+)?(?:full|raw|comp
 const PROCEED_WITH_PATH =
   /^(?:yes|proceed|go ahead|write it|move it)\b(?!.*\b(?:instead|(?:inside|within|into|to) the (?:project|workspace)))/is;
 
+// How many attempts each prompt gets when the provider drops a turn
+// mid-stream and it ends without a substantive response (see askAssistant).
+const DEAD_TURN_ATTEMPTS = 3;
+
+// How long one attempt waits for the response to finish streaming.
+const RESPONSE_TIMEOUT_MS = 120000;
+
+// Worst case for one askAssistant attempt: sendChatMessage can spend up to
+// 60s waiting out a still-streaming previous turn (chat_pane.actions.ts)
+// before the response poll runs to RESPONSE_TIMEOUT_MS.
+const ATTEMPT_BUDGET_MS = 60000 + RESPONSE_TIMEOUT_MS;
+
 test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '@serial'] }, () => {
   requireAiCredentials(test, 'positai');
 
@@ -106,6 +118,16 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '
     await chatActions.dismissSetupPrompts();
   });
 
+  // Dead-turn retries (see askAssistant) can pay the full attempt budget up
+  // to DEAD_TURN_ATTEMPTS times, and the test timeout must clear that worst
+  // case: exhausting it mid-attempt would turn the diagnostic dead-turn error
+  // into a bare "Test timeout exceeded". Derived so a change to either
+  // constant keeps the two in sync; the margin covers conversation setup and
+  // dialog handling around the polls.
+  test.beforeEach(() => {
+    test.setTimeout(DEAD_TURN_ATTEMPTS * ATTEMPT_BUDGET_MS + 60000);
+  });
+
   test.afterAll(async () => {
     // Files inside the project and outside-project files now live in the
     // sandbox and are removed by the sandbox afterAll (registered by
@@ -122,20 +144,44 @@ test.describe.serial('Filesystem Guardrails (#17122)', { tag: ['@ai', '@chat', '
    *
    * `answerQuestion` selects the option to take if the assistant pauses on an
    * AskUser question rather than acting.
+   *
+   * The provider can drop a turn mid-stream: the turn ends cleanly after
+   * streaming only a thinking block (or nothing at all), no tool ever runs,
+   * and the file-state assertion then fails on work the assistant never did
+   * (see isLastMessageSubstantive). Such dead turns are re-sent in a fresh
+   * conversation, up to DEAD_TURN_ATTEMPTS attempts in total, so a transient
+   * provider drop doesn't fail a guardrail test that never got exercised.
    */
   async function askAssistant(prompt: string, answerQuestion?: RegExp): Promise<string> {
-    await chatActions.startNewConversation();
-    const initialCount = await chatActions.sendChatMessage(prompt, answerQuestion);
+    for (let attempt = 1; ; attempt++) {
+      await chatActions.startNewConversation();
+      const initialCount = await chatActions.sendChatMessage(prompt, answerQuestion);
 
-    // Handle Allow dialogs and wait for response to finish streaming
-    await chatActions.pollWithAllowDialogs(async () => {
-      const count = await chatPane.getMessageCount();
-      if (count <= initialCount) return false;
-      return await chatActions.isTurnIdle();
-    }, 120000, answerQuestion);
+      // Handle Allow dialogs and wait for response to finish streaming
+      await chatActions.pollWithAllowDialogs(async () => {
+        const count = await chatPane.getMessageCount();
+        if (count <= initialCount) return false;
+        return await chatActions.isTurnIdle();
+      }, RESPONSE_TIMEOUT_MS, answerQuestion);
 
-    const lastMessage = chatPane.messageItem.last();
-    return await lastMessage.innerText();
+      if (await chatPane.isLastMessageSubstantive()) {
+        return await chatPane.messageItem.last().innerText();
+      }
+
+      const lastText =
+        await chatPane.messageItem.last().innerText({ timeout: 5000 }).catch(() => '');
+      if (attempt >= DEAD_TURN_ATTEMPTS) {
+        throw new Error(
+          `askAssistant: the assistant turn ended without a substantive response ` +
+          `${attempt} times in a row -- the provider appears to be dropping turns ` +
+          `mid-stream. Last message: ${JSON.stringify(lastText)}`
+        );
+      }
+      console.log(
+        `askAssistant: dead turn (nothing beyond a thinking block; last message ` +
+        `${JSON.stringify(lastText)}); retrying (attempt ${attempt + 1} of ${DEAD_TURN_ATTEMPTS})`
+      );
+    }
   }
 
   /**

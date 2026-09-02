@@ -44,6 +44,19 @@ export function isServiceReachable(url: string, timeoutMs = 10000): Promise<bool
 }
 
 /**
+ * Probe a service again, replacing the cached answer. A probe that passed at
+ * test start only proves the host answered then -- the runner's network can
+ * degrade mid-run (#18426), so a test whose service call silently times out
+ * can re-probe to distinguish "service gone" (skip) from "product hung"
+ * (fail). The refreshed cache entry also lets later tests' guards see the
+ * degraded state.
+ */
+export function reprobeService(url: string, timeoutMs = 10000): Promise<boolean> {
+  probeCache.delete(url);
+  return isServiceReachable(url, timeoutMs);
+}
+
+/**
  * Whether a raw TCP port accepts connections, for services that don't speak
  * HTTP (e.g. a database). Deliberately uncached: the databases the
  * Connections tests talk to are started and stopped within a run, so a

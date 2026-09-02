@@ -114,7 +114,7 @@ jobs:
       r_effective: ${{ steps.pick.outputs.r_effective }}
       r_declared: ${{ steps.pick.outputs.r_declared }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - id: pick
         name: Resolve the certification matrix
@@ -370,7 +370,7 @@ jobs:
       # version/RELEASE names the branch whose daily manifest the URLs come from,
       # so this job needs the repository -- and the composite actions live here
       # too, so they have to be on disk before they can be used.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
 
@@ -615,7 +615,7 @@ jobs:
         id: fetch_versions
         if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
         continue-on-error: true
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: r-version-linux-desktop-*
           path: r-versions
@@ -624,7 +624,7 @@ jobs:
         id: fetch_outcomes
         if: ${{ needs.pick.outputs.linux_matrix != '[]' }}
         continue-on-error: true
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           pattern: r-outcome-linux-desktop-*
           path: r-outcomes

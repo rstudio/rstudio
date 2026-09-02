@@ -452,6 +452,14 @@ public class SessionInfo extends JavaScriptObject
       return this.posit_assistant_enabled;
    }-*/;
 
+   public final native boolean getPositAssistantInstallationEnabled() /*-{
+      // Absent when the session predates the setting; default to allowed,
+      // which is both the option's default and the behavior before it
+      // existed. Defaulting the other way would hide the install controls
+      // and refuse installs against a session that permits them.
+      return this.posit_assistant_installation_enabled !== false;
+   }-*/;
+
    public final native int getWebSocketPingInterval() /*-{
       return this.websocket_ping_interval;
    }-*/;

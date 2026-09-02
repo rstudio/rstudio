@@ -4,8 +4,14 @@ import * as path from 'path';
 import { launchRStudio, shutdownRStudio, type DesktopSession } from './desktop.fixture';
 import { launchServer, shutdownServer, externalServerUrl } from './server.fixture';
 import { setAuthStateEnv, type AiAuthOption } from '../utils/auth';
-import { getEnvironmentVersions, clearConsole } from '../pages/console_pane.page';
+import { clearConsole } from '../pages/console_pane.page';
 import { ConsolePaneActions } from '../actions/console_pane.actions';
+import {
+  collectRunVersions,
+  formatRunVersions,
+  publishRunVersions,
+  runVersionsKey,
+} from '../utils/versions';
 import { drainClientExceptions, getPref, setPref } from '../utils/commands';
 import { readRemoteOdbcStatus } from '../utils/connections';
 import { withDeadline, DeadlineError } from '../utils/deadline';
@@ -112,10 +118,15 @@ async function disableLeakedAssistant(page: Page): Promise<void> {
   if (leakedOn(chatProvider)) await setPref(page, 'chat_provider', 'none');
 }
 
-/** Capture R/RStudio versions once per worker and log them. */
-async function logVersions(page: Page): Promise<void> {
-  const versions = await getEnvironmentVersions(page);
-  console.log(`R: ${versions.r}, RStudio: ${versions.rstudio}`);
+/**
+ * Capture what this worker is running against, log it, and publish it for the
+ * reporter to put in the report metadata. The merge job reads that metadata back
+ * out to write the run summary, so nothing here touches the summary directly.
+ */
+async function recordVersions(page: Page, mode: Mode): Promise<void> {
+  const versions = await collectRunVersions(page, mode);
+  console.log(`Run under test: ${runVersionsKey(versions)} · ${formatRunVersions(versions)}`);
+  publishRunVersions(versions);
   await clearConsole(page);
 }
 
@@ -413,7 +424,7 @@ export const test = base.extend<
       // Server mode doesn't expose a per-session log dir (the spawned rserver
       // shares a data home across workers); see the issue's desktop-only note.
       attachConsoleCapture(session.page, consoleBuffer);
-      await logVersions(session.page);
+      await recordVersions(session.page, 'server');
       const odbcDir = serverOdbcDir();
       if (odbcDir) {
         await applyOdbcSysIni(session.page, odbcDir);
@@ -426,7 +437,7 @@ export const test = base.extend<
     } else {
       const session = await launchRStudio();
       attachConsoleCapture(session.page, consoleBuffer);
-      await logVersions(session.page);
+      await recordVersions(session.page, 'desktop');
       await verifyTestManifestIfRequested(session);
       await use({
         page: session.page,

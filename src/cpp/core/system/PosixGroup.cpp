@@ -87,7 +87,7 @@ Error groupFrom(const boost::function<int(
       if (result == ERANGE)
          buffSize *= 2;
 
-   } while (result == ERANGE);
+   } while (result == ERANGE || result == EINTR);
 
    if (temp == nullptr)
    {
