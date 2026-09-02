@@ -46,6 +46,7 @@ struct FileRequestOptions
    bool useEmulatedStack;
    std::string serverHomepagePath;
    std::string frameOptions;
+   bool compress;
 };
 
 void handleFileRequest(const FileRequestOptions& options,
@@ -113,14 +114,14 @@ void handleFileRequest(const FileRequestOptions& options,
    if (regex_utils::match(uri, boost::regex(".*\\.cache\\..*")))
    {
       pResponse->setCacheForeverHeaders();
-      pResponse->setFile(filePath, request);
+      pResponse->setFile(filePath, request, options.compress);
    }
-   
-   // case: files designated to never be cached 
+
+   // case: files designated to never be cached
    else if (regex_utils::match(uri, boost::regex(".*\\.nocache\\..*")))
    {
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(filePath, request);
+      pResponse->setFile(filePath, request, options.compress);
    }
    // case: main page -- don't cache and dynamically set compiler stack mode
    else if (uri == mainPage)
@@ -161,7 +162,7 @@ void handleFileRequest(const FileRequestOptions& options,
 
       // return the page
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(filePath, request, text::TemplateFilter(vars));
+      pResponse->setFile(filePath, request, text::TemplateFilter(vars), options.compress);
    }
    // case: normal cacheable file
    else
@@ -182,11 +183,12 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& gwtPrefix,
                                        bool useEmulatedStack,
                                        const std::string& serverHomepagePath,
-                                       const std::string& frameOptions)
+                                       const std::string& frameOptions,
+                                       bool compress)
 {
    FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
                                 gwtPrefix, useEmulatedStack, serverHomepagePath,
-                                frameOptions };
+                                frameOptions, compress };
 
    return boost::bind(handleFileRequest,
                       options,

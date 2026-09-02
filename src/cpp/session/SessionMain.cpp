@@ -840,12 +840,8 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       registerRpcMethod(json::adaptMethodToAsync(method));
    }
 
-   // add gwt handlers if we are running desktop mode
-   if ((rsession::options().programMode() == kSessionProgramModeDesktop) ||
-       rsession::options().standalone())
-   {
-      http_methods::registerGwtHandlers();
-   }
+   // (the gwt handlers used in desktop and standalone modes are registered in
+   // rsessionMain, before the http listener starts)
 
    // enque abend warning event if necessary (but not in standalone
    // mode since those processes are often aborted unceremoniously)
@@ -2756,6 +2752,14 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
 
       // initialize directory trust state before R initialization
       modules::trust::initializeTrustState();
+
+      // in desktop and standalone modes we serve the client ourselves; register
+      // the handlers before listening so the listener thread can serve the
+      // page and its assets while R initializes below
+      if ((options.programMode() == kSessionProgramModeDesktop) || options.standalone())
+      {
+         http_methods::registerGwtHandlers();
+      }
 
       // start http connection listener
       error = waitWithTimeout(

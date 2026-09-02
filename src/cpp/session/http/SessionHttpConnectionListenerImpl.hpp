@@ -362,6 +362,15 @@ private:
       if (connection::checkForInterrupt(ptrHttpConnection))
          return;
 
+      // serve static client assets (the GWT page, scripts and styles) right
+      // here: they need neither R nor the main thread, and the main thread
+      // does not drain the connection queue until R has fully initialized
+      if (http_methods::isStaticAssetRequest(ptrHttpConnection))
+      {
+         http_methods::handleConnection(ptrHttpConnection, http_methods::ForegroundConnection);
+         return;
+      }
+
       // place the connection on the correct queue
       if (connection::isGetEvents(ptrHttpConnection))
       {

@@ -308,16 +308,20 @@ public:
 
    void setDynamicHtml(const std::string& html, const Request& request);
    
-   void setFile(const FilePath& filePath, const Request& request)
+   void setFile(const FilePath& filePath, const Request& request, bool compress = true)
    {
       NullOutputFilter nullFilter;
-      setFile(filePath, request, nullFilter);
+      setFile(filePath, request, nullFilter, compress);
    }
-   
+
+   // compress: gzip the body when the client accepts it. Worth it over a
+   // network, but on a loopback connection compressing a large file costs
+   // far more than sending it uncompressed.
    template <typename Filter>
-   void setFile(const FilePath& filePath, 
-                const Request& request, 
-                const Filter& filter)
+   void setFile(const FilePath& filePath,
+                const Request& request,
+                const Filter& filter,
+                bool compress = true)
    {
       // ensure that the file exists
       if (!filePath.exists())
@@ -325,18 +329,18 @@ public:
          setNotFoundError(request);
          return;
       }
-      
+
       // set content type
       if (contentType().empty())
       {
          setContentType(filePath.getMimeContentType());
       }
-      
+
       // gzip if possible
-      if (contentEncoding().empty() && request.acceptsEncoding(kGzipEncoding))
+      if (compress && contentEncoding().empty() && request.acceptsEncoding(kGzipEncoding))
          setContentEncoding(kGzipEncoding);
 
-      Error error = setBody(filePath, filter, 128, usePadding(request, filePath));
+      Error error = setBody(filePath, filter, 65536, usePadding(request, filePath));
       if (error)
          setError(status::InternalServerError, error.getMessage());
    }

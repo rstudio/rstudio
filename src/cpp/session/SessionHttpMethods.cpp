@@ -644,6 +644,28 @@ bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
                                          "/rpc/");
 }
 
+bool isStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   // only GET requests that fall through to the GWT file handler: anything
+   // with a module-registered handler, and every RPC or event request, needs
+   // the main thread (and possibly R)
+   if (!s_defaultUriHandler)
+      return false;
+
+   const core::http::Request& request = ptrConnection->request();
+   if (request.method() != "GET")
+      return false;
+
+   const std::string& uri = request.uri();
+   if (boost::algorithm::starts_with(uri, "/rpc/") ||
+       boost::algorithm::starts_with(uri, "/events/"))
+   {
+      return false;
+   }
+
+   return !uri_handlers::handlers().handlerFor(uri);
+}
+
 bool isAsyncJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
 {
    std::string uri = ptrConnection->request().uri();
@@ -953,6 +975,13 @@ WaitResult startHttpConnectionListenerWithTimeout()
 
 void registerGwtHandlers()
 {
+   // called once, before the HTTP listener starts, so the listener thread can
+   // serve the client while R initializes (see isStaticAssetRequest)
+   static bool s_registered = false;
+   if (s_registered)
+      return;
+   s_registered = true;
+
    // alias options
    session::Options& options = session::options();
 
@@ -974,11 +1003,18 @@ void registerGwtHandlers()
    // declare program mode in JS init block (for GWT boot time access)
    std::string initJs = "window.program_mode = \"" + options.programMode() + "\";\n";
 
-   // set default handler
+   // set default handler; the desktop talks to us over loopback, where
+   // compressing the multi-megabyte client costs far more than sending it
+   bool compress = options.programMode() != kSessionProgramModeDesktop;
    s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(),
                                                   "/",
                                                   http::UriFilterFunction(),
-                                                  initJs);
+                                                  initJs,
+                                                  std::string(),
+                                                  false,
+                                                  std::string(),
+                                                  std::string(),
+                                                  compress);
 }
 
 namespace {

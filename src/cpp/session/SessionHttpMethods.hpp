@@ -48,6 +48,7 @@ void waitForMethodInitFunction(const ClientEvent& initEvent);
 bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection);
 
 bool isAsyncJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection);
+bool isStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection);
 
 void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType);
