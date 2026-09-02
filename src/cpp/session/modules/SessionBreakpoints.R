@@ -548,6 +548,10 @@
       evalq({ 1 }, envir = envir)
    }
 
+   # Empty / comments-only files parse to length 0
+   if (length(content) == 0)
+      return(fun)
+
    # Copy each statement from the file into the eval body of the function
    for (i in 1:length(content)) {
      body(fun)[[2]][[2]][[i + 1]] <- content[[i]]
@@ -555,7 +559,7 @@
 
    # Set up the source references 
    refs <- attr(content, "srcref")
-   if (is.null(refs))
+   if (length(refs) == 0)
       return(fun)
    lastref <- length(refs)
    attr(body(fun), "srcfile") <- attr(content, "srcfile")
