@@ -253,6 +253,41 @@ test.describe('Data Viewer column visibility', () => {
     }
   });
 
+  // An open filter editor holds the header rebuild back (autoSizeColumns
+  // defers it so the editor isn't torn down mid-edit); hide/show closes the
+  // editor first, otherwise the rows would be rebuilt against a column order
+  // the headers don't show yet.
+  test('hiding a column while a filter editor is open closes it and keeps headers and rows in step', async ({ rstudioPage: page }) => {
+    await consoleActions.executeInConsole(
+      '{ .rs.colvis_filter_df <- data.frame(x = 1:20, y = 21:40, z = 41:60); View(.rs.colvis_filter_df) }',
+    );
+    await expect(dataViewer.columnHeader(1)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    // The info bar renders once the first row batch lands, which is also when
+    // the post-load auto-size rebuilds the headers; touching the filter row
+    // before that races the rebuild (see column-filters.test.ts).
+    await expect(dataViewer.gridInfo).toContainText('of 20', { timeout: TIMEOUTS.fileOpen });
+    await page.locator('#data_editing_toolbar').getByText('Filter', { exact: true }).click();
+    const colFilter1 = dataViewer.columnHeader(1).locator('.colFilter');
+    await expect(colFilter1).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    // Open x's numeric filter popup, then hide y from the sidebar.
+    await colFilter1.getByText('All').click();
+    const popup = dataViewer.frame.locator('.filterPopup');
+    await expect(popup).toBeVisible();
+    await dataViewer.frame.locator('.sidebar-col[data-col-idx="2"] .sidebar-eye-icon').click();
+
+    // The editor is closed; y is gone from the headers AND the rows, which
+    // agree on the remaining two columns (z's first value now sits second);
+    // and the filter row is still up on x.
+    await expect(popup).toHaveCount(0);
+    await expect(dataViewer.columnHeader(2)).toHaveCount(0);
+    await expect(dataViewer.frame.locator('#data_cols th[data-col-idx]')).toHaveCount(2);
+    const row0 = dataViewer.frame.locator('#gridBody tr[data-row="0"]');
+    await expect(row0.locator('td[data-col-pos]')).toHaveCount(2);
+    await expect(row0.locator('td[data-col-pos="2"]')).toHaveText('41');
+    await expect(dataViewer.columnHeader(1).locator('.colFilter')).toBeVisible();
+  });
+
   test('a pinned column can be hidden and returns to the pinned pane', async () => {
     await viewMtcarsCopy();
     await waitForViewer(dataViewer);

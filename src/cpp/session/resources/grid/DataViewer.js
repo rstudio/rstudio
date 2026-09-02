@@ -2455,12 +2455,15 @@ var updateAllColumnsHiddenHint = function() {
    hint.classList.toggle("visible", allHidden);
 };
 
-// Rebuild headers in the current column order (pinned first, then unpinned).
-// Reorder existing <th> elements rather than recreating them so any attached
-// filter UI / popup state is preserved across pin toggles.
+// Rebuild headers in the current column order (pinned first, then unpinned,
+// hidden columns left out). Header-attached filter UI is re-injected; an open
+// filter editor is closed first, since the rows are rebuilt right after and
+// a deferred header rebuild would leave the two out of step.
 var rebuildHeaders = function() {
    var thead = domThead;
    if (!thead || !cols) return;
+
+   dismissHeaderEditors();
 
    // Recompute the pinned/unpinned order, then let autoSizeColumns rebuild the
    // windowed header row. Header-attached UI (filters, column types) is
@@ -2627,6 +2630,21 @@ var isHeaderEditorOpen = function() {
    var active = document.activeElement;
    return !!(active && active.classList &&
              active.classList.contains("textFilterBox"));
+};
+
+// Close any open header editor -- the tracked filter popup and a focused
+// inline text filter -- ahead of a layout rebuild that must not be deferred.
+// autoSizeColumns would otherwise postpone the header rebuild to protect the
+// editor while the rows are rebuilt against the new column order, leaving the
+// body and the headers out of step until the editor closes. Used by the window
+// slide (whose new window may not even contain the editor's column) and by
+// the pin / hide rebuilds.
+var dismissHeaderEditors = function() {
+   if (dismissActivePopup) dismissActivePopup(true);
+   var activeEl = document.activeElement;
+   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox"))
+      activeEl.blur();
+   deferredHeaderRebuild = false;
 };
 
 // Run a header rebuild that was deferred because an editor was open. Scheduled
@@ -8155,11 +8173,7 @@ var applyColumnWindowUpdate = function(resCols, options) {
    // defers the rebuild while a filter editor is open (to protect it from
    // teardown mid-edit). Close any open editor instead -- its column may not
    // even exist in the new window.
-   if (dismissActivePopup) dismissActivePopup(true);
-   var activeEl = document.activeElement;
-   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox"))
-      activeEl.blur();
-   deferredHeaderRebuild = false;
+   dismissHeaderEditors();
 
    // Rebuild layout for the new window: widths, headers (autoSizeColumns
    // re-injects any active header UI) and pinned offsets.
