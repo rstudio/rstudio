@@ -960,6 +960,10 @@ var fetchColumnNames = function(callback) {
       .then(function(result) {
          if (result && !result.error && result.names) {
             columnNamesCache = result.names;
+            // The status bar may be naming an unfetched sort column by number
+            // (columnNameForAbs falls back to this cache when the sidebar's
+            // column index is unavailable); re-render it now the names exist.
+            updateInfoBar();
             callback(columnNamesCache);
          } else {
             callback(null);
