@@ -295,6 +295,16 @@ test.describe('Data Viewer column visibility', () => {
       await expect(dataViewer.gridInfo).toContainText('300 total columns (297 hidden)');
       await expect(dataViewer.frame.locator('#allColumnsHiddenHint')).toBeHidden();
 
+      // The three visible columns fit the viewport, yet the toolbar's Go to
+      // column box must stay available while anything is hidden: it is a way
+      // back to a hidden column. Jumping to column 150 shows it in place.
+      await dataViewer.goToColumn(150);
+      await expect(dataViewer.columnHeader(150)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.frame.locator('#data_cols th[data-col-idx]')).toHaveCount(4);
+      await expect(row0.locator('td[data-col-pos="2"]')).toHaveText('1491', { timeout: TIMEOUTS.fileOpen });
+      await expect(row0.locator('td[data-col-pos="3"]')).toHaveText('2591');
+      await expect(dataViewer.gridInfo).toContainText('(296 hidden)');
+
       // Show all: the frame is wide again and column 1 leads.
       await headerEye.click();
       await expect(dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-label'))
@@ -303,6 +313,38 @@ test.describe('Data Viewer column visibility', () => {
       await expect(dataViewer.gridInfo).not.toContainText('hidden');
     } finally {
       await consoleActions.executeInConsole('rm(".rs.colvis_wide_df", envir = .GlobalEnv)');
+    }
+  });
+
+  // The toolbar's Go to column box normally appears only when the columns
+  // overflow the viewport, but it doubles as a way back to a hidden column, so
+  // it must also appear while anything is hidden -- including after hide-all
+  // on a frame that never overflowed.
+  test('Go to column stays available while columns are hidden on a narrow frame', async () => {
+    await consoleActions.executeInConsole(
+      '{ .rs.colvis_narrow_df <- data.frame(a = 1:3, b = 4:6, c = 7:9); View(.rs.colvis_narrow_df) }',
+    );
+    try {
+      await waitForViewer(dataViewer);
+      await expect(dataViewer.columnHeader(3)).toBeVisible();
+      await expect(dataViewer.gotoColumnInput).toBeHidden();
+
+      await dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-eye').click();
+      await expect(dataViewer.frame.locator('#data_cols th')).toHaveCount(0);
+      await expect(dataViewer.gotoColumnInput).toBeVisible();
+
+      // Jumping to a hidden column through the box shows just that column.
+      await dataViewer.goToColumn('b');
+      await expect(dataViewer.columnHeader(2)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await expect(dataViewer.columnHeader(1)).toHaveCount(0);
+      await expect(dataViewer.gridInfo).toContainText('(2 hidden)');
+
+      // Once nothing is hidden the box goes away again, since the frame fits.
+      await dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-eye').click();
+      await expect(dataViewer.gridInfo).not.toContainText('hidden');
+      await expect(dataViewer.gotoColumnInput).toBeHidden();
+    } finally {
+      await consoleActions.executeInConsole('rm(".rs.colvis_narrow_df", envir = .GlobalEnv)');
     }
   });
 

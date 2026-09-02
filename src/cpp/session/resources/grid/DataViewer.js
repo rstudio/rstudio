@@ -7148,17 +7148,27 @@ var updateGridScrollbars = function() {
 var lastColumnOverflow = null;
 
 var updateColumnOverflowState = function() {
-   if (!cols || totalTableWidth <= 0)
+   if (!cols)
       return;
    var viewport = domViewport;
    if (!viewport)
+      return;
+
+   // Hidden columns take no layout width, but the host's Go to column box is
+   // also the way to reach (and thereby show) one of them, so it stays
+   // available while any column is hidden even when the visible set fits --
+   // including the all-hidden case, where the unpinned width is legitimately
+   // zero. Otherwise a zero width means the layout isn't measured yet, and
+   // there is nothing to report.
+   var anyHidden = hiddenColumns.size > 0;
+   if (totalTableWidth <= 0 && !anyHidden)
       return;
 
    // totalTableWidth is the unpinned content width (fetched unpinned columns
    // plus estimated unfetched spans); domViewport is the unpinned pane. Compare
    // against clientWidth rather than scrollWidth, which includes the overscroll
    // padding and would read as "overflowing" for every frame.
-   var overflow = totalTableWidth > viewport.clientWidth + 1;
+   var overflow = totalTableWidth > viewport.clientWidth + 1 || anyHidden;
    if (overflow !== lastColumnOverflow) {
       lastColumnOverflow = overflow;
       if (window.columnOverflowCallback)
