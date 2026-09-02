@@ -84,10 +84,23 @@ test.describe('Data Viewer column visibility', () => {
     // pane never reaches zero tabs (#17738).
     await resetSourcePaneState(page);
     await expect(sourcePane.selectedTab).toContainText('Untitled', { timeout: 5000 });
+    // Drop the per-test frame copies (viewMtcarsCopy) so they don't pile up.
+    await consoleActions.executeInConsole(
+      'rm(list = ls(envir = .GlobalEnv, all.names = TRUE, pattern = "^[.]rs[.]colvis_"), envir = .GlobalEnv)',
+    );
   });
 
+  // View() a copy of mtcars named after the current test. Viewer state (pins,
+  // sorts, hidden columns) is persisted in localStorage per object name, so a
+  // unique object per test keeps one test's state from reaching another
+  // regardless of how the previous viewer tab was torn down.
+  async function viewMtcarsCopy(): Promise<void> {
+    const name = '.rs.colvis_' + test.info().title.replace(/[^A-Za-z0-9]+/g, '_');
+    await consoleActions.executeInConsole(`{ ${name} <- mtcars; View(${name}) }`);
+  }
+
   test('sidebar eye icon hides a column from the grid and shows it again', async () => {
-    await consoleActions.executeInConsole('View(mtcars)');
+    await viewMtcarsCopy();
     await waitForViewer(dataViewer);
     expect((await colOrder(dataViewer)).slice(0, 5)).toEqual(['0', '1', '2', '3', '4']);
 
@@ -125,7 +138,7 @@ test.describe('Data Viewer column visibility', () => {
   });
 
   test('header eye hides every column and the in-grid hint shows them all', async () => {
-    await consoleActions.executeInConsole('View(mtcars)');
+    await viewMtcarsCopy();
     await waitForViewer(dataViewer);
 
     const headerEye = dataViewer.frame.locator('#sidebarToggle .sidebar-toggle-eye');
@@ -170,7 +183,7 @@ test.describe('Data Viewer column visibility', () => {
   });
 
   test('a hidden column keeps its sort, and clicking its entry shows it again', async () => {
-    await consoleActions.executeInConsole('View(mtcars)');
+    await viewMtcarsCopy();
     await waitForViewer(dataViewer);
 
     // Sort mpg (1) descending from the sidebar: Toyota Corolla (33.9 mpg,
@@ -241,7 +254,7 @@ test.describe('Data Viewer column visibility', () => {
   });
 
   test('a pinned column can be hidden and returns to the pinned pane', async () => {
-    await consoleActions.executeInConsole('View(mtcars)');
+    await viewMtcarsCopy();
     await waitForViewer(dataViewer);
 
     const entry3 = dataViewer.frame.locator('.sidebar-col[data-col-idx="3"]');
@@ -261,7 +274,7 @@ test.describe('Data Viewer column visibility', () => {
   });
 
   test('H hides the column under the keyboard cursor and moves the cursor on', async ({ rstudioPage: page }) => {
-    await consoleActions.executeInConsole('View(mtcars)');
+    await viewMtcarsCopy();
     await waitForViewer(dataViewer);
 
     // Clicking a header makes it the active header and focuses the grid.
