@@ -137,6 +137,32 @@ command_exists() {
    command -v "$1" >/dev/null 2>&1
 }
 
+# Download one candidate URL. A 404 means the installer is not at this
+# location and the caller should move on to the next candidate. Anything
+# else -- a connection reset mid-transfer, say, which CRAN does under load --
+# is retried here, since curl's own --retry only covers timeouts and a few
+# 5xx codes.
+download() {
+   local url="$1"
+   local dest="$2"
+
+   local attempt code
+   for attempt in 1 2 3; do
+      if code="$(curl -fsSL --retry 5 --retry-delay 10 -o "${dest}" -w '%{http_code}' "${url}")"; then
+         return 0
+      fi
+
+      if [[ "${code}" == "404" ]]; then
+         return 1
+      fi
+
+      echo "    attempt ${attempt} failed (HTTP ${code}); retrying" >&2
+      sleep 10
+   done
+
+   return 1
+}
+
 usage() {
    echo "Usage: $(basename "$0") <version> [platform ...]" >&2
    echo >&2
@@ -213,7 +239,7 @@ for PLATFORM in "${PLATFORMS[@]}"; do
    FOUND=""
    while IFS= read -r URL; do
       echo "    trying ${URL}"
-      if curl -fsSL --retry 5 --retry-delay 10 -o "${WORKDIR}/${FILENAME}" "${URL}"; then
+      if download "${URL}" "${WORKDIR}/${FILENAME}"; then
          FOUND="${URL}"
          break
       fi
