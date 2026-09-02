@@ -285,6 +285,14 @@ var activeCol = -1;
 // from the body via ArrowUp at row 0.
 var activeHeaderCol = -1;
 
+// Absolute index of the column the active header should move to once the
+// window slide now in flight lands, or -1. Set by setColumnsHidden when a
+// keyboard hide's successor column (the one taking the hidden column's slot)
+// isn't fetched yet; applyColumnWindowUpdate applies it after the remap, and
+// scrolls it into view when pendingActiveHeaderScroll is set.
+var pendingActiveHeaderAbs = -1;
+var pendingActiveHeaderScroll = false;
+
 // Pinned columns: a set of absolute (1-based) column indices in the full
 // frame, so a pin tracks its column across pagination rather than its position
 // within the currently fetched window. The rownames column is always
@@ -2389,9 +2397,11 @@ var setColumnsHidden = function(absList, hidden, options) {
    // display slot, so the keyboard cursor doesn't vanish with it.
    clearActiveCell();
    var headerOrigCol = -1;
+   var headerOrigAbs = -1;
    var headerSlot = -1;
    if (activeHeaderCol >= 0) {
       headerOrigCol = columnOrder[activeHeaderCol];
+      headerOrigAbs = absColIndex(headerOrigCol);
       headerSlot = activeHeaderCol;
       clearActiveHeader();
    }
@@ -2410,12 +2420,33 @@ var setColumnsHidden = function(absList, hidden, options) {
    updateInfoBar();
    saveState();
 
+   var scrollHeader = !!(options && options.scrollActiveHeader);
    if (headerOrigCol >= 0) {
       var newIdx = columnOrder.indexOf(headerOrigCol);
-      if (newIdx < 0)
-         newIdx = Math.min(headerSlot, columnOrder.length - 1);
+      if (newIdx < 0) {
+         // The header's own column was hidden. Its successor in the scrollable
+         // layout -- the next column that is neither pinned nor hidden -- takes
+         // its slot, but may not be fetched yet when the hidden column sat at
+         // the window's right edge; the slide below then fetches it, and
+         // applyColumnWindowUpdate moves the cursor there on landing. (A pinned
+         // column, or one with no successor, keeps the slot-based fallback.)
+         var succAbs = pinnedColumns.has(headerOrigAbs)
+            ? -1
+            : nthIncludedAbs(headerOrigAbs + 1, 0, countExcludedInRange);
+         if (succAbs >= 1 && totalCols > 0 && succAbs <= totalCols) {
+            var succPos = posForAbsColIndex(succAbs);
+            if (succPos >= 0) {
+               newIdx = columnOrder.indexOf(succPos);
+            } else {
+               pendingActiveHeaderAbs = succAbs;
+               pendingActiveHeaderScroll = scrollHeader;
+            }
+         } else {
+            newIdx = Math.min(headerSlot, columnOrder.length - 1);
+         }
+      }
       if (newIdx >= 0)
-         setActiveHeader(newIdx, !!(options && options.scrollActiveHeader));
+         setActiveHeader(newIdx, scrollHeader);
    }
 
    if (!(options && options.deferSync) && fetchedSetLacksRequested())
@@ -7552,6 +7583,8 @@ var resetGridState = function() {
    activeRow = -1;
    activeCol = -1;
    activeHeaderCol = -1;
+   pendingActiveHeaderAbs = -1;
+   pendingActiveHeaderScroll = false;
    // The viewport persists across destroyGrid; clear its activedescendant so
    // it can't reference an id whose td/th was just removed from the DOM.
    setViewportActiveDescendant(null);
@@ -8182,6 +8215,21 @@ var applyColumnWindowUpdate = function(resCols, options) {
    if (activeCol < 0) activeRow = -1;
    activeHeaderCol = remapDisplayIdx(activeHeaderAbs);
 
+   // A keyboard hide whose successor column wasn't fetched parked the
+   // cursor's destination (setColumnsHidden); it lands with this window.
+   var pendingHeaderScroll = false;
+   if (pendingActiveHeaderAbs > 0) {
+      var pendingIdx = remapDisplayIdx(pendingActiveHeaderAbs);
+      if (pendingIdx >= 0) {
+         activeHeaderCol = pendingIdx;
+         activeRow = -1;
+         activeCol = -1;
+         pendingHeaderScroll = pendingActiveHeaderScroll;
+      }
+      pendingActiveHeaderAbs = -1;
+      pendingActiveHeaderScroll = false;
+   }
+
    // The header row must be rebuilt for the new window, but autoSizeColumns
    // defers the rebuild while a filter editor is open (to protect it from
    // teardown mid-edit). Close any open editor instead -- its column may not
@@ -8244,6 +8292,10 @@ var applyColumnWindowUpdate = function(resCols, options) {
       restoreScrollAnchor(anchor);
    }
    syncColumnWindow();
+   // The keyboard cursor that just landed on its successor column stays
+   // visible, as it does for an in-window keyboard hide.
+   if (pendingHeaderScroll)
+      ensureActiveHeaderVisible();
 
    // Sync the viewport's aria-activedescendant with the remapped active
    // cell/header (cleared when neither survived the slide).
