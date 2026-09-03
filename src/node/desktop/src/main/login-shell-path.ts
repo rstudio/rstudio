@@ -180,12 +180,13 @@ export function loginShellPathFailed(): boolean {
 const kDefaultToolPaths = ['/usr/local/bin', '/opt/homebrew/bin'];
 
 /**
- * The given PATH, extended with the standard tool locations it lacks: the
- * path_helper sources (/etc/paths, /etc/paths.d/*) the session's own
- * last-resort initialization would read, plus Homebrew's directories.
+ * A fallback PATH built the way a login shell would: the path_helper sources
+ * (/etc/paths, /etc/paths.d/*) first -- the same inputs, in the same order,
+ * as the session's own last-resort initialization -- then Homebrew's
+ * directories, then whatever inherited entries are not already present.
  */
 export function withDefaultToolPaths(path: string): string {
-  const parts = path.length > 0 ? path.split(':') : [];
+  const parts: string[] = [];
 
   const append = (dir: string) => {
     const trimmed = dir.trim();
@@ -205,6 +206,10 @@ export function withDefaultToolPaths(path: string): string {
   }
 
   for (const dir of kDefaultToolPaths) {
+    append(dir);
+  }
+
+  for (const dir of path.split(':')) {
     append(dir);
   }
 

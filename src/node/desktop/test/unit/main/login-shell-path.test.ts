@@ -78,13 +78,23 @@ describe('LoginShellPath', () => {
     assert.equal(await loginShellPath(), fresh);
   });
 
-  it('extends a PATH with the standard tool locations, without duplicates', () => {
-    const extended = withDefaultToolPaths('/usr/bin:/opt/homebrew/bin');
+  it('builds a fallback PATH with tool locations first, without duplicates', () => {
+    const extended = withDefaultToolPaths('/usr/bin:/opt/homebrew/bin:/custom/bin');
     const parts = extended.split(':');
 
-    assert.equal(parts[0], '/usr/bin');
     assert.include(parts, '/usr/local/bin');
     assert.include(parts, '/opt/homebrew/bin');
+    assert.include(parts, '/custom/bin');
     assert.equal(new Set(parts).size, parts.length, 'expected no duplicate entries');
+
+    // the path_helper entries take precedence over inherited ones, as they
+    // would in a real login shell
+    if (process.platform === 'darwin') {
+      assert.isBelow(
+        parts.indexOf('/usr/local/bin'),
+        parts.indexOf('/custom/bin'),
+        'expected path_helper entries to precede inherited ones',
+      );
+    }
   });
 });
