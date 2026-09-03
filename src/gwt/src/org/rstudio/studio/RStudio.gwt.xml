@@ -125,6 +125,13 @@
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
    <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 
+   <!-- Install the initial fragment via a script tag instead of eval of
+        downloaded strings; script tags let the browser compile the code in
+        a background thread during the download, and reuse its compiled-code
+        cache across page loads (we always serve same-origin, which this
+        install mode requires) -->
+   <set-configuration-property name="installCode" value="false"/>
+
    <!-- work around incompatibility between GWT 2.8 and Gin 2.1.2 -->
    <set-configuration-property name="gin.classloading.exceptedPackages" value="com.google.gwt.core.client"/>
 
