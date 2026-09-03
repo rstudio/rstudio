@@ -391,7 +391,10 @@ export class SessionLauncher {
     startupCheckpoint('session-probe-begin');
     const deadline = Date.now() + kProbeTimeoutMs;
     while (Date.now() < deadline) {
-      if (this.sessionProcess?.exitCode !== null) {
+      // exitCode stays null when the process dies from a signal, so check
+      // signalCode as well
+      const session = this.sessionProcess;
+      if (session == null || session.exitCode !== null || session.signalCode !== null) {
         return false;
       }
       if (await probeUrl(url)) {

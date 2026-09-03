@@ -158,6 +158,17 @@ public class RpcRequest
                      return;
                   }
 
+                  // parse failures are reported as a null response rather
+                  // than an exception
+                  if (rpcResponse == null)
+                  {
+                     RpcError error = RpcError.create(
+                                                RpcError.TRANSMISSION_ERROR,
+                                                "Unable to parse the response from the server");
+                     requestCallback.onError(enclosingRequest, error);
+                     return;
+                  }
+
                   // response received and validated, process it! NOTE: this is
                   // deliberately outside the try/catch above: an exception from
                   // the callback is a client bug, and catching it here would

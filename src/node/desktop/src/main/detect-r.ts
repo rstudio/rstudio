@@ -60,12 +60,20 @@ function executeCommand(command: string): Expected<string> {
   });
 }
 
+/**
+ * True when the Windows R chooser was explicitly requested, via the
+ * environment or by holding Ctrl at launch.
+ */
+export function rChooserRequested(): boolean {
+  return getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 || desktop.isCtrlKeyDown();
+}
+
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
 
   const options = ElectronDesktopOptions();
 
   if (platform === 'win32') {
-    const showUi = getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 || desktop.isCtrlKeyDown();
+    const showUi = rChooserRequested();
 
     if (!showUi) {
       // nothing to do if RSTUDIO_WHICH_R is set

@@ -95,7 +95,9 @@ async function queryLoginShellPath(shell: string): Promise<string | null> {
       logger().logError(error);
       resolve(null);
     });
-    child.on('exit', (code) => {
+    // 'close' rather than 'exit': stdout is only guaranteed drained once the
+    // stdio streams have closed, and a truncated PATH must not be cached
+    child.on('close', (code) => {
       clearTimeout(timer);
       if (code !== 0) {
         logger().logDebug(`Login shell ${shell} exited with code ${code}; not using its PATH`);

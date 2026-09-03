@@ -367,7 +367,7 @@ private:
       // does not drain the connection queue until R has fully initialized
       if (http_methods::isStaticAssetRequest(ptrHttpConnection))
       {
-         http_methods::handleConnection(ptrHttpConnection, http_methods::ForegroundConnection);
+         http_methods::handleStaticAssetRequest(ptrHttpConnection);
          return;
       }
 

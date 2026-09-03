@@ -28,6 +28,8 @@
 
 #include "session-config.h"
 
+#include <atomic>
+
 #include <boost/algorithm/string.hpp>
 
 #include <shared_core/json/Json.hpp>
@@ -73,6 +75,11 @@ namespace session {
 namespace {
 
 core::http::UriHandlerFunction s_defaultUriHandler;
+
+// whether s_defaultUriHandler has been assigned; the listener thread gates
+// its static-asset fast path on this (an atomic, because in server mode the
+// assignment happens on the main thread while the listener is running)
+std::atomic<bool> s_gwtHandlersRegistered(false);
 
 // version of the executable -- this is the legacy version designator. we
 // set it to double max so that it always invalidates legacy clients
@@ -649,7 +656,7 @@ bool isStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection)
    // only GET requests that fall through to the GWT file handler: anything
    // with a module-registered handler, and every RPC or event request, needs
    // the main thread (and possibly R)
-   if (!s_defaultUriHandler)
+   if (!s_gwtHandlersRegistered.load(std::memory_order_acquire))
       return false;
 
    const core::http::Request& request = ptrConnection->request();
@@ -664,6 +671,17 @@ bool isStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection)
    }
 
    return !uri_handlers::handlers().handlerFor(uri);
+}
+
+void handleStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   // serve with the default (GWT file) handler directly. the caller decided
+   // via isStaticAssetRequest() that no module handler applies; consulting
+   // the handler map again (as handleConnection() would) could pick up a
+   // handler registered in between and run it on the listener thread
+   core::http::Response response;
+   s_defaultUriHandler(ptrConnection->request(), &response);
+   ptrConnection->sendResponse(response);
 }
 
 bool isAsyncJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
@@ -1015,6 +1033,9 @@ void registerGwtHandlers()
                                                   std::string(),
                                                   std::string(),
                                                   compress);
+
+   // publish the handler to the listener thread (see isStaticAssetRequest)
+   s_gwtHandlersRegistered.store(true, std::memory_order_release);
 }
 
 namespace {
