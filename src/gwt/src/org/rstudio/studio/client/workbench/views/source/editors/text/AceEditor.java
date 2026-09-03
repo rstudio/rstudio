@@ -23,6 +23,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import org.rstudio.core.client.AceSupport;
+import org.rstudio.core.client.AsyncJavaScriptLoader;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -302,33 +303,14 @@ public class AceEditor implements DocDisplay
 
    public static void load(final Command command)
    {
-      // the vim / emacs keybindings are not part of the base load; they are
-      // loaded lazily, by the first editor that needs them (loadKeybindings)
-      aceLoader_.addCallback(() ->
-      {
-         // acesupport and ext-language-tools depend only on ace itself, so
-         // load them in parallel
-         final int[] pending = { 2 };
-         ExternalJavaScriptLoader.Callback onLoaded = () ->
-         {
-            pending[0] -= 1;
-            if (pending[0] > 0)
-               return;
-
-            AceSupport.initialize();
-
-            if (command != null)
-               command.execute();
-         };
-
-         aceSupportLoader_.addCallback(onLoaded);
-         extLanguageToolsLoader_.addCallback(onLoaded);
-      });
+      // NOTE: the vim / emacs keybindings are not part of the base load; they
+      // are loaded lazily, by the first editor that needs them (loadKeybindings)
+      baseLoader_.execute(command);
    }
 
    public static boolean keybindingsLoaded()
    {
-      return vimLoader_.isLoaded() && emacsLoader_.isLoaded();
+      return keybindingsLoader_.isLoaded();
    }
 
    // Run a command once the vim / emacs keybindings have loaded, without
@@ -344,20 +326,7 @@ public class AceEditor implements DocDisplay
 
    public static void loadKeybindings(final Command command)
    {
-      aceLoader_.addCallback(() ->
-            vimLoader_.addCallback(() ->
-                  emacsLoader_.addCallback(() ->
-                  {
-                     AceEditorNative.fixupEmacsKeybindings();
-                     TextEditingTarget.initializeIncrementalSearch();
-
-                     for (Command pendingCommand : keybindingsLoadedCommands_)
-                        pendingCommand.execute();
-                     keybindingsLoadedCommands_.clear();
-
-                     if (command != null)
-                        command.execute();
-                  })));
+      keybindingsLoader_.execute(command);
    }
 
    public static final native AceEditor getEditor(Element el)
@@ -5237,6 +5206,29 @@ public class AceEditor implements DocDisplay
                    AceResources.INSTANCE.extLanguageToolsUncompressed());
 
    private static final List<Command> keybindingsLoadedCommands_ = new ArrayList<>();
+
+   // ace itself must load before the bundles extending it; within each stage
+   // the scripts load in parallel
+   private static final AsyncJavaScriptLoader baseLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(aceSupportLoader_, extLanguageToolsLoader_)
+               .onFinished(() -> AceSupport.initialize());
+
+   private static final AsyncJavaScriptLoader keybindingsLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(vimLoader_, emacsLoader_)
+               .onFinished(() ->
+               {
+                  // setup that piggybacks on the keybindings' arrival
+                  AceEditorNative.fixupEmacsKeybindings();
+                  TextEditingTarget.initializeIncrementalSearch();
+
+                  for (Command pendingCommand : keybindingsLoadedCommands_)
+                     pendingCommand.execute();
+                  keybindingsLoadedCommands_.clear();
+               });
 
    private boolean popupVisible_;
 
