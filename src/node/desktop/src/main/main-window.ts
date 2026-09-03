@@ -401,13 +401,14 @@ export class MainWindow extends GwtWindow {
           .then((error: Err) => {
             if (error) {
               logger().logError(error);
+            } else {
+              startupCheckpoint('session-url-reachable');
             }
           })
           .catch((error) => {
             logger().logError(error);
           })
           .finally(() => {
-            startupCheckpoint('session-url-reachable');
             this.reload();
           });
       } else {

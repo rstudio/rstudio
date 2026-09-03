@@ -40,7 +40,15 @@ interface Checkpoint {
 
 // how long to wait after the workbench initializes before harvesting the
 // renderer timeline; long enough to include the deferred-init tail
-const kRendererHarvestDelayMs = 3000;
+// the harvest waits for the client's deferred-init-completed mark (the last
+// startup milestone), polling at this interval and giving up at the timeout
+// so a stalled session cannot postpone the harvest forever
+const kHarvestPollIntervalMs = 500;
+const kHarvestTimeoutMs = 30000;
+
+// once the final mark is seen, a short settle lets trailing entries (late
+// resource timings) be recorded before the timeline is copied
+const kHarvestSettleMs = 1000;
 
 // looked up on every checkpoint rather than cached: there are only a handful
 // of checkpoints, and this keeps the module trivially testable
@@ -104,13 +112,36 @@ interface RendererEntry {
 /**
  * Copies the renderer's navigation timing, resource timing and
  * `performance.mark()` entries into the timing file as "client" checkpoints.
- * The GWT client records marks prefixed "rstudio:" at its own milestones.
+ * The GWT client records marks prefixed "rstudio:" at its own milestones; the
+ * harvest runs once the last of them (deferred-init-completed) has been
+ * recorded, so slow launches are captured in full rather than truncated at a
+ * fixed delay.
  */
 export function harvestRendererTiming(webContents: WebContents): void {
   if (!startupTimingEnabled()) {
     return;
   }
 
+  const kProbeScript = String.raw`
+    performance.getEntriesByName('rstudio:deferred-init-completed', 'mark').length > 0`;
+
+  const deadline = Date.now() + kHarvestTimeoutMs;
+  const poll = () => {
+    webContents
+      .executeJavaScript(kProbeScript)
+      .then((completed: boolean) => {
+        if (completed || Date.now() >= deadline) {
+          setTimeout(() => harvestNow(webContents), kHarvestSettleMs);
+        } else {
+          setTimeout(poll, kHarvestPollIntervalMs);
+        }
+      })
+      .catch((error: unknown) => logger().logError(error));
+  };
+  setTimeout(poll, kHarvestPollIntervalMs);
+}
+
+function harvestNow(webContents: WebContents): void {
   // performance.timeOrigin is epoch-based, so everything can be converted to
   // the same wall-clock scale used by the other tiers
   const script = String.raw`
@@ -137,15 +168,13 @@ export function harvestRendererTiming(webContents: WebContents): void {
       return entries;
     })()`;
 
-  setTimeout(() => {
-    webContents
-      .executeJavaScript(script)
-      .then((entries: RendererEntry[]) => {
-        for (const entry of entries) {
-          write({ tier: 'client', name: entry.name, t: entry.t, dur: entry.dur });
-        }
-        write({ tier: 'desktop', name: 'timing-harvested', t: nowMs(), pid: process.pid });
-      })
-      .catch((error: unknown) => logger().logError(error));
-  }, kRendererHarvestDelayMs);
+  webContents
+    .executeJavaScript(script)
+    .then((entries: RendererEntry[]) => {
+      for (const entry of entries) {
+        write({ tier: 'client', name: entry.name, t: entry.t, dur: entry.dur });
+      }
+      write({ tier: 'desktop', name: 'timing-harvested', t: nowMs(), pid: process.pid });
+    })
+    .catch((error: unknown) => logger().logError(error));
 }

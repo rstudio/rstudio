@@ -239,10 +239,6 @@ public class Application implements ApplicationEventHandlers
                   }
                }.schedule(10000);
             }
-            else
-            {
-               dismissLoadingProgress.execute();
-            }
 
             // set session info
             session_.setSessionInfo(sessionInfo);
@@ -292,7 +288,16 @@ public class Application implements ApplicationEventHandlers
             // client_init was sent while Ace was still loading; the
             // workbench constructs editors (console input, source), so
             // wait for Ace before building it (a no-op if already loaded)
-            AceEditor.load(() -> initializeWorkbench());
+            AceEditor.load(() ->
+            {
+               // dismiss the loading UI only now, so a client_init response
+               // that beats the ace load doesn't expose a blank shell
+               // (switch-project keeps its overlay on the timer above)
+               if (!ApplicationAction.isSwitchProject())
+                  dismissLoadingProgress.execute();
+
+               initializeWorkbench();
+            });
          }
 
          public void onError(ServerError error)
