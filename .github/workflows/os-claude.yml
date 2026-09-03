@@ -2,9 +2,9 @@ name: Claude PR Assistant
 
 # @claude mentions on this public repository are relayed, via
 # repository_dispatch, to the private rstudio-pro repository, where the
-# actual Claude workflow (os-claude.yml there) runs against a checkout of
-# this repository and posts results back through the workbench-ide-release
-# GitHub App. Platform policy does not allow LLM workflows or model
+# actual Claude workflow (ide-os-claude.yml there) runs against a checkout
+# of this repository and posts results back through the
+# workbench-ide-release GitHub App. Platform policy does not allow LLM workflows or model
 # credentials on public repositories (posit-dev/platform-infra#317), so
 # this workflow must remain a thin, LLM-free relay.
 #
