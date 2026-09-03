@@ -580,13 +580,19 @@ public abstract class Prefs
    }
 
    /**
-    * Indicates whether preference layers have been loaded. Prefs objects
-    * constructed before the session info arrives start with no layers, and
-    * every preference reads as its default until updatePrefs() supplies them.
+    * Indicates whether preference layers have been loaded, up to and
+    * including the given layer. Prefs objects constructed before the session
+    * info arrives start with no layers, and every preference reads as its
+    * default until updatePrefs() supplies them.
+    *
+    * @param requiredLayer The highest layer index that must be present
+    *   (e.g. UserPrefs.LAYER_USER).
     */
-   public boolean hasLoadedLayers()
+   public boolean hasLoadedLayers(int requiredLayer)
    {
-      if (layers_.length() == 0)
+      // the layer array can be shorter than the fixed layer indices during
+      // startup (see SessionInfo's clamped accessors)
+      if (layers_.length() <= requiredLayer)
          return false;
 
       // SessionInfo synthesizes a placeholder layer ([{}]) when the session

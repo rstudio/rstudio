@@ -167,7 +167,7 @@ public class ApplicationAutomation
       // every pref registers with its default value (see #17733). A plain
       // Java assert would be compiled out of the optimized GWT output that
       // automation runs against, so check explicitly.
-      if (!userPrefs_.hasLoadedLayers())
+      if (!userPrefs_.hasLoadedLayers(UserPrefs.LAYER_USER))
       {
          throw new IllegalStateException(
                "automation agent initialized before user prefs were loaded from session info");

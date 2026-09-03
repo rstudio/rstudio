@@ -173,6 +173,21 @@ export function loginShellPathFailed(): boolean {
   return fresh === null;
 }
 
+// standard tool locations a login shell would normally contribute; appended
+// as a fallback when the shell itself could not be asked
+const kDefaultToolPaths = ['/usr/local/bin', '/opt/homebrew/bin'];
+
+/** The given PATH, extended with the standard tool locations it lacks. */
+export function withDefaultToolPaths(path: string): string {
+  const parts = path.length > 0 ? path.split(':') : [];
+  for (const dir of kDefaultToolPaths) {
+    if (!parts.includes(dir)) {
+      parts.push(dir);
+    }
+  }
+  return parts.join(':');
+}
+
 /**
  * The PATH to launch a session with. Resolves immediately when the shell
  * has answered or a previous launch's answer is available; on a first

@@ -48,6 +48,7 @@ import {
   kSessionPathInitializedEnvVar,
   loginShellPath,
   loginShellPathFailed,
+  withDefaultToolPaths,
 } from './login-shell-path';
 import { probeUrl } from './url-utils';
 import { showWhatsNewWindow } from './whats-new-window';
@@ -138,7 +139,9 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     } else if (loginShellPathFailed()) {
       // the desktop's bounded query failed or timed out; the session's own
       // probe has no timeout and would hang on the same profile, so tell it
-      // to keep the inherited PATH instead
+      // to keep the inherited PATH, extended with the standard tool
+      // locations a login shell would normally contribute
+      env['PATH'] = withDefaultToolPaths(env['PATH'] ?? '');
       env[kSessionPathInitializedEnvVar] = '1';
     }
   }
