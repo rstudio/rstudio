@@ -191,6 +191,11 @@ if(GWT_COPY)
       # runs with a different working directory and needs an absolute path
       get_filename_component(GWT_EXTRAS_ABSOLUTE_DIR "${GWT_EXTRAS_DIR}"
          ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
+      # locate the gzip helper relative to this file: the top-level source
+      # directory need not be the repository root (e.g. cmake -S src)
+      get_filename_component(GZIP_HELPER_SCRIPT
+         "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/gzip-file.cmake" ABSOLUTE)
       install(CODE "
          # resolve symlinks (the folder exists by install time): the helper
          # runs with this directory as its working directory, and
@@ -207,7 +212,7 @@ if(GWT_COPY)
                COMMAND \"\${CMAKE_COMMAND}\"
                   \"-DINPUT=\${SYMBOL_MAP_NAME}\"
                   \"-DOUTPUT=\${SYMBOL_MAPS_DIR}/\${SYMBOL_MAP_NAME}.gz\"
-                  -P \"${CMAKE_SOURCE_DIR}/cmake/gzip-file.cmake\"
+                  -P \"${GZIP_HELPER_SCRIPT}\"
                WORKING_DIRECTORY \"\${SYMBOL_MAPS_SOURCE_DIR}\"
                RESULT_VARIABLE GZIP_RESULT)
             if(NOT GZIP_RESULT EQUAL 0)
