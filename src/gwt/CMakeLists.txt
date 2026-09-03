@@ -173,29 +173,42 @@ if(GWT_COPY)
 
    # copy symbol maps, gzipped to save space when supported -- they are only
    # read when deobfuscating client-side stack traces for the log, and
-   # GwtSymbolMaps.cpp reads both the plain and gzipped forms
+   # GwtSymbolMaps.cpp reads both the plain and gzipped forms. only the
+   # *.symbolMap files themselves are gzipped; any other files in the folder
+   # (e.g. the .symbolMapOffset read by ServerEval.cpp) are installed as-is
    if(CMAKE_VERSION VERSION_LESS "3.18")
       install(
          DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
          DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
    else()
+      install(
+         DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
+         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps
+         PATTERN "*.symbolMap" EXCLUDE)
+
       # GWT_EXTRAS_DIR may be relative to this source directory (as
       # install(DIRECTORY) would resolve it); the install-time code below
       # runs with a different working directory and needs an absolute path
       get_filename_component(GWT_EXTRAS_ABSOLUTE_DIR "${GWT_EXTRAS_DIR}"
          ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
       install(CODE "
+         set(SYMBOL_MAPS_SOURCE_DIR \"${GWT_EXTRAS_ABSOLUTE_DIR}/rstudio/symbolMaps\")
          set(SYMBOL_MAPS_DIR \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps\")
          file(MAKE_DIRECTORY \"\${SYMBOL_MAPS_DIR}\")
-         file(GLOB SYMBOL_MAPS \"${GWT_EXTRAS_ABSOLUTE_DIR}/rstudio/symbolMaps/*.symbolMap\")
+         file(GLOB SYMBOL_MAPS \"\${SYMBOL_MAPS_SOURCE_DIR}/*.symbolMap\")
          foreach(SYMBOL_MAP \${SYMBOL_MAPS})
             get_filename_component(SYMBOL_MAP_NAME \"\${SYMBOL_MAP}\" NAME)
             message(STATUS \"Compressing: \${SYMBOL_MAP_NAME}\")
-            file(ARCHIVE_CREATE
-               OUTPUT \"\${SYMBOL_MAPS_DIR}/\${SYMBOL_MAP_NAME}.gz\"
-               PATHS \"\${SYMBOL_MAP}\"
-               FORMAT raw
-               COMPRESSION GZip)
+            execute_process(
+               COMMAND \"\${CMAKE_COMMAND}\"
+                  \"-DINPUT=\${SYMBOL_MAP_NAME}\"
+                  \"-DOUTPUT=\${SYMBOL_MAPS_DIR}/\${SYMBOL_MAP_NAME}.gz\"
+                  -P \"${CMAKE_SOURCE_DIR}/cmake/gzip-file.cmake\"
+               WORKING_DIRECTORY \"\${SYMBOL_MAPS_SOURCE_DIR}\"
+               RESULT_VARIABLE GZIP_RESULT)
+            if(NOT GZIP_RESULT EQUAL 0)
+               message(FATAL_ERROR \"Failed to compress \${SYMBOL_MAP_NAME}\")
+            endif()
          endforeach()
       ")
    endif()
