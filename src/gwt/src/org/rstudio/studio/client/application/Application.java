@@ -94,6 +94,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -289,7 +290,11 @@ public class Application implements ApplicationEventHandlers
                      ApplicationAutomation automation = pAutomation_.get();
                      automation.initializeAgent();
                   }
-                  initializeWorkbench();
+
+                  // client_init was sent while Ace was still loading; the
+                  // workbench constructs editors (console input, source), so
+                  // wait for Ace before building it (a no-op if already loaded)
+                  AceEditor.load(() -> initializeWorkbench());
                });
             });
          }

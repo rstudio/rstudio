@@ -275,16 +275,38 @@ public class RStudio implements EntryPoint
 
       final SerializedCommandQueue queue = new SerializedCommandQueue();
 
-      // ensure Ace is loaded up front
-      queue.addCommand(continuation -> AceEditor.load(continuation));
-      queue.addCommand(continuation ->
+      if (StringUtil.isNullOrEmpty(view))
       {
-         StartupTiming.mark("ace-loaded");
-         continuation.execute();
-      });
+         // in the main window, start the application first: it sends the
+         // client_init request immediately, and Ace then loads while that
+         // round trip is in flight (the workbench is not built until both
+         // have finished; see Application.go)
+         queue.addCommand(continuation ->
+         {
+            onDelayLoadApplication();
+            continuation.execute();
+         });
 
-      // load the requested page
-      queue.addCommand(continuation -> onDelayLoadApplication());
+         queue.addCommand(continuation -> AceEditor.load(continuation));
+         queue.addCommand(continuation ->
+         {
+            StartupTiming.mark("ace-loaded");
+            continuation.execute();
+         });
+      }
+      else
+      {
+         // satellites construct editors as soon as they open, so they need
+         // Ace loaded up front
+         queue.addCommand(continuation -> AceEditor.load(continuation));
+         queue.addCommand(continuation ->
+         {
+            StartupTiming.mark("ace-loaded");
+            continuation.execute();
+         });
+
+         queue.addCommand(continuation -> onDelayLoadApplication());
+      }
 
       GWT.runAsync(new RunAsyncCallback()
       {
