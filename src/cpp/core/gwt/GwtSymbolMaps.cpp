@@ -87,14 +87,11 @@ Error readGzippedSymbolMap(const FilePath& gzMapPath,
 
    // stream the decompression through the line parser, so that lookups can
    // terminate early without inflating the whole file (as with the plain
-   // symbol map). decompression errors surface as stream failures, which
-   // readCollectionFromStream() reports.
-   //
-   // NOTE: terminating early means the gzip trailer CRC is not validated
-   // for the unread remainder of the file. that is deliberate: symbol maps
-   // are best-effort diagnostics (the plain-file path performs no integrity
-   // validation at all), and corruption within the consumed region still
-   // surfaces as an inflate failure.
+   // symbol map). terminating early skips the gzip trailer CRC for the
+   // unread remainder, so callers validate the payload once up front (see
+   // validateGzipFile); corruption within the consumed region still
+   // surfaces as an inflate failure, which readCollectionFromStream()
+   // reports as a stream error.
    boost::iostreams::filtering_istream is;
    is.push(boost::iostreams::gzip_decompressor());
    is.push(*pIfs);
@@ -105,6 +102,44 @@ Error readGzippedSymbolMap(const FilePath& gzMapPath,
             boost::bind(parseSymbolMapLine, _1, _2, pSymbolsLeftToFind));
    if (error)
       error.addProperty("path", gzMapPath.getAbsolutePath());
+
+   return error;
+}
+
+Error validateGzipFile(const FilePath& gzPath)
+{
+   std::shared_ptr<std::istream> pIfs;
+   Error error = gzPath.openForRead(pIfs);
+   if (error)
+      return error;
+
+   // read the entire stream, discarding the output, so that zlib validates
+   // the whole payload including the trailer CRC. decompression failures
+   // (including a truncated trailer) set the stream's badbit.
+   try
+   {
+      boost::iostreams::filtering_istream is;
+      is.push(boost::iostreams::gzip_decompressor());
+      is.push(*pIfs);
+
+      char buffer[8192];
+      while (is.read(buffer, sizeof(buffer)))
+      {
+      }
+
+      if (is.bad())
+      {
+         error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      }
+   }
+   catch(const std::exception& e)
+   {
+      error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("what", e.what());
+   }
+
+   if (error)
+      error.addProperty("path", gzPath.getAbsolutePath());
 
    return error;
 }
@@ -166,6 +201,33 @@ struct SymbolMaps::Impl
 {
    FilePath symbolMapsPath;
    SymbolCache symbolCache;
+   boost::mutex validationMutex;
+   std::map<std::string,bool> gzMapValidation;
+
+   // validate each gzipped symbol map's integrity once; reads after
+   // validation terminate early and skip the trailer CRC (see
+   // readGzippedSymbolMap)
+   bool validateGzippedSymbolMap(const FilePath& gzMapPath)
+   {
+      LOCK_MUTEX(validationMutex)
+      {
+         std::string path = gzMapPath.getAbsolutePath();
+         std::map<std::string,bool>::const_iterator it = gzMapValidation.find(path);
+         if (it != gzMapValidation.end())
+            return it->second;
+
+         Error error = validateGzipFile(gzMapPath);
+         if (error)
+            LOG_ERROR(error);
+
+         bool valid = !error;
+         gzMapValidation[path] = valid;
+         return valid;
+      }
+      END_LOCK_MUTEX
+
+      return false;
+   }
 
    std::string loadOneSymbol(const std::string& strongName,
                              const std::string& symbol)
@@ -210,7 +272,7 @@ struct SymbolMaps::Impl
             LOG_ERROR(error);
 
       }
-      else if (gzMapPath.exists())
+      else if (gzMapPath.exists() && validateGzippedSymbolMap(gzMapPath))
       {
          Error error = readGzippedSymbolMap(gzMapPath,
                                             &toReturn,

@@ -104,6 +104,38 @@ TEST(GwtSymbolMapsTest, ResymbolizesFromGzippedSymbolMap)
    mapsDir.removeIfExists();
 }
 
+TEST(GwtSymbolMapsTest, TruncatedGzippedSymbolMapReturnsOriginalElement)
+{
+   FilePath mapsDir;
+   ASSERT_FALSE(FilePath::tempFilePath(mapsDir));
+   ASSERT_FALSE(mapsDir.ensureDirectory());
+
+   // strip the 8-byte gzip trailer (CRC + size): the deflate data is intact,
+   // so the symbols would still parse if the payload were not validated
+   FilePath gzMapPath = mapsDir.completeChildPath(std::string(kStrongName) + ".symbolMap.gz");
+   std::shared_ptr<std::ostream> pOfs;
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
+               sizeof(kSymbolMapContentsGz) - 8);
+   ASSERT_TRUE(pOfs->good());
+   pOfs.reset();
+
+   SymbolMaps maps;
+   ASSERT_FALSE(maps.initialize(mapsDir));
+
+   StackElement se;
+   se.className = "obfuscated";
+   se.methodName = "Pb";
+   se.lineNumber = 7;
+   StackElement resymbolized = maps.resymbolize(se, kStrongName);
+
+   EXPECT_EQ(se.className, resymbolized.className);
+   EXPECT_EQ(se.methodName, resymbolized.methodName);
+   EXPECT_EQ(se.lineNumber, resymbolized.lineNumber);
+
+   mapsDir.removeIfExists();
+}
+
 TEST(GwtSymbolMapsTest, CorruptGzippedSymbolMapReturnsOriginalElement)
 {
    FilePath mapsDir;
