@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/system/EnvironmentLock.hpp>
 
@@ -85,6 +86,11 @@ void unsetenv(const std::string& name)
    ::unsetenv(name.c_str());
 }
 
+bool isValidEnvironmentVariableName(const std::string& name)
+{
+   static const boost::regex pattern("[a-zA-Z_][a-zA-Z0-9_]*");
+   return boost::regex_match(name, pattern);
+}
 
 } // namespace system
 } // namespace core

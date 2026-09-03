@@ -412,7 +412,7 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
          ? EX_SUSPEND_RESTART_LAUNCHER_SESSION
          : EX_CONTINUE;
 
-   rstudio::r::session::RSuspendOptions options(exitStatus);
+   rstudio::r::session::RSuspendOptions options(exitStatus, suspend::noSaveEnvVars());
    Error error = json::readObjectParam(
             request.params, 0,
             "save_minimal", &(options.saveMinimal),

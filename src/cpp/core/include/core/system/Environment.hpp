@@ -100,9 +100,16 @@ void addToPath(Options* pEnvironment,
 
 bool parseEnvVar(const std::string envVar, Option* pEnvVar);
 
-// True when `name` is a legal environment variable name: a leading letter or
-// underscore followed by letters, digits, or underscores: [a-zA-Z_][a-zA-Z0-9_]*.
-// An empty name is not valid.
+// True when `name` is a valid environment variable name 
+// On POSIX this enforces the portable shell-safe grammar: ie a leading letter or
+// underscore followed by letters, digits, or underscores: [a-zA-Z_][a-zA-Z0-9_]*
+// On Windows this rejects an empty string and names containing '=', the two things 
+// SetEnvironmentVariable itself forbids. 
+//
+// This is only a syntax check, not a check for existence in the environment.
+// Do not attempt to use it to filter existing environment variables (e.g. for save/restore 
+// or forwarding), since it will silently drop legal names such as Windows' 
+// ProgramFiles(x86) or a Bash-exported function's BASH_FUNC_foo%%.
 bool isValidEnvironmentVariableName(const std::string& name);
 
 // expand environment variables in a string; for example /$USER/foo to

@@ -155,12 +155,6 @@ bool parseEnvVar(const std::string envVar, Option* pEnvVar)
    }
 }
 
-bool isValidEnvironmentVariableName(const std::string& name)
-{
-   static const boost::regex pattern("[a-zA-Z_][a-zA-Z0-9_]*");
-   return boost::regex_match(name, pattern);
-}
-
 std::string expandEnvVars(const Options& environment, const std::string& str)
 {
    std::string result(str);
