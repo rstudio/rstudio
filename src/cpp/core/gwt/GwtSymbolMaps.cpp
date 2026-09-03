@@ -202,33 +202,35 @@ struct SymbolMaps::Impl
    FilePath symbolMapsPath;
    SymbolCache symbolCache;
    boost::mutex validationMutex;
-   std::map<std::string,bool> gzMapValidation;
+   std::set<std::string> validatedGzMaps;
 
-   // validate each gzipped symbol map's integrity once; reads after
-   // validation terminate early and skip the trailer CRC (see
+   // validate each gzipped symbol map's integrity before allowing
+   // early-terminating reads, which skip the trailer CRC (see
    // readGzippedSymbolMap)
    //
-   // NOTE: results are memoized by path for the process lifetime. symbol
-   // maps are content-addressed (the file name is the GWT permutation's
-   // strong name), so the contents under a given path never change; and the
-   // symbol cache already memoizes failed lookups permanently, so
-   // revalidating would not restore symbols that a failure already poisoned
+   // successful validations are memoized by path for the process lifetime;
+   // this assumes the file's contents are stable, which holds in practice
+   // because the file name is the GWT permutation's strong name (a content
+   // hash). failures are deliberately not memoized, so a file that was
+   // unreadable or damaged is revalidated on the next lookup and recovers
+   // if it has been repaired or replaced.
    bool validateGzippedSymbolMap(const FilePath& gzMapPath)
    {
       LOCK_MUTEX(validationMutex)
       {
          std::string path = gzMapPath.getAbsolutePath();
-         std::map<std::string,bool>::const_iterator it = gzMapValidation.find(path);
-         if (it != gzMapValidation.end())
-            return it->second;
+         if (validatedGzMaps.count(path) != 0)
+            return true;
 
          Error error = validateGzipFile(gzMapPath);
          if (error)
+         {
             LOG_ERROR(error);
+            return false;
+         }
 
-         bool valid = !error;
-         gzMapValidation[path] = valid;
-         return valid;
+         validatedGzMaps.insert(path);
+         return true;
       }
       END_LOCK_MUTEX
 

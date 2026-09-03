@@ -161,6 +161,46 @@ TEST(GwtSymbolMapsTest, CorruptGzippedSymbolMapReturnsOriginalElement)
    mapsDir.removeIfExists();
 }
 
+TEST(GwtSymbolMapsTest, RepairedGzippedSymbolMapIsRevalidated)
+{
+   FilePath mapsDir;
+   ASSERT_FALSE(FilePath::tempFilePath(mapsDir));
+   ASSERT_FALSE(mapsDir.ensureDirectory());
+
+   FilePath gzMapPath = mapsDir.completeChildPath(std::string(kStrongName) + ".symbolMap.gz");
+   ASSERT_FALSE(writeStringToFile(gzMapPath, "not gzip data"));
+
+   SymbolMaps maps;
+   ASSERT_FALSE(maps.initialize(mapsDir));
+
+   // the damaged file fails validation, so the lookup comes back unchanged
+   StackElement se;
+   se.methodName = "Pb";
+   se.lineNumber = -1;
+   StackElement resymbolized = maps.resymbolize(se, kStrongName);
+   EXPECT_EQ(se.methodName, resymbolized.methodName);
+
+   // repair the file; a lookup for a symbol not yet poisoned by the failed
+   // attempt must trigger revalidation and succeed
+   std::shared_ptr<std::ostream> pOfs;
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
+               sizeof(kSymbolMapContentsGz));
+   ASSERT_TRUE(pOfs->good());
+   pOfs.reset();
+
+   StackElement other;
+   other.methodName = "Qb";
+   other.lineNumber = -1;
+   StackElement recovered = maps.resymbolize(other, kStrongName);
+
+   EXPECT_EQ("com.example.gwt.Widget", recovered.className);
+   EXPECT_EQ("layout", recovered.methodName);
+   EXPECT_EQ(42, recovered.lineNumber);
+
+   mapsDir.removeIfExists();
+}
+
 TEST(GwtSymbolMapsTest, UnknownSymbolReturnsOriginalElement)
 {
    FilePath mapsDir;
