@@ -289,7 +289,13 @@ struct SymbolMaps::Impl
                                                &toReturn,
                                                &symbolsLeftToFind);
             if (error)
+            {
                LOG_ERROR(error);
+
+               // treat a failed read like a failed validation below: leave
+               // the symbols uncached so a later lookup can retry them
+               cacheMissingSymbols = false;
+            }
          }
          else
          {

@@ -207,6 +207,56 @@ TEST(GwtSymbolMapsTest, RepairedGzippedSymbolMapIsRevalidated)
    mapsDir.removeIfExists();
 }
 
+TEST(GwtSymbolMapsTest, GzippedSymbolMapReadFailureIsRetriable)
+{
+   FilePath mapsDir;
+   ASSERT_FALSE(FilePath::tempFilePath(mapsDir));
+   ASSERT_FALSE(mapsDir.ensureDirectory());
+
+   FilePath gzMapPath = mapsDir.completeChildPath(std::string(kStrongName) + ".symbolMap.gz");
+   std::shared_ptr<std::ostream> pOfs;
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
+               sizeof(kSymbolMapContentsGz));
+   pOfs.reset();
+
+   // resolve one symbol so the file's validation result is memoized
+   SymbolMaps maps;
+   ASSERT_FALSE(maps.initialize(mapsDir));
+
+   StackElement se;
+   se.methodName = "Pb";
+   se.lineNumber = -1;
+   StackElement resymbolized = maps.resymbolize(se, kStrongName);
+   EXPECT_EQ("render", resymbolized.methodName);
+
+   // damage the file mid-stream: validation is already memoized, so the
+   // next lookup reaches the read itself, which must fail without caching
+   // the requested symbol as unknown
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz), 30);
+   pOfs.reset();
+
+   StackElement other;
+   other.methodName = "Qb";
+   other.lineNumber = -1;
+   StackElement damaged = maps.resymbolize(other, kStrongName);
+   EXPECT_EQ("Qb", damaged.methodName);
+
+   // repair the file: the same symbol must now resolve
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
+               sizeof(kSymbolMapContentsGz));
+   pOfs.reset();
+
+   StackElement recovered = maps.resymbolize(other, kStrongName);
+   EXPECT_EQ("com.example.gwt.Widget", recovered.className);
+   EXPECT_EQ("layout", recovered.methodName);
+   EXPECT_EQ(42, recovered.lineNumber);
+
+   mapsDir.removeIfExists();
+}
+
 TEST(GwtSymbolMapsTest, UnknownSymbolReturnsOriginalElement)
 {
    FilePath mapsDir;
