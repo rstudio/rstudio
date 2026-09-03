@@ -388,6 +388,7 @@ export class SessionLauncher {
     const kProbeIntervalMs = 20;
     const kProbeTimeoutMs = 30000;
 
+    startupCheckpoint('session-probe-begin');
     const deadline = Date.now() + kProbeTimeoutMs;
     while (Date.now() < deadline) {
       if (this.sessionProcess?.exitCode !== null) {
