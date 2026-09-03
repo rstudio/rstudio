@@ -84,6 +84,10 @@ export function isSafeHost(host: string): boolean {
   return false;
 }
 
+// a probe that connects but never receives a response (e.g. another process
+// shadowing the port) must not hang its caller's retry loop
+const kProbeRequestTimeoutMs = 2500;
+
 /**
  * Resolves true once something answers an HTTP request to `url` with any
  * status. The session's listener rejects this unauthenticated probe, but a
@@ -91,8 +95,8 @@ export function isSafeHost(host: string): boolean {
  */
 export async function probeUrl(url: string): Promise<boolean> {
   return new Promise((resolve) => {
-    http
-      .get(url, (res) => {
+    const request = http
+      .get(url, { timeout: kProbeRequestTimeoutMs }, (res) => {
         res.resume(); // consume response data to free up memory
         resolve(true);
       })
@@ -100,6 +104,10 @@ export async function probeUrl(url: string): Promise<boolean> {
         logger().logDebug(`Connection to ${url} failed: ${e.message}`);
         resolve(false);
       });
+    request.on('timeout', () => {
+      // destroying fires 'error' (ECONNRESET), which resolves false above
+      request.destroy();
+    });
   });
 }
 

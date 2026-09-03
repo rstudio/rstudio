@@ -21,9 +21,10 @@ import { join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 import {
   detectREnvironment,
-  detectREnvironmentAsync,
   parseRQueryResult,
   promptUserForR,
+  rDetectionReady,
+  startRDetection,
 } from '../../../src/main/detect-r';
 
 describe('DetectR', () => {
@@ -82,9 +83,11 @@ describe('DetectR', () => {
     writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}'\n`, { mode: 0o755 });
 
     try {
-      const [background, backgroundError] = await detectREnvironmentAsync(fakeR);
-      assert.isNull(backgroundError);
-      assert.equal(background.envVars.R_HOME, '/opt/fake-r');
+      // the production wiring: main.ts starts the detection, and the launch
+      // sequence awaits it before the synchronous path reads the cache
+      process.env.RSTUDIO_WHICH_R = fakeR;
+      startRDetection();
+      await rDetectionReady();
 
       // remove the stand-in: another query would now fail to launch, so a
       // successful synchronous detection proves the cached result is reused
@@ -92,7 +95,8 @@ describe('DetectR', () => {
 
       const [environment, error] = detectREnvironment(fakeR);
       assert.isNull(error);
-      assert.deepEqual(environment, background);
+      assert.equal(environment.version, '4.5.1');
+      assert.equal(environment.envVars.R_HOME, '/opt/fake-r');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
