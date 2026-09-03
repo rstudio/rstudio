@@ -114,7 +114,23 @@ void handleFileRequest(const FileRequestOptions& options,
    if (regex_utils::match(uri, boost::regex(".*\\.cache\\..*")))
    {
       pResponse->setCacheForeverHeaders();
-      pResponse->setFile(filePath, request, options.compress);
+
+      // prefer a precompressed sibling (produced at build time for the large
+      // content-hashed assets): its compression cost has already been paid,
+      // so it is worthwhile even where runtime compression is not (see
+      // options.compress)
+      FilePath gzPath(filePath.getAbsolutePath() + ".gz");
+      if (gzPath.exists() && request.acceptsEncoding(http::kGzipEncoding))
+      {
+         pResponse->setContentType(filePath.getMimeContentType());
+         pResponse->setContentEncoding(http::kGzipEncoding);
+         pResponse->addHeader("Vary", "Accept-Encoding");
+         pResponse->setFile(gzPath, request, false);
+      }
+      else
+      {
+         pResponse->setFile(filePath, request, options.compress);
+      }
    }
 
    // case: files designated to never be cached
