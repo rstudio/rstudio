@@ -19,6 +19,7 @@ import { safeError } from '../core/err';
 import { logLevel, logger } from '../core/logger';
 import { setApplication } from './app-state';
 import { Application } from './application';
+import { startRDetection } from './detect-r';
 import { initI18n } from './i18n-manager';
 import { startLoginShellPathQuery } from './login-shell-path';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -159,8 +160,10 @@ recordProcessStart();
 startupCheckpoint('main-entry');
 
 // the login shell is slow to answer and the session will need its PATH, so
-// ask before anything else (see login-shell-path.ts)
+// ask before anything else (see login-shell-path.ts); likewise start asking
+// R about itself, which takes about as long as Electron's own startup
 startLoginShellPathQuery();
+startRDetection();
 
 initI18n();
 

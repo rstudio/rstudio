@@ -25,7 +25,7 @@ import { DesktopActivation } from './activation-overlay';
 import { appState, AppState, getEventBus } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { ArgsManager } from './args-manager';
-import { prepareEnvironment, promptUserForR, scanForR, showRNotFoundError } from './detect-r';
+import { prepareEnvironment, promptUserForR, rDetectionReady, scanForR, showRNotFoundError } from './detect-r';
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
@@ -384,6 +384,11 @@ export class Application implements AppState {
       // intentionally empty
     };
     app.on('window-all-closed', windowAllClosedHandler);
+
+    // the query started when the app launched has normally finished by now,
+    // so the detection below finds its answer in the cache
+    await rDetectionReady();
+    startupCheckpoint('r-query-ready');
 
     // on Windows, ask the user what version of R they'd like to use
     let rPath;
