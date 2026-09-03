@@ -192,7 +192,11 @@ if(GWT_COPY)
       get_filename_component(GWT_EXTRAS_ABSOLUTE_DIR "${GWT_EXTRAS_DIR}"
          ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
       install(CODE "
-         set(SYMBOL_MAPS_SOURCE_DIR \"${GWT_EXTRAS_ABSOLUTE_DIR}/rstudio/symbolMaps\")
+         # resolve symlinks (the folder exists by install time): the helper
+         # runs with this directory as its working directory, and
+         # file(ARCHIVE_CREATE) misresolves paths from symlinked directories
+         get_filename_component(SYMBOL_MAPS_SOURCE_DIR
+            \"${GWT_EXTRAS_ABSOLUTE_DIR}/rstudio/symbolMaps\" REALPATH)
          set(SYMBOL_MAPS_DIR \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps\")
          file(MAKE_DIRECTORY \"\${SYMBOL_MAPS_DIR}\")
          file(GLOB SYMBOL_MAPS \"\${SYMBOL_MAPS_SOURCE_DIR}/*.symbolMap\")
