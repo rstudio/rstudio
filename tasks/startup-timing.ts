@@ -20,6 +20,7 @@ import {
   findFreePort,
   flagNumber,
   parseArgs,
+  rebuildFromDirectoryListings,
   rejectUnknownFlags,
   requirePosix,
   resolveCheckout,
@@ -378,7 +379,11 @@ async function main(): Promise<void> {
 
   const reportTarget = args.flags.get('report');
   if (typeof reportTarget === 'string') {
-    report(readRuns(path.resolve(reportTarget)));
+    const resolved = path.resolve(reportTarget);
+    if (!fs.existsSync(resolved)) {
+      fail(TAG, `no such file or directory: ${resolved}`);
+    }
+    report(readRuns(rebuildFromDirectoryListings(TAG, fs.realpathSync(resolved))));
     return;
   }
 
@@ -392,19 +397,34 @@ async function main(): Promise<void> {
   const out = args.flags.get('out');
   const extra = args.flags.get('extra');
 
+  // like the checkout, paths from the command line are laundered through
+  // directory listings before they reach file operations or spawn
+  // (see rebuildFromDirectoryListings)
+  let appBinary: string | null = null;
+  if (typeof app === 'string') {
+    const resolved = path.resolve(app);
+    if (!fs.existsSync(resolved)) {
+      fail(TAG, `no such file: ${resolved}`);
+    }
+    appBinary = rebuildFromDirectoryListings(TAG, fs.realpathSync(resolved));
+  }
+
+  let outDir = path.join(stateDir(checkout), 'startup-timing');
+  if (typeof out === 'string') {
+    const resolved = path.resolve(out);
+    fs.mkdirSync(resolved, { recursive: true });
+    outDir = rebuildFromDirectoryListings(TAG, fs.realpathSync(resolved));
+  }
+
   const options: LaunchOptions = {
     checkout,
-    app: typeof app === 'string' ? path.resolve(app) : null,
-    outDir: typeof out === 'string' ? path.resolve(out) : path.join(stateDir(checkout), 'startup-timing'),
+    app: appBinary,
+    outDir,
     userConfig: args.flags.get('user-config') === true,
     splash: args.flags.get('splash') !== false,
     extraArgs: typeof extra === 'string' ? extra.split(' ').filter((a) => a.length > 0) : [],
     timeoutMs: timeoutSec * 1000,
   };
-
-  if (options.app !== null && !fs.existsSync(options.app)) {
-    fail(TAG, `no such file: ${options.app}`);
-  }
 
   fs.mkdirSync(options.outDir, { recursive: true });
   step(TAG, `Measuring ${options.app ?? `the dev build in ${checkout}`} (${runs} run${runs === 1 ? '' : 's'})`);

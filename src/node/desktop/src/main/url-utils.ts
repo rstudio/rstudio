@@ -13,7 +13,6 @@
  *
  */
 
-import http from 'http';
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
 import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
@@ -94,21 +93,17 @@ const kProbeRequestTimeoutMs = 2500;
  * rejection still means it is up.
  */
 export async function probeUrl(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const request = http
-      .get(url, { timeout: kProbeRequestTimeoutMs }, (res) => {
-        res.resume(); // consume response data to free up memory
-        resolve(true);
-      })
-      .on('error', (e) => {
-        logger().logDebug(`Connection to ${url} failed: ${e.message}`);
-        resolve(false);
-      });
-    request.on('timeout', () => {
-      // destroying fires 'error' (ECONNRESET), which resolves false above
-      request.destroy();
+  try {
+    const response = await fetch(url, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(kProbeRequestTimeoutMs),
     });
-  });
+    await response.body?.cancel(); // release the connection without reading the body
+    return true;
+  } catch (error: unknown) {
+    logger().logDebug(`Connection to ${url} failed: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
 }
 
 /**
