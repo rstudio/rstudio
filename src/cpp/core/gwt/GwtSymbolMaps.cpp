@@ -89,6 +89,12 @@ Error readGzippedSymbolMap(const FilePath& gzMapPath,
    // terminate early without inflating the whole file (as with the plain
    // symbol map). decompression errors surface as stream failures, which
    // readCollectionFromStream() reports.
+   //
+   // NOTE: terminating early means the gzip trailer CRC is not validated
+   // for the unread remainder of the file. that is deliberate: symbol maps
+   // are best-effort diagnostics (the plain-file path performs no integrity
+   // validation at all), and corruption within the consumed region still
+   // surfaces as an inflate failure.
    boost::iostreams::filtering_istream is;
    is.push(boost::iostreams::gzip_decompressor());
    is.push(*pIfs);
