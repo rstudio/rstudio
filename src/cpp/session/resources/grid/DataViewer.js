@@ -8449,6 +8449,18 @@ var maybeSlideForScroll = function() {
       (vHi > fetchedWindowEnd && fetchedWindowEnd < totalCols);
    if (!needSlide) return;
 
+   // A window narrower than the viewport can never cover it: recentring only
+   // swaps which side shows unfetched span columns, and because the two
+   // layouts' measured widths disagree about where the center falls, each
+   // landing slide can propose undoing the previous one, rebuilding the grid
+   // forever. Stay parked while any of the window remains on screen; once it
+   // has scrolled away entirely, a recenter brings data back into view and
+   // lands in a parked partial-overlap state.
+   var visibleSpan = visibleIndexOf(vHi) - visibleIndexOf(vLo) + 1;
+   var windowOnScreen = vHi >= fetchedWindowStart && vLo <= fetchedWindowEnd;
+   if (visibleSpan > maxDisplayColumns && windowOnScreen)
+      return;
+
    var center = Math.round((vLo + vHi) / 2);
    var newOffset = centeredColumnOffset(center);
    if (newOffset === columnOffset) return;

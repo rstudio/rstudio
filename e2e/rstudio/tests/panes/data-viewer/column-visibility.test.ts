@@ -436,6 +436,44 @@ test.describe('Data Viewer column visibility', () => {
     await expect(dataViewer.frame.locator('th.activeHeader')).toHaveCount(1);
   });
 
+  // A fetched window narrower than the viewport can never cover it, so the
+  // scroll-driven recenter must stay parked instead of fighting the window's
+  // placement: each slide would just swap which side shows unfetched span
+  // columns, and the alternating layouts can rebuild the grid forever (the CI
+  // live-lock behind the maybeSlideForScroll guard). Two integer columns are
+  // narrower than any viewport, so unlike the five-column window above this
+  // exercises the parked path on every platform. Scrolling the window fully
+  // off screen is the escape hatch: that slide is still taken.
+  test('a window narrower than the viewport stays parked until scrolled away', async () => {
+    await viewAs('as.data.frame(matrix(1:3000, nrow = 10, ncol = 300))');
+    await waitForViewer(dataViewer);
+    await expect(dataViewer.gridInfo).toContainText('of 10', { timeout: TIMEOUTS.fileOpen });
+
+    await dataViewer.viewport.evaluate((el) => {
+      const w = el.ownerDocument.defaultView as unknown as {
+        setOffsetAndMaxColumns: (offset: number, max: number) => void;
+      };
+      w.setOffsetAndMaxColumns(0, 2);
+    });
+    await expect(dataViewer.columnHeader(3)).toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
+
+    // Parked: clicking the last fetched header succeeds (a recenter rebuild
+    // would detach it mid-click) and the window is still 1..2 afterwards.
+    await dataViewer.columnHeader(2).click();
+    await expect(dataViewer.columnHeader(2)).toHaveClass(/activeHeader/);
+    expect(await colOrder(dataViewer)).toEqual(['0', '1', '2']);
+
+    // Scroll until no part of the window is on screen: the recenter fires,
+    // fetches a window near the scroll position, and drops columns 1..2.
+    await dataViewer.viewport.evaluate((el) => {
+      el.scrollLeft = 12000;
+    });
+    await expect(dataViewer.columnHeader(1)).toHaveCount(0, { timeout: TIMEOUTS.fileOpen });
+    const order = await colOrder(dataViewer);
+    expect(order[0]).toBe('0');
+    expect(order.slice(1).map(Number).every((abs) => abs > 2)).toBe(true);
+  });
+
   // The fetched column window is measured in visible columns, so hiding
   // almost everything on a frame wider than the window must still fetch and
   // lay out the few columns that remain -- with no blank span standing in for
