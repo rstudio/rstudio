@@ -147,10 +147,6 @@ public class RpcRequest
                      requestLogEntry_.logResponse(ResponseType.Normal,
                                                  responseText);
                      rpcResponse = RpcResponse.parseUnsafe(responseText);
-                     
-                     // response received and validated, process it!
-                     requestCallback.onResponseReceived(enclosingRequest, 
-                                                        rpcResponse);
                   }
                   catch(Exception e)
                   {
@@ -159,7 +155,16 @@ public class RpcRequest
                                                 RpcError.TRANSMISSION_ERROR,
                                                 e.getLocalizedMessage());
                      requestCallback.onError(enclosingRequest, error);
+                     return;
                   }
+
+                  // response received and validated, process it! NOTE: this is
+                  // deliberately outside the try/catch above: an exception from
+                  // the callback is a client bug, and catching it here would
+                  // both misreport it as a transmission error and hide it from
+                  // the uncaught-exception log
+                  requestCallback.onResponseReceived(enclosingRequest,
+                                                     rpcResponse);
                }
                else
                {
