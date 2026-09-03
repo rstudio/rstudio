@@ -3001,22 +3001,39 @@ START:
          if (status.isInParentheticalScope())
             GOTO_INVALID_TOKEN(cursor);
          
+         // A semicolon can validly end the document, so plain cursor
+         // moves (ending the parse at end of document) are used below,
+         // rather than the macros which would lint the end of document.
+         //
          // Ensure that we don't have excess semi-colons following.
-         MOVE_TO_NEXT_TOKEN(cursor, status);
+         if (!cursor.moveToNextToken())
+            return;
+
          if (isBlank(cursor))
-            MOVE_TO_NEXT_TOKEN(cursor, status);
-         
+         {
+            if (!cursor.moveToNextToken())
+               return;
+         }
+
          while (cursor.isType(RToken::SEMI))
          {
             status.lint().unexpectedToken(cursor);
-            MOVE_TO_NEXT_TOKEN(cursor, status);
+            if (!cursor.moveToNextToken())
+               return;
+
             if (isBlank(cursor))
-               MOVE_TO_NEXT_TOKEN(cursor, status);
+            {
+               if (!cursor.moveToNextToken())
+                  return;
+            }
          }
-         
+
          if (isWhitespace(cursor))
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-         
+         {
+            if (!cursor.moveToNextSignificantToken())
+               return;
+         }
+
          goto START;
       }
       
