@@ -257,6 +257,46 @@ TEST(GwtSymbolMapsTest, GzippedSymbolMapReadFailureIsRetriable)
    mapsDir.removeIfExists();
 }
 
+TEST(GwtSymbolMapsTest, PartialGzippedSymbolMapReadContributesNothing)
+{
+   FilePath mapsDir;
+   ASSERT_FALSE(FilePath::tempFilePath(mapsDir));
+   ASSERT_FALSE(mapsDir.ensureDirectory());
+
+   // truncate near the end of the deflate data: earlier lines (including
+   // the requested symbol's) may decode before the stream fails, but a
+   // failed read must be all-or-nothing
+   FilePath gzMapPath = mapsDir.completeChildPath(std::string(kStrongName) + ".symbolMap.gz");
+   std::shared_ptr<std::ostream> pOfs;
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
+               sizeof(kSymbolMapContentsGz) - 19);
+   pOfs.reset();
+
+   SymbolMaps maps;
+   ASSERT_FALSE(maps.initialize(mapsDir));
+
+   StackElement se;
+   se.methodName = "Pb";
+   se.lineNumber = -1;
+   StackElement resymbolized = maps.resymbolize(se, kStrongName);
+   EXPECT_EQ(se.methodName, resymbolized.methodName);
+
+   // repair the file: the same symbol must resolve, proving the failed
+   // read neither negative-cached it nor cached partial results
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
+               sizeof(kSymbolMapContentsGz));
+   pOfs.reset();
+
+   StackElement retried = maps.resymbolize(se, kStrongName);
+   EXPECT_EQ("com.example.gwt.Widget", retried.className);
+   EXPECT_EQ("render", retried.methodName);
+   EXPECT_EQ(105, retried.lineNumber);
+
+   mapsDir.removeIfExists();
+}
+
 TEST(GwtSymbolMapsTest, UnknownSymbolReturnsOriginalElement)
 {
    FilePath mapsDir;

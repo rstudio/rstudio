@@ -285,8 +285,11 @@ struct SymbolMaps::Impl
       {
          if (validateGzippedSymbolMap(gzMapPath))
          {
+            // parse into a scratch map that is merged only on success, so
+            // that a read failing partway through contributes nothing
+            std::map<std::string,std::string> gzSymbols;
             Error error = readGzippedSymbolMap(gzMapPath,
-                                               &toReturn,
+                                               &gzSymbols,
                                                &symbolsLeftToFind);
             if (error)
             {
@@ -295,6 +298,10 @@ struct SymbolMaps::Impl
                // treat a failed read like a failed validation below: leave
                // the symbols uncached so a later lookup can retry them
                cacheMissingSymbols = false;
+            }
+            else
+            {
+               toReturn.insert(gzSymbols.begin(), gzSymbols.end());
             }
          }
          else
