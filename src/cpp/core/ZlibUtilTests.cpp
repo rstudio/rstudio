@@ -96,6 +96,50 @@ TEST(ZlibTest, InvalidCompressedStringFailsToDecompress)
    ASSERT_TRUE(error);
 }
 
+TEST(ZlibTest, CanDecompressGzipFormat)
+{
+   // 'gzip -n' output for "The quick brown fox jumps over the lazy dog."
+   const unsigned char gzipData[] = {
+      31, 139, 8, 0, 0, 0, 0, 0, 0, 3, 11, 201, 72, 85, 40, 44,
+      205, 76, 206, 86, 72, 42, 202, 47, 207, 83, 72, 203, 175, 80, 200, 42,
+      205, 45, 40, 86, 200, 47, 75, 45, 82, 40, 1, 74, 231, 36, 86, 85,
+      42, 164, 228, 167, 235, 1, 0, 233, 37, 144, 81, 44, 0, 0, 0
+   };
+
+   std::vector<unsigned char> compressed(gzipData, gzipData + sizeof(gzipData));
+
+   std::string uncompressed;
+   Error error = decompressGzip(compressed, &uncompressed);
+   ASSERT_FALSE(error);
+
+   EXPECT_EQ("The quick brown fox jumps over the lazy dog.", uncompressed);
+}
+
+TEST(ZlibTest, DecompressGzipRejectsZlibFormat)
+{
+   const std::string original = "The quick brown fox jumps over the lazy dog.";
+
+   std::vector<unsigned char> compressed;
+   Error error = compressString(original, &compressed);
+   ASSERT_FALSE(error);
+
+   std::string uncompressed;
+   error = decompressGzip(compressed, &uncompressed);
+   ASSERT_TRUE(error);
+}
+
+TEST(ZlibTest, InvalidGzipDataFailsToDecompress)
+{
+   const std::string invalidCompressed = "not gzip data";
+
+   std::vector<unsigned char> compressed;
+   std::copy(invalidCompressed.begin(), invalidCompressed.end(), std::back_inserter(compressed));
+
+   std::string uncompressed;
+   Error error = decompressGzip(compressed, &uncompressed);
+   ASSERT_TRUE(error);
+}
+
 } // namespace zlib
 } // namespace core
 } // namespace rstudio

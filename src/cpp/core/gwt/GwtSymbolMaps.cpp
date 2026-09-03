@@ -18,6 +18,8 @@
 #include <string>
 #include <map>
 #include <set>
+#include <sstream>
+#include <iterator>
 #include <algorithm>
 
 #include <boost/regex.hpp>
@@ -29,6 +31,7 @@
 #include <core/RegexUtils.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/ZlibUtil.hpp>
 
 using namespace boost::placeholders;
 
@@ -72,6 +75,36 @@ ReadCollectionAction parseSymbolMapLine(
    pSymbolsLeftToFind->erase(*pFirst);
 
    return ReadCollectionAddLine;
+}
+
+Error readGzippedSymbolMap(const FilePath& gzMapPath,
+                           std::map<std::string,std::string>* pMap,
+                           std::set<std::string>* pSymbolsLeftToFind)
+{
+   // read the compressed contents
+   std::shared_ptr<std::istream> pIfs;
+   Error error = gzMapPath.openForRead(pIfs);
+   if (error)
+      return error;
+
+   std::vector<unsigned char> compressedData(
+            (std::istreambuf_iterator<char>(*pIfs)),
+            std::istreambuf_iterator<char>());
+
+   // decompress, then parse lines as for the plain symbol map
+   std::string contents;
+   error = zlib::decompressGzip(compressedData, &contents);
+   if (error)
+   {
+      error.addProperty("path", gzMapPath.getAbsolutePath());
+      return error;
+   }
+
+   std::istringstream is(contents);
+   return readCollectionFromStream<std::map<std::string,std::string> >(
+            is,
+            pMap,
+            boost::bind(parseSymbolMapLine, _1, _2, pSymbolsLeftToFind));
 }
 
 class SymbolCache : boost::noncopyable
@@ -159,8 +192,11 @@ struct SymbolMaps::Impl
       // lookup additional symbols by reading the file
       std::set<std::string> symbolsLeftToFind = requiredSymbols;
 
-      // read it from disk if it exists
+      // read it from disk if it exists; packaged builds ship the symbol map
+      // gzipped, so fall back to the compressed form when the plain file is
+      // not available
       FilePath mapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap");
+      FilePath gzMapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap.gz");
       if (mapPath.exists())
       {
          Error error = readCollectionFromFile
@@ -171,6 +207,14 @@ struct SymbolMaps::Impl
          if (error)
             LOG_ERROR(error);
 
+      }
+      else if (gzMapPath.exists())
+      {
+         Error error = readGzippedSymbolMap(gzMapPath,
+                                            &toReturn,
+                                            &symbolsLeftToFind);
+         if (error)
+            LOG_ERROR(error);
       }
 
       // mark all remaining symbols as having been looked for

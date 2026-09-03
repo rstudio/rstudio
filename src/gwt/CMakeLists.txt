@@ -153,24 +153,52 @@ if(GWT_COPY)
              GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
    # install local web resources
-   # we exclude WEB-INF here just in case a prior GWT build updated this
+   # we exclude WEB-INF here just in case a prior GWT build updated this;
+   # JavaScript source maps (e.g. panmirror's) are excluded since they are
+   # only useful when debugging with browser devtools
    install(
       DIRECTORY www
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
       PATTERN "WEB-INF" EXCLUDE
-      PATTERN ".gitignore" EXCLUDE)
+      PATTERN ".gitignore" EXCLUDE
+      REGEX "\\.js\\.map$" EXCLUDE)
 
    # install compiled GWT artefacts
    install(
       DIRECTORY "${GWT_WWW_DIR}"
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
       PATTERN "WEB-INF" EXCLUDE
-      PATTERN ".gitignore" EXCLUDE)
+      PATTERN ".gitignore" EXCLUDE
+      REGEX "\\.js\\.map$" EXCLUDE)
 
-   # copy symbol maps
-   install(
-      DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
-      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
+   # copy symbol maps, gzipped to save space when supported -- they are only
+   # read when deobfuscating client-side stack traces for the log, and
+   # GwtSymbolMaps.cpp reads both the plain and gzipped forms
+   if(CMAKE_VERSION VERSION_LESS "3.18")
+      install(
+         DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
+         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
+   else()
+      # GWT_EXTRAS_DIR may be relative to this source directory (as
+      # install(DIRECTORY) would resolve it); the install-time code below
+      # runs with a different working directory and needs an absolute path
+      get_filename_component(GWT_EXTRAS_ABSOLUTE_DIR "${GWT_EXTRAS_DIR}"
+         ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+      install(CODE "
+         set(SYMBOL_MAPS_DIR \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps\")
+         file(MAKE_DIRECTORY \"\${SYMBOL_MAPS_DIR}\")
+         file(GLOB SYMBOL_MAPS \"${GWT_EXTRAS_ABSOLUTE_DIR}/rstudio/symbolMaps/*.symbolMap\")
+         foreach(SYMBOL_MAP \${SYMBOL_MAPS})
+            get_filename_component(SYMBOL_MAP_NAME \"\${SYMBOL_MAP}\" NAME)
+            message(STATUS \"Compressing: \${SYMBOL_MAP_NAME}\")
+            file(ARCHIVE_CREATE
+               OUTPUT \"\${SYMBOL_MAPS_DIR}/\${SYMBOL_MAP_NAME}.gz\"
+               PATHS \"\${SYMBOL_MAP}\"
+               FORMAT raw
+               COMPRESSION GZip)
+         endforeach()
+      ")
+   endif()
 
 endif()
 
