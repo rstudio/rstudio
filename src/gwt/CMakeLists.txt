@@ -175,8 +175,9 @@ if(GWT_COPY)
    # read when deobfuscating client-side stack traces for the log, and
    # GwtSymbolMaps.cpp reads both the plain and gzipped forms. only the
    # *.symbolMap files themselves are gzipped; any other files in the folder
-   # (e.g. the .symbolMapOffset read by ServerEval.cpp) are installed as-is
-   if(CMAKE_VERSION VERSION_LESS "3.18")
+   # (e.g. the .symbolMapOffset read by ServerEval.cpp) are installed as-is.
+   # (3.19 is required for file(CHMOD) in the gzip-file.cmake helper)
+   if(CMAKE_VERSION VERSION_LESS "3.19")
       install(
          DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
          DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)

@@ -31,3 +31,8 @@ file(ARCHIVE_CREATE
    PATHS "${INPUT}"
    FORMAT raw
    COMPRESSION GZip)
+
+# match the permissions install(DIRECTORY) applies to installed files,
+# rather than inheriting the caller's umask
+file(CHMOD "${OUTPUT}"
+   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
