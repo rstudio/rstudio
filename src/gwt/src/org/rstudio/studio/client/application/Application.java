@@ -271,32 +271,28 @@ public class Application implements ApplicationEventHandlers
                };
             }
 
-            // initialize workbench
-            // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
-            // in desktop mode, though unsure why). The automation agent must be initialized
-            // after this refresh -- registerPrefs() iterates userPrefs_.allPrefs(), and in desktop
-            // mode that returns an incomplete set until the pref refresh has run.
-            // The completion booleans report whether the set_user_state /
-            // set_user_prefs RPCs succeeded, but we deliberately proceed to
-            // build the workbench either way: a transient persistence failure
-            // here must not dead-end startup (see #18019). The RPC error has
-            // already been logged by writeState()/writeUserPrefs().
-            userState_.get().writeState(boolArg ->
-            {
-               userPrefs_.get().writeUserPrefs(boolArg1 ->
-               {
-                  if (sessionInfo.isAutomationAgent())
-                  {
-                     ApplicationAutomation automation = pAutomation_.get();
-                     automation.initializeAgent();
-                  }
+            // refresh prefs in case they were loaded without sessionInfo (this
+            // happens exclusively in desktop mode, though unsure why). The
+            // refresh is the synchronous first step of writeState() and
+            // writeUserPrefs(), so the automation agent and the workbench see
+            // a complete pref set (registerPrefs() iterates
+            // userPrefs_.allPrefs()) without waiting for the set_user_state /
+            // set_user_prefs round trips, which only write these same values
+            // back to the server. Failures there are logged but must not block
+            // or dead-end startup (see #18019).
+            userState_.get().writeState(null);
+            userPrefs_.get().writeUserPrefs(null);
 
-                  // client_init was sent while Ace was still loading; the
-                  // workbench constructs editors (console input, source), so
-                  // wait for Ace before building it (a no-op if already loaded)
-                  AceEditor.load(() -> initializeWorkbench());
-               });
-            });
+            if (sessionInfo.isAutomationAgent())
+            {
+               ApplicationAutomation automation = pAutomation_.get();
+               automation.initializeAgent();
+            }
+
+            // client_init was sent while Ace was still loading; the
+            // workbench constructs editors (console input, source), so
+            // wait for Ace before building it (a no-op if already loaded)
+            AceEditor.load(() -> initializeWorkbench());
          }
 
          public void onError(ServerError error)
