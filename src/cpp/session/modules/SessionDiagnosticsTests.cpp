@@ -312,6 +312,16 @@ TEST(DiagnosticsTest, ValidExpressionsGenerateNoLint) {
    EXPECT_NO_ERRORS("x[1, 2]");
    EXPECT_NO_ERRORS("x[, 1]");
    EXPECT_NO_ERRORS("x[1, ]");
+
+   // numeric literals can be indexed, and even 'called'
+   // https://github.com/rstudio/rstudio/issues/18717
+   EXPECT_NO_ERRORS("1[TRUE]");
+   EXPECT_NO_ERRORS("1[[1]]");
+   EXPECT_NO_ERRORS("quote(1[kg])");
+   EXPECT_NO_ERRORS("1.5e3[2]");
+   EXPECT_NO_ERRORS("0x10[[1]]");
+   EXPECT_NO_ERRORS("foo(1[2])");
+   EXPECT_NO_ERRORS("1(2)");
 }
 
 TEST(DiagnosticsTest, SymbolRangesDoNotLeakAcrossParseOperations) {

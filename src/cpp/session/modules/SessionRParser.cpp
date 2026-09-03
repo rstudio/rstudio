@@ -3086,7 +3086,6 @@ START:
          }
          
          // Move to the next token.
-         bool isNumber = cursor.isType(RToken::NUMBER);
          const RToken& next = cursor.nextSignificantToken();
          
          // If we encounter an operator, we need to figure out whether it's
@@ -3122,9 +3121,10 @@ START:
             }
          }
          
-         // Identifiers followed by brackets are function calls.
-         // Only non-numeric symbols can be function calls.
-         if (!isNumber && canOpenArgumentList(next))
+         // An expression followed by an opening bracket is a function
+         // call or an indexing operation. Note that this is legal even
+         // for numeric literals, e.g. '1[TRUE]' is valid R code.
+         if (canOpenArgumentList(next))
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
             goto ARGUMENT_LIST;
