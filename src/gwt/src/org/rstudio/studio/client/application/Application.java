@@ -267,17 +267,18 @@ public class Application implements ApplicationEventHandlers
                };
             }
 
-            // refresh prefs in case they were loaded without sessionInfo (this
-            // happens exclusively in desktop mode, though unsure why). The
-            // refresh is the synchronous first step of writeState() and
-            // writeUserPrefs(), so the automation agent and the workbench see
-            // a complete pref set (registerPrefs() iterates
-            // userPrefs_.allPrefs()) without waiting for the set_user_state /
-            // set_user_prefs round trips, which only write these same values
-            // back to the server. Failures there are logged but must not block
-            // or dead-end startup (see #18019).
-            userState_.get().writeState(null);
-            userPrefs_.get().writeUserPrefs(null);
+            // UserPrefs can be constructed before this response arrives
+            // (eager GIN singletons and the application headers inject it
+            // during Application construction), leaving its pref layers
+            // empty. Refresh prefs and state from the session info so
+            // everything downstream -- in particular the automation agent,
+            // whose registerPrefs() iterates userPrefs_.allPrefs() -- sees
+            // complete values. No server write-back is needed: these are the
+            // same values the server just sent us, and echoing them via
+            // writeUserPrefs()/writeState() would rewrite the pref and state
+            // files on every load.
+            userPrefs_.get().loadFromSessionInfo();
+            userState_.get().loadFromSessionInfo();
 
             if (sessionInfo.isAutomationAgent())
             {
