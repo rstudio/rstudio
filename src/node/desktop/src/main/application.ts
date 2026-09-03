@@ -28,7 +28,7 @@ import { ArgsManager } from './args-manager';
 import {
   prepareEnvironment,
   promptUserForR,
-  rChooserRequested,
+  rChooserLikely,
   rDetectionReady,
   scanForR,
   showRNotFoundError,
@@ -394,10 +394,10 @@ export class Application implements AppState {
 
     // the query started when the app launched has normally finished by now,
     // so the detection below finds its answer in the cache. When the Windows
-    // R chooser was explicitly requested, don't wait on the probe: the user
-    // may be choosing a different R precisely because the default one hangs
-    // or fails, and the probe queries that R
-    if (process.platform !== 'win32' || !rChooserRequested()) {
+    // R chooser is going to show anyway (explicitly requested, or a first run
+    // with nothing to reuse), don't wait on the probe: the chooser must not
+    // be delayed by a slow or hanging R
+    if (process.platform !== 'win32' || !rChooserLikely()) {
       await rDetectionReady();
     }
     startupCheckpoint('r-query-ready');

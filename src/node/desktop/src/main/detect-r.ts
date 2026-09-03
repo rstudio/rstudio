@@ -68,6 +68,21 @@ export function rChooserRequested(): boolean {
   return getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 || desktop.isCtrlKeyDown();
 }
 
+/**
+ * True when Windows startup is going to show the R chooser, as far as can be
+ * predicted without consulting R: explicitly requested, or a first run with
+ * no remembered selection to reuse.
+ */
+export function rChooserLikely(): boolean {
+  if (rChooserRequested()) {
+    return true;
+  }
+  if (getenv('RSTUDIO_WHICH_R').length !== 0) {
+    return false;
+  }
+  return storedRCandidatesWin32().length === 0;
+}
+
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
 
   const options = ElectronDesktopOptions();

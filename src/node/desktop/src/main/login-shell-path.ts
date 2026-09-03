@@ -86,7 +86,11 @@ async function queryLoginShellPath(shell: string): Promise<string | null> {
     const child = spawn(shell, ['-l', '-c', 'printf "%s" "$PATH"'], { env, stdio: ['ignore', 'pipe', 'ignore'] });
     const timer = setTimeout(() => {
       logger().logWarning(`Login shell ${shell} did not report PATH within ${kQueryTimeoutMs}ms; killing it`);
-      child.kill();
+      // resolve now rather than waiting for 'close': a profile that traps or
+      // ignores the signal must not leave a first launch waiting (late
+      // 'close'/'error' resolutions are no-ops)
+      child.kill('SIGKILL');
+      resolve(null);
     }, kQueryTimeoutMs);
 
     child.stdout.on('data', (data) => (stdout += data));
