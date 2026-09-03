@@ -266,54 +266,6 @@ Error decompressString(const std::vector<unsigned char>& compressedData,
    return Success();
 }
 
-Error decompressGzip(const std::vector<unsigned char>& compressedData,
-                     std::string* str)
-{
-   if (compressedData.empty())
-   {
-      *str = "";
-      return Success();
-   }
-
-   size_t dataLen = compressedData.size();
-   ByteBuffer srcBuff(dataLen);
-   srcBuff.append(compressedData.data(), dataLen);
-
-   ByteBuffer destBuff(dataLen * 2);
-
-   z_stream zStream;
-   size_t remainIn, remainOut;
-   makeZStream(srcBuff, destBuff, &remainIn, &remainOut, &zStream);
-
-   // windowBits of MAX_WBITS + 16 requests decoding of the gzip format
-   int res = inflateInit2(&zStream, MAX_WBITS + 16);
-   if (res != Z_OK)
-      return systemError(res, "ZLib initialization error", ERROR_LOCATION);
-
-   while (res != Z_STREAM_END)
-   {
-      updateOut(&destBuff, &remainOut, &zStream);
-
-      res = inflate(&zStream, Z_NO_FLUSH);
-      destBuff.setDataSize(zStream.total_out);
-      if ((res == Z_DATA_ERROR) || (res == Z_NEED_DICT) || (res == Z_MEM_ERROR) ||
-          (res == Z_BUF_ERROR && zStream.avail_in == 0 && remainIn == 0))
-      {
-         inflateEnd(&zStream);
-         return systemError(res, "ZLib inflation error", ERROR_LOCATION);
-      }
-
-      updateIn(&srcBuff, &remainIn, &zStream);
-   }
-
-   inflateEnd(&zStream);
-
-   // unlike decompressString(), the decompressed data carries no trailing
-   // NUL, so the string must be built with an explicit length
-   str->assign(reinterpret_cast<const char*>(destBuff.get()), destBuff.dataSize());
-   return Success();
-}
-
 } // namespace zlib
 } // namespace core
 } // namespace rstudio

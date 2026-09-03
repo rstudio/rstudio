@@ -28,11 +28,6 @@ Error compressString(const std::string& toCompress, std::vector<unsigned char>* 
 
 Error decompressString(const std::vector<unsigned char>& compressedData, std::string* str);
 
-// decompress data in the gzip format (e.g. the contents of a .gz file);
-// note that this is a different format than the zlib format used by
-// compressString() / decompressString() above
-Error decompressGzip(const std::vector<unsigned char>& compressedData, std::string* str);
-
 } // namespace zlib
 } // namespace core
 } // namespace rstudio

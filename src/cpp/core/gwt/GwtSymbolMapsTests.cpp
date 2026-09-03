@@ -104,6 +104,31 @@ TEST(GwtSymbolMapsTest, ResymbolizesFromGzippedSymbolMap)
    mapsDir.removeIfExists();
 }
 
+TEST(GwtSymbolMapsTest, CorruptGzippedSymbolMapReturnsOriginalElement)
+{
+   FilePath mapsDir;
+   ASSERT_FALSE(FilePath::tempFilePath(mapsDir));
+   ASSERT_FALSE(mapsDir.ensureDirectory());
+
+   FilePath gzMapPath = mapsDir.completeChildPath(std::string(kStrongName) + ".symbolMap.gz");
+   ASSERT_FALSE(writeStringToFile(gzMapPath, "not gzip data"));
+
+   SymbolMaps maps;
+   ASSERT_FALSE(maps.initialize(mapsDir));
+
+   StackElement se;
+   se.className = "obfuscated";
+   se.methodName = "Pb";
+   se.lineNumber = 7;
+   StackElement resymbolized = maps.resymbolize(se, kStrongName);
+
+   EXPECT_EQ(se.className, resymbolized.className);
+   EXPECT_EQ(se.methodName, resymbolized.methodName);
+   EXPECT_EQ(se.lineNumber, resymbolized.lineNumber);
+
+   mapsDir.removeIfExists();
+}
+
 TEST(GwtSymbolMapsTest, UnknownSymbolReturnsOriginalElement)
 {
    FilePath mapsDir;

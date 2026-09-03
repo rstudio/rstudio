@@ -18,20 +18,19 @@
 #include <string>
 #include <map>
 #include <set>
-#include <sstream>
-#include <iterator>
 #include <algorithm>
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 #include <core/Thread.hpp>
 #include <core/RegexUtils.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/ZlibUtil.hpp>
 
 using namespace boost::placeholders;
 
@@ -81,30 +80,27 @@ Error readGzippedSymbolMap(const FilePath& gzMapPath,
                            std::map<std::string,std::string>* pMap,
                            std::set<std::string>* pSymbolsLeftToFind)
 {
-   // read the compressed contents
    std::shared_ptr<std::istream> pIfs;
    Error error = gzMapPath.openForRead(pIfs);
    if (error)
       return error;
 
-   std::vector<unsigned char> compressedData(
-            (std::istreambuf_iterator<char>(*pIfs)),
-            std::istreambuf_iterator<char>());
+   // stream the decompression through the line parser, so that lookups can
+   // terminate early without inflating the whole file (as with the plain
+   // symbol map). decompression errors surface as stream failures, which
+   // readCollectionFromStream() reports.
+   boost::iostreams::filtering_istream is;
+   is.push(boost::iostreams::gzip_decompressor());
+   is.push(*pIfs);
 
-   // decompress, then parse lines as for the plain symbol map
-   std::string contents;
-   error = zlib::decompressGzip(compressedData, &contents);
-   if (error)
-   {
-      error.addProperty("path", gzMapPath.getAbsolutePath());
-      return error;
-   }
-
-   std::istringstream is(contents);
-   return readCollectionFromStream<std::map<std::string,std::string> >(
+   error = readCollectionFromStream<std::map<std::string,std::string> >(
             is,
             pMap,
             boost::bind(parseSymbolMapLine, _1, _2, pSymbolsLeftToFind));
+   if (error)
+      error.addProperty("path", gzMapPath.getAbsolutePath());
+
+   return error;
 }
 
 class SymbolCache : boost::noncopyable
