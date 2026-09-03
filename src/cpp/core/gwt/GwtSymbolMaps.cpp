@@ -267,6 +267,7 @@ struct SymbolMaps::Impl
       // read it from disk if it exists; packaged builds ship the symbol map
       // gzipped, so fall back to the compressed form when the plain file is
       // not available
+      bool cacheMissingSymbols = true;
       FilePath mapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap");
       FilePath gzMapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap.gz");
       if (mapPath.exists())
@@ -280,19 +281,32 @@ struct SymbolMaps::Impl
             LOG_ERROR(error);
 
       }
-      else if (gzMapPath.exists() && validateGzippedSymbolMap(gzMapPath))
+      else if (gzMapPath.exists())
       {
-         Error error = readGzippedSymbolMap(gzMapPath,
-                                            &toReturn,
-                                            &symbolsLeftToFind);
-         if (error)
-            LOG_ERROR(error);
+         if (validateGzippedSymbolMap(gzMapPath))
+         {
+            Error error = readGzippedSymbolMap(gzMapPath,
+                                               &toReturn,
+                                               &symbolsLeftToFind);
+            if (error)
+               LOG_ERROR(error);
+         }
+         else
+         {
+            // the file could not be validated or read, so leave the symbols
+            // uncached: a lookup after the file is repaired can then retry
+            // them (validation failures are not memoized either)
+            cacheMissingSymbols = false;
+         }
       }
 
       // mark all remaining symbols as having been looked for
-      for (const std::string& symbol : symbolsLeftToFind)
+      if (cacheMissingSymbols)
       {
-         toReturn[symbol] = SYMBOL_DATA_UNKNOWN;
+         for (const std::string& symbol : symbolsLeftToFind)
+         {
+            toReturn[symbol] = SYMBOL_DATA_UNKNOWN;
+         }
       }
 
       // add the return results to the cache

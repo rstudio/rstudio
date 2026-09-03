@@ -180,14 +180,20 @@ TEST(GwtSymbolMapsTest, RepairedGzippedSymbolMapIsRevalidated)
    StackElement resymbolized = maps.resymbolize(se, kStrongName);
    EXPECT_EQ(se.methodName, resymbolized.methodName);
 
-   // repair the file; a lookup for a symbol not yet poisoned by the failed
-   // attempt must trigger revalidation and succeed
+   // repair the file: both the symbol requested during the failure and a
+   // fresh one must now resolve, since neither the validation failure nor
+   // the affected symbols were cached
    std::shared_ptr<std::ostream> pOfs;
    ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
    pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
                sizeof(kSymbolMapContentsGz));
    ASSERT_TRUE(pOfs->good());
    pOfs.reset();
+
+   StackElement retried = maps.resymbolize(se, kStrongName);
+   EXPECT_EQ("com.example.gwt.Widget", retried.className);
+   EXPECT_EQ("render", retried.methodName);
+   EXPECT_EQ(105, retried.lineNumber);
 
    StackElement other;
    other.methodName = "Qb";
