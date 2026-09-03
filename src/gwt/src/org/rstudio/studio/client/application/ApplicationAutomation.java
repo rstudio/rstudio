@@ -162,6 +162,17 @@ public class ApplicationAutomation
 
    public final void initializeAgent()
    {
+      // Tripwire for construction-order regressions: the pref layers must be
+      // loaded from the session info before the bridge enumerates them, or
+      // every pref registers with its default value (see #17733). A plain
+      // Java assert would be compiled out of the optimized GWT output that
+      // automation runs against, so check explicitly.
+      if (!userPrefs_.hasLoadedLayers())
+      {
+         throw new IllegalStateException(
+               "automation agent initialized before user prefs were loaded from session info");
+      }
+
       isAutomationAgent_ = true;
       initializeRoot();
       registerCommands();

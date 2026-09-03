@@ -572,12 +572,23 @@ public abstract class Prefs
       return val;
    }
    
-   // Meant to be called when the satellite window receives the sessionInfo.
+   // Meant to be called when a window (main or satellite) receives the
+   // sessionInfo.
    protected void updatePrefs(JsArray<PrefLayer> layers)
    {
       layers_ = layers;
    }
-   
+
+   /**
+    * Indicates whether preference layers have been loaded. Prefs objects
+    * constructed before the session info arrives start with no layers, and
+    * every preference reads as its default until updatePrefs() supplies them.
+    */
+   public boolean hasLoadedLayers()
+   {
+      return layers_.length() > 0;
+   }
+
    private JsArray<PrefLayer> layers_;
    private final HashMap<String, PrefValue<?>> values_ = new HashMap<>();
 }
