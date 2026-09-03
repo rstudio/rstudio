@@ -207,6 +207,12 @@ struct SymbolMaps::Impl
    // validate each gzipped symbol map's integrity once; reads after
    // validation terminate early and skip the trailer CRC (see
    // readGzippedSymbolMap)
+   //
+   // NOTE: results are memoized by path for the process lifetime. symbol
+   // maps are content-addressed (the file name is the GWT permutation's
+   // strong name), so the contents under a given path never change; and the
+   // symbol cache already memoizes failed lookups permanently, so
+   // revalidating would not restore symbols that a failure already poisoned
    bool validateGzippedSymbolMap(const FilePath& gzMapPath)
    {
       LOCK_MUTEX(validationMutex)
