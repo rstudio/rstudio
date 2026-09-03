@@ -19,16 +19,16 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include <istream>
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
 
 #include <core/Thread.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/ZlibUtil.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -92,14 +92,22 @@ Error readGzippedSymbolMap(const FilePath& gzMapPath,
    // validateGzipFile); corruption within the consumed region still
    // surfaces as an inflate failure, which readCollectionFromStream()
    // reports as a stream error.
-   boost::iostreams::filtering_istream is;
-   is.push(boost::iostreams::gzip_decompressor());
-   is.push(*pIfs);
+   try
+   {
+      zlib::GzipDecompressingStreambuf streambuf(*pIfs);
+      std::istream is(&streambuf);
 
-   error = readCollectionFromStream<std::map<std::string,std::string> >(
-            is,
-            pMap,
-            boost::bind(parseSymbolMapLine, _1, _2, pSymbolsLeftToFind));
+      error = readCollectionFromStream<std::map<std::string,std::string> >(
+               is,
+               pMap,
+               boost::bind(parseSymbolMapLine, _1, _2, pSymbolsLeftToFind));
+   }
+   catch(const std::exception& e)
+   {
+      error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("what", e.what());
+   }
+
    if (error)
       error.addProperty("path", gzMapPath.getAbsolutePath());
 
@@ -118,9 +126,8 @@ Error validateGzipFile(const FilePath& gzPath)
    // (including a truncated trailer) set the stream's badbit.
    try
    {
-      boost::iostreams::filtering_istream is;
-      is.push(boost::iostreams::gzip_decompressor());
-      is.push(*pIfs);
+      zlib::GzipDecompressingStreambuf streambuf(*pIfs);
+      std::istream is(&streambuf);
 
       char buffer[8192];
       while (is.read(buffer, sizeof(buffer)))
