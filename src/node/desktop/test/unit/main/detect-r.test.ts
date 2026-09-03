@@ -15,15 +15,15 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import { existsSync } from 'fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { restore, saveAndClear } from '../unit-utils';
 import {
   detectREnvironment,
+  detectREnvironmentAsync,
   parseRQueryResult,
   promptUserForR,
-  rDetectionReady,
-  scanForR,
-  startRDetection,
 } from '../../../src/main/detect-r';
 
 describe('DetectR', () => {
@@ -69,23 +69,32 @@ describe('DetectR', () => {
     assert.isNotNull(noOutputError);
   });
 
-  it('detects R in the background and serves the scan from the cache', async function () {
-    if (process.platform !== 'darwin' || !existsSync('/usr/local/bin/R')) {
+  it('the background query fills the cache the synchronous path reads', async function () {
+    if (process.platform === 'win32') {
       this.skip();
     }
-    this.timeout(30000);
 
-    startRDetection();
-    await rDetectionReady();
+    // a stand-in R: an executable that answers the version query the way R
+    // would (\036 is the marker, \037 the field separator)
+    const fields = ['4.5.1', '/opt/fake-r', '/opt/fake-r/doc', '/opt/fake-r/include', '/opt/fake-r/share', '', '', '/opt/fake-r/lib', 'aarch64-fake'];
+    const dir = mkdtempSync(join(tmpdir(), 'detect-r-test-'));
+    const fakeR = join(dir, 'R');
+    writeFileSync(fakeR, `#!/bin/sh\nprintf '\\036${fields.join('\\037')}'\n`, { mode: 0o755 });
 
-    // the scan validates the same executable, so this must not need R again
-    const started = Date.now();
-    const [rPath, error] = scanForR();
-    assert.isNull(error);
-    assert.isTrue(existsSync(rPath));
-    const [environment, envError] = detectREnvironment(rPath);
-    assert.isNull(envError);
-    assert.isNotEmpty(environment.envVars.R_HOME);
-    assert.isBelow(Date.now() - started, 50, 'expected cached results, not a fresh R launch');
+    try {
+      const [background, backgroundError] = await detectREnvironmentAsync(fakeR);
+      assert.isNull(backgroundError);
+      assert.equal(background.envVars.R_HOME, '/opt/fake-r');
+
+      // remove the stand-in: another query would now fail to launch, so a
+      // successful synchronous detection proves the cached result is reused
+      rmSync(dir, { recursive: true, force: true });
+
+      const [environment, error] = detectREnvironment(fakeR);
+      assert.isNull(error);
+      assert.deepEqual(environment, background);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

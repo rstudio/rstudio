@@ -360,10 +360,10 @@ public:
     * @param filePath  The file to set as the response.
     * @param request   The HTTP request from the browser.
     */
-   void setCacheableFile(const FilePath& filePath, const Request& request)
+   void setCacheableFile(const FilePath& filePath, const Request& request, bool compress = true)
    {
       setCacheWithRevalidationHeaders();
-      setIndefiniteCacheableFile(filePath, request);
+      setIndefiniteCacheableFile(filePath, request, compress);
    }
 
    /**
@@ -377,12 +377,13 @@ public:
     * @param filter    An output filter through which to process the file contents.
     */
    template <typename Filter>
-   void setCacheableFile(const FilePath& filePath, 
-                         const Request& request, 
-                         const Filter& filter)
+   void setCacheableFile(const FilePath& filePath,
+                         const Request& request,
+                         const Filter& filter,
+                         bool compress = true)
    {
       setCacheWithRevalidationHeaders();
-      setIndefiniteCacheableFile(filePath, request, filter);
+      setIndefiniteCacheableFile(filePath, request, filter, compress);
    }
 
    /**
@@ -392,10 +393,10 @@ public:
     * @param filePath  The file to set as the response.
     * @param request   The HTTP request from the browser.
     */
-   void setIndefiniteCacheableFile(const FilePath& filePath, const Request& request)
+   void setIndefiniteCacheableFile(const FilePath& filePath, const Request& request, bool compress = true)
    {
       NullOutputFilter nullFilter;
-      setIndefiniteCacheableFile(filePath, request, nullFilter);
+      setIndefiniteCacheableFile(filePath, request, nullFilter, compress);
    }
    
    /**
@@ -408,9 +409,10 @@ public:
     * @param filter    An output filter through which to process the file contents.
     */
    template <typename Filter>
-   void setIndefiniteCacheableFile(const FilePath& filePath, 
-                                   const Request& request, 
-                                   const Filter& filter)
+   void setIndefiniteCacheableFile(const FilePath& filePath,
+                                   const Request& request,
+                                   const Filter& filter,
+                                   bool compress = true)
    {
       // ensure that the file exists
       if (!filePath.exists())
@@ -432,7 +434,7 @@ public:
       }
       else
       {
-         setFile(filePath, request, filter);
+         setFile(filePath, request, filter, compress);
       }
    }
    void setRangeableFile(const FilePath& filePath, const Request& request);

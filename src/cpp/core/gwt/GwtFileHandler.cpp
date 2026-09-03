@@ -169,7 +169,7 @@ void handleFileRequest(const FileRequestOptions& options,
    {
       // since these are application components we force revalidation (default behavior of
       // setCacheableFile)
-      pResponse->setCacheableFile(filePath, request);
+      pResponse->setCacheableFile(filePath, request, options.compress);
    }
 }
    
