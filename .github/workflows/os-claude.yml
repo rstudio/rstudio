@@ -50,7 +50,12 @@ jobs:
         run: |
           NUMBER="${ISSUE_NUMBER:-$PR_NUMBER}"
           TITLE="${ISSUE_TITLE:-$PR_TITLE}"
-          SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
+
+          # printf + tr -d '\n' force the slug to a single line even if a
+          # crafted title were to smuggle a newline in: one surviving into
+          # GITHUB_OUTPUT would let a public user's issue title inject
+          # arbitrary step outputs.
+          SLUG=$(printf '%s' "$TITLE" | tr -d '\n' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
 
           echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
           echo "branch-prefix=claude/${NUMBER}-${SLUG}-" >> "$GITHUB_OUTPUT"
