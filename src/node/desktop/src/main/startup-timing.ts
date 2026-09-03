@@ -130,8 +130,12 @@ export function harvestRendererTiming(webContents: WebContents): void {
     webContents
       .executeJavaScript(kProbeScript)
       .then((completed: boolean) => {
-        if (completed || Date.now() >= deadline) {
-          setTimeout(() => harvestNow(webContents), kHarvestSettleMs);
+        if (completed) {
+          setTimeout(() => harvestNow(webContents, true), kHarvestSettleMs);
+        } else if (Date.now() >= deadline) {
+          // harvest what exists, but mark the timeline as incomplete so
+          // consumers do not mistake a stalled startup for a finished one
+          setTimeout(() => harvestNow(webContents, false), kHarvestSettleMs);
         } else {
           setTimeout(poll, kHarvestPollIntervalMs);
         }
@@ -141,7 +145,7 @@ export function harvestRendererTiming(webContents: WebContents): void {
   setTimeout(poll, kHarvestPollIntervalMs);
 }
 
-function harvestNow(webContents: WebContents): void {
+function harvestNow(webContents: WebContents, completed: boolean): void {
   // performance.timeOrigin is epoch-based, so everything can be converted to
   // the same wall-clock scale used by the other tiers
   const script = String.raw`
@@ -174,7 +178,8 @@ function harvestNow(webContents: WebContents): void {
       for (const entry of entries) {
         write({ tier: 'client', name: entry.name, t: entry.t, dur: entry.dur });
       }
-      write({ tier: 'desktop', name: 'timing-harvested', t: nowMs(), pid: process.pid });
+      const name = completed ? 'timing-harvested' : 'timing-harvest-timeout';
+      write({ tier: 'desktop', name, t: nowMs(), pid: process.pid });
     })
     .catch((error: unknown) => logger().logError(error));
 }

@@ -586,7 +586,16 @@ public abstract class Prefs
     */
    public boolean hasLoadedLayers()
    {
-      return layers_.length() > 0;
+      if (layers_.length() == 0)
+         return false;
+
+      // SessionInfo synthesizes a placeholder layer ([{}]) when the session
+      // never delivered prefs; only layers the session built carry values
+      for (int i = 0; i < layers_.length(); i++)
+         if (layers_.get(i).getValues() == null)
+            return false;
+
+      return true;
    }
 
    private JsArray<PrefLayer> layers_;

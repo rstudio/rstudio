@@ -164,6 +164,16 @@ export function cachedLoginShellPath(): string | null {
 }
 
 /**
+ * True when this launch's query finished without an answer (shell failure or
+ * timeout). The session should then not repeat the query: its own probe has
+ * no timeout, so it would hang on the same profile the desktop just gave up
+ * on.
+ */
+export function loginShellPathFailed(): boolean {
+  return fresh === null;
+}
+
+/**
  * The PATH to launch a session with. Resolves immediately when the shell
  * has answered or a previous launch's answer is available; on a first
  * launch it waits for the shell (bounded by the query timeout).

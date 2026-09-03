@@ -43,7 +43,12 @@ import path from 'path';
 import { createSplashScreen } from './splash-screen';
 import { startupCheckpoint } from './startup-timing';
 import { readMachoArchitectures } from '../core/macho';
-import { cachedLoginShellPath, kSessionPathInitializedEnvVar, loginShellPath } from './login-shell-path';
+import {
+  cachedLoginShellPath,
+  kSessionPathInitializedEnvVar,
+  loginShellPath,
+  loginShellPathFailed,
+} from './login-shell-path';
 import { probeUrl } from './url-utils';
 import { showWhatsNewWindow } from './whats-new-window';
 import {
@@ -129,6 +134,11 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     const shellPath = cachedLoginShellPath();
     if (shellPath) {
       env['PATH'] = shellPath;
+      env[kSessionPathInitializedEnvVar] = '1';
+    } else if (loginShellPathFailed()) {
+      // the desktop's bounded query failed or timed out; the session's own
+      // probe has no timeout and would hang on the same profile, so tell it
+      // to keep the inherited PATH instead
       env[kSessionPathInitializedEnvVar] = '1';
     }
   }

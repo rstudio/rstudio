@@ -80,7 +80,10 @@ export function rChooserLikely(): boolean {
   if (getenv('RSTUDIO_WHICH_R').length !== 0) {
     return false;
   }
-  return storedRCandidatesWin32().length === 0;
+
+  // a stored candidate that no longer exists on disk will fail validation
+  // and land in the chooser anyway
+  return !storedRCandidatesWin32().some((candidate) => existsSync(candidate.path));
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {

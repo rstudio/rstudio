@@ -177,13 +177,19 @@ async function launchOnce(index: number, options: LaunchOptions): Promise<Run> {
     exited = true;
   });
 
-  // the desktop writes 'timing-harvested' a few seconds after the workbench
-  // initializes, once the renderer's timeline has been copied into the file
+  // the desktop writes 'timing-harvested' once the client reports deferred
+  // init complete and the renderer's timeline has been copied into the file
+  // (or 'timing-harvest-timeout' if the client never got that far)
   const deadline = Date.now() + options.timeoutMs;
   let complete = false;
+  let harvestTimedOut = false;
   while (Date.now() < deadline) {
     if (hasCheckpoint(timingFile, 'timing-harvested')) {
       complete = true;
+      break;
+    }
+    if (hasCheckpoint(timingFile, 'timing-harvest-timeout')) {
+      harvestTimedOut = true;
       break;
     }
     if (exited) {
@@ -198,7 +204,11 @@ async function launchOnce(index: number, options: LaunchOptions): Promise<Run> {
   await waitForExit(pid, 5000);
 
   if (!complete) {
-    const reason = exited ? 'the process exited before the workbench initialized' : 'timed out';
+    const reason = harvestTimedOut
+      ? 'the client never completed deferred init, so the timeline is incomplete'
+      : exited
+        ? 'the process exited before the workbench initialized'
+        : 'timed out';
     fail(TAG, `run ${index + 1}: ${reason}; see ${logFile}`);
   }
 
