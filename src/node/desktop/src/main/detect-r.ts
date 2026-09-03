@@ -82,7 +82,11 @@ export function rChooserLikely(): boolean {
   }
 
   // a stored candidate that no longer exists on disk will fail validation
-  // and land in the chooser anyway
+  // and land in the chooser anyway. NOTE: full parity with promptUserForR's
+  // acceptance (isValidBinary) is deliberately not attempted: it launches R
+  // synchronously, which is the very cost the background probe exists to
+  // hide, and a stored R that exists but fails pays a single R attempt
+  // either way (the probe tries it first; validation then reads the cache)
   return !storedRCandidatesWin32().some((candidate) => existsSync(candidate.path));
 }
 

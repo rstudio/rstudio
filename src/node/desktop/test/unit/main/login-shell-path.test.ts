@@ -23,6 +23,7 @@ import {
   loginShellPath,
   resetLoginShellPath,
   startLoginShellPathQuery,
+  withDefaultToolPaths,
 } from '../../../src/main/login-shell-path';
 
 describe('LoginShellPath', () => {
@@ -75,5 +76,15 @@ describe('LoginShellPath', () => {
     startLoginShellPathQuery(dir);
     assert.equal(cachedLoginShellPath(), fresh);
     assert.equal(await loginShellPath(), fresh);
+  });
+
+  it('extends a PATH with the standard tool locations, without duplicates', () => {
+    const extended = withDefaultToolPaths('/usr/bin:/opt/homebrew/bin');
+    const parts = extended.split(':');
+
+    assert.equal(parts[0], '/usr/bin');
+    assert.include(parts, '/usr/local/bin');
+    assert.include(parts, '/opt/homebrew/bin');
+    assert.equal(new Set(parts).size, parts.length, 'expected no duplicate entries');
   });
 });

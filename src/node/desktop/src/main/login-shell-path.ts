@@ -14,6 +14,8 @@
  */
 
 import { spawn } from 'child_process';
+import { existsSync, readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
 import ElectronStore from 'electron-store';
 import { getenv } from '../core/environment';
 import { logger } from '../core/logger';
@@ -173,19 +175,55 @@ export function loginShellPathFailed(): boolean {
   return fresh === null;
 }
 
-// standard tool locations a login shell would normally contribute; appended
-// as a fallback when the shell itself could not be asked
+// Homebrew's locations, which path_helper does not know about; appended as a
+// fallback when the shell itself could not be asked
 const kDefaultToolPaths = ['/usr/local/bin', '/opt/homebrew/bin'];
 
-/** The given PATH, extended with the standard tool locations it lacks. */
+/**
+ * The given PATH, extended with the standard tool locations it lacks: the
+ * path_helper sources (/etc/paths, /etc/paths.d/*) the session's own
+ * last-resort initialization would read, plus Homebrew's directories.
+ */
 export function withDefaultToolPaths(path: string): string {
   const parts = path.length > 0 ? path.split(':') : [];
-  for (const dir of kDefaultToolPaths) {
-    if (!parts.includes(dir)) {
-      parts.push(dir);
+
+  const append = (dir: string) => {
+    const trimmed = dir.trim();
+    if (trimmed.length > 0 && !parts.includes(trimmed)) {
+      parts.push(trimmed);
+    }
+  };
+
+  for (const file of etcPathsFiles()) {
+    try {
+      for (const line of readFileSync(file, 'utf8').split('\n')) {
+        append(line);
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
     }
   }
+
+  for (const dir of kDefaultToolPaths) {
+    append(dir);
+  }
+
   return parts.join(':');
+}
+
+function etcPathsFiles(): string[] {
+  const files: string[] = [];
+  if (existsSync('/etc/paths')) {
+    files.push('/etc/paths');
+  }
+  try {
+    for (const entry of readdirSync('/etc/paths.d')) {
+      files.push(join('/etc/paths.d', entry));
+    }
+  } catch {
+    // no /etc/paths.d
+  }
+  return files;
 }
 
 /**
