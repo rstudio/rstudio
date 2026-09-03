@@ -302,21 +302,62 @@ public class AceEditor implements DocDisplay
 
    public static void load(final Command command)
    {
+      // the vim / emacs keybindings are not part of the base load; they are
+      // loaded lazily, by the first editor that needs them (loadKeybindings)
       aceLoader_.addCallback(() ->
-            aceSupportLoader_.addCallback(() ->
-                  extLanguageToolsLoader_.addCallback(() ->
-                        vimLoader_.addCallback(() ->
-                              emacsLoader_.addCallback(() ->
-                              {
-                                 AceSupport.initialize();
+      {
+         // acesupport and ext-language-tools depend only on ace itself, so
+         // load them in parallel
+         final int[] pending = { 2 };
+         ExternalJavaScriptLoader.Callback onLoaded = () ->
+         {
+            pending[0] -= 1;
+            if (pending[0] > 0)
+               return;
 
-                                 if (command != null)
-                                    command.execute();
-                              })
-                        )
-                  )
-            )
-      );
+            AceSupport.initialize();
+
+            if (command != null)
+               command.execute();
+         };
+
+         aceSupportLoader_.addCallback(onLoaded);
+         extLanguageToolsLoader_.addCallback(onLoaded);
+      });
+   }
+
+   public static boolean keybindingsLoaded()
+   {
+      return vimLoader_.isLoaded() && emacsLoader_.isLoaded();
+   }
+
+   // Run a command once the vim / emacs keybindings have loaded, without
+   // triggering the load itself. Used for setup (like the vim ex commands)
+   // that is only meaningful once some editor has requested the keybindings.
+   public static void onKeybindingsLoaded(final Command command)
+   {
+      if (keybindingsLoaded())
+         command.execute();
+      else
+         keybindingsLoadedCommands_.add(command);
+   }
+
+   public static void loadKeybindings(final Command command)
+   {
+      aceLoader_.addCallback(() ->
+            vimLoader_.addCallback(() ->
+                  emacsLoader_.addCallback(() ->
+                  {
+                     AceEditorNative.fixupEmacsKeybindings();
+                     TextEditingTarget.initializeIncrementalSearch();
+
+                     for (Command pendingCommand : keybindingsLoadedCommands_)
+                        pendingCommand.execute();
+                     keybindingsLoadedCommands_.clear();
+
+                     if (command != null)
+                        command.execute();
+                  })));
    }
 
    public static final native AceEditor getEditor(Element el)
@@ -1135,6 +1176,15 @@ public class AceEditor implements DocDisplay
 
    private void updateKeyboardHandlers()
    {
+      // the vim / emacs keybindings load lazily; if they are needed here but
+      // not yet available, apply the handlers once they arrive (the editor
+      // keeps default keybindings in the interim)
+      if ((useVimMode_ || useEmacsKeybindings_) && !keybindingsLoaded())
+      {
+         loadKeybindings(() -> updateKeyboardHandlers());
+         return;
+      }
+
       // clear out existing keyboard handlers (they will be refreshed below)
       for (HandlerRegistration handler : keyboardHandlers_)
          if (handler != null)
@@ -5185,6 +5235,8 @@ public class AceEditor implements DocDisplay
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
          getLoader(AceResources.INSTANCE.extLanguageTools(),
                    AceResources.INSTANCE.extLanguageToolsUncompressed());
+
+   private static final List<Command> keybindingsLoadedCommands_ = new ArrayList<>();
 
    private boolean popupVisible_;
 
