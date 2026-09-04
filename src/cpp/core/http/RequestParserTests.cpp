@@ -88,12 +88,17 @@ struct FormTester
       const std::string& name,
       const std::string& data,
       const std::string& contentType = std::string(),
-      const std::string& filename = std::string()
+      const std::string& filename = std::string(),
+      bool quoteName = true
    )
    {
       std::ostringstream ss;
       ss << "\r\n--" << boundary << "\r\n";
-      ss << "Content-Disposition: form-data; name=\"" << name << '"';
+      ss << "Content-Disposition: form-data; name=";
+      if (quoteName)
+        ss << "\"" << name << '"';
+      else
+        ss << name;
       if (!filename.empty())
          ss << "; filename=\"" << filename << '"';
       ss << "\r\n";
@@ -390,6 +395,35 @@ TEST(HttpTest, FormParsingEdgeCases)
 
    File file = form.request.uploadedFile("field2");
    EXPECT_EQ(file.name, "semicolon;and\"quote.txt");
+}
+
+TEST(HttpTest, FormParsingEdgeCases2)
+{
+   FormTester form;
+   form.expectedData = form.multipart("field1", "value1") +
+      "\r\n--boundary --" +
+      form.multipart("fie\"ld2", "test", "text/plain", "filename.txt") +
+      "\r\n--boundary--";
+
+   form.requestStr = "POST /test HTTP/1.1\r\n"
+      "Host: example.com\r\n"
+      "Content-Type: multipart/form-data; Boundary=\"boundary\" \r\n"
+      "Content-Length: " + std::to_string(form.expectedData.size()) +
+      "\r\n\r\n" + form.expectedData;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   EXPECT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1\r\n--boundary --");
+
+   File file = form.request.uploadedFile("fie\"ld2");
+   EXPECT_EQ(file.name, "filename.txt");
+   EXPECT_TRUE(file.contents == "test") << "uploaded file contents mismatch";
 }
 
 TEST(HttpTest, FormParsingBoundaryTrailingSpaces)

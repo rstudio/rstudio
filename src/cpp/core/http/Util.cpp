@@ -16,8 +16,8 @@
 
 #include <core/http/Util.hpp>
 
-#include <cstdio>
 #include <cctype>
+#include <cstdio>
 #include <ios>
 #include <iostream>
 #include <sstream>
@@ -26,10 +26,11 @@
 
 #include <boost/asio.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/regex.hpp>
@@ -141,12 +142,17 @@ void parseQueryString(const std::string& queryString, Fields* pFields)
    return parseFields(queryString, "&", "=", pFields, FieldDecodeQueryString);
 }
 
+namespace {
+
 struct SemiFinder
 {
    template <typename ITER>
-   boost::iterator_range<ITER> operator()(ITER begin, ITER end) const {
+   boost::iterator_range<ITER> operator()(ITER begin, ITER end) const
+   {
       bool inQuotes = false;
       bool escape = false;
+      bool readyQuote = false;
+      bool foundEq = false;
       for (ITER iter = begin; iter != end; iter++)
       {
          if (escape)
@@ -157,7 +163,7 @@ struct SemiFinder
          {
             escape = true;
          }
-         else if (*iter == '"')
+         else if (*iter == '"' && (inQuotes || readyQuote))
          {
             inQuotes = !inQuotes;
          }
@@ -165,6 +171,16 @@ struct SemiFinder
          {
             return boost::iterator_range<ITER>(iter, iter + 1);
          }
+         else if (!inQuotes && *iter == '=')
+         {
+            if (!foundEq)
+            {
+               foundEq = true;
+               readyQuote = true;
+               continue;
+            }
+         }
+         readyQuote = false;
       }
       return boost::iterator_range<ITER>(end, end);
    }
@@ -176,12 +192,14 @@ struct BoundaryFinder
 
    std::string boundary;
 
-   enum State {
+   enum State
+   {
       NeedLeadingCR,
       NeedLeadingLF,
       NeedDash1,
       NeedDash2,
       NeedString,
+      NeedTrailingCROrDash,
       NeedTrailingCR,
       NeedTrailingLF,
       NeedTerminatorDash2,
@@ -212,7 +230,7 @@ struct BoundaryFinder
          if (state == NeedLeadingCR)
             matchStart = iter;
          // Reset the state machine on an unexpected \r
-         if (state != NeedTrailingCR && ch == '\r')
+         if (state != NeedTrailingCR && state != NeedTrailingCROrDash && ch == '\r')
          {
             state = NeedLeadingLF;
             matchStart = iter;
@@ -242,18 +260,21 @@ struct BoundaryFinder
                {
                   matchPos++;
                   if (matchPos == boundary.size())
-                     state = NeedTrailingCR;
+                     state = NeedTrailingCROrDash;
                }
                else
                   state = NeedLeadingCR;
                break;
+            case NeedTrailingCROrDash:
             case NeedTrailingCR:
                if (ch == '\r')
                   state = NeedTrailingLF;
-               else if (ch == '-')
+               else if (ch == '-' && state == NeedTrailingCROrDash)
                   state = NeedTerminatorDash2;
                else if (ch != ' ' && ch != '\t')
                   state = NeedLeadingCR;
+               else
+                  state = NeedTrailingCR;
                break;
             case NeedTrailingLF:
                if (ch == '\n')
@@ -282,6 +303,9 @@ struct HeaderParams
       namespace ba = boost::algorithm;
 
       HeaderParams result;
+      if (!headerRange.size())
+        return result;
+
       std::string_view header(&*headerRange.begin(), headerRange.size());
 
       auto fields = ba::make_split_iterator(header, semiFinder);
@@ -340,6 +364,8 @@ struct HeaderParams
    }
 };
 
+}
+
 
 void parseMultipartForm(const std::string& contentType,
                         const std::string& body,
@@ -357,15 +383,15 @@ void parseMultipartForm(const std::string& contentType,
       return;
    }
 
-   // Per RFC 1341, multipart-body ends immediately after the `--` with no CRLF necessary.
+   // Per RFC 2046, multipart-body ends immediately after the `--` with no CRLF necessary.
    size_t terminatorPos = body.find("\r\n--" + boundary + "--");
-   if (!terminatorPos || !body.size())
+   if (terminatorPos == 0 || !body.size())
    {
       // No sections, just a terminating boundary
       LOG_WARNING_MESSAGE("Invalid multipart/form-data: no sections");
       return;
    }
-   // Be permissinve beyond the strict requirements of RFC 1341:
+   // Be permissive beyond the strict requirements of RFC 2046:
    // Use best effort to read the last part even if the terminator is missing.
    if (terminatorPos == std::string::npos)
       terminatorPos = body.size();
