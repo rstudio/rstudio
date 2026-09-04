@@ -24,9 +24,10 @@ fi
 read -r -d '' USAGE <<- EOF
 Run RStudio unit tests. Available flags:
 
---help    Show this help.
---scope   Run only tests with the given scope (core, rserver, rsession, r).
---filter  Run a subset of R tests, matching the requested filter.
+--help           Show this help.
+--scope          Run only tests with the given scope (core, rserver, rsession, r).
+--filter         Run a subset of R tests, matching the requested filter.
+--only-database  Restrict the rserver scope to the database-backed fixture tests.
 EOF
 
 section () {
@@ -184,6 +185,12 @@ while [ $# -gt 0 ]; do
 
    ;;
 
+   "--only-database")
+      ONLY_DATABASE=true
+      shift
+
+   ;;
+
    "--help")
       echo "${USAGE}"
       exit 0
@@ -274,7 +281,13 @@ if has-scope "rserver"; then
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests" ]; then
       section "Running 'rserver' tests..."
       cd server
-      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests"
+      # Database-backed fixture tests (named *IntegrationTest) run alongside
+      # the rest of the suite by default; --only-database narrows to just those.
+      RSERVER_TESTS_ARGS=""
+      if [ "${ONLY_DATABASE:-false}" = "true" ]; then
+         RSERVER_TESTS_ARGS="--only-database"
+      fi
+      runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests ${RSERVER_TESTS_ARGS}"
       cd ..
    fi
 
