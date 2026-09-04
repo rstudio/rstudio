@@ -285,11 +285,32 @@ var activeCol = -1;
 // from the body via ArrowUp at row 0.
 var activeHeaderCol = -1;
 
+// Absolute index of the column the active header should move to once the
+// window slide that fetches it lands, or -1. Set by setColumnsHidden when a
+// keyboard hide's successor column (the one taking the hidden column's slot)
+// isn't fetched yet; applyColumnWindowUpdate applies it after the remap --
+// only for the slide generation recorded here, and scrolling it into view
+// when pendingActiveHeaderScroll is set. Cancelled by any newer selection
+// (setActiveHeader / setActiveCell) and when that slide fails or is
+// superseded, so a stale intent can never hijack a later cursor position.
+var pendingActiveHeaderAbs = -1;
+var pendingActiveHeaderScroll = false;
+var pendingActiveHeaderGen = 0;
+
 // Pinned columns: a set of absolute (1-based) column indices in the full
 // frame, so a pin tracks its column across pagination rather than its position
 // within the currently fetched window. The rownames column is always
 // implicitly pinned and is not represented here.
 var pinnedColumns = new Set();
+
+// Hidden columns: absolute (1-based) indices left out of the grid. Hiding is
+// purely a display concern -- a hidden column keeps its pin, sort, filter and
+// manual width, and its sidebar entry stays listed (dimmed) so it can be shown
+// again. Mutate only through setColumnsHidden / the state-restore paths, which
+// drop hiddenSortedCache; the span layout searches that sorted copy on every
+// scroll event (countHiddenBelow).
+var hiddenColumns = new Set();
+var hiddenSortedCache = null;
 
 // Saved per-object state loaded at the start of bootstrap (before the column
 // fetch) so the request can include pinned columns that fall outside the
@@ -297,11 +318,16 @@ var pinnedColumns = new Set();
 // arrives; see primeSelectionState / applySavedState.
 var pendingSavedState = null;
 
-// Number of pinned columns primed from saved state for the in-flight column
-// request. If the fingerprint turns out not to match (object reassigned to a
-// different frame), those columns were requested against the wrong frame, so
-// initGrid re-bootstraps once after clearing the stale selection.
-var primedPinnedCount = 0;
+// Number of pinned + hidden columns primed from saved state for the in-flight
+// column request. If the fingerprint turns out not to match (object reassigned
+// to a different frame), that request was shaped by the wrong frame's
+// selection, so initGrid re-bootstraps once after clearing it.
+var primedSelectionCount = 0;
+
+// Frame width recorded in the saved state, used only to bound the visible-
+// column walk of the first fetch after a bootstrap, when totalCols is not yet
+// known (see windowEndAbs). 0 = no hint.
+var primedTotalCols = 0;
 
 // Pinned-block width cache (pinnedOffsetsCache.totalWidth), dropped by
 // invalidatePinnedOffsets() on width/pinning changes. The pinned columns now
@@ -946,6 +972,10 @@ var fetchColumnNames = function(callback) {
       .then(function(result) {
          if (result && !result.error && result.names) {
             columnNamesCache = result.names;
+            // The status bar may be naming an unfetched sort column by number
+            // (columnNameForAbs falls back to this cache when the sidebar's
+            // column index is unavailable); re-render it now the names exist.
+            updateInfoBar();
             callback(columnNamesCache);
          } else {
             callback(null);
@@ -1619,9 +1649,11 @@ var posForAbsColIndex = function(absIdx) {
 // is available while the window is scrolled away). Pins that are already inside
 // the window keep their natural position -- the pinned-first display order is a
 // render-time concern handled by getColumnOrder, not a fetch-order one, so the
-// position of an in-window column stays stable across a re-fetch. Returns an
-// empty array to mean "the whole frame" -- used when no column windowing is
-// configured, in which case every column is present.
+// position of an in-window column stays stable across a re-fetch. Hidden
+// columns are never requested: the window is measured in visible columns
+// (windowEndAbs), so hiding extends its absolute span instead of thinning it.
+// Returns an empty array to mean "the whole frame" -- used when no column
+// windowing is configured, in which case every column is present.
 var buildRequestedColumns = function() {
    var maxCols = effectiveMaxDisplayColumns();
    if (maxCols <= 0)
@@ -1631,9 +1663,7 @@ var buildRequestedColumns = function() {
    // offset, so the first window column is columnOffset + 1. The server clamps
    // indices past the end of the frame, so an unknown totalCols is harmless.
    var windowStart = columnOffset + 1;
-   var windowEnd = columnOffset + maxCols;
-   if (totalCols > 0)
-      windowEnd = Math.min(windowEnd, totalCols);
+   var windowEnd = windowEndAbs(windowStart, maxCols);
 
    var requested = [];
    var seen = {};
@@ -1642,7 +1672,7 @@ var buildRequestedColumns = function() {
    // first so their data accompanies the window we're about to display.
    Array.from(pinnedColumns)
       .filter(function(a) {
-         return typeof a === "number" && a >= 1 &&
+         return typeof a === "number" && a >= 1 && !hiddenColumns.has(a) &&
             (a < windowStart || a > windowEnd);
       })
       .sort(function(a, b) { return a - b; })
@@ -1651,9 +1681,35 @@ var buildRequestedColumns = function() {
       });
 
    for (var c = windowStart; c <= windowEnd; c++) {
-      if (!seen[c]) { seen[c] = true; requested.push(c); }
+      if (!seen[c] && !hiddenColumns.has(c)) { seen[c] = true; requested.push(c); }
    }
+
+   // With every column hidden there is nothing to ask for, but an empty request
+   // means "the whole frame" to the server -- a full describe of a possibly
+   // very wide frame. Name the lowest hidden column instead: it is fetched but
+   // never rendered (getColumnOrder drops it), and the frame totals still arrive.
+   if (requested.length === 0 && hiddenColumns.size > 0)
+      requested.push(hiddenSorted()[0]);
    return requested;
+};
+
+// Absolute index of the last column of a fetch window holding `count` VISIBLE
+// columns from startAbs: the count-th non-hidden column at or after startAbs,
+// or the frame's last column when fewer remain. Before the first response the
+// frame width is unknown; with restored hidden columns the saved-state hint
+// bounds the walk then, so a restored hide-all can't run the request entirely
+// past the end (which the server would answer with the whole frame). Without
+// hidden columns the walk stays unbounded and the server clamps it: the hint
+// is stale after a column is added, and only the hidden case is guaranteed a
+// clean re-bootstrap on the resulting fingerprint mismatch (initGrid).
+var windowEndAbs = function(startAbs, count) {
+   var end = nthVisibleAbs(startAbs, count - 1);
+   var bound = totalCols;
+   if (bound <= 0 && hiddenColumns.size > 0)
+      bound = primedTotalCols;
+   if (bound > 0 && end > bound)
+      end = bound;
+   return end;
 };
 
 // The ordered list of absolute column indices to request for ROW data. Once
@@ -1692,13 +1748,17 @@ var effectiveMaxDisplayColumns = function() {
 // Returns the column render order: pinned columns first (in original order),
 // then unpinned columns (in original order). Column 0 (rownames) is always first.
 // The server returns exactly the columns we asked for (pinned + window), so we
-// order the whole fetched set rather than capping at maxDisplayColumns.
+// order the whole fetched set rather than capping at maxDisplayColumns. Hidden
+// columns are left out even when fetched (a column hidden after its fetch stays
+// in `cols` until the next window slide).
 var getColumnOrder = function() {
    var colCount = cols ? cols.length : 0;
    var pinned = [];
    var unpinned = [];
    for (var i = 0; i < colCount; i++) {
-      if (isColumnPinned(i)) {
+      if (isColumnHidden(absColIndex(i))) {
+         continue;
+      } else if (isColumnPinned(i)) {
          pinned.push(i);
       } else {
          unpinned.push(i);
@@ -1772,32 +1832,67 @@ var pinnedBlockWidth = function() {
 // absorbed when a slide lands (anchor-based scroll compensation in
 // applyColumnWindowUpdate). This is what gives the horizontal scrollbar the
 // full frame's range, so the user scrolls -- rather than paginates -- through
-// columns.
+// columns. Hidden columns are absent from all three segments.
 // ----------------------------------------------------------------------------
 
-// Number of pinned columns whose absolute index falls in [lo, hi].
-var countPinnedInRange = function(lo, hi) {
+// Sorted copy of the hidden set, rebuilt lazily after a mutation (the mutation
+// paths null hiddenSortedCache).
+var hiddenSorted = function() {
+   if (hiddenSortedCache === null)
+      hiddenSortedCache = Array.from(hiddenColumns).sort(function(a, b) { return a - b; });
+   return hiddenSortedCache;
+};
+
+var isColumnHidden = function(absIdx) {
+   return hiddenColumns.has(absIdx);
+};
+
+// Number of hidden columns with absolute index < abs. A binary search, so the
+// scroll-time layout math stays cheap when thousands of columns are hidden.
+var countHiddenBelow = function(abs) {
+   var arr = hiddenSorted();
+   var lo = 0, hi = arr.length;
+   while (lo < hi) {
+      var mid = (lo + hi) >> 1;
+      if (arr[mid] < abs)
+         lo = mid + 1;
+      else
+         hi = mid;
+   }
+   return lo;
+};
+
+var countHiddenInRange = function(lo, hi) {
    if (lo > hi) return 0;
-   var n = 0;
+   return countHiddenBelow(hi + 1) - countHiddenBelow(lo);
+};
+
+// Number of columns in [lo, hi] that take no space in the scrollable layout:
+// pinned (frozen pane) or hidden (not rendered). A pinned column that is also
+// hidden counts once.
+var countExcludedInRange = function(lo, hi) {
+   if (lo > hi) return 0;
+   var n = countHiddenInRange(lo, hi);
    pinnedColumns.forEach(function(abs) {
-      if (abs >= lo && abs <= hi) n++;
+      if (abs >= lo && abs <= hi && !hiddenColumns.has(abs)) n++;
    });
    return n;
 };
 
-// Unpinned column counts in the spans. Pinned columns are excluded: they are
-// always fetched and rendered sticky at the front, so they occupy no span
-// space. fetchedWindowEnd === 0 (no grid yet) yields empty spans.
+// Layout column counts in the spans. Pinned and hidden columns are excluded:
+// pinned columns are always fetched and rendered in the frozen pane, hidden
+// ones are not rendered at all, so neither occupies span space.
+// fetchedWindowEnd === 0 (no grid yet) yields empty spans.
 var leftSpanCols = function() {
    var hi = fetchedWindowStart - 1;
    if (fetchedWindowEnd <= 0 || hi < 1) return 0;
-   return hi - countPinnedInRange(1, hi);
+   return hi - countExcludedInRange(1, hi);
 };
 
 var rightSpanCols = function() {
    if (fetchedWindowEnd <= 0 || fetchedWindowEnd >= totalCols) return 0;
    var lo = fetchedWindowEnd + 1;
-   return (totalCols - lo + 1) - countPinnedInRange(lo, totalCols);
+   return (totalCols - lo + 1) - countExcludedInRange(lo, totalCols);
 };
 
 var leftSpanWidth = function() {
@@ -1812,15 +1907,63 @@ var rightSpanWidth = function() {
    return rightSpanWidthCache;
 };
 
-// The k-th (0-based) unpinned absolute column index at or after startAbs.
-// Walks the (small, sorted) pinned set to skip over pinned indices.
-var nthUnpinnedAbs = function(startAbs, k) {
-   var sorted = Array.from(pinnedColumns).sort(function(a, b) { return a - b; });
+// The k-th (0-based) column at or after startAbs that countExcluded(lo, hi)
+// does not exclude. Iterates start + k + excluded(start..abs) to a fixed
+// point: each pass folds in the excluded columns the previous one skipped
+// over, and the walk stops on a column that is itself included. Unclamped.
+var nthIncludedAbs = function(startAbs, k, countExcluded) {
    var abs = startAbs + k;
-   for (var i = 0; i < sorted.length; i++) {
-      if (sorted[i] >= startAbs && sorted[i] <= abs) abs++;
+   while (true) {
+      var next = startAbs + k + countExcluded(startAbs, abs);
+      if (next === abs)
+         return abs;
+      abs = next;
    }
+};
+
+// The k-th (0-based) non-hidden absolute column index at or after startAbs.
+var nthVisibleAbs = function(startAbs, k) {
+   return nthIncludedAbs(startAbs, k, countHiddenInRange);
+};
+
+// The k-th (0-based) absolute column index at or after startAbs that occupies
+// scrollable layout space (neither pinned nor hidden), clamped to the frame.
+var nthLayoutAbs = function(startAbs, k) {
+   var abs = nthIncludedAbs(startAbs, k, countExcludedInRange);
    return Math.max(1, Math.min(abs, totalCols));
+};
+
+// Visible (non-hidden) columns in the frame; 0 while totalCols is unknown.
+var visibleColumnCount = function() {
+   if (totalCols <= 0) return 0;
+   return totalCols - countHiddenInRange(1, totalCols);
+};
+
+// A column's 0-based position among the visible columns (the number of
+// visible columns before it).
+var visibleIndexOf = function(abs) {
+   return (abs - 1) - countHiddenBelow(abs);
+};
+
+// Largest columnOffset at which a window of maxDisplayColumns visible columns
+// still fits before the end of the frame -- the clamp for scroll-driven slides
+// and jumps. In absolute terms that window may span far more than
+// maxDisplayColumns indices when columns are hidden.
+var maxColumnOffset = function() {
+   var visible = visibleColumnCount();
+   if (maxDisplayColumns <= 0 || visible <= maxDisplayColumns) return 0;
+   return nthVisibleAbs(1, visible - maxDisplayColumns) - 1;
+};
+
+// columnOffset for a window whose visible columns are centered on `abs`,
+// clamped to the frame. A jump wants context on both sides, and a window
+// starting at the target would put unfetched (blank) span columns to its
+// immediate left.
+var centeredColumnOffset = function(abs) {
+   var half = Math.floor(maxDisplayColumns / 2);
+   var startVisible = Math.max(0, visibleIndexOf(abs) - half);
+   var offset = nthVisibleAbs(1, startVisible) - 1;
+   return Math.max(0, Math.min(maxColumnOffset(), offset));
 };
 
 // Map a content x-coordinate (px from the table's left edge) to the absolute
@@ -1842,7 +1985,7 @@ var absColAtContentX = function(x) {
 
    if (x < spanBase + leftW) {
       var k = Math.max(0, Math.floor((x - spanBase) / DEFAULT_COL_WIDTH));
-      return nthUnpinnedAbs(1, k);
+      return nthLayoutAbs(1, k);
    }
 
    var fx = x - leftW;
@@ -1852,7 +1995,7 @@ var absColAtContentX = function(x) {
 
    var rx = x - (offs[lastPos + 1] + leftW);
    var k2 = Math.max(0, Math.floor(rx / DEFAULT_COL_WIDTH));
-   return nthUnpinnedAbs(fetchedWindowEnd + 1, k2);
+   return nthLayoutAbs(fetchedWindowEnd + 1, k2);
 };
 
 // Inverse of absColAtContentX: the layout x of a column's left edge, by
@@ -1882,12 +2025,12 @@ var layoutXOfAbs = function(absIdx) {
    }
 
    if (absIdx < fetchedWindowStart) {
-      var k = (absIdx - 1) - countPinnedInRange(1, absIdx - 1);
+      var k = (absIdx - 1) - countExcludedInRange(1, absIdx - 1);
       return offs[firstUnpinned] - pinnedW + Math.max(0, k) * DEFAULT_COL_WIDTH;
    }
 
    var lo = fetchedWindowEnd + 1;
-   var k2 = (absIdx - lo) - countPinnedInRange(lo, absIdx - 1);
+   var k2 = (absIdx - lo) - countExcludedInRange(lo, absIdx - 1);
    return offs[lastPos + 1] + leftW - pinnedW + Math.max(0, k2) * DEFAULT_COL_WIDTH;
 };
 
@@ -1997,7 +2140,15 @@ var appendPinnedCells = function(parent, makeCell) {
 var appendUnpinnedWindowedCells = function(parent, makeCell, spacerTag) {
    var firstUnpinned = firstUnpinnedPos();
    var lastPos = columnOrder.length - 1;
-   if (firstUnpinned > lastPos) return;
+   if (firstUnpinned > lastPos) {
+      // No unpinned column to render (every column hidden, or every fetched
+      // one pinned). Keep one empty cell so the row still has its height: the
+      // rendered rows of this pane define the scroll extent the frozen pane's
+      // rows follow, and cell-less rows would collapse to nothing, leaving
+      // later row names unreachable. unpinnedRenderedColumnCount matches.
+      parent.appendChild(colSpacerCell(spacerTag, 0));
+      return;
+   }
 
    // Clamp the window to the unpinned range; fall back to the full range if it
    // hasn't been computed yet so we never render an empty body.
@@ -2072,7 +2223,9 @@ var reinjectHeaderUI = function(th, colIdx, col) {
 // right spacer. Cheap to call on every horizontal-window change.
 var rebuildHeaderWindow = function() {
    var thead = domThead;
-   if (!thead || !cols || !columnOrder.length) return;
+   // An empty columnOrder (every column hidden, no rownames) still needs the
+   // stale headers cleared, so only a missing grid bails.
+   if (!thead || !cols) return;
 
    var makeHeader = function(pos) {
       var colIdx = columnOrder[pos];
@@ -2193,12 +2346,180 @@ var togglePinColumn = function(absIdx, scrollActiveHeader) {
       slideColumnWindow();
 };
 
-// Rebuild headers in the current column order (pinned first, then unpinned).
-// Reorder existing <th> elements rather than recreating them so any attached
-// filter UI / popup state is preserved across pin toggles.
+// ==========================================================================
+// Column Visibility
+// ==========================================================================
+
+// True when the desired fetch set names a column the current `cols` lacks.
+// Columns that merely dropped out of the desired set (a just-hidden one) can
+// stay fetched harmlessly -- getColumnOrder leaves them out -- so only a
+// missing column forces a window slide. (Unpinning is stricter: an unpinned
+// out-of-window column left in `cols` WOULD render; see togglePinColumn.)
+var fetchedSetLacksRequested = function() {
+   var have = {};
+   var fetched = colsRequestList();
+   for (var i = 0; i < fetched.length; i++)
+      have[fetched[i]] = true;
+
+   var wanted = buildRequestedColumns();
+   for (var j = 0; j < wanted.length; j++) {
+      if (!have[wanted[j]])
+         return true;
+   }
+   return false;
+};
+
+var clearPendingActiveHeader = function() {
+   pendingActiveHeaderAbs = -1;
+   pendingActiveHeaderScroll = false;
+   pendingActiveHeaderGen = 0;
+};
+
+// " (N hidden)" for the column readouts, or "" when nothing is hidden.
+var hiddenColumnsText = function() {
+   var n = hiddenColumns.size;
+   return n > 0 ? " (" + n.toLocaleString() + " hidden)" : "";
+};
+
+// Hide or show columns by absolute index. Hiding is a layout change of the
+// same shape as pinning -- the column leaves the render order and the
+// scrollable spans -- so this mirrors togglePinColumn: rebuild headers and
+// rows, refresh the sidebar and status bar, persist, then re-sync the fetched
+// window when it no longer holds a column the layout wants (hiding an
+// in-window column extends the window; showing one may need it fetched). A
+// hidden column keeps its pin, sort, filter and manual width.
+//
+// options.deferSync skips the window re-sync for callers that follow up with
+// a slide of their own (goToColumn); options.scrollActiveHeader keeps a
+// keyboard-driven active header in view, as togglePinColumn does.
+var setColumnsHidden = function(absList, hidden, options) {
+   var changed = false;
+   for (var i = 0; i < absList.length; i++) {
+      var abs = absList[i];
+      if (typeof abs !== "number" || abs < 1)
+         continue;
+      if (hidden && !hiddenColumns.has(abs)) {
+         hiddenColumns.add(abs);
+         changed = true;
+      } else if (!hidden && hiddenColumns.has(abs)) {
+         hiddenColumns.delete(abs);
+         changed = true;
+      }
+   }
+   if (!changed) return;
+   hiddenSortedCache = null;
+
+   // The display order changes, so positional cell/header coordinates are
+   // stale. The active header follows its column when that column is still
+   // shown; one on a column just hidden moves to the column now occupying its
+   // display slot, so the keyboard cursor doesn't vanish with it.
+   clearActiveCell();
+   var headerOrigCol = -1;
+   var headerOrigAbs = -1;
+   var headerSlot = -1;
+   if (activeHeaderCol >= 0) {
+      headerOrigCol = columnOrder[activeHeaderCol];
+      headerOrigAbs = absColIndex(headerOrigCol);
+      headerSlot = activeHeaderCol;
+      clearActiveHeader();
+   }
+
+   // Keep the fetch window over visible columns: hiding can leave the offset
+   // past the last one, and a window starting there would hold nothing.
+   if (maxDisplayColumns > 0)
+      columnOffset = Math.min(columnOffset, maxColumnOffset());
+
+   invalidatePinnedOffsets();
+   rebuildHeaders();
+   renderVisibleRows(true);
+   updateCustomScrollbars();
+   updateSidebarColumnIndicators();
+   updateAllColumnsHiddenHint();
+   updateInfoBar();
+   saveState();
+
+   var scrollHeader = !!(options && options.scrollActiveHeader);
+   if (headerOrigCol >= 0) {
+      var newIdx = columnOrder.indexOf(headerOrigCol);
+      if (newIdx < 0) {
+         // The header's own column was hidden. Its successor in the scrollable
+         // layout -- the next column that is neither pinned nor hidden -- takes
+         // its slot, but may not be fetched yet when the hidden column sat at
+         // the window's right edge; the slide below then fetches it, and
+         // applyColumnWindowUpdate moves the cursor there on landing. (A pinned
+         // column, or one with no successor, keeps the slot-based fallback.)
+         var succAbs = pinnedColumns.has(headerOrigAbs)
+            ? -1
+            : nthIncludedAbs(headerOrigAbs + 1, 0, countExcludedInRange);
+         if (succAbs >= 1 && totalCols > 0 && succAbs <= totalCols) {
+            var succPos = posForAbsColIndex(succAbs);
+            if (succPos >= 0) {
+               newIdx = columnOrder.indexOf(succPos);
+            } else {
+               pendingActiveHeaderAbs = succAbs;
+               pendingActiveHeaderScroll = scrollHeader;
+            }
+         } else {
+            newIdx = Math.min(headerSlot, columnOrder.length - 1);
+         }
+      }
+      if (newIdx >= 0)
+         setActiveHeader(newIdx, scrollHeader);
+   }
+
+   if (!(options && options.deferSync) && fetchedSetLacksRequested()) {
+      // An unfetched successor is, by construction, part of what this slide
+      // requests; bind the parked cursor move to this slide alone.
+      var generation = slideColumnWindow();
+      if (pendingActiveHeaderAbs > 0)
+         pendingActiveHeaderGen = generation;
+   } else if (pendingActiveHeaderAbs > 0) {
+      clearPendingActiveHeader();
+   }
+};
+
+var toggleColumnHidden = function(absIdx) {
+   setColumnsHidden([absIdx], !hiddenColumns.has(absIdx));
+};
+
+// Hide every column, or show every hidden one. Backs the sidebar header's eye:
+// with anything hidden it shows all, otherwise it hides all. Hide-all is the
+// "start from nothing and pick a few" workflow, so an all-hidden grid is a
+// supported state (see updateAllColumnsHiddenHint).
+var setAllColumnsHidden = function(hidden) {
+   var list = [];
+   if (hidden) {
+      for (var c = 1; c <= totalCols; c++)
+         list.push(c);
+   } else {
+      list = Array.from(hiddenColumns);
+   }
+   setColumnsHidden(list, hidden);
+};
+
+var toggleAllColumnsHidden = function() {
+   setAllColumnsHidden(hiddenColumns.size === 0);
+};
+
+// Show or hide the in-grid hint for the all-hidden state. The sidebar is the
+// only per-column show affordance and may be collapsed, which would leave an
+// empty grid with no visible way back; the hint carries a show-all button.
+var updateAllColumnsHiddenHint = function() {
+   var hint = document.getElementById("allColumnsHiddenHint");
+   if (!hint) return;
+   var allHidden = cols !== null && totalCols > 0 && visibleColumnCount() === 0;
+   hint.classList.toggle("visible", allHidden);
+};
+
+// Rebuild headers in the current column order (pinned first, then unpinned,
+// hidden columns left out). Header-attached filter UI is re-injected; an open
+// filter editor is closed first, since the rows are rebuilt right after and
+// a deferred header rebuild would leave the two out of step.
 var rebuildHeaders = function() {
    var thead = domThead;
    if (!thead || !cols) return;
+
+   dismissHeaderEditors();
 
    // Recompute the pinned/unpinned order, then let autoSizeColumns rebuild the
    // windowed header row. Header-attached UI (filters, column types) is
@@ -2367,6 +2688,30 @@ var isHeaderEditorOpen = function() {
              active.classList.contains("textFilterBox"));
 };
 
+// Close any open header editor -- the tracked filter popup and a focused
+// inline text filter -- ahead of a layout rebuild that must not be deferred.
+// autoSizeColumns would otherwise postpone the header rebuild to protect the
+// editor while the rows are rebuilt against the new column order, leaving the
+// body and the headers out of step until the editor closes. Used by the window
+// slide (whose new window may not even contain the editor's column) and by
+// the pin / hide rebuilds.
+var dismissHeaderEditors = function() {
+   // A text filter box (inline in the header, or inside a sidebar filter
+   // popup) applies its input on a debounce. Commit anything still pending
+   // before the box goes away: the rebuilt header is created from the stored
+   // filter, and a debounced apply landing afterwards would filter the grid
+   // under a blank box. Done before the popup dismissal below, which detaches
+   // a popup-hosted box.
+   var activeEl = document.activeElement;
+   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox")) {
+      if (activeEl.dvFlushPendingApply)
+         activeEl.dvFlushPendingApply();
+      activeEl.blur();
+   }
+   if (dismissActivePopup) dismissActivePopup(true);
+   deferredHeaderRebuild = false;
+};
+
 // Run a header rebuild that was deferred because an editor was open. Scheduled
 // asynchronously so it doesn't reenter DOM teardown from within the editor's
 // own blur/dismiss handler.
@@ -2386,7 +2731,9 @@ var autoSizeColumns = function() {
    var thead = domThead;
    // Widths are computed from columnOrder + data (below), so headers need not
    // exist yet -- this is also the path that first builds the windowed header.
-   if (!thead || !cols || !columnOrder.length) return;
+   // An empty columnOrder (every column hidden, no rownames) runs through so
+   // the table collapses and the stale headers are cleared.
+   if (!thead || !cols) return;
 
    // If the viewport isn't visible (e.g. background tab), measurements
    // will be wrong. Flag and bail; onActivate will re-run sizing once the
@@ -3243,6 +3590,10 @@ var createTextFilterBox = function(ele, idx, col, onDismiss) {
       applyFilters();
    });
 
+   // Lets dismissHeaderEditors commit typed-but-not-yet-applied text before a
+   // rebuild recreates this box from the stored filter value.
+   input.dvFlushPendingApply = function() { updateView.flush(); };
+
    input.addEventListener("keyup", function(evt) {
       // Escape dismisses (handled on keydown below); its keyup must not
       // schedule one more apply of the abandoned input, which would land
@@ -3690,7 +4041,9 @@ var setSortStatus = function(text) {
 var visibleColumnRangeText = function() {
    if (!cols || measuredWidths.length === 0 || totalCols <= 0)
       return "";
-   if (maxDisplayColumns <= 0 || totalCols <= maxDisplayColumns)
+   // Once hiding brings the visible columns within one window the frame no
+   // longer slides, so the plain total reads better (see the note above).
+   if (maxDisplayColumns <= 0 || visibleColumnCount() <= maxDisplayColumns)
       return "";
    var viewport = domViewport;
    if (!viewport)
@@ -3776,18 +4129,33 @@ var updateInfoBar = function() {
          ? colRange
          : ", " + totalCols.toLocaleString() +
            (totalCols === 1 ? " total column" : " total columns");
+      text += hiddenColumnsText();
    }
    if (textEl) textEl.textContent = text;
 
    var sortText = "";
    if (sortColumn >= 0 && sortDirection && cols) {
-      var sortPos = posForAbsColIndex(sortColumn);
-      if (sortPos >= 0 && cols[sortPos]) {
-         var dirText = sortDirection === "asc" ? "ascending" : "descending";
-         sortText = "Sorted by: " + cols[sortPos].col_name + " (" + dirText + ")";
-      }
+      var dirText = sortDirection === "asc" ? "ascending" : "descending";
+      sortText = "Sorted by: " + columnNameForAbs(sortColumn) + " (" + dirText + ")";
    }
    setSortStatus(sortText);
+};
+
+// A column's name by absolute index, from whichever metadata has it: the
+// fetched window, the sidebar's complete column index, or the go-to-column
+// name cache; "column N" until one of them loads. The sort column in
+// particular need not be fetched -- it may be hidden, or scrolled outside the
+// window -- and the sort status must still name it.
+var columnNameForAbs = function(absIdx) {
+   var pos = posForAbsColIndex(absIdx);
+   if (pos >= 0 && cols[pos])
+      return cols[pos].col_name;
+   var listIdx = sidebarIndexByAbs[absIdx];
+   if (typeof listIdx === "number" && sidebarListCols[listIdx])
+      return sidebarListCols[listIdx].col_name;
+   if (columnNamesCache && columnNamesCache[absIdx - 1])
+      return columnNamesCache[absIdx - 1];
+   return "column " + absIdx;
 };
 
 // Create the <tr> shell for data row `r` (shared by the pinned and unpinned
@@ -4767,6 +5135,9 @@ var ensureSidebarColumns = function() {
          if (result && !result.error && result.columns && result.columns.length) {
             sidebarColumns = result.columns;
             rebuildSidebarPreservingScroll();
+            // The status bar may have been naming an unfetched sort column by
+            // number while waiting for this index (columnNameForAbs).
+            updateInfoBar();
          }
       })
       .catch(function(err) {
@@ -5110,14 +5481,33 @@ var populateEntrySummary = function(entry, summary) {
    }
 };
 
-// Apply the current pin/sort/filter indicator state to a single built entry.
-// Shared by buildSidebarEntry (at build time) and updateSidebarColumnIndicators
-// (when state changes), keyed off the entry's absolute data-col-idx.
+// Apply the current pin/hidden/sort/filter indicator state to a single built
+// entry. Shared by buildSidebarEntry (at build time) and
+// updateSidebarColumnIndicators (when state changes), keyed off the entry's
+// absolute data-col-idx.
 var applySidebarEntryIndicators = function(entry) {
    var absIdx = parseInt(entry.getAttribute("data-col-idx"), 10);
    if (isNaN(absIdx)) return;
    var nameEl = entry.querySelector(".sidebar-col-name");
    var colName = nameEl ? nameEl.textContent : "";
+
+   // A hidden column's entry is dimmed as a whole (CSS), and activating it
+   // shows the column as well as scrolling to it (goToColumn).
+   var hidden = isColumnHidden(absIdx);
+   entry.classList.toggle("col-hidden", hidden);
+   var headerEl = entry.querySelector(".sidebar-col-header");
+   if (headerEl) {
+      headerEl.setAttribute("aria-label",
+         (hidden ? "Show and scroll to column " : "Scroll to column ") + colName);
+   }
+   var eyeEl = entry.querySelector(".sidebar-eye-icon");
+   if (eyeEl) {
+      eyeEl.classList.toggle("col-hidden", hidden);
+      eyeEl.title = hidden ? "Show column" : "Hide column";
+      eyeEl.setAttribute("aria-pressed", hidden ? "true" : "false");
+      eyeEl.setAttribute("aria-label",
+         (hidden ? "Show column " : "Hide column ") + colName);
+   }
 
    var pinEl = entry.querySelector(".sidebar-pin-icon");
    if (pinEl) {
@@ -5164,8 +5554,8 @@ var applySidebarEntryIndicators = function(entry) {
 };
 
 // Build one sidebar entry's DOM. No per-entry listeners -- those are delegated
-// to the content container. Identity (name, type, pin/sort/filter icons) is
-// always present; the summary (sparkline + range/NA) is seeded from cache if
+// to the content container. Identity (name, type, pin/eye/sort/filter icons)
+// is always present; the summary (sparkline + range/NA) is seeded from cache if
 // available, else queued for the debounced lazy fetch. The sparkline lives in a
 // fixed-height slot reserved up front so every entry is the constant
 // --sidebar-entry-height the virtualizer assumes.
@@ -5219,6 +5609,14 @@ var buildSidebarEntry = function(col, absIdx, virtIndex) {
    if (col.col_tz)
       type.title = "Timezone: " + col.col_tz;
    header.appendChild(type);
+
+   // Eye: hides the column from the grid, or shows it again. Its state text
+   // (title / aria) is applied with the other indicators below.
+   var eyeIcon = document.createElement("span");
+   eyeIcon.className = "sidebar-eye-icon";
+   eyeIcon.setAttribute("role", "button");
+   eyeIcon.setAttribute("tabindex", "0");
+   header.appendChild(eyeIcon);
 
    var filterIcon = document.createElement("span");
    filterIcon.className = "sidebar-filter-icon";
@@ -5395,6 +5793,11 @@ var onSidebarContentClick = function(evt) {
       togglePinColumn(absIdx);
       return;
    }
+   if (t.closest(".sidebar-eye-icon")) {
+      evt.stopPropagation(); evt.preventDefault();
+      toggleColumnHidden(absIdx);
+      return;
+   }
    var sortEl = t.closest(".sidebar-sort-icon");
    if (sortEl) {
       if (sortEl.classList.contains("disabled")) return;
@@ -5431,6 +5834,9 @@ var onSidebarContentKeydown = function(evt) {
    } else if (t.classList.contains("sidebar-pin-icon")) {
       evt.preventDefault(); evt.stopPropagation();
       togglePinColumn(absIdx);
+   } else if (t.classList.contains("sidebar-eye-icon")) {
+      evt.preventDefault(); evt.stopPropagation();
+      toggleColumnHidden(absIdx);
    } else if (t.classList.contains("sidebar-sort-icon")) {
       if (t.classList.contains("disabled")) return;
       evt.preventDefault(); evt.stopPropagation();
@@ -5580,6 +5986,12 @@ var initSidebar = function() {
    }
    toggle.appendChild(toggleLabel);
 
+   // "(N hidden)" qualifier on the count; filled in (and kept current) by
+   // updateSidebarHiddenState.
+   var hiddenTag = document.createElement("span");
+   hiddenTag.className = "sidebar-toggle-hidden";
+   toggleLabel.appendChild(hiddenTag);
+
    // When the summaries describe a filtered subset rather than the whole
    // frame, say so -- the histograms/ranges/NA% otherwise look like they
    // describe the full object. (filteredSummaries is set only while a column
@@ -5615,6 +6027,26 @@ var initSidebar = function() {
          onToggleHelpActivate(evt);
    });
    toggle.appendChild(toggleHelp);
+
+   // Eye: hides every column, or shows every hidden one (see
+   // toggleAllColumnsHidden). Like the help icon, its activation must not
+   // reach the toggle. Its glyph/state text is applied by
+   // updateSidebarHiddenState.
+   var toggleEye = document.createElement("span");
+   toggleEye.className = "sidebar-eye-icon sidebar-toggle-eye";
+   toggleEye.setAttribute("role", "button");
+   toggleEye.setAttribute("tabindex", "0");
+   var onToggleEyeActivate = function(evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+      toggleAllColumnsHidden();
+   };
+   toggleEye.addEventListener("click", onToggleEyeActivate);
+   toggleEye.addEventListener("keydown", function(evt) {
+      if (evt.key === "Enter" || evt.key === " ")
+         onToggleEyeActivate(evt);
+   });
+   toggle.appendChild(toggleEye);
 
    // Decorative close glyph; clicks bubble to the toggle, which remains the
    // panel's single accessible control.
@@ -5694,23 +6126,42 @@ var initSidebar = function() {
    // Attach the floating scrollbar after the spacers establish the scroll range.
    attachSidebarScrollbar();
    if (sidebarScrollbar_) sidebarScrollbar_.update();
+
+   updateSidebarHiddenState();
 };
 
-// Sync the sidebar's pin and sort icons with the module pin/sort state.
-// Called after any pin or sort mutation -- whether it originated from the
-// grid header, the keyboard, or the sidebar icons themselves -- and at the
-// end of initSidebar to apply the initial (possibly restored) state.
-// Re-apply pin/sort/filter indicator state to the currently-built entries.
-// With virtualization only the visible window exists in the DOM; off-window
-// entries pick up the current state when they are next built (buildSidebarEntry
-// calls applySidebarEntryIndicators). The per-entry logic is shared with that
-// build path via applySidebarEntryIndicators.
+// Sync the sidebar header with the hidden-column state: the "(N hidden)" tag
+// on the column count and the show-all / hide-all eye.
+var updateSidebarHiddenState = function() {
+   var anyHidden = hiddenColumns.size > 0;
+   var tag = document.querySelector("#sidebarToggle .sidebar-toggle-hidden");
+   if (tag)
+      tag.textContent = hiddenColumnsText();
+   var eye = document.querySelector("#sidebarToggle .sidebar-toggle-eye");
+   if (eye) {
+      eye.classList.toggle("col-hidden", anyHidden);
+      var action = anyHidden ? "Show all columns" : "Hide all columns";
+      eye.title = action;
+      eye.setAttribute("aria-label", action);
+      eye.setAttribute("aria-pressed", anyHidden ? "true" : "false");
+   }
+};
+
+// Re-apply pin/hidden/sort/filter indicator state to the currently-built
+// entries, and the hidden-column state to the header. Called after any pin,
+// hide, sort or filter mutation -- whether it originated from the grid header,
+// the keyboard, or the sidebar icons themselves. With virtualization only the
+// visible window exists in the DOM; off-window entries pick up the current
+// state when they are next built (buildSidebarEntry calls
+// applySidebarEntryIndicators). The per-entry logic is shared with that build
+// path via applySidebarEntryIndicators.
 var updateSidebarColumnIndicators = function() {
    var content = document.getElementById("sidebarContent");
    if (!content) return;
    var entries = content.querySelectorAll(".sidebar-col");
    for (var i = 0; i < entries.length; i++)
       applySidebarEntryIndicators(entries[i]);
+   updateSidebarHiddenState();
 };
 
 // ==========================================================================
@@ -5828,9 +6279,18 @@ var buildSidebarHelpOverlay = function() {
    addLine(headerSec,
       "Each entry names a column and its type. Click an entry to scroll " +
       "the grid to that column; the pin and sort icons work just like " +
-      "their counterparts in the grid header, and the funnel icon filters " +
-      "the column (see Filter below). For date and date-time columns, hover " +
-      "the type label to see the timezone.");
+      "their counterparts in the grid header, the eye icon hides or shows " +
+      "the column (see Visibility below), and the funnel icon filters it " +
+      "(see Filter below). For date and date-time columns, hover the type " +
+      "label to see the timezone.");
+
+   var visibilitySec = addSection("Visibility");
+   addLine(visibilitySec,
+      "The eye icon hides the column from the grid, or shows it again; the " +
+      "eye in the panel header hides every column, or shows every hidden " +
+      "one. A hidden column keeps its pin, sort and filter, and is shown " +
+      "again when you click its entry or jump to it with Go to column. In " +
+      "the grid, H hides the column under the keyboard cursor.");
 
    var plotSec = addSection("Mini-plot");
    addLine(plotSec,
@@ -6127,6 +6587,8 @@ var ensureActiveCellVisible = function() {
 };
 
 var setActiveCell = function(row, col) {
+   // A selection made now outranks a cursor move parked for an in-flight slide.
+   clearPendingActiveHeader();
    var maxRow = filteredRows - 1;
    var maxCol = columnOrder.length - 1;
    if (maxRow < 0 || maxCol < 0) return;
@@ -6197,6 +6659,8 @@ var ensureActiveHeaderVisible = function() {
 // unwanted. Keyboard-driven changes keep the default so the active header (the
 // keyboard cursor) stays visible.
 var setActiveHeader = function(col, scrollIntoView) {
+   // A selection made now outranks a cursor move parked for an in-flight slide.
+   clearPendingActiveHeader();
    var maxCol = columnOrder.length - 1;
    if (maxCol < 0) return;
    col = Math.max(0, Math.min(maxCol, col));
@@ -6302,6 +6766,17 @@ var onGridKeyDown = function(evt) {
          // Keyboard toggle: keep the active header (the keyboard cursor)
          // visible by scrolling it back into view after the reorder.
          if (!isRownames) togglePinColumn(absColIndex(origCol), true);
+         return;
+      }
+      if (key === "h" || key === "H") {
+         evt.preventDefault();
+         // Keyboard hide: the cursor moves to the column that takes the hidden
+         // one's slot (setColumnsHidden), scrolled into view. Showing a hidden
+         // column again is a sidebar action -- it has no header to target.
+         if (!isRownames) {
+            setColumnsHidden([absColIndex(origCol)], true,
+                             { scrollActiveHeader: true });
+         }
          return;
       }
    }
@@ -6785,17 +7260,27 @@ var updateGridScrollbars = function() {
 var lastColumnOverflow = null;
 
 var updateColumnOverflowState = function() {
-   if (!cols || totalTableWidth <= 0)
+   if (!cols)
       return;
    var viewport = domViewport;
    if (!viewport)
+      return;
+
+   // Hidden columns take no layout width, but the host's Go to column box is
+   // also the way to reach (and thereby show) one of them, so it stays
+   // available while any column is hidden even when the visible set fits --
+   // including the all-hidden case, where the unpinned width is legitimately
+   // zero. Otherwise a zero width means the layout isn't measured yet, and
+   // there is nothing to report.
+   var anyHidden = hiddenColumns.size > 0;
+   if (totalTableWidth <= 0 && !anyHidden)
       return;
 
    // totalTableWidth is the unpinned content width (fetched unpinned columns
    // plus estimated unfetched spans); domViewport is the unpinned pane. Compare
    // against clientWidth rather than scrollWidth, which includes the overscroll
    // padding and would read as "overflowing" for every frame.
-   var overflow = totalTableWidth > viewport.clientWidth + 1;
+   var overflow = totalTableWidth > viewport.clientWidth + 1 || anyHidden;
    if (overflow !== lastColumnOverflow) {
       lastColumnOverflow = overflow;
       if (window.columnOverflowCallback)
@@ -6855,10 +7340,11 @@ var installColumnResponse = function(resCols) {
    if (cols[0].total_rows > 0)
       totalRows = cols[0].total_rows;
 
-   // Record the fetched window bounds the span layout derives from.
+   // Record the fetched window bounds the span layout derives from. The end is
+   // measured in visible columns (windowEndAbs), matching buildRequestedColumns.
    fetchedWindowStart = columnOffset + 1;
    fetchedWindowEnd = maxDisplayColumns > 0
-      ? Math.min(columnOffset + maxDisplayColumns, totalCols)
+      ? windowEndAbs(fetchedWindowStart, maxDisplayColumns)
       : totalCols;
 };
 
@@ -6933,11 +7419,12 @@ var initGrid = function(resCols, data) {
    // so pinning order must be settled here; fetchRows below needs sort/filters.
    var stateDiscarded = applySavedState(savedState);
 
-   // If the fingerprint didn't match, the columns we requested may have
-   // included pinned indices from an unrelated frame (now cleared). Re-bootstrap
-   // once with a clean window so we don't display the wrong prepended columns.
-   if (stateDiscarded && primedPinnedCount > 0) {
-      primedPinnedCount = 0;
+   // If the fingerprint didn't match, the columns we requested were shaped by
+   // an unrelated frame's selection (pinned indices prepended, hidden ones
+   // skipped -- now cleared). Re-bootstrap once with a clean window so we
+   // don't display the wrong columns.
+   if (stateDiscarded && primedSelectionCount > 0) {
+      primedSelectionCount = 0;
       pendingSavedState = null;
       bootstrap();
       return;
@@ -6955,6 +7442,7 @@ var initGrid = function(resCols, data) {
 
    // Initialize sidebar
    initSidebar();
+   updateAllColumnsHiddenHint();
 
    // Handle data import mode (data provided directly)
    if (data) {
@@ -7118,10 +7606,13 @@ var resetGridState = function() {
    cachedSearch = "";
    cachedFilterValues = {};
    pinnedColumns.clear();
+   hiddenColumns.clear();
+   hiddenSortedCache = null;
    columnOrder = [];
    activeRow = -1;
    activeCol = -1;
    activeHeaderCol = -1;
+   clearPendingActiveHeader();
    // The viewport persists across destroyGrid; clear its activedescendant so
    // it can't reference an id whose td/th was just removed from the DOM.
    setViewportActiveDescendant(null);
@@ -7240,13 +7731,17 @@ var saveState = function() {
    // entry could never validate on reload. (saveState now also fires from scroll
    // settling and tab deactivation, either of which can race an early teardown.)
    if (!cols) return;
-   // pinnedColumns/sort/filters/manualWidths are stored by absolute column
-   // identity (col_index in the full frame), so they survive column
-   // pagination.
+   // pinnedColumns/hiddenColumns/sort/filters/manualWidths are stored by
+   // absolute column identity (col_index in the full frame), so they survive
+   // column pagination.
    var state = {
       version: STATE_VERSION,
       columns: columnFingerprint(),
+      // Frame width, so the first fetch after a reload can bound its visible-
+      // column walk before the server has reported totalCols (windowEndAbs).
+      totalCols: totalCols,
       pinnedColumns: Array.from(pinnedColumns),
+      hiddenColumns: Array.from(hiddenColumns),
       sidebarVisible: sidebarVisible,
       manualWidths: Object.assign({}, manualWidths),
       sort: sortColumn >= 0 ? { col: sortColumn, dir: sortDirection } : null,
@@ -7307,19 +7802,23 @@ var clearSavedState = function() {
    try { localStorage.removeItem(key); } catch (e) { /* quota / disabled storage */ }
 };
 
-// Populate the pinned/sort/filter selection from saved state before `cols` is
-// available. These are all keyed by absolute column identity, so they can be
-// resolved without the fetched columns -- which is what lets the column
-// request include pinned columns outside the visible window. The fingerprint
-// cannot be checked yet (it comes from the server response), so applySavedState
-// validates it once `cols` arrives and clears the selection on a mismatch.
+// Populate the pinned/hidden/sort/filter selection from saved state before
+// `cols` is available. These are all keyed by absolute column identity, so they
+// can be resolved without the fetched columns -- which is what lets the column
+// request include pinned columns outside the visible window and skip hidden
+// ones. The fingerprint cannot be checked yet (it comes from the server
+// response), so applySavedState validates it once `cols` arrives and clears
+// the selection on a mismatch.
 var primeSelectionState = function() {
    pendingSavedState = loadSavedState();
    pinnedColumns.clear();
+   hiddenColumns.clear();
+   hiddenSortedCache = null;
    sortColumn = -1;
    sortDirection = "";
    cachedFilterValues = {};
-   primedPinnedCount = 0;
+   primedSelectionCount = 0;
+   primedTotalCols = 0;
 
    var state = pendingSavedState;
    if (!state)
@@ -7331,7 +7830,15 @@ var primeSelectionState = function() {
             pinnedColumns.add(idx);
       });
    }
-   primedPinnedCount = pinnedColumns.size;
+   if (Array.isArray(state.hiddenColumns)) {
+      state.hiddenColumns.forEach(function(idx) {
+         if (typeof idx === "number" && idx >= 1)
+            hiddenColumns.add(idx);
+      });
+   }
+   primedSelectionCount = pinnedColumns.size + hiddenColumns.size;
+   if (typeof state.totalCols === "number" && state.totalCols > 0)
+      primedTotalCols = state.totalCols;
 
    if (state.sort &&
        typeof state.sort.col === "number" && state.sort.col >= 1 &&
@@ -7368,18 +7875,26 @@ var applySavedState = function(state) {
        state.columns !== columnFingerprint()) {
       clearSavedState();
       pinnedColumns.clear();
+      hiddenColumns.clear();
+      hiddenSortedCache = null;
+      primedTotalCols = 0;
       sortColumn = -1;
       sortDirection = "";
       cachedFilterValues = {};
       return true;
    }
 
-   // Selection (pins/sort/filters) was primed by primeSelectionState; clamp it
-   // to the frame now that the column count is known.
+   // Selection (pins/hidden/sort/filters) was primed by primeSelectionState;
+   // clamp it to the frame now that the column count is known.
    pinnedColumns.forEach(function(absIdx) {
       if (absIdx > totalCols)
          pinnedColumns.delete(absIdx);
    });
+   hiddenColumns.forEach(function(absIdx) {
+      if (absIdx > totalCols)
+         hiddenColumns.delete(absIdx);
+   });
+   hiddenSortedCache = null;
    if (sortColumn > totalCols) {
       sortColumn = -1;
       sortDirection = "";
@@ -7462,6 +7977,7 @@ var destroyGrid = function() {
    resetGridState();
    invalidateCache();
    destroyCustomScrollbars();
+   updateAllColumnsHiddenHint();
 
    // Clear DOM (both the unpinned and the frozen pinned pane)
    var thead = domThead;
@@ -7676,7 +8192,7 @@ var restoreScrollAnchor = function(anchor) {
 // options.targetAbs, when given, scrolls the viewport so that absolute column
 // is centered in the unpinned viewport region -- used by go-to-column jumps.
 // Otherwise the current visual position is preserved via a scroll anchor.
-var applyColumnWindowUpdate = function(resCols, options) {
+var applyColumnWindowUpdate = function(resCols, options, generation) {
    var targetAbs = options && options.targetAbs > 0 ? options.targetAbs : -1;
    var anchor = targetAbs > 0 ? null : captureScrollAnchor();
 
@@ -7727,15 +8243,26 @@ var applyColumnWindowUpdate = function(resCols, options) {
    if (activeCol < 0) activeRow = -1;
    activeHeaderCol = remapDisplayIdx(activeHeaderAbs);
 
+   // A keyboard hide whose successor column wasn't fetched parked the
+   // cursor's destination for this very slide (setColumnsHidden); it lands
+   // with this window. Any newer selection has already cancelled it.
+   var pendingHeaderScroll = false;
+   if (pendingActiveHeaderAbs > 0 && pendingActiveHeaderGen === generation) {
+      var pendingIdx = remapDisplayIdx(pendingActiveHeaderAbs);
+      if (pendingIdx >= 0) {
+         activeHeaderCol = pendingIdx;
+         activeRow = -1;
+         activeCol = -1;
+         pendingHeaderScroll = pendingActiveHeaderScroll;
+      }
+      clearPendingActiveHeader();
+   }
+
    // The header row must be rebuilt for the new window, but autoSizeColumns
    // defers the rebuild while a filter editor is open (to protect it from
    // teardown mid-edit). Close any open editor instead -- its column may not
    // even exist in the new window.
-   if (dismissActivePopup) dismissActivePopup(true);
-   var activeEl = document.activeElement;
-   if (activeEl && activeEl.classList && activeEl.classList.contains("textFilterBox"))
-      activeEl.blur();
-   deferredHeaderRebuild = false;
+   dismissHeaderEditors();
 
    // Rebuild layout for the new window: widths, headers (autoSizeColumns
    // re-injects any active header UI) and pinned offsets.
@@ -7793,6 +8320,10 @@ var applyColumnWindowUpdate = function(resCols, options) {
       restoreScrollAnchor(anchor);
    }
    syncColumnWindow();
+   // The keyboard cursor that just landed on its successor column stays
+   // visible, as it does for an in-window keyboard hide.
+   if (pendingHeaderScroll)
+      ensureActiveHeaderVisible();
 
    // Sync the viewport's aria-activedescendant with the remapped active
    // cell/header (cleared when neither survived the slide).
@@ -7835,9 +8366,15 @@ var applyColumnWindowUpdate = function(resCols, options) {
       }
    }
 
-   // The user may have kept scrolling while this window was in flight;
-   // immediately evaluate whether another slide is already warranted.
-   maybeSlideForScroll();
+   // A column shown while this window was in flight was requested against
+   // the previous hidden set and may be missing from it; re-fetch once (a
+   // miss on that landing too is left to the next scroll-driven slide, so two
+   // racing updates can't ping-pong). Otherwise the user may have kept
+   // scrolling; immediately evaluate whether another slide is warranted.
+   if (!(options && options.resync) && fetchedSetLacksRequested())
+      slideColumnWindow({ resync: true });
+   else
+      maybeSlideForScroll();
 };
 
 // Fetch column metadata for the current columnOffset/maxDisplayColumns and
@@ -7845,7 +8382,7 @@ var applyColumnWindowUpdate = function(resCols, options) {
 // superseded by a newer slide or a full bootstrap (data refresh) is dropped.
 var slideColumnWindow = function(options) {
    if (bootstrapping || cols === null)
-      return;
+      return 0;
 
    var generation = ++bootstrapGeneration;
    slideInFlightGen = generation;
@@ -7854,7 +8391,13 @@ var slideColumnWindow = function(options) {
       // or failed slide can't permanently block scroll-driven slides.
       if (slideInFlightGen === generation)
          slideInFlightGen = 0;
-      if (generation !== bootstrapGeneration) return;
+      // A cursor move parked for this slide dies with it: a superseding slide
+      // or bootstrap has its own intent, and a failed slide leaves the grid as
+      // it was.
+      var superseded = generation !== bootstrapGeneration;
+      if ((superseded || result.error) && pendingActiveHeaderGen === generation)
+         clearPendingActiveHeader();
+      if (superseded) return;
       if (result.error) {
          // The slide advanced columnOffset before fetching; on failure roll it
          // back to the still-current fetched window. Otherwise columnOffset and
@@ -7866,8 +8409,9 @@ var slideColumnWindow = function(options) {
          return;
       }
       hideError();
-      applyColumnWindowUpdate(result, options);
+      applyColumnWindowUpdate(result, options, generation);
    });
+   return generation;
 };
 
 // Scroll-driven sliding: when the visible column range pokes outside the
@@ -7905,9 +8449,20 @@ var maybeSlideForScroll = function() {
       (vHi > fetchedWindowEnd && fetchedWindowEnd < totalCols);
    if (!needSlide) return;
 
+   // A window narrower than the viewport can never cover it: recentring only
+   // swaps which side shows unfetched span columns, and because the two
+   // layouts' measured widths disagree about where the center falls, each
+   // landing slide can propose undoing the previous one, rebuilding the grid
+   // forever. Stay parked while any of the window remains on screen; once it
+   // has scrolled away entirely, a recenter brings data back into view and
+   // lands in a parked partial-overlap state.
+   var visibleSpan = visibleIndexOf(vHi) - visibleIndexOf(vLo) + 1;
+   var windowOnScreen = vHi >= fetchedWindowStart && vLo <= fetchedWindowEnd;
+   if (visibleSpan > maxDisplayColumns && windowOnScreen)
+      return;
+
    var center = Math.round((vLo + vHi) / 2);
-   var newOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns,
-      center - Math.floor(maxDisplayColumns / 2) - 1));
+   var newOffset = centeredColumnOffset(center);
    if (newOffset === columnOffset) return;
 
    columnOffset = newOffset;
@@ -7934,6 +8489,11 @@ var goToColumn = function(column) {
    if (!isFinite(abs) || abs < 1) return;
    if (totalCols > 0) abs = Math.min(abs, totalCols);
 
+   // Jumping to a hidden column is a request to see it. Show it first, leaving
+   // the window re-sync to the reveal / slide below, which centers on it.
+   if (isColumnHidden(abs))
+      setColumnsHidden([abs], false, { deferSync: true });
+
    // Already fetched: bring it into view directly (centered, with the
    // highlight flash).
    var pos = posForAbsColIndex(abs);
@@ -7942,12 +8502,10 @@ var goToColumn = function(column) {
       return;
    }
 
-   // Center the fetched window on the target as well as the viewport: a
-   // jump wants context on both sides, and a window starting at the target
-   // would put unfetched (blank) span columns to its immediate left.
+   // Center the fetched window on the target as well as the viewport (see
+   // centeredColumnOffset).
    if (maxDisplayColumns <= 0) return;
-   columnOffset = Math.max(0, Math.min(totalCols - maxDisplayColumns,
-      abs - 1 - Math.floor(maxDisplayColumns / 2)));
+   columnOffset = centeredColumnOffset(abs);
    slideColumnWindow({ targetAbs: abs });
 };
 
@@ -8398,6 +8956,14 @@ document.addEventListener("DOMContentLoaded", function() {
    var sortClear = document.getElementById("rsGridData_info_sort_clear");
    if (sortClear)
       sortClear.addEventListener("click", clearSort);
+
+   // Likewise static: the show-all button of the all-columns-hidden hint.
+   var showAll = document.getElementById("allColumnsHiddenShow");
+   if (showAll) {
+      showAll.addEventListener("click", function() {
+         setAllColumnsHidden(false);
+      });
+   }
 
    if (dataMode === "server") {
       bootstrap();
