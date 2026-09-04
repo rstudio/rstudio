@@ -471,6 +471,25 @@ if [ "${build_package}" = "1" ]; then
       # move to target directory
       cd "${INSTALL_DIR}"
 
+      # transparently compress the application bundle on disk (APFS / HFS+
+      # decmpfs). The compression is preserved when the bundle is copied into
+      # the DMG and when users drag-install from it, roughly halving the
+      # installed size; copies made with tools that do not preserve the
+      # attribute silently fall back to the full size. Code signatures remain
+      # valid because they cover the (unchanged) logical file contents. This
+      # step must run after signing, since signing rewrites the files and
+      # would discard the compression.
+      for app in *.app; do
+         info "Compressing '${app}' ..."
+         rm -rf "${app}.compressed"
+         ditto --hfsCompression "${app}" "${app}.compressed"
+         rm -rf "${app}"
+         mv "${app}.compressed" "${app}"
+         info "Verifying code signature of '${app}' ..."
+         codesign --verify --strict "${app}"
+         info "Done!"
+      done
+
       # create 'Applications' symlink
       ln -nfs /Applications Applications
 

@@ -863,15 +863,73 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    endif()
 
    # install Copilot Language Server
+   #
+   # the copilot-language-server-js distribution bundles native binaries for
+   # every platform and architecture it supports; the binaries that can never
+   # run on the target platform account for the bulk of the distribution's
+   # size, so exclude them. revisit these patterns when updating the bundled
+   # Copilot version in case the package layout changes -- files that stop
+   # matching are installed again (larger package), never broken.
    if(RSTUDIO_ENABLE_COPILOT)
+
       if(APPLE)
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}" 
+         set(COPILOT_EXCLUDED_PLATFORMS "linux|win32")
+      elseif(WIN32)
+         set(COPILOT_EXCLUDED_PLATFORMS "darwin|linux")
+      else()
+         set(COPILOT_EXCLUDED_PLATFORMS "darwin|win32")
+      endif()
+
+      set(COPILOT_EXCLUDES
+         REGEX "copilot-language-server-js/(bin|compiled)/(${COPILOT_EXCLUDED_PLATFORMS})$" EXCLUDE
+         REGEX "@github/copilot/sdk/prebuilds/(${COPILOT_EXCLUDED_PLATFORMS})-" EXCLUDE)
+
+      # mxc-bin mixes binaries for all platforms within its per-architecture
+      # folders, so those are excluded file-by-file; the crypt32*.node modules
+      # at the package root are Windows-only
+      if(WIN32)
+         list(APPEND COPILOT_EXCLUDES
+            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec|mxc-exec-mac)$" EXCLUDE)
+      elseif(APPLE)
+         list(APPEND COPILOT_EXCLUDES
+            REGEX "@github/copilot/mxc-bin/[^/]+/(linux-test-proxy|lxc-exec)$" EXCLUDE
+            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
+            REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
+      else()
+         list(APPEND COPILOT_EXCLUDES
+            REGEX "@github/copilot/mxc-bin/[^/]+/mxc-exec-mac$" EXCLUDE
+            REGEX "@github/copilot/mxc-bin/[^/]+/[^/]+\\.(exe|dll)$" EXCLUDE
+            REGEX "copilot-language-server-js/crypt32[^/]*\\.node$" EXCLUDE)
+      endif()
+
+      # non-macOS packages are architecture-specific, so also exclude binaries
+      # built for the other architecture (macOS packages are universal and
+      # keep both)
+      if(NOT APPLE)
+         string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" COPILOT_TARGET_PROCESSOR)
+         if(COPILOT_TARGET_PROCESSOR MATCHES "^(x86_64|amd64)$")
+            set(COPILOT_EXCLUDED_ARCH "arm64")
+         elseif(COPILOT_TARGET_PROCESSOR MATCHES "^(aarch64|arm64)$")
+            set(COPILOT_EXCLUDED_ARCH "x64")
+         endif()
+         if(DEFINED COPILOT_EXCLUDED_ARCH)
+            list(APPEND COPILOT_EXCLUDES
+               REGEX "copilot-language-server-js/(bin|compiled)/[^/]+/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
+               REGEX "@github/copilot/sdk/prebuilds/[^/]+-${COPILOT_EXCLUDED_ARCH}$" EXCLUDE
+               REGEX "@github/copilot/mxc-bin/${COPILOT_EXCLUDED_ARCH}$" EXCLUDE)
+         endif()
+      endif()
+
+      if(APPLE)
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-               USE_SOURCE_PERMISSIONS)
+               USE_SOURCE_PERMISSIONS
+               ${COPILOT_EXCLUDES})
       else()
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_COPILOT_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS)
+               USE_SOURCE_PERMISSIONS
+               ${COPILOT_EXCLUDES})
       endif()
    endif()
 
