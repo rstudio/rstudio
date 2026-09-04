@@ -679,7 +679,7 @@ void handleStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection)
    // serve with the default (GWT file) handler directly. the caller decided
    // via isStaticAssetRequest() that no module handler applies; consulting
    // the handler map again (as handleConnection() would) could pick up a
-   // handler registered in between and run it on the listener thread
+   // handler registered in between and run it off the main thread
    core::http::Response response;
    s_defaultUriHandler(ptrConnection->request(), &response);
    ptrConnection->sendResponse(response);

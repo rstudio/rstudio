@@ -2754,8 +2754,8 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
       modules::trust::initializeTrustState();
 
       // in desktop and standalone modes we serve the client ourselves; register
-      // the handlers before listening so the listener thread can serve the
-      // page and its assets while R initializes below
+      // the handlers before listening so the page and its assets can be
+      // served while R initializes below
       if ((options.programMode() == kSessionProgramModeDesktop) || options.standalone())
       {
          http_methods::registerGwtHandlers();

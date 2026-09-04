@@ -126,6 +126,19 @@ public:
                                            &(acceptorService_.ioContext())));
          listenerThread_ = MOVE_THREAD(listenerThread);
 
+         // in desktop and standalone modes the session serves the client's
+         // static assets itself (see registerGwtHandlers); launch the thread
+         // that serves them, so their file reads and socket writes never
+         // stall the listener thread
+         if (options().programMode() == kSessionProgramModeDesktop ||
+             options().standalone())
+         {
+            boost::thread staticAssetThread(
+                  bind(&HttpConnectionListenerImpl<ProtocolType>::serveStaticAssets,
+                       this));
+            staticAssetThread_ = MOVE_THREAD(staticAssetThread);
+         }
+
          // set started flag
          started_ = true;
 
@@ -160,6 +173,13 @@ public:
             listenerThread_,
             "HttpConnectionListener thread",
             false); // released via ioContext().stop() above, not interruptible
+
+      // wait for the static asset thread (a no-op if it was never started);
+      // the interrupt releases it from its queue wait
+      core::thread::joinOrAbandonThread(
+            staticAssetThread_,
+            "Static asset thread",
+            true);
 
       // allow subclass specific cleanup
       core::Error error = cleanup();
@@ -362,12 +382,14 @@ private:
       if (connection::checkForInterrupt(ptrHttpConnection))
          return;
 
-      // serve static client assets (the GWT page, scripts and styles) right
-      // here: they need neither R nor the main thread, and the main thread
-      // does not drain the connection queue until R has fully initialized
+      // hand static client assets (the GWT page, scripts and styles) to
+      // their own thread: they need neither R nor the main thread (which
+      // does not drain the connection queue until R has fully initialized),
+      // and their file reads and socket writes must not stall this thread,
+      // which accepts every connection and services abort/suspend/interrupt
       if (http_methods::isStaticAssetRequest(ptrHttpConnection))
       {
-         http_methods::handleStaticAssetRequest(ptrHttpConnection);
+         staticAssetQueue_.enqueConnection(ptrHttpConnection);
          return;
       }
 
@@ -428,6 +450,28 @@ private:
       }
    }
 
+   // serve static asset requests handed over by enqueConnection, one at a
+   // time, until stop() interrupts the queue wait
+   void serveStaticAssets()
+   {
+      try
+      {
+         while (true)
+         {
+            boost::shared_ptr<HttpConnection> ptrConnection =
+                  staticAssetQueue_.dequeConnection(
+                        boost::posix_time::milliseconds(500));
+            if (ptrConnection)
+               http_methods::handleStaticAssetRequest(ptrConnection);
+         }
+      }
+      catch(const boost::thread_interrupted&)
+      {
+         // stop() shutting the thread down
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
 private:
 
    // acceptor service (includes io service)
@@ -439,9 +483,13 @@ private:
    // connection queues
    HttpConnectionQueue mainConnectionQueue_;
    HttpConnectionQueue eventsConnectionQueue_;
+   HttpConnectionQueue staticAssetQueue_;
 
    // listener thread
    boost::thread listenerThread_;
+
+   // static asset thread (desktop and standalone modes only)
+   boost::thread staticAssetThread_;
 
    // flag indicating we've started
    std::atomic<bool> started_;
