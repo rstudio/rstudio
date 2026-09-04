@@ -66,8 +66,14 @@ public class RTokenizerTests extends GWTTestCase
       v.verify(new String[] {
             "1", "10", "0.1", ".2", "1e-7", "1.2e+7", "2e", "3e+",
             "0x", "0x0", "0xDEADBEEF", "0xcafebad", "1L", "0x10L",
-            "1000000L", "1e6L", "1.1L", "1e-3L", "2i", "4.1i", 
-            "1e-2i"
+            "1000000L", "1e6L", "1.1L", "1e-3L", "2i", "4.1i",
+            "1e-2i",
+
+            // hex literals: uppercase prefix, binary exponents,
+            // fractions, and suffixes
+            // https://github.com/rstudio/rstudio/issues/14363
+            "0XFF", "0Xff", "0x1p3", "0xAp-2", "0X2P2", "0x1p-3",
+            "0x1.8p3", "0x.8p2", "0xFi", "0xFL"
       });
    }
    

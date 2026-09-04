@@ -3001,22 +3001,39 @@ START:
          if (status.isInParentheticalScope())
             GOTO_INVALID_TOKEN(cursor);
          
+         // A semicolon can validly end the document, so plain cursor
+         // moves (ending the parse at end of document) are used below,
+         // rather than the macros which would lint the end of document.
+         //
          // Ensure that we don't have excess semi-colons following.
-         MOVE_TO_NEXT_TOKEN(cursor, status);
+         if (!cursor.moveToNextToken())
+            return;
+
          if (isBlank(cursor))
-            MOVE_TO_NEXT_TOKEN(cursor, status);
-         
+         {
+            if (!cursor.moveToNextToken())
+               return;
+         }
+
          while (cursor.isType(RToken::SEMI))
          {
             status.lint().unexpectedToken(cursor);
-            MOVE_TO_NEXT_TOKEN(cursor, status);
+            if (!cursor.moveToNextToken())
+               return;
+
             if (isBlank(cursor))
-               MOVE_TO_NEXT_TOKEN(cursor, status);
+            {
+               if (!cursor.moveToNextToken())
+                  return;
+            }
          }
-         
+
          if (isWhitespace(cursor))
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-         
+         {
+            if (!cursor.moveToNextSignificantToken())
+               return;
+         }
+
          goto START;
       }
       
@@ -3086,7 +3103,6 @@ START:
          }
          
          // Move to the next token.
-         bool isNumber = cursor.isType(RToken::NUMBER);
          const RToken& next = cursor.nextSignificantToken();
          
          // If we encounter an operator, we need to figure out whether it's
@@ -3122,9 +3138,10 @@ START:
             }
          }
          
-         // Identifiers followed by brackets are function calls.
-         // Only non-numeric symbols can be function calls.
-         if (!isNumber && canOpenArgumentList(next))
+         // An expression followed by an opening bracket is a function
+         // call or an indexing operation. Note that this is legal even
+         // for numeric literals, e.g. '1[TRUE]' is valid R code.
+         if (canOpenArgumentList(next))
          {
             MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
             goto ARGUMENT_LIST;

@@ -312,6 +312,34 @@ TEST(DiagnosticsTest, ValidExpressionsGenerateNoLint) {
    EXPECT_NO_ERRORS("x[1, 2]");
    EXPECT_NO_ERRORS("x[, 1]");
    EXPECT_NO_ERRORS("x[1, ]");
+
+   // numeric literals can be indexed, and even 'called'
+   // https://github.com/rstudio/rstudio/issues/18717
+   EXPECT_NO_ERRORS("1[TRUE]");
+   EXPECT_NO_ERRORS("1[[1]]");
+   EXPECT_NO_ERRORS("quote(1[kg])");
+   EXPECT_NO_ERRORS("1.5e3[2]");
+   EXPECT_NO_ERRORS("0x10[[1]]");
+   EXPECT_NO_ERRORS("foo(1[2])");
+   EXPECT_NO_ERRORS("1(2)");
+
+   // hex literals with uppercase prefixes, binary exponents, fractions
+   // https://github.com/rstudio/rstudio/issues/14363
+   EXPECT_NO_ERRORS("0XFF");
+   EXPECT_NO_ERRORS("x <- 0x1p3");
+   EXPECT_NO_ERRORS("0xAp-2 + 0X2P2");
+   EXPECT_NO_ERRORS("0x1.8p3");
+   EXPECT_NO_ERRORS("0xFi");
+   EXPECT_NO_ERRORS("0xFL");
+
+   // semicolons can end the document
+   EXPECT_NO_ERRORS("1;");
+   EXPECT_NO_ERRORS("x <- 1;");
+   EXPECT_NO_ERRORS("f(); g();");
+   EXPECT_NO_ERRORS("1; ");
+   EXPECT_NO_ERRORS("1;\n");
+   EXPECT_NO_ERRORS("f <- function() 1;");
+   EXPECT_ERRORS("1;;");
 }
 
 TEST(DiagnosticsTest, SymbolRangesDoNotLeakAcrossParseOperations) {

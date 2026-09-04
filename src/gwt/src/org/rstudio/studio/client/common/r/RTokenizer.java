@@ -155,7 +155,7 @@ public class RTokenizer
    
    private RToken matchNumber()
    {
-      String num = peek("0x[0-9a-fA-F]*L?");
+      String num = peek("0[xX][0-9a-fA-F]*(\\.[0-9a-fA-F]*)?([pP][+-]?[0-9]*)?[Li]?");
       if (num == null)
          num = peek("[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?");
 
