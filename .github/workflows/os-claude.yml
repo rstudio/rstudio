@@ -1,0 +1,114 @@
+name: Claude PR Assistant
+
+# @claude mentions on this public repository are relayed, via
+# repository_dispatch, to the private rstudio-pro repository, where the
+# actual Claude workflow (ide-os-claude.yml there) runs against a checkout
+# of this repository and posts results back through the
+# workbench-ide-release GitHub App. Platform policy does not allow LLM workflows or model
+# credentials on public repositories (posit-dev/platform-infra#317), so
+# this workflow must remain a thin, LLM-free relay.
+#
+# All free text (titles, comment bodies) stays on this side: the dispatch
+# payload carries only numbers, usernames, and a pre-slugged branch prefix,
+# so the receiving workflow never has to sanitize anything.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  relay:
+    # This is a public repository, so gate on author association: only
+    # owners, organization members, and collaborators may invoke the
+    # assistant. Anyone else mentioning @claude is a no-op.
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'issues' && contains(github.event.issue.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.issue.author_association)) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      # Titles are free text, so they are passed through the environment and
+      # never interpolated into script text.
+      - name: Compute dispatch payload
+        id: payload
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          NUMBER="${ISSUE_NUMBER:-$PR_NUMBER}"
+          TITLE="${ISSUE_TITLE:-$PR_TITLE}"
+
+          # printf + tr -d '\n' force the slug to a single line even if a
+          # crafted title were to smuggle a newline in: one surviving into
+          # GITHUB_OUTPUT would let a public user's issue title inject
+          # arbitrary step outputs.
+          SLUG=$(printf '%s' "$TITLE" | tr -d '\n' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
+
+          echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "branch-prefix=claude/${NUMBER}-${SLUG}-" >> "$GITHUB_OUTPUT"
+
+      - name: Generate token for GitHub App
+        id: generate-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.WORKBENCH_IDE_RELEASE_CLIENT_ID }}
+          private-key: ${{ secrets.WORKBENCH_IDE_RELEASE_PEM }}
+          owner: rstudio
+          repositories: rstudio-pro
+          permission-contents: write
+
+      - name: Relay to rstudio-pro
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          NUMBER: ${{ steps.payload.outputs.number }}
+          IS_PR: ${{ github.event_name == 'pull_request_review_comment' || github.event_name == 'pull_request_review' || (github.event_name == 'issue_comment' && github.event.issue.pull_request != null) }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          REVIEW_ID: ${{ github.event.review.id }}
+          ACTOR: ${{ github.triggering_actor }}
+          BRANCH_PREFIX: ${{ steps.payload.outputs.branch-prefix }}
+        run: |
+          gh api repos/rstudio/rstudio-pro/dispatches \
+            -f event_type=os-claude \
+            -f "client_payload[event_name]=${EVENT_NAME}" \
+            -f "client_payload[number]=${NUMBER}" \
+            -f "client_payload[is_pr]=${IS_PR}" \
+            -f "client_payload[comment_id]=${COMMENT_ID}" \
+            -f "client_payload[review_id]=${REVIEW_ID}" \
+            -f "client_payload[actor]=${ACTOR}" \
+            -f "client_payload[branch_prefix]=${BRANCH_PREFIX}"
+
+      # Runs after the dispatch so a failed reaction never blocks the relay.
+      # Reviews have no reactions API; there the only ack is Claude's reply.
+      - name: Acknowledge mention
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ steps.payload.outputs.number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: |
+          case "$EVENT_NAME" in
+            issue_comment)
+              gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=eyes
+              ;;
+            pull_request_review_comment)
+              gh api "repos/${REPO}/pulls/comments/${COMMENT_ID}/reactions" -f content=eyes
+              ;;
+            issues)
+              gh api "repos/${REPO}/issues/${NUMBER}/reactions" -f content=eyes
+              ;;
+          esac
