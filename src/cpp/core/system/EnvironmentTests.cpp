@@ -236,6 +236,50 @@ TEST(ResourcesTest, CongruentMemoryMetrics)
    }
 }
 
+#ifndef _WIN32
+
+TEST(EnvironmentTest, IsValidEnvironmentVariableName)
+{
+   // Accepted
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("_FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("f"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("_"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("PWB_GLOBAL_OVER_GROUP"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO_BAR_BAZ"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("A1_b2"));
+
+   // Rejected: outside the portable shell-safe grammar, even though some of
+   // these are real, legal POSIX environment variable names (e.g. a
+   // Bash-exported function surfaces as BASH_FUNC_foo%%)
+   EXPECT_FALSE(isValidEnvironmentVariableName(""));
+   EXPECT_FALSE(isValidEnvironmentVariableName("1FOO"));       // leading digit
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO-BAR"));    // dash
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO BAR"));    // space
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO.BAR"));    // dot
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO="));       // stray '='
+   EXPECT_FALSE(isValidEnvironmentVariableName("FÖO"));        // non-ASCII
+}
+
+#else
+
+TEST(EnvironmentTest, IsValidEnvironmentVariableName)
+{
+   // Accepted: Windows imposes no character restrictions beyond the ones
+   // SetEnvironmentVariable itself enforces, so names the POSIX grammar
+   // would reject are still valid here
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("1FOO"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("ProgramFiles(x86)"));
+   EXPECT_TRUE(isValidEnvironmentVariableName("FOO BAR"));
+
+   // Rejected: the only two things SetEnvironmentVariable forbids
+   EXPECT_FALSE(isValidEnvironmentVariableName(""));
+   EXPECT_FALSE(isValidEnvironmentVariableName("FOO="));
+}
+
+#endif
+
 } // namespace system
 } // namespace core
 } // namespace rstudio
