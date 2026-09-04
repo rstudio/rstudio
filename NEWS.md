@@ -4,7 +4,7 @@
 -
 
 ### Fixed
--
+- ([#12375](https://github.com/rstudio/rstudio/issues/12375)): `debugSource()` no longer errors when `options(keep.source = FALSE)`.
 
 ### Dependencies
 -
