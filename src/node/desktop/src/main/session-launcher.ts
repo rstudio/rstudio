@@ -45,6 +45,7 @@ import { startupCheckpoint } from './startup-timing';
 import { readMachoArchitectures } from '../core/macho';
 import {
   cachedLoginShellPath,
+  isShellDerivedPath,
   kSessionPathInitializedEnvVar,
   loginShellPath,
   loginShellPathFailed,
@@ -130,19 +131,28 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
       absPath = new FilePath('/usr/bin/arch');
     }
 
-    // adopt the login shell's PATH if we have it, and say so, so rsession
-    // need not spend its own startup asking the shell (see login-shell-path.ts)
-    const shellPath = cachedLoginShellPath();
-    if (shellPath) {
-      env['PATH'] = shellPath;
+    // settle the PATH the session starts with (see login-shell-path.ts).
+    // a terminal launch already carries a shell's PATH -- keep it, along
+    // with any customizations (an activated conda environment, direnv) a
+    // fresh login shell would lose, exactly as the session's own
+    // initializePath() always has
+    if (isShellDerivedPath(env['PATH'] ?? '')) {
       env[kSessionPathInitializedEnvVar] = '1';
-    } else if (loginShellPathFailed()) {
-      // the desktop's bounded query failed or timed out; the session's own
-      // probe has no timeout and would hang on the same profile, so tell it
-      // to keep the inherited PATH, extended with the standard tool
-      // locations a login shell would normally contribute
-      env['PATH'] = withDefaultToolPaths(env['PATH'] ?? '');
-      env[kSessionPathInitializedEnvVar] = '1';
+    } else {
+      // adopt the login shell's PATH if we have it, and say so, so rsession
+      // need not spend its own startup asking the shell
+      const shellPath = cachedLoginShellPath();
+      if (shellPath) {
+        env['PATH'] = shellPath;
+        env[kSessionPathInitializedEnvVar] = '1';
+      } else if (loginShellPathFailed()) {
+        // the desktop's bounded query failed or timed out; the session's own
+        // probe has no timeout and would hang on the same profile, so tell it
+        // to keep the inherited PATH, extended with the standard tool
+        // locations a login shell would normally contribute
+        env['PATH'] = withDefaultToolPaths(env['PATH'] ?? '');
+        env[kSessionPathInitializedEnvVar] = '1';
+      }
     }
   }
 
@@ -164,18 +174,14 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
 
 /**
  * Architectures of R's shared library, as `/usr/bin/file` would report them
- * but without launching a process. Unreadable files yield an empty list,
- * which callers treat as "not the architecture we were looking for".
+ * but without launching a process. A file that is not a Mach-O image yields
+ * an empty list; a file that cannot be read throws, failing the launch --
+ * the callers would otherwise each guess a (different) architecture.
  */
 function libRArchitectures(rLib: FilePath): string[] {
-  try {
-    const architectures = readMachoArchitectures(rLib.getAbsolutePath());
-    logger().logDebug(`${rLib.getAbsolutePath()}: ${architectures.join(', ') || 'not a Mach-O image'}`);
-    return architectures;
-  } catch (error: unknown) {
-    logger().logError(error);
-    return [];
-  }
+  const architectures = readMachoArchitectures(rLib.getAbsolutePath());
+  logger().logDebug(`${rLib.getAbsolutePath()}: ${architectures.join(', ') || 'not a Mach-O image'}`);
+  return architectures;
 }
 
 function abendLogPath(): FilePath {
@@ -269,9 +275,12 @@ export class SessionLauncher {
     logger().logDiagnosticEnvVar('R_USER');
     logger().logDiagnosticEnvVar('RSTUDIO_CPP_BUILD_OUTPUT');
 
-    // settle which PATH the session gets; this only waits on a first launch
+    // settle which PATH the session gets; this only waits on a first launch,
+    // and never on a terminal launch, whose PATH is kept as-is
     // (see login-shell-path.ts)
-    await loginShellPath();
+    if (!isShellDerivedPath(getenv('PATH'))) {
+      await loginShellPath();
+    }
     startupCheckpoint('login-shell-path-ready');
 
     // launch the process

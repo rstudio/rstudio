@@ -16,6 +16,7 @@
 #include <core/StartupTiming.hpp>
 
 #include <chrono>
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 
@@ -42,6 +43,40 @@ double nowMs()
    return duration<double, std::milli>(system_clock::now().time_since_epoch()).count();
 }
 
+// escape a checkpoint name for embedding in a JSON string: names can carry
+// request URIs, and an unescaped quote or backslash would tear the line
+std::string escaped(const std::string& name)
+{
+   std::string result;
+   result.reserve(name.size());
+
+   for (char ch : name)
+   {
+      switch (ch)
+      {
+      case '\\':
+         result += "\\\\";
+         break;
+      case '"':
+         result += "\\\"";
+         break;
+      default:
+         if (static_cast<unsigned char>(ch) < 0x20)
+         {
+            char buffer[8];
+            snprintf(buffer, sizeof(buffer), "\\u%04x", static_cast<unsigned char>(ch));
+            result += buffer;
+         }
+         else
+         {
+            result += ch;
+         }
+      }
+   }
+
+   return result;
+}
+
 void write(const std::string& name, double t, double durationMs)
 {
    // the desktop and session processes append to the same file; small
@@ -51,7 +86,7 @@ void write(const std::string& name, double t, double durationMs)
       return;
 
    out << std::fixed << std::setprecision(3)
-       << "{\"tier\":\"session\",\"name\":\"" << name << "\""
+       << "{\"tier\":\"session\",\"name\":\"" << escaped(name) << "\""
        << ",\"t\":" << t
        << ",\"pid\":" << core::system::currentProcessId();
 

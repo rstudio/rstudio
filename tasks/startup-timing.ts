@@ -235,21 +235,30 @@ function readRun(file: string): Run {
 }
 
 function readRuns(target: string): Run[] {
-  if (fs.statSync(target).isFile()) {
-    return [readRun(target)];
-  }
-
   const runs: Run[] = [];
-  for (const entry of fs.readdirSync(target).sort()) {
-    const file = path.join(target, entry, 'startup-timing.jsonl');
-    if (fs.existsSync(file)) {
-      runs.push(readRun(file));
+  if (fs.statSync(target).isFile()) {
+    runs.push(readRun(target));
+  } else {
+    for (const entry of fs.readdirSync(target).sort()) {
+      const file = path.join(target, entry, 'startup-timing.jsonl');
+      if (fs.existsSync(file)) {
+        runs.push(readRun(file));
+      }
     }
   }
-  if (runs.length === 0) {
-    fail(TAG, `no startup-timing.jsonl files found under ${target}`);
+
+  // a launch killed before its first checkpoint leaves an empty file behind;
+  // such a run has no timeline (and no origin) to report
+  const nonEmpty = runs.filter((run) => run.checkpoints.length > 0);
+  for (const run of runs) {
+    if (!nonEmpty.includes(run)) {
+      step(TAG, `skipping ${run.file}: no checkpoints`);
+    }
   }
-  return runs;
+  if (nonEmpty.length === 0) {
+    fail(TAG, `no startup checkpoints found under ${target}`);
+  }
+  return nonEmpty;
 }
 
 // --- reporting --------------------------------------------------------------

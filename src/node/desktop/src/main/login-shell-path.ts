@@ -39,6 +39,21 @@ import { logger } from '../core/logger';
 /** Marker telling rsession that PATH already came from a login shell. */
 export const kSessionPathInitializedEnvVar = 'RSTUDIO_SESSION_PATH_INITIALIZED';
 
+// the session's own heuristic (initializePath in SessionPath.cpp): launchd's
+// PATH never contains /usr/local/bin, so its presence means the app was
+// launched from a terminal and PATH was already set up by a shell
+const kShellDerivedPathPattern = /(^|:)\/usr\/local\/bin\/?(:|$)/;
+
+/**
+ * Whether a PATH was already set up by a shell, i.e. RStudio was launched
+ * from a terminal. Such a PATH must be kept as-is: it can carry
+ * customizations (an activated conda or Python environment, direnv) that a
+ * fresh login shell would not reproduce.
+ */
+export function isShellDerivedPath(path: string): boolean {
+  return kShellDerivedPathPattern.test(path);
+}
+
 // a profile that hangs must not hold up a first launch indefinitely
 const kQueryTimeoutMs = 10000;
 

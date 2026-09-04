@@ -1145,15 +1145,6 @@ public class AceEditor implements DocDisplay
 
    private void updateKeyboardHandlers()
    {
-      // the vim / emacs keybindings load lazily; if they are needed here but
-      // not yet available, apply the handlers once they arrive (the editor
-      // keeps default keybindings in the interim)
-      if ((useVimMode_ || useEmacsKeybindings_) && !keybindingsLoaded())
-      {
-         loadKeybindings(() -> updateKeyboardHandlers());
-         return;
-      }
-
       // clear out existing keyboard handlers (they will be refreshed below)
       for (HandlerRegistration handler : keyboardHandlers_)
          if (handler != null)
@@ -1171,8 +1162,17 @@ public class AceEditor implements DocDisplay
       // create a keyboard previewer for our special hooks
       AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(completionManager_);
 
-      // set default key handler
-      if (useVimMode_)
+      // set default key handler. the vim / emacs keybindings load lazily; if
+      // they are needed here but not yet available, keep default keybindings
+      // and re-run once they arrive -- only this choice of handler waits on
+      // them, so the previewer and event listeners below stay installed in
+      // the interim (and permanently, should the load fail)
+      if ((useVimMode_ || useEmacsKeybindings_) && !keybindingsLoaded())
+      {
+         loadKeybindings(() -> updateKeyboardHandlers());
+         widget_.getEditor().setKeyboardHandler(null);
+      }
+      else if (useVimMode_)
       {
          widget_.getEditor().setKeyboardHandler(KeyboardHandler.vim());
          RStudioGinjector.INSTANCE.getVimrcLoader().ensureLoaded(widget_.getEditor());

@@ -77,8 +77,9 @@ namespace {
 core::http::UriHandlerFunction s_defaultUriHandler;
 
 // whether s_defaultUriHandler has been assigned; the listener thread gates
-// its static-asset fast path on this (an atomic, because in server mode the
-// assignment happens on the main thread while the listener is running)
+// its static-asset fast path on this. registerGwtHandlers() runs (in desktop
+// and standalone modes only) before the listener thread starts, so the store
+// is always visible to it; the atomic is defensive, not load-bearing
 std::atomic<bool> s_gwtHandlersRegistered(false);
 
 // version of the executable -- this is the legacy version designator. we

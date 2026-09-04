@@ -20,6 +20,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import {
   cachedLoginShellPath,
+  isShellDerivedPath,
   loginShellPath,
   resetLoginShellPath,
   startLoginShellPathQuery,
@@ -76,6 +77,21 @@ describe('LoginShellPath', () => {
     startLoginShellPathQuery(dir);
     assert.equal(cachedLoginShellPath(), fresh);
     assert.equal(await loginShellPath(), fresh);
+  });
+
+  it('recognizes a shell-derived PATH by /usr/local/bin, as the session does', () => {
+    // a terminal launch: the shell's PATH (possibly customized) must be kept
+    assert.isTrue(isShellDerivedPath('/usr/local/bin:/usr/bin:/bin'));
+    assert.isTrue(isShellDerivedPath('/opt/conda/envs/myenv/bin:/usr/local/bin:/usr/bin'));
+    assert.isTrue(isShellDerivedPath('/usr/bin:/usr/local/bin'));
+    assert.isTrue(isShellDerivedPath('/usr/bin:/usr/local/bin/:/bin'));
+
+    // a Finder / Dock launch: launchd's minimal PATH
+    assert.isFalse(isShellDerivedPath('/usr/bin:/bin:/usr/sbin:/sbin'));
+    assert.isFalse(isShellDerivedPath(''));
+
+    // entries merely prefixed with /usr/local/bin do not count
+    assert.isFalse(isShellDerivedPath('/usr/local/binaries:/usr/bin'));
   });
 
   it('builds a fallback PATH with tool locations first, without duplicates', () => {

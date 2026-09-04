@@ -614,10 +614,6 @@
    <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
    <set-if-unset  property="npm.bin" value="npm"/>
 
-   <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
-   <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
-   <set-if-unset  property="node.bin" value="node"/>
-
    <target name="testpage" depends="acesupport"
            description="Runs the standalone HTML test pages under test/ in headless chromium">
       <retry retrycount="3">
