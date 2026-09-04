@@ -728,7 +728,7 @@ public:
    core::Error setEditorKeybindings(std::string val);
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    bool vimLoadVimrc();
    core::Error setVimLoadVimrc(bool val);

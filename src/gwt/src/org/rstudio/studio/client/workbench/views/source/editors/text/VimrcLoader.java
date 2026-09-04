@@ -30,9 +30,10 @@ import com.google.inject.Singleton;
 
 /**
  * Loads Vim key mappings from the user's vimrc file (~/.rstudio-vimrc if it
- * exists, otherwise ~/.vimrc) and applies them to Ace's Vim keybinding
- * emulation. Mappings are stored in state shared by all editor instances, so
- * the vimrc only needs to be applied once per client session.
+ * exists, otherwise ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc) and applies
+ * them to Ace's Vim keybinding emulation. Mappings are stored in state shared
+ * by all editor instances, so the vimrc only needs to be applied once per
+ * client session.
  */
 @Singleton
 public class VimrcLoader
@@ -218,9 +219,11 @@ public class VimrcLoader
 
    private enum State { IDLE, LOADING, DONE }
 
+   // $XDG_CONFIG_HOME/vim/vimrc is resolved server-side via xdg::xdgUserConfigHome().
    private static final String[] VIMRC_PATHS = new String[] {
       "~/.rstudio-vimrc",
-      "~/.vimrc"
+      "~/.vimrc",
+      "$XDG_CONFIG_HOME/vim/vimrc"
    };
 
    private static final Set<String> SUPPORTED_COMMANDS = new HashSet<>(Arrays.asList(

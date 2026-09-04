@@ -941,7 +941,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String EDITOR_KEYBINDINGS_SUBLIME = "sublime";
 
    /**
-    * Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim editor keybindings are enabled.
+    * Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
     */
    public PrefValue<Boolean> vimLoadVimrc()
    {
