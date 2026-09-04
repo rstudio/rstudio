@@ -63,6 +63,7 @@ struct FormTester
          }
       );
    }
+   FormTester(const FormTester&) = delete;
 
    bool handle(const std::string& formData, bool complete)
    {
@@ -164,7 +165,6 @@ struct FormTester
    std::string buffer;
    Error validationError;
    Request request;
-   FormHandler handler;
    RequestParser parser;
    const char* parseIter = nullptr;
    const char* endIter = nullptr;
