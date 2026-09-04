@@ -46,6 +46,7 @@ struct FileRequestOptions
    bool useEmulatedStack;
    std::string serverHomepagePath;
    std::string frameOptions;
+   bool compress;
 };
 
 void handleFileRequest(const FileRequestOptions& options,
@@ -113,14 +114,30 @@ void handleFileRequest(const FileRequestOptions& options,
    if (regex_utils::match(uri, boost::regex(".*\\.cache\\..*")))
    {
       pResponse->setCacheForeverHeaders();
-      pResponse->setFile(filePath, request);
+
+      // prefer a precompressed sibling (produced at build time for the large
+      // content-hashed assets): its compression cost has already been paid,
+      // so it is worthwhile even where runtime compression is not (see
+      // options.compress)
+      FilePath gzPath(filePath.getAbsolutePath() + ".gz");
+      if (gzPath.exists() && request.acceptsEncoding(http::kGzipEncoding))
+      {
+         pResponse->setContentType(filePath.getMimeContentType());
+         pResponse->setContentEncoding(http::kGzipEncoding);
+         pResponse->addHeader("Vary", "Accept-Encoding");
+         pResponse->setFile(gzPath, request, false);
+      }
+      else
+      {
+         pResponse->setFile(filePath, request, options.compress);
+      }
    }
-   
-   // case: files designated to never be cached 
+
+   // case: files designated to never be cached
    else if (regex_utils::match(uri, boost::regex(".*\\.nocache\\..*")))
    {
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(filePath, request);
+      pResponse->setFile(filePath, request, options.compress);
    }
    // case: main page -- don't cache and dynamically set compiler stack mode
    else if (uri == mainPage)
@@ -161,14 +178,14 @@ void handleFileRequest(const FileRequestOptions& options,
 
       // return the page
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(filePath, request, text::TemplateFilter(vars));
+      pResponse->setFile(filePath, request, text::TemplateFilter(vars), options.compress);
    }
    // case: normal cacheable file
    else
    {
       // since these are application components we force revalidation (default behavior of
       // setCacheableFile)
-      pResponse->setCacheableFile(filePath, request);
+      pResponse->setCacheableFile(filePath, request, options.compress);
    }
 }
    
@@ -182,11 +199,12 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& gwtPrefix,
                                        bool useEmulatedStack,
                                        const std::string& serverHomepagePath,
-                                       const std::string& frameOptions)
+                                       const std::string& frameOptions,
+                                       bool compress)
 {
    FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
                                 gwtPrefix, useEmulatedStack, serverHomepagePath,
-                                frameOptions };
+                                frameOptions, compress };
 
    return boost::bind(handleFileRequest,
                       options,

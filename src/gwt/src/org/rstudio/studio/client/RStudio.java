@@ -18,6 +18,7 @@ package org.rstudio.studio.client;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
@@ -126,6 +127,7 @@ public class RStudio implements EntryPoint
 {
    public void onModuleLoad()
    {
+      StartupTiming.mark("module-load");
       Debug.injectDebug();
       maybeSetWindowName("rstudio-" + StringUtil.makeRandomId(16));
       maybeDelayLoadApplication(this);
@@ -273,17 +275,45 @@ public class RStudio implements EntryPoint
 
       final SerializedCommandQueue queue = new SerializedCommandQueue();
 
-      // ensure Ace is loaded up front
-      queue.addCommand(continuation -> AceEditor.load(continuation));
+      if (StringUtil.isNullOrEmpty(view))
+      {
+         // in the main window, start the application first: it sends the
+         // client_init request immediately, and Ace then loads while that
+         // round trip is in flight (the workbench is not built until both
+         // have finished; see Application.go)
+         queue.addCommand(continuation ->
+         {
+            onDelayLoadApplication();
+            continuation.execute();
+         });
 
-      // load the requested page
-      queue.addCommand(continuation -> onDelayLoadApplication());
+         queue.addCommand(continuation -> AceEditor.load(continuation));
+         queue.addCommand(continuation ->
+         {
+            StartupTiming.mark("ace-loaded");
+            continuation.execute();
+         });
+      }
+      else
+      {
+         // satellites construct editors as soon as they open, so they need
+         // Ace loaded up front
+         queue.addCommand(continuation -> AceEditor.load(continuation));
+         queue.addCommand(continuation ->
+         {
+            StartupTiming.mark("ace-loaded");
+            continuation.execute();
+         });
+
+         queue.addCommand(continuation -> onDelayLoadApplication());
+      }
 
       GWT.runAsync(new RunAsyncCallback()
       {
          @Override
          public void onSuccess()
          {
+            StartupTiming.mark("app-fragment-loaded");
             queue.run();
          }
 
@@ -299,6 +329,7 @@ public class RStudio implements EntryPoint
    private void onDelayLoadApplication()
    {
       ensureStylesInjected();
+      StartupTiming.mark("styles-injected");
 
       String view = Window.Location.getParameter("view");
       if (VCSApplication.NAME.equals(view))

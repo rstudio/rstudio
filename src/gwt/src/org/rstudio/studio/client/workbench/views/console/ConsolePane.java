@@ -169,6 +169,12 @@ public class ConsolePane extends WorkbenchPane
 
    public int getCharacterWidth()
    {
+      // the shell is created alongside the pane's widget; a measurement can
+      // be requested before then (e.g. a font-size change during startup),
+      // and 0 means "no valid measurement yet" to consumers
+      if (shell_ == null)
+         return 0;
+
       return shell_.getDisplay().getCharacterWidth();
    }
 

@@ -905,8 +905,16 @@ public class TextEditingTarget implements
       initializeIncrementalSearch();
    }
 
-   private static final native String initializeIncrementalSearch() /*-{
-      var IncrementalSearch = $wnd.require("ace/incremental_search").IncrementalSearch;
+   // Route incremental-search messages into our status display.
+   // ace/incremental_search is part of the lazily-loaded emacs keybindings,
+   // so this runs both at class initialization (a no-op if they have not
+   // loaded) and again once they arrive (see AceEditor.loadKeybindings).
+   public static final native void initializeIncrementalSearch() /*-{
+      var isearch = $wnd.require("ace/incremental_search");
+      if (isearch == null)
+         return;
+
+      var IncrementalSearch = isearch.IncrementalSearch;
       (function() {
          this.message = $entry(function(msg) {
             @org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::setIncrementalSearchMessage(Ljava/lang/String;)(msg);

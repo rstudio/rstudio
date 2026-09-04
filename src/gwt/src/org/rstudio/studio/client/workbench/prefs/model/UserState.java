@@ -51,6 +51,18 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
       eventBus.addHandler(UserStateChangedEvent.TYPE, this);
    }
    
+   /**
+    * Reloads the state layers from the session info.
+    *
+    * See UserPrefs.loadFromSessionInfo(); unlike UserPrefs, UserState is not
+    * normally constructed until after the session info arrives, so this is
+    * primarily insurance against construction-order changes.
+    */
+   public void loadFromSessionInfo()
+   {
+      updatePrefs(session_.getSessionInfo().getUserState());
+   }
+
    public void writeState()
    {
       writeState(null);
@@ -58,7 +70,7 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
 
    public void writeState(CommandWithArg<Boolean> onCompleted)
    {
-      updatePrefs(session_.getSessionInfo().getUserState());
+      loadFromSessionInfo();
       server_.setUserState(
          session_.getSessionInfo().getUserStateLayer().getValues(),
          new ServerRequestCallback<VoidResponse>() 
@@ -88,8 +100,8 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
             public void onError(ServerError error)
             {
                // still invoke the continuation on failure so that callers
-               // chaining off writeState() (e.g. workbench bootstrap) are not
-               // left dead-ended by a transient RPC failure (see #18019)
+               // chaining off writeState() are not left dead-ended by a
+               // transient RPC failure (see #18019)
                if (onCompleted != null)
                {
                   onCompleted.execute(false);

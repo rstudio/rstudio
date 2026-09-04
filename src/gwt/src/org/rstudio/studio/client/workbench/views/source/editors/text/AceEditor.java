@@ -23,6 +23,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import org.rstudio.core.client.AceSupport;
+import org.rstudio.core.client.AsyncJavaScriptLoader;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -302,21 +303,30 @@ public class AceEditor implements DocDisplay
 
    public static void load(final Command command)
    {
-      aceLoader_.addCallback(() ->
-            aceSupportLoader_.addCallback(() ->
-                  extLanguageToolsLoader_.addCallback(() ->
-                        vimLoader_.addCallback(() ->
-                              emacsLoader_.addCallback(() ->
-                              {
-                                 AceSupport.initialize();
+      // NOTE: the vim / emacs keybindings are not part of the base load; they
+      // are loaded lazily, by the first editor that needs them (loadKeybindings)
+      baseLoader_.execute(command);
+   }
 
-                                 if (command != null)
-                                    command.execute();
-                              })
-                        )
-                  )
-            )
-      );
+   public static boolean keybindingsLoaded()
+   {
+      return keybindingsLoader_.isLoaded();
+   }
+
+   // Run a command once the vim / emacs keybindings have loaded, without
+   // triggering the load itself. Used for setup (like the vim ex commands)
+   // that is only meaningful once some editor has requested the keybindings.
+   public static void onKeybindingsLoaded(final Command command)
+   {
+      if (keybindingsLoaded())
+         command.execute();
+      else
+         keybindingsLoadedCommands_.add(command);
+   }
+
+   public static void loadKeybindings(final Command command)
+   {
+      keybindingsLoader_.execute(command);
    }
 
    public static final native AceEditor getEditor(Element el)
@@ -1152,8 +1162,17 @@ public class AceEditor implements DocDisplay
       // create a keyboard previewer for our special hooks
       AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(completionManager_);
 
-      // set default key handler
-      if (useVimMode_)
+      // set default key handler. the vim / emacs keybindings load lazily; if
+      // they are needed here but not yet available, keep default keybindings
+      // and re-run once they arrive -- only this choice of handler waits on
+      // them, so the previewer and event listeners below stay installed in
+      // the interim (and permanently, should the load fail)
+      if ((useVimMode_ || useEmacsKeybindings_) && !keybindingsLoaded())
+      {
+         loadKeybindings(() -> updateKeyboardHandlers());
+         widget_.getEditor().setKeyboardHandler(null);
+      }
+      else if (useVimMode_)
       {
          widget_.getEditor().setKeyboardHandler(KeyboardHandler.vim());
          RStudioGinjector.INSTANCE.getVimrcLoader().ensureLoaded(widget_.getEditor());
@@ -5185,6 +5204,31 @@ public class AceEditor implements DocDisplay
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
          getLoader(AceResources.INSTANCE.extLanguageTools(),
                    AceResources.INSTANCE.extLanguageToolsUncompressed());
+
+   private static final List<Command> keybindingsLoadedCommands_ = new ArrayList<>();
+
+   // ace itself must load before the bundles extending it; within each stage
+   // the scripts load in parallel
+   private static final AsyncJavaScriptLoader baseLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(aceSupportLoader_, extLanguageToolsLoader_)
+               .onFinished(() -> AceSupport.initialize());
+
+   private static final AsyncJavaScriptLoader keybindingsLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(vimLoader_, emacsLoader_)
+               .onFinished(() ->
+               {
+                  // setup that piggybacks on the keybindings' arrival
+                  AceEditorNative.fixupEmacsKeybindings();
+                  TextEditingTarget.initializeIncrementalSearch();
+
+                  for (Command pendingCommand : keybindingsLoadedCommands_)
+                     pendingCommand.execute();
+                  keybindingsLoadedCommands_.clear();
+               });
 
    private boolean popupVisible_;
 

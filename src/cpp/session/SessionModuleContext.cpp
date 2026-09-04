@@ -53,6 +53,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
@@ -2248,6 +2249,7 @@ std::string libPathsString()
 
 Error sourceModuleRFile(const std::string& rSourceFile)
 {
+   core::startup_timing::ScopedCheckpoint timing("source:" + rSourceFile);
    FilePath modulesPath = session::options().modulesRSourcePath();
    FilePath srcPath = modulesPath.completePath(rSourceFile);
    return r::sourceManager().sourceTools(srcPath);
