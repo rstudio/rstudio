@@ -1011,7 +1011,18 @@ void rSessionInitHook(bool newSession)
 
 void rDeferredInit(bool newSession)
 {
-   module_context::events().onDeferredInit(newSession);
+   // run the deferred init handlers with any R error they raise contained
+   // here, rather than letting it longjmp through the C++ frames of session
+   // initialization (#18718). the user's error handler is left in place, as
+   // some handlers inspect it (see SessionErrors)
+   Error error = rstudio::r::exec::executeSafely(
+            [&]()
+            {
+               module_context::events().onDeferredInit(newSession);
+            },
+            rstudio::r::exec::ExecuteSafelyKeepErrorHandler);
+   if (error)
+      LOG_ERROR(error);
 
    // schedule execution of the session init hook
    module_context::scheduleDelayedWork(

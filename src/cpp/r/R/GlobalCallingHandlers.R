@@ -30,30 +30,53 @@
 ))
 
 
-.rs.addFunction("globalCallingHandlers.initialize", function()
+.rs.addFunction("globalCallingHandlers.handlers", function()
 {
-   # Install our handlers.
-   if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors_warnings_messages")
+   pref <- .rs.uiPrefs$consoleHighlightConditions$get()
+   if (identical(pref, "errors_warnings_messages"))
    {
-      globalCallingHandlers(
+      list(
          error   = .rs.globalCallingHandlers.onError,
          warning = .rs.globalCallingHandlers.onWarning,
          message = .rs.globalCallingHandlers.onMessage
       )
    }
-   else if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors_warnings")
+   else if (identical(pref, "errors_warnings"))
    {
-      globalCallingHandlers(
+      list(
          error   = .rs.globalCallingHandlers.onError,
          warning = .rs.globalCallingHandlers.onWarning
       )
    }
-   else if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors")
+   else if (identical(pref, "errors"))
    {
-      globalCallingHandlers(
+      list(
          error   = .rs.globalCallingHandlers.onError
       )
    }
+   else
+   {
+      list()
+   }
+})
+
+.rs.addFunction("globalCallingHandlers.initialize", function()
+{
+   # NOTE: The body of this function is evaluated directly at the top level
+   # (see installGlobalCallingHandlers() in SessionInit.cpp), as global calling
+   # handlers must attach to R's top-level context. An error raised here would
+   # escape as a longjmp through the C++ frames of session initialization, so
+   # everything that might fail is resolved inside tryCatch() first; only
+   # globalCallingHandlers() itself runs outside of it, since it refuses to run
+   # with condition handlers on the stack. As the body runs in the global
+   # environment, it must also not create any bindings.
+   do.call(
+      globalCallingHandlers,
+      tryCatch(
+         .rs.globalCallingHandlers.handlers(),
+         error = function(cnd) list()
+      )
+   )
 })
 
 .rs.addFunction("globalCallingHandlers.initializeCall", function()

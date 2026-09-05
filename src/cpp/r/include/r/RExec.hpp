@@ -47,8 +47,20 @@ namespace rstudio {
 namespace r {
 namespace exec {
 
+// options for executeSafely
+enum ExecuteSafelyOptions
+{
+   ExecuteSafelyDefault          = 0,
+
+   // leave the user's error handler (options("error")) in place while the
+   // function runs, for code which needs to observe it; by default it is
+   // disabled so that e.g. recover() cannot be entered from internal code
+   ExecuteSafelyKeepErrorHandler = 1
+};
+
 // safe (no r error longjump) execution of arbitrary nullary function
-core::Error executeSafely(boost::function<void()> function);
+core::Error executeSafely(boost::function<void()> function,
+                          ExecuteSafelyOptions options = ExecuteSafelyDefault);
 
 typedef boost::function<bool()> MainThreadFunction;
 

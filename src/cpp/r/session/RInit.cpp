@@ -400,8 +400,15 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
-      // do the deferred action
-      s_deferredDeserializationAction();
+      // do the deferred action, containing any R error it raises so that it
+      // cannot longjmp through the C++ frames of session initialization
+      // (#18718). the action is cleared either way, as it must not run twice
+      Error error = r::exec::executeSafely(
+               s_deferredDeserializationAction,
+               r::exec::ExecuteSafelyKeepErrorHandler);
+      if (error)
+         LOG_ERROR(error);
+
       s_deferredDeserializationAction.clear();
    }
 
