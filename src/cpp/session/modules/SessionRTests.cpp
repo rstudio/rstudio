@@ -22,12 +22,15 @@
 #include <string>
 #include <thread>
 
+#include <core/Scope.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RInterface.hpp>
+#include <r/ROptions.hpp>
+#include <r/RVersion.hpp>
 #include <r/RUtil.hpp>
 
 using namespace rstudio::core;
@@ -35,6 +38,41 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 namespace tests {
+
+TEST(SessionRTest, OptionCachePreservesCellsAcrossValueChanges) {
+   int originalWarn = r::options::getOption<int>("warn");
+   scope::CallOnExit restoreWarn([originalWarn]() {
+      r::options::setOption("warn", originalWarn);
+   });
+
+   SEXP cell = r::options::getOptionCell("warn");
+   ASSERT_NE(R_NilValue, cell);
+
+   // Consumers retain option cells to detect changes without duplicating
+   // R objects. Initializing the cache safely must preserve that behavior.
+   ASSERT_FALSE(r::options::setOption("warn", 1));
+   EXPECT_EQ(cell, r::options::getOptionCell("warn"));
+   EXPECT_EQ(1, r::options::getOption<int>("warn"));
+
+   ASSERT_FALSE(r::options::setOption("warn", 2));
+   EXPECT_EQ(cell, r::options::getOptionCell("warn"));
+   EXPECT_EQ(2, r::options::getOption<int>("warn"));
+}
+
+TEST(SessionRTest, VersionCacheOnlyUsesMainThread) {
+   std::string expected;
+   ASSERT_FALSE(r::exec::evaluateString("format(getRversion())", R_BaseEnv, &expected));
+   EXPECT_EQ(expected, static_cast<std::string>(r::version()));
+
+   // The cache is now populated explicitly outside its static initializer;
+   // workers must not access it, even after it has been populated.
+   Version workerVersion;
+   std::thread([&workerVersion]() {
+      workerVersion = r::version();
+   }).join();
+   EXPECT_TRUE(workerVersion.empty());
+   EXPECT_EQ(expected, static_cast<std::string>(r::version()));
+}
 
 TEST(SessionRTest, RFunctionErrorsDontSetResultToNull) {
    SEXP result = R_NilValue;

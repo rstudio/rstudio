@@ -87,12 +87,27 @@ SEXP getOptionCell(const std::string& name)
       return R_NilValue;
    }
 
-   // keep reference to R options list
-   static SEXP optionsSEXP =
-         r::sexp::findVarInFrame(R_BaseNamespace, Rf_install(".Options"));
-
+   // Do not call R while holding a C++ static-initialization guard: an R
+   // longjmp would bypass its cleanup and leave subsequent reads blocked.
+   static SEXP optionsSEXP = nullptr;
    if (optionsSEXP == nullptr)
-      return R_NilValue;
+   {
+      SEXP resultSEXP = nullptr;
+      auto callback = +[](void* data) {
+         *static_cast<SEXP*>(data) =
+               r::sexp::findVarInFrame(R_BaseNamespace, Rf_install(".Options"));
+      };
+
+      // executeSafely() itself reads options before entering R_ToplevelExec,
+      // so use the R boundary directly here. Cache only a successful lookup.
+      if (!R_ToplevelExec(callback, &resultSEXP) ||
+          resultSEXP == nullptr || resultSEXP == R_NilValue)
+      {
+         return R_NilValue;
+      }
+
+      optionsSEXP = resultSEXP;
+   }
 
    // we search through the options list directly and return
    // the underlying value to avoid duplicating the underlying
