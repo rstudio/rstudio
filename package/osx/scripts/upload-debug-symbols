@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+
+#
+# upload-debug-symbols
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+set -e
+
+PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
+
+AWS_BUCKET="s3://rstudio-debug-symbols"
+
+usage () {
+
+	cat <<- EOF
+
+	Usage: $0 <product> <version> [--dry-run]
+
+	Collect the dSYM bundles produced by a macOS package build and upload
+	them to AWS S3, following the naming convention established by
+	package/linux/scripts/upload-debug-symbols:
+
+	    ${AWS_BUCKET}/<version>/<product>-macos-<arch>.tar.xz
+
+	<product> is the product name (e.g. "electron") and <version> is the
+	full RStudio version (e.g. "2026.10.0-daily+13"), which names the
+	directory in the bucket.
+
+	A universal package build produces one build directory per
+	architecture (see make-package), and each gets its own archive:
+
+	    ${PKG_DIR}/build          x86_64
+	    ${PKG_DIR}/build-arm64    arm64
+
+	Architectures without a build directory are skipped. dSYM bundles
+	only exist for RelWithDebInfo package builds; add_stripped_executable
+	(cmake/globals.cmake) runs dsymutil before stripping each executable.
+
+	With --dry-run, the archives are created but not uploaded.
+
+	EOF
+
+}
+
+if [ "$2" = "" ] || [ "$1" = "--help" ]; then
+	usage
+	exit 1
+fi
+
+product="$1"
+version="$2"
+dry_run=0
+
+for arg in "${@:3}"; do
+	case "${arg}" in
+	--dry-run) dry_run=1 ;;
+	*)
+		error "unknown argument '${arg}'"
+		usage
+		exit 1
+		;;
+	esac
+done
+
+
+ensure-aws-cli () {
+
+	# Check and see if aws-cli is already on the PATH.
+	if command -v aws &> /dev/null; then
+		return 0
+	fi
+
+	# Homebrew installs are not necessarily on the PATH of a Jenkins agent,
+	# nor is a per-user install from a previous run of this script.
+	PATH="/opt/homebrew/bin:/usr/local/bin:${HOME}/aws-cli:${PATH}"
+	hash -r
+
+	if command -v aws &> /dev/null; then
+		return 0
+	fi
+
+	# The aws-cli is not installed; install it for the current user only,
+	# which needs no sudo. This is the layout AWS documents for a per-user
+	# install: the package creates an aws-cli folder inside customLocation.
+	local tmpdir
+	tmpdir="$(mktemp -d)"
+	pushd "${tmpdir}"
+
+	download "https://awscli.amazonaws.com/AWSCLIV2.pkg" "AWSCLIV2.pkg"
+
+	cat > choices.xml <<- EOF
+	<?xml version="1.0" encoding="UTF-8"?>
+	<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+	<plist version="1.0">
+	<array>
+	  <dict>
+	    <key>choiceAttribute</key>
+	    <string>customLocation</string>
+	    <key>attributeSetting</key>
+	    <string>${HOME}</string>
+	    <key>choiceIdentifier</key>
+	    <string>default</string>
+	  </dict>
+	</array>
+	</plist>
+	EOF
+
+	installer -pkg AWSCLIV2.pkg -target CurrentUserHomeDirectory -applyChoiceChangesXML choices.xml
+	popd
+
+	hash -r
+	command -v aws &> /dev/null
+
+}
+
+# Archive the dSYM bundles from one build directory and upload the result.
+upload-symbols-for-arch () {
+
+	local arch="$1"
+	local builddir="$2"
+
+	if [ ! -d "${builddir}" ]; then
+		info "No ${arch} build directory at '${builddir}'; skipping"
+		return 0
+	fi
+
+	# Discover the dSYM bundles; there is one per add_stripped_executable
+	# target (rsession, rpostback, diagnostics) and they sit next to the
+	# executables in the build tree. Prune so the search does not descend
+	# into the bundles themselves. Bundle names follow the build target, not
+	# the installed name: the arm64 build's rsession ships as rsession-arm64,
+	# which is fine since debuggers pair a dSYM with its binary by UUID.
+	local dsyms=()
+	while IFS= read -r -d '' dsym; do
+		dsyms+=("${dsym}")
+	done < <(find "${builddir}/src/cpp" -type d -name "*.dSYM" -prune -print0 | sort -z)
+
+	if [ "${#dsyms[@]}" -eq 0 ]; then
+		error "No dSYM bundles found under '${builddir}/src/cpp'; was this a RelWithDebInfo package build?"
+		return 1
+	fi
+
+	# rsession carries almost all of the session debug info, so its absence
+	# means the build is not one we can symbolize, whatever else was found.
+	local has_rsession=0
+	for dsym in "${dsyms[@]}"; do
+		if [ "$(basename "${dsym}")" = "rsession.dSYM" ]; then
+			has_rsession=1
+		fi
+	done
+
+	if [ "${has_rsession}" -eq 0 ]; then
+		error "rsession.dSYM not found under '${builddir}/src/cpp'"
+		return 1
+	fi
+
+	# Build the archive with each bundle at the top level. Bundle names are
+	# unique within an architecture, and the two architectures go to
+	# separate archives, so no directory prefix is needed.
+	local prefix="${product}-macos-${arch}"
+	local archive="${builddir}/${prefix}.tar"
+	rm -f "${archive}" "${archive}.xz"
+
+	info "Collecting ${arch} debug symbols:"
+	for dsym in "${dsyms[@]}"; do
+		info "  $(basename "${dsym}")"
+		tar -r -f "${archive}" -C "$(dirname "${dsym}")" "$(basename "${dsym}")"
+	done
+
+	xz -T0 "${archive}"
+
+	local src="${archive}.xz"
+	local tgt="${AWS_BUCKET}/${version}/${prefix}.tar.xz"
+
+	if [ "${dry_run}" -eq 1 ]; then
+		info "Dry run: would upload '${src}' to '${tgt}'"
+		return 0
+	fi
+
+	info "Uploading '${src}' to '${tgt}'"
+	aws s3 cp "${src}" "${tgt}"
+
+}
+
+if [ "${dry_run}" -eq 0 ]; then
+	ensure-aws-cli || {
+		error "aws-cli is not available"
+		exit 1
+	}
+fi
+
+# Same directories make-package builds into (BUILD_DIR_X86_64 / BUILD_DIR_ARM64).
+upload-symbols-for-arch x86_64 "${PKG_DIR}/build"
+upload-symbols-for-arch arm64 "${PKG_DIR}/build-arm64"

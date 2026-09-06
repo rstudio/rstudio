@@ -22,6 +22,7 @@ pipeline {
 
   environment {
     PATH = "$HOME/opt/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    AWS_ACCOUNT_ID = '749683154838'
     OS = 'macos'
     PACKAGE_OS = 'macOS'
     RSTUDIO_VERSION = ""
@@ -103,7 +104,6 @@ pipeline {
     stage('Build and Sign') {
 
       environment {
-        AWS_ACCOUNT_ID = '749683154838'
         KEYCHAIN_PATH = "${WORKSPACE}/buildagent.keychain"
         KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
         MACOS_DEVELOPER_CERTIFICATE = credentials('MACOS_DEVELOPER_CERTIFICATE')
@@ -231,6 +231,17 @@ pipeline {
                   utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${AWS_PATH}/"
                 }
               }
+            }
+          }
+        }
+
+        stage("Upload Debug Symbols") {
+          steps {
+            // same role the linux and windows builds use to publish to
+            // rstudio-debug-symbols; as above, the macOS agent cannot use
+            // an instance profile, so the role is assumed explicitly
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID, region: 'us-east-1') {
+              sh "package/osx/scripts/upload-debug-symbols ${PRODUCT} ${RSTUDIO_VERSION}"
             }
           }
         }
