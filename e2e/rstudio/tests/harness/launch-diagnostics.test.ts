@@ -25,6 +25,11 @@ function waitForExit(proc: ChildProcess): Promise<void> {
   return new Promise((resolve) => proc.once('exit', () => resolve()));
 }
 
+/** Let already-resolved promise callbacks run before asserting on them. */
+function tick(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
 test.describe('launch diagnostics', { tag: ['@desktop_only'] }, () => {
   test('reports a live child as still running, not as a death', async () => {
     const proc = spawn(NODE, LINGER, { stdio: 'pipe' });
@@ -117,13 +122,24 @@ test.describe('launch diagnostics', { tag: ['@desktop_only'] }, () => {
 
     // Nothing has ended yet, so settled() must still be waiting -- this is the
     // assertion that fails if it resolves eagerly off the exit code.
-    await new Promise((resolve) => setImmediate(resolve));
+    await tick();
     expect(done).toBe(false);
     expect(tail.text()).toBe('');
 
+    // Bring one stream down on its own. settled() waits for *both*, so it must
+    // still be pending here; ending them together would hide a settled() that
+    // resolves on the first 'end'. Awaiting the event rather than a delay keeps
+    // this deterministic -- captureOutputTail's listener was attached first, so
+    // it has already processed the end by the time this resolves.
+    const stdoutEnded = new Promise((resolve) => stdout.once('end', resolve));
+    stdout.end();
+    await stdoutEnded;
+    await tick();
+    expect(done).toBe(false);
+
+    // The fatal line arrives on the stream that is still open.
     stderr.write('FATAL-AFTER-EXIT');
     stderr.end();
-    stdout.end();
     await settling;
 
     expect(done).toBe(true);
