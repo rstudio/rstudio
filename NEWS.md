@@ -1,6 +1,7 @@
 ## RStudio 2026.10.0 "Blue Mistflower" Release Notes
 
 ### New
+- ([#17787](https://github.com/rstudio/rstudio/issues/17787)): Columns in the data viewer can now be hidden and shown from the summary panel, individually or all at once.
 - ([#18738](https://github.com/rstudio/rstudio/issues/18738)): Reduced the disk space used by RStudio installations: Copilot Language Server binaries for other platforms are no longer installed, JavaScript source maps are no longer packaged, GWT symbol maps are stored compressed, and macOS application bundles are now transparently compressed on disk.
 - ([#18739](https://github.com/rstudio/rstudio/issues/18739)): Optimized RStudio Desktop startup time.
 
