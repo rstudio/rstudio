@@ -1447,7 +1447,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    padding-top: 4px;
 }
 
-.rstudio-highlight-active-tabs .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
+.rstudio-highlight-active-tabs .moduleTabPanel .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab .gwt-Label {
    font-weight: normal;
 }
 
@@ -2509,12 +2509,13 @@ input[type="checkbox"]:checked:before {
    box-shadow: 0 2px 0 #3465a4 inset;
 }
 
-.rstudio-highlight-active-tabs .rstudio-themes-dark .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+.rstudio-highlight-active-tabs .rstudio-themes-dark .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
    box-shadow: 0 2px 0 #8ab4f8 inset;
 }
 
+/* Thicken the selected label without changing tab widths or ellipsis positions. */
 .rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
-   font-weight: 600;
+   -webkit-text-stroke: 0.4px currentColor;
 }
 
 .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter {
