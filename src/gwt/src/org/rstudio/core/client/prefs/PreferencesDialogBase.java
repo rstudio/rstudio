@@ -181,7 +181,6 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       super.onLoad();
       resizeHandler_ = Window.addResizeHandler(event ->
       {
-         panel_.onResize();
          if (getAbsoluteTop() + getOffsetHeight() > event.getHeight() ||
              getAbsoluteLeft() + getOffsetWidth() > event.getWidth())
             center();

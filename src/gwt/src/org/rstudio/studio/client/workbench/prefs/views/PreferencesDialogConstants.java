@@ -28,6 +28,11 @@ public class PreferencesDialogConstants
    public static final int SECTION_CHOOSER_PADDING = 10;
    public static final int PANE_CONTAINER_WIDTH = PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH;
 
+   // Allow 100px for the caption, footer, borders, and padding, plus the
+   // 30px bottom margin used by ModalDialogBase's overflow fallback.
+   // Keep this allowance in sync with the dialog chrome in ThemeStyles.css.
+   private static final int DIALOG_VERTICAL_RESERVE = 100 + 30;
+
    // Width of the panel container when the section chooser is not shown, e.g.
    // Help / Accessibility / Acccessibility Options...
    public static final int PANEL_CONTAINER_WIDTH_NO_CHOOSER = 516;
@@ -44,10 +49,8 @@ public class PreferencesDialogConstants
 
    public static final String panelContainerHeight(int offset)
    {
-      // Leave room for the caption, dialog buttons, and the 30px bottom margin
-      // reserved by ModalDialogBase before it scrolls the entire dialog.
       return "min(" + (PANEL_CONTAINER_HEIGHT - offset) +
-            "px, calc(100vh - " + (130 + offset) + "px))";
+            "px, calc(100vh - " + (DIALOG_VERTICAL_RESERVE + offset) + "px))";
    }
    
    public static final String panelContainerWidthNoChooser()
