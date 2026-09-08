@@ -55,7 +55,8 @@ jobs:
           # crafted title were to smuggle a newline in: one surviving into
           # GITHUB_OUTPUT would let a public user's issue title inject
           # arbitrary step outputs.
-          SLUG=$(printf '%s' "$TITLE" | tr -d '\n' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//' | cut -c1-40)
+          SLUG=$(printf '%s' "$TITLE" | tr -d '\n' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | cut -c1-40 | sed 's/-$//')
+          SLUG="${SLUG:-issue}"
 
           echo "number=${NUMBER}" >> "$GITHUB_OUTPUT"
           echo "branch-prefix=claude/${NUMBER}-${SLUG}-" >> "$GITHUB_OUTPUT"
@@ -78,7 +79,8 @@ jobs:
           IS_PR: ${{ github.event_name == 'pull_request_review_comment' || github.event_name == 'pull_request_review' || (github.event_name == 'issue_comment' && github.event.issue.pull_request != null) }}
           COMMENT_ID: ${{ github.event.comment.id }}
           REVIEW_ID: ${{ github.event.review.id }}
-          ACTOR: ${{ github.triggering_actor }}
+          # Keep the mention author even when another maintainer reruns the workflow.
+          ACTOR: ${{ github.event.comment.user.login || github.event.review.user.login || github.event.issue.user.login }}
           BRANCH_PREFIX: ${{ steps.payload.outputs.branch-prefix }}
         run: |
           gh api repos/rstudio/rstudio-pro/dispatches \
