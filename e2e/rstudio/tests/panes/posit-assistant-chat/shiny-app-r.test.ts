@@ -26,6 +26,10 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   // load-bearing too -- the cleanup hooks unlink that exact file.
   const PROMPT = `Create a Shiny for R web app for a tip calculator. The app can only depend on packages that are already installed--nothing that isn't already installed. The app should be a single file named app.R in the current working directory. It should have a slider from $0 to $100 for the bill amount. It should have four buttons: 10%, 15%, 20%, and 25%. The output, the tip, should be based on the value in the slider and the chosen button. The buttons and slider should both be oriented horizontally, the slider above the buttons. The bill and tip amount should be displayed above the slider. The title of the page should be "Wacky Tip Calculator for R". Then run the app in the viewer pane and make sure that it can be seen. The app MUST be viewable in the RStudio viewer pane. Do NOT set options(shiny.launch.browser) and do NOT pass a launch.browser argument to runApp--RStudio is already configured to open the app in the Viewer pane. Then say "Wacky Tip Calculator for R has started" when the app starts running.`;
 
+  // Budget for the assistant to write app.R and get it running in the Viewer,
+  // sized for LLM tail latency -- observed whole-test durations are 90-108s.
+  const ASSISTANT_TURN_BUDGET_MS = 300000;
+
   test.beforeAll(async ({ rstudioPage: page }) => {
     // A cold-cache package install can outlast the global per-test timeout;
     // keep the headroom this install hook's ensurePackages() budget assumes.
@@ -99,6 +103,12 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
   test('Create and run R Shiny tip calculator', async ({ rstudioPage: page }) => {
     test.skip(missingPackages.length > 0, `Missing packages: ${missingPackages.join(', ')}`);
 
+    // Without this the test falls back to the 120s global timeout and cuts the
+    // poll below off at 40% of its budget -- a bare "Test timeout exceeded"
+    // instead of the poll's own diagnostic. Derived to keep the two in sync;
+    // the margin covers conversation setup and the 90s of Viewer assertions.
+    test.setTimeout(ASSISTANT_TURN_BUDGET_MS + 120000);
+
     // Start a fresh conversation
     await chatActions.startNewConversation();
 
@@ -115,7 +125,7 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
         }
       }
       return false;
-    }, 300000);
+    }, ASSISTANT_TURN_BUDGET_MS);
 
 
 
