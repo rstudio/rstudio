@@ -406,9 +406,17 @@ void ensureDeserialized()
 {
    if (s_deferredDeserializationAction)
    {
-      // do the deferred action (restores .RData or the suspended session)
+      // do the deferred action, containing any R error it raises so that it
+      // cannot longjmp through the C++ frames of session initialization
+      // (#18718). clear the action after either result so subsequent calls
+      // do not retry a restore that may already have partially completed
       core::startup_timing::ScopedCheckpoint timing("r-deserialize");
-      s_deferredDeserializationAction();
+      Error error = r::exec::executeSafely(
+               s_deferredDeserializationAction,
+               r::exec::ExecuteSafelyKeepErrorHandler);
+      if (error)
+         LOG_ERROR(error);
+
       s_deferredDeserializationAction.clear();
    }
 

@@ -30,30 +30,66 @@
 ))
 
 
-.rs.addFunction("globalCallingHandlers.initialize", function()
+.rs.addFunction("globalCallingHandlers.handlers", function()
 {
-   # Install our handlers.
-   if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors_warnings_messages")
+   pref <- .rs.uiPrefs$consoleHighlightConditions$get()
+   if (identical(pref, "errors_warnings_messages"))
    {
-      globalCallingHandlers(
+      list(
          error   = .rs.globalCallingHandlers.onError,
          warning = .rs.globalCallingHandlers.onWarning,
          message = .rs.globalCallingHandlers.onMessage
       )
    }
-   else if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors_warnings")
+   else if (identical(pref, "errors_warnings"))
    {
-      globalCallingHandlers(
+      list(
          error   = .rs.globalCallingHandlers.onError,
          warning = .rs.globalCallingHandlers.onWarning
       )
    }
-   else if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors")
+   else if (identical(pref, "errors"))
    {
-      globalCallingHandlers(
+      list(
          error   = .rs.globalCallingHandlers.onError
       )
    }
+   else
+   {
+      list()
+   }
+})
+
+.rs.addFunction("globalCallingHandlers.initialize", function()
+{
+   # NOTE: The body of this function is evaluated directly at the top level
+   # (see installGlobalCallingHandlers() in SessionInit.cpp), as global calling
+   # handlers must attach to R's top-level context. An error raised here would
+   # escape as a longjmp through the C++ frames of session initialization, so
+   # resolve handlers inside tryCatch() first. Registration itself must run
+   # outside of it, since globalCallingHandlers() refuses to run with local
+   # condition handlers on the stack. It can still fail if a caller installed
+   # handlers, so the C++ side does this last, after deferred initialization.
+   # As the body runs in the restored global environment, it must not create
+   # bindings or rely on unqualified base functions that the workspace can mask.
+   base::do.call(
+      base::globalCallingHandlers,
+      base::tryCatch(
+         .rs.globalCallingHandlers.handlers(),
+         error = function(cnd)
+         {
+            # Reporting the failure must not let another error escape.
+            base::tryCatch(
+               .rs.logWarningMessage(
+                  "Failed to initialize global calling handlers: %s",
+                  base::conditionMessage(cnd)
+               ),
+               error = function(cnd) NULL
+            )
+            base::list()
+         }
+      )
+   )
 })
 
 .rs.addFunction("globalCallingHandlers.initializeCall", function()
