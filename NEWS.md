@@ -4,7 +4,7 @@
 - Optimized RStudio Desktop startup time.
 
 ### Fixed
-- Fixed Windows subprocess detection reporting unrelated processes as children after process ID reuse (#18677).
+- ([#18677](https://github.com/rstudio/rstudio/issues/18677)): Fixed Windows subprocess detection reporting unrelated processes as children after process ID reuse.
 
 ### Dependencies
 -
