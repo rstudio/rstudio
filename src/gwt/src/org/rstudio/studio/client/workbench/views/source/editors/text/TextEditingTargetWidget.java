@@ -995,7 +995,8 @@ public class TextEditingTargetWidget
          @Override
          public void run()
          {
-            mgr.setActive(column_);
+            // Rendering the outline must not change the active column. This
+            // document may have been deselected or closed since scheduling.
             String title = commands_.toggleDocumentOutline().getTooltip();
             title = editorPanel_.getWidgetSize(docOutlineWidget_) > 0
                   ? title.replace(constants_.show(), constants_.hide())

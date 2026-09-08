@@ -515,6 +515,11 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void setActive(SourceColumn column)
    {
+      // Delayed callbacks can retain a column after its last tab was closed.
+      // Do not let them make an unregistered column the active destination.
+      if (column != null && !columnList_.contains(column))
+         return;
+
       SourceColumn prevColumn = activeColumn_;
       activeColumn_ = column;
 
@@ -613,6 +618,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public SourceColumn getActive()
    {
       if (activeColumn_ != null &&
+         columnList_.contains(activeColumn_) &&
          (columnList_.get(0).asWidget().getOffsetWidth() == 0 ||
           (activeColumn_.asWidget().isAttached() &&
            activeColumn_.asWidget().getOffsetWidth() > 0)))
