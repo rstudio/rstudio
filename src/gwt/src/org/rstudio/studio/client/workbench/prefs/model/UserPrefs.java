@@ -21,6 +21,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Document;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -90,6 +92,9 @@ public class UserPrefs extends UserPrefsComputed
       eventBus.addHandler(SessionInitEvent.TYPE, this);
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
+
+      // Satellites receive the same preference updates as the main window.
+      highlightActiveTabs().addValueChangeHandler(event -> syncHighlightActiveTabs());
       
       // Let desktop-side know when Electron-specific preferences change as these are mirrored
       // in the electron-store so they can be used during startup (before the session is started).
@@ -289,10 +294,17 @@ public class UserPrefs extends UserPrefsComputed
          false);
    }
    
+   private void syncHighlightActiveTabs()
+   {
+      DomUtils.toggleClass(Document.get().getBody(),
+            "rstudio-highlight-active-tabs", highlightActiveTabs().getValue());
+   }
+
    @Override
    public void onSessionInit(SessionInitEvent event)
    {
       loadFromSessionInfo();
+      syncHighlightActiveTabs();
 
       origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
       announceScreenReaderState();

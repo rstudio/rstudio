@@ -2312,6 +2312,19 @@ core::Error UserPrefValues::setWrapTabNavigation(bool val)
 }
 
 /**
+ * Use a bold label and a blue overline to highlight the active document and pane tabs.
+ */
+bool UserPrefValues::highlightActiveTabs()
+{
+   return readPref<bool>("highlight_active_tabs");
+}
+
+core::Error UserPrefValues::setHighlightActiveTabs(bool val)
+{
+   return writePref("highlight_active_tabs", val);
+}
+
+/**
  * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
  */
 bool UserPrefValues::mousewheelChangesEditorTab()
@@ -4154,6 +4167,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
       kWrapTabNavigation,
+      kHighlightActiveTabs,
       kMousewheelChangesEditorTab,
       kGlobalTheme,
       kUseDarkThemeModalDialogs,

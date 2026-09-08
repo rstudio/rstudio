@@ -189,6 +189,8 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       basic.add(spacedBefore(headerLabel(constants_.otherCaption())));
 
+      basic.add(checkboxPref(prefs_.highlightActiveTabs()));
+
       basic.add(checkboxPref(
             constants_.otherWrapAroundLabel(),
             prefs_.wrapTabNavigation(),

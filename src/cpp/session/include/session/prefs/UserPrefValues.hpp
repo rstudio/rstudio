@@ -311,6 +311,7 @@ namespace prefs {
 #define kLatexPreviewOnCursorIdleInlineOnly "inline_only"
 #define kLatexPreviewOnCursorIdleAlways "always"
 #define kWrapTabNavigation "wrap_tab_navigation"
+#define kHighlightActiveTabs "highlight_active_tabs"
 #define kMousewheelChangesEditorTab "mousewheel_changes_editor_tab"
 #define kGlobalTheme "global_theme"
 #define kGlobalThemeDefault "default"
@@ -1572,6 +1573,12 @@ public:
     */
    bool wrapTabNavigation();
    core::Error setWrapTabNavigation(bool val);
+
+   /**
+    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    */
+   bool highlightActiveTabs();
+   core::Error setHighlightActiveTabs(bool val);
 
    /**
     * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.

@@ -1657,6 +1657,16 @@
    clear = function() { .rs.clearUserPref("wrap_tab_navigation") }
 )
 
+# Highlight active document and pane tabs
+#
+# Use a bold label and a blue overline to highlight the active document and pane
+# tabs.
+.rs.uiPrefs$highlightActiveTabs <- list(
+   get = function() { .rs.getUserPref("highlight_active_tabs") },
+   set = function(value) { .rs.setUserPref("highlight_active_tabs", value) },
+   clear = function() { .rs.clearUserPref("highlight_active_tabs") }
+)
+
 # Change active editor tab with mouse wheel
 #
 # Whether scrolling the mouse wheel over the editor tab bar changes the active

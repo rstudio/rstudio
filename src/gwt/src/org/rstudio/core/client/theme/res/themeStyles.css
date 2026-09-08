@@ -61,6 +61,7 @@
 @external gwt-SplitLayoutPanel-Workbench;
 
 @external rstudio-themes-dark;
+@external rstudio-highlight-active-tabs;
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
@@ -1446,6 +1447,10 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    padding-top: 4px;
 }
 
+.rstudio-highlight-active-tabs .moduleTabPanel .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab .gwt-Label {
+   font-weight: normal;
+}
+
 .rstudio-themes-dark .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
    font-weight: 400;
 }
@@ -2497,6 +2502,20 @@ input[type="checkbox"]:checked:before {
    padding-left: 9px;
    padding-right: 9px;
    margin-left: -1px;
+}
+
+/* Mark the selected tab without changing its height or content position. */
+.rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+   box-shadow: 0 2px 0 #3465a4 inset;
+}
+
+.rstudio-highlight-active-tabs .rstudio-themes-dark .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+   box-shadow: 0 2px 0 #8ab4f8 inset;
+}
+
+/* Thicken the selected label without changing tab widths or ellipsis positions. */
+.rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
+   -webkit-text-stroke: 0.4px currentColor;
 }
 
 .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter {
