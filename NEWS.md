@@ -6,6 +6,7 @@
 - ([#18739](https://github.com/rstudio/rstudio/issues/18739)): Optimized RStudio Desktop startup time.
 
 ### Fixed
+- ([#18677](https://github.com/rstudio/rstudio/issues/18677)): Fixed Windows subprocess detection reporting unrelated processes as children after process ID reuse.
 - ([#18742](https://github.com/rstudio/rstudio/issues/18742)): Fixed an issue where the Global Options dialog could push the OK and Apply buttons off screen in short windows.
 - ([#18736](https://github.com/rstudio/rstudio/issues/18736)): Fixed an issue where delayed document outline initialization could reactivate a closed Source column and leave a new document without an active editor
 - ([#18718](https://github.com/rstudio/rstudio/issues/18718)): Fixed an issue where an R error during session initialization could leave the session hung forever at startup, with RStudio Server reporting that R was taking longer than usual to start.
