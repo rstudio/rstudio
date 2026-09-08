@@ -4,6 +4,7 @@
 - Optimized RStudio Desktop startup time.
 
 ### Fixed
+- ([#18742](https://github.com/rstudio/rstudio/issues/18742)): Fixed an issue where the Global Options dialog could push the OK and Apply buttons off screen in short windows.
 - ([#18736](https://github.com/rstudio/rstudio/issues/18736)): Fixed an issue where delayed document outline initialization could reactivate a closed Source column and leave a new document without an active editor
 - ([#18718](https://github.com/rstudio/rstudio/issues/18718)): Fixed an issue where an R error during session initialization could leave the session hung forever at startup, with RStudio Server reporting that R was taking longer than usual to start.
 - ([#14363](https://github.com/rstudio/rstudio/issues/14363)): Fixed an issue where hexadecimal literals with binary exponents (e.g. `0x1p3`), fractions, uppercase `0X` prefixes, or an imaginary suffix were reported as parse errors

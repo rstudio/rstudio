@@ -222,8 +222,7 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       int width = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH
             - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
             - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
-      int height = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT;
-      panel.setSize(width + "px", height + "px");
+      panel.setSize(width + "px", PreferencesDialogConstants.panelContainerHeight());
    }
 
    private ProgressIndicator progressIndicator_;
