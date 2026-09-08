@@ -14,9 +14,27 @@ import type { ChildProcess } from 'child_process';
 /** Cap on retained child output -- enough for a stack or a fatal error. */
 export const OUTPUT_TAIL_LIMIT = 4000;
 
+/** Default wait for a dead child's streams to deliver their last reads. */
+export const TAIL_SETTLE_TIMEOUT_MS = 500;
+
+export interface OutputTail {
+  /** The captured tail as of now. */
+  text(): string;
+  /**
+   * Resolve once both streams have ended, or after `timeoutMs`.
+   *
+   * Node emits `'exit'` before the stdio streams necessarily deliver their
+   * final reads, so reading the tail straight off an exit can miss the
+   * trailing output -- which is exactly the part that says why the child
+   * died. Bounded because a stream that errors may never end, and resolves
+   * at once for a child that is still running (its streams stay open) or one
+   * whose streams already ended.
+   */
+  settled(timeoutMs?: number): Promise<void>;
+}
+
 /**
- * Drain a spawned child's stdout/stderr into a bounded tail and return a
- * getter for it.
+ * Drain a spawned child's stdout/stderr into a bounded tail.
  *
  * Draining matters on its own: nothing reads these pipes otherwise, and a
  * child blocks once a pipe buffer fills (~64KB on Linux), so a chatty
@@ -26,14 +44,38 @@ export const OUTPUT_TAIL_LIMIT = 4000;
 export function captureOutputTail(
   proc: ChildProcess,
   limit: number = OUTPUT_TAIL_LIMIT,
-): () => string {
+): OutputTail {
   let tail = '';
   const append = (chunk: Buffer | string): void => {
     tail = (tail + chunk.toString()).slice(-limit);
   };
-  proc.stdout?.on('data', append);
-  proc.stderr?.on('data', append);
-  return () => tail;
+
+  const streams = [proc.stdout, proc.stderr].filter((s): s is NonNullable<typeof s> => !!s);
+  let pending = streams.length;
+  let onDrained: (() => void) | undefined;
+  for (const stream of streams) {
+    stream.on('data', append);
+    stream.once('end', () => {
+      if (--pending === 0) onDrained?.();
+    });
+  }
+
+  return {
+    text: () => tail,
+    settled: (timeoutMs: number = TAIL_SETTLE_TIMEOUT_MS) =>
+      new Promise<void>((resolve) => {
+        const running = proc.exitCode === null && proc.signalCode === null;
+        if (pending === 0 || running) {
+          resolve();
+          return;
+        }
+        const timer = setTimeout(resolve, timeoutMs);
+        onDrained = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+      }),
+  };
 }
 
 /**

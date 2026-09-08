@@ -24,12 +24,6 @@ function waitForExit(proc: ChildProcess): Promise<void> {
   return new Promise((resolve) => proc.once('exit', () => resolve()));
 }
 
-// 'exit' can precede the final stdout/stderr reads; 'close' means the streams
-// are done, which is what the output assertions depend on.
-function waitForClose(proc: ChildProcess): Promise<void> {
-  return new Promise((resolve) => proc.once('close', () => resolve()));
-}
-
 test.describe('launch diagnostics', { tag: ['@desktop_only'] }, () => {
   test('reports a live child as still running, not as a death', async () => {
     const proc = spawn(NODE, LINGER, { stdio: 'pipe' });
@@ -94,14 +88,31 @@ test.describe('launch diagnostics', { tag: ['@desktop_only'] }, () => {
       { stdio: 'pipe' },
     );
     const tail = captureOutputTail(proc);
-    await waitForClose(proc);
+    await waitForExit(proc);
+    await tail.settled();
 
-    const captured = tail();
+    const captured = tail.text();
     expect(captured).toHaveLength(OUTPUT_TAIL_LIMIT);
     expect(captured).toContain('FATAL-AT-THE-END');
 
     const state = describeLaunchState(proc, captured, '');
     expect(state).toContain('FATAL-AT-THE-END');
+  });
+
+  test('settled() does not stall the failure path for a live child', async () => {
+    // A running child's streams stay open, so waiting on them would burn the
+    // whole bounded timeout on every CDP-timeout failure. settled() has to
+    // short-circuit instead.
+    const proc = spawn(NODE, LINGER, { stdio: 'pipe' });
+    const tail = captureOutputTail(proc);
+    try {
+      const started = Date.now();
+      await tail.settled(5000);
+      expect(Date.now() - started).toBeLessThan(1000);
+    } finally {
+      proc.kill('SIGKILL');
+      await waitForExit(proc);
+    }
   });
 
   test('distinguishes uncaptured output from a child that wrote nothing', async () => {

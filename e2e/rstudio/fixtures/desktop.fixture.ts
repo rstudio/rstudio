@@ -729,7 +729,10 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   let lastConnectErr: unknown;
   while (Date.now() < cdpDeadline) {
     if (launchError) {
-      const state = describeLaunchState(rstudioProcess, outputTail?.(), cdpPortListenerPids());
+      // The child has exited by now; give its streams a moment to deliver the
+      // trailing output, which is the part that says why it died.
+      await outputTail?.settled();
+      const state = describeLaunchState(rstudioProcess, outputTail?.text(), cdpPortListenerPids());
       killProcessTree(rstudioProcess);
       throw new Error(`${launchError.message}\n${state}`);
     }
@@ -742,7 +745,8 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     }
   }
   if (!browser) {
-    const state = describeLaunchState(rstudioProcess, outputTail?.(), cdpPortListenerPids());
+    await outputTail?.settled();
+    const state = describeLaunchState(rstudioProcess, outputTail?.text(), cdpPortListenerPids());
     killProcessTree(rstudioProcess);
     throw new Error(
       `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}\n${state}`,
