@@ -1,7 +1,8 @@
 ## RStudio 2026.10.0 "Blue Mistflower" Release Notes
 
 ### New
-- Optimized RStudio Desktop startup time.
+- ([#18738](https://github.com/rstudio/rstudio/issues/18738)): Reduced the disk space used by RStudio installations: Copilot Language Server binaries for other platforms are no longer installed, JavaScript source maps are no longer packaged, GWT symbol maps are stored compressed, and macOS application bundles are now transparently compressed on disk.
+- ([#18739](https://github.com/rstudio/rstudio/issues/18739)): Optimized RStudio Desktop startup time.
 
 ### Fixed
 - ([#18742](https://github.com/rstudio/rstudio/issues/18742)): Fixed an issue where the Global Options dialog could push the OK and Apply buttons off screen in short windows.

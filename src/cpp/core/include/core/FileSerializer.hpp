@@ -87,24 +87,18 @@ enum ReadCollectionAction
 };
    
 template <typename CollectionType>
-Error readCollectionFromFile(
-         const core::FilePath& filePath,
+Error readCollectionFromStream(
+         std::istream& is,
          CollectionType* pCollection,
-         boost::function<ReadCollectionAction(const std::string& line, 
+         boost::function<ReadCollectionAction(const std::string& line,
                                  typename CollectionType::value_type* pValue)>
                          parseFunction,
                          bool trimAndIgnoreBlankLines=true)
 {
    using namespace boost::system::errc;
-   
-   // open the file stream
-   std::shared_ptr<std::istream> pIfs;
-   Error error = filePath.openForRead(pIfs);
-   if (error)
-      return error;
-   
+
    // create insert iterator
-   std::insert_iterator<CollectionType> insertIterator(*pCollection, 
+   std::insert_iterator<CollectionType> insertIterator(*pCollection,
                                                        pCollection->begin());
 
    try
@@ -114,16 +108,16 @@ Error readCollectionFromFile(
       while (true)
       {
          // read the next line
-         std::getline(*pIfs, nextLine);
+         std::getline(is, nextLine);
 
-         if (pIfs->eof())
+         if (is.eof())
          {
             // only exit here if we have nothing to process
             // otherwise, exit after we have processed the data
             if (nextLine.empty())
                break;
          }
-         else if (pIfs->fail())
+         else if (is.fail())
             return systemError(io_error, ERROR_LOCATION);
 
          // trim whitespace then ignore it if it is a blank line
@@ -151,7 +145,7 @@ Error readCollectionFromFile(
          }
 
          // if we've hit the end of the file, we're done reading
-         if (pIfs->eof())
+         if (is.eof())
             break;
       }
    }
@@ -160,11 +154,35 @@ Error readCollectionFromFile(
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", filePath.getAbsolutePath());
       return error;
    }
-   
+
    return Success();
+}
+
+template <typename CollectionType>
+Error readCollectionFromFile(
+         const core::FilePath& filePath,
+         CollectionType* pCollection,
+         boost::function<ReadCollectionAction(const std::string& line,
+                                 typename CollectionType::value_type* pValue)>
+                         parseFunction,
+                         bool trimAndIgnoreBlankLines=true)
+{
+   // open the file stream
+   std::shared_ptr<std::istream> pIfs;
+   Error error = filePath.openForRead(pIfs);
+   if (error)
+      return error;
+
+   error = readCollectionFromStream(*pIfs,
+                                    pCollection,
+                                    parseFunction,
+                                    trimAndIgnoreBlankLines);
+   if (error)
+      error.addProperty("path", filePath.getAbsolutePath());
+
+   return error;
 }
 
 template <typename ContentType>
