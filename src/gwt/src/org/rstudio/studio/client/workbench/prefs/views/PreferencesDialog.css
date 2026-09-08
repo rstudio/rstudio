@@ -1,5 +1,5 @@
 
-@external gwt-CheckBox gwt-Label;
+@external gwt-CheckBox gwt-Label gwt-TabLayoutPanelContentContainer;
 @external rstudio-themes-dark, rstudio-theme-aware-dialog;
 
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
@@ -17,6 +17,13 @@
 .panelContainerNoChooser {
    width: PANEL_CONTAINER_WIDTH_NO_CHOOSER;
    height: PANEL_CONTAINER_HEIGHT;
+}
+
+/* Scroll the GWT layer around the tab content. Its inline overflow is
+ * hidden by default, which would clip taller panes at the capped height. */
+.panelContainer .gwt-TabLayoutPanelContentContainer > div,
+.panelContainerNoChooser .gwt-TabLayoutPanelContentContainer > div {
+   overflow: auto !important;
 }
 
 .sshKeyWidget {
@@ -68,6 +75,46 @@
    width: 148px;
    overflow-x: hidden;
    overflow-y: scroll;
+}
+
+.appearanceColumns {
+   display: flex;
+}
+
+.appearanceColumns > iframe {
+   flex-shrink: 0;
+   height: auto;
+}
+
+.appearanceControls {
+   display: flex;
+   flex-direction: column;
+   flex-grow: 1;
+   min-width: 160px;
+}
+
+.appearanceControls > * {
+   flex-shrink: 0;
+}
+
+.editorThemeChooser {
+   display: flex;
+   flex-direction: column;
+   flex-grow: 1;
+}
+
+.editorThemeChooser select {
+   flex-grow: 1;
+   height: 80px;
+   min-height: 80px;
+}
+
+.appearanceThemeButtons {
+   align-self: flex-start;
+}
+
+.appearanceThemeButtons button {
+   display: block;
 }
 
 .themeInfobar {

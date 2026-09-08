@@ -18,8 +18,11 @@ package org.rstudio.core.client.prefs;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -56,6 +59,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       PreferencesDialogBaseResources res = PreferencesDialogBaseResources.INSTANCE;
 
       sectionChooser_ = new SectionChooser(caption);
+      sectionChooser_.getElement().getStyle().setOverflow(Overflow.AUTO);
 
       ThemedButton okButton = new ThemedButton(
             constants_.okButtonTitle(),
@@ -75,6 +79,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       panel_.setStyleName(panelContainerStyle_);
       container_ = new FlowPanel();
       container_.getElement().getStyle().setPaddingLeft(10, Unit.PX);
+      container_.getElement().getStyle().setOverflow(Overflow.AUTO);
 
       addStyleName(res.styles().preferencesDialog());
       setThemeAware(true);
@@ -168,6 +173,26 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    protected Widget createMainWidget()
    {
       return panel_;
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      resizeHandler_ = Window.addResizeHandler(event ->
+      {
+         if (getAbsoluteTop() + getOffsetHeight() > event.getHeight() ||
+             getAbsoluteLeft() + getOffsetWidth() > event.getWidth())
+            center();
+      });
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      resizeHandler_.removeHandler();
+      resizeHandler_ = null;
+      super.onUnload();
    }
 
    protected void hidePane(int index)
@@ -299,6 +324,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    }
 
    private DockLayoutPanel panel_;
+   private HandlerRegistration resizeHandler_;
    private List<PreferencesDialogPaneBase<T>> panes_;
    private FlowPanel container_;
    private Integer currentIndex_;

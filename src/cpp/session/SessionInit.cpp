@@ -40,24 +40,33 @@ std::atomic<bool> s_sessionInitialized(false);
 // completed) from a fresh start or suspend/resume (event still to fire)
 std::atomic<bool> s_deferredInitCompleted(false);
 
-} // anonymous namespace
+// has ensureSessionInitialized() run? (main thread only.) this is an
+// explicit flag, set before the one-time work begins, rather than a
+// function-local static: an R error escaping that work longjmps over the
+// static's initialization guard and leaves it locked for good, so the next
+// client_init blocks forever in __cxa_guard_acquire (#18718)
+bool s_ensureSessionInitializedCalled = false;
 
-bool ensureSessionInitializedImpl()
+void installGlobalCallingHandlers()
 {
-   // install condition handlers if requested
-   if (r::session::utils::isR4())
-   {
-      // install global calling handlers
-      SEXP initializeSEXP = R_NilValue;
-      r::sexp::Protect protect;
-      Error error = r::exec::RFunction(".rs.globalCallingHandlers.initializeCall")
-            .call(&initializeSEXP, &protect);
-      if (error)
-         LOG_ERROR(error);
+   SEXP initializeSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.globalCallingHandlers.initializeCall")
+         .call(&initializeSEXP, &protect);
+   if (error)
+      LOG_ERROR(error);
 
-      Rf_eval(initializeSEXP, R_GlobalEnv);
-   }
+   // this must be evaluated directly rather than via R_tryEval(): global
+   // calling handlers attach to R's top-level context, and would be discarded
+   // along with the temporary context established by R_ToplevelExec(). an R
+   // error raised here therefore escapes as a longjmp. the R side contains
+   // errors while resolving handlers, but registration itself can still fail
+   // (e.g. if a caller has condition handlers on the stack)
+   Rf_eval(initializeSEXP, R_GlobalEnv);
+}
 
+void ensureSessionInitializedImpl()
+{
    // note that we are now fully initialized. we defer setting this
    // flag so that consoleRead and handleClientInit know that we have just
    // started up and can act accordingly
@@ -68,16 +77,24 @@ bool ensureSessionInitializedImpl()
    // for the potentially very lengthy deserialization of the environment)
    rstudio::r::session::ensureDeserialized();
 
-   return true;
-
+   // install condition handlers last: the raw R evaluation can still longjmp,
+   // and must not prevent deserialization or leave s_sessionInitialized false
+   // after the one-time initialization flag has been set
+   if (r::session::utils::isR4())
+      installGlobalCallingHandlers();
 }
+
+} // anonymous namespace
 
 // certain things are deferred until after we have sent our first response
 // take care of these things here
 void ensureSessionInitialized()
 {
-   static bool once = ensureSessionInitializedImpl();
-   (void) once;
+   if (s_ensureSessionInitializedCalled)
+      return;
+
+   s_ensureSessionInitializedCalled = true;
+   ensureSessionInitializedImpl();
 }
 
 bool isSessionInitialized()
