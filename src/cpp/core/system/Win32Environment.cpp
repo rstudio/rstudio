@@ -194,6 +194,13 @@ void unsetenv(const std::string& name)
    }
 }
 
+bool isValidEnvironmentVariableName(const std::string& name)
+{
+   // SetEnvironmentVariable forbids only the empty name and names containing
+   // '='; unlike POSIX, Windows imposes no restriction on the remaining
+   // characters (e.g. ProgramFiles(x86) is a real, always-present variable)
+   return !name.empty() && name.find('=') == std::string::npos;
+}
 
 } // namespace system
 } // namespace core
