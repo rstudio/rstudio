@@ -6,6 +6,7 @@ Repo-level developer tasks, run through the top-level `package.json`:
 npm run rserver-dev       # start a development RStudio Server
 npm run rserver-status    # report what is running
 npm run rserver-stop      # stop it
+npm run startup-timing    # measure RStudio Desktop startup
 ```
 
 The tasks are TypeScript run directly by `node` (built-in type stripping, Node
@@ -60,6 +61,44 @@ reports the running instance instead (use `--restart` to replace it).
 - State lives in `<checkout>/.rstudio-dev/` (gitignored): `instance.json` plus
   `rserver.log` and `gwt.log`, which are the first place to look if a start
   fails.
+
+## startup-timing
+
+Measures where RStudio Desktop spends its startup time:
+
+```sh
+npm run startup-timing                                   # dev build, 3 launches
+npm run startup-timing -- --runs=5 --no-splash
+npm run startup-timing -- --app=/Applications/RStudio.app/Contents/MacOS/RStudio
+npm run startup-timing -- --report=.rstudio-dev/startup-timing   # re-print
+```
+
+Each launch runs with `RSTUDIO_STARTUP_TIMING=<file>`, which makes the three
+processes involved append checkpoints to one JSON-lines file:
+
+- the Electron main process (`src/node/desktop/src/main/startup-timing.ts`):
+  app ready, R detection, rsession spawn, window creation, page load,
+  workbench initialized;
+- the rsession process (`src/cpp/core/StartupTiming.cpp`, called from
+  `SessionMain.cpp`, `RInit.cpp` and friends): options, prefs, HTTP listener,
+  R initialization, module initialization, `client_init`, deferred init;
+- the GWT client, which records `performance.mark("rstudio:...")` at its own
+  milestones (`org.rstudio.core.client.StartupTiming`); the desktop copies
+  those marks plus the navigation and resource timings into the file once the
+  workbench is up.
+
+The report prints the merged timeline (medians across runs, relative to the
+Electron process creation time) followed by the longest measured spans, such
+as the R module files sourced during session init and the largest downloads.
+The per-run files under `<checkout>/.rstudio-dev/startup-timing/` also hold
+the launch log and, unless `--user-config` was given, the throwaway RStudio
+config and data homes the run used. The Electron profile (`--user-data-dir`)
+is shared by the runs of one measurement and emptied before the first, so
+run 1 behaves like a first launch and later runs like everyday launches.
+
+Measuring the dev build goes through `npm run start` (electron-forge) each
+time, so a run takes a while to start; the timeline is unaffected because it
+begins at Electron process creation, after webpack has finished.
 
 ## Windows
 

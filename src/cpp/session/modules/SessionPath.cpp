@@ -156,10 +156,17 @@ Error initializePathViaShell(const std::string& shellPath,
 // might.
 std::string initializePath()
 {
+   std::string defaultPath = core::system::getenv("PATH");
+
+   // RStudio Desktop asks the login shell itself, while Electron is still
+   // starting, and hands the result over with this marker set; asking again
+   // here would put the shell's startup cost back on the critical path
+   if (core::system::getenv("RSTUDIO_SESSION_PATH_INITIALIZED") == "1")
+      return defaultPath;
+
    // if the user's path already contains '/usr/local/bin', assume that
    // they're running RStudio through a shell / terminal and so we don't
    // need to re-read the shell PATH
-   std::string defaultPath = core::system::getenv("PATH");
    boost::regex reUsrLocalbin("(^|:)/usr/local/bin/?(:|$)");
    if (boost::regex_search(defaultPath, reUsrLocalbin))
       return defaultPath;

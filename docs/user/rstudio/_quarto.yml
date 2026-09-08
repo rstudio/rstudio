@@ -44,8 +44,13 @@ website:
    # - id: guide
       collapse-level: 2
       contents:
-      - text: "Introduction"
+      - section: "Introduction"
         href: index.qmd
+        contents:
+          - text: "Welcome"
+            href: index.qmd
+          - text: "Download RStudio"
+            href: download.qmd
       - text: "Getting Started"
         href: ide/get-started/index.qmd
       - section: "Guide"
@@ -149,3 +154,4 @@ format:
     include-in-header:
       - assets/_version-toast.html
       - assets/_page-actions.html
+      - assets/_download.html
