@@ -4,7 +4,7 @@
 - Optimized RStudio Desktop startup time.
 
 ### Fixed
--
+- Fixed an issue where the Global Options dialog could push the OK and Apply buttons off screen in short windows.
 
 ### Dependencies
 -

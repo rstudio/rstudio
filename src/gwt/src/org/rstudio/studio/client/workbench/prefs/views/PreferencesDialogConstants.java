@@ -39,7 +39,15 @@ public class PreferencesDialogConstants
    
    public static final String panelContainerHeight()
    {
-      return PANEL_CONTAINER_HEIGHT + "px";
+      return panelContainerHeight(0);
+   }
+
+   public static final String panelContainerHeight(int offset)
+   {
+      // Leave room for the caption, dialog buttons, and the 30px bottom margin
+      // reserved by ModalDialogBase before it scrolls the entire dialog.
+      return "min(" + (PANEL_CONTAINER_HEIGHT - offset) +
+            "px, calc(100vh - " + (130 + offset) + "px))";
    }
    
    public static final String panelContainerWidthNoChooser()

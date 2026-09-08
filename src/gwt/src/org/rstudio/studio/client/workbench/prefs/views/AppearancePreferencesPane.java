@@ -333,7 +333,9 @@ public class AppearancePreferencesPane extends PreferencesPane
             false);
       
       theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
-      theme_.getListBox().getElement().getStyle().setHeight(themeSelectorHeight(), Unit.PX);
+      theme_.getListBox().setHeight(PreferencesDialogConstants.panelContainerHeight(
+            PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - themeSelectorHeight()));
+      theme_.getListBox().getElement().getStyle().setProperty("minHeight", "80px");
       theme_.getListBox().addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -441,11 +443,11 @@ public class AppearancePreferencesPane extends PreferencesPane
       int previewWidth = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH - 312;
       // Reserve room below the two columns for the "ignore project appearance"
       // checkbox so it fits without overflowing the pane.
-      int previewHeight = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 38 - IGNORE_APPEARANCE_ROW_HEIGHT;
       previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(RES.codeSample().getText());
       preview_.setWidth(previewWidth + "px");
-      preview_.setHeight(previewHeight + "px");
+      preview_.setHeight(PreferencesDialogConstants.panelContainerHeight(38 + IGNORE_APPEARANCE_ROW_HEIGHT));
+      preview_.getElement().getStyle().setProperty("minHeight", "100px");
       preview_.setFontSize(Double.parseDouble(editorFontSize_.getValue()));
       preview_.setLineHeight(Double.parseDouble(editorLineHeight_.getValue()));
       preview_.setTheme(currentTheme.getUrl());
@@ -483,18 +485,18 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    // It looks like theme components are larger in desktop, so we need
    // to adjust the height of certain UI elements to ensure everything
-   // can fit.
+   // can fit, including the row below the theme controls.
    //
    // https://github.com/rstudio/rstudio/issues/13154
    private int themeSelectorHeight()
    {
       if (Desktop.isDesktop())
       {
-         return 200;
+         return 200 - IGNORE_APPEARANCE_ROW_HEIGHT;
       }
       else
       {
-         return 250;
+         return 250 - IGNORE_APPEARANCE_ROW_HEIGHT;
       }
    }
 
