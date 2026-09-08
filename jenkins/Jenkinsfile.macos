@@ -241,7 +241,9 @@ pipeline {
             // rstudio-debug-symbols; as above, the macOS agent cannot use
             // an instance profile, so the role is assumed explicitly
             withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID, region: 'us-east-1') {
-              sh "package/osx/scripts/upload-debug-symbols ${PRODUCT} ${RSTUDIO_VERSION}"
+              retry(5) {
+                sh "package/osx/scripts/upload-debug-symbols ${PRODUCT} ${RSTUDIO_VERSION}"
+              }
             }
           }
         }

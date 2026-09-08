@@ -43,9 +43,10 @@ usage () {
 	    ${PKG_DIR}/build          x86_64
 	    ${PKG_DIR}/build-arm64    arm64
 
-	Architectures without a build directory are skipped. dSYM bundles
-	only exist for RelWithDebInfo package builds; add_stripped_executable
-	(cmake/globals.cmake) runs dsymutil before stripping each executable.
+	Architectures without a build directory are skipped, but at least one
+	build directory must exist. dSYM bundles only exist for RelWithDebInfo
+	package builds; add_stripped_executable (cmake/globals.cmake) runs
+	dsymutil before stripping each executable.
 
 	With --dry-run, the archives are created but not uploaded.
 
@@ -66,7 +67,7 @@ for arg in "${@:3}"; do
 	case "${arg}" in
 	--dry-run) dry_run=1 ;;
 	*)
-		error "unknown argument '${arg}'"
+		error "unknown argument '${arg}'" || true
 		usage
 		exit 1
 		;;
@@ -77,15 +78,6 @@ done
 ensure-aws-cli () {
 
 	# Check and see if aws-cli is already on the PATH.
-	if command -v aws &> /dev/null; then
-		return 0
-	fi
-
-	# Homebrew installs are not necessarily on the PATH of a Jenkins agent,
-	# nor is a per-user install from a previous run of this script.
-	PATH="/opt/homebrew/bin:/usr/local/bin:${HOME}/aws-cli:${PATH}"
-	hash -r
-
 	if command -v aws &> /dev/null; then
 		return 0
 	fi
@@ -192,6 +184,17 @@ upload-symbols-for-arch () {
 	aws s3 cp "${src}" "${tgt}"
 
 }
+
+if [ ! -d "${PKG_DIR}/build" ] && [ ! -d "${PKG_DIR}/build-arm64" ]; then
+	error "No macOS build directories found under '${PKG_DIR}'; run make-package first"
+fi
+
+# Jenkins agents may omit Homebrew and per-user tools from PATH. Make them
+# available even when aws is already installed or this is a dry run, while
+# preserving the caller's preferred tools.
+PATH="${PATH}:/opt/homebrew/bin:/usr/local/bin:${HOME}/aws-cli"
+hash -r
+require-program xz
 
 if [ "${dry_run}" -eq 0 ]; then
 	ensure-aws-cli || {
