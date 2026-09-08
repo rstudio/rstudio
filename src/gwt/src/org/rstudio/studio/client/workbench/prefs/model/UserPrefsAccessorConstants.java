@@ -1488,6 +1488,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String wrapTabNavigationDescription();
 
    /**
+    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    */
+   @DefaultStringValue("Highlight active document and pane tabs")
+   String highlightActiveTabsTitle();
+   @DefaultStringValue("Use a bold label and a blue overline to highlight the active document and pane tabs.")
+   String highlightActiveTabsDescription();
+
+   /**
     * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
     */
    @DefaultStringValue("Change active editor tab with mouse wheel")

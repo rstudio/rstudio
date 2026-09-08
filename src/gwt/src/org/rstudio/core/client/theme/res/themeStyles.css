@@ -61,6 +61,7 @@
 @external gwt-SplitLayoutPanel-Workbench;
 
 @external rstudio-themes-dark;
+@external rstudio-highlight-active-tabs;
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
@@ -1442,8 +1443,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: MULTIPODTABRIGHT left top no-repeat;
 }
 .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
-   font-weight: normal;
+   font-weight: bold;
    padding-top: 4px;
+}
+
+.rstudio-highlight-active-tabs .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
+   font-weight: normal;
 }
 
 .rstudio-themes-dark .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
@@ -2500,15 +2505,15 @@ input[type="checkbox"]:checked:before {
 }
 
 /* Mark the selected tab without changing its height or content position. */
-.gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+.rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
    box-shadow: 0 2px 0 #3465a4 inset;
 }
 
-.rstudio-themes-dark .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+.rstudio-highlight-active-tabs .rstudio-themes-dark .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
    box-shadow: 0 2px 0 #8ab4f8 inset;
 }
 
-.gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
+.rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
    font-weight: 600;
 }
 
