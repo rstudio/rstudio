@@ -16,6 +16,8 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RExec.hpp>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <shared_core/FilePath.hpp>
 
 #include <core/Log.hpp>
@@ -284,7 +286,8 @@ bool isExecuting()
    return s_executionCount > 0;
 }
 
-Error executeSafely(boost::function<void()> function)
+Error executeSafely(boost::function<void()> function,
+                    ExecuteSafelyOptions options)
 {
    if (!ASSERT_MAIN_THREAD())
    {
@@ -293,8 +296,12 @@ Error executeSafely(boost::function<void()> function)
                ERROR_LOCATION);
    }
    
-   // disable custom error handlers while we execute code
-   DisableErrorHandlerScope disableErrorHandler;
+   // disable custom error handlers while we execute code (unless the
+   // caller needs them left in place)
+   boost::scoped_ptr<DisableErrorHandlerScope> disableErrorHandler;
+   if ((options & ExecuteSafelyKeepErrorHandler) == 0)
+      disableErrorHandler.reset(new DisableErrorHandlerScope());
+
    DisableDebugScope disableStepInto(R_GlobalEnv);
    
    // note that we're executing code in this scope
