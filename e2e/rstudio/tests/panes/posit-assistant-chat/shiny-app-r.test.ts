@@ -122,6 +122,11 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
     // Send the deterministic prompt
     await chatActions.sendChatMessage(PROMPT);
 
+    // The no-output watchdog counts from the last output, not from here, so
+    // announce the wait: that resets its timer at poll start and makes the
+    // budget-vs-watchdog margin exact instead of a guess about setup silence.
+    console.log(`[shiny-app-r] awaiting assistant turn (budget ${ASSISTANT_TURN_BUDGET_MS / 1000}s)`);
+
     // Poll until the assistant completes. Handle Allow dialogs for each tool type.
     await chatActions.pollWithAllowDialogs(async () => {
       const messageCount = await chatPane.getMessageCount();
