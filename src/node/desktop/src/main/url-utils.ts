@@ -13,7 +13,6 @@
  *
  */
 
-import http from 'http';
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
 import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
@@ -84,6 +83,29 @@ export function isSafeHost(host: string): boolean {
   return false;
 }
 
+// a probe that connects but never receives a response (e.g. another process
+// shadowing the port) must not hang its caller's retry loop
+const kProbeRequestTimeoutMs = 2500;
+
+/**
+ * Resolves true once something answers an HTTP request to `url` with any
+ * status. The session's listener rejects this unauthenticated probe, but a
+ * rejection still means it is up.
+ */
+export async function probeUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(kProbeRequestTimeoutMs),
+    });
+    await response.body?.cancel(); // release the connection without reading the body
+    return true;
+  } catch (error: unknown) {
+    logger().logDebug(`Connection to ${url} failed: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+}
+
 /**
  * Wait for a URL to respond, with retries and timeout
  */
@@ -94,17 +116,8 @@ export async function waitForUrlWithTimeout(
   maxWaitSec: number,
 ): Promise<Err> {
   const checkReady: WaitTimeoutFn = async () => {
-    return new Promise((resolve) => {
-      http
-        .get(url, (res) => {
-          res.resume(); // consume response data to free up memory
-          resolve(new WaitResult('WaitSuccess'));
-        })
-        .on('error', (e) => {
-          logger().logDebug(`Connection to ${url} failed: ${e.message}`);
-          resolve(new WaitResult('WaitContinue'));
-        });
-    });
+    const reachable = await probeUrl(url);
+    return new WaitResult(reachable ? 'WaitSuccess' : 'WaitContinue');
   };
 
   return waitWithTimeout(checkReady, initialWaitMs, incrementWaitMs, maxWaitSec);

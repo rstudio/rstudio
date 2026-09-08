@@ -104,6 +104,19 @@ public class UserPrefs extends UserPrefsComputed
       }
    }
 
+   /**
+    * Reloads the preference layers from the session info.
+    *
+    * UserPrefs can be constructed before the client_init response arrives
+    * (eager GIN singletons and the application headers inject it during
+    * application startup), in which case the layers start out empty and every
+    * preference reads as its default until this is called.
+    */
+   public void loadFromSessionInfo()
+   {
+      updatePrefs(session_.getSessionInfo().getPrefs());
+   }
+
    public void writeUserPrefs()
    {
       writeUserPrefs(null);
@@ -127,7 +140,7 @@ public class UserPrefs extends UserPrefsComputed
    // ambiguous, since CommandWithArg and CommandWith2Args are unrelated types.
    public void writeUserPrefsWithDetail(CommandWith2Args<Boolean, String> onCompleted)
    {
-      updatePrefs(session_.getSessionInfo().getPrefs());
+      loadFromSessionInfo();
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
          new ServerRequestCallback<VoidResponse>()
@@ -279,7 +292,7 @@ public class UserPrefs extends UserPrefsComputed
    @Override
    public void onSessionInit(SessionInitEvent event)
    {
-      updatePrefs(session_.getSessionInfo().getPrefs());
+      loadFromSessionInfo();
 
       origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
       announceScreenReaderState();

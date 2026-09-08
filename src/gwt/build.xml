@@ -277,6 +277,11 @@
    <set-if-exists property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd"/>
    <set-if-unset  property="yarn.bin" value="yarn"/>
 
+   <!-- use node from dependencies if available, otherwise from the system -->
+   <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
+   <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
+   <set-if-unset  property="node.bin" value="node"/>
+
    <!-- similar lookup for panmirror -->
    <set-if-exists property="panmirror.dir" value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
    <set-if-exists property="panmirror.dir" value="c:/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
@@ -375,6 +380,14 @@
          <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="${gwt.main.module}"/>
       </java>
+
+      <!-- precompress the large content-hashed outputs so the session can
+           serve them with Content-Encoding: gzip at zero runtime cost
+           (node is already required by the panmirror step above) -->
+      <exec executable="${node.bin}" resolveexecutable="true" failonerror="true">
+         <arg value="tools/precompress.js"/>
+         <arg value="${www.dir}/rstudio"/>
+      </exec>
    </target>
 
    <target name="soyc" description="Generate and show SOYC report">
@@ -600,10 +613,6 @@
    <set-if-exists property="npm.bin" value="${node.dir}/bin/npm"/>
    <set-if-exists property="npm.bin" value="${node.dir}/npm.cmd"/>
    <set-if-unset  property="npm.bin" value="npm"/>
-
-   <set-if-exists property="node.bin" value="${node.dir}/bin/node"/>
-   <set-if-exists property="node.bin" value="${node.dir}/node.exe"/>
-   <set-if-unset  property="node.bin" value="node"/>
 
    <target name="testpage" depends="acesupport"
            description="Runs the standalone HTML test pages under test/ in headless chromium">
