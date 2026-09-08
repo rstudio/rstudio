@@ -48,14 +48,19 @@ const RESTORE_VIMRC = [
 ].join(' ');
 
 // True once a mapping with the given keys has been registered with the Vim
-// emulation (user mappings land in the shared keymap).
+// emulation (user mappings land in the shared keymap). The vim module loads
+// lazily -- requested by the first editor that applies vim keybindings -- so
+// "module not loaded yet" reads as "mapping not registered yet".
 function vimMappingRegistered(page: Page, keys: string): Promise<boolean> {
   return page.evaluate((mappedKeys) => {
     const w = window as unknown as {
-      require(id: string): { handler: { defaultKeymap: Array<{ keys?: string }> } };
+      require(id: string): { handler: { defaultKeymap: Array<{ keys?: string }> } } | undefined;
     };
-    const handler = w.require('ace/keyboard/vim').handler;
-    return handler.defaultKeymap.some((mapping) => mapping.keys === mappedKeys);
+    const vim = w.require('ace/keyboard/vim');
+    if (!vim) {
+      return false;
+    }
+    return vim.handler.defaultKeymap.some((mapping) => mapping.keys === mappedKeys);
   }, keys);
 }
 

@@ -63,6 +63,7 @@
 #include <core/http/Cookie.hpp>
 #include <core/http/CSRFToken.hpp>
 #include <core/r_util/RSessionContext.hpp>
+#include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Locale.hpp>
 
@@ -177,6 +178,8 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
 {
+   core::startup_timing::checkpoint("client-init-begin");
+
    // notify that we're about to initialize
    module_context::events().onBeforeClientInit();
    
@@ -736,16 +739,19 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #endif
 
    ptrConnection->sendResponse(response);
+   core::startup_timing::checkpoint("client-init-response-sent");
 
    // complete initialization of session
    init::ensureSessionInitialized();
-   
+   core::startup_timing::checkpoint("session-initialized");
+
    // notify modules of the client init
    module_context::events().onClientInit();
-   
+
    // call the init function
    initFunction();
 
+   core::startup_timing::checkpoint("client-init-end");
    LOG_DEBUG_MESSAGE("End /rpc/client_init for client: " + clientId);
 }
 

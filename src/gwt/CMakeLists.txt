@@ -99,6 +99,13 @@ if(GWT_BUILD)
    # depend on Java source files
    file(GLOB_RECURSE GWT_SOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.java")
 
+   # module definitions and the build logic itself must also invalidate the build
+   file(GLOB_RECURSE GWT_MODULE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.gwt.xml")
+   list(APPEND GWT_SOURCE_FILES
+      ${GWT_MODULE_FILES}
+      "${CMAKE_CURRENT_SOURCE_DIR}/build.xml"
+      "${CMAKE_CURRENT_SOURCE_DIR}/tools/precompress.js")
+
    # generated during GWT build command
    set(GWT_BUILD_TIMESTAMP "${CMAKE_CURRENT_BINARY_DIR}/timestamp")
 

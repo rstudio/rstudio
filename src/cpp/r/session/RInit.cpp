@@ -15,6 +15,7 @@
 
 #include <boost/bind/bind.hpp>
 
+#include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -214,6 +215,8 @@ void restoreSession(const FilePath& suspendedSessionPath,
 // one-time per session initialization
 Error initialize()
 {
+   core::startup_timing::checkpoint("r-session-init-begin");
+
    // ensure that the utils package is loaded (it might not be loaded
    // if R is attempting to recover from a library loading error which
    // occurs during .Rprofile)
@@ -259,7 +262,7 @@ Error initialize()
    error = r::sourceManager().sourceTools(globalCallingHandlersFilePath);
    if (error)
       return error;
-
+   core::startup_timing::checkpoint("r-tools-sourced");
 
    // initialize graphics device -- use a stable directory for server mode
    // and temp directory for desktop mode (so that we can support multiple
@@ -329,7 +332,8 @@ Error initialize()
       // defer loading of global environment
       s_deferredDeserializationAction = deferredRestoreNewSession;
    }
-   
+   core::startup_timing::checkpoint("r-state-restored");
+
    // initialize client
    RInitInfo rInitInfo(wasResumed);
    error = rCallbacks().init(rInitInfo);
@@ -384,6 +388,8 @@ Error initialize()
    }
 #endif
 
+   core::startup_timing::checkpoint("r-session-init-end");
+
    // now run hooks for those waiting for session to be fully initialized
    if (rCallbacks().initComplete)
       rCallbacks().initComplete();
@@ -404,6 +410,7 @@ void ensureDeserialized()
       // cannot longjmp through the C++ frames of session initialization
       // (#18718). clear the action after either result so subsequent calls
       // do not retry a restore that may already have partially completed
+      core::startup_timing::ScopedCheckpoint timing("r-deserialize");
       Error error = r::exec::executeSafely(
                s_deferredDeserializationAction,
                r::exec::ExecuteSafelyKeepErrorHandler);
