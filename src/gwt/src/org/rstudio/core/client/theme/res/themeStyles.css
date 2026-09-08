@@ -2501,11 +2501,11 @@ input[type="checkbox"]:checked:before {
 
 /* Mark the selected tab without changing its height or content position. */
 .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 0 3px 0 #3465a4 inset;
+   box-shadow: 0 2px 0 #3465a4 inset;
 }
 
 .rstudio-themes-dark .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 0 3px 0 #8ab4f8 inset;
+   box-shadow: 0 2px 0 #8ab4f8 inset;
 }
 
 .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
