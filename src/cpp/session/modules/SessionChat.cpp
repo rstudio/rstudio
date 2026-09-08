@@ -65,7 +65,6 @@
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
-#include <core/Version.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -3793,11 +3792,8 @@ const int kManifestDeadlineSeconds = 30;
 // main thread by fetchManifestAsync -- its process callbacks can otherwise fire
 // on the offline-service background thread while R is busy.
 // s_pendingCompletions holds the actions to run once the in-flight check
-// finishes (each RPC caller queues one); s_checkIncludesStartup records whether
-// any caller in the current batch is the startup check (which also runs the
-// recommended-RStudio-version warning).
+// finishes (each RPC caller queues one).
 bool s_checkInProgress = false;
-bool s_checkIncludesStartup = false;
 std::vector<boost::function<void()>> s_pendingCompletions;
 
 // Reset single-flight state and run queued completions. Swap first so a completion
@@ -3805,7 +3801,6 @@ std::vector<boost::function<void()>> s_pendingCompletions;
 void drainPendingCompletions()
 {
    s_checkInProgress = false;
-   s_checkIncludesStartup = false;
    std::vector<boost::function<void()>> completions;
    completions.swap(s_pendingCompletions);
    for (boost::function<void()>& completion : completions)
@@ -3814,7 +3809,7 @@ void drainPendingCompletions()
 
 // Defined further below (after the manifest parse/check helpers); forward-declared
 // here so onDeferredInit's startup kickoff can reference startUpdateCheck.
-void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete);
+void startUpdateCheck(bool force, boost::function<void()> onComplete);
 void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest);
 
 // Automation-only override for chatCheckForUpdates. When set (via the
@@ -4038,70 +4033,6 @@ void fetchManifestAsync(
       false);  // not idleOnly: fire even while R is busy (not only when idle)
 }
 
-
-// Extract recommended RStudio version from manifest
-// Returns Success() and populates output params if field is present and valid
-// Returns error if field is missing or invalid (caller should handle gracefully)
-Error getRecommendedRStudioVersion(
-    const json::Object& manifest,
-    std::string* pVersion,
-    std::string* pUrl)
-{
-   if (!pVersion || !pUrl)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-   // Look for "recommendedRStudioVersion" object
-   json::Object versionObj;
-   Error error = json::readObject(manifest, "recommendedRStudioVersion", versionObj);
-   if (error)
-   {
-      // Field not present - this is expected for older manifests
-      return error;
-   }
-
-   // Extract "version" and "url" fields
-   std::string version, url;
-   error = json::readObject(versionObj, "version", version, "url", url);
-   if (error)
-   {
-      WLOG("recommendedRStudioVersion missing required fields: {}", error.getMessage());
-      return error;
-   }
-
-   // Validate URL is HTTPS
-   if (!isHttpsUrl(url))
-   {
-      WLOG("Rejecting recommendedRStudioVersion with non-HTTPS URL: {}", url);
-      return systemError(boost::system::errc::protocol_error,
-                        "recommendedRStudioVersion URL must use HTTPS",
-                        ERROR_LOCATION);
-   }
-
-   *pVersion = version;
-   *pUrl = url;
-
-   DLOG("Found recommended RStudio version: {} at {}", version, url);
-   return Success();
-}
-
-// Show warning bar about outdated RStudio version
-void showRStudioVersionWarning(
-    const std::string& recommendedVersion,
-    const std::string& downloadUrl)
-{
-   json::Object msgJson;
-   msgJson["severe"] = false;
-   boost::format fmt(
-      "A newer version of RStudio (%1%) is recommended for Posit AI Pass. "
-      "<a href=\"%2%\" target=\"_blank\" rel=\"noopener noreferrer\">Download the update</a>"
-   );
-   msgJson["message"] = boost::str(fmt %
-      string_utils::htmlEscape(recommendedVersion, true) %
-      string_utils::htmlEscape(downloadUrl, true));
-   ClientEvent event(client_events::kShowWarningBar, msgJson);
-   module_context::enqueClientEvent(event);
-}
-
 // Show warning bar when Posit Assistant is using the test manifest.
 void showTestManifestWarning()
 {
@@ -4142,14 +4073,12 @@ void onDeferredInit(bool)
    // path. The fetch is async, but spawning the --vanilla child R process still
    // has a cost (process creation + R DLL load, often AV-scanned on Windows), so
    // we wait for an idle moment rather than spawning it during session startup.
-   // isStartup=true so the recommended-RStudio-version warning fires (once,
-   // startup-only). Guarded by isPositAssistantWanted() so non-PAI sessions never
-   // spawn the fetch.
+   // Guarded by isPositAssistantWanted() so non-PAI sessions never spawn the fetch.
    if (isPositAssistantWanted())
    {
       module_context::scheduleDelayedWork(
          boost::posix_time::seconds(1),
-         []() { startUpdateCheck(true, false, boost::function<void()>()); },
+         []() { startUpdateCheck(false, boost::function<void()>()); },
          true);  // idleOnly: run after R becomes idle (post client attach)
    }
 }
@@ -4558,13 +4487,10 @@ Error installPackage(const FilePath& packagePath)
 // there) once a manifest fetch completes (success or failure). Computes the new
 // update state from the manifest, writes s_updateState in one atomic locked update
 // (no reset-at-start window), stops the agent when the installed version/protocol
-// is unsupported or the manifest is unavailable, runs the startup-only
-// recommended-RStudio-version warning, then drains any queued single-flight
-// completions.
+// is unsupported or the manifest is unavailable, then drains any queued
+// single-flight completions.
 void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest)
 {
-   bool wasStartup = s_checkIncludesStartup;
-
    std::string installedVersion = getInstalledVersion();
    if (installedVersion.empty())
    {
@@ -4588,9 +4514,6 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    // Staged on the success path (authoritative record from buildSuccessOutcome).
    // Left unset on every other exit, so finish() falls back to preserve-and-bump.
    boost::optional<ManifestCheckRecord> recordToWrite;
-   bool showVersionWarning = false;
-   std::string recommendedVersion;
-   std::string downloadPageUrl;
 
    // Apply the computed state + side effects, then drain waiters. Runs on exactly
    // one exit path.
@@ -4619,9 +4542,6 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       // "Checking for Posit Assistant installation..." UI for ~10s.
       if (manifestUnavailable || isPositAssistantUnsupported())
          assistant::requestAgentStop();
-
-      if (showVersionWarning)
-         showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
 
       // Persist the attempt. The success path stages an authoritative record;
       // every other exit leaves it unset and we preserve-and-bump (only a success
@@ -4760,45 +4680,6 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
            installedVersion, packageVersion);
    }
 
-   // Startup-only: warn about an out-of-date prerelease RStudio build. Computed
-   // here, fired in finish() (after the state write); never on a pane-open/Retry
-   // check (wasStartup is false for those).
-   if (wasStartup)
-   {
-      Error versionError =
-         getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
-      if (!versionError)
-      {
-         core::Version current(RSTUDIO_VERSION);
-         core::Version recommended(recommendedVersion);
-         if (recommended.empty())
-         {
-            WLOG("Failed to parse recommended RStudio version: {}", recommendedVersion);
-         }
-         else
-         {
-            std::string versionStr(RSTUDIO_VERSION);
-            bool isPrereleaseBuild =
-               versionStr.find("-daily") != std::string::npos ||
-               versionStr.find("-hourly") != std::string::npos;
-            bool forceCheck =
-               !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
-
-            DLOG("RStudio version check: current={}, recommended={}, isPrerelease={}",
-                 RSTUDIO_VERSION, recommendedVersion, isPrereleaseBuild);
-
-            if (installedVersion == "0.0.0")
-               DLOG("  Skipping version warning (Posit Assistant not installed)");
-            else if (!isPrereleaseBuild && !forceCheck)
-               DLOG("  Skipping version warning (release build)");
-            else if (current < recommended)
-               showVersionWarning = true;
-            else
-               DLOG("  No warning needed (version is current or newer)");
-         }
-      }
-   }
-
    finish();
 }
 
@@ -4935,12 +4816,10 @@ void resolveWithoutManifestFetch()
 // the check finishes; overlapping callers (startup + pane-open + Retry) share a
 // single fetch. Ordering invariant: enqueue the completion BEFORE starting the
 // fetch, so the synchronous DEBUG-manifest path still drains it. Main-thread only.
-void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete)
+void startUpdateCheck(bool force, boost::function<void()> onComplete)
 {
    if (onComplete)
       s_pendingCompletions.push_back(onComplete);
-   if (isStartup)
-      s_checkIncludesStartup = true;
 
    // A caller that joins an in-flight check only enqueues its completion above;
    // `force` is not re-evaluated here, so the in-flight check's own fetch-vs-skip
@@ -5763,7 +5642,7 @@ void chatCheckForUpdates(const json::JsonRpcRequest& request,
 
    // Otherwise kick (or join) an async check and resolve once it completes.
    DLOG("Update state not populated or recheck forced, performing async check");
-   startUpdateCheck(false, forceRecheck, boost::bind(resolveWithUpdateState, cont));
+   startUpdateCheck(forceRecheck, boost::bind(resolveWithUpdateState, cont));
 }
 
 // Test-only: install (or clear) a one-shot override for chatCheckForUpdates.
@@ -6162,7 +6041,7 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
    else
    {
       DLOG("Update state not populated, performing async check before install");
-      startUpdateCheck(false, true, boost::bind(performInstall, cont));
+      startUpdateCheck(true, boost::bind(performInstall, cont));
    }
 }
 

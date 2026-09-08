@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.StartupTiming;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.application.ui.RTimeoutOptions;
@@ -97,6 +98,7 @@ public class ApplicationClientInit implements RTimeoutOptions.RTimeoutObserver
          }
       };
 
+      StartupTiming.mark("client-init-sent");
       server_.clientInit(GWT.getHostPageBaseURL(), options, rpcRequestCallback_);
    }
    

@@ -16,6 +16,7 @@
 #include <cstring>
 
 #include <core/Log.hpp>
+#include <core/StartupTiming.hpp>
 
 #include <r/RRuntime.hpp>
 #include <r/session/REventLoop.hpp>
@@ -124,7 +125,9 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
 
    // initialize R
    const char *args[]= {"RStudio", "--interactive"};
+   core::startup_timing::checkpoint("r-initialize-begin");
    Rf_initialize_R(sizeof(args)/sizeof(args[0]), (char**)args);
+   core::startup_timing::checkpoint("r-initialized");
 
    // For newSession = false we need to do a few things:
    //
@@ -223,8 +226,10 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
       R_Suicide("RStudio failed to initialize R runtime dispatch");
    }
 
-   // initialize the main loop
+   // initialize the main loop (this is where Rprofile.site and .Rprofile run)
+   core::startup_timing::checkpoint("r-mainloop-setup-begin");
    setup_Rmainloop();
+   core::startup_timing::checkpoint("r-mainloop-setup-end");
 
    // run the main loop
    run_Rmainloop();

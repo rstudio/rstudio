@@ -22,8 +22,10 @@
 # Sources are CRAN for Windows and macOS, and Posit's r-builds CDN for Linux
 # (the same places rig pulled from). Both lay their files out inconsistently
 # -- CRAN moves macOS builds between OS-codename directories across releases,
-# and retires old Windows installers into base/old/ -- so this script absorbs
-# that variation and writes ONE flat naming scheme into the bucket:
+# retires old Windows installers into base/old/, and eventually moves whole
+# major series off to cran-archive.r-project.org (R 3.x lives there now) --
+# so this script absorbs that variation and writes ONE flat naming scheme
+# into the bucket:
 #
 #    R/<version>/R-<version>-<platform>.<ext>
 #
@@ -36,6 +38,7 @@ set -euo pipefail
 
 AWS_BUCKET="s3://rstudio-buildtools"
 CRAN="https://cran.r-project.org"
+CRAN_ARCHIVE="https://cran-archive.r-project.org"
 RBUILDS="https://cdn.posit.co/r"
 
 # Every platform CI installs R on. The key doubles as the token in the
@@ -74,6 +77,7 @@ r_source_urls() {
       windows-x86_64)
          echo "${CRAN}/bin/windows/base/R-${version}-win.exe"
          echo "${CRAN}/bin/windows/base/old/${version}/R-${version}-win.exe"
+         echo "${CRAN_ARCHIVE}/bin/windows/base/old/${version}/R-${version}-win.exe"
          ;;
 
       macos-arm64)
@@ -83,9 +87,12 @@ r_source_urls() {
 
       macos-x86_64)
          # R <= 4.2 predates the per-arch directories on macOS and carries no
-         # arch suffix in the filename.
+         # arch suffix in the filename. R 3.x is on cran-archive, where the
+         # '.nn' build is the notarized one and the one CRAN's index links.
          echo "${CRAN}/bin/macosx/big-sur-x86_64/base/R-${version}-x86_64.pkg"
          echo "${CRAN}/bin/macosx/base/R-${version}.pkg"
+         echo "${CRAN_ARCHIVE}/bin/macosx/base/R-${version}.nn.pkg"
+         echo "${CRAN_ARCHIVE}/bin/macosx/base/R-${version}.pkg"
          ;;
 
       # r-builds keys its Debian-family packages by distro only; the
@@ -128,6 +135,32 @@ r_extension() {
 # check if command exists
 command_exists() {
    command -v "$1" >/dev/null 2>&1
+}
+
+# Download one candidate URL. A 404 means the installer is not at this
+# location and the caller should move on to the next candidate. Anything
+# else -- a connection reset mid-transfer, say, which CRAN does under load --
+# is retried here, since curl's own --retry only covers timeouts and a few
+# 5xx codes.
+download() {
+   local url="$1"
+   local dest="$2"
+
+   local attempt code
+   for attempt in 1 2 3; do
+      if code="$(curl -fsSL --retry 5 --retry-delay 10 -o "${dest}" -w '%{http_code}' "${url}")"; then
+         return 0
+      fi
+
+      if [[ "${code}" == "404" ]]; then
+         return 1
+      fi
+
+      echo "    attempt ${attempt} failed (HTTP ${code}); retrying" >&2
+      sleep 10
+   done
+
+   return 1
 }
 
 usage() {
@@ -206,7 +239,7 @@ for PLATFORM in "${PLATFORMS[@]}"; do
    FOUND=""
    while IFS= read -r URL; do
       echo "    trying ${URL}"
-      if curl -fsSL --retry 5 --retry-delay 10 -o "${WORKDIR}/${FILENAME}" "${URL}"; then
+      if download "${URL}" "${WORKDIR}/${FILENAME}"; then
          FOUND="${URL}"
          break
       fi
