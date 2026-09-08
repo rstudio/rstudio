@@ -402,7 +402,8 @@ void ensureDeserialized()
    {
       // do the deferred action, containing any R error it raises so that it
       // cannot longjmp through the C++ frames of session initialization
-      // (#18718). the action is cleared either way, as it must not run twice
+      // (#18718). clear the action after either result so subsequent calls
+      // do not retry a restore that may already have partially completed
       Error error = r::exec::executeSafely(
                s_deferredDeserializationAction,
                r::exec::ExecuteSafelyKeepErrorHandler);

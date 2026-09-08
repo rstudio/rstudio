@@ -59,17 +59,14 @@ void installGlobalCallingHandlers()
    // this must be evaluated directly rather than via R_tryEval(): global
    // calling handlers attach to R's top-level context, and would be discarded
    // along with the temporary context established by R_ToplevelExec(). an R
-   // error raised here therefore escapes as a longjmp, so the R side resolves
-   // everything that might fail before it calls globalCallingHandlers()
+   // error raised here therefore escapes as a longjmp. the R side contains
+   // errors while resolving handlers, but registration itself can still fail
+   // (e.g. if a caller has condition handlers on the stack)
    Rf_eval(initializeSEXP, R_GlobalEnv);
 }
 
 void ensureSessionInitializedImpl()
 {
-   // install condition handlers if requested
-   if (r::session::utils::isR4())
-      installGlobalCallingHandlers();
-
    // note that we are now fully initialized. we defer setting this
    // flag so that consoleRead and handleClientInit know that we have just
    // started up and can act accordingly
@@ -79,6 +76,12 @@ void ensureSessionInitializedImpl()
    // is supported so that the workbench UI can load without having to wait
    // for the potentially very lengthy deserialization of the environment)
    rstudio::r::session::ensureDeserialized();
+
+   // install condition handlers last: the raw R evaluation can still longjmp,
+   // and must not prevent deserialization or leave s_sessionInitialized false
+   // after the one-time initialization flag has been set
+   if (r::session::utils::isR4())
+      installGlobalCallingHandlers();
 }
 
 } // anonymous namespace

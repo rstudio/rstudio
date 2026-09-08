@@ -66,15 +66,28 @@
    # (see installGlobalCallingHandlers() in SessionInit.cpp), as global calling
    # handlers must attach to R's top-level context. An error raised here would
    # escape as a longjmp through the C++ frames of session initialization, so
-   # everything that might fail is resolved inside tryCatch() first; only
-   # globalCallingHandlers() itself runs outside of it, since it refuses to run
-   # with condition handlers on the stack. As the body runs in the global
-   # environment, it must also not create any bindings.
-   do.call(
-      globalCallingHandlers,
-      tryCatch(
+   # resolve handlers inside tryCatch() first. Registration itself must run
+   # outside of it, since globalCallingHandlers() refuses to run with local
+   # condition handlers on the stack. It can still fail if a caller installed
+   # handlers, so the C++ side does this last, after deferred initialization.
+   # As the body runs in the restored global environment, it must not create
+   # bindings or rely on unqualified base functions that the workspace can mask.
+   base::do.call(
+      base::globalCallingHandlers,
+      base::tryCatch(
          .rs.globalCallingHandlers.handlers(),
-         error = function(cnd) list()
+         error = function(cnd)
+         {
+            # Reporting the failure must not let another error escape.
+            base::tryCatch(
+               .rs.logWarningMessage(
+                  "Failed to initialize global calling handlers: %s",
+                  base::conditionMessage(cnd)
+               ),
+               error = function(cnd) NULL
+            )
+            base::list()
+         }
       )
    )
 })

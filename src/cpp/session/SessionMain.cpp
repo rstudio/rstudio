@@ -1022,7 +1022,12 @@ void rDeferredInit(bool newSession)
             },
             rstudio::r::exec::ExecuteSafelyKeepErrorHandler);
    if (error)
+   {
+      error.addProperty("description",
+                        "Deferred initialization failed; remaining handlers were skipped");
+      error.addProperty("newSession", newSession);
       LOG_ERROR(error);
+   }
 
    // schedule execution of the session init hook
    module_context::scheduleDelayedWork(
