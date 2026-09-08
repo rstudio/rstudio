@@ -486,7 +486,7 @@ if [ "${build_package}" = "1" ]; then
          rm -rf "${app}"
          mv "${app}.compressed" "${app}"
          info "Verifying code signature of '${app}' ..."
-         codesign --verify --strict "${app}"
+         codesign --verify --deep --strict "${app}"
          info "Done!"
       done
 

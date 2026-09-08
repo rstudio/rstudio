@@ -263,18 +263,41 @@ TEST(GwtSymbolMapsTest, PartialGzippedSymbolMapReadContributesNothing)
    ASSERT_FALSE(FilePath::tempFilePath(mapsDir));
    ASSERT_FALSE(mapsDir.ensureDirectory());
 
-   // truncate near the end of the deflate data: earlier lines (including
-   // the requested symbol's) may decode before the stream fails, but a
-   // failed read must be all-or-nothing
+   // 'gzip -n' output for a map containing only this symbol:
+   // Ab,com.example.gwt.Widget::prime()V,com.example.gwt.Widget,prime,com/example/gwt/Widget.java,1,0
+   const unsigned char primingMapGz[] = {
+      31, 139, 8, 0, 0, 0, 0, 0, 0, 3, 115, 76, 210, 73, 206, 207,
+      213, 75, 173, 72, 204, 45, 200, 73, 213, 75, 47, 47, 209, 11, 207, 76,
+      73, 79, 45, 177, 178, 42, 40, 202, 204, 77, 213, 208, 12, 195, 161, 64,
+      7, 44, 15, 146, 212, 135, 74, 234, 3, 37, 245, 33, 146, 122, 89, 137,
+      101, 137, 58, 134, 58, 6, 92, 0, 50, 128, 178, 126, 97, 0, 0, 0
+   };
+
    FilePath gzMapPath = mapsDir.completeChildPath(std::string(kStrongName) + ".symbolMap.gz");
    std::shared_ptr<std::ostream> pOfs;
    ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
-   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
-               sizeof(kSymbolMapContentsGz) - 19);
+   pOfs->write(reinterpret_cast<const char*>(primingMapGz), sizeof(primingMapGz));
+   ASSERT_TRUE(pOfs->good());
    pOfs.reset();
 
+   // memoize successful validation without caching Pb, the symbol whose
+   // partially successful read we will test below
    SymbolMaps maps;
    ASSERT_FALSE(maps.initialize(mapsDir));
+
+   StackElement priming;
+   priming.methodName = "Ab";
+   priming.lineNumber = -1;
+   ASSERT_EQ("prime", maps.resymbolize(priming, kStrongName).methodName);
+
+   // replace the validated file with a truncated map: Pb decodes fully,
+   // then reading the incomplete Qb line fails before the parser can
+   // terminate. The parsed Pb entry must be discarded.
+   ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
+   pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
+               sizeof(kSymbolMapContentsGz) - 19);
+   ASSERT_TRUE(pOfs->good());
+   pOfs.reset();
 
    StackElement se;
    se.methodName = "Pb";
@@ -282,11 +305,17 @@ TEST(GwtSymbolMapsTest, PartialGzippedSymbolMapReadContributesNothing)
    StackElement resymbolized = maps.resymbolize(se, kStrongName);
    EXPECT_EQ(se.methodName, resymbolized.methodName);
 
+   // remove all decodable content: Pb must not resolve from a cached
+   // partial result left by the failed read
+   ASSERT_FALSE(writeStringToFile(gzMapPath, "not gzip data"));
+   EXPECT_EQ(se.methodName, maps.resymbolize(se, kStrongName).methodName);
+
    // repair the file: the same symbol must resolve, proving the failed
-   // read neither negative-cached it nor cached partial results
+   // reads did not cache it as unknown
    ASSERT_FALSE(gzMapPath.openForWrite(pOfs));
    pOfs->write(reinterpret_cast<const char*>(kSymbolMapContentsGz),
                sizeof(kSymbolMapContentsGz));
+   ASSERT_TRUE(pOfs->good());
    pOfs.reset();
 
    StackElement retried = maps.resymbolize(se, kStrongName);
