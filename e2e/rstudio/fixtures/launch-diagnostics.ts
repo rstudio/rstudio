@@ -42,7 +42,7 @@ export interface OutputTail {
  * launch that dies says so at the end.
  */
 export function captureOutputTail(
-  proc: ChildProcess,
+  proc: Pick<ChildProcess, 'stdout' | 'stderr' | 'exitCode' | 'signalCode'>,
   limit: number = OUTPUT_TAIL_LIMIT,
 ): OutputTail {
   let tail = '';

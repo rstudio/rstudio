@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { spawn, type ChildProcess } from 'child_process';
+import { PassThrough } from 'stream';
 import { captureOutputTail, describeLaunchState, OUTPUT_TAIL_LIMIT } from '@fixtures/launch-diagnostics';
 
 /**
@@ -97,6 +98,37 @@ test.describe('launch diagnostics', { tag: ['@desktop_only'] }, () => {
 
     const state = describeLaunchState(proc, captured, '');
     expect(state).toContain('FATAL-AT-THE-END');
+  });
+
+  test('settled() waits for data that arrives after the child has exited', async () => {
+    // The real race is not reproducible on demand: a spawned child that writes
+    // and exits had all output delivered before 'exit' at 12B, 8KB, 200KB and
+    // 2MB. Drive it deterministically instead, with streams we control and an
+    // already-set exitCode standing in for a child that has gone.
+    const stdout = new PassThrough();
+    const stderr = new PassThrough();
+    const exited = { stdout, stderr, exitCode: 1, signalCode: null };
+
+    const tail = captureOutputTail(exited);
+    let done = false;
+    const settling = tail.settled(5000).then(() => {
+      done = true;
+    });
+
+    // Nothing has ended yet, so settled() must still be waiting -- this is the
+    // assertion that fails if it resolves eagerly off the exit code.
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(done).toBe(false);
+    expect(tail.text()).toBe('');
+
+    stderr.write('FATAL-AFTER-EXIT');
+    stderr.end();
+    stdout.end();
+    await settling;
+
+    expect(done).toBe(true);
+    expect(tail.text()).toContain('FATAL-AFTER-EXIT');
+    expect(describeLaunchState(exited, tail.text(), '')).toContain('FATAL-AFTER-EXIT');
   });
 
   test('settled() does not stall the failure path for a live child', async () => {
