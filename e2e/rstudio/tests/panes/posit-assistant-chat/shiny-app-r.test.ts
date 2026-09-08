@@ -28,7 +28,14 @@ test.describe.serial('R Shiny Tip Calculator via Posit Assistant', { tag: ['@ai'
 
   // Budget for the assistant to write app.R and get it running in the Viewer,
   // sized for LLM tail latency -- observed whole-test durations are 90-108s.
-  const ASSISTANT_TURN_BUDGET_MS = 300000;
+  //
+  // Capped below the 300s no-output watchdog in scripts/run-with-heartbeat.mjs
+  // (PW_HEARTBEAT_TIMEOUT_SECONDS, which only the Linux desktop engine
+  // overrides). The poll is silent while the assistant works, so a budget at
+  // or above that threshold lets the watchdog kill the whole shard instead of
+  // this one test failing with the poll's own diagnostic. Raising it means
+  // emitting progress from the poll first.
+  const ASSISTANT_TURN_BUDGET_MS = 240000;
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     // A cold-cache package install can outlast the global per-test timeout;
