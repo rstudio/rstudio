@@ -2,6 +2,7 @@
 
 ### New
 - Optimized RStudio Desktop startup time.
+- Active document and pane tabs now have a bold label and a blue overline to make them easier to identify. (#18692)
 
 ### Fixed
 -

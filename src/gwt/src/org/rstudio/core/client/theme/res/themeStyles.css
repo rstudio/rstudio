@@ -1442,7 +1442,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: MULTIPODTABRIGHT left top no-repeat;
 }
 .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
-   font-weight: bold;
+   font-weight: normal;
    padding-top: 4px;
 }
 
@@ -2497,6 +2497,19 @@ input[type="checkbox"]:checked:before {
    padding-left: 9px;
    padding-right: 9px;
    margin-left: -1px;
+}
+
+/* Mark the selected tab without changing its height or content position. */
+.gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+   box-shadow: 0 3px 0 #3465a4 inset;
+}
+
+.rstudio-themes-dark .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+   box-shadow: 0 3px 0 #8ab4f8 inset;
+}
+
+.gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
+   font-weight: 600;
 }
 
 .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter {
