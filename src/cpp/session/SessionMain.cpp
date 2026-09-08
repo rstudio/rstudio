@@ -413,7 +413,7 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
          ? EX_SUSPEND_RESTART_LAUNCHER_SESSION
          : EX_CONTINUE;
 
-   rstudio::r::session::RSuspendOptions options(exitStatus);
+   rstudio::r::session::RSuspendOptions options(exitStatus, suspend::noSaveEnvVars());
    Error error = json::readObjectParam(
             request.params, 0,
             "save_minimal", &(options.saveMinimal),
@@ -1015,7 +1015,24 @@ void rSessionInitHook(bool newSession)
 void rDeferredInit(bool newSession)
 {
    core::startup_timing::ScopedCheckpoint timing("deferred-init");
-   module_context::events().onDeferredInit(newSession);
+
+   // run the deferred init handlers with any R error they raise contained
+   // here, rather than letting it longjmp through the C++ frames of session
+   // initialization (#18718). the user's error handler is left in place, as
+   // some handlers inspect it (see SessionErrors)
+   Error error = rstudio::r::exec::executeSafely(
+            [&]()
+            {
+               module_context::events().onDeferredInit(newSession);
+            },
+            rstudio::r::exec::ExecuteSafelyKeepErrorHandler);
+   if (error)
+   {
+      error.addProperty("description",
+                        "Deferred initialization failed; remaining handlers were skipped");
+      error.addProperty("newSession", newSession);
+      LOG_ERROR(error);
+   }
 
    // schedule execution of the session init hook
    module_context::scheduleDelayedWork(

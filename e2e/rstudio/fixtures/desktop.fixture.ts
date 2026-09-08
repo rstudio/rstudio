@@ -12,6 +12,7 @@ import { dismissAllModals, documentCloseAllNoSave, executeCommand } from '../uti
 import { withDeadline } from '../utils/deadline';
 import { workerRLibsUser } from './r-libs-setup';
 import { trackForReaping } from './process-reaper';
+import { captureOutputTail, describeLaunchState } from './launch-diagnostics';
 import { isDebugMode } from '../utils/debug';
 import { userHomeForAuthState } from '../utils/auth';
 
@@ -689,20 +690,29 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   // tree is detached into its own group and would otherwise survive the run.
   trackForReaping(rstudioProcess, () => killProcessTree(rstudioProcess));
   const launchTarget = DEV_MODE ? `npm run start (cwd ${DEV_DESKTOP_DIR})` : RSTUDIO_PATH;
+  // Dev mode inherits the streams to the terminal, so there is nothing to
+  // read; every other path pipes them and would otherwise discard them.
+  const outputTail = DEV_MODE ? undefined : captureOutputTail(rstudioProcess);
   let launchError: Error | undefined;
+  let cdpConnected = false;
   rstudioProcess.on('error', (err) => {
     launchError = new Error(`Failed to launch RStudio (${launchTarget}): ${err.message}`);
   });
   // `'error'` only fires on spawn-level failures (ENOENT). An exit with a
   // non-zero code -- missing npm script, webpack abort, electron-forge
   // crash -- would otherwise sit unnoticed for the full CDP-wait timeout.
-  // We only treat code !== 0 as an error; code === null means the process
-  // was killed by signal (typically our own killProcessTree during
-  // teardown), which isn't a launch failure.
+  // A signal death (code === null) is usually our own killProcessTree, but
+  // that only runs after we have already decided to fail -- so before CDP is
+  // up the signal came from outside (OOM killer, segfault), which is exactly
+  // the launch failure rstudio#18522 could never account for.
   rstudioProcess.on('exit', (code, signal) => {
     if (code !== null && code !== 0) {
       launchError = new Error(
         `RStudio process (${launchTarget}) exited prematurely with code ${code}${signal ? ` (signal ${signal})` : ''}`,
+      );
+    } else if (code === null && signal && !cdpConnected) {
+      launchError = new Error(
+        `RStudio process (${launchTarget}) was killed by ${signal} before CDP became reachable`,
       );
     }
   });
@@ -719,8 +729,12 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
   let lastConnectErr: unknown;
   while (Date.now() < cdpDeadline) {
     if (launchError) {
+      // The child has exited by now; give its streams a moment to deliver the
+      // trailing output, which is the part that says why it died.
+      await outputTail?.settled();
+      const state = describeLaunchState(rstudioProcess, outputTail?.text(), cdpPortListenerPids());
       killProcessTree(rstudioProcess);
-      throw launchError;
+      throw new Error(`${launchError.message}\n${state}`);
     }
     try {
       browser = await chromium.connectOverCDP(CDP_URL, { timeout: 5000 });
@@ -731,11 +745,14 @@ async function launchRStudioOnce(existingConfigRoot?: string): Promise<DesktopSe
     }
   }
   if (!browser) {
+    await outputTail?.settled();
+    const state = describeLaunchState(rstudioProcess, outputTail?.text(), cdpPortListenerPids());
     killProcessTree(rstudioProcess);
     throw new Error(
-      `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}`,
+      `Failed to connect to CDP at ${CDP_URL} within ${startupTimeout}ms: ${(lastConnectErr as Error)?.message ?? 'unknown'}\n${state}`,
     );
   }
+  cdpConnected = true;
 
   attachLaunchDebug(browser);
 
