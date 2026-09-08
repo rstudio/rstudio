@@ -127,7 +127,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       commands_ = commands;
       hasActiveProject_ = session.getSessionInfo().getActiveProjectFile() != null;
 
-      VerticalPanel leftPanel = new VerticalPanel();
+      FlowPanel leftPanel = new FlowPanel();
+      leftPanel.addStyleName(res.styles().appearanceControls());
 
       relaunchRequired_ = false;
 
@@ -333,9 +334,6 @@ public class AppearancePreferencesPane extends PreferencesPane
             false);
       
       theme_.getListBox().getElement().<SelectElement>cast().setSize(7);
-      theme_.getListBox().setHeight(PreferencesDialogConstants.panelContainerHeight(
-            PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - themeSelectorHeight()));
-      theme_.getListBox().getElement().getStyle().setProperty("minHeight", "80px");
       theme_.getListBox().addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -347,6 +345,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
       theme_.addStyleName(res.styles().themeChooser());
+      theme_.addStyleName(res.styles().editorThemeChooser());
       // SelectWidget.setElementId sets the id on the underlying <select> and
       // keeps its label associated (unlike assignElementId, which would land on
       // the composite wrapper).
@@ -395,6 +394,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       removeThemeButton_.setEnabled(!currentTheme.isDefaultTheme());
 
       themeButtonsPanel_ = new HorizontalPanel();
+      themeButtonsPanel_.addStyleName(res.styles().appearanceThemeButtons());
       themeButtonsPanel_.add(addThemeButton_);
       themeButtonsPanel_.add(removeThemeButton_);
 
@@ -438,29 +438,23 @@ public class AppearancePreferencesPane extends PreferencesPane
       leftPanel.add(themeButtonsPanel_);
       leftPanel.add(projectThemeOverridePanel_);
 
-      FlowPanel previewPanel = new FlowPanel();
-
       int previewWidth = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH - 312;
-      // Reserve room below the two columns for the "ignore project appearance"
-      // checkbox so it fits without overflowing the pane.
-      previewPanel.setSize("100%", "100%");
       preview_ = new AceEditorPreview(RES.codeSample().getText());
       preview_.setWidth(previewWidth + "px");
-      preview_.setHeight(PreferencesDialogConstants.panelContainerHeight(38 + IGNORE_APPEARANCE_ROW_HEIGHT));
-      preview_.getElement().getStyle().setProperty("minHeight", "100px");
       preview_.setFontSize(Double.parseDouble(editorFontSize_.getValue()));
       preview_.setLineHeight(Double.parseDouble(editorLineHeight_.getValue()));
       preview_.setTheme(currentTheme.getUrl());
       updatePreviewZoomLevel();
-      previewPanel.add(preview_);
-
-      HorizontalPanel hpanel = new HorizontalPanel();
-      hpanel.setWidth("100%");
-      hpanel.add(leftPanel);
-      hpanel.setCellWidth(leftPanel, "160px");
-      hpanel.add(previewPanel);
-
-      add(hpanel);
+      // Share the column height so the theme list fills the space above its
+      // buttons and their bottom edge aligns with the preview. Reserve room
+      // below both columns for the "ignore project appearance" checkbox.
+      FlowPanel columns = new FlowPanel();
+      columns.addStyleName(res.styles().appearanceColumns());
+      columns.getElement().getStyle().setProperty("minHeight",
+            PreferencesDialogConstants.panelContainerHeight(38 + IGNORE_APPEARANCE_ROW_HEIGHT));
+      columns.add(leftPanel);
+      columns.add(preview_);
+      add(columns);
 
       // "Ignore project-specific appearance settings" -- a global opt-out that
       // makes RStudio always use the global editor theme even when the active
@@ -483,23 +477,6 @@ public class AppearancePreferencesPane extends PreferencesPane
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
    }
    
-   // It looks like theme components are larger in desktop, so we need
-   // to adjust the height of certain UI elements to ensure everything
-   // can fit, including the row below the theme controls.
-   //
-   // https://github.com/rstudio/rstudio/issues/13154
-   private int themeSelectorHeight()
-   {
-      if (Desktop.isDesktop())
-      {
-         return 200 - IGNORE_APPEARANCE_ROW_HEIGHT;
-      }
-      else
-      {
-         return 250 - IGNORE_APPEARANCE_ROW_HEIGHT;
-      }
-   }
-
    private int getInitialZoomIndex(double currentZoomLevel)
    {
       int initialIndex = -1;

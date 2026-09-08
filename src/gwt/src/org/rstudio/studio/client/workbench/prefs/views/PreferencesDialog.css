@@ -70,6 +70,46 @@
    overflow-y: scroll;
 }
 
+.appearanceColumns {
+   display: flex;
+}
+
+.appearanceColumns > iframe {
+   flex-shrink: 0;
+   height: auto;
+}
+
+.appearanceControls {
+   display: flex;
+   flex-direction: column;
+   flex-grow: 1;
+   min-width: 160px;
+}
+
+.appearanceControls > * {
+   flex-shrink: 0;
+}
+
+.editorThemeChooser {
+   display: flex;
+   flex-direction: column;
+   flex-grow: 1;
+}
+
+.editorThemeChooser select {
+   flex-grow: 1;
+   height: 80px;
+   min-height: 80px;
+}
+
+.appearanceThemeButtons {
+   align-self: flex-start;
+}
+
+.appearanceThemeButtons button {
+   display: block;
+}
+
 .themeInfobar {
    border: solid 1px #ccc;
    border-bottom: none;
