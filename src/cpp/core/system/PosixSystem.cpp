@@ -2238,20 +2238,54 @@ bool isProcessRunning(pid_t pid)
 }
 
 #ifdef __linux__
-bool isProcessZombie(pid_t pid)
+namespace {
+
+// the state character of a /proc/<pid>/stat or /proc/<pid>/task/<tid>/stat
+// line; it follows the parenthesized command name, which may itself contain
+// spaces and parentheses
+bool readProcState(const FilePath& statPath, char* pState)
 {
    std::string contents;
-   FilePath statPath("/proc/" + safe_convert::numberToString(pid) + "/stat");
    Error error = core::readStringFromFile(statPath, &contents);
    if (error)
       return false;
 
-   // the state follows the parenthesized command name, which may itself
-   // contain spaces and parentheses
    std::size_t end = contents.rfind(')');
    if (end == std::string::npos || end + 2 >= contents.size())
       return false;
-   return contents[end + 2] == 'Z';
+
+   *pState = contents[end + 2];
+   return true;
+}
+
+} // anonymous namespace
+
+bool isProcessZombie(pid_t pid)
+{
+   FilePath procDir("/proc/" + safe_convert::numberToString(pid));
+   char state = 0;
+   if (!readProcState(procDir.completePath("stat"), &state) || state != 'Z')
+      return false;
+
+   // /proc/<pid>/stat describes the thread group leader, which reads as a
+   // zombie as soon as the main thread exits even while other threads run
+   // on. The process is only gone once no thread is left alive; if that
+   // cannot be established, err towards treating it as alive.
+   std::vector<FilePath> tasks;
+   Error error = procDir.completePath("task").getChildren(tasks);
+   if (error)
+      return false;
+
+   for (const FilePath& task : tasks)
+   {
+      char taskState = 0;
+      if (!readProcState(task.completePath("stat"), &taskState))
+         continue;
+      if (taskState != 'Z' && taskState != 'X')
+         return false;
+   }
+
+   return true;
 }
 #elif defined(__APPLE__)
 bool isProcessZombie(pid_t pid)

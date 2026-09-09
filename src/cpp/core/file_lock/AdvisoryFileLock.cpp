@@ -27,6 +27,7 @@
 #endif
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "ForkAwareRegistry.hpp"
 
@@ -456,6 +457,8 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 
    // Then reserve the inode itself, waiting out any probe (through any name)
    // that still has it open: its close would drop the lock about to be taken.
+   // Where the inode key is the path key (Windows), the reservation above
+   // already covers it and a second one would wait on itself.
    std::string inode;
    error = inodeKey(lockFilePath, &inode);
    if (error)
@@ -463,9 +466,13 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    if (inode.empty())
       return fileNotFoundError(lockFilePath, ERROR_LOCATION);
 
-   AcquireScope inodeReservation(inode);
-   if (!inodeReservation.active())
-      return noLockAvailableError(lockFilePath);
+   boost::scoped_ptr<AcquireScope> pInodeReservation;
+   if (inode != key)
+   {
+      pInodeReservation.reset(new AcquireScope(inode));
+      if (!pInodeReservation->active())
+         return noLockAvailableError(lockFilePath);
+   }
 
    try
    {
@@ -486,7 +493,8 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       pImpl_->lock.swap(lock);
       pImpl_->processId = system::currentProcessId();
       reservation.markHeld();
-      inodeReservation.markHeld();
+      if (pInodeReservation)
+         pInodeReservation->markHeld();
       return Success();
    }
    catch (interprocess_exception& e)
@@ -533,7 +541,8 @@ Error AdvisoryFileLock::release()
       // Close the descriptor before allowing another file_lock in this
       // process to open the same path.
       pImpl_->lock = BoostFileLock();
-      lockRegistration().release(pImpl_->inodeRegistrationKey);
+      if (pImpl_->inodeRegistrationKey != pImpl_->registrationKey)
+         lockRegistration().release(pImpl_->inodeRegistrationKey);
       lockRegistration().release(pImpl_->registrationKey);
    }
 

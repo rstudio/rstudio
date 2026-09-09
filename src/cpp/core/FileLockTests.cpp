@@ -17,6 +17,7 @@
 
 #include <core/FileLock.hpp>
 
+#include <pthread.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -980,6 +981,61 @@ TEST_F(FileLockingTest, ZombieOwnerLinkLockIsStale)
    ASSERT_EQ(child, ::waitpid(child, &status, 0));
    ASSERT_TRUE(WIFEXITED(status));
    EXPECT_EQ(0, WEXITSTATUS(status));
+}
+
+TEST_F(FileLockingTest, LockHeldByWorkerAfterMainThreadExitIsLive)
+{
+   // On Linux the thread group leader reads as a zombie once the main thread
+   // has exited, while worker threads run on; a lock such a worker holds must
+   // not be reclaimed. Once the worker exits too, the whole process is gone.
+   int acquired[2];
+   int release[2];
+   ASSERT_EQ(0, ::pipe(acquired));
+   ASSERT_EQ(0, ::pipe(release));
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::close(acquired[0]);
+      ::close(release[1]);
+
+      // leaked on purpose: pthread_exit() below unwinds this frame, and a
+      // joinable boost::thread destructor would terminate the process
+      new boost::thread([&]()
+      {
+         LinkBasedFileLock lock;
+         char ok = lock.acquire(lockFilePath_) ? 0 : 1;
+         if (::write(acquired[1], &ok, 1) != 1)
+            ::_exit(1);
+
+         char signal;
+         if (::read(release[0], &signal, 1) != 1)
+            ::_exit(2);
+         ::_exit(lock.release() ? 3 : 0);
+      });
+      ::pthread_exit(nullptr);
+   }
+
+   ::close(acquired[1]);
+   ::close(release[0]);
+
+   char ok = 0;
+   ASSERT_EQ(1, ::read(acquired[0], &ok, 1));
+   ASSERT_EQ(1, ok);
+
+   EXPECT_FALSE(system::isProcessZombie(child));
+   EXPECT_FALSE(LinkBasedFileLock::isLockFileStale(lockFilePath_));
+   LinkBasedFileLock contender;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(contender.acquire(lockFilePath_)));
+
+   ASSERT_EQ(1, ::write(release[1], "x", 1));
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+   EXPECT_FALSE(contender.acquire(lockFilePath_));
+   EXPECT_FALSE(contender.release());
 }
 
 TEST_F(FileLockingTest, ConcurrentAdvisoryProbesDoNotBlockAcquire)
