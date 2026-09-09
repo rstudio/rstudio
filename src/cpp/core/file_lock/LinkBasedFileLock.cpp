@@ -370,11 +370,18 @@ Error hasExpectedIdentity(const FilePath& filePath,
 // Removes the entry at 'filePath' only if it is still the inode described by
 // 'metadata'. POSIX has no conditional unlink, so after a cheap identity
 // check the entry is renamed aside (atomically taking whatever is at the
-// path), checked again, and either unlinked or linked back into place. The
-// callers hold the takeover claim, so the entry can only change underneath
-// them if something outside the lock deletes it and a new owner publishes in
-// the same instant; a link-back that then finds the path re-occupied gives up
-// on the displaced entry rather than clobber the newer one.
+// path), checked again, and either unlinked or linked back into place.
+//
+// The identity check and the rename are two system calls, and no POSIX
+// primitive combines them, so an entry replaced in between is briefly
+// displaced and then restored; a link-back that finds the path re-occupied
+// gives up on the displaced entry rather than clobber the newer one. Every
+// other step of the protocol is an atomic election (rename of the stale
+// entry, link/O_EXCL publication), so this window is the whole residual
+// risk of breaking a stale lock: it needs an abandoned entry plus three
+// contenders acting within a few system calls of each other. Public-lock
+// removals additionally run under the claim, which excludes other contenders
+// entirely; only reclaiming an abandoned claim itself runs unprotected.
 Error removeIfSameIdentity(const FilePath& filePath,
                            const LockMetadata& metadata,
                            RemoveResult* pResult)
@@ -1119,7 +1126,8 @@ LockRegistration& lockRegistration()
 {
    // Lock objects can be destroyed during static shutdown. Keep the registry
    // alive for the lifetime of the process so those destructors remain safe.
-   static LockRegistration* pInstance = new LockRegistration();
+   static LockRegistration* pInstance =
+      file_lock::ForkAwareRegistry::publish(new LockRegistration());
    return *pInstance;
 }
 

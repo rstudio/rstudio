@@ -42,8 +42,21 @@ namespace file_lock {
 // released by the forking thread on both sides, and so the condition variable
 // can simply be re-initialized in the child. Registries are created once and
 // never destroyed.
+//
+// A registry takes part in the fork handlers only once publish() has been
+// called on the fully constructed object; publishing from a constructor
+// would let a concurrent fork() run resetInChild() on a half-built object.
 class ForkAwareRegistry : boost::noncopyable
 {
+public:
+   // Publishes a complete registry to the fork handlers and returns it.
+   template <typename Registry>
+   static Registry* publish(Registry* pRegistry)
+   {
+      publishRegistry(pRegistry);
+      return pRegistry;
+   }
+
 protected:
    ForkAwareRegistry();
    virtual ~ForkAwareRegistry() {}
@@ -72,6 +85,8 @@ protected:
    void notifyAll();
 
 private:
+   static void publishRegistry(ForkAwareRegistry* pRegistry);
+
 #ifdef _WIN32
    boost::mutex mutex_;
    boost::condition_variable condition_;
@@ -88,6 +103,10 @@ private:
 #ifdef _WIN32
 
 inline ForkAwareRegistry::ForkAwareRegistry()
+{
+}
+
+inline void ForkAwareRegistry::publishRegistry(ForkAwareRegistry*)
 {
 }
 
@@ -136,7 +155,10 @@ inline ForkAwareRegistry::ForkAwareRegistry()
 {
    ::pthread_mutex_init(&mutex_, nullptr);
    ::pthread_cond_init(&condition_, nullptr);
+}
 
+inline void ForkAwareRegistry::publishRegistry(ForkAwareRegistry* pRegistry)
+{
    // register the fork handlers once, before the first registry is listed
    struct AtForkRegistration
    {
@@ -147,8 +169,10 @@ inline ForkAwareRegistry::ForkAwareRegistry()
    };
    static AtForkRegistration registration;
 
+   // the prepare handler takes this mutex, so a fork either sees the new
+   // registry in the list or does not see it at all
    ::pthread_mutex_lock(&detail::forkAwareRegistriesMutex());
-   detail::forkAwareRegistries().push_back(this);
+   detail::forkAwareRegistries().push_back(pRegistry);
    ::pthread_mutex_unlock(&detail::forkAwareRegistriesMutex());
 }
 

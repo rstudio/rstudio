@@ -722,6 +722,57 @@ TEST_F(FileLockingTest, AdvisoryRegistryUsableInChildAfterFork)
       });
 }
 
+TEST_F(FileLockingTest, InheritedAdvisoryLockObjectIsInertInChild)
+{
+   // A lock object copied into a child by fork() never held anything there.
+   // Releasing it must not unlock or close the inode (which would drop a
+   // lock the child has since taken) nor disturb the child's registry.
+   AdvisoryFileLock inherited;
+   ASSERT_FALSE(inherited.acquire(lockFilePath_));
+
+   int released[2];
+   ASSERT_EQ(0, ::pipe(released));
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::close(released[1]);
+      char signal;
+      if (::read(released[0], &signal, 1) != 1)
+         ::_exit(1);
+
+      AdvisoryFileLock held;
+      if (held.acquire(lockFilePath_))
+         ::_exit(2);
+      if (inherited.release())
+         ::_exit(3);
+
+      AdvisoryFileLock probe;
+      if (!FileLock::isNoLockAvailable(probe.acquire(lockFilePath_)))
+         ::_exit(4);
+
+      bool isLocked = false;
+      if (probe.isLocked(lockFilePath_, &isLocked) || !isLocked)
+         ::_exit(5);
+      if (held.release())
+         ::_exit(6);
+      if (probe.acquire(lockFilePath_))
+         ::_exit(7);
+      ::_exit(0);
+   }
+
+   ::close(released[0]);
+   ASSERT_FALSE(inherited.release());
+   ASSERT_EQ(1, ::write(released[1], "x", 1));
+   ::close(released[1]);
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+}
+
 TEST_F(FileLockingTest, LinkRegistryUsableInChildAfterFork)
 {
    expectChildrenSurviveForkDuringActivity(

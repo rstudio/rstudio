@@ -16,6 +16,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <core/FileLock.hpp>
 
@@ -195,7 +196,7 @@ AdvisoryLockRegistration& lockRegistration()
    // Lock objects can be destroyed during static shutdown. Keep the registry
    // alive for the lifetime of the process so those destructors remain safe.
    static AdvisoryLockRegistration* pInstance =
-      new AdvisoryLockRegistration();
+      file_lock::ForkAwareRegistry::publish(new AdvisoryLockRegistration());
    return *pInstance;
 }
 
@@ -302,10 +303,31 @@ Error noLockAvailableError(const FilePath& lockFilePath)
 
 struct AdvisoryFileLock::Impl
 {
+   Impl()
+      : processId(0)
+   {
+   }
+
    FilePath lockFilePath;
    std::string registrationKey;
    BoostFileLock lock;
+   PidType processId;
 };
+
+namespace {
+
+// Descriptors of lock objects inherited across fork(). The child never held
+// those locks, but closing an inherited descriptor would drop any lock the
+// child has since taken on the same inode, so they are kept open for the
+// life of the process.
+std::vector<BoostFileLock*>& inheritedLocks()
+{
+   static std::vector<BoostFileLock*>* pInstance =
+      new std::vector<BoostFileLock*>();
+   return *pInstance;
+}
+
+} // anonymous namespace
 
 bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
 {
@@ -423,6 +445,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       pImpl_->lockFilePath = lockFilePath;
       pImpl_->registrationKey = key;
       pImpl_->lock.swap(lock);
+      pImpl_->processId = system::currentProcessId();
       reservation.markHeld();
       return Success();
    }
@@ -442,23 +465,39 @@ Error AdvisoryFileLock::release()
       return noLockAvailableError(pImpl_->lockFilePath);
 
    Error error;
-   try
+   if (pImpl_->processId != system::currentProcessId())
    {
-      pImpl_->lock.unlock();
-      LOG("Released lock: " << pImpl_->lockFilePath.getAbsolutePath());
+      // Inherited across fork(): the kernel lock belongs to the parent and
+      // this process's registry never recorded it. Unlocking or closing here
+      // would instead drop a lock this process took on the same inode, and
+      // deregistering would forget it (see inheritedLocks()).
+      BoostFileLock* pInherited = new BoostFileLock();
+      pInherited->swap(pImpl_->lock);
+      inheritedLocks().push_back(pInherited);
+      LOG("Discarded inherited lock: " << pImpl_->lockFilePath.getAbsolutePath());
    }
-   catch (interprocess_exception& e)
+   else
    {
-      error = Error(ec_from_exception(e), ERROR_LOCATION);
-      error.addProperty("lock-file", pImpl_->lockFilePath);
+      try
+      {
+         pImpl_->lock.unlock();
+         LOG("Released lock: " << pImpl_->lockFilePath.getAbsolutePath());
+      }
+      catch (interprocess_exception& e)
+      {
+         error = Error(ec_from_exception(e), ERROR_LOCATION);
+         error.addProperty("lock-file", pImpl_->lockFilePath);
+      }
+
+      // Close the descriptor before allowing another file_lock in this
+      // process to open the same path.
+      pImpl_->lock = BoostFileLock();
+      lockRegistration().release(pImpl_->registrationKey);
    }
 
-   // Close the descriptor before allowing another file_lock in this process
-   // to open the same path.
-   pImpl_->lock = BoostFileLock();
-   lockRegistration().release(pImpl_->registrationKey);
    pImpl_->registrationKey.clear();
    pImpl_->lockFilePath = FilePath();
+   pImpl_->processId = 0;
    return error;
 }
 
