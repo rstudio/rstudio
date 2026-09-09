@@ -1229,8 +1229,8 @@
         "highlight_active_tabs": {
             "type": "boolean",
             "default": true,
-            "title": "Highlight active document and pane tabs",
-            "description": "Use a bold label and a blue overline to highlight the active document and pane tabs."
+            "title": "Highlight active document tab",
+            "description": "Use a bold label and a blue overline to highlight the active document tab."
         },
         "mousewheel_changes_editor_tab": {
             "type": "boolean",

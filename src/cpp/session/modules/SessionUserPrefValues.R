@@ -1657,10 +1657,9 @@
    clear = function() { .rs.clearUserPref("wrap_tab_navigation") }
 )
 
-# Highlight active document and pane tabs
+# Highlight active document tab
 #
-# Use a bold label and a blue overline to highlight the active document and pane
-# tabs.
+# Use a bold label and a blue overline to highlight the active document tab.
 .rs.uiPrefs$highlightActiveTabs <- list(
    get = function() { .rs.getUserPref("highlight_active_tabs") },
    set = function(value) { .rs.setUserPref("highlight_active_tabs", value) },

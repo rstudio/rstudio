@@ -2852,7 +2852,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    * Use a bold label and a blue overline to highlight the active document tab.
     */
    public PrefValue<Boolean> highlightActiveTabs()
    {

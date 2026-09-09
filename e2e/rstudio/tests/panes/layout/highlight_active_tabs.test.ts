@@ -7,16 +7,27 @@ import { DARK_THEME, LIGHT_THEME, expectThemeStylesheet } from '@utils/theme';
 import type { Locator, Page } from 'playwright';
 
 const PREF = 'highlight_active_tabs';
-const LABEL = 'Highlight active document and pane tabs';
+const LABEL = 'Highlight active document tab';
 const FILES = ['highlight_first.R', 'highlight_second.R'];
 
 function sourceTab(page: Page, filename: string): Locator {
   return page.locator('.gwt-TabLayoutPanelTab').filter({ has: page.getByText(filename, { exact: true }) });
 }
 
-async function expectHighlight(tab: Locator, enabled: boolean): Promise<void> {
-  await expect(tab.locator('table.rstheme_tabLayoutCenter')).toHaveCSS('box-shadow', enabled ? /inset/ : 'none');
+async function expectHighlight(tab: Locator, enabled: boolean, accent?: string): Promise<void> {
+  const center = tab.locator('table.rstheme_tabLayoutCenter');
+  await expect(center).toHaveCSS('box-shadow', enabled ? /inset/ : 'none');
   await expect(tab.locator('.gwt-Label')).toHaveCSS('-webkit-text-stroke-width', enabled ? '0.4px' : '0px');
+  if (accent !== undefined) {
+    // The overline recolors the tab's own top border so it reads as one bar.
+    await expect(center).toHaveCSS('border-top-width', '1px');
+    if (enabled) {
+      await expect(center).toHaveCSS('border-top-color', accent);
+      await expect(center).toHaveCSS('box-shadow', new RegExp(accent.replace(/[()]/g, '\\$&')));
+    } else {
+      await expect(center).not.toHaveCSS('border-top-color', accent);
+    }
+  }
 }
 
 async function openBasicOptions(page: Page): Promise<Locator> {
@@ -65,10 +76,12 @@ test.describe.serial('Active tab highlighting preference', () => {
     for (const filename of FILES)
       await writeAndOpenFile(page, sandbox.dir, filename, '# Active tab preference\n');
 
+    const active = sourceTab(page, FILES[1]);
+    const inactive = sourceTab(page, FILES[0]);
     const environment = page.locator('#rstudio_workbench_tab_environment');
-    await expectHighlight(environment, true);
-    await expectHighlight(sourceTab(page, FILES[1]), true);
-    await expectHighlight(sourceTab(page, FILES[0]), false);
+    await expectHighlight(active, true);
+    await expectHighlight(inactive, false);
+    await expectHighlight(environment, false);
 
     let dialog = await openBasicOptions(page);
     const checkbox = dialog.getByRole('checkbox', { name: LABEL });
@@ -76,7 +89,7 @@ test.describe.serial('Active tab highlighting preference', () => {
     await checkbox.uncheck();
     await dialog.locator('#rstudio_dlg_cancel').click();
     expect(await getPref(page, PREF)).toBe(true);
-    await expectHighlight(environment, true);
+    await expectHighlight(active, true);
 
     dialog = await openBasicOptions(page);
     await dialog.getByRole('checkbox', { name: LABEL }).uncheck();
@@ -84,19 +97,19 @@ test.describe.serial('Active tab highlighting preference', () => {
     await dialog.locator('#rstudio_dlg_apply').click();
     await saved;
     await expect.poll(() => getPref(page, PREF)).toBe(false);
-    await expectHighlight(environment, false);
-    await expectHighlight(sourceTab(page, FILES[1]), false);
+    await expectHighlight(active, false);
+    await expectHighlight(inactive, false);
     await dialog.locator('#rstudio_preferences_confirm').click();
 
     await reloadAndWait(page);
     expect(await getPref(page, PREF)).toBe(false);
-    await expectHighlight(environment, false);
+    await expectHighlight(sourceTab(page, FILES[1]), false);
     dialog = await openBasicOptions(page);
     await expect(dialog.getByRole('checkbox', { name: LABEL })).not.toBeChecked();
     await page.screenshot({ path: testInfo.outputPath('active-tab-preference.png') });
     await dialog.getByRole('checkbox', { name: LABEL }).check();
     await dialog.locator('#rstudio_preferences_confirm').click();
-    await expectHighlight(environment, true);
+    await expectHighlight(sourceTab(page, FILES[1]), true);
   });
 
   test('selection preserves tab widths and filename truncation', async ({ rstudioPage: page }) => {
@@ -147,22 +160,12 @@ test.describe.serial('Active tab highlighting preference', () => {
       await expectHighlight(sourceTab(page, filename), true);
       await expect.poll(() => Promise.all(filenames.map(name => tabMetrics(sourceTab(page, name))))).toEqual(widths);
     }
-
-    const environment = page.locator('#rstudio_workbench_tab_environment');
-    const history = page.locator('#rstudio_workbench_tab_history');
-    const paneWidths = await Promise.all([environment, history].map(tabMetrics));
-    await history.click();
-    await expectHighlight(history, true);
-    expect(await Promise.all([environment, history].map(tabMetrics))).toEqual(paneWidths);
-    await environment.click();
-    await expectHighlight(environment, true);
-    expect(await Promise.all([environment, history].map(tabMetrics))).toEqual(paneWidths);
   });
 
-  for (const { name, editor, global, href, accent, inactiveWeight } of [
-    { name: 'Modern light', editor: LIGHT_THEME, global: 'default', href: 'textmate', accent: 'rgb(52, 101, 164)', inactiveWeight: '700' },
-    { name: 'Modern dark', editor: DARK_THEME, global: 'default', href: 'cobalt', accent: 'rgb(138, 180, 248)', inactiveWeight: '400' },
-    { name: 'Sky', editor: LIGHT_THEME, global: 'alternate', href: 'textmate', accent: 'rgb(52, 101, 164)', inactiveWeight: '700' },
+  for (const { name, editor, global, href, accent, paneWeight } of [
+    { name: 'Modern light', editor: LIGHT_THEME, global: 'default', href: 'textmate', accent: 'rgb(52, 101, 164)', paneWeight: '700' },
+    { name: 'Modern dark', editor: DARK_THEME, global: 'default', href: 'cobalt', accent: 'rgb(138, 180, 248)', paneWeight: '400' },
+    { name: 'Sky', editor: LIGHT_THEME, global: 'alternate', href: 'textmate', accent: 'rgb(52, 101, 164)', paneWeight: '700' },
   ]) {
     test(`toggle and selection follow ${name} styling`, async ({ rstudioPage: page }, testInfo) => {
       await setPref(page, 'global_theme', global);
@@ -173,25 +176,31 @@ test.describe.serial('Active tab highlighting preference', () => {
       for (const filename of FILES)
         await writeAndOpenFile(page, sandbox.dir, filename, '# Active tab preference\n');
 
+      const first = sourceTab(page, FILES[0]);
+      const second = sourceTab(page, FILES[1]);
+      await expectHighlight(second, true, accent);
+      await expectHighlight(first, false, accent);
+      await first.click();
+      await expectHighlight(first, true, accent);
+      await expectHighlight(second, false, accent);
+
+      // Pane tabs keep their previous styling whether or not they are selected.
       const environment = page.locator('#rstudio_workbench_tab_environment');
       const history = page.locator('#rstudio_workbench_tab_history');
-      await expectHighlight(environment, true);
-      await expect(environment.locator('table.rstheme_tabLayoutCenter')).toHaveCSS('box-shadow', new RegExp(accent.replace(/[()]/g, '\\$&')));
       await history.click();
-      await expectHighlight(history, true);
-      await expectHighlight(environment, false);
-      await expect(environment.locator('.gwt-Label')).toHaveCSS('font-weight', '400');
-      await sourceTab(page, FILES[0]).click();
-      await expectHighlight(sourceTab(page, FILES[0]), true);
-      await expectHighlight(sourceTab(page, FILES[1]), false);
+      for (const tab of [environment, history]) {
+        await expectHighlight(tab, false, accent);
+        await expect(tab.locator('.gwt-Label')).toHaveCSS('font-weight', paneWeight);
+      }
 
       await setPref(page, PREF, false);
-      await expectHighlight(history, false);
-      await expectHighlight(sourceTab(page, FILES[0]), false);
-      await expect(environment.locator('.gwt-Label')).toHaveCSS('font-weight', inactiveWeight);
+      await expectHighlight(first, false, accent);
+      await expectHighlight(history, false, accent);
+      await expect(history.locator('.gwt-Label')).toHaveCSS('font-weight', paneWeight);
       await setPref(page, PREF, true);
-      await expectHighlight(history, true);
-      await expectHighlight(sourceTab(page, FILES[0]), true);
+      await expectHighlight(first, true, accent);
+      await expectHighlight(history, false, accent);
+      await expect(history.locator('.gwt-Label')).toHaveCSS('font-weight', paneWeight);
 
       await page.screenshot({ path: testInfo.outputPath('active-tabs.png') });
       await executeCommand(page, 'maximizeTabSet2');
@@ -202,7 +211,7 @@ test.describe.serial('Active tab highlighting preference', () => {
       for (const enabled of [true, false, true]) {
         await setPref(page, PREF, enabled);
         await expectHighlight(minimizedEnvironment, false);
-        await expect(minimizedEnvironment.locator('.gwt-Label')).toHaveCSS('font-weight', inactiveWeight);
+        await expect(minimizedEnvironment.locator('.gwt-Label')).toHaveCSS('font-weight', paneWeight);
       }
     });
   }

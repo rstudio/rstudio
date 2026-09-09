@@ -1447,10 +1447,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    padding-top: 4px;
 }
 
-.rstudio-highlight-active-tabs .moduleTabPanel .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab .gwt-Label {
-   font-weight: normal;
-}
-
 .rstudio-themes-dark .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
    font-weight: 400;
 }
@@ -2504,17 +2500,21 @@ input[type="checkbox"]:checked:before {
    margin-left: -1px;
 }
 
-/* Mark the selected tab without changing its height or content position. */
-.rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 2px 0 0 #3465a4 inset;
+/* Mark the selected document tab with a 2px overline: the tab's own 1px top
+   border is recolored (so the rounded corners follow it) and a 1px inset shadow
+   extends it inward, without changing the tab's height or content position. */
+.rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+   border-top-color: #3465a4;
+   box-shadow: 0 1px 0 #3465a4 inset;
 }
 
-.rstudio-highlight-active-tabs .rstudio-themes-dark .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 2px 0 0 #8ab4f8 inset;
+.rstudio-highlight-active-tabs .rstudio-themes-dark .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
+   border-top-color: #8ab4f8;
+   box-shadow: 0 1px 0 #8ab4f8 inset;
 }
 
 /* Thicken the selected label without changing tab widths or ellipsis positions. */
-.rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
+.rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
    -webkit-text-stroke: 0.4px currentColor;
 }
 

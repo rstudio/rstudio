@@ -1488,11 +1488,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String wrapTabNavigationDescription();
 
    /**
-    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    * Use a bold label and a blue overline to highlight the active document tab.
     */
-   @DefaultStringValue("Highlight active document and pane tabs")
+   @DefaultStringValue("Highlight active document tab")
    String highlightActiveTabsTitle();
-   @DefaultStringValue("Use a bold label and a blue overline to highlight the active document and pane tabs.")
+   @DefaultStringValue("Use a bold label and a blue overline to highlight the active document tab.")
    String highlightActiveTabsDescription();
 
    /**
