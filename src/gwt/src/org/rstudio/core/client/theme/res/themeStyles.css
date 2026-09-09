@@ -2532,7 +2532,7 @@ input[type="checkbox"]:checked:before {
 }
 
 .rstudio-highlight-active-tabs .rstudio-themes-dark .docTabPanel .gwt-TabLayoutPanelTab-selected::before {
-   border-color: #4f8fea;
+   border-color: #4586e2;
 }
 
 /* Thicken the selected label without changing tab widths or ellipsis positions. */

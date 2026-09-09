@@ -181,7 +181,7 @@ test.describe.serial('Active tab highlighting preference', () => {
 
   for (const { name, editor, global, href, accent, paneWeight } of [
     { name: 'Modern light', editor: LIGHT_THEME, global: 'default', href: 'textmate', accent: 'rgb(52, 101, 164)', paneWeight: '700' },
-    { name: 'Modern dark', editor: DARK_THEME, global: 'default', href: 'cobalt', accent: 'rgb(79, 143, 234)', paneWeight: '400' },
+    { name: 'Modern dark', editor: DARK_THEME, global: 'default', href: 'cobalt', accent: 'rgb(69, 134, 226)', paneWeight: '400' },
     { name: 'Sky', editor: LIGHT_THEME, global: 'alternate', href: 'textmate', accent: 'rgb(52, 101, 164)', paneWeight: '700' },
   ]) {
     test(`toggle and selection follow ${name} styling`, async ({ rstudioPage: page }, testInfo) => {
