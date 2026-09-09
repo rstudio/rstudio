@@ -1000,9 +1000,9 @@ TEST_F(FileLockingTest, LockHeldByWorkerAfterMainThreadExitIsLive)
       ::close(acquired[0]);
       ::close(release[1]);
 
-      // leaked on purpose: pthread_exit() below unwinds this frame, and a
-      // joinable boost::thread destructor would terminate the process
-      new boost::thread([&]()
+      // detached: pthread_exit() below unwinds this frame, and a joinable
+      // boost::thread destructor would terminate the process
+      boost::thread worker([&]()
       {
          LinkBasedFileLock lock;
          char ok = lock.acquire(lockFilePath_) ? 0 : 1;
@@ -1014,6 +1014,7 @@ TEST_F(FileLockingTest, LockHeldByWorkerAfterMainThreadExitIsLive)
             ::_exit(2);
          ::_exit(lock.release() ? 3 : 0);
       });
+      worker.detach();
       ::pthread_exit(nullptr);
    }
 

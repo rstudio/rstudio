@@ -14,8 +14,10 @@
  */
 
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include <core/FileLock.hpp>
 
@@ -174,6 +176,16 @@ public:
       notifyAll();
    }
 
+   // Keeps the descriptor of a lock object inherited across fork() open for
+   // the life of the process: closing it would drop any lock this process
+   // has since taken on the same inode.
+   void parkInheritedLock(BoostFileLock& lock)
+   {
+      Guard guard(*this);
+      parked_.push_back(std::unique_ptr<BoostFileLock>(new BoostFileLock()));
+      parked_.back()->swap(lock);
+   }
+
 private:
    void prune(const std::string& key)
    {
@@ -184,11 +196,15 @@ private:
 
    void resetInChild() override
    {
-      // fcntl locks are not inherited, so a child starts with nothing held
+      // fcntl locks are not inherited, so a child starts with nothing held;
+      // closing the parent's parked descriptors is safe at this point for
+      // the same reason
       states_.clear();
+      parked_.clear();
    }
 
    std::map<std::string, PathState> states_;
+   std::vector<std::unique_ptr<BoostFileLock> > parked_;
 };
 
 AdvisoryLockRegistration& lockRegistration()
@@ -518,11 +534,8 @@ Error AdvisoryFileLock::release()
       // Inherited across fork(): the kernel lock belongs to the parent and
       // this process's registry never recorded it. Unlocking or closing here
       // would instead drop a lock this process took on the same inode, and
-      // deregistering would forget it. The descriptor is parked in an object
-      // that is deliberately never freed, so it stays open for the life of
-      // the process without any shared bookkeeping.
-      BoostFileLock* pParked = new BoostFileLock();
-      pParked->swap(pImpl_->lock);
+      // deregistering would forget it.
+      lockRegistration().parkInheritedLock(pImpl_->lock);
       LOG("Discarded inherited lock: " << pImpl_->lockFilePath.getAbsolutePath());
    }
    else
