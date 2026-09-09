@@ -14,18 +14,26 @@ function sourceTab(page: Page, filename: string): Locator {
   return page.locator('.gwt-TabLayoutPanelTab').filter({ has: page.getByText(filename, { exact: true }) });
 }
 
+// The indicator is a ::before overlay on the tab, so read it via getComputedStyle.
+function indicator(tab: Locator) {
+  return tab.evaluate(element => {
+    const style = getComputedStyle(element, '::before');
+    const rect = element.getBoundingClientRect();
+    return { content: style.content, height: style.height, background: style.backgroundColor, top: rect.top };
+  });
+}
+
 async function expectHighlight(tab: Locator, enabled: boolean, accent?: string): Promise<void> {
+  await expect.poll(() => indicator(tab).then(bar => bar.content !== 'none')).toBe(enabled);
   const center = tab.locator('table.rstheme_tabLayoutCenter');
   await expect(center).toHaveCSS('box-shadow', enabled ? /inset/ : 'none');
   await expect(tab.locator('.gwt-Label')).toHaveCSS('-webkit-text-stroke-width', enabled ? '0.4px' : '0px');
-  if (accent !== undefined) {
-    // The overline recolors the tab's own top border so it reads as one bar.
-    await expect(center).toHaveCSS('border-top-width', '1px');
-    if (enabled) {
-      await expect(center).toHaveCSS('border-top-color', accent);
+  if (enabled) {
+    const bar = await indicator(tab);
+    expect(bar.height).toBe('2px');
+    if (accent !== undefined) {
+      expect(bar.background).toBe(accent);
       await expect(center).toHaveCSS('box-shadow', new RegExp(accent.replace(/[()]/g, '\\$&')));
-    } else {
-      await expect(center).not.toHaveCSS('border-top-color', accent);
     }
   }
 }

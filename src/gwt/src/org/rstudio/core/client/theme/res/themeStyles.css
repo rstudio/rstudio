@@ -2500,16 +2500,38 @@ input[type="checkbox"]:checked:before {
    margin-left: -1px;
 }
 
-/* Mark the selected document tab with a 2px overline: the tab's own 1px top
-   border is recolored (so the rounded corners follow it) and a 1px inset shadow
-   extends it inward, without changing the tab's height or content position. */
+/* Draw the selected document tab's indicator as a straight 2px bar over the
+   tab's top edge. The pane frame (.windowFrameObject > div:last-child) paints
+   its own 1px border across the top row of the tab strip, so the bar is a
+   raised overlay positioned from the tab's box rather than part of the tab's
+   rounded border. It adds no height and does not move the tab's content. */
+.rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected {
+   position: relative;
+}
+
+.rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: -1px;
+   right: 0;
+   height: 2px;
+   background: #3465a4;
+   z-index: 1;
+   pointer-events: none;
+}
+
+.rstudio-highlight-active-tabs .rstudio-themes-dark .docTabPanel .gwt-TabLayoutPanelTab-selected::before {
+   background: #8ab4f8;
+}
+
+/* A 1px inset shadow just inside the tab's rounded top border, so the flat bar
+   above flows into the tab's curved corners. */
 .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   border-top-color: #3465a4;
    box-shadow: 0 1px 0 #3465a4 inset;
 }
 
 .rstudio-highlight-active-tabs .rstudio-themes-dark .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   border-top-color: #8ab4f8;
    box-shadow: 0 1px 0 #8ab4f8 inset;
 }
 
