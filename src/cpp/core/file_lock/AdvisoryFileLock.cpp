@@ -27,8 +27,8 @@
 #endif
 
 #include <boost/filesystem/operations.hpp>
-#include <boost/thread/condition_variable.hpp>
-#include <boost/thread/mutex.hpp>
+
+#include "ForkAwareRegistry.hpp"
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -78,24 +78,18 @@ struct PathState
    }
 };
 
-class AdvisoryLockRegistration : boost::noncopyable
+class AdvisoryLockRegistration : public file_lock::ForkAwareRegistry
 {
 public:
-   AdvisoryLockRegistration()
-      : processId_(system::currentProcessId())
-   {
-   }
-
    // Reserves the key for acquisition, then waits out probes that still have
    // the file open. Taking the reservation first gives the acquirer priority
    // over a steady stream of probes. Returns false if this process already
    // holds the lock.
    bool beginAcquire(const std::string& key)
    {
-      boost::mutex::scoped_lock lock(mutex_);
+      Guard guard(*this);
       for (;;)
       {
-         resetAfterFork();
          PathState& state = states_[key];
          if (state.held)
          {
@@ -109,18 +103,17 @@ public:
             break;
          }
 
-         condition_.wait(lock);
+         guard.wait();
       }
 
       while (states_[key].probes > 0)
-         condition_.wait(lock);
+         guard.wait();
       return true;
    }
 
    void endAcquire(const std::string& key, bool held)
    {
-      boost::mutex::scoped_lock lock(mutex_);
-      resetAfterFork();
+      Guard guard(*this);
       auto it = states_.find(key);
       if (it != states_.end())
       {
@@ -128,20 +121,19 @@ public:
          it->second.held = held;
          prune(key);
       }
-      condition_.notify_all();
+      notifyAll();
    }
 
    void release(const std::string& key)
    {
-      boost::mutex::scoped_lock lock(mutex_);
-      resetAfterFork();
+      Guard guard(*this);
       auto it = states_.find(key);
       if (it != states_.end())
       {
          it->second.held = false;
          prune(key);
       }
-      condition_.notify_all();
+      notifyAll();
    }
 
    // Registers a probe unless this process holds the lock, in which case it
@@ -149,10 +141,9 @@ public:
    // file. An in-flight acquisition is waited out so the answer reflects it.
    bool beginProbe(const std::string& key)
    {
-      boost::mutex::scoped_lock lock(mutex_);
+      Guard guard(*this);
       for (;;)
       {
-         resetAfterFork();
          PathState& state = states_[key];
          if (state.held)
          {
@@ -166,21 +157,20 @@ public:
             return true;
          }
 
-         condition_.wait(lock);
+         guard.wait();
       }
    }
 
    void endProbe(const std::string& key)
    {
-      boost::mutex::scoped_lock lock(mutex_);
-      resetAfterFork();
+      Guard guard(*this);
       auto it = states_.find(key);
       if (it != states_.end() && it->second.probes > 0)
       {
          --it->second.probes;
          prune(key);
       }
-      condition_.notify_all();
+      notifyAll();
    }
 
 private:
@@ -191,21 +181,13 @@ private:
          states_.erase(it);
    }
 
-   void resetAfterFork()
+   void resetInChild() override
    {
       // fcntl locks are not inherited, so a child starts with nothing held
-      PidType processId = system::currentProcessId();
-      if (processId_ != processId)
-      {
-         states_.clear();
-         processId_ = processId;
-      }
+      states_.clear();
    }
 
-   boost::mutex mutex_;
-   boost::condition_variable condition_;
    std::map<std::string, PathState> states_;
-   PidType processId_;
 };
 
 AdvisoryLockRegistration& lockRegistration()

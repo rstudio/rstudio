@@ -37,7 +37,8 @@
 
 #include <boost/optional.hpp>
 #include <boost/system/error_code.hpp>
-#include <boost/thread/mutex.hpp>
+
+#include "ForkAwareRegistry.hpp"
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -259,7 +260,9 @@ Error writeLockContents(int descriptor, bool released)
    return writeDescriptorContents(descriptor, contents);
 }
 
-Error descriptorIdentity(int descriptor, LockMetadata* pMetadata)
+Error descriptorIdentity(int descriptor,
+                         LockMetadata* pMetadata,
+                         std::time_t* pLastWriteTime = nullptr)
 {
    struct stat info;
    if (::fstat(descriptor, &info) == -1)
@@ -269,13 +272,18 @@ Error descriptorIdentity(int descriptor, LockMetadata* pMetadata)
    pMetadata->inode = info.st_ino;
    pMetadata->hasIdentity = true;
    pMetadata->identityFollowsSymlink = true;
+   if (pLastWriteTime != nullptr)
+      *pLastWriteTime = info.st_mtime;
    return Success();
 }
 
 #endif
 
+// Reads identity, timestamp and contents from one opened descriptor, so that
+// a lock replaced mid-inspection cannot be judged by another inode's age.
 Error readLockMetadata(const FilePath& lockFilePath,
-                       LockMetadata* pMetadata)
+                       LockMetadata* pMetadata,
+                       std::time_t* pLastWriteTime)
 {
 #ifndef _WIN32
    int descriptor = ::open(
@@ -288,7 +296,7 @@ Error readLockMetadata(const FilePath& lockFilePath,
       return error;
    }
 
-   Error error = descriptorIdentity(descriptor, pMetadata);
+   Error error = descriptorIdentity(descriptor, pMetadata, pLastWriteTime);
    if (error)
    {
       ::close(descriptor);
@@ -318,6 +326,10 @@ Error readLockMetadata(const FilePath& lockFilePath,
 #else
    std::string contents;
    Error error = core::readStringFromFile(lockFilePath, &contents);
+   if (error)
+      return error;
+
+   error = lockFilePath.getLastWriteTime(*pLastWriteTime);
    if (error)
       return error;
 #endif
@@ -356,11 +368,13 @@ Error hasExpectedIdentity(const FilePath& filePath,
 }
 
 // Removes the entry at 'filePath' only if it is still the inode described by
-// 'metadata'. POSIX has no conditional unlink, so the entry is first renamed
-// aside (atomically taking whatever is at the path), checked, and either
-// unlinked or linked back into place. A link-back that finds the path already
-// re-occupied gives up on the displaced entry rather than clobber the newer
-// one; that needs two contenders to publish in the same instant.
+// 'metadata'. POSIX has no conditional unlink, so after a cheap identity
+// check the entry is renamed aside (atomically taking whatever is at the
+// path), checked again, and either unlinked or linked back into place. The
+// callers hold the takeover claim, so the entry can only change underneath
+// them if something outside the lock deletes it and a new owner publishes in
+// the same instant; a link-back that then finds the path re-occupied gives up
+// on the displaced entry rather than clobber the newer one.
 Error removeIfSameIdentity(const FilePath& filePath,
                            const LockMetadata& metadata,
                            RemoveResult* pResult)
@@ -377,6 +391,18 @@ Error removeIfSameIdentity(const FilePath& filePath,
    *pResult = RemoveResult::Removed;
    return Success();
 #else
+   bool matches = false;
+   Error error = hasExpectedIdentity(filePath, metadata, &matches);
+   if (error)
+      return error;
+   if (!matches)
+   {
+      struct stat info;
+      if (::lstat(filePath.getAbsolutePathNative().c_str(), &info) == 0)
+         *pResult = RemoveResult::Mismatch;
+      return Success();
+   }
+
    FilePath tempPath = tempPathBeside(filePath);
    if (::rename(filePath.getAbsolutePathNative().c_str(),
                 tempPath.getAbsolutePathNative().c_str()) == -1)
@@ -389,8 +415,7 @@ Error removeIfSameIdentity(const FilePath& filePath,
       return error;
    }
 
-   bool matches = false;
-   Error error = hasExpectedIdentity(tempPath, metadata, &matches);
+   error = hasExpectedIdentity(tempPath, metadata, &matches);
    if (!error && matches)
    {
       *pResult = RemoveResult::Removed;
@@ -512,26 +537,16 @@ Error inspectLockFile(const FilePath& lockFilePath,
       info = targetInfo;
    }
 
-   pInspection->metadata.device = info.st_dev;
-   pInspection->metadata.inode = info.st_ino;
-   pInspection->metadata.hasIdentity = true;
-   pInspection->metadata.identityFollowsSymlink = true;
-   lastWriteTime = info.st_mtime;
 #else
    if (!lockFilePath.exists())
       return Success();
-
-   Error timeError = lockFilePath.getLastWriteTime(lastWriteTime);
-   if (timeError)
-   {
-      if (isFileNotFoundError(timeError))
-         return Success();
-      return timeError;
-   }
 #endif
 
    pInspection->exists = true;
-   Error error = readLockMetadata(lockFilePath, &pInspection->metadata);
+   Error error = readLockMetadata(
+      lockFilePath,
+      &pInspection->metadata,
+      &lastWriteTime);
    if (error)
    {
       if (isFileNotFoundError(error))
@@ -541,10 +556,17 @@ Error inspectLockFile(const FilePath& lockFilePath,
       }
 
 #ifndef _WIN32
-      // Another user's lock we cannot read still expires by age; treating it
-      // as unreadable (no PID) falls through to the timeout check below.
+      // Another user's lock we cannot read still expires by age. Identity and
+      // timestamp then come from the pathname (one stat call, so they are at
+      // least consistent with each other) and the PID stays unknown.
       if (!isPermissionError(error.getCode()))
          return error;
+
+      pInspection->metadata.device = info.st_dev;
+      pInspection->metadata.inode = info.st_ino;
+      pInspection->metadata.hasIdentity = true;
+      pInspection->metadata.identityFollowsSymlink = true;
+      lastWriteTime = info.st_mtime;
 #else
       return error;
 #endif
@@ -711,29 +733,38 @@ Error claimLockFile(const FilePath& claimFilePath,
 #endif
 }
 
+// Takes the claim for a public lock path. *pHeld is false when another
+// contender holds it (or replaced ours after judging it stale, e.g. after a
+// long stall in a load-balanced deployment); the caller must then leave the
+// public path alone.
+Error acquireClaim(const FilePath& lockFilePath, Claim* pClaim, bool* pHeld)
+{
+   *pHeld = false;
+   Error error = claimLockFile(claimPathForLock(lockFilePath), pClaim, pHeld);
+   if (error || !*pHeld)
+      return error;
+
+#ifndef _WIN32
+   error = hasExpectedIdentity(pClaim->path, pClaim->identity, pHeld);
+   if (error || !*pHeld)
+   {
+      *pHeld = false;
+      closeClaim(pClaim);
+   }
+#endif
+   return error;
+}
+
 Error removeLockFile(const FilePath& lockFilePath,
                      const LockMetadata& expectedMetadata)
 {
    Claim claim;
-   bool claimed = false;
-   Error error = claimLockFile(claimPathForLock(lockFilePath), &claim, &claimed);
+   bool held = false;
+   Error error = acquireClaim(lockFilePath, &claim, &held);
    if (error)
       return error;
-   if (!claimed)
+   if (!held)
       return noLockAvailableError(lockFilePath);
-
-#ifndef _WIN32
-   // A contender that judged this claim stale (e.g. after a long stall in a
-   // load-balanced deployment) may have replaced it; the replacement's owner
-   // is now the elected contender.
-   bool stillOurs = false;
-   error = hasExpectedIdentity(claim.path, claim.identity, &stillOurs);
-   if (error || !stillOurs)
-   {
-      closeClaim(&claim);
-      return error ? error : noLockAvailableError(lockFilePath);
-   }
-#endif
 
    // An inspection is tied to the inode it read. If another contender has
    // already replaced that inode, the replacement is left untouched.
@@ -801,10 +832,28 @@ Error createProxyFile(const FilePath& lockFilePath,
    return error;
 }
 
+// Unlinks 'filePath' if it still refers to the inode in 'identity'. Only safe
+// under the takeover claim: with the claim held no contender is between
+// judging that inode stale and replacing it, and a new owner can publish at
+// the path only once this inode has left it, so the check cannot go stale
+// before the unlink.
+void unlinkIfSameIdentity(const FilePath& filePath, const LockMetadata& identity)
+{
+   bool matches = false;
+   Error error = hasExpectedIdentity(filePath, identity, &matches);
+   if (error)
+      LOG_ERROR(error);
+   else if (matches)
+      unlinkBestEffort(filePath);
+}
+
 // Removes the public path and owner file of a lock held through
 // 'descriptor', but only where they still refer to that descriptor's inode.
-// The inode is also marked released, so any hard link that could not be
-// removed (or one created by an older RStudio) does not read as held.
+// If a contender holds the claim it is mid-takeover of this (expired) lock
+// and will remove the files itself; nothing is moved or renamed here, so a
+// successor's entry is never disturbed even briefly. The inode is also
+// marked released, so any hard link that could not be removed (or one
+// created by an older RStudio) does not read as held.
 Error releaseLockFiles(const FilePath& lockFilePath,
                        const FilePath& ownerFilePath,
                        int descriptor)
@@ -814,16 +863,24 @@ Error releaseLockFiles(const FilePath& lockFilePath,
    if (error)
       return error;
 
-   RemoveResult result;
-   error = removeIfSameIdentity(lockFilePath, identity, &result);
+   Claim claim;
+   bool held = false;
+   error = acquireClaim(lockFilePath, &claim, &held);
    if (error)
-      LOG_ERROR(error);
-
-   if (!ownerFilePath.isEmpty())
    {
-      Error ownerError = removeIfSameIdentity(ownerFilePath, identity, &result);
-      if (ownerError)
-         LOG_ERROR(ownerError);
+      LOG_ERROR(error);
+   }
+   else if (!held)
+   {
+      LOG("Claim held by a contender; leaving lock files to it: "
+          << lockFilePath.getAbsolutePath());
+   }
+   else
+   {
+      unlinkIfSameIdentity(lockFilePath, identity);
+      if (!ownerFilePath.isEmpty())
+         unlinkIfSameIdentity(ownerFilePath, identity);
+      releaseClaim(&claim);
    }
 
    return writeLockContents(descriptor, true);
@@ -970,22 +1027,16 @@ struct RegisteredLock
    FilePath ownerFilePath;
 };
 
-class LockRegistration : boost::noncopyable
+class LockRegistration : public file_lock::ForkAwareRegistry
 {
 public:
-   LockRegistration()
-      : processId_(system::currentProcessId())
-   {
-   }
-
    Error registerLock(const std::string& key,
                       const std::string& token,
                       int descriptor,
                       const FilePath& lockFilePath,
                       const FilePath& ownerFilePath)
    {
-      boost::mutex::scoped_lock lock(mutex_);
-      resetAfterFork();
+      Guard guard(*this);
 #ifndef _WIN32
       int registeredDescriptor = ::dup(descriptor);
       if (registeredDescriptor == -1)
@@ -1007,8 +1058,7 @@ public:
 
    void deregisterLock(const std::string& key, const std::string& token)
    {
-      boost::mutex::scoped_lock lock(mutex_);
-      resetAfterFork();
+      Guard guard(*this);
       auto it = registration_.find(key);
       if (it != registration_.end() && it->second.token == token)
       {
@@ -1021,8 +1071,7 @@ public:
 
    void refreshLocks()
    {
-      boost::mutex::scoped_lock lock(mutex_);
-      resetAfterFork();
+      Guard guard(*this);
       for (const auto& entry : registration_)
       {
 #ifndef _WIN32
@@ -1035,8 +1084,7 @@ public:
 
    void clearLocks()
    {
-      boost::mutex::scoped_lock lock(mutex_);
-      resetAfterFork();
+      Guard guard(*this);
 #ifndef _WIN32
       for (const auto& entry : registration_)
       {
@@ -1054,23 +1102,17 @@ public:
    }
 
 private:
-   void resetAfterFork()
+   void resetInChild() override
    {
-      PidType processId = system::currentProcessId();
-      if (processId_ != processId)
-      {
+      // the parent keeps its leases; the child merely drops its copies
 #ifndef _WIN32
-         for (const auto& entry : registration_)
-            ::close(entry.second.descriptor);
+      for (const auto& entry : registration_)
+         ::close(entry.second.descriptor);
 #endif
-         registration_.clear();
-         processId_ = processId;
-      }
+      registration_.clear();
    }
 
-   boost::mutex mutex_;
    std::map<std::string, RegisteredLock> registration_;
-   PidType processId_;
 };
 
 LockRegistration& lockRegistration()

@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/barrier.hpp>
 
@@ -125,6 +126,50 @@ protected:
    {
       while (::time(nullptr) - startTime < seconds)
          boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+   }
+
+   // Forks repeatedly while threads keep a lock registry busy. Each child
+   // must complete 'childWork' rather than block on a registry mutex it
+   // inherited in the locked state; alarm() turns such a deadlock into a
+   // signal exit. The child work must not log (the logger's own locks are
+   // not this test's concern).
+   void expectChildrenSurviveForkDuringActivity(
+      const boost::function<void(int)>& activity,
+      const boost::function<bool()>& childWork)
+   {
+      const int threadCount = 4;
+      std::atomic<bool> stop(false);
+      boost::thread_group threads;
+      for (int i = 0; i < threadCount; ++i)
+      {
+         threads.create_thread([&, i]()
+         {
+            while (!stop.load())
+               activity(i);
+         });
+      }
+
+      for (int i = 0; i < 40; ++i)
+      {
+         pid_t child = ::fork();
+         EXPECT_NE(-1, child);
+         if (child == -1)
+            break;
+         if (child == 0)
+         {
+            ::alarm(10);
+            ::_exit(childWork() ? 0 : 1);
+         }
+
+         int status;
+         EXPECT_EQ(child, ::waitpid(child, &status, 0));
+         EXPECT_TRUE(WIFEXITED(status)) << "child " << i << " was killed";
+         if (WIFEXITED(status))
+            EXPECT_EQ(0, WEXITSTATUS(status)) << "child " << i;
+      }
+
+      stop.store(true);
+      threads.join_all();
    }
 
    void TearDown() override
@@ -626,6 +671,72 @@ TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
    EXPECT_FALSE(lock.acquire(lockFilePath_));
    EXPECT_FALSE(claim.exists());
    EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
+{
+   // A contender holding the claim is mid-takeover of this (expired) lock
+   // and owns the files; release must not move or remove anything, only
+   // mark the inode released.
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   FilePath claim = claimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeStringToFile(claim, std::to_string(::getpid()) + "\n"));
+
+   ASSERT_FALSE(lock.release());
+   EXPECT_TRUE(lockFilePath_.exists());
+   EXPECT_TRUE(claim.exists());
+   EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+
+   std::string contents;
+   ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
+   EXPECT_EQ("-1\n", contents);
+
+   // once the claim is gone, the released lock is reclaimed and cleaned up
+   ASSERT_FALSE(claim.remove());
+   LinkBasedFileLock next;
+   ASSERT_FALSE(next.acquire(lockFilePath_));
+   ASSERT_FALSE(next.release());
+   EXPECT_TRUE(childrenOf(root_).empty());
+}
+
+TEST_F(FileLockingTest, AdvisoryRegistryUsableInChildAfterFork)
+{
+   FilePath probedPath = root_.completePath("probed");
+   ASSERT_FALSE(probedPath.ensureFile());
+
+   expectChildrenSurviveForkDuringActivity(
+      [&](int)
+      {
+         AdvisoryFileLock probe;
+         bool isLocked = false;
+         probe.isLocked(probedPath, &isLocked);
+      },
+      [&]()
+      {
+         // only the probe's completion matters: a parent thread's probe may
+         // momentarily hold the fcntl lock, so the answer itself may vary
+         AdvisoryFileLock probe;
+         bool isLocked = true;
+         return !probe.isLocked(probedPath, &isLocked);
+      });
+}
+
+TEST_F(FileLockingTest, LinkRegistryUsableInChildAfterFork)
+{
+   expectChildrenSurviveForkDuringActivity(
+      [&](int index)
+      {
+         LinkBasedFileLock lock;
+         if (!lock.acquire(root_.completePath("lock-" + std::to_string(index))))
+            lock.release();
+      },
+      [&]()
+      {
+         // registry access without logging: the child's registry is empty
+         FileLock::refresh();
+         return true;
+      });
 }
 
 TEST_F(FileLockingTest, StaleClaimIsReplacedDuringTakeover)
