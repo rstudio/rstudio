@@ -2472,8 +2472,11 @@ RSESSION_MAIN_API int rsessionMain(int argc, char * const argv[])
             monitor::client().createLogDestination(core::system::generateShortenedUuid(), log::LogLevel::WARN, options.programIdentity()));
       }
 
-      // initialize file lock config
-      FileLock::initialize(desktopMode ? FileLock::LOCKTYPE_ADVISORY : FileLock::LOCKTYPE_LINKBASED);
+      // initialize file lock config. use the platform default (advisory on
+      // Windows, link-based elsewhere) in every mode: desktop and server
+      // sessions can share a data directory, and each type misreads the
+      // other's live locks as stale (#18744)
+      FileLock::initialize();
 
       // re-initialize log for desktop mode
       if (desktopMode)

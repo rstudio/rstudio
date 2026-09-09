@@ -66,7 +66,7 @@ std::string sessionsInUseMessage(FileLock::LockType lockType)
       "Close Posit Assistant in your other sessions and try again.";
 
    // Advisory locks vanish with their process; only link-based locks
-   // (server) can linger up to the staleness timeout after a hard crash.
+   // (macOS, Linux) can linger up to the staleness timeout after a hard crash.
    if (lockType == FileLock::LOCKTYPE_LINKBASED)
    {
       message += " If another session ended unexpectedly, this may take up "
