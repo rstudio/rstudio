@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc_info.h>
+#include <sys/sysctl.h>
 #endif
 
 #ifdef __linux__
@@ -2197,10 +2198,31 @@ Error processInfo(const std::string& process,
    return Success();
 }
 
+#ifdef __APPLE__
+Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
+{
+   struct kinfo_proc info;
+   std::size_t size = sizeof(info);
+   int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(pid) };
+   if (::sysctl(name, 4, &info, &size, nullptr, 0) == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   // sysctl reports success with no data when the process does not exist
+   if (size == 0)
+      return systemError(ESRCH, ERROR_LOCATION);
+
+   const struct timeval& start = info.kp_proc.p_starttime;
+   double startSecs =
+      static_cast<double>(start.tv_sec) + start.tv_usec / 1000000.0;
+   *pCreationTime = date_time::timeFromSecondsSinceEpoch(startSecs);
+   return Success();
+}
+#else
 Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 {
    return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
+#endif
 #endif
 
 bool isProcessRunning(pid_t pid)

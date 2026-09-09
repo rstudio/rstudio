@@ -139,7 +139,8 @@ TEST_F(ChatInstallLock, StaleSessionFileDoesNotBlockAndIsDeleted)
 {
    // A leftover lock file from a crashed session: present on disk, but its
    // owner (a PID beyond pid_max) is gone. File existence alone must never
-   // mean "in use".
+   // mean "in use". The probe's acquire-and-release reclaims the stale
+   // link-based lock and removes the files it created, leaving no litter.
    FilePath staleFile =
       sessionA_->sessionLocksDir().completePath("session-dead.lock");
    ASSERT_FALSE(staleFile.getParent().ensureDirectory());
@@ -148,6 +149,10 @@ TEST_F(ChatInstallLock, StaleSessionFileDoesNotBlockAndIsDeleted)
    std::string message;
    EXPECT_FALSE(sessionB_->tryBeginMutation(&message));
    EXPECT_FALSE(staleFile.exists());
+
+   std::vector<FilePath> children;
+   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   EXPECT_TRUE(children.empty());
    sessionB_->endMutation();
 }
 
@@ -339,9 +344,10 @@ TEST_F(ChatInstallLock, AdvisoryLockAcrossProcessesBlocksMutationAndClearsOnExit
    ASSERT_EQ(::waitpid(child, &status, 0), child);
 
    // The leftover lock file must not read as "in use" once its holder is
-   // gone; the mutation proceeds and cleans it up.
+   // gone; the mutation proceeds. Advisory lock files intentionally persist
+   // so that every contender locks the same inode.
    EXPECT_FALSE(advisoryLocal.tryBeginMutation(&message));
-   EXPECT_FALSE(otherLockFile.exists());
+   EXPECT_TRUE(otherLockFile.exists());
    advisoryLocal.endMutation();
 }
 
@@ -437,9 +443,8 @@ TEST_F(ChatInstallLock, MutationScopeFailureDoesNotEndOuterMutation)
 
 TEST_F(ChatInstallLock, NonLockFilesInSessionsDirAreIgnored)
 {
-   // Link-based locking drops transient proxy files beside the lock files it
-   // manages; the mutation probe must neither inspect nor delete a non-.lock
-   // entry.
+   // Link-based locking keeps owner files beside the lock files it manages;
+   // the mutation probe must neither inspect nor delete a non-.lock entry.
    FilePath proxyFile =
       sessionA_->sessionLocksDir().completePath("proxy.txt");
    ASSERT_FALSE(proxyFile.getParent().ensureDirectory());

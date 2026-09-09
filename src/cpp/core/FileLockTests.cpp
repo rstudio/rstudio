@@ -22,6 +22,9 @@
 #include <unistd.h>
 
 #include <atomic>
+#include <cstdint>
+#include <ctime>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -33,6 +36,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
@@ -41,6 +45,42 @@ namespace core {
 namespace tests {
 
 namespace {
+
+// Mirrors the claim naming in LinkBasedFileLock.cpp (FNV-1a of the lock
+// filename) so tests can plant a claim file beside a lock.
+FilePath claimPathFor(const FilePath& lockFilePath)
+{
+   uint64_t hash = 14695981039346656037ULL;
+   for (unsigned char character : lockFilePath.getFilename())
+   {
+      hash ^= character;
+      hash *= 1099511628211ULL;
+   }
+
+   std::ostringstream stream;
+   stream << ".rstudio-lock-claim-41c29-" << std::hex << hash;
+   return lockFilePath.getParent().completePath(stream.str());
+}
+
+std::vector<FilePath> childrenOf(const FilePath& directory)
+{
+   std::vector<FilePath> children;
+   Error error = directory.getChildren(children);
+   if (error)
+      LOG_ERROR(error);
+   return children;
+}
+
+int countChildrenWithPrefix(const FilePath& directory, const std::string& prefix)
+{
+   int count = 0;
+   for (const FilePath& child : childrenOf(directory))
+   {
+      if (child.getFilename().compare(0, prefix.size(), prefix) == 0)
+         ++count;
+   }
+   return count;
+}
 
 class FileLockingTest : public ::testing::Test
 {
@@ -60,6 +100,31 @@ protected:
       oldTimeout_ = FileLock::getTimeoutInterval();
       FileLock::setLoadBalancedForTesting(false);
       FileLock::setUseSymlinksForTesting(false);
+   }
+
+   // The wall-clock start time of this test process, which the staleness
+   // check compares against lock mtimes. Skips the test where unavailable.
+   bool ownStartTime(std::time_t* pStartTime)
+   {
+      system::ProcessInfo info;
+      info.pid = ::getpid();
+      boost::posix_time::ptime created;
+      Error error = info.creationTime(&created);
+      if (error)
+         return false;
+
+      *pStartTime = static_cast<std::time_t>(
+         date_time::secondsSinceEpoch(created));
+      return true;
+   }
+
+   // Waits until this process has been alive for at least 'seconds', so a
+   // test can back-date a lock mtime past a short timeout without also
+   // pre-dating the owner's start (which reads as PID reuse).
+   void waitUntilAliveFor(std::time_t startTime, std::time_t seconds)
+   {
+      while (::time(nullptr) - startTime < seconds)
+         boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
    }
 
    void TearDown() override
@@ -368,14 +433,43 @@ TEST_F(FileLockingTest, AdvisoryLockSurvivesSymlinkAliasOperations)
 
 TEST_F(FileLockingTest, LiveLinkOwnerDoesNotExpire)
 {
+   // A stalled owner's lock ages past the timeout without being refreshed,
+   // but its mtime still post-dates the owner's start: not stale.
+   std::time_t startTime = 0;
+   if (!ownStartTime(&startTime))
+      GTEST_SKIP() << "process start time unavailable on this platform";
+
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
+   waitUntilAliveFor(startTime, 3);
+
    LinkBasedFileLock first;
    LinkBasedFileLock second;
    ASSERT_FALSE(first.acquire(lockFilePath_));
-   lockFilePath_.setLastWriteTime(::time(nullptr) - 3600);
+   lockFilePath_.setLastWriteTime(::time(nullptr) - 2);
 
    EXPECT_TRUE(first.isLocked(lockFilePath_));
    EXPECT_TRUE(FileLock::isNoLockAvailable(second.acquire(lockFilePath_)));
    EXPECT_FALSE(first.release());
+}
+
+TEST_F(FileLockingTest, ReusedPidDoesNotPinOrphanedLock)
+{
+   // The lock names a live PID (ours), but was last written before that
+   // process started: the original owner is gone and the PID was reused.
+   std::time_t startTime = 0;
+   if (!ownStartTime(&startTime))
+      GTEST_SKIP() << "process start time unavailable on this platform";
+
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, std::to_string(::getpid()) + "\n"));
+   lockFilePath_.setLastWriteTime(
+      startTime - FileLock::getTimeoutInterval().total_seconds() - 5);
+
+   EXPECT_TRUE(LinkBasedFileLock::isLockFileStale(lockFilePath_));
+
+   LinkBasedFileLock lock;
+   EXPECT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_TRUE(lock.isLocked(lockFilePath_));
+   EXPECT_FALSE(lock.release());
 }
 
 TEST_F(FileLockingTest, ExpiredLinkOwnerCannotReleaseReplacement)
@@ -390,7 +484,10 @@ TEST_F(FileLockingTest, ExpiredLinkOwnerCannotReleaseReplacement)
    lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
    ASSERT_FALSE(replacement.acquire(lockFilePath_));
 
+   // The expired owner's release must leave the replacement's files alone.
    EXPECT_FALSE(expired.release());
+   EXPECT_TRUE(lockFilePath_.exists());
+   EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
    EXPECT_TRUE(replacement.isLocked(lockFilePath_));
    EXPECT_TRUE(FileLock::isNoLockAvailable(contender.acquire(lockFilePath_)));
    EXPECT_FALSE(replacement.release());
@@ -405,9 +502,283 @@ TEST_F(FileLockingTest, LinkMetadataRemainsBackwardCompatible)
    ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
    EXPECT_EQ(std::to_string(::getpid()) + "\n", contents);
 
+   // Release removes the lock's own entries; a link an older RStudio (or
+   // anything else) still holds to the inode must read as released.
+   FilePath keptLink = root_.completePath("kept-link");
+   ASSERT_EQ(
+      0,
+      ::link(
+         lockFilePath_.getAbsolutePath().c_str(),
+         keptLink.getAbsolutePath().c_str()));
+
    ASSERT_FALSE(lock.release());
-   ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
+   EXPECT_FALSE(lockFilePath_.exists());
+   ASSERT_FALSE(readStringFromFile(keptLink, &contents));
    EXPECT_EQ("-1\n", contents);
+}
+
+TEST_F(FileLockingTest, ReleaseRemovesLockAndOwnerFiles)
+{
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_TRUE(lockFilePath_.exists());
+   EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+
+   ASSERT_FALSE(lock.release());
+   EXPECT_FALSE(lockFilePath_.exists());
+   EXPECT_TRUE(childrenOf(root_).empty());
+}
+
+TEST_F(FileLockingTest, SymlinkReleaseRemovesLockAndOwnerFiles)
+{
+   FileLock::setUseSymlinksForTesting(true);
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_TRUE(lockFilePath_.isSymlink());
+
+   ASSERT_FALSE(lock.release());
+   EXPECT_TRUE(childrenOf(root_).empty());
+}
+
+TEST_F(FileLockingTest, CleanUpRemovesRegisteredLockFiles)
+{
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+
+   FileLock::cleanUp();
+   EXPECT_TRUE(childrenOf(root_).empty());
+
+   // the object's own release afterwards is harmless
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, OrphanedOwnerFilesAreSwept)
+{
+   // Owners left behind when something else deleted their public lock path
+   // (a released owner and a legacy proxy of a dead process) are reclaimed by
+   // the next acquisition in the directory; a live claim is not.
+   FilePath releasedOwner =
+      root_.completePath(".rstudio-lock-owner-41c29-released");
+   FilePath deadLegacyOwner =
+      root_.completePath(".rstudio-lock-41c29-host-99999999-thread");
+   FilePath liveClaim =
+      root_.completePath(".rstudio-lock-claim-41c29-live");
+   ASSERT_FALSE(writeStringToFile(releasedOwner, "-1\n"));
+   ASSERT_FALSE(writeStringToFile(deadLegacyOwner, "99999999\n"));
+   ASSERT_FALSE(writeStringToFile(liveClaim, std::to_string(::getpid()) + "\n"));
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(releasedOwner.exists());
+   EXPECT_FALSE(deadLegacyOwner.exists());
+   EXPECT_TRUE(liveClaim.exists());
+   EXPECT_TRUE(lockFilePath_.exists());
+   EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+
+   ASSERT_FALSE(lock.release());
+   ASSERT_FALSE(liveClaim.remove());
+   EXPECT_TRUE(childrenOf(root_).empty());
+}
+
+TEST_F(FileLockingTest, ExternallyDeletedLockPathLeavesNoPermanentLitter)
+{
+   // A crashed owner leaves its lock and owner file behind. A caller that
+   // then removes the public path (as the notebook cache does) orphans the
+   // owner; the next acquisition in the directory sweeps it.
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      LinkBasedFileLock lock;
+      ::_exit(lock.acquire(lockFilePath_) ? 1 : 0);
+   }
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   ASSERT_EQ(0, WEXITSTATUS(status));
+   ASSERT_TRUE(lockFilePath_.exists());
+   EXPECT_FALSE(LinkBasedFileLock().isLocked(lockFilePath_));
+
+   ASSERT_FALSE(lockFilePath_.remove());
+   EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+
+   LinkBasedFileLock next;
+   ASSERT_FALSE(next.acquire(root_.completePath("other-lock")));
+   EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+   ASSERT_FALSE(next.release());
+   EXPECT_TRUE(childrenOf(root_).empty());
+}
+
+TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
+{
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
+   FilePath claim = claimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeStringToFile(claim, std::to_string(::getpid()) + "\n"));
+
+   LinkBasedFileLock lock;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+   EXPECT_TRUE(claim.exists());
+   EXPECT_TRUE(lockFilePath_.exists());
+
+   ASSERT_FALSE(claim.remove());
+   EXPECT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(claim.exists());
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, StaleClaimIsReplacedDuringTakeover)
+{
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
+   FilePath claim = claimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeStringToFile(claim, "99999999\n"));
+
+   LinkBasedFileLock lock;
+   EXPECT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(claim.exists());
+   EXPECT_TRUE(lock.isLocked(lockFilePath_));
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, LockFilesAreReadableByOtherUsers)
+{
+   mode_t mask = ::umask(0);
+   ::umask(mask);
+   mode_t expected = 0644 & ~mask;
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+
+   for (const FilePath& child : childrenOf(root_))
+   {
+      struct stat info;
+      ASSERT_EQ(0, ::stat(child.getAbsolutePath().c_str(), &info));
+      EXPECT_EQ(expected, info.st_mode & 0777) << child.getAbsolutePath();
+   }
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, UnreadableLinkLockExpiresByTimeout)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root bypasses file permissions";
+
+   // Another user's lock (unreadable to us) is held until it ages out, then
+   // may be taken over; the read failure is not an inspection error.
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, "99999999\n"));
+   ASSERT_EQ(0, ::chmod(lockFilePath_.getAbsolutePath().c_str(), 0));
+
+   LinkBasedFileLock lock;
+   bool isLocked = false;
+   EXPECT_FALSE(lock.isLocked(lockFilePath_, &isLocked));
+   EXPECT_TRUE(isLocked);
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+
+   lockFilePath_.setLastWriteTime(
+      ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds() - 1);
+   EXPECT_FALSE(lock.isLocked(lockFilePath_, &isLocked));
+   EXPECT_FALSE(isLocked);
+   EXPECT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, BoolIsLockedFailsOpenOnInspectionError)
+{
+   // A path that cannot be inspected is "not locked" for callers of the bool
+   // overload (which cleans up leftovers), while the Error overload reports
+   // the failure and leaves the flag set for callers that fail closed.
+   FilePath directoryAsLock = root_.completePath("dir-lock");
+   ASSERT_FALSE(directoryAsLock.ensureDirectory());
+
+   AdvisoryFileLock advisory;
+   bool isLocked = false;
+   EXPECT_TRUE(advisory.isLocked(directoryAsLock, &isLocked));
+   EXPECT_TRUE(isLocked);
+   EXPECT_FALSE(advisory.isLocked(directoryAsLock));
+
+   FilePath invalidPath = root_.completePath(std::string(300, 'x'));
+   LinkBasedFileLock linkBased;
+   isLocked = false;
+   EXPECT_TRUE(linkBased.isLocked(invalidPath, &isLocked));
+   EXPECT_TRUE(isLocked);
+   EXPECT_FALSE(linkBased.isLocked(invalidPath));
+}
+
+TEST_F(FileLockingTest, AdvisoryLockThroughDanglingSymlinkSurvivesProbe)
+{
+   // The same-process registry key must not depend on whether the lock path
+   // resolves yet: acquiring through a dangling symlink creates the target,
+   // and a later probe through the same path must find the registration
+   // rather than open the file and drop this process's lock.
+   FilePath target = root_.completePath("real-lock");
+   ASSERT_EQ(
+      0,
+      ::symlink(
+         target.getAbsolutePath().c_str(),
+         lockFilePath_.getAbsolutePath().c_str()));
+   ASSERT_FALSE(target.exists());
+
+   AdvisoryFileLock lock;
+   AdvisoryFileLock other;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   ASSERT_TRUE(target.exists());
+
+   bool isLocked = false;
+   EXPECT_FALSE(other.isLocked(lockFilePath_, &isLocked));
+   EXPECT_TRUE(isLocked);
+   EXPECT_FALSE(other.isLocked(target, &isLocked));
+   EXPECT_TRUE(isLocked);
+   expectChildSeesAdvisoryLock();
+
+   EXPECT_TRUE(FileLock::isNoLockAvailable(other.acquire(target)));
+   expectChildSeesAdvisoryLock();
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, ConcurrentAdvisoryProbesDoNotBlockAcquire)
+{
+   ASSERT_FALSE(lockFilePath_.ensureFile());
+
+   const std::size_t threadCount = 8;
+   std::atomic<bool> stop(false);
+   std::atomic<int> probeErrors(0);
+   boost::barrier started(threadCount + 1);
+   boost::thread_group threads;
+
+   for (std::size_t i = 0; i < threadCount; ++i)
+   {
+      threads.create_thread([&]()
+      {
+         started.wait();
+         while (!stop.load())
+         {
+            AdvisoryFileLock probe;
+            bool isLocked = false;
+            if (probe.isLocked(lockFilePath_, &isLocked))
+               ++probeErrors;
+         }
+      });
+   }
+
+   started.wait();
+
+   // An in-flight probe is not contention: acquire waits it out.
+   AdvisoryFileLock lock;
+   Error error = lock.acquire(lockFilePath_);
+   ASSERT_FALSE(error) << error.asString();
+
+   // Probes see the held lock without touching the descriptor.
+   AdvisoryFileLock observer;
+   bool isLocked = false;
+   EXPECT_FALSE(observer.isLocked(lockFilePath_, &isLocked));
+   EXPECT_TRUE(isLocked);
+   expectChildSeesAdvisoryLock();
+
+   stop.store(true);
+   threads.join_all();
+   EXPECT_EQ(0, probeErrors.load());
+   EXPECT_FALSE(lock.release());
 }
 
 TEST_F(FileLockingTest, LegacySymlinkOwnerCanBeReplaced)

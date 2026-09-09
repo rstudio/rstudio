@@ -71,7 +71,12 @@ public:
    // NOTE: 'isLocked()' does not ask whether _this lock_ has the lock; rather,
    // whether _any lock_ has the lock. it's implemented as a virtual member function
    // to allow for polymorphism (ie, select method at runtime)
+   //
+   // The bool overload treats an inspection failure as "not locked" (and logs
+   // it); callers that must fail closed should use the Error overload, which
+   // reports the failure and leaves *pIsLocked set to true.
    virtual bool isLocked(const FilePath& lockFilePath) const = 0;
+   virtual Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const = 0;
    
    // warns if FileLock::initialize() hasn't been called yet
    static bool verifyInitialized();

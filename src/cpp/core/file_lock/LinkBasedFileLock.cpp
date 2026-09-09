@@ -28,7 +28,7 @@
 #endif
 
 #include <cstdint>
-#include <iomanip>
+#include <ctime>
 #include <limits>
 #include <map>
 #include <sstream>
@@ -43,6 +43,7 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
 
+#include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
@@ -67,8 +68,17 @@ namespace {
 const char * const kLegacyFileLockPrefix = ".rstudio-lock-41c29";
 const char * const kOwnerFilePrefix = ".rstudio-lock-owner-41c29";
 const char * const kFileLockClaimPrefix = ".rstudio-lock-claim-41c29";
+const char * const kFileLockTempPrefix = ".rstudio-lock-tmp-41c29";
 const char * const kReleasedProcessId = "-1";
 
+// Lock files must stay readable by other users: in a shared project, a
+// collaborator's session inspects (and eventually expires) locks it did not
+// create. The process umask still applies.
+const int kLockFileMode = 0644;
+
+// The identity of a lock is the inode behind it. For a symlink lock that is
+// the target's inode (what the owner holds open), except for a broken symlink
+// where only the link itself remains.
 struct LockMetadata
 {
    boost::optional<PidType> processId;
@@ -89,21 +99,39 @@ struct LockInspection
    LockMetadata metadata;
 };
 
+enum class RemoveResult
+{
+   Removed,   // the expected inode was removed
+   Absent,    // nothing was at the path
+   Mismatch   // a different inode was at the path and has been left in place
+};
+
 std::string pidString()
 {
    return safe_convert::numberToString(system::currentProcessId());
 }
 
-bool isProxyFile(const FilePath& filePath)
+bool hasPrefix(const std::string& filename, const char* prefix)
+{
+   std::string full = std::string(prefix) + "-";
+   return filename.size() > full.size() &&
+          filename.compare(0, full.size(), full) == 0;
+}
+
+bool isOwnerFile(const FilePath& filePath)
 {
    const std::string filename = filePath.getFilename();
-   const std::string legacyPrefix =
-      std::string(kLegacyFileLockPrefix) + "-";
-   const std::string ownerPrefix = std::string(kOwnerFilePrefix) + "-";
-   return (filename.size() > legacyPrefix.size() &&
-           filename.compare(0, legacyPrefix.size(), legacyPrefix) == 0) ||
-          (filename.size() > ownerPrefix.size() &&
-           filename.compare(0, ownerPrefix.size(), ownerPrefix) == 0);
+   return hasPrefix(filename, kLegacyFileLockPrefix) ||
+          hasPrefix(filename, kOwnerFilePrefix);
+}
+
+bool isSweepableArtifact(const FilePath& filePath)
+{
+   // Temp files are excluded: a live contender is mid-way through an
+   // identity-checked removal, and sweeping the file out from under it would
+   // read as contention.
+   return isOwnerFile(filePath) ||
+          hasPrefix(filePath.getFilename(), kFileLockClaimPrefix);
 }
 
 FilePath proxyPathForToken(const FilePath& lockFilePath,
@@ -113,24 +141,11 @@ FilePath proxyPathForToken(const FilePath& lockFilePath,
       std::string(kOwnerFilePrefix) + "-" + token);
 }
 
-FilePath claimPathForOwner(const FilePath& ownerFilePath)
-{
-   const std::string ownerPrefix = std::string(kOwnerFilePrefix) + "-";
-   const std::string legacyPrefix =
-      std::string(kLegacyFileLockPrefix) + "-";
-   const std::string filename = ownerFilePath.getFilename();
-   bool usesOwnerPrefix =
-      filename.compare(0, ownerPrefix.size(), ownerPrefix) == 0;
-   const std::string& prefix = usesOwnerPrefix ? ownerPrefix : legacyPrefix;
-   std::string token = filename.substr(prefix.size());
-   return ownerFilePath.getParent().completePath(
-      std::string(kFileLockClaimPrefix) + "-" + token);
-}
-
 FilePath claimPathForLock(const FilePath& lockFilePath)
 {
-   // Use a stable FNV-1a hash to keep the claim name below NAME_MAX even when
-   // the caller's lock filename is already near that limit.
+   // Every contender for a public lock path must use the same claim name.
+   // Use a stable FNV-1a hash to keep it below NAME_MAX even when the
+   // caller's lock filename is already near that limit.
    uint64_t hash = 14695981039346656037ULL;
    for (unsigned char character : lockFilePath.getFilename())
    {
@@ -139,9 +154,17 @@ FilePath claimPathForLock(const FilePath& lockFilePath)
    }
 
    std::ostringstream stream;
-   stream << kFileLockClaimPrefix << "-path-" << std::hex << hash;
+   stream << kFileLockClaimPrefix << "-" << std::hex << hash;
    return lockFilePath.getParent().completePath(stream.str());
 }
+
+#ifndef _WIN32
+FilePath tempPathBeside(const FilePath& filePath)
+{
+   return filePath.getParent().completePath(
+      std::string(kFileLockTempPrefix) + "-" + system::generateUuid(false));
+}
+#endif
 
 std::string lockContents(bool released)
 {
@@ -168,7 +191,42 @@ void parseLockContents(const std::string& contents, LockMetadata* pMetadata)
    }
 }
 
+Error noLockAvailableError(const FilePath& lockFilePath)
+{
+   Error error = systemError(
+      boost::system::errc::no_lock_available,
+      ERROR_LOCATION);
+   error.addProperty("lock-file", lockFilePath);
+   return error;
+}
+
 #ifndef _WIN32
+
+bool isPermissionError(int errorNumber)
+{
+   return errorNumber == EACCES || errorNumber == EPERM;
+}
+
+Error unlinkPath(const FilePath& filePath)
+{
+   if (::unlink(filePath.getAbsolutePathNative().c_str()) == 0 ||
+       errno == ENOENT)
+   {
+      return Success();
+   }
+
+   Error error = systemError(errno, ERROR_LOCATION);
+   error.addProperty("path", filePath);
+   return error;
+}
+
+void unlinkBestEffort(const FilePath& filePath)
+{
+   Error error = unlinkPath(filePath);
+   if (error)
+      LOG_ERROR(error);
+}
+
 Error writeDescriptorContents(int descriptor, const std::string& contents)
 {
    std::size_t written = 0;
@@ -189,6 +247,31 @@ Error writeDescriptorContents(int descriptor, const std::string& contents)
 
    return Success();
 }
+
+Error writeLockContents(int descriptor, bool released)
+{
+   std::string contents = lockContents(released);
+   if (::lseek(descriptor, 0, SEEK_SET) == -1)
+      return systemCallError("lseek", errno, ERROR_LOCATION);
+   if (::ftruncate(descriptor, 0) == -1)
+      return systemCallError("ftruncate", errno, ERROR_LOCATION);
+
+   return writeDescriptorContents(descriptor, contents);
+}
+
+Error descriptorIdentity(int descriptor, LockMetadata* pMetadata)
+{
+   struct stat info;
+   if (::fstat(descriptor, &info) == -1)
+      return systemCallError("fstat", errno, ERROR_LOCATION);
+
+   pMetadata->device = info.st_dev;
+   pMetadata->inode = info.st_ino;
+   pMetadata->hasIdentity = true;
+   pMetadata->identityFollowsSymlink = true;
+   return Success();
+}
+
 #endif
 
 Error readLockMetadata(const FilePath& lockFilePath,
@@ -205,12 +288,11 @@ Error readLockMetadata(const FilePath& lockFilePath,
       return error;
    }
 
-   struct stat info;
-   if (::fstat(descriptor, &info) == -1)
+   Error error = descriptorIdentity(descriptor, pMetadata);
+   if (error)
    {
-      int errorNumber = errno;
       ::close(descriptor);
-      return systemCallError("fstat", errorNumber, ERROR_LOCATION);
+      return error;
    }
 
    std::string contents;
@@ -233,10 +315,6 @@ Error readLockMetadata(const FilePath& lockFilePath,
       contents.append(buffer, static_cast<std::size_t>(result));
    }
    ::close(descriptor);
-
-   pMetadata->device = info.st_dev;
-   pMetadata->inode = info.st_ino;
-   pMetadata->hasIdentity = true;
 #else
    std::string contents;
    Error error = core::readStringFromFile(lockFilePath, &contents);
@@ -277,6 +355,65 @@ Error hasExpectedIdentity(const FilePath& filePath,
    return Success();
 }
 
+// Removes the entry at 'filePath' only if it is still the inode described by
+// 'metadata'. POSIX has no conditional unlink, so the entry is first renamed
+// aside (atomically taking whatever is at the path), checked, and either
+// unlinked or linked back into place. A link-back that finds the path already
+// re-occupied gives up on the displaced entry rather than clobber the newer
+// one; that needs two contenders to publish in the same instant.
+Error removeIfSameIdentity(const FilePath& filePath,
+                           const LockMetadata& metadata,
+                           RemoveResult* pResult)
+{
+   *pResult = RemoveResult::Absent;
+#ifdef _WIN32
+   Error error = filePath.remove();
+   if (error)
+   {
+      if (isFileNotFoundError(error))
+         return Success();
+      return error;
+   }
+   *pResult = RemoveResult::Removed;
+   return Success();
+#else
+   FilePath tempPath = tempPathBeside(filePath);
+   if (::rename(filePath.getAbsolutePathNative().c_str(),
+                tempPath.getAbsolutePathNative().c_str()) == -1)
+   {
+      if (errno == ENOENT)
+         return Success();
+
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
+   }
+
+   bool matches = false;
+   Error error = hasExpectedIdentity(tempPath, metadata, &matches);
+   if (!error && matches)
+   {
+      *pResult = RemoveResult::Removed;
+      return unlinkPath(tempPath);
+   }
+
+   // Not ours: put it back without following (or clobbering) anything.
+   if (::linkat(AT_FDCWD, tempPath.getAbsolutePathNative().c_str(),
+                AT_FDCWD, filePath.getAbsolutePathNative().c_str(), 0) == -1)
+   {
+      Error linkError = systemCallError("linkat", errno, ERROR_LOCATION);
+      linkError.addProperty("path", filePath);
+      linkError.addProperty("description",
+                            "Could not restore a displaced lock entry");
+      LOG_ERROR(linkError);
+   }
+   unlinkBestEffort(tempPath);
+
+   *pResult = RemoveResult::Mismatch;
+   return error;
+#endif
+}
+
 Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
 {
    std::vector<FilePath> children;
@@ -286,7 +423,7 @@ Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
 
    for (const FilePath& child : children)
    {
-      if (child == lockFilePath || !isProxyFile(child))
+      if (child == lockFilePath || !isOwnerFile(child))
          continue;
 
 #ifndef _WIN32
@@ -307,12 +444,41 @@ Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
    return Success();
 }
 
+#ifndef _WIN32
+
+// A live PID is not proof of a live owner: the owner may have crashed and the
+// kernel may have handed its PID to an unrelated process. The owner wrote the
+// lock after it started, so a process that started after the last refresh
+// cannot be the owner. The timeout interval absorbs clock skew (e.g. an NFS
+// server stamping mtimes) so a legitimate owner is never judged reused.
+bool isOwnerProcessStale(PidType processId, std::time_t lastWriteTime)
+{
+   if (!system::isProcessRunning(processId))
+      return true;
+
+   system::ProcessInfo info;
+   info.pid = processId;
+   boost::posix_time::ptime created;
+   Error error = info.creationTime(&created);
+   if (error)
+      return !system::isProcessRunning(processId);
+
+   double startSeconds = date_time::secondsSinceEpoch(created);
+   double tolerance =
+      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
+   return startSeconds > static_cast<double>(lastWriteTime) + tolerance;
+}
+
+#endif
+
 Error inspectLockFile(const FilePath& lockFilePath,
                       LockInspection* pInspection)
 {
+   std::time_t lastWriteTime = 0;
+
 #ifndef _WIN32
-   struct stat pathInfo;
-   if (::lstat(lockFilePath.getAbsolutePathNative().c_str(), &pathInfo) == -1)
+   struct stat info;
+   if (::lstat(lockFilePath.getAbsolutePathNative().c_str(), &info) == -1)
    {
       if (errno == ENOENT)
          return Success();
@@ -322,7 +488,7 @@ Error inspectLockFile(const FilePath& lockFilePath,
       return error;
    }
 
-   if (S_ISLNK(pathInfo.st_mode))
+   if (S_ISLNK(info.st_mode))
    {
       struct stat targetInfo;
       if (::stat(lockFilePath.getAbsolutePathNative().c_str(), &targetInfo) == -1)
@@ -334,18 +500,34 @@ Error inspectLockFile(const FilePath& lockFilePath,
             return error;
          }
 
+         // broken symlink: nothing to read, and only the link itself to remove
          pInspection->exists = true;
          pInspection->stale = true;
-         pInspection->metadata.device = pathInfo.st_dev;
-         pInspection->metadata.inode = pathInfo.st_ino;
+         pInspection->metadata.device = info.st_dev;
+         pInspection->metadata.inode = info.st_ino;
          pInspection->metadata.hasIdentity = true;
          pInspection->metadata.identityFollowsSymlink = false;
          return Success();
       }
+      info = targetInfo;
    }
+
+   pInspection->metadata.device = info.st_dev;
+   pInspection->metadata.inode = info.st_ino;
+   pInspection->metadata.hasIdentity = true;
+   pInspection->metadata.identityFollowsSymlink = true;
+   lastWriteTime = info.st_mtime;
 #else
    if (!lockFilePath.exists())
       return Success();
+
+   Error timeError = lockFilePath.getLastWriteTime(lastWriteTime);
+   if (timeError)
+   {
+      if (isFileNotFoundError(timeError))
+         return Success();
+      return timeError;
+   }
 #endif
 
    pInspection->exists = true;
@@ -357,7 +539,15 @@ Error inspectLockFile(const FilePath& lockFilePath,
          pInspection->exists = false;
          return Success();
       }
+
+#ifndef _WIN32
+      // Another user's lock we cannot read still expires by age; treating it
+      // as unreadable (no PID) falls through to the timeout check below.
+      if (!isPermissionError(error.getCode()))
+         return error;
+#else
       return error;
+#endif
    }
 
    if (pInspection->metadata.released)
@@ -372,25 +562,14 @@ Error inspectLockFile(const FilePath& lockFilePath,
    // lock and later interfering with the replacement owner.
    if (!FileLock::isLoadBalanced() && pInspection->metadata.processId)
    {
-      pInspection->stale =
-         !system::isProcessRunning(*pInspection->metadata.processId);
+      pInspection->stale = isOwnerProcessStale(
+         *pInspection->metadata.processId,
+         lastWriteTime);
       return pInspection->stale
          ? findOwnerFile(lockFilePath, &pInspection->metadata)
          : Success();
    }
 #endif
-
-   std::time_t lastWriteTime;
-   error = lockFilePath.getLastWriteTime(lastWriteTime);
-   if (error)
-   {
-      if (isFileNotFoundError(error))
-      {
-         pInspection->exists = false;
-         return Success();
-      }
-      return error;
-   }
 
    double seconds =
       static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
@@ -401,37 +580,79 @@ Error inspectLockFile(const FilePath& lockFilePath,
       : Success();
 }
 
-Error noLockAvailableError(const FilePath& lockFilePath)
+// Removes stale owner and claim files left in a lock directory: owners
+// orphaned when something other than the lock deleted the public path (a
+// crash, or a caller cleaning up), and claims abandoned mid-takeover. Live
+// entries are never touched; each candidate is inspected like a lock.
+void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
 {
-   Error error = systemError(
-      boost::system::errc::no_lock_available,
-      ERROR_LOCATION);
-   error.addProperty("lock-file", lockFilePath);
-   return error;
-}
-
-Error unlinkPath(const FilePath& filePath)
-{
-#ifdef _WIN32
-   Error error = filePath.remove();
-   if (error && !isFileNotFoundError(error))
-      return error;
-   return Success();
-#else
-   if (::unlink(filePath.getAbsolutePathNative().c_str()) == 0 ||
-       errno == ENOENT)
+   std::vector<FilePath> children;
+   Error error = directory.getChildren(children);
+   if (error)
    {
-      return Success();
+      LOG_ERROR(error);
+      return;
    }
 
-   Error error = systemError(errno, ERROR_LOCATION);
-   error.addProperty("path", filePath);
-   return error;
-#endif
+   for (const FilePath& child : children)
+   {
+      if (child == ownPath || !isSweepableArtifact(child))
+         continue;
+
+      LockInspection inspection;
+      error = inspectLockFile(child, &inspection);
+      if (error || !inspection.exists || !inspection.stale)
+         continue;
+
+      LOG("Removing stale lock artifact: " << child.getAbsolutePath());
+      RemoveResult result;
+      error = removeIfSameIdentity(child, inspection.metadata, &result);
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
-Error claimLockFile(const FilePath& claimFilePath, bool* pClaimed)
+// A private claim beside the lock elects one stale-lock contender. The claim
+// is held open so that its identity can be re-checked before acting on it.
+struct Claim
 {
+   FilePath path;
+   int descriptor = -1;
+   LockMetadata identity;
+};
+
+void closeClaim(Claim* pClaim)
+{
+#ifndef _WIN32
+   if (pClaim->descriptor != -1)
+      ::close(pClaim->descriptor);
+#endif
+   pClaim->descriptor = -1;
+}
+
+void releaseClaim(Claim* pClaim)
+{
+#ifndef _WIN32
+   if (pClaim->descriptor != -1)
+   {
+      RemoveResult result;
+      Error error = removeIfSameIdentity(
+         pClaim->path,
+         pClaim->identity,
+         &result);
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
+   closeClaim(pClaim);
+}
+
+Error claimLockFile(const FilePath& claimFilePath,
+                    Claim* pClaim,
+                    bool* pClaimed)
+{
+   *pClaimed = false;
+   pClaim->path = claimFilePath;
 #ifdef _WIN32
    *pClaimed = true;
    return Success();
@@ -440,26 +661,19 @@ Error claimLockFile(const FilePath& claimFilePath, bool* pClaimed)
    {
       int descriptor = ::open(
          claimFilePath.getAbsolutePathNative().c_str(),
-         O_WRONLY | O_CREAT | O_EXCL,
-         0600);
+         O_RDWR | O_CREAT | O_EXCL,
+         kLockFileMode);
       if (descriptor != -1)
       {
+         pClaim->descriptor = descriptor;
          Error error = writeDescriptorContents(descriptor, lockContents(false));
-         int closeResult = ::close(descriptor);
+         if (!error)
+            error = descriptorIdentity(descriptor, &pClaim->identity);
          if (error)
          {
-            Error removeError = unlinkPath(claimFilePath);
-            if (removeError)
-               LOG_ERROR(removeError);
+            unlinkBestEffort(claimFilePath);
+            closeClaim(pClaim);
             return error;
-         }
-         if (closeResult == -1)
-         {
-            int errorNumber = errno;
-            Error removeError = unlinkPath(claimFilePath);
-            if (removeError)
-               LOG_ERROR(removeError);
-            return systemCallError("close", errorNumber, ERROR_LOCATION);
          }
 
          *pClaimed = true;
@@ -473,23 +687,26 @@ Error claimLockFile(const FilePath& claimFilePath, bool* pClaimed)
          return error;
       }
 
+      // Another contender's claim. Only a stale one (dead or expired owner)
+      // may be replaced, and only if it is still the inode we inspected.
       LockInspection inspection;
       Error error = inspectLockFile(claimFilePath, &inspection);
       if (error)
          return error;
-      if (!inspection.exists || inspection.stale)
+      if (inspection.exists && !inspection.stale)
+         return Success();
+
+      if (inspection.exists)
       {
-         error = unlinkPath(claimFilePath);
+         RemoveResult result;
+         error = removeIfSameIdentity(claimFilePath, inspection.metadata, &result);
          if (error)
             return error;
-         continue;
+         if (result == RemoveResult::Mismatch)
+            return Success();
       }
-
-      *pClaimed = false;
-      return Success();
    }
 
-   *pClaimed = false;
    return Success();
 #endif
 }
@@ -497,85 +714,50 @@ Error claimLockFile(const FilePath& claimFilePath, bool* pClaimed)
 Error removeLockFile(const FilePath& lockFilePath,
                      const LockMetadata& expectedMetadata)
 {
-   // A private claim beside the lock elects one stale-lock contender.
-   // Inode checks then prevent an earlier inspection from deleting a newer
-   // lock at the same public path.
-   bool matches = false;
-   Error error = hasExpectedIdentity(
-      lockFilePath,
-      expectedMetadata,
-      &matches);
-   if (error)
-      return error;
-   if (!matches)
-      return noLockAvailableError(lockFilePath);
-
-   if (!expectedMetadata.ownerFilePath.isEmpty())
-   {
-      error = hasExpectedIdentity(
-         expectedMetadata.ownerFilePath,
-         expectedMetadata,
-         &matches);
-      if (error)
-         return error;
-      if (!matches)
-      {
-         return noLockAvailableError(lockFilePath);
-      }
-   }
-
-   FilePath claimFilePath = expectedMetadata.ownerFilePath.isEmpty()
-      ? claimPathForLock(lockFilePath)
-      : claimPathForOwner(expectedMetadata.ownerFilePath);
+   Claim claim;
    bool claimed = false;
-   error = claimLockFile(claimFilePath, &claimed);
+   Error error = claimLockFile(claimPathForLock(lockFilePath), &claim, &claimed);
    if (error)
       return error;
    if (!claimed)
       return noLockAvailableError(lockFilePath);
 
 #ifndef _WIN32
-   // An inspection is tied to the inode it read. If another contender has
-   // already replaced that inode, leave the replacement untouched.
-   error = hasExpectedIdentity(lockFilePath, expectedMetadata, &matches);
-   if (error || !matches)
+   // A contender that judged this claim stale (e.g. after a long stall in a
+   // load-balanced deployment) may have replaced it; the replacement's owner
+   // is now the elected contender.
+   bool stillOurs = false;
+   error = hasExpectedIdentity(claim.path, claim.identity, &stillOurs);
+   if (error || !stillOurs)
    {
-      if (!claimFilePath.isEmpty())
-      {
-         Error claimError = unlinkPath(claimFilePath);
-         if (claimError)
-            LOG_ERROR(claimError);
-      }
+      closeClaim(&claim);
       return error ? error : noLockAvailableError(lockFilePath);
    }
 #endif
 
-   error = unlinkPath(lockFilePath);
-   if (!error && !expectedMetadata.ownerFilePath.isEmpty())
-      error = unlinkPath(expectedMetadata.ownerFilePath);
+   // An inspection is tied to the inode it read. If another contender has
+   // already replaced that inode, the replacement is left untouched.
+   RemoveResult result;
+   error = removeIfSameIdentity(lockFilePath, expectedMetadata, &result);
+   if (!error && result == RemoveResult::Mismatch)
+      error = noLockAvailableError(lockFilePath);
 
-   if (!claimFilePath.isEmpty())
+   if (!error && !expectedMetadata.ownerFilePath.isEmpty())
    {
-      Error claimError = unlinkPath(claimFilePath);
-      if (claimError)
-         LOG_ERROR(claimError);
+      RemoveResult ownerResult;
+      Error ownerError = removeIfSameIdentity(
+         expectedMetadata.ownerFilePath,
+         expectedMetadata,
+         &ownerResult);
+      if (ownerError)
+         LOG_ERROR(ownerError);
    }
 
+   releaseClaim(&claim);
    return error;
 }
 
 #ifndef _WIN32
-
-Error writeLockContents(int descriptor, bool released)
-{
-   std::string contents = lockContents(released);
-   if (::lseek(descriptor, 0, SEEK_SET) == -1)
-      return systemCallError("lseek", errno, ERROR_LOCATION);
-   if (::ftruncate(descriptor, 0) == -1)
-      return systemCallError("ftruncate", errno, ERROR_LOCATION);
-
-   return writeDescriptorContents(descriptor, contents);
-}
 
 Error createProxyFile(const FilePath& lockFilePath,
                       std::string* pToken,
@@ -589,7 +771,7 @@ Error createProxyFile(const FilePath& lockFilePath,
       int descriptor = ::open(
          proxyPath.getAbsolutePathNative().c_str(),
          O_RDWR | O_CREAT | O_EXCL,
-         0600);
+         kLockFileMode);
       if (descriptor == -1)
       {
          if (errno == EEXIST)
@@ -604,9 +786,7 @@ Error createProxyFile(const FilePath& lockFilePath,
       if (error)
       {
          ::close(descriptor);
-         Error removeError = unlinkPath(proxyPath);
-         if (removeError)
-            LOG_ERROR(removeError);
+         unlinkBestEffort(proxyPath);
          return error;
       }
 
@@ -621,8 +801,37 @@ Error createProxyFile(const FilePath& lockFilePath,
    return error;
 }
 
+// Removes the public path and owner file of a lock held through
+// 'descriptor', but only where they still refer to that descriptor's inode.
+// The inode is also marked released, so any hard link that could not be
+// removed (or one created by an older RStudio) does not read as held.
+Error releaseLockFiles(const FilePath& lockFilePath,
+                       const FilePath& ownerFilePath,
+                       int descriptor)
+{
+   LockMetadata identity;
+   Error error = descriptorIdentity(descriptor, &identity);
+   if (error)
+      return error;
+
+   RemoveResult result;
+   error = removeIfSameIdentity(lockFilePath, identity, &result);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!ownerFilePath.isEmpty())
+   {
+      Error ownerError = removeIfSameIdentity(ownerFilePath, identity, &result);
+      if (ownerError)
+         LOG_ERROR(ownerError);
+   }
+
+   return writeLockContents(descriptor, true);
+}
+
 Error writeLockFile(const FilePath& lockFilePath,
                     std::string* pToken,
+                    FilePath* pOwnerFilePath,
                     int* pDescriptor)
 {
    std::string token;
@@ -672,9 +881,13 @@ Error writeLockFile(const FilePath& lockFilePath,
             ERROR_LOCATION);
          validationError.addProperty("lock-file", lockFilePath);
          validationError.addProperty("owner-file", proxyPath);
-         Error releaseError = writeLockContents(
-            proxyDescriptor,
-            true);
+
+         // Take back whatever we published, and nothing else: a public path
+         // that does not refer to our owner belongs to someone else.
+         Error releaseError = releaseLockFiles(
+            lockFilePath,
+            proxyPath,
+            proxyDescriptor);
          if (releaseError)
             LOG_ERROR(releaseError);
          ::close(proxyDescriptor);
@@ -682,6 +895,7 @@ Error writeLockFile(const FilePath& lockFilePath,
       }
 
       *pToken = token;
+      *pOwnerFilePath = proxyPath;
       *pDescriptor = proxyDescriptor;
       return Success();
    }
@@ -689,9 +903,7 @@ Error writeLockFile(const FilePath& lockFilePath,
    if (linkError == EEXIST)
    {
       ::close(proxyDescriptor);
-      Error removeError = unlinkPath(proxyPath);
-      if (removeError)
-         LOG_ERROR(removeError);
+      unlinkBestEffort(proxyPath);
       return fileExistsError(lockFilePath, ERROR_LOCATION);
    }
 
@@ -701,14 +913,12 @@ Error writeLockFile(const FilePath& lockFilePath,
    int descriptor = ::open(
       lockFilePath.getAbsolutePathNative().c_str(),
       O_RDWR | O_CREAT | O_EXCL,
-      0600);
+      kLockFileMode);
    if (descriptor == -1)
    {
       int errorNumber = errno;
       ::close(proxyDescriptor);
-      Error removeError = unlinkPath(proxyPath);
-      if (removeError)
-         LOG_ERROR(removeError);
+      unlinkBestEffort(proxyPath);
 
       Error openError = systemError(errorNumber, ERROR_LOCATION);
       openError.addProperty("lock-file", lockFilePath);
@@ -717,20 +927,17 @@ Error writeLockFile(const FilePath& lockFilePath,
 
    error = writeLockContents(descriptor, false);
    ::close(proxyDescriptor);
-   Error removeError = unlinkPath(proxyPath);
-   if (removeError)
-      LOG_ERROR(removeError);
+   unlinkBestEffort(proxyPath);
 
    if (error)
    {
       ::close(descriptor);
-      Error lockRemoveError = unlinkPath(lockFilePath);
-      if (lockRemoveError)
-         LOG_ERROR(lockRemoveError);
+      unlinkBestEffort(lockFilePath);
       return error;
    }
 
    *pToken = token;
+   *pOwnerFilePath = FilePath();
    *pDescriptor = descriptor;
    return Success();
 }
@@ -739,6 +946,7 @@ Error writeLockFile(const FilePath& lockFilePath,
 
 Error writeLockFile(const FilePath& lockFilePath,
                     std::string*,
+                    FilePath*,
                     int*)
 {
    return systemError(
@@ -758,6 +966,8 @@ struct RegisteredLock
 {
    std::string token;
    int descriptor;
+   FilePath lockFilePath;
+   FilePath ownerFilePath;
 };
 
 class LockRegistration : boost::noncopyable
@@ -770,7 +980,9 @@ public:
 
    Error registerLock(const std::string& key,
                       const std::string& token,
-                      int descriptor)
+                      int descriptor,
+                      const FilePath& lockFilePath,
+                      const FilePath& ownerFilePath)
    {
       boost::mutex::scoped_lock lock(mutex_);
       resetAfterFork();
@@ -786,7 +998,9 @@ public:
          ::close(existing->second.descriptor);
       registration_[key] = RegisteredLock{
          token,
-         registeredDescriptor};
+         registeredDescriptor,
+         lockFilePath,
+         ownerFilePath};
 #endif
       return Success();
    }
@@ -826,9 +1040,11 @@ public:
 #ifndef _WIN32
       for (const auto& entry : registration_)
       {
-         Error error = writeLockContents(
-            entry.second.descriptor,
-            true);
+         LOG("Clearing lock: " << entry.second.lockFilePath.getAbsolutePath());
+         Error error = releaseLockFiles(
+            entry.second.lockFilePath,
+            entry.second.ownerFilePath,
+            entry.second.descriptor);
          if (error)
             LOG_ERROR(error);
          ::close(entry.second.descriptor);
@@ -889,6 +1105,7 @@ struct LinkBasedFileLock::Impl
    }
 
    FilePath lockFilePath;
+   FilePath ownerFilePath;
    std::string registrationKey;
    std::string token;
    int descriptor;
@@ -917,10 +1134,14 @@ FilePath LinkBasedFileLock::lockFilePath() const
 
 bool LinkBasedFileLock::isLocked(const FilePath& lockFilePath) const
 {
-   bool isLocked = true;
+   bool isLocked = false;
    Error error = this->isLocked(lockFilePath, &isLocked);
    if (error)
+   {
       LOG_ERROR(error);
+      return false;
+   }
+
    return isLocked;
 }
 
@@ -968,10 +1189,12 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    }
 
    std::string token;
+   FilePath ownerFilePath;
    int descriptor = -1;
    error = writeLockFile(
       lockFilePath,
       &token,
+      &ownerFilePath,
       &descriptor);
    if (error)
    {
@@ -990,13 +1213,16 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    error = lockRegistration().registerLock(
       key,
       token,
-      descriptor);
+      descriptor,
+      lockFilePath,
+      ownerFilePath);
    if (error)
    {
 #ifndef _WIN32
-      Error releaseError = writeLockContents(
-         descriptor,
-         true);
+      Error releaseError = releaseLockFiles(
+         lockFilePath,
+         ownerFilePath,
+         descriptor);
       if (releaseError)
          LOG_ERROR(releaseError);
       ::close(descriptor);
@@ -1005,12 +1231,14 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    }
 
    pImpl_->lockFilePath = lockFilePath;
+   pImpl_->ownerFilePath = ownerFilePath;
    pImpl_->registrationKey = key;
    pImpl_->token = token;
    pImpl_->descriptor = descriptor;
    pImpl_->processId = system::currentProcessId();
 
    LOG("Acquired lock: " << lockFilePath.getAbsolutePath());
+   sweepStaleArtifacts(lockFilePath.getParent(), ownerFilePath);
    return Success();
 }
 
@@ -1023,12 +1251,13 @@ Error LinkBasedFileLock::release()
 #ifndef _WIN32
    if (pImpl_->processId == system::currentProcessId())
    {
-      // Update the inode opened at acquisition. If a stale takeover replaced
-      // the public path, this descriptor still refers only to the old owner and
-      // cannot release or delete the successor's lock.
-      error = writeLockContents(
-         pImpl_->descriptor,
-         true);
+      // Everything is checked against the inode opened at acquisition. If a
+      // stale takeover replaced the public path, the successor's entries do
+      // not match and are left alone.
+      error = releaseLockFiles(
+         pImpl_->lockFilePath,
+         pImpl_->ownerFilePath,
+         pImpl_->descriptor);
    }
    ::close(pImpl_->descriptor);
 #endif
@@ -1039,6 +1268,7 @@ Error LinkBasedFileLock::release()
    LOG("Released lock: " << pImpl_->lockFilePath.getAbsolutePath());
 
    pImpl_->lockFilePath = FilePath();
+   pImpl_->ownerFilePath = FilePath();
    pImpl_->registrationKey.clear();
    pImpl_->token.clear();
    pImpl_->descriptor = -1;
@@ -1053,9 +1283,9 @@ void LinkBasedFileLock::refresh()
 
 void LinkBasedFileLock::cleanUp()
 {
-   // Individual lock objects mark their private owner inode released in their
-   // destructors. Clearing the registry here must not delete shared pathnames:
-   // after lease takeover, a pathname may already belong to another process.
+   // Locks still registered at shutdown are released here; each removal is
+   // identity-checked, so a pathname taken over by another process after a
+   // lease expiry is left untouched.
    lockRegistration().clearLocks();
 }
 

@@ -57,6 +57,10 @@ const char * const kLocksConfFile    = "file-locks";
 const double kDefaultRefreshRate     = 20.0;
 const double kDefaultTimeoutInterval = 30.0;
 
+// boost::posix_time::seconds narrows to a 32-bit count, and the refresh timer
+// converts to a system_clock duration; a year is far below either limit.
+const double kMaxIntervalSeconds     = 365.0 * 24.0 * 60.0 * 60.0;
+
 std::string lockTypeToString(FileLock::LockType type)
 {
    switch (type)
@@ -88,10 +92,10 @@ double getFieldPositive(const Settings& settings,
                         double defaultValue)
 {
    double value = settings.getDouble(name, defaultValue);
-   if (!std::isfinite(value) || value < 1)
+   if (!std::isfinite(value) || value < 1 || value > kMaxIntervalSeconds)
    {
       LOG_WARNING_MESSAGE(
-         "invalid field '" + name + "': must be at least one second");
+         "invalid field '" + name + "': must be between one second and one year");
       return defaultValue;
    }
    

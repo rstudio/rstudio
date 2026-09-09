@@ -77,24 +77,13 @@ enum class LockProbe
    Error
 };
 
-// Non-destructive tri-state lock probe. Unlike FileLock::isLocked() it
-// distinguishes an inspection error from a free lock so callers can fail
+// Non-destructive tri-state lock probe. Unlike the bool FileLock::isLocked()
+// it distinguishes an inspection error from a free lock so callers can fail
 // closed, and it does not alter the lock object's lifecycle state.
 LockProbe probeLock(const FilePath& lockFilePath, FileLock::LockType lockType)
 {
    bool isLocked = true;
-   Error error;
-   if (lockType == FileLock::LOCKTYPE_LINKBASED)
-   {
-      LinkBasedFileLock lock;
-      error = lock.isLocked(lockFilePath, &isLocked);
-   }
-   else
-   {
-      AdvisoryFileLock lock;
-      error = lock.isLocked(lockFilePath, &isLocked);
-   }
-
+   Error error = FileLock::create(lockType)->isLocked(lockFilePath, &isLocked);
    if (error)
    {
       LOG_ERROR(error);
@@ -277,22 +266,25 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
 
       for (const FilePath& child : children)
       {
-         // Skip our own lock file: probing a lock this process holds would
-         // release it under POSIX fcntl semantics. Skip non-.lock entries:
-         // link-based locking creates transient proxy files alongside the
-         // lock files it manages.
+         // Skip our own lock file: this process already holds it. Skip
+         // non-.lock entries: link-based locking keeps owner files (and
+         // short-lived claim files) beside the lock files it manages.
          if (child.getFilename() == ownSessionLockPath().getFilename())
             continue;
          if (child.getExtensionLowerCase() != kSessionLockSuffix)
             continue;
 
-         // Probe by acquisition: isLocked() reports false both for a free
-         // lock and when inspection fails, which could delete a live lock.
-         // Acquiring distinguishes the cases — success means the file was
-         // stale (an advisory leftover from a crash, or a link-based file
-         // whose owner is gone; file existence alone never means "in use"),
-         // contention means a live session, and anything else fails closed
-         // rather than risk mutating under a session we could not check.
+         // Probe by acquisition: success means the file was stale (an
+         // advisory leftover from a crash, or a link-based lock whose owner
+         // is gone; file existence alone never means "in use"), contention
+         // means a live session, and anything else fails closed rather than
+         // risk mutating under a session we could not check.
+         //
+         // The file is never unlinked here. A released link-based lock
+         // removes its own files, and an advisory lock file must persist so
+         // that every contender locks the same inode: deleting it after
+         // release would let a same-named session that acquired in between
+         // hold a lock at an inode no later probe can see.
          boost::shared_ptr<FileLock> probe = makeLock();
          Error probeError = probe->acquire(child);
          if (!probeError)
@@ -300,14 +292,6 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
             Error releaseError = probe->release();
             if (releaseError)
                LOG_ERROR(releaseError);
-            Error removeError = child.removeIfExists();
-            if (removeError)
-            {
-               LOG_WARNING_MESSAGE(
-                  "Failed to remove stale Posit Assistant session lock "
-                  "file '" + child.getAbsolutePath() + "': " +
-                  removeError.getMessage());
-            }
             continue;
          }
 
