@@ -2506,11 +2506,11 @@ input[type="checkbox"]:checked:before {
 
 /* Mark the selected tab without changing its height or content position. */
 .rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 0 1px 0 #3465a4 inset;
+   box-shadow: 2px 0 0 #3465a4 inset;
 }
 
 .rstudio-highlight-active-tabs .rstudio-themes-dark .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 0 1px 0 #8ab4f8 inset;
+   box-shadow: 2px 0 0 #8ab4f8 inset;
 }
 
 /* Thicken the selected label without changing tab widths or ellipsis positions. */
