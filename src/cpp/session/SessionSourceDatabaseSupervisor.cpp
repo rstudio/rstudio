@@ -241,11 +241,17 @@ Error createSessionDir()
    if (error)
       return error;
 
-   // attempt to acquire the lock. if we can't then we still continue
-   // so we can support filesystems that don't have file locks.
+   // Attempt to acquire the lock. Unsupported locking can be tolerated,
+   // but contention with another session must prevent sharing its database.
    error = sessionDirLock().acquire(sessionLockFilePath(sessionDirPath()));
    if (error)
+   {
+      // A competing owner must not share this database, even though we allow
+      // startup to continue when the filesystem does not support locking.
+      if (FileLock::isNoLockAvailable(error))
+         return error;
       LOG_ERROR(error);
+   }
 
    return Success();
 }
@@ -347,7 +353,7 @@ bool reclaimOrphanedSession()
       }
 
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!sessionDirLock().isLocked(lockFilePath))
+      if (!FileLock::isLockedByAnyType(lockFilePath))
       {
          // adopt by giving the session dir our own name
          Error error = sessionDir.move(sessionDirPath());
@@ -395,12 +401,12 @@ Error removeAndRecreate(const FilePath& dir)
 // support file-locking. In these cases we need to gracefully fall back
 // to some sane behavior. To implement this we use the following scheme:
 //
-//  (1) Always attempt to call FileLock::acquire to create an advisory lock
-//      but if it fails we still allow the process to start up.
+//  (1) Attempt to acquire the configured lock type. Unsupported locking may
+//      be tolerated, but contention with another session is an error.
 //
-//  (2) When checking for "orphan" source-db directories we try to acquire
-//      a lock on them -- for volumes that don't support locks this will
-//      always be an error so we'll never be able to recover an orphan dir
+//  (2) Check both advisory and link-based locks before recovering an orphan
+//      directory, since Desktop and Server have different defaults. If an
+//      advisory lock cannot be inspected, leave the directory alone.
 //
 // In some multi-machine cases it's actually possible for two processes
 // to both get a lock on the same file. For this reason if we are running
@@ -411,15 +417,27 @@ Error removeAndRecreate(const FilePath& dir)
 
 Error attachToSourceDatabase()
 {  
-   // this session may already have a source database; if it does, re-acquire a
-   // lock and then use it. don't log warnings as this should only fail when
-   // e.g. the filesystem does not support the active locking scheme
+   // This session may already have a source database. Confirm that no other
+   // process owns it before re-acquiring its lock and using it.
    FilePath existingSdb = sessionDirPath();
    if (existingSdb.exists())
    {
+      // Unscoped Server processes can resolve to the same active session ID.
+      // Do not reuse its source database if another process still owns it,
+      // including an owner using a different locking scheme.
+      FilePath lockFilePath = sessionLockFilePath(existingSdb);
+      if (FileLock::isLockedByAnyType(lockFilePath))
+      {
+         Error error = systemError(boost::system::errc::no_lock_available, ERROR_LOCATION);
+         error.addProperty("lock-file", lockFilePath);
+         return error;
+      }
+
       Error error = sessionDirLock().acquire(sessionLockFilePath(existingSdb));
       if (error)
       {
+         if (FileLock::isNoLockAvailable(error))
+            return error;
          LOG_ERROR(error);
       }
       else

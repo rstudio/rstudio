@@ -260,6 +260,27 @@ boost::shared_ptr<FileLock> FileLock::createDefault()
    return FileLock::create(s_defaultType);
 }
 
+bool FileLock::isLockedByAnyType(const FilePath& lockFilePath)
+{
+   // Desktop uses advisory locks and Server uses link-based locks. Inspect
+   // advisory locks first, before reading a possible link-based lock's PID.
+   AdvisoryFileLock advisoryLock;
+   if (advisoryLock.isLocked(lockFilePath))
+      return true;
+
+#ifndef _WIN32
+   // Advisory lock files can be empty, whereas link-based locks contain a PID.
+   // Do not pass an empty advisory lock file to the link-based PID check.
+   if (lockFilePath.exists() && lockFilePath.getSize() > 0)
+   {
+      LinkBasedFileLock linkBasedLock;
+      return linkBasedLock.isLocked(lockFilePath);
+   }
+#endif
+
+   return false;
+}
+
 void FileLock::refresh()
 {
    verifyInitialized();

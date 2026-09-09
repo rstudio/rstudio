@@ -82,7 +82,8 @@ bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
       Error error(boost::interprocess::ec_from_exception(e), ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
       LOG_ERROR(error);
-      return false;
+      // Failure to inspect the lock does not establish that it is free.
+      return true;
    }
 }
 

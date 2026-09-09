@@ -77,6 +77,78 @@ void forkAndCheckLock()
    ASSERT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0) << "Child process did not exit cleanly";
 }
 
+void checkCrossTypeLockFromChild(bool expected)
+{
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      bool locked = FileLock::isLockedByAnyType(s_lockFilePath);
+      ::_exit(locked == expected ? EXIT_SUCCESS : EXIT_FAILURE);
+   }
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(EXIT_SUCCESS, WEXITSTATUS(status));
+}
+
+TEST(FileLockingTest, CrossTypeCheckDetectsAdvisoryOwner)
+{
+   FileLock::initialize();
+   ScopedFileLock lock(FileLock::create(FileLock::LOCKTYPE_ADVISORY), s_lockFilePath);
+   ASSERT_FALSE(lock.error());
+
+   checkCrossTypeLockFromChild(true);
+   // Probing in another process must leave the owner's lock intact.
+   checkCrossTypeLockFromChild(true);
+}
+
+TEST(FileLockingTest, CrossTypeCheckDetectsLinkBasedOwner)
+{
+   FileLock::initialize();
+   ScopedFileLock lock(FileLock::create(FileLock::LOCKTYPE_LINKBASED), s_lockFilePath);
+   ASSERT_FALSE(lock.error());
+
+   checkCrossTypeLockFromChild(true);
+   checkCrossTypeLockFromChild(true);
+}
+
+TEST(FileLockingTest, CrossTypeCheckAllowsExpiredLinkBasedLock)
+{
+   FileLock::initialize();
+   ScopedFileLock lock(FileLock::create(FileLock::LOCKTYPE_LINKBASED), s_lockFilePath);
+   ASSERT_FALSE(lock.error());
+
+   s_lockFilePath.setLastWriteTime(
+      std::time(nullptr) - FileLock::getTimeoutInterval().total_seconds() - 1);
+   checkCrossTypeLockFromChild(false);
+}
+
+TEST(FileLockingTest, CrossTypeCheckAllowsMissingAndUnlockedAdvisoryFiles)
+{
+   FileLock::initialize();
+   ASSERT_FALSE(s_lockFilePath.removeIfExists());
+   EXPECT_FALSE(FileLock::isLockedByAnyType(s_lockFilePath));
+   EXPECT_FALSE(s_lockFilePath.exists());
+
+   ASSERT_FALSE(s_lockFilePath.ensureFile());
+   RemoveOnExitScope cleanup(s_lockFilePath, ERROR_LOCATION);
+   EXPECT_FALSE(FileLock::isLockedByAnyType(s_lockFilePath));
+}
+
+TEST(FileLockingTest, CrossTypeCheckDoesNotTreatInspectionErrorsAsUnlocked)
+{
+   FileLock::initialize();
+   FilePath directory(s_lockFilePath.getAbsolutePath() + "-directory");
+   ASSERT_FALSE(directory.ensureDirectory());
+   RemoveOnExitScope cleanup(directory, ERROR_LOCATION);
+
+   // A directory cannot be opened as an advisory lock file. An inspection
+   // failure must not authorize reclaiming another session's source data.
+   EXPECT_TRUE(FileLock::isLockedByAnyType(directory));
+}
+
 TEST(FileLockingTest, LinkBasedLockCanOnlyBeAcquiredOnce)
 {
    Error error;
