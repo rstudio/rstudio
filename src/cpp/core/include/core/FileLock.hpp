@@ -95,6 +95,16 @@ public:
    static bool isLoggingEnabled() { return s_loggingEnabled; }
    static bool isLoadBalanced() { return s_isLoadBalanced; }
    static bool useSymlinks() { return s_useSymlinks; }
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   static void setLoadBalancedForTesting(bool isLoadBalanced)
+   {
+      s_isLoadBalanced = isLoadBalanced;
+   }
+   static void setUseSymlinksForTesting(bool useSymlinks)
+   {
+      s_useSymlinks = useSymlinks;
+   }
+#endif
    static bool isNoLockAvailable(const Error& error)
    {
       return error == systemError(boost::system::errc::no_lock_available, ErrorLocation());
@@ -119,6 +129,7 @@ public:
    Error acquire(const FilePath& lockFilePath);
    Error release();
    bool isLocked(const FilePath& lockFilePath) const;
+   Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const;
    FilePath lockFilePath() const;
    
    AdvisoryFileLock();
@@ -139,6 +150,7 @@ public:
    Error acquire(const FilePath& lockFilePath);
    Error release();
    bool isLocked(const FilePath& lockFilePath) const;
+   Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const;
    FilePath lockFilePath() const;
    
    LinkBasedFileLock();

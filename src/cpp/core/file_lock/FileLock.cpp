@@ -15,6 +15,8 @@
 
 #include <core/FileLock.hpp>
 
+#include <cmath>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -86,9 +88,10 @@ double getFieldPositive(const Settings& settings,
                         double defaultValue)
 {
    double value = settings.getDouble(name, defaultValue);
-   if (value < 0)
+   if (!std::isfinite(value) || value < 1)
    {
-      LOG_WARNING_MESSAGE("invalid field '" + name + "': must be positive");
+      LOG_WARNING_MESSAGE(
+         "invalid field '" + name + "': must be at least one second");
       return defaultValue;
    }
    

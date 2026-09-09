@@ -18,15 +18,7 @@
 #include <cstddef>
 #include <vector>
 
-// boost/interprocess requires this undef under mingw64 (mirrors
-// core/file_lock/AdvisoryFileLock.cpp)
-#if defined(__GNUC__) && defined(_WIN64)
-   #undef BOOST_USE_WINDOWS_H
-#endif
-#include <boost/interprocess/sync/file_lock.hpp>
-
 #include <core/Log.hpp>
-#include <core/StringUtils.hpp>
 
 namespace rstudio {
 namespace session {
@@ -86,42 +78,30 @@ enum class LockProbe
 };
 
 // Non-destructive tri-state lock probe. Unlike FileLock::isLocked() it
-// distinguishes an inspection error from a free lock (so callers can fail
-// closed), and unlike an acquire-and-release probe it never unlinks the lock
-// file (an advisory release unlocks and then deletes the file, opening a
-// takeover race where two mutators end up holding locks on different inodes
-// of the same path).
+// distinguishes an inspection error from a free lock so callers can fail
+// closed, and it does not alter the lock object's lifecycle state.
 LockProbe probeLock(const FilePath& lockFilePath, FileLock::LockType lockType)
 {
-   if (!lockFilePath.exists())
-      return LockProbe::Free;
-
-   // Link-based locks never run on Windows (FileLock forces advisory there)
+   bool isLocked = true;
+   Error error;
    if (lockType == FileLock::LOCKTYPE_LINKBASED)
    {
-      return LinkBasedFileLock::isLockFileStale(lockFilePath)
-         ? LockProbe::Free
-         : LockProbe::Held;
+      LinkBasedFileLock lock;
+      error = lock.isLocked(lockFilePath, &isLocked);
+   }
+   else
+   {
+      AdvisoryFileLock lock;
+      error = lock.isLocked(lockFilePath, &isLocked);
    }
 
-   try
+   if (error)
    {
-      boost::interprocess::file_lock lock(
-         string_utils::utf8ToSystem(lockFilePath.getAbsolutePath()).c_str());
-      if (lock.try_lock())
-      {
-         lock.unlock();
-         return LockProbe::Free;
-      }
-      return LockProbe::Held;
-   }
-   catch (boost::interprocess::interprocess_exception& e)
-   {
-      LOG_WARNING_MESSAGE(
-         "Unable to inspect lock file '" + lockFilePath.getAbsolutePath() +
-         "': " + e.what());
+      LOG_ERROR(error);
       return LockProbe::Error;
    }
+
+   return isLocked ? LockProbe::Held : LockProbe::Free;
 }
 
 } // anonymous namespace
