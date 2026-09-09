@@ -137,7 +137,8 @@ public:
    // distinguish a free lock from an inspection failure; see the probe loop
    // in the .cpp — excluding our own file by name (probing a lock this
    // process holds would release it under POSIX fcntl semantics). Files
-   // whose probe acquisition succeeds are stale leftovers and are deleted.
+   // whose probe acquisition succeeds are stale leftovers; those older than
+   // the lock timeout are deleted (see the probe loop for why not sooner).
    //
    // On failure, *pUserMessage receives user-facing text describing why
    // (another mutator, or live sessions in use). This process's own held

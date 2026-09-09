@@ -875,11 +875,12 @@ TEST_F(FileLockingTest, UnreadableLinkLockExpiresByTimeout)
    EXPECT_FALSE(lock.release());
 }
 
-TEST_F(FileLockingTest, BoolIsLockedFailsOpenOnInspectionError)
+TEST_F(FileLockingTest, BoolIsLockedFailsClosedOnInspectionError)
 {
-   // A path that cannot be inspected is "not locked" for callers of the bool
-   // overload (which cleans up leftovers), while the Error overload reports
-   // the failure and leaves the flag set for callers that fail closed.
+   // A path that cannot be inspected reads as locked through both overloads:
+   // callers of the bool overload remove or adopt what is "not locked", so a
+   // transient error must not hand them another session's live lock. The
+   // Error overload additionally reports the failure.
    FilePath directoryAsLock = root_.completePath("dir-lock");
    ASSERT_FALSE(directoryAsLock.ensureDirectory());
 
@@ -887,14 +888,14 @@ TEST_F(FileLockingTest, BoolIsLockedFailsOpenOnInspectionError)
    bool isLocked = false;
    EXPECT_TRUE(advisory.isLocked(directoryAsLock, &isLocked));
    EXPECT_TRUE(isLocked);
-   EXPECT_FALSE(advisory.isLocked(directoryAsLock));
+   EXPECT_TRUE(advisory.isLocked(directoryAsLock));
 
    FilePath invalidPath = root_.completePath(std::string(300, 'x'));
    LinkBasedFileLock linkBased;
    isLocked = false;
    EXPECT_TRUE(linkBased.isLocked(invalidPath, &isLocked));
    EXPECT_TRUE(isLocked);
-   EXPECT_FALSE(linkBased.isLocked(invalidPath));
+   EXPECT_TRUE(linkBased.isLocked(invalidPath));
 }
 
 TEST_F(FileLockingTest, AdvisoryLockThroughDanglingSymlinkSurvivesProbe)
@@ -1211,6 +1212,18 @@ TEST_F(FileLockingTest, LinkLockDestructorReleasesLock)
    LinkBasedFileLock replacement;
    EXPECT_FALSE(replacement.acquire(lockFilePath_));
    EXPECT_FALSE(replacement.release());
+}
+
+TEST_F(FileLockingTest, LinkLockReleaseWithoutAcquireSucceeds)
+{
+   // Callers that tolerate a failed acquire still release unconditionally at
+   // shutdown; that must not read as an error.
+   LinkBasedFileLock lock;
+   EXPECT_FALSE(lock.release());
+
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(lock.release());
+   EXPECT_FALSE(lock.release());
 }
 
 TEST_F(FileLockingTest, LinkCreationErrorsAreNotReportedAsContention)

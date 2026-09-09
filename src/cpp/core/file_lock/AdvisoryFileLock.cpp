@@ -363,13 +363,10 @@ struct AdvisoryFileLock::Impl
 
 bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
 {
-   bool isLocked = false;
+   bool isLocked = true;
    Error error = this->isLocked(lockFilePath, &isLocked);
    if (error)
-   {
       LOG_ERROR(error);
-      return false;
-   }
 
    return isLocked;
 }
@@ -500,6 +497,20 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       {
          LOG("Failed to acquire lock: " << lockFilePath.getAbsolutePath());
          return noLockAvailableError(lockFilePath);
+      }
+
+      // The lock was taken by name; make sure the path still leads to the
+      // inode reserved above (an older RStudio may unlink and recreate lock
+      // files), or the registry would guard one inode while the kernel lock
+      // sits on another.
+      std::string lockedInode;
+      error = inodeKey(lockFilePath, &lockedInode);
+      if (!error && lockedInode != inode)
+         error = noLockAvailableError(lockFilePath);
+      if (error)
+      {
+         lock.unlock();
+         return error;
       }
 
       LOG("Acquired lock: " << lockFilePath.getAbsolutePath());

@@ -26,6 +26,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <ctime>
+
 #include <gtest/gtest.h>
 
 #include <core/FileLock.hpp>
@@ -344,10 +346,18 @@ TEST_F(ChatInstallLock, AdvisoryLockAcrossProcessesBlocksMutationAndClearsOnExit
    ASSERT_EQ(::waitpid(child, &status, 0), child);
 
    // The leftover lock file must not read as "in use" once its holder is
-   // gone; the mutation proceeds. Advisory lock files intentionally persist
-   // so that every contender locks the same inode.
+   // gone; the mutation proceeds. A recent advisory lock file is kept (its
+   // owner may still be about to lock it) ...
    EXPECT_FALSE(advisoryLocal.tryBeginMutation(&message));
    EXPECT_TRUE(otherLockFile.exists());
+   advisoryLocal.endMutation();
+
+   // ... while one older than the lock timeout is a dead session's leftover
+   // and is cleaned up, so the sessions directory does not grow forever.
+   otherLockFile.setLastWriteTime(
+      ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds() - 1);
+   EXPECT_FALSE(advisoryLocal.tryBeginMutation(&message));
+   EXPECT_FALSE(otherLockFile.exists());
    advisoryLocal.endMutation();
 }
 

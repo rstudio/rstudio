@@ -16,6 +16,7 @@
 #include "ChatInstallLock.hpp"
 
 #include <cstddef>
+#include <ctime>
 #include <vector>
 
 #include <core/Log.hpp>
@@ -78,8 +79,9 @@ enum class LockProbe
 };
 
 // Non-destructive tri-state lock probe. Unlike the bool FileLock::isLocked()
-// it distinguishes an inspection error from a free lock so callers can fail
-// closed, and it does not alter the lock object's lifecycle state.
+// it distinguishes an inspection error from a held lock so callers can word
+// their refusal honestly, and it does not alter the lock object's lifecycle
+// state.
 LockProbe probeLock(const FilePath& lockFilePath, FileLock::LockType lockType)
 {
    bool isLocked = true;
@@ -280,11 +282,13 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
          // means a live session, and anything else fails closed rather than
          // risk mutating under a session we could not check.
          //
-         // The file is never unlinked here. A released link-based lock
-         // removes its own files, and an advisory lock file must persist so
-         // that every contender locks the same inode: deleting it after
-         // release would let a same-named session that acquired in between
-         // hold a lock at an inode no later probe can see.
+         // A released link-based lock removes its own files, but an advisory
+         // one leaves its file behind (release must not unlink it, or two
+         // contenders could lock different inodes at one path), and every
+         // process mints a new file name. Those leftovers are removed here
+         // once old enough that no session can still be between creating
+         // the file and locking it; a live session's file is never this old
+         // and unlocked at the same time.
          boost::shared_ptr<FileLock> probe = makeLock();
          Error probeError = probe->acquire(child);
          if (!probeError)
@@ -292,6 +296,15 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
             Error releaseError = probe->release();
             if (releaseError)
                LOG_ERROR(releaseError);
+
+            std::time_t settled =
+               ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds();
+            if (child.exists() && child.getLastWriteTime() < settled)
+            {
+               Error removeError = child.removeIfExists();
+               if (removeError)
+                  LOG_ERROR(removeError);
+            }
             continue;
          }
 

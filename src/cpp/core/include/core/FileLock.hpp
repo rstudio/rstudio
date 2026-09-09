@@ -72,9 +72,11 @@ public:
    // whether _any lock_ has the lock. it's implemented as a virtual member function
    // to allow for polymorphism (ie, select method at runtime)
    //
-   // The bool overload treats an inspection failure as "not locked" (and logs
-   // it); callers that must fail closed should use the Error overload, which
-   // reports the failure and leaves *pIsLocked set to true.
+   // Both overloads fail closed: an inspection failure reads as "locked", so
+   // a caller never removes or adopts what may be another session's live
+   // lock. The bool overload logs the failure; the Error overload reports it
+   // (and leaves *pIsLocked set to true) for callers that need to tell the
+   // two apart.
    virtual bool isLocked(const FilePath& lockFilePath) const = 0;
    virtual Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const = 0;
    

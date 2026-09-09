@@ -24,6 +24,7 @@
 #ifdef _MSC_VER
 # include <io.h>
 #else
+# include <sys/time.h>
 # include <unistd.h>
 #endif
 
@@ -249,6 +250,23 @@ Error writeDescriptorContents(int descriptor, const std::string& contents)
    return Success();
 }
 
+// Stamps the lock with this host's clock. A write leaves the mtime to the
+// filesystem, which on a network mount is the server's clock; staleness is
+// judged against the contender's clock (and, for a local owner, its process
+// start time), so the two must not be mixed.
+Error stampWriteTime(int descriptor)
+{
+   struct timeval now;
+   if (::gettimeofday(&now, nullptr) == -1)
+      return systemCallError("gettimeofday", errno, ERROR_LOCATION);
+
+   struct timeval times[2] = { now, now };
+   if (::futimes(descriptor, times) == -1)
+      return systemCallError("futimes", errno, ERROR_LOCATION);
+
+   return Success();
+}
+
 Error writeLockContents(int descriptor, bool released)
 {
    std::string contents = lockContents(released);
@@ -257,7 +275,11 @@ Error writeLockContents(int descriptor, bool released)
    if (::ftruncate(descriptor, 0) == -1)
       return systemCallError("ftruncate", errno, ERROR_LOCATION);
 
-   return writeDescriptorContents(descriptor, contents);
+   Error error = writeDescriptorContents(descriptor, contents);
+   if (error)
+      return error;
+
+   return stampWriteTime(descriptor);
 }
 
 Error descriptorIdentity(int descriptor,
@@ -288,7 +310,7 @@ Error readLockMetadata(const FilePath& lockFilePath,
 #ifndef _WIN32
    int descriptor = ::open(
       lockFilePath.getAbsolutePathNative().c_str(),
-      O_RDONLY | O_NONBLOCK);
+      O_RDONLY | O_NONBLOCK | O_CLOEXEC);
    if (descriptor == -1)
    {
       Error error = systemError(errno, ERROR_LOCATION);
@@ -481,10 +503,16 @@ Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
 // A live PID is not proof of a live owner: the owner may have exited without
 // being reaped yet, or crashed and had its PID handed to an unrelated
 // process. The owner wrote the lock after it started, so a process that
-// started after the last refresh cannot be the owner. The timeout interval
-// absorbs clock skew (e.g. an NFS server stamping mtimes) so a legitimate
-// owner is never judged reused.
-bool isOwnerProcessStale(PidType processId, std::time_t lastWriteTime)
+// started after the last refresh cannot be the owner. Both timestamps come
+// from this host's clock (see stampWriteTime), so only their resolution
+// needs absorbing: /proc reports the start time in whole seconds since a
+// boot time that is itself rounded.
+//
+// Returns none when the start time is unavailable (e.g. /proc mounted with
+// hidepid); the caller then falls back to the age check rather than let bare
+// PID existence pin the lock.
+boost::optional<bool> isOwnerProcessStale(PidType processId,
+                                          std::time_t lastWriteTime)
 {
    if (!system::isProcessRunning(processId) || system::isProcessZombie(processId))
       return true;
@@ -494,12 +522,12 @@ bool isOwnerProcessStale(PidType processId, std::time_t lastWriteTime)
    boost::posix_time::ptime created;
    Error error = info.creationTime(&created);
    if (error)
-      return !system::isProcessRunning(processId);
+      return boost::none;
 
+   const double kStartTimeToleranceSeconds = 5;
    double startSeconds = date_time::secondsSinceEpoch(created);
-   double tolerance =
-      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
-   return startSeconds > static_cast<double>(lastWriteTime) + tolerance;
+   return startSeconds >
+          static_cast<double>(lastWriteTime) + kStartTimeToleranceSeconds;
 }
 
 #endif
@@ -592,12 +620,16 @@ Error inspectLockFile(const FilePath& lockFilePath,
    // lock and later interfering with the replacement owner.
    if (!FileLock::isLoadBalanced() && pInspection->metadata.processId)
    {
-      pInspection->stale = isOwnerProcessStale(
+      boost::optional<bool> stale = isOwnerProcessStale(
          *pInspection->metadata.processId,
          lastWriteTime);
-      return pInspection->stale
-         ? findOwnerFile(lockFilePath, &pInspection->metadata)
-         : Success();
+      if (stale)
+      {
+         pInspection->stale = *stale;
+         return pInspection->stale
+            ? findOwnerFile(lockFilePath, &pInspection->metadata)
+            : Success();
+      }
    }
 #endif
 
@@ -691,12 +723,14 @@ Error claimLockFile(const FilePath& claimFilePath,
    {
       int descriptor = ::open(
          claimFilePath.getAbsolutePathNative().c_str(),
-         O_RDWR | O_CREAT | O_EXCL,
+         O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC,
          kLockFileMode);
       if (descriptor != -1)
       {
          pClaim->descriptor = descriptor;
          Error error = writeDescriptorContents(descriptor, lockContents(false));
+         if (!error)
+            error = stampWriteTime(descriptor);
          if (!error)
             error = descriptorIdentity(descriptor, &pClaim->identity);
          if (error)
@@ -756,8 +790,10 @@ Error acquireClaim(const FilePath& lockFilePath, Claim* pClaim, bool* pHeld)
    error = hasExpectedIdentity(pClaim->path, pClaim->identity, pHeld);
    if (error || !*pHeld)
    {
+      // Identity-checked, so a contender's replacement is left in place but
+      // our own claim does not linger to block every later takeover.
       *pHeld = false;
-      closeClaim(pClaim);
+      releaseClaim(pClaim);
    }
 #endif
    return error;
@@ -809,7 +845,7 @@ Error createProxyFile(const FilePath& lockFilePath,
       FilePath proxyPath = proxyPathForToken(lockFilePath, token);
       int descriptor = ::open(
          proxyPath.getAbsolutePathNative().c_str(),
-         O_RDWR | O_CREAT | O_EXCL,
+         O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC,
          kLockFileMode);
       if (descriptor == -1)
       {
@@ -977,7 +1013,7 @@ Error writeLockFile(const FilePath& lockFilePath,
    // publication before this write cannot let another contender take over.
    int descriptor = ::open(
       lockFilePath.getAbsolutePathNative().c_str(),
-      O_RDWR | O_CREAT | O_EXCL,
+      O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC,
       kLockFileMode);
    if (descriptor == -1)
    {
@@ -1046,10 +1082,10 @@ public:
    {
       Guard guard(*this);
 #ifndef _WIN32
-      int registeredDescriptor = ::dup(descriptor);
+      int registeredDescriptor = ::fcntl(descriptor, F_DUPFD_CLOEXEC, 0);
       if (registeredDescriptor == -1)
       {
-         return systemCallError("dup", errno, ERROR_LOCATION);
+         return systemCallError("fcntl", errno, ERROR_LOCATION);
       }
 
       auto existing = registration_.find(key);
@@ -1079,15 +1115,32 @@ public:
 
    void refreshLocks()
    {
-      Guard guard(*this);
-      for (const auto& entry : registration_)
-      {
 #ifndef _WIN32
-         LOG("Bumping write time for lock token: " << entry.second.token);
-         if (::futimes(entry.second.descriptor, nullptr) == -1)
-            LOG_ERROR(systemCallError("futimes", errno, ERROR_LOCATION));
-#endif
+      // The mutex is held across fork(), so filesystem I/O (which can stall
+      // on a network mount) must not run under it. Duplicates stay valid if
+      // a lock is released meanwhile.
+      std::vector<std::pair<std::string, int> > descriptors;
+      {
+         Guard guard(*this);
+         for (const auto& entry : registration_)
+         {
+            int descriptor = ::fcntl(entry.second.descriptor, F_DUPFD_CLOEXEC, 0);
+            if (descriptor == -1)
+               LOG_ERROR(systemCallError("fcntl", errno, ERROR_LOCATION));
+            else
+               descriptors.push_back(std::make_pair(entry.second.token, descriptor));
+         }
       }
+
+      for (const auto& entry : descriptors)
+      {
+         LOG("Bumping write time for lock token: " << entry.first);
+         Error error = stampWriteTime(entry.second);
+         if (error)
+            LOG_ERROR(error);
+         ::close(entry.second);
+      }
+#endif
    }
 
    void clearLocks()
@@ -1185,13 +1238,10 @@ FilePath LinkBasedFileLock::lockFilePath() const
 
 bool LinkBasedFileLock::isLocked(const FilePath& lockFilePath) const
 {
-   bool isLocked = false;
+   bool isLocked = true;
    Error error = this->isLocked(lockFilePath, &isLocked);
    if (error)
-   {
       LOG_ERROR(error);
-      return false;
-   }
 
    return isLocked;
 }
@@ -1295,8 +1345,10 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
 
 Error LinkBasedFileLock::release()
 {
+   // Nothing to release; callers that tolerate a failed acquire (to support
+   // filesystems without working locks) still release unconditionally.
    if (pImpl_->descriptor == -1)
-      return noLockAvailableError(pImpl_->lockFilePath);
+      return Success();
 
    Error error;
 #ifndef _WIN32
