@@ -2501,12 +2501,13 @@ input[type="checkbox"]:checked:before {
 }
 
 /* Draw the selected document tab's indicator by hand: a raised overlay shaped
-   like the top of the tab (same 3px radius), with a 2px top border and 1px side
-   borders in the accent color. That gives a flat top edge that curves into the
-   tab's corners from a single painted shape. The pane frame
-   (.windowFrameObject > div:last-child) paints its own 1px border across the
-   top row of the tab strip, so the overlay is z-indexed above it. It adds no
-   height and does not move the tab's content. */
+   like the top of the tab, with a 3px top border and 1px side borders in the
+   accent color. That gives a flat top edge that curves into the tab's corners
+   from a single painted shape. It starts 1px above the tab, so its radius is
+   1px larger than the tab's 3px to keep the outer curves concentric. The pane
+   frame (.windowFrameObject > div:last-child) paints its own 1px border across
+   the top row of the tab strip, so the overlay is z-indexed above it. It adds
+   no height and does not move the tab's content. */
 .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected {
    position: relative;
 }
@@ -2514,15 +2515,15 @@ input[type="checkbox"]:checked:before {
 .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected::before {
    content: '';
    position: absolute;
-   top: 0;
+   top: -1px;
    left: -1px;
    right: 0;
-   height: 3px;
+   height: 4px;
    box-sizing: border-box;
    border-style: solid;
    border-color: #3465a4;
-   border-width: 2px 1px 0 1px;
-   border-radius: 3px 3px 0 0;
+   border-width: 3px 1px 0 1px;
+   border-radius: 4px 4px 0 0;
    z-index: 1;
    pointer-events: none;
 }
