@@ -168,6 +168,13 @@ ShellCommand svn()
    return ShellCommand(exePath);
 }
 
+#ifdef _WIN32
+std::string svnBin()
+{
+   return FilePath(s_svnExePath).getAbsolutePathNative();
+}
+#endif
+
 Error runSvn(const ShellArgs& args,
              const FilePath& workingDir,
              bool redirectStdErrToStdOut,
@@ -177,9 +184,22 @@ Error runSvn(const ShellArgs& args,
    if (!workingDir.isEmpty())
       options.workingDir = workingDir;
    options.redirectStdErrToStdOut = redirectStdErrToStdOut;
+
+   // as in git's gitExec(), prefer runProgram() on Windows: runCommand() runs
+   // the command in a cmd.exe shell, and a cmd.exe disabled by Group Policy
+   // waits on a keypress that never arrives, so the caller never returns.
+   // https://github.com/rstudio/rstudio/issues/18735
+#ifdef _WIN32
+   Error error = core::system::runProgram(svnBin(),
+                                          args.args(),
+                                          "",
+                                          options,
+                                          pResult);
+#else
    Error error = core::system::runCommand(svn() << args.args(),
                                           options,
                                           pResult);
+#endif
    return error;
 }
 
@@ -411,6 +431,11 @@ Error parseXml(const std::string strData,
 
 bool isSvnInstalled()
 {
+   // detection found no svn, so there is nothing to ask: running it anyway
+   // would just report the failure to launch an empty path as an error
+   if (s_svnExePath.empty())
+      return false;
+
    int exitCode;
    Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
 
