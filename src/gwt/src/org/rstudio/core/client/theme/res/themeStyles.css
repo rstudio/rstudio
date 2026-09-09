@@ -2500,14 +2500,17 @@ input[type="checkbox"]:checked:before {
    margin-left: -1px;
 }
 
-/* Draw the selected document tab's indicator by hand: a raised overlay shaped
-   like the top of the tab, with a 3px top border and 1px side borders in the
-   accent color. That gives a flat top edge that curves into the tab's corners
-   from a single painted shape. It starts 1px above the tab, so its radius is
-   1px larger than the tab's 3px to keep the outer curves concentric. The pane
-   frame (.windowFrameObject > div:last-child) paints its own 1px border across
-   the top row of the tab strip, so the overlay is z-indexed above it. It adds
-   no height and does not move the tab's content. */
+/* Draw the selected document tab's indicator by hand: an overlay shaped like
+   the top of the tab, with a 3px top border and 1px side borders in the accent
+   color. That gives a flat top edge that curves into the tab's corners from a
+   single painted shape. It starts 1px above the tab, so its radius is 1px
+   larger than the tab's 3px to keep the outer curves concentric. It adds no
+   height and does not move the tab's content.
+
+   The tab strip sits 1px above its GWT layout layer, which clips it, so the
+   tab's top row (where the pane frame's border paints) is never visible. This
+   in-flow version is the fallback; the anchored version below escapes the
+   clipping and is used wherever the browser supports it. */
 .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected {
    position: relative;
 }
@@ -2535,6 +2538,36 @@ input[type="checkbox"]:checked:before {
 /* Thicken the selected label without changing tab widths or ellipsis positions. */
 .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter .gwt-Label {
    -webkit-text-stroke: 0.4px currentColor;
+}
+
+/* Position the indicator from the tab's client rectangle instead of in flow,
+   so it can paint over the clipped top row. A fixed-position box escapes the
+   overflow clipping of every ancestor, and CSS anchor positioning keeps it
+   glued to the tab through resizes, drags and strip scrolling. anchor-scope
+   keeps each tab's overlay bound to its own tab when several source columns
+   each have a selected tab, and position-visibility hides the overlay when
+   the tab itself is scrolled out of the strip.
+
+   GWT's legacy CssResource parser passes the body of an unrecognized at-rule
+   through untouched, which is what lets the anchor syntax reach the browser.
+   Obfuscation does not run on a passed-through body, so only @external class
+   names can appear here; pane and dialog tabs also match these selectors, but
+   generate no ::before box (content: none), so the rules are inert for them.
+   The colors and shape come from the in-flow rules above. */
+@supports (anchor-scope: --rstudio-active-doc-tab) and (top: anchor(top)) {
+   .rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab.gwt-TabLayoutPanelTab-selected {
+      anchor-name: --rstudio-active-doc-tab;
+      anchor-scope: --rstudio-active-doc-tab;
+   }
+
+   .rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab.gwt-TabLayoutPanelTab-selected::before {
+      position: fixed;
+      position-anchor: --rstudio-active-doc-tab;
+      position-visibility: anchors-visible;
+      top: calc(anchor(top) - 1px);
+      left: calc(anchor(left) - 1px);
+      right: anchor(right);
+   }
 }
 
 .rstudio-themes-dark .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter {

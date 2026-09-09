@@ -18,6 +18,7 @@ function sourceTab(page: Page, filename: string): Locator {
 function indicator(tab: Locator) {
   return tab.evaluate(element => {
     const style = getComputedStyle(element, '::before');
+    const rect = element.getBoundingClientRect();
     return {
       content: style.content,
       height: style.height,
@@ -25,6 +26,10 @@ function indicator(tab: Locator) {
       sideWidth: style.borderLeftWidth,
       color: style.borderTopColor,
       radius: style.borderTopLeftRadius,
+      position: style.position,
+      // Anchored (fixed) boxes resolve their insets to viewport pixels.
+      top: parseFloat(style.top),
+      tabTop: rect.top,
     };
   });
 }
@@ -34,7 +39,9 @@ async function expectHighlight(tab: Locator, enabled: boolean, accent?: string):
   await expect(tab.locator('.gwt-Label')).toHaveCSS('-webkit-text-stroke-width', enabled ? '0.4px' : '0px');
   if (enabled) {
     const bar = await indicator(tab);
-    expect(bar).toMatchObject({ height: '4px', topWidth: '3px', sideWidth: '1px', radius: '4px' });
+    expect(bar).toMatchObject({ height: '4px', topWidth: '3px', sideWidth: '1px', radius: '4px', position: 'fixed' });
+    // The overlay escapes the tab strip's clipping and starts 1px above the tab.
+    expect(bar.top).toBeCloseTo(bar.tabTop - 1, 1);
     if (accent !== undefined)
       expect(bar.color).toBe(accent);
   }
