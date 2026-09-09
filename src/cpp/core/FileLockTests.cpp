@@ -22,6 +22,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifdef __linux__
+# include <sys/syscall.h>
+#endif
+
 #include <atomic>
 #include <cstdint>
 #include <ctime>
@@ -1000,8 +1004,8 @@ TEST_F(FileLockingTest, LockHeldByWorkerAfterMainThreadExitIsLive)
       ::close(acquired[0]);
       ::close(release[1]);
 
-      // detached: pthread_exit() below unwinds this frame, and a joinable
-      // boost::thread destructor would terminate the process
+      // detached: the leader exit below may unwind this frame, and a
+      // joinable boost::thread destructor would terminate the process
       boost::thread worker([&]()
       {
          LinkBasedFileLock lock;
@@ -1015,7 +1019,16 @@ TEST_F(FileLockingTest, LockHeldByWorkerAfterMainThreadExitIsLive)
          ::_exit(lock.release() ? 3 : 0);
       });
       worker.detach();
+
+      // exit only the leader thread. glibc implements pthread_exit() as a
+      // forced unwind; gtest's catch-all frames are still on this forked
+      // stack, would swallow it, and glibc then aborts the whole child
+      // ("FATAL: exception not rethrown") -- taking the worker with it
+#ifdef __linux__
+      ::syscall(SYS_exit, 0);
+#else
       ::pthread_exit(nullptr);
+#endif
    }
 
    ::close(acquired[1]);
