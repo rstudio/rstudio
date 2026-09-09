@@ -57,9 +57,10 @@ namespace install_lock {
 // The protocol assumes every process sharing the locks directory uses the
 // same lock type. FileLock::initialize() picks one default per platform
 // regardless of desktop/server mode, so sessions sharing a home directory
-// agree; the file-locks configuration file can still override it. Mixing
-// types makes each side misread the other's live locks as stale -- a
-// pre-existing core::FileLock limitation.
+// agree; on macOS and Linux the file-locks configuration file can still
+// override it (Windows is always advisory). Mixing types makes each side
+// misread the other's live locks as stale -- a pre-existing core::FileLock
+// limitation.
 //
 // All methods must be called on the main thread (both subprocess lifecycles
 // run their callbacks there via callbacksRequireMainThread); no internal
