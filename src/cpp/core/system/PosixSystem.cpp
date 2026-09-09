@@ -2028,36 +2028,6 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
    return Success();
 }
 
-namespace {
-
-Error readStatFields(const FilePath& statFilePath,
-                     std::size_t numRequiredFields,
-                     std::vector<std::string>* pFields)
-{
-   if (!statFilePath.exists())
-      return core::fileNotFoundError(statFilePath, ERROR_LOCATION);
-
-   std::string str;
-   Error error = core::readStringFromFile(statFilePath, &str);
-   if (error)
-      return error;
-
-   boost::algorithm::split(*pFields, str,
-                           boost::is_any_of(" "),
-                           boost::algorithm::token_compress_on);
-   if (pFields->size() < numRequiredFields)
-   {
-      Error error = systemError(boost::system::errc::protocol_error,
-                                ERROR_LOCATION);
-      error.addProperty("stat-fields", str);
-      return error;
-   }
-
-   return Success();
-}
-
-} // anonymous namespace
-
 Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 {
    // get clock ticks (bail if we can't)
@@ -2095,17 +2065,41 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    }
 
 
-   // read the stat fields
-   boost::format fmt("/proc/%1%");
-   std::string dir = boost::str(fmt % pid);
-   FilePath procDir(dir);
-   std::vector<std::string> fields;
-   error = readStatFields(procDir.completeChildPath("stat"), 22, &fields);
+   // read the stat line; the command name is parenthesized and may itself
+   // contain spaces, so split only what follows its closing parenthesis
+   boost::format fmt("/proc/%1%/stat");
+   std::string contents;
+   error = core::readStringFromFile(FilePath(boost::str(fmt % pid)), &contents);
    if (error)
       return error;
 
+   std::size_t nameEnd = contents.rfind(')');
+   if (nameEnd == std::string::npos)
+   {
+      Error parseError = systemError(boost::system::errc::protocol_error,
+                                     ERROR_LOCATION);
+      parseError.addProperty("stat-fields", contents);
+      return parseError;
+   }
+
+   // fields after the name, starting with the state (field 3 of the line);
+   // starttime is field 22 of the line
+   std::vector<std::string> fields;
+   boost::algorithm::split(fields,
+                           boost::algorithm::trim_copy(contents.substr(nameEnd + 1)),
+                           boost::is_any_of(" "),
+                           boost::algorithm::token_compress_on);
+   const std::size_t startTimeIndex = 22 - 3;
+   if (fields.size() <= startTimeIndex)
+   {
+      Error parseError = systemError(boost::system::errc::protocol_error,
+                                     ERROR_LOCATION);
+      parseError.addProperty("stat-fields", contents);
+      return parseError;
+   }
+
    // get the creation time and return success
-   double startTicks = safe_convert::stringTo<double>(fields[21], 0);
+   double startTicks = safe_convert::stringTo<double>(fields[startTimeIndex], 0);
    double startSecs = (startTicks / clockTicks) + bootTime;
    *pCreationTime = date_time::timeFromSecondsSinceEpoch(startSecs);
    return Success();
