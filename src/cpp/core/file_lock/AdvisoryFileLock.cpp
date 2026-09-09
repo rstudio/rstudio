@@ -199,12 +199,14 @@ AdvisoryLockRegistration& lockRegistration()
    return *pInstance;
 }
 
-// Same-process bookkeeping keys on the file the kernel will actually open.
-// canonical() is only defined for existing paths, so the final component is
-// resolved by hand: a lock path that is a symlink keys on its target whether
-// or not that target exists yet, and a plain path keys the same way before and
-// after the file is created.
-std::string registrationKey(const FilePath& lockFilePath)
+// Same-process bookkeeping uses two keys. The path key names the file the
+// kernel will open and is stable before and after the file exists: canonical()
+// is only defined for existing paths, so the final component is resolved by
+// hand, and a lock path that is a symlink keys on its target either way. It
+// serializes creation of the file. The inode key identifies the file itself
+// once it exists, so that hard links to one inode (which fcntl treats as one
+// lock) share a single registration.
+std::string pathKey(const FilePath& lockFilePath)
 {
    FilePath path = lockFilePath;
 
@@ -230,6 +232,34 @@ std::string registrationKey(const FilePath& lockFilePath)
 #endif
 
    return path.getParent().getCanonicalPath() + "/" + path.getFilename();
+}
+
+// The inode key of an existing lock file; empty if it does not exist.
+Error inodeKey(const FilePath& lockFilePath, std::string* pKey)
+{
+   pKey->clear();
+#ifdef _WIN32
+   // st_ino is not meaningful on Windows; fall back to the path
+   if (lockFilePath.exists())
+      *pKey = pathKey(lockFilePath);
+   return Success();
+#else
+   struct stat info;
+   if (::stat(lockFilePath.getAbsolutePathNative().c_str(), &info) == -1)
+   {
+      if (errno == ENOENT)
+         return Success();
+
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("lock-file", lockFilePath);
+      return error;
+   }
+
+   std::ostringstream stream;
+   stream << "inode:" << info.st_dev << ":" << info.st_ino;
+   *pKey = stream.str();
+   return Success();
+#endif
 }
 
 class ProbeScope : boost::noncopyable
@@ -309,6 +339,7 @@ struct AdvisoryFileLock::Impl
 
    FilePath lockFilePath;
    std::string registrationKey;
+   std::string inodeRegistrationKey;
    BoostFileLock lock;
    PidType processId;
 };
@@ -348,8 +379,18 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
       return Success();
    }
 
-   // Held by this process: answer without opening the file (see PathState).
-   ProbeScope probe(registrationKey(lockFilePath));
+   // Held by this process (under any name): answer without opening the file.
+   std::string key;
+   Error keyError = inodeKey(lockFilePath, &key);
+   if (keyError)
+      return keyError;
+   if (key.empty())
+   {
+      *pIsLocked = false;
+      return Success();
+   }
+
+   ProbeScope probe(key);
    if (!probe.active())
       return Success();
 
@@ -400,9 +441,9 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    if (error)
       return error;
 
-   // Reserve the path before opening the file, and wait out any probe that
-   // still has it open: its close would drop the lock we are about to take.
-   std::string key = registrationKey(lockFilePath);
+   // Reserve the path before creating the file: ensureFile() opens and closes
+   // a descriptor, which would drop a lock this process already holds on it.
+   std::string key = pathKey(lockFilePath);
    AcquireScope reservation(key);
    if (!reservation.active())
       return noLockAvailableError(lockFilePath);
@@ -412,6 +453,19 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    error = lockFilePath.ensureFile();
    if (error)
       return error;
+
+   // Then reserve the inode itself, waiting out any probe (through any name)
+   // that still has it open: its close would drop the lock about to be taken.
+   std::string inode;
+   error = inodeKey(lockFilePath, &inode);
+   if (error)
+      return error;
+   if (inode.empty())
+      return fileNotFoundError(lockFilePath, ERROR_LOCATION);
+
+   AcquireScope inodeReservation(inode);
+   if (!inodeReservation.active())
+      return noLockAvailableError(lockFilePath);
 
    try
    {
@@ -428,9 +482,11 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       LOG("Acquired lock: " << lockFilePath.getAbsolutePath());
       pImpl_->lockFilePath = lockFilePath;
       pImpl_->registrationKey = key;
+      pImpl_->inodeRegistrationKey = inode;
       pImpl_->lock.swap(lock);
       pImpl_->processId = system::currentProcessId();
       reservation.markHeld();
+      inodeReservation.markHeld();
       return Success();
    }
    catch (interprocess_exception& e)
@@ -477,10 +533,12 @@ Error AdvisoryFileLock::release()
       // Close the descriptor before allowing another file_lock in this
       // process to open the same path.
       pImpl_->lock = BoostFileLock();
+      lockRegistration().release(pImpl_->inodeRegistrationKey);
       lockRegistration().release(pImpl_->registrationKey);
    }
 
    pImpl_->registrationKey.clear();
+   pImpl_->inodeRegistrationKey.clear();
    pImpl_->lockFilePath = FilePath();
    pImpl_->processId = 0;
    return error;

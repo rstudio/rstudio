@@ -478,14 +478,15 @@ Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
 
 #ifndef _WIN32
 
-// A live PID is not proof of a live owner: the owner may have crashed and the
-// kernel may have handed its PID to an unrelated process. The owner wrote the
-// lock after it started, so a process that started after the last refresh
-// cannot be the owner. The timeout interval absorbs clock skew (e.g. an NFS
-// server stamping mtimes) so a legitimate owner is never judged reused.
+// A live PID is not proof of a live owner: the owner may have exited without
+// being reaped yet, or crashed and had its PID handed to an unrelated
+// process. The owner wrote the lock after it started, so a process that
+// started after the last refresh cannot be the owner. The timeout interval
+// absorbs clock skew (e.g. an NFS server stamping mtimes) so a legitimate
+// owner is never judged reused.
 bool isOwnerProcessStale(PidType processId, std::time_t lastWriteTime)
 {
-   if (!system::isProcessRunning(processId))
+   if (!system::isProcessRunning(processId) || system::isProcessZombie(processId))
       return true;
 
    system::ProcessInfo info;

@@ -39,6 +39,7 @@
 
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/System.hpp>
 
 namespace rstudio {
@@ -920,6 +921,65 @@ TEST_F(FileLockingTest, AdvisoryLockThroughDanglingSymlinkSurvivesProbe)
    EXPECT_TRUE(FileLock::isNoLockAvailable(other.acquire(target)));
    expectChildSeesAdvisoryLock();
    EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, AdvisoryLockSurvivesHardLinkAliasProbe)
+{
+   // fcntl locks belong to the inode, so a hard link is the same lock; the
+   // same-process registry must recognize it under the alias rather than
+   // open and close the inode (which would drop this process's lock).
+   AdvisoryFileLock lock;
+   AdvisoryFileLock other;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+
+   FilePath alias = root_.completePath("alias-link");
+   ASSERT_EQ(
+      0,
+      ::link(
+         lockFilePath_.getAbsolutePath().c_str(),
+         alias.getAbsolutePath().c_str()));
+
+   bool isLocked = false;
+   EXPECT_FALSE(other.isLocked(alias, &isLocked));
+   EXPECT_TRUE(isLocked);
+   expectChildSeesAdvisoryLock();
+
+   EXPECT_TRUE(FileLock::isNoLockAvailable(other.acquire(alias)));
+   expectChildSeesAdvisoryLock();
+
+   EXPECT_FALSE(lock.release());
+   EXPECT_FALSE(other.acquire(alias));
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+   EXPECT_FALSE(other.release());
+}
+
+TEST_F(FileLockingTest, ZombieOwnerLinkLockIsStale)
+{
+   // An owner that has exited but not been reaped still answers kill(0);
+   // its lock must nonetheless be reclaimable without waiting for a reaper.
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      LinkBasedFileLock lock;
+      ::_exit(lock.acquire(lockFilePath_) ? 1 : 0);
+   }
+
+   // wait for the child to exit without reaping it
+   for (int attempt = 0; attempt < 100 && !system::isProcessZombie(child); ++attempt)
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+   ASSERT_TRUE(system::isProcessZombie(child));
+   ASSERT_TRUE(system::isProcessRunning(child));
+
+   EXPECT_TRUE(LinkBasedFileLock::isLockFileStale(lockFilePath_));
+   LinkBasedFileLock lock;
+   EXPECT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(lock.release());
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
 }
 
 TEST_F(FileLockingTest, ConcurrentAdvisoryProbesDoNotBlockAcquire)

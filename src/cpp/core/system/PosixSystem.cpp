@@ -43,6 +43,7 @@
 #include <mach-o/dyld.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/proc_info.h>
 #include <sys/sysctl.h>
 #endif
@@ -2235,6 +2236,39 @@ bool isProcessRunning(pid_t pid)
    int result = kill(pid, 0);
    return result == 0 || errno == EPERM;
 }
+
+#ifdef __linux__
+bool isProcessZombie(pid_t pid)
+{
+   std::string contents;
+   FilePath statPath("/proc/" + safe_convert::numberToString(pid) + "/stat");
+   Error error = core::readStringFromFile(statPath, &contents);
+   if (error)
+      return false;
+
+   // the state follows the parenthesized command name, which may itself
+   // contain spaces and parentheses
+   std::size_t end = contents.rfind(')');
+   if (end == std::string::npos || end + 2 >= contents.size())
+      return false;
+   return contents[end + 2] == 'Z';
+}
+#elif defined(__APPLE__)
+bool isProcessZombie(pid_t pid)
+{
+   struct kinfo_proc info;
+   std::size_t size = sizeof(info);
+   int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(pid) };
+   if (::sysctl(name, 4, &info, &size, nullptr, 0) == -1 || size == 0)
+      return false;
+   return info.kp_proc.p_stat == SZOMB;
+}
+#else
+bool isProcessZombie(pid_t)
+{
+   return false;
+}
+#endif
 
 std::string ProcessInfo::getUsername() const
 {
