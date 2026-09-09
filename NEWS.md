@@ -18,4 +18,5 @@
 
 ### Dependencies
 - Copilot Language Server 1.544.0
+- Node.js 24.21.0 (GitHub Copilot, Posit Assistant)
 
