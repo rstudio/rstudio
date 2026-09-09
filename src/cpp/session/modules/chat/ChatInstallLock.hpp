@@ -42,8 +42,8 @@ namespace install_lock {
 // - An "in use" lock (locks/sessions/<ownerId>.lock) is held while this
 //   session runs the chat backend and/or NES agent from the user-data
 //   install. It is a *held* core::FileLock, never a marker file we clean up:
-//   advisory locks (desktop) are released by the OS the moment the process
-//   dies, and link-based locks (server) go stale via the existing PID/
+//   advisory locks (Windows) are released by the OS the moment the process
+//   dies, and link-based locks (macOS, Linux) go stale via the existing PID/
 //   heartbeat machinery — so a crashed session cannot cause a persistent
 //   false "in use" report.
 // - A mutation lock (locks/install.lock) serializes install/update/uninstall
@@ -55,11 +55,11 @@ namespace install_lock {
 // install.lock. Simultaneous racers each see the other and back off.
 //
 // The protocol assumes every process sharing the locks directory uses the
-// same lock type. Mixing types (e.g. a desktop rsession's advisory locks
-// alongside a server rsession's link-based locks over one home directory)
-// makes each side misread the other's live locks as stale — a pre-existing
-// core::FileLock limitation; a uniform type can be forced via the
-// file-locks configuration file.
+// same lock type. FileLock::initialize() picks one default per platform
+// regardless of desktop/server mode, so sessions sharing a home directory
+// agree; the file-locks configuration file can still override it. Mixing
+// types makes each side misread the other's live locks as stale -- a
+// pre-existing core::FileLock limitation.
 //
 // All methods must be called on the main thread (both subprocess lifecycles
 // run their callbacks there via callbacksRequireMainThread); no internal
@@ -83,8 +83,8 @@ public:
    //   file and permanently refuses this process's starts as a spurious
    //   "update in progress" (#18571).
    // lockType: test seam; production omits it and uses the process default
-   //   configured by FileLock::initialize() (advisory in desktop mode,
-   //   link-based in server mode).
+   //   configured by FileLock::initialize() (advisory on Windows,
+   //   link-based elsewhere).
    InstallLock(const core::FilePath& locksDir,
                const std::string& ownerId,
                const boost::optional<core::FileLock::LockType>& lockType =
