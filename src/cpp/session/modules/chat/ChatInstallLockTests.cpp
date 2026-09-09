@@ -288,9 +288,9 @@ TEST_F(ChatInstallLock, LocksDirAutoCreated)
 
 TEST_F(ChatInstallLock, AdvisoryLockAcrossProcessesBlocksMutationAndClearsOnExit)
 {
-   // The production desktop path: advisory locks conflict across processes
-   // and are released by the kernel the moment the holder exits — even when
-   // the holder never cleans up its lock file.
+   // The Windows default (or a file-locks opt-in): advisory locks conflict
+   // across processes and are released by the kernel the moment the holder
+   // exits — even when the holder never cleans up its lock file.
    InstallLock advisoryLocal(
       locksDir_, "session-local", FileLock::LOCKTYPE_ADVISORY);
 
