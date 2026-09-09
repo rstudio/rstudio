@@ -726,20 +726,25 @@ TEST_F(FileLockingTest, InheritedAdvisoryLockObjectIsInertInChild)
 {
    // A lock object copied into a child by fork() never held anything there.
    // Releasing it must not unlock or close the inode (which would drop a
-   // lock the child has since taken) nor disturb the child's registry.
+   // lock the child has since taken) nor disturb the child's registry. The
+   // parent verifies the child's kernel lock from outside the child's
+   // registry: its own acquisition must fail while the child holds the lock.
    AdvisoryFileLock inherited;
    ASSERT_FALSE(inherited.acquire(lockFilePath_));
 
-   int released[2];
-   ASSERT_EQ(0, ::pipe(released));
+   int toChild[2];
+   int toParent[2];
+   ASSERT_EQ(0, ::pipe(toChild));
+   ASSERT_EQ(0, ::pipe(toParent));
 
    pid_t child = ::fork();
    ASSERT_NE(-1, child);
    if (child == 0)
    {
-      ::close(released[1]);
+      ::close(toChild[1]);
+      ::close(toParent[0]);
       char signal;
-      if (::read(released[0], &signal, 1) != 1)
+      if (::read(toChild[0], &signal, 1) != 1)
          ::_exit(1);
 
       AdvisoryFileLock held;
@@ -748,24 +753,43 @@ TEST_F(FileLockingTest, InheritedAdvisoryLockObjectIsInertInChild)
       if (inherited.release())
          ::_exit(3);
 
+      // still held in this process, per the registry
       AdvisoryFileLock probe;
       if (!FileLock::isNoLockAvailable(probe.acquire(lockFilePath_)))
          ::_exit(4);
 
-      bool isLocked = false;
-      if (probe.isLocked(lockFilePath_, &isLocked) || !isLocked)
+      // let the parent verify the kernel lock, then release
+      if (::write(toParent[1], "h", 1) != 1)
          ::_exit(5);
-      if (held.release())
+      if (::read(toChild[0], &signal, 1) != 1)
          ::_exit(6);
-      if (probe.acquire(lockFilePath_))
+      if (held.release())
          ::_exit(7);
+      if (::write(toParent[1], "r", 1) != 1)
+         ::_exit(8);
       ::_exit(0);
    }
 
-   ::close(released[0]);
+   ::close(toChild[0]);
+   ::close(toParent[1]);
+
    ASSERT_FALSE(inherited.release());
-   ASSERT_EQ(1, ::write(released[1], "x", 1));
-   ::close(released[1]);
+   ASSERT_EQ(1, ::write(toChild[1], "x", 1));
+
+   char signal = 0;
+   ASSERT_EQ(1, ::read(toParent[0], &signal, 1));
+   ASSERT_EQ('h', signal);
+   AdvisoryFileLock parentLock;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(parentLock.acquire(lockFilePath_)));
+
+   ASSERT_EQ(1, ::write(toChild[1], "x", 1));
+   ASSERT_EQ(1, ::read(toParent[0], &signal, 1));
+   ASSERT_EQ('r', signal);
+   EXPECT_FALSE(parentLock.acquire(lockFilePath_));
+   EXPECT_FALSE(parentLock.release());
+
+   ::close(toChild[1]);
+   ::close(toParent[0]);
 
    int status;
    ASSERT_EQ(child, ::waitpid(child, &status, 0));

@@ -16,7 +16,6 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <vector>
 
 #include <core/FileLock.hpp>
 
@@ -314,21 +313,6 @@ struct AdvisoryFileLock::Impl
    PidType processId;
 };
 
-namespace {
-
-// Descriptors of lock objects inherited across fork(). The child never held
-// those locks, but closing an inherited descriptor would drop any lock the
-// child has since taken on the same inode, so they are kept open for the
-// life of the process.
-std::vector<BoostFileLock*>& inheritedLocks()
-{
-   static std::vector<BoostFileLock*>* pInstance =
-      new std::vector<BoostFileLock*>();
-   return *pInstance;
-}
-
-} // anonymous namespace
-
 bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
 {
    bool isLocked = false;
@@ -470,10 +454,11 @@ Error AdvisoryFileLock::release()
       // Inherited across fork(): the kernel lock belongs to the parent and
       // this process's registry never recorded it. Unlocking or closing here
       // would instead drop a lock this process took on the same inode, and
-      // deregistering would forget it (see inheritedLocks()).
-      BoostFileLock* pInherited = new BoostFileLock();
-      pInherited->swap(pImpl_->lock);
-      inheritedLocks().push_back(pInherited);
+      // deregistering would forget it. The descriptor is parked in an object
+      // that is deliberately never freed, so it stays open for the life of
+      // the process without any shared bookkeeping.
+      BoostFileLock* pParked = new BoostFileLock();
+      pParked->swap(pImpl_->lock);
       LOG("Discarded inherited lock: " << pImpl_->lockFilePath.getAbsolutePath());
    }
    else
