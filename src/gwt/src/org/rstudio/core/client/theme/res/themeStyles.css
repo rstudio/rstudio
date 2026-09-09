@@ -2500,11 +2500,13 @@ input[type="checkbox"]:checked:before {
    margin-left: -1px;
 }
 
-/* Draw the selected document tab's indicator as a straight 2px bar over the
-   tab's top edge. The pane frame (.windowFrameObject > div:last-child) paints
-   its own 1px border across the top row of the tab strip, so the bar is a
-   raised overlay positioned from the tab's box rather than part of the tab's
-   rounded border. It adds no height and does not move the tab's content. */
+/* Draw the selected document tab's indicator by hand: a raised overlay shaped
+   like the top of the tab (same 3px radius), with a 2px top border and 1px side
+   borders in the accent color. That gives a flat top edge that curves into the
+   tab's corners from a single painted shape. The pane frame
+   (.windowFrameObject > div:last-child) paints its own 1px border across the
+   top row of the tab strip, so the overlay is z-indexed above it. It adds no
+   height and does not move the tab's content. */
 .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected {
    position: relative;
 }
@@ -2515,24 +2517,18 @@ input[type="checkbox"]:checked:before {
    top: 0;
    left: -1px;
    right: 0;
-   height: 2px;
-   background: #3465a4;
+   height: 3px;
+   box-sizing: border-box;
+   border-style: solid;
+   border-color: #3465a4;
+   border-width: 2px 1px 0 1px;
+   border-radius: 3px 3px 0 0;
    z-index: 1;
    pointer-events: none;
 }
 
 .rstudio-highlight-active-tabs .rstudio-themes-dark .docTabPanel .gwt-TabLayoutPanelTab-selected::before {
-   background: #8ab4f8;
-}
-
-/* A 1px inset shadow just inside the tab's rounded top border, so the flat bar
-   above flows into the tab's curved corners. */
-.rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 0 1px 0 #3465a4 inset;
-}
-
-.rstudio-highlight-active-tabs .rstudio-themes-dark .docTabPanel .gwt-TabLayoutPanelTab-selected table.rstheme_tabLayoutCenter {
-   box-shadow: 0 1px 0 #8ab4f8 inset;
+   border-color: #8ab4f8;
 }
 
 /* Thicken the selected label without changing tab widths or ellipsis positions. */

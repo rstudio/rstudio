@@ -18,23 +18,25 @@ function sourceTab(page: Page, filename: string): Locator {
 function indicator(tab: Locator) {
   return tab.evaluate(element => {
     const style = getComputedStyle(element, '::before');
-    const rect = element.getBoundingClientRect();
-    return { content: style.content, height: style.height, background: style.backgroundColor, top: rect.top };
+    return {
+      content: style.content,
+      height: style.height,
+      topWidth: style.borderTopWidth,
+      sideWidth: style.borderLeftWidth,
+      color: style.borderTopColor,
+      radius: style.borderTopLeftRadius,
+    };
   });
 }
 
 async function expectHighlight(tab: Locator, enabled: boolean, accent?: string): Promise<void> {
   await expect.poll(() => indicator(tab).then(bar => bar.content !== 'none')).toBe(enabled);
-  const center = tab.locator('table.rstheme_tabLayoutCenter');
-  await expect(center).toHaveCSS('box-shadow', enabled ? /inset/ : 'none');
   await expect(tab.locator('.gwt-Label')).toHaveCSS('-webkit-text-stroke-width', enabled ? '0.4px' : '0px');
   if (enabled) {
     const bar = await indicator(tab);
-    expect(bar.height).toBe('2px');
-    if (accent !== undefined) {
-      expect(bar.background).toBe(accent);
-      await expect(center).toHaveCSS('box-shadow', new RegExp(accent.replace(/[()]/g, '\\$&')));
-    }
+    expect(bar).toMatchObject({ height: '3px', topWidth: '2px', sideWidth: '1px', radius: '3px' });
+    if (accent !== undefined)
+      expect(bar.color).toBe(accent);
   }
 }
 
