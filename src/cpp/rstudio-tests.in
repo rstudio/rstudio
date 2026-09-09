@@ -463,6 +463,12 @@ fi
 if has-scope "rsession"; then
 
    section "Running 'rsession' tests"
+   # Session initialization opens the source database even for C++ tests.
+   # Isolate it from any IDE running under this user, just as for the R tests.
+   RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX) || error "Could not create test state directory"
+   export RSTUDIO_DATA_HOME="${RSTUDIO_FOLDER}/data"
+   export RSTUDIO_CONFIG_HOME="${RSTUDIO_FOLDER}/config"
+
    runWatchdogProcess 5m false                                    \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" \
       --run-tests                                                 \
@@ -493,7 +499,7 @@ if has-scope "r"; then
 
    # Establish temporary folders for user state and data; this prevents the state/config on the
    # machine from affecting the tests
-   RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX)
+   RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX) || error "Could not create test state directory"
    export RSTUDIO_DATA_HOME="${RSTUDIO_FOLDER}/data"
    export RSTUDIO_CONFIG_HOME="${RSTUDIO_FOLDER}/config"
 

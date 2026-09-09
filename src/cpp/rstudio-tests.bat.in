@@ -145,6 +145,8 @@ goto :eof
 
 :run_rsession
 echo Running 'rsession' tests...
+call :isolate_session_state
+if errorlevel 1 goto :eof
 "@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" --run-tests --config-file="!SESSION_CONF!"
 call :record "rsession" !ERRORLEVEL!
 goto :eof
@@ -161,17 +163,8 @@ set "TESTTHAT_TESTS_DIR=@CMAKE_CURRENT_SOURCE_DIR@/tests/testthat"
 set "TESTTHAT_OUTPUT_DIR=@CMAKE_CURRENT_BINARY_DIR@"
 if defined TEST_FILTER set "TESTTHAT_FILTER=!TEST_FILTER!"
 
-REM fresh state/config so the machine's config doesn't affect the tests.
-REM %RANDOM% alone is not unique, so concatenate two draws.
-set "RSTUDIO_TEST_TMP=%TEMP%\rstudio-tests-!RANDOM!!RANDOM!"
-mkdir "!RSTUDIO_TEST_TMP!" 2>nul
-if not exist "!RSTUDIO_TEST_TMP!\" (
-    echo DIAGNOSTICS: failed to create temp dir !RSTUDIO_TEST_TMP! 1>&2
-    set "TEST_FAILURE=1"
-    goto :eof
-)
-set "RSTUDIO_DATA_HOME=!RSTUDIO_TEST_TMP!\data"
-set "RSTUDIO_CONFIG_HOME=!RSTUDIO_TEST_TMP!\config"
+call :isolate_session_state
+if errorlevel 1 goto :eof
 
 REM backslash path for filesystem ops (del/set /p are unreliable with '/')
 set "FAILLOG=@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log"
@@ -204,6 +197,20 @@ goto :eof
 REM ===========================================================================
 REM helpers
 REM ===========================================================================
+
+REM Both C++ and R session tests initialize a source database. Use fresh state
+REM so they cannot attach to, or clean up, a running IDE's session.
+:isolate_session_state
+set "RSTUDIO_TEST_TMP=%TEMP%\rstudio-tests-!RANDOM!!RANDOM!"
+mkdir "!RSTUDIO_TEST_TMP!" 2>nul
+if errorlevel 1 (
+    echo DIAGNOSTICS: failed to create temp dir !RSTUDIO_TEST_TMP! 1>&2
+    set "TEST_FAILURE=1"
+    exit /b 1
+)
+set "RSTUDIO_DATA_HOME=!RSTUDIO_TEST_TMP!\data"
+set "RSTUDIO_CONFIG_HOME=!RSTUDIO_TEST_TMP!\config"
+exit /b 0
 
 REM add_scope <name> -> appends the canonical form of a requested scope to
 REM TEST_SCOPES, or sets SCOPE_ERROR when the name isn't a known scope
