@@ -2269,10 +2269,13 @@ bool isProcessZombie(pid_t pid)
 
    // /proc/<pid>/stat describes the thread group leader, which reads as a
    // zombie as soon as the main thread exits even while other threads run
-   // on. The process is only gone once no thread is left alive; if that
-   // cannot be established, err towards treating it as alive.
+   // on. The process is only gone once no thread is left alive; whenever
+   // that cannot be established (an unreadable task, or a thread set that
+   // changed while being scanned, e.g. a worker replaced itself) err towards
+   // treating it as alive.
+   FilePath taskDir = procDir.completePath("task");
    std::vector<FilePath> tasks;
-   Error error = procDir.completePath("task").getChildren(tasks);
+   Error error = taskDir.getChildren(tasks);
    if (error)
       return false;
 
@@ -2280,12 +2283,19 @@ bool isProcessZombie(pid_t pid)
    {
       char taskState = 0;
       if (!readProcState(task.completePath("stat"), &taskState))
-         continue;
+         return false;
       if (taskState != 'Z' && taskState != 'X')
          return false;
    }
 
-   return true;
+   std::vector<FilePath> tasksAfter;
+   error = taskDir.getChildren(tasksAfter);
+   if (error)
+      return false;
+
+   std::sort(tasks.begin(), tasks.end());
+   std::sort(tasksAfter.begin(), tasksAfter.end());
+   return tasks == tasksAfter;
 }
 #elif defined(__APPLE__)
 bool isProcessZombie(pid_t pid)

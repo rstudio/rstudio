@@ -1024,6 +1024,27 @@ TEST_F(FileLockingTest, LockHeldByWorkerAfterMainThreadExitIsLive)
    ASSERT_EQ(1, ::read(acquired[0], &ok, 1));
    ASSERT_EQ(1, ok);
 
+#ifdef __linux__
+   // the worker signals before the main thread has necessarily exited; wait
+   // until the leader actually reads as a zombie so the check below is real
+   FilePath childStat("/proc/" + std::to_string(child) + "/stat");
+   bool leaderIsZombie = false;
+   for (int attempt = 0; attempt < 100 && !leaderIsZombie; ++attempt)
+   {
+      std::string contents;
+      if (!readStringFromFile(childStat, &contents))
+      {
+         std::size_t end = contents.rfind(')');
+         leaderIsZombie = end != std::string::npos &&
+                          end + 2 < contents.size() &&
+                          contents[end + 2] == 'Z';
+      }
+      if (!leaderIsZombie)
+         boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+   }
+   ASSERT_TRUE(leaderIsZombie);
+#endif
+
    EXPECT_FALSE(system::isProcessZombie(child));
    EXPECT_FALSE(LinkBasedFileLock::isLockFileStale(lockFilePath_));
    LinkBasedFileLock contender;
