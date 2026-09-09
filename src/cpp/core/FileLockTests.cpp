@@ -27,9 +27,7 @@
 #endif
 
 #include <atomic>
-#include <cstdint>
 #include <ctime>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -53,20 +51,9 @@ namespace tests {
 
 namespace {
 
-// Mirrors the claim naming in LinkBasedFileLock.cpp (FNV-1a of the lock
-// filename) so tests can plant a claim file beside a lock.
 FilePath claimPathFor(const FilePath& lockFilePath)
 {
-   uint64_t hash = 14695981039346656037ULL;
-   for (unsigned char character : lockFilePath.getFilename())
-   {
-      hash ^= character;
-      hash *= 1099511628211ULL;
-   }
-
-   std::ostringstream stream;
-   stream << ".rstudio-lock-claim-41c29-" << std::hex << hash;
-   return lockFilePath.getParent().completePath(stream.str());
+   return LinkBasedFileLock::claimPathForTesting(lockFilePath);
 }
 
 std::vector<FilePath> childrenOf(const FilePath& directory)
@@ -523,6 +510,26 @@ TEST_F(FileLockingTest, ReusedPidDoesNotPinOrphanedLock)
    EXPECT_FALSE(lock.release());
 }
 
+TEST_F(FileLockingTest, ReusedPidVerdictWaitsForTimeout)
+{
+   // The lock names a live PID that started after the last write, but the
+   // lock has not aged out yet: a young owner is still refreshing, so the
+   // start-time comparison (which a wall-clock step can upset) is not
+   // consulted until the age check has already failed.
+   std::time_t startTime = 0;
+   if (!ownStartTime(&startTime))
+      GTEST_SKIP() << "process start time unavailable on this platform";
+
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(3600));
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, std::to_string(::getpid()) + "\n"));
+   lockFilePath_.setLastWriteTime(startTime - 100);
+
+   EXPECT_FALSE(LinkBasedFileLock::isLockFileStale(lockFilePath_));
+   LinkBasedFileLock lock;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+   EXPECT_TRUE(lock.isLocked(lockFilePath_));
+}
+
 TEST_F(FileLockingTest, ExpiredLinkOwnerCannotReleaseReplacement)
 {
    FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
@@ -630,6 +637,25 @@ TEST_F(FileLockingTest, OrphanedOwnerFilesAreSwept)
    ASSERT_FALSE(lock.release());
    ASSERT_FALSE(liveClaim.remove());
    EXPECT_TRUE(childrenOf(root_).empty());
+}
+
+TEST_F(FileLockingTest, AbandonedTempFilesAreSwept)
+{
+   // A contender killed between renaming a stale entry aside and unlinking
+   // it leaves the temp file behind. It is swept once that contender is
+   // gone; one whose contender is still alive may be mid-removal and stays.
+   FilePath abandoned = root_.completePath(
+      ".rstudio-lock-tmp-41c29-99999999-abandoned");
+   FilePath inFlight = root_.completePath(
+      ".rstudio-lock-tmp-41c29-" + std::to_string(::getpid()) + "-inflight");
+   ASSERT_FALSE(writeStringToFile(abandoned, "12345\n"));
+   ASSERT_FALSE(writeStringToFile(inFlight, "12345\n"));
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(abandoned.exists());
+   EXPECT_TRUE(inFlight.exists());
+   EXPECT_FALSE(lock.release());
 }
 
 TEST_F(FileLockingTest, ExternallyDeletedLockPathLeavesNoPermanentLitter)

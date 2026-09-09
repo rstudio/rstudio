@@ -43,6 +43,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Hash.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/DateTime.hpp>
@@ -127,13 +128,16 @@ bool isOwnerFile(const FilePath& filePath)
           hasPrefix(filename, kOwnerFilePrefix);
 }
 
+bool isTempFile(const FilePath& filePath)
+{
+   return hasPrefix(filePath.getFilename(), kFileLockTempPrefix);
+}
+
 bool isSweepableArtifact(const FilePath& filePath)
 {
-   // Temp files are excluded: a live contender is mid-way through an
-   // identity-checked removal, and sweeping the file out from under it would
-   // read as contention.
    return isOwnerFile(filePath) ||
-          hasPrefix(filePath.getFilename(), kFileLockClaimPrefix);
+          hasPrefix(filePath.getFilename(), kFileLockClaimPrefix) ||
+          isTempFile(filePath);
 }
 
 FilePath proxyPathForToken(const FilePath& lockFilePath,
@@ -146,26 +150,44 @@ FilePath proxyPathForToken(const FilePath& lockFilePath,
 FilePath claimPathForLock(const FilePath& lockFilePath)
 {
    // Every contender for a public lock path must use the same claim name.
-   // Use a stable FNV-1a hash to keep it below NAME_MAX even when the
-   // caller's lock filename is already near that limit.
-   uint64_t hash = 14695981039346656037ULL;
-   for (unsigned char character : lockFilePath.getFilename())
-   {
-      hash ^= character;
-      hash *= 1099511628211ULL;
-   }
-
-   std::ostringstream stream;
-   stream << kFileLockClaimPrefix << "-" << std::hex << hash;
-   return lockFilePath.getParent().completePath(stream.str());
+   // Hash the lock filename to keep it below NAME_MAX even when the caller's
+   // lock filename is already near that limit.
+   return lockFilePath.getParent().completePath(
+      std::string(kFileLockClaimPrefix) + "-" +
+      hash::crc32HexHash(lockFilePath.getFilename()));
 }
 
 #ifndef _WIN32
+
+// A renamed-aside entry is named for the contender doing the removal, so
+// that a sweep can tell an abandoned one (contender gone) from one whose
+// removal is still in flight.
 FilePath tempPathBeside(const FilePath& filePath)
 {
    return filePath.getParent().completePath(
-      std::string(kFileLockTempPrefix) + "-" + system::generateUuid(false));
+      std::string(kFileLockTempPrefix) + "-" + pidString() + "-" +
+      system::generateUuid(false));
 }
+
+boost::optional<PidType> tempFileContender(const FilePath& filePath)
+{
+   std::string prefix = std::string(kFileLockTempPrefix) + "-";
+   std::string rest = filePath.getFilename().substr(prefix.size());
+   std::string::size_type end = rest.find('-');
+   if (end == std::string::npos)
+      return boost::none;
+
+   boost::optional<uint64_t> value =
+      safe_convert::stringTo<uint64_t>(rest.substr(0, end));
+   if (!value || *value == 0 ||
+       *value > static_cast<uint64_t>(std::numeric_limits<PidType>::max()))
+   {
+      return boost::none;
+   }
+
+   return static_cast<PidType>(*value);
+}
+
 #endif
 
 std::string lockContents(bool released)
@@ -195,11 +217,7 @@ void parseLockContents(const std::string& contents, LockMetadata* pMetadata)
 
 Error noLockAvailableError(const FilePath& lockFilePath)
 {
-   Error error = systemError(
-      boost::system::errc::no_lock_available,
-      ERROR_LOCATION);
-   error.addProperty("lock-file", lockFilePath);
-   return error;
+   return FileLock::noLockAvailableError(lockFilePath);
 }
 
 #ifndef _WIN32
@@ -451,17 +469,34 @@ Error removeIfSameIdentity(const FilePath& filePath,
       return unlinkPath(tempPath);
    }
 
-   // Not ours: put it back without following (or clobbering) anything.
-   if (::linkat(AT_FDCWD, tempPath.getAbsolutePathNative().c_str(),
-                AT_FDCWD, filePath.getAbsolutePathNative().c_str(), 0) == -1)
+   // Not ours: put it back without following (or clobbering) anything. Where
+   // the filesystem cannot link (the same mounts that take the O_EXCL
+   // fallback), fall back to a rename into a path we have just seen empty; a
+   // path re-occupied in the meantime keeps the newer entry.
+   bool restored =
+      ::linkat(AT_FDCWD, tempPath.getAbsolutePathNative().c_str(),
+               AT_FDCWD, filePath.getAbsolutePathNative().c_str(), 0) == 0;
+   int linkError = restored ? 0 : errno;
+   if (!restored && linkError != EEXIST)
    {
-      Error linkError = systemCallError("linkat", errno, ERROR_LOCATION);
-      linkError.addProperty("path", filePath);
-      linkError.addProperty("description",
-                            "Could not restore a displaced lock entry");
-      LOG_ERROR(linkError);
+      struct stat info;
+      if (::lstat(filePath.getAbsolutePathNative().c_str(), &info) == -1 &&
+          errno == ENOENT)
+      {
+         restored = ::rename(tempPath.getAbsolutePathNative().c_str(),
+                             filePath.getAbsolutePathNative().c_str()) == 0;
+      }
    }
-   unlinkBestEffort(tempPath);
+
+   if (!restored)
+   {
+      Error restoreError = systemCallError("linkat", linkError, ERROR_LOCATION);
+      restoreError.addProperty("path", filePath);
+      restoreError.addProperty("description",
+                               "Could not restore a displaced lock entry");
+      LOG_ERROR(restoreError);
+      unlinkBestEffort(tempPath);
+   }
 
    *pResult = RemoveResult::Mismatch;
    return error;
@@ -470,6 +505,11 @@ Error removeIfSameIdentity(const FilePath& filePath,
 
 Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
 {
+   // Only a public lock path has a separate owner file; an artifact being
+   // inspected for the sweep has nothing to find and no caller reads it.
+   if (isSweepableArtifact(lockFilePath))
+      return Success();
+
    std::vector<FilePath> children;
    Error error = lockFilePath.getParent().getChildren(children);
    if (error)
@@ -500,23 +540,27 @@ Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
 
 #ifndef _WIN32
 
-// A live PID is not proof of a live owner: the owner may have exited without
-// being reaped yet, or crashed and had its PID handed to an unrelated
-// process. The owner wrote the lock after it started, so a process that
-// started after the last refresh cannot be the owner. Both timestamps come
-// from this host's clock (see stampWriteTime), so only their resolution
-// needs absorbing: /proc reports the start time in whole seconds since a
-// boot time that is itself rounded.
+bool isProcessGone(PidType processId)
+{
+   return !system::isProcessRunning(processId) ||
+          system::isProcessZombie(processId);
+}
+
+// A live PID is not proof of a live owner: a crashed owner's PID may have
+// been handed to an unrelated process. The owner wrote the lock after it
+// started, so a process that started after the last refresh cannot be the
+// owner. Both timestamps come from this host's clock (see stampWriteTime),
+// so only their resolution needs absorbing: /proc reports the start time in
+// whole seconds since a boot time that is itself rounded. A wall-clock step
+// also separates them, which is why callers consult this only for a lock
+// that has already aged out: a live owner refreshes well within the timeout.
 //
 // Returns none when the start time is unavailable (e.g. /proc mounted with
-// hidepid); the caller then falls back to the age check rather than let bare
-// PID existence pin the lock.
-boost::optional<bool> isOwnerProcessStale(PidType processId,
-                                          std::time_t lastWriteTime)
+// hidepid), so the caller can fall back to the age check rather than let
+// bare PID existence pin the lock.
+boost::optional<bool> isOwnerProcessReused(PidType processId,
+                                           std::time_t lastWriteTime)
 {
-   if (!system::isProcessRunning(processId) || system::isProcessZombie(processId))
-      return true;
-
    system::ProcessInfo info;
    info.pid = processId;
    boost::posix_time::ptime created;
@@ -529,6 +573,13 @@ boost::optional<bool> isOwnerProcessStale(PidType processId,
    return startSeconds >
           static_cast<double>(lastWriteTime) + kStartTimeToleranceSeconds;
 }
+
+// How long a live local owner that has stopped refreshing keeps its lock, as
+// a multiple of the timeout. A stalled process must not lose its lock the
+// moment a refresh is late, but the PID check cannot see across hosts or PID
+// namespaces sharing a lock directory, so an unrelated process there must
+// not pin an orphaned lock forever either.
+const int kLiveOwnerGraceMultiplier = 10;
 
 #endif
 
@@ -614,38 +665,68 @@ Error inspectLockFile(const FilePath& lockFilePath,
       return findOwnerFile(lockFilePath, &pInspection->metadata);
    }
 
+   double seconds =
+      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
+   double age = ::difftime(::time(nullptr), lastWriteTime);
+   pInspection->stale = age >= seconds;
+
 #ifndef _WIN32
-   // A live local owner remains authoritative even if a refresh was delayed.
-   // This prevents a sleeping or temporarily stalled process from losing its
-   // lock and later interfering with the replacement owner.
    if (!FileLock::isLoadBalanced() && pInspection->metadata.processId)
    {
-      boost::optional<bool> stale = isOwnerProcessStale(
-         *pInspection->metadata.processId,
-         lastWriteTime);
-      if (stale)
+      PidType processId = *pInspection->metadata.processId;
+      if (isProcessGone(processId))
       {
-         pInspection->stale = *stale;
-         return pInspection->stale
-            ? findOwnerFile(lockFilePath, &pInspection->metadata)
-            : Success();
+         // The owner is gone; no need to wait for the lock to age out.
+         pInspection->stale = true;
+      }
+      else if (pInspection->stale)
+      {
+         // Aged out, but a live local owner remains authoritative for a
+         // while longer, so a sleeping or temporarily stalled process does
+         // not lose its lock and later interfere with the replacement owner.
+         boost::optional<bool> reused =
+            isOwnerProcessReused(processId, lastWriteTime);
+         if (reused && !*reused)
+            pInspection->stale = age >= seconds * kLiveOwnerGraceMultiplier;
       }
    }
 #endif
 
-   double seconds =
-      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
-   double diff = ::difftime(::time(nullptr), lastWriteTime);
-   pInspection->stale = diff >= seconds;
    return pInspection->stale
       ? findOwnerFile(lockFilePath, &pInspection->metadata)
       : Success();
 }
 
-// Removes stale owner and claim files left in a lock directory: owners
+#ifndef _WIN32
+
+// A renamed-aside entry is abandoned once the contender that renamed it is
+// gone. Its own timestamps say nothing (rename keeps the old owner's mtime),
+// so where PIDs cannot be checked the rename's ctime stands in: no removal
+// stays in flight for a whole timeout.
+bool isTempFileAbandoned(const FilePath& filePath)
+{
+   if (!FileLock::isLoadBalanced())
+   {
+      boost::optional<PidType> contender = tempFileContender(filePath);
+      return contender && isProcessGone(*contender);
+   }
+
+   struct stat info;
+   if (::lstat(filePath.getAbsolutePathNative().c_str(), &info) == -1)
+      return false;
+
+   double seconds =
+      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
+   return ::difftime(::time(nullptr), info.st_ctime) >= seconds;
+}
+
+#endif
+
+// Removes stale owner, claim and temp files left in a lock directory: owners
 // orphaned when something other than the lock deleted the public path (a
-// crash, or a caller cleaning up), and claims abandoned mid-takeover. Live
-// entries are never touched; each candidate is inspected like a lock.
+// crash, or a caller cleaning up), claims abandoned mid-takeover, and
+// entries renamed aside by a contender that died mid-removal. Live entries
+// are never touched; each candidate is inspected like a lock.
 void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
 {
    std::vector<FilePath> children;
@@ -660,6 +741,18 @@ void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
    {
       if (child == ownPath || !isSweepableArtifact(child))
          continue;
+
+#ifndef _WIN32
+      if (isTempFile(child))
+      {
+         if (isTempFileAbandoned(child))
+         {
+            LOG("Removing abandoned lock temp file: " << child.getAbsolutePath());
+            unlinkBestEffort(child);
+         }
+         continue;
+      }
+#endif
 
       LockInspection inspection;
       error = inspectLockFile(child, &inspection);
@@ -1145,9 +1238,15 @@ public:
 
    void clearLocks()
    {
-      Guard guard(*this);
+      // as in refreshLocks(), no filesystem I/O under the mutex
+      std::map<std::string, RegisteredLock> registration;
+      {
+         Guard guard(*this);
+         registration.swap(registration_);
+      }
+
 #ifndef _WIN32
-      for (const auto& entry : registration_)
+      for (const auto& entry : registration)
       {
          LOG("Clearing lock: " << entry.second.lockFilePath.getAbsolutePath());
          Error error = releaseLockFiles(
@@ -1159,7 +1258,6 @@ public:
          ::close(entry.second.descriptor);
       }
 #endif
-      registration_.clear();
    }
 
 private:
@@ -1236,15 +1334,12 @@ FilePath LinkBasedFileLock::lockFilePath() const
    return pImpl_->lockFilePath;
 }
 
-bool LinkBasedFileLock::isLocked(const FilePath& lockFilePath) const
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+FilePath LinkBasedFileLock::claimPathForTesting(const FilePath& lockFilePath)
 {
-   bool isLocked = true;
-   Error error = this->isLocked(lockFilePath, &isLocked);
-   if (error)
-      LOG_ERROR(error);
-
-   return isLocked;
+   return claimPathForLock(lockFilePath);
 }
+#endif
 
 Error LinkBasedFileLock::isLocked(const FilePath& lockFilePath,
                                   bool* pIsLocked) const

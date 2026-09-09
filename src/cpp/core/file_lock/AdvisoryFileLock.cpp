@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 
 #ifndef _WIN32
+# include <fcntl.h>
 # include <unistd.h>
 #endif
 
@@ -186,6 +187,15 @@ public:
       parked_.back()->swap(lock);
    }
 
+#ifndef _WIN32
+   // Likewise for a bare descriptor that turned out to refer to a held inode.
+   void parkDescriptor(int descriptor)
+   {
+      Guard guard(*this);
+      parkedDescriptors_.push_back(descriptor);
+   }
+#endif
+
 private:
    void prune(const std::string& key)
    {
@@ -201,10 +211,18 @@ private:
       // the same reason
       states_.clear();
       parked_.clear();
+#ifndef _WIN32
+      for (int descriptor : parkedDescriptors_)
+         ::close(descriptor);
+      parkedDescriptors_.clear();
+#endif
    }
 
    std::map<std::string, PathState> states_;
    std::vector<std::unique_ptr<BoostFileLock> > parked_;
+#ifndef _WIN32
+   std::vector<int> parkedDescriptors_;
+#endif
 };
 
 AdvisoryLockRegistration& lockRegistration()
@@ -251,6 +269,15 @@ std::string pathKey(const FilePath& lockFilePath)
    return path.getParent().getCanonicalPath() + "/" + path.getFilename();
 }
 
+#ifndef _WIN32
+std::string inodeKeyFor(const struct stat& info)
+{
+   std::ostringstream stream;
+   stream << "inode:" << info.st_dev << ":" << info.st_ino;
+   return stream.str();
+}
+#endif
+
 // The inode key of an existing lock file; empty if it does not exist.
 Error inodeKey(const FilePath& lockFilePath, std::string* pKey)
 {
@@ -272,9 +299,7 @@ Error inodeKey(const FilePath& lockFilePath, std::string* pKey)
       return error;
    }
 
-   std::ostringstream stream;
-   stream << "inode:" << info.st_dev << ":" << info.st_ino;
-   *pKey = stream.str();
+   *pKey = inodeKeyFor(info);
    return Success();
 #endif
 }
@@ -336,15 +361,6 @@ private:
    bool held_;
 };
 
-Error noLockAvailableError(const FilePath& lockFilePath)
-{
-   Error error = systemError(
-      boost::system::errc::no_lock_available,
-      ERROR_LOCATION);
-   error.addProperty("lock-file", lockFilePath);
-   return error;
-}
-
 } // anonymous namespace
 
 struct AdvisoryFileLock::Impl
@@ -360,16 +376,6 @@ struct AdvisoryFileLock::Impl
    BoostFileLock lock;
    PidType processId;
 };
-
-bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
-{
-   bool isLocked = true;
-   Error error = this->isLocked(lockFilePath, &isLocked);
-   if (error)
-      LOG_ERROR(error);
-
-   return isLocked;
-}
 
 Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
                                  bool* pIsLocked) const
@@ -404,13 +410,65 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
       return Success();
    }
 
-   ProbeScope probe(key);
-   if (!probe.active())
+   boost::scoped_ptr<ProbeScope> pProbe(new ProbeScope(key));
+   if (!pProbe->active())
       return Success();
 
-   // Check whether another process holds the lock. The BoostFileLock must be
-   // destroyed (its descriptor closed) before the probe scope ends, or a
-   // waiting acquirer could lock the file just before that close drops it.
+   // Check whether another process holds the lock. The descriptor must be
+   // closed before the probe scope ends, or a waiting acquirer could lock the
+   // file just before that close drops it.
+#ifndef _WIN32
+   int descriptor = ::open(
+      lockFilePath.getAbsolutePathNative().c_str(),
+      O_RDWR | O_CLOEXEC);
+   if (descriptor == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("lock-file", lockFilePath);
+      return error;
+   }
+
+   // The probe was registered on the inode found by name a moment ago. If
+   // the name now leads elsewhere, re-register on what was actually opened:
+   // closing a descriptor of an inode this process holds would drop that
+   // lock, so such a descriptor is parked instead and the answer is "held".
+   struct stat info;
+   if (::fstat(descriptor, &info) == -1)
+   {
+      Error error = systemCallError("fstat", errno, ERROR_LOCATION);
+      error.addProperty("lock-file", lockFilePath);
+      ::close(descriptor);
+      return error;
+   }
+
+   std::string openedKey = inodeKeyFor(info);
+   if (openedKey != key)
+   {
+      pProbe.reset(new ProbeScope(openedKey));
+      if (!pProbe->active())
+      {
+         lockRegistration().parkDescriptor(descriptor);
+         return Success();
+      }
+   }
+
+   // Same request boost::interprocess::file_lock makes, so the two interoperate.
+   struct flock request = {};
+   request.l_type = F_WRLCK;
+   request.l_whence = SEEK_SET;
+
+   Error error;
+   if (::fcntl(descriptor, F_SETLK, &request) == 0)
+      *pIsLocked = false;
+   else if (errno != EAGAIN && errno != EACCES)
+      error = systemCallError("fcntl", errno, ERROR_LOCATION);
+
+   // closing releases the lock just taken, if any
+   ::close(descriptor);
+   if (error)
+      error.addProperty("lock-file", lockFilePath);
+   return error;
+#else
    try
    {
       BoostFileLock lock(systemPath.c_str());
@@ -427,6 +485,7 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
+#endif
 }
 
 AdvisoryFileLock::AdvisoryFileLock()

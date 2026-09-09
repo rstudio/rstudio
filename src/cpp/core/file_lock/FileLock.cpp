@@ -23,6 +23,7 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/Settings.hpp>
 #include <core/Log.hpp>
@@ -105,6 +106,25 @@ double getFieldPositive(const Settings& settings,
 bool s_isInitialized = false;
 
 } // end anonymous namespace
+
+bool FileLock::isLocked(const FilePath& lockFilePath) const
+{
+   bool isLocked = true;
+   Error error = this->isLocked(lockFilePath, &isLocked);
+   if (error)
+      LOG_ERROR(error);
+
+   return isLocked;
+}
+
+Error FileLock::noLockAvailableError(const FilePath& lockFilePath)
+{
+   Error error = systemError(
+      boost::system::errc::no_lock_available,
+      ERROR_LOCATION);
+   error.addProperty("lock-file", lockFilePath);
+   return error;
+}
 
 bool FileLock::verifyInitialized()
 {

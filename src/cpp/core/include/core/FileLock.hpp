@@ -74,12 +74,16 @@ public:
    //
    // Both overloads fail closed: an inspection failure reads as "locked", so
    // a caller never removes or adopts what may be another session's live
-   // lock. The bool overload logs the failure; the Error overload reports it
-   // (and leaves *pIsLocked set to true) for callers that need to tell the
-   // two apart.
-   virtual bool isLocked(const FilePath& lockFilePath) const = 0;
+   // lock. The bool overload (implemented once here) logs the failure; the
+   // Error overload reports it (and leaves *pIsLocked set to true) for
+   // callers that need to tell the two apart.
+   virtual bool isLocked(const FilePath& lockFilePath) const;
    virtual Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const = 0;
-   
+
+   // the error every implementation reports for a lock held elsewhere;
+   // recognized by isNoLockAvailable()
+   static Error noLockAvailableError(const FilePath& lockFilePath);
+
    // warns if FileLock::initialize() hasn't been called yet
    static bool verifyInitialized();
    
@@ -135,10 +139,10 @@ public:
    
    Error acquire(const FilePath& lockFilePath);
    Error release();
-   bool isLocked(const FilePath& lockFilePath) const;
+   using FileLock::isLocked;
    Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const;
    FilePath lockFilePath() const;
-   
+
    AdvisoryFileLock();
    ~AdvisoryFileLock();
    
@@ -153,13 +157,17 @@ public:
    static bool isLockFileStale(const FilePath& lockFilePath);
    static void refresh();
    static void cleanUp();
-   
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   // the claim file contenders for 'lockFilePath' elect themselves through
+   static FilePath claimPathForTesting(const FilePath& lockFilePath);
+#endif
+
    Error acquire(const FilePath& lockFilePath);
    Error release();
-   bool isLocked(const FilePath& lockFilePath) const;
+   using FileLock::isLocked;
    Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const;
    FilePath lockFilePath() const;
-   
+
    LinkBasedFileLock();
    ~LinkBasedFileLock();
    

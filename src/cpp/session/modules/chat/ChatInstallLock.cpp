@@ -287,16 +287,15 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
          // contenders could lock different inodes at one path), and every
          // process mints a new file name. Those leftovers are removed here
          // once old enough that no session can still be between creating
-         // the file and locking it; a live session's file is never this old
-         // and unlocked at the same time.
+         // the file and locking it, and while the probe still holds the
+         // lock: a session re-acquiring its old file concurrently then either
+         // fails to lock it or, if it locked the inode first, is rejected by
+         // acquire's post-lock inode check rather than left holding an
+         // unlinked inode no later probe can see.
          boost::shared_ptr<FileLock> probe = makeLock();
          Error probeError = probe->acquire(child);
          if (!probeError)
          {
-            Error releaseError = probe->release();
-            if (releaseError)
-               LOG_ERROR(releaseError);
-
             std::time_t settled =
                ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds();
             if (child.exists() && child.getLastWriteTime() < settled)
@@ -305,6 +304,10 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
                if (removeError)
                   LOG_ERROR(removeError);
             }
+
+            Error releaseError = probe->release();
+            if (releaseError)
+               LOG_ERROR(releaseError);
             continue;
          }
 
