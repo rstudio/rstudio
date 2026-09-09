@@ -222,7 +222,12 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       int width = PreferencesDialogConstants.PANEL_CONTAINER_WIDTH
             - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
             - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
-      panel.setSize(width + "px", PreferencesDialogConstants.panelContainerHeight());
+      panel.setWidth(width + "px");
+
+      // Set the height directly: GWT's setHeight() has a legacy IE assertion
+      // that cannot parse CSS expressions such as min() and calc().
+      panel.getElement().getStyle().setProperty("height",
+            PreferencesDialogConstants.panelContainerHeight());
    }
 
    private ProgressIndicator progressIndicator_;
