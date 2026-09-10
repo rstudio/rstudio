@@ -8,61 +8,14 @@
 import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
-import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
 import { documentCloseAllNoSave, executeCommand, waitForActiveDocument } from '@utils/commands';
 import { seedSandboxFile } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { rStringLiteral } from '@utils/r';
-
-const TERMINAL_TAB = '#rstudio_workbench_tab_terminal';
-const XTERM_SELECTOR = '.xterm';
+import { captureResult, focusTerminal, killAllTerminals, openTerminal } from '@utils/terminal';
 
 const FILE_CONTENT = 'first <- 1\nsecond <- 2\nthird <- 3\n';
-
-async function captureResult(page: Page, rExpression: string): Promise<string> {
-  const marker = `__TERM_OPEN_${Date.now()}__`;
-  await executeInConsole(
-    page,
-    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
-    { wait: true },
-  );
-
-  const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const match = output.match(pattern);
-  if (!match) throw new Error(`captureResult: markers not found for "${rExpression}"`);
-  return match[1].trim();
-}
-
-async function killAllTerminals(page: Page): Promise<void> {
-  await executeInConsole(page, 'rstudioapi::terminalKill(rstudioapi::terminalList())', {
-    wait: true,
-  });
-}
-
-// Creates a terminal and returns once its shell is echoing a prompt, with the
-// xterm widget focused for typing (see terminal.test.ts for the rationale).
-async function openTerminal(page: Page): Promise<void> {
-  await executeInConsole(page, 'rstudioapi::terminalCreate(show = TRUE)');
-  await expect(page.locator(XTERM_SELECTOR)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-
-  await expect
-    .poll(
-      () =>
-        captureResult(
-          page,
-          '{ ids <- rstudioapi::terminalList(); ' +
-            'length(ids) > 0 && any(nzchar(trimws(rstudioapi::terminalBuffer(ids[[1]])))) }',
-        ),
-      { timeout: TIMEOUTS.consoleReady },
-    )
-    .toBe('TRUE');
-
-  await page.locator(TERMINAL_TAB).click();
-  await expect(page.locator(XTERM_SELECTOR)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-  await page.locator(XTERM_SELECTOR).click();
-}
 
 async function runInTerminal(page: Page, command: string): Promise<void> {
   await page.keyboard.type(command);
@@ -94,7 +47,10 @@ test.describe.serial('Terminal: rstudio command opens files', () => {
   test('an absolute path with a :line suffix opens the file at that line', async ({
     rstudioPage: page,
   }) => {
+    // Against a remote server the seed is written through the R console,
+    // which takes focus away from the terminal.
     const fullPath = await seedSandboxFile(page, sandbox.dir, 'open_from_terminal.R', FILE_CONTENT);
+    await focusTerminal(page);
 
     await runInTerminal(page, `rstudio "${fullPath}:2"`);
 
