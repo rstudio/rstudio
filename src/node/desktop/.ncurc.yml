@@ -1,0 +1,6 @@
+reject:
+  # 1.7.5 and later unbundle what 1.7.3 ships as a single ncc bundle, adding 22
+  # transitive packages (among them @mapbox/node-pre-gyp and its network stack).
+  # 1.11.0 builds and emits functionally identical bundles, so the added surface
+  # buys nothing. Re-checked 2026-09-10.
+  - '@vercel/webpack-asset-relocator-loader'
