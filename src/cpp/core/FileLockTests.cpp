@@ -96,6 +96,8 @@ protected:
       oldGraceMultiplier_ = FileLock::getLiveOwnerGraceMultiplier();
       FileLock::setLoadBalancedForTesting(false);
       FileLock::setUseSymlinksForTesting(false);
+      LinkBasedFileLock::setBeforeReleaseForTesting({});
+      LinkBasedFileLock::setBeforeRefreshForTesting({});
    }
 
    // The wall-clock start time of this test process, which the staleness
@@ -169,6 +171,8 @@ protected:
 
    void TearDown() override
    {
+      LinkBasedFileLock::setBeforeReleaseForTesting({});
+      LinkBasedFileLock::setBeforeRefreshForTesting({});
       FileLock::cleanUp();
       FileLock::setTimeoutInterval(oldTimeout_);
       FileLock::setLiveOwnerGraceMultiplierForTesting(oldGraceMultiplier_);
@@ -671,6 +675,101 @@ TEST_F(FileLockingTest, ExpiredLinkOwnerCannotReleaseReplacement)
    EXPECT_FALSE(replacement.release());
 }
 
+TEST_F(FileLockingTest, StalledReleasePreservesSuccessorInAnotherProcess)
+{
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
+   FileLock::setLoadBalancedForTesting(true);
+
+   for (bool useSymlinks : {false, true})
+   {
+      SCOPED_TRACE(useSymlinks ? "symlink" : "hard link");
+      FileLock::setUseSymlinksForTesting(useSymlinks);
+      LinkBasedFileLock first;
+      ASSERT_FALSE(first.acquire(lockFilePath_));
+
+      int takeover[2];
+      int ready[2];
+      int done[2];
+      ASSERT_EQ(0, ::pipe(takeover));
+      ASSERT_EQ(0, ::pipe(ready));
+      ASSERT_EQ(0, ::pipe(done));
+      pid_t child = ::fork();
+      ASSERT_NE(-1, child);
+      if (child == 0)
+      {
+         ::alarm(10);
+         ::close(takeover[1]);
+         ::close(ready[0]);
+         ::close(done[1]);
+         waitForByte(takeover[0]);
+         LinkBasedFileLock replacement;
+         if (replacement.acquire(lockFilePath_))
+            ::_exit(1);
+         sendByte(ready[1]);
+         waitForByte(done[0]);
+         ::_exit(replacement.release() ? 2 : 0);
+      }
+
+      ::close(takeover[0]);
+      ::close(ready[1]);
+      ::close(done[0]);
+
+      LinkBasedFileLock::setBeforeReleaseForTesting([&]()
+      {
+         // Pause immediately before release's filesystem operation. Model
+         // expiry during that pause, including an abandoned cleanup claim,
+         // and let the child complete its takeover before release resumes.
+         lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
+         FilePath claim = claimPathFor(lockFilePath_);
+         EXPECT_FALSE(writeStringToFile(claim, std::to_string(::getpid()) + "\n"));
+         claim.setLastWriteTime(::time(nullptr) - 10);
+         sendByte(takeover[1]);
+         waitForByte(ready[0]);
+      });
+
+      EXPECT_FALSE(first.release());
+      LinkBasedFileLock::setBeforeReleaseForTesting({});
+      EXPECT_TRUE(lockFilePath_.exists());
+      LinkBasedFileLock contender;
+      EXPECT_TRUE(contender.isLocked(lockFilePath_));
+      EXPECT_TRUE(FileLock::isNoLockAvailable(contender.acquire(lockFilePath_)));
+      EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+
+      sendByte(done[1]);
+      int status;
+      EXPECT_EQ(child, ::waitpid(child, &status, 0));
+      EXPECT_TRUE(WIFEXITED(status));
+      if (WIFEXITED(status))
+         EXPECT_EQ(0, WEXITSTATUS(status));
+      ::close(takeover[1]);
+      ::close(ready[0]);
+      ::close(done[1]);
+   }
+}
+
+TEST_F(FileLockingTest, RefreshSnapshotDoesNotTouchReleasedInode)
+{
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   const std::time_t releasedTime = ::time(nullptr) - 60;
+
+   LinkBasedFileLock::setBeforeRefreshForTesting([&]()
+   {
+      // The refresh already copied its descriptor out of the registry.
+      // Release and back-date the retained entry before that snapshot runs.
+      EXPECT_FALSE(lock.release());
+      lockFilePath_.setLastWriteTime(releasedTime);
+   });
+   LinkBasedFileLock::refresh();
+   LinkBasedFileLock::setBeforeRefreshForTesting({});
+
+   std::string contents;
+   ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
+   EXPECT_EQ("-1\n", contents);
+   EXPECT_EQ(releasedTime, lockFilePath_.getLastWriteTime());
+   EXPECT_FALSE(lock.isLocked(lockFilePath_));
+}
+
 TEST_F(FileLockingTest, LinkMetadataRemainsBackwardCompatible)
 {
    LinkBasedFileLock lock;
@@ -680,8 +779,8 @@ TEST_F(FileLockingTest, LinkMetadataRemainsBackwardCompatible)
    ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
    EXPECT_EQ(std::to_string(::getpid()) + "\n", contents);
 
-   // Release removes the lock's own entries; a link an older RStudio (or
-   // anything else) still holds to the inode must read as released.
+   // Every link to the held inode, including the retained public entry,
+   // must read as released in the PID-only format older versions understand.
    FilePath keptLink = root_.completePath("kept-link");
    ASSERT_EQ(
       0,
@@ -690,12 +789,12 @@ TEST_F(FileLockingTest, LinkMetadataRemainsBackwardCompatible)
          keptLink.getAbsolutePath().c_str()));
 
    ASSERT_FALSE(lock.release());
-   EXPECT_FALSE(lockFilePath_.exists());
+   EXPECT_TRUE(lockFilePath_.exists());
    ASSERT_FALSE(readStringFromFile(keptLink, &contents));
    EXPECT_EQ("-1\n", contents);
 }
 
-TEST_F(FileLockingTest, ReleaseRemovesLockAndOwnerFiles)
+TEST_F(FileLockingTest, ReleaseRetiresPublicEntryAndRemovesOwnerFile)
 {
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
@@ -703,11 +802,18 @@ TEST_F(FileLockingTest, ReleaseRemovesLockAndOwnerFiles)
    EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
 
    ASSERT_FALSE(lock.release());
-   EXPECT_FALSE(lockFilePath_.exists());
-   EXPECT_TRUE(childrenOf(root_).empty());
+   EXPECT_TRUE(lockFilePath_.exists());
+   EXPECT_FALSE(lock.isLocked(lockFilePath_));
+   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+
+   LinkBasedFileLock next;
+   ASSERT_FALSE(next.acquire(lockFilePath_));
+   EXPECT_TRUE(next.isLocked(lockFilePath_));
+   EXPECT_FALSE(next.release());
 }
 
-TEST_F(FileLockingTest, SymlinkReleaseRemovesLockAndOwnerFiles)
+TEST_F(FileLockingTest, SymlinkReleaseRetiresPublicEntryAndRemovesOwnerFile)
 {
    FileLock::setUseSymlinksForTesting(true);
 
@@ -716,16 +822,28 @@ TEST_F(FileLockingTest, SymlinkReleaseRemovesLockAndOwnerFiles)
    EXPECT_TRUE(lockFilePath_.isSymlink());
 
    ASSERT_FALSE(lock.release());
-   EXPECT_TRUE(childrenOf(root_).empty());
+   EXPECT_TRUE(lockFilePath_.isSymlink());
+   EXPECT_FALSE(lockFilePath_.exists());
+   EXPECT_FALSE(lock.isLocked(lockFilePath_));
+   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+
+   LinkBasedFileLock next;
+   ASSERT_FALSE(next.acquire(lockFilePath_));
+   EXPECT_TRUE(next.isLocked(lockFilePath_));
+   EXPECT_FALSE(next.release());
 }
 
-TEST_F(FileLockingTest, CleanUpRemovesRegisteredLockFiles)
+TEST_F(FileLockingTest, CleanUpRetiresRegisteredLockFiles)
 {
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
 
    FileLock::cleanUp();
-   EXPECT_TRUE(childrenOf(root_).empty());
+   EXPECT_TRUE(lockFilePath_.exists());
+   EXPECT_FALSE(lock.isLocked(lockFilePath_));
+   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
 
    // the object's own release afterwards is harmless
    EXPECT_FALSE(lock.release());
@@ -756,7 +874,8 @@ TEST_F(FileLockingTest, OrphanedOwnerFilesAreSwept)
 
    ASSERT_FALSE(lock.release());
    ASSERT_FALSE(liveClaim.remove());
-   EXPECT_TRUE(childrenOf(root_).empty());
+   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_FALSE(lock.isLocked(lockFilePath_));
 }
 
 TEST_F(FileLockingTest, AbandonedTempFilesAreSwept)
@@ -827,7 +946,8 @@ TEST_F(FileLockingTest, ExternallyDeletedLockPathLeavesNoPermanentLitter)
    ASSERT_FALSE(next.acquire(root_.completePath("other-lock")));
    EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
    ASSERT_FALSE(next.release());
-   EXPECT_TRUE(childrenOf(root_).empty());
+   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_FALSE(next.isLocked(root_.completePath("other-lock")));
 }
 
 TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
@@ -850,8 +970,7 @@ TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
 TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
 {
    // A contender holding the claim is mid-takeover of this (expired) lock
-   // and owns the files; release must not move or remove anything, only
-   // mark the inode released.
+   // and owns the public path; release must leave that path and claim alone.
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
    FilePath claim = claimPathFor(lockFilePath_);
@@ -860,7 +979,7 @@ TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
    ASSERT_FALSE(lock.release());
    EXPECT_TRUE(lockFilePath_.exists());
    EXPECT_TRUE(claim.exists());
-   EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+   EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
 
    std::string contents;
    ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
@@ -871,7 +990,8 @@ TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
    LinkBasedFileLock next;
    ASSERT_FALSE(next.acquire(lockFilePath_));
    ASSERT_FALSE(next.release());
-   EXPECT_TRUE(childrenOf(root_).empty());
+   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_FALSE(next.isLocked(lockFilePath_));
 }
 
 TEST_F(FileLockingTest, AdvisoryRegistryUsableInChildAfterFork)

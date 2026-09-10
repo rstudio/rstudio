@@ -15,6 +15,7 @@
 
 #include "ChatInstallLock.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <ctime>
 #include <vector>
@@ -34,6 +35,21 @@ namespace {
 const char* const kInstallLockFileName = "install.lock";
 const char* const kSessionLocksDirName = "sessions";
 const char* const kSessionLockSuffix = ".lock";
+const char* const kSessionLockEpochMarker = ".epoch-";
+
+bool isEpochSessionLock(const FilePath& path)
+{
+   std::string stem = path.getStem();
+   std::size_t marker = stem.rfind(kSessionLockEpochMarker);
+   if (marker == std::string::npos || marker == 0)
+      return false;
+
+   std::string epoch = stem.substr(marker + std::string(kSessionLockEpochMarker).size());
+   return !epoch.empty() && std::all_of(epoch.begin(), epoch.end(), [](char ch)
+   {
+      return ch >= '0' && ch <= '9';
+   });
+}
 
 std::size_t componentIndex(InstallLock::Component component)
 {
@@ -109,6 +125,7 @@ InstallLock::InstallLock(
    : locksDir_(locksDir),
      ownerId_(ownerId),
      lockType_(lockType),
+     sessionLockEpoch_(0),
      nextToken_(0),
      mutationActive_(false)
 {
@@ -128,6 +145,11 @@ Error InstallLock::acquireInUse(Component component, uint64_t* pToken)
 
    if (!anyComponentHeld())
    {
+      // Every attempt gets a name this process will never publish again.
+      // Released link locks retain their public path, so a mutator can only
+      // safely remove that entry if no subsequent start can reuse its name.
+      ++sessionLockEpoch_;
+
       Error error = sessionLocksDir().ensureDirectory();
       if (error)
          return error;
@@ -276,52 +298,72 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
          // Skip our own lock file: this process already holds it. Skip
          // non-.lock entries: link-based locking keeps owner files (and
          // short-lived claim files) beside the lock files it manages.
-         if (child.getFilename() == ownSessionLockPath().getFilename())
+         if (anyComponentHeld() &&
+             child.getFilename() == ownSessionLockPath().getFilename())
             continue;
          if (child.getExtensionLowerCase() != kSessionLockSuffix)
             continue;
 
-         // Probe by acquisition: success means the file was stale (an
-         // advisory leftover from a crash, or a link-based lock whose owner
-         // is gone; file existence alone never means "in use"), contention
-         // means a live session, and anything else fails closed rather than
-         // risk mutating under a session we could not check.
-         //
-         // A released link-based lock removes its own files, but an advisory
-         // one leaves its file behind (release must not unlink it, or two
-         // contenders could lock different inodes at one path), and every
-         // process mints a new file name. Those leftovers are removed here
-         // once old enough that no session can still be between creating
-         // the file and locking it, and while the probe still holds the
-         // lock: a session re-acquiring its old file concurrently then either
-         // fails to lock it or, if it locked the inode first, is rejected by
-         // acquire's post-lock inode check rather than left holding an
-         // unlinked inode no later probe can see.
          boost::shared_ptr<FileLock> probe = makeLock();
-         Error probeError = probe->acquire(child);
-         if (!probeError)
+         Error probeError;
+         if (effectiveLockType() == FileLock::LOCKTYPE_LINKBASED)
          {
-            // Remove the stale leftover only if we can confirm it is older
-            // than the timeout. The unchecked getLastWriteTime() returns 0 on
-            // a stat failure (e.g. a transient ESTALE on network storage),
-            // which would read as ancient and delete a file that may be
-            // seconds old and about to be locked; the checked overload lets us
-            // skip removal on such an error instead.
-            std::time_t settled =
-               ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds();
-            std::time_t lastWrite = 0;
-            Error timeError = child.getLastWriteTime(lastWrite);
-            if (!timeError && lastWrite < settled)
-            {
-               Error removeError = child.removeIfExists();
-               if (removeError)
-                  LOG_ERROR(removeError);
-            }
+            // Inspect without acquiring: acquisition would replace a stale
+            // entry and renew its timestamp, leaving another released file
+            // after the probe. Epoch names are never reused, and mutators
+            // are serialized by install.lock, so an unlocked epoch entry
+            // cannot be replaced by a later start while we remove it.
+            bool locked = true;
+            probeError = probe->isLocked(child, &locked);
+            if (!probeError && locked)
+               probeError = FileLock::noLockAvailableError(child);
 
-            Error releaseError = probe->release();
-            if (releaseError)
-               LOG_ERROR(releaseError);
-            continue;
+            if (!probeError)
+            {
+               // Older clients reuse their per-process name. Keep those
+               // entries: even a released marker can become another live
+               // lock between this inspection and a pathname deletion.
+               if (isEpochSessionLock(child))
+               {
+                  // removeIfExists() follows symlinks and would miss the
+                  // dangling public link left after its owner was removed.
+                  Error removeError = child.remove();
+                  if (removeError)
+                     LOG_ERROR(removeError);
+               }
+               continue;
+            }
+         }
+         else
+         {
+            // Advisory files have no released marker. Hold the kernel lock
+            // while removing old leftovers; preserve recent files whose
+            // creator may still be between creating and locking them.
+            probeError = probe->acquire(child);
+            if (!probeError)
+            {
+               // Remove the stale leftover only if we can confirm it is older
+               // than the timeout. The unchecked getLastWriteTime() returns 0 on
+               // a stat failure (e.g. a transient ESTALE on network storage),
+               // which would read as ancient and delete a file that may be
+               // seconds old and about to be locked; the checked overload lets us
+               // skip removal on such an error instead.
+               std::time_t settled =
+                  ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds();
+               std::time_t lastWrite = 0;
+               Error timeError = child.getLastWriteTime(lastWrite);
+               if (!timeError && lastWrite < settled)
+               {
+                  Error removeError = child.removeIfExists();
+                  if (removeError)
+                     LOG_ERROR(removeError);
+               }
+
+               Error releaseError = probe->release();
+               if (releaseError)
+                  LOG_ERROR(releaseError);
+               continue;
+            }
          }
 
          Error releaseError = lock->release();
@@ -381,7 +423,9 @@ FilePath InstallLock::sessionLocksDir() const
 
 FilePath InstallLock::ownSessionLockPath() const
 {
-   return sessionLocksDir().completePath(ownerId_ + kSessionLockSuffix);
+   return sessionLocksDir().completePath(
+      ownerId_ + kSessionLockEpochMarker + std::to_string(sessionLockEpoch_) +
+      kSessionLockSuffix);
 }
 
 boost::shared_ptr<FileLock> InstallLock::makeLock() const

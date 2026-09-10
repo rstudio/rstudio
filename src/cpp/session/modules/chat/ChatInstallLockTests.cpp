@@ -49,6 +49,7 @@ protected:
    void SetUp() override
    {
       FileLock::initialize();
+      oldUseSymlinks_ = FileLock::useSymlinks();
 
       FilePath tempPath;
       ASSERT_FALSE(FilePath::tempFilePath(tempPath));
@@ -65,11 +66,13 @@ protected:
       sessionA_.reset();
       sessionB_.reset();
       locksDir_.getParent().removeIfExists();
+      FileLock::setUseSymlinksForTesting(oldUseSymlinks_);
    }
 
    FilePath locksDir_;
    std::unique_ptr<InstallLock> sessionA_;
    std::unique_ptr<InstallLock> sessionB_;
+   bool oldUseSymlinks_;
 };
 
 TEST_F(ChatInstallLock, MutationExcludesOtherMutation)
@@ -149,10 +152,10 @@ TEST_F(ChatInstallLock, StaleSessionFileDoesNotBlockAndIsDeleted)
 {
    // A leftover lock file from a crashed session: present on disk, but its
    // owner (a PID beyond pid_max) is gone. File existence alone must never
-   // mean "in use". The probe's acquire-and-release reclaims the stale
-   // link-based lock and removes the files it created, leaving no litter.
+   // mean "in use". A retired epoch path is inspected and deleted without
+   // acquiring it and refreshing its timestamp.
    FilePath staleFile =
-      sessionA_->sessionLocksDir().completePath("session-dead.lock");
+      sessionA_->sessionLocksDir().completePath("session-dead.epoch-1.lock");
    ASSERT_FALSE(staleFile.getParent().ensureDirectory());
    ASSERT_FALSE(writeStringToFile(staleFile, "99999999"));
 
@@ -164,6 +167,120 @@ TEST_F(ChatInstallLock, StaleSessionFileDoesNotBlockAndIsDeleted)
    ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
    EXPECT_TRUE(children.empty());
    sessionB_->endMutation();
+}
+
+TEST_F(ChatInstallLock, RepeatedStartsRetireSessionFilenamesAndCleanReleasedEntries)
+{
+   std::set<std::string> filenames;
+   for (int attempt = 0; attempt < 3; ++attempt)
+   {
+      uint64_t token = 0;
+      std::string message;
+      ASSERT_FALSE(sessionA_->acquireInUseForStart(
+         InstallLock::Component::ChatBackend, &token, &message));
+
+      std::vector<FilePath> children;
+      ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+      std::size_t sessionFiles = 0;
+      for (const FilePath& child : children)
+      {
+         if (child.getExtensionLowerCase() == ".lock")
+         {
+            ++sessionFiles;
+            EXPECT_TRUE(filenames.insert(child.getFilename()).second);
+         }
+      }
+      EXPECT_EQ(1u, sessionFiles);
+      EXPECT_TRUE(sessionB_->tryBeginMutation(&message));
+
+      sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
+
+      // A mutator must also clean its own retired filename; only its
+      // currently held session lock is excluded from the scan.
+      ASSERT_FALSE(sessionA_->tryBeginMutation(&message));
+      children.clear();
+      ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+      EXPECT_TRUE(children.empty());
+      sessionA_->endMutation();
+   }
+}
+
+TEST_F(ChatInstallLock, FailedStartUsesAnotherFilenameOnRetry)
+{
+   std::string message;
+   ASSERT_FALSE(sessionB_->tryBeginMutation(&message));
+
+   uint64_t token = 0;
+   EXPECT_TRUE(sessionA_->acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &message));
+   EXPECT_EQ(0u, token);
+
+   std::vector<FilePath> children;
+   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   ASSERT_EQ(1u, children.size());
+   FilePath retired = children.front();
+   sessionB_->endMutation();
+
+   ASSERT_FALSE(sessionA_->acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &message));
+   LinkBasedFileLock probe;
+   EXPECT_FALSE(probe.isLocked(retired));
+   EXPECT_TRUE(sessionB_->tryBeginMutation(&message));
+   EXPECT_TRUE(sessionA_->inUseHeld());
+
+   sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
+   ASSERT_FALSE(sessionB_->tryBeginMutation(&message));
+   children.clear();
+   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   EXPECT_TRUE(children.empty());
+   sessionB_->endMutation();
+}
+
+TEST_F(ChatInstallLock, ReleasedSymlinkSessionEntryIsRemoved)
+{
+   FileLock::setUseSymlinksForTesting(true);
+   uint64_t token = 0;
+   ASSERT_FALSE(sessionA_->acquireInUse(
+      InstallLock::Component::ChatBackend, &token));
+   sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
+
+   std::vector<FilePath> children;
+   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   ASSERT_EQ(1u, children.size());
+   EXPECT_TRUE(children.front().isSymlink());
+   EXPECT_FALSE(children.front().exists());
+
+   std::string message;
+   ASSERT_FALSE(sessionB_->tryBeginMutation(&message));
+   children.clear();
+   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   EXPECT_TRUE(children.empty());
+   sessionB_->endMutation();
+}
+
+TEST_F(ChatInstallLock, LegacyReleasedSessionNameIsRetainedForReuse)
+{
+   FilePath legacyPath =
+      sessionA_->sessionLocksDir().completePath("session-legacy.lock");
+   ASSERT_FALSE(legacyPath.getParent().ensureDirectory());
+   ASSERT_FALSE(writeStringToFile(legacyPath, "-1\n"));
+   std::time_t modified = 0;
+   ASSERT_FALSE(legacyPath.getLastWriteTime(modified));
+
+   std::string message;
+   ASSERT_FALSE(sessionB_->tryBeginMutation(&message));
+   EXPECT_TRUE(legacyPath.exists());
+   std::time_t modifiedAfter = 0;
+   ASSERT_FALSE(legacyPath.getLastWriteTime(modifiedAfter));
+   EXPECT_EQ(modified, modifiedAfter);
+   sessionB_->endMutation();
+
+   // An older client may publish another lock under this same name.
+   LinkBasedFileLock legacy;
+   ASSERT_FALSE(legacy.acquire(legacyPath));
+   EXPECT_TRUE(sessionB_->tryBeginMutation(&message));
+   EXPECT_TRUE(legacy.isLocked(legacyPath));
+   EXPECT_FALSE(legacy.release());
 }
 
 TEST_F(ChatInstallLock, ComponentsShareOneLockAndReleaseOnLast)

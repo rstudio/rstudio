@@ -28,6 +28,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/function.hpp>
 
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
@@ -182,9 +183,13 @@ public:
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
    // the claim file contenders for 'lockFilePath' elect themselves through
    static FilePath claimPathForTesting(const FilePath& lockFilePath);
+   static void setBeforeReleaseForTesting(const boost::function<void()>& callback);
+   static void setBeforeRefreshForTesting(const boost::function<void()>& callback);
 #endif
 
    Error acquire(const FilePath& lockFilePath);
+   // Marks the held inode released. Its public entry remains as a released
+   // file (or a dangling symlink) until the next acquisition reclaims it.
    Error release();
    using FileLock::isLocked;
    Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const;

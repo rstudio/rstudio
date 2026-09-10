@@ -33,6 +33,8 @@
 #include <ctime>
 #include <limits>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -81,6 +83,20 @@ const char * const kReleasedProcessId = "-1";
 // collaborator's session inspects (and eventually expires) locks it did not
 // create. The process umask still applies.
 const int kLockFileMode = 0644;
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+boost::function<void()> s_beforeRelease;
+boost::function<void()> s_beforeRefresh;
+#endif
+
+// Shared by the owner and registry snapshots. This mutex is never held by
+// the fork handlers: an inherited owner cannot release in the child, and
+// the child drops the registry's copies before taking any new locks.
+struct LockState
+{
+   std::mutex mutex;
+   bool released = false;
+};
 
 // The identity of a lock is the inode behind it. For a symlink lock that is
 // the target's inode (what the owner holds open), except for a broken symlink
@@ -1032,78 +1048,26 @@ Error createProxyFile(const FilePath& lockFilePath,
    return error;
 }
 
-// Unlinks 'filePath' if it still refers to the inode in 'identity' and its
-// contents still name this process. The inode alone is not proof: on a
-// network mount a deleted inode number can be reissued to a successor's lock
-// while this process's descriptor still reports it, and the successor's file
-// names the successor. Meant to run under the takeover claim, where no
-// claim-honouring contender is between judging this inode stale and
-// replacing it. An older RStudio ignores the claim, so against one the
-// stat-and-unlink pair is still a (few-system-call) window; it was unbounded
-// before the identity check existed.
-void unlinkIfSameIdentity(const FilePath& filePath, const LockMetadata& identity)
-{
-   LockMetadata current;
-   std::time_t lastWriteTime = 0;
-   Error error = readLockMetadata(filePath, &current, &lastWriteTime);
-   if (error)
-   {
-      if (!isFileNotFoundError(error))
-         LOG_ERROR(error);
-      return;
-   }
-
-   bool matches = current.device == identity.device &&
-                  current.inode == identity.inode &&
-                  !current.released &&
-                  current.processId &&
-                  *current.processId == system::currentProcessId();
-   if (matches)
-      unlinkBestEffort(filePath);
-}
-
-// Removes the public path and owner file of a lock held through
-// 'descriptor', but only where they still refer to that descriptor's inode.
-// If a contender holds the claim it is mid-takeover of this (expired) lock
-// and will remove the files itself; nothing is moved or renamed here, so a
-// successor's entry is never disturbed even briefly. The inode is also
-// marked released, so any hard link that could not be removed (or one
-// created by an older RStudio) does not read as held.
-Error releaseLockFiles(const FilePath& lockFilePath,
-                       const FilePath& ownerFilePath,
+// Release through the descriptor, never through the reusable public name.
+// A claim can expire during any filesystem call or scheduler stall, so it
+// cannot make a pathname check followed by unlink safe against a successor.
+// The released public entry is reclaimed by the next acquisition. Only the
+// private UUID owner name can be removed here: no acquisition reuses it.
+Error releaseLockFiles(const FilePath& ownerFilePath,
                        int descriptor)
 {
-   LockMetadata identity;
-   Error error = descriptorIdentity(descriptor, &identity);
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_beforeRelease)
+      s_beforeRelease();
+#endif
+
+   Error error = writeLockContents(descriptor, true);
    if (error)
       return error;
 
-   Claim claim;
-   bool held = false;
-   error = acquireClaim(lockFilePath, &claim, &held);
-   if (error)
-   {
-      // The claim could not be created at all (a full disk, most likely).
-      // Unlinking needs no space, and leaving the lock behind would hold the
-      // path for a whole timeout, so release without the claim's protection.
-      LOG_ERROR(error);
-      held = true;
-   }
-
-   if (!held)
-   {
-      LOG("Claim held by a contender; leaving lock files to it: "
-          << lockFilePath.getAbsolutePath());
-   }
-   else
-   {
-      unlinkIfSameIdentity(lockFilePath, identity);
-      if (!ownerFilePath.isEmpty())
-         unlinkIfSameIdentity(ownerFilePath, identity);
-      releaseClaim(&claim);
-   }
-
-   return writeLockContents(descriptor, true);
+   if (!ownerFilePath.isEmpty())
+      unlinkBestEffort(ownerFilePath);
+   return Success();
 }
 
 Error writeLockFile(const FilePath& lockFilePath,
@@ -1160,7 +1124,6 @@ Error writeLockFile(const FilePath& lockFilePath,
          // Take back whatever we published, and nothing else: a public path
          // that does not refer to our owner belongs to someone else.
          Error releaseError = releaseLockFiles(
-            lockFilePath,
             proxyPath,
             proxyDescriptor);
          if (releaseError)
@@ -1258,7 +1221,22 @@ struct RegisteredLock
    int descriptor;
    FilePath lockFilePath;
    FilePath ownerFilePath;
+   std::shared_ptr<LockState> state;
 };
+
+#ifndef _WIN32
+Error releaseRegisteredLock(const FilePath& ownerFilePath,
+                            int descriptor,
+                            const std::shared_ptr<LockState>& state)
+{
+   std::lock_guard<std::mutex> guard(state->mutex);
+   if (state->released)
+      return Success();
+
+   state->released = true;
+   return releaseLockFiles(ownerFilePath, descriptor);
+}
+#endif
 
 class LockRegistration : public file_lock::ForkAwareRegistry
 {
@@ -1267,7 +1245,8 @@ public:
                       const std::string& token,
                       int descriptor,
                       const FilePath& lockFilePath,
-                      const FilePath& ownerFilePath)
+                      const FilePath& ownerFilePath,
+                      const std::shared_ptr<LockState>& state)
    {
       Guard guard(*this);
 #ifndef _WIN32
@@ -1284,7 +1263,8 @@ public:
          token,
          registeredDescriptor,
          lockFilePath,
-         ownerFilePath};
+         ownerFilePath,
+         state};
 #endif
       return Success();
    }
@@ -1312,7 +1292,7 @@ public:
       // The mutex is held across fork(), so filesystem I/O (which can stall
       // on a network mount) must not run under it. Duplicates stay valid if
       // a lock is released meanwhile.
-      std::vector<std::pair<std::string, int> > descriptors;
+      std::vector<RegisteredLock> locks;
       {
          Guard guard(*this);
          for (const auto& entry : registration_)
@@ -1321,15 +1301,30 @@ public:
             if (descriptor == -1)
                LOG_ERROR(systemCallError("fcntl", errno, ERROR_LOCATION));
             else
-               descriptors.push_back(std::make_pair(entry.second.token, descriptor));
+            {
+               locks.push_back(entry.second);
+               locks.back().descriptor = descriptor;
+            }
          }
       }
 
-      for (const auto& entry : descriptors)
-      {
-         LOG("Bumping write time for lock token: " << entry.first);
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+      if (s_beforeRefresh)
+         s_beforeRefresh();
+#endif
 
-         Error error = stampWriteTime(entry.second);
+      for (const RegisteredLock& lock : locks)
+      {
+         std::lock_guard<std::mutex> guard(lock.state->mutex);
+         if (lock.state->released)
+         {
+            ::close(lock.descriptor);
+            continue;
+         }
+
+         LOG("Bumping write time for lock token: " << lock.token);
+
+         Error error = stampWriteTime(lock.descriptor);
          if (error)
          {
             // The mount refuses explicit timestamps. Unlike acquisition, a
@@ -1337,12 +1332,12 @@ public:
             // fallback the lock would never be bumped and would age out under
             // a live owner. Rewriting the (unchanged) contents lets the
             // write's own mtime stand in, as it does at acquisition.
-            Error rewriteError = writeLockContents(entry.second, false);
+            Error rewriteError = writeLockContents(lock.descriptor, false);
             if (rewriteError)
                LOG_ERROR(rewriteError);
          }
 
-         ::close(entry.second);
+         ::close(lock.descriptor);
       }
 #endif
    }
@@ -1360,10 +1355,10 @@ public:
       for (const auto& entry : registration)
       {
          LOG("Clearing lock: " << entry.second.lockFilePath.getAbsolutePath());
-         Error error = releaseLockFiles(
-            entry.second.lockFilePath,
+         Error error = releaseRegisteredLock(
             entry.second.ownerFilePath,
-            entry.second.descriptor);
+            entry.second.descriptor,
+            entry.second.state);
          if (error)
             LOG_ERROR(error);
          ::close(entry.second.descriptor);
@@ -1423,6 +1418,7 @@ struct LinkBasedFileLock::Impl
    std::string token;
    int descriptor;
    PidType processId;
+   std::shared_ptr<LockState> state;
 };
 
 LinkBasedFileLock::LinkBasedFileLock()
@@ -1449,6 +1445,16 @@ FilePath LinkBasedFileLock::lockFilePath() const
 FilePath LinkBasedFileLock::claimPathForTesting(const FilePath& lockFilePath)
 {
    return claimPathForLock(lockFilePath);
+}
+
+void LinkBasedFileLock::setBeforeReleaseForTesting(const boost::function<void()>& callback)
+{
+   s_beforeRelease = callback;
+}
+
+void LinkBasedFileLock::setBeforeRefreshForTesting(const boost::function<void()>& callback)
+{
+   s_beforeRefresh = callback;
 }
 #endif
 
@@ -1522,17 +1528,18 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    }
 
    std::string key = registrationKey(lockFilePath);
+   std::shared_ptr<LockState> state(new LockState());
    error = lockRegistration().registerLock(
       key,
       token,
       descriptor,
       lockFilePath,
-      ownerFilePath);
+      ownerFilePath,
+      state);
    if (error)
    {
 #ifndef _WIN32
       Error releaseError = releaseLockFiles(
-         lockFilePath,
          ownerFilePath,
          descriptor);
       if (releaseError)
@@ -1548,6 +1555,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    pImpl_->token = token;
    pImpl_->descriptor = descriptor;
    pImpl_->processId = system::currentProcessId();
+   pImpl_->state = state;
 
    LOG("Acquired lock: " << lockFilePath.getAbsolutePath());
    sweepStaleArtifacts(lockFilePath.getParent(), ownerFilePath);
@@ -1561,12 +1569,9 @@ Error LinkBasedFileLock::release()
    if (pImpl_->descriptor == -1)
       return Success();
 
-   // If cleanUp() already released and deregistered this lock, its files are
-   // gone (or belong to a successor); repeating the release would perform
-   // claim create/rename/unlink I/O for nothing, and during static
-   // destruction after ::exit() can log spurious errors once the session dir
-   // has moved. deregisterLock reports whether we were still the registered
-   // owner.
+   // Stop new refresh snapshots before releasing. Snapshots already copied
+   // out of the registry share state with this owner, so they cannot rewrite
+   // its released marker if their timestamp update needs the write fallback.
    bool wasRegistered = lockRegistration().deregisterLock(
       pImpl_->registrationKey,
       pImpl_->token);
@@ -1575,13 +1580,10 @@ Error LinkBasedFileLock::release()
 #ifndef _WIN32
    if (wasRegistered && pImpl_->processId == system::currentProcessId())
    {
-      // Everything is checked against the inode opened at acquisition. If a
-      // stale takeover replaced the public path, the successor's entries do
-      // not match and are left alone.
-      error = releaseLockFiles(
-         pImpl_->lockFilePath,
+      error = releaseRegisteredLock(
          pImpl_->ownerFilePath,
-         pImpl_->descriptor);
+         pImpl_->descriptor,
+         pImpl_->state);
    }
    ::close(pImpl_->descriptor);
 #endif
@@ -1594,6 +1596,7 @@ Error LinkBasedFileLock::release()
    pImpl_->token.clear();
    pImpl_->descriptor = -1;
    pImpl_->processId = 0;
+   pImpl_->state.reset();
    return error;
 }
 
@@ -1604,9 +1607,8 @@ void LinkBasedFileLock::refresh()
 
 void LinkBasedFileLock::cleanUp()
 {
-   // Locks still registered at shutdown are released here; each removal is
-   // identity-checked, so a pathname taken over by another process after a
-   // lease expiry is left untouched.
+   // Release the registered inodes; their public names may already belong
+   // to successor owners and are left for acquisition to reclaim.
    lockRegistration().clearLocks();
 }
 
