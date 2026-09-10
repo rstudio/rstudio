@@ -120,6 +120,7 @@ test.describe.serial('Active tab highlighting preference', () => {
 
     await reloadAndWait(page);
     expect(await getPref(page, PREF)).toBe(false);
+    await sourceTab(page, FILES[1]).click();
     await expectHighlight(sourceTab(page, FILES[1]), false);
     dialog = await openBasicOptions(page);
     await expect(dialog.getByRole('checkbox', { name: LABEL })).not.toBeChecked();
