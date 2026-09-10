@@ -57,14 +57,8 @@ public class ConfusableCharacterLinter
          if (isRmd && !isRChunkBodyRow(docDisplay, row))
             continue;
 
-         // a line whose first non-blank character is '#' is a comment in its
-         // entirety, whatever the highlighter makes of it: Quarto's "#|"
-         // options are tokenized as YAML, with only the prefix as a comment
-         if (docDisplay.getLine(row).trim().startsWith("#"))
-            continue;
-
          JsArray<Token> tokens = docDisplay.getTokens(row);
-         if (tokens == null)
+         if (tokens == null || isCommentRow(tokens))
             continue;
 
          // columns are accumulated from the token values rather than read
@@ -107,9 +101,28 @@ public class ConfusableCharacterLinter
       return constants_.confusableCharacterWarning(codepoint(ch), lookalike);
    }
 
+   // a row that opens with a comment is a comment in its entirety, whatever
+   // the highlighter makes of the rest: Quarto's "#|" options are tokenized
+   // as YAML after the prefix. Checking the token rather than the text keeps
+   // a '#' that continues a multi-line string from hiding the code after it.
+   private static boolean isCommentRow(JsArray<Token> tokens)
+   {
+      for (int i = 0; i < tokens.length(); i++)
+      {
+         Token token = tokens.get(i);
+         if (token.getValue().trim().isEmpty())
+            continue;
+
+         return token.getType().startsWith("comment");
+      }
+
+      return false;
+   }
+
    // a token with non-ASCII characters that don't resemble ASCII is a word
-   // deliberately written in another script, not a stray lookalike. This also
-   // spares joiners in scripts that need them (e.g. ZWNJ in Persian).
+   // deliberately written in another script, not a stray lookalike. Invisible
+   // characters don't count as such letters; R rejects them anywhere in code
+   // (a joiner inside a Persian identifier is "unexpected input").
    private static boolean isNonLatinWord(String value)
    {
       for (int i = 0; i < value.length(); i++)

@@ -38,7 +38,8 @@ const R_CODE_LINE = `x <- ${CYRILLIC_C}(1, 2, 3)`;
 // comment); row 1: in code (flagged); row 2: in a string and a comment
 // (exempt); row 3: a genuine Cyrillic identifier (exempt); row 4: a no-break
 // space where a space was meant (flagged); row 5: a zero-width space inside
-// an identifier (flagged, as invisible)
+// an identifier (flagged, as invisible); rows 6-7: a multi-line string whose
+// closing row starts with '#', so the code after it is not a comment (flagged)
 const R_CONTENT = heredoc`
   #' Use **left${EN_DASH}right** intervals.
   ${R_CODE_LINE}
@@ -46,11 +47,14 @@ const R_CONTENT = heredoc`
   ${CYRILLIC_WORD} <- 1
   z <-${NBSP}1
   w <- foo${ZWSP}bar
+  s <- "
+  #"; v <- ${CYRILLIC_C}(1)
 `;
 const R_EXPECTED = [
   { row: 1, column: 5, text: "Non-ASCII character U+0441 looks like 'c'" },
   { row: 4, column: 4, text: "Non-ASCII character U+00A0 looks like ' '" },
   { row: 5, column: 8, text: 'Invisible character U+200B' },
+  { row: 7, column: 9, text: "Non-ASCII character U+0441 looks like 'c'" },
 ];
 
 // only the R chunk body is R code: the prose and the other chunks all contain
