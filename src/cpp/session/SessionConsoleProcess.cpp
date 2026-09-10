@@ -130,6 +130,10 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    // amend shell paths as appropriate
    session::modules::workbench::amendShellPaths(&shellEnv);
 
+   // put the postback scripts first so the `rstudio` helper (which opens files in
+   // this session) shadows any same-named application binary on the PATH
+   core::system::addToPath(&shellEnv, module_context::rPostbackScriptsDir().getAbsolutePath(), true);
+
    // set options
    core::system::ProcessOptions options;
    options.workingDir = procInfo.getCwd().isEmpty()

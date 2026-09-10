@@ -15,6 +15,7 @@
 
 #include "SessionModuleContextInternal.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <vector>
 
@@ -1472,7 +1473,7 @@ bool isTextFile(const FilePath& targetPath)
 
 }
 
-void editFile(const core::FilePath& filePath, int lineNumber)
+void editFile(const core::FilePath& filePath, int lineNumber, int column)
 {
    // construct file system item (also tag with mime type) and position
    json::Object fileJson = module_context::createFileSystemItem(filePath);
@@ -1483,7 +1484,7 @@ void editFile(const core::FilePath& filePath, int lineNumber)
    {
       json::Object positionJson;
       positionJson["line"] = lineNumber;
-      positionJson["column"] = 1;
+      positionJson["column"] = std::max(column, 1);
       positionJsonValue = positionJson;
    }
 
