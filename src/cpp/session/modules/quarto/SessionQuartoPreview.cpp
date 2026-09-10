@@ -158,11 +158,20 @@ protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
       : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState),
                      slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType()),
-                     configCaptured_(true)
+                     isShinyDoc_(false), configCaptured_(true)
    {
-     // with no preview requested there is nothing to serve: run a one-shot
-     // `quarto render` instead of leaving a preview server behind (#12838)
-     renderOnly_ = viewerType_ == kRmdViewerTypeNone;
+     if (editorState_.isObject())
+     {
+        Error error = core::json::readObject(
+           editorState_.getObject(),
+           "is_shiny_doc", isShinyDoc_);
+        if (error)
+           LOG_ERROR(error);
+     }
+
+     // static documents need only a one-shot render when no preview is requested
+     // (#12838); Shiny documents still need a server for Run Document
+     renderOnly_ = viewerType_ == kRmdViewerTypeNone && !isShinyDoc_;
      renderToken_ = core::system::generateUuid();
 
      readInputFileLines();
@@ -176,16 +185,6 @@ protected:
    
    virtual std::vector<std::string> args()
    {
-      bool isShinyDoc = false;
-      if (editorState_.isObject())
-      {
-         Error error = core::json::readObject(
-            editorState_.getObject(),
-            "is_shiny_doc", isShinyDoc);
-         if (error)
-            LOG_ERROR(error);
-      }
-
       // preview target file, as a path relative to the working directory
       // the job runs in (see previewDir())
       if (renderOnly_)
@@ -198,13 +197,13 @@ protected:
          return args;
       }
 
-      std::vector<std::string> args = { isShinyDoc ? "serve" : "preview" };
+      std::vector<std::string> args = { isShinyDoc_ ? "serve" : "preview" };
       if (!previewTarget_.isDirectory())
       {
          std::string targetPath = previewTargetPath(previewTarget_, previewDir());
          args.push_back(string_utils::utf8ToSystem(targetPath));
 
-         if (!isShinyDoc)
+         if (!isShinyDoc_)
          {
             args.push_back("--to");
             args.push_back(!format_.empty() ? format_ : "default");
@@ -221,7 +220,7 @@ protected:
          args.push_back("--presentation");
 
       // no watching inputs and no browser
-      if (!isShinyDoc)
+      if (!isShinyDoc_)
       {
          args.push_back("--no-watch-inputs");
          args.push_back("--no-browse");
@@ -598,6 +597,7 @@ private:
    int controlPort_;
    std::string path_;
    std::string viewerType_;
+   bool isShinyDoc_;
    bool renderOnly_;
    FilePath configFile_;
    std::string configContents_;
