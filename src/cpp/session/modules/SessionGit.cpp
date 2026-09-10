@@ -211,7 +211,7 @@ class Git;
 std::vector<PidType> s_pidsToTerminate_;
 
 // git as a shell command, for the callers that run it through a shell; Windows
-// uses gitBin() with runProgram() instead, so as not to need a cmd.exe
+// uses gitBin() with runProgram() instead -- see gitExec()
 #ifndef _WIN32
 ShellCommand git()
 {
@@ -358,8 +358,10 @@ Error gitExec(const ShellArgs& args,
 
    // on Windows, we prefer runProgram() rather than runCommand()
    // as runCommand() requires going through a cmd.exe shell, which
-   // doesn't support UNC paths.
+   // doesn't support UNC paths, and which hangs when a cmd.exe disabled by
+   // Group Policy waits on a keypress that never arrives.
    // https://github.com/rstudio/rstudio/issues/4137
+   // https://github.com/rstudio/rstudio/issues/18735
 #ifdef _WIN32
    error = runProgram(gitBin(), args.args(), "", options, pResult);
 #else
@@ -3365,11 +3367,7 @@ bool initGitBin()
 #endif
    }
 
-   // Save version. Ask git for it through gitExec() rather than runCommand():
-   // on Windows runCommand() runs the command in a cmd.exe shell, and a cmd.exe
-   // disabled by Group Policy prints a message and then waits on a keypress
-   // that never arrives, hanging session startup here.
-   // https://github.com/rstudio/rstudio/issues/18735
+   // Save version
    s_gitVersion = GIT_1_7_2;
    core::system::ProcessResult result;
    error = gitExec(gitArgs() << "--version", &result);

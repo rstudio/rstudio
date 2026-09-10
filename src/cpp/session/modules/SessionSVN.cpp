@@ -168,13 +168,6 @@ ShellCommand svn()
    return ShellCommand(exePath);
 }
 
-#ifdef _WIN32
-std::string svnBin()
-{
-   return FilePath(s_svnExePath).getAbsolutePathNative();
-}
-#endif
-
 Error runSvn(const ShellArgs& args,
              const FilePath& workingDir,
              bool redirectStdErrToStdOut,
@@ -185,12 +178,12 @@ Error runSvn(const ShellArgs& args,
       options.workingDir = workingDir;
    options.redirectStdErrToStdOut = redirectStdErrToStdOut;
 
-   // as in git's gitExec(), prefer runProgram() on Windows: runCommand() runs
-   // the command in a cmd.exe shell, and a cmd.exe disabled by Group Policy
-   // waits on a keypress that never arrives, so the caller never returns.
+   // on Windows, prefer runProgram() over runCommand() as git's gitExec() does:
+   // runCommand() goes through a cmd.exe shell, which hangs when disabled by
+   // Group Policy.
    // https://github.com/rstudio/rstudio/issues/18735
 #ifdef _WIN32
-   Error error = core::system::runProgram(svnBin(),
+   Error error = core::system::runProgram(s_svnExePath,
                                           args.args(),
                                           "",
                                           options,
