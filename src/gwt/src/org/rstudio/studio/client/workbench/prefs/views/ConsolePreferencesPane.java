@@ -79,9 +79,9 @@ public class ConsolePreferencesPane extends PreferencesPane
       displayGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);
       panel.add(displayGrid);
 
+      consoleMaxLines_ = numericPref(10, NumericValueWidget.NoMaximum, prefs_.consoleMaxLines());
       TwoColumnLayoutGridBuilder truncationGridBuilder = new TwoColumnLayoutGridBuilder();
-      truncationGridBuilder.add(constants_.consoleMaxLinesLabel(),
-                                numericPref(10, NumericValueWidget.NoMaximum, prefs_.consoleMaxLines()));
+      truncationGridBuilder.add(constants_.consoleMaxLinesLabel(), consoleMaxLines_);
       truncationGridBuilder.add(constants_.consoleLimitOutputLengthLabel(), numericPref(prefs_.consoleLineLengthLimit()));
       LayoutGrid truncationGrid = truncationGridBuilder.get();
       truncationGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);
@@ -158,12 +158,13 @@ public class ConsolePreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return true;
+      return consoleMaxLines_.validate();
    }
 
    private boolean initialHighlightConsoleErrors_;
    private final SelectWidget consoleColorMode_;
    private final SelectWidget consoleHighlightConditions_;
+   private final NumericValueWidget consoleMaxLines_;
 
    // Injected
    private final UserPrefs prefs_;

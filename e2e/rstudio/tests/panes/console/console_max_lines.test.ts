@@ -19,6 +19,14 @@ async function consoleLineCount(page: Page): Promise<number> {
   return text.split('\n').filter((line) => line.length > 0).length;
 }
 
+async function reloadAndWait(page: Page): Promise<void> {
+  await page.reload();
+  await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+    timeout: TIMEOUTS.sessionRestart,
+    polling: 50,
+  });
+}
+
 test.describe.serial('Console scrollback limit', () => {
   let consoleActions: ConsolePaneActions;
 
@@ -29,6 +37,36 @@ test.describe.serial('Console scrollback limit', () => {
   test.afterAll(async ({ rstudioPage: page }) => {
     await clearPref(page, 'console_max_lines');
     await consoleActions.clearConsole();
+  });
+
+  test('lowering a populated console keeps the newest output after reload', async ({
+    rstudioPage: page,
+  }) => {
+    await setPref(page, 'console_max_lines', 5000);
+    await consoleActions.clearConsole();
+    await consoleActions.executeInConsole(`cat(sprintf("line %03d", seq_len(${PRINTED_LINES})), sep = "\\n")`);
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText(`line ${PRINTED_LINES}`);
+
+    // Serialize the existing actions before shrinking, including any output
+    // still pending in the session's write buffer.
+    await reloadAndWait(page);
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText('line 001');
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText(`line ${PRINTED_LINES}`);
+
+    await setPref(page, 'console_max_lines', 50);
+
+    // Lowering the limit trims existing output without another R command.
+    await expect.poll(() => consoleLineCount(page)).toBeLessThanOrEqual(60);
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText(`line ${PRINTED_LINES}`);
+    await expect(page.locator(CONSOLE_OUTPUT)).not.toContainText('line 001');
+
+    // Reload rebuilds the console from the session's action buffer, so this
+    // also checks that resizing the server buffer retains the newest output.
+    await reloadAndWait(page);
+
+    await expect(page.locator(CONSOLE_OUTPUT)).toContainText(`line ${PRINTED_LINES}`);
+    await expect(page.locator(CONSOLE_OUTPUT)).not.toContainText('line 001');
+    await expect.poll(() => consoleLineCount(page)).toBeLessThanOrEqual(60);
   });
 
   test('a lower limit trims the scrollback as soon as new output arrives', async ({
