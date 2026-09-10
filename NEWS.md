@@ -17,5 +17,6 @@
 - ([#18722](https://github.com/rstudio/rstudio/issues/18722)): Fixed an issue where the diagnostics system reported "unexpected end of document" for R scripts ending with a semicolon
 
 ### Dependencies
+- Copilot Language Server 1.544.0
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)
 
