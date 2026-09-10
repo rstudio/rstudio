@@ -14,11 +14,19 @@
  */
 package org.rstudio.studio.client.common.spelling.ui;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.spelling.SpellingService;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -34,11 +42,14 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class ChangeSpellingLanguageDialog extends ModalDialog<String>
 {
-   public ChangeSpellingLanguageDialog(SpellingService spellingService, UserPrefs prefs)
+   public ChangeSpellingLanguageDialog(
+         SpellingService spellingService,
+         UserPrefs prefs,
+         ProjectsServerOperations server)
    {
       super(constants_.changeSpellingLanguageCaption(),
             Roles.getDialogRole(),
-            (langId) -> applyLanguage(prefs, langId));
+            (langId, indicator) -> applyLanguage(spellingService, prefs, server, langId, indicator));
 
       SpellingPrefsContext context = prefs.spellingPrefsContext().getValue();
 
@@ -69,22 +80,84 @@ public class ChangeSpellingLanguageDialog extends ModalDialog<String>
       return !StringUtil.isNullOrEmpty(input);
    }
 
-   private static void applyLanguage(UserPrefs prefs, String langId)
+   private static void applyLanguage(
+         SpellingService spellingService,
+         UserPrefs prefs,
+         ProjectsServerOperations server,
+         String langId,
+         ProgressIndicator indicator)
    {
       PrefValue<String> language = prefs.spellingDictionaryLanguage();
       if (StringUtil.equals(language.getValue(), langId))
+      {
+         indicator.onCompleted();
          return;
+      }
 
-      // the global value is what persists; a project-level dictionary (set in
-      // Project Options) would otherwise keep shadowing it for this session
-      language.setGlobalValue(langId);
+      indicator.onProgress(coreConstants_.progressIndicatorTitle());
+
+      // Persist the effective layer so the server and the picker agree, and
+      // leave the global default alone when this project overrides it.
       if (language.hasProjectValue())
-         language.setProjectValue(langId);
+      {
+         server.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
+         {
+            @Override
+            public void onResponseReceived(RProjectOptions options)
+            {
+               RProjectConfig config = options.getConfig();
+               config.setSpellingDictionary(langId);
+               server.writeProjectConfig(config, new ServerRequestCallback<VoidResponse>()
+               {
+                  @Override
+                  public void onResponseReceived(VoidResponse response)
+                  {
+                     language.setProjectValue(langId);
+                     spellingService.onDictionaryLanguageChanged();
+                     indicator.onCompleted();
+                  }
 
-      prefs.writeUserPrefs();
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     indicator.onError(error.getUserMessage());
+                  }
+               });
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }
+         });
+      }
+      else
+      {
+         boolean hadGlobalValue = prefs.getUserLayer().hasKey(language.getId());
+         String previousLanguage = language.getGlobalValue();
+         language.setGlobalValue(langId, false);
+         prefs.writeUserPrefsWithDetail((succeeded, errorMessage) ->
+         {
+            if (succeeded)
+            {
+               indicator.onCompleted();
+            }
+            else
+            {
+               if (hadGlobalValue)
+                  language.setGlobalValue(previousLanguage, false);
+               else
+                  prefs.getUserLayer().unset(language.getId());
+
+               indicator.onError(errorMessage);
+            }
+         });
+      }
    }
 
    private final SpellingLanguageSelectWidget languageWidget_;
 
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
+   private static final CoreClientConstants coreConstants_ = GWT.create(CoreClientConstants.class);
 }

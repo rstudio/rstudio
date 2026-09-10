@@ -31,6 +31,9 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.spelling.SpellingService;
+import org.rstudio.studio.client.common.spelling.ui.ChangeSpellingLanguageDialog;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -41,6 +44,7 @@ import org.rstudio.studio.client.workbench.events.WorkbenchLoadedEvent;
 import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.AssistantPreferencesPane;
@@ -52,9 +56,6 @@ import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.RMarkdownPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.SourceControlPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.SpellingPreferencesPane;
-import org.rstudio.studio.client.common.spelling.SpellingService;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.common.spelling.ui.ChangeSpellingLanguageDialog;
 import org.rstudio.studio.client.workbench.prefs.views.SweavePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.TerminalPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
@@ -106,10 +107,12 @@ public class WorkbenchScreen extends Composite
                           FontSizeManager fontSizeManager,
                           OptionsLoader.Shim optionsLoader,
                           Provider<SpellingService> pSpellingService,
-                          Provider<UserPrefs> pUserPrefs)
+                          Provider<UserPrefs> pUserPrefs,
+                          Provider<ProjectsServerOperations> pProjectsServer)
    {
       pSpellingService_ = pSpellingService;
       pUserPrefs_ = pUserPrefs;
+      pProjectsServer_ = pProjectsServer;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;
@@ -479,7 +482,10 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onChangeSpellingLanguage()
    {
-      new ChangeSpellingLanguageDialog(pSpellingService_.get(), pUserPrefs_.get()).showModal();
+      new ChangeSpellingLanguageDialog(
+            pSpellingService_.get(),
+            pUserPrefs_.get(),
+            pProjectsServer_.get()).showModal();
    }
 
    @Handler
@@ -537,4 +543,5 @@ public class WorkbenchScreen extends Composite
    private final PaneManager paneManager_;
    private final Provider<SpellingService> pSpellingService_;
    private final Provider<UserPrefs> pUserPrefs_;
+   private final Provider<ProjectsServerOperations> pProjectsServer_;
 }

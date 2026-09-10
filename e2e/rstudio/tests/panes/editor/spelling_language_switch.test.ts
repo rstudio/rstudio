@@ -4,18 +4,30 @@
 // checker re-checks open documents, so "colour" stops being flagged as soon
 // as the dictionary becomes British English -- no restart.
 
-import type { Page } from 'playwright';
+import type { Page, Route } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { TIMEOUTS } from '@utils/constants';
-import { clearPref, executeCommand, getPref, setPref, waitForSourcePaneReset } from '@utils/commands';
-import { closeAndDeleteSandboxFiles, writeAndOpenFile } from '@utils/files';
+import {
+  clearPref,
+  dismissAllModals,
+  executeCommand,
+  getPref,
+  resetSourcePaneState,
+  saveDocument,
+  setPref,
+  waitForSourcePaneReset,
+} from '@utils/commands';
+import { closeAndDeleteSandboxFiles, openFile, writeAndOpenFile } from '@utils/files';
+import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
+import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 
 const LANGUAGE_SELECT = '#rstudio_change_spelling_language_select';
 const DIALOG_OK = '#rstudio_dlg_ok';
+const CHECK_SPELLING = /\/rpc\/check_spelling(?:\?|$)/;
 
 // "colour" sits at columns 4-10 of the first line
 const CONTENT = 'The colour of the sky.\n';
@@ -26,36 +38,23 @@ const WORD_END = 10;
 // A realtime spelling marker is a front "text" marker covering exactly the
 // word (lint markers are added in front; session.getMarkers() alone would only
 // return the back markers, e.g. the selected-word highlight).
-async function isWordFlagged(page: Page): Promise<boolean> {
-  return page.evaluate(
-    (word) => {
-      const editor = window.rstudio?.documents.activeEditor();
-      if (!editor) return false;
-      const markers = Object.values(editor.session.getMarkers(true)) as Array<{
-        type: string;
-        range?: { start: { row: number; column: number }; end: { row: number; column: number } };
-      }>;
-      return markers.some(
-        (m) =>
-          m.type === 'text' &&
-          m.range !== undefined &&
-          m.range.start.row === word.row &&
-          m.range.start.column === word.start &&
-          m.range.end.column === word.end,
-      );
-    },
-    { row: WORD_ROW, start: WORD_START, end: WORD_END },
+async function isWordFlagged(editor: AceEditor): Promise<boolean> {
+  return (await editor.getMarkers(true)).some(
+    (marker) =>
+      marker.type === 'text' &&
+      marker.range?.start.row === WORD_ROW &&
+      marker.range.start.column === WORD_START &&
+      marker.range.end.row === WORD_ROW &&
+      marker.range.end.column === WORD_END,
   );
 }
 
-// Realtime lint runs on document edits while the editor is focused (and after
-// a dictionary change), so focus the editor and make a no-op edit before
-// watching the markers.
-async function expectWordFlagged(
+// Prime background lint once before changing the dictionary. Assertions after
+// the change must not edit the document: doing so would hide a missing recheck.
+async function primeSpelling(
   page: Page,
   sourceActions: SourcePaneActions,
   editor: AceEditor,
-  flagged: boolean,
 ): Promise<void> {
   if (!(await editor.isFocused())) {
     await sourceActions.sourcePane.aceTextInput.click({ force: true });
@@ -64,8 +63,11 @@ async function expectWordFlagged(
   await editor.gotoLine(2, 0);
   await page.keyboard.type(' ');
   await page.keyboard.press('Backspace');
+  await saveDocument(page);
+}
 
-  await expect.poll(() => isWordFlagged(page), { timeout: TIMEOUTS.fileOpen }).toBe(flagged);
+async function expectWordFlagged(editor: AceEditor, flagged: boolean): Promise<void> {
+  await expect.poll(() => isWordFlagged(editor), { timeout: TIMEOUTS.fileOpen }).toBe(flagged);
 }
 
 async function changeLanguage(page: Page, langId: string): Promise<void> {
@@ -78,7 +80,15 @@ async function changeLanguage(page: Page, langId: string): Promise<void> {
   await expect.poll(() => getPref(page, 'spelling_dictionary_language')).toBe(langId);
 }
 
-test.describe.serial('Change Spelling Language', () => {
+async function expectSpellCheckComplete(page: Page): Promise<void> {
+  await executeCommand(page, 'checkSpelling');
+  const complete = page.getByRole('alertdialog', { name: 'Check Spelling', exact: true });
+  await expect(complete).toContainText('Spell check is complete.');
+  await complete.getByRole('button', { name: 'OK', exact: true }).click();
+  await expect(complete).toBeHidden();
+}
+
+test.describe('Change Spelling Language', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
@@ -88,17 +98,18 @@ test.describe.serial('Change Spelling Language', () => {
     consoleActions = new ConsolePaneActions(page);
     sourceActions = new SourcePaneActions(page, consoleActions);
     await setPref(page, 'real_time_spellchecking', true);
-    await setPref(page, 'spelling_dictionary_language', 'en_US');
   });
 
   // the per-test fixture resets the source pane, so the document is opened
   // per test rather than once for the suite
   test.beforeEach(async ({ rstudioPage: page }) => {
     await waitForSourcePaneReset(page);
+    await setPref(page, 'spelling_dictionary_language', 'en_US');
     await writeAndOpenFile(page, sandbox.dir, fileName, CONTENT);
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
+    await dismissAllModals(page);
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
   });
 
@@ -109,18 +120,117 @@ test.describe.serial('Change Spelling Language', () => {
 
   test('a British dictionary un-flags "colour" without a restart', async ({ rstudioPage: page }) => {
     const editor = new AceEditor(page, '');
-    await expectWordFlagged(page, sourceActions, editor, true);
+    await primeSpelling(page, sourceActions, editor);
+    await expectWordFlagged(editor, true);
 
     await changeLanguage(page, 'en_GB');
-    await expectWordFlagged(page, sourceActions, editor, false);
+    await expectWordFlagged(editor, false);
+    await expectSpellCheckComplete(page);
   });
 
   test('switching back to American English flags it again', async ({ rstudioPage: page }) => {
     const editor = new AceEditor(page, '');
+    await primeSpelling(page, sourceActions, editor);
+    await expectWordFlagged(editor, true);
     await changeLanguage(page, 'en_GB');
-    await expectWordFlagged(page, sourceActions, editor, false);
+    await expectWordFlagged(editor, false);
 
     await changeLanguage(page, 'en_US');
-    await expectWordFlagged(page, sourceActions, editor, true);
+    await expectWordFlagged(editor, true);
+  });
+
+  test('a project dictionary change reaches the server and persists in the project', async ({ rstudioPage: page }) => {
+    // Choosing the existing global value still needs to update the effective
+    // server dictionary when a project overrides it.
+    await setPref(page, 'spelling_dictionary_language', 'en_GB');
+    const projectDir = await createAndOpenProject(
+      page,
+      sandbox.dir,
+      'SpellingLanguage',
+      ['SpellingDictionary: en_US'],
+    );
+    try {
+      consoleActions = new ConsolePaneActions(page);
+      sourceActions = new SourcePaneActions(page, consoleActions);
+      await expect.poll(() => getPref(page, 'spelling_dictionary_language')).toBe('en_US');
+      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour")')).toBe(false);
+      await openFile(page, `${sandbox.dir}/${fileName}`);
+      const editor = new AceEditor(page, '');
+      await primeSpelling(page, sourceActions, editor);
+      await expectWordFlagged(editor, true);
+
+      await changeLanguage(page, 'en_GB');
+      await expectWordFlagged(editor, false);
+      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour")')).toBe(true);
+      const projectFile = rPathLiteral(`${projectDir}/SpellingLanguage.Rproj`);
+      expect(await consoleActions.evalRLogical(
+        `any(readLines(${projectFile}) == "SpellingDictionary: en_GB")`,
+      )).toBe(true);
+    } finally {
+      await dismissAllModals(page);
+      await resetSourcePaneState(page);
+      await closeProjectIfOpen(page);
+      consoleActions = new ConsolePaneActions(page);
+      sourceActions = new SourcePaneActions(page, consoleActions);
+    }
+    await expect.poll(() => getPref(page, 'spelling_dictionary_language')).toBe('en_GB');
+  });
+
+  test('a delayed response from the old dictionary cannot restore stale spelling results', async ({ rstudioPage: page }) => {
+    const editor = new AceEditor(page, '');
+    await primeSpelling(page, sourceActions, editor);
+    await expectWordFlagged(editor, true);
+
+    let heldRoute: Route | undefined;
+    let oldMisspelledIndex = -1;
+    await page.route(CHECK_SPELLING, async (route) => {
+      const words = route.request().postDataJSON().params[0] as string[];
+      if (!heldRoute && words.includes('favour')) {
+        // "colour" is already cached as incorrect. This request combines that
+        // cached result with the not-yet-cached "favour", exposing stale data
+        // in both the document cache and the shared spelling service cache.
+        oldMisspelledIndex = words.indexOf('favour');
+        heldRoute = route;
+        return;
+      }
+      await route.continue();
+    });
+
+    try {
+      await editor.setValue('The favour of the colour.\n');
+      await primeSpelling(page, sourceActions, editor);
+      await expect.poll(() => heldRoute !== undefined).toBe(true);
+
+      // A real British response must arrive while the American response is
+      // still held. This establishes the order without relying on sleeps.
+      const britishResponse = page.waitForResponse((response) =>
+        CHECK_SPELLING.test(response.url()) &&
+        (response.request().postData() ?? '').includes('favour'),
+      );
+      await changeLanguage(page, 'en_GB');
+      const britishResult = await (await britishResponse).json();
+      expect(britishResult.error).toBeUndefined();
+      expect(britishResult.result).toEqual([]);
+
+      const oldResponse = page.waitForResponse((response) => response.request() === heldRoute!.request());
+      await heldRoute!.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ result: [oldMisspelledIndex] }),
+      });
+      await (await oldResponse).finished();
+      await expectSpellCheckComplete(page);
+
+      // Reopen to discard the per-document cache and exercise the shared
+      // service cache too. Neither word should regain its American verdict.
+      await resetSourcePaneState(page);
+      await openFile(page, `${sandbox.dir}/${fileName}`);
+      await expectSpellCheckComplete(page);
+    } finally {
+      await page.unroute(CHECK_SPELLING);
+      // Resolve a still-held request when an earlier assertion fails so the
+      // test does not leave an outstanding spelling RPC during teardown.
+      await heldRoute?.abort().catch(() => {});
+    }
   });
 });
