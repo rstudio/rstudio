@@ -346,20 +346,20 @@ public class EditingTargetCodeExecution
     * cursor -- what Execute Current Statement runs, minus the comment lines
     * it also picks up above the statement.
     */
-   public Range getCurrentStatementRange()
+   public static Range getCurrentStatementRange(DocDisplay docDisplay)
    {
-      int[] limits = getRowLimits();
-      return docDisplay_.getMultiLineExpr(docDisplay_.getCursorPosition(), limits[0], limits[1]);
+      int[] limits = getRowLimits(docDisplay);
+      return docDisplay.getMultiLineExpr(docDisplay.getCursorPosition(), limits[0], limits[1]);
    }
 
    // rows a statement or paragraph may span: the whole document, or the
    // body of the chunk containing the cursor
-   private int[] getRowLimits()
+   private static int[] getRowLimits(DocDisplay docDisplay)
    {
       int startRowLimit = 0;
-      int endRowLimit = docDisplay_.getRowCount();
+      int endRowLimit = docDisplay.getRowCount();
 
-      Scope scope = docDisplay_.getCurrentChunk();
+      Scope scope = docDisplay.getCurrentChunk();
       if (scope != null)
       {
          startRowLimit = scope.getBodyStart().getRow();
@@ -373,7 +373,7 @@ public class EditingTargetCodeExecution
    {
       Range range;
       
-      int[] limits = getRowLimits();
+      int[] limits = getRowLimits(docDisplay_);
       int startRowLimit = limits[0];
       int endRowLimit = limits[1];
   
@@ -381,7 +381,7 @@ public class EditingTargetCodeExecution
       {
          // no scope to guard region, check the document itself to find
          // the region to execute
-         range = getCurrentStatementRange();
+         range = getCurrentStatementRange(docDisplay_);
          
          // expand to include comments (10 lines max)
          int startRow = range.getStart().getRow();

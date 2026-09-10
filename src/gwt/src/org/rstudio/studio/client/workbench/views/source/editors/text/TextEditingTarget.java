@@ -6262,9 +6262,10 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         Range range = codeExecution().getCurrentStatementRange();
+         DocDisplay display = activeDisplay();
+         Range range = EditingTargetCodeExecution.getCurrentStatementRange(display);
          if (range != null)
-            activeDisplay().setSelectionRange(range);
+            display.setSelectionRange(range);
       });
    }
 
