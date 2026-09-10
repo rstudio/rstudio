@@ -196,27 +196,27 @@ test.describe.serial('Active tab highlighting preference', () => {
       const first = sourceTab(page, FILES[0]);
       const second = sourceTab(page, FILES[1]);
       await expectHighlight(second, true, accent);
-      await expectHighlight(first, false, accent);
+      await expectHighlight(first, false);
       await first.click();
       await expectHighlight(first, true, accent);
-      await expectHighlight(second, false, accent);
+      await expectHighlight(second, false);
 
       // Pane tabs keep their previous styling whether or not they are selected.
       const environment = page.locator('#rstudio_workbench_tab_environment');
       const history = page.locator('#rstudio_workbench_tab_history');
       await history.click();
       for (const tab of [environment, history]) {
-        await expectHighlight(tab, false, accent);
+        await expectHighlight(tab, false);
         await expect(tab.locator('.gwt-Label')).toHaveCSS('font-weight', paneWeight);
       }
 
       await setPref(page, PREF, false);
-      await expectHighlight(first, false, accent);
-      await expectHighlight(history, false, accent);
+      await expectHighlight(first, false);
+      await expectHighlight(history, false);
       await expect(history.locator('.gwt-Label')).toHaveCSS('font-weight', paneWeight);
       await setPref(page, PREF, true);
       await expectHighlight(first, true, accent);
-      await expectHighlight(history, false, accent);
+      await expectHighlight(history, false);
       await expect(history.locator('.gwt-Label')).toHaveCSS('font-weight', paneWeight);
 
       await page.screenshot({ path: testInfo.outputPath('active-tabs.png') });
