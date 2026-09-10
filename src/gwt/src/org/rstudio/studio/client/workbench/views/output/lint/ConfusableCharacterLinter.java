@@ -57,6 +57,12 @@ public class ConfusableCharacterLinter
          if (isRmd && !isRChunkBodyRow(docDisplay, row))
             continue;
 
+         // a line whose first non-blank character is '#' is a comment in its
+         // entirety, whatever the highlighter makes of it: Quarto's "#|"
+         // options are tokenized as YAML, with only the prefix as a comment
+         if (docDisplay.getLine(row).trim().startsWith("#"))
+            continue;
+
          JsArray<Token> tokens = docDisplay.getTokens(row);
          if (tokens == null)
             continue;

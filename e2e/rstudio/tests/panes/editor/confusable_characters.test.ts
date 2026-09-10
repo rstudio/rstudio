@@ -56,7 +56,8 @@ const R_EXPECTED = [
 // only the R chunk body is R code: the prose and the other chunks all contain
 // lookalikes that must not be flagged. {markdown} has no dedicated highlight
 // rules (the highlighter falls back to R for it), and engine= overrides the
-// {r} engine name.
+// {r} engine name. Within the R chunk, a Quarto "#|" option line is tokenized
+// as YAML rather than as a comment, yet is still comment text.
 const FENCE = '`'.repeat(3);
 const RMD_CONTENT = heredoc`
   ---
@@ -66,6 +67,7 @@ const RMD_CONTENT = heredoc`
   Prose with a Cyrillic ${CYRILLIC_C} and an en${EN_DASH}dash.
 
   ${FENCE}{r}
+  #| fig-cap: left${EN_DASH}right
   ${R_CODE_LINE}
   ${FENCE}
 
