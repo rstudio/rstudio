@@ -46,6 +46,7 @@ import {
   findComponents,
   initializeLang,
   initializeSharedSecret,
+  isAutomated,
   loadRWebsite,
   raiseAndActivateWindow,
   removeStaleOptionsLockfile,
@@ -564,6 +565,12 @@ export class Application implements AppState {
         owner,
         baseUrl,
       );
+    }
+
+    // windowOpening() created the window hidden; surface it without pulling
+    // OS focus away from whatever the user is doing while the tests run.
+    if (isAutomated()) {
+      newWindow.showInactive();
     }
   }
 

@@ -1,0 +1,12 @@
+reject:
+  # Pinned for electron/forge#3600, still open. Forge's AssetRelocatorPatch
+  # rewrites the loader's `__webpack_require__.ab = __dirname + ...` injection so
+  # renderer bundles resolve native_modules correctly, and it finds that
+  # injection by intercepting a tap named 'asset-relocator-loader' on
+  # compilation.mainTemplate.hooks.requireExtensions. 1.7.4 changed the injected
+  # code, so Forge raises "does not appear to be compatible with Forge" and the
+  # build fails. 1.7.5 and later stop tapping requireExtensions at all, so the
+  # interceptor never fires: the build goes green while the patch silently does
+  # not apply. A passing build is therefore not evidence of compatibility here.
+  # Verified against 1.7.4 and 1.11.0 on 2026-09-10.
+  - '@vercel/webpack-asset-relocator-loader'
