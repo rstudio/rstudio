@@ -543,6 +543,8 @@ public class CodePreferencesPane extends PreferencesPane
       rOptionsPanel.add(checkboxPref(
             constants_.diagnosticsWarnVariableDefinedButNotUsedLabel(), prefs_.warnVariableDefinedButNotUsed()));
       rOptionsPanel.add(checkboxPref(constants_.diagnosticsStyleDiagnosticsLabel(), prefs_.styleDiagnostics()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnConfusableCharactersLabel(), prefs_.warnConfusableCharacters()));
       rOptionsPanel.setVisible(prefs_.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override

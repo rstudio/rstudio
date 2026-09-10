@@ -869,6 +869,19 @@ core::Error UserPrefValues::setWarnVariableDefinedButNotUsed(bool val)
 }
 
 /**
+ * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+ */
+bool UserPrefValues::warnConfusableCharacters()
+{
+   return readPref<bool>("warn_confusable_characters");
+}
+
+core::Error UserPrefValues::setWarnConfusableCharacters(bool val)
+{
+   return writePref("warn_confusable_characters", val);
+}
+
+/**
  * Whether to automatically discover and offer to install missing R package dependencies.
  */
 bool UserPrefValues::autoDiscoverPackageDependencies()
@@ -4056,6 +4069,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckUnexpectedAssignmentInFunctionCall,
       kWarnIfNoSuchVariableInScope,
       kWarnVariableDefinedButNotUsed,
+      kWarnConfusableCharacters,
       kAutoDiscoverPackageDependencies,
       kAutoAppendNewline,
       kStripTrailingWhitespace,

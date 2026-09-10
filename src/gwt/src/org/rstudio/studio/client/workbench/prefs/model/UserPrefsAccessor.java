@@ -109,6 +109,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CHECK_UNEXPECTED_ASSIGNMENT_IN_FUNCTION_CALL = "check_unexpected_assignment_in_function_call";
    public static final String WARN_IF_NO_SUCH_VARIABLE_IN_SCOPE = "warn_if_no_such_variable_in_scope";
    public static final String WARN_VARIABLE_DEFINED_BUT_NOT_USED = "warn_variable_defined_but_not_used";
+   public static final String WARN_CONFUSABLE_CHARACTERS = "warn_confusable_characters";
    public static final String AUTO_DISCOVER_PACKAGE_DEPENDENCIES = "auto_discover_package_dependencies";
    public static final String AUTO_APPEND_NEWLINE = "auto_append_newline";
    public static final String STRIP_TRAILING_WHITESPACE = "strip_trailing_whitespace";
@@ -1344,6 +1345,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.warnVariableDefinedButNotUsedTitle(), 
          _constants.warnVariableDefinedButNotUsedDescription(), 
          false);
+   }
+
+   /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   public PrefValue<Boolean> warnConfusableCharacters()
+   {
+      return bool(
+         "warn_confusable_characters",
+         _constants.warnConfusableCharactersTitle(), 
+         _constants.warnConfusableCharactersDescription(), 
+         true);
    }
 
    /**
@@ -4814,6 +4827,8 @@ public class UserPrefsAccessor extends Prefs
          warnIfNoSuchVariableInScope().setValue(layer, source.getBool("warn_if_no_such_variable_in_scope"));
       if (source.hasKey("warn_variable_defined_but_not_used"))
          warnVariableDefinedButNotUsed().setValue(layer, source.getBool("warn_variable_defined_but_not_used"));
+      if (source.hasKey("warn_confusable_characters"))
+         warnConfusableCharacters().setValue(layer, source.getBool("warn_confusable_characters"));
       if (source.hasKey("auto_discover_package_dependencies"))
          autoDiscoverPackageDependencies().setValue(layer, source.getBool("auto_discover_package_dependencies"));
       if (source.hasKey("auto_append_newline"))
@@ -5363,6 +5378,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(checkUnexpectedAssignmentInFunctionCall());
       prefs.add(warnIfNoSuchVariableInScope());
       prefs.add(warnVariableDefinedButNotUsed());
+      prefs.add(warnConfusableCharacters());
       prefs.add(autoDiscoverPackageDependencies());
       prefs.add(autoAppendNewline());
       prefs.add(stripTrailingWhitespace());

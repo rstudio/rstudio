@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.output;
 
 public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     String toolBarTitle(String title);
+    String confusableCharacterWarning(String codepoint, String lookalike);
     String viewLogText();
     String compilePDFTaskName();
     String viewLogTitle();

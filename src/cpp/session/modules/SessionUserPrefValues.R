@@ -619,6 +619,16 @@
    clear = function() { .rs.clearUserPref("warn_variable_defined_but_not_used") }
 )
 
+# Warn about characters that look like ASCII but are not
+#
+# Whether to warn about characters in R code that look like ASCII but are not,
+# such as the Cyrillic letter 'c' or typographic quotes
+.rs.uiPrefs$warnConfusableCharacters <- list(
+   get = function() { .rs.getUserPref("warn_confusable_characters") },
+   set = function(value) { .rs.setUserPref("warn_confusable_characters", value) },
+   clear = function() { .rs.clearUserPref("warn_confusable_characters") }
+)
+
 # Detect missing R packages in the editor
 #
 # Whether to automatically discover and offer to install missing R package
