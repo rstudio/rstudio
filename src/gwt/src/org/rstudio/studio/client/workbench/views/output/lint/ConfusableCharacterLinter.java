@@ -17,13 +17,14 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -106,15 +107,22 @@ public class ConfusableCharacterLinter
    }
 
    // the chunk header row (```{r}) is fenced markup, not R code, and chunks
-   // in other engines (python, asis, ...) are not R at all
+   // in other engines (python, asis, ...) are not R at all. The header is
+   // parsed rather than asking the highlighter, which falls back to R rules
+   // for engines it doesn't know (e.g. {markdown}).
    private static boolean isRChunkBodyRow(DocDisplay docDisplay, int row)
    {
-      Position position = Position.create(row, 0);
-      Scope chunk = docDisplay.getChunkAtPosition(position);
-      if (chunk == null || !chunk.isChunk() || chunk.getPreamble().getRow() == row)
+      Scope chunk = docDisplay.getChunkAtPosition(Position.create(row, 0));
+      if (chunk == null || !chunk.isChunk())
          return false;
 
-      return FileType.R_LANG_MODE.equals(docDisplay.getLanguageMode(position));
+      int headerRow = chunk.getPreamble().getRow();
+      if (headerRow == row)
+         return false;
+
+      Map<String, String> options = RChunkHeaderParser.parse(docDisplay.getLine(headerRow));
+      String engine = StringUtil.stringValue(options.get("engine"));
+      return engine.equalsIgnoreCase("r");
    }
 
    private static String lookalikeFor(char ch)

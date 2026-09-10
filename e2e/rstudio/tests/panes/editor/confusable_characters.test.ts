@@ -40,8 +40,10 @@ const R_CONTENT = heredoc`
   ${CYRILLIC_WORD} <- 1
 `;
 
-// only the R chunk body is R code: the prose, the asis chunk and the python
-// chunk all contain lookalikes that must not be flagged
+// only the R chunk body is R code: the prose and the other chunks all contain
+// lookalikes that must not be flagged. {markdown} has no dedicated highlight
+// rules (the highlighter falls back to R for it), and engine= overrides the
+// {r} engine name.
 const FENCE = '`'.repeat(3);
 const RMD_CONTENT = heredoc`
   ---
@@ -58,9 +60,17 @@ const RMD_CONTENT = heredoc`
   An asis chunk with a Cyrillic ${CYRILLIC_C} and an en${EN_DASH}dash.
   ${FENCE}
 
+  ${FENCE}{markdown}
+  A markdown chunk with a Cyrillic ${CYRILLIC_C} and an en${EN_DASH}dash.
+  ${FENCE}
+
   ${FENCE}{python}
   y = ${CYRILLIC_C}(1)
   print(y ${EN_DASH} 1)
+  ${FENCE}
+
+  ${FENCE}{r, engine='python'}
+  z = ${CYRILLIC_C}(1)
   ${FENCE}
 `;
 const RMD_R_CODE_ROW = RMD_CONTENT.split('\n').indexOf(R_CODE_LINE);
