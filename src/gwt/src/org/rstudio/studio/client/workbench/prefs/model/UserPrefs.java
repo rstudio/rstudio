@@ -216,7 +216,10 @@ public class UserPrefs extends UserPrefsComputed
    @Override
    public void onUserPrefsChanged(UserPrefsChangedEvent e)
    {
-      syncPrefs(e.getName(), e.getValues());
+      if (e.isFullLayer())
+         replaceLayerValues(e.getName(), e.getValues());
+      else
+         syncPrefs(e.getName(), e.getValues());
    }
 
    @Handler

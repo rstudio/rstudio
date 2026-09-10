@@ -233,4 +233,125 @@ test.describe('Change Spelling Language', () => {
       await heldRoute?.abort().catch(() => {});
     }
   });
+
+  test('clearing a project dictionary rechecks an open detached editor', async ({ rstudioPage: page }) => {
+    await setPref(page, 'spelling_dictionary_language', 'en_GB');
+    await createAndOpenProject(page, sandbox.dir, 'DetachedSpelling', ['SpellingDictionary: en_US']);
+    let satellite: Page | undefined;
+    try {
+      consoleActions = new ConsolePaneActions(page);
+      sourceActions = new SourcePaneActions(page, consoleActions);
+      await openFile(page, `${sandbox.dir}/${fileName}`);
+      const detached = page.context().waitForEvent('page');
+      await executeCommand(page, 'popoutDoc');
+      satellite = await detached;
+      await satellite.waitForLoadState('domcontentloaded');
+      expect(satellite.url()).toContain('view=source_window_');
+
+      // Source satellites have no automation bridge. Match the one document
+      // by content using the Ace page object, and prime its own spelling cache.
+      const editor = new AceEditor(satellite, 'The colour');
+      await expect.poll(() => editor.getValue()).toBe(CONTENT);
+      await satellite.locator('.ace_text-input').first().click({ force: true });
+      await editor.gotoLine(2, 0);
+      await satellite.keyboard.type(' ');
+      await satellite.keyboard.press('Backspace');
+      await satellite.keyboard.press('ControlOrMeta+s');
+      await expectWordFlagged(editor, true);
+
+      await executeCommand(page, 'projectOptions');
+      const options = page.getByRole('dialog', { name: 'Project Options', exact: true });
+      await options.locator('#rstudio_label_spelling_options').click();
+      const language = options.getByRole('combobox', { name: 'Main dictionary language:' });
+      await expect(language).toHaveValue('en_US');
+      await language.selectOption({ label: '(Default)' });
+      await options.locator('#rstudio_preferences_confirm').click();
+      await expect(options).toBeHidden();
+
+      await expect.poll(() => getPref(page, 'spelling_dictionary_language')).toBe('en_GB');
+      // No edits or spelling commands in the satellite after clearing the
+      // override: its full project preference layer must remove the old key.
+      await expectWordFlagged(editor, false);
+      expect(await consoleActions.evalRLogical('.Call("rs_checkSpelling", "colour")')).toBe(true);
+    } finally {
+      await satellite?.close().catch(() => {});
+      await dismissAllModals(page);
+      await resetSourcePaneState(page);
+      await closeProjectIfOpen(page);
+      consoleActions = new ConsolePaneActions(page);
+      sourceActions = new SourcePaneActions(page, consoleActions);
+    }
+  });
+
+  test('newly installed dictionaries remain available when the picker reopens', async ({ rstudioPage: page }) => {
+    const installDictionaries = /\/rpc\/install_all_dictionaries(?:\?|$)/;
+    const savePreferences = /\/rpc\/set_user_prefs(?:\?|$)/;
+    const installedId = 'x-pw-installed';
+    const installedName = 'Installed test dictionary';
+    let installCount = 0;
+    let savedInstalledDictionary = false;
+
+    await executeCommand(page, 'changeSpellingLanguage');
+    const dialog = page.getByRole('dialog', { name: 'Change Spelling Language', exact: true });
+    const language = dialog.locator(LANGUAGE_SELECT);
+    const languages = await language.locator('option').evaluateAll((options) =>
+      options
+        .map((option) => ({ id: (option as HTMLOptionElement).value, name: option.textContent ?? '' }))
+        .filter((option) => option.id !== ''),
+    );
+    expect(languages.some((entry) => entry.id === installedId)).toBe(false);
+
+    // Installation and persistence are mocked at the RPC boundary: this test
+    // exercises client context reuse without downloading files or asking the
+    // backend spelling engine to open a synthetic dictionary.
+    await page.route(installDictionaries, async (route) => {
+      installCount++;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          result: {
+            all_languages_installed: true,
+            available_languages: [...languages, { id: installedId, name: installedName }],
+            custom_dictionaries: [],
+          },
+        }),
+      });
+    });
+    await page.route(savePreferences, async (route) => {
+      if (route.request().postDataJSON().params[0].spelling_dictionary_language === installedId) {
+        savedInstalledDictionary = true;
+        await route.fulfill({ status: 200, contentType: 'application/json', body: '{"result":null}' });
+      } else {
+        await route.continue();
+      }
+    });
+
+    try {
+      // The last entry invokes install/update on machines with either set of
+      // dictionaries. Its successful response introduces the synthetic one.
+      await language.selectOption({ index: languages.length });
+      await expect(language.locator(`option[value="${installedId}"]`)).toHaveText(installedName);
+      await language.selectOption(installedId);
+      await dialog.locator(DIALOG_OK).click();
+      await expect(dialog).toBeHidden();
+      expect(savedInstalledDictionary).toBe(true);
+      await expect.poll(() => getPref(page, 'spelling_dictionary_language')).toBe(installedId);
+
+      await executeCommand(page, 'changeSpellingLanguage');
+      await expect(dialog).toBeVisible();
+      await expect(language.locator(`option[value="${installedId}"]`)).toHaveText(installedName);
+      await expect(language).toHaveValue(installedId);
+      await expect(language.locator('option').last()).toHaveText('Update Dictionaries...');
+      expect(installCount).toBe(1);
+    } finally {
+      await dismissAllModals(page);
+      await page.unroute(installDictionaries);
+      await page.unroute(savePreferences);
+      // Reload the real server context so the simulated installed list cannot
+      // affect subsequent tests in this worker. The mock never changed disk.
+      await page.reload();
+      await page.waitForFunction(() => window.rstudio?.ready === true);
+    }
+  });
 });

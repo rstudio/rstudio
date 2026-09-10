@@ -28,6 +28,7 @@ import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedE
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -220,7 +221,22 @@ public class SpellingService implements HasChangeHandlers
    public void installAllDictionaries(
                   ServerRequestCallback<SpellingPrefsContext> requestCallback)
    {
-      server_.installAllDictionaries(requestCallback);
+      server_.installAllDictionaries(new ServerRequestCallback<SpellingPrefsContext>()
+      {
+         @Override
+         public void onResponseReceived(SpellingPrefsContext context)
+         {
+            // Newly opened language pickers read this shared context.
+            uiPrefs_.spellingPrefsContext().setValue(PrefLayer.LAYER_COMPUTED, context);
+            requestCallback.onResponseReceived(context);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            requestCallback.onError(error);
+         }
+      });
    }
    
    public void invalidateCache()
