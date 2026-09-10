@@ -59,13 +59,18 @@ std::string sessionsInUseMessage(FileLock::LockType lockType)
       "Close Posit Assistant in your other sessions and try again.";
 
    // Advisory locks vanish with their process; only link-based locks
-   // (macOS, Linux) can linger up to the staleness timeout after a hard crash.
+   // (macOS, Linux) can linger after a hard crash. A cleanly crashed session's
+   // lock clears at the staleness timeout, but one whose process is still
+   // alive yet unresponsive is held for the live-owner grace window (a
+   // multiple of the timeout) so a briefly stalled session does not lose its
+   // lock. Quote that upper bound rather than the bare timeout.
    if (lockType == FileLock::LOCKTYPE_LINKBASED)
    {
-      message += " If another session ended unexpectedly, this may take up "
-                 "to " +
-                 std::to_string(FileLock::getTimeoutInterval().total_seconds()) +
-                 " seconds to clear.";
+      long clearSeconds = FileLock::getTimeoutInterval().total_seconds() *
+                          FileLock::getLiveOwnerGraceMultiplier();
+      message += " If another session ended unexpectedly or stopped "
+                 "responding, this may take up to " +
+                 std::to_string(clearSeconds) + " seconds to clear.";
    }
 
    return message;
@@ -296,9 +301,17 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
          Error probeError = probe->acquire(child);
          if (!probeError)
          {
+            // Remove the stale leftover only if we can confirm it is older
+            // than the timeout. The unchecked getLastWriteTime() returns 0 on
+            // a stat failure (e.g. a transient ESTALE on network storage),
+            // which would read as ancient and delete a file that may be
+            // seconds old and about to be locked; the checked overload lets us
+            // skip removal on such an error instead.
             std::time_t settled =
                ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds();
-            if (child.exists() && child.getLastWriteTime() < settled)
+            std::time_t lastWrite = 0;
+            Error timeError = child.getLastWriteTime(lastWrite);
+            if (!timeError && lastWrite < settled)
             {
                Error removeError = child.removeIfExists();
                if (removeError)

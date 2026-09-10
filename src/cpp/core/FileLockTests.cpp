@@ -778,6 +778,28 @@ TEST_F(FileLockingTest, AbandonedTempFilesAreSwept)
    EXPECT_FALSE(lock.release());
 }
 
+TEST_F(FileLockingTest, LiveContenderTempFileIsSweptOnceAged)
+{
+   // A rename-aside temp file whose namer is alive but unrelated (a container
+   // sharing the directory, or a reused PID) must not linger forever. Once it
+   // is older than the timeout it is swept by age, like an owner file, rather
+   // than pinned indefinitely by the live PID. The name uses our own live PID
+   // so the process check cannot classify it as abandoned.
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
+
+   FilePath liveContender = root_.completePath(
+      ".rstudio-lock-tmp-41c29-" + std::to_string(::getpid()) + "-aged");
+   ASSERT_FALSE(writeStringToFile(liveContender, "12345\n"));
+
+   // Its ctime is now; let the wall clock pass the one-second timeout.
+   boost::this_thread::sleep_for(boost::chrono::milliseconds(1200));
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(liveContender.exists());
+   EXPECT_FALSE(lock.release());
+}
+
 TEST_F(FileLockingTest, ExternallyDeletedLockPathLeavesNoPermanentLitter)
 {
    // A crashed owner leaves its lock and owner file behind. A caller that

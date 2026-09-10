@@ -273,30 +273,34 @@ Error writeDescriptorContents(int descriptor, const std::string& contents)
    return Success();
 }
 
-// Stamps the lock with this host's clock. A write leaves the mtime to the
-// filesystem, which on a network mount is the server's clock; staleness is
-// judged against the contender's clock (and, for a local owner, its process
-// start time), so the two must not be mixed.
-//
-// Some mounts refuse explicit timestamps (utimes needs ownership, which uid
-// squashing takes away; some CIFS and FUSE backends lack the operation). The
-// write's own mtime then stands in, as it always did before stamping: a
-// degraded mode worth one log line per process, not a failure that would
-// keep every session from ever acquiring a lock there.
-void stampWriteTime(int descriptor)
+// Stamps the lock with this host's clock via an explicit timestamp. A plain
+// write instead leaves the mtime to the filesystem, which on a network mount
+// is the server's clock; staleness is judged against the contender's clock
+// (and, for a local owner, its process start time), so the two must not be
+// mixed. Returns the error rather than logging it, so refreshLocks() -- which
+// has no write of its own to fall back on -- can react to an unsupported mount.
+Error stampWriteTime(int descriptor)
 {
-   Error error;
    struct timeval now;
    if (::gettimeofday(&now, nullptr) == -1)
-   {
-      error = systemCallError("gettimeofday", errno, ERROR_LOCATION);
-   }
-   else
-   {
-      struct timeval times[2] = {now, now};
-      if (::futimes(descriptor, times) == -1)
-         error = systemCallError("futimes", errno, ERROR_LOCATION);
-   }
+      return systemCallError("gettimeofday", errno, ERROR_LOCATION);
+
+   struct timeval times[2] = {now, now};
+   if (::futimes(descriptor, times) == -1)
+      return systemCallError("futimes", errno, ERROR_LOCATION);
+
+   return Success();
+}
+
+// Stamps the lock, tolerating mounts that refuse explicit timestamps (utimes
+// needs ownership, which uid squashing takes away; some CIFS and FUSE backends
+// lack the operation). Used where a write to the lock has just set the mtime
+// anyway, so a failure here is cosmetic: a degraded mode worth one log line
+// per process, not a failure that would keep every session from acquiring a
+// lock there.
+void stampWriteTimeBestEffort(int descriptor)
+{
+   Error error = stampWriteTime(descriptor);
 
    static std::atomic<bool> s_reported(false);
    if (error && !s_reported.exchange(true))
@@ -323,7 +327,7 @@ Error writeLockContents(int descriptor, bool released)
    if (::ftruncate(descriptor, static_cast<off_t>(contents.size())) == -1)
       return systemCallError("ftruncate", errno, ERROR_LOCATION);
 
-   stampWriteTime(descriptor);
+   stampWriteTimeBestEffort(descriptor);
    return Success();
 }
 
@@ -498,8 +502,7 @@ Error removeIfSameIdentity(const FilePath& filePath,
 
    // Not ours: put it back without following (or clobbering) anything. Where
    // the filesystem cannot link (the same mounts that take the O_EXCL
-   // fallback), fall back to a rename into a path we have just seen empty; a
-   // path re-occupied in the meantime keeps the newer entry.
+   // fallback), fall back to a rename into a path we have just seen empty.
    bool restored =
       ::linkat(AT_FDCWD, tempPath.getAbsolutePathNative().c_str(),
                AT_FDCWD, filePath.getAbsolutePathNative().c_str(), 0) == 0;
@@ -509,7 +512,17 @@ Error removeIfSameIdentity(const FilePath& filePath,
       // linkat() leaves the renamed-aside name in place as a second link
       unlinkBestEffort(tempPath);
    }
-   else if (linkError != EEXIST)
+   else if (linkError == EEXIST)
+   {
+      // The path was re-occupied by a newer entry while ours was aside. We
+      // cannot restore ours without clobbering the newer one, but the
+      // displaced entry may be a live owner's lock, so it must not be
+      // discarded either. Leave it renamed-aside; the sweep reclaims it once
+      // it (or the contender that displaced it) ages out. Treated as restored
+      // so the failure path below does not delete it.
+      restored = true;
+   }
+   else
    {
       struct stat info;
       if (::lstat(filePath.getAbsolutePathNative().c_str(), &info) == -1 &&
@@ -730,14 +743,18 @@ Error inspectLockFile(const FilePath& lockFilePath,
 
 // A renamed-aside entry is abandoned once the contender that renamed it is
 // gone. Its own timestamps say nothing (rename keeps the old owner's mtime),
-// so where PIDs cannot be checked the rename's ctime stands in: no removal
-// stays in flight for a whole timeout.
+// so the rename's ctime stands in: no removal stays in flight for a whole
+// timeout. On a single host a gone contender is proof at once; but a PID that
+// is live and unrelated (a container sharing the directory, a reused number)
+// or a name we cannot parse must not pin the entry forever, so those fall
+// through to the same ctime check the load-balanced path always uses.
 bool isTempFileAbandoned(const FilePath& filePath)
 {
    if (!FileLock::isLoadBalanced())
    {
       boost::optional<PidType> contender = tempFileContender(filePath);
-      return contender && isProcessGone(*contender);
+      if (contender && isProcessGone(*contender))
+         return true;
    }
 
    struct stat info;
@@ -780,6 +797,22 @@ void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
             unlinkBestEffort(child);
          }
          continue;
+      }
+
+      // A hard-linked owner file still referenced by a public lock path is a
+      // live (or merely timed-out) lock's owner, not an orphan: the normal
+      // takeover path removes both together. Only an orphan whose public path
+      // is gone has a single link. Skipping the still-linked ones by their
+      // cheap link count keeps this per-acquire sweep from running a full
+      // inspection (open/read/kill/proc) on every live owner in the directory.
+      // Symlink-mode owners always have one link, so they fall through as
+      // before.
+      if (isOwnerFile(child))
+      {
+         struct stat info;
+         if (::lstat(child.getAbsolutePathNative().c_str(), &info) == 0 &&
+             S_ISREG(info.st_mode) && info.st_nlink > 1)
+            continue;
       }
 #endif
 
@@ -853,7 +886,7 @@ Error claimLockFile(const FilePath& claimFilePath,
          Error error = writeDescriptorContents(descriptor, lockContents(false));
          if (!error)
          {
-            stampWriteTime(descriptor);
+            stampWriteTimeBestEffort(descriptor);
             error = descriptorIdentity(descriptor, &pClaim->identity);
          }
          if (error)
@@ -1256,17 +1289,21 @@ public:
       return Success();
    }
 
-   void deregisterLock(const std::string& key, const std::string& token)
+   // Returns whether the lock was still registered under this token. A caller
+   // whose lock was already released by clearLocks() (at cleanUp) sees false
+   // and must not repeat the filesystem release.
+   bool deregisterLock(const std::string& key, const std::string& token)
    {
       Guard guard(*this);
       auto it = registration_.find(key);
-      if (it != registration_.end() && it->second.token == token)
-      {
+      if (it == registration_.end() || it->second.token != token)
+         return false;
+
 #ifndef _WIN32
-         ::close(it->second.descriptor);
+      ::close(it->second.descriptor);
 #endif
-         registration_.erase(it);
-      }
+      registration_.erase(it);
+      return true;
    }
 
    void refreshLocks()
@@ -1291,7 +1328,20 @@ public:
       for (const auto& entry : descriptors)
       {
          LOG("Bumping write time for lock token: " << entry.first);
-         stampWriteTime(entry.second);
+
+         Error error = stampWriteTime(entry.second);
+         if (error)
+         {
+            // The mount refuses explicit timestamps. Unlike acquisition, a
+            // refresh has no write of its own to set the mtime, so without a
+            // fallback the lock would never be bumped and would age out under
+            // a live owner. Rewriting the (unchanged) contents lets the
+            // write's own mtime stand in, as it does at acquisition.
+            Error rewriteError = writeLockContents(entry.second, false);
+            if (rewriteError)
+               LOG_ERROR(rewriteError);
+         }
+
          ::close(entry.second);
       }
 #endif
@@ -1511,9 +1561,19 @@ Error LinkBasedFileLock::release()
    if (pImpl_->descriptor == -1)
       return Success();
 
+   // If cleanUp() already released and deregistered this lock, its files are
+   // gone (or belong to a successor); repeating the release would perform
+   // claim create/rename/unlink I/O for nothing, and during static
+   // destruction after ::exit() can log spurious errors once the session dir
+   // has moved. deregisterLock reports whether we were still the registered
+   // owner.
+   bool wasRegistered = lockRegistration().deregisterLock(
+      pImpl_->registrationKey,
+      pImpl_->token);
+
    Error error;
 #ifndef _WIN32
-   if (pImpl_->processId == system::currentProcessId())
+   if (wasRegistered && pImpl_->processId == system::currentProcessId())
    {
       // Everything is checked against the inode opened at acquisition. If a
       // stale takeover replaced the public path, the successor's entries do
@@ -1526,9 +1586,6 @@ Error LinkBasedFileLock::release()
    ::close(pImpl_->descriptor);
 #endif
 
-   lockRegistration().deregisterLock(
-      pImpl_->registrationKey,
-      pImpl_->token);
    LOG("Released lock: " << pImpl_->lockFilePath.getAbsolutePath());
 
    pImpl_->lockFilePath = FilePath();

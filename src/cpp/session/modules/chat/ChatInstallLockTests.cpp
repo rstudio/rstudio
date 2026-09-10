@@ -102,6 +102,14 @@ TEST_F(ChatInstallLock, LiveInUseBlocksMutationUntilReleased)
    EXPECT_TRUE(error);
    EXPECT_NE(message.find("in use by another"), std::string::npos);
 
+   // The link-based caveat quotes the live-owner grace window (a multiple of
+   // the timeout), not the bare timeout: a still-running but unresponsive
+   // session holds its lock that long before it can be taken over.
+   long clearSeconds = FileLock::getTimeoutInterval().total_seconds() *
+                       FileLock::getLiveOwnerGraceMultiplier();
+   EXPECT_NE(message.find(std::to_string(clearSeconds) + " seconds to clear"),
+             std::string::npos);
+
    sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
    EXPECT_FALSE(sessionA_->inUseHeld());
 

@@ -64,6 +64,15 @@ public:
                                    boost::posix_time::seconds interval = s_refreshRate);
    
    // sub-classes implement locking semantics
+   //
+   // Blocking contract: acquire() and isLocked() coordinate with other threads
+   // in this process that touch the same lock path (the advisory implementation
+   // must, since closing any descriptor for a file drops every fcntl lock this
+   // process holds on it). A call can therefore wait on an in-flight acquire or
+   // probe of the same path on another thread, and a filesystem syscall stalled
+   // on one thread (e.g. an unresponsive network mount) can delay others acting
+   // on that path. Call from a context that tolerates this; there is no
+   // non-blocking or timed variant.
    virtual Error acquire(const FilePath& lockFilePath) = 0;
    virtual Error release() = 0;
    virtual FilePath lockFilePath() const = 0;

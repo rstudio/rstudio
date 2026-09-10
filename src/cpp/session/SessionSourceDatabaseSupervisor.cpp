@@ -347,7 +347,18 @@ bool reclaimOrphanedSession()
       }
 
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
-      if (!sessionDirLock().isLocked(lockFilePath))
+
+      // Adopt only a session dir we can confirm is unlocked. isLocked() fails
+      // closed (an inspection error reads as locked), which is the safe choice
+      // here: adopting a dir another live session still holds would corrupt
+      // its source database. A transient inspection error therefore defers
+      // recovery of this dir to a later start rather than risk a steal.
+      bool locked = true;
+      Error lockError = sessionDirLock().isLocked(lockFilePath, &locked);
+      if (lockError)
+         LOG_ERROR(lockError);
+
+      if (!locked)
       {
          // adopt by giving the session dir our own name
          Error error = sessionDir.move(sessionDirPath());

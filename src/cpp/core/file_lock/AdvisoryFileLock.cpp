@@ -443,6 +443,13 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
    std::string openedKey = inodeKeyFor(info);
    if (openedKey != key)
    {
+      // Drop the probe on the inode found by name before registering one on
+      // the inode actually opened. Holding both at once -- waiting on the
+      // opened inode's acquirer while still counted as a prober on the other
+      // -- lets two such threads deadlock against two acquirers. The
+      // descriptor being guarded is the opened one, so the first probe is
+      // safe to release here.
+      pProbe.reset();
       pProbe.reset(new ProbeScope(openedKey));
       if (!pProbe->active())
       {
