@@ -431,19 +431,14 @@ Error parseXml(const std::string strData,
 
 bool isSvnInstalled()
 {
-   // detection found no svn, so there is nothing to ask: running it anyway
-   // would just report the failure to launch an empty path as an error
-   if (s_svnExePath.empty())
-      return false;
-
    int exitCode;
    Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
 
+   // as in isGitInstalled(), a failure to launch svn is the answer 'no' rather
+   // than a problem to report: on Windows an svn_exe_path that is empty or no
+   // longer exists fails here, and this runs on every client init
    if (error)
-   {
-      LOG_ERROR(error);
       return false;
-   }
 
    return exitCode == EXIT_SUCCESS;
 }

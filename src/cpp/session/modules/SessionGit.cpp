@@ -334,8 +334,11 @@ Error gitExec(const ShellArgs& args,
               core::system::ProcessResult* pResult)
 {
    // if we see an 'index.lock' file within the associated
-   // git repository, try waiting a bit until it's removed
-   waitForIndexLock(workingDir);
+   // git repository, try waiting a bit until it's removed.
+   // an empty working dir means there is no repository to wait on, and would
+   // resolve the lockfile path against the process working directory instead
+   if (!workingDir.isEmpty())
+      waitForIndexLock(workingDir);
 
    // initialize process options
    core::system::ProcessOptions options = procOptions();
