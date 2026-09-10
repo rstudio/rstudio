@@ -151,6 +151,15 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       return autoRaisedFromMinimize_;
    }
 
+   /**
+    * An explicit activation supersedes an automatic raise, even when the
+    * window is already visible and no state change is needed.
+    */
+   public void clearAutoRaisedFromMinimize()
+   {
+      autoRaisedFromMinimize_ = false;
+   }
+
    @Override
    public void onEnsureHeight(EnsureHeightEvent event)
    {

@@ -96,7 +96,10 @@ public class Console
       events.addHandler(SendToConsoleEvent.TYPE, event ->
       {
          if (event.shouldRaise())
+         {
             view.bringToFront();
+            pPaneManager_.get().getConsoleLogicalWindow().clearAutoRaisedFromMinimize();
+         }
       });
 
       ((Binder) GWT.create(Binder.class)).bind(commands, this);
@@ -212,9 +215,13 @@ public class Console
       view_.focus();
       view_.ensureCursorVisible();
 
-      // a task handing control back to the console (focusWindow == false)
-      // shouldn't leave a pane open that it only opened for its own output
-      if (!focusWindow)
+      // Explicit activation keeps the console open, even if bringToFront()
+      // just raised it through an ensure-visible event.
+      if (focusWindow)
+         pPaneManager_.get().getConsoleLogicalWindow().clearAutoRaisedFromMinimize();
+      // A task handing control back to the console should restore a pane
+      // that it only opened for its own output.
+      else
          pPaneManager_.get().minimizeConsoleIfAutoRaised();
 
       // the above code seems to always leave focus in the console

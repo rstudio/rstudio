@@ -693,6 +693,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.NORMAL);
          consoleWindow.onWindowStateChange(event);
       }
+      consoleWindow.clearAutoRaisedFromMinimize();
 
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only

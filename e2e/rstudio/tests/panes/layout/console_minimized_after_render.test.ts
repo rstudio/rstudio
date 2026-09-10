@@ -1,8 +1,6 @@
-// A minimized Console pane goes back to minimized after a successful render
-// (#11622). Render output lives in the Console pane's tabset, so starting a
-// render raises the pane; once the render succeeds and control returns to the
-// console, the pane is minimized again. A failed render leaves it open so the
-// output can be read.
+// A successful render preserves the Console pane's minimized state (#11622).
+// An explicit user restore keeps it open, and a failed render opens the pane
+// so its output can be read.
 
 import type { Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
@@ -12,8 +10,6 @@ import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { closeAndDeleteSandboxFiles, writeAndOpenFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { useSuiteSandbox } from '@utils/sandbox';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
 const CONSOLE_MIN_BTN = `${CONSOLE_PANE} .rstudio_panel_min_btn_console`;
@@ -27,6 +23,44 @@ const FENCE = '```';
 async function minimizeConsole(page: Page): Promise<void> {
   await page.locator(CONSOLE_MIN_BTN).click();
   await expect(page.locator(CONSOLE_PANE)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+}
+
+async function renderDocument(page: Page, fileName: string, succeeded: boolean): Promise<void> {
+  type RenderEvent = {
+    type: string;
+    data?: { target_file?: string; succeeded?: boolean };
+  };
+  let completed: RenderEvent | undefined;
+
+  // Observe the session's completion event without typing into the Console
+  // or assuming that the runner can access files on the rsession host.
+  const completion = page.waitForResponse(
+    async response => {
+      if (!new URL(response.url()).pathname.endsWith('/events/get_events'))
+        return false;
+      const body = await response.json().catch(() => null) as { result?: RenderEvent[] } | null;
+      const event = body?.result?.find(event =>
+        event.type === 'rmd_render_completed' &&
+        event.data?.target_file?.replace(/\\/g, '/').split('/').pop() === fileName,
+      );
+      if (!event)
+        return false;
+      completed = event;
+      return true;
+    },
+    { timeout: RENDER_TIMEOUT },
+  );
+
+  await Promise.all([completion, executeCommand(page, 'knitDocument')]);
+  expect(completed?.data?.succeeded).toBe(succeeded);
+
+  // get_events queues client-side dispatch. Wait until CompilePanel has
+  // processed this document's completion too. Inspect the button's own
+  // display property: toBeHidden would also pass while its pane is minimized.
+  const toolbar = page.getByRole('toolbar', { name: 'R Markdown Tab', includeHidden: true });
+  await expect(toolbar).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
+  await expect(toolbar.getByRole('button', { name: 'Stop', exact: true, includeHidden: true }))
+    .toHaveCSS('display', 'none', { timeout: TIMEOUTS.fileOpen });
 }
 
 test.describe.serial('Console pane stays minimized across a render', () => {
@@ -81,15 +115,30 @@ test.describe.serial('Console pane stays minimized across a render', () => {
     await writeAndOpenFile(page, sandbox.dir, fileName, rmd);
     await minimizeConsole(page);
 
-    await executeCommand(page, 'knitDocument');
-
-    // The render is done once its output exists; the pane then has to be
-    // minimized again (it was raised for the Render tab in between). Watch the
-    // file from here rather than via the console: typing into the console
-    // would itself raise the pane and defeat the test.
-    const outputPath = path.join(sandbox.dir, fileName.replace(/\.Rmd$/, '.html'));
-    await expect.poll(() => fs.existsSync(outputPath), { timeout: RENDER_TIMEOUT }).toBe(true);
+    await renderDocument(page, fileName, true);
     await expect(page.locator(CONSOLE_PANE)).toBeHidden({ timeout: TIMEOUTS.fileOpen });
+  });
+
+  test('a successful render keeps a console restored with Ctrl+2 open', async ({ rstudioPage: page }) => {
+    fileName = `restored_ok_${Date.now()}.Rmd`;
+    const rmd = heredoc`
+      ---
+      title: "Restored console"
+      output: html_document
+      ---
+
+      Body.
+    `;
+    await writeAndOpenFile(page, sandbox.dir, fileName, rmd);
+    await minimizeConsole(page);
+
+    // Ctrl+2 uses activateConsole, which must count as the user restoring
+    // the pane even though it raises the Console through ensureVisible.
+    await page.keyboard.press('Control+2');
+    await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    await renderDocument(page, fileName, true);
+    await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
   });
 
   test('a failed render leaves the pane open', async ({ rstudioPage: page }) => {
@@ -107,11 +156,9 @@ test.describe.serial('Console pane stays minimized across a render', () => {
     await writeAndOpenFile(page, sandbox.dir, fileName, rmd);
     await minimizeConsole(page);
 
-    await executeCommand(page, 'knitDocument');
+    await renderDocument(page, fileName, false);
 
-    // the Render tab (inside the Console pane) reports the failure and the pane
-    // is opened for it; "Execution halted" is the last line rmarkdown prints,
-    // so the pane must still be showing once it has arrived
+    // The failed render has completed and its output remains visible.
     const consolePane = page.locator(CONSOLE_PANE);
     await expect(consolePane).toContainText('render should fail', { timeout: RENDER_TIMEOUT });
     await expect(consolePane).toContainText('Execution halted', { timeout: RENDER_TIMEOUT });
