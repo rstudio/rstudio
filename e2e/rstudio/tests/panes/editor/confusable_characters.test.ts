@@ -23,6 +23,10 @@ const CYRILLIC_C = 'с';
 const EN_DASH = '–';
 // a genuine Cyrillic word: also contains letters with no ASCII lookalike
 const CYRILLIC_WORD = 'сумма';
+// U+00A0 NO-BREAK SPACE, renders as a gap but is not whitespace to R
+const NBSP = '\u00a0';
+// U+200B ZERO WIDTH SPACE, not rendered at all
+const ZWSP = '\u200b';
 
 const R_FILE = 'confusable_characters.R';
 const RMD_FILE = 'confusable_characters.Rmd';
@@ -32,13 +36,22 @@ const R_CODE_LINE = `x <- ${CYRILLIC_C}(1, 2, 3)`;
 
 // row 0: formatted roxygen prose (exempt; tokenized as constant.numeric, not
 // comment); row 1: in code (flagged); row 2: in a string and a comment
-// (exempt); row 3: a genuine Cyrillic identifier (exempt)
+// (exempt); row 3: a genuine Cyrillic identifier (exempt); row 4: a no-break
+// space where a space was meant (flagged); row 5: a zero-width space inside
+// an identifier (flagged, as invisible)
 const R_CONTENT = heredoc`
   #' Use **left${EN_DASH}right** intervals.
   ${R_CODE_LINE}
   y <- "${CYRILLIC_C}" # ${CYRILLIC_C}
   ${CYRILLIC_WORD} <- 1
+  z <-${NBSP}1
+  w <- foo${ZWSP}bar
 `;
+const R_EXPECTED = [
+  { row: 1, column: 5, text: "Non-ASCII character U+0441 looks like 'c'" },
+  { row: 4, column: 4, text: "Non-ASCII character U+00A0 looks like ' '" },
+  { row: 5, column: 8, text: 'Invisible character U+200B' },
+];
 
 // only the R chunk body is R code: the prose and the other chunks all contain
 // lookalikes that must not be flagged. {markdown} has no dedicated highlight
@@ -75,8 +88,8 @@ const RMD_CONTENT = heredoc`
 `;
 const RMD_R_CODE_ROW = RMD_CONTENT.split('\n').indexOf(R_CODE_LINE);
 
-const MESSAGE_PREFIX = 'Non-ASCII character';
-const EXPECTED_MESSAGE = `${MESSAGE_PREFIX} U+0441 looks like 'c'`;
+const MESSAGE_PATTERN = /^(Non-ASCII|Invisible) character U\+/;
+const EXPECTED_MESSAGE = R_EXPECTED[0].text;
 
 async function getConfusableAnnotations(page: Page): Promise<Ace.Annotation[]> {
   const annotations = await page.evaluate(() => {
@@ -89,7 +102,7 @@ async function getConfusableAnnotations(page: Page): Promise<Ace.Annotation[]> {
       type: a.type,
     }));
   });
-  return annotations.filter((a) => a.text.includes(MESSAGE_PREFIX));
+  return annotations.filter((a) => MESSAGE_PATTERN.test(a.text)).sort((a, b) => a.row - b.row || a.column - b.column);
 }
 
 async function pollConfusables(page: Page, expectedCount: number): Promise<Ace.Annotation[]> {
@@ -145,20 +158,17 @@ test.describe.serial('Confusable character diagnostics', () => {
     await clearPref(page, 'show_diagnostics_r');
   });
 
-  test('a lone Cyrillic letter in code is flagged; roxygen, strings, comments and Cyrillic words are not', async ({
+  test('lookalikes and invisible characters in code are flagged; roxygen, strings, comments and Cyrillic words are not', async ({
     rstudioPage: page,
   }) => {
     await writeAndOpenFile(page, sandbox.dir, R_FILE, R_CONTENT);
     const editor = new AceEditor(page, '');
     await relint(page, sourceActions, editor, R_CONTENT);
 
-    const flagged = await pollConfusables(page, 1);
+    const flagged = await pollConfusables(page, R_EXPECTED.length);
 
-    // row 1, right after "x <- "
-    expect(flagged[0].row).toBe(1);
-    expect(flagged[0].column).toBe(5);
-    expect(flagged[0].text).toBe(EXPECTED_MESSAGE);
-    expect(flagged[0].type).toBe('warning');
+    expect(flagged.map(({ row, column, text }) => ({ row, column, text }))).toEqual(R_EXPECTED);
+    expect(flagged.every((a) => a.type === 'warning')).toBe(true);
   });
 
   test('in R Markdown, only R chunk bodies are checked', async ({ rstudioPage: page }) => {
@@ -177,7 +187,7 @@ test.describe.serial('Confusable character diagnostics', () => {
     await writeAndOpenFile(page, sandbox.dir, R_FILE, R_CONTENT);
     const editor = new AceEditor(page, '');
     await relint(page, sourceActions, editor, R_CONTENT);
-    await pollConfusables(page, 1);
+    await pollConfusables(page, R_EXPECTED.length);
 
     await setPref(page, 'warn_confusable_characters', false);
     try {

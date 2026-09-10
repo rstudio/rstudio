@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
@@ -32,9 +35,11 @@ import com.google.gwt.core.client.JsArray;
 /**
  * Flags characters in R code that look like ASCII but are not: Cyrillic and
  * Greek lookalike letters, the Greek question mark, typographic quotes and
- * dashes (as pasted from the web), the Unicode minus sign, no-break spaces
- * and fullwidth forms. R happily parses e.g. Cyrillic "c" as a new symbol,
- * so these are invisible bugs. Strings and comments (roxygen included) are
+ * dashes (as pasted from the web), the Unicode minus sign, Unicode spaces
+ * and fullwidth forms, plus zero-width characters that cannot be seen at
+ * all. R happily parses e.g. Cyrillic "c" as a new symbol and rejects the
+ * spaces with "unexpected input", so these are invisible bugs. Strings and
+ * comments (roxygen included) are
  * left alone, as is everything outside R chunks in R Markdown. A token that
  * also contains non-ASCII characters with no ASCII lookalike is a genuine
  * non-Latin word (e.g. a Cyrillic identifier) and is not flagged. See #14485.
@@ -56,27 +61,27 @@ public class ConfusableCharacterLinter
          if (tokens == null)
             continue;
 
+         // columns are accumulated from the token values rather than read
+         // off the tokens: text the tokenizer matched no rule for (e.g. a
+         // zero-width space) is stamped with the column of the next match
+         int column = 0;
          for (int i = 0; i < tokens.length(); i++)
          {
             Token token = tokens.get(i);
-            if (isStringOrComment(token.getType()))
-               continue;
-
             String value = token.getValue();
-            if (isNonLatinWord(value))
+            int start = column;
+            column += value.length();
+
+            if (isStringOrComment(token.getType()) || isNonLatinWord(value))
                continue;
 
             for (int j = 0; j < value.length(); j++)
             {
-               String lookalike = lookalikeFor(value.charAt(j));
-               if (lookalike == null)
+               String message = warningFor(value.charAt(j));
+               if (message == null)
                   continue;
 
-               int column = token.getColumn() + j;
-               lint.push(LintItem.create(
-                     row, column, row, column + 1,
-                     constants_.confusableCharacterWarning(codepoint(value.charAt(j)), lookalike),
-                     "warning"));
+               lint.push(LintItem.create(row, start + j, row, start + j + 1, message, "warning"));
             }
          }
       }
@@ -84,14 +89,27 @@ public class ConfusableCharacterLinter
       return lint;
    }
 
+   private static String warningFor(char ch)
+   {
+      if (INVISIBLES.contains(ch))
+         return constants_.invisibleCharacterWarning(codepoint(ch));
+
+      String lookalike = lookalikeFor(ch);
+      if (lookalike == null)
+         return null;
+
+      return constants_.confusableCharacterWarning(codepoint(ch), lookalike);
+   }
+
    // a token with non-ASCII characters that don't resemble ASCII is a word
-   // deliberately written in another script, not a stray lookalike
+   // deliberately written in another script, not a stray lookalike. This also
+   // spares joiners in scripts that need them (e.g. ZWNJ in Persian).
    private static boolean isNonLatinWord(String value)
    {
       for (int i = 0; i < value.length(); i++)
       {
          char ch = value.charAt(i);
-         if (ch >= 0x80 && lookalikeFor(ch) == null)
+         if (ch >= 0x80 && lookalikeFor(ch) == null && !INVISIBLES.contains(ch))
             return true;
       }
       return false;
@@ -167,9 +185,18 @@ public class ConfusableCharacterLinter
       // Greek question mark, typographic quotes, dashes and the minus sign
       addLookalikes("\u037E\u2018\u2019\u201A\u201B\u201C\u201D\u201E\u201F\u2010\u2011\u2012\u2013\u2014\u2212",
                     ";''''\"\"\"\"------");
-      // no-break space
-      LOOKALIKES.put('\u00A0', " ");
+      // no-break space, ogham space mark, en/em/thin/hair spaces and friends
+      // (U+2000..U+200A), narrow no-break, medium mathematical and
+      // ideographic spaces: all render as a gap, none is whitespace to R
+      String spaces = "\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000";
+      for (int i = 0; i < spaces.length(); i++)
+         LOOKALIKES.put(spaces.charAt(i), " ");
    }
+
+   // zero-width space, non-joiner and joiner, word joiner, soft hyphen and
+   // the byte order mark: nothing to see at all, so no ASCII lookalike
+   private static final Set<Character> INVISIBLES = new HashSet<>(
+         Arrays.asList('\u200B', '\u200C', '\u200D', '\u2060', '\u00AD', '\uFEFF'));
 
    private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }
