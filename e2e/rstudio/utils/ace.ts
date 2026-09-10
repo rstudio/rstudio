@@ -105,6 +105,7 @@ export namespace Ace {
     session: Session;
     selection: Selection;
     getValue(): string;
+    getOption(name: 'animatedScroll'): boolean;
     setValue(value: string, cursorPos?: number): void;
     focus(): void;
     gotoLine(line: number, column?: number, animate?: boolean): void;

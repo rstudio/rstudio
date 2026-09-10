@@ -13,7 +13,7 @@ async function activeEditorAnimatesScroll(page: Page): Promise<boolean | null> {
   return page.evaluate(() => {
     const editor = window.rstudio?.documents.activeEditor();
     if (!editor) return null;
-    return editor.getOption('animatedScroll') as boolean;
+    return editor.getOption('animatedScroll');
   });
 }
 
@@ -45,7 +45,17 @@ test.describe.serial('Smooth scrolling pref', () => {
   test('applies to documents opened after it is enabled', async ({ rstudioPage: page }) => {
     await setPref(page, 'smooth_scrolling', true);
     try {
+      const originalDocId = await page.evaluate(() => window.rstudio?.documents.active()?.id ?? null);
+      expect(originalDocId).not.toBeNull();
+
       await executeCommand(page, 'newSourceDoc');
+      await expect.poll(
+        () => page.evaluate((previousId) => {
+          const activeDoc = window.rstudio?.documents.active();
+          return activeDoc != null && activeDoc.id !== previousId;
+        }, originalDocId),
+        { timeout: TIMEOUTS.fileOpen }
+      ).toBe(true);
       await expect.poll(() => activeEditorAnimatesScroll(page), { timeout: TIMEOUTS.fileOpen }).toBe(true);
     } finally {
       await clearPref(page, 'smooth_scrolling');
