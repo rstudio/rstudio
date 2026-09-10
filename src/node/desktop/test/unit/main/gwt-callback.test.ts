@@ -22,8 +22,9 @@ import { createSinonStubInstance, StubbedClass } from '../unit-utils';
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import { MainWindow } from '../../../src/main/main-window';
 
-function fakeBrowserWindow(state?: { visible: boolean; minimized: boolean }) {
+function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
   return {
+    isDestroyed: sinon.stub().returns(state?.destroyed ?? false),
     isVisible: sinon.stub().returns(state?.visible ?? true),
     isMinimized: sinon.stub().returns(state?.minimized ?? false),
     show: sinon.stub(),
@@ -78,6 +79,22 @@ describe('DesktopCallback', () => {
       app.commandLine.appendSwitch('automation-agent');
       try {
         assert.strictEqual(callback.dialogParentWindow(), main);
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+    });
+
+    // a sheet on a window that is not on screen is held until the window comes
+    // back, so the run would hang on a dialog it can never dismiss
+    it('stays parentless in automation mode when the main window is off screen', () => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        for (const state of [{ minimized: true }, { visible: false }, { destroyed: true }]) {
+          mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
+          assert.isUndefined(callback.dialogParentWindow(), JSON.stringify(state));
+        }
       } finally {
         app.commandLine.removeSwitch('automation-agent');
       }

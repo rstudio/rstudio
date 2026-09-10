@@ -1353,7 +1353,20 @@ export class GwtCallback extends EventEmitter {
     if (window) {
       return window;
     }
-    return isAutomated() ? this.mainWindow.window : undefined;
+
+    if (!isAutomated()) {
+      return undefined;
+    }
+
+    // AppKit holds a sheet on a minimized or hidden window until the window
+    // comes back, and the test run would hang on a dialog it can never reach;
+    // a parentless dialog that activates the app is the lesser evil there.
+    const main = this.mainWindow.window;
+    if (!main.isDestroyed() && main.isVisible() && !main.isMinimized()) {
+      return main;
+    }
+
+    return undefined;
   }
 
   /**
