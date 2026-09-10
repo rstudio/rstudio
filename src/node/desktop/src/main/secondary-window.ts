@@ -15,6 +15,7 @@
 
 import { BrowserWindow, WebContents } from 'electron';
 import { DesktopBrowserWindow } from './desktop-browser-window';
+import { isAutomated } from './utils';
 
 export class SecondaryWindow extends DesktopBrowserWindow {
   constructor(
@@ -61,6 +62,8 @@ export class SecondaryWindow extends DesktopBrowserWindow {
       action: 'allow',
       overrideBrowserWindowOptions: {
         autoHideMenuBar: true,
+        // See SatelliteWindow.windowOpening()
+        show: !isAutomated(),
         width: width,
         height: height,
         webPreferences: {

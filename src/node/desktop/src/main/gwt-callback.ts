@@ -225,13 +225,12 @@ export class GwtCallback extends EventEmitter {
           openDialogOptions.filters = parseFilter(filter);
         }
 
-        let focusedWindow = BrowserWindow.getFocusedWindow();
-        if (focusOwner) {
-          focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
-        }
+        const focusedWindow = this.dialogParentWindow(
+          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
+        );
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
-            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+            dialog.showOpenDialog(focusedWindow, openDialogOptions),
           );
         } else {
           return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
@@ -280,13 +279,12 @@ export class GwtCallback extends EventEmitter {
           filters.unshift({ name: extension, extensions: [extension] });
         }
         saveDialogOptions['filters'] = filters;
-        let focusedWindow = BrowserWindow.getFocusedWindow();
-        if (focusOwner) {
-          focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
-        }
+        const focusedWindow = this.dialogParentWindow(
+          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
+        );
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
-            dialog.showSaveDialog(focusedWindow!, saveDialogOptions),
+            dialog.showSaveDialog(focusedWindow, saveDialogOptions),
           );
         } else {
           return appState().modalTracker.trackElectronModalAsync(async () => dialog.showSaveDialog(saveDialogOptions));
@@ -304,14 +302,13 @@ export class GwtCallback extends EventEmitter {
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
 
-        let focusedWindow = BrowserWindow.getFocusedWindow();
-        if (focusOwner) {
-          focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
-        }
+        const focusedWindow = this.dialogParentWindow(
+          focusOwner ? this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window : null,
+        );
 
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
-            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+            dialog.showOpenDialog(focusedWindow, openDialogOptions),
           );
         } else {
           return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
@@ -698,7 +695,7 @@ export class GwtCallback extends EventEmitter {
           };
         }
 
-        const focusedWindow = BrowserWindow.getFocusedWindow();
+        const focusedWindow = this.dialogParentWindow();
         if (focusedWindow) {
           return appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showMessageBox(focusedWindow, openDialogOptions),
@@ -1162,7 +1159,7 @@ export class GwtCallback extends EventEmitter {
           detail: "What's New information is not available.",
           buttons: ['OK'],
         };
-        const focusedWindow = BrowserWindow.getFocusedWindow();
+        const focusedWindow = this.dialogParentWindow();
         if (focusedWindow) {
           void appState().modalTracker.trackElectronModalAsync(async () =>
             dialog.showMessageBox(focusedWindow, msgBoxOptions),
@@ -1344,6 +1341,32 @@ export class GwtCallback extends EventEmitter {
    */
   unregisterOwner(owner: GwtWindow): void {
     this.owners.delete(owner);
+  }
+
+  /**
+   * Parent window for a native dialog. Without one, macOS runs the dialog
+   * detached and activates the app; in automation mode the app is never
+   * focused, so fall back to the main window and get a sheet instead.
+   */
+  dialogParentWindow(preferred?: BrowserWindow | null): BrowserWindow | undefined {
+    const window = preferred ?? BrowserWindow.getFocusedWindow();
+    if (window) {
+      return window;
+    }
+
+    if (!isAutomated()) {
+      return undefined;
+    }
+
+    // AppKit holds a sheet on a minimized or hidden window until the window
+    // comes back, and the test run would hang on a dialog it can never reach;
+    // a parentless dialog that activates the app is the lesser evil there.
+    const main = this.mainWindow.window;
+    if (!main.isDestroyed() && main.isVisible() && !main.isMinimized()) {
+      return main;
+    }
+
+    return undefined;
   }
 
   /**
