@@ -130,6 +130,8 @@
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
 
+#include <fmt/format.h>
+
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -2067,9 +2069,9 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 
    // read the stat line; the command name is parenthesized and may itself
    // contain spaces, so split only what follows its closing parenthesis
-   boost::format fmt("/proc/%1%/stat");
+   FilePath statFile(fmt::format("/proc/{}/stat", pid));
    std::string contents;
-   error = core::readStringFromFile(FilePath(boost::str(fmt % pid)), &contents);
+   error = core::readStringFromFile(statFile, &contents);
    if (error)
       return error;
 
@@ -2256,7 +2258,7 @@ bool readProcState(const FilePath& statPath, char* pState)
 
 bool isProcessZombie(pid_t pid)
 {
-   FilePath procDir("/proc/" + safe_convert::numberToString(pid));
+   FilePath procDir(fmt::format("/proc/{}", pid));
    char state = 0;
    if (!readProcState(procDir.completePath("stat"), &state) || state != 'Z')
       return false;

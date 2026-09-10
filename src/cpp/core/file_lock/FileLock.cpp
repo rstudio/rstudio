@@ -86,7 +86,7 @@ FileLock::LockType stringToLockType(const std::string& lockType,
    else if (boost::iequals(lockType, kLockTypeLinkBased))
       return FileLock::LOCKTYPE_LINKBASED;
    
-   LOG_WARNING_MESSAGE("unrecognized lock type '" + lockType + "'");
+   WLOGF("unrecognized lock type '{}'", lockType);
    return defaultLockType;
 }
 
@@ -97,8 +97,7 @@ double getFieldPositive(const Settings& settings,
    double value = settings.getDouble(name, defaultValue);
    if (!std::isfinite(value) || value < 1 || value > kMaxIntervalSeconds)
    {
-      LOG_WARNING_MESSAGE(
-         "invalid field '" + name + "': must be between one second and one year");
+      WLOGF("invalid field '{}': must be between one second and one year", name);
       return defaultValue;
    }
    

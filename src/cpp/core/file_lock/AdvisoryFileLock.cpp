@@ -29,6 +29,8 @@
 # include <unistd.h>
 #endif
 
+#include <fmt/format.h>
+
 #include <boost/scoped_ptr.hpp>
 
 #include "ForkAwareRegistry.hpp"
@@ -265,15 +267,15 @@ std::string pathKey(const FilePath& lockFilePath)
    }
 #endif
 
-   return path.getParent().getCanonicalPath() + "/" + path.getFilename();
+   return fmt::format("{}/{}",
+                      path.getParent().getCanonicalPath(),
+                      path.getFilename());
 }
 
 #ifndef _WIN32
 std::string inodeKeyFor(const struct stat& info)
 {
-   std::ostringstream stream;
-   stream << "inode:" << info.st_dev << ":" << info.st_ino;
-   return stream.str();
+   return fmt::format("inode:{}:{}", info.st_dev, info.st_ino);
 }
 #endif
 

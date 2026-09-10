@@ -37,6 +37,8 @@
 #include <string>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <boost/optional.hpp>
 #include <boost/system/error_code.hpp>
 
@@ -145,7 +147,7 @@ FilePath proxyPathForToken(const FilePath& lockFilePath,
                            const std::string& token)
 {
    return lockFilePath.getParent().completePath(
-      std::string(kOwnerFilePrefix) + "-" + token);
+      fmt::format("{}-{}", kOwnerFilePrefix, token));
 }
 
 FilePath claimPathForLock(const FilePath& lockFilePath)
@@ -154,8 +156,9 @@ FilePath claimPathForLock(const FilePath& lockFilePath)
    // Hash the lock filename to keep it below NAME_MAX even when the caller's
    // lock filename is already near that limit.
    return lockFilePath.getParent().completePath(
-      std::string(kFileLockClaimPrefix) + "-" +
-      hash::crc32HexHash(lockFilePath.getFilename()));
+      fmt::format("{}-{}",
+                  kFileLockClaimPrefix,
+                  hash::crc32HexHash(lockFilePath.getFilename())));
 }
 
 #ifndef _WIN32
@@ -166,13 +169,15 @@ FilePath claimPathForLock(const FilePath& lockFilePath)
 FilePath tempPathBeside(const FilePath& filePath)
 {
    return filePath.getParent().completePath(
-      std::string(kFileLockTempPrefix) + "-" + pidString() + "-" +
-      system::generateUuid(false));
+      fmt::format("{}-{}-{}",
+                  kFileLockTempPrefix,
+                  pidString(),
+                  system::generateUuid(false)));
 }
 
 boost::optional<PidType> tempFileContender(const FilePath& filePath)
 {
-   std::string prefix = std::string(kFileLockTempPrefix) + "-";
+   std::string prefix = fmt::format("{}-", kFileLockTempPrefix);
    std::string rest = filePath.getFilename().substr(prefix.size());
    std::string::size_type end = rest.find('-');
    if (end == std::string::npos)
@@ -195,8 +200,7 @@ std::string lockContents(bool released)
 {
    // Keep the public contents parseable as a PID by older RStudio versions.
    // The negative release sentinel is also treated as stale by those versions.
-   return released ? std::string(kReleasedProcessId) + "\n"
-                   : pidString() + "\n";
+   return fmt::format("{}\n", released ? kReleasedProcessId : pidString());
 }
 
 void parseLockContents(const std::string& contents, LockMetadata* pMetadata)
@@ -1210,8 +1214,9 @@ Error writeLockFile(const FilePath& lockFilePath,
 
 std::string registrationKey(const FilePath& lockFilePath)
 {
-   return lockFilePath.getParent().getCanonicalPath() + "/" +
-          lockFilePath.getFilename();
+   return fmt::format("{}/{}",
+                      lockFilePath.getParent().getCanonicalPath(),
+                      lockFilePath.getFilename());
 }
 
 struct RegisteredLock
