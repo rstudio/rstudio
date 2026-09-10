@@ -60,7 +60,7 @@
     "chai": "6.2.2",
     "copy-webpack-plugin": "14.0.0",
     "css-loader": "7.1.5",
-    "electron": "42.11.1",
+    "electron": "43.7.0",
     "electron-mocha": "13.1.0",
     "eslint": "10.10.0",
     "fork-ts-checker-webpack-plugin": "9.1.0",
@@ -100,7 +100,7 @@
     "winston-syslog": "2.7.1"
   },
   "allowScripts": {
-    "electron@42.11.1": true,
+    "electron@43.7.0": true,
     "msgpackr-extract@3.0.3": true,
     "unix-dgram@2.0.6": true
   }
