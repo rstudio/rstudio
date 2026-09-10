@@ -68,7 +68,7 @@ public class RealtimeSpellChecker
       // subscribe to spelling prefs changes (invalidateAll on changes)
       ValueChangeHandler<Boolean> prefChangedHandler = (event) -> context_.invalidateAllWords();
       ValueChangeHandler<Boolean> realtimeChangedHandler = (event) -> {};
-      ValueChangeHandler<String> dictChangedHandler = (event) -> {};
+      ValueChangeHandler<String> dictChangedHandler = (event) -> onDictionariesChanged();
       userPrefs_.ignoreUppercaseWords().addValueChangeHandler(prefChangedHandler);
       userPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
       userPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
@@ -141,6 +141,15 @@ public class RealtimeSpellChecker
       context_.writeDictionary(contextDictionary_);
       updateIgnoredWordsIndex();
       context_.invalidateWord(affectedWord, false);
+   }
+
+   // a different dictionary invalidates every verdict cached in this session;
+   // drop them and re-check the document so the change shows immediately
+   private void onDictionariesChanged()
+   {
+      correctWords.clear();
+      incorrectWords.clear();
+      context_.invalidateAllWords();
    }
 
    public SpellCheckerResult getCachedWords(ArrayList<String> words)

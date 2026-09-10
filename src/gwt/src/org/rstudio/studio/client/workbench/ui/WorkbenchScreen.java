@@ -52,6 +52,9 @@ import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.RMarkdownPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.SourceControlPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.SpellingPreferencesPane;
+import org.rstudio.studio.client.common.spelling.SpellingService;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.common.spelling.ui.ChangeSpellingLanguageDialog;
 import org.rstudio.studio.client.workbench.prefs.views.SweavePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.TerminalPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
@@ -101,8 +104,12 @@ public class WorkbenchScreen extends Composite
                           Commands commands,
                           final Provider<FileMRUList> mruList,
                           FontSizeManager fontSizeManager,
-                          OptionsLoader.Shim optionsLoader)
+                          OptionsLoader.Shim optionsLoader,
+                          Provider<SpellingService> pSpellingService,
+                          Provider<UserPrefs> pUserPrefs)
    {
+      pSpellingService_ = pSpellingService;
+      pUserPrefs_ = pUserPrefs;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       session_ = session;
@@ -470,6 +477,12 @@ public class WorkbenchScreen extends Composite
    }
 
    @Handler
+   void onChangeSpellingLanguage()
+   {
+      new ChangeSpellingLanguageDialog(pSpellingService_.get(), pUserPrefs_.get()).showModal();
+   }
+
+   @Handler
    void onShowVcsOptions()
    {
       optionsLoader_.showOptions(SourceControlPreferencesPane.class, true);
@@ -522,4 +535,6 @@ public class WorkbenchScreen extends Composite
 
    private final MainSplitPanel tabsPanel_;
    private final PaneManager paneManager_;
+   private final Provider<SpellingService> pSpellingService_;
+   private final Provider<UserPrefs> pUserPrefs_;
 }
