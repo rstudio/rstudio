@@ -28,6 +28,7 @@
 # include <unistd.h>
 #endif
 
+#include <atomic>
 #include <cstdint>
 #include <ctime>
 #include <limits>
@@ -272,32 +273,54 @@ Error writeDescriptorContents(int descriptor, const std::string& contents)
 // filesystem, which on a network mount is the server's clock; staleness is
 // judged against the contender's clock (and, for a local owner, its process
 // start time), so the two must not be mixed.
-Error stampWriteTime(int descriptor)
+//
+// Some mounts refuse explicit timestamps (utimes needs ownership, which uid
+// squashing takes away; some CIFS and FUSE backends lack the operation). The
+// write's own mtime then stands in, as it always did before stamping: a
+// degraded mode worth one log line per process, not a failure that would
+// keep every session from ever acquiring a lock there.
+void stampWriteTime(int descriptor)
 {
+   Error error;
    struct timeval now;
    if (::gettimeofday(&now, nullptr) == -1)
-      return systemCallError("gettimeofday", errno, ERROR_LOCATION);
+   {
+      error = systemCallError("gettimeofday", errno, ERROR_LOCATION);
+   }
+   else
+   {
+      struct timeval times[2] = {now, now};
+      if (::futimes(descriptor, times) == -1)
+         error = systemCallError("futimes", errno, ERROR_LOCATION);
+   }
 
-   struct timeval times[2] = { now, now };
-   if (::futimes(descriptor, times) == -1)
-      return systemCallError("futimes", errno, ERROR_LOCATION);
-
-   return Success();
+   static std::atomic<bool> s_reported(false);
+   if (error && !s_reported.exchange(true))
+   {
+      error.addProperty("description",
+                        "Lock timestamps will follow the filesystem clock");
+      LOG_ERROR(error);
+   }
 }
 
+// Writes the contents before truncating to their length, so that a write
+// that fails (e.g. ENOSPC) leaves the previous contents, which still name
+// the owner, rather than an empty file that is held until it ages out.
 Error writeLockContents(int descriptor, bool released)
 {
    std::string contents = lockContents(released);
    if (::lseek(descriptor, 0, SEEK_SET) == -1)
       return systemCallError("lseek", errno, ERROR_LOCATION);
-   if (::ftruncate(descriptor, 0) == -1)
-      return systemCallError("ftruncate", errno, ERROR_LOCATION);
 
    Error error = writeDescriptorContents(descriptor, contents);
    if (error)
       return error;
 
-   return stampWriteTime(descriptor);
+   if (::ftruncate(descriptor, static_cast<off_t>(contents.size())) == -1)
+      return systemCallError("ftruncate", errno, ERROR_LOCATION);
+
+   stampWriteTime(descriptor);
+   return Success();
 }
 
 Error descriptorIdentity(int descriptor,
@@ -477,7 +500,12 @@ Error removeIfSameIdentity(const FilePath& filePath,
       ::linkat(AT_FDCWD, tempPath.getAbsolutePathNative().c_str(),
                AT_FDCWD, filePath.getAbsolutePathNative().c_str(), 0) == 0;
    int linkError = restored ? 0 : errno;
-   if (!restored && linkError != EEXIST)
+   if (restored)
+   {
+      // linkat() leaves the renamed-aside name in place as a second link
+      unlinkBestEffort(tempPath);
+   }
+   else if (linkError != EEXIST)
    {
       struct stat info;
       if (::lstat(filePath.getAbsolutePathNative().c_str(), &info) == -1 &&
@@ -573,13 +601,6 @@ boost::optional<bool> isOwnerProcessReused(PidType processId,
    return startSeconds >
           static_cast<double>(lastWriteTime) + kStartTimeToleranceSeconds;
 }
-
-// How long a live local owner that has stopped refreshing keeps its lock, as
-// a multiple of the timeout. A stalled process must not lose its lock the
-// moment a refresh is late, but the PID check cannot see across hosts or PID
-// namespaces sharing a lock directory, so an unrelated process there must
-// not pin an orphaned lock forever either.
-const int kLiveOwnerGraceMultiplier = 10;
 
 #endif
 
@@ -682,12 +703,16 @@ Error inspectLockFile(const FilePath& lockFilePath,
       else if (pInspection->stale)
       {
          // Aged out, but a live local owner remains authoritative for a
-         // while longer, so a sleeping or temporarily stalled process does
-         // not lose its lock and later interfere with the replacement owner.
+         // while longer (see FileLock::getLiveOwnerGraceMultiplier), so a
+         // sleeping or temporarily stalled process does not lose its lock
+         // and later interfere with the replacement owner.
          boost::optional<bool> reused =
             isOwnerProcessReused(processId, lastWriteTime);
          if (reused && !*reused)
-            pInspection->stale = age >= seconds * kLiveOwnerGraceMultiplier;
+         {
+            double grace = seconds * FileLock::getLiveOwnerGraceMultiplier();
+            pInspection->stale = age >= grace;
+         }
       }
    }
 #endif
@@ -823,9 +848,10 @@ Error claimLockFile(const FilePath& claimFilePath,
          pClaim->descriptor = descriptor;
          Error error = writeDescriptorContents(descriptor, lockContents(false));
          if (!error)
-            error = stampWriteTime(descriptor);
-         if (!error)
+         {
+            stampWriteTime(descriptor);
             error = descriptorIdentity(descriptor, &pClaim->identity);
+         }
          if (error)
          {
             unlinkBestEffort(claimFilePath);
@@ -969,18 +995,33 @@ Error createProxyFile(const FilePath& lockFilePath,
    return error;
 }
 
-// Unlinks 'filePath' if it still refers to the inode in 'identity'. Only safe
-// under the takeover claim: with the claim held no contender is between
-// judging that inode stale and replacing it, and a new owner can publish at
-// the path only once this inode has left it, so the check cannot go stale
-// before the unlink.
+// Unlinks 'filePath' if it still refers to the inode in 'identity' and its
+// contents still name this process. The inode alone is not proof: on a
+// network mount a deleted inode number can be reissued to a successor's lock
+// while this process's descriptor still reports it, and the successor's file
+// names the successor. Meant to run under the takeover claim, where no
+// claim-honouring contender is between judging this inode stale and
+// replacing it. An older RStudio ignores the claim, so against one the
+// stat-and-unlink pair is still a (few-system-call) window; it was unbounded
+// before the identity check existed.
 void unlinkIfSameIdentity(const FilePath& filePath, const LockMetadata& identity)
 {
-   bool matches = false;
-   Error error = hasExpectedIdentity(filePath, identity, &matches);
+   LockMetadata current;
+   std::time_t lastWriteTime = 0;
+   Error error = readLockMetadata(filePath, &current, &lastWriteTime);
    if (error)
-      LOG_ERROR(error);
-   else if (matches)
+   {
+      if (!isFileNotFoundError(error))
+         LOG_ERROR(error);
+      return;
+   }
+
+   bool matches = current.device == identity.device &&
+                  current.inode == identity.inode &&
+                  !current.released &&
+                  current.processId &&
+                  *current.processId == system::currentProcessId();
+   if (matches)
       unlinkBestEffort(filePath);
 }
 
@@ -1005,9 +1046,14 @@ Error releaseLockFiles(const FilePath& lockFilePath,
    error = acquireClaim(lockFilePath, &claim, &held);
    if (error)
    {
+      // The claim could not be created at all (a full disk, most likely).
+      // Unlinking needs no space, and leaving the lock behind would hold the
+      // path for a whole timeout, so release without the claim's protection.
       LOG_ERROR(error);
+      held = true;
    }
-   else if (!held)
+
+   if (!held)
    {
       LOG("Claim held by a contender; leaving lock files to it: "
           << lockFilePath.getAbsolutePath());
@@ -1056,14 +1102,12 @@ Error writeLockFile(const FilePath& lockFilePath,
    int linkError = status == -1 ? errno : 0;
    bool linked = status == 0;
 
-   // Some older NFS implementations can report failure after creating the
-   // hard link. The link count and inode identity are authoritative.
-   if (!linked && !FileLock::useSymlinks())
-   {
-      struct stat info;
-      if (::fstat(proxyDescriptor, &info) == 0 && info.st_nlink == 2)
-         linked = lockFilePath.isEquivalentTo(proxyPath);
-   }
+   // Some NFS implementations report failure (EEXIST on a retransmit, EIO on
+   // a lost reply) after creating the link. What the public path now refers
+   // to is authoritative: if it is our owner file, the lock is ours, and
+   // giving up would leave a live-looking lock nobody refreshes.
+   if (!linked)
+      linked = lockFilePath.isEquivalentTo(proxyPath);
 
    if (linked)
    {
@@ -1104,6 +1148,9 @@ Error writeLockFile(const FilePath& lockFilePath,
    // If the filesystem cannot create links, fall back to O_EXCL. An empty or
    // partially written fallback file is treated as held until its timeout, so
    // publication before this write cannot let another contender take over.
+   LOG((FileLock::useSymlinks() ? "symlink" : "link")
+       << "() failed (errno " << linkError << "); falling back to O_EXCL: "
+       << lockFilePath.getAbsolutePath());
    int descriptor = ::open(
       lockFilePath.getAbsolutePathNative().c_str(),
       O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC,
@@ -1111,6 +1158,17 @@ Error writeLockFile(const FilePath& lockFilePath,
    if (descriptor == -1)
    {
       int errorNumber = errno;
+
+      // A misreported link() can also surface here, as EEXIST on our own
+      // owner file; check before giving the proxy up.
+      if (errorNumber == EEXIST && lockFilePath.isEquivalentTo(proxyPath))
+      {
+         *pToken = token;
+         *pOwnerFilePath = proxyPath;
+         *pDescriptor = proxyDescriptor;
+         return Success();
+      }
+
       ::close(proxyDescriptor);
       unlinkBestEffort(proxyPath);
 
@@ -1228,9 +1286,7 @@ public:
       for (const auto& entry : descriptors)
       {
          LOG("Bumping write time for lock token: " << entry.first);
-         Error error = stampWriteTime(entry.second);
-         if (error)
-            LOG_ERROR(error);
+         stampWriteTime(entry.second);
          ::close(entry.second);
       }
 #endif
@@ -1372,12 +1428,16 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    if (inspection.exists)
    {
       if (!inspection.stale)
+      {
+         LOG("No lock available: " << lockFilePath.getAbsolutePath());
          return noLockAvailableError(lockFilePath);
+      }
 
       LOG("Removing stale lockfile: " << lockFilePath.getAbsolutePath());
       error = removeLockFile(lockFilePath, inspection.metadata);
       if (error)
       {
+         LOG("Failed to remove stale lockfile: " << lockFilePath.getAbsolutePath() << " (" << error.getSummary() << ")");
          if (FileLock::isNoLockAvailable(error))
             return noLockAvailableError(lockFilePath);
          return error;
@@ -1394,6 +1454,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       &descriptor);
    if (error)
    {
+      LOG("Failed to acquire lock: " << lockFilePath.getAbsolutePath() << " (" << error.getSummary() << ")");
       if (error == systemError(
                      boost::system::errc::file_exists,
                      ErrorLocation()))

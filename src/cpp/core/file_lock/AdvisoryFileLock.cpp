@@ -29,7 +29,6 @@
 # include <unistd.h>
 #endif
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include "ForkAwareRegistry.hpp"
@@ -382,24 +381,8 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
 {
    *pIsLocked = true;
 
-   std::string systemPath =
-      string_utils::utf8ToSystem(lockFilePath.getAbsolutePath());
-   boost::system::error_code existsError;
-   bool exists = boost::filesystem::exists(systemPath, existsError);
-   if (existsError)
-   {
-      Error error(existsError, ERROR_LOCATION);
-      error.addProperty("lock-file", lockFilePath);
-      return error;
-   }
-
-   if (!exists)
-   {
-      *pIsLocked = false;
-      return Success();
-   }
-
    // Held by this process (under any name): answer without opening the file.
+   // An empty key means there is no file, so nothing can hold it.
    std::string key;
    Error keyError = inodeKey(lockFilePath, &key);
    if (keyError)
@@ -421,6 +404,20 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
    int descriptor = ::open(
       lockFilePath.getAbsolutePathNative().c_str(),
       O_RDWR | O_CLOEXEC);
+
+   // A lock file this process may not write (another user's, or one on a
+   // read-only mount) can still be probed: a shared-lock request conflicts
+   // with a holder's exclusive lock just the same.
+   bool readOnly = false;
+   if (descriptor == -1 &&
+       (errno == EACCES || errno == EPERM || errno == EROFS))
+   {
+      readOnly = true;
+      descriptor = ::open(
+         lockFilePath.getAbsolutePathNative().c_str(),
+         O_RDONLY | O_CLOEXEC);
+   }
+
    if (descriptor == -1)
    {
       Error error = systemError(errno, ERROR_LOCATION);
@@ -452,9 +449,10 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
       }
    }
 
-   // Same request boost::interprocess::file_lock makes, so the two interoperate.
+   // Same request boost::interprocess::file_lock makes, so the two
+   // interoperate; a read-only descriptor can only request a shared lock.
    struct flock request = {};
-   request.l_type = F_WRLCK;
+   request.l_type = readOnly ? F_RDLCK : F_WRLCK;
    request.l_whence = SEEK_SET;
 
    Error error;
@@ -469,6 +467,8 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
       error.addProperty("lock-file", lockFilePath);
    return error;
 #else
+   std::string systemPath =
+      string_utils::utf8ToSystem(lockFilePath.getAbsolutePath());
    try
    {
       BoostFileLock lock(systemPath.c_str());
@@ -483,7 +483,43 @@ Error AdvisoryFileLock::isLocked(const FilePath& lockFilePath,
    {
       Error error(boost::interprocess::ec_from_exception(e), ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
-      return error;
+
+      // boost::interprocess opens the file for writing, which a read-only
+      // file refuses. LockFileEx only needs read access, so probe the same
+      // exclusive whole-file range through a read handle instead.
+      HANDLE handle = ::CreateFileA(
+         systemPath.c_str(),
+         GENERIC_READ,
+         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+         nullptr,
+         OPEN_EXISTING,
+         FILE_ATTRIBUTE_NORMAL,
+         nullptr);
+      if (handle == INVALID_HANDLE_VALUE)
+         return error;
+
+      OVERLAPPED overlapped = {};
+      BOOL locked = ::LockFileEx(
+         handle,
+         LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
+         0,
+         MAXDWORD,
+         MAXDWORD,
+         &overlapped);
+      DWORD lockError = locked ? ERROR_SUCCESS : ::GetLastError();
+      if (locked)
+      {
+         ::UnlockFileEx(handle, 0, MAXDWORD, MAXDWORD, &overlapped);
+         *pIsLocked = false;
+      }
+      ::CloseHandle(handle);
+
+      if (locked || lockError == ERROR_LOCK_VIOLATION)
+         return Success();
+
+      Error probeError = systemError(lockError, ERROR_LOCATION);
+      probeError.addProperty("lock-file", lockFilePath);
+      return probeError;
    }
 #endif
 }

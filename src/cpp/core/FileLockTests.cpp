@@ -80,7 +80,8 @@ class FileLockingTest : public ::testing::Test
 {
 protected:
    FileLockingTest()
-      : oldTimeout_(0)
+      : oldTimeout_(0),
+        oldGraceMultiplier_(0)
    {
    }
 
@@ -92,6 +93,7 @@ protected:
       ASSERT_FALSE(root_.ensureDirectory());
       lockFilePath_ = root_.completePath("lock");
       oldTimeout_ = FileLock::getTimeoutInterval();
+      oldGraceMultiplier_ = FileLock::getLiveOwnerGraceMultiplier();
       FileLock::setLoadBalancedForTesting(false);
       FileLock::setUseSymlinksForTesting(false);
    }
@@ -169,6 +171,7 @@ protected:
    {
       FileLock::cleanUp();
       FileLock::setTimeoutInterval(oldTimeout_);
+      FileLock::setLiveOwnerGraceMultiplierForTesting(oldGraceMultiplier_);
       FileLock::setLoadBalancedForTesting(false);
       FileLock::setUseSymlinksForTesting(false);
       Error error = root_.removeIfExists();
@@ -201,7 +204,25 @@ protected:
    FilePath root_;
    FilePath lockFilePath_;
    boost::posix_time::seconds oldTimeout_;
+   int oldGraceMultiplier_;
 };
+
+// One byte over a pipe, for handing a turn between a test and its child.
+void waitForByte(int descriptor)
+{
+   char byte = 0;
+   while (::read(descriptor, &byte, 1) == -1 && errno == EINTR)
+   {
+   }
+}
+
+void sendByte(int descriptor)
+{
+   char byte = 1;
+   while (::write(descriptor, &byte, 1) == -1 && errno == EINTR)
+   {
+   }
+}
 
 } // anonymous namespace
 
@@ -399,6 +420,77 @@ TEST_F(FileLockingTest, AdvisoryLockSurvivesSameProcessOperations)
    EXPECT_FALSE(other.release());
 }
 
+TEST_F(FileLockingTest, AdvisoryMissingLockFileIsNotLocked)
+{
+   // Nothing can hold a lock file that does not exist. The probe must say so
+   // rather than report an error, which the bool overload reads as "locked"
+   // and callers then refuse to proceed on.
+   AdvisoryFileLock lock;
+   bool isLocked = true;
+   EXPECT_FALSE(lock.isLocked(lockFilePath_, &isLocked));
+   EXPECT_FALSE(isLocked);
+   EXPECT_FALSE(lock.isLocked(lockFilePath_));
+}
+
+TEST_F(FileLockingTest, AdvisoryReadOnlyLockFileCanBeProbed)
+{
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root bypasses file permissions";
+
+   // A lock file this process may not write (root-owned after a sudo run,
+   // say) is still probed rather than reported as permanently held.
+   ASSERT_FALSE(lockFilePath_.ensureFile());
+   ASSERT_EQ(0, ::chmod(lockFilePath_.getAbsolutePath().c_str(), 0444));
+
+   AdvisoryFileLock lock;
+   bool isLocked = true;
+   EXPECT_FALSE(lock.isLocked(lockFilePath_, &isLocked));
+   EXPECT_FALSE(isLocked);
+
+   // ... and it does see a holder: the child locks the (briefly writable)
+   // file, makes it read-only again, then holds it until told to exit.
+   int lockReady[2];
+   int parentDone[2];
+   ASSERT_EQ(0, ::pipe(lockReady));
+   ASSERT_EQ(0, ::pipe(parentDone));
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::alarm(10);
+      AdvisoryFileLock childLock;
+      if (::chmod(lockFilePath_.getAbsolutePath().c_str(), 0644) == -1)
+         ::_exit(1);
+      if (childLock.acquire(lockFilePath_))
+         ::_exit(2);
+      if (::chmod(lockFilePath_.getAbsolutePath().c_str(), 0444) == -1)
+         ::_exit(3);
+      sendByte(lockReady[1]);
+      waitForByte(parentDone[0]);
+      ::_exit(0);
+   }
+
+   waitForByte(lockReady[0]);
+   isLocked = false;
+   EXPECT_FALSE(lock.isLocked(lockFilePath_, &isLocked));
+   EXPECT_TRUE(isLocked);
+   sendByte(parentDone[1]);
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+   ::close(lockReady[0]);
+   ::close(lockReady[1]);
+   ::close(parentDone[0]);
+   ::close(parentDone[1]);
+
+   isLocked = true;
+   EXPECT_FALSE(lock.isLocked(lockFilePath_, &isLocked));
+   EXPECT_FALSE(isLocked);
+}
+
 TEST_F(FileLockingTest, OnlyOneThreadAcquiresAdvisoryFileLockAtATime)
 {
    const std::size_t threadCount = 100;
@@ -487,6 +579,34 @@ TEST_F(FileLockingTest, LiveLinkOwnerDoesNotExpire)
 
    EXPECT_TRUE(first.isLocked(lockFilePath_));
    EXPECT_TRUE(FileLock::isNoLockAvailable(second.acquire(lockFilePath_)));
+   EXPECT_FALSE(first.release());
+}
+
+TEST_F(FileLockingTest, StalledLiveOwnerLosesLockAfterGrace)
+{
+   // A live local owner that has stopped refreshing keeps its lock past the
+   // timeout, but only for the configured number of timeout intervals: the
+   // PID check cannot tell it from an unrelated process in another PID
+   // namespace, which must not pin an orphaned lock forever.
+   std::time_t startTime = 0;
+   if (!ownStartTime(&startTime))
+      GTEST_SKIP() << "process start time unavailable on this platform";
+
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
+   FileLock::setLiveOwnerGraceMultiplierForTesting(3);
+
+   LinkBasedFileLock first;
+   LinkBasedFileLock second;
+   ASSERT_FALSE(first.acquire(lockFilePath_));
+
+   lockFilePath_.setLastWriteTime(::time(nullptr) - 2);
+   EXPECT_TRUE(first.isLocked(lockFilePath_));
+   EXPECT_TRUE(FileLock::isNoLockAvailable(second.acquire(lockFilePath_)));
+
+   lockFilePath_.setLastWriteTime(::time(nullptr) - 4);
+   EXPECT_FALSE(first.isLocked(lockFilePath_));
+   EXPECT_FALSE(second.acquire(lockFilePath_));
+   EXPECT_FALSE(second.release());
    EXPECT_FALSE(first.release());
 }
 

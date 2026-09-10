@@ -106,6 +106,14 @@ public:
    static bool isLoggingEnabled() { return s_loggingEnabled; }
    static bool isLoadBalanced() { return s_isLoadBalanced; }
    static bool useSymlinks() { return s_useSymlinks; }
+
+   // How long a link-based lock whose owner is a live process on this host,
+   // but has stopped refreshing it, stays held: this many timeout intervals.
+   // A stalled process must not lose its lock the moment a refresh is late,
+   // but a PID check cannot see across hosts or PID namespaces sharing a lock
+   // directory, so an unrelated process there must not pin an orphaned lock
+   // forever either.
+   static int getLiveOwnerGraceMultiplier() { return s_liveOwnerGraceMultiplier; }
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
    static void setLoadBalancedForTesting(bool isLoadBalanced)
    {
@@ -114,6 +122,10 @@ public:
    static void setUseSymlinksForTesting(bool useSymlinks)
    {
       s_useSymlinks = useSymlinks;
+   }
+   static void setLiveOwnerGraceMultiplierForTesting(int multiplier)
+   {
+      s_liveOwnerGraceMultiplier = multiplier;
    }
 #endif
    static bool isNoLockAvailable(const Error& error)
@@ -126,6 +138,7 @@ protected:
    static bool s_useSymlinks;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
+   static int s_liveOwnerGraceMultiplier;
    static bool s_loggingEnabled;
    static bool s_isLoadBalanced;
    static FilePath s_logFile;
