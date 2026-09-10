@@ -1483,7 +1483,7 @@ void editFile(const core::FilePath& filePath, int lineNumber, int column)
    if (lineNumber >= 0)
    {
       json::Object positionJson;
-      positionJson["line"] = lineNumber;
+      positionJson["line"] = std::max(lineNumber, 1);
       positionJson["column"] = std::max(column, 1);
       positionJsonValue = positionJson;
    }

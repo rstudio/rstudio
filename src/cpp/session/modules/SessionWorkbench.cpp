@@ -572,7 +572,9 @@ Error initialize()
       core::system::setenv("BROWSER", browserCommand);
    }
 
-   // register the openfile handler behind the `rstudio` terminal command
+   // register the openfile handler behind the `rstudio` terminal command; the
+   // computed rpostback-openfile shell command is unused, as the script in
+   // postback/rstudio invokes rpostback directly
    std::string openFileCommand;
    Error error = module_context::registerPostbackHandler("openfile",
                                                          openFilePostback,

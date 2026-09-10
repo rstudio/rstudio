@@ -17,32 +17,41 @@
 
 # Opens files in the RStudio session that owns this terminal.
 #
-#   rstudio [file[:line[:column]]]...
+#   rstudio [--] file[:line[:column]]...
 #
 # Files that do not exist yet are created, as with file.edit() in R.
 
 usage() {
-   echo "usage: rstudio [file[:line[:column]]]..." >&2
+   echo "usage: rstudio [--] file[:line[:column]]..." >&2
 }
 
-if [ "$#" -eq 0 ]; then
-   usage
-   exit 1
-fi
-
-for arg in "$@"; do
-   case "$arg" in
+# options are only recognized before the first file operand, so paths
+# beginning with '-' still work after a file or after '--'
+while [ "$#" -gt 0 ]; do
+   case "$1" in
+      --)
+         shift
+         break
+         ;;
       -h|--help)
          usage
          exit 0
          ;;
       -*)
-         echo "rstudio: unknown option '$arg'" >&2
+         echo "rstudio: unknown option '$1'" >&2
          usage
          exit 1
          ;;
+      *)
+         break
+         ;;
    esac
 done
+
+if [ "$#" -eq 0 ]; then
+   usage
+   exit 1
+fi
 
 if [ -z "$RS_RPOSTBACK_PATH" ]; then
    echo "rstudio: this command only works within an RStudio terminal" >&2
