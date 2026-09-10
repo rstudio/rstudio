@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -32,10 +33,10 @@ import com.google.gwt.core.client.JsArray;
  * Greek lookalike letters, the Greek question mark, typographic quotes and
  * dashes (as pasted from the web), the Unicode minus sign, no-break spaces
  * and fullwidth forms. R happily parses e.g. Cyrillic "c" as a new symbol,
- * so these are invisible bugs. Strings and comments are left alone, as is
- * prose outside chunks in R Markdown. A token that also contains non-ASCII
- * characters with no ASCII lookalike is a genuine non-Latin word (e.g. a
- * Cyrillic identifier) and is not flagged. See #14485.
+ * so these are invisible bugs. Strings and comments (roxygen included) are
+ * left alone, as is everything outside R chunks in R Markdown. A token that
+ * also contains non-ASCII characters with no ASCII lookalike is a genuine
+ * non-Latin word (e.g. a Cyrillic identifier) and is not flagged. See #14485.
  */
 public class ConfusableCharacterLinter
 {
@@ -47,7 +48,7 @@ public class ConfusableCharacterLinter
       int rowCount = docDisplay.getRowCount();
       for (int row = 0; row < rowCount; row++)
       {
-         if (isRmd && !isChunkBodyRow(docDisplay, row))
+         if (isRmd && !isRChunkBodyRow(docDisplay, row))
             continue;
 
          JsArray<Token> tokens = docDisplay.getTokens(row);
@@ -57,8 +58,7 @@ public class ConfusableCharacterLinter
          for (int i = 0; i < tokens.length(); i++)
          {
             Token token = tokens.get(i);
-            String type = token.getType();
-            if (type.startsWith("string") || type.startsWith("comment"))
+            if (isStringOrComment(token.getType()))
                continue;
 
             String value = token.getValue();
@@ -96,11 +96,25 @@ public class ConfusableCharacterLinter
       return false;
    }
 
-   // the chunk header row (```{r}) is fenced markup, not R code
-   private static boolean isChunkBodyRow(DocDisplay docDisplay, int row)
+   // roxygen prose is tokenized as e.g. constant.numeric.virtual-comment
+   // (for **bold**), so the comment prefix alone doesn't cover it
+   private static boolean isStringOrComment(String type)
    {
-      Scope chunk = docDisplay.getChunkAtPosition(Position.create(row, 0));
-      return chunk != null && chunk.isChunk() && chunk.getPreamble().getRow() != row;
+      return type.startsWith("string") ||
+             type.startsWith("comment") ||
+             type.contains("virtual-comment");
+   }
+
+   // the chunk header row (```{r}) is fenced markup, not R code, and chunks
+   // in other engines (python, asis, ...) are not R at all
+   private static boolean isRChunkBodyRow(DocDisplay docDisplay, int row)
+   {
+      Position position = Position.create(row, 0);
+      Scope chunk = docDisplay.getChunkAtPosition(position);
+      if (chunk == null || !chunk.isChunk() || chunk.getPreamble().getRow() == row)
+         return false;
+
+      return FileType.R_LANG_MODE.equals(docDisplay.getLanguageMode(position));
    }
 
    private static String lookalikeFor(char ch)
