@@ -62,6 +62,7 @@
 
 @external rstudio-themes-dark;
 @external rstudio-highlight-active-tabs;
+@external docTabPanel;
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
@@ -2551,16 +2552,15 @@ input[type="checkbox"]:checked:before {
    GWT's legacy CssResource parser passes the body of an unrecognized at-rule
    through untouched, which is what lets the anchor syntax reach the browser.
    Obfuscation does not run on a passed-through body, so only @external class
-   names can appear here; pane and dialog tabs also match these selectors, but
-   generate no ::before box (content: none), so the rules are inert for them.
+   names can appear here; docTabPanel is declared @external for this reason.
    The colors and shape come from the in-flow rules above. */
 @supports (anchor-scope: --rstudio-active-doc-tab) and (top: anchor(top)) {
-   .rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab.gwt-TabLayoutPanelTab-selected {
+   .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab.gwt-TabLayoutPanelTab-selected {
       anchor-name: --rstudio-active-doc-tab;
       anchor-scope: --rstudio-active-doc-tab;
    }
 
-   .rstudio-highlight-active-tabs .gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab.gwt-TabLayoutPanelTab-selected::before {
+   .rstudio-highlight-active-tabs .docTabPanel .gwt-TabLayoutPanelTab.gwt-TabLayoutPanelTab-selected::before {
       position: fixed;
       position-anchor: --rstudio-active-doc-tab;
       position-visibility: anchors-visible;
