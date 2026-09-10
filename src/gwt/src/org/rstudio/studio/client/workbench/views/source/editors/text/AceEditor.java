@@ -824,7 +824,12 @@ public class AceEditor implements DocDisplay
             // the cursor sits inside this bracket's arguments; any chain lies outside it
             return false;
          }
-         else if (cursor.currentType().contains("identifier") &&
+         else if (PIPE_OPERATORS.contains(cursor.currentValue()))
+         {
+            // a ggplot chain piped into another call is no longer a ggplot chain
+            return false;
+         }
+         else if (cursor.hasType("identifier") &&
                   cursor.peekFwd(1).valueEquals("(") &&
                   isGgplotFunctionName(cursor.currentValue()))
          {
@@ -5204,6 +5209,8 @@ public class AceEditor implements DocDisplay
    private static final int DEBUG_CONTEXT_LINES = 2;
    private static final String MAGRITTR_PIPE = "%>%";
    private static final String NATIVE_R_PIPE = "|>";
+   private static final Set<String> PIPE_OPERATORS = new HashSet<>(Arrays.asList(
+         NATIVE_R_PIPE, MAGRITTR_PIPE, "%<>%", "%T>%", "%$%"));
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
@@ -5227,12 +5234,20 @@ public class AceEditor implements DocDisplay
    private static final Set<String> GGPLOT_FUNCTIONS = new HashSet<>(Arrays.asList(
          "ggplot", "qplot", "quickplot",
          "labs", "ggtitle", "xlab", "ylab", "xlim", "ylim", "lims", "expand_limits",
-         "guides", "annotate", "theme", "borders", "ease_aes",
-         "plot_layout", "plot_annotation", "plot_spacer", "wrap_plots", "wrap_elements", "inset_element"));
+         "guides", "annotate", "theme", "borders",
+         // patchwork
+         "plot_layout", "plot_annotation", "plot_spacer", "wrap_plots", "wrap_elements", "inset_element",
+         // gganimate (its view_ / enter_ / exit_ / shadow_ prefixes are too generic to match on)
+         "ease_aes",
+         "enter_appear", "enter_drift", "enter_fade", "enter_fly", "enter_grow", "enter_manual",
+         "enter_recolor", "enter_recolour", "enter_reset",
+         "exit_disappear", "exit_drift", "exit_fade", "exit_fly", "exit_manual",
+         "exit_recolor", "exit_recolour", "exit_reset", "exit_shrink",
+         "shadow_mark", "shadow_null", "shadow_trail", "shadow_wake",
+         "view_follow", "view_static", "view_step", "view_step_manual", "view_zoom", "view_zoom_manual"));
 
    private static final String[] GGPLOT_FUNCTION_PREFIXES = {
-         "geom_", "stat_", "scale_", "theme_", "facet_", "coord_", "annotation_",
-         "transition_", "enter_", "exit_", "shadow_", "view_"
+         "geom_", "stat_", "scale_", "theme_", "facet_", "coord_", "annotation_", "transition_"
    };
 
    // theme_* helpers that act on the global theme rather than on a plot

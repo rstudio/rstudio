@@ -68,6 +68,26 @@ const CASES: PipeCase[] = [
     content: 'theme_set(theme_bw())',
     expected: PIPE,
   },
+  {
+    name: 'after a ggplot chain piped into another call',
+    content: 'ggplot(mtcars) + geom_point() |> ggplotly()',
+    expected: PIPE,
+  },
+  {
+    name: 'after a ggplot chain piped across lines into another call',
+    content: 'ggplot(mtcars) + geom_point() |>\n  ggplotly()',
+    expected: PIPE,
+  },
+  {
+    name: 'after a user function sharing a gganimate prefix',
+    content: 'mtcars |> view_summary()',
+    expected: PIPE,
+  },
+  {
+    name: 'after a gganimate call',
+    content: 'ggplot(mtcars) + view_follow()',
+    expected: PLUS,
+  },
 ];
 
 // Loads `content` into the active editor, puts the cursor at its end, runs
@@ -121,6 +141,20 @@ test.describe('Insert Pipe Operator in ggplot2 chains', () => {
       expect(await insertPipeAtEnd(page, editor, c.content)).toBe(c.expected);
     });
   }
+
+  test('inserts a pipe with the cursor at column 0 of a non-empty line', async ({ rstudioPage: page }) => {
+    // the token cursor lands before the first token here; the walk must not
+    // dereference its (empty) type
+    const editor = new AceEditor(page, '');
+    const content = 'mtcars';
+    await editor.setValue(content);
+    await editor.gotoLine(1, 0);
+    await expect.poll(() => editor.getValue()).toBe(content);
+
+    await executeCommand(page, 'insertPipeOperator');
+
+    await expect.poll(() => editor.getValue()).toBe(`${PIPE.trimStart()}${content}`);
+  });
 
   test('inserts a pipe in a ggplot chain when the pref is off', async ({ rstudioPage: page }) => {
     await setPref(page, 'insert_plus_in_ggplot_chains', false);
