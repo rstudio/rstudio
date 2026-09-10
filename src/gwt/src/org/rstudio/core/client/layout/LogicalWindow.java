@@ -111,6 +111,11 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public void onWindowStateChange(WindowStateChangeEvent event)
    {
       WindowState newState = event.getNewState();
+
+      // remember a tab surfacing itself out of MINIMIZE; any other request (a
+      // frame button, an owner) supersedes a pending auto-raise
+      autoRaisedFromMinimize_ =
+            event.isEnsureVisible() && state_ == MINIMIZE && newState == NORMAL;
       if (state_ == EXCLUSIVE && newState == MAXIMIZE)
          newState = NORMAL;
       if (newState == state_)
@@ -132,6 +137,18 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public WindowState getState()
    {
       return state_;
+   }
+
+   /**
+    * True when the most recent change to this window was a tab raising it out
+    * of MINIMIZE on its own (an ensure-visible or ensure-height request, e.g.
+    * render output surfacing), rather than the user or an owner asking for it.
+    * Lets a later "return to the console" put the pane back the way the user
+    * left it.
+    */
+   public boolean wasAutoRaisedFromMinimize()
+   {
+      return autoRaisedFromMinimize_;
    }
 
    @Override
@@ -158,6 +175,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
          if (getState() != WindowState.MAXIMIZE &&
              getState() != WindowState.EXCLUSIVE)
          {
+            autoRaisedFromMinimize_ = false;
             events_.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
          }
       }
@@ -169,6 +187,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
          }
          else if (getState() != WindowState.NORMAL)
          {
+            autoRaisedFromMinimize_ = getState() == WindowState.MINIMIZE;
             events_.fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
          }
       }
@@ -182,4 +201,5 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    private WindowFrame normal_;
    private MinimizedWindowFrame minimized_;
    private WindowState state_;
+   private boolean autoRaisedFromMinimize_ = false;
 }

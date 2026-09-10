@@ -444,7 +444,7 @@ public class WindowFrame extends Composite
           logicalState_ == WindowState.HIDE ||
           logicalState_ == WindowState.MINIMIZE)
       {
-         fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
+         fireEvent(WindowStateChangeEvent.forEnsureVisible());
       }
 
       events_.fireEvent(new WindowEnsureVisibleEvent(this));

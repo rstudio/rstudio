@@ -43,6 +43,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class Console
 {
@@ -72,11 +73,13 @@ public class Console
    public Console(final Display view,
                   EventBus events,
                   Session session,
-                  Commands commands)
+                  Commands commands,
+                  Provider<PaneManager> pPaneManager)
    {
       view_ = view;
       events_ = events;
       session_ = session;
+      pPaneManager_ = pPaneManager;
       
       try
       {
@@ -209,6 +212,11 @@ public class Console
       view_.focus();
       view_.ensureCursorVisible();
 
+      // a task handing control back to the console (focusWindow == false)
+      // shouldn't leave a pane open that it only opened for its own output
+      if (!focusWindow)
+         pPaneManager_.get().minimizeConsoleIfAutoRaised();
+
       // the above code seems to always leave focus in the console
       // (haven't been able to sort out why). this ensure it's restored
       // if that's what the caller requested.
@@ -242,4 +250,5 @@ public class Console
    private final EventBus events_;
    private final Display view_;
    private final Session session_;
+   private final Provider<PaneManager> pPaneManager_;
 }
