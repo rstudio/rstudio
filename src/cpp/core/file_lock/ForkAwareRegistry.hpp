@@ -16,7 +16,7 @@
 #ifndef CORE_FILE_LOCK_FORK_AWARE_REGISTRY_HPP
 #define CORE_FILE_LOCK_FORK_AWARE_REGISTRY_HPP
 
-#include <vector>
+#include <memory>
 
 #include <boost/noncopyable.hpp>
 
@@ -43,18 +43,43 @@ namespace file_lock {
 // can simply be re-initialized in the child. Registries are created once and
 // never destroyed.
 //
-// A registry takes part in the fork handlers only once publish() has been
-// called on the fully constructed object; publishing from a constructor
-// would let a concurrent fork() run resetInChild() on a half-built object.
+// instance() constructs and publishes a registry while holding the mutex
+// used by the fork handlers. Its pointer storage must be constant-initialized:
+// a function-local static initializer has a separate C++ guard that a child
+// can inherit in the busy state, even after the registry was published.
 class ForkAwareRegistry : boost::noncopyable
 {
 public:
-   // Publishes a complete registry to the fork handlers and returns it.
+   // Lazily constructs an immortal registry. Pass a pointer initialized to
+   // nullptr, and access that pointer only through this function.
    template <typename Registry>
-   static Registry* publish(Registry* pRegistry)
+   static Registry& instance(Registry*& pInstance)
    {
-      publishRegistry(pRegistry);
-      return pRegistry;
+      Registry* pRegistry;
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+      bool published = false;
+#endif
+      {
+         InitializationGuard guard;
+         if (!pInstance)
+         {
+            std::unique_ptr<Registry> registry(new Registry());
+            publishRegistry(registry.get());
+            pInstance = registry.release();
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+            published = true;
+#endif
+         }
+         pRegistry = pInstance;
+      }
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+      // Let a test fork after publication, while the initializing call is
+      // still in progress. This must run outside the initialization mutex.
+      if (published)
+         static_cast<ForkAwareRegistry*>(pRegistry)->afterPublishForTesting();
+#endif
+      return *pRegistry;
    }
 
 protected:
@@ -63,6 +88,10 @@ protected:
 
    // Called in the child, with the mutex held: drop all inherited state.
    virtual void resetInChild() = 0;
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   virtual void afterPublishForTesting() {}
+#endif
 
    // Holds the registry mutex for its lifetime.
    class Guard : boost::noncopyable
@@ -85,6 +114,13 @@ protected:
    void notifyAll();
 
 private:
+   class InitializationGuard : boost::noncopyable
+   {
+   public:
+      InitializationGuard();
+      ~InitializationGuard();
+   };
+
    static void publishRegistry(ForkAwareRegistry* pRegistry);
 
 #ifdef _WIN32
@@ -95,6 +131,12 @@ private:
    static void parentAfterFork();
    static void childAfterFork();
 
+   struct AtForkRegistration
+   {
+      AtForkRegistration();
+   };
+   static AtForkRegistration s_atForkRegistration;
+
    pthread_mutex_t mutex_;
    pthread_cond_t condition_;
 #endif
@@ -103,10 +145,6 @@ private:
 #ifdef _WIN32
 
 inline ForkAwareRegistry::ForkAwareRegistry()
-{
-}
-
-inline void ForkAwareRegistry::publishRegistry(ForkAwareRegistry*)
 {
 }
 
@@ -132,78 +170,10 @@ inline void ForkAwareRegistry::notifyAll()
 
 #else
 
-namespace detail {
-
-// The list of registries and the mutex guarding it; the latter is also held
-// across fork() so the handlers see a consistent list.
-inline pthread_mutex_t& forkAwareRegistriesMutex()
-{
-   static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-   return mutex;
-}
-
-inline std::vector<ForkAwareRegistry*>& forkAwareRegistries()
-{
-   static std::vector<ForkAwareRegistry*>* pInstances =
-      new std::vector<ForkAwareRegistry*>();
-   return *pInstances;
-}
-
-} // namespace detail
-
 inline ForkAwareRegistry::ForkAwareRegistry()
 {
    ::pthread_mutex_init(&mutex_, nullptr);
    ::pthread_cond_init(&condition_, nullptr);
-}
-
-inline void ForkAwareRegistry::publishRegistry(ForkAwareRegistry* pRegistry)
-{
-   // register the fork handlers once, before the first registry is listed
-   struct AtForkRegistration
-   {
-      AtForkRegistration()
-      {
-         ::pthread_atfork(prepareFork, parentAfterFork, childAfterFork);
-      }
-   };
-   static AtForkRegistration registration;
-
-   // the prepare handler takes this mutex, so a fork either sees the new
-   // registry in the list or does not see it at all
-   ::pthread_mutex_lock(&detail::forkAwareRegistriesMutex());
-   detail::forkAwareRegistries().push_back(pRegistry);
-   ::pthread_mutex_unlock(&detail::forkAwareRegistriesMutex());
-}
-
-inline void ForkAwareRegistry::prepareFork()
-{
-   ::pthread_mutex_lock(&detail::forkAwareRegistriesMutex());
-   for (ForkAwareRegistry* pRegistry : detail::forkAwareRegistries())
-      ::pthread_mutex_lock(&pRegistry->mutex_);
-}
-
-inline void ForkAwareRegistry::parentAfterFork()
-{
-   std::vector<ForkAwareRegistry*>& registries = detail::forkAwareRegistries();
-   for (auto it = registries.rbegin(); it != registries.rend(); ++it)
-      ::pthread_mutex_unlock(&(*it)->mutex_);
-   ::pthread_mutex_unlock(&detail::forkAwareRegistriesMutex());
-}
-
-inline void ForkAwareRegistry::childAfterFork()
-{
-   std::vector<ForkAwareRegistry*>& registries = detail::forkAwareRegistries();
-   for (auto it = registries.rbegin(); it != registries.rend(); ++it)
-   {
-      ForkAwareRegistry* pRegistry = *it;
-      pRegistry->resetInChild();
-
-      // any waiter belonged to a thread that does not exist in the child
-      ::pthread_cond_init(&pRegistry->condition_, nullptr);
-      ::pthread_mutex_unlock(&pRegistry->mutex_);
-   }
-   ::pthread_mutex_unlock(&detail::forkAwareRegistriesMutex());
 }
 
 inline ForkAwareRegistry::Guard::Guard(ForkAwareRegistry& registry)

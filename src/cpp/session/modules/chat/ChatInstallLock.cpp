@@ -296,8 +296,8 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
       for (const FilePath& child : children)
       {
          // Skip our own lock file: this process already holds it. Skip
-         // non-.lock entries: link-based locking keeps owner files (and
-         // short-lived claim files) beside the lock files it manages.
+         // non-.lock entries: link-based locking keeps owner files and its
+         // claim namespace beside the lock files it manages.
          if (anyComponentHeld() &&
              child.getFilename() == ownSessionLockPath().getFilename())
             continue;

@@ -41,6 +41,21 @@ using namespace rstudio::session::modules::chat::install_lock;
 
 namespace {
 
+std::vector<FilePath> sessionLockFilesIn(const FilePath& directory)
+{
+   std::vector<FilePath> children;
+   Error error = directory.getChildren(children);
+   EXPECT_FALSE(error);
+
+   std::vector<FilePath> lockFiles;
+   for (const FilePath& child : children)
+   {
+      if (child.getExtensionLowerCase() == ".lock")
+         lockFiles.push_back(child);
+   }
+   return lockFiles;
+}
+
 // Two InstallLock instances over the same locks directory model two
 // concurrent rsession processes.
 class ChatInstallLock : public testing::Test
@@ -198,8 +213,7 @@ TEST_F(ChatInstallLock, RepeatedStartsRetireSessionFilenamesAndCleanReleasedEntr
       // A mutator must also clean its own retired filename; only its
       // currently held session lock is excluded from the scan.
       ASSERT_FALSE(sessionA_->tryBeginMutation(&message));
-      children.clear();
-      ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+      children = sessionLockFilesIn(sessionA_->sessionLocksDir());
       EXPECT_TRUE(children.empty());
       sessionA_->endMutation();
    }
@@ -215,8 +229,8 @@ TEST_F(ChatInstallLock, FailedStartUsesAnotherFilenameOnRetry)
       InstallLock::Component::ChatBackend, &token, &message));
    EXPECT_EQ(0u, token);
 
-   std::vector<FilePath> children;
-   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   std::vector<FilePath> children =
+      sessionLockFilesIn(sessionA_->sessionLocksDir());
    ASSERT_EQ(1u, children.size());
    FilePath retired = children.front();
    sessionB_->endMutation();
@@ -230,8 +244,7 @@ TEST_F(ChatInstallLock, FailedStartUsesAnotherFilenameOnRetry)
 
    sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
    ASSERT_FALSE(sessionB_->tryBeginMutation(&message));
-   children.clear();
-   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   children = sessionLockFilesIn(sessionA_->sessionLocksDir());
    EXPECT_TRUE(children.empty());
    sessionB_->endMutation();
 }
@@ -244,16 +257,15 @@ TEST_F(ChatInstallLock, ReleasedSymlinkSessionEntryIsRemoved)
       InstallLock::Component::ChatBackend, &token));
    sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
 
-   std::vector<FilePath> children;
-   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   std::vector<FilePath> children =
+      sessionLockFilesIn(sessionA_->sessionLocksDir());
    ASSERT_EQ(1u, children.size());
    EXPECT_TRUE(children.front().isSymlink());
    EXPECT_FALSE(children.front().exists());
 
    std::string message;
    ASSERT_FALSE(sessionB_->tryBeginMutation(&message));
-   children.clear();
-   ASSERT_FALSE(sessionA_->sessionLocksDir().getChildren(children));
+   children = sessionLockFilesIn(sessionA_->sessionLocksDir());
    EXPECT_TRUE(children.empty());
    sessionB_->endMutation();
 }

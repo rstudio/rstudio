@@ -21,9 +21,22 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#if defined(__APPLE__) || defined(__linux__)
+# include <sys/acl.h>
+#endif
+
+#ifdef __APPLE__
+# include <membership.h>
+#endif
+
+#ifdef __linux__
+# include <acl/libacl.h>
+#endif
+
 #ifdef _MSC_VER
 # include <io.h>
 #else
+# include <dirent.h>
 # include <sys/time.h>
 # include <unistd.h>
 #endif
@@ -76,6 +89,8 @@ namespace {
 const char * const kLegacyFileLockPrefix = ".rstudio-lock-41c29";
 const char * const kOwnerFilePrefix = ".rstudio-lock-owner-41c29";
 const char * const kFileLockClaimPrefix = ".rstudio-lock-claim-41c29";
+const char * const kFileLockClaimDirectory = ".rstudio-lock-claims-41c29";
+const char * const kFileLockClaimTempPrefix = ".rstudio-lock-claims-tmp-41c29";
 const char * const kFileLockTempPrefix = ".rstudio-lock-tmp-41c29";
 const char * const kReleasedProcessId = "-1";
 
@@ -88,6 +103,9 @@ const int kLockFileMode = 0644;
 boost::function<void()> s_beforeRelease;
 boost::function<void()> s_beforeRefresh;
 boost::function<Error(int)> s_beforeWrite;
+boost::function<void(const FilePath&)> s_beforeClaim;
+boost::function<void(const FilePath&)> s_afterRename;
+bool s_forceClaimDirectoryChownFailure = false;
 bool s_forceFallback = false;
 #endif
 
@@ -154,6 +172,11 @@ bool isTempFile(const FilePath& filePath)
    return hasPrefix(filePath.getFilename(), kFileLockTempPrefix);
 }
 
+bool isPreparedClaimDirectory(const FilePath& filePath)
+{
+   return hasPrefix(filePath.getFilename(), kFileLockClaimTempPrefix);
+}
+
 bool isSweepableArtifact(const FilePath& filePath)
 {
    return isOwnerFile(filePath) ||
@@ -170,10 +193,21 @@ FilePath proxyPathForToken(const FilePath& lockFilePath,
 
 FilePath claimPathForLock(const FilePath& lockFilePath)
 {
-   // Every contender for a public lock path must use the same claim name.
-   // Hash the lock filename to keep it below NAME_MAX even when the caller's
-   // lock filename is already near that limit.
-   return lockFilePath.getParent().completePath(
+   // Keep the public filename as its own path component so the filesystem
+   // applies exactly the same case and normalization rules to both names.
+   // The containing directory supplies the claim namespace without making
+   // an already-near-NAME_MAX filename longer.
+   return lockFilePath.getParent()
+      .completePath(kFileLockClaimDirectory)
+      .completePath(lockFilePath.getFilename());
+}
+
+FilePath legacyClaimPathForLock(const FilePath& lockFilePath)
+{
+   // Keep taking the claim used by deployed versions so a rolling upgrade
+   // cannot run old and new stale-removal protocols at the same time.
+   FilePath parent(lockFilePath.getParent().getCanonicalPath());
+   return parent.completePath(
       fmt::format("{}-{}",
                   kFileLockClaimPrefix,
                   hash::crc32HexHash(lockFilePath.getFilename())));
@@ -193,10 +227,12 @@ FilePath tempPathBeside(const FilePath& filePath)
                   system::generateUuid(false)));
 }
 
-boost::optional<PidType> tempFileContender(const FilePath& filePath)
+boost::optional<PidType> temporaryEntryContender(
+   const std::string& filename,
+   const char* prefixValue)
 {
-   std::string prefix = fmt::format("{}-", kFileLockTempPrefix);
-   std::string rest = filePath.getFilename().substr(prefix.size());
+   std::string prefix = fmt::format("{}-", prefixValue);
+   std::string rest = filename.substr(prefix.size());
    std::string::size_type end = rest.find('-');
    if (end == std::string::npos)
       return boost::none;
@@ -380,6 +416,35 @@ Error descriptorIdentity(int descriptor,
    return Success();
 }
 
+Error readDescriptorMetadata(int descriptor,
+                             LockMetadata* pMetadata,
+                             std::time_t* pLastWriteTime)
+{
+   Error error = descriptorIdentity(descriptor, pMetadata, pLastWriteTime);
+   if (error)
+      return error;
+
+   std::string contents;
+   char buffer[64];
+   while (contents.size() <= sizeof(buffer))
+   {
+      ssize_t result = ::read(descriptor, buffer, sizeof(buffer));
+      if (result == -1)
+      {
+         if (errno == EINTR)
+            continue;
+         return systemCallError("read", errno, ERROR_LOCATION);
+      }
+      if (result == 0)
+         break;
+
+      contents.append(buffer, static_cast<std::size_t>(result));
+   }
+
+   parseLockContents(contents, pMetadata);
+   return Success();
+}
+
 #endif
 
 // Reads identity, timestamp and contents from one opened descriptor, so that
@@ -399,33 +464,12 @@ Error readLockMetadata(const FilePath& lockFilePath,
       return error;
    }
 
-   Error error = descriptorIdentity(descriptor, pMetadata, pLastWriteTime);
-   if (error)
-   {
-      ::close(descriptor);
-      return error;
-   }
-
-   std::string contents;
-   char buffer[64];
-   while (contents.size() <= sizeof(buffer))
-   {
-      ssize_t result = ::read(descriptor, buffer, sizeof(buffer));
-      if (result == -1)
-      {
-         if (errno == EINTR)
-            continue;
-
-         int errorNumber = errno;
-         ::close(descriptor);
-         return systemCallError("read", errorNumber, ERROR_LOCATION);
-      }
-      if (result == 0)
-         break;
-
-      contents.append(buffer, static_cast<std::size_t>(result));
-   }
+   Error error = readDescriptorMetadata(
+      descriptor,
+      pMetadata,
+      pLastWriteTime);
    ::close(descriptor);
+   return error;
 #else
    std::string contents;
    Error error = core::readStringFromFile(lockFilePath, &contents);
@@ -435,10 +479,9 @@ Error readLockMetadata(const FilePath& lockFilePath,
    error = lockFilePath.getLastWriteTime(*pLastWriteTime);
    if (error)
       return error;
-#endif
-
    parseLockContents(contents, pMetadata);
    return Success();
+#endif
 }
 
 Error hasExpectedIdentity(const FilePath& filePath,
@@ -469,6 +512,165 @@ Error hasExpectedIdentity(const FilePath& filePath,
 #endif
    return Success();
 }
+
+#ifndef _WIN32
+
+Error hasExpectedIdentityAt(int directoryDescriptor,
+                            const FilePath& filePath,
+                            const LockMetadata& metadata,
+                            bool* pMatches)
+{
+   *pMatches = false;
+   if (!metadata.hasIdentity)
+      return Success();
+
+   struct stat info;
+   if (::fstatat(
+          directoryDescriptor,
+          filePath.getFilename().c_str(),
+          &info,
+          AT_SYMLINK_NOFOLLOW) == -1)
+   {
+      if (errno == ENOENT)
+         return Success();
+
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
+   }
+
+   *pMatches = info.st_dev == metadata.device &&
+               info.st_ino == metadata.inode;
+   return Success();
+}
+
+Error unlinkAt(int directoryDescriptor, const FilePath& filePath)
+{
+   if (::unlinkat(
+          directoryDescriptor,
+          filePath.getFilename().c_str(),
+          0) == 0 || errno == ENOENT)
+   {
+      return Success();
+   }
+
+   Error error = systemError(errno, ERROR_LOCATION);
+   error.addProperty("path", filePath);
+   return error;
+}
+
+void unlinkAtBestEffort(int directoryDescriptor, const FilePath& filePath)
+{
+   Error error = unlinkAt(directoryDescriptor, filePath);
+   if (error)
+      LOG_ERROR(error);
+}
+
+// Directory-relative counterpart to removeIfSameIdentity(). Claim operations
+// stay anchored to the verified namespace even if its public name is replaced.
+Error removeIfSameIdentityAt(int directoryDescriptor,
+                             const FilePath& filePath,
+                             const LockMetadata& metadata,
+                             RemoveResult* pResult)
+{
+   *pResult = RemoveResult::Absent;
+   bool matches = false;
+   Error error = hasExpectedIdentityAt(
+      directoryDescriptor,
+      filePath,
+      metadata,
+      &matches);
+   if (error)
+      return error;
+   if (!matches)
+   {
+      struct stat info;
+      if (::fstatat(
+             directoryDescriptor,
+             filePath.getFilename().c_str(),
+             &info,
+             AT_SYMLINK_NOFOLLOW) == 0)
+      {
+         *pResult = RemoveResult::Mismatch;
+      }
+      return Success();
+   }
+
+   FilePath tempPath = tempPathBeside(filePath);
+   if (::renameat(
+          directoryDescriptor,
+          filePath.getFilename().c_str(),
+          directoryDescriptor,
+          tempPath.getFilename().c_str()) == -1)
+   {
+      if (errno == ENOENT)
+         return Success();
+
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
+   }
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_afterRename)
+      s_afterRename(filePath);
+#endif
+
+   error = hasExpectedIdentityAt(
+      directoryDescriptor,
+      tempPath,
+      metadata,
+      &matches);
+   if (!error && matches)
+   {
+      *pResult = RemoveResult::Removed;
+      return unlinkAt(directoryDescriptor, tempPath);
+   }
+
+   bool restored =
+      ::linkat(directoryDescriptor, tempPath.getFilename().c_str(),
+               directoryDescriptor, filePath.getFilename().c_str(), 0) == 0;
+   int linkError = restored ? 0 : errno;
+   if (restored)
+   {
+      unlinkAtBestEffort(directoryDescriptor, tempPath);
+   }
+   else if (linkError == EEXIST)
+   {
+      restored = true;
+   }
+   else
+   {
+      struct stat info;
+      if (::fstatat(
+             directoryDescriptor,
+             filePath.getFilename().c_str(),
+             &info,
+             AT_SYMLINK_NOFOLLOW) == -1 && errno == ENOENT)
+      {
+         restored = ::renameat(
+            directoryDescriptor,
+            tempPath.getFilename().c_str(),
+            directoryDescriptor,
+            filePath.getFilename().c_str()) == 0;
+      }
+   }
+
+   if (!restored)
+   {
+      Error restoreError = systemCallError("linkat", linkError, ERROR_LOCATION);
+      restoreError.addProperty("path", filePath);
+      restoreError.addProperty("description",
+                               "Could not restore a displaced claim entry");
+      LOG_ERROR(restoreError);
+      unlinkAtBestEffort(directoryDescriptor, tempPath);
+   }
+
+   *pResult = RemoveResult::Mismatch;
+   return error;
+}
+
+#endif
 
 // Removes the entry at 'filePath' only if it is still the inode described by
 // 'metadata'. POSIX has no conditional unlink, so after a cheap identity
@@ -524,6 +726,11 @@ Error removeIfSameIdentity(const FilePath& filePath,
       error.addProperty("path", filePath);
       return error;
    }
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_afterRename)
+      s_afterRename(filePath);
+#endif
 
    error = hasExpectedIdentity(tempPath, metadata, &matches);
    if (!error && matches)
@@ -653,6 +860,42 @@ boost::optional<bool> isOwnerProcessReused(PidType processId,
 
 #endif
 
+void determineStaleness(std::time_t lastWriteTime,
+                        LockInspection* pInspection)
+{
+   if (pInspection->metadata.released)
+   {
+      pInspection->stale = true;
+      return;
+   }
+
+   double seconds =
+      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
+   double age = ::difftime(::time(nullptr), lastWriteTime);
+   pInspection->stale = age >= seconds;
+
+#ifndef _WIN32
+   if (!FileLock::isLoadBalanced() && pInspection->metadata.processId)
+   {
+      PidType processId = *pInspection->metadata.processId;
+      if (isProcessGone(processId))
+      {
+         pInspection->stale = true;
+      }
+      else if (pInspection->stale)
+      {
+         boost::optional<bool> reused =
+            isOwnerProcessReused(processId, lastWriteTime);
+         if (reused && !*reused)
+         {
+            double grace = seconds * FileLock::getLiveOwnerGraceMultiplier();
+            pInspection->stale = age >= grace;
+         }
+      }
+   }
+#endif
+}
+
 Error inspectLockFile(const FilePath& lockFilePath,
                       LockInspection* pInspection)
 {
@@ -729,42 +972,7 @@ Error inspectLockFile(const FilePath& lockFilePath,
 #endif
    }
 
-   if (pInspection->metadata.released)
-   {
-      pInspection->stale = true;
-      return findOwnerFile(lockFilePath, &pInspection->metadata);
-   }
-
-   double seconds =
-      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
-   double age = ::difftime(::time(nullptr), lastWriteTime);
-   pInspection->stale = age >= seconds;
-
-#ifndef _WIN32
-   if (!FileLock::isLoadBalanced() && pInspection->metadata.processId)
-   {
-      PidType processId = *pInspection->metadata.processId;
-      if (isProcessGone(processId))
-      {
-         // The owner is gone; no need to wait for the lock to age out.
-         pInspection->stale = true;
-      }
-      else if (pInspection->stale)
-      {
-         // Aged out, but a live local owner remains authoritative for a
-         // while longer (see FileLock::getLiveOwnerGraceMultiplier), so a
-         // sleeping or temporarily stalled process does not lose its lock
-         // and later interfere with the replacement owner.
-         boost::optional<bool> reused =
-            isOwnerProcessReused(processId, lastWriteTime);
-         if (reused && !*reused)
-         {
-            double grace = seconds * FileLock::getLiveOwnerGraceMultiplier();
-            pInspection->stale = age >= grace;
-         }
-      }
-   }
-#endif
+   determineStaleness(lastWriteTime, pInspection);
 
    return pInspection->stale
       ? findOwnerFile(lockFilePath, &pInspection->metadata)
@@ -773,6 +981,82 @@ Error inspectLockFile(const FilePath& lockFilePath,
 
 #ifndef _WIN32
 
+Error inspectClaimFileAt(int directoryDescriptor,
+                         const FilePath& claimFilePath,
+                         LockInspection* pInspection)
+{
+   struct stat namedInfo;
+   if (::fstatat(
+          directoryDescriptor,
+          claimFilePath.getFilename().c_str(),
+          &namedInfo,
+          AT_SYMLINK_NOFOLLOW) == -1)
+   {
+      if (errno == ENOENT)
+         return Success();
+
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", claimFilePath);
+      return error;
+   }
+
+   pInspection->exists = true;
+   if (!S_ISREG(namedInfo.st_mode))
+   {
+      Error error = systemError(
+         boost::system::errc::invalid_argument,
+         "Claim entry is not a regular file",
+         ERROR_LOCATION);
+      error.addProperty("path", claimFilePath);
+      return error;
+   }
+
+   int flags = O_RDONLY | O_NONBLOCK | O_CLOEXEC;
+#ifdef O_NOFOLLOW
+   flags |= O_NOFOLLOW;
+#endif
+   int descriptor = ::openat(
+      directoryDescriptor,
+      claimFilePath.getFilename().c_str(),
+      flags);
+   std::time_t lastWriteTime = 0;
+   if (descriptor == -1)
+   {
+      if (errno == ENOENT)
+      {
+         pInspection->exists = false;
+         return Success();
+      }
+      if (!isPermissionError(errno))
+      {
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("path", claimFilePath);
+         return error;
+      }
+
+      pInspection->metadata.device = namedInfo.st_dev;
+      pInspection->metadata.inode = namedInfo.st_ino;
+      pInspection->metadata.hasIdentity = true;
+      pInspection->metadata.identityFollowsSymlink = false;
+      lastWriteTime = namedInfo.st_mtime;
+   }
+   else
+   {
+      Error error = readDescriptorMetadata(
+         descriptor,
+         &pInspection->metadata,
+         &lastWriteTime);
+      ::close(descriptor);
+      if (error)
+         return error;
+
+      pInspection->metadata.identityFollowsSymlink = false;
+   }
+
+   determineStaleness(lastWriteTime, pInspection);
+   return Success();
+}
+
 // A renamed-aside entry is abandoned once the contender that renamed it is
 // gone. Its own timestamps say nothing (rename keeps the old owner's mtime),
 // so the rename's ctime stands in: no removal stays in flight for a whole
@@ -780,11 +1064,13 @@ Error inspectLockFile(const FilePath& lockFilePath,
 // is live and unrelated (a container sharing the directory, a reused number)
 // or a name we cannot parse must not pin the entry forever, so those fall
 // through to the same ctime check the load-balanced path always uses.
-bool isTempFileAbandoned(const FilePath& filePath)
+bool isTemporaryEntryAbandoned(const FilePath& filePath, const char* prefix)
 {
    if (!FileLock::isLoadBalanced())
    {
-      boost::optional<PidType> contender = tempFileContender(filePath);
+      boost::optional<PidType> contender = temporaryEntryContender(
+         filePath.getFilename(),
+         prefix);
       if (contender && isProcessGone(*contender))
          return true;
    }
@@ -798,39 +1084,92 @@ bool isTempFileAbandoned(const FilePath& filePath)
    return ::difftime(::time(nullptr), info.st_ctime) >= seconds;
 }
 
+bool isTempFileAbandoned(const FilePath& filePath)
+{
+   return isTemporaryEntryAbandoned(filePath, kFileLockTempPrefix);
+}
+
+bool isTemporaryEntryAbandonedAt(int directoryDescriptor,
+                                 const FilePath& filePath,
+                                 const char* prefix)
+{
+   if (!FileLock::isLoadBalanced())
+   {
+      boost::optional<PidType> contender = temporaryEntryContender(
+         filePath.getFilename(),
+         prefix);
+      if (contender && isProcessGone(*contender))
+         return true;
+   }
+
+   struct stat info;
+   if (::fstatat(
+          directoryDescriptor,
+          filePath.getFilename().c_str(),
+          &info,
+          AT_SYMLINK_NOFOLLOW) == -1)
+   {
+      return false;
+   }
+
+   double seconds =
+      static_cast<double>(FileLock::getTimeoutInterval().total_seconds());
+   return ::difftime(::time(nullptr), info.st_ctime) >= seconds;
+}
+
 #endif
 
-// Removes stale owner, claim and temp files left in a lock directory: owners
-// orphaned when something other than the lock deleted the public path (a
-// crash, or a caller cleaning up), claims abandoned mid-takeover, and
-// entries renamed aside by a contender that died mid-removal. Live entries
-// are never touched; each candidate is inspected like a lock.
+// Removes stale owner, legacy claim, temp, and prepared-namespace entries left
+// in a lock directory. Live entries are never touched; file candidates are
+// inspected like locks, while prepared namespaces must be empty directories.
 void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
 {
    std::vector<FilePath> children;
    Error error = directory.getChildren(children);
    if (error)
    {
+#ifndef _WIN32
+      if (!isPermissionError(error.getCode()))
+         LOG_ERROR(error);
+#else
       LOG_ERROR(error);
+#endif
       return;
    }
 
    for (const FilePath& child : children)
    {
-      if (child == ownPath || !isSweepableArtifact(child))
+      if (child == ownPath)
          continue;
 
 #ifndef _WIN32
-      if (isTempFile(child))
+      if (isPreparedClaimDirectory(child))
       {
-         if (isTempFileAbandoned(child))
+         if (!isTemporaryEntryAbandoned(child, kFileLockClaimTempPrefix))
+            continue;
+
+         // A prepared namespace is always an empty directory. Refuse files
+         // and symlinks, and use rmdir() so a nonempty or concurrently
+         // replaced entry is left untouched.
+         struct stat info;
+         if (::lstat(child.getAbsolutePathNative().c_str(), &info) == 0 &&
+             S_ISDIR(info.st_mode) &&
+             ::rmdir(child.getAbsolutePathNative().c_str()) == -1 &&
+             errno != ENOENT && errno != ENOTEMPTY && errno != EEXIST &&
+             !isPermissionError(errno))
          {
-            LOG("Removing abandoned lock temp file: " << child.getAbsolutePath());
-            unlinkBestEffort(child);
+            Error removeError = systemError(errno, ERROR_LOCATION);
+            removeError.addProperty("path", child);
+            LOG_ERROR(removeError);
          }
          continue;
       }
+#endif
 
+      if (!isSweepableArtifact(child))
+         continue;
+
+#ifndef _WIN32
       // A hard-linked owner file still referenced by a public lock path is a
       // live (or merely timed-out) lock's owner, not an orphan: the normal
       // takeover path removes both together. Only an orphan whose public path
@@ -853,6 +1192,13 @@ void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
       if (error || !inspection.exists || !inspection.stale)
          continue;
 
+#ifndef _WIN32
+      // A caller's public basename may look like an internal temporary. Only
+      // apply the temp lifecycle after proving the entry itself is stale.
+      if (isTempFile(child) && !isTempFileAbandoned(child))
+         continue;
+#endif
+
       LOG("Removing stale lock artifact: " << child.getAbsolutePath());
       RemoveResult result;
       error = removeIfSameIdentity(child, inspection.metadata, &result);
@@ -861,13 +1207,123 @@ void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
    }
 }
 
-// A private claim beside the lock elects one stale-lock contender. The claim
-// is held open so that its identity can be re-checked before acting on it.
+#ifndef _WIN32
+
+// Claims use the public basename inside their private directory, so every
+// entry there is a claim or an identity-preserving removal temporary. Sweep
+// stale entries whenever any lock in the directory is acquired.
+void sweepStaleClaims(int directoryDescriptor,
+                      const FilePath& directory,
+                      const LockMetadata& ownIdentity)
+{
+   // Acquire needs only search permission. Open a separate read descriptor
+   // for this best-effort sweep; a write-and-search-only namespace still
+   // remains fully usable for locking.
+   int flags = O_RDONLY | O_CLOEXEC;
+#ifdef O_DIRECTORY
+   flags |= O_DIRECTORY;
+#endif
+   int scanDescriptor = ::openat(directoryDescriptor, ".", flags);
+   if (scanDescriptor == -1)
+   {
+      if (!isPermissionError(errno))
+      {
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("path", directory);
+         LOG_ERROR(error);
+      }
+      return;
+   }
+
+   DIR* entries = ::fdopendir(scanDescriptor);
+   if (!entries)
+   {
+      int errorNumber = errno;
+      ::close(scanDescriptor);
+      Error error = systemError(errorNumber, ERROR_LOCATION);
+      error.addProperty("path", directory);
+      LOG_ERROR(error);
+      return;
+   }
+
+   int readError = 0;
+   for (;;)
+   {
+      errno = 0;
+      dirent* pEntry = ::readdir(entries);
+      if (!pEntry)
+      {
+         readError = errno;
+         break;
+      }
+
+      std::string filename = pEntry->d_name;
+      if (filename == "." || filename == "..")
+         continue;
+
+      FilePath child = directory.completePath(filename);
+      bool ownClaim = false;
+      Error error = hasExpectedIdentityAt(
+         directoryDescriptor,
+         child,
+         ownIdentity,
+         &ownClaim);
+      if (error || ownClaim)
+         continue;
+
+      LockInspection inspection;
+      error = inspectClaimFileAt(
+         directoryDescriptor,
+         child,
+         &inspection);
+      if (error || !inspection.exists || !inspection.stale)
+         continue;
+
+      // A public basename may itself look like an internal temp name. Only
+      // apply the temp lifecycle after identity and liveness checks, so an
+      // own or concurrently live claim can never be classified by its name.
+      if (hasPrefix(filename, kFileLockTempPrefix) &&
+          !isTemporaryEntryAbandonedAt(
+             directoryDescriptor,
+             child,
+             kFileLockTempPrefix))
+      {
+         continue;
+      }
+
+      RemoveResult result;
+      error = removeIfSameIdentityAt(
+         directoryDescriptor,
+         child,
+         inspection.metadata,
+         &result);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   ::closedir(entries);
+   if (readError != 0)
+   {
+      Error error = systemError(readError, ERROR_LOCATION);
+      error.addProperty("path", directory);
+      LOG_ERROR(error);
+   }
+}
+
+#endif
+
+// A claim in the private namespace elects one acquirer through removal and
+// publication. Both it and the namespace stay open so their identities can be
+// re-checked without traversing a replaced directory name.
 struct Claim
 {
+   ~Claim();
+
    FilePath path;
    int descriptor = -1;
+   int directoryDescriptor = -1;
    LockMetadata identity;
+   LockMetadata directoryIdentity;
 };
 
 void closeClaim(Claim* pClaim)
@@ -875,17 +1331,21 @@ void closeClaim(Claim* pClaim)
 #ifndef _WIN32
    if (pClaim->descriptor != -1)
       ::close(pClaim->descriptor);
+   if (pClaim->directoryDescriptor != -1)
+      ::close(pClaim->directoryDescriptor);
 #endif
    pClaim->descriptor = -1;
+   pClaim->directoryDescriptor = -1;
 }
 
 void releaseClaim(Claim* pClaim)
 {
 #ifndef _WIN32
-   if (pClaim->descriptor != -1)
+   if (pClaim->descriptor != -1 && pClaim->directoryDescriptor != -1)
    {
       RemoveResult result;
-      Error error = removeIfSameIdentity(
+      Error error = removeIfSameIdentityAt(
+         pClaim->directoryDescriptor,
          pClaim->path,
          pClaim->identity,
          &result);
@@ -896,20 +1356,55 @@ void releaseClaim(Claim* pClaim)
    closeClaim(pClaim);
 }
 
+Claim::~Claim()
+{
+   releaseClaim(this);
+}
+
+Error validateClaim(const Claim& claim, const FilePath& lockFilePath)
+{
+#ifndef _WIN32
+   bool namedDirectory = false;
+   Error error = hasExpectedIdentity(
+      claim.path.getParent(),
+      claim.directoryIdentity,
+      &namedDirectory);
+   if (error)
+      return error;
+   if (!namedDirectory)
+      return noLockAvailableError(lockFilePath);
+
+   bool held = false;
+   error = hasExpectedIdentityAt(
+      claim.directoryDescriptor,
+      claim.path,
+      claim.identity,
+      &held);
+   if (error)
+      return error;
+   if (!held)
+      return noLockAvailableError(lockFilePath);
+#endif
+   return Success();
+}
+
 Error claimLockFile(const FilePath& claimFilePath,
+                    int claimDirectoryDescriptor,
                     Claim* pClaim,
                     bool* pClaimed)
 {
    *pClaimed = false;
    pClaim->path = claimFilePath;
 #ifdef _WIN32
+   (void)claimDirectoryDescriptor;
    *pClaimed = true;
    return Success();
 #else
    for (int attempt = 0; attempt < 2; ++attempt)
    {
-      int descriptor = ::open(
-         claimFilePath.getAbsolutePathNative().c_str(),
+      int descriptor = ::openat(
+         claimDirectoryDescriptor,
+         claimFilePath.getFilename().c_str(),
          O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC,
          kLockFileMode);
       if (descriptor != -1)
@@ -944,7 +1439,10 @@ Error claimLockFile(const FilePath& claimFilePath,
       // Another contender's claim. Only a stale one (dead or expired owner)
       // may be replaced, and only if it is still the inode we inspected.
       LockInspection inspection;
-      Error error = inspectLockFile(claimFilePath, &inspection);
+      Error error = inspectClaimFileAt(
+         claimDirectoryDescriptor,
+         claimFilePath,
+         &inspection);
       if (error)
          return error;
       if (inspection.exists && !inspection.stale)
@@ -953,7 +1451,11 @@ Error claimLockFile(const FilePath& claimFilePath,
       if (inspection.exists)
       {
          RemoveResult result;
-         error = removeIfSameIdentity(claimFilePath, inspection.metadata, &result);
+         error = removeIfSameIdentityAt(
+            claimDirectoryDescriptor,
+            claimFilePath,
+            inspection.metadata,
+            &result);
          if (error)
             return error;
          if (result == RemoveResult::Mismatch)
@@ -965,19 +1467,1032 @@ Error claimLockFile(const FilePath& claimFilePath,
 #endif
 }
 
+Error verifyClaimDirectory(const FilePath& claimDirectory)
+{
+#ifndef _WIN32
+   struct stat info;
+   if (::lstat(claimDirectory.getAbsolutePathNative().c_str(), &info) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", claimDirectory);
+      return error;
+   }
+
+   if (!S_ISDIR(info.st_mode))
+   {
+      Error error = systemError(
+         boost::system::errc::not_a_directory,
+         ERROR_LOCATION);
+      error.addProperty("path", claimDirectory);
+      return error;
+   }
+#else
+   (void)claimDirectory;
+#endif
+   return Success();
+}
+
+bool isClaimDirectoryRetryError(const Error& error)
+{
+   if (error.getCode() == ENOENT)
+      return true;
+#ifdef ESTALE
+   return error.getCode() == ESTALE;
+#else
+   return false;
+#endif
+}
+
+#ifndef _WIN32
+
+#ifdef __linux__
+
+Error currentGroups(std::vector<gid_t>* pGroups)
+{
+   pGroups->clear();
+   pGroups->push_back(::getegid());
+
+   int count = ::getgroups(0, nullptr);
+   if (count == -1)
+      return systemCallError("getgroups", errno, ERROR_LOCATION);
+   if (count == 0)
+      return Success();
+
+   std::vector<gid_t> supplementary(static_cast<std::size_t>(count));
+   if (::getgroups(count, supplementary.data()) == -1)
+      return systemCallError("getgroups", errno, ERROR_LOCATION);
+   pGroups->insert(
+      pGroups->end(),
+      supplementary.begin(),
+      supplementary.end());
+   return Success();
+}
+
+bool containsGroup(const std::vector<gid_t>& groups, gid_t expected)
+{
+   for (gid_t group : groups)
+   {
+      if (group == expected)
+         return true;
+   }
+   return false;
+}
+
+Error currentModePermissions(const struct stat& parentInfo,
+                             mode_t* pPermissions)
+{
+   if (::geteuid() == parentInfo.st_uid)
+   {
+      *pPermissions = (parentInfo.st_mode >> 6) & 07;
+      return Success();
+   }
+
+   std::vector<gid_t> groups;
+   Error error = currentGroups(&groups);
+   if (error)
+      return error;
+   *pPermissions = containsGroup(groups, parentInfo.st_gid)
+      ? (parentInfo.st_mode >> 3) & 07
+      : parentInfo.st_mode & 07;
+   return Success();
+}
+
+#endif
+
+#endif
+
+#if defined(__APPLE__) || defined(__linux__)
+
+bool isAclUnsupported(int errorNumber)
+{
+   if (errorNumber == ENOTSUP)
+      return true;
+#if defined(EOPNOTSUPP) && EOPNOTSUPP != ENOTSUP
+   return errorNumber == EOPNOTSUPP;
+#else
+   return false;
+#endif
+}
+
+#endif
+
+#ifdef __linux__
+
+struct PosixAccessControlList
+{
+   mode_t owner = 0;
+   mode_t group = 0;
+   mode_t other = 0;
+   mode_t mask = 07;
+   std::map<uid_t, mode_t> users;
+   std::map<gid_t, mode_t> groups;
+};
+
+Error aclCallError(const char* operation,
+                   int errorNumber,
+                   const FilePath& path)
+{
+   Error error = systemCallError(operation, errorNumber, ERROR_LOCATION);
+   error.addProperty("path", path);
+   return error;
+}
+
+Error readAclPermissions(acl_entry_t entry, mode_t* pPermissions)
+{
+   *pPermissions = 0;
+   acl_permset_t permissionSet;
+   if (::acl_get_permset(entry, &permissionSet) == -1)
+      return systemCallError("acl_get_permset", errno, ERROR_LOCATION);
+
+   int result = ::acl_get_perm(permissionSet, ACL_READ);
+   if (result == -1)
+      return systemCallError("acl_get_perm", errno, ERROR_LOCATION);
+   if (result == 1)
+      *pPermissions |= 04;
+
+   result = ::acl_get_perm(permissionSet, ACL_WRITE);
+   if (result == -1)
+      return systemCallError("acl_get_perm", errno, ERROR_LOCATION);
+   if (result == 1)
+      *pPermissions |= 02;
+
+   result = ::acl_get_perm(permissionSet, ACL_EXECUTE);
+   if (result == -1)
+      return systemCallError("acl_get_perm", errno, ERROR_LOCATION);
+   if (result == 1)
+      *pPermissions |= 01;
+
+   return Success();
+}
+
+Error readPosixAccessControlList(const FilePath& directory,
+                                 PosixAccessControlList* pAccess)
+{
+   acl_t acl = ::acl_get_file(
+      directory.getAbsolutePathNative().c_str(),
+      ACL_TYPE_ACCESS);
+   if (!acl)
+      return aclCallError("acl_get_file", errno, directory);
+
+   bool hasMask = false;
+   acl_entry_t entry;
+   int entryId = ACL_FIRST_ENTRY;
+   for (;;)
+   {
+      int result = ::acl_get_entry(acl, entryId, &entry);
+      entryId = ACL_NEXT_ENTRY;
+      if (result == 0)
+         break;
+      if (result == -1)
+      {
+         int errorNumber = errno;
+         ::acl_free(acl);
+         return aclCallError("acl_get_entry", errorNumber, directory);
+      }
+
+      acl_tag_t tag;
+      if (::acl_get_tag_type(entry, &tag) == -1)
+      {
+         int errorNumber = errno;
+         ::acl_free(acl);
+         return aclCallError("acl_get_tag_type", errorNumber, directory);
+      }
+
+      mode_t permissions;
+      Error error = readAclPermissions(entry, &permissions);
+      if (error)
+      {
+         ::acl_free(acl);
+         error.addProperty("path", directory);
+         return error;
+      }
+
+      if (tag == ACL_USER_OBJ)
+      {
+         pAccess->owner = permissions;
+      }
+      else if (tag == ACL_GROUP_OBJ)
+      {
+         pAccess->group = permissions;
+      }
+      else if (tag == ACL_OTHER)
+      {
+         pAccess->other = permissions;
+      }
+      else if (tag == ACL_MASK)
+      {
+         pAccess->mask = permissions;
+         hasMask = true;
+      }
+      else if (tag == ACL_USER || tag == ACL_GROUP)
+      {
+         void* pQualifier = ::acl_get_qualifier(entry);
+         if (!pQualifier)
+         {
+            int errorNumber = errno;
+            ::acl_free(acl);
+            return aclCallError(
+               "acl_get_qualifier",
+               errorNumber,
+               directory);
+         }
+
+         if (tag == ACL_USER)
+         {
+            uid_t user = *static_cast<uid_t*>(pQualifier);
+            pAccess->users[user] = permissions;
+         }
+         else
+         {
+            gid_t group = *static_cast<gid_t*>(pQualifier);
+            pAccess->groups[group] = permissions;
+         }
+         ::acl_free(pQualifier);
+      }
+   }
+   ::acl_free(acl);
+
+   if (hasMask)
+   {
+      pAccess->group &= pAccess->mask;
+      for (auto& user : pAccess->users)
+         user.second &= pAccess->mask;
+      for (auto& group : pAccess->groups)
+         group.second &= pAccess->mask;
+   }
+
+   return Success();
+}
+
+mode_t currentUserPermissions(const PosixAccessControlList& access,
+                              const struct stat& parentInfo,
+                              const std::vector<gid_t>& processGroups)
+{
+   uid_t user = ::geteuid();
+   if (user == parentInfo.st_uid)
+      return access.owner;
+
+   auto namedUser = access.users.find(user);
+   if (namedUser != access.users.end())
+      return namedUser->second;
+
+   bool matchedGroup = false;
+   mode_t permissions = 0;
+   if (containsGroup(processGroups, parentInfo.st_gid))
+   {
+      matchedGroup = true;
+      permissions |= access.group;
+   }
+   for (const auto& namedGroup : access.groups)
+   {
+      if (containsGroup(processGroups, namedGroup.first))
+      {
+         matchedGroup = true;
+         permissions |= namedGroup.second;
+      }
+   }
+
+   return matchedGroup ? permissions : access.other;
+}
+
+Error addPosixAclEntry(acl_t* pAcl,
+                       acl_tag_t tag,
+                       const void* pQualifier,
+                       mode_t permissions)
+{
+   acl_entry_t entry;
+   if (::acl_create_entry(pAcl, &entry) == -1)
+      return systemCallError("acl_create_entry", errno, ERROR_LOCATION);
+   if (::acl_set_tag_type(entry, tag) == -1)
+      return systemCallError("acl_set_tag_type", errno, ERROR_LOCATION);
+   if (pQualifier && ::acl_set_qualifier(entry, pQualifier) == -1)
+      return systemCallError("acl_set_qualifier", errno, ERROR_LOCATION);
+
+   acl_permset_t permissionSet;
+   if (::acl_get_permset(entry, &permissionSet) == -1)
+      return systemCallError("acl_get_permset", errno, ERROR_LOCATION);
+   if (::acl_clear_perms(permissionSet) == -1)
+      return systemCallError("acl_clear_perms", errno, ERROR_LOCATION);
+   if ((permissions & 04) &&
+       ::acl_add_perm(permissionSet, ACL_READ) == -1)
+   {
+      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+   }
+   if ((permissions & 02) &&
+       ::acl_add_perm(permissionSet, ACL_WRITE) == -1)
+   {
+      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+   }
+   if ((permissions & 01) &&
+       ::acl_add_perm(permissionSet, ACL_EXECUTE) == -1)
+   {
+      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+Error applyTranslatedPosixAcl(const FilePath& parent,
+                              const struct stat& parentInfo,
+                              const struct stat& preparedInfo,
+                              int descriptor,
+                              bool* pApplied)
+{
+   *pApplied = false;
+   PosixAccessControlList parentAccess;
+   Error error = readPosixAccessControlList(parent, &parentAccess);
+   if (error && isAclUnsupported(error.getCode()))
+      return Success();
+   if (error)
+      return error;
+
+   std::vector<gid_t> processGroups;
+   error = currentGroups(&processGroups);
+   if (error)
+      return error;
+
+   uid_t childOwner = ::geteuid();
+   gid_t childGroup = preparedInfo.st_gid;
+   mode_t childOwnerPermissions = currentUserPermissions(
+      parentAccess,
+      parentInfo,
+      processGroups);
+   // The successful mkdir proved these permissions at creation time. Keep
+   // the creator able to publish and later retire claims if the parent ACL
+   // changed while its metadata was being copied.
+   childOwnerPermissions |= 03;
+
+   std::map<uid_t, mode_t> namedUsers = parentAccess.users;
+   namedUsers.erase(childOwner);
+   if (parentInfo.st_uid != childOwner)
+      namedUsers[parentInfo.st_uid] |= parentAccess.owner;
+
+   std::map<gid_t, mode_t> namedGroups = parentAccess.groups;
+   mode_t childGroupPermissions = 0;
+   bool childGroupNamed = false;
+   if (childGroup == parentInfo.st_gid)
+   {
+      childGroupPermissions |= parentAccess.group;
+      childGroupNamed = true;
+   }
+   auto namedChildGroup = namedGroups.find(childGroup);
+   if (namedChildGroup != namedGroups.end())
+   {
+      childGroupPermissions |= namedChildGroup->second;
+      childGroupNamed = true;
+      namedGroups.erase(namedChildGroup);
+   }
+
+   if (!childGroupNamed)
+   {
+      // A changed owning group cannot exactly preserve POSIX ACL fallback
+      // semantics. Use only permissions common to "other" and every parent
+      // group entry, so membership in the child's group never widens access.
+      childGroupPermissions = parentAccess.other & parentAccess.group;
+      for (const auto& namedGroup : parentAccess.groups)
+         childGroupPermissions &= namedGroup.second;
+   }
+
+   if (parentInfo.st_gid != childGroup)
+      namedGroups[parentInfo.st_gid] |= parentAccess.group;
+
+   acl_t childAcl = ::acl_init(
+      static_cast<int>(
+         4 + namedUsers.size() + namedGroups.size()));
+   if (!childAcl)
+      return aclCallError("acl_init", errno, parent);
+
+   error = addPosixAclEntry(
+      &childAcl,
+      ACL_USER_OBJ,
+      nullptr,
+      childOwnerPermissions);
+   for (const auto& namedUser : namedUsers)
+   {
+      if (error)
+         break;
+      error = addPosixAclEntry(
+         &childAcl,
+         ACL_USER,
+         &namedUser.first,
+         namedUser.second);
+   }
+   if (!error)
+   {
+      error = addPosixAclEntry(
+         &childAcl,
+         ACL_GROUP_OBJ,
+         nullptr,
+         childGroupPermissions);
+   }
+   for (const auto& namedGroup : namedGroups)
+   {
+      if (error)
+         break;
+      error = addPosixAclEntry(
+         &childAcl,
+         ACL_GROUP,
+         &namedGroup.first,
+         namedGroup.second);
+   }
+   if (!error)
+   {
+      error = addPosixAclEntry(
+         &childAcl,
+         ACL_OTHER,
+         nullptr,
+         parentAccess.other);
+   }
+   if (!error && (!namedUsers.empty() || !namedGroups.empty()) &&
+       ::acl_calc_mask(&childAcl) == -1)
+   {
+      error = systemCallError("acl_calc_mask", errno, ERROR_LOCATION);
+   }
+   if (!error && ::acl_valid(childAcl) == -1)
+      error = systemCallError("acl_valid", errno, ERROR_LOCATION);
+   if (!error && ::acl_set_fd(descriptor, childAcl) == -1)
+   {
+      int errorNumber = errno;
+      if (!isAclUnsupported(errorNumber))
+         error = systemCallError("acl_set_fd", errorNumber, ERROR_LOCATION);
+   }
+   else if (!error)
+   {
+      *pApplied = true;
+   }
+
+   ::acl_free(childAcl);
+   if (error)
+      error.addProperty("path", parent);
+   return error;
+}
+
+#endif
+
+#ifdef __APPLE__
+
+Error effectiveDirectoryPermissions(const FilePath& directory,
+                                    mode_t* pPermissions)
+{
+   *pPermissions = 0;
+   struct Permission
+   {
+      int accessMode;
+      mode_t mode;
+   };
+   const Permission permissions[] = {
+      {R_OK, 04},
+      {W_OK, 02},
+      {X_OK, 01}
+   };
+
+   for (const Permission& permission : permissions)
+   {
+      if (::faccessat(
+             AT_FDCWD,
+             directory.getAbsolutePathNative().c_str(),
+             permission.accessMode,
+             AT_EACCESS) == 0)
+      {
+         *pPermissions |= permission.mode;
+      }
+      else if (!isPermissionError(errno))
+      {
+         Error error = systemCallError("faccessat", errno, ERROR_LOCATION);
+         error.addProperty("path", directory);
+         return error;
+      }
+   }
+
+   return Success();
+}
+
+Error addDarwinAclEntry(acl_t* pAcl,
+                        const uuid_t identity,
+                        mode_t permissions)
+{
+   if (permissions == 0)
+      return Success();
+
+   if (!*pAcl)
+   {
+      *pAcl = ::acl_init(1);
+      if (!*pAcl)
+         return systemCallError("acl_init", errno, ERROR_LOCATION);
+   }
+
+   acl_entry_t entry;
+   if (::acl_create_entry(pAcl, &entry) == -1)
+      return systemCallError("acl_create_entry", errno, ERROR_LOCATION);
+   if (::acl_set_tag_type(entry, ACL_EXTENDED_ALLOW) == -1)
+      return systemCallError("acl_set_tag_type", errno, ERROR_LOCATION);
+   if (::acl_set_qualifier(entry, identity) == -1)
+      return systemCallError("acl_set_qualifier", errno, ERROR_LOCATION);
+
+   acl_permset_t permissionSet;
+   if (::acl_get_permset(entry, &permissionSet) == -1)
+      return systemCallError("acl_get_permset", errno, ERROR_LOCATION);
+   if (::acl_clear_perms(permissionSet) == -1)
+      return systemCallError("acl_clear_perms", errno, ERROR_LOCATION);
+
+   if ((permissions & 04) &&
+       ::acl_add_perm(permissionSet, ACL_LIST_DIRECTORY) == -1)
+   {
+      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+   }
+   if (permissions & 02)
+   {
+      const acl_perm_t writePermissions[] = {
+         ACL_ADD_FILE,
+         ACL_ADD_SUBDIRECTORY,
+         ACL_DELETE_CHILD
+      };
+      for (acl_perm_t permission : writePermissions)
+      {
+         if (::acl_add_perm(permissionSet, permission) == -1)
+            return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+      }
+   }
+   if ((permissions & 01) &&
+       ::acl_add_perm(permissionSet, ACL_SEARCH) == -1)
+   {
+      return systemCallError("acl_add_perm", errno, ERROR_LOCATION);
+   }
+
+   acl_flagset_t flagSet;
+   if (::acl_get_flagset_np(entry, &flagSet) == -1)
+      return systemCallError("acl_get_flagset_np", errno, ERROR_LOCATION);
+   if (::acl_clear_flags_np(flagSet) == -1)
+      return systemCallError("acl_clear_flags_np", errno, ERROR_LOCATION);
+   return Success();
+}
+
+Error translateDarwinAcl(const FilePath& parent,
+                         const struct stat& parentInfo,
+                         const struct stat& preparedInfo,
+                         bool groupAligned,
+                         acl_t* pAcl)
+{
+   if (parentInfo.st_uid != preparedInfo.st_uid)
+   {
+      uuid_t ownerIdentity;
+      int status = ::mbr_uid_to_uuid(parentInfo.st_uid, ownerIdentity);
+      if (status != 0)
+         return systemCallError("mbr_uid_to_uuid", status, ERROR_LOCATION);
+
+      Error error = addDarwinAclEntry(
+         pAcl,
+         ownerIdentity,
+         (parentInfo.st_mode >> 6) & 07);
+      if (error)
+         return error;
+   }
+
+   if (!groupAligned)
+   {
+      uuid_t groupIdentity;
+      int status = ::mbr_gid_to_uuid(parentInfo.st_gid, groupIdentity);
+      if (status != 0)
+         return systemCallError("mbr_gid_to_uuid", status, ERROR_LOCATION);
+
+      Error error = addDarwinAclEntry(
+         pAcl,
+         groupIdentity,
+         (parentInfo.st_mode >> 3) & 07);
+      if (error)
+         return error;
+   }
+
+   if (*pAcl && ::acl_valid(*pAcl) == -1)
+      return systemCallError("acl_valid", errno, ERROR_LOCATION);
+   return Success();
+}
+
+#endif
+
+Error applyClaimDirectoryPermissions(const FilePath& parent,
+                                     const struct stat& parentInfo,
+                                     struct stat preparedInfo,
+                                     int descriptor)
+{
+#if defined(__APPLE__)
+   acl_t parentAcl = ::acl_get_file(
+      parent.getAbsolutePathNative().c_str(),
+      ACL_TYPE_EXTENDED);
+   if (!parentAcl && errno != ENOENT && !isAclUnsupported(errno))
+   {
+      Error error = systemCallError("acl_get_file", errno, ERROR_LOCATION);
+      error.addProperty("path", parent);
+      return error;
+   }
+#endif
+
+   bool groupAligned = preparedInfo.st_gid == parentInfo.st_gid;
+   bool chownDenied = false;
+   if (!groupAligned)
+   {
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+      chownDenied = s_forceClaimDirectoryChownFailure;
+#endif
+      if (!chownDenied &&
+          ::fchown(
+             descriptor,
+             static_cast<uid_t>(-1),
+             parentInfo.st_gid) == 0)
+      {
+         preparedInfo.st_gid = parentInfo.st_gid;
+         groupAligned = true;
+      }
+      else if (!chownDenied && isPermissionError(errno))
+      {
+         chownDenied = true;
+      }
+      else if (!chownDenied)
+      {
+         int errorNumber = errno;
+#if defined(__APPLE__)
+         if (parentAcl)
+            ::acl_free(parentAcl);
+#endif
+         Error error = systemError(errorNumber, ERROR_LOCATION);
+         error.addProperty("path", parent);
+         return error;
+      }
+   }
+
+#ifdef __linux__
+   bool aclApplied = false;
+   Error error = applyTranslatedPosixAcl(
+      parent,
+      parentInfo,
+      preparedInfo,
+      descriptor,
+      &aclApplied);
+   if (error)
+      return error;
+
+   mode_t mode;
+   if (aclApplied)
+   {
+      struct stat appliedInfo;
+      if (::fstat(descriptor, &appliedInfo) == -1)
+      {
+         Error statError = systemCallError("fstat", errno, ERROR_LOCATION);
+         statError.addProperty("path", parent);
+         return statError;
+      }
+      mode = (appliedInfo.st_mode & 0777) | (parentInfo.st_mode & S_ISGID);
+   }
+   else
+   {
+      mode_t ownerPermissions;
+      Error modeError = currentModePermissions(
+         parentInfo,
+         &ownerPermissions);
+      if (modeError)
+         return modeError;
+      ownerPermissions |= 03;
+      mode_t groupPermissions = groupAligned
+         ? (parentInfo.st_mode >> 3) & 07
+         : ((parentInfo.st_mode >> 3) & 07) &
+              (parentInfo.st_mode & 07);
+      mode = (parentInfo.st_mode & S_ISGID) |
+             (ownerPermissions << 6) |
+             (groupPermissions << 3) |
+             (parentInfo.st_mode & 07);
+   }
+
+   if (::fchmod(descriptor, mode) == -1)
+   {
+      Error chmodError = systemCallError("fchmod", errno, ERROR_LOCATION);
+      chmodError.addProperty("path", parent);
+      return chmodError;
+   }
+#elif defined(__APPLE__)
+   mode_t ownerPermissions;
+   Error error = effectiveDirectoryPermissions(parent, &ownerPermissions);
+   if (error)
+   {
+      if (parentAcl)
+         ::acl_free(parentAcl);
+      return error;
+   }
+   // mkdir() already proved write and search access. Preserve those rights
+   // if the parent policy changes while its ACL and mode are translated.
+   ownerPermissions |= 03;
+
+   error = translateDarwinAcl(
+      parent,
+      parentInfo,
+      preparedInfo,
+      groupAligned,
+      &parentAcl);
+   if (error)
+   {
+      if (parentAcl)
+         ::acl_free(parentAcl);
+      error.addProperty("path", parent);
+      return error;
+   }
+
+   if (parentAcl)
+   {
+      int status = ::acl_set_fd(descriptor, parentAcl);
+      int errorNumber = status == -1 ? errno : 0;
+      ::acl_free(parentAcl);
+      if (status == -1)
+      {
+         if (isAclUnsupported(errorNumber))
+            status = 0;
+      }
+      if (status == -1)
+      {
+         Error error = systemCallError(
+            "acl_set_fd",
+            errorNumber,
+            ERROR_LOCATION);
+         error.addProperty("path", parent);
+         return error;
+      }
+   }
+
+   mode_t groupPermissions = groupAligned
+      ? (parentInfo.st_mode >> 3) & 07
+      : ((parentInfo.st_mode >> 3) & 07) &
+           (parentInfo.st_mode & 07);
+   mode_t mode = (parentInfo.st_mode & S_ISGID) |
+                 (ownerPermissions << 6) |
+                 (groupPermissions << 3) |
+                 (parentInfo.st_mode & 07);
+   if (::fchmod(descriptor, mode) == -1)
+   {
+      Error chmodError = systemCallError("fchmod", errno, ERROR_LOCATION);
+      chmodError.addProperty("path", parent);
+      return chmodError;
+   }
+#else
+   if (!groupAligned)
+   {
+      Error error = systemError(EPERM, ERROR_LOCATION);
+      error.addProperty("path", parent);
+      return error;
+   }
+   mode_t mode = parentInfo.st_mode & (S_ISGID | 0777);
+   if (::fchmod(descriptor, mode) == -1)
+   {
+      Error error = systemCallError("fchmod", errno, ERROR_LOCATION);
+      error.addProperty("path", parent);
+      return error;
+   }
+#endif
+
+   return Success();
+}
+
+Error ensureClaimDirectory(const FilePath& lockFilePath,
+                           const FilePath& claimDirectory)
+{
+#ifndef _WIN32
+   struct stat existingInfo;
+   if (::lstat(claimDirectory.getAbsolutePathNative().c_str(),
+               &existingInfo) == 0)
+   {
+      return verifyClaimDirectory(claimDirectory);
+   }
+   else if (errno != ENOENT)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", claimDirectory);
+      return error;
+   }
+
+   struct stat parentInfo;
+   if (::stat(
+          lockFilePath.getParent().getAbsolutePathNative().c_str(),
+          &parentInfo) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", lockFilePath.getParent());
+      return error;
+   }
+
+   FilePath preparedDirectory;
+   for (int attempt = 0; attempt < 3; ++attempt)
+   {
+      preparedDirectory = lockFilePath.getParent().completePath(
+         fmt::format("{}-{}-{}",
+                     kFileLockClaimTempPrefix,
+                     pidString(),
+                     system::generateUuid(false)));
+      if (::mkdir(preparedDirectory.getAbsolutePathNative().c_str(), 0700) == 0)
+         break;
+      if (errno != EEXIST)
+      {
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("path", preparedDirectory);
+         return error;
+      }
+      preparedDirectory = FilePath();
+   }
+
+   if (preparedDirectory.isEmpty())
+   {
+      Error error = systemError(
+         boost::system::errc::file_exists,
+         ERROR_LOCATION);
+      error.addProperty("path", claimDirectory);
+      return error;
+   }
+
+   int flags = O_RDONLY | O_CLOEXEC;
+#ifdef O_DIRECTORY
+   flags |= O_DIRECTORY;
+#endif
+#ifdef O_NOFOLLOW
+   flags |= O_NOFOLLOW;
+#endif
+   int descriptor = ::open(
+      preparedDirectory.getAbsolutePathNative().c_str(),
+      flags);
+   if (descriptor == -1)
+   {
+      int errorNumber = errno;
+      ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
+      Error error = systemError(errorNumber, ERROR_LOCATION);
+      error.addProperty("path", preparedDirectory);
+      return error;
+   }
+
+   struct stat preparedInfo;
+   if (::fstat(descriptor, &preparedInfo) == -1)
+   {
+      int errorNumber = errno;
+      ::close(descriptor);
+      ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
+      Error error = systemError(errorNumber, ERROR_LOCATION);
+      error.addProperty("path", preparedDirectory);
+      return error;
+   }
+   if (!S_ISDIR(preparedInfo.st_mode))
+   {
+      ::close(descriptor);
+      ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
+      Error error = systemError(
+         boost::system::errc::not_a_directory,
+         ERROR_LOCATION);
+      error.addProperty("path", preparedDirectory);
+      return error;
+   }
+
+   // The prepared directory stays private until it has the parent's access
+   // policy. Sticky is deliberately omitted: peers allowed to publish in the
+   // parent must also be able to retire one another's stale claims here.
+   Error permissionError = applyClaimDirectoryPermissions(
+      lockFilePath.getParent(),
+      parentInfo,
+      preparedInfo,
+      descriptor);
+   if (permissionError)
+   {
+      ::close(descriptor);
+      ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
+      permissionError.addProperty("path", preparedDirectory);
+      return permissionError;
+   }
+
+   int status = ::rename(
+      preparedDirectory.getAbsolutePathNative().c_str(),
+      claimDirectory.getAbsolutePathNative().c_str());
+   int renameError = status == -1 ? errno : 0;
+   ::close(descriptor);
+
+   if (status == -1)
+   {
+      ::rmdir(preparedDirectory.getAbsolutePathNative().c_str());
+      if (renameError != EEXIST && renameError != ENOTEMPTY)
+      {
+         Error error = systemError(renameError, ERROR_LOCATION);
+         error.addProperty("path", claimDirectory);
+         return error;
+      }
+   }
+   return verifyClaimDirectory(claimDirectory);
+#else
+   (void)lockFilePath;
+   (void)claimDirectory;
+   return Success();
+#endif
+}
+
 // Takes the claim for a public lock path. *pHeld is false when another
 // contender holds it (or replaced ours after judging it stale, e.g. after a
 // long stall in a load-balanced deployment); the caller must then leave the
 // public path alone.
-Error acquireClaim(const FilePath& lockFilePath, Claim* pClaim, bool* pHeld)
+Error acquireClaimAt(const FilePath& lockFilePath,
+                     const FilePath& claimFilePath,
+                     bool sweepClaims,
+                     Claim* pClaim,
+                     bool* pHeld)
 {
    *pHeld = false;
-   Error error = claimLockFile(claimPathForLock(lockFilePath), pClaim, pHeld);
-   if (error || !*pHeld)
-      return error;
+   Error error;
 
 #ifndef _WIN32
-   error = hasExpectedIdentity(pClaim->path, pClaim->identity, pHeld);
+   int claimDirectoryDescriptor = -1;
+   for (;;)
+   {
+      int flags = O_CLOEXEC;
+#ifdef O_SEARCH
+      flags |= O_SEARCH;
+#elif defined(O_PATH)
+      flags |= O_PATH;
+#else
+      flags |= O_RDONLY;
+#endif
+#ifdef O_DIRECTORY
+      flags |= O_DIRECTORY;
+#endif
+#ifdef O_NOFOLLOW
+      flags |= O_NOFOLLOW;
+#endif
+      claimDirectoryDescriptor = ::open(
+         claimFilePath.getParent().getAbsolutePathNative().c_str(),
+         flags);
+      if (claimDirectoryDescriptor == -1)
+      {
+         error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("path", claimFilePath.getParent());
+         return error;
+      }
+
+      struct stat openedInfo;
+      struct stat namedInfo;
+      if (::fstat(claimDirectoryDescriptor, &openedInfo) == -1 ||
+          ::lstat(claimFilePath.getParent().getAbsolutePathNative().c_str(),
+                  &namedInfo) == -1)
+      {
+         int errorNumber = errno;
+         ::close(claimDirectoryDescriptor);
+         error = systemError(errorNumber, ERROR_LOCATION);
+         error.addProperty("path", claimFilePath.getParent());
+         return error;
+      }
+
+      if (!S_ISDIR(openedInfo.st_mode) || !S_ISDIR(namedInfo.st_mode))
+      {
+         ::close(claimDirectoryDescriptor);
+         error = systemError(
+            boost::system::errc::not_a_directory,
+            ERROR_LOCATION);
+         error.addProperty("path", claimFilePath.getParent());
+         return error;
+      }
+
+      if (openedInfo.st_dev == namedInfo.st_dev &&
+          openedInfo.st_ino == namedInfo.st_ino)
+      {
+         break;
+      }
+
+      ::close(claimDirectoryDescriptor);
+      claimDirectoryDescriptor = -1;
+   }
+#else
+   int claimDirectoryDescriptor = -1;
+#endif
+
+#ifndef _WIN32
+   pClaim->directoryDescriptor = claimDirectoryDescriptor;
+   error = descriptorIdentity(
+      claimDirectoryDescriptor,
+      &pClaim->directoryIdentity);
+   if (error)
+   {
+      closeClaim(pClaim);
+      return error;
+   }
+   pClaim->directoryIdentity.identityFollowsSymlink = false;
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_beforeClaim)
+      s_beforeClaim(claimFilePath);
+#endif
+#endif
+
+   error = claimLockFile(
+      claimFilePath,
+      claimDirectoryDescriptor,
+      pClaim,
+      pHeld);
+   if (error || !*pHeld)
+   {
+      closeClaim(pClaim);
+      return error;
+   }
+
+#ifndef _WIN32
+   error = validateClaim(*pClaim, lockFilePath);
+   *pHeld = !error;
    if (error || !*pHeld)
    {
       // Identity-checked, so a contender's replacement is left in place but
@@ -985,25 +2500,102 @@ Error acquireClaim(const FilePath& lockFilePath, Claim* pClaim, bool* pHeld)
       *pHeld = false;
       releaseClaim(pClaim);
    }
+
+   if (!error && *pHeld && sweepClaims)
+   {
+      sweepStaleClaims(
+         pClaim->directoryDescriptor,
+         claimFilePath.getParent(),
+         pClaim->identity);
+   }
 #endif
    return error;
+}
+
+Error acquireClaim(const FilePath& lockFilePath, Claim* pClaim, bool* pHeld)
+{
+   FilePath claimFilePath = claimPathForLock(lockFilePath);
+#ifndef _WIN32
+   bool retiredInaccessibleDirectory = false;
+#endif
+   for (int attempt = 0; attempt < 16; ++attempt)
+   {
+      Error error = ensureClaimDirectory(
+         lockFilePath,
+         claimFilePath.getParent());
+      if (error)
+      {
+         if (isClaimDirectoryRetryError(error))
+            continue;
+         return error;
+      }
+
+      error = acquireClaimAt(
+         lockFilePath,
+         claimFilePath,
+         true,
+         pClaim,
+         pHeld);
+#ifndef _WIN32
+      if (error &&
+          isPermissionError(error.getCode()) &&
+          !retiredInaccessibleDirectory)
+      {
+         // The parent policy may have authorized this contender after an
+         // older user created the namespace. If no acquisition is active,
+         // retire that empty namespace and rebuild it from the current ACL.
+         int status = ::rmdir(
+            claimFilePath.getParent().getAbsolutePathNative().c_str());
+         if (status == 0 || errno == ENOENT)
+         {
+            retiredInaccessibleDirectory = true;
+            closeClaim(pClaim);
+            continue;
+         }
+      }
+#endif
+      if (!error || !isClaimDirectoryRetryError(error))
+         return error;
+
+      closeClaim(pClaim);
+   }
+
+   Error error = systemError(boost::system::errc::resource_unavailable_try_again,
+                             ERROR_LOCATION);
+   error.addProperty("path", claimFilePath.getParent());
+   return error;
+}
+
+Error acquireLegacyClaim(const FilePath& lockFilePath,
+                         Claim* pClaim,
+                         bool* pHeld)
+{
+   return acquireClaimAt(
+      lockFilePath,
+      legacyClaimPathForLock(lockFilePath),
+      false,
+      pClaim,
+      pHeld);
+}
+
+Error validateClaims(const Claim& legacyClaim,
+                     const Claim& claim,
+                     const FilePath& lockFilePath)
+{
+   Error error = validateClaim(legacyClaim, lockFilePath);
+   if (error)
+      return error;
+   return validateClaim(claim, lockFilePath);
 }
 
 Error removeLockFile(const FilePath& lockFilePath,
                      const LockMetadata& expectedMetadata)
 {
-   Claim claim;
-   bool held = false;
-   Error error = acquireClaim(lockFilePath, &claim, &held);
-   if (error)
-      return error;
-   if (!held)
-      return noLockAvailableError(lockFilePath);
-
+   // The caller holds the claim through both this removal and publication.
    // An inspection is tied to the inode it read. If another contender has
    // already replaced that inode, the replacement is left untouched.
    RemoveResult result;
-   error = removeIfSameIdentity(lockFilePath, expectedMetadata, &result);
+   Error error = removeIfSameIdentity(lockFilePath, expectedMetadata, &result);
    if (!error && result == RemoveResult::Mismatch)
       error = noLockAvailableError(lockFilePath);
 
@@ -1018,7 +2610,6 @@ Error removeLockFile(const FilePath& lockFilePath,
          LOG_ERROR(ownerError);
    }
 
-   releaseClaim(&claim);
    return error;
 }
 
@@ -1089,6 +2680,8 @@ Error releaseLockFiles(const FilePath& ownerFilePath,
 }
 
 Error writeLockFile(const FilePath& lockFilePath,
+                    const Claim& legacyClaim,
+                    const Claim& claim,
                     std::string* pToken,
                     FilePath* pOwnerFilePath,
                     int* pDescriptor)
@@ -1103,6 +2696,16 @@ Error writeLockFile(const FilePath& lockFilePath,
       &proxyDescriptor);
    if (error)
       return error;
+
+   // Preparing the private inode may have stalled beyond the claim's lease.
+   // Check again immediately before publishing through the public name.
+   error = validateClaims(legacyClaim, claim, lockFilePath);
+   if (error)
+   {
+      ::close(proxyDescriptor);
+      unlinkBestEffort(proxyPath);
+      return error;
+   }
 
    int status;
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
@@ -1178,6 +2781,14 @@ Error writeLockFile(const FilePath& lockFilePath,
    LOG((FileLock::useSymlinks() ? "symlink" : "link")
        << "() failed (errno " << linkError << "); falling back to O_EXCL: "
        << lockFilePath.getAbsolutePath());
+   error = validateClaims(legacyClaim, claim, lockFilePath);
+   if (error)
+   {
+      ::close(proxyDescriptor);
+      unlinkBestEffort(proxyPath);
+      return error;
+   }
+
    int descriptor = ::open(
       lockFilePath.getAbsolutePathNative().c_str(),
       O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC,
@@ -1239,6 +2850,8 @@ Error writeLockFile(const FilePath& lockFilePath,
 #else
 
 Error writeLockFile(const FilePath& lockFilePath,
+                    const Claim&,
+                    const Claim&,
                     std::string*,
                     FilePath*,
                     int*)
@@ -1426,9 +3039,8 @@ LockRegistration& lockRegistration()
 {
    // Lock objects can be destroyed during static shutdown. Keep the registry
    // alive for the lifetime of the process so those destructors remain safe.
-   static LockRegistration* pInstance =
-      file_lock::ForkAwareRegistry::publish(new LockRegistration());
-   return *pInstance;
+   static LockRegistration* pInstance = nullptr;
+   return file_lock::ForkAwareRegistry::instance(pInstance);
 }
 
 } // anonymous namespace
@@ -1489,6 +3101,12 @@ FilePath LinkBasedFileLock::claimPathForTesting(const FilePath& lockFilePath)
    return claimPathForLock(lockFilePath);
 }
 
+FilePath LinkBasedFileLock::legacyClaimPathForTesting(
+   const FilePath& lockFilePath)
+{
+   return legacyClaimPathForLock(lockFilePath);
+}
+
 void LinkBasedFileLock::setBeforeReleaseForTesting(const boost::function<void()>& callback)
 {
    s_beforeRelease = callback;
@@ -1502,6 +3120,24 @@ void LinkBasedFileLock::setBeforeRefreshForTesting(const boost::function<void()>
 void LinkBasedFileLock::setBeforeWriteForTesting(const boost::function<Error(int)>& callback)
 {
    s_beforeWrite = callback;
+}
+
+void LinkBasedFileLock::setBeforeClaimForTesting(
+   const boost::function<void(const FilePath&)>& callback)
+{
+   s_beforeClaim = callback;
+}
+
+void LinkBasedFileLock::setAfterRenameForTesting(
+   const boost::function<void(const FilePath&)>& callback)
+{
+   s_afterRename = callback;
+}
+
+void LinkBasedFileLock::setForceClaimDirectoryChownFailureForTesting(
+   bool forceFailure)
+{
+   s_forceClaimDirectoryChownFailure = forceFailure;
 }
 
 void LinkBasedFileLock::setForceFallbackForTesting(bool forceFallback)
@@ -1529,6 +3165,15 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    if (pImpl_->descriptor != -1)
       return noLockAvailableError(lockFilePath);
 
+   if (lockFilePath.getFilename() == kFileLockClaimDirectory)
+   {
+      Error error = systemError(
+         boost::system::errc::invalid_argument,
+         ERROR_LOCATION);
+      error.addProperty("lock-file", lockFilePath);
+      return error;
+   }
+
    Error error = lockFilePath.getParent().ensureDirectory();
    if (error)
       return error;
@@ -1538,14 +3183,42 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    if (error)
       return error;
 
+   if (inspection.exists && !inspection.stale)
+      return noLockAvailableError(lockFilePath);
+
+   // Take the legacy hashed claim first so deployed versions serialize with
+   // this acquisition during a rolling upgrade. The exact-name claim then
+   // adds the filesystem's case and Unicode alias semantics. Keep both until
+   // publication has been validated; RAII covers every failure.
+   Claim legacyClaim;
+   bool legacyHeld = false;
+   error = acquireLegacyClaim(lockFilePath, &legacyClaim, &legacyHeld);
+   if (error)
+      return error;
+   if (!legacyHeld)
+      return noLockAvailableError(lockFilePath);
+
+   Claim claim;
+   bool held = false;
+   error = acquireClaim(lockFilePath, &claim, &held);
+   if (error)
+      return error;
+   if (!held)
+      return noLockAvailableError(lockFilePath);
+
+   inspection = LockInspection();
+   error = inspectLockFile(lockFilePath, &inspection);
+   if (error)
+      return error;
+   if (inspection.exists && !inspection.stale)
+      return noLockAvailableError(lockFilePath);
+
+   error = validateClaims(legacyClaim, claim, lockFilePath);
+   if (error)
+      return error;
+
    if (inspection.exists)
    {
-      if (!inspection.stale)
-      {
-         LOG("No lock available: " << lockFilePath.getAbsolutePath());
-         return noLockAvailableError(lockFilePath);
-      }
-
       LOG("Removing stale lockfile: " << lockFilePath.getAbsolutePath());
       error = removeLockFile(lockFilePath, inspection.metadata);
       if (error)
@@ -1562,6 +3235,8 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    int descriptor = -1;
    error = writeLockFile(
       lockFilePath,
+      legacyClaim,
+      claim,
       &token,
       &ownerFilePath,
       &descriptor);
@@ -1576,6 +3251,21 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
       }
 
       error.addProperty("lock-file", lockFilePath);
+      return error;
+   }
+
+   // A stalled publication can finish after another contender has reclaimed
+   // its claim. Retire only the inode we hold open in that case; the reusable
+   // public name may already belong to the successor.
+   error = validateClaims(legacyClaim, claim, lockFilePath);
+   if (error)
+   {
+#ifndef _WIN32
+      Error releaseError = releaseLockFiles(ownerFilePath, descriptor);
+      if (releaseError)
+         LOG_ERROR(releaseError);
+      ::close(descriptor);
+#endif
       return error;
    }
 
@@ -1609,6 +3299,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    pImpl_->processId = system::currentProcessId();
    pImpl_->state = state;
 
+   releaseClaim(&claim);
    LOG("Acquired lock: " << lockFilePath.getAbsolutePath());
    sweepStaleArtifacts(lockFilePath.getParent(), ownerFilePath);
    return Success();

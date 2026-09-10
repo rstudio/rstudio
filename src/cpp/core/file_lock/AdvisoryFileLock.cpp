@@ -230,9 +230,8 @@ AdvisoryLockRegistration& lockRegistration()
 {
    // Lock objects can be destroyed during static shutdown. Keep the registry
    // alive for the lifetime of the process so those destructors remain safe.
-   static AdvisoryLockRegistration* pInstance =
-      file_lock::ForkAwareRegistry::publish(new AdvisoryLockRegistration());
-   return *pInstance;
+   static AdvisoryLockRegistration* pInstance = nullptr;
+   return file_lock::ForkAwareRegistry::instance(pInstance);
 }
 
 // Same-process bookkeeping uses two keys. The path key names the file the

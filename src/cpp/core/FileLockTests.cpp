@@ -23,7 +23,15 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifdef __APPLE__
+# include <membership.h>
+# include <sys/acl.h>
+#endif
+
 #ifdef __linux__
+# include <acl/libacl.h>
+# include <grp.h>
+# include <sys/acl.h>
 # include <sys/syscall.h>
 #endif
 
@@ -46,6 +54,8 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/System.hpp>
 
+#include "file_lock/ForkAwareRegistry.hpp"
+
 namespace rstudio {
 namespace core {
 namespace tests {
@@ -55,6 +65,19 @@ namespace {
 FilePath claimPathFor(const FilePath& lockFilePath)
 {
    return LinkBasedFileLock::claimPathForTesting(lockFilePath);
+}
+
+FilePath legacyClaimPathFor(const FilePath& lockFilePath)
+{
+   return LinkBasedFileLock::legacyClaimPathForTesting(lockFilePath);
+}
+
+Error writeClaimContents(const FilePath& claimPath, const std::string& contents)
+{
+   Error error = claimPath.getParent().ensureDirectory();
+   if (error)
+      return error;
+   return writeStringToFile(claimPath, contents);
 }
 
 std::vector<FilePath> childrenOf(const FilePath& directory)
@@ -86,6 +109,213 @@ bool descriptorRefersTo(int descriptor, const FilePath& path)
           opened.st_dev == named.st_dev && opened.st_ino == named.st_ino;
 }
 
+#ifdef __linux__
+
+bool setAccessAcl(const FilePath& path, const std::string& text, int* pError)
+{
+   acl_t acl = ::acl_from_text(text.c_str());
+   if (!acl)
+   {
+      *pError = errno;
+      return false;
+   }
+
+   int status = ::acl_set_file(
+      path.getAbsolutePath().c_str(),
+      ACL_TYPE_ACCESS,
+      acl);
+   *pError = status == -1 ? errno : 0;
+   ::acl_free(acl);
+   return status == 0;
+}
+
+bool aclHasNamedPrincipal(const FilePath& path,
+                          acl_tag_t expectedTag,
+                          unsigned int expectedId,
+                          mode_t expectedPermissions)
+{
+   acl_t acl = ::acl_get_file(
+      path.getAbsolutePath().c_str(),
+      ACL_TYPE_ACCESS);
+   if (!acl)
+      return false;
+
+   bool found = false;
+   acl_entry_t entry;
+   int entryId = ACL_FIRST_ENTRY;
+   while (::acl_get_entry(acl, entryId, &entry) == 1)
+   {
+      entryId = ACL_NEXT_ENTRY;
+      acl_tag_t tag;
+      if (::acl_get_tag_type(entry, &tag) == -1 || tag != expectedTag)
+         continue;
+
+      void* pQualifier = ::acl_get_qualifier(entry);
+      if (!pQualifier)
+         continue;
+      unsigned int id = *static_cast<unsigned int*>(pQualifier);
+      ::acl_free(pQualifier);
+      if (id != expectedId)
+         continue;
+
+      acl_permset_t permissions;
+      if (::acl_get_permset(entry, &permissions) == -1)
+         break;
+      mode_t actualPermissions = 0;
+      if (::acl_get_perm(permissions, ACL_READ) == 1)
+         actualPermissions |= 04;
+      if (::acl_get_perm(permissions, ACL_WRITE) == 1)
+         actualPermissions |= 02;
+      if (::acl_get_perm(permissions, ACL_EXECUTE) == 1)
+         actualPermissions |= 01;
+      found = actualPermissions == expectedPermissions;
+      break;
+   }
+
+   ::acl_free(acl);
+   return found;
+}
+
+#endif
+
+#ifdef __APPLE__
+
+bool setExtendedAclForUser(const FilePath& path,
+                           uid_t user,
+                           bool allowWrites,
+                           int* pError)
+{
+   acl_t acl = ::acl_init(1);
+   if (!acl)
+   {
+      *pError = errno;
+      return false;
+   }
+
+   acl_entry_t entry;
+   uuid_t identity;
+   int status = ::mbr_uid_to_uuid(user, identity);
+   if (status == 0)
+      status = ::acl_create_entry(&acl, &entry);
+   if (status == 0)
+      status = ::acl_set_tag_type(entry, ACL_EXTENDED_ALLOW);
+   if (status == 0)
+      status = ::acl_set_qualifier(entry, identity);
+
+   acl_permset_t permissions;
+   if (status == 0)
+      status = ::acl_get_permset(entry, &permissions);
+   if (status == 0)
+      status = ::acl_clear_perms(permissions);
+   if (status == 0)
+      status = ::acl_add_perm(permissions, ACL_READ_DATA);
+   if (status == 0)
+      status = ::acl_add_perm(permissions, ACL_SEARCH);
+   if (status == 0 && allowWrites)
+      status = ::acl_add_perm(permissions, ACL_ADD_FILE);
+   if (status == 0 && allowWrites)
+      status = ::acl_add_perm(permissions, ACL_ADD_SUBDIRECTORY);
+   if (status == 0 && allowWrites)
+      status = ::acl_add_perm(permissions, ACL_DELETE_CHILD);
+
+   acl_flagset_t flags;
+   if (status == 0)
+      status = ::acl_get_flagset_np(entry, &flags);
+   if (status == 0)
+      status = ::acl_clear_flags_np(flags);
+   if (status == 0)
+      status = ::acl_add_flag_np(flags, ACL_ENTRY_FILE_INHERIT);
+   if (status == 0)
+   {
+      status = ::acl_set_file(
+         path.getAbsolutePath().c_str(),
+         ACL_TYPE_EXTENDED,
+         acl);
+   }
+
+   *pError = status == -1 ? errno : status;
+   ::acl_free(acl);
+   return status == 0;
+}
+
+bool setExtendedAcl(const FilePath& path, int* pError)
+{
+   return setExtendedAclForUser(
+      path,
+      ::geteuid(),
+      false,
+      pError);
+}
+
+bool denyExtendedAclPermission(const FilePath& path,
+                               acl_perm_t deniedPermission,
+                               int* pError)
+{
+   acl_t acl = ::acl_init(1);
+   if (!acl)
+   {
+      *pError = errno;
+      return false;
+   }
+
+   acl_entry_t entry;
+   uuid_t identity;
+   int status = ::mbr_uid_to_uuid(::geteuid(), identity);
+   if (status == 0)
+      status = ::acl_create_entry(&acl, &entry);
+   if (status == 0)
+      status = ::acl_set_tag_type(entry, ACL_EXTENDED_DENY);
+   if (status == 0)
+      status = ::acl_set_qualifier(entry, identity);
+
+   acl_permset_t permissions;
+   if (status == 0)
+      status = ::acl_get_permset(entry, &permissions);
+   if (status == 0)
+      status = ::acl_clear_perms(permissions);
+   if (status == 0)
+      status = ::acl_add_perm(permissions, deniedPermission);
+
+   acl_flagset_t flags;
+   if (status == 0)
+      status = ::acl_get_flagset_np(entry, &flags);
+   if (status == 0)
+      status = ::acl_clear_flags_np(flags);
+   if (status == 0)
+   {
+      status = ::acl_set_file(
+         path.getAbsolutePath().c_str(),
+         ACL_TYPE_EXTENDED,
+         acl);
+   }
+
+   *pError = status == -1 ? errno : status;
+   ::acl_free(acl);
+   return status == 0;
+}
+
+std::string extendedAclText(const FilePath& path)
+{
+   acl_t acl = ::acl_get_file(
+      path.getAbsolutePath().c_str(),
+      ACL_TYPE_EXTENDED);
+   if (!acl)
+      return std::string();
+
+   ssize_t length = 0;
+   char* pText = ::acl_to_text(acl, &length);
+   std::string text;
+   if (pText)
+   {
+      text.assign(pText, static_cast<std::size_t>(length));
+      ::acl_free(pText);
+   }
+   ::acl_free(acl);
+   return text;
+}
+
+#endif
+
 class FileLockingTest : public ::testing::Test
 {
 protected:
@@ -109,6 +339,9 @@ protected:
       LinkBasedFileLock::setBeforeReleaseForTesting({});
       LinkBasedFileLock::setBeforeRefreshForTesting({});
       LinkBasedFileLock::setBeforeWriteForTesting({});
+      LinkBasedFileLock::setBeforeClaimForTesting({});
+      LinkBasedFileLock::setAfterRenameForTesting({});
+      LinkBasedFileLock::setForceClaimDirectoryChownFailureForTesting(false);
       LinkBasedFileLock::setForceFallbackForTesting(false);
    }
 
@@ -186,6 +419,9 @@ protected:
       LinkBasedFileLock::setBeforeReleaseForTesting({});
       LinkBasedFileLock::setBeforeRefreshForTesting({});
       LinkBasedFileLock::setBeforeWriteForTesting({});
+      LinkBasedFileLock::setBeforeClaimForTesting({});
+      LinkBasedFileLock::setAfterRenameForTesting({});
+      LinkBasedFileLock::setForceClaimDirectoryChownFailureForTesting(false);
       LinkBasedFileLock::setForceFallbackForTesting(false);
       FileLock::cleanUp();
       FileLock::setTimeoutInterval(oldTimeout_);
@@ -242,7 +478,67 @@ void sendByte(int descriptor)
    }
 }
 
+class ForkPublicationTestRegistry : public file_lock::ForkAwareRegistry
+{
+public:
+   static boost::function<void()> afterPublish;
+
+   bool wasResetInChild() const { return reset_; }
+   void touch() { Guard guard(*this); }
+
+private:
+   void resetInChild() override { reset_ = true; }
+   void afterPublishForTesting() override { afterPublish(); }
+
+   bool reset_ = false;
+};
+
+boost::function<void()> ForkPublicationTestRegistry::afterPublish;
+
 } // anonymous namespace
+
+TEST_F(FileLockingTest, RegistryPublicationFinishesBeforeFork)
+{
+   int published[2];
+   int resume[2];
+   ASSERT_EQ(0, ::pipe(published));
+   ASSERT_EQ(0, ::pipe(resume));
+
+   ForkPublicationTestRegistry* pRegistry = nullptr;
+   ForkPublicationTestRegistry::afterPublish = [&]()
+   {
+      sendByte(published[1]);
+      waitForByte(resume[0]);
+   };
+   boost::thread initializer([&]()
+   {
+      file_lock::ForkAwareRegistry::instance(pRegistry).touch();
+   });
+
+   // The first instance() call is still on another thread's stack. fork()
+   // must see the published pointer without inheriting a busy C++ guard.
+   waitForByte(published[0]);
+   pid_t child = ::fork();
+   if (child == 0)
+   {
+      ::alarm(10);
+      auto& registry = file_lock::ForkAwareRegistry::instance(pRegistry);
+      registry.touch();
+      ::_exit(registry.wasResetInChild() ? 0 : 1);
+   }
+
+   sendByte(resume[1]);
+   initializer.join();
+   ForkPublicationTestRegistry::afterPublish.clear();
+   for (int descriptor : {published[0], published[1], resume[0], resume[1]})
+      ::close(descriptor);
+
+   ASSERT_NE(-1, child);
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+}
 
 TEST_F(FileLockingTest, LinkBasedLockCanOnlyBeAcquiredOnce)
 {
@@ -779,7 +1075,7 @@ TEST_F(FileLockingTest, StalledReleasePreservesSuccessorInAnotherProcess)
          // and let the child complete its takeover before release resumes.
          lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
          FilePath claim = claimPathFor(lockFilePath_);
-         EXPECT_FALSE(writeStringToFile(claim, std::to_string(::getpid()) + "\n"));
+         EXPECT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
          claim.setLastWriteTime(::time(nullptr) - 10);
          sendByte(takeover[1]);
          waitForByte(ready[0]);
@@ -849,6 +1145,8 @@ TEST_F(FileLockingTest, StalledFallbackPublicationPreservesSuccessor)
          // contender takes over before the original write returns.
          replaced = true;
          lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
+         claimPathFor(lockFilePath_).setLastWriteTime(::time(nullptr) - 10);
+         legacyClaimPathFor(lockFilePath_).setLastWriteTime(::time(nullptr) - 10);
          EXPECT_FALSE(successor.acquire(lockFilePath_));
          return failWrite ? systemError(ENOSPC, ERROR_LOCATION) : Success();
       });
@@ -909,7 +1207,7 @@ TEST_F(FileLockingTest, FailedClaimPublicationPreservesSuccessorClaim)
       // while its creator is still waiting for the initial write.
       replaced = true;
       EXPECT_FALSE(claimPath.remove());
-      EXPECT_FALSE(writeStringToFile(claimPath, std::to_string(::getpid()) + "\n"));
+      EXPECT_FALSE(writeClaimContents(claimPath, std::to_string(::getpid()) + "\n"));
       return systemError(ENOSPC, ERROR_LOCATION);
    });
 
@@ -991,7 +1289,7 @@ TEST_F(FileLockingTest, ReleaseRetiresPublicEntryAndRemovesOwnerFile)
    ASSERT_FALSE(lock.release());
    EXPECT_TRUE(lockFilePath_.exists());
    EXPECT_FALSE(lock.isLocked(lockFilePath_));
-   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(2, childrenOf(root_).size());
    EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
 
    LinkBasedFileLock next;
@@ -1012,7 +1310,7 @@ TEST_F(FileLockingTest, SymlinkReleaseRetiresPublicEntryAndRemovesOwnerFile)
    EXPECT_TRUE(lockFilePath_.isSymlink());
    EXPECT_FALSE(lockFilePath_.exists());
    EXPECT_FALSE(lock.isLocked(lockFilePath_));
-   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(2, childrenOf(root_).size());
    EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
 
    LinkBasedFileLock next;
@@ -1029,7 +1327,7 @@ TEST_F(FileLockingTest, CleanUpRetiresRegisteredLockFiles)
    FileLock::cleanUp();
    EXPECT_TRUE(lockFilePath_.exists());
    EXPECT_FALSE(lock.isLocked(lockFilePath_));
-   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(2, childrenOf(root_).size());
    EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
 
    // the object's own release afterwards is harmless
@@ -1061,7 +1359,7 @@ TEST_F(FileLockingTest, OrphanedOwnerFilesAreSwept)
 
    ASSERT_FALSE(lock.release());
    ASSERT_FALSE(liveClaim.remove());
-   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(2, childrenOf(root_).size());
    EXPECT_FALSE(lock.isLocked(lockFilePath_));
 }
 
@@ -1133,7 +1431,7 @@ TEST_F(FileLockingTest, ExternallyDeletedLockPathLeavesNoPermanentLitter)
    ASSERT_FALSE(next.acquire(root_.completePath("other-lock")));
    EXPECT_EQ(1, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
    ASSERT_FALSE(next.release());
-   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(2, childrenOf(root_).size());
    EXPECT_FALSE(next.isLocked(root_.completePath("other-lock")));
 }
 
@@ -1141,7 +1439,7 @@ TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
 {
    ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
    FilePath claim = claimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeStringToFile(claim, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
 
    LinkBasedFileLock lock;
    EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
@@ -1154,6 +1452,745 @@ TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
    EXPECT_FALSE(lock.release());
 }
 
+TEST_F(FileLockingTest, LiveClaimBlocksPublicationIntoAbsentPath)
+{
+   FilePath claim = claimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
+
+   for (int mode = 0; mode < 3; ++mode)
+   {
+      SCOPED_TRACE(mode);
+      FileLock::setUseSymlinksForTesting(mode == 1);
+      LinkBasedFileLock::setForceFallbackForTesting(mode == 2);
+
+      LinkBasedFileLock lock;
+      EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+      EXPECT_FALSE(lockFilePath_.exists());
+      EXPECT_TRUE(claim.exists());
+   }
+}
+
+TEST_F(FileLockingTest, LiveLegacyClaimBlocksPublication)
+{
+   FilePath legacyClaim = legacyClaimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeClaimContents(
+      legacyClaim,
+      std::to_string(::getpid()) + "\n"));
+
+   LinkBasedFileLock lock;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+   EXPECT_TRUE(legacyClaim.exists());
+   EXPECT_FALSE(lockFilePath_.exists());
+   EXPECT_FALSE(claimPathFor(lockFilePath_).getParent().exists());
+   EXPECT_FALSE(legacyClaim.remove());
+}
+
+TEST_F(FileLockingTest, ClaimDirectoryReplacementDuringOpenIsRetried)
+{
+   FilePath claim = claimPathFor(lockFilePath_);
+   bool removed = false;
+   LinkBasedFileLock::setBeforeClaimForTesting([&](const FilePath& path)
+   {
+      if (removed || path != claim)
+         return;
+
+      removed = true;
+      EXPECT_EQ(
+         0,
+         ::rmdir(path.getParent().getAbsolutePathNative().c_str()));
+   });
+
+   LinkBasedFileLock lock;
+   EXPECT_FALSE(lock.acquire(lockFilePath_));
+   LinkBasedFileLock::setBeforeClaimForTesting({});
+   EXPECT_TRUE(removed);
+   EXPECT_TRUE(lock.isLocked(lockFilePath_));
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, ClaimDirectorySymlinkIsRejected)
+{
+   FilePath target = root_.completePath("claim-target");
+   ASSERT_FALSE(target.ensureDirectory());
+   ASSERT_EQ(0, ::chmod(target.getAbsolutePath().c_str(), 0700));
+
+   FilePath claimDirectory = claimPathFor(lockFilePath_).getParent();
+   ASSERT_EQ(
+      0,
+      ::symlink(
+         target.getAbsolutePath().c_str(),
+         claimDirectory.getAbsolutePath().c_str()));
+
+   LinkBasedFileLock lock;
+   Error error = lock.acquire(lockFilePath_);
+   EXPECT_TRUE(error);
+   EXPECT_FALSE(FileLock::isNoLockAvailable(error));
+   EXPECT_FALSE(lockFilePath_.exists());
+
+   struct stat info;
+   ASSERT_EQ(0, ::stat(target.getAbsolutePath().c_str(), &info));
+   EXPECT_EQ(0700, info.st_mode & 0777);
+   ASSERT_EQ(0, ::unlink(claimDirectory.getAbsolutePath().c_str()));
+}
+
+TEST_F(FileLockingTest, ReplacedClaimDirectoryCannotRedirectRemoval)
+{
+   FilePath claim = claimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeClaimContents(claim, "-1\n"));
+
+   FilePath claimDirectory = claim.getParent();
+   FilePath displacedDirectory = root_.completePath("displaced-claims");
+   FilePath targetDirectory = root_.completePath("claim-target");
+   ASSERT_FALSE(targetDirectory.ensureDirectory());
+   FilePath victim = targetDirectory.completePath(claim.getFilename());
+   ASSERT_FALSE(writeStringToFile(victim, "-1\n"));
+
+   bool replaced = false;
+   LinkBasedFileLock::setBeforeClaimForTesting([&](const FilePath& path)
+   {
+      if (replaced || path != claim)
+         return;
+
+      replaced = true;
+      ASSERT_EQ(
+         0,
+         ::rename(
+            claimDirectory.getAbsolutePath().c_str(),
+            displacedDirectory.getAbsolutePath().c_str()));
+      ASSERT_EQ(
+         0,
+         ::symlink(
+            targetDirectory.getAbsolutePath().c_str(),
+            claimDirectory.getAbsolutePath().c_str()));
+   });
+
+   LinkBasedFileLock lock;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+   LinkBasedFileLock::setBeforeClaimForTesting({});
+   EXPECT_TRUE(replaced);
+   EXPECT_TRUE(victim.exists());
+   std::string contents;
+   ASSERT_FALSE(readStringFromFile(victim, &contents));
+   EXPECT_EQ("-1\n", contents);
+   EXPECT_FALSE(lockFilePath_.exists());
+
+   ASSERT_EQ(0, ::unlink(claimDirectory.getAbsolutePath().c_str()));
+   ASSERT_FALSE(victim.remove());
+   ASSERT_FALSE(targetDirectory.remove());
+   ASSERT_FALSE(displacedDirectory.remove());
+}
+
+TEST_F(FileLockingTest, ClaimDirectoryUsesParentPermissionsDespiteUmask)
+{
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 01777));
+   mode_t oldMask = ::umask(0077);
+   LinkBasedFileLock lock;
+   Error error = lock.acquire(lockFilePath_);
+   ::umask(oldMask);
+   ASSERT_FALSE(error);
+
+   struct stat parentInfo;
+   struct stat claimInfo;
+   ASSERT_EQ(0, ::stat(root_.getAbsolutePath().c_str(), &parentInfo));
+   ASSERT_EQ(
+      0,
+      ::stat(
+         claimPathFor(lockFilePath_).getParent().getAbsolutePath().c_str(),
+         &claimInfo));
+   mode_t permissionBits = S_ISGID | 0777;
+   EXPECT_EQ(
+      parentInfo.st_mode & permissionBits,
+      claimInfo.st_mode & permissionBits);
+   EXPECT_EQ(0, claimInfo.st_mode & S_ISVTX);
+   EXPECT_EQ(parentInfo.st_gid, claimInfo.st_gid);
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, ClaimDirectoryUsesParentGroupWithoutSetgid)
+{
+   int groupCount = ::getgroups(0, nullptr);
+   ASSERT_NE(-1, groupCount);
+   std::vector<gid_t> groups(static_cast<std::size_t>(groupCount));
+   ASSERT_EQ(groupCount, ::getgroups(groupCount, groups.data()));
+
+   gid_t parentGroup = ::getegid();
+   for (gid_t group : groups)
+   {
+      if (group != ::getegid())
+      {
+         parentGroup = group;
+         break;
+      }
+   }
+   if (parentGroup == ::getegid())
+      GTEST_SKIP() << "process has no alternate supplementary group";
+
+   ASSERT_EQ(
+      0,
+      ::chown(
+         root_.getAbsolutePath().c_str(),
+         static_cast<uid_t>(-1),
+         parentGroup));
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0770));
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+
+   struct stat claimInfo;
+   ASSERT_EQ(
+      0,
+      ::stat(
+         claimPathFor(lockFilePath_).getParent().getAbsolutePath().c_str(),
+         &claimInfo));
+   EXPECT_EQ(parentGroup, claimInfo.st_gid);
+   EXPECT_EQ(0770, claimInfo.st_mode & 0777);
+   EXPECT_EQ(0, claimInfo.st_mode & S_ISGID);
+   EXPECT_FALSE(lock.release());
+}
+
+#ifdef __APPLE__
+
+TEST_F(FileLockingTest, ClaimDirectoryCopiesExtendedAcl)
+{
+   int aclError = 0;
+   if (!setExtendedAcl(root_, &aclError))
+   {
+      if (aclError == ENOTSUP)
+         GTEST_SKIP() << "filesystem has no extended ACL support";
+      FAIL() << "could not set parent ACL: " << aclError;
+   }
+   std::string expectedAcl = extendedAclText(root_);
+   ASSERT_FALSE(expectedAcl.empty());
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_EQ(
+      expectedAcl,
+      extendedAclText(claimPathFor(lockFilePath_).getParent()));
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, DarwinAclPreservesParentOwnerAcrossCreators)
+{
+   if (::geteuid() != 0)
+      GTEST_SKIP() << "test needs root to run children under separate uids";
+
+   const uid_t parentOwner = 12345;
+   const uid_t creator = 12346;
+   ASSERT_EQ(
+      0,
+      ::chown(root_.getAbsolutePath().c_str(), parentOwner, parentOwner));
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0700));
+
+   int aclError = 0;
+   if (!setExtendedAclForUser(root_, creator, true, &aclError))
+   {
+      if (aclError == ENOTSUP || aclError == EOPNOTSUPP)
+         GTEST_SKIP() << "filesystem has no extended ACL support";
+      FAIL() << "could not set parent ACL: " << aclError;
+   }
+
+   int ready[2];
+   int done[2];
+   ASSERT_EQ(0, ::pipe(ready));
+   ASSERT_EQ(0, ::pipe(done));
+   pid_t creatorChild = ::fork();
+   ASSERT_NE(-1, creatorChild);
+   if (creatorChild == 0)
+   {
+      ::close(ready[0]);
+      ::close(done[1]);
+      if (::setgroups(0, nullptr) == -1 ||
+          ::setgid(creator) == -1 ||
+          ::setuid(creator) == -1)
+      {
+         ::_exit(10);
+      }
+
+      LinkBasedFileLock lock;
+      if (lock.acquire(root_.completePath("creator-lock")))
+         ::_exit(1);
+      FilePath liveClaim = claimPathFor(root_.completePath("live-claim"));
+      if (writeClaimContents(liveClaim, std::to_string(::getpid()) + "\n"))
+         ::_exit(2);
+      sendByte(ready[1]);
+      waitForByte(done[0]);
+      if (liveClaim.remove())
+         ::_exit(3);
+      ::_exit(lock.release() ? 4 : 0);
+   }
+
+   ::close(ready[1]);
+   ::close(done[0]);
+   waitForByte(ready[0]);
+
+   pid_t ownerChild = ::fork();
+   ASSERT_NE(-1, ownerChild);
+   if (ownerChild == 0)
+   {
+      if (::setgroups(0, nullptr) == -1 ||
+          ::setgid(parentOwner) == -1 ||
+          ::setuid(parentOwner) == -1)
+      {
+         ::_exit(10);
+      }
+
+      LinkBasedFileLock lock;
+      Error error = lock.acquire(root_.completePath("owner-lock"));
+      if (error)
+         ::_exit(1);
+      ::_exit(lock.release() ? 2 : 0);
+   }
+
+   int status;
+   ASSERT_EQ(ownerChild, ::waitpid(ownerChild, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+
+   sendByte(done[1]);
+   ASSERT_EQ(creatorChild, ::waitpid(creatorChild, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+   ::close(ready[0]);
+   ::close(done[1]);
+}
+
+TEST_F(FileLockingTest, DarwinAddFileAclFailsClosedWithoutExactClaim)
+{
+   int aclError = 0;
+   if (!denyExtendedAclPermission(
+          root_,
+          ACL_ADD_SUBDIRECTORY,
+          &aclError))
+   {
+      if (aclError == ENOTSUP || aclError == EOPNOTSUPP)
+         GTEST_SKIP() << "filesystem has no extended ACL support";
+      FAIL() << "could not set parent ACL: " << aclError;
+   }
+
+   LinkBasedFileLock lock;
+   Error error = lock.acquire(lockFilePath_);
+   EXPECT_TRUE(error);
+   EXPECT_FALSE(FileLock::isNoLockAvailable(error));
+   EXPECT_FALSE(lockFilePath_.exists());
+   EXPECT_FALSE(claimPathFor(lockFilePath_).getParent().exists());
+}
+
+#endif
+
+#ifdef __linux__
+
+TEST_F(FileLockingTest, ClaimDirectoryCopiesAccessAclWithoutDefaultAcl)
+{
+   uid_t namedUser = ::geteuid() == 12345 ? 12346 : 12345;
+   int aclError = 0;
+   if (!setAccessAcl(
+          root_,
+          "u::rwx,u:" + std::to_string(namedUser) +
+             ":rwx,g::---,m::rwx,o::---",
+          &aclError))
+   {
+      if (aclError == ENOTSUP)
+         GTEST_SKIP() << "filesystem has no POSIX ACL support";
+      FAIL() << "could not set parent ACL: " << aclError;
+   }
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_TRUE(aclHasNamedPrincipal(
+      claimPathFor(lockFilePath_).getParent(),
+      ACL_USER,
+      namedUser,
+      07));
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, AclAuthorizedUserCanCreateClaimDirectory)
+{
+   if (::geteuid() != 0)
+      GTEST_SKIP() << "test needs root to run a child under another uid";
+
+   const uid_t childUser = 12345;
+   LinkBasedFileLock originalOwner;
+   ASSERT_FALSE(originalOwner.acquire(root_.completePath("owner-lock")));
+
+   int aclError = 0;
+   if (!setAccessAcl(
+          root_,
+          "u::rwx,u:" + std::to_string(childUser) +
+             ":rwx,g::---,m::rwx,o::---",
+          &aclError))
+   {
+      if (aclError == ENOTSUP)
+         GTEST_SKIP() << "filesystem has no POSIX ACL support";
+      FAIL() << "could not set parent ACL: " << aclError;
+   }
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      if (::setgroups(0, nullptr) == -1 ||
+          ::setgid(childUser) == -1 ||
+          ::setuid(childUser) == -1)
+      {
+         ::_exit(10);
+      }
+
+      LinkBasedFileLock lock;
+      Error error = lock.acquire(lockFilePath_);
+      if (error)
+         ::_exit(1);
+      error = lock.release();
+      ::_exit(error ? 2 : 0);
+   }
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+   EXPECT_TRUE(aclHasNamedPrincipal(
+      claimPathFor(lockFilePath_).getParent(),
+      ACL_USER,
+      ::geteuid(),
+      07));
+   EXPECT_FALSE(originalOwner.release());
+}
+
+TEST_F(FileLockingTest, ClaimDirectoryMapsParentGroupWhenChownIsDenied)
+{
+   gid_t parentGroup = ::getegid();
+   if (::geteuid() == 0)
+   {
+      ++parentGroup;
+   }
+   else
+   {
+      int groupCount = ::getgroups(0, nullptr);
+      ASSERT_NE(-1, groupCount);
+      std::vector<gid_t> groups(static_cast<std::size_t>(groupCount));
+      ASSERT_EQ(groupCount, ::getgroups(groupCount, groups.data()));
+      for (gid_t group : groups)
+      {
+         if (group != ::getegid())
+         {
+            parentGroup = group;
+            break;
+         }
+      }
+   }
+   if (parentGroup == ::getegid())
+      GTEST_SKIP() << "process cannot assign an alternate parent group";
+
+   ASSERT_EQ(
+      0,
+      ::chown(
+         root_.getAbsolutePath().c_str(),
+         static_cast<uid_t>(-1),
+         parentGroup));
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0770));
+   LinkBasedFileLock::setForceClaimDirectoryChownFailureForTesting(true);
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   FilePath claimDirectory = claimPathFor(lockFilePath_).getParent();
+   struct stat claimInfo;
+   ASSERT_EQ(0, ::stat(claimDirectory.getAbsolutePath().c_str(), &claimInfo));
+   EXPECT_EQ(::getegid(), claimInfo.st_gid);
+   EXPECT_TRUE(aclHasNamedPrincipal(
+      claimDirectory,
+      ACL_GROUP,
+      parentGroup,
+      07));
+   EXPECT_FALSE(lock.release());
+}
+
+#endif
+
+TEST_F(FileLockingTest, WriteAndSearchPermissionsAllowClaimCreation)
+{
+#if defined(O_SEARCH) || defined(O_PATH)
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0300));
+   LinkBasedFileLock lock;
+   Error error = lock.acquire(lockFilePath_);
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0700));
+   ASSERT_EQ(
+      0,
+      ::chmod(
+         claimPathFor(lockFilePath_).getParent().getAbsolutePath().c_str(),
+         0700));
+   ASSERT_FALSE(error);
+   EXPECT_FALSE(lock.release());
+#else
+   GTEST_SKIP() << "platform has no search-only directory descriptor";
+#endif
+}
+
+TEST_F(FileLockingTest, StaleClaimsForOtherLocksAreSwept)
+{
+   FilePath staleClaim = claimPathFor(root_.completePath("stale-lock"));
+   FilePath liveClaim = claimPathFor(root_.completePath("live-lock"));
+   ASSERT_FALSE(writeClaimContents(staleClaim, "-1\n"));
+   ASSERT_FALSE(writeClaimContents(
+      liveClaim,
+      std::to_string(::getpid()) + "\n"));
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(staleClaim.exists());
+   EXPECT_TRUE(liveClaim.exists());
+   EXPECT_FALSE(lock.release());
+   EXPECT_FALSE(liveClaim.remove());
+}
+
+TEST_F(FileLockingTest, LiveNestedRemovalTempIsNotSwept)
+{
+   FilePath staleClaim = claimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeClaimContents(staleClaim, "-1\n"));
+
+   FilePath otherLockPath = root_.completePath("other-lock");
+   LinkBasedFileLock other;
+   bool interleaved = false;
+   LinkBasedFileLock::setAfterRenameForTesting([&](const FilePath& path)
+   {
+      if (interleaved || path != staleClaim)
+         return;
+
+      interleaved = true;
+      EXPECT_FALSE(other.acquire(otherLockPath));
+   });
+
+   LinkBasedFileLock lock;
+   EXPECT_FALSE(lock.acquire(lockFilePath_));
+   LinkBasedFileLock::setAfterRenameForTesting({});
+   EXPECT_TRUE(interleaved);
+   EXPECT_TRUE(lock.isLocked(lockFilePath_));
+   EXPECT_TRUE(other.isLocked(otherLockPath));
+   EXPECT_FALSE(lock.release());
+   EXPECT_FALSE(other.release());
+}
+
+TEST_F(FileLockingTest, AbandonedPreparedClaimDirectoriesAreSwept)
+{
+   FilePath abandoned = root_.completePath(
+      ".rstudio-lock-claims-tmp-41c29-99999999-abandoned");
+   FilePath live = root_.completePath(
+      ".rstudio-lock-claims-tmp-41c29-" +
+      std::to_string(::getpid()) + "-live");
+   ASSERT_FALSE(abandoned.ensureDirectory());
+   ASSERT_FALSE(live.ensureDirectory());
+
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   EXPECT_FALSE(abandoned.exists());
+   EXPECT_TRUE(live.exists());
+   EXPECT_FALSE(lock.release());
+   EXPECT_FALSE(live.remove());
+}
+
+TEST_F(FileLockingTest, TempShapedBasenameKeepsItsLiveClaim)
+{
+   FilePath lockPath = root_.completePath(
+      ".rstudio-lock-tmp-41c29-99999999-public-name");
+   LinkBasedFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockPath));
+   EXPECT_TRUE(lockPath.exists());
+   EXPECT_TRUE(lock.isLocked(lockPath));
+   LinkBasedFileLock contender;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(contender.acquire(lockPath)));
+   EXPECT_FALSE(lock.release());
+}
+
+TEST_F(FileLockingTest, ClaimNamespaceBasenameIsRejected)
+{
+   FilePath lockPath = root_.completePath(".rstudio-lock-claims-41c29");
+   LinkBasedFileLock lock;
+   Error error = lock.acquire(lockPath);
+   EXPECT_EQ(systemError(EINVAL, ErrorLocation()), error);
+   EXPECT_FALSE(lockPath.exists());
+}
+
+TEST_F(FileLockingTest, StaleRemovalBlocksPublicationThroughCaseAliases)
+{
+   FilePath aliasPath = root_.completePath("LOCK");
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
+   if (!lockFilePath_.isEquivalentTo(aliasPath))
+   {
+      ASSERT_FALSE(lockFilePath_.remove());
+      GTEST_SKIP() << "filesystem is case-sensitive";
+   }
+   ASSERT_FALSE(lockFilePath_.remove());
+
+   for (int mode = 0; mode < 3; ++mode)
+   {
+      SCOPED_TRACE(mode);
+      FileLock::setUseSymlinksForTesting(mode == 1);
+      LinkBasedFileLock::setForceFallbackForTesting(mode == 2);
+      ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
+
+      bool renamed = false;
+      LinkBasedFileLock contender;
+      LinkBasedFileLock aliasContender;
+      LinkBasedFileLock::setAfterRenameForTesting([&](const FilePath& path)
+      {
+         if (path != lockFilePath_)
+            return;
+
+         renamed = true;
+         // The public name is absent between rename and identity validation
+         // (and possible restoration). Neither spelling may publish into it.
+         EXPECT_FALSE(lockFilePath_.exists());
+         EXPECT_TRUE(claimPathFor(lockFilePath_).isEquivalentTo(
+            claimPathFor(aliasPath)));
+         EXPECT_TRUE(FileLock::isNoLockAvailable(contender.acquire(lockFilePath_)));
+         EXPECT_TRUE(FileLock::isNoLockAvailable(aliasContender.acquire(aliasPath)));
+      });
+
+      LinkBasedFileLock owner;
+      EXPECT_FALSE(owner.acquire(lockFilePath_));
+      LinkBasedFileLock::setAfterRenameForTesting({});
+      EXPECT_TRUE(renamed);
+      EXPECT_TRUE(owner.isLocked(lockFilePath_));
+      EXPECT_FALSE(claimPathFor(lockFilePath_).exists());
+      ASSERT_FALSE(owner.release());
+      ASSERT_FALSE(lockFilePath_.remove());
+   }
+}
+
+TEST_F(FileLockingTest, CaseSensitiveNamesUseIndependentClaims)
+{
+   FilePath aliasPath = root_.completePath("LOCK");
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, "probe\n"));
+   if (lockFilePath_.isEquivalentTo(aliasPath))
+   {
+      ASSERT_FALSE(lockFilePath_.remove());
+      GTEST_SKIP() << "filesystem is case-insensitive";
+   }
+   ASSERT_FALSE(lockFilePath_.remove());
+
+   FilePath claim = claimPathFor(lockFilePath_);
+   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
+
+   LinkBasedFileLock alias;
+   EXPECT_FALSE(alias.acquire(aliasPath));
+   EXPECT_TRUE(claim.exists());
+   ASSERT_FALSE(alias.release());
+   ASSERT_FALSE(claim.remove());
+}
+
+TEST_F(FileLockingTest, StaleRemovalBlocksPublicationThroughUnicodeAliases)
+{
+   FilePath primaryPath = root_.completePath("\xC3\x84" "LOCK");
+   std::vector<FilePath> aliases = {
+      root_.completePath("\xC3\xA4" "lock"),
+      root_.completePath("A\xCC\x88" "LOCK")
+   };
+
+   ASSERT_FALSE(writeStringToFile(primaryPath, "-1\n"));
+   for (const FilePath& aliasPath : aliases)
+   {
+      if (!primaryPath.isEquivalentTo(aliasPath))
+      {
+         ASSERT_FALSE(primaryPath.remove());
+         GTEST_SKIP() << "filesystem does not use the tested Unicode aliases";
+      }
+   }
+   ASSERT_FALSE(primaryPath.remove());
+
+   for (const FilePath& aliasPath : aliases)
+   {
+      for (int mode = 0; mode < 3; ++mode)
+      {
+         SCOPED_TRACE(aliasPath.getFilename());
+         SCOPED_TRACE(mode);
+         FileLock::setUseSymlinksForTesting(mode == 1);
+         LinkBasedFileLock::setForceFallbackForTesting(mode == 2);
+         ASSERT_FALSE(writeStringToFile(primaryPath, "-1\n"));
+
+         bool renamed = false;
+         LinkBasedFileLock aliasContender;
+         LinkBasedFileLock::setAfterRenameForTesting([&](const FilePath& path)
+         {
+            if (path != primaryPath)
+               return;
+
+            renamed = true;
+            EXPECT_FALSE(primaryPath.exists());
+            EXPECT_TRUE(claimPathFor(primaryPath).isEquivalentTo(
+               claimPathFor(aliasPath)));
+            EXPECT_TRUE(FileLock::isNoLockAvailable(
+               aliasContender.acquire(aliasPath)));
+         });
+
+         LinkBasedFileLock owner;
+         ASSERT_FALSE(owner.acquire(primaryPath));
+         LinkBasedFileLock::setAfterRenameForTesting({});
+         EXPECT_TRUE(renamed);
+         EXPECT_TRUE(owner.isLocked(primaryPath));
+         ASSERT_FALSE(owner.release());
+         ASSERT_FALSE(primaryPath.remove());
+      }
+   }
+}
+
+TEST_F(FileLockingTest, LostClaimBeforePublicationLeavesPublicPathAbsent)
+{
+   FilePath claimPath = claimPathFor(lockFilePath_);
+   FilePath legacyClaimPath = legacyClaimPathFor(lockFilePath_);
+   bool replaced = false;
+   LinkBasedFileLock::setBeforeWriteForTesting([&](int descriptor) -> Error
+   {
+      if (replaced ||
+          descriptorRefersTo(descriptor, claimPath) ||
+          descriptorRefersTo(descriptor, legacyClaimPath))
+         return Success();
+
+      // Preparing the private owner inode stalled long enough for another
+      // contender to replace our claim. We must not publish after resuming.
+      replaced = true;
+      EXPECT_FALSE(claimPath.remove());
+      EXPECT_FALSE(writeClaimContents(claimPath, std::to_string(::getpid()) + "\n"));
+      return Success();
+   });
+
+   LinkBasedFileLock lock;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+   LinkBasedFileLock::setBeforeWriteForTesting({});
+   EXPECT_TRUE(replaced);
+   EXPECT_FALSE(lockFilePath_.exists());
+   EXPECT_TRUE(claimPath.exists());
+   EXPECT_EQ(0, countChildrenWithPrefix(root_, ".rstudio-lock-owner-41c29-"));
+}
+
+TEST_F(FileLockingTest, LostClaimAfterPublicationRetiresPublishedInode)
+{
+   LinkBasedFileLock::setForceFallbackForTesting(true);
+   FilePath claimPath = claimPathFor(lockFilePath_);
+   bool replaced = false;
+   LinkBasedFileLock::setBeforeWriteForTesting([&](int descriptor) -> Error
+   {
+      if (replaced || !descriptorRefersTo(descriptor, lockFilePath_))
+         return Success();
+
+      // The public inode remains ours, but the publication outlasted the
+      // claim. Retire that inode without removing the successor's claim.
+      replaced = true;
+      EXPECT_FALSE(claimPath.remove());
+      EXPECT_FALSE(writeClaimContents(claimPath, std::to_string(::getpid()) + "\n"));
+      return Success();
+   });
+
+   LinkBasedFileLock lock;
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+   LinkBasedFileLock::setBeforeWriteForTesting({});
+   EXPECT_TRUE(replaced);
+   EXPECT_TRUE(claimPath.exists());
+   std::string contents;
+   ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
+   EXPECT_EQ("-1\n", contents);
+   EXPECT_FALSE(lock.isLocked(lockFilePath_));
+}
+
 TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
 {
    // A contender holding the claim is mid-takeover of this (expired) lock
@@ -1161,7 +2198,7 @@ TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
    FilePath claim = claimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeStringToFile(claim, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
 
    ASSERT_FALSE(lock.release());
    EXPECT_TRUE(lockFilePath_.exists());
@@ -1177,7 +2214,7 @@ TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
    LinkBasedFileLock next;
    ASSERT_FALSE(next.acquire(lockFilePath_));
    ASSERT_FALSE(next.release());
-   EXPECT_EQ(1, childrenOf(root_).size());
+   EXPECT_EQ(2, childrenOf(root_).size());
    EXPECT_FALSE(next.isLocked(lockFilePath_));
 }
 
@@ -1299,7 +2336,7 @@ TEST_F(FileLockingTest, StaleClaimIsReplacedDuringTakeover)
 {
    ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
    FilePath claim = claimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeStringToFile(claim, "99999999\n"));
+   ASSERT_FALSE(writeClaimContents(claim, "99999999\n"));
 
    LinkBasedFileLock lock;
    EXPECT_FALSE(lock.acquire(lockFilePath_));
@@ -1314,6 +2351,9 @@ TEST_F(FileLockingTest, LockFilesAreReadableByOtherUsers)
    ::umask(mask);
    mode_t expected = 0644 & ~mask;
 
+   struct stat parentInfo;
+   ASSERT_EQ(0, ::stat(root_.getAbsolutePath().c_str(), &parentInfo));
+
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
 
@@ -1321,7 +2361,9 @@ TEST_F(FileLockingTest, LockFilesAreReadableByOtherUsers)
    {
       struct stat info;
       ASSERT_EQ(0, ::stat(child.getAbsolutePath().c_str(), &info));
-      EXPECT_EQ(expected, info.st_mode & 0777) << child.getAbsolutePath();
+      mode_t expectedMode = S_ISDIR(info.st_mode) ?
+         parentInfo.st_mode & 0777 : expected;
+      EXPECT_EQ(expectedMode, info.st_mode & 0777) << child.getAbsolutePath();
    }
    EXPECT_FALSE(lock.release());
 }
