@@ -2642,6 +2642,11 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().getRenderer().setScrollPastEnd(enable);
    }
 
+   public void setSmoothScrolling(boolean enable)
+   {
+      widget_.getEditor().getRenderer().setAnimatedScroll(enable);
+   }
+
    public void setHighlightRFunctionCalls(boolean highlight)
    {
       _setHighlightRFunctionCallsImpl(highlight);

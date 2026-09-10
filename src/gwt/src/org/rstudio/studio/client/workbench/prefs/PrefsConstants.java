@@ -533,6 +533,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String displayShowIndentGuidesLabel();
     String displayBlinkingCursorLabel();
     String displayScrollPastEndOfDocumentLabel();
+    String displaySmoothScrollingLabel();
     String displayEnableTextDragLabel();
     String displayFoldStyleLabel();
     String savingAutoAppendNewLineLabel();

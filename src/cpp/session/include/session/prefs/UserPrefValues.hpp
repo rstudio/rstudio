@@ -166,6 +166,7 @@ namespace prefs {
 #define kSyntaxColorConsole "syntax_color_console"
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
+#define kSmoothScrolling "smooth_scrolling"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
@@ -1003,6 +1004,12 @@ public:
     */
    bool scrollPastEndOfDocument();
    core::Error setScrollPastEndOfDocument(bool val);
+
+   /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   bool smoothScrolling();
+   core::Error setSmoothScrolling(bool val);
 
    /**
     * Whether to highlight R function calls in the code editor.

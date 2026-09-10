@@ -222,6 +222,7 @@ public class CodePreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
       displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
+      displayPanel.add(checkboxPref(constants_.displaySmoothScrollingLabel(), prefs_.smoothScrolling()));
 
       foldMode_ = new SelectWidget(
             constants_.displayFoldStyleLabel(),

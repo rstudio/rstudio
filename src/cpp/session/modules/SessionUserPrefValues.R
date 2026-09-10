@@ -769,6 +769,16 @@
    clear = function() { .rs.clearUserPref("scroll_past_end_of_document") }
 )
 
+# Smooth scrolling
+#
+# Whether the source editor animates scrolling, e.g. when moving the cursor or
+# jumping to a line, instead of jumping instantly.
+.rs.uiPrefs$smoothScrolling <- list(
+   get = function() { .rs.getUserPref("smooth_scrolling") },
+   set = function(value) { .rs.setUserPref("smooth_scrolling", value) },
+   clear = function() { .rs.clearUserPref("smooth_scrolling") }
+)
+
 # Highlight R function calls
 #
 # Whether to highlight R function calls in the code editor.
