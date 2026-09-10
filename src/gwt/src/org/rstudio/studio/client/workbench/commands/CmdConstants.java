@@ -1216,6 +1216,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Execute the entire R statement which contains the cursor.") // $NON-NLS-1$
     String executeCurrentStatementDesc();
     
+    // selectCurrentStatement
+    @DefaultStringValue("Select Current Statement") // $NON-NLS-1$
+    String selectCurrentStatementLabel();
+    @DefaultStringValue("Select Current _Statement") // $NON-NLS-1$
+    String selectCurrentStatementMenuLabel();
+    @DefaultStringValue("Select the entire R statement which contains the cursor, even when it spans several lines.") // $NON-NLS-1$
+    String selectCurrentStatementDesc();
+    
     // executeCurrentParagraph
     @DefaultStringValue("Execute Current Paragraph") // $NON-NLS-1$
     String executeCurrentParagraphLabel();
