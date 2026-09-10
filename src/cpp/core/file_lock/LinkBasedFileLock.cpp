@@ -87,6 +87,8 @@ const int kLockFileMode = 0644;
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
 boost::function<void()> s_beforeRelease;
 boost::function<void()> s_beforeRefresh;
+boost::function<Error(int)> s_beforeWrite;
+bool s_forceFallback = false;
 #endif
 
 // Shared by the owner and registry snapshots. This mutex is never held by
@@ -215,7 +217,8 @@ boost::optional<PidType> tempFileContender(const FilePath& filePath)
 std::string lockContents(bool released)
 {
    // Keep the public contents parseable as a PID by older RStudio versions.
-   // The negative release sentinel is also treated as stale by those versions.
+   // The negative release sentinel is also treated as stale by older local
+   // readers; older load-balanced readers require an expired timestamp too.
    return fmt::format("{}\n", released ? kReleasedProcessId : pidString());
 }
 
@@ -270,6 +273,15 @@ void unlinkBestEffort(const FilePath& filePath)
 
 Error writeDescriptorContents(int descriptor, const std::string& contents)
 {
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_beforeWrite)
+   {
+      Error error = s_beforeWrite(descriptor);
+      if (error)
+         return error;
+   }
+#endif
+
    std::size_t written = 0;
    while (written < contents.size())
    {
@@ -295,10 +307,13 @@ Error writeDescriptorContents(int descriptor, const std::string& contents)
 // (and, for a local owner, its process start time), so the two must not be
 // mixed. Returns the error rather than logging it, so refreshLocks() -- which
 // has no write of its own to fall back on -- can react to an unsupported mount.
-Error stampWriteTime(int descriptor)
+Error stampWriteTime(int descriptor, bool released = false)
 {
-   struct timeval now;
-   if (::gettimeofday(&now, nullptr) == -1)
+   // Legacy load-balanced readers only inspect age. Retire the exact inode
+   // at the epoch so those readers also see an immediate release, regardless
+   // of their timeout or small differences between host clocks.
+   struct timeval now = {0, 0};
+   if (!released && ::gettimeofday(&now, nullptr) == -1)
       return systemCallError("gettimeofday", errno, ERROR_LOCATION);
 
    struct timeval times[2] = {now, now};
@@ -313,10 +328,11 @@ Error stampWriteTime(int descriptor)
 // lack the operation). Used where a write to the lock has just set the mtime
 // anyway, so a failure here is cosmetic: a degraded mode worth one log line
 // per process, not a failure that would keep every session from acquiring a
-// lock there.
-void stampWriteTimeBestEffort(int descriptor)
+// lock there. After release, current readers still recognize the sentinel;
+// legacy age-only readers must wait for timeout if backdating is denied.
+void stampWriteTimeBestEffort(int descriptor, bool released = false)
 {
-   Error error = stampWriteTime(descriptor);
+   Error error = stampWriteTime(descriptor, released);
 
    static std::atomic<bool> s_reported(false);
    if (error && !s_reported.exchange(true))
@@ -343,7 +359,7 @@ Error writeLockContents(int descriptor, bool released)
    if (::ftruncate(descriptor, static_cast<off_t>(contents.size())) == -1)
       return systemCallError("ftruncate", errno, ERROR_LOCATION);
 
-   stampWriteTimeBestEffort(descriptor);
+   stampWriteTimeBestEffort(descriptor, released);
    return Success();
 }
 
@@ -907,7 +923,9 @@ Error claimLockFile(const FilePath& claimFilePath,
          }
          if (error)
          {
-            unlinkBestEffort(claimFilePath);
+            // Initialization may have stalled past expiry. The reusable
+            // claim name can now belong to a successor; leave any incomplete
+            // publication to expire instead of unlinking that name.
             closeClaim(pClaim);
             return error;
          }
@@ -1087,6 +1105,14 @@ Error writeLockFile(const FilePath& lockFilePath,
       return error;
 
    int status;
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_forceFallback)
+   {
+      status = -1;
+      errno = EOPNOTSUPP;
+   }
+   else
+#endif
    if (FileLock::useSymlinks())
    {
       status = ::symlink(
@@ -1146,8 +1172,9 @@ Error writeLockFile(const FilePath& lockFilePath,
    }
 
    // If the filesystem cannot create links, fall back to O_EXCL. An empty or
-   // partially written fallback file is treated as held until its timeout, so
-   // publication before this write cannot let another contender take over.
+   // partially written fallback file is treated as held until its timeout.
+   // A write can outlast that timeout, so validate ownership afterwards and
+   // never clean up a failed publication through the reusable public name.
    LOG((FileLock::useSymlinks() ? "symlink" : "link")
        << "() failed (errno " << linkError << "); falling back to O_EXCL: "
        << lockFilePath.getAbsolutePath());
@@ -1181,10 +1208,25 @@ Error writeLockFile(const FilePath& lockFilePath,
    ::close(proxyDescriptor);
    unlinkBestEffort(proxyPath);
 
+   if (!error)
+   {
+      LockMetadata identity;
+      error = descriptorIdentity(descriptor, &identity);
+      if (!error)
+      {
+         bool matches = false;
+         error = hasExpectedIdentity(lockFilePath, identity, &matches);
+         if (!error && !matches)
+            error = noLockAvailableError(lockFilePath);
+      }
+   }
+
    if (error)
    {
+      // As with a failed claim write, an incomplete public entry is left
+      // for timeout cleanup. Even an identity check followed by unlink can
+      // delete a successor if the filesystem call stalls.
       ::close(descriptor);
-      unlinkBestEffort(lockFilePath);
       return error;
    }
 
@@ -1455,6 +1497,16 @@ void LinkBasedFileLock::setBeforeReleaseForTesting(const boost::function<void()>
 void LinkBasedFileLock::setBeforeRefreshForTesting(const boost::function<void()>& callback)
 {
    s_beforeRefresh = callback;
+}
+
+void LinkBasedFileLock::setBeforeWriteForTesting(const boost::function<Error(int)>& callback)
+{
+   s_beforeWrite = callback;
+}
+
+void LinkBasedFileLock::setForceFallbackForTesting(bool forceFallback)
+{
+   s_forceFallback = forceFallback;
 }
 #endif
 

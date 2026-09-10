@@ -185,6 +185,8 @@ public:
    static FilePath claimPathForTesting(const FilePath& lockFilePath);
    static void setBeforeReleaseForTesting(const boost::function<void()>& callback);
    static void setBeforeRefreshForTesting(const boost::function<void()>& callback);
+   static void setBeforeWriteForTesting(const boost::function<Error(int)>& callback);
+   static void setForceFallbackForTesting(bool forceFallback);
 #endif
 
    Error acquire(const FilePath& lockFilePath);

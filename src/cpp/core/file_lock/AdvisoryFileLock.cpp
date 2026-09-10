@@ -273,6 +273,49 @@ std::string pathKey(const FilePath& lockFilePath)
 }
 
 #ifndef _WIN32
+Error ensureAdvisoryLockFile(const FilePath& lockFilePath)
+{
+   // Persistent advisory lock files must be writable by every collaborator
+   // who can reach the shared lock directory: fcntl's exclusive lock needs
+   // a writable descriptor. These files contain no application data; the
+   // directory controls access, and the creator's umask must not prevent a
+   // later user from taking the lock.
+   int descriptor;
+   do
+   {
+      descriptor = ::open(
+         lockFilePath.getAbsolutePathNative().c_str(),
+         O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC,
+         0666);
+   }
+   while (descriptor == -1 && errno == EINTR);
+
+   if (descriptor == -1)
+   {
+      // Never open or change permissions on an existing inode here: it may
+      // already be locked in this process, including through another name.
+      if (errno == EEXIST)
+         return Success();
+
+      Error error = systemCallError("open", errno, ERROR_LOCATION);
+      error.addProperty("lock-file", lockFilePath);
+      return error;
+   }
+
+   Error error;
+   if (::fchmod(descriptor, 0666) == -1)
+   {
+      error = systemCallError("fchmod", errno, ERROR_LOCATION);
+      error.addProperty("lock-file", lockFilePath);
+   }
+
+   // O_EXCL proves this is our new inode, so descriptor-based chmod cannot
+   // affect a substituted pathname. On error, leave the name alone for the
+   // same reason; never unlink a file that could now belong to a contender.
+   ::close(descriptor);
+   return error;
+}
+
 std::string inodeKeyFor(const struct stat& info)
 {
    return fmt::format("inode:{}:{}", info.st_dev, info.st_ino);
@@ -559,7 +602,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    if (error)
       return error;
 
-   // Reserve the path before creating the file: ensureFile() opens and closes
+   // Reserve the path before creating the file: creation opens and closes
    // a descriptor, which would drop a lock this process already holds on it.
    std::string key = pathKey(lockFilePath);
    AcquireScope reservation(key);
@@ -568,7 +611,14 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
 
    // Advisory lock files are intentionally persistent. Deleting one on
    // release allows contenders to lock different inodes at the same path.
+#ifdef _WIN32
    error = lockFilePath.ensureFile();
+#else
+   // pathKey() resolves the final symlink too, including a dangling one.
+   // Exclusive creation must target that resolved name, since O_EXCL does
+   // not follow a symlink at its final component.
+   error = ensureAdvisoryLockFile(FilePath(key));
+#endif
    if (error)
       return error;
 

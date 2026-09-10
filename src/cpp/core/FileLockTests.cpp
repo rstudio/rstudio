@@ -17,6 +17,7 @@
 
 #include <core/FileLock.hpp>
 
+#include <fcntl.h>
 #include <pthread.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -76,6 +77,15 @@ int countChildrenWithPrefix(const FilePath& directory, const std::string& prefix
    return count;
 }
 
+bool descriptorRefersTo(int descriptor, const FilePath& path)
+{
+   struct stat opened;
+   struct stat named;
+   return ::fstat(descriptor, &opened) == 0 &&
+          ::stat(path.getAbsolutePath().c_str(), &named) == 0 &&
+          opened.st_dev == named.st_dev && opened.st_ino == named.st_ino;
+}
+
 class FileLockingTest : public ::testing::Test
 {
 protected:
@@ -98,6 +108,8 @@ protected:
       FileLock::setUseSymlinksForTesting(false);
       LinkBasedFileLock::setBeforeReleaseForTesting({});
       LinkBasedFileLock::setBeforeRefreshForTesting({});
+      LinkBasedFileLock::setBeforeWriteForTesting({});
+      LinkBasedFileLock::setForceFallbackForTesting(false);
    }
 
    // The wall-clock start time of this test process, which the staleness
@@ -173,6 +185,8 @@ protected:
    {
       LinkBasedFileLock::setBeforeReleaseForTesting({});
       LinkBasedFileLock::setBeforeRefreshForTesting({});
+      LinkBasedFileLock::setBeforeWriteForTesting({});
+      LinkBasedFileLock::setForceFallbackForTesting(false);
       FileLock::cleanUp();
       FileLock::setTimeoutInterval(oldTimeout_);
       FileLock::setLiveOwnerGraceMultiplierForTesting(oldGraceMultiplier_);
@@ -447,6 +461,11 @@ TEST_F(FileLockingTest, AdvisoryReadOnlyLockFileCanBeProbed)
    ASSERT_EQ(0, ::chmod(lockFilePath_.getAbsolutePath().c_str(), 0444));
 
    AdvisoryFileLock lock;
+   EXPECT_TRUE(lock.acquire(lockFilePath_));
+   struct stat info;
+   ASSERT_EQ(0, ::stat(lockFilePath_.getAbsolutePath().c_str(), &info));
+   EXPECT_EQ(0444, info.st_mode & 0777);
+
    bool isLocked = true;
    EXPECT_FALSE(lock.isLocked(lockFilePath_, &isLocked));
    EXPECT_FALSE(isLocked);
@@ -539,6 +558,45 @@ TEST_F(FileLockingTest, AdvisoryReleaseKeepsStableInode)
    EXPECT_EQ(before.st_dev, after.st_dev);
    EXPECT_EQ(before.st_ino, after.st_ino);
    EXPECT_FALSE(second.release());
+}
+
+TEST_F(FileLockingTest, AdvisoryNewLockIsSharedDespiteRestrictiveUmask)
+{
+   mode_t previousMask = ::umask(0077);
+   AdvisoryFileLock first;
+   Error error = first.acquire(lockFilePath_);
+   ::umask(previousMask);
+   ASSERT_FALSE(error);
+
+   struct stat before;
+   ASSERT_EQ(0, ::stat(lockFilePath_.getAbsolutePath().c_str(), &before));
+   EXPECT_EQ(0666, before.st_mode & 0777);
+   ASSERT_FALSE(first.release());
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::alarm(10);
+      AdvisoryFileLock second;
+      if (second.acquire(lockFilePath_))
+         ::_exit(1);
+      struct stat after;
+      if (::stat(lockFilePath_.getAbsolutePath().c_str(), &after))
+         ::_exit(2);
+      if (before.st_dev != after.st_dev || before.st_ino != after.st_ino)
+         ::_exit(3);
+      if ((after.st_mode & 0777) != 0666)
+         ::_exit(4);
+      if (second.release())
+         ::_exit(5);
+      ::_exit(0);
+   }
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
 }
 
 TEST_F(FileLockingTest, AdvisoryLockSurvivesSymlinkAliasOperations)
@@ -768,6 +826,135 @@ TEST_F(FileLockingTest, RefreshSnapshotDoesNotTouchReleasedInode)
    EXPECT_EQ("-1\n", contents);
    EXPECT_EQ(releasedTime, lockFilePath_.getLastWriteTime());
    EXPECT_FALSE(lock.isLocked(lockFilePath_));
+}
+
+TEST_F(FileLockingTest, StalledFallbackPublicationPreservesSuccessor)
+{
+   FileLock::setLoadBalancedForTesting(true);
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
+   LinkBasedFileLock::setForceFallbackForTesting(true);
+
+   for (bool failWrite : {true, false})
+   {
+      SCOPED_TRACE(failWrite ? "failed write" : "successful write");
+      LinkBasedFileLock first;
+      LinkBasedFileLock successor;
+      bool replaced = false;
+      LinkBasedFileLock::setBeforeWriteForTesting([&](int descriptor) -> Error
+      {
+         if (replaced || !descriptorRefersTo(descriptor, lockFilePath_))
+            return Success();
+
+         // Model a write that stalls beyond publication's timeout. A second
+         // contender takes over before the original write returns.
+         replaced = true;
+         lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
+         EXPECT_FALSE(successor.acquire(lockFilePath_));
+         return failWrite ? systemError(ENOSPC, ERROR_LOCATION) : Success();
+      });
+
+      Error error = first.acquire(lockFilePath_);
+      LinkBasedFileLock::setBeforeWriteForTesting({});
+      EXPECT_TRUE(replaced);
+      if (failWrite)
+         EXPECT_EQ(systemError(ENOSPC, ErrorLocation()), error);
+      else
+         EXPECT_TRUE(FileLock::isNoLockAvailable(error));
+
+      EXPECT_FALSE(first.release());
+      EXPECT_TRUE(lockFilePath_.exists());
+      LinkBasedFileLock third;
+      EXPECT_TRUE(third.isLocked(lockFilePath_));
+      EXPECT_TRUE(FileLock::isNoLockAvailable(third.acquire(lockFilePath_)));
+      EXPECT_FALSE(successor.release());
+   }
+}
+
+TEST_F(FileLockingTest, FailedFallbackPublicationCanExpire)
+{
+   FileLock::setLoadBalancedForTesting(true);
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
+   LinkBasedFileLock::setForceFallbackForTesting(true);
+   LinkBasedFileLock::setBeforeWriteForTesting([&](int descriptor) -> Error
+   {
+      return descriptorRefersTo(descriptor, lockFilePath_)
+         ? systemError(ENOSPC, ERROR_LOCATION)
+         : Success();
+   });
+
+   LinkBasedFileLock first;
+   EXPECT_EQ(systemError(ENOSPC, ErrorLocation()), first.acquire(lockFilePath_));
+   LinkBasedFileLock::setBeforeWriteForTesting({});
+
+   // The failed publication stays held until expiry, then normal takeover
+   // reclaims it without any unsafe pathname cleanup by the failed writer.
+   EXPECT_TRUE(first.isLocked(lockFilePath_));
+   lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
+   LinkBasedFileLock next;
+   EXPECT_FALSE(next.acquire(lockFilePath_));
+   EXPECT_FALSE(next.release());
+}
+
+TEST_F(FileLockingTest, FailedClaimPublicationPreservesSuccessorClaim)
+{
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
+   FilePath claimPath = claimPathFor(lockFilePath_);
+   bool replaced = false;
+   LinkBasedFileLock::setBeforeWriteForTesting([&](int descriptor) -> Error
+   {
+      if (replaced || !descriptorRefersTo(descriptor, claimPath))
+         return Success();
+
+      // Simulate another contender replacing an expired, incomplete claim
+      // while its creator is still waiting for the initial write.
+      replaced = true;
+      EXPECT_FALSE(claimPath.remove());
+      EXPECT_FALSE(writeStringToFile(claimPath, std::to_string(::getpid()) + "\n"));
+      return systemError(ENOSPC, ERROR_LOCATION);
+   });
+
+   LinkBasedFileLock lock;
+   EXPECT_EQ(systemError(ENOSPC, ErrorLocation()), lock.acquire(lockFilePath_));
+   LinkBasedFileLock::setBeforeWriteForTesting({});
+   EXPECT_TRUE(replaced);
+   EXPECT_TRUE(claimPath.exists());
+   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
+}
+
+TEST_F(FileLockingTest, ReleasedLinkInodeExpiresForLegacyLoadBalancedReaders)
+{
+   FileLock::setLoadBalancedForTesting(true);
+   for (int mode = 0; mode < 3; ++mode)
+   {
+      SCOPED_TRACE(mode);
+      FileLock::setUseSymlinksForTesting(mode == 1);
+      LinkBasedFileLock::setForceFallbackForTesting(mode == 2);
+      for (bool cleanUp : {false, true})
+      {
+         SCOPED_TRACE(cleanUp ? "cleanup" : "release");
+         LinkBasedFileLock lock;
+         ASSERT_FALSE(lock.acquire(lockFilePath_));
+         int descriptor = ::open(lockFilePath_.getAbsolutePath().c_str(), O_RDONLY);
+         ASSERT_NE(-1, descriptor);
+         struct stat info = {};
+         EXPECT_EQ(0, ::fstat(descriptor, &info));
+         EXPECT_LT(::difftime(::time(nullptr), info.st_mtime),
+                   FileLock::getTimeoutInterval().total_seconds());
+
+         if (cleanUp)
+            FileLock::cleanUp();
+         else
+            EXPECT_FALSE(lock.release());
+
+         EXPECT_EQ(0, ::fstat(descriptor, &info));
+         // Older load-balanced versions ignore the release sentinel. Test
+         // their age-only predicate against the retained inode directly.
+         EXPECT_GE(::difftime(::time(nullptr), info.st_mtime),
+                   FileLock::getTimeoutInterval().total_seconds());
+         ::close(descriptor);
+         EXPECT_FALSE(lock.isLocked(lockFilePath_));
+      }
+   }
 }
 
 TEST_F(FileLockingTest, LinkMetadataRemainsBackwardCompatible)
@@ -1196,7 +1383,7 @@ TEST_F(FileLockingTest, AdvisoryLockThroughDanglingSymlinkSurvivesProbe)
    ASSERT_EQ(
       0,
       ::symlink(
-         target.getAbsolutePath().c_str(),
+         target.getFilename().c_str(),
          lockFilePath_.getAbsolutePath().c_str()));
    ASSERT_FALSE(target.exists());
 
@@ -1204,6 +1391,9 @@ TEST_F(FileLockingTest, AdvisoryLockThroughDanglingSymlinkSurvivesProbe)
    AdvisoryFileLock other;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
    ASSERT_TRUE(target.exists());
+   struct stat info;
+   ASSERT_EQ(0, ::stat(target.getAbsolutePath().c_str(), &info));
+   EXPECT_EQ(0666, info.st_mode & 0777);
 
    bool isLocked = false;
    EXPECT_FALSE(other.isLocked(lockFilePath_, &isLocked));
