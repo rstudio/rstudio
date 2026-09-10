@@ -160,6 +160,9 @@ protected:
                      slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType()),
                      configCaptured_(true)
    {
+     // with no preview requested there is nothing to serve: run a one-shot
+     // `quarto render` instead of leaving a preview server behind (#12838)
+     renderOnly_ = viewerType_ == kRmdViewerTypeNone;
      renderToken_ = core::system::generateUuid();
 
      readInputFileLines();
@@ -168,7 +171,7 @@ protected:
 
    virtual std::string name()
    {
-      return "Preview: " + previewTarget_.getFilename();
+      return (renderOnly_ ? "Render: " : "Preview: ") + previewTarget_.getFilename();
    }
    
    virtual std::vector<std::string> args()
@@ -185,6 +188,16 @@ protected:
 
       // preview target file, as a path relative to the working directory
       // the job runs in (see previewDir())
+      if (renderOnly_)
+      {
+         std::vector<std::string> args = { "render" };
+         if (!previewTarget_.isDirectory())
+            args.push_back(string_utils::utf8ToSystem(previewTargetPath(previewTarget_, previewDir())));
+         args.push_back("--to");
+         args.push_back(!format_.empty() ? format_ : "default");
+         return args;
+      }
+
       std::vector<std::string> args = { isShinyDoc ? "serve" : "preview" };
       if (!previewTarget_.isDirectory())
       {
@@ -269,6 +282,16 @@ protected:
    virtual core::FilePath workingDir()
    {
       return previewDir();
+   }
+
+   virtual void onCompleted(int exitStatus)
+   {
+      QuartoJob::onCompleted(exitStatus);
+
+      // a preview signals this once its server is up; a render is done when
+      // the process exits (a failure keeps the job output in front)
+      if (renderOnly_ && exitStatus == EXIT_SUCCESS)
+         activateConsole();
    }
 
 private:
@@ -575,6 +598,7 @@ private:
    int controlPort_;
    std::string path_;
    std::string viewerType_;
+   bool renderOnly_;
    FilePath configFile_;
    std::string configContents_;
    bool configCaptured_;
