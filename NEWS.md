@@ -5,6 +5,7 @@
 - ([#17787](https://github.com/rstudio/rstudio/issues/17787)): Columns in the data viewer can now be hidden and shown from the summary panel, individually or all at once.
 - ([#18738](https://github.com/rstudio/rstudio/issues/18738)): Reduced the disk space used by RStudio installations: Copilot Language Server binaries for other platforms are no longer installed, JavaScript source maps are no longer packaged, GWT symbol maps are stored compressed, and macOS application bundles are now transparently compressed on disk.
 - ([#18739](https://github.com/rstudio/rstudio/issues/18739)): Optimized RStudio Desktop startup time.
+- ([#14226](https://github.com/rstudio/rstudio/issues/14226)): Files can now be opened in the source editor from the Terminal pane with `rstudio <file>[:line[:column]]` (macOS, Linux, and RStudio Server).
 - ([#15261](https://github.com/rstudio/rstudio/issues/15261)): The Insert Pipe Operator command (Ctrl+Shift+M) now inserts `+` when the cursor is within a ggplot2 chain. This can be disabled in Global Options > Code > Editing.
 - ([#12379](https://github.com/rstudio/rstudio/issues/12379)): Customized editor keyboard shortcuts (e.g. Remove Word Left) now also apply to the Console input.
 
