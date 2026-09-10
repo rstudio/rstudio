@@ -516,12 +516,23 @@ export class Application implements AppState {
   windowOpening():
     | { action: 'deny' }
     | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
-    // no additional config if pending window is a satellite
-    for (const pendingWindow of this.pendingWindows) {
+    if (this.pendingWindows.length > 0) {
+      const pendingWindow = this.pendingWindows[0];
+
+      // a window of this name is already open: activate it instead. This has
+      // to be denied here, before Electron creates the window; a denied
+      // request never reaches windowCreated(), so consume the pending entry.
+      const existingWindow = this.windowTracker.getWindow(pendingWindow.name)?.window;
+      if (existingWindow) {
+        this.pendingWindows.shift();
+        raiseAndActivateWindow(existingWindow);
+        return { action: 'deny' };
+      }
+
+      // no additional config if pending window is a satellite
       if (pendingWindow.type === 'satellite') {
         return SatelliteWindow.windowOpening();
       }
-      break;
     }
 
     // determine size for secondary window
@@ -538,14 +549,6 @@ export class Application implements AppState {
     // check if we have a pending window waiting to come up
     const pendingWindow = this.pendingWindows.shift();
     if (pendingWindow) {
-      // check for an existing window of this name
-      const existingWindow = this.windowTracker.getWindow(pendingWindow.name)?.window;
-      if (existingWindow) {
-        // activate the existing window then deny creation of new window
-        raiseAndActivateWindow(existingWindow);
-        return;
-      }
-
       if (pendingWindow.type === 'satellite') {
         configureSatelliteWindow(pendingWindow, newWindow, owner);
       } else {
