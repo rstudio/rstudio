@@ -15,10 +15,13 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
@@ -780,10 +783,78 @@ public class AceEditor implements DocDisplay
 
    private void insertPipeOperator()
    {
+      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+
+      // ggplot2 layers are chained with '+', not with a pipe
+      if (prefs.insertPlusInGgplotChains().getValue() && isCursorInGgplotChain())
+      {
+         insertOperatorWithSpacing("+");
+         return;
+      }
+
       // Use magrittr style pipes if the user has not opted into new native pipe syntax
-      boolean nativePipePreferred = RStudioGinjector.INSTANCE.getUserPrefs().insertNativePipeOperator().getValue();
+      boolean nativePipePreferred = prefs.insertNativePipeOperator().getValue();
       String pipe =  nativePipePreferred ? NATIVE_R_PIPE : MAGRITTR_PIPE;
       insertOperatorWithSpacing(pipe);
+   }
+
+   // Walks backwards from the cursor through the current statement, at the
+   // cursor's own nesting level, looking for a ggplot2-style call. Bracketed
+   // groups are skipped as a unit, so a ggplot chain nested inside a call
+   // argument does not count once the cursor has left those brackets.
+   private boolean isCursorInGgplotChain()
+   {
+      if (!DocumentMode.isCursorInRMode(this) || !hasCodeModel())
+         return false;
+
+      Position position = hasSelection() ? getSelectionStart() : getCursorPosition();
+      TokenCursor cursor = getCodeModel().getTokenCursor();
+      if (!cursor.moveToPosition(position))
+         return false;
+
+      while (true)
+      {
+         if (cursor.isRightBracket())
+         {
+            if (!cursor.bwdToMatchingToken())
+               return false;
+         }
+         else if (cursor.isLeftBracket() || cursor.valueEquals(";"))
+         {
+            // the cursor sits inside this bracket's arguments; any chain lies outside it
+            return false;
+         }
+         else if (cursor.currentType().contains("identifier") &&
+                  cursor.peekFwd(1).valueEquals("(") &&
+                  isGgplotFunctionName(cursor.currentValue()))
+         {
+            return true;
+         }
+
+         int row = cursor.getRow();
+         boolean leadingOperator = cursor.isLookingAtBinaryOp();
+         if (!cursor.moveToPreviousToken())
+            return false;
+
+         // a new row only continues the statement across a binary operator
+         // (trailing or leading) or a comma
+         if (cursor.getRow() != row &&
+             !leadingOperator &&
+             !cursor.isLookingAtBinaryOp() &&
+             !cursor.valueEquals(","))
+         {
+            return false;
+         }
+      }
+   }
+
+   private static boolean isGgplotFunctionName(String name)
+   {
+      for (String prefix : GGPLOT_FUNCTION_PREFIXES)
+         if (name.startsWith(prefix))
+            return !GGPLOT_FUNCTION_EXCLUSIONS.contains(name);
+
+      return GGPLOT_FUNCTIONS.contains(name);
    }
 
    private boolean shouldIndentOnPaste()
@@ -5151,6 +5222,22 @@ public class AceEditor implements DocDisplay
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
+
+   // functions that appear at the top level of a ggplot2 (or extension) chain
+   private static final Set<String> GGPLOT_FUNCTIONS = new HashSet<>(Arrays.asList(
+         "ggplot", "qplot", "quickplot",
+         "labs", "ggtitle", "xlab", "ylab", "xlim", "ylim", "lims", "expand_limits",
+         "guides", "annotate", "theme", "borders", "ease_aes",
+         "plot_layout", "plot_annotation", "plot_spacer", "wrap_plots", "wrap_elements", "inset_element"));
+
+   private static final String[] GGPLOT_FUNCTION_PREFIXES = {
+         "geom_", "stat_", "scale_", "theme_", "facet_", "coord_", "annotation_",
+         "transition_", "enter_", "exit_", "shadow_", "view_"
+   };
+
+   // theme_* helpers that act on the global theme rather than on a plot
+   private static final Set<String> GGPLOT_FUNCTION_EXCLUSIONS = new HashSet<>(Arrays.asList(
+         "theme_set", "theme_get", "theme_update", "theme_replace"));
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
    private CompletionContext context_ = null;
