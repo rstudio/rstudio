@@ -179,6 +179,41 @@ test.describe.serial('Active tab highlighting preference', () => {
     }
   });
 
+  test('a partly scrolled-out tab falls back to the clipped indicator', async ({ rstudioPage: page }) => {
+    await setPref(page, PREF, true);
+    const scrolledFiles = Array.from({ length: 20 }, (_, i) => `highlight_scroll_${String(i + 1).padStart(2, '0')}.R`);
+    additionalFiles.push(...scrolledFiles);
+    for (const filename of scrolledFiles)
+      await writeAndOpenFile(page, sandbox.dir, filename, '# Scrolled tab strip\n');
+
+    // A middle tab leaves scroll room on both sides of it.
+    const tab = sourceTab(page, scrolledFiles[9]);
+    const panel = page.locator('.docTabPanel').filter({ has: tab });
+    await tab.click();
+    await expectHighlight(tab, true);
+    await expect(panel).not.toHaveClass(/docTabPanelClipped/);
+
+    // Scroll the strip's layout layer so the selected tab is half hidden at
+    // the left edge, and check the scroll actually landed there.
+    const scrolled = await tab.evaluate(element => {
+      const host = element.closest('.gwt-TabLayoutPanelTabs')!.parentElement!;
+      const hostRect = host.getBoundingClientRect();
+      const tabRect = element.getBoundingClientRect();
+      const target = host.scrollLeft + (tabRect.left - hostRect.left) + tabRect.width / 2;
+      host.scrollLeft = target;
+      return { target, actual: host.scrollLeft };
+    });
+    expect(scrolled.actual).toBeCloseTo(scrolled.target, 0);
+    await expect(panel).toHaveClass(/docTabPanelClipped/);
+    await expect.poll(() => indicator(tab).then(bar => bar.position)).toBe('absolute');
+    await expect.poll(() => indicator(tab).then(bar => bar.content)).not.toBe('none');
+
+    // Selecting the tab scrolls it back into view and restores the overlay.
+    await tab.click();
+    await expect(panel).not.toHaveClass(/docTabPanelClipped/);
+    await expectHighlight(tab, true);
+  });
+
   for (const { name, editor, global, href, accent, paneWeight } of [
     { name: 'Modern light', editor: LIGHT_THEME, global: 'default', href: 'textmate', accent: 'rgb(52, 101, 164)', paneWeight: '700' },
     { name: 'Modern dark', editor: DARK_THEME, global: 'default', href: 'cobalt', accent: 'rgb(69, 134, 226)', paneWeight: '400' },
