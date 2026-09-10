@@ -55,6 +55,10 @@ public class ShellPane extends ShellWidget implements Shell.Display
       events.addHandler(ResetEditorCommandsEvent.TYPE, event ->
       {
          editor.resetCommands();
+
+         // resetCommands() reinstalls every Ace default, which replaces the
+         // console-specific Home / End commands set up by ShellWidget.
+         editor.useDocumentLineNavigation();
       });
 
       uiPrefs.syntaxColorConsole().bind(new CommandWithArg<Boolean>()

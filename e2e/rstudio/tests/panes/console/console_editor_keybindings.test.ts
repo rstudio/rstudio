@@ -9,27 +9,35 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { waitForConsoleFocus } from '@pages/console_pane.page';
 import { executeCommand } from '@utils/commands';
-import { setConsoleInput } from '@utils/console';
+import { YES_BTN } from '@pages/modals.page';
+import {
+  getConsoleCursorPosition,
+  getConsoleScreenRowCount,
+  setConsoleInput,
+} from '@utils/console';
 
-// The editor bindings live in <config home>/keybindings/editor_bindings.json.
-// Desktop and spawned-server workers run with a sandboxed RSTUDIO_CONFIG_HOME,
-// but an external server shares its config with the developer, so any
-// pre-existing file is set aside and restored through the R session.
-const BINDINGS_FILE = [
+// Keybindings live in <config home>/keybindings/. The editor bindings are in
+// editor_bindings.json, but the dialog's Reset button also rewrites the app
+// and addin bindings, so all three are handled. Desktop and spawned-server
+// workers run with a sandboxed RSTUDIO_CONFIG_HOME, but an external server
+// shares its config with the developer, so any pre-existing files are set
+// aside and restored through the R session.
+const BINDINGS_FILES = [
   'file.path(Sys.getenv("RSTUDIO_CONFIG_HOME",',
   '  unset = file.path(Sys.getenv("XDG_CONFIG_HOME", unset = "~/.config"), "rstudio")),',
-  '  "keybindings", "editor_bindings.json")',
+  '  "keybindings", c("editor_bindings.json", "rstudio_bindings.json", "addins.json"))',
 ].join(' ');
 
 const BACKUP_BINDINGS = [
-  `f <- ${BINDINGS_FILE};`,
+  `for (f in ${BINDINGS_FILES})`,
   'if (file.exists(f)) file.rename(f, paste0(f, ".e2e-backup"))',
 ].join(' ');
 
 const RESTORE_BINDINGS = [
-  `f <- ${BINDINGS_FILE};`,
+  `for (f in ${BINDINGS_FILES}) {`,
   'unlink(f);',
   'if (file.exists(paste0(f, ".e2e-backup"))) file.rename(paste0(f, ".e2e-backup"), f)',
+  '}',
 ].join(' ');
 
 // Unbound in every RStudio keymap and in Ace's defaults, so it can only reach
@@ -116,6 +124,49 @@ test.describe.serial('Console honors custom editor keybindings', () => {
 
     await page.keyboard.press(NEW_SHORTCUT);
     await expect.poll(() => consoleActions.consolePane.consoleInputValue()).toBe('gamma ');
+
+    await setConsoleInput(page, '');
+  });
+
+  test('Reset drops the rebinding but keeps console Home/End navigation', async ({
+    rstudioPage: page,
+  }) => {
+    await executeCommand(page, 'modifyKeyboardShortcuts');
+    const dialog = page.getByRole('dialog', { name: 'Keyboard Shortcuts', exact: true });
+    await expect(dialog).toBeVisible();
+
+    await dialog.locator('#rstudio_kybrd_shrtcts_rst').click();
+    const confirm = page.getByRole('alertdialog', { name: 'Reset Keyboard Shortcuts' });
+    await expect(confirm).toBeVisible();
+    await confirm.locator(YES_BTN).click();
+    await expect(confirm).toBeHidden();
+
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(dialog).toBeHidden();
+
+    // the reset reached the console: the custom shortcut no longer fires there
+    const input = consoleActions.consolePane.consoleInput;
+    await input.click({ force: true });
+    await waitForConsoleFocus(page);
+    await setConsoleInput(page, 'epsilon zeta');
+    await expect.poll(() => consoleActions.consolePane.consoleInputValue()).toBe('epsilon zeta');
+
+    await input.press(NEW_SHORTCUT);
+    expect(await consoleActions.consolePane.consoleInputValue()).toBe('epsilon zeta');
+
+    // resetting reinstalls Ace's defaults, which must not undo the console's
+    // whole-line Home / End behavior on a soft-wrapped command (#18447)
+    const command = `x <- c(${Array.from({ length: 80 }, (_, i) => i + 1).join(', ')})`;
+    await setConsoleInput(page, command);
+    expect(await getConsoleScreenRowCount(page)).toBeGreaterThan(1);
+
+    await input.press('Home');
+    await expect.poll(() => getConsoleCursorPosition(page)).toEqual({ row: 0, column: 0 });
+
+    await input.press('End');
+    await expect
+      .poll(() => getConsoleCursorPosition(page))
+      .toEqual({ row: 0, column: command.length });
 
     await setConsoleInput(page, '');
   });
