@@ -7,7 +7,6 @@
 - ([#18739](https://github.com/rstudio/rstudio/issues/18739)): Optimized RStudio Desktop startup time.
 
 ### Fixed
-- ([#18775](https://github.com/rstudio/rstudio/issues/18775)): Fixed an issue in RStudio Desktop where opening a named satellite or secondary window while a window of that name was already open could leave behind an extra, unmanaged window.
 - ([#18735](https://github.com/rstudio/rstudio/issues/18735)): Fixed an issue on Windows where RStudio failed to start when the command prompt was disabled by Group Policy.
 - ([#18744](https://github.com/rstudio/rstudio/issues/18744)): RStudio Desktop now uses link-based file locks by default on macOS and Linux, matching RStudio Server, so sessions from both editions sharing a data directory or a project on a network drive no longer mistake each other's live locks for stale ones.
 - ([#18677](https://github.com/rstudio/rstudio/issues/18677)): Fixed Windows subprocess detection reporting unrelated processes as children after process ID reuse.
