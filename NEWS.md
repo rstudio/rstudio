@@ -8,6 +8,7 @@
 
 ### Fixed
 - ([#18760](https://github.com/rstudio/rstudio/issues/18760)): Fixed an issue where long R version names in Global Options > General could push the R version selector outside the dialog.
+- ([#18735](https://github.com/rstudio/rstudio/issues/18735)): Fixed an issue on Windows where RStudio failed to start when the command prompt was disabled by Group Policy.
 - ([#18744](https://github.com/rstudio/rstudio/issues/18744)): RStudio Desktop now uses link-based file locks by default on macOS and Linux, matching RStudio Server, so sessions from both editions sharing a data directory or a project on a network drive no longer mistake each other's live locks for stale ones.
 - ([#18677](https://github.com/rstudio/rstudio/issues/18677)): Fixed Windows subprocess detection reporting unrelated processes as children after process ID reuse.
 - ([#18742](https://github.com/rstudio/rstudio/issues/18742)): Fixed an issue where the Global Options dialog could push the OK and Apply buttons off screen in short windows.
@@ -18,5 +19,6 @@
 - ([#18722](https://github.com/rstudio/rstudio/issues/18722)): Fixed an issue where the diagnostics system reported "unexpected end of document" for R scripts ending with a semicolon
 
 ### Dependencies
+- Copilot Language Server 1.544.0
 - Node.js 24.21.0 (GitHub Copilot, Posit Assistant)
 

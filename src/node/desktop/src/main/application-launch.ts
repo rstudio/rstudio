@@ -19,6 +19,7 @@ import { existsSync, readdirSync } from 'fs';
 import { setenv, unsetenv } from '../core/environment';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
+import { isAutomated } from './utils';
 import { app } from 'electron';
 
 export interface LaunchRStudioOptions {
@@ -63,6 +64,11 @@ export class ApplicationLaunch {
     // in devmode, we need to pass the directory path when launching the application;
     // for package builds, we have no such requirement
     const argv = app.isPackaged ? [] : [process.argv[1]];
+
+    // keep the relaunched instance from stealing focus during automation runs
+    if (isAutomated()) {
+      argv.push('--automation-agent');
+    }
 
     // resolve working directory
     let workingDir = app.getPath('home');

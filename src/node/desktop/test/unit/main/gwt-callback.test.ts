@@ -16,14 +16,15 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
-import { BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { createSinonStubInstance, StubbedClass } from '../unit-utils';
 
 import { GwtCallback } from '../../../src/main/gwt-callback';
 import { MainWindow } from '../../../src/main/main-window';
 
-function fakeBrowserWindow(state?: { visible: boolean; minimized: boolean }) {
+function fakeBrowserWindow(state?: { visible?: boolean; minimized?: boolean; destroyed?: boolean }) {
   return {
+    isDestroyed: sinon.stub().returns(state?.destroyed ?? false),
     isVisible: sinon.stub().returns(state?.visible ?? true),
     isMinimized: sinon.stub().returns(state?.minimized ?? false),
     show: sinon.stub(),
@@ -51,6 +52,53 @@ describe('DesktopCallback', () => {
 
   it('can be constructed', () => {
     assert.isNotEmpty(callback);
+  });
+
+  describe('dialogParentWindow', () => {
+    // a parentless native dialog activates the app on macOS, so automation
+    // runs must always get a parent even though the app is never focused
+    it('prefers the requested window, then the focused window', () => {
+      const preferred = fakeBrowserWindow() as unknown as BrowserWindow;
+      const focused = fakeBrowserWindow() as unknown as BrowserWindow;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(focused);
+
+      assert.strictEqual(callback.dialogParentWindow(preferred), preferred);
+      assert.strictEqual(callback.dialogParentWindow(), focused);
+    });
+
+    it('leaves the dialog parentless when nothing is focused', () => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+      assert.isUndefined(callback.dialogParentWindow());
+    });
+
+    it('falls back to the main window in automation mode', () => {
+      const main = fakeBrowserWindow() as unknown as BrowserWindow;
+      mainWindow.window = main;
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        assert.strictEqual(callback.dialogParentWindow(), main);
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+    });
+
+    // a sheet on a window that is not on screen is held until the window comes
+    // back, so the run would hang on a dialog it can never dismiss
+    it('stays parentless in automation mode when the main window is off screen', () => {
+      sinon.stub(BrowserWindow, 'getFocusedWindow').returns(null);
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        for (const state of [{ minimized: true }, { visible: false }, { destroyed: true }]) {
+          mainWindow.window = fakeBrowserWindow(state) as unknown as BrowserWindow;
+          assert.isUndefined(callback.dialogParentWindow(), JSON.stringify(state));
+        }
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
+    });
   });
 
   describe('desktop_bring_main_frame_behind_active', () => {
