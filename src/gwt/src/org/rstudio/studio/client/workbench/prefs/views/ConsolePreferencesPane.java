@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -79,7 +80,8 @@ public class ConsolePreferencesPane extends PreferencesPane
       panel.add(displayGrid);
 
       TwoColumnLayoutGridBuilder truncationGridBuilder = new TwoColumnLayoutGridBuilder();
-      truncationGridBuilder.add(constants_.consoleMaxLinesLabel(), numericPref(prefs_.consoleMaxLines()));
+      truncationGridBuilder.add(constants_.consoleMaxLinesLabel(),
+                                numericPref(10, NumericValueWidget.NoMaximum, prefs_.consoleMaxLines()));
       truncationGridBuilder.add(constants_.consoleLimitOutputLengthLabel(), numericPref(prefs_.consoleLineLengthLimit()));
       LayoutGrid truncationGrid = truncationGridBuilder.get();
       truncationGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);

@@ -181,6 +181,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
 
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
+      uiPrefs.consoleMaxLines().addValueChangeHandler((event) ->
+      {
+         // the session ignores smaller values too (see SessionConsole.cpp)
+         if (event.getValue() >= MIN_CONSOLE_LINES)
+            view_.setMaxOutputLines(event.getValue());
+      });
 
       keyDownPreviewHandlers_ = new ArrayList<>();
       keyPressPreviewHandlers_ = new ArrayList<>();
@@ -983,4 +989,5 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private boolean restoreFocus_ = true;
    private boolean debugging_ = false;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
+   private static final int MIN_CONSOLE_LINES = 10;
 }
