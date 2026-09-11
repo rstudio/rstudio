@@ -582,7 +582,9 @@ export class Application implements AppState {
         {
           label: i18next.t('applicationTs.newRstudioWindow'),
           click: () => {
-            this.appLaunch?.launchRStudio({ workingDirectory: appState().projectDirectory });
+            // start in the project's directory, but don't open the project itself;
+            // this command is for starting a new, separate session (#15669)
+            this.appLaunch?.launchRStudio({ workingDirectory: appState().projectDirectory, noProject: true });
           },
         },
       ]);

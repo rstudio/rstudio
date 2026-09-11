@@ -25,6 +25,9 @@ import { app } from 'electron';
 export interface LaunchRStudioOptions {
   projectFilePath?: string;
   workingDirectory?: string;
+
+  // start the new session with no project, even if the working directory contains one
+  noProject?: boolean;
 }
 
 export function resolveProjectFile(projectDir: string): string {
@@ -80,9 +83,11 @@ export class ApplicationLaunch {
     setenv(kRStudioInitialWorkingDir, workingDir);
 
     // resolve project file, if any
-    const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
-    if (existsSync(projectFile)) {
-      setenv(kRStudioInitialProject, projectFile);
+    if (!options.noProject) {
+      const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
+      if (existsSync(projectFile)) {
+        setenv(kRStudioInitialProject, projectFile);
+      }
     }
 
     // run it

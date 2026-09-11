@@ -15,13 +15,18 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { restore, saveAndClear } from '../unit-utils';
+import { Menu } from 'electron';
+
+import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 import { Application, collectStateDirIssues } from '../../../src/main/application';
+import { ApplicationLaunch } from '../../../src/main/application-launch';
+import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { randomString } from '../../../src/main/utils';
@@ -89,6 +94,41 @@ describe('Application', () => {
       assert.lengthOf(issues, 1);
       assert.strictEqual(issues[0].directory, logDir);
       assert.isNotEmpty(issues[0].message);
+    });
+  });
+
+  describe('Dock menu', () => {
+    beforeEach(() => {
+      clearApplicationSingleton();
+    });
+    afterEach(() => {
+      sinon.restore();
+      clearApplicationSingleton();
+    });
+
+    it('new window starts in the project directory, without opening the project', function () {
+      if (process.platform !== 'darwin') {
+        this.skip();
+      }
+
+      const projectDirectory = path.join(os.tmpdir(), 'some-project');
+      const application = new Application();
+      setApplication(application);
+      appState().projectDirectory = projectDirectory;
+
+      const appLaunch = createSinonStubInstance(ApplicationLaunch);
+      application.appLaunch = appLaunch;
+
+      const buildFromTemplate = sinon.spy(Menu, 'buildFromTemplate');
+      application.setDockMenu();
+
+      // the menu item's click handler ignores the arguments Electron passes it
+      const newWindowItem = buildFromTemplate.firstCall.args[0][0];
+      (newWindowItem.click as unknown as () => void)();
+
+      assert.isTrue(
+        appLaunch.launchRStudio.calledOnceWithExactly({ workingDirectory: projectDirectory, noProject: true }),
+      );
     });
   });
 
