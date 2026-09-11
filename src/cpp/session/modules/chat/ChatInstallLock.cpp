@@ -376,6 +376,11 @@ bool InstallLock::mutationInProgress() const
    return mutationActive_;
 }
 
+const std::string& InstallLock::ownerId() const
+{
+   return ownerId_;
+}
+
 FilePath InstallLock::installLockPath() const
 {
    return locksDir_.completePath(kInstallLockFileName);

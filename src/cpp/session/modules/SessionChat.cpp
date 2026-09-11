@@ -6455,11 +6455,16 @@ install_lock::InstallLock& installLock()
    // (it can be empty for dev/automation-launched sessions); the uuid
    // supplies the per-process uniqueness. Leftover files from dead
    // processes are stale-cleaned by the next mutator.
-   static const std::string ownerId =
-      module_context::activeSession().id().empty()
-         ? core::system::generateUuid(false)
-         : module_context::activeSession().id() + "-" +
-              core::system::generateUuid(false);
+   //
+   // Computed in a lambda rather than a conditional expression directly in
+   // the static's initializer: MSVC in C++20 mode initializes
+   // `static const std::string x = cond ? f() : g() + f();` to an empty
+   // string, which named every session's lock file ".lock" (#18787).
+   static const std::string ownerId = []() {
+      std::string sessionId = module_context::activeSession().id();
+      std::string uuid = core::system::generateUuid(false);
+      return sessionId.empty() ? uuid : sessionId + "-" + uuid;
+   }();
    static install_lock::InstallLock instance(
       xdg::userDataDir().completePath(chat_constants::kPositAiLocksDirName),
       ownerId);
