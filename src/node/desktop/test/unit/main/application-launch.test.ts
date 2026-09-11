@@ -23,7 +23,7 @@ import childProcess, { ChildProcess } from 'child_process';
 import { app } from 'electron';
 
 import { getenv, setenv } from '../../../src/core/environment';
-import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../../../src/core/r-user-data';
+import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../../../src/core/r-user-data';
 import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
 import { MainWindow } from '../../../src/main/main-window';
 import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
@@ -107,27 +107,29 @@ describe('ApplicationLaunch', () => {
     assert.equal(launchEnv.workingDir, dir);
   });
 
-  it('launchRStudio starts without a project when noProject is requested', () => {
+  it('launchRStudio asks for no project, and no working directory, when noProject is requested', () => {
     const launchEnv = captureLaunchEnv();
-    const dir = projectDir();
 
-    ApplicationLaunch.init().launchRStudio({ workingDirectory: dir, noProject: true });
+    ApplicationLaunch.init().launchRStudio({ noProject: true });
 
-    assert.isEmpty(launchEnv.project);
-    assert.equal(launchEnv.workingDir, dir);
+    // the session needs an explicit "none" so it doesn't restore the last project, and no
+    // working directory of ours so it uses the user's default working directory
+    assert.equal(launchEnv.project, kProjectNone);
+    assert.isEmpty(launchEnv.workingDir);
   });
 
-  it('launchRStudio ignores an inherited initial project when noProject is requested', () => {
+  it('launchRStudio ignores an inherited project and working directory when noProject is requested', () => {
     const launchEnv = captureLaunchEnv();
     const dir = projectDir();
 
     // set when this instance was itself started by opening a project
     setenv(kRStudioInitialProject, path.join(dir, 'test.Rproj'));
+    setenv(kRStudioInitialWorkingDir, dir);
 
-    ApplicationLaunch.init().launchRStudio({ workingDirectory: dir, noProject: true });
+    ApplicationLaunch.init().launchRStudio({ noProject: true });
 
-    assert.isEmpty(launchEnv.project);
-    assert.equal(launchEnv.workingDir, dir);
+    assert.equal(launchEnv.project, kProjectNone);
+    assert.isEmpty(launchEnv.workingDir);
   });
 
   it('Resolve Empty Project File Path', () => {
