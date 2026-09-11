@@ -421,7 +421,7 @@ public class DualWindowLayoutPanel extends SimplePanel
                      "Unknown WindowState " + event.getNewState());
          }
          windowA_.onWindowStateChange(
-                                 new WindowStateChangeEvent(topState));
+               new WindowStateChangeEvent(topState, event.skipFocusChange()));
       };
 
       hookEvents();

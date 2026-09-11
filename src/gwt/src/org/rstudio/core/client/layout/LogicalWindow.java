@@ -18,6 +18,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
@@ -43,6 +44,21 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       normal_.addWindowStateChangeHandler(this);
       normal_.addEnsureHeightHandler(this);
       minimized_.addWindowStateChangeHandler(this);
+
+      // User interaction keeps an automatically raised pane open, including
+      // selecting a tab or typing directly into its editor. Capture before
+      // those controls can stop propagation; focus events also arise during
+      // automatic activation and must not cancel the pending restoration.
+      DomUtils.addEventListener(
+            normal_.getElement(),
+            "mousedown",
+            true,
+            event -> clearAutoRaisedFromMinimize());
+      DomUtils.addEventListener(
+            normal_.getElement(),
+            "keydown",
+            true,
+            event -> clearAutoRaisedFromMinimize());
    }
 
    public WindowFrame getNormal()
