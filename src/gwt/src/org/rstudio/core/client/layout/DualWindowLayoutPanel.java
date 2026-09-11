@@ -456,6 +456,12 @@ public class DualWindowLayoutPanel extends SimplePanel
             {
                WindowState topState = resizePanes(layout_.getSplitterBottom());
 
+               // the drag happens on the splitter, outside either window's
+               // element, so a NORMAL resize would otherwise leave a pending
+               // auto-raise armed
+               windowA_.clearAutoRaisedFromMinimize();
+               windowB_.clearAutoRaisedFromMinimize();
+
                // we're already in normal if the splitter is being invoked
                if (topState != WindowState.NORMAL)
                {

@@ -2676,16 +2676,15 @@ public class PaneManager
    }
 
    /**
-    * Puts the console pane back into MINIMIZE when the only reason it is open
-    * is that one of its tabs raised it (e.g. Render output). Called when a
-    * background task hands control back to the console after succeeding; a
-    * failed task never gets here, so its output stays in view (#11622).
+    * Puts the console pane back into MINIMIZE without moving focus. Called
+    * when a background task that raised the pane for its own output (e.g.
+    * Render) hands control back to the console after succeeding; a failed
+    * task never gets here, so its output stays in view (#11622).
     */
-   public void minimizeConsoleIfAutoRaised()
+   public void minimizeConsolePane()
    {
       LogicalWindow consoleWindow = getConsoleLogicalWindow();
-      if (consoleWindow.wasAutoRaisedFromMinimize() &&
-          consoleWindow.getState() == WindowState.NORMAL)
+      if (consoleWindow.getState() == WindowState.NORMAL)
       {
          consoleWindow.onWindowStateChange(
                new WindowStateChangeEvent(WindowState.MINIMIZE, true));

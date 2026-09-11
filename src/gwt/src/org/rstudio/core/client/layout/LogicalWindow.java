@@ -45,6 +45,11 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       normal_.addEnsureHeightHandler(this);
       minimized_.addWindowStateChangeHandler(this);
 
+      // A tab surfacing while the window is already open claims it (e.g.
+      // Render output arriving in a pane a job raised earlier), so a later
+      // hand-back must not put the pane away.
+      normal_.addEnsureVisibleHandler(event -> clearAutoRaisedFromMinimize());
+
       // User interaction keeps an automatically raised pane open, including
       // selecting a tab or typing directly into its editor. Capture before
       // those controls can stop propagation; focus events also arise during
@@ -141,6 +146,11 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
 
    public void transitionToState(WindowState newState)
    {
+      // an owner or a sibling's transition (maximize, zoom, splitter snap)
+      // moving this window out of NORMAL supersedes a pending auto-raise
+      if (newState != WindowState.NORMAL)
+         autoRaisedFromMinimize_ = false;
+
       normal_.setMaximizedDependentState(newState);
       normal_.setExclusiveDependentState(newState);
       normal_.setLogicalState(newState);

@@ -29,6 +29,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.core.client.layout.LogicalWindow;
+import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane.ConsoleMode;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
@@ -203,6 +205,18 @@ public class Console
 
    private void activateConsole(boolean focusWindow)
    {
+      LogicalWindow consoleWindow = pPaneManager_.get().getConsoleLogicalWindow();
+
+      // A task handing control back to a pane the user has since put away
+      // leaves it there; raising it only to minimize it again would flash.
+      if (!focusWindow && consoleWindow.getState() == WindowState.MINIMIZE)
+         return;
+
+      // Read before bringToFront(): the console tab surfacing counts as a
+      // claim on the pane and clears the flag.
+      boolean restoreMinimized =
+            !focusWindow && consoleWindow.wasAutoRaisedFromMinimize();
+
       // ensure we don't leave focus in the console
       final FocusContext focusContext = new FocusContext();
       if (!focusWindow)
@@ -218,11 +232,11 @@ public class Console
       // Explicit activation keeps the console open, even if bringToFront()
       // just raised it through an ensure-visible event.
       if (focusWindow)
-         pPaneManager_.get().getConsoleLogicalWindow().clearAutoRaisedFromMinimize();
+         consoleWindow.clearAutoRaisedFromMinimize();
       // A task handing control back to the console should restore a pane
       // that it only opened for its own output.
-      else
-         pPaneManager_.get().minimizeConsoleIfAutoRaised();
+      else if (restoreMinimized)
+         pPaneManager_.get().minimizeConsolePane();
 
       // the above code seems to always leave focus in the console
       // (haven't been able to sort out why). this ensure it's restored

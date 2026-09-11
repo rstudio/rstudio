@@ -13,6 +13,9 @@ import { useSuiteSandbox } from '@utils/sandbox';
 
 const CONSOLE_PANE = '#rstudio_Console_pane';
 const CONSOLE_MIN_BTN = `${CONSOLE_PANE} .rstudio_panel_min_btn_console`;
+const FIND_PANE = '#rstudio_workbench_panel_find_in_files';
+const FIND_SEARCH_INPUT = '#rstudio_find_files_text';
+const FIND_OK_BTN = '#rstudio_dlg_ok';
 
 // rmarkdown::render of a trivial document plus pandoc; generous on CI.
 const RENDER_TIMEOUT = 90000;
@@ -174,6 +177,35 @@ test.describe.serial('Console pane stays minimized across a render', () => {
     // the pane even though it raises the Console through ensureVisible.
     await page.keyboard.press('Control+2');
     await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+
+    await renderDocument(page, fileName, true);
+    await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+  });
+
+  test('a pane raised by another tab stays open after a successful render', async ({ rstudioPage: page }) => {
+    fileName = `raised_ok_${Date.now()}.Rmd`;
+    const rmd = heredoc`
+      ---
+      title: "Raised by another tab"
+      output: html_document
+      ---
+
+      Body.
+    `;
+    await writeAndOpenFile(page, sandbox.dir, fileName, rmd);
+    await minimizeConsoleWithRenderTab(page);
+
+    // A search surfaces Find in Files through ensureVisible, the same
+    // automatic raise a background job uses, with no interaction inside the
+    // pane. The Render tab then takes the open pane over, so it stays open.
+    await executeCommand(page, 'findInFiles');
+    const searchInput = page.locator(FIND_SEARCH_INPUT);
+    await searchInput.waitFor({ state: 'visible', timeout: TIMEOUTS.fileOpen });
+    await searchInput.click();
+    await searchInput.pressSequentially('Raised by another tab');
+    await page.locator(FIND_OK_BTN).click();
+    await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+    await expect(page.locator(FIND_PANE)).toContainText(fileName, { timeout: TIMEOUTS.fileOpen });
 
     await renderDocument(page, fileName, true);
     await expect(page.locator(CONSOLE_PANE)).toBeVisible({ timeout: TIMEOUTS.fileOpen });
