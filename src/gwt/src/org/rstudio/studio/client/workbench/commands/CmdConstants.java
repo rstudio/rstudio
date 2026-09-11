@@ -1970,6 +1970,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Check spelling in document") // $NON-NLS-1$
     String checkSpellingDesc();
     
+    // changeSpellingLanguage
+    @DefaultStringValue("Change Spelling _Language...") // $NON-NLS-1$
+    String changeSpellingLanguageMenuLabel();
+    @DefaultStringValue("Switch the dictionary used for spell checking") // $NON-NLS-1$
+    String changeSpellingLanguageDesc();
+    
     // wordCount
     @DefaultStringValue("_Word Count") // $NON-NLS-1$
     String wordCountMenuLabel();
