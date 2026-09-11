@@ -4,7 +4,7 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import { getPref } from '@utils/commands';
 
 // Closing a project immediately after opening one must not prompt to save the
-// workspace image when save_workspace is "never" (rstudio/rstudio#18394).
+// workspace image when save_workspace is "never" (rstudio/rstudio#18784).
 //
 // The session reports its save action two ways: in the client_init SessionInfo
 // payload, and asynchronously through save_action_changed. The client used to

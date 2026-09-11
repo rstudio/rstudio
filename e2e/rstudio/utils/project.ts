@@ -241,15 +241,20 @@ export async function closeProjectIfOpen(page: Page): Promise<void> {
       { timeout: TIMEOUTS.sessionRestart, polling: 100 },
     );
   } catch (err) {
-    const blocking = await page
-      .locator('div.gwt-DialogBox:visible')
-      .first()
-      .innerText()
-      .catch(() => '');
+    const blocking = (
+      await page
+        .locator('div.gwt-DialogBox:visible')
+        .first()
+        .innerText()
+        .catch(() => '')
+    )
+      .replace(/\s+/g, ' ')
+      .trim();
     if (blocking)
       throw new Error(
         `closeProjectIfOpen: project still active; a modal dialog is blocking the close: ` +
-          `${JSON.stringify(blocking.replace(/\s+/g, ' ').trim())}`,
+          `${JSON.stringify(blocking)}`,
+        { cause: err },
       );
     throw err;
   }
