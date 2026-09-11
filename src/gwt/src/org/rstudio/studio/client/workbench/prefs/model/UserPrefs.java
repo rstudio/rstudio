@@ -457,6 +457,10 @@ public class UserPrefs extends UserPrefsComputed
 
    public static final int MAX_EDITOR_SCROLL_MULTIPLIER = 200;
 
+   // must match kMinConsoleLines in SessionConsole.cpp, below which the
+   // session ignores console_max_lines
+   public static final int MIN_CONSOLE_LINES = 10;
+
    private final Session session_;
    private final PrefsServerOperations server_;
    private final SatelliteManager satelliteManager_;

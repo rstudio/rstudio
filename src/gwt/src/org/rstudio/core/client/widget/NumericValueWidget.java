@@ -91,6 +91,16 @@ public class NumericValueWidget extends Composite
       textBoxLabel_.setText(text);
    }
 
+   /**
+    * Show or hide the widget's own label, e.g. when a containing layout
+    * supplies one. The label text is retained so validation errors can
+    * still name the field.
+    */
+   public void setLabelVisible(boolean visible)
+   {
+      textBoxLabel_.setVisible(visible);
+   }
+
    public String getValue()
    {
       return textBox_.getValue();

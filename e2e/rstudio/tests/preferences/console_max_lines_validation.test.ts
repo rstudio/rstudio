@@ -43,7 +43,10 @@ test.describe('Console scrollback limit validation', () => {
       // merely add an HTML min attribute that the dialog ignores.
       const errorOk = page.locator(CONFIRM_BTN);
       await expect(errorOk).toBeVisible();
-      await expect(page.getByText('must be greater than or equal to 10.', { exact: false })).toBeVisible();
+      // The message must name the field: the pane has three numeric inputs.
+      await expect(
+        page.getByText('Maximum lines of output to keep in the console: must be greater than or equal to 10.'),
+      ).toBeVisible();
       await expect(page.locator(OPTIONS_OK)).toBeVisible();
       await errorOk.click();
       await closeGlobalOptions(page);

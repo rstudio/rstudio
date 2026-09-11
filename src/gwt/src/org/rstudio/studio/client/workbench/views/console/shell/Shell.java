@@ -184,7 +184,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       uiPrefs.consoleMaxLines().addValueChangeHandler((event) ->
       {
          // the session ignores smaller values too (see SessionConsole.cpp)
-         if (event.getValue() >= MIN_CONSOLE_LINES)
+         if (event.getValue() >= UserPrefs.MIN_CONSOLE_LINES)
             view_.setMaxOutputLines(event.getValue());
       });
 
@@ -989,5 +989,4 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private boolean restoreFocus_ = true;
    private boolean debugging_ = false;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
-   private static final int MIN_CONSOLE_LINES = 10;
 }
