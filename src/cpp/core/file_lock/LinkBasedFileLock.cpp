@@ -787,17 +787,20 @@ Error removeIfSameIdentity(const FilePath& filePath,
 #endif
 }
 
-Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
+void findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
 {
+   // Owner discovery is only for best-effort artifact cleanup. A caller may
+   // have write and search access to the directory without being able to
+   // list it, and that must not prevent replacing a known stale public inode.
    // Only a public lock path has a separate owner file; an artifact being
    // inspected for the sweep has nothing to find and no caller reads it.
    if (isSweepableArtifact(lockFilePath))
-      return Success();
+      return;
 
    std::vector<FilePath> children;
    Error error = lockFilePath.getParent().getChildren(children);
    if (error)
-      return error;
+      return;
 
    for (const FilePath& child : children)
    {
@@ -808,7 +811,7 @@ Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
       bool matches = false;
       error = hasExpectedIdentity(child, *pMetadata, &matches);
       if (error)
-         return error;
+         continue;
       if (matches)
 #else
       if (lockFilePath.isEquivalentTo(child))
@@ -818,8 +821,6 @@ Error findOwnerFile(const FilePath& lockFilePath, LockMetadata* pMetadata)
          break;
       }
    }
-
-   return Success();
 }
 
 #ifndef _WIN32
@@ -973,10 +974,7 @@ Error inspectLockFile(const FilePath& lockFilePath,
    }
 
    determineStaleness(lastWriteTime, pInspection);
-
-   return pInspection->stale
-      ? findOwnerFile(lockFilePath, &pInspection->metadata)
-      : Success();
+   return Success();
 }
 
 #ifndef _WIN32
@@ -2591,6 +2589,9 @@ Error validateClaims(const Claim& legacyClaim,
 Error removeLockFile(const FilePath& lockFilePath,
                      const LockMetadata& expectedMetadata)
 {
+   LockMetadata metadata = expectedMetadata;
+   findOwnerFile(lockFilePath, &metadata);
+
    // The caller holds the claim through both this removal and publication.
    // An inspection is tied to the inode it read. If another contender has
    // already replaced that inode, the replacement is left untouched.
@@ -2599,12 +2600,12 @@ Error removeLockFile(const FilePath& lockFilePath,
    if (!error && result == RemoveResult::Mismatch)
       error = noLockAvailableError(lockFilePath);
 
-   if (!error && !expectedMetadata.ownerFilePath.isEmpty())
+   if (!error && !metadata.ownerFilePath.isEmpty())
    {
       RemoveResult ownerResult;
       Error ownerError = removeIfSameIdentity(
-         expectedMetadata.ownerFilePath,
-         expectedMetadata,
+         metadata.ownerFilePath,
+         metadata,
          &ownerResult);
       if (ownerError)
          LOG_ERROR(ownerError);

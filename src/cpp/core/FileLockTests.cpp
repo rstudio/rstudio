@@ -948,6 +948,91 @@ TEST_F(FileLockingTest, AdvisoryNewLockIsSharedDespiteRestrictiveUmask)
    EXPECT_EQ(0, WEXITSTATUS(status));
 }
 
+#ifdef __linux__
+
+TEST_F(FileLockingTest, AdvisoryNewLockIsSharedDespiteRestrictiveDefaultAcl)
+{
+   if (::geteuid() != 0)
+      GTEST_SKIP() << "changing to a collaborator's uid requires root";
+
+   const uid_t collaborator = 65534;
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0777));
+   acl_t defaultAcl = ::acl_from_text(
+      "user::rwx,user:65534:r--,group::rwx,mask::rwx,other::rwx");
+   ASSERT_NE(nullptr, defaultAcl);
+   int status = ::acl_set_file(
+      root_.getAbsolutePath().c_str(),
+      ACL_TYPE_DEFAULT,
+      defaultAcl);
+   int errorNumber = errno;
+   ::acl_free(defaultAcl);
+   if (status == -1 && (errorNumber == ENOTSUP || errorNumber == EOPNOTSUPP))
+      GTEST_SKIP() << "filesystem does not support default ACLs";
+   ASSERT_EQ(0, status) << errorNumber;
+
+   AdvisoryFileLock first;
+   ASSERT_FALSE(first.acquire(lockFilePath_));
+   struct stat before;
+   ASSERT_EQ(0, ::stat(lockFilePath_.getAbsolutePath().c_str(), &before));
+   ASSERT_FALSE(first.release());
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::alarm(10);
+      if (::setgroups(0, nullptr) == -1 ||
+          ::setgid(collaborator) == -1 || ::setuid(collaborator) == -1)
+      {
+         ::_exit(1);
+      }
+
+      // The collaborator can create files here, but a named read-only ACL
+      // inherited from the directory would prevent reopening our lock.
+      FilePath ownFile = root_.completePath("collaborator");
+      if (ownFile.ensureFile())
+         ::_exit(2);
+      AdvisoryFileLock second;
+      if (second.acquire(lockFilePath_))
+         ::_exit(3);
+      struct stat after;
+      if (::stat(lockFilePath_.getAbsolutePath().c_str(), &after) == -1 ||
+          before.st_dev != after.st_dev || before.st_ino != after.st_ino)
+      {
+         ::_exit(4);
+      }
+      if (second.release())
+         ::_exit(5);
+      ::_exit(0);
+   }
+
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+}
+
+TEST_F(FileLockingTest, AdvisoryExistingLockKeepsItsAcl)
+{
+   ASSERT_FALSE(lockFilePath_.ensureFile());
+   int errorNumber = 0;
+   if (!setAccessAcl(
+      lockFilePath_,
+      "user::rw-,user:65534:r--,group::rw-,mask::rw-,other::rw-",
+      &errorNumber))
+   {
+      if (errorNumber == ENOTSUP || errorNumber == EOPNOTSUPP)
+         GTEST_SKIP() << "filesystem does not support access ACLs";
+      FAIL() << errorNumber;
+   }
+
+   AdvisoryFileLock lock;
+   ASSERT_FALSE(lock.acquire(lockFilePath_));
+   ASSERT_FALSE(lock.release());
+   EXPECT_TRUE(aclHasNamedPrincipal(lockFilePath_, ACL_USER, 65534, 04));
+}
+
+#endif
+
 TEST_F(FileLockingTest, AdvisoryLockSurvivesSymlinkAliasOperations)
 {
    ASSERT_FALSE(lockFilePath_.ensureFile());
@@ -1972,6 +2057,42 @@ TEST_F(FileLockingTest, WriteAndSearchPermissionsAllowClaimCreation)
          0700));
    ASSERT_FALSE(error);
    EXPECT_FALSE(lock.release());
+#else
+   GTEST_SKIP() << "platform has no search-only directory descriptor";
+#endif
+}
+
+TEST_F(FileLockingTest, WriteAndSearchPermissionsAllowReleasedLockReuse)
+{
+#if defined(O_SEARCH) || defined(O_PATH)
+   if (::geteuid() == 0)
+      GTEST_SKIP() << "root bypasses directory permissions";
+
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0300));
+   LinkBasedFileLock first;
+   Error acquireError = first.acquire(lockFilePath_);
+   Error releaseError = first.release();
+
+   // Release leaves a stale public inode. Inspecting and replacing that
+   // known filename must not require permission to list its parent.
+   bool locked = true;
+   Error probeError = first.isLocked(lockFilePath_, &locked);
+   LinkBasedFileLock second;
+   Error reacquireError = second.acquire(lockFilePath_);
+   Error secondReleaseError = second.release();
+
+   // Restore directory access before assertions so failures can be cleaned up.
+   ASSERT_EQ(0, ::chmod(root_.getAbsolutePath().c_str(), 0700));
+   FilePath claimDirectory = claimPathFor(lockFilePath_).getParent();
+   if (claimDirectory.exists())
+      ASSERT_EQ(0, ::chmod(claimDirectory.getAbsolutePath().c_str(), 0700));
+
+   ASSERT_FALSE(acquireError);
+   ASSERT_FALSE(releaseError);
+   EXPECT_FALSE(probeError);
+   EXPECT_FALSE(locked);
+   EXPECT_FALSE(reacquireError);
+   EXPECT_FALSE(secondReleaseError);
 #else
    GTEST_SKIP() << "platform has no search-only directory descriptor";
 #endif

@@ -29,6 +29,11 @@
 # include <unistd.h>
 #endif
 
+#ifdef __linux__
+# include <acl/libacl.h>
+# include <sys/acl.h>
+#endif
+
 #include <fmt/format.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -311,6 +316,31 @@ Error ensureAdvisoryLockFile(const FilePath& lockFilePath)
       error = systemCallError("fchmod", errno, ERROR_LOCATION);
       error.addProperty("lock-file", lockFilePath);
    }
+
+#ifdef __linux__
+   // chmod updates the ACL mask but preserves inherited named-user/group
+   // entries, which can still deny a directory collaborator write access.
+   // Give this new empty inode the same effective access as its 0666 mode;
+   // the parent directory continues to control who can reach it.
+   if (!error)
+   {
+      acl_t acl = ::acl_from_mode(0666);
+      if (!acl)
+         error = systemCallError("acl_from_mode", errno, ERROR_LOCATION);
+      else
+      {
+         if (::acl_set_fd(descriptor, acl) == -1)
+         {
+            int errorNumber = errno;
+            if (errorNumber != ENOTSUP && errorNumber != EOPNOTSUPP)
+               error = systemCallError("acl_set_fd", errorNumber, ERROR_LOCATION);
+         }
+         ::acl_free(acl);
+      }
+      if (error)
+         error.addProperty("lock-file", lockFilePath);
+   }
+#endif
 
    // O_EXCL proves this is our new inode, so descriptor-based chmod cannot
    // affect a substituted pathname. On error, leave the name alone for the
