@@ -22,16 +22,25 @@ import path from 'path';
 import childProcess, { ChildProcess } from 'child_process';
 import { app } from 'electron';
 
-import { getenv } from '../../../src/core/environment';
+import { getenv, setenv } from '../../../src/core/environment';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../../../src/core/r-user-data';
 import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
 import { MainWindow } from '../../../src/main/main-window';
-import { createSinonStubInstance } from '../unit-utils';
+import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 
 describe('ApplicationLaunch', () => {
   const tempDirs: string[] = [];
+  const launchEnvVars: Record<string, string> = {
+    [kRStudioInitialProject]: '',
+    [kRStudioInitialWorkingDir]: '',
+  };
+
+  beforeEach(() => {
+    saveAndClear(launchEnvVars);
+  });
 
   afterEach(() => {
+    restore(launchEnvVars);
     sinon.restore();
     while (tempDirs.length) {
       fs.rmSync(tempDirs.pop() as string, { recursive: true, force: true });
@@ -101,6 +110,19 @@ describe('ApplicationLaunch', () => {
   it('launchRStudio starts without a project when noProject is requested', () => {
     const launchEnv = captureLaunchEnv();
     const dir = projectDir();
+
+    ApplicationLaunch.init().launchRStudio({ workingDirectory: dir, noProject: true });
+
+    assert.isEmpty(launchEnv.project);
+    assert.equal(launchEnv.workingDir, dir);
+  });
+
+  it('launchRStudio ignores an inherited initial project when noProject is requested', () => {
+    const launchEnv = captureLaunchEnv();
+    const dir = projectDir();
+
+    // set when this instance was itself started by opening a project
+    setenv(kRStudioInitialProject, path.join(dir, 'test.Rproj'));
 
     ApplicationLaunch.init().launchRStudio({ workingDirectory: dir, noProject: true });
 

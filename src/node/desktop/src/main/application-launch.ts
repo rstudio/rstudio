@@ -82,6 +82,10 @@ export class ApplicationLaunch {
     }
     setenv(kRStudioInitialWorkingDir, workingDir);
 
+    // this instance may have been started by opening a project, which leaves the
+    // variable set in our own environment; clear it so it can't leak to the new session
+    unsetenv(kRStudioInitialProject);
+
     // resolve project file, if any
     if (!options.noProject) {
       const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
