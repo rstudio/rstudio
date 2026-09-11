@@ -10,6 +10,7 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { SourcePane } from '@pages/source_pane.page';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
+import { TIMEOUTS } from '@utils/constants';
 import {
   CODE_TAB,
   CODE_EDITING_PANEL,
@@ -64,6 +65,24 @@ function vimMappingRegistered(page: Page, keys: string): Promise<boolean> {
   }, keys);
 }
 
+// newSourceDoc only dispatches the command: the document is created over an
+// RPC and its editor laid out afterwards. Clicking straight away can land on
+// the outgoing document's ace_content, which is still in the DOM but no
+// longer rendered -- "Element is not visible", even with force (force skips
+// the actionability checks, not the scroll-into-view a zero-box element
+// fails). Wait for the new editor to be both active and painted.
+async function waitForNewEditor(page: Page, sourcePane: SourcePane): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const doc = window.rstudio?.documents.active() ?? null;
+      return doc !== null && doc.path === null;
+    },
+    null,
+    { timeout: TIMEOUTS.fileOpen, polling: 50 },
+  );
+  await expect(sourcePane.contentPane).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+}
+
 test.describe('Vimrc keybindings', () => {
   test('mappings from ~/.rstudio-vimrc apply when the pref is enabled', async ({
     rstudioPage: page,
@@ -82,6 +101,7 @@ test.describe('Vimrc keybindings', () => {
       // open a new document; attaching the Vim keyboard handler triggers the
       // vimrc load
       await executeCommand(page, 'newSourceDoc');
+      await waitForNewEditor(page, sourcePane);
       await expect
         .poll(() => vimMappingRegistered(page, 'jk'), {
           message: 'expected the vimrc mapping to be registered',
@@ -130,6 +150,7 @@ test.describe('Vimrc keybindings', () => {
       // Vim keybindings first, with the load pref still disabled
       await setPref(page, 'editor_keybindings', 'vim');
       await executeCommand(page, 'newSourceDoc');
+      await waitForNewEditor(page, sourcePane);
 
       // focus the editor so the mid-session load path has a Vim editor to
       // apply against, then flip the pref: the mapping should appear without
