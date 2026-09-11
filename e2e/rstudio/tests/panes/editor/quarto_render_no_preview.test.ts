@@ -15,6 +15,8 @@ import { useSuiteSandbox } from '@utils/sandbox';
 import * as path from 'path';
 
 const JOBS_PANEL = '#rstudio_workbench_panel_background_jobs';
+const JOBS_TAB = '#rstudio_workbench_tab_background_jobs';
+const CONSOLE_TAB = '#rstudio_workbench_tab_console';
 
 // a first quarto render on a cold machine can take a while
 const RENDER_TIMEOUT = 120000;
@@ -27,6 +29,19 @@ const QMD = heredoc`
   ---
 
   Hello.
+`;
+
+// an include of a file that does not exist fails the render before any
+// engine runs, so this needs neither knitr nor a code chunk
+const BROKEN_QMD = heredoc`
+  ---
+  title: "No preview, broken"
+  format: html
+  ---
+
+  Hello.
+
+  {{< include missing.qmd >}}
 `;
 
 const SHINY_QMD = heredoc`
@@ -89,6 +104,30 @@ test.describe.serial('Quarto with no preview', () => {
     await expect(jobsPanel).toContainText(`Render: ${fileName}`, { timeout: TIMEOUTS.fileOpen });
     await expect(jobsPanel).not.toContainText(`Preview: ${fileName}`);
     await expect(jobsPanel).toContainText('Succeeded', { timeout: TIMEOUTS.fileOpen });
+
+    // a successful render hands focus back to the console, as a preview does
+    // once its server is up
+    await expect(page.locator(CONSOLE_TAB)).toHaveAttribute('aria-selected', 'true', {
+      timeout: TIMEOUTS.fileOpen,
+    });
+  });
+
+  test('a failed render leaves its output in the Background Jobs pane', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, fileName, BROKEN_QMD);
+    await executeCommand(page, 'quartoRenderDocument');
+
+    const jobsPanel = page.locator(JOBS_PANEL);
+    await expect(jobsPanel).toContainText(`Render: ${fileName}`, { timeout: TIMEOUTS.fileOpen });
+    await expect(jobsPanel).toContainText('Failed', { timeout: RENDER_TIMEOUT });
+    await expect(jobsPanel).toContainText('missing.qmd');
+
+    // unlike a successful render, a failure does not switch back to the
+    // console, so the error stays in front of the user
+    await expect(page.locator(JOBS_TAB)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator(CONSOLE_TAB)).not.toHaveAttribute('aria-selected', 'true');
+
+    const outputPath = path.join(sandbox.dir, fileName.replace(/\.qmd$/, '.html'));
+    expect(await consoleActions.evalRLogical(`file.exists(${rPathLiteral(outputPath)})`)).toBe(false);
   });
 
   test('Run Document still starts a Shiny application', async ({ rstudioPage: page }) => {
