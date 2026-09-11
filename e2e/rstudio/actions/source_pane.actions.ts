@@ -1,4 +1,4 @@
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { SourcePane } from '../pages/source_pane.page';
 import { ConsolePaneActions } from './console_pane.actions';
@@ -61,10 +61,59 @@ export class SourcePaneActions {
     await this.page.keyboard.type(text);
   }
 
+  /**
+   * Wait for a suggestion `indicator` (ghost text, or any next-edit
+   * suggestion presentation), re-requesting when the assistant answers with
+   * nothing.
+   *
+   * An automatic request that comes back empty is a terminal state: the
+   * status bar reads "<provider>: No completions available." and nothing
+   * re-asks, so a plain toBeVisible() burns the whole budget waiting for a
+   * suggestion that is never coming. That is a live model talking, not a
+   * bug -- it declines a context some of the time, and when it does it
+   * tends to do so on every platform at once, which is how one empty answer
+   * shows up as four "flaky" rows in a CI report (ghost text in run
+   * 34627740555, the NES rename tests in run 34637770965).
+   *
+   * assistantRequestCompletions is the explicit re-ask (Request Completions
+   * in the menu). It schedules the same suggestion timer the automatic path
+   * uses, so the answer can come back as ghost text or as a next-edit
+   * suggestion. The assertion still fails if nothing ever arrives.
+   */
+  async waitForSuggestion(indicator: Locator, timeout: number): Promise<void> {
+    const deadline = Date.now() + timeout;
+    for (;;) {
+      const remaining = Math.max(deadline - Date.now(), 1000);
+      try {
+        await expect(indicator).toBeVisible({ timeout: Math.min(remaining, 10000) });
+        return;
+      } catch (err) {
+        if (Date.now() >= deadline)
+          throw err;
+        if (await this.sourcePane.statusBarNoCompletions.isVisible().catch(() => false)) {
+          console.log('  No completions available -- re-requesting');
+          // Don't let a momentarily-disabled command replace the real
+          // diagnostic; the loop's own failure is the one worth reporting.
+          await executeCommand(this.page, 'assistantRequestCompletions').catch((e) =>
+            console.log(`  re-request skipped: ${e}`),
+          );
+        }
+      }
+    }
+  }
+
+  async waitForGhostText(timeout = TIMEOUTS.ghostText): Promise<void> {
+    await this.waitForSuggestion(this.sourcePane.ghostText.first(), timeout);
+  }
+
+  async waitForNesSuggestion(timeout = TIMEOUTS.nesApply): Promise<void> {
+    await this.waitForSuggestion(this.sourcePane.nesIndicator, timeout);
+  }
+
   async acceptNesRename(): Promise<string> {
     const { nesApply, ghostText, nesInsertionPreview, nesGutter, nesSuggestionContent } = this.sourcePane;
 
-    await expect(nesApply.or(ghostText).or(nesInsertionPreview).or(nesGutter).first()).toBeVisible({ timeout: TIMEOUTS.nesApply });
+    await this.waitForNesSuggestion();
 
     if (await nesApply.first().isVisible()) {
       const nesSuggestion = nesSuggestionContent.first();

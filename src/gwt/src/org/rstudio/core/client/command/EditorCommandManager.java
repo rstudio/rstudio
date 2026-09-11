@@ -143,6 +143,16 @@ public class EditorCommandManager
                }
             });
 
+      // The handler above only covers editors that load from here on. This
+      // runs from an AceEditor.load() callback, and ExternalJavaScriptLoader
+      // drains its callbacks one per scheduler tick, so an editor created
+      // earlier in that queue (the Console input) can attach and fire
+      // EditorLoadedEvent before the handler exists. Load now as well so a
+      // saved editor binding reaches the Console even when no source
+      // document is open; rebindCommand() fires SetEditorCommandBindingsEvent,
+      // which live editors already honor.
+      loadBindings();
+
       events_.addHandler(CopySourcePathEvent.TYPE, event ->
       {
          String path = event.getPath();
