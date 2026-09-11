@@ -154,7 +154,10 @@ public class UserPrefs extends UserPrefsComputed
             public void onResponseReceived(VoidResponse v)
             {
                UserPrefsChangedEvent event = new UserPrefsChangedEvent(
-                     session_.getSessionInfo().getUserPrefLayer());
+                     session_.getSessionInfo().getUserPrefLayer(), true);
+
+               // Notify local consumers after the server has saved the prefs.
+               eventBus_.dispatchEvent(event);
 
                if (Satellite.isCurrentWindowSatellite())
                {
@@ -213,7 +216,10 @@ public class UserPrefs extends UserPrefsComputed
    @Override
    public void onUserPrefsChanged(UserPrefsChangedEvent e)
    {
-      syncPrefs(e.getName(), e.getValues());
+      if (e.isFullLayer())
+         replaceLayerValues(e.getName(), e.getValues());
+      else
+         syncPrefs(e.getName(), e.getValues());
    }
 
    @Handler

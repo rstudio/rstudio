@@ -2170,6 +2170,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String insertNativePipeOperatorDescription();
 
    /**
+    * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+    */
+   @DefaultStringValue("Insert + instead of a pipe within ggplot2 chains")
+   String insertPlusInGgplotChainsTitle();
+   @DefaultStringValue("Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain")
+   String insertPlusInGgplotChainsDescription();
+
+   /**
     * Whether to keep track of recently used commands in the Command Palette
     */
    @DefaultStringValue("Remember recently used items in Command Palette")

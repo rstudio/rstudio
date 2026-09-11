@@ -3404,6 +3404,19 @@ core::Error UserPrefValues::setInsertNativePipeOperator(bool val)
 }
 
 /**
+ * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+ */
+bool UserPrefValues::insertPlusInGgplotChains()
+{
+   return readPref<bool>("insert_plus_in_ggplot_chains");
+}
+
+core::Error UserPrefValues::setInsertPlusInGgplotChains(bool val)
+{
+   return writePref("insert_plus_in_ggplot_chains", val);
+}
+
+/**
  * Whether to keep track of recently used commands in the Command Palette
  */
 bool UserPrefValues::commandPaletteMru()
@@ -4264,6 +4277,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSaveRetryTimeout,
       kSaveFilesDurably,
       kInsertNativePipeOperator,
+      kInsertPlusInGgplotChains,
       kCommandPaletteMru,
       kShowMemoryUsage,
       kMemoryQueryIntervalSeconds,
