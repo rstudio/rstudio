@@ -66,6 +66,10 @@ namespace core {
 namespace {
 typedef boost::interprocess::file_lock BoostFileLock;
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+boost::function<void(const FilePath&)> s_beforeAdvisoryOpen;
+#endif
+
 // Per-path bookkeeping for this process. POSIX fcntl locks are process-scoped:
 // closing any descriptor for a file drops every lock this process holds on
 // it, so nothing in this process may open a lock path while another object
@@ -409,7 +413,8 @@ private:
 struct AdvisoryFileLock::Impl
 {
    Impl()
-      : processId(0)
+      : descriptor(-1),
+        processId(0)
    {
    }
 
@@ -417,6 +422,7 @@ struct AdvisoryFileLock::Impl
    std::string registrationKey;
    std::string inodeRegistrationKey;
    BoostFileLock lock;
+   int descriptor;
    PidType processId;
 };
 
@@ -580,6 +586,14 @@ AdvisoryFileLock::AdvisoryFileLock()
 {
 }
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+void AdvisoryFileLock::setBeforeOpenForTesting(
+   const boost::function<void(const FilePath&)>& callback)
+{
+   s_beforeAdvisoryOpen = callback;
+}
+#endif
+
 AdvisoryFileLock::~AdvisoryFileLock()
 {
    if (!pImpl_->registrationKey.empty())
@@ -640,6 +654,12 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
          return noLockAvailableError(lockFilePath);
    }
 
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   if (s_beforeAdvisoryOpen)
+      s_beforeAdvisoryOpen(lockFilePath);
+#endif
+
+#ifdef _WIN32
    try
    {
       BoostFileLock lock(
@@ -683,6 +703,102 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       error.addProperty("lock-file", lockFilePath);
       return error;
    }
+#else
+   int descriptor;
+   do
+   {
+      descriptor = ::open(
+         lockFilePath.getAbsolutePathNative().c_str(),
+         O_RDWR | O_CLOEXEC);
+   }
+   while (descriptor == -1 && errno == EINTR);
+
+   if (descriptor == -1)
+   {
+      Error openError = systemCallError("open", errno, ERROR_LOCATION);
+      openError.addProperty("lock-file", lockFilePath);
+      return openError;
+   }
+
+   // The name may have been replaced since inodeKey() reserved it. Register
+   // the inode that was actually opened before any lock or close can affect
+   // another descriptor this process holds for that inode.
+   struct stat openedInfo;
+   if (::fstat(descriptor, &openedInfo) == -1)
+   {
+      Error statError = systemCallError("fstat", errno, ERROR_LOCATION);
+      statError.addProperty("lock-file", lockFilePath);
+      // Without an identity, closing could drop a lock this process already
+      // holds on the opened inode through another name.
+      lockRegistration().parkDescriptor(descriptor);
+      return statError;
+   }
+
+   std::string openedInode = inodeKeyFor(openedInfo);
+   if (openedInode != inode)
+   {
+      // Release the stale reservation before taking the opened inode's key.
+      // Keeping both would deadlock if two paths were swapped concurrently.
+      pInodeReservation.reset();
+      inode = openedInode;
+      pInodeReservation.reset(new AcquireScope(inode));
+      if (!pInodeReservation->active())
+      {
+         // Closing any descriptor for an inode locked by this process drops
+         // that lock, so keep this descriptor open for the process lifetime.
+         lockRegistration().parkDescriptor(descriptor);
+         return noLockAvailableError(lockFilePath);
+      }
+   }
+
+   struct flock request = {};
+   request.l_type = F_WRLCK;
+   request.l_whence = SEEK_SET;
+   int lockStatus;
+   do
+   {
+      lockStatus = ::fcntl(descriptor, F_SETLK, &request);
+   }
+   while (lockStatus == -1 && errno == EINTR);
+
+   if (lockStatus == -1)
+   {
+      int errorNumber = errno;
+      ::close(descriptor);
+      if (errorNumber == EAGAIN || errorNumber == EACCES)
+         return noLockAvailableError(lockFilePath);
+
+      Error lockError = systemCallError("fcntl", errorNumber, ERROR_LOCATION);
+      lockError.addProperty("lock-file", lockFilePath);
+      return lockError;
+   }
+
+   // The descriptor is stable, but the public name must still resolve to it.
+   // Otherwise another process could use the same path for a different inode.
+   std::string lockedInode;
+   error = inodeKey(lockFilePath, &lockedInode);
+   if (!error && lockedInode != inode)
+      error = noLockAvailableError(lockFilePath);
+   if (error)
+   {
+      request.l_type = F_UNLCK;
+      while (::fcntl(descriptor, F_SETLK, &request) == -1 && errno == EINTR)
+      {
+      }
+      ::close(descriptor);
+      return error;
+   }
+
+   LOG("Acquired lock: " << lockFilePath.getAbsolutePath());
+   pImpl_->lockFilePath = lockFilePath;
+   pImpl_->registrationKey = key;
+   pImpl_->inodeRegistrationKey = inode;
+   pImpl_->descriptor = descriptor;
+   pImpl_->processId = system::currentProcessId();
+   reservation.markHeld();
+   pInodeReservation->markHeld();
+   return Success();
+#endif
 }
 
 Error AdvisoryFileLock::release()
@@ -699,11 +815,17 @@ Error AdvisoryFileLock::release()
       // this process's registry never recorded it. Unlocking or closing here
       // would instead drop a lock this process took on the same inode, and
       // deregistering would forget it.
+#ifdef _WIN32
       lockRegistration().parkInheritedLock(pImpl_->lock);
+#else
+      lockRegistration().parkDescriptor(pImpl_->descriptor);
+      pImpl_->descriptor = -1;
+#endif
       LOG("Discarded inherited lock: " << pImpl_->lockFilePath.getAbsolutePath());
    }
    else
    {
+#ifdef _WIN32
       try
       {
          pImpl_->lock.unlock();
@@ -718,6 +840,30 @@ Error AdvisoryFileLock::release()
       // Close the descriptor before allowing another file_lock in this
       // process to open the same path.
       pImpl_->lock = BoostFileLock();
+#else
+      struct flock request = {};
+      request.l_type = F_UNLCK;
+      request.l_whence = SEEK_SET;
+      int status;
+      do
+      {
+         status = ::fcntl(pImpl_->descriptor, F_SETLK, &request);
+      }
+      while (status == -1 && errno == EINTR);
+      if (status == -1)
+      {
+         error = systemCallError("fcntl", errno, ERROR_LOCATION);
+         error.addProperty("lock-file", pImpl_->lockFilePath);
+      }
+      else
+      {
+         LOG("Released lock: " << pImpl_->lockFilePath.getAbsolutePath());
+      }
+
+      // Close while the registry still excludes same-process operations.
+      ::close(pImpl_->descriptor);
+      pImpl_->descriptor = -1;
+#endif
       if (pImpl_->inodeRegistrationKey != pImpl_->registrationKey)
          lockRegistration().release(pImpl_->inodeRegistrationKey);
       lockRegistration().release(pImpl_->registrationKey);
@@ -726,6 +872,7 @@ Error AdvisoryFileLock::release()
    pImpl_->registrationKey.clear();
    pImpl_->inodeRegistrationKey.clear();
    pImpl_->lockFilePath = FilePath();
+   pImpl_->descriptor = -1;
    pImpl_->processId = 0;
    return error;
 }

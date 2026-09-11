@@ -416,6 +416,7 @@ protected:
 
    void TearDown() override
    {
+      AdvisoryFileLock::setBeforeOpenForTesting({});
       LinkBasedFileLock::setBeforeReleaseForTesting({});
       LinkBasedFileLock::setBeforeRefreshForTesting({});
       LinkBasedFileLock::setBeforeWriteForTesting({});
@@ -732,6 +733,56 @@ TEST_F(FileLockingTest, AdvisoryLockSurvivesSameProcessOperations)
    EXPECT_FALSE(other.isLocked(lockFilePath_));
    ASSERT_FALSE(other.acquire(lockFilePath_));
    EXPECT_FALSE(other.release());
+}
+
+TEST_F(FileLockingTest, AdvisoryReplacedPathDoesNotReleaseHeldInode)
+{
+   FilePath heldPath = root_.completePath("held-lock");
+   FilePath replacementPath = root_.completePath("replacement-lock");
+   ASSERT_FALSE(heldPath.ensureFile());
+   ASSERT_FALSE(lockFilePath_.ensureFile());
+
+   AdvisoryFileLock holder;
+   ASSERT_FALSE(holder.acquire(heldPath));
+   ASSERT_EQ(
+      0,
+      ::link(
+         heldPath.getAbsolutePathNative().c_str(),
+         replacementPath.getAbsolutePathNative().c_str()));
+
+   bool replaced = false;
+   AdvisoryFileLock::setBeforeOpenForTesting([&](const FilePath& path)
+   {
+      if (path != lockFilePath_)
+         return;
+
+      AdvisoryFileLock::setBeforeOpenForTesting({});
+      replaced = ::rename(
+         replacementPath.getAbsolutePathNative().c_str(),
+         lockFilePath_.getAbsolutePathNative().c_str()) == 0;
+   });
+
+   AdvisoryFileLock other;
+   Error error = other.acquire(lockFilePath_);
+   ASSERT_TRUE(replaced);
+   EXPECT_TRUE(FileLock::isNoLockAvailable(error));
+
+   // The rejected acquisition opened the holder's inode through the replaced
+   // path. Its cleanup must not unlock that inode for another process.
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      AdvisoryFileLock contender;
+      Error childError = contender.acquire(heldPath);
+      ::_exit(FileLock::isNoLockAvailable(childError) ? 0 : 1);
+   }
+
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
+   ASSERT_TRUE(WIFEXITED(status));
+   EXPECT_EQ(0, WEXITSTATUS(status));
+   EXPECT_FALSE(holder.release());
 }
 
 TEST_F(FileLockingTest, AdvisoryMissingLockFileIsNotLocked)

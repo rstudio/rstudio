@@ -159,6 +159,10 @@ class AdvisoryFileLock : public FileLock
 public:
    static void refresh();
    static void cleanUp();
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   static void setBeforeOpenForTesting(
+      const boost::function<void(const FilePath&)>& callback);
+#endif
    
    Error acquire(const FilePath& lockFilePath);
    Error release();
