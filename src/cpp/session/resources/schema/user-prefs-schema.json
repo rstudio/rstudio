@@ -643,8 +643,9 @@
         "console_max_lines": {
             "type": "integer",
             "default": 10000,
+            "minimum": 10,
             "title": "Maximum lines in R console",
-            "description": "The maximum number of console actions to store and display in the console scrollback buffer."
+            "description": "The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes."
         },
         "ansi_console_mode": {
             "type": "string",
