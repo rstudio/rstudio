@@ -2645,6 +2645,7 @@ public class AceEditor implements DocDisplay
    public void setSmoothScrolling(boolean enable)
    {
       widget_.getEditor().getRenderer().setAnimatedScroll(enable);
+      widget_.getEditor().getCommandManager().useAnimatedLineNavigation();
    }
 
    public void setHighlightRFunctionCalls(boolean highlight)
@@ -3108,7 +3109,7 @@ public class AceEditor implements DocDisplay
    public void moveCursorNearTop(int rowOffset)
    {
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
-      widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset));
+      widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset), true);
    }
 
    @Override

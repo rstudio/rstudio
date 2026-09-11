@@ -207,6 +207,26 @@ public class AceCommandManager extends JavaScriptObject
    }-*/;
 
    /**
+    * Let vertical cursor movement use the renderer's animatedScroll option.
+    * Ace's default line navigation only reveals the cursor, without animation.
+    */
+   public final native void useAnimatedLineNavigation()
+   /*-{
+      var names = ["golineup", "golinedown", "selectup", "selectdown"];
+      for (var i = 0; i < names.length; i++) {
+         var command = this.byName[names[i]];
+         if (!command || command.scrollIntoView !== "cursor")
+            continue;
+
+         // Defaults are shared across editors; preserve them and any custom
+         // key bindings by installing a clone in this command manager.
+         var clone = @org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager::cloneCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(command);
+         clone.scrollIntoView = "animate";
+         this.addCommand(clone);
+      }
+   }-*/;
+
+   /**
     * Make the line start / line end navigation commands act on document lines
     * rather than soft-wrapped screen rows.
     *
