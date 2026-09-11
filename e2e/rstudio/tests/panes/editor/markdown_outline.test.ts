@@ -8,7 +8,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { AceEditor } from '@pages/ace_editor.page';
 import { TIMEOUTS } from '@utils/constants';
-import { executeCommand, isCommandEnabled, waitForSourcePaneReset } from '@utils/commands';
+import { executeCommand, isCommandEnabled } from '@utils/commands';
 import { closeAndDeleteSandboxFiles, writeAndOpenFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -37,7 +37,6 @@ test.describe.serial('Markdown document outline', () => {
   });
 
   test.beforeEach(async ({ rstudioPage: page }) => {
-    await waitForSourcePaneReset(page);
     await writeAndOpenFile(page, sandbox.dir, fileName, MARKDOWN);
   });
 
