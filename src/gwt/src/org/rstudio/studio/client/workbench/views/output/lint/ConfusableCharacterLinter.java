@@ -33,16 +33,18 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 
 /**
- * Flags characters in R code that look like ASCII but are not: Cyrillic and
- * Greek lookalike letters, the Greek question mark, typographic quotes and
- * dashes (as pasted from the web), the Unicode minus sign, Unicode spaces
- * and fullwidth forms, plus zero-width characters that cannot be seen at
- * all. R happily parses e.g. Cyrillic "c" as a new symbol and rejects the
- * spaces with "unexpected input", so these are invisible bugs. Strings and
- * comments (roxygen included) are
- * left alone, as is everything outside R chunks in R Markdown. A token that
- * also contains non-ASCII characters with no ASCII lookalike is a genuine
- * non-Latin word (e.g. a Cyrillic identifier) and is not flagged. See #14485.
+ * Flags characters in R code that look like ASCII but are not: Cyrillic
+ * lookalike letters, the Greek question mark, typographic quotes and dashes
+ * (as pasted from the web), the Unicode minus sign, Unicode spaces and
+ * fullwidth forms, plus zero-width characters that cannot be seen at all.
+ * R happily parses e.g. Cyrillic "c" as a new symbol and rejects the spaces
+ * with "unexpected input", so these are invisible bugs. Strings, comments
+ * (roxygen included) and backtick-quoted names are left alone, as is
+ * everything outside R chunks in R Markdown. A token that also contains
+ * non-ASCII characters with no ASCII lookalike is a genuine non-Latin word
+ * (e.g. a Cyrillic identifier) and is not flagged. Greek letters are the
+ * symbol alphabet of statistical code (rho, nu, ...) and are never flagged.
+ * See #14485.
  */
 public class ConfusableCharacterLinter
 {
@@ -50,11 +52,12 @@ public class ConfusableCharacterLinter
    {
       JsArray<LintItem> lint = JsArray.createArray().cast();
       boolean isRmd = docDisplay.getFileType().isRmd();
+      Map<Integer, Boolean> rChunkByHeaderRow = new HashMap<>();
 
       int rowCount = docDisplay.getRowCount();
       for (int row = 0; row < rowCount; row++)
       {
-         if (isRmd && !isRChunkBodyRow(docDisplay, row))
+         if (isRmd && !isRChunkBodyRow(docDisplay, row, rChunkByHeaderRow))
             continue;
 
          JsArray<Token> tokens = docDisplay.getTokens(row);
@@ -72,7 +75,7 @@ public class ConfusableCharacterLinter
             int start = column;
             column += value.length();
 
-            if (isStringOrComment(token.getType()) || isNonLatinWord(value))
+            if (isStringOrComment(token.getType()) || isQuotedName(value) || isNonLatinWord(value))
                continue;
 
             for (int j = 0; j < value.length(); j++)
@@ -134,6 +137,14 @@ public class ConfusableCharacterLinter
       return false;
    }
 
+   // a backtick-quoted name (tokenized as a plain identifier) can hold any
+   // character, and usually has to match e.g. an imported column exactly:
+   // df$`Men's height` with a curly apostrophe is not something to "fix"
+   private static boolean isQuotedName(String value)
+   {
+      return value.startsWith("`");
+   }
+
    // roxygen prose is tokenized as e.g. constant.numeric.virtual-comment
    // (for **bold**), so the comment prefix alone doesn't cover it
    private static boolean isStringOrComment(String type)
@@ -146,8 +157,11 @@ public class ConfusableCharacterLinter
    // the chunk header row (```{r}) is fenced markup, not R code, and chunks
    // in other engines (python, asis, ...) are not R at all. The header is
    // parsed rather than asking the highlighter, which falls back to R rules
-   // for engines it doesn't know (e.g. {markdown}).
-   private static boolean isRChunkBodyRow(DocDisplay docDisplay, int row)
+   // for engines it doesn't know (e.g. {markdown}). Parsing compiles a few
+   // regexes, so the verdict is cached per header row for the lint pass.
+   private static boolean isRChunkBodyRow(DocDisplay docDisplay,
+                                          int row,
+                                          Map<Integer, Boolean> rChunkByHeaderRow)
    {
       Scope chunk = docDisplay.getChunkAtPosition(Position.create(row, 0));
       if (chunk == null || !chunk.isChunk())
@@ -157,9 +171,16 @@ public class ConfusableCharacterLinter
       if (headerRow == row)
          return false;
 
-      Map<String, String> options = RChunkHeaderParser.parse(docDisplay.getLine(headerRow));
-      String engine = StringUtil.stringValue(options.get("engine"));
-      return engine.equalsIgnoreCase("r");
+      Boolean isRChunk = rChunkByHeaderRow.get(headerRow);
+      if (isRChunk == null)
+      {
+         Map<String, String> options = RChunkHeaderParser.parse(docDisplay.getLine(headerRow));
+         String engine = StringUtil.stringValue(options.get("engine"));
+         isRChunk = engine.equalsIgnoreCase("r");
+         rChunkByHeaderRow.put(headerRow, isRChunk);
+      }
+
+      return isRChunk;
    }
 
    private static String lookalikeFor(char ch)
@@ -198,10 +219,8 @@ public class ConfusableCharacterLinter
       // Cyrillic uppercase: A B E K M H O P C T X I J S
       addLookalikes("\u0410\u0412\u0415\u041A\u041C\u041D\u041E\u0420\u0421\u0422\u0425\u0406\u0408\u0405",
                     "ABEKMHOPCTXIJS");
-      // Greek: o p v i (lowercase); A B E Z H I K M N O P T Y X (uppercase)
-      addLookalikes("\u03BF\u03C1\u03BD\u03B9\u0391\u0392\u0395\u0396\u0397\u0399\u039A\u039C\u039D\u039F\u03A1\u03A4\u03A5\u03A7",
-                    "opviABEZHIKMNOPTYX");
-      // Greek question mark, typographic quotes, dashes and the minus sign
+      // Greek question mark (Greek letters are deliberate symbols in R code
+      // and are not lookalikes), typographic quotes, dashes and the minus sign
       addLookalikes("\u037E\u2018\u2019\u201A\u201B\u201C\u201D\u201E\u201F\u2010\u2011\u2012\u2013\u2014\u2212",
                     ";''''\"\"\"\"------");
       // no-break space, ogham space mark, en/em/thin/hair spaces and friends

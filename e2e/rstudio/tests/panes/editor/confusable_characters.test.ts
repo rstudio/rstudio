@@ -27,6 +27,11 @@ const CYRILLIC_WORD = 'сумма';
 const NBSP = '\u00a0';
 // U+200B ZERO WIDTH SPACE, not rendered at all
 const ZWSP = '\u200b';
+// U+2019 RIGHT SINGLE QUOTATION MARK, a lookalike for the apostrophe
+const CURLY_APOSTROPHE = '\u2019';
+// U+03C1 GREEK SMALL LETTER RHO: a statistical symbol, not a lookalike for "p"
+const RHO = '\u03c1';
+const BACKTICK = '`';
 
 const R_FILE = 'confusable_characters.R';
 const RMD_FILE = 'confusable_characters.Rmd';
@@ -39,7 +44,9 @@ const R_CODE_LINE = `x <- ${CYRILLIC_C}(1, 2, 3)`;
 // (exempt); row 3: a genuine Cyrillic identifier (exempt); row 4: a no-break
 // space where a space was meant (flagged); row 5: a zero-width space inside
 // an identifier (flagged, as invisible); rows 6-7: a multi-line string whose
-// closing row starts with '#', so the code after it is not a comment (flagged)
+// closing row starts with '#', so the code after it is not a comment (flagged);
+// row 8: a backtick-quoted column name, which must match the data as imported
+// (exempt); row 9: a Greek letter used as a symbol (exempt)
 const R_CONTENT = heredoc`
   #' Use **left${EN_DASH}right** intervals.
   ${R_CODE_LINE}
@@ -49,6 +56,8 @@ const R_CONTENT = heredoc`
   w <- foo${ZWSP}bar
   s <- "
   #"; v <- ${CYRILLIC_C}(1)
+  h <- df$${BACKTICK}Men${CURLY_APOSTROPHE}s height${BACKTICK}
+  ${RHO} <- cor(x, y)
 `;
 const R_EXPECTED = [
   { row: 1, column: 5, text: "Non-ASCII character U+0441 looks like 'c'" },
@@ -164,7 +173,7 @@ test.describe.serial('Confusable character diagnostics', () => {
     await clearPref(page, 'show_diagnostics_r');
   });
 
-  test('lookalikes and invisible characters in code are flagged; roxygen, strings, comments and Cyrillic words are not', async ({
+  test('lookalikes and invisible characters in code are flagged; roxygen, strings, comments, Cyrillic words, backtick names and Greek symbols are not', async ({
     rstudioPage: page,
   }) => {
     await writeAndOpenFile(page, sandbox.dir, R_FILE, R_CONTENT);
