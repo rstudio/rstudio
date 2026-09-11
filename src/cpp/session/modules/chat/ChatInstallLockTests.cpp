@@ -13,18 +13,10 @@
  *
  */
 
-// Link-based locks are unsupported on Windows (FileLock forces advisory
-// there), and these tests rely on link-based semantics for cross-instance
-// exclusion within one process (POSIX fcntl advisory locks never conflict
-// in-process). The lock primitive itself is covered on Windows by
-// Win32FileLockTests.cpp; InstallLock's token/component state machine is
-// platform-independent and exercised here on POSIX.
-#ifndef _WIN32
-
 #include "ChatInstallLock.hpp"
 
-#include <sys/wait.h>
-#include <unistd.h>
+#include <string>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -34,8 +26,22 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include "../SessionChat.hpp"
+
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::install_lock;
+
+// Link-based locks are unsupported on Windows (FileLock forces advisory
+// there), and the tests in this block rely on link-based semantics for
+// cross-instance exclusion within one process (POSIX fcntl advisory locks
+// never conflict in-process). The lock primitive itself is covered on
+// Windows by Win32FileLockTests.cpp; InstallLock's token/component state
+// machine is platform-independent and exercised here on POSIX. The tests
+// after the block run everywhere.
+#ifndef _WIN32
+
+#include <sys/wait.h>
+#include <unistd.h>
 
 namespace {
 
@@ -695,3 +701,68 @@ TEST_F(ChatInstallLock, AcquireInUseForStartFailsClosedWhenInstallLockUninspecta
 } // anonymous namespace
 
 #endif // !_WIN32
+
+namespace {
+
+// Single-instance tests over a temp locks directory; advisory locks so they
+// run on every platform.
+class ChatInstallLockOwner : public testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FileLock::initialize();
+      ASSERT_FALSE(FilePath::tempFilePath(tempPath_));
+      locksDir_ = tempPath_.completePath("locks");
+   }
+
+   void TearDown() override
+   {
+      tempPath_.removeIfExists();
+   }
+
+   std::vector<std::string> sessionLockFileNames(const InstallLock& lock)
+   {
+      std::vector<FilePath> children;
+      Error error = lock.sessionLocksDir().getChildren(children);
+      EXPECT_FALSE(error);
+      std::vector<std::string> names;
+      for (const FilePath& child : children)
+         names.push_back(child.getFilename());
+      return names;
+   }
+
+   FilePath tempPath_;
+   FilePath locksDir_;
+};
+
+TEST_F(ChatInstallLockOwner, OwnerIdNamesTheSessionLockFile)
+{
+   InstallLock lock(locksDir_, "971bc367-abc123", FileLock::LOCKTYPE_ADVISORY);
+
+   uint64_t token = 0;
+   std::string userMessage;
+   ASSERT_FALSE(lock.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
+   EXPECT_NE(token, 0u);
+
+   std::vector<std::string> names = sessionLockFileNames(lock);
+   ASSERT_EQ(names.size(), 1u);
+   EXPECT_EQ(names[0], "971bc367-abc123.lock");
+
+   lock.releaseInUse(InstallLock::Component::ChatBackend, token);
+   EXPECT_TRUE(sessionLockFileNames(lock).empty());
+}
+
+// The production accessor derives the owner id from the session id and a
+// per-process uuid. MSVC in C++20 mode initialized the previous form of
+// that static (a conditional expression) to an empty string, so every
+// Windows session locked "sessions/.lock" and the second instance refused
+// to start (#18787). Constructing the singleton touches no files.
+TEST(ChatInstallLockProduction, OwnerIdIsNotEmpty)
+{
+   EXPECT_FALSE(
+      rstudio::session::modules::chat::installLock().ownerId().empty());
+}
+
+} // anonymous namespace

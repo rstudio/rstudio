@@ -152,6 +152,7 @@ public:
    // transitions via mutationInProgress() (in-process flag only; it never
    // probes the file — self-probing an advisory lock would release it).
    bool mutationInProgress() const;
+   const std::string& ownerId() const;
    core::FilePath installLockPath() const;
    core::FilePath sessionLocksDir() const;
 
