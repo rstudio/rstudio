@@ -20,6 +20,8 @@
 #include <ctime>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <core/Log.hpp>
 
 namespace rstudio {
@@ -84,9 +86,10 @@ std::string sessionsInUseMessage(FileLock::LockType lockType)
    {
       long clearSeconds = FileLock::getTimeoutInterval().total_seconds() *
                           FileLock::getLiveOwnerGraceMultiplier();
-      message += " If another session ended unexpectedly or stopped "
-                 "responding, this may take up to " +
-                 std::to_string(clearSeconds) + " seconds to clear.";
+      message += fmt::format(
+         " If another session ended unexpectedly or stopped "
+         "responding, this may take up to {} seconds to clear.",
+         clearSeconds);
    }
 
    return message;
@@ -424,8 +427,12 @@ FilePath InstallLock::sessionLocksDir() const
 FilePath InstallLock::ownSessionLockPath() const
 {
    return sessionLocksDir().completePath(
-      ownerId_ + kSessionLockEpochMarker + std::to_string(sessionLockEpoch_) +
-      kSessionLockSuffix);
+      fmt::format(
+         "{}{}{}{}",
+         ownerId_,
+         kSessionLockEpochMarker,
+         sessionLockEpoch_,
+         kSessionLockSuffix));
 }
 
 boost::shared_ptr<FileLock> InstallLock::makeLock() const

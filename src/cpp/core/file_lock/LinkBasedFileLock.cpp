@@ -155,7 +155,7 @@ std::string pidString()
 
 bool hasPrefix(const std::string& filename, const char* prefix)
 {
-   std::string full = std::string(prefix) + "-";
+   std::string full = fmt::format("{}-", prefix);
    return filename.size() > full.size() &&
           filename.compare(0, full.size(), full) == 0;
 }
@@ -223,7 +223,7 @@ FilePath tempPathBeside(const FilePath& filePath)
    return filePath.getParent().completePath(
       fmt::format("{}-{}-{}",
                   kFileLockTempPrefix,
-                  pidString(),
+                  system::currentProcessId(),
                   system::generateUuid(false)));
 }
 
@@ -2282,7 +2282,7 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
       preparedDirectory = lockFilePath.getParent().completePath(
          fmt::format("{}-{}-{}",
                      kFileLockClaimTempPrefix,
-                     pidString(),
+                     system::currentProcessId(),
                      system::generateUuid(false)));
       if (::mkdir(preparedDirectory.getAbsolutePathNative().c_str(), 0700) == 0)
          break;

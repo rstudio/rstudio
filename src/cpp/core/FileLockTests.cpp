@@ -40,6 +40,8 @@
 #include <string>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/barrier.hpp>
@@ -976,7 +978,7 @@ TEST_F(FileLockingTest, ReusedPidDoesNotPinOrphanedLock)
    if (!ownStartTime(&startTime))
       GTEST_SKIP() << "process start time unavailable on this platform";
 
-   ASSERT_FALSE(writeStringToFile(lockFilePath_, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, fmt::format("{}\n", ::getpid())));
    lockFilePath_.setLastWriteTime(
       startTime - FileLock::getTimeoutInterval().total_seconds() - 5);
 
@@ -999,7 +1001,7 @@ TEST_F(FileLockingTest, ReusedPidVerdictWaitsForTimeout)
       GTEST_SKIP() << "process start time unavailable on this platform";
 
    FileLock::setTimeoutInterval(boost::posix_time::seconds(3600));
-   ASSERT_FALSE(writeStringToFile(lockFilePath_, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeStringToFile(lockFilePath_, fmt::format("{}\n", ::getpid())));
    lockFilePath_.setLastWriteTime(startTime - 100);
 
    EXPECT_FALSE(LinkBasedFileLock::isLockFileStale(lockFilePath_));
@@ -1075,7 +1077,7 @@ TEST_F(FileLockingTest, StalledReleasePreservesSuccessorInAnotherProcess)
          // and let the child complete its takeover before release resumes.
          lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
          FilePath claim = claimPathFor(lockFilePath_);
-         EXPECT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
+         EXPECT_FALSE(writeClaimContents(claim, fmt::format("{}\n", ::getpid())));
          claim.setLastWriteTime(::time(nullptr) - 10);
          sendByte(takeover[1]);
          waitForByte(ready[0]);
@@ -1207,7 +1209,7 @@ TEST_F(FileLockingTest, FailedClaimPublicationPreservesSuccessorClaim)
       // while its creator is still waiting for the initial write.
       replaced = true;
       EXPECT_FALSE(claimPath.remove());
-      EXPECT_FALSE(writeClaimContents(claimPath, std::to_string(::getpid()) + "\n"));
+      EXPECT_FALSE(writeClaimContents(claimPath, fmt::format("{}\n", ::getpid())));
       return systemError(ENOSPC, ERROR_LOCATION);
    });
 
@@ -1262,7 +1264,7 @@ TEST_F(FileLockingTest, LinkMetadataRemainsBackwardCompatible)
 
    std::string contents;
    ASSERT_FALSE(readStringFromFile(lockFilePath_, &contents));
-   EXPECT_EQ(std::to_string(::getpid()) + "\n", contents);
+   EXPECT_EQ(fmt::format("{}\n", ::getpid()), contents);
 
    // Every link to the held inode, including the retained public entry,
    // must read as released in the PID-only format older versions understand.
@@ -1347,7 +1349,7 @@ TEST_F(FileLockingTest, OrphanedOwnerFilesAreSwept)
       root_.completePath(".rstudio-lock-claim-41c29-live");
    ASSERT_FALSE(writeStringToFile(releasedOwner, "-1\n"));
    ASSERT_FALSE(writeStringToFile(deadLegacyOwner, "99999999\n"));
-   ASSERT_FALSE(writeStringToFile(liveClaim, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeStringToFile(liveClaim, fmt::format("{}\n", ::getpid())));
 
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
@@ -1371,7 +1373,7 @@ TEST_F(FileLockingTest, AbandonedTempFilesAreSwept)
    FilePath abandoned = root_.completePath(
       ".rstudio-lock-tmp-41c29-99999999-abandoned");
    FilePath inFlight = root_.completePath(
-      ".rstudio-lock-tmp-41c29-" + std::to_string(::getpid()) + "-inflight");
+      fmt::format(".rstudio-lock-tmp-41c29-{}-inflight", ::getpid()));
    ASSERT_FALSE(writeStringToFile(abandoned, "12345\n"));
    ASSERT_FALSE(writeStringToFile(inFlight, "12345\n"));
 
@@ -1392,7 +1394,7 @@ TEST_F(FileLockingTest, LiveContenderTempFileIsSweptOnceAged)
    FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
 
    FilePath liveContender = root_.completePath(
-      ".rstudio-lock-tmp-41c29-" + std::to_string(::getpid()) + "-aged");
+      fmt::format(".rstudio-lock-tmp-41c29-{}-aged", ::getpid()));
    ASSERT_FALSE(writeStringToFile(liveContender, "12345\n"));
 
    // Its ctime is now; let the wall clock pass the one-second timeout.
@@ -1439,7 +1441,7 @@ TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
 {
    ASSERT_FALSE(writeStringToFile(lockFilePath_, "-1\n"));
    FilePath claim = claimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeClaimContents(claim, fmt::format("{}\n", ::getpid())));
 
    LinkBasedFileLock lock;
    EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
@@ -1455,7 +1457,7 @@ TEST_F(FileLockingTest, LiveClaimBlocksStaleLockTakeover)
 TEST_F(FileLockingTest, LiveClaimBlocksPublicationIntoAbsentPath)
 {
    FilePath claim = claimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeClaimContents(claim, fmt::format("{}\n", ::getpid())));
 
    for (int mode = 0; mode < 3; ++mode)
    {
@@ -1475,7 +1477,7 @@ TEST_F(FileLockingTest, LiveLegacyClaimBlocksPublication)
    FilePath legacyClaim = legacyClaimPathFor(lockFilePath_);
    ASSERT_FALSE(writeClaimContents(
       legacyClaim,
-      std::to_string(::getpid()) + "\n"));
+      fmt::format("{}\n", ::getpid())));
 
    LinkBasedFileLock lock;
    EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
@@ -1711,7 +1713,7 @@ TEST_F(FileLockingTest, DarwinAclPreservesParentOwnerAcrossCreators)
       if (lock.acquire(root_.completePath("creator-lock")))
          ::_exit(1);
       FilePath liveClaim = claimPathFor(root_.completePath("live-claim"));
-      if (writeClaimContents(liveClaim, std::to_string(::getpid()) + "\n"))
+      if (writeClaimContents(liveClaim, fmt::format("{}\n", ::getpid())))
          ::_exit(2);
       sendByte(ready[1]);
       waitForByte(done[0]);
@@ -1786,8 +1788,7 @@ TEST_F(FileLockingTest, ClaimDirectoryCopiesAccessAclWithoutDefaultAcl)
    int aclError = 0;
    if (!setAccessAcl(
           root_,
-          "u::rwx,u:" + std::to_string(namedUser) +
-             ":rwx,g::---,m::rwx,o::---",
+          fmt::format("u::rwx,u:{}:rwx,g::---,m::rwx,o::---", namedUser),
           &aclError))
    {
       if (aclError == ENOTSUP)
@@ -1817,8 +1818,7 @@ TEST_F(FileLockingTest, AclAuthorizedUserCanCreateClaimDirectory)
    int aclError = 0;
    if (!setAccessAcl(
           root_,
-          "u::rwx,u:" + std::to_string(childUser) +
-             ":rwx,g::---,m::rwx,o::---",
+          fmt::format("u::rwx,u:{}:rwx,g::---,m::rwx,o::---", childUser),
           &aclError))
    {
       if (aclError == ENOTSUP)
@@ -1933,7 +1933,7 @@ TEST_F(FileLockingTest, StaleClaimsForOtherLocksAreSwept)
    ASSERT_FALSE(writeClaimContents(staleClaim, "-1\n"));
    ASSERT_FALSE(writeClaimContents(
       liveClaim,
-      std::to_string(::getpid()) + "\n"));
+      fmt::format("{}\n", ::getpid())));
 
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
@@ -1975,8 +1975,7 @@ TEST_F(FileLockingTest, AbandonedPreparedClaimDirectoriesAreSwept)
    FilePath abandoned = root_.completePath(
       ".rstudio-lock-claims-tmp-41c29-99999999-abandoned");
    FilePath live = root_.completePath(
-      ".rstudio-lock-claims-tmp-41c29-" +
-      std::to_string(::getpid()) + "-live");
+      fmt::format(".rstudio-lock-claims-tmp-41c29-{}-live", ::getpid()));
    ASSERT_FALSE(abandoned.ensureDirectory());
    ASSERT_FALSE(live.ensureDirectory());
 
@@ -2069,7 +2068,7 @@ TEST_F(FileLockingTest, CaseSensitiveNamesUseIndependentClaims)
    ASSERT_FALSE(lockFilePath_.remove());
 
    FilePath claim = claimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeClaimContents(claim, fmt::format("{}\n", ::getpid())));
 
    LinkBasedFileLock alias;
    EXPECT_FALSE(alias.acquire(aliasPath));
@@ -2149,7 +2148,7 @@ TEST_F(FileLockingTest, LostClaimBeforePublicationLeavesPublicPathAbsent)
       // contender to replace our claim. We must not publish after resuming.
       replaced = true;
       EXPECT_FALSE(claimPath.remove());
-      EXPECT_FALSE(writeClaimContents(claimPath, std::to_string(::getpid()) + "\n"));
+      EXPECT_FALSE(writeClaimContents(claimPath, fmt::format("{}\n", ::getpid())));
       return Success();
    });
 
@@ -2176,7 +2175,7 @@ TEST_F(FileLockingTest, LostClaimAfterPublicationRetiresPublishedInode)
       // claim. Retire that inode without removing the successor's claim.
       replaced = true;
       EXPECT_FALSE(claimPath.remove());
-      EXPECT_FALSE(writeClaimContents(claimPath, std::to_string(::getpid()) + "\n"));
+      EXPECT_FALSE(writeClaimContents(claimPath, fmt::format("{}\n", ::getpid())));
       return Success();
    });
 
@@ -2198,7 +2197,7 @@ TEST_F(FileLockingTest, ReleaseLeavesFilesWhileContenderHoldsClaim)
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
    FilePath claim = claimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeClaimContents(claim, std::to_string(::getpid()) + "\n"));
+   ASSERT_FALSE(writeClaimContents(claim, fmt::format("{}\n", ::getpid())));
 
    ASSERT_FALSE(lock.release());
    EXPECT_TRUE(lockFilePath_.exists());
@@ -2321,7 +2320,7 @@ TEST_F(FileLockingTest, LinkRegistryUsableInChildAfterFork)
       [&](int index)
       {
          LinkBasedFileLock lock;
-         if (!lock.acquire(root_.completePath("lock-" + std::to_string(index))))
+         if (!lock.acquire(root_.completePath(fmt::format("lock-{}", index))))
             lock.release();
       },
       [&]()
@@ -2562,7 +2561,7 @@ TEST_F(FileLockingTest, LockHeldByWorkerAfterMainThreadExitIsLive)
 #ifdef __linux__
    // the worker signals before the main thread has necessarily exited; wait
    // until the leader actually reads as a zombie so the check below is real
-   FilePath childStat("/proc/" + std::to_string(child) + "/stat");
+   FilePath childStat(fmt::format("/proc/{}/stat", child));
    bool leaderIsZombie = false;
    for (int attempt = 0; attempt < 100 && !leaderIsZombie; ++attempt)
    {
@@ -2675,7 +2674,7 @@ TEST_F(FileLockingTest, LinkLockPidIsNeverInterpretedByShell)
 {
    FilePath marker = root_.completePath("marker");
    std::string contents =
-      std::to_string(::getpid()) + "; touch " + marker.getAbsolutePath();
+      fmt::format("{}; touch {}", ::getpid(), marker.getAbsolutePath());
    ASSERT_FALSE(writeStringToFile(lockFilePath_, contents));
 
    EXPECT_FALSE(LinkBasedFileLock::isLockFileStale(lockFilePath_));

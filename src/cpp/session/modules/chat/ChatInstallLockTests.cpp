@@ -28,6 +28,8 @@
 
 #include <ctime>
 
+#include <fmt/format.h>
+
 #include <gtest/gtest.h>
 
 #include <core/FileLock.hpp>
@@ -125,7 +127,7 @@ TEST_F(ChatInstallLock, LiveInUseBlocksMutationUntilReleased)
    // session holds its lock that long before it can be taken over.
    long clearSeconds = FileLock::getTimeoutInterval().total_seconds() *
                        FileLock::getLiveOwnerGraceMultiplier();
-   EXPECT_NE(message.find(std::to_string(clearSeconds) + " seconds to clear"),
+   EXPECT_NE(message.find(fmt::format("{} seconds to clear", clearSeconds)),
              std::string::npos);
 
    sessionA_->releaseInUse(InstallLock::Component::ChatBackend, token);
