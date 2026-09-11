@@ -58,7 +58,6 @@ var HtmlMode = require("ace/mode/html").Mode;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var MarkdownFoldMode = require("mode/markdown_folding").FoldMode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
-var RCodeModel = require("mode/r_code_model").RCodeModel;
 
 var Mode = function(suppressHighlighting, session) {
    this.HighlightRules = MarkdownHighlightRules;
@@ -76,6 +75,8 @@ var Mode = function(suppressHighlighting, session) {
    // start/end patterns can never match.
    if (session)
    {
+      // Standalone highlighting does not load the code model's dependencies.
+      var RCodeModel = require("mode/r_code_model").RCodeModel;
       this.$tokenizer = new Tokenizer(new MarkdownHighlightRules().getRules());
       this.codeModel = new RCodeModel(session, this.$tokenizer, /^r-/, /(?!)/, /(?!)/);
    }
