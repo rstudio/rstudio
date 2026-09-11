@@ -512,6 +512,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingAutoDetectIndentationDesc();
     String editingInsertMatchingLabel();
     String editingUseNativePipeOperatorLabel();
+    String editingInsertPlusInGgplotChainsLabel();
     String editingProjectOverrideInfoText();
     String editProjectPreferencesButtonLabel();
     String editingReindentOnPasteLabel();

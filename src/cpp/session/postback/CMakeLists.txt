@@ -69,6 +69,7 @@ configure_file(rpostback-browser   ${POSTBACK_SCRIPT_DIR}/rpostback-browser)
 configure_file(rpostback-editfile  ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
 configure_file(rpostback-gitssh    ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
 configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
+configure_file(rstudio             ${POSTBACK_SCRIPT_DIR}/rstudio)
 
 # set RPOSTBACK_EXECUTABLE_PATH for rdesktop-dev
 if(WIN32)
@@ -81,7 +82,7 @@ endif()
 if(NOT RSTUDIO_SESSION_WIN32)
    install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
    file(GLOB POSTBACK_SCRIPTS "rpostback-*")
-   set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough")
+   set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough" "rstudio")
    install(PROGRAMS ${POSTBACK_SCRIPTS}
            DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
 endif()
