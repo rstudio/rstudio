@@ -1244,6 +1244,17 @@ TEST_F(DatabaseTestsFixture, CompoundWhereExpressions)
    EXPECT_EQ(sql, "SELECT id FROM BuilderTest WHERE NOT (bar = :where_1_bar AND foo = :where_1_foo)");
 }
 
+TEST_F(DatabaseTestsFixture, EmptyCompoundWhere)
+{
+   SelectBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("id").where(QBWhereAnd());
+   EXPECT_EQ(builder.toSQL(), "SELECT id FROM BuilderTest WHERE (1 = 1)");
+
+   SelectBuilder builder2(sqliteConnection, "BuilderTest");
+   builder2.add("id").where(QBWhereOr());
+   EXPECT_EQ(builder2.toSQL(), "SELECT id FROM BuilderTest WHERE (1 = 0)");
+}
+
 TEST_F(DatabaseTestsFixture, RawBuilderWorks)
 {
    SqlIdentifier iCol("i_val"), fCol("f_val"), bCol("b_val"), tCol("t_val");

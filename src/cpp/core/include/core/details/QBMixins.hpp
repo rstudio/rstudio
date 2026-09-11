@@ -266,7 +266,7 @@ public:
       return std::move(*self);
    }
 
-   // As where(), but negates the match
+   // As where(), but wraps the clause in `NOT (...)`
    BUILDER&& whereNot(QBCompoundWhere&& clause)
    {
       auto node = clause.takeNode();
