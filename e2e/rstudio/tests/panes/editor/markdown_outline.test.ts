@@ -27,6 +27,20 @@ const MARKDOWN = heredoc`
   # Four
 `;
 
+// The plain markdown tokenizer has no YAML state, so without special handling
+// the closing '---' reads as a setext heading and the '#' line as an ATX one.
+const FRONT_MATTER = heredoc`
+  ---
+  title: "Post"
+  # a yaml comment
+  date: "2026-01-01"
+  ---
+
+  # Intro
+
+  ## Details
+`;
+
 test.describe.serial('Markdown document outline', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
@@ -34,10 +48,6 @@ test.describe.serial('Markdown document outline', () => {
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-  });
-
-  test.beforeEach(async ({ rstudioPage: page }) => {
-    await writeAndOpenFile(page, sandbox.dir, fileName, MARKDOWN);
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
@@ -48,13 +58,11 @@ test.describe.serial('Markdown document outline', () => {
     await consoleActions.resetSourcePane();
   });
 
-  test('a .md document offers the outline and its headings nest by level', async ({
-    rstudioPage: page,
-  }) => {
+  test('a .md document offers the outline and its headings nest by level', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, fileName, MARKDOWN);
+
     // the command is only offered for file types that can show a scope tree
-    await expect
-      .poll(() => isCommandEnabled(page, 'toggleDocumentOutline'), { timeout: TIMEOUTS.fileOpen })
-      .toBe(true);
+    await expect.poll(() => isCommandEnabled(page, 'toggleDocumentOutline'), { timeout: TIMEOUTS.fileOpen }).toBe(true);
 
     // the scopes the outline is built from
     const editor = new AceEditor(page, '');
@@ -77,5 +85,16 @@ test.describe.serial('Markdown document outline', () => {
     await executeCommand(page, 'toggleDocumentOutline');
     await expect.poll(() => isCommandEnabled(page, 'toggleDocumentOutline')).toBe(true);
     await executeCommand(page, 'toggleDocumentOutline');
+  });
+
+  test('YAML front matter does not contribute sections', async ({ rstudioPage: page }) => {
+    await writeAndOpenFile(page, sandbox.dir, fileName, FRONT_MATTER);
+
+    const editor = new AceEditor(page, '');
+    await expect
+      .poll(async () => (await editor.getSectionScopes()).map((s) => s.label), {
+        timeout: TIMEOUTS.fileOpen,
+      })
+      .toEqual(['Intro', 'Details']);
   });
 });
