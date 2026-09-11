@@ -150,7 +150,7 @@ describe('Application', () => {
       app.windowTracker.addWindow('rstudio_satellite_source', tracked);
       app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
 
-      const result = app.windowOpening();
+      const result = app.windowOpening('rstudio_satellite_source');
 
       assert.equal(result.action, 'deny');
       assert.isTrue(focus.calledOnce);
@@ -165,7 +165,7 @@ describe('Application', () => {
       app.windowTracker.addWindow('_rstudio_help', tracked);
       app.prepareForWindow(pendingSecondary('_rstudio_help'));
 
-      const result = app.windowOpening();
+      const result = app.windowOpening('_rstudio_help');
 
       assert.equal(result.action, 'deny');
       assert.isTrue(focus.calledOnce);
@@ -177,7 +177,37 @@ describe('Application', () => {
       app.windowTracker.addWindow('rstudio_satellite_other', trackedWindow().tracked);
       app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
 
-      const result = app.windowOpening();
+      const result = app.windowOpening('rstudio_satellite_source');
+
+      assert.equal(result.action, 'allow');
+      assert.equal(app.pendingWindows.length, 1);
+    });
+
+    it('drops stale entries queued ahead of the requested window', () => {
+      // Chromium reuses an already-open window of the same name without
+      // consulting us, so the entry queued for it never gets consumed; it must
+      // not deny (or configure) the next, unrelated window.open()
+      const app = new Application();
+      const { tracked, focus } = trackedWindow();
+      app.windowTracker.addWindow('rstudio_satellite_source', tracked);
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+      app.prepareForWindow(pendingSecondary('_rstudio_help'));
+
+      const result = app.windowOpening('_rstudio_help');
+
+      assert.equal(result.action, 'allow');
+      assert.isTrue(focus.notCalled);
+      assert.deepEqual(
+        app.pendingWindows.map((pending) => pending.name),
+        ['_rstudio_help'],
+      );
+    });
+
+    it('leaves the queue alone for a request with no pending entry', () => {
+      const app = new Application();
+      app.prepareForWindow(pendingSatellite('rstudio_satellite_source'));
+
+      const result = app.windowOpening('_blank');
 
       assert.equal(result.action, 'allow');
       assert.equal(app.pendingWindows.length, 1);
