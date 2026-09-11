@@ -92,11 +92,13 @@ public:
                   boost::none);
 
    // Acquires the in-use lock (first component takes the file lock; the
-   // second just marks itself held). Fails while this process's own mutation
-   // is active: a re-entrant start dispatched during the mutation must not
-   // launch from the directory being swapped, and the install.lock probe in
-   // acquireInUseForStart() cannot catch it (our own advisory lock does not
-   // conflict in-process), so this in-process check is the only guard.
+   // second just marks itself held). Fails if the owner id is empty (the
+   // lock file would be named ".lock" and shared by every session, #18787).
+   // Fails while this process's own mutation is active: a re-entrant start
+   // dispatched during the mutation must not launch from the directory being
+   // swapped, and the install.lock probe in acquireInUseForStart() cannot
+   // catch it (our own advisory lock does not conflict in-process), so this
+   // in-process check is the only guard.
    //
    // On success *pToken receives a generation token identifying this holder;
    // on failure it receives 0. Tokens are never 0, so callers may use 0 as a

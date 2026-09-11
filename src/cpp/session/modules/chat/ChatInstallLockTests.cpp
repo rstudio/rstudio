@@ -754,6 +754,24 @@ TEST_F(ChatInstallLockOwner, OwnerIdNamesTheSessionLockFile)
    EXPECT_TRUE(sessionLockFileNames(lock).empty());
 }
 
+TEST_F(ChatInstallLockOwner, EmptyOwnerIdIsRefusedNotSharedAsDotLock)
+{
+   InstallLock lock(locksDir_, "", FileLock::LOCKTYPE_ADVISORY);
+
+   uint64_t token = 0;
+   std::string userMessage;
+   Error error = lock.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage);
+   EXPECT_TRUE(error);
+   EXPECT_EQ(token, 0u);
+   EXPECT_FALSE(lock.inUseHeld());
+
+   // A missing owner id is a defect, not an update in progress.
+   EXPECT_NE(userMessage.find("Unable to verify"), std::string::npos);
+   EXPECT_EQ(userMessage.find("update is in progress"), std::string::npos);
+   EXPECT_FALSE(lock.sessionLocksDir().completePath(".lock").exists());
+}
+
 // The production accessor derives the owner id from the session id and a
 // per-process uuid. MSVC in C++20 mode initialized the previous form of
 // that static (a conditional expression) to an empty string, so every
