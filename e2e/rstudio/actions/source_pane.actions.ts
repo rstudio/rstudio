@@ -39,8 +39,13 @@ export class SourcePaneActions {
   }
 
   async closeSourceAndDeleteFile(fileName: string): Promise<void> {
-    await executeCommand(this.page, 'saveAllSourceDocs');
-    await sleep(1000);
+    // No saveAllSourceDocs here: the file is deleted two lines down, so
+    // saving it changes nothing -- but it prompts Save File for any dirty
+    // Untitled tab, and that modal's glass panel blocks every later click
+    // (it broke the markdown HTML-preview spec on all four platforms).
+    // resetSourcePane reverts dirty file-backed tabs instead, which needs no
+    // dialog.
+    //
     // resetSourcePane closes every tab except a single Untitled placeholder,
     // so the source pane never transits through the zero-tab HIDE state
     // (#17738) and the next test starts from a known good state. The previous

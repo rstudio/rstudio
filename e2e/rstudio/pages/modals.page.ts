@@ -81,3 +81,53 @@ export async function dismissBlockingModals(page: Page): Promise<string[]> {
 
   return dismissed;
 }
+
+/**
+ * Dismiss the "Save workspace image to <path>?" prompt that a session quit --
+ * Close Project, or a project switch -- can put up, choosing "Don't Save".
+ * Resolves to true if a prompt was dismissed.
+ *
+ * The prompt is a race, not a preference problem. The e2e sessions all run
+ * with `save_workspace: never`, but the client reaches that value only when
+ * the backend pushes a SaveActionChangedEvent; until then ApplicationQuit's
+ * `saveAction_` holds its SaveAction.saveAsk() default, and a quit decided in
+ * that window prompts. Tests that open and close projects back to back (e.g.
+ * restart-under-agent) quit sessions that are seconds old, so they land in it.
+ *
+ * Polls rather than waiting a fixed interval: the prompt appears only after
+ * the quit's unsaved-changes round trip, and in the common no-prompt case the
+ * quit proceeds instead -- which flips `window.rstudio.ready` to false (or
+ * tears the execution context down entirely, in Server mode where the page
+ * navigates). Either is the signal to stop looking, so a session that is not
+ * going to prompt costs one poll, not the timeout.
+ */
+export async function dismissSaveWorkspacePrompt(page: Page, timeout: number = 15000): Promise<boolean> {
+  const deadline = Date.now() + timeout;
+
+  // The same selector set the fixtures use for the startup sweep. It isn't
+  // scoped to this dialog's caption, but the only modal that can be up in
+  // the moment between dispatching a quit and the quit starting is the
+  // quit's own prompt.
+  const dontSave = page.locator(
+    "button:has-text('Don\\'t Save'), button:has-text('Do not Save'), " + NO_BTN,
+  ).first();
+
+  for (;;) {
+    if (await dontSave.isVisible().catch(() => false)) {
+      await dontSave.click();
+      console.log('dismissSaveWorkspacePrompt: chose "Don\'t Save" on the quit prompt');
+      return true;
+    }
+
+    // `ready === true` means the workbench is still up, i.e. the quit has not
+    // begun; anything else (false, missing bridge, destroyed context) means it
+    // has, so no prompt is coming.
+    const quitStarted = await page
+      .evaluate(() => window.rstudio?.ready !== true)
+      .catch(() => true);
+    if (quitStarted || Date.now() >= deadline)
+      return false;
+
+    await sleep(100);
+  }
+}
