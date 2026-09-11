@@ -101,20 +101,30 @@ struct QBCompoundNode : public QBBaseNode
 
    virtual std::string toClause(const std::string& prefix = std::string()) const
    {
-      // WHERE () is invalid SQL
+      // WHERE () is invalid SQL, so a special case is needed for consistent behavior.
       if (nodes.empty())
       {
-         // AND / NOT OR implies that no records should be matched if no conditions match
+         // An AND clause excludes records that don't match all conditions.
+         // Therefore, an empty AND clause EXCLUDES no records.
+
+         // An OR clause includes records that match any condition.
+         // Therefore, an empty OR clause INCLUDES no records.
+
+         // A NOT clause (interactions with NULL notwithstanding) includes
+         // records that would have been excluded, and vice versa.
+         // Therefore, an empty NOT(AND) clause INCLUDES no records,
+         // and an empty NOT(OR) clause EXCLUDES no records.
+
          if (negate ? (op == "OR") : (op == "AND"))
-            return "(1 = 0)";
-         // OR / NOT AND implies that all records should be matched if no conditions fail
-         return "(1 = 1)";
+            return "(1 = 1)";
+         return "(1 = 0)";
       }
+
       std::string extPrefix = prefix + refName + "_";
       std::ostringstream ss;
       bool first = true;
       if (negate)
-        ss << "NOT ";
+         ss << "NOT ";
       ss << "(";
       for (const QBBaseNode* node : nodes)
       {
