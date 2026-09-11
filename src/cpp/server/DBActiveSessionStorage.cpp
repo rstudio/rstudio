@@ -24,6 +24,9 @@
 
 #include <numeric>
 
+// for RSTUDIO_PRO_BUILD
+#include "server-config.h"
+
 using namespace rstudio::core;
 using namespace rstudio::core::database;
 using namespace rstudio::core::r_util;
@@ -47,65 +50,74 @@ const SqlIdentifier kTableName = "active_session_metadata";
 const SqlIdentifier kSessionIdColumnName = "session_id";
 const SqlIdentifier kProjectColumnName = "project";
 
-static std::map<std::string, SqlIdentifier> kASMColumns;
-static std::map<std::string, std::string> kASMProperties;
-
-void populateASMMaps()
+// Maps session metadata property names to columns and vice versa for
+// the active_session_metadata table, initialized with a static.
+struct ASMMaps
 {
-   static bool ready = false;
-   if (ready)
-      return;
+   std::map<std::string, SqlIdentifier> columns;
+   std::map<std::string, std::string> properties;
+};
 
-   kASMColumns[ActiveSession::kEditor] = "workbench";
-   kASMProperties["workbench"] = ActiveSession::kEditor;
+const ASMMaps& asmMaps()
+{
+   static const ASMMaps maps = []()
+   {
+      ASMMaps m;
 
-   kASMColumns[ActiveSession::kProjectId] = kProjectColumnName;
-   kASMProperties[kProjectColumnName] = ActiveSession::kProjectId;
+      m.columns[ActiveSession::kEditor] = "workbench";
+      m.properties["workbench"] = ActiveSession::kEditor;
 
-   std::string keys[] = {
-      ActiveSession::kCreated,
-      ActiveSession::kExecuting,
-      ActiveSession::kInitial,
-      ActiveSession::kLastUsed,
-      ActiveSession::kLabel,
-      ActiveSession::kProject,
-      ActiveSession::kSavePromptRequired,
-      ActiveSession::kRunning,
-      ActiveSession::kRVersion,
-      ActiveSession::kRVersionHome,
-      ActiveSession::kRVersionLabel,
-      ActiveSession::kWorkingDir,
-      ActiveSession::kActivityState,
-      ActiveSession::kLastStateUpdated,
-      ActiveSession::kLastResumed,
-      ActiveSession::kSuspendTimestamp,
-      ActiveSession::kBlockingSuspend,
-      ActiveSession::kLaunchParameters,
+      m.columns[ActiveSession::kProjectId] = kProjectColumnName;
+      m.properties[kProjectColumnName] = ActiveSession::kProjectId;
+
+      std::string keys[] = {
+         ActiveSession::kCreated,
+         ActiveSession::kExecuting,
+         ActiveSession::kInitial,
+         ActiveSession::kLastUsed,
+         ActiveSession::kLabel,
+         ActiveSession::kProject,
+         ActiveSession::kSavePromptRequired,
+         ActiveSession::kRunning,
+         ActiveSession::kRVersion,
+         ActiveSession::kRVersionHome,
+         ActiveSession::kRVersionLabel,
+         ActiveSession::kWorkingDir,
+         ActiveSession::kActivityState,
+         ActiveSession::kLastStateUpdated,
+         ActiveSession::kLastResumed,
+         ActiveSession::kSuspendTimestamp,
+         ActiveSession::kBlockingSuspend,
+         ActiveSession::kLaunchParameters,
 #ifdef RSTUDIO_PRO_BUILD
-      ActiveSession::kSuspendSize,
+         // the active_session_metadata schema only has this column in Workbench
+         ActiveSession::kSuspendSize,
 #endif
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
-      // only used in tests
-      "user_id",
-      "session_id",
+         // only used in tests
+         "user_id",
+         "session_id",
 #endif
-   };
+      };
 
-   for (const std::string& key : keys) {
-      // Since these are compile-time constants, we know they're already validated.
-      // Skip the validation step by using the const char* constructor.
-      kASMColumns[key] = key.c_str();
-      kASMProperties[key] = key;
-   }
+      for (const std::string& key : keys) {
+         // Since these are compile-time constants, we know they're already validated.
+         // Skip the validation step by using the const char* constructor.
+         m.columns[key] = key.c_str();
+         m.properties[key] = key;
+      }
 
-   ready = true;
-};
+      return m;
+   }();
+
+   return maps;
+}
 
 inline Result<SqlIdentifier> columnName(const std::string& propertyName)
 {
-   populateASMMaps();
-   auto iter = kASMColumns.find(propertyName);
-   if (iter == kASMColumns.end())
+   const auto& columns = asmMaps().columns;
+   auto iter = columns.find(propertyName);
+   if (iter == columns.end())
    {
       return Unexpected(Error("Unknown property " + propertyName, boost::system::errc::invalid_argument, ERROR_LOCATION));
    }
@@ -115,10 +127,9 @@ inline Result<SqlIdentifier> columnName(const std::string& propertyName)
 
 inline Result<std::string> propertyName(const std::string& columnName)
 {
-   populateASMMaps();
-
-   auto iter = kASMProperties.find(columnName);
-   if (iter == kASMProperties.end())
+   const auto& properties = asmMaps().properties;
+   auto iter = properties.find(columnName);
+   if (iter == properties.end())
    {
       return Unexpected(Error("Unknown column " + columnName, boost::system::errc::invalid_argument, ERROR_LOCATION));
    }
@@ -419,7 +430,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
 Error DBActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
 {
    std::set<std::string> all;
-   for (const auto& [propName, colName] : kASMColumns) {
+   for (const auto& [propName, colName] : asmMaps().columns) {
       all.insert(propName);
    }
    return readProperties(all, pValues);
