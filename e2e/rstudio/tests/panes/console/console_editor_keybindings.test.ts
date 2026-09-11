@@ -119,11 +119,23 @@ test.describe.serial('Console honors custom editor keybindings', () => {
     const input = consoleActions.consolePane.consoleInput;
     await input.click({ force: true });
     await waitForConsoleFocus(page);
-    await setConsoleInput(page, 'gamma delta');
-    await expect.poll(() => consoleActions.consolePane.consoleInputValue()).toBe('gamma delta');
 
-    await page.keyboard.press(NEW_SHORTCUT);
-    await expect.poll(() => consoleActions.consolePane.consoleInputValue()).toBe('gamma ');
+    // `ready` says R's deferred init is done; it says nothing about the
+    // editor bindings, which EditorCommandManager loads on EditorLoadedEvent
+    // and applies only once an async read of editor_bindings.json returns.
+    // A single press can therefore land before the rebinding exists and be
+    // swallowed, so retry the whole set-press-assert block: the retry is what
+    // waits for the load, and the assertion still fails if the binding never
+    // reaches the console.
+    await expect(async () => {
+      await setConsoleInput(page, 'gamma delta');
+      await expect.poll(() => consoleActions.consolePane.consoleInputValue()).toBe('gamma delta');
+
+      await page.keyboard.press(NEW_SHORTCUT);
+      await expect
+        .poll(() => consoleActions.consolePane.consoleInputValue(), { timeout: 2000 })
+        .toBe('gamma ');
+    }).toPass({ timeout: 20000 });
 
     await setConsoleInput(page, '');
   });

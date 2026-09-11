@@ -7,6 +7,7 @@ import {
   CONSOLE_OUTPUT,
 } from '../pages/console_pane.page';
 import { executeCommand, openProject } from './commands';
+import { dismissSaveWorkspacePrompt } from '../pages/modals.page';
 import { sleep, TIMEOUTS } from './constants';
 import { assertAbsolutePath } from './paths';
 
@@ -199,6 +200,10 @@ export async function createAndOpenProject(
  * triggers RStudio's "R session is currently busy. Are you sure you want to
  * quit?" confirmation dialog and hangs the test.
  *
+ * A close is a session quit, so it can raise the "Save workspace image?"
+ * prompt before anything else happens; dismissSaveWorkspacePrompt clears it
+ * (without it the waits below just time out behind the modal's glass).
+ *
  * "Close project" is effectively a workbench rebuild -- the same Electron
  * window swaps out the project-bound page for a fresh no-project page. So we
  * wait not just for the console to come back, but for the new
@@ -218,6 +223,7 @@ export async function closeProjectIfOpen(page: Page): Promise<void> {
 
   await menu.click();
   await page.locator(CLOSE_PROJECT_MENU_ITEM).click();
+  await dismissSaveWorkspacePrompt(page);
   await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
   await page.waitForSelector(CONSOLE_INPUT, {
     state: 'visible',
