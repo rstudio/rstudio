@@ -2428,6 +2428,16 @@
    clear = function() { .rs.clearUserPref("insert_native_pipe_operator") }
 )
 
+# Insert + instead of a pipe within ggplot2 chains
+#
+# Whether the Insert Pipe Operator command should insert '+' instead of a pipe
+# when the cursor is within a ggplot2 chain
+.rs.uiPrefs$insertPlusInGgplotChains <- list(
+   get = function() { .rs.getUserPref("insert_plus_in_ggplot_chains") },
+   set = function(value) { .rs.setUserPref("insert_plus_in_ggplot_chains", value) },
+   clear = function() { .rs.clearUserPref("insert_plus_in_ggplot_chains") }
+)
+
 # Remember recently used items in Command Palette
 #
 # Whether to keep track of recently used commands in the Command Palette

@@ -55,14 +55,14 @@ test.describe.serial('Conversation History', { tag: ['@ai', '@chat'] }, () => {
     await chatActions.openConversationHistory();
     await chatPane.getConversationItemByName(athenaName).first().click();
     await chatActions.closeConversationHistory();
-    const athenaMessages = chatPane.frame.locator('[data-message-id]');
+    const athenaMessages = chatPane.messageItem;
     await expect(athenaMessages.last()).toContainText('Athena', { timeout: 5000 });
 
     // Open history again for Aphrodite
     await chatActions.openConversationHistory();
     await chatPane.getConversationItemByName(aphroditeName).first().click();
     await chatActions.closeConversationHistory();
-    const aphroditeMessages = chatPane.frame.locator('[data-message-id]');
+    const aphroditeMessages = chatPane.messageItem;
     await expect(aphroditeMessages.last()).toContainText('Aphrodite', { timeout: 5000 });
 
     // Open history and delete Artemis conversation

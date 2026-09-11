@@ -143,6 +143,23 @@
    margin-bottom: 1px;
 }
 
+/* A native select sizes itself to its widest option, so long Workbench R
+   version labels would push the control (and its label) past the pane edge.
+   Let it fill the remaining row width and truncate the selected text instead. */
+.rVersionSelectWidget {
+   width: 100%;
+}
+
+.rVersionSelectWidget .gwt-Label {
+   white-space: nowrap;
+}
+
+.rVersionSelectWidget select {
+   width: 100%;
+   min-width: 0;
+   text-overflow: ellipsis;
+}
+
 
 .userDictEditButton {
    margin-left: 8px !important;

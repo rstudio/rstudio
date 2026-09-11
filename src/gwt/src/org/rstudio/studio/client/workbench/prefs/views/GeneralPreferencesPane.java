@@ -71,7 +71,8 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UserPrefs prefs,
                                  Session session,
                                  GlobalDisplay globalDisplay,
-                                 WorkbenchContext context)
+                                 WorkbenchContext context,
+                                 PreferencesDialogResources res)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
@@ -122,6 +123,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          rServerRVersion_ = new RVersionSelectWidget(
                                        ElementIds.SelectWidgetId.R_VER_GEN_PREF_PANE,
                                        versionsInfo.getAvailableRVersions());
+         rServerRVersion_.addStyleName(res.styles().rVersionSelectWidget());
          basic.add(tight(rServerRVersion_));
 
          rememberRVersionForProjects_ =

@@ -130,6 +130,16 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    // amend shell paths as appropriate
    session::modules::workbench::amendShellPaths(&shellEnv);
 
+#ifndef _WIN32
+   // put the postback scripts first so the `rstudio` helper (which opens files in
+   // this session) shadows any same-named application binary on the PATH; a
+   // restored terminal's saved PATH already starts with it, so don't stack copies
+   std::string postbackDir = module_context::rPostbackScriptsDir().getAbsolutePath();
+   std::string shellPath = core::system::getenv(shellEnv, "PATH");
+   if (shellPath != postbackDir && !boost::algorithm::starts_with(shellPath, postbackDir + ":"))
+      core::system::addToPath(&shellEnv, postbackDir, true);
+#endif
+
    // set options
    core::system::ProcessOptions options;
    options.workingDir = procInfo.getCwd().isEmpty()
