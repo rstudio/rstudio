@@ -88,7 +88,7 @@ public:
 
 struct QBCompoundNode : public QBBaseNode
 {
-   QBCompoundNode(const std::string& op) : QBBaseNode(SqlIdentifier()), op(op) {}
+   QBCompoundNode(const std::string& op) : QBBaseNode(SqlIdentifier()), op(op), negate(false) {}
 
    virtual void apply(Query& query, const std::string& prefix = std::string())
    {
@@ -104,15 +104,17 @@ struct QBCompoundNode : public QBBaseNode
       // WHERE () is invalid SQL
       if (nodes.empty())
       {
-         // AND implies that no records should be matched if no conditions match
-         if (op == "AND")
+         // AND / NOT OR implies that no records should be matched if no conditions match
+         if (negate ? (op == "OR") : (op == "AND"))
             return "(1 = 0)";
-         // OR implies that all records should be matched if no conditions fail
+         // OR / NOT AND implies that all records should be matched if no conditions fail
          return "(1 = 1)";
       }
       std::string extPrefix = prefix + refName + "_";
       std::ostringstream ss;
       bool first = true;
+      if (negate)
+        ss << "NOT ";
       ss << "(";
       for (const QBBaseNode* node : nodes)
       {
@@ -132,6 +134,7 @@ struct QBCompoundNode : public QBBaseNode
    }
 
    std::string op;
+   bool negate;
    QBNodeList nodes;
 };
 
