@@ -27,6 +27,12 @@ namespace session {
 namespace modules { 
 namespace dirty {
 
+// The save action the session would take if it exited right now, as one of the
+// r::session::kSaveAction* values. Reported in SessionInfo so a quit or project
+// close issued before the first save_action_changed event reaches the client
+// still uses the real action rather than the client's 'ask' default.
+int saveAction();
+
 core::Error initialize();
 
 } // namespace dirty
