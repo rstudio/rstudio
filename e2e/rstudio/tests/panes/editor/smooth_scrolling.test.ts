@@ -8,6 +8,8 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { TIMEOUTS } from '@utils/constants';
 import { clearPref, executeCommand, setPref, waitForSourcePaneReset } from '@utils/commands';
+import { BACKUP_BINDINGS, RESTORE_BINDINGS } from '@utils/keybindings';
+import { YES_BTN } from '@pages/modals.page';
 
 declare global {
   interface Window {
@@ -46,6 +48,17 @@ async function expectScrollAnimation(page: Page, enabled: boolean): Promise<void
   if (!enabled) {
     expect(await page.evaluate(() => window.smoothScrollProbe?.samples)).toEqual([]);
   }
+}
+
+// The Ace commands that smooth scrolling re-installs with scrollIntoView: "animate".
+const NAVIGATION_COMMANDS = ['golineup', 'golinedown', 'selectup', 'selectdown'];
+
+async function animatedNavigationCommands(page: Page): Promise<string[]> {
+  return page.evaluate((names) => {
+    const editor = window.rstudio?.documents.activeEditor();
+    if (!editor) return [];
+    return names.filter((name) => editor.commands.byName[name]?.scrollIntoView === 'animate');
+  }, NAVIGATION_COMMANDS);
 }
 
 async function activeEditorAnimatesScroll(page: Page): Promise<boolean | null> {
@@ -106,6 +119,45 @@ test.describe.serial('Smooth scrolling pref', () => {
     } finally {
       await clearPref(page, 'smooth_scrolling');
     }
+  });
+
+  test('arrow navigation keeps animating after resetting keyboard shortcuts', async ({ rstudioPage: page }) => {
+    await setPref(page, 'smooth_scrolling', true);
+    await expect.poll(
+      () => animatedNavigationCommands(page),
+      { timeout: TIMEOUTS.fileOpen }
+    ).toEqual(NAVIGATION_COMMANDS);
+
+    // Tag the installed command so the reset (which reinstalls Ace's shared
+    // defaults, scrollIntoView: "cursor") is observable rather than assumed.
+    await page.evaluate(() => {
+      window.rstudio!.documents.activeEditor()!.commands.byName['golineup'].e2eTagged = true;
+    });
+
+    await consoleActions.executeInConsole(BACKUP_BINDINGS);
+    try {
+      await executeCommand(page, 'modifyKeyboardShortcuts');
+      const dialog = page.getByRole('dialog', { name: 'Keyboard Shortcuts', exact: true });
+      await expect(dialog).toBeVisible();
+
+      await dialog.locator('#rstudio_kybrd_shrtcts_rst').click();
+      const confirm = page.getByRole('alertdialog', { name: 'Reset Keyboard Shortcuts' });
+      await expect(confirm).toBeVisible();
+      await confirm.locator(YES_BTN).click();
+      await expect(confirm).toBeHidden();
+
+      await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+      await expect(dialog).toBeHidden();
+
+      await expect.poll(
+        () => page.evaluate(() => window.rstudio!.documents.activeEditor()!.commands.byName['golineup'].e2eTagged),
+        { timeout: TIMEOUTS.fileOpen }
+      ).toBeUndefined();
+    } finally {
+      await consoleActions.executeInConsole(RESTORE_BINDINGS);
+    }
+
+    expect(await animatedNavigationCommands(page)).toEqual(NAVIGATION_COMMANDS);
   });
 
   for (const enabled of [true, false]) {

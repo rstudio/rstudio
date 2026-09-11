@@ -2721,7 +2721,12 @@ public class AceEditor implements DocDisplay
    public void setSmoothScrolling(boolean enable)
    {
       widget_.getEditor().getRenderer().setAnimatedScroll(enable);
-      widget_.getEditor().getCommandManager().useAnimatedLineNavigation();
+
+      // The animated line navigation commands are deliberately left in place
+      // when disabling: with animatedScroll off, Ace treats an "animate"
+      // scrollIntoView exactly like "cursor", so there is nothing to undo.
+      if (enable)
+         widget_.getEditor().getCommandManager().useAnimatedLineNavigation();
    }
 
    public void setHighlightRFunctionCalls(boolean highlight)

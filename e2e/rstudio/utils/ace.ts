@@ -104,6 +104,8 @@ export namespace Ace {
   // The runtime editor instance. Hung off the .ace_editor DOM element via
   // the .env.editor backref (see AceEditorElement below).
   export interface Editor {
+    /** Per-editor command table; Ace's defaults are shared until a clone is installed. */
+    commands: { byName: Record<string, { scrollIntoView?: string; [key: string]: unknown }> };
     renderer: {
       scrollTop: number;
       $scrollAnimation?: { from: number; to: number } | null;

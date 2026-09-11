@@ -214,8 +214,19 @@ public class AceCommandManager extends JavaScriptObject
    /*-{
       var names = ["golineup", "golinedown", "selectup", "selectdown"];
       for (var i = 0; i < names.length; i++) {
-         var command = this.byName[names[i]];
-         if (!command || command.scrollIntoView !== "cursor")
+         var name = names[i];
+         var command = this.byName[name];
+
+         // These are Ace built-ins, so a missing one means an Ace update
+         // renamed or removed it. Warn rather than silently half-apply the
+         // override (say, Down animating while Shift+Down jumps).
+         if (!command) {
+            @org.rstudio.core.client.Debug::logWarning(Ljava/lang/String;)("useAnimatedLineNavigation: Ace command '" + name + "' not found");
+            continue;
+         }
+
+         // Already installed, or not the stock command: nothing to do.
+         if (command.scrollIntoView !== "cursor")
             continue;
 
          // Defaults are shared across editors; preserve them and any custom
