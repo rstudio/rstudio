@@ -6,7 +6,7 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { resetSourcePaneState, setPref } from '@utils/commands';
+import { executeCommand, resetSourcePaneState, setPref } from '@utils/commands';
 import { requireAiCredentials } from '@utils/ai-credentials';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
@@ -60,6 +60,43 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
         await page.keyboard.press('Escape');
         await sleep(500);
         console.log('  Dismissed autocomplete popup (pre-ghost-text)');
+      }
+    };
+
+    // Wait for ghost text, re-requesting when the assistant answers with
+    // nothing.
+    //
+    // An automatic request that comes back empty is a terminal state: the
+    // status bar reads "<provider>: No completions available." and nothing
+    // re-asks, so a plain toBeVisible() burns the full ghost-text budget
+    // waiting for a suggestion that is never coming. That is a live model
+    // talking, not a bug -- it declines this context some of the time, and
+    // when it does it tends to do so on every platform at once, which is how
+    // one empty answer shows up as four "flaky" rows in a CI report.
+    //
+    // assistantRequestCompletions is the explicit re-ask (Request Completions
+    // in the menu). The assertion still fails if nothing ever arrives.
+    const expectGhostText = async (page: Page, timeout = TIMEOUTS.ghostText) => {
+      const deadline = Date.now() + timeout;
+      for (;;) {
+        const remaining = Math.max(deadline - Date.now(), 1000);
+        try {
+          await expect(sourcePane.ghostText.first()).toBeVisible({
+            timeout: Math.min(remaining, 10000),
+          });
+          return;
+        } catch (err) {
+          if (Date.now() >= deadline)
+            throw err;
+          if (await sourcePane.statusBarNoCompletions.isVisible().catch(() => false)) {
+            console.log('  No completions available -- re-requesting');
+            // Don't let a momentarily-disabled command replace the real
+            // diagnostic; the loop's own failure is the one worth reporting.
+            await executeCommand(page, 'assistantRequestCompletions').catch((e) =>
+              console.log(`  re-request skipped: ${e}`),
+            );
+          }
+        }
       }
     };
 
@@ -118,7 +155,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await typeTriggerOnNewLine(page, 'x <- func');
 
-      await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+      await expectGhostText(page);
 
       const ghostTextParts = await sourcePane.ghostText.allTextContents();
       const ghostTextContent = ghostTextParts.join('');
@@ -428,7 +465,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await typeTriggerOnNewLine(page, 'x <- func');
 
-      await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+      await expectGhostText(page);
       console.log('  Ghost text visible — pressing Escape');
 
       // Press Escape until the suggestion is gone AND no completion request is
@@ -465,7 +502,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await typeTriggerOnNewLine(page, 'x <- func');
 
-      await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+      await expectGhostText(page);
       console.log('  Ghost text visible — moving cursor away');
 
       // Moving the cursor away from the completion point should dismiss the
@@ -672,7 +709,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await typeTriggerOnNewLine(page, 'x <- calc');
 
       // Wait for ghost text to confirm a real suggestion arrived
-      await expect(sourcePane.ghostText.first()).toBeVisible({ timeout: TIMEOUTS.ghostText });
+      await expectGhostText(page);
       const ghostParts = await sourcePane.ghostText.allTextContents();
       console.log('  Ghost text: "' + ghostParts.join('') + '"');
 
