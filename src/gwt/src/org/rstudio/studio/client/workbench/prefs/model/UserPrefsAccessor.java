@@ -125,6 +125,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SYNTAX_COLOR_CONSOLE = "syntax_color_console";
    public static final String HIGHLIGHT_CONSOLE_ERRORS = "highlight_console_errors";
    public static final String SCROLL_PAST_END_OF_DOCUMENT = "scroll_past_end_of_document";
+   public static final String SMOOTH_SCROLLING = "smooth_scrolling";
    public static final String HIGHLIGHT_R_FUNCTION_CALLS = "highlight_r_function_calls";
    public static final String COLOR_PREVIEW = "color_preview";
    public static final String RAINBOW_PARENTHESES = "rainbow_parentheses";
@@ -303,6 +304,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SAVE_RETRY_TIMEOUT = "save_retry_timeout";
    public static final String SAVE_FILES_DURABLY = "save_files_durably";
    public static final String INSERT_NATIVE_PIPE_OPERATOR = "insert_native_pipe_operator";
+   public static final String INSERT_PLUS_IN_GGPLOT_CHAINS = "insert_plus_in_ggplot_chains";
    public static final String COMMAND_PALETTE_MRU = "command_palette_mru";
    public static final String SHOW_MEMORY_USAGE = "show_memory_usage";
    public static final String MEMORY_QUERY_INTERVAL_SECONDS = "memory_query_interval_seconds";
@@ -1550,6 +1552,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   public PrefValue<Boolean> smoothScrolling()
+   {
+      return bool(
+         "smooth_scrolling",
+         _constants.smoothScrollingTitle(), 
+         _constants.smoothScrollingDescription(), 
+         false);
+   }
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    public PrefValue<Boolean> highlightRFunctionCalls()
@@ -1610,7 +1624,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    public PrefValue<Integer> consoleMaxLines()
    {
@@ -3995,6 +4009,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+    */
+   public PrefValue<Boolean> insertPlusInGgplotChains()
+   {
+      return bool(
+         "insert_plus_in_ggplot_chains",
+         _constants.insertPlusInGgplotChainsTitle(), 
+         _constants.insertPlusInGgplotChainsDescription(), 
+         true);
+   }
+
+   /**
     * Whether to keep track of recently used commands in the Command Palette
     */
    public PrefValue<Boolean> commandPaletteMru()
@@ -4846,6 +4872,8 @@ public class UserPrefsAccessor extends Prefs
          highlightConsoleErrors().setValue(layer, source.getBool("highlight_console_errors"));
       if (source.hasKey("scroll_past_end_of_document"))
          scrollPastEndOfDocument().setValue(layer, source.getBool("scroll_past_end_of_document"));
+      if (source.hasKey("smooth_scrolling"))
+         smoothScrolling().setValue(layer, source.getBool("smooth_scrolling"));
       if (source.hasKey("highlight_r_function_calls"))
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
       if (source.hasKey("color_preview"))
@@ -5202,6 +5230,8 @@ public class UserPrefsAccessor extends Prefs
          saveFilesDurably().setValue(layer, source.getBool("save_files_durably"));
       if (source.hasKey("insert_native_pipe_operator"))
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
+      if (source.hasKey("insert_plus_in_ggplot_chains"))
+         insertPlusInGgplotChains().setValue(layer, source.getBool("insert_plus_in_ggplot_chains"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
       if (source.hasKey("show_memory_usage"))
@@ -5379,6 +5409,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(syntaxColorConsole());
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
+      prefs.add(smoothScrolling());
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
@@ -5557,6 +5588,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(saveRetryTimeout());
       prefs.add(saveFilesDurably());
       prefs.add(insertNativePipeOperator());
+      prefs.add(insertPlusInGgplotChains());
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());

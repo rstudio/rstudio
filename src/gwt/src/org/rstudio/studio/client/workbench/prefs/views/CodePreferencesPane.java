@@ -90,6 +90,7 @@ public class CodePreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
       useNativePipe_ = checkboxPref(constants_.editingUseNativePipeOperatorLabel(), prefs_.insertNativePipeOperator());
       editingPanel.add(useNativePipe_);
+      editingPanel.add(checkboxPref(constants_.editingInsertPlusInGgplotChainsLabel(), prefs_.insertPlusInGgplotChains()));
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(
@@ -222,6 +223,7 @@ public class CodePreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
       displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
+      displayPanel.add(checkboxPref(constants_.displaySmoothScrollingLabel(), prefs_.smoothScrolling()));
 
       foldMode_ = new SelectWidget(
             constants_.displayFoldStyleLabel(),

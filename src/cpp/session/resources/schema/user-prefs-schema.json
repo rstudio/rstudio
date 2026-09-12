@@ -610,6 +610,12 @@
             "title": "Scroll past end of file",
             "description": "Whether to allow scrolling past the end of a file."
         },
+        "smooth_scrolling": {
+            "type": "boolean",
+            "default": false,
+            "title": "Smooth scrolling",
+            "description": "Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly."
+        },
         "highlight_r_function_calls": {
             "type": "boolean",
             "default": false,
@@ -643,8 +649,9 @@
         "console_max_lines": {
             "type": "integer",
             "default": 10000,
+            "minimum": 10,
             "title": "Maximum lines in R console",
-            "description": "The maximum number of console actions to store and display in the console scrollback buffer."
+            "description": "The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes."
         },
         "ansi_console_mode": {
             "type": "string",
@@ -1780,6 +1787,12 @@
         "insert_native_pipe_operator": {
             "description": "Whether the Insert Pipe Operator command should use the native R pipe operator, |>",
             "title": "Use R's native pipe operator, |>",
+            "type": "boolean",
+            "default": true
+        },
+        "insert_plus_in_ggplot_chains": {
+            "description": "Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain",
+            "title": "Insert + instead of a pipe within ggplot2 chains",
             "type": "boolean",
             "default": true
         },

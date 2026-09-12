@@ -73,6 +73,8 @@ export namespace Ace {
   // Methods on the EditSession (editor.session). Ace exposes many more --
   // restrict to the ones tests actually need to keep the surface obvious.
   export interface Session {
+    on(event: 'changeScrollTop', fn: (scrollTop: number) => void): void;
+    off(event: 'changeScrollTop', fn: (scrollTop: number) => void): void;
     getLength(): number;
     /** Rows as rendered: with wrap mode on, one soft-wrapped line counts once per visual row. */
     getScreenLength(): number;
@@ -87,7 +89,7 @@ export namespace Ace {
     getTabString(): string;
     getTokens(row: number): unknown[];
     getTokenAt(row: number, column: number): unknown | null;
-    getMarkers(): Record<string, unknown>;
+    getMarkers(inFront?: boolean): Record<string, unknown>;
     replace(range: Range, text: string): Position;
     remove(range: Range): Position;
     getDocument(): Document;
@@ -102,9 +104,16 @@ export namespace Ace {
   // The runtime editor instance. Hung off the .ace_editor DOM element via
   // the .env.editor backref (see AceEditorElement below).
   export interface Editor {
+    /** Per-editor command table; Ace's defaults are shared until a clone is installed. */
+    commands: { byName: Record<string, { scrollIntoView?: string; [key: string]: unknown }> };
+    renderer: {
+      scrollTop: number;
+      $scrollAnimation?: { from: number; to: number } | null;
+    };
     session: Session;
     selection: Selection;
     getValue(): string;
+    getOption(name: 'animatedScroll'): boolean;
     setValue(value: string, cursorPos?: number): void;
     focus(): void;
     gotoLine(line: number, column?: number, animate?: boolean): void;
