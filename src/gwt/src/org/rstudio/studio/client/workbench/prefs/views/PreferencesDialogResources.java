@@ -42,6 +42,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String smallerText();
       String checkBoxAligned();
       String visualModeWrapSelectWidget();
+      String rVersionSelectWidget();
       String userDictEditButton();
    }
 

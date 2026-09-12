@@ -303,6 +303,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SAVE_RETRY_TIMEOUT = "save_retry_timeout";
    public static final String SAVE_FILES_DURABLY = "save_files_durably";
    public static final String INSERT_NATIVE_PIPE_OPERATOR = "insert_native_pipe_operator";
+   public static final String INSERT_PLUS_IN_GGPLOT_CHAINS = "insert_plus_in_ggplot_chains";
    public static final String COMMAND_PALETTE_MRU = "command_palette_mru";
    public static final String SHOW_MEMORY_USAGE = "show_memory_usage";
    public static final String MEMORY_QUERY_INTERVAL_SECONDS = "memory_query_interval_seconds";
@@ -3995,6 +3996,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+    */
+   public PrefValue<Boolean> insertPlusInGgplotChains()
+   {
+      return bool(
+         "insert_plus_in_ggplot_chains",
+         _constants.insertPlusInGgplotChainsTitle(), 
+         _constants.insertPlusInGgplotChainsDescription(), 
+         true);
+   }
+
+   /**
     * Whether to keep track of recently used commands in the Command Palette
     */
    public PrefValue<Boolean> commandPaletteMru()
@@ -5202,6 +5215,8 @@ public class UserPrefsAccessor extends Prefs
          saveFilesDurably().setValue(layer, source.getBool("save_files_durably"));
       if (source.hasKey("insert_native_pipe_operator"))
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
+      if (source.hasKey("insert_plus_in_ggplot_chains"))
+         insertPlusInGgplotChains().setValue(layer, source.getBool("insert_plus_in_ggplot_chains"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
       if (source.hasKey("show_memory_usage"))
@@ -5557,6 +5572,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(saveRetryTimeout());
       prefs.add(saveFilesDurably());
       prefs.add(insertNativePipeOperator());
+      prefs.add(insertPlusInGgplotChains());
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());

@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+#
+# rstudio
+#
+# Copyright (C) 2026 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# Opens files in the RStudio session that owns this terminal.
+#
+#   rstudio [--] file[:line[:column]]...
+#
+# Files that do not exist yet are created, as with file.edit() in R.
+
+usage() {
+   echo "usage: rstudio [--] file[:line[:column]]..." >&2
+}
+
+# options are only recognized before the first file operand, so paths
+# beginning with '-' still work after a file or after '--'
+while [ "$#" -gt 0 ]; do
+   case "$1" in
+      --)
+         shift
+         break
+         ;;
+      -h|--help)
+         usage
+         exit 0
+         ;;
+      -*)
+         echo "rstudio: unknown option '$1'" >&2
+         usage
+         exit 1
+         ;;
+      *)
+         break
+         ;;
+   esac
+done
+
+if [ "$#" -eq 0 ]; then
+   usage
+   exit 1
+fi
+
+if [ -z "$RS_RPOSTBACK_PATH" ]; then
+   echo "rstudio: this command only works within an RStudio terminal" >&2
+   exit 1
+fi
+
+status=0
+for arg in "$@"; do
+   case "$arg" in
+      /*)
+         target="$arg"
+         ;;
+      *)
+         # the session's working directory is not this shell's
+         target="$PWD/$arg"
+         ;;
+   esac
+
+   if output=$("$RS_RPOSTBACK_PATH" openfile "$target"); then
+      [ -n "$output" ] && echo "$output"
+   else
+      status=1
+      [ -n "$output" ] && echo "$output" >&2
+   fi
+done
+
+exit $status

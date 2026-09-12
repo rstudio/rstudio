@@ -1784,6 +1784,12 @@
             "type": "boolean",
             "default": true
         },
+        "insert_plus_in_ggplot_chains": {
+            "description": "Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain",
+            "title": "Insert + instead of a pipe within ggplot2 chains",
+            "type": "boolean",
+            "default": true
+        },
         "command_palette_mru": {
             "description": "Whether to keep track of recently used commands in the Command Palette",
             "title": "Remember recently used items in Command Palette",

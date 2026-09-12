@@ -177,9 +177,22 @@ Error runSvn(const ShellArgs& args,
    if (!workingDir.isEmpty())
       options.workingDir = workingDir;
    options.redirectStdErrToStdOut = redirectStdErrToStdOut;
+
+   // on Windows, prefer runProgram() over runCommand() as git's gitExec() does:
+   // runCommand() goes through a cmd.exe shell, which hangs when disabled by
+   // Group Policy.
+   // https://github.com/rstudio/rstudio/issues/18735
+#ifdef _WIN32
+   Error error = core::system::runProgram(s_svnExePath,
+                                          args.args(),
+                                          "",
+                                          options,
+                                          pResult);
+#else
    Error error = core::system::runCommand(svn() << args.args(),
                                           options,
                                           pResult);
+#endif
    return error;
 }
 
@@ -414,11 +427,11 @@ bool isSvnInstalled()
    int exitCode;
    Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
 
+   // as in isGitInstalled(), a failure to launch svn is the answer 'no' rather
+   // than a problem to report: on Windows an svn_exe_path that is empty or no
+   // longer exists fails here, and this runs on every client init
    if (error)
-   {
-      LOG_ERROR(error);
       return false;
-   }
 
    return exitCode == EXIT_SUCCESS;
 }

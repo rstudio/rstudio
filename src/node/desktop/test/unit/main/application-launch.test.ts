@@ -15,13 +15,20 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import sinon from 'sinon';
 import fs from 'fs';
+import childProcess, { ChildProcess } from 'child_process';
+import { app } from 'electron';
 
 import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
 import { MainWindow } from '../../../src/main/main-window';
 import { createSinonStubInstance } from '../unit-utils';
 
 describe('ApplicationLaunch', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
   it('static init returns new instance', () => {
     const appLaunch = ApplicationLaunch.init();
     assert.isObject(appLaunch);
@@ -35,6 +42,22 @@ describe('ApplicationLaunch', () => {
     const createdWindow = appLaunch.mainWindow as MainWindow;
 
     assert.strictEqual(testWindow, createdWindow, 'Test window does not match created window');
+  });
+
+  it('launchRStudio forwards --automation-agent to the relaunched instance', () => {
+    const spawnStub = sinon.stub(childProcess, 'spawn').returns({ unref: sinon.stub() } as unknown as ChildProcess);
+    const appLaunch = ApplicationLaunch.init();
+
+    appLaunch.launchRStudio({});
+    assert.notInclude(spawnStub.firstCall.args[1] as string[], '--automation-agent');
+
+    app.commandLine.appendSwitch('automation-agent');
+    try {
+      appLaunch.launchRStudio({});
+    } finally {
+      app.commandLine.removeSwitch('automation-agent');
+    }
+    assert.include(spawnStub.secondCall.args[1] as string[], '--automation-agent');
   });
 
   it('Resolve Empty Project File Path', () => {
