@@ -154,7 +154,10 @@ public class UserPrefs extends UserPrefsComputed
             public void onResponseReceived(VoidResponse v)
             {
                UserPrefsChangedEvent event = new UserPrefsChangedEvent(
-                     session_.getSessionInfo().getUserPrefLayer());
+                     session_.getSessionInfo().getUserPrefLayer(), true);
+
+               // Notify local consumers after the server has saved the prefs.
+               eventBus_.dispatchEvent(event);
 
                if (Satellite.isCurrentWindowSatellite())
                {
@@ -213,7 +216,10 @@ public class UserPrefs extends UserPrefsComputed
    @Override
    public void onUserPrefsChanged(UserPrefsChangedEvent e)
    {
-      syncPrefs(e.getName(), e.getValues());
+      if (e.isFullLayer())
+         replaceLayerValues(e.getName(), e.getValues());
+      else
+         syncPrefs(e.getName(), e.getValues());
    }
 
    @Handler
@@ -456,6 +462,10 @@ public class UserPrefs extends UserPrefsComputed
    public static final int MAX_SCREEN_READER_CONSOLE_OUTPUT = 999;
 
    public static final int MAX_EDITOR_SCROLL_MULTIPLIER = 200;
+
+   // must match kMinConsoleLines in SessionConsole.cpp, below which the
+   // session ignores console_max_lines
+   public static final int MIN_CONSOLE_LINES = 10;
 
    private final Session session_;
    private final PrefsServerOperations server_;

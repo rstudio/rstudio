@@ -54,7 +54,11 @@ public class LayoutGrid extends Grid
             
             if (widget instanceof NumericValueWidget)
             {
-               ((NumericValueWidget) widget).setLabel("");
+               // the grid supplies the visible label; give the widget the same
+               // text so its validation errors name the field the user sees
+               NumericValueWidget numericWidget = (NumericValueWidget) widget;
+               numericWidget.setLabel(label);
+               numericWidget.setLabelVisible(false);
                formLabel.getElement().getStyle().setMarginBottom(4, Unit.PX);
             }
 

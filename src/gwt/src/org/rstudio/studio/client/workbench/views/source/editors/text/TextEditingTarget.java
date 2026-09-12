@@ -6263,6 +6263,18 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onSelectCurrentStatement()
+   {
+      withVisualModeSelection(() ->
+      {
+         DocDisplay display = activeDisplay();
+         Range range = EditingTargetCodeExecution.getCurrentStatementRange(display);
+         if (range != null)
+            display.setSelectionRange(range);
+      });
+   }
+
+   @Handler
    void onExecuteCurrentParagraph()
    {
       withVisualModeSelection(() ->
