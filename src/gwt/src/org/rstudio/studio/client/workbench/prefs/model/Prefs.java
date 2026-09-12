@@ -579,6 +579,41 @@ public abstract class Prefs
       layers_ = layers;
    }
 
+   // Complete layer updates include removals, such as a project option reset
+   // to its global default. Apply the entire layer before notifying listeners.
+   protected void replaceLayerValues(String layerName, JsObject source)
+   {
+      for (PrefLayer layer : JsUtil.asIterable(layers_))
+      {
+         if (layer == null || !layerName.equals(layer.getName()))
+            continue;
+
+         HashMap<PrefValue<?>, Object> previousValues = new HashMap<>();
+         for (PrefValue<?> pref : values_.values())
+            previousValues.put(pref, pref.getValue());
+
+         JsObject target = layer.getValues();
+         for (String key : target.iterableKeys())
+         {
+            if (!source.hasKey(key))
+               target.unset(key);
+         }
+         for (String key : source.iterableKeys())
+            target.setElement(key, source.getElement(key));
+
+         for (PrefValue<?> pref : previousValues.keySet())
+            fireValueChangeIfNeeded(pref, previousValues.get(pref));
+         return;
+      }
+   }
+
+   private <T> void fireValueChangeIfNeeded(PrefValue<T> pref, Object previousValue)
+   {
+      T value = pref.getValue();
+      if (previousValue == null ? value != null : !previousValue.equals(value))
+         ValueChangeEvent.fire(pref, value);
+   }
+
    /**
     * Indicates whether preference layers have been loaded, up to and
     * including the given layer. Prefs objects constructed before the session

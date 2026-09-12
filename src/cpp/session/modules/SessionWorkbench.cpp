@@ -19,8 +19,10 @@
 
 #include <boost/function.hpp>
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/Debug.hpp>
 #include <core/Exec.hpp>
@@ -415,6 +417,47 @@ void editFilePostback(const std::string& file,
    cont(EXIT_SUCCESS, "");
 }
 
+// `rstudio <file>[:line[:column]]` from the Terminal pane (see postback/rstudio)
+void openFilePostback(const std::string& argument,
+                      const module_context::PostbackHandlerContinuation& cont)
+{
+   std::string path = argument;
+   int line = -1;
+   int column = 1;
+
+   // split off a trailing :line[:column], unless the whole argument names a file
+   boost::smatch match;
+   boost::regex reLocation("^(.+?):(\\d+)(?::(\\d+))?$");
+   if (!FilePath(path).exists() && boost::regex_match(argument, match, reLocation))
+   {
+      path = match[1].str();
+      line = safe_convert::stringTo<int>(match[2].str(), -1);
+      if (match[3].matched)
+         column = safe_convert::stringTo<int>(match[3].str(), 1);
+   }
+
+   FilePath filePath(path);
+   if (filePath.isDirectory())
+   {
+      cont(EXIT_FAILURE, "rstudio: '" + path + "' is a directory\n");
+      return;
+   }
+
+   // create the file if it doesn't exist yet, as file.edit() does
+   if (!filePath.exists())
+   {
+      Error error = core::writeStringToFile(filePath, "", module_context::lineEndings(filePath));
+      if (error)
+      {
+         cont(EXIT_FAILURE, "rstudio: cannot create '" + path + "': " + error.getSummary() + "\n");
+         return;
+      }
+   }
+
+   module_context::editFile(filePath, line, column);
+   cont(EXIT_SUCCESS, "");
+}
+
 // options("pdfviewer")
 void viewPdfPostback(const std::string& pdfPath,
                     const module_context::PostbackHandlerContinuation& cont)
@@ -528,6 +571,16 @@ Error initialize()
          return error;
       core::system::setenv("BROWSER", browserCommand);
    }
+
+   // register the openfile handler behind the `rstudio` terminal command; the
+   // computed rpostback-openfile shell command is unused, as the script in
+   // postback/rstudio invokes rpostback directly
+   std::string openFileCommand;
+   Error error = module_context::registerPostbackHandler("openfile",
+                                                         openFilePostback,
+                                                         &openFileCommand);
+   if (error)
+      return error;
 
    // register waitForMethod for active document context
    using namespace module_context;

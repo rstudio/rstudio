@@ -816,8 +816,9 @@
 
 # Maximum lines in R console
 #
-# The maximum number of console actions to store and display in the console
-# scrollback buffer.
+# The maximum number of lines of output to keep in the console scrollback buffer.
+# Very long lines are stored in chunks and may count as more than one line, so
+# slightly fewer lines than this may be restored when a session resumes.
 .rs.uiPrefs$consoleMaxLines <- list(
    get = function() { .rs.getUserPref("console_max_lines") },
    set = function(value) { .rs.setUserPref("console_max_lines", value) },
@@ -2426,6 +2427,16 @@
    get = function() { .rs.getUserPref("insert_native_pipe_operator") },
    set = function(value) { .rs.setUserPref("insert_native_pipe_operator", value) },
    clear = function() { .rs.clearUserPref("insert_native_pipe_operator") }
+)
+
+# Insert + instead of a pipe within ggplot2 chains
+#
+# Whether the Insert Pipe Operator command should insert '+' instead of a pipe
+# when the cursor is within a ggplot2 chain
+.rs.uiPrefs$insertPlusInGgplotChains <- list(
+   get = function() { .rs.getUserPref("insert_plus_in_ggplot_chains") },
+   set = function(value) { .rs.setUserPref("insert_plus_in_ggplot_chains", value) },
+   clear = function() { .rs.clearUserPref("insert_plus_in_ggplot_chains") }
 )
 
 # Remember recently used items in Command Palette

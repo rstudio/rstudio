@@ -1,68 +1,17 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
-import { executeInConsole, CONSOLE_OUTPUT } from '@pages/console_pane.page';
 import { AceEditor } from '@pages/ace_editor.page';
-import { rStringLiteral } from '@utils/r';
 import { clearPref, executeCommand, setPref } from '@utils/commands';
 import { useSuiteSandbox } from '@utils/sandbox';
+import { rStringLiteral } from '@utils/r';
+import {
+  XTERM_SELECTOR,
+  captureResult,
+  killAllTerminals,
+  openTerminal,
+} from '@utils/terminal';
 import type { Page } from 'playwright';
-
-const TERMINAL_TAB = '#rstudio_workbench_tab_terminal';
-const XTERM_SELECTOR = '.xterm';
-
-async function captureResult(page: Page, rExpression: string): Promise<string> {
-  const marker = `__TERM_${Date.now()}__`;
-  // Gate on R reporting idle so the marker pair has fully written by the time
-  // we read the console.
-  await executeInConsole(
-    page,
-    `cat(${rStringLiteral(marker)}, ${rExpression}, ${rStringLiteral(marker)})`,
-    { wait: true },
-  );
-
-  const pattern = new RegExp(`${marker}\\s+(.*?)\\s+${marker}`, 's');
-  const output = await page.locator(CONSOLE_OUTPUT).innerText();
-  const match = output.match(pattern);
-  if (!match) throw new Error(`captureResult: markers not found for "${rExpression}"`);
-  return match[1].trim();
-}
-
-async function killAllTerminals(page: Page): Promise<void> {
-  await executeInConsole(
-    page,
-    'rstudioapi::terminalKill(rstudioapi::terminalList())',
-    { wait: true },
-  );
-}
-
-async function openTerminal(page: Page): Promise<void> {
-  await executeInConsole(page, 'rstudioapi::terminalCreate(show = TRUE)');
-  await expect(page.locator(XTERM_SELECTOR)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-  await expect(page.locator(TERMINAL_TAB)).toHaveAttribute('aria-selected', 'true', {
-    timeout: TIMEOUTS.consoleReady,
-  });
-
-  // The xterm widget becomes visible before the shell has attached to the pty
-  // and echoed its prompt; keystrokes sent before then are dropped (observed
-  // on macOS CI: the buffer held only the prompt, every typed line lost).
-  // Wait until the buffer has a non-empty line -- proof the shell is echoing.
-  await expect.poll(
-    () => captureResult(
-      page,
-      '{ ids <- rstudioapi::terminalList(); ' +
-      'length(ids) > 0 && any(nzchar(trimws(rstudioapi::terminalBuffer(ids[[1]])))) }',
-    ),
-    { timeout: TIMEOUTS.consoleReady },
-  ).toBe('TRUE');
-
-  // captureResult drives the R console (it clicks the Console tab and focuses
-  // the console input), so reselect the terminal and give it keyboard focus
-  // before callers start typing.
-  await page.locator(TERMINAL_TAB).click();
-  await expect(page.locator(XTERM_SELECTOR)).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-  await page.locator(XTERM_SELECTOR).click();
-}
 
 // The WebGL addon appends its webgl2 render canvas plus a 2D link layer to
 // the xterm screen element (the DOM renderer uses no canvas). Find the render

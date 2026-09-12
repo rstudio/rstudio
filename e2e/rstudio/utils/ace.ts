@@ -87,7 +87,7 @@ export namespace Ace {
     getTabString(): string;
     getTokens(row: number): unknown[];
     getTokenAt(row: number, column: number): unknown | null;
-    getMarkers(): Record<string, unknown>;
+    getMarkers(inFront?: boolean): Record<string, unknown>;
     replace(range: Range, text: string): Position;
     remove(range: Range): Position;
     getDocument(): Document;

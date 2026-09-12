@@ -70,7 +70,8 @@ void ConsoleActions::setCapacity(int capacity)
 {
    LOCK_MUTEX(mutex_)
    {
-      actions_.set_capacity(capacity);
+      // Keep the newest actions when reducing the scrollback limit.
+      actions_.rset_capacity(capacity);
    }
    END_LOCK_MUTEX
 }

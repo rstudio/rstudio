@@ -83,6 +83,7 @@ public abstract class
    public abstract AppCommand executeLastCode();
    public abstract AppCommand executeCurrentLine();
    public abstract AppCommand executeCurrentStatement();
+   public abstract AppCommand selectCurrentStatement();
    public abstract AppCommand executeCurrentParagraph();
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertChunkR();
@@ -718,6 +719,7 @@ public abstract class
 
    // Other
    public abstract AppCommand checkSpelling();
+   public abstract AppCommand changeSpellingLanguage();
    public abstract AppCommand wordCount();
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
