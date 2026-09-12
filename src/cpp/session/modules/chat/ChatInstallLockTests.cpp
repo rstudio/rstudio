@@ -27,6 +27,7 @@
 #include <shared_core/FilePath.hpp>
 
 #include "../SessionChat.hpp"
+#include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::install_lock;
@@ -772,15 +773,51 @@ TEST_F(ChatInstallLockOwner, EmptyOwnerIdIsRefusedNotSharedAsDotLock)
    EXPECT_FALSE(lock.sessionLocksDir().completePath(".lock").exists());
 }
 
-// The production accessor derives the owner id from the session id and a
-// per-process uuid. MSVC in C++20 mode initialized the previous form of
-// that static (a conditional expression) to an empty string, so every
-// Windows session locked "sessions/.lock" and the second instance refused
-// to start (#18787). Constructing the singleton touches no files.
-TEST(ChatInstallLockProduction, OwnerIdIsNotEmpty)
+// A mutator with an empty owner id would treat a foreign "sessions/.lock"
+// as its own and skip probing it, then modify the installation under a
+// live backend. It must refuse before taking install.lock.
+TEST_F(ChatInstallLockOwner, EmptyOwnerIdRefusesMutation)
 {
-   EXPECT_FALSE(
-      rstudio::session::modules::chat::installLock().ownerId().empty());
+   InstallLock lock(locksDir_, "", FileLock::LOCKTYPE_ADVISORY);
+
+   std::string userMessage;
+   Error error = lock.tryBeginMutation(&userMessage);
+   EXPECT_TRUE(error);
+   EXPECT_FALSE(lock.mutationInProgress());
+   EXPECT_NE(userMessage.find("Unable to verify"), std::string::npos);
+   EXPECT_EQ(userMessage.find("installing or updating"), std::string::npos);
+   EXPECT_FALSE(lock.installLockPath().exists());
+}
+
+// The production accessor derives the owner id from the session id and a
+// per-process uuid: "<sessionId>-<uuid>", or just "<uuid>" when the session
+// id is empty (dev/automation launches). The uuid suffix is what makes the
+// id unique per process (#18571); the bare session id would collide with an
+// orphaned predecessor. MSVC in C++20 mode initialized the previous form of
+// this id (a `static const std::string` with a conditional-expression
+// initializer) to an empty string, so every Windows session locked
+// "sessions/.lock" and the second instance refused to start (#18787).
+// Constructing the singleton touches no files.
+TEST(ChatInstallLockProduction, OwnerIdIsSessionIdPlusPerProcessUuid)
+{
+   using rstudio::session::module_context::activeSession;
+   const std::string& id =
+      rstudio::session::modules::chat::installLock().ownerId();
+   const std::string sessionId = activeSession().id();
+
+   // generateUuid(false) yields 32 hex digits with no dashes.
+   const std::size_t kUuidLength = 32;
+   ASSERT_GE(id.size(), kUuidLength);
+   EXPECT_NE(id, sessionId);
+
+   std::string uuid = id.substr(id.size() - kUuidLength);
+   EXPECT_EQ(uuid.find_first_not_of("0123456789abcdefABCDEF"),
+             std::string::npos)
+      << "owner id does not end in a uuid: " << id;
+
+   std::string prefix = id.substr(0, id.size() - kUuidLength);
+   EXPECT_EQ(prefix, sessionId.empty() ? "" : sessionId + "-")
+      << "owner id does not keep the session id prefix: " << id;
 }
 
 } // anonymous namespace
