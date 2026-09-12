@@ -2338,7 +2338,7 @@ core::Error UserPrefValues::setWrapTabNavigation(bool val)
 }
 
 /**
- * Use a bold label and a blue overline to highlight the active document and pane tabs.
+ * Use a bold label and a blue overline to highlight the active document tab.
  */
 bool UserPrefValues::highlightActiveTabs()
 {
