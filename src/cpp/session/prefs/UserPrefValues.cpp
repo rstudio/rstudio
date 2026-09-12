@@ -1077,6 +1077,19 @@ core::Error UserPrefValues::setScrollPastEndOfDocument(bool val)
 }
 
 /**
+ * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+ */
+bool UserPrefValues::smoothScrolling()
+{
+   return readPref<bool>("smooth_scrolling");
+}
+
+core::Error UserPrefValues::setSmoothScrolling(bool val)
+{
+   return writePref("smooth_scrolling", val);
+}
+
+/**
  * Whether to highlight R function calls in the code editor.
  */
 bool UserPrefValues::highlightRFunctionCalls()
@@ -4085,6 +4098,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSyntaxColorConsole,
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
+      kSmoothScrolling,
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,

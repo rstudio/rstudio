@@ -712,6 +712,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String scrollPastEndOfDocumentDescription();
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   @DefaultStringValue("Smooth scrolling")
+   String smoothScrollingTitle();
+   @DefaultStringValue("Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.")
+   String smoothScrollingDescription();
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    @DefaultStringValue("Highlight R function calls")

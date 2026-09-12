@@ -125,6 +125,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SYNTAX_COLOR_CONSOLE = "syntax_color_console";
    public static final String HIGHLIGHT_CONSOLE_ERRORS = "highlight_console_errors";
    public static final String SCROLL_PAST_END_OF_DOCUMENT = "scroll_past_end_of_document";
+   public static final String SMOOTH_SCROLLING = "smooth_scrolling";
    public static final String HIGHLIGHT_R_FUNCTION_CALLS = "highlight_r_function_calls";
    public static final String COLOR_PREVIEW = "color_preview";
    public static final String RAINBOW_PARENTHESES = "rainbow_parentheses";
@@ -1547,6 +1548,18 @@ public class UserPrefsAccessor extends Prefs
          "scroll_past_end_of_document",
          _constants.scrollPastEndOfDocumentTitle(), 
          _constants.scrollPastEndOfDocumentDescription(), 
+         false);
+   }
+
+   /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   public PrefValue<Boolean> smoothScrolling()
+   {
+      return bool(
+         "smooth_scrolling",
+         _constants.smoothScrollingTitle(), 
+         _constants.smoothScrollingDescription(), 
          false);
    }
 
@@ -4859,6 +4872,8 @@ public class UserPrefsAccessor extends Prefs
          highlightConsoleErrors().setValue(layer, source.getBool("highlight_console_errors"));
       if (source.hasKey("scroll_past_end_of_document"))
          scrollPastEndOfDocument().setValue(layer, source.getBool("scroll_past_end_of_document"));
+      if (source.hasKey("smooth_scrolling"))
+         smoothScrolling().setValue(layer, source.getBool("smooth_scrolling"));
       if (source.hasKey("highlight_r_function_calls"))
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
       if (source.hasKey("color_preview"))
@@ -5394,6 +5409,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(syntaxColorConsole());
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
+      prefs.add(smoothScrolling());
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
