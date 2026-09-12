@@ -720,6 +720,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String scrollPastEndOfDocumentDescription();
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   @DefaultStringValue("Smooth scrolling")
+   String smoothScrollingTitle();
+   @DefaultStringValue("Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.")
+   String smoothScrollingDescription();
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    @DefaultStringValue("Highlight R function calls")
@@ -760,11 +768,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String consoleLineLengthLimitDescription();
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    @DefaultStringValue("Maximum lines in R console")
    String consoleMaxLinesTitle();
-   @DefaultStringValue("The maximum number of console actions to store and display in the console scrollback buffer.")
+   @DefaultStringValue("The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.")
    String consoleMaxLinesDescription();
 
    /**

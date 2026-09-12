@@ -1090,6 +1090,19 @@ core::Error UserPrefValues::setScrollPastEndOfDocument(bool val)
 }
 
 /**
+ * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+ */
+bool UserPrefValues::smoothScrolling()
+{
+   return readPref<bool>("smooth_scrolling");
+}
+
+core::Error UserPrefValues::setSmoothScrolling(bool val)
+{
+   return writePref("smooth_scrolling", val);
+}
+
+/**
  * Whether to highlight R function calls in the code editor.
  */
 bool UserPrefValues::highlightRFunctionCalls()
@@ -1155,7 +1168,7 @@ core::Error UserPrefValues::setConsoleLineLengthLimit(int val)
 }
 
 /**
- * The maximum number of console actions to store and display in the console scrollback buffer.
+ * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
  */
 int UserPrefValues::consoleMaxLines()
 {
@@ -4099,6 +4112,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSyntaxColorConsole,
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
+      kSmoothScrolling,
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,

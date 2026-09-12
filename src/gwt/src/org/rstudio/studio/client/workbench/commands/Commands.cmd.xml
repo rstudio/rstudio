@@ -250,6 +250,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="reformatCode"/>
          <cmd refid="reformatDocument"/>
          <separator/>
+         <cmd refid="selectCurrentStatement"/>
+         <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
          <menu label="Run Regi_on">
@@ -751,6 +753,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="selectCurrentStatement" value="Ctrl+Alt+Shift+S"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
          <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
@@ -1967,6 +1970,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Execute Current Statement"
         menuLabel="Execute Current _Statement"
         desc="Execute the entire R statement which contains the cursor."
+        context="r"/>
+
+   <cmd id="selectCurrentStatement"
+        label="Select Current Statement"
+        menuLabel="Select Current _Statement"
+        desc="Select the entire R statement which contains the cursor, even when it spans several lines."
         context="r"/>
 
    <cmd id="executeCurrentParagraph"

@@ -167,6 +167,7 @@ namespace prefs {
 #define kSyntaxColorConsole "syntax_color_console"
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
+#define kSmoothScrolling "smooth_scrolling"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
@@ -1013,6 +1014,12 @@ public:
    core::Error setScrollPastEndOfDocument(bool val);
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   bool smoothScrolling();
+   core::Error setSmoothScrolling(bool val);
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    bool highlightRFunctionCalls();
@@ -1043,7 +1050,7 @@ public:
    core::Error setConsoleLineLengthLimit(int val);
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    int consoleMaxLines();
    core::Error setConsoleMaxLines(int val);

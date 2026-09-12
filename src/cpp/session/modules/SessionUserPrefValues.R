@@ -779,6 +779,16 @@
    clear = function() { .rs.clearUserPref("scroll_past_end_of_document") }
 )
 
+# Smooth scrolling
+#
+# Whether the source editor animates scrolling, e.g. when moving the cursor or
+# jumping to a line, instead of jumping instantly.
+.rs.uiPrefs$smoothScrolling <- list(
+   get = function() { .rs.getUserPref("smooth_scrolling") },
+   set = function(value) { .rs.setUserPref("smooth_scrolling", value) },
+   clear = function() { .rs.clearUserPref("smooth_scrolling") }
+)
+
 # Highlight R function calls
 #
 # Whether to highlight R function calls in the code editor.
@@ -826,8 +836,9 @@
 
 # Maximum lines in R console
 #
-# The maximum number of console actions to store and display in the console
-# scrollback buffer.
+# The maximum number of lines of output to keep in the console scrollback buffer.
+# Very long lines are stored in chunks and may count as more than one line, so
+# slightly fewer lines than this may be restored when a session resumes.
 .rs.uiPrefs$consoleMaxLines <- list(
    get = function() { .rs.getUserPref("console_max_lines") },
    set = function(value) { .rs.setUserPref("console_max_lines", value) },
