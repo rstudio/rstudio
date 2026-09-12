@@ -20,6 +20,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 
+import com.google.gwt.core.client.JsArrayString;
+
 public interface ConsoleServerOperations extends CodeToolsServerOperations,
                                                  HistoryServerOperations
 {
@@ -67,6 +69,17 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processGetBuffer(String handle,
                          boolean stripAnsiCodes,
                          ServerRequestCallback<ProcessBufferChunk> requestCallback);
+
+   /**
+    * Resolve paths seen in a terminal's output against its working directory.
+    * @param handle terminal handle
+    * @param paths candidate paths, relative or absolute
+    * @param requestCallback one entry per candidate: the path of an existing
+    *                        file, or an empty string
+    */
+   void processResolveFilePaths(String handle,
+                                JsArrayString paths,
+                                ServerRequestCallback<JsArrayString> requestCallback);
     
    /**
     * Switch a server process to use Rpc mode after failing to connect to

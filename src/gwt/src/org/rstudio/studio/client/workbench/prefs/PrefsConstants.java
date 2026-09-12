@@ -435,6 +435,8 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String chkHardwareAccelerationLabel();
     String chkAudibleBellLabel();
     String chkWebLinksLabel();
+    String chkFileLinksLabel();
+    String chkFileLinksMacLabel();
     String helpLinkLabel();
     String miscLabel();
     String autoClosePrefLabel();

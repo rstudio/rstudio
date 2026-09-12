@@ -17,6 +17,7 @@
 
 #include <gsl/gsl-lite.hpp>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 #include <core/Algorithm.hpp>
@@ -771,6 +772,70 @@ Error procEraseBuffer(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// Resolve a path seen in terminal output against the terminal's working
+// directory. Returns the aliased path if it names an existing file, and an
+// empty string otherwise.
+std::string resolveTerminalFilePath(const FilePath& cwd, const std::string& candidate)
+{
+   // UNC paths can stall on network lookups, and nothing a shell prints
+   // needs them resolved on mouse hover
+   if (candidate.empty() ||
+       candidate.size() > 1024 ||
+       boost::algorithm::starts_with(candidate, "//") ||
+       boost::algorithm::starts_with(candidate, "\\\\"))
+   {
+      return std::string();
+   }
+
+   FilePath path = module_context::resolveAliasedPath(candidate);
+   if (!path.isAbsolute())
+      path = cwd.completePath(candidate);
+
+   if (path.exists() && path.isRegularFile())
+      return module_context::createAliasedPath(path);
+
+   // git diff headers prefix paths with a/ and b/
+   if (boost::algorithm::starts_with(candidate, "a/") ||
+       boost::algorithm::starts_with(candidate, "b/"))
+   {
+      return resolveTerminalFilePath(cwd, candidate.substr(2));
+   }
+
+   return std::string();
+}
+
+Error procResolveFilePaths(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   json::Array candidates;
+
+   Error error = json::readParams(request.params, &handle, &candidates);
+   if (error)
+      return error;
+
+   // resolve against the terminal's current directory, falling back to the
+   // directory new terminals start in (e.g. for a terminal we no longer track)
+   FilePath cwd;
+   ConsoleProcessPtr proc = findProcByHandle(handle);
+   if (proc != nullptr)
+      cwd = proc->getCwd();
+   if (cwd.isEmpty() || !cwd.exists())
+      cwd = module_context::shellWorkingDirectory();
+
+   json::Array resolved;
+   for (const json::Value& candidate : candidates)
+   {
+      std::string result;
+      if (candidate.isString())
+         result = resolveTerminalFilePath(cwd, candidate.getString());
+      resolved.push_back(result);
+   }
+
+   pResponse->setResult(resolved);
+   return Success();
+}
+
 Error procGetBufferChunk(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -975,6 +1040,7 @@ Error initializeApi()
       (bind(registerRpcMethod, "process_set_title", procSetTitle))
       (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
       (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk))
+      (bind(registerRpcMethod, "process_resolve_file_paths", procResolveFilePaths))
       (bind(registerRpcMethod, "process_test_exists", procTestExists))
       (bind(registerRpcMethod, "process_use_rpc", procUseRpc))
       (bind(registerRpcMethod, "process_notify_visible", procNotifyVisible))

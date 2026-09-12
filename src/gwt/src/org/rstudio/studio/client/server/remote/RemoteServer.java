@@ -1063,6 +1063,17 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void processResolveFilePaths(String handle,
+                                       JsArrayString paths,
+                                       ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      setArrayString(params, 1, paths);
+      sendRequest(RPC_SCOPE, PROCESS_RESOLVE_FILE_PATHS, params, requestCallback);
+   }
+
+   @Override
    public void processGetBufferChunk(String handle,
                                      int chunk,
                                      ServerRequestCallback<ProcessBufferChunk> requestCallback)
@@ -7259,6 +7270,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_SET_CAPTION = "process_set_caption";
    private static final String PROCESS_SET_TITLE = "process_set_title";
    private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
+   private static final String PROCESS_RESOLVE_FILE_PATHS = "process_resolve_file_paths";
    private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
    private static final String PROCESS_GET_BUFFER = "process_get_buffer";
    private static final String PROCESS_USE_RPC = "process_use_rpc";

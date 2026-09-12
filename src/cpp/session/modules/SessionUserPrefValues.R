@@ -1465,6 +1465,16 @@
    clear = function() { .rs.clearUserPref("terminal_weblinks") }
 )
 
+# Make file paths in Terminal clickable
+#
+# Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click
+# (Cmd+Click on macOS).
+.rs.uiPrefs$terminalFileLinks <- list(
+   get = function() { .rs.getUserPref("terminal_file_links") },
+   set = function(value) { .rs.setUserPref("terminal_file_links", value) },
+   clear = function() { .rs.clearUserPref("terminal_file_links") }
+)
+
 # Show R Markdown render command
 #
 # Whether to print the render command use to knit R Markdown documents in the R

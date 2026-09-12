@@ -200,6 +200,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String TERMINAL_BELL_STYLE = "terminal_bell_style";
    public static final String TERMINAL_RENDERER = "terminal_renderer";
    public static final String TERMINAL_WEBLINKS = "terminal_weblinks";
+   public static final String TERMINAL_FILE_LINKS = "terminal_file_links";
    public static final String SHOW_RMD_RENDER_COMMAND = "show_rmd_render_command";
    public static final String RMD_RENAME_IN_SCOPE_BEHAVIOR = "rmd_rename_in_scope_behavior";
    public static final String ENABLE_TEXT_DRAG = "enable_text_drag";
@@ -2546,6 +2547,18 @@ public class UserPrefsAccessor extends Prefs
          "terminal_weblinks",
          _constants.terminalWeblinksTitle(), 
          _constants.terminalWeblinksDescription(), 
+         true);
+   }
+
+   /**
+    * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+    */
+   public PrefValue<Boolean> terminalFileLinks()
+   {
+      return bool(
+         "terminal_file_links",
+         _constants.terminalFileLinksTitle(), 
+         _constants.terminalFileLinksDescription(), 
          true);
    }
 
@@ -5009,6 +5022,8 @@ public class UserPrefsAccessor extends Prefs
          terminalRenderer().setValue(layer, source.getString("terminal_renderer"));
       if (source.hasKey("terminal_weblinks"))
          terminalWeblinks().setValue(layer, source.getBool("terminal_weblinks"));
+      if (source.hasKey("terminal_file_links"))
+         terminalFileLinks().setValue(layer, source.getBool("terminal_file_links"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
       if (source.hasKey("rmd_rename_in_scope_behavior"))
@@ -5469,6 +5484,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());
+      prefs.add(terminalFileLinks());
       prefs.add(showRmdRenderCommand());
       prefs.add(rmdRenameInScopeBehavior());
       prefs.add(enableTextDrag());

@@ -1073,6 +1073,12 @@
             "title": "Make links in Terminal clickable",
             "description": "Whether web links displayed in the Terminal tab are made clickable."
         },
+        "terminal_file_links": {
+            "type": "boolean",
+            "default": true,
+            "title": "Make file paths in Terminal clickable",
+            "description": "Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS)."
+        },
         "show_rmd_render_command": {
             "type": "boolean",
             "default": false,

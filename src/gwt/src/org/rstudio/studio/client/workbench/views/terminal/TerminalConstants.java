@@ -73,6 +73,8 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     String clearingBufferCaption();
     String interruptingChildCaption();
     String writeErrorMessage(String color, String message, String ansiCode);
+    String fileLinkHint(String path);
+    String fileLinkHintMac(String path);
     String processCompletedText();
     String zombieExitCodeText();
     String unknownText();

@@ -185,7 +185,11 @@ public class TerminalPreferencesPane extends PreferencesPane
       chkAudibleBell_ = new CheckBox(constants_.chkAudibleBellLabel());
       general.add(lessSpaced(chkAudibleBell_));
       chkWebLinks_ = new CheckBox(constants_.chkWebLinksLabel());
-      general.add(chkWebLinks_);
+      general.add(lessSpaced(chkWebLinks_));
+      chkFileLinks_ = new CheckBox(BrowseCap.isMacintosh() ?
+            constants_.chkFileLinksMacLabel() :
+            constants_.chkFileLinksLabel());
+      general.add(chkFileLinks_);
 
       HelpLink helpLink = new HelpLink(constants_.helpRStudioAccessibilityLinkLabel(), "rstudio_terminal", false);
       nudgeRight(helpLink);
@@ -353,6 +357,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       chkAudibleBell_.setValue(prefs_.terminalBellStyle().getValue() == UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND);
       chkWebLinks_.setValue(prefs_.terminalWeblinks().getValue());
+      chkFileLinks_.setValue(prefs_.terminalFileLinks().getValue());
       chkHardwareAcceleration_.setValue(prefs_.terminalRenderer().getValue() == UserPrefsAccessor.TERMINAL_RENDERER_CANVAS);
 
       if (!initialDirectory_.setValue(prefs.terminalInitialDirectory().getValue()))
@@ -386,6 +391,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       prefs_.terminalRenderer().setGlobalValue(chkHardwareAcceleration_.getValue() ?
             UserPrefsAccessor.TERMINAL_RENDERER_CANVAS : UserPrefsAccessor.TERMINAL_RENDERER_DOM);
       prefs_.terminalWeblinks().setGlobalValue(chkWebLinks_.getValue());
+      prefs_.terminalFileLinks().setGlobalValue(chkFileLinks_.getValue());
 
       prefs_.terminalInitialDirectory().setGlobalValue(initialDirectory_.getValue());
       prefs_.terminalCloseBehavior().setGlobalValue(autoClosePref_.getValue());
@@ -510,6 +516,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    private final CheckBox chkHardwareAcceleration_;
    private final CheckBox chkAudibleBell_;
    private final CheckBox chkWebLinks_;
+   private final CheckBox chkFileLinks_;
    private final CheckBox chkPythonIntegration_;
 
    private SelectWidget autoClosePref_;
