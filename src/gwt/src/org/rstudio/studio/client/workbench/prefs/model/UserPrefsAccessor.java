@@ -1611,7 +1611,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    public PrefValue<Integer> consoleMaxLines()
    {
