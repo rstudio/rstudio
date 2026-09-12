@@ -142,6 +142,10 @@ Error InstallLock::acquireInUse(Component component, uint64_t* pToken)
 {
    *pToken = 0;
 
+   Error error = checkOwnerId();
+   if (error)
+      return error;
+
    if (mutationActive_)
    {
       return systemError(
@@ -152,7 +156,7 @@ Error InstallLock::acquireInUse(Component component, uint64_t* pToken)
 
    if (!anyComponentHeld())
    {
-      Error error = sessionLocksDir().ensureDirectory();
+      error = sessionLocksDir().ensureDirectory();
       if (error)
          return error;
 
@@ -257,7 +261,16 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
          ERROR_LOCATION);
    }
 
-   Error error = locksDir_.ensureDirectory();
+   Error error = checkOwnerId();
+   if (error)
+   {
+      *pUserMessage =
+         "Unable to verify the Posit Assistant installation state: " +
+         error.getMessage();
+      return error;
+   }
+
+   error = locksDir_.ensureDirectory();
    if (error)
    {
       *pUserMessage =
@@ -376,6 +389,11 @@ bool InstallLock::mutationInProgress() const
    return mutationActive_;
 }
 
+const std::string& InstallLock::ownerId() const
+{
+   return ownerId_;
+}
+
 FilePath InstallLock::installLockPath() const
 {
    return locksDir_.completePath(kInstallLockFileName);
@@ -389,6 +407,24 @@ FilePath InstallLock::sessionLocksDir() const
 FilePath InstallLock::ownSessionLockPath() const
 {
    return sessionLocksDir().completePath(ownerId_ + kSessionLockSuffix);
+}
+
+Error InstallLock::checkOwnerId() const
+{
+   // An empty owner id would name this session's lock file ".lock", a path
+   // every other session with the same defect shares (#18787). A starter
+   // would then contend on it and report an update in progress; a mutator
+   // would take a foreign ".lock" for its own, skip probing it, and modify
+   // the installation under a live backend. Refuse both instead so the
+   // defect surfaces as a real error.
+   if (!ownerId_.empty())
+      return Success();
+
+   return systemError(
+      boost::system::errc::invalid_argument,
+      "The Posit Assistant install lock has no owner id; the session "
+      "lock file cannot be named",
+      ERROR_LOCATION);
 }
 
 boost::shared_ptr<FileLock> InstallLock::makeLock() const
