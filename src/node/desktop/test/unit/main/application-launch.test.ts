@@ -17,17 +17,54 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import childProcess, { ChildProcess } from 'child_process';
 import { app } from 'electron';
 
+import { getenv, setenv } from '../../../src/core/environment';
+import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../../../src/core/r-user-data';
 import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
 import { MainWindow } from '../../../src/main/main-window';
-import { createSinonStubInstance } from '../unit-utils';
+import { createSinonStubInstance, restore, saveAndClear } from '../unit-utils';
 
 describe('ApplicationLaunch', () => {
-  afterEach(() => {
-    sinon.restore();
+  const tempDirs: string[] = [];
+  const launchEnvVars: Record<string, string> = {
+    [kRStudioInitialProject]: '',
+    [kRStudioInitialWorkingDir]: '',
+  };
+
+  beforeEach(() => {
+    saveAndClear(launchEnvVars);
   });
+
+  afterEach(() => {
+    restore(launchEnvVars);
+    sinon.restore();
+    while (tempDirs.length) {
+      fs.rmSync(tempDirs.pop() as string, { recursive: true, force: true });
+    }
+  });
+
+  function projectDir(): string {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-application-launch-test-'));
+    tempDirs.push(dir);
+    fs.writeFileSync(path.join(dir, 'test.Rproj'), '');
+    return dir;
+  }
+
+  // the relaunched instance picks up its initial project and working directory
+  // from the environment, which is only set for the duration of the spawn call
+  function captureLaunchEnv(): { project: string; workingDir: string } {
+    const launchEnv = { project: '', workingDir: '' };
+    sinon.stub(childProcess, 'spawn').callsFake(() => {
+      launchEnv.project = getenv(kRStudioInitialProject);
+      launchEnv.workingDir = getenv(kRStudioInitialWorkingDir);
+      return { unref: sinon.stub() } as unknown as ChildProcess;
+    });
+    return launchEnv;
+  }
 
   it('static init returns new instance', () => {
     const appLaunch = ApplicationLaunch.init();
@@ -58,6 +95,41 @@ describe('ApplicationLaunch', () => {
       app.commandLine.removeSwitch('automation-agent');
     }
     assert.include(spawnStub.secondCall.args[1] as string[], '--automation-agent');
+  });
+
+  it('launchRStudio opens the project found in the working directory', () => {
+    const launchEnv = captureLaunchEnv();
+    const dir = projectDir();
+
+    ApplicationLaunch.init().launchRStudio({ workingDirectory: dir });
+
+    assert.equal(launchEnv.project, path.join(dir, 'test.Rproj'));
+    assert.equal(launchEnv.workingDir, dir);
+  });
+
+  it('launchRStudio asks for no project, and no working directory, when noProject is requested', () => {
+    const launchEnv = captureLaunchEnv();
+
+    ApplicationLaunch.init().launchRStudio({ noProject: true });
+
+    // the session needs an explicit "none" so it doesn't restore the last project, and no
+    // working directory of ours so it uses the user's default working directory
+    assert.equal(launchEnv.project, kProjectNone);
+    assert.isEmpty(launchEnv.workingDir);
+  });
+
+  it('launchRStudio ignores an inherited project and working directory when noProject is requested', () => {
+    const launchEnv = captureLaunchEnv();
+    const dir = projectDir();
+
+    // set when this instance was itself started by opening a project
+    setenv(kRStudioInitialProject, path.join(dir, 'test.Rproj'));
+    setenv(kRStudioInitialWorkingDir, dir);
+
+    ApplicationLaunch.init().launchRStudio({ noProject: true });
+
+    assert.equal(launchEnv.project, kProjectNone);
+    assert.isEmpty(launchEnv.workingDir);
   });
 
   it('Resolve Empty Project File Path', () => {

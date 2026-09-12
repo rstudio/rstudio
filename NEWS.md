@@ -18,6 +18,7 @@
 - ([#12379](https://github.com/rstudio/rstudio/issues/12379)): Customized editor keyboard shortcuts (e.g. Remove Word Left) now also apply to the Console input.
 
 ### Fixed
+- ([#15669](https://github.com/rstudio/rstudio/issues/15669)): Fixed an issue on macOS where the Dock icon's "New RStudio Window" command opened the project that was already open in the current window. The new window now starts with no project, in the default working directory.
 - ([#18760](https://github.com/rstudio/rstudio/issues/18760)): Fixed an issue where long R version names in Global Options > General could push the R version selector outside the dialog.
 - ([#18735](https://github.com/rstudio/rstudio/issues/18735)): Fixed an issue on Windows where RStudio failed to start when the command prompt was disabled by Group Policy.
 - ([#18744](https://github.com/rstudio/rstudio/issues/18744)): RStudio Desktop now uses link-based file locks by default on macOS and Linux, matching RStudio Server, so sessions from both editions sharing a data directory or a project on a network drive no longer mistake each other's live locks for stale ones.

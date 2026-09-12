@@ -17,7 +17,7 @@ import path from 'path';
 import { spawn } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
 import { setenv, unsetenv } from '../core/environment';
-import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
+import { kProjectNone, kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
 import { isAutomated } from './utils';
 import { app } from 'electron';
@@ -25,6 +25,9 @@ import { app } from 'electron';
 export interface LaunchRStudioOptions {
   projectFilePath?: string;
   workingDirectory?: string;
+
+  // start the new session with no project, in the user's default working directory
+  noProject?: boolean;
 }
 
 export function resolveProjectFile(projectDir: string): string {
@@ -70,19 +73,29 @@ export class ApplicationLaunch {
       argv.push('--automation-agent');
     }
 
-    // resolve working directory
-    let workingDir = app.getPath('home');
-    if (options.workingDirectory != null) {
-      workingDir = options.workingDirectory;
-    } else if (options.projectFilePath != null) {
-      workingDir = path.dirname(options.projectFilePath);
-    }
-    setenv(kRStudioInitialWorkingDir, workingDir);
+    // this instance may have been started by opening a project or a file, which leaves these
+    // variables set in our own environment; clear them so they can't leak to the new session
+    unsetenv(kRStudioInitialProject);
+    unsetenv(kRStudioInitialWorkingDir);
 
-    // resolve project file, if any
-    const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
-    if (existsSync(projectFile)) {
-      setenv(kRStudioInitialProject, projectFile);
+    if (options.noProject) {
+      // ask for no project explicitly, so the session doesn't restore the last one; with no
+      // working directory of our own the session uses the user's default working directory
+      setenv(kRStudioInitialProject, kProjectNone);
+    } else {
+      // resolve working directory; callers give us either a directory or a project file
+      const workingDir =
+        options.workingDirectory ??
+        (options.projectFilePath === undefined ? undefined : path.dirname(options.projectFilePath));
+      if (workingDir !== undefined) {
+        setenv(kRStudioInitialWorkingDir, workingDir);
+      }
+
+      // resolve project file, if any
+      const projectFile = options.projectFilePath ?? (workingDir === undefined ? '' : resolveProjectFile(workingDir));
+      if (existsSync(projectFile)) {
+        setenv(kRStudioInitialProject, projectFile);
+      }
     }
 
     // run it
