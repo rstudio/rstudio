@@ -580,6 +580,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String warnVariableDefinedButNotUsedDescription();
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   @DefaultStringValue("Warn about characters that look like ASCII but are not")
+   String warnConfusableCharactersTitle();
+   @DefaultStringValue("Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes")
+   String warnConfusableCharactersDescription();
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    @DefaultStringValue("Detect missing R packages in the editor")

@@ -148,6 +148,7 @@ namespace prefs {
 #define kCheckUnexpectedAssignmentInFunctionCall "check_unexpected_assignment_in_function_call"
 #define kWarnIfNoSuchVariableInScope "warn_if_no_such_variable_in_scope"
 #define kWarnVariableDefinedButNotUsed "warn_variable_defined_but_not_used"
+#define kWarnConfusableCharacters "warn_confusable_characters"
 #define kAutoDiscoverPackageDependencies "auto_discover_package_dependencies"
 #define kAutoAppendNewline "auto_append_newline"
 #define kStripTrailingWhitespace "strip_trailing_whitespace"
@@ -909,6 +910,12 @@ public:
     */
    bool warnVariableDefinedButNotUsed();
    core::Error setWarnVariableDefinedButNotUsed(bool val);
+
+   /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   bool warnConfusableCharacters();
+   core::Error setWarnConfusableCharacters(bool val);
 
    /**
     * Whether to automatically discover and offer to install missing R package dependencies.

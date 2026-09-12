@@ -47,6 +47,14 @@ export namespace Ace {
     subFolds: Fold[];
   }
 
+  // A gutter marker + squiggle, as set by the lint pipeline (LintManager).
+  export interface Annotation {
+    row: number;
+    column: number;
+    text: string;
+    type: string;
+  }
+
   // A node of the scope tree RStudio's code models build (see
   // acesupport/acemode/r_scope_tree.js). Sections are the nodes that drive the
   // document outline; 'depth' is set only on those with a heading level.
@@ -90,6 +98,7 @@ export namespace Ace {
     getTokens(row: number): unknown[];
     getTokenAt(row: number, column: number): unknown | null;
     getMarkers(inFront?: boolean): Record<string, unknown>;
+    getAnnotations(): Annotation[];
     replace(range: Range, text: string): Position;
     remove(range: Range): Position;
     getDocument(): Document;

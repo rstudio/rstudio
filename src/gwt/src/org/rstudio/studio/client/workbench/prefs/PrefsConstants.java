@@ -562,6 +562,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel();
     String diagnosticsWarnIfNoSuchVariableInScopeLabel();
     String diagnosticsWarnVariableDefinedButNotUsedLabel();
+    String diagnosticsWarnConfusableCharactersLabel();
     String diagnosticsStyleDiagnosticsLabel();
     String diagnosticsAutoDiscoverPackageDependenciesLabel();
     String diagnosticsShowDiagnosticsCppLabel();
