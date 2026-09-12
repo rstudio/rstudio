@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -84,7 +85,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                           Binder binder,
                           TerminalHelper terminalHelper,
                           Provider<JobManager> pJobManager,
-                          Provider<SessionOpener> pSessionOpener)
+                          Provider<SessionOpener> pSessionOpener,
+                          Provider<Session> pSession)
    {
       // save references
       server_ = server;
@@ -96,6 +98,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       terminalHelper_ = terminalHelper;
       pJobManager_ = pJobManager;
       pSessionOpener_ = pSessionOpener;
+      pSession_ = pSession;
       
       // bind to commands
       binder.bind(commands, this);
@@ -179,7 +182,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    {
       Command handleUnsaved = () -> {
          // handle unsaved editor changes
-         handleUnsavedChanges(saveAction_.getAction(), caption, allowCancel, forceSaveAll,
+         handleUnsavedChanges(saveAction().getAction(), caption, allowCancel, forceSaveAll,
                pSource_.get(), workbenchContext_, globalEnvTarget_, quitContext);
       };
 
@@ -407,6 +410,29 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    {
       saveAction_ = event.getAction();
    }
+
+   /**
+    * The session's current save action.
+    *
+    * SaveActionChangedEvent is asynchronous, so a quit or project close issued
+    * soon after a session restart can run before the first one arrives -- on a
+    * loaded machine the new session's first event batch can take seconds. Fall
+    * back to the action client_init reported, which is already correct by the
+    * time the workbench is interactive; defaulting to "ask" here prompted to
+    * save the workspace image even with save_workspace set to never, and in
+    * that state the close never completes until someone answers the dialog.
+    */
+   private SaveAction saveAction()
+   {
+      if (saveAction_ != null)
+         return saveAction_;
+
+      SessionInfo sessionInfo = pSession_.get().getSessionInfo();
+      SaveAction reported = sessionInfo != null ? sessionInfo.getSaveAction() : null;
+
+      // prompting is the conservative choice when the session hasn't told us
+      return reported != null ? reported : SaveAction.saveAsk();
+   }
    
    @Override
    public void onHandleUnsavedChanges(HandleUnsavedChangesEvent event)
@@ -487,7 +513,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          {
             terminalHelper_.warnBusyTerminalBeforeCommand(() ->
             {
-               boolean saveChanges = saveAction_.getAction() != SaveAction.NOSAVE;
+               boolean saveChanges = saveAction().getAction() != SaveAction.NOSAVE;
                SuspendOptions options = SuspendOptions.createSaveMinimal(saveChanges);
                eventBus_.fireEvent(new SuspendAndRestartEvent(options));
             }, constants_.restartRCaption(), constants_.terminalJobTerminatedQuestion(),
@@ -756,7 +782,9 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       return suspendingAndRestarting_;
    }
    
-   private SaveAction saveAction_ = SaveAction.saveAsk();
+   // null until the session publishes a SaveActionChangedEvent; read through
+   // saveAction() so the value client_init delivered is used in the meantime
+   private SaveAction saveAction_ = null;
    private boolean isQuitting_ = false;
    private boolean suspendingAndRestarting_ = false;
 
@@ -770,5 +798,6 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
    private final Provider<SessionOpener> pSessionOpener_;
+   private final Provider<Session> pSession_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

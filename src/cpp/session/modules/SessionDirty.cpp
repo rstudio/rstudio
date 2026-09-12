@@ -122,9 +122,7 @@ void handleSaveActionChanged()
 void checkForSaveActionChanged()
 {
    // compute current save action
-   int currentSaveAction = r::session::imageIsDirty() ?
-                                 module_context::saveWorkspaceAction() :
-                                 r::session::kSaveActionNoSave;
+   int currentSaveAction = saveAction();
 
    // compare and fire event if necessary
    if (s_lastSaveAction != currentSaveAction)
@@ -152,7 +150,12 @@ void onResume(const Settings& settings)
 
 void onClientInit()
 {
-   // enque save action changed
+   // enque save action changed. compute the action first: s_lastSaveAction
+   // still holds its 'ask' placeholder until the first detect-changes pass
+   // runs, and publishing that told the client to prompt for an unsaved
+   // workspace image on a quit or project close issued before the pass --
+   // even with save_workspace set to never.
+   s_lastSaveAction = saveAction();
    handleSaveActionChanged();
 }
  
@@ -164,6 +167,13 @@ void onDetectChanges(module_context::ChangeSource source)
 
 } // anonymous namespace
  
+int saveAction()
+{
+   return r::session::imageIsDirty() ?
+             module_context::saveWorkspaceAction() :
+             r::session::kSaveActionNoSave;
+}
+
 Error initialize()
 {         
    // add suspend handler
