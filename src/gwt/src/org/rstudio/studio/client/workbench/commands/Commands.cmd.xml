@@ -209,6 +209,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="findInFiles"/>
          <separator/>
          <cmd refid="checkSpelling"/>
+         <cmd refid="changeSpellingLanguage"/>
          <cmd refid="wordCount"/>
          <separator/>
          <cmd refid="consoleClear"/>
@@ -2532,6 +2533,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Check _Spelling..."
         context="editor"
         desc="Check spelling in document"/>
+
+   <cmd id="changeSpellingLanguage"
+        menuLabel="Change Spelling _Language..."
+        windowMode="main"
+        desc="Switch the dictionary used for spell checking"/>
 
    <cmd id="wordCount"
         menuLabel="_Word Count"

@@ -719,6 +719,7 @@ public abstract class
 
    // Other
    public abstract AppCommand checkSpelling();
+   public abstract AppCommand changeSpellingLanguage();
    public abstract AppCommand wordCount();
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
