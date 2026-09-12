@@ -222,6 +222,7 @@ public interface DocDisplay extends HasValueChangeHandlers<VoidResponse>,
    void setIndentGuides(String choice);
    void setBlinkingCursor(boolean blinking);
    void setScrollPastEndOfDocument(boolean enable);
+   void setSmoothScrolling(boolean enable);
    void setHighlightRFunctionCalls(boolean highlight);
    void setColorPreview(boolean show);
    void setRainbowParentheses(boolean rainbow);

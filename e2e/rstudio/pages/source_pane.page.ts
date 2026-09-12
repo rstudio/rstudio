@@ -31,6 +31,7 @@ export class SourcePane extends PageObject {
   public chunkImage: Locator;
   public statusBarCompletionReceived: Locator;
   public statusBarCompletionPending: Locator;
+  public statusBarNoCompletions: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -72,6 +73,10 @@ export class SourcePane extends PageObject {
     // Shown while a code-completion request is in flight (COMPLETION_REQUESTED).
     // Its presence means a response may still land and re-render ghost text.
     this.statusBarCompletionPending = this.footerTable.locator('.gwt-Label', { hasText: 'Waiting for completions' });
+    // Terminal state for a request that came back empty (assistantNoCompletions
+    // in EditorsTextConstants). Nothing retries on its own from here, so a test
+    // waiting on ghost text must re-request rather than keep waiting.
+    this.statusBarNoCompletions = this.footerTable.locator('.gwt-Label', { hasText: 'No completions available' });
   }
 }
 

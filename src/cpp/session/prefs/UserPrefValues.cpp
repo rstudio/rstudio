@@ -869,6 +869,19 @@ core::Error UserPrefValues::setWarnVariableDefinedButNotUsed(bool val)
 }
 
 /**
+ * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+ */
+bool UserPrefValues::warnConfusableCharacters()
+{
+   return readPref<bool>("warn_confusable_characters");
+}
+
+core::Error UserPrefValues::setWarnConfusableCharacters(bool val)
+{
+   return writePref("warn_confusable_characters", val);
+}
+
+/**
  * Whether to automatically discover and offer to install missing R package dependencies.
  */
 bool UserPrefValues::autoDiscoverPackageDependencies()
@@ -1077,6 +1090,19 @@ core::Error UserPrefValues::setScrollPastEndOfDocument(bool val)
 }
 
 /**
+ * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+ */
+bool UserPrefValues::smoothScrolling()
+{
+   return readPref<bool>("smooth_scrolling");
+}
+
+core::Error UserPrefValues::setSmoothScrolling(bool val)
+{
+   return writePref("smooth_scrolling", val);
+}
+
+/**
  * Whether to highlight R function calls in the code editor.
  */
 bool UserPrefValues::highlightRFunctionCalls()
@@ -1142,7 +1168,7 @@ core::Error UserPrefValues::setConsoleLineLengthLimit(int val)
 }
 
 /**
- * The maximum number of console actions to store and display in the console scrollback buffer.
+ * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
  */
 int UserPrefValues::consoleMaxLines()
 {
@@ -3391,6 +3417,19 @@ core::Error UserPrefValues::setInsertNativePipeOperator(bool val)
 }
 
 /**
+ * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+ */
+bool UserPrefValues::insertPlusInGgplotChains()
+{
+   return readPref<bool>("insert_plus_in_ggplot_chains");
+}
+
+core::Error UserPrefValues::setInsertPlusInGgplotChains(bool val)
+{
+   return writePref("insert_plus_in_ggplot_chains", val);
+}
+
+/**
  * Whether to keep track of recently used commands in the Command Palette
  */
 bool UserPrefValues::commandPaletteMru()
@@ -4056,6 +4095,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckUnexpectedAssignmentInFunctionCall,
       kWarnIfNoSuchVariableInScope,
       kWarnVariableDefinedButNotUsed,
+      kWarnConfusableCharacters,
       kAutoDiscoverPackageDependencies,
       kAutoAppendNewline,
       kStripTrailingWhitespace,
@@ -4072,6 +4112,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSyntaxColorConsole,
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
+      kSmoothScrolling,
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
@@ -4250,6 +4291,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSaveRetryTimeout,
       kSaveFilesDurably,
       kInsertNativePipeOperator,
+      kInsertPlusInGgplotChains,
       kCommandPaletteMru,
       kShowMemoryUsage,
       kMemoryQueryIntervalSeconds,
