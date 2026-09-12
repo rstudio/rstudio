@@ -29,6 +29,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.core.client.layout.LogicalWindow;
+import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane.ConsoleMode;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
@@ -43,6 +45,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class Console
 {
@@ -72,11 +75,13 @@ public class Console
    public Console(final Display view,
                   EventBus events,
                   Session session,
-                  Commands commands)
+                  Commands commands,
+                  Provider<PaneManager> pPaneManager)
    {
       view_ = view;
       events_ = events;
       session_ = session;
+      pPaneManager_ = pPaneManager;
       
       try
       {
@@ -93,7 +98,10 @@ public class Console
       events.addHandler(SendToConsoleEvent.TYPE, event ->
       {
          if (event.shouldRaise())
+         {
             view.bringToFront();
+            pPaneManager_.get().getConsoleLogicalWindow().clearAutoRaisedFromMinimize();
+         }
       });
 
       ((Binder) GWT.create(Binder.class)).bind(commands, this);
@@ -197,6 +205,18 @@ public class Console
 
    private void activateConsole(boolean focusWindow)
    {
+      LogicalWindow consoleWindow = pPaneManager_.get().getConsoleLogicalWindow();
+
+      // A task handing control back to a pane the user has since put away
+      // leaves it there; raising it only to minimize it again would flash.
+      if (!focusWindow && consoleWindow.getState() == WindowState.MINIMIZE)
+         return;
+
+      // Read before bringToFront(): the console tab surfacing counts as a
+      // claim on the pane and clears the flag.
+      boolean restoreMinimized =
+            !focusWindow && consoleWindow.wasAutoRaisedFromMinimize();
+
       // ensure we don't leave focus in the console
       final FocusContext focusContext = new FocusContext();
       if (!focusWindow)
@@ -208,6 +228,15 @@ public class Console
       view_.bringToFront();
       view_.focus();
       view_.ensureCursorVisible();
+
+      // Explicit activation keeps the console open, even if bringToFront()
+      // just raised it through an ensure-visible event.
+      if (focusWindow)
+         consoleWindow.clearAutoRaisedFromMinimize();
+      // A task handing control back to the console should restore a pane
+      // that it only opened for its own output.
+      else if (restoreMinimized)
+         pPaneManager_.get().minimizeConsolePane();
 
       // the above code seems to always leave focus in the console
       // (haven't been able to sort out why). this ensure it's restored
@@ -242,4 +271,5 @@ public class Console
    private final EventBus events_;
    private final Display view_;
    private final Session session_;
+   private final Provider<PaneManager> pPaneManager_;
 }
