@@ -66,12 +66,14 @@ function FileLinkProvider(terminal, host)
    this._terminal = terminal;
    this._host = host;
    this._requestId = 0;
+   this._cacheGeneration = 0;
    this._cache = {};
    this._cacheKeys = [];
 }
 
 FileLinkProvider.prototype.provideLinks = function(bufferLineNumber, callback)
 {
+   var requestId = ++this._requestId;
    var terminal = this._terminal;
    var window = getWindowedLineStrings(terminal, bufferLineNumber - 1);
    var text = window.lines.join("");
@@ -83,7 +85,6 @@ FileLinkProvider.prototype.provideLinks = function(bufferLineNumber, callback)
    }
 
    var self = this;
-   var requestId = ++this._requestId;
    var cached = this._lookupCache(text);
    if (cached)
    {
@@ -92,7 +93,12 @@ FileLinkProvider.prototype.provideLinks = function(bufferLineNumber, callback)
    }
 
    var candidates = matches.map(function(match) { return match.path; });
+   var cacheGeneration = this._cacheGeneration;
    this._host.resolve(candidates, function(resolved) {
+      // A cwd change invalidates pending resolutions as well as cached ones.
+      if (cacheGeneration !== self._cacheGeneration)
+         return;
+
       resolved = resolved || [];
       self._storeCache(text, resolved);
 
@@ -147,6 +153,7 @@ FileLinkProvider.prototype._createLink = function(range, match, path)
 
 FileLinkProvider.prototype.clearCache = function()
 {
+   this._cacheGeneration++;
    this._cache = {};
    this._cacheKeys = [];
 };
@@ -306,7 +313,9 @@ function getWindowedLineStrings(terminal, lineIndex)
    var previous;
    var text;
 
-   if (line.isWrapped && current.charAt(0) !== " ")
+   // Spaces may be inside a quoted path, so collect all wrapped rows within
+   // the size limit instead of treating whitespace as a token boundary.
+   if (line.isWrapped)
    {
       while (chars < MAX_LINE_CHARS)
       {
@@ -318,7 +327,7 @@ function getWindowedLineStrings(terminal, lineIndex)
          text = previous.translateToString(false);
          chars += text.length;
          lines.push(text);
-         if (!previous.isWrapped || text.indexOf(" ") !== -1)
+         if (!previous.isWrapped)
             break;
       }
       lines.reverse();
@@ -342,8 +351,6 @@ function getWindowedLineStrings(terminal, lineIndex)
       text = next.translateToString(!(following && following.isWrapped));
       chars += text.length;
       lines.push(text);
-      if (text.indexOf(" ") !== -1)
-         break;
    }
 
    return { lines: lines, startLine: startLine };
