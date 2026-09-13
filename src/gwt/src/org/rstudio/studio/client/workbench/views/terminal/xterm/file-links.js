@@ -75,6 +75,7 @@ FileLinkProvider.prototype.provideLinks = function(bufferLineNumber, callback)
 {
    var requestId = ++this._requestId;
    var terminal = this._terminal;
+   var buffer = terminal.buffer.active;
    var window = getWindowedLineStrings(terminal, bufferLineNumber - 1);
    var text = window.lines.join("");
    var matches = findCandidates(text);
@@ -108,6 +109,18 @@ FileLinkProvider.prototype.provideLinks = function(bufferLineNumber, callback)
       if (requestId !== self._requestId)
          return;
 
+      // The result can be cached by text, but its offsets only apply while
+      // the captured rows still contain that text in the same buffer.
+      if (terminal.buffer.active !== buffer)
+         return;
+      var currentWindow = getWindowedLineStrings(terminal, bufferLineNumber - 1);
+      if (currentWindow.startLine !== window.startLine ||
+          currentWindow.lines.length !== window.lines.length ||
+          currentWindow.lines.some(function(line, index) { return line !== window.lines[index]; }))
+      {
+         return;
+      }
+
       callback(self._buildLinks(window.startLine, matches, resolved));
    });
 };
@@ -130,12 +143,14 @@ FileLinkProvider.prototype._buildLinks = function(startLine, matches, resolved)
 
 FileLinkProvider.prototype._createLink = function(range, match, path)
 {
+   var self = this;
+   var cacheGeneration = this._cacheGeneration;
    var host = this._host;
    return {
       range: range,
       text: match.text,
       activate: function(event) {
-         if (event.button !== 0)
+         if (event.button !== 0 || cacheGeneration !== self._cacheGeneration)
             return;
          var modifierHeld = host.isMac ? event.metaKey : event.ctrlKey;
          if (!modifierHeld)

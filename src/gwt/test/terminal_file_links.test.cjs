@@ -108,3 +108,50 @@ for (const row of [1, 2, 3])
       assert.deepEqual(opened, ["/cwd/" + path]);
    });
 }
+
+test("rewritten terminal output discards a pending link response", async t => {
+   const terminal = await createTerminal(t, "old.R");
+   const requests = [];
+   const opened = [];
+   const provider = new FileLinkProvider(terminal, {
+      resolve: (paths, callback) => requests.push(callback),
+      open: path => opened.push(path)
+   });
+
+   let staleDelivered = false;
+   provider.provideLinks(1, () => { staleDelivered = true; });
+   await new Promise(resolve => terminal.write("\rnew.R", resolve));
+   requests[0](["/cwd/old.R"]);
+   assert.equal(staleDelivered, false);
+
+   provider.provideLinks(1, activate);
+   requests[1](["/cwd/new.R"]);
+   assert.deepEqual(opened, ["/cwd/new.R"]);
+});
+
+test("switching terminal buffers discards a pending link response", async t => {
+   const terminal = await createTerminal(t, "file.R");
+   let resolve;
+   const provider = new FileLinkProvider(terminal, {
+      resolve: (paths, callback) => { resolve = callback; }
+   });
+   let staleDelivered = false;
+   provider.provideLinks(1, () => { staleDelivered = true; });
+   await new Promise(done => terminal.write("\x1b[?1049hfile.R", done));
+   resolve(["/cwd/file.R"]);
+   assert.equal(staleDelivered, false);
+});
+
+test("a delivered link cannot open a file from a previous cwd", async t => {
+   const terminal = await createTerminal(t, "file.R");
+   const opened = [];
+   const provider = new FileLinkProvider(terminal, {
+      resolve: (paths, callback) => callback(["/old/file.R"]),
+      open: path => opened.push(path)
+   });
+   let delivered;
+   provider.provideLinks(1, links => { delivered = links; });
+   provider.clearCache();
+   activate(delivered);
+   assert.deepEqual(opened, []);
+});
