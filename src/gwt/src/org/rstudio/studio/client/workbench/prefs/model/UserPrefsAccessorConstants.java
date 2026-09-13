@@ -1340,6 +1340,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalWeblinksDescription();
 
    /**
+    * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+    */
+   @DefaultStringValue("Make file paths in Terminal clickable")
+   String terminalFileLinksTitle();
+   @DefaultStringValue("Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).")
+   String terminalFileLinksDescription();
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    @DefaultStringValue("Show R Markdown render command")

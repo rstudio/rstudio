@@ -14,6 +14,7 @@
 - ([#16102](https://github.com/rstudio/rstudio/issues/16102)): Added Code > Select Current Statement (Ctrl+Alt+Shift+S), which selects the whole R statement containing the cursor, including statements that span several lines.
 - ([#12223](https://github.com/rstudio/rstudio/issues/12223)): Added Edit > Change Spelling Language... (also in the Command Palette) to switch the spelling dictionary in one step. Dictionary changes now take effect immediately in open documents, without restarting RStudio.
 - ([#14226](https://github.com/rstudio/rstudio/issues/14226)): Files can now be opened in the source editor from the Terminal pane with `rstudio <file>[:line[:column]]` (macOS, Linux, and RStudio Server).
+- ([#18804](https://github.com/rstudio/rstudio/issues/18804)): File paths printed in the Terminal pane (for example by `git status`, `ls`, or compiler diagnostics) can now be opened in RStudio with Ctrl+Click (Cmd+Click on macOS); a `file:line:column` suffix opens the file at that position. This can be disabled in Global Options > Terminal.
 - ([#15261](https://github.com/rstudio/rstudio/issues/15261)): The Insert Pipe Operator command (Ctrl+Shift+M) now inserts `+` when the cursor is within a ggplot2 chain. This can be disabled in Global Options > Code > Editing.
 - ([#12379](https://github.com/rstudio/rstudio/issues/12379)): Customized editor keyboard shortcuts (e.g. Remove Word Left) now also apply to the Console input.
 

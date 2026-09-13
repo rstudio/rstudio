@@ -2078,6 +2078,19 @@ core::Error UserPrefValues::setTerminalWeblinks(bool val)
 }
 
 /**
+ * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+ */
+bool UserPrefValues::terminalFileLinks()
+{
+   return readPref<bool>("terminal_file_links");
+}
+
+core::Error UserPrefValues::setTerminalFileLinks(bool val)
+{
+   return writePref("terminal_file_links", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -4188,6 +4201,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalBellStyle,
       kTerminalRenderer,
       kTerminalWeblinks,
+      kTerminalFileLinks,
       kShowRmdRenderCommand,
       kRmdRenameInScopeBehavior,
       kEnableTextDrag,
