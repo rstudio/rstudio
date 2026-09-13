@@ -19,7 +19,7 @@ import sinon from 'sinon';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import childProcess, { ChildProcess } from 'child_process';
+import childProcess, { ChildProcess, SpawnOptions } from 'child_process';
 import { app } from 'electron';
 
 import { getenv, setenv } from '../../../src/core/environment';
@@ -55,12 +55,13 @@ describe('ApplicationLaunch', () => {
   }
 
   // the relaunched instance picks up its initial project and working directory
-  // from the environment, which is only set for the duration of the spawn call
+  // from the environment passed to spawn
   function captureLaunchEnv(): { project: string; workingDir: string } {
     const launchEnv = { project: '', workingDir: '' };
-    sinon.stub(childProcess, 'spawn').callsFake(() => {
-      launchEnv.project = getenv(kRStudioInitialProject);
-      launchEnv.workingDir = getenv(kRStudioInitialWorkingDir);
+    sinon.stub(childProcess, 'spawn').callsFake((...args: unknown[]) => {
+      const env = (args[2] as SpawnOptions).env ?? {};
+      launchEnv.project = env[kRStudioInitialProject] ?? '';
+      launchEnv.workingDir = env[kRStudioInitialWorkingDir] ?? '';
       return { unref: sinon.stub() } as unknown as ChildProcess;
     });
     return launchEnv;
@@ -85,12 +86,12 @@ describe('ApplicationLaunch', () => {
     const spawnStub = sinon.stub(childProcess, 'spawn').returns({ unref: sinon.stub() } as unknown as ChildProcess);
     const appLaunch = ApplicationLaunch.init();
 
-    appLaunch.launchRStudio({});
+    appLaunch.launchRStudio({ noProject: true });
     assert.notInclude(spawnStub.firstCall.args[1] as string[], '--automation-agent');
 
     app.commandLine.appendSwitch('automation-agent');
     try {
-      appLaunch.launchRStudio({});
+      appLaunch.launchRStudio({ noProject: true });
     } finally {
       app.commandLine.removeSwitch('automation-agent');
     }
@@ -104,6 +105,17 @@ describe('ApplicationLaunch', () => {
     ApplicationLaunch.init().launchRStudio({ workingDirectory: dir });
 
     assert.equal(launchEnv.project, path.join(dir, 'test.Rproj'));
+    assert.equal(launchEnv.workingDir, dir);
+  });
+
+  it('launchRStudio opens the given project file in its directory', () => {
+    const launchEnv = captureLaunchEnv();
+    const dir = projectDir();
+    const projectFile = path.join(dir, 'test.Rproj');
+
+    ApplicationLaunch.init().launchRStudio({ projectFilePath: projectFile });
+
+    assert.equal(launchEnv.project, projectFile);
     assert.equal(launchEnv.workingDir, dir);
   });
 
@@ -130,6 +142,10 @@ describe('ApplicationLaunch', () => {
 
     assert.equal(launchEnv.project, kProjectNone);
     assert.isEmpty(launchEnv.workingDir);
+
+    // and our own environment is left alone
+    assert.equal(getenv(kRStudioInitialProject), path.join(dir, 'test.Rproj'));
+    assert.equal(getenv(kRStudioInitialWorkingDir), dir);
   });
 
   it('Resolve Empty Project File Path', () => {
