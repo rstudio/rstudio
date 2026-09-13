@@ -5,7 +5,7 @@
 // tokens naming an existing file become links, and a link activates with the
 // platform's open-link modifier held (Cmd on macOS, Ctrl elsewhere).
 
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { TIMEOUTS } from '@utils/constants';
 import { AceEditor } from '@pages/ace_editor.page';
@@ -31,12 +31,58 @@ interface Point {
   y: number;
 }
 
+/** Screen point at the centre of cell `column` of a rendered terminal row. */
+async function cellPoint(row: Locator, column: number): Promise<Point> {
+  // a span holds a run of same-styled cells (e.g. every name on an `ls`
+  // row), so locate the span covering the column and interpolate within it
+  const spans = row.locator('span');
+  const count = await spans.count();
+  let start = 0;
+  for (let i = 0; i < count; i++) {
+    const span = spans.nth(i);
+    const length = ((await span.textContent()) ?? '').length;
+    if (column < start + length) {
+      const box = await span.boundingBox();
+      if (!box) break;
+      const cellWidth = box.width / Math.max(length, 1);
+      return { x: box.x + (column - start + 0.5) * cellWidth, y: box.y + box.height / 2 };
+    }
+    start += length;
+  }
+  throw new Error(`terminal row has no cell at column ${column}`);
+}
+
+/**
+ * Find the last occurrence of `text` in the rendered terminal and return a
+ * point over it. A long path wraps across rows, and where the wrap falls
+ * depends on the path's length, so the match is made against each row joined
+ * with the one above it and the point lands on the part of the match in the
+ * lower row. Searching from the bottom finds the command's output rather than
+ * its echo of the command line.
+ */
+async function locateTerminalText(page: Page, text: string): Promise<Point> {
+  const rows = page.locator(XTERM_ROWS);
+  const texts = await rows.allTextContents();
+  for (let i = texts.length - 1; i >= 0; i--) {
+    const above = i > 0 ? texts[i - 1] : '';
+    const index = (above + texts[i]).lastIndexOf(text);
+    if (index === -1) continue;
+
+    // a match lying wholly in the row above is found on that row's turn
+    const end = index + text.length - above.length;
+    if (end <= 0) continue;
+
+    const start = Math.max(0, index - above.length);
+    return cellPoint(rows.nth(i), Math.floor((start + end) / 2));
+  }
+  throw new Error(`terminal text not found: ${text}`);
+}
+
 /**
  * Hover the terminal text `text` until xterm reports a link under the pointer,
- * and return the point to click. A long path wraps across rows, so `text`
- * should be its tail (the file name); the last matching span is the command's
- * output rather than its echo of the command line, and either way the row
- * belongs to a link naming the file.
+ * and return the point to click. `text` should be the tail of the printed
+ * path (the file name), which belongs to a link naming the file wherever the
+ * path wraps.
  *
  * The raw mouse is used throughout: xterm's screen element sits over the row
  * spans, so locator-level hover/click fail their hit-target check. Link
@@ -46,21 +92,11 @@ interface Point {
  * hop to the row above before each retry.
  */
 async function hoverFileLink(page: Page, text: string): Promise<Point> {
-  const link = page.locator(`${XTERM_ROWS} span`).filter({ hasText: text }).last();
-  await expect(link).toBeVisible({ timeout: TIMEOUTS.consoleReady });
-
   let point: Point = { x: 0, y: 0 };
   await expect(async () => {
-    const box = await link.boundingBox();
-    if (!box) throw new Error('link span has no bounding box');
-
-    // the span holds a whole run of same-styled cells (e.g. every name on an
-    // `ls` row), so aim at the middle of `text` rather than of the span
-    const content = (await link.textContent()) ?? '';
-    const cellWidth = box.width / Math.max(content.length, 1);
-    const offset = content.indexOf(text) + text.length / 2;
-    point = { x: box.x + offset * cellWidth, y: box.y + box.height / 2 };
-    await page.mouse.move(point.x, point.y - box.height);
+    point = await locateTerminalText(page, text);
+    const rowHeight = (await page.locator(XTERM_ROWS).first().boundingBox())?.height ?? 0;
+    await page.mouse.move(point.x, point.y - rowHeight);
     await page.mouse.move(point.x, point.y);
     await expect(page.locator(LINK_UNDER_POINTER)).toBeVisible({ timeout: TIMEOUTS.settleDelay });
   }).toPass({ timeout: TIMEOUTS.fileOpen });
@@ -111,7 +147,11 @@ test.describe.serial('Terminal: file paths open with Ctrl/Cmd+Click', () => {
     const fullPath = await seedSandboxFile(page, sandbox.dir, 'link_absolute.R', FILE_CONTENT);
     await focusTerminal(page);
 
-    await runInTerminal(page, `echo ${fullPath}:2`);
+    // On Windows the sandbox path comes back with backslashes, which an
+    // unquoted bash `echo` strips (Git Bash is the default shell there); print
+    // the forward-slash form, which every shell echoes verbatim and the
+    // session resolves just the same.
+    await runInTerminal(page, `echo ${fullPath.replace(/\\/g, '/')}:2`);
     const link = await hoverFileLink(page, 'link_absolute.R:2');
     await clickFileLink(page, link);
 
