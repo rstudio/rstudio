@@ -1883,6 +1883,11 @@ public class TextEditingTarget implements
                public void onResetEditorCommands(ResetEditorCommandsEvent event)
                {
                   getDocDisplay().resetCommands();
+
+                  // resetCommands() reinstalls every Ace default, which replaces
+                  // the animated line navigation commands that smooth scrolling
+                  // installs.
+                  getDocDisplay().setSmoothScrolling(prefs_.smoothScrolling().getValue());
                }
             });
 
@@ -6254,6 +6259,18 @@ public class TextEditingTarget implements
       withVisualModeSelection(() ->
       {
          codeExecution().executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
+      });
+   }
+
+   @Handler
+   void onSelectCurrentStatement()
+   {
+      withVisualModeSelection(() ->
+      {
+         DocDisplay display = activeDisplay();
+         Range range = EditingTargetCodeExecution.getCurrentStatementRange(display);
+         if (range != null)
+            display.setSelectionRange(range);
       });
    }
 

@@ -49,15 +49,16 @@ export interface AppState {
   sessionEarlyExitCode: number;
   startupDelayMs: number;
   prepareForWindow(pendingWindow: PendingWindow): void;
-  windowOpening():
+  windowOpening(
+    frameName: string,
+  ):
     | { action: 'deny' }
     | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined };
-  windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
+  windowCreated(newWindow: BrowserWindow, owner: WebContents, frameName: string, baseUrl?: string): void;
   server?: Server;
   client?: Client;
   eventBus?: TypedEventEmitter<EventBusTypes>;
   argsManager: ArgsManager;
-  projectDirectory?: string;
   stateDirIssues: UserDirIssue[];
 }
 

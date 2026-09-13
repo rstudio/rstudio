@@ -641,7 +641,7 @@ public class ClientEventDispatcher
          else if (type == ClientEvent.UserPrefsChanged)
          {
             PrefLayer data = event.getData();
-            eventBus_.dispatchEvent(new UserPrefsChangedEvent(data));
+            eventBus_.dispatchEvent(new UserPrefsChangedEvent(data, data.isFullLayer()));
          }
          else if (type == ClientEvent.UserStateChanged)
          {

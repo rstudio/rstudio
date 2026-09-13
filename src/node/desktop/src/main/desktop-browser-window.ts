@@ -242,11 +242,11 @@ export class DesktopBrowserWindow extends EventEmitter {
 
       // configure window creation; we'll associate the resulting BrowserWindow with our
       // window wrapper type via 'did-create-window' below
-      return appState().windowOpening();
+      return appState().windowOpening(details.frameName);
     });
 
-    this.window.webContents.on('did-create-window', (newWindow) => {
-      appState().windowCreated(newWindow, this.window.webContents, this.options.baseUrl);
+    this.window.webContents.on('did-create-window', (newWindow, details) => {
+      appState().windowCreated(newWindow, this.window.webContents, details.frameName, this.options.baseUrl);
     });
 
     // calling event.preventDefault() prevents navigation

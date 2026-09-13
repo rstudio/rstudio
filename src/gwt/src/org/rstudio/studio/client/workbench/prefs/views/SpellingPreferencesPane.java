@@ -171,10 +171,7 @@ public class SpellingPreferencesPane extends PreferencesPane
 
       restart.setDesktopRestartRequired(
             restart.getDesktopRestartRequired() ||
-            customDictsWidget_.getCustomDictsModified() ||
-            !StringUtil.equals(
-                  rPrefs.spellingDictionaryLanguage().getValue(),
-                  languageWidget_.getSelectedLanguage()));
+            customDictsWidget_.getCustomDictsModified());
       
       return restart;
    }

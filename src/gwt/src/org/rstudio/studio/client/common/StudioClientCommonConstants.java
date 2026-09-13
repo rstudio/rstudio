@@ -224,6 +224,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String confirmOverwriteKeyCaption();
     String confirmOverwriteKeyMessage(String path);
     String spellingLanguageSelectWidgetLabel();
+    String changeSpellingLanguageCaption();
     String addHelpButtonLabel();
     String progressDownloadingLabel();
     String progressDownloadingLanguagesLabel();
