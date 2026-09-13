@@ -13,18 +13,11 @@
  *
  */
 
-// Link-based locks are unsupported on Windows (FileLock forces advisory
-// there), and these tests rely on link-based semantics for cross-instance
-// exclusion within one process (POSIX fcntl advisory locks never conflict
-// in-process). The lock primitive itself is covered on Windows by
-// Win32FileLockTests.cpp; InstallLock's token/component state machine is
-// platform-independent and exercised here on POSIX.
-#ifndef _WIN32
-
 #include "ChatInstallLock.hpp"
 
-#include <sys/wait.h>
-#include <unistd.h>
+#include <algorithm>
+#include <string>
+#include <vector>
 
 #include <ctime>
 
@@ -38,8 +31,23 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include "../SessionChat.hpp"
+#include <session/SessionModuleContext.hpp>
+
 using namespace rstudio::core;
 using namespace rstudio::session::modules::chat::install_lock;
+
+// Link-based locks are unsupported on Windows (FileLock forces advisory
+// there), and the tests in this block rely on link-based semantics for
+// cross-instance exclusion within one process (POSIX fcntl advisory locks
+// never conflict in-process). The lock primitive itself is covered on
+// Windows by Win32FileLockTests.cpp; InstallLock's token/component state
+// machine is platform-independent and exercised here on POSIX. The tests
+// after the block run everywhere.
+#ifndef _WIN32
+
+#include <sys/wait.h>
+#include <unistd.h>
 
 namespace {
 
@@ -849,3 +857,135 @@ TEST_F(ChatInstallLock, AcquireInUseForStartFailsClosedWhenInstallLockUninspecta
 } // anonymous namespace
 
 #endif // !_WIN32
+
+namespace {
+
+// Single-instance tests over a temp locks directory; advisory locks so they
+// run on every platform.
+class ChatInstallLockOwner : public testing::Test
+{
+protected:
+   void SetUp() override
+   {
+      FileLock::initialize();
+      ASSERT_FALSE(FilePath::tempFilePath(tempPath_));
+      locksDir_ = tempPath_.completePath("locks");
+   }
+
+   void TearDown() override
+   {
+      tempPath_.removeIfExists();
+   }
+
+   std::vector<std::string> sessionLockFileNames(const InstallLock& lock)
+   {
+      std::vector<FilePath> children;
+      Error error = lock.sessionLocksDir().getChildren(children);
+      EXPECT_FALSE(error);
+      std::vector<std::string> names;
+      for (const FilePath& child : children)
+         names.push_back(child.getFilename());
+      return names;
+   }
+
+   FilePath tempPath_;
+   FilePath locksDir_;
+};
+
+TEST_F(ChatInstallLockOwner, OwnerIdNamesTheSessionLockFile)
+{
+   InstallLock lock(locksDir_, "971bc367-abc123", FileLock::LOCKTYPE_ADVISORY);
+
+   uint64_t token = 0;
+   std::string userMessage;
+   ASSERT_FALSE(lock.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
+   EXPECT_NE(token, 0u);
+
+   std::vector<std::string> names = sessionLockFileNames(lock);
+   ASSERT_EQ(names.size(), 1u);
+   EXPECT_EQ(names[0], "971bc367-abc123.epoch-1.lock");
+
+   lock.releaseInUse(InstallLock::Component::ChatBackend, token);
+   EXPECT_FALSE(lock.inUseHeld());
+
+   // Released entries are retained for a mutator's stale sweep rather than
+   // unlinked; the next attempt publishes a fresh epoch instead of reusing
+   // the released name.
+   ASSERT_FALSE(lock.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage));
+   names = sessionLockFileNames(lock);
+   std::sort(names.begin(), names.end());
+   ASSERT_EQ(names.size(), 2u);
+   EXPECT_EQ(names[0], "971bc367-abc123.epoch-1.lock");
+   EXPECT_EQ(names[1], "971bc367-abc123.epoch-2.lock");
+   lock.releaseInUse(InstallLock::Component::ChatBackend, token);
+}
+
+TEST_F(ChatInstallLockOwner, EmptyOwnerIdIsRefusedNotSharedAsDotLock)
+{
+   InstallLock lock(locksDir_, "", FileLock::LOCKTYPE_ADVISORY);
+
+   uint64_t token = 0;
+   std::string userMessage;
+   Error error = lock.acquireInUseForStart(
+      InstallLock::Component::ChatBackend, &token, &userMessage);
+   EXPECT_TRUE(error);
+   EXPECT_EQ(token, 0u);
+   EXPECT_FALSE(lock.inUseHeld());
+
+   // A missing owner id is a defect, not an update in progress.
+   EXPECT_NE(userMessage.find("Unable to verify"), std::string::npos);
+   EXPECT_EQ(userMessage.find("update is in progress"), std::string::npos);
+   EXPECT_FALSE(lock.sessionLocksDir().completePath(".epoch-1.lock").exists());
+}
+
+// A mutator with an empty owner id would treat a foreign
+// "sessions/.epoch-<n>.lock" as its own and skip probing it, then modify the
+// installation under a
+// live backend. It must refuse before taking install.lock.
+TEST_F(ChatInstallLockOwner, EmptyOwnerIdRefusesMutation)
+{
+   InstallLock lock(locksDir_, "", FileLock::LOCKTYPE_ADVISORY);
+
+   std::string userMessage;
+   Error error = lock.tryBeginMutation(&userMessage);
+   EXPECT_TRUE(error);
+   EXPECT_FALSE(lock.mutationInProgress());
+   EXPECT_NE(userMessage.find("Unable to verify"), std::string::npos);
+   EXPECT_EQ(userMessage.find("installing or updating"), std::string::npos);
+   EXPECT_FALSE(lock.installLockPath().exists());
+}
+
+// The production accessor derives the owner id from the session id and a
+// per-process uuid: "<sessionId>-<uuid>", or just "<uuid>" when the session
+// id is empty (dev/automation launches). The uuid suffix is what makes the
+// id unique per process (#18571); the bare session id would collide with an
+// orphaned predecessor. MSVC in C++20 mode initialized the previous form of
+// this id (a `static const std::string` with a conditional-expression
+// initializer) to an empty string, so every Windows session locked
+// "sessions/.lock" and the second instance refused to start (#18787).
+// Constructing the singleton touches no files.
+TEST(ChatInstallLockProduction, OwnerIdIsSessionIdPlusPerProcessUuid)
+{
+   using rstudio::session::module_context::activeSession;
+   const std::string& id =
+      rstudio::session::modules::chat::installLock().ownerId();
+   const std::string sessionId = activeSession().id();
+
+   // generateUuid(false) yields 32 hex digits with no dashes.
+   const std::size_t kUuidLength = 32;
+   ASSERT_GE(id.size(), kUuidLength);
+   EXPECT_NE(id, sessionId);
+
+   std::string uuid = id.substr(id.size() - kUuidLength);
+   EXPECT_EQ(uuid.find_first_not_of("0123456789abcdefABCDEF"),
+             std::string::npos)
+      << "owner id does not end in a uuid: " << id;
+
+   std::string prefix = id.substr(0, id.size() - kUuidLength);
+   EXPECT_EQ(prefix, sessionId.empty() ? "" : sessionId + "-")
+      << "owner id does not keep the session id prefix: " << id;
+}
+
+} // anonymous namespace

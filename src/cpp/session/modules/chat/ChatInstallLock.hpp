@@ -94,9 +94,10 @@ public:
    // Acquires the in-use lock (first component takes the file lock; the
    // second just marks itself held). Each first-component acquisition attempt
    // uses a new filename so released entries can be cleaned without racing
-   // a later start. Fails while this process's own mutation
-   // is active: a re-entrant start dispatched during the mutation must not
-   // launch from the directory being swapped, and the install.lock probe in
+   // a later start. Fails if the owner id is empty (see checkOwnerId). Fails
+   // while this process's own mutation is active: a re-entrant start
+   // dispatched during the mutation must not launch from the directory being
+   // swapped, and the install.lock probe in
    // acquireInUseForStart() cannot catch it (our own advisory lock does not
    // conflict in-process), so this in-process check is the only guard.
    //
@@ -139,6 +140,8 @@ public:
    // epoch entries are retired and removed; legacy names that older clients may
    // reuse are retained. Advisory leftovers are acquired and removed only once
    // older than the lock timeout (see the probe loop for why not sooner).
+   // Fails if the owner id is empty (see checkOwnerId): the own-file
+   // exclusion would otherwise skip a foreign ".epoch-<n>.lock".
    //
    // On failure, *pUserMessage receives user-facing text describing why
    // (another mutator, or live sessions in use). This process's own held
@@ -154,11 +157,16 @@ public:
    // transitions via mutationInProgress() (in-process flag only; it never
    // probes the file — self-probing an advisory lock would release it).
    bool mutationInProgress() const;
+   const std::string& ownerId() const;
    core::FilePath installLockPath() const;
    core::FilePath sessionLocksDir() const;
 
 private:
    core::FilePath ownSessionLockPath() const;
+   // Both entry points refuse an empty owner id, which would name this
+   // session's lock file ".epoch-<n>.lock" and share it with every other session that
+   // has the same defect (#18787).
+   core::Error checkOwnerId() const;
    boost::shared_ptr<core::FileLock> makeLock() const;
    core::FileLock::LockType effectiveLockType() const;
    bool anyComponentHeld() const;

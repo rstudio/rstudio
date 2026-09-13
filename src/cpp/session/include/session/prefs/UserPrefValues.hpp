@@ -148,6 +148,7 @@ namespace prefs {
 #define kCheckUnexpectedAssignmentInFunctionCall "check_unexpected_assignment_in_function_call"
 #define kWarnIfNoSuchVariableInScope "warn_if_no_such_variable_in_scope"
 #define kWarnVariableDefinedButNotUsed "warn_variable_defined_but_not_used"
+#define kWarnConfusableCharacters "warn_confusable_characters"
 #define kAutoDiscoverPackageDependencies "auto_discover_package_dependencies"
 #define kAutoAppendNewline "auto_append_newline"
 #define kStripTrailingWhitespace "strip_trailing_whitespace"
@@ -166,6 +167,7 @@ namespace prefs {
 #define kSyntaxColorConsole "syntax_color_console"
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
+#define kSmoothScrolling "smooth_scrolling"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
@@ -910,6 +912,12 @@ public:
    core::Error setWarnVariableDefinedButNotUsed(bool val);
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   bool warnConfusableCharacters();
+   core::Error setWarnConfusableCharacters(bool val);
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    bool autoDiscoverPackageDependencies();
@@ -1006,6 +1014,12 @@ public:
    core::Error setScrollPastEndOfDocument(bool val);
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   bool smoothScrolling();
+   core::Error setSmoothScrolling(bool val);
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    bool highlightRFunctionCalls();
@@ -1036,7 +1050,7 @@ public:
    core::Error setConsoleLineLengthLimit(int val);
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    int consoleMaxLines();
    core::Error setConsoleMaxLines(int val);
@@ -1576,7 +1590,7 @@ public:
    core::Error setWrapTabNavigation(bool val);
 
    /**
-    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    * Use a bold label and a blue overline to highlight the active document tab.
     */
    bool highlightActiveTabs();
    core::Error setHighlightActiveTabs(bool val);

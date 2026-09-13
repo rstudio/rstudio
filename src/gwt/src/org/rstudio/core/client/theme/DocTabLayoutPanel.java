@@ -163,6 +163,13 @@ public class DocTabLayoutPanel
             DOM.sinkBitlessEvent(tabBar, "mousewheel");
             DOM.sinkBitlessEvent(tabBar, "wheel");
             Event.setEventListener(tabBar, dragManager_);
+
+            // the tab bar scrolls inside its layout layer; track that so the
+            // selected tab's indicator can be re-clipped while it is partly
+            // out of view
+            Element scrollHost = tabBar.getParentElement();
+            DOM.sinkEvents(scrollHost, Event.ONSCROLL);
+            Event.setEventListener(scrollHost, event -> updateSelectedTabClipping());
          }
       });
    }
@@ -355,20 +362,7 @@ public class DocTabLayoutPanel
          currentAnimation_ = null;
       }
 
-      Element selectedTab = (Element) DomUtils.findNode(
-            getElement(),
-            true,
-            false,
-            new NodePredicate()
-            {
-               public boolean test(Node n)
-               {
-                  if (n.getNodeType() != Node.ELEMENT_NODE)
-                     return false;
-                  return ((Element) n).getClassName()
-                        .contains("gwt-TabLayoutPanelTab-selected");
-               }
-            });
+      Element selectedTab = getSelectedTabElement();
       if (selectedTab == null)
       {
          return;
@@ -380,6 +374,10 @@ public class DocTabLayoutPanel
 
       if (!isVisible() || !isAttached() || tabBar.getOffsetWidth() == 0)
          return; // not yet loaded
+
+      // re-check once layout settles; if this scrolls, the scroll listener
+      // re-checks again
+      Scheduler.get().scheduleDeferred(() -> updateSelectedTabClipping());
 
       final Element tabBarParent = tabBar.getParentElement();
 
@@ -1372,6 +1370,51 @@ public class DocTabLayoutPanel
    public void onBrowserEvent(Event event)
    {
       super.onBrowserEvent(event);
+   }
+
+   private Element getSelectedTabElement()
+   {
+      return (Element) DomUtils.findNode(
+            getElement(),
+            true,
+            false,
+            new NodePredicate()
+            {
+               public boolean test(Node n)
+               {
+                  if (n.getNodeType() != Node.ELEMENT_NODE)
+                     return false;
+                  return ((Element) n).getClassName()
+                        .contains("gwt-TabLayoutPanelTab-selected");
+               }
+            });
+   }
+
+   // The selected tab's indicator is anchor-positioned so it can escape the
+   // strip's clipping and paint over the frame border. That also lets it spill
+   // past the strip when the tab is only partly in view, so flag that state
+   // and let the stylesheet clip the indicator again.
+   private void updateSelectedTabClipping()
+   {
+      Element tabBar = getTabBarElement();
+      if (tabBar == null || tabBar.getOffsetWidth() == 0)
+         return;
+
+      Element selectedTab = getSelectedTabElement();
+      if (selectedTab == null)
+      {
+         removeStyleName(styles_.docTabPanelClipped());
+         return;
+      }
+
+      Element scrollHost = tabBar.getParentElement();
+      int visibleLeft = scrollHost.getAbsoluteLeft();
+      int visibleRight = visibleLeft + scrollHost.getOffsetWidth() - rightMargin_;
+      int tabLeft = selectedTab.getAbsoluteLeft();
+      int tabRight = tabLeft + selectedTab.getOffsetWidth();
+
+      boolean clipped = tabLeft < visibleLeft || tabRight > visibleRight;
+      setStyleName(styles_.docTabPanelClipped(), clipped);
    }
 
    private Element getTabBarElement()

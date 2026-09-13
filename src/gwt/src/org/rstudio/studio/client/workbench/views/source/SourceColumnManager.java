@@ -646,7 +646,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (!hasActiveEditor())
          return false;
-      Boolean dirty = activeColumn_.getActiveEditor().dirtyState().getValue();
+      return isDirty(activeColumn_.getActiveEditor());
+   }
+
+   // dirtyState() is a Value<Boolean> that can still be null before the
+   // editor finishes initializing, so treat "unknown" as clean.
+   private static boolean isDirty(EditingTarget editor)
+   {
+      Boolean dirty = editor.dirtyState().getValue();
       return dirty != null && dirty;
    }
 
@@ -1361,12 +1368,19 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public void onDocumentResetToUntitled(DocumentResetToUntitledEvent event)
    {
       // Reuse an existing untitled doc if one is open. Untitled = no path.
+      //
+      // A *dirty* untitled doc is not reusable: revertUnsavedTargets below
+      // only reverts file-backed editors, so keeping it would carry the
+      // previous caller's unsaved text into the "clean slate" this event
+      // promises. That text then surfaces later as a modal Save File prompt
+      // the next time anything saves all documents, whose glass panel blocks
+      // every subsequent click. Close it with the rest and start fresh.
       String existingUntitledId = null;
       for (SourceColumn column : columnList_)
       {
          for (EditingTarget editor : column.getEditors())
          {
-            if (editor.getPath() == null)
+            if (editor.getPath() == null && !isDirty(editor))
             {
                existingUntitledId = editor.getId();
                break;

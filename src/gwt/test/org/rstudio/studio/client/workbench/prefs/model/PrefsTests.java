@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import org.rstudio.core.client.js.JsObject;
+
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -159,5 +161,111 @@ public class PrefsTests extends GWTTestCase
       pref.removeProjectValue(false);
 
       assertTrue(pref.getProjectValue());
+   }
+
+   private static native JsArray<PrefLayer> populatedLayers() /*-{
+      return [
+         {name: "default", values: {spelling_dictionary_language: "en_US", num_spaces_for_tab: 2}},
+         {name: "computed", values: {}},
+         {name: "system", values: {}},
+         {name: "user", values: {spelling_dictionary_language: "en_GB", num_spaces_for_tab: 4}},
+         {name: "project", values: {spelling_dictionary_language: "de_DE", num_spaces_for_tab: 8}}
+      ];
+   }-*/;
+
+   public void testProjectLayerRemovalNotifiesAfterAllValuesAreApplied()
+   {
+      TestPrefs prefs = new TestPrefs(populatedLayers());
+      Prefs.PrefValue<String> language = prefs.string("spelling_dictionary_language", "Language", "", "en_US");
+      Prefs.PrefValue<Integer> tabWidth = prefs.integer("num_spaces_for_tab", "Tab width", "", 2);
+      int[] notifications = {0, 0};
+      language.addValueChangeHandler(event ->
+      {
+         assertEquals("en_GB", event.getValue());
+         assertFalse(language.hasProjectValue());
+         assertEquals(Integer.valueOf(6), tabWidth.getValue());
+         notifications[0]++;
+      });
+      tabWidth.addValueChangeHandler(event ->
+      {
+         assertEquals(Integer.valueOf(6), event.getValue());
+         assertEquals("en_GB", language.getValue());
+         notifications[1]++;
+      });
+
+      JsObject replacement = JsObject.createJsObject();
+      replacement.setInteger("num_spaces_for_tab", 6);
+      prefs.replaceLayerValues(PrefLayer.LAYER_PROJECT, replacement);
+
+      assertEquals("en_GB", language.getValue());
+      assertEquals(1, notifications[0]);
+      assertEquals(1, notifications[1]);
+   }
+
+   public void testProjectLayerReplacementPreservesAliasesAndOtherLayers()
+   {
+      JsArray<PrefLayer> layers = populatedLayers();
+      TestPrefs prefs = new TestPrefs(layers);
+      JsObject projectValues = layers.get(UserPrefsAccessor.LAYER_PROJECT).getValues();
+      JsObject userValues = layers.get(UserPrefsAccessor.LAYER_USER).getValues();
+      JsObject defaultValues = layers.get(UserPrefsAccessor.LAYER_DEFAULT).getValues();
+
+      JsObject replacement = JsObject.createJsObject();
+      replacement.setInteger("num_spaces_for_tab", 6);
+      prefs.replaceLayerValues(PrefLayer.LAYER_PROJECT, replacement);
+
+      // SessionInfo and preference objects share these layer objects.
+      assertSame(projectValues, layers.get(UserPrefsAccessor.LAYER_PROJECT).getValues());
+      assertFalse(projectValues.hasKey("spelling_dictionary_language"));
+      assertEquals(Integer.valueOf(6), projectValues.getInteger("num_spaces_for_tab"));
+      assertSame(userValues, layers.get(UserPrefsAccessor.LAYER_USER).getValues());
+      assertEquals("en_GB", userValues.getString("spelling_dictionary_language"));
+      assertEquals(Integer.valueOf(4), userValues.getInteger("num_spaces_for_tab"));
+      assertSame(defaultValues, layers.get(UserPrefsAccessor.LAYER_DEFAULT).getValues());
+      assertEquals("en_US", defaultValues.getString("spelling_dictionary_language"));
+      assertEquals(Integer.valueOf(2), defaultValues.getInteger("num_spaces_for_tab"));
+   }
+
+   public void testReplacingLayerWithItselfPreservesValuesWithoutNotification()
+   {
+      JsArray<PrefLayer> layers = populatedLayers();
+      TestPrefs prefs = new TestPrefs(layers);
+      Prefs.PrefValue<String> language = prefs.string("spelling_dictionary_language", "Language", "", "en_US");
+      Prefs.PrefValue<Integer> tabWidth = prefs.integer("num_spaces_for_tab", "Tab width", "", 2);
+      int[] notifications = {0};
+      language.addValueChangeHandler(event -> notifications[0]++);
+      tabWidth.addValueChangeHandler(event -> notifications[0]++);
+
+      JsObject projectValues = layers.get(UserPrefsAccessor.LAYER_PROJECT).getValues();
+      prefs.replaceLayerValues(PrefLayer.LAYER_PROJECT, projectValues);
+
+      assertEquals("de_DE", language.getValue());
+      assertEquals(Integer.valueOf(8), tabWidth.getValue());
+      assertEquals(0, notifications[0]);
+   }
+
+   public void testMaskedUserLayerChangesNotifyOnlyWhenProjectOverrideIsRemoved()
+   {
+      TestPrefs prefs = new TestPrefs(populatedLayers());
+      Prefs.PrefValue<String> language = prefs.string("spelling_dictionary_language", "Language", "", "en_US");
+      int[] notifications = {0};
+      language.addValueChangeHandler(event ->
+      {
+         assertEquals("fr_FR", event.getValue());
+         notifications[0]++;
+      });
+
+      JsObject replacement = JsObject.createJsObject();
+      replacement.setString("spelling_dictionary_language", "fr_FR");
+      prefs.replaceLayerValues(PrefLayer.LAYER_USER, replacement);
+
+      assertEquals("de_DE", language.getValue());
+      assertEquals("fr_FR", language.getGlobalValue());
+      assertEquals(0, notifications[0]);
+
+      prefs.replaceLayerValues(PrefLayer.LAYER_PROJECT, JsObject.createJsObject());
+
+      assertEquals("fr_FR", language.getValue());
+      assertEquals(1, notifications[0]);
    }
 }
