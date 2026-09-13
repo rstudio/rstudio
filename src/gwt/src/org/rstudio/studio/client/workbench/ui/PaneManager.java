@@ -693,6 +693,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.NORMAL);
          consoleWindow.onWindowStateChange(event);
       }
+      consoleWindow.clearAutoRaisedFromMinimize();
 
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only
@@ -2672,6 +2673,22 @@ public class PaneManager
    public LogicalWindow getSourceLogicalWindow()
    {
       return sourceLogicalWindows_.get(0);
+   }
+
+   /**
+    * Puts the console pane back into MINIMIZE without moving focus. Called
+    * when a background task that raised the pane for its own output (e.g.
+    * Render) hands control back to the console after succeeding; a failed
+    * task never gets here, so its output stays in view (#11622).
+    */
+   public void minimizeConsolePane()
+   {
+      LogicalWindow consoleWindow = getConsoleLogicalWindow();
+      if (consoleWindow.getState() == WindowState.NORMAL)
+      {
+         consoleWindow.onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.MINIMIZE, true));
+      }
    }
 
    public LogicalWindow getConsoleLogicalWindow()
