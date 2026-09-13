@@ -2070,6 +2070,8 @@ Error translateDarwinAcl(const FilePath& parent,
 
 #endif
 
+#ifndef _WIN32
+
 Error applyClaimDirectoryPermissions(const FilePath& parent,
                                      const struct stat& parentInfo,
                                      struct stat preparedInfo,
@@ -2248,6 +2250,8 @@ Error applyClaimDirectoryPermissions(const FilePath& parent,
 
    return Success();
 }
+
+#endif
 
 Error ensureClaimDirectory(const FilePath& lockFilePath,
                            const FilePath& claimDirectory)
