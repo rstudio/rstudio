@@ -160,6 +160,9 @@ FileLinkProvider.prototype._lookupCache = function(text)
    if (Date.now() - entry.time > CACHE_TTL_MS)
    {
       delete this._cache[text];
+      var stale = this._cacheKeys.indexOf(text);
+      if (stale !== -1)
+         this._cacheKeys.splice(stale, 1);
       return null;
    }
    return entry.resolved;

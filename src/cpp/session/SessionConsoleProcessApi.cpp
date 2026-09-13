@@ -787,7 +787,11 @@ std::string resolveTerminalFilePath(const FilePath& cwd, const std::string& cand
       return std::string();
    }
 
-   FilePath path = module_context::resolveAliasedPath(candidate);
+   // Only expand home aliases through resolveAliasedPath(); it resolves
+   // other relative paths against the R session's working directory.
+   FilePath path = candidate == "~" || boost::algorithm::starts_with(candidate, "~/")
+         ? module_context::resolveAliasedPath(candidate)
+         : FilePath(candidate);
    if (!path.isAbsolute())
       path = cwd.completePath(candidate);
 

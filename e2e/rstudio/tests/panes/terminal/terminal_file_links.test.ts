@@ -11,6 +11,7 @@ import { TIMEOUTS } from '@utils/constants';
 import { AceEditor } from '@pages/ace_editor.page';
 import { clearPref, documentCloseAllNoSave, executeCommand, setPref, waitForActiveDocument } from '@utils/commands';
 import { seedSandboxFile } from '@utils/files';
+import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { captureResult, focusTerminal, killAllTerminals, openTerminal } from '@utils/terminal';
 
@@ -165,10 +166,22 @@ test.describe.serial('Terminal: file paths open with Ctrl/Cmd+Click', () => {
     test.skip(isWindows, 'the test drives a POSIX shell (cd + ls)');
 
     const fileName = 'link_relative.R';
-    const fullPath = await seedSandboxFile(page, sandbox.dir, fileName, FILE_CONTENT);
+    const terminalDir = `${sandbox.dir}/terminal`;
+    const fullPath = await seedSandboxFile(page, sandbox.dir, `terminal/${fileName}`, FILE_CONTENT);
+
+    // R stays in the sandbox root, with a same-named decoy. Resolving against
+    // R's working directory must not open that file instead of the terminal's.
+    await seedSandboxFile(page, sandbox.dir, fileName, 'stop("wrong working directory")\n');
+    expect(await captureResult(page, 'getwd()')).toBe(sandbox.dir);
     await focusTerminal(page);
 
-    await runInTerminal(page, `cd "${sandbox.dir}"`);
+    await runInTerminal(page, `cd "${terminalDir}"`);
+    // Wait for the session's cwd poller before hovering: the decoy is also a
+    // valid link while the terminal still reports its previous directory.
+    await expect.poll(() => captureResult(page,
+      `normalizePath(rstudioapi::terminalContext(rstudioapi::terminalList()[[1]])$working_dir) == normalizePath(${rPathLiteral(terminalDir)})`,
+    ), { timeout: TIMEOUTS.fileOpen }).toBe('TRUE');
+    await focusTerminal(page);
     await runInTerminal(page, 'ls');
     const link = await hoverFileLink(page, fileName);
     await clickFileLink(page, link);
