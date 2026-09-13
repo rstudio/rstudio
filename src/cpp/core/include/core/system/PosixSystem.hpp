@@ -136,6 +136,11 @@ core::Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername = t
 // signal (e.g. one owned by another user) counts as running
 bool isProcessRunning(pid_t pid);
 
+// check whether a process has exited but not yet been reaped; such a process
+// still "exists" to isProcessRunning() (kill(pid, 0) succeeds) but can no
+// longer hold or release anything
+bool isProcessZombie(pid_t pid);
+
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
 
 

@@ -28,6 +28,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/function.hpp>
 
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
@@ -64,6 +65,15 @@ public:
                                    boost::posix_time::seconds interval = s_refreshRate);
    
    // sub-classes implement locking semantics
+   //
+   // Blocking contract: acquire() and isLocked() coordinate with other threads
+   // in this process that touch the same lock path (the advisory implementation
+   // must, since closing any descriptor for a file drops every fcntl lock this
+   // process holds on it). A call can therefore wait on an in-flight acquire or
+   // probe of the same path on another thread, and a filesystem syscall stalled
+   // on one thread (e.g. an unresponsive network mount) can delay others acting
+   // on that path. Call from a context that tolerates this; there is no
+   // non-blocking or timed variant.
    virtual Error acquire(const FilePath& lockFilePath) = 0;
    virtual Error release() = 0;
    virtual FilePath lockFilePath() const = 0;
@@ -71,8 +81,19 @@ public:
    // NOTE: 'isLocked()' does not ask whether _this lock_ has the lock; rather,
    // whether _any lock_ has the lock. it's implemented as a virtual member function
    // to allow for polymorphism (ie, select method at runtime)
-   virtual bool isLocked(const FilePath& lockFilePath) const = 0;
-   
+   //
+   // Both overloads fail closed: an inspection failure reads as "locked", so
+   // a caller never removes or adopts what may be another session's live
+   // lock. The bool overload (implemented once here) logs the failure; the
+   // Error overload reports it (and leaves *pIsLocked set to true) for
+   // callers that need to tell the two apart.
+   virtual bool isLocked(const FilePath& lockFilePath) const;
+   virtual Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const = 0;
+
+   // the error every implementation reports for a lock held elsewhere;
+   // recognized by isNoLockAvailable()
+   static Error noLockAvailableError(const FilePath& lockFilePath);
+
    // warns if FileLock::initialize() hasn't been called yet
    static bool verifyInitialized();
    
@@ -95,6 +116,28 @@ public:
    static bool isLoggingEnabled() { return s_loggingEnabled; }
    static bool isLoadBalanced() { return s_isLoadBalanced; }
    static bool useSymlinks() { return s_useSymlinks; }
+
+   // How long a link-based lock whose owner is a live process on this host,
+   // but has stopped refreshing it, stays held: this many timeout intervals.
+   // A stalled process must not lose its lock the moment a refresh is late,
+   // but a PID check cannot see across hosts or PID namespaces sharing a lock
+   // directory, so an unrelated process there must not pin an orphaned lock
+   // forever either.
+   static int getLiveOwnerGraceMultiplier() { return s_liveOwnerGraceMultiplier; }
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   static void setLoadBalancedForTesting(bool isLoadBalanced)
+   {
+      s_isLoadBalanced = isLoadBalanced;
+   }
+   static void setUseSymlinksForTesting(bool useSymlinks)
+   {
+      s_useSymlinks = useSymlinks;
+   }
+   static void setLiveOwnerGraceMultiplierForTesting(int multiplier)
+   {
+      s_liveOwnerGraceMultiplier = multiplier;
+   }
+#endif
    static bool isNoLockAvailable(const Error& error)
    {
       return error == systemError(boost::system::errc::no_lock_available, ErrorLocation());
@@ -105,6 +148,7 @@ protected:
    static bool s_useSymlinks;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
+   static int s_liveOwnerGraceMultiplier;
    static bool s_loggingEnabled;
    static bool s_isLoadBalanced;
    static FilePath s_logFile;
@@ -115,12 +159,17 @@ class AdvisoryFileLock : public FileLock
 public:
    static void refresh();
    static void cleanUp();
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   static void setBeforeOpenForTesting(
+      const boost::function<void(const FilePath&)>& callback);
+#endif
    
    Error acquire(const FilePath& lockFilePath);
    Error release();
-   bool isLocked(const FilePath& lockFilePath) const;
+   using FileLock::isLocked;
+   Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const;
    FilePath lockFilePath() const;
-   
+
    AdvisoryFileLock();
    ~AdvisoryFileLock();
    
@@ -135,12 +184,27 @@ public:
    static bool isLockFileStale(const FilePath& lockFilePath);
    static void refresh();
    static void cleanUp();
-   
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+   // the claim file contenders for 'lockFilePath' elect themselves through
+   static FilePath claimPathForTesting(const FilePath& lockFilePath);
+   static FilePath legacyClaimPathForTesting(const FilePath& lockFilePath);
+   static void setBeforeReleaseForTesting(const boost::function<void()>& callback);
+   static void setBeforeRefreshForTesting(const boost::function<void()>& callback);
+   static void setBeforeWriteForTesting(const boost::function<Error(int)>& callback);
+   static void setBeforeClaimForTesting(const boost::function<void(const FilePath&)>& callback);
+   static void setAfterRenameForTesting(const boost::function<void(const FilePath&)>& callback);
+   static void setForceClaimDirectoryChownFailureForTesting(bool forceFailure);
+   static void setForceFallbackForTesting(bool forceFallback);
+#endif
+
    Error acquire(const FilePath& lockFilePath);
+   // Marks the held inode released. Its public entry remains as a released
+   // file (or a dangling symlink) until the next acquisition reclaims it.
    Error release();
-   bool isLocked(const FilePath& lockFilePath) const;
+   using FileLock::isLocked;
+   Error isLocked(const FilePath& lockFilePath, bool* pIsLocked) const;
    FilePath lockFilePath() const;
-   
+
    LinkBasedFileLock();
    ~LinkBasedFileLock();
    

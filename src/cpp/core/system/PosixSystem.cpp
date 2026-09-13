@@ -43,7 +43,9 @@
 #include <mach-o/dyld.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/proc_info.h>
+#include <sys/sysctl.h>
 #endif
 
 #ifdef __linux__
@@ -127,6 +129,8 @@
 #include <boost/scope_exit.hpp>
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
+
+#include <fmt/format.h>
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
@@ -2026,36 +2030,6 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
    return Success();
 }
 
-namespace {
-
-Error readStatFields(const FilePath& statFilePath,
-                     std::size_t numRequiredFields,
-                     std::vector<std::string>* pFields)
-{
-   if (!statFilePath.exists())
-      return core::fileNotFoundError(statFilePath, ERROR_LOCATION);
-
-   std::string str;
-   Error error = core::readStringFromFile(statFilePath, &str);
-   if (error)
-      return error;
-
-   boost::algorithm::split(*pFields, str,
-                           boost::is_any_of(" "),
-                           boost::algorithm::token_compress_on);
-   if (pFields->size() < numRequiredFields)
-   {
-      Error error = systemError(boost::system::errc::protocol_error,
-                                ERROR_LOCATION);
-      error.addProperty("stat-fields", str);
-      return error;
-   }
-
-   return Success();
-}
-
-} // anonymous namespace
-
 Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 {
    // get clock ticks (bail if we can't)
@@ -2093,17 +2067,41 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    }
 
 
-   // read the stat fields
-   boost::format fmt("/proc/%1%");
-   std::string dir = boost::str(fmt % pid);
-   FilePath procDir(dir);
-   std::vector<std::string> fields;
-   error = readStatFields(procDir.completeChildPath("stat"), 22, &fields);
+   // read the stat line; the command name is parenthesized and may itself
+   // contain spaces, so split only what follows its closing parenthesis
+   FilePath statFile(fmt::format("/proc/{}/stat", pid));
+   std::string contents;
+   error = core::readStringFromFile(statFile, &contents);
    if (error)
       return error;
 
+   std::size_t nameEnd = contents.rfind(')');
+   if (nameEnd == std::string::npos)
+   {
+      Error parseError = systemError(boost::system::errc::protocol_error,
+                                     ERROR_LOCATION);
+      parseError.addProperty("stat-fields", contents);
+      return parseError;
+   }
+
+   // fields after the name, starting with the state (field 3 of the line);
+   // starttime is field 22 of the line
+   std::vector<std::string> fields;
+   boost::algorithm::split(fields,
+                           boost::algorithm::trim_copy(contents.substr(nameEnd + 1)),
+                           boost::is_any_of(" "),
+                           boost::algorithm::token_compress_on);
+   const std::size_t startTimeIndex = 22 - 3;
+   if (fields.size() <= startTimeIndex)
+   {
+      Error parseError = systemError(boost::system::errc::protocol_error,
+                                     ERROR_LOCATION);
+      parseError.addProperty("stat-fields", contents);
+      return parseError;
+   }
+
    // get the creation time and return success
-   double startTicks = safe_convert::stringTo<double>(fields[21], 0);
+   double startTicks = safe_convert::stringTo<double>(fields[startTimeIndex], 0);
    double startSecs = (startTicks / clockTicks) + bootTime;
    *pCreationTime = date_time::timeFromSecondsSinceEpoch(startSecs);
    return Success();
@@ -2197,10 +2195,31 @@ Error processInfo(const std::string& process,
    return Success();
 }
 
+#ifdef __APPLE__
+Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
+{
+   struct kinfo_proc info;
+   std::size_t size = sizeof(info);
+   int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(pid) };
+   if (::sysctl(name, 4, &info, &size, nullptr, 0) == -1)
+      return systemError(errno, ERROR_LOCATION);
+
+   // sysctl reports success with no data when the process does not exist
+   if (size == 0)
+      return systemError(ESRCH, ERROR_LOCATION);
+
+   const struct timeval& start = info.kp_proc.p_starttime;
+   double startSecs =
+      static_cast<double>(start.tv_sec) + start.tv_usec / 1000000.0;
+   *pCreationTime = date_time::timeFromSecondsSinceEpoch(startSecs);
+   return Success();
+}
+#else
 Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 {
    return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
+#endif
 #endif
 
 bool isProcessRunning(pid_t pid)
@@ -2213,6 +2232,83 @@ bool isProcessRunning(pid_t pid)
    int result = kill(pid, 0);
    return result == 0 || errno == EPERM;
 }
+
+#ifdef __linux__
+namespace {
+
+// the state character of a /proc/<pid>/stat or /proc/<pid>/task/<tid>/stat
+// line; it follows the parenthesized command name, which may itself contain
+// spaces and parentheses
+bool readProcState(const FilePath& statPath, char* pState)
+{
+   std::string contents;
+   Error error = core::readStringFromFile(statPath, &contents);
+   if (error)
+      return false;
+
+   std::size_t end = contents.rfind(')');
+   if (end == std::string::npos || end + 2 >= contents.size())
+      return false;
+
+   *pState = contents[end + 2];
+   return true;
+}
+
+} // anonymous namespace
+
+bool isProcessZombie(pid_t pid)
+{
+   FilePath procDir(fmt::format("/proc/{}", pid));
+   char state = 0;
+   if (!readProcState(procDir.completePath("stat"), &state) || state != 'Z')
+      return false;
+
+   // /proc/<pid>/stat describes the thread group leader, which reads as a
+   // zombie as soon as the main thread exits even while other threads run
+   // on. The process is only gone once no thread is left alive; whenever
+   // that cannot be established (an unreadable task, or a thread set that
+   // changed while being scanned, e.g. a worker replaced itself) err towards
+   // treating it as alive.
+   FilePath taskDir = procDir.completePath("task");
+   std::vector<FilePath> tasks;
+   Error error = taskDir.getChildren(tasks);
+   if (error)
+      return false;
+
+   for (const FilePath& task : tasks)
+   {
+      char taskState = 0;
+      if (!readProcState(task.completePath("stat"), &taskState))
+         return false;
+      if (taskState != 'Z' && taskState != 'X')
+         return false;
+   }
+
+   std::vector<FilePath> tasksAfter;
+   error = taskDir.getChildren(tasksAfter);
+   if (error)
+      return false;
+
+   std::sort(tasks.begin(), tasks.end());
+   std::sort(tasksAfter.begin(), tasksAfter.end());
+   return tasks == tasksAfter;
+}
+#elif defined(__APPLE__)
+bool isProcessZombie(pid_t pid)
+{
+   struct kinfo_proc info;
+   std::size_t size = sizeof(info);
+   int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, static_cast<int>(pid) };
+   if (::sysctl(name, 4, &info, &size, nullptr, 0) == -1 || size == 0)
+      return false;
+   return info.kp_proc.p_stat == SZOMB;
+}
+#else
+bool isProcessZombie(pid_t)
+{
+   return false;
+}
+#endif
 
 std::string ProcessInfo::getUsername() const
 {

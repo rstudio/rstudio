@@ -32,6 +32,11 @@
 
 #include <gtest/gtest.h>
 
+#ifdef __linux__
+# include <sys/prctl.h>
+#endif
+
+#include <core/DateTime.hpp>
 #include <core/Thread.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/PosixChildProcessTracker.hpp>
@@ -76,6 +81,49 @@ static std::string getNoGroupName()
 
    EXPECT_FALSE(group.empty());
    return group;
+}
+
+TEST(PosixTests, CreationTimeParsesCommandNameWithSpaces)
+{
+   // /proc/<pid>/stat wraps the command name in parentheses; a name with
+   // spaces (or parentheses) must not shift the start-time field
+   int ready[2];
+   int done[2];
+   ASSERT_EQ(0, ::pipe(ready));
+   ASSERT_EQ(0, ::pipe(done));
+
+   pid_t child = ::fork();
+   ASSERT_NE(-1, child);
+   if (child == 0)
+   {
+      ::close(ready[0]);
+      ::close(done[1]);
+      ::prctl(PR_SET_NAME, "a b (c) d");
+      (void)::write(ready[1], "x", 1);
+      char signal;
+      (void)::read(done[0], &signal, 1);
+      ::_exit(0);
+   }
+
+   ::close(ready[1]);
+   ::close(done[0]);
+   char signal = 0;
+   ASSERT_EQ(1, ::read(ready[0], &signal, 1));
+
+   ProcessInfo info;
+   info.pid = child;
+   boost::posix_time::ptime created;
+   Error error = info.creationTime(&created);
+   EXPECT_FALSE(error) << error.asString();
+
+   double startSeconds = date_time::secondsSinceEpoch(created);
+   double now = date_time::secondsSinceEpoch();
+   EXPECT_LE(startSeconds, now + 5);
+   EXPECT_GE(startSeconds, now - 120);
+
+   ASSERT_EQ(1, ::write(done[1], "x", 1));
+   int status;
+   ASSERT_EQ(child, ::waitpid(child, &status, 0));
 }
 
 #endif
