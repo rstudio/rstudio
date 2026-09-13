@@ -75,12 +75,18 @@ export class SourcePaneActions {
    * shows up as four "flaky" rows in a CI report (ghost text in run
    * 34627740555, the NES rename tests in run 34637770965).
    *
-   * assistantRequestCompletions is the explicit re-ask (Request Completions
-   * in the menu). It schedules the same suggestion timer the automatic path
-   * uses, so the answer can come back as ghost text or as a next-edit
-   * suggestion. The assertion still fails if nothing ever arrives.
+   * `rerequest` is the command that re-asks, and it has to match the kind of
+   * suggestion being waited for. assistantRequestCompletions (Request
+   * Completions in the menu) only ever asks for an at-cursor completion: its
+   * empty-result fallback to a next-edit request is Copilot-only
+   * (shouldFallbackToNes() is !isPositAi), so under Posit AI it re-paints
+   * "No completions available" without a next-edit request ever going out
+   * (run 34711642587). assistantAcceptNextEditSuggestion with no suggestion
+   * on screen calls requestNextEditSuggestions() directly, the same request
+   * the automatic document-change path makes. The assertion still fails if
+   * nothing ever arrives.
    */
-  async waitForSuggestion(indicator: Locator, timeout: number): Promise<void> {
+  async waitForSuggestion(indicator: Locator, timeout: number, rerequest: string): Promise<void> {
     const deadline = Date.now() + timeout;
     for (;;) {
       const remaining = Math.max(deadline - Date.now(), 1000);
@@ -91,10 +97,10 @@ export class SourcePaneActions {
         if (Date.now() >= deadline)
           throw err;
         if (await this.sourcePane.statusBarNoCompletions.isVisible().catch(() => false)) {
-          console.log('  No completions available -- re-requesting');
+          console.log(`  No completions available -- re-requesting via ${rerequest}`);
           // Don't let a momentarily-disabled command replace the real
           // diagnostic; the loop's own failure is the one worth reporting.
-          await executeCommand(this.page, 'assistantRequestCompletions').catch((e) =>
+          await executeCommand(this.page, rerequest).catch((e) =>
             console.log(`  re-request skipped: ${e}`),
           );
         }
@@ -103,11 +109,11 @@ export class SourcePaneActions {
   }
 
   async waitForGhostText(timeout = TIMEOUTS.ghostText): Promise<void> {
-    await this.waitForSuggestion(this.sourcePane.ghostText.first(), timeout);
+    await this.waitForSuggestion(this.sourcePane.ghostText.first(), timeout, 'assistantRequestCompletions');
   }
 
   async waitForNesSuggestion(timeout = TIMEOUTS.nesApply): Promise<void> {
-    await this.waitForSuggestion(this.sourcePane.nesIndicator, timeout);
+    await this.waitForSuggestion(this.sourcePane.nesIndicator, timeout, 'assistantAcceptNextEditSuggestion');
   }
 
   async acceptNesRename(): Promise<string> {
