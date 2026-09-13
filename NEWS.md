@@ -1,6 +1,7 @@
 ## RStudio 2026.10.0 "Blue Mistflower" Release Notes
 
 ### New
+- ([#18803](https://github.com/rstudio/rstudio/issues/18803)): RStudio Desktop now logs detailed renderer, GPU, and utility process failures to help diagnose crashes.
 - ([#18692](https://github.com/rstudio/rstudio/issues/18692)): The active document tab now has a bold label and a blue overline to make it easier to identify. This is enabled by default and can be disabled in Global Options > General > Basic > Other.
 - ([#17787](https://github.com/rstudio/rstudio/issues/17787)): Columns in the data viewer can now be hidden and shown from the summary panel, individually or all at once.
 - ([#18738](https://github.com/rstudio/rstudio/issues/18738)): Reduced the disk space used by RStudio installations: Copilot Language Server binaries for other platforms are no longer installed, JavaScript source maps are no longer packaged, GWT symbol maps are stored compressed, and macOS application bundles are now transparently compressed on disk.

@@ -36,6 +36,7 @@ import {
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
+import { registerProcessDiagnostics } from './process-diagnostics';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
@@ -272,6 +273,8 @@ export class Application implements AppState {
   }
 
   private registerAppEvents() {
+    registerProcessDiagnostics();
+
     app.on('before-quit', () => {
       app.releaseSingleInstanceLock();
 
