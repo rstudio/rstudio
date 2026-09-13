@@ -33,6 +33,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
@@ -143,6 +145,26 @@ public class EditorCommandManager
                }
             });
 
+      // The handler above only covers editors that load from here on. This
+      // runs from an AceEditor.load() callback, and ExternalJavaScriptLoader
+      // drains its callbacks one per scheduler tick, so an editor created
+      // earlier in that queue (the Console input) can attach and fire
+      // EditorLoadedEvent before the handler exists. Load once the session is
+      // up as well, so a saved editor binding reaches the Console even when no
+      // source document is open; rebindCommand() fires
+      // SetEditorCommandBindingsEvent, which live editors already honor.
+      //
+      // Wait for SessionInitEvent rather than loading here: on the server Ace
+      // can finish loading before client_init returns, and an RPC sent before
+      // then carries no client id, so the session rejects it with
+      // INVALID_CLIENT_ID and the client disconnects itself. Ace can also
+      // finish after the session is up, in which case the event has already
+      // fired and we load right away.
+      if (session_.getSessionInfo() != null)
+         loadBindings();
+      else
+         events_.addHandler(SessionInitEvent.TYPE, event -> loadBindings());
+
       events_.addHandler(CopySourcePathEvent.TYPE, event ->
       {
          String path = event.getPath();
@@ -158,10 +180,12 @@ public class EditorCommandManager
 
    @Inject
    private void initialize(EventBus events,
-                           FilesServerOperations files)
+                           FilesServerOperations files,
+                           Session session)
    {
       events_ = events;
       files_ = files;
+      session_ = session;
    }
 
    public static final native JsArray<AceCommand> getDefaultAceCommands() /*-{
@@ -275,4 +299,5 @@ public class EditorCommandManager
    // Injected ----
    private EventBus events_;
    private FilesServerOperations files_;
+   private Session session_;
 }

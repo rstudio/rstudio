@@ -813,11 +813,34 @@ export async function openProject(
   // settle before polling the bridge. On Desktop this is a no-op.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
 
-  await page.waitForFunction(
-    () => window.rstudio?.ready === true,
-    null,
-    { timeout, polling: 50 },
-  );
+  // A Desktop project switch navigates the window to the new session, and
+  // GWT's bootstrap has no retry: if the main *.cache.js fails to load the
+  // window stays blank forever (run 34637770965 saw net::ERR_NO_BUFFER_SPACE
+  // on Windows, with `rstudio.nocache.js` loaded and nothing after it). So
+  // if ready has not flipped within a grace period AND the automation bridge
+  // was never installed -- window.rstudio is still the bootstrap's global
+  // function, or missing, rather than the bridge object -- reload once to
+  // refetch the bootstrap. A session that is merely slow (bridge installed,
+  // ready still false) is left alone.
+  const started = Date.now();
+  const grace = Math.min(20000, timeout);
+  const readyInGrace = await page
+    .waitForFunction(() => window.rstudio?.ready === true, null, { timeout: grace, polling: 50 })
+    .then(() => true, () => false);
+  if (!readyInGrace) {
+    const bridgeInstalled = await page
+      .evaluate(() => typeof window.rstudio === 'object' && window.rstudio !== null)
+      .catch(() => false);
+    if (!bridgeInstalled) {
+      console.log(`openProject: automation bridge missing ${grace}ms after the switch; reloading once`);
+      await page.reload({ timeout: 30000 }).catch(() => {});
+    }
+    await page.waitForFunction(
+      () => window.rstudio?.ready === true,
+      null,
+      { timeout: Math.max(timeout - (Date.now() - started), 1000), polling: 50 },
+    );
+  }
 
   // ready=true tells us the workbench is wired up, but SessionInfo can
   // still report the previous project's path for a beat -- and the project
