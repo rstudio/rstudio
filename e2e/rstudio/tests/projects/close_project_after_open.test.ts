@@ -16,8 +16,10 @@ import { getPref } from '@utils/commands';
 //
 // This test leaves no gap between the open and the close: no console command
 // runs in the new session, so nothing forces the R-side detect-changes pass
-// that produced the corrected event. A regression fails inside
-// closeProjectIfOpen, which blocks on project.isActive() === false.
+// that produced the corrected event. closeProjectIfOpen sweeps the prompt
+// away if it does appear (so the other project tests survive a regression),
+// which is why the assertion here is on its return value: true means the
+// prompt was shown and dismissed, and that is the bug.
 test.describe('Close project immediately after open', { tag: ['@projects'] }, () => {
   const sandbox = useSuiteSandbox();
 
@@ -35,7 +37,10 @@ test.describe('Close project immediately after open', { tag: ['@projects'] }, ()
     ).toBe('never');
 
     await createAndOpenProject(page, sandbox.dir, 'close_after_open');
-    await closeProjectIfOpen(page);
+    expect(
+      await closeProjectIfOpen(page),
+      'Close Project should not raise the "Save workspace image?" prompt',
+    ).toBe(false);
 
     expect(
       await page.evaluate(() => window.rstudio?.project?.isActive()),
