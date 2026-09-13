@@ -109,6 +109,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CHECK_UNEXPECTED_ASSIGNMENT_IN_FUNCTION_CALL = "check_unexpected_assignment_in_function_call";
    public static final String WARN_IF_NO_SUCH_VARIABLE_IN_SCOPE = "warn_if_no_such_variable_in_scope";
    public static final String WARN_VARIABLE_DEFINED_BUT_NOT_USED = "warn_variable_defined_but_not_used";
+   public static final String WARN_CONFUSABLE_CHARACTERS = "warn_confusable_characters";
    public static final String AUTO_DISCOVER_PACKAGE_DEPENDENCIES = "auto_discover_package_dependencies";
    public static final String AUTO_APPEND_NEWLINE = "auto_append_newline";
    public static final String STRIP_TRAILING_WHITESPACE = "strip_trailing_whitespace";
@@ -125,6 +126,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SYNTAX_COLOR_CONSOLE = "syntax_color_console";
    public static final String HIGHLIGHT_CONSOLE_ERRORS = "highlight_console_errors";
    public static final String SCROLL_PAST_END_OF_DOCUMENT = "scroll_past_end_of_document";
+   public static final String SMOOTH_SCROLLING = "smooth_scrolling";
    public static final String HIGHLIGHT_R_FUNCTION_CALLS = "highlight_r_function_calls";
    public static final String COLOR_PREVIEW = "color_preview";
    public static final String RAINBOW_PARENTHESES = "rainbow_parentheses";
@@ -1349,6 +1351,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   public PrefValue<Boolean> warnConfusableCharacters()
+   {
+      return bool(
+         "warn_confusable_characters",
+         _constants.warnConfusableCharactersTitle(), 
+         _constants.warnConfusableCharactersDescription(), 
+         true);
+   }
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    public PrefValue<Boolean> autoDiscoverPackageDependencies()
@@ -1548,6 +1562,18 @@ public class UserPrefsAccessor extends Prefs
          "scroll_past_end_of_document",
          _constants.scrollPastEndOfDocumentTitle(), 
          _constants.scrollPastEndOfDocumentDescription(), 
+         false);
+   }
+
+   /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   public PrefValue<Boolean> smoothScrolling()
+   {
+      return bool(
+         "smooth_scrolling",
+         _constants.smoothScrollingTitle(), 
+         _constants.smoothScrollingDescription(), 
          false);
    }
 
@@ -2866,7 +2892,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    * Use a bold label and a blue overline to highlight the active document tab.
     */
    public PrefValue<Boolean> highlightActiveTabs()
    {
@@ -4840,6 +4866,8 @@ public class UserPrefsAccessor extends Prefs
          warnIfNoSuchVariableInScope().setValue(layer, source.getBool("warn_if_no_such_variable_in_scope"));
       if (source.hasKey("warn_variable_defined_but_not_used"))
          warnVariableDefinedButNotUsed().setValue(layer, source.getBool("warn_variable_defined_but_not_used"));
+      if (source.hasKey("warn_confusable_characters"))
+         warnConfusableCharacters().setValue(layer, source.getBool("warn_confusable_characters"));
       if (source.hasKey("auto_discover_package_dependencies"))
          autoDiscoverPackageDependencies().setValue(layer, source.getBool("auto_discover_package_dependencies"));
       if (source.hasKey("auto_append_newline"))
@@ -4872,6 +4900,8 @@ public class UserPrefsAccessor extends Prefs
          highlightConsoleErrors().setValue(layer, source.getBool("highlight_console_errors"));
       if (source.hasKey("scroll_past_end_of_document"))
          scrollPastEndOfDocument().setValue(layer, source.getBool("scroll_past_end_of_document"));
+      if (source.hasKey("smooth_scrolling"))
+         smoothScrolling().setValue(layer, source.getBool("smooth_scrolling"));
       if (source.hasKey("highlight_r_function_calls"))
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
       if (source.hasKey("color_preview"))
@@ -5393,6 +5423,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(checkUnexpectedAssignmentInFunctionCall());
       prefs.add(warnIfNoSuchVariableInScope());
       prefs.add(warnVariableDefinedButNotUsed());
+      prefs.add(warnConfusableCharacters());
       prefs.add(autoDiscoverPackageDependencies());
       prefs.add(autoAppendNewline());
       prefs.add(stripTrailingWhitespace());
@@ -5409,6 +5440,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(syntaxColorConsole());
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
+      prefs.add(smoothScrolling());
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());

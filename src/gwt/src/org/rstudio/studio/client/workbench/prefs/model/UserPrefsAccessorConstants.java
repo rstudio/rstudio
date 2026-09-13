@@ -580,6 +580,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String warnVariableDefinedButNotUsedDescription();
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   @DefaultStringValue("Warn about characters that look like ASCII but are not")
+   String warnConfusableCharactersTitle();
+   @DefaultStringValue("Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes")
+   String warnConfusableCharactersDescription();
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    @DefaultStringValue("Detect missing R packages in the editor")
@@ -710,6 +718,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String scrollPastEndOfDocumentTitle();
    @DefaultStringValue("Whether to allow scrolling past the end of a file.")
    String scrollPastEndOfDocumentDescription();
+
+   /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   @DefaultStringValue("Smooth scrolling")
+   String smoothScrollingTitle();
+   @DefaultStringValue("Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.")
+   String smoothScrollingDescription();
 
    /**
     * Whether to highlight R function calls in the code editor.
@@ -1496,11 +1512,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String wrapTabNavigationDescription();
 
    /**
-    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    * Use a bold label and a blue overline to highlight the active document tab.
     */
-   @DefaultStringValue("Highlight active document and pane tabs")
+   @DefaultStringValue("Highlight active document tab")
    String highlightActiveTabsTitle();
-   @DefaultStringValue("Use a bold label and a blue overline to highlight the active document and pane tabs.")
+   @DefaultStringValue("Use a bold label and a blue overline to highlight the active document tab.")
    String highlightActiveTabsDescription();
 
    /**

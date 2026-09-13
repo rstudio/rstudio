@@ -619,6 +619,16 @@
    clear = function() { .rs.clearUserPref("warn_variable_defined_but_not_used") }
 )
 
+# Warn about characters that look like ASCII but are not
+#
+# Whether to warn about characters in R code that look like ASCII but are not,
+# such as the Cyrillic letter 'c' or typographic quotes
+.rs.uiPrefs$warnConfusableCharacters <- list(
+   get = function() { .rs.getUserPref("warn_confusable_characters") },
+   set = function(value) { .rs.setUserPref("warn_confusable_characters", value) },
+   clear = function() { .rs.clearUserPref("warn_confusable_characters") }
+)
+
 # Detect missing R packages in the editor
 #
 # Whether to automatically discover and offer to install missing R package
@@ -767,6 +777,16 @@
    get = function() { .rs.getUserPref("scroll_past_end_of_document") },
    set = function(value) { .rs.setUserPref("scroll_past_end_of_document", value) },
    clear = function() { .rs.clearUserPref("scroll_past_end_of_document") }
+)
+
+# Smooth scrolling
+#
+# Whether the source editor animates scrolling, e.g. when moving the cursor or
+# jumping to a line, instead of jumping instantly.
+.rs.uiPrefs$smoothScrolling <- list(
+   get = function() { .rs.getUserPref("smooth_scrolling") },
+   set = function(value) { .rs.setUserPref("smooth_scrolling", value) },
+   clear = function() { .rs.clearUserPref("smooth_scrolling") }
 )
 
 # Highlight R function calls
@@ -1668,10 +1688,9 @@
    clear = function() { .rs.clearUserPref("wrap_tab_navigation") }
 )
 
-# Highlight active document and pane tabs
+# Highlight active document tab
 #
-# Use a bold label and a blue overline to highlight the active document and pane
-# tabs.
+# Use a bold label and a blue overline to highlight the active document tab.
 .rs.uiPrefs$highlightActiveTabs <- list(
    get = function() { .rs.getUserPref("highlight_active_tabs") },
    set = function(value) { .rs.setUserPref("highlight_active_tabs", value) },

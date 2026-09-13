@@ -607,7 +607,9 @@ export class Application implements AppState {
         {
           label: i18next.t('applicationTs.newRstudioWindow'),
           click: () => {
-            this.appLaunch?.launchRStudio({ workingDirectory: appState().projectDirectory });
+            // this command starts a new, separate session: no project, and the user's
+            // default working directory rather than anything from this window (#15669)
+            this.appLaunch?.launchRStudio({ noProject: true });
           },
         },
       ]);

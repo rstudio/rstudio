@@ -312,6 +312,14 @@ public class LintManager
                {
                   if (context.token.isInvalid())
                      return;
+
+                  // add lookalike-character warnings alongside the R diagnostics
+                  if (userPrefs_.warnConfusableCharacters().getValue())
+                  {
+                     JsArray<LintItem> confusables = ConfusableCharacterLinter.lint(docDisplay_);
+                     for (int i = 0; i < confusables.length(); i++)
+                        lint.push(confusables.get(i));
+                  }
                   
                   // lint yaml for rmd files and R chunks within rmd files
                   boolean isRmd = docDisplay_.getFileType().isRmd();
