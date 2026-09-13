@@ -1,6 +1,7 @@
 import { test, expect } from '@fixtures/rstudio.fixture';
 import { clearPref, dismissAllModals, executeCommand, getPref, resetLayoutZoom, setPref } from '@utils/commands';
 import { executeInConsole } from '@pages/console_pane.page';
+import { TIMEOUTS } from '@utils/constants';
 import { writeAndOpenFile, closeAndDeleteSandboxFiles } from '@utils/files';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { DARK_THEME, LIGHT_THEME, expectThemeStylesheet } from '@utils/theme';
@@ -38,12 +39,17 @@ async function expectHighlight(tab: Locator, enabled: boolean, accent?: string):
   await expect.poll(() => indicator(tab).then(bar => bar.content !== 'none')).toBe(enabled);
   await expect(tab.locator('.gwt-Label')).toHaveCSS('-webkit-text-stroke-width', enabled ? '0.4px' : '0px');
   if (enabled) {
-    const bar = await indicator(tab);
-    expect(bar).toMatchObject({ height: '4px', topWidth: '3px', sideWidth: '1px', radius: '4px', position: 'fixed' });
-    // The overlay escapes the tab strip's clipping and starts 1px above the tab.
-    expect(bar.top).toBeCloseTo(bar.tabTop - 1, 1);
-    if (accent !== undefined)
-      expect(bar.color).toBe(accent);
+    // Selecting a partly hidden tab animates the strip to reveal it, and the
+    // overlay stays in its clipped (absolute) form until that scroll settles,
+    // so poll the geometry rather than reading it once.
+    await expect(async () => {
+      const bar = await indicator(tab);
+      expect(bar).toMatchObject({ height: '4px', topWidth: '3px', sideWidth: '1px', radius: '4px', position: 'fixed' });
+      // The overlay escapes the tab strip's clipping and starts 1px above the tab.
+      expect(bar.top).toBeCloseTo(bar.tabTop - 1, 1);
+      if (accent !== undefined)
+        expect(bar.color).toBe(accent);
+    }).toPass({ timeout: TIMEOUTS.fileOpen });
   }
 }
 
