@@ -121,6 +121,47 @@ describe('MainWindow', () => {
       await new Promise(setImmediate);
       assert.isTrue(fake.quit.calledOnce);
     });
-  });
 
+    // simulates the healthy path: the renderer answers the probe and quitR()
+    // resolves as soon as the GWT save prompt is on screen, which is well
+    // before the user has answered it (#18818)
+    function closeEventWithLiveRenderer() {
+      const fake = {
+        geometrySaved: true,
+        quitConfirmed: false,
+        sessionProcess: { exitCode: null },
+        window: {},
+        executeJavaScript: sinon.stub().resolves(true),
+        quit: sinon.stub(),
+      };
+      const close = () => {
+        const event = { preventDefault: sinon.stub() };
+        MainWindow.prototype.closeEvent.call(fake as unknown as MainWindow, event as unknown as Electron.Event);
+        return event;
+      };
+      return { fake, close };
+    }
+
+    it('does not confirm the quit just because quitR() was dispatched', async () => {
+      const { fake, close } = closeEventWithLiveRenderer();
+      close();
+      await new Promise(setImmediate);
+      assert.isTrue(fake.executeJavaScript.calledWith('window.desktopHooks.quitR()'));
+      assert.isFalse(fake.quitConfirmed);
+    });
+
+    it('still intercepts the close after a cancelled quit', async () => {
+      const { fake, close } = closeEventWithLiveRenderer();
+      close();
+      await new Promise(setImmediate);
+
+      // the user cancelled, so the session is still running: the next close
+      // must run the quit sequence again rather than closing the window
+      const second = close();
+      await new Promise(setImmediate);
+      assert.isTrue(second.preventDefault.calledOnce);
+      assert.strictEqual(fake.executeJavaScript.withArgs('window.desktopHooks.quitR()').callCount, 2);
+      assert.isTrue(fake.quit.notCalled);
+    });
+  });
 });

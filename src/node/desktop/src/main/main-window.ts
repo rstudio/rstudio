@@ -355,9 +355,12 @@ export class MainWindow extends GwtWindow {
           // exit to avoid user having to kill/force-close the application
           quit();
         } else {
-          this.executeJavaScript('window.desktopHooks.quitR()')
-            .then(() => (this.quitConfirmed = true))
-            .catch((error: unknown) => logger().logError(error));
+          // quitR() resolves once the quit sequence has been dispatched, not
+          // once the user has answered its prompts, so the quit is confirmed
+          // only when the session actually exits and quit() runs; confirming
+          // it here left a cancelled quit disarming every later close
+          // (https://github.com/rstudio/rstudio/issues/18818)
+          this.executeJavaScript('window.desktopHooks.quitR()').catch((error: unknown) => logger().logError(error));
         }
       })
       .catch((error: unknown) => {
