@@ -16,6 +16,7 @@
 - ([#14226](https://github.com/rstudio/rstudio/issues/14226)): Files can now be opened in the source editor from the Terminal pane with `rstudio <file>[:line[:column]]` (macOS, Linux, and RStudio Server).
 - ([#15261](https://github.com/rstudio/rstudio/issues/15261)): The Insert Pipe Operator command (Ctrl+Shift+M) now inserts `+` when the cursor is within a ggplot2 chain. This can be disabled in Global Options > Code > Editing.
 - ([#12379](https://github.com/rstudio/rstudio/issues/12379)): Customized editor keyboard shortcuts (e.g. Remove Word Left) now also apply to the Console input.
+- ([#18774](https://github.com/rstudio/rstudio/issues/18774)): RStudio now runs the newest compatible Posit Assistant installation among the copy bundled with RStudio, the system-wide installation, and the user's own, instead of always preferring the user's own. A per-user installation no longer shadows a newer bundled or system-wide copy.
 
 ### Fixed
 - ([#18784](https://github.com/rstudio/rstudio/issues/18784)): Fixed an issue where quitting, closing a project, or switching projects shortly after a session restart prompted to save the workspace image even when Save workspace was set to Never.

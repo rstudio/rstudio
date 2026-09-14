@@ -14,8 +14,12 @@
  */
 
 #include "ChatInstallation.hpp"
+#include "ChatTypes.hpp"
 #include "ChatConstants.hpp"
 #include "ChatLogging.hpp"
+
+#include <algorithm>
+#include <vector>
 
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
@@ -92,61 +96,132 @@ InstallSearchPaths positAssistantSearchPaths()
    return paths;
 }
 
-core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
+namespace {
+
+using types::SemanticVersion;
+
+// One tier's installation as the resolver ranks it.
+struct InstallCandidate
 {
-   // 1. Check user data directory (XDG-based, platform-appropriate)
-   // Linux/macOS: ~/.local/share/rstudio/pai/bin
-   // Windows: %LOCALAPPDATA%/rstudio/pai/bin
-   bool userInstallPresent = verifyPositAiInstallation(paths.userDataPath);
-   if (paths.userInstallEnabled && userInstallPresent)
+   InstallCandidate() : tier(""), compatible(false) {}
+
+   core::FilePath path;
+   const char* tier;
+
+   // protocol.json declares the protocol this build speaks; a missing file
+   // counts as incompatible, matching hasProtocolMismatch()
+   bool compatible;
+
+   // package.json's version; 0.0.0 when the file is missing or unparsable, so
+   // an install that cannot say what it is never claims to be newer
+   SemanticVersion version;
+   std::string versionText;
+};
+
+// Ranks a compatible installation above an incompatible one, and a newer
+// version above an older one. Equal candidates are not ordered, so a stable
+// sort keeps them in the tier order they were collected in.
+bool outranks(const InstallCandidate& lhs, const InstallCandidate& rhs)
+{
+   if (lhs.compatible != rhs.compatible)
+      return lhs.compatible;
+   return lhs.version > rhs.version;
+}
+
+InstallCandidate describeInstallation(const core::FilePath& path, const char* tier)
+{
+   InstallCandidate candidate;
+   candidate.path = path;
+   candidate.tier = tier;
+   candidate.compatible = getInstalledProtocolVersion(path) == kProtocolVersion;
+   candidate.versionText = getInstalledVersion(path);
+   if (!candidate.version.parse(candidate.versionText))
+      candidate.version = SemanticVersion();
+   return candidate;
+}
+
+// The valid installations that compete by version, best first. Ties keep the
+// order collected here: user, then system, then bundled. A pinned
+// posit-assistant-path never competes -- it is used outright or ends the
+// search -- so the system tier is left out when the path is pinned, and the
+// bundled copy with it (a pinned path that holds no installation must not
+// fall back to the shipped version).
+std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
+                                               bool includeUserInstall)
+{
+   std::vector<InstallCandidate> candidates;
+
+   if (includeUserInstall && paths.userInstallEnabled &&
+       verifyPositAiInstallation(paths.userDataPath))
    {
-      DLOG("Using user-level AI installation: {}", paths.userDataPath.getAbsolutePath());
-      return paths.userDataPath;
+      candidates.push_back(describeInstallation(paths.userDataPath, "user-level"));
    }
 
+   if (!paths.pinnedSystemPath)
+   {
+      if (verifyPositAiInstallation(paths.systemPath))
+         candidates.push_back(describeInstallation(paths.systemPath, "system-wide"));
+      if (verifyPositAiInstallation(paths.bundledPath))
+         candidates.push_back(describeInstallation(paths.bundledPath, "bundled"));
+   }
+
+   std::stable_sort(candidates.begin(), candidates.end(), outranks);
+   return candidates;
+}
+
+} // anonymous namespace
+
+core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
+{
    // An installation left in the user data directory before the administrator
    // disabled user-managed installs -- or copied there to get around the
    // setting -- is ignored, never removed. That silently changes which version
    // runs, and can be a downgrade, so say so once per session (locate() runs
    // on every status, verify, and chat request).
-   if (userInstallPresent && RS_ONCE())
+   if (!paths.userInstallEnabled && verifyPositAiInstallation(paths.userDataPath) &&
+       RS_ONCE())
+   {
       WLOG("Ignoring user-level AI installation at {}: Posit Assistant "
            "installation is managed by the administrator",
            paths.userDataPath.getAbsolutePath());
-
-   // 2. Check the system-wide installation: posit-assistant-path when set, and
-   // otherwise the XDG config directory (/etc/rstudio/pai/bin on Linux and
-   // macOS, C:/ProgramData/rstudio/pai/bin on Windows)
-   if (verifyPositAiInstallation(paths.systemPath))
-   {
-      DLOG("Using system-wide AI installation: {}", paths.systemPath.getAbsolutePath());
-      return paths.systemPath;
    }
 
-   // A path the administrator pinned but that holds no installation ends the
-   // search: falling through to the bundled copy would answer a typo or an
-   // unmounted share with a silent downgrade to whatever version shipped
-   // with RStudio.
+   // posit-assistant-path is the administrator's explicit choice: it is used
+   // as-is, even when a newer copy exists elsewhere. A pinned path that holds
+   // no installation ends the search for read-only copies: falling through to
+   // the bundled one would answer a typo or an unmounted share with a silent
+   // downgrade to whatever version shipped with RStudio.
    if (paths.pinnedSystemPath)
    {
+      if (verifyPositAiInstallation(paths.systemPath))
+      {
+         DLOG("Using AI installation pinned by posit-assistant-path: {}",
+              paths.systemPath.getAbsolutePath());
+         return paths.systemPath;
+      }
+
       // Warn once per session: locate() runs on every status, verify, and chat
       // request, and a misconfigured path would otherwise flood the log.
       if (RS_ONCE())
          WLOG("posit-assistant-path set but installation invalid: {}",
               paths.systemPath.getAbsolutePath());
    }
-   else
+
+   // Among the remaining tiers -- the user data directory (Linux/macOS:
+   // ~/.local/share/rstudio/pai/bin, Windows: %LOCALAPPDATA%/rstudio/pai/bin),
+   // the XDG system config directory (/etc/rstudio/pai/bin, or
+   // C:/ProgramData/rstudio/pai/bin), and the copy bundled with RStudio --
+   // the newest compatible installation wins, so a per-user install made
+   // before a newer bundle shipped does not shadow it indefinitely.
+   std::vector<InstallCandidate> candidates = rankedCandidates(paths, true);
+   if (!candidates.empty())
    {
-      // 3. Check the copy bundled with RStudio. It ranks last: a
-      // manifest-installed update lands in the user data directory and an
-      // administrator's own install is deliberate, so both outrank it.
-      // Open-source builds ship no bundle and always fall through here.
-      if (verifyPositAiInstallation(paths.bundledPath))
-      {
-         DLOG("Using AI installation bundled with RStudio: {}",
-              paths.bundledPath.getAbsolutePath());
-         return paths.bundledPath;
-      }
+      const InstallCandidate& best = candidates.front();
+      DLOG("Using {} AI installation (version {}): {}",
+           best.tier,
+           best.versionText.empty() ? "unknown" : best.versionText,
+           best.path.getAbsolutePath());
+      return best.path;
    }
 
    DLOG("No valid AI installation found. Checked locations:");
@@ -162,6 +237,31 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
 core::FilePath locatePositAssistantInstallation()
 {
    return locatePositAssistantInstallation(positAssistantSearchPaths());
+}
+
+bool userInstallWouldBeSelected(const InstallSearchPaths& paths, const std::string& version)
+{
+   if (!paths.userInstallEnabled)
+      return false;
+
+   if (paths.pinnedSystemPath && verifyPositAiInstallation(paths.systemPath))
+      return false;
+
+   // The manifest only ever offers packages built for this build's protocol.
+   InstallCandidate proposed;
+   proposed.compatible = true;
+   if (!proposed.version.parse(version))
+      proposed.version = SemanticVersion();
+
+   // The user install itself is what the install overwrites, so only the
+   // read-only tiers compete against the proposed version.
+   std::vector<InstallCandidate> readOnly = rankedCandidates(paths, false);
+   return readOnly.empty() || !outranks(readOnly.front(), proposed);
+}
+
+bool userInstallWouldBeSelected(const std::string& version)
+{
+   return userInstallWouldBeSelected(positAssistantSearchPaths(), version);
 }
 
 std::string getInstalledVersion(const core::FilePath& positAiPath)

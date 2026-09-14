@@ -37,6 +37,19 @@ void stageInstallation(const FilePath& dir)
       "<html>mock</html>");
 }
 
+// Stages an installation that also declares a package version and the
+// protocol it was built for, the two inputs the resolver ranks on.
+void stageInstallation(const FilePath& dir,
+                       const std::string& version,
+                       const std::string& protocol = kProtocolVersion)
+{
+   stageInstallation(dir);
+   writeStringToFile(dir.completeChildPath("package.json"),
+                     "{\"version\": \"" + version + "\"}");
+   writeStringToFile(dir.completeChildPath(kProtocolVersionFileName),
+                     "{\"protocol\": \"" + protocol + "\"}");
+}
+
 } // anonymous namespace
 
 TEST(ChatInstallation, VerifyPositAiInstallationReturnsFalseForNonExistentPath)
@@ -272,13 +285,146 @@ InstallSearchPaths tempSearchPaths(FilePath* pRoot)
 
 } // anonymous namespace
 
-TEST(ChatInstallation, LocatePrefersUserInstallation)
+TEST(ChatInstallation, LocatePrefersNewestInstallation)
 {
    FilePath root;
    InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath, "1.2.0");
+   stageInstallation(paths.systemPath, "1.1.0");
+   stageInstallation(paths.bundledPath, "1.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.userDataPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocatePrefersNewerBundledOverStaleUserInstallation)
+{
+   // A per-user install made before the bundle existed must not shadow a
+   // newer copy shipped with RStudio.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath, "1.0.0");
+   stageInstallation(paths.bundledPath, "1.2.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.bundledPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocatePrefersNewerSystemOverStaleUserInstallation)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath, "1.0.0");
+   stageInstallation(paths.systemPath, "1.1.0");
+   stageInstallation(paths.bundledPath, "0.9.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.systemPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateBreaksVersionTiesByTier)
+{
+   // Equal versions keep the historical order: user, then system, then bundled.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath, "1.0.0");
+   stageInstallation(paths.systemPath, "1.0.0");
+   stageInstallation(paths.bundledPath, "1.0.0");
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.userDataPath);
+
+   paths.userDataPath.removeIfExists();
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.systemPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateRanksVersionlessInstallationLowest)
+{
+   // An install with no readable package.json cannot claim to be newer than
+   // anything, but is still used when it is all there is.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
    stageInstallation(paths.userDataPath);
-   stageInstallation(paths.systemPath);
-   stageInstallation(paths.bundledPath);
+   stageInstallation(paths.bundledPath, "0.1.0");
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.bundledPath);
+
+   paths.bundledPath.removeIfExists();
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.userDataPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocatePrefersCompatibleProtocolOverHigherVersion)
+{
+   // A user install built for another RStudio's protocol would only resolve
+   // to the update-required prompt; a compatible bundle runs instead.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath, "2.0.0", "0.0");
+   stageInstallation(paths.bundledPath, "1.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.bundledPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateTreatsMissingProtocolFileAsIncompatible)
+{
+   // hasProtocolMismatch() counts a missing protocol.json as a mismatch, so
+   // the resolver must rank such an install the same way.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath);
+   writeStringToFile(paths.userDataPath.completeChildPath("package.json"),
+                     "{\"version\": \"2.0.0\"}");
+   stageInstallation(paths.bundledPath, "1.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.bundledPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateFallsBackToHighestVersionWhenNoneIsCompatible)
+{
+   // With no compatible candidate the newest still resolves, so the existing
+   // protocol-mismatch handling sees the same install it always did.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath, "2.0.0", "0.0");
+   stageInstallation(paths.bundledPath, "1.0.0", "0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.userDataPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocatePinnedInstallationWinsOverNewerUserInstallation)
+{
+   // posit-assistant-path is the administrator's explicit choice, so it is
+   // used as-is rather than entering the version race.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.pinnedSystemPath = true;
+   stageInstallation(paths.userDataPath, "2.0.0");
+   stageInstallation(paths.systemPath, "1.0.0");
+
+   EXPECT_EQ(locatePositAssistantInstallation(paths), paths.systemPath);
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, LocateUsesUserInstallationWhenPinnedPathIsInvalid)
+{
+   // An invalid pinned path only rules out the bundled copy; a user install
+   // is still the user's to run.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.pinnedSystemPath = true;
+   stageInstallation(paths.userDataPath, "1.0.0");
+   stageInstallation(paths.bundledPath, "2.0.0");
 
    EXPECT_EQ(locatePositAssistantInstallation(paths), paths.userDataPath);
 
@@ -339,8 +485,8 @@ TEST(ChatInstallation, LocateSkipsUserInstallationWhenInstallsAreManaged)
    FilePath root;
    InstallSearchPaths paths = tempSearchPaths(&root);
    paths.userInstallEnabled = false;
-   stageInstallation(paths.userDataPath);
-   stageInstallation(paths.systemPath);
+   stageInstallation(paths.userDataPath, "2.0.0");
+   stageInstallation(paths.systemPath, "1.0.0");
 
    EXPECT_EQ(locatePositAssistantInstallation(paths), paths.systemPath);
    EXPECT_TRUE(verifyPositAiInstallation(paths.userDataPath));
@@ -385,6 +531,107 @@ TEST(ChatInstallation, LocateReturnsEmptyWhenOnlyUserInstallationExistsAndInstal
    stageInstallation(paths.userDataPath);
 
    EXPECT_TRUE(locatePositAssistantInstallation(paths).isEmpty());
+
+   root.removeIfExists();
+}
+
+// ============================================================================
+// userInstallWouldBeSelected
+// ============================================================================
+
+TEST(ChatInstallation, UserInstallWouldBeSelectedWhenNothingIsInstalled)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+
+   EXPECT_TRUE(userInstallWouldBeSelected(paths, "1.0.0"));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, UserInstallWouldBeSelectedOverTheUserInstallItReplaces)
+{
+   // The existing user install is what the install overwrites, so it never
+   // competes -- a manifest rollback of the user tier still takes effect.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.userDataPath, "2.0.0");
+
+   EXPECT_TRUE(userInstallWouldBeSelected(paths, "1.0.0"));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, UserInstallWouldNotBeSelectedBelowNewerReadOnlyInstall)
+{
+   // Installing an older version than the bundle would change nothing, so the
+   // update check must not offer it -- the offer could never be satisfied.
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.bundledPath, "1.2.0");
+   EXPECT_FALSE(userInstallWouldBeSelected(paths, "1.1.0"));
+
+   stageInstallation(paths.systemPath, "1.3.0");
+   EXPECT_FALSE(userInstallWouldBeSelected(paths, "1.2.5"));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, UserInstallWouldBeSelectedAboveOlderReadOnlyInstall)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.systemPath, "1.0.0");
+   stageInstallation(paths.bundledPath, "1.0.0");
+
+   EXPECT_TRUE(userInstallWouldBeSelected(paths, "1.1.0"));
+   // A tie resolves to the user tier.
+   EXPECT_TRUE(userInstallWouldBeSelected(paths, "1.0.0"));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, UserInstallWouldBeSelectedOverIncompatibleReadOnlyInstall)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.bundledPath, "9.0.0", "0.0");
+
+   EXPECT_TRUE(userInstallWouldBeSelected(paths, "1.0.0"));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, UserInstallWouldBeSelectedOverVersionlessReadOnlyInstall)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   stageInstallation(paths.systemPath);
+
+   EXPECT_TRUE(userInstallWouldBeSelected(paths, "1.0.0"));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, UserInstallWouldNotBeSelectedUnderValidPinnedPath)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.pinnedSystemPath = true;
+   stageInstallation(paths.systemPath, "0.5.0");
+
+   EXPECT_FALSE(userInstallWouldBeSelected(paths, "9.9.9"));
+
+   root.removeIfExists();
+}
+
+TEST(ChatInstallation, UserInstallWouldNotBeSelectedWhenInstallsAreManaged)
+{
+   FilePath root;
+   InstallSearchPaths paths = tempSearchPaths(&root);
+   paths.userInstallEnabled = false;
+
+   EXPECT_FALSE(userInstallWouldBeSelected(paths, "1.0.0"));
 
    root.removeIfExists();
 }
