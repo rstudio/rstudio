@@ -187,7 +187,6 @@ public:
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
    // the claim file contenders for 'lockFilePath' elect themselves through
    static FilePath claimPathForTesting(const FilePath& lockFilePath);
-   static FilePath legacyClaimPathForTesting(const FilePath& lockFilePath);
    static void setBeforeReleaseForTesting(const boost::function<void()>& callback);
    static void setBeforeRefreshForTesting(const boost::function<void()>& callback);
    static void setBeforeWriteForTesting(const boost::function<Error(int)>& callback);

@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -2195,7 +2196,6 @@ Error processInfo(const std::string& process,
    return Success();
 }
 
-#ifdef __APPLE__
 Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 {
    struct kinfo_proc info;
@@ -2214,12 +2214,6 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    *pCreationTime = date_time::timeFromSecondsSinceEpoch(startSecs);
    return Success();
 }
-#else
-Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
-{
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-}
-#endif
 #endif
 
 bool isProcessRunning(pid_t pid)

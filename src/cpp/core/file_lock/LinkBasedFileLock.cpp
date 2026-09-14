@@ -54,6 +54,7 @@
 
 #include <fmt/format.h>
 
+#include <boost/noncopyable.hpp>
 #include <boost/optional.hpp>
 #include <boost/system/error_code.hpp>
 
@@ -61,7 +62,6 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <shared_core/Hash.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/DateTime.hpp>
@@ -88,7 +88,6 @@ namespace {
 
 const char * const kLegacyFileLockPrefix = ".rstudio-lock-41c29";
 const char * const kOwnerFilePrefix = ".rstudio-lock-owner-41c29";
-const char * const kFileLockClaimPrefix = ".rstudio-lock-claim-41c29";
 const char * const kFileLockClaimDirectory = ".rstudio-lock-claims-41c29";
 const char * const kFileLockClaimTempPrefix = ".rstudio-lock-claims-tmp-41c29";
 const char * const kFileLockTempPrefix = ".rstudio-lock-tmp-41c29";
@@ -180,7 +179,6 @@ bool isPreparedClaimDirectory(const FilePath& filePath)
 bool isSweepableArtifact(const FilePath& filePath)
 {
    return isOwnerFile(filePath) ||
-          hasPrefix(filePath.getFilename(), kFileLockClaimPrefix) ||
           isTempFile(filePath);
 }
 
@@ -200,17 +198,6 @@ FilePath claimPathForLock(const FilePath& lockFilePath)
    return lockFilePath.getParent()
       .completePath(kFileLockClaimDirectory)
       .completePath(lockFilePath.getFilename());
-}
-
-FilePath legacyClaimPathForLock(const FilePath& lockFilePath)
-{
-   // Keep taking the claim used by deployed versions so a rolling upgrade
-   // cannot run old and new stale-removal protocols at the same time.
-   FilePath parent(lockFilePath.getParent().getCanonicalPath());
-   return parent.completePath(
-      fmt::format("{}-{}",
-                  kFileLockClaimPrefix,
-                  hash::crc32HexHash(lockFilePath.getFilename())));
 }
 
 #ifndef _WIN32
@@ -1119,7 +1106,7 @@ bool isTemporaryEntryAbandonedAt(int directoryDescriptor,
 
 #endif
 
-// Removes stale owner, legacy claim, temp, and prepared-namespace entries left
+// Removes stale owner, temp, and prepared-namespace entries left
 // in a lock directory. Live entries are never touched; file candidates are
 // inspected like locks, while prepared namespaces must be empty directories.
 void sweepStaleArtifacts(const FilePath& directory, const FilePath& ownPath)
@@ -1315,7 +1302,7 @@ void sweepStaleClaims(int directoryDescriptor,
 // A claim in the private namespace elects one acquirer through removal and
 // publication. Both it and the namespace stay open so their identities can be
 // re-checked without traversing a replaced directory name.
-struct Claim
+struct Claim : boost::noncopyable
 {
    ~Claim();
 
@@ -2394,7 +2381,6 @@ Error ensureClaimDirectory(const FilePath& lockFilePath,
 // public path alone.
 Error acquireClaimAt(const FilePath& lockFilePath,
                      const FilePath& claimFilePath,
-                     bool sweepClaims,
                      Claim* pClaim,
                      bool* pHeld)
 {
@@ -2496,8 +2482,7 @@ Error acquireClaimAt(const FilePath& lockFilePath,
 
 #ifndef _WIN32
    error = validateClaim(*pClaim, lockFilePath);
-   *pHeld = !error;
-   if (error || !*pHeld)
+   if (error)
    {
       // Identity-checked, so a contender's replacement is left in place but
       // our own claim does not linger to block every later takeover.
@@ -2505,7 +2490,7 @@ Error acquireClaimAt(const FilePath& lockFilePath,
       releaseClaim(pClaim);
    }
 
-   if (!error && *pHeld && sweepClaims)
+   if (!error)
    {
       sweepStaleClaims(
          pClaim->directoryDescriptor,
@@ -2537,7 +2522,6 @@ Error acquireClaim(const FilePath& lockFilePath, Claim* pClaim, bool* pHeld)
       error = acquireClaimAt(
          lockFilePath,
          claimFilePath,
-         true,
          pClaim,
          pHeld);
 #ifndef _WIN32
@@ -2568,28 +2552,6 @@ Error acquireClaim(const FilePath& lockFilePath, Claim* pClaim, bool* pHeld)
                              ERROR_LOCATION);
    error.addProperty("path", claimFilePath.getParent());
    return error;
-}
-
-Error acquireLegacyClaim(const FilePath& lockFilePath,
-                         Claim* pClaim,
-                         bool* pHeld)
-{
-   return acquireClaimAt(
-      lockFilePath,
-      legacyClaimPathForLock(lockFilePath),
-      false,
-      pClaim,
-      pHeld);
-}
-
-Error validateClaims(const Claim& legacyClaim,
-                     const Claim& claim,
-                     const FilePath& lockFilePath)
-{
-   Error error = validateClaim(legacyClaim, lockFilePath);
-   if (error)
-      return error;
-   return validateClaim(claim, lockFilePath);
 }
 
 Error removeLockFile(const FilePath& lockFilePath,
@@ -2684,7 +2646,6 @@ Error releaseLockFiles(const FilePath& ownerFilePath,
 }
 
 Error writeLockFile(const FilePath& lockFilePath,
-                    const Claim& legacyClaim,
                     const Claim& claim,
                     std::string* pToken,
                     FilePath* pOwnerFilePath,
@@ -2703,7 +2664,7 @@ Error writeLockFile(const FilePath& lockFilePath,
 
    // Preparing the private inode may have stalled beyond the claim's lease.
    // Check again immediately before publishing through the public name.
-   error = validateClaims(legacyClaim, claim, lockFilePath);
+   error = validateClaim(claim, lockFilePath);
    if (error)
    {
       ::close(proxyDescriptor);
@@ -2785,7 +2746,7 @@ Error writeLockFile(const FilePath& lockFilePath,
    LOG((FileLock::useSymlinks() ? "symlink" : "link")
        << "() failed (errno " << linkError << "); falling back to O_EXCL: "
        << lockFilePath.getAbsolutePath());
-   error = validateClaims(legacyClaim, claim, lockFilePath);
+   error = validateClaim(claim, lockFilePath);
    if (error)
    {
       ::close(proxyDescriptor);
@@ -3105,12 +3066,6 @@ FilePath LinkBasedFileLock::claimPathForTesting(const FilePath& lockFilePath)
    return claimPathForLock(lockFilePath);
 }
 
-FilePath LinkBasedFileLock::legacyClaimPathForTesting(
-   const FilePath& lockFilePath)
-{
-   return legacyClaimPathForLock(lockFilePath);
-}
-
 void LinkBasedFileLock::setBeforeReleaseForTesting(const boost::function<void()>& callback)
 {
    s_beforeRelease = callback;
@@ -3190,18 +3145,8 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    if (inspection.exists && !inspection.stale)
       return noLockAvailableError(lockFilePath);
 
-   // Take the legacy hashed claim first so deployed versions serialize with
-   // this acquisition during a rolling upgrade. The exact-name claim then
-   // adds the filesystem's case and Unicode alias semantics. Keep both until
-   // publication has been validated; RAII covers every failure.
-   Claim legacyClaim;
-   bool legacyHeld = false;
-   error = acquireLegacyClaim(lockFilePath, &legacyClaim, &legacyHeld);
-   if (error)
-      return error;
-   if (!legacyHeld)
-      return noLockAvailableError(lockFilePath);
-
+   // The exact-name claim follows the filesystem's case and Unicode alias
+   // semantics. Keep it until publication is validated; RAII covers failures.
    Claim claim;
    bool held = false;
    error = acquireClaim(lockFilePath, &claim, &held);
@@ -3217,7 +3162,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    if (inspection.exists && !inspection.stale)
       return noLockAvailableError(lockFilePath);
 
-   error = validateClaims(legacyClaim, claim, lockFilePath);
+   error = validateClaim(claim, lockFilePath);
    if (error)
       return error;
 
@@ -3239,7 +3184,6 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    int descriptor = -1;
    error = writeLockFile(
       lockFilePath,
-      legacyClaim,
       claim,
       &token,
       &ownerFilePath,
@@ -3261,7 +3205,7 @@ Error LinkBasedFileLock::acquire(const FilePath& lockFilePath)
    // A stalled publication can finish after another contender has reclaimed
    // its claim. Retire only the inode we hold open in that case; the reusable
    // public name may already belong to the successor.
-   error = validateClaims(legacyClaim, claim, lockFilePath);
+   error = validateClaim(claim, lockFilePath);
    if (error)
    {
 #ifndef _WIN32

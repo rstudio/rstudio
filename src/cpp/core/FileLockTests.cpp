@@ -69,11 +69,6 @@ FilePath claimPathFor(const FilePath& lockFilePath)
    return LinkBasedFileLock::claimPathForTesting(lockFilePath);
 }
 
-FilePath legacyClaimPathFor(const FilePath& lockFilePath)
-{
-   return LinkBasedFileLock::legacyClaimPathForTesting(lockFilePath);
-}
-
 Error writeClaimContents(const FilePath& claimPath, const std::string& contents)
 {
    Error error = claimPath.getParent().ensureDirectory();
@@ -1199,7 +1194,6 @@ TEST_F(FileLockingTest, StalledFallbackPublicationPreservesSuccessor)
          replaced = true;
          lockFilePath_.setLastWriteTime(::time(nullptr) - 10);
          claimPathFor(lockFilePath_).setLastWriteTime(::time(nullptr) - 10);
-         legacyClaimPathFor(lockFilePath_).setLastWriteTime(::time(nullptr) - 10);
          EXPECT_FALSE(successor.acquire(lockFilePath_));
          return failWrite ? systemError(ENOSPC, ERROR_LOCATION) : Success();
       });
@@ -1396,11 +1390,10 @@ TEST_F(FileLockingTest, OrphanedOwnerFilesAreSwept)
       root_.completePath(".rstudio-lock-owner-41c29-released");
    FilePath deadLegacyOwner =
       root_.completePath(".rstudio-lock-41c29-host-99999999-thread");
-   FilePath liveClaim =
-      root_.completePath(".rstudio-lock-claim-41c29-live");
+   FilePath liveClaim = claimPathFor(root_.completePath("live-lock"));
    ASSERT_FALSE(writeStringToFile(releasedOwner, "-1\n"));
    ASSERT_FALSE(writeStringToFile(deadLegacyOwner, "99999999\n"));
-   ASSERT_FALSE(writeStringToFile(liveClaim, fmt::format("{}\n", ::getpid())));
+   ASSERT_FALSE(writeClaimContents(liveClaim, fmt::format("{}\n", ::getpid())));
 
    LinkBasedFileLock lock;
    ASSERT_FALSE(lock.acquire(lockFilePath_));
@@ -1521,21 +1514,6 @@ TEST_F(FileLockingTest, LiveClaimBlocksPublicationIntoAbsentPath)
       EXPECT_FALSE(lockFilePath_.exists());
       EXPECT_TRUE(claim.exists());
    }
-}
-
-TEST_F(FileLockingTest, LiveLegacyClaimBlocksPublication)
-{
-   FilePath legacyClaim = legacyClaimPathFor(lockFilePath_);
-   ASSERT_FALSE(writeClaimContents(
-      legacyClaim,
-      fmt::format("{}\n", ::getpid())));
-
-   LinkBasedFileLock lock;
-   EXPECT_TRUE(FileLock::isNoLockAvailable(lock.acquire(lockFilePath_)));
-   EXPECT_TRUE(legacyClaim.exists());
-   EXPECT_FALSE(lockFilePath_.exists());
-   EXPECT_FALSE(claimPathFor(lockFilePath_).getParent().exists());
-   EXPECT_FALSE(legacyClaim.remove());
 }
 
 TEST_F(FileLockingTest, ClaimDirectoryReplacementDuringOpenIsRetried)
@@ -2186,13 +2164,10 @@ TEST_F(FileLockingTest, StaleRemovalBlocksPublicationThroughUnicodeAliases)
 TEST_F(FileLockingTest, LostClaimBeforePublicationLeavesPublicPathAbsent)
 {
    FilePath claimPath = claimPathFor(lockFilePath_);
-   FilePath legacyClaimPath = legacyClaimPathFor(lockFilePath_);
    bool replaced = false;
    LinkBasedFileLock::setBeforeWriteForTesting([&](int descriptor) -> Error
    {
-      if (replaced ||
-          descriptorRefersTo(descriptor, claimPath) ||
-          descriptorRefersTo(descriptor, legacyClaimPath))
+      if (replaced || descriptorRefersTo(descriptor, claimPath))
          return Success();
 
       // Preparing the private owner inode stalled long enough for another
