@@ -63,8 +63,11 @@ reports the running instance instead (use `--restart` to replace it).
   `~/.config/rstudio`, and two worktrees' instances don't share state. Both
   directories persist across restarts of the same checkout. To start from your
   own preferences, copy `~/.config/rstudio/rstudio-prefs.json` into the config
-  home; to use the real homes instead, pass `--user-config`. `HOME` itself is
-  unchanged, so R and its libraries are your usual ones.
+  home. The data home also holds user-installed components and Assistant
+  state, so a fresh worktree may need to download Posit Assistant and Air
+  again and require a new Assistant sign-in. To use the real config and data
+  homes instead, pass `--user-config`. `HOME` itself is unchanged, so R and
+  its libraries are your usual ones.
 - State lives in `<checkout>/.rstudio-dev/` (gitignored): `instance.json`,
   `rserver.log` and `gwt.log` -- the first place to look if a start fails --
   plus the `config` and `data` homes above (session logs are under

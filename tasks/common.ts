@@ -38,8 +38,8 @@ export interface Instance {
    * when --user-config left them on the real homes. Absent in records written
    * before these existed, which read as undefined.
    */
-  configHome: string | null;
-  dataHome: string | null;
+  configHome?: string | null;
+  dataHome?: string | null;
   startedAt: string;
 }
 

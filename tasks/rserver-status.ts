@@ -75,6 +75,8 @@ function reportInstance(instance: Instance): void {
 
   if (instance.configHome) {
     console.log(`    state:    ${instance.configHome} (config), ${instance.dataHome} (data)`);
+  } else if (instance.configHome === null) {
+    console.log('    state:    your own RStudio config and data homes (--user-config)');
   }
 
   if (!rserverAlive) {
