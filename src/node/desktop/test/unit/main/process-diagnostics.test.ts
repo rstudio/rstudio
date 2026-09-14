@@ -102,4 +102,20 @@ describe('Process diagnostics', () => {
     assert.deepEqual(loggedDetails(debugLog, 'child-process-gone'), details);
     assert.isTrue(errorLog.notCalled);
   });
+
+  it('keeps killed renderer exits at debug level even with a nonzero exit code', () => {
+    const details: RenderProcessGoneDetails = { reason: 'killed', exitCode: 137 };
+    events.emit('render-process-gone', {}, { id: 29 }, details);
+
+    assert.deepEqual(loggedDetails(debugLog, 'render-process-gone'), { ...details, webContentsId: 29 });
+    assert.isTrue(errorLog.notCalled);
+  });
+
+  it('keeps killed utility exits at debug level even with a nonzero exit code', () => {
+    const details: Details = { type: 'Utility', reason: 'killed', exitCode: 137 };
+    events.emit('child-process-gone', {}, details);
+
+    assert.deepEqual(loggedDetails(debugLog, 'child-process-gone'), details);
+    assert.isTrue(errorLog.notCalled);
+  });
 });

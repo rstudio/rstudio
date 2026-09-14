@@ -18,7 +18,8 @@ import { logger } from '../core/logger';
 
 function logProcessExit(eventName: string, details: Details | RenderProcessGoneDetails, webContentsId?: number): void {
   const message = `Electron ${eventName}: ${JSON.stringify({ ...details, webContentsId })}`;
-  if (details.reason === 'clean-exit') {
+  // Killed processes can be part of normal window or application teardown.
+  if (details.reason === 'clean-exit' || details.reason === 'killed') {
     logger().logDebug(message);
   } else {
     logger().logErrorMessage(message);
