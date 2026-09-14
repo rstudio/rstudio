@@ -15,16 +15,13 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -121,24 +118,7 @@ public class ChunkHtmlPage extends ChunkOutputPage
    
    public static void syncThemeTextColor(Colors themeColors, Element body)
    {
-      Style bodyStyle = body.getStyle();
-      if (StringUtil.isNullOrEmpty(bodyStyle.getBackgroundColor()) &&
-          StringUtil.isNullOrEmpty(body.getClassName()))
-      {
-         bodyStyle.setColor(themeColors.foreground);
-
-         // HTML fragments use quirks mode, where Chromium can leave table
-         // colors stale after the body color changes. Use normal inheritance,
-         // with zero specificity so authored table colors take precedence.
-         Document document = body.getOwnerDocument();
-         if (document.getElementById(TABLE_THEME_STYLE_ID) == null)
-         {
-            StyleElement style = document.createStyleElement();
-            style.setId(TABLE_THEME_STYLE_ID);
-            style.setInnerText(":where(table) { color: inherit; }");
-            document.getHead().insertFirst(style);
-         }
-      }
+      ChunkHtmlTheme.sync(body, themeColors.foreground, themeColors.background);
    }
       
    @Override
@@ -171,6 +151,5 @@ public class ChunkHtmlPage extends ChunkOutputPage
    final private Widget content_;
    private Colors themeColors_ = null;
    private Command afterRender_;
-   private static final String TABLE_THEME_STYLE_ID = "rstudio-chunk-table-theme";
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }
