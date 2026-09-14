@@ -122,7 +122,8 @@
          args    = c("-E", "-Xutf8"),
          input   = "import sys; print(sys.executable)",
          stdout  = TRUE,
-         stderr  = TRUE
+         stderr  = TRUE,
+         timeout = .rs.python.probeTimeout()
       )
    )
    
@@ -306,18 +307,30 @@
    invisible(pythonPath)
 })
 
+# Interpreter discovery runs every candidate Python (and conda) as a child
+# process on the main R thread, and a wedged one used to block the Python
+# options panel indefinitely ("Finding interpreters..." with no way out).
+# Bound each probe instead; a probe that times out is reported as an invalid
+# interpreter rather than stalling the whole scan. Seconds.
+.rs.addFunction("python.probeTimeout", function()
+{
+   getOption("rstudio.python.probeTimeout", default = 10)
+})
+
 .rs.addFunction("python.execute", function(python, code)
 {
    python <- normalizePath(python, winslash = "/", mustWork = TRUE)
    
    args <- c("-E", "-c", shQuote(code))
    result <- suppressWarnings(
-      system2(python, args, stdout = TRUE, stderr = TRUE)
+      system2(python, args, stdout = TRUE, stderr = TRUE, timeout = .rs.python.probeTimeout())
    )
    
-   # propagate failure as error
+   # propagate failure as error (system2 reports a timeout as status 124)
    status <- .rs.nullCoalesce(attr(result, "status", exact = TRUE), 0L)
-   if (!identical(status, 0L))
+   if (identical(status, 124L))
+      .rs.stopf("timed out after %i seconds waiting for '%s'", as.integer(.rs.python.probeTimeout()), python)
+   else if (!identical(status, 0L))
       .rs.stopf("error retrieving Python version [error code %i]", status)
    
    paste(result, collapse = "\n")
@@ -705,13 +718,19 @@
    if (!file.exists(conda))
       return(NULL)
    
-   # ask it for environments
+   # ask it for environments. conda can be slow to start, so give it more
+   # room than a plain interpreter probe -- but not unbounded.
    args <- c("env", "list", "--json", "--quiet")
    tmp <- tempfile()
-   output <- system2(conda, args, stdout = TRUE, stderr = tmp)
+   output <- suppressWarnings(
+      system2(conda, args, stdout = TRUE, stderr = tmp, timeout = 3 * .rs.python.probeTimeout())
+   )
    
    status <- .rs.nullCoalesce(attr(output, "status", exact = TRUE), 0L)
-   if (!identical(status, 0L)) {
+   if (identical(status, 124L)) {
+      warning(sprintf("timed out waiting for '%s %s'; skipping conda environments", conda, paste(args, collapse = " ")))
+      return(NULL)
+   } else if (!identical(status, 0L)) {
       errors <- paste(readLines(tmp), collapse = "\n")
       .rs.stopf("Error executing %s %s:\n%s", conda, paste(args, collapse = " "), errors)
    }
