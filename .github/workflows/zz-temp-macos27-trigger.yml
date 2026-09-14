@@ -1,0 +1,40 @@
+name: "zz-temp macOS 27 trigger (DELETE before merge)"
+
+# TEMPORARY pre-merge validation trigger for the macOS 27 arm64 E2E engine.
+# A brand-new engine that isn't on the default branch yet can't be reached by
+# workflow_dispatch/schedule, but a push trigger runs from the branch's own
+# files. This fires the engine on push to the feature branch so it can be
+# validated pre-merge. DELETE THIS FILE before the PR merges.
+#
+# One job on the daily-installer path. build_from_source is false, so the build
+# job is skipped and this costs two macOS jobs (the e2e shards) rather than
+# three -- worth it on a preview image, where queueing is the limit. It still
+# exercises everything that is new here: the xcode-27 label, the R install, the
+# e2e dependencies and the suite itself. Validate the from-source path in a
+# later push, once this one is green.
+
+on:
+  push:
+    branches:
+      - test/ron/e2e-macos-27-arm64-workflow
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  macos27-daily:
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-27-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      build_from_source: false
+      # No rstudio_installer_url: the engine resolves the latest Blue
+      # Mistflower daily from version/RELEASE, so the binary matches the tests
+      # checked out beside it, and the manifest's SHA-256 gets verified (an
+      # override URL skips that check).
+      project: desktop
