@@ -19,10 +19,13 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -34,6 +37,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -45,6 +49,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalReceivedConsoleProcessInfoEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
@@ -54,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -67,21 +73,24 @@ import com.google.inject.Inject;
 public class TerminalSession extends XTermWidget
                              implements TerminalSessionSocket.Session,
                                         XTermTitleEvent.Handler,
-   SessionSerializationEvent.Handler,
-                                        ThemeChangedEvent.Handler
+                                        SessionSerializationEvent.Handler,
+                                        ThemeChangedEvent.Handler,
+                                        TerminalCwdEvent.Handler
 {
    /**
     * @param info terminal metadata
     * @param options terminal emulator options
     * @param tabMovesFocus does pressing tab key move focus out of terminal
-    * @param showWebLinks links detected and made clickable
+    * @param showWebLinks web links detected and made clickable
+    * @param showFileLinks file paths detected and made clickable
     */
    public TerminalSession(ConsoleProcessInfo info,
                           XTermOptions options,
                           boolean tabMovesFocus,
-                          boolean showWebLinks)
+                          boolean showWebLinks,
+                          boolean showFileLinks)
    {
-      super(options, tabMovesFocus, showWebLinks);
+      super(options, tabMovesFocus, showWebLinks, showFileLinks);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
@@ -101,13 +110,15 @@ public class TerminalSession extends XTermWidget
                            EventBus events,
                            final Session session,
                            UserPrefs uiPrefs,
-                           GlobalDisplay globalDisplay)
+                           GlobalDisplay globalDisplay,
+                           FileTypeRegistry fileTypeRegistry)
    {
       server_ = server;
       eventBus_ = events;
       uiPrefs_ = uiPrefs;
       sessionInfo_ = session.getSessionInfo();
       globalDisplay_ = globalDisplay;
+      fileTypeRegistry_ = fileTypeRegistry;
    }
 
    /**
@@ -169,6 +180,7 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
+            addHandlerRegistration(eventBus_.addHandler(TerminalCwdEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg)));
             addHandlerRegistration(uiPrefs_.tabKeyMoveFocus().bind(arg -> setTabMovesFocus(arg)));
 
@@ -331,6 +343,58 @@ public class TerminalSession extends XTermWidget
             updateTheme(XTermTheme.terminalThemeFromEditorTheme());
          }
       }.schedule(250);
+   }
+
+   @Override
+   public void onTerminalCwd(TerminalCwdEvent event)
+   {
+      // relative paths in earlier output now resolve against a different directory
+      if (StringUtil.equals(event.getHandle(), getHandle()))
+         clearFileLinkCache();
+   }
+
+   @Override
+   protected void resolveFileLinks(JsArrayString candidates, CommandWithArg<JsArrayString> callback)
+   {
+      String handle = getHandle();
+      if (StringUtil.isNullOrEmpty(handle))
+      {
+         callback.execute(null);
+         return;
+      }
+
+      server_.processResolveFilePaths(handle, candidates, new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString resolved)
+         {
+            callback.execute(resolved);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            callback.execute(null);
+         }
+      });
+   }
+
+   @Override
+   protected void openFileLink(String path, int line, int column)
+   {
+      FileSystemItem file = FileSystemItem.createFile(path);
+      if (line > 0)
+      {
+         // a position only makes sense in the source editor
+         fileTypeRegistry_.editFile(file, FilePosition.create(line, Math.max(column, 1)));
+      }
+      else
+      {
+         // otherwise open as the Files pane would (e.g. images in the viewer),
+         // but never fall back to downloading a file we can't display
+         fileTypeRegistry_.openFile(file, false);
+      }
    }
 
    @Override
@@ -1038,5 +1102,6 @@ public class TerminalSession extends XTermWidget
    private UserPrefs uiPrefs_;
    private SessionInfo sessionInfo_;
    private GlobalDisplay globalDisplay_;
+   private FileTypeRegistry fileTypeRegistry_;
    private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }
