@@ -11,6 +11,7 @@
 - ([#14226](https://github.com/rstudio/rstudio/issues/14226)): Files can now be opened in the source editor from the Terminal pane with `rstudio <file>[:line[:column]]` (macOS, Linux, and RStudio Server).
 - ([#15261](https://github.com/rstudio/rstudio/issues/15261)): The Insert Pipe Operator command (Ctrl+Shift+M) now inserts `+` when the cursor is within a ggplot2 chain. This can be disabled in Global Options > Code > Editing.
 - ([#12379](https://github.com/rstudio/rstudio/issues/12379)): Customized editor keyboard shortcuts (e.g. Remove Word Left) now also apply to the Console input.
+- ([#1687](https://github.com/rstudio/rstudio/issues/1687)): Ctrl+Shift+C now copies the selection and Ctrl+Shift+V pastes in the Terminal pane, matching the shortcuts used by common terminal emulators.
 
 ### Fixed
 - ([#18760](https://github.com/rstudio/rstudio/issues/18760)): Fixed an issue where long R version names in Global Options > General could push the R version selector outside the dialog.
