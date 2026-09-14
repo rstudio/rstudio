@@ -98,6 +98,33 @@ InstallSearchPaths positAssistantSearchPaths()
 
 namespace {
 
+// Reads the version package.json declares. Quiet by design: the resolver
+// reads every tier on every locate() call, so a tier that cannot report a
+// version must not warn each time -- failures come back as the Error.
+core::Error readDeclaredVersion(const core::FilePath& positAiPath, std::string* pVersion)
+{
+   core::FilePath packageJson = positAiPath.completeChildPath("package.json");
+   if (!packageJson.exists())
+      return core::fileNotFoundError(packageJson, ERROR_LOCATION);
+
+   std::string content;
+   core::Error error = core::readStringFromFile(packageJson, &content);
+   if (error)
+      return error;
+
+   core::json::Value packageValue;
+   if (packageValue.parse(content) || !packageValue.isObject())
+      return core::systemError(boost::system::errc::bad_message,
+                               "package.json is not a JSON object",
+                               ERROR_LOCATION);
+
+   return core::json::readObject(packageValue.getObject(), "version", *pVersion);
+}
+
+} // anonymous namespace
+
+namespace {
+
 using types::SemanticVersion;
 
 // One tier's installation as the resolver ranks it.
@@ -134,9 +161,12 @@ InstallCandidate describeInstallation(const core::FilePath& path, const char* ti
    candidate.path = path;
    candidate.tier = tier;
    candidate.compatible = getInstalledProtocolVersion(path) == kProtocolVersion;
-   candidate.versionText = getInstalledVersion(path);
-   if (!candidate.version.parse(candidate.versionText))
+   if (readDeclaredVersion(path, &candidate.versionText) ||
+       !candidate.version.parse(candidate.versionText))
+   {
+      candidate.versionText.clear();
       candidate.version = SemanticVersion();
+   }
    return candidate;
 }
 
@@ -269,41 +299,12 @@ std::string getInstalledVersion(const core::FilePath& positAiPath)
    if (positAiPath.isEmpty())
       return "";
 
-   core::FilePath packageJson = positAiPath.completeChildPath("package.json");
-   if (!packageJson.exists())
-   {
-      WLOG("package.json not found in AI installation");
-      return "";
-   }
-
-   // Read and parse package.json
-   std::string content;
-   core::Error error = core::readStringFromFile(packageJson, &content);
-   if (error)
-   {
-      WLOG("Failed to read package.json: {}", error.getMessage());
-      return "";
-   }
-
-   core::json::Value packageValue;
-   if (packageValue.parse(content))
-   {
-      WLOG("Failed to parse package.json");
-      return "";
-   }
-
-   if (!packageValue.isObject())
-   {
-      WLOG("package.json is not a JSON object");
-      return "";
-   }
-
-   core::json::Object packageObj = packageValue.getObject();
    std::string version;
-   error = core::json::readObject(packageObj, "version", version);
+   core::Error error = readDeclaredVersion(positAiPath, &version);
    if (error)
    {
-      WLOG("package.json missing 'version' field");
+      WLOG("Could not read the Posit Assistant version at {}: {}",
+           positAiPath.getAbsolutePath(), error.getSummary());
       return "";
    }
 
