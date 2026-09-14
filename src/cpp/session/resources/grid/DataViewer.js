@@ -2606,6 +2606,10 @@ var applyPinnedColumns = function() {
       }
       table.style.paddingRight = overscroll + "px";
    }
+
+   // The padding just written is what decides whether the viewport overflows
+   // horizontally, and so whether a native bar takes a gutter out of it.
+   syncPinnedPaneGutter();
 };
 
 // ==========================================================================
@@ -4008,6 +4012,30 @@ var hScrollbarOverlayHeight = function(viewport) {
       ? 0 : NATIVE_H_SCROLLBAR_OVERLAY_RESERVE;
 };
 
+// Inset the frozen pane by the layout space the viewport's native horizontal
+// scrollbar claims, so the two panes share one vertical scroll range. The
+// panes are the same height with the same rows and spacers, but the gutter
+// comes out of the viewport's clientHeight only (the frozen pane's own bar is
+// hidden and its table never overflows horizontally), so its scroll range
+// ended a gutter short of the viewport's. syncPinnedScrollTop then clamped it
+// a bar's height early at maximum scroll -- leaving the row labels a row out
+// of step with the rows beside them, and setting up the onPinnedScroll clamp
+// check that yanked the viewport back under the bar (#18620). Zero in overlay
+// mode and wherever the platform floats native bars, where the ranges already
+// match. Runs from applyPinnedColumns, whose overscroll padding is what makes
+// the viewport overflow horizontally in the first place.
+var syncPinnedPaneGutter = function() {
+   var viewport = domViewport;
+   var pinnedPane = domPinnedPane;
+   if (!viewport || !pinnedPane) return;
+
+   // The scroll panes carry no border, so this is exactly the bar's gutter.
+   var gutter = Math.max(0, viewport.offsetHeight - viewport.clientHeight);
+   var marginBottom = gutter > 0 ? gutter + "px" : "";
+   if (pinnedPane.style.marginBottom !== marginBottom)
+      pinnedPane.style.marginBottom = marginBottom;
+};
+
 // Height of the viewport area in which data rows are actually visible. The
 // viewport's full clientHeight overstates this: the sticky <thead> overlays
 // the top (while still contributing to scroll content height), and the custom
@@ -4463,17 +4491,22 @@ var syncPinnedScrollTop = function() {
 var onPinnedScroll = function() {
    if (!domPinnedPane || !domViewport) return;
    if (domViewport.scrollTop === domPinnedPane.scrollTop) return;
-   // In native-scrollbar mode the viewport's horizontal scrollbar shrinks its
-   // clientHeight, so the viewport can scroll slightly lower than the
-   // (scrollbar-free) frozen pane. When the viewport is ahead but the frozen
-   // pane is already clamped at its own bottom, that gap is just the clamp --
-   // not a user scroll of the frozen pane -- so leave the viewport alone rather
-   // than yanking it back up (which snapped the bottom edge). The scrollHeight
-   // read is reached only in this descending/bottom case, not on the common
-   // synced-echo path above.
+   // syncPinnedPaneGutter gives both panes the same scroll range, but the
+   // gutter it mirrors is a whole-pixel measurement of a fractional layout,
+   // so the frozen pane can still clamp a fraction of a pixel short of the
+   // viewport. When the viewport is ahead but the frozen pane is already at
+   // its own bottom, that gap is just the clamp -- not a user scroll of the
+   // frozen pane -- so leave the viewport alone rather than yanking it back
+   // up. Compared with a pixel of slack: scrollHeight and clientHeight are
+   // rounded while scrollTop is not, and under non-integer display scaling
+   // (Windows at 125%) the clamped offset reads e.g. 681.5 against a computed
+   // max of 682. An exact >= took that as "not clamped" and yanked the
+   // viewport back under the horizontal scrollbar on every wheel tick at the
+   // bottom (#18620). The scrollHeight read is reached only in this
+   // descending/bottom case, not on the common synced-echo path above.
    if (domViewport.scrollTop > domPinnedPane.scrollTop) {
       var pinnedMax = domPinnedPane.scrollHeight - domPinnedPane.clientHeight;
-      if (domPinnedPane.scrollTop >= pinnedMax) return;
+      if (domPinnedPane.scrollTop >= pinnedMax - 1) return;
    }
    domViewport.scrollTop = domPinnedPane.scrollTop;
 };
