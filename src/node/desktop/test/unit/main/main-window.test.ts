@@ -124,7 +124,9 @@ describe('MainWindow', () => {
 
     // simulates the healthy path: the renderer answers the probe and quitR()
     // resolves as soon as the GWT save prompt is on screen, which is well
-    // before the user has answered it (#18818)
+    // before the user has answered it (#18818). Nothing here distinguishes a
+    // quit the user cancelled from one still waiting on an answer -- the main
+    // process is not told either way -- so both are this same state.
     function closeEventWithLiveRenderer() {
       const fake = {
         geometrySaved: true,
@@ -155,8 +157,10 @@ describe('MainWindow', () => {
       close();
       await new Promise(setImmediate);
 
-      // the user cancelled, so the session is still running: the next close
-      // must run the quit sequence again rather than closing the window
+      // the session is still running, so the next close must run the quit
+      // sequence again rather than closing the window. Suppressing the
+      // re-run would need a cancellation signal ApplicationQuit does not
+      // send; without one, suppression would leave the close button dead.
       const second = close();
       await new Promise(setImmediate);
       assert.isTrue(second.preventDefault.calledOnce);

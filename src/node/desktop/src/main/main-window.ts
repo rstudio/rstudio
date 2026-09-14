@@ -356,10 +356,10 @@ export class MainWindow extends GwtWindow {
           quit();
         } else {
           // quitR() resolves once the quit sequence has been dispatched, not
-          // once the user has answered its prompts, so the quit is confirmed
-          // only when the session actually exits and quit() runs; confirming
-          // it here left a cancelled quit disarming every later close
-          // (https://github.com/rstudio/rstudio/issues/18818)
+          // once the user has answered its prompts, so only quit() -- which
+          // runs after the session exits -- may confirm the quit. A cancelled
+          // quit is indistinguishable from one still being answered, so
+          // closing again just re-runs the sequence (#18818)
           this.executeJavaScript('window.desktopHooks.quitR()').catch((error: unknown) => logger().logError(error));
         }
       })
