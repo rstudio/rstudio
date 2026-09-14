@@ -6,7 +6,7 @@ import { AssistantOptionsActions } from '@actions/assistant_options.actions';
 import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
-import { executeCommand, resetSourcePaneState, setPref } from '@utils/commands';
+import { resetSourcePaneState, setPref } from '@utils/commands';
 import {
   aiServiceOutageReason,
   hasAiCredentials,
@@ -83,57 +83,20 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       throw err;
     };
 
-    // Wait for any NES indicator. The assistant may answer with a diff view
-    // (Apply visible), ghost text, an insertion preview, or just the gutter
-    // marker; which one is the model's call, so accept any of them.
+    // Keep the shared retry logic and re-probe the service if it times out.
     const expectSuggestionIndicator = async (timeout = TIMEOUTS.nesApply) => {
       try {
-        await expect(
-          sourcePane.nesApply
-            .or(sourcePane.ghostText)
-            .or(sourcePane.nesInsertionPreview)
-            .or(sourcePane.nesGutter)
-            .first()
-        ).toBeVisible({ timeout });
+        await sourceActions.waitForNesSuggestion(timeout);
       } catch (err) {
         await failUnlessServiceGone(err);
       }
     };
 
-    // Wait for ghost text, re-requesting when the assistant answers with
-    // nothing.
-    //
-    // An automatic request that comes back empty is a terminal state: the
-    // status bar reads "<provider>: No completions available." and nothing
-    // re-asks, so a plain toBeVisible() burns the full ghost-text budget
-    // waiting for a suggestion that is never coming. That is a live model
-    // talking, not a bug -- it declines this context some of the time, and
-    // when it does it tends to do so on every platform at once, which is how
-    // one empty answer shows up as four "flaky" rows in a CI report.
-    //
-    // assistantRequestCompletions is the explicit re-ask (Request Completions
-    // in the menu). The assertion still fails if nothing ever arrives.
-    const expectGhostText = async (page: Page, timeout = TIMEOUTS.ghostText) => {
-      const deadline = Date.now() + timeout;
-      for (;;) {
-        const remaining = Math.max(deadline - Date.now(), 1000);
-        try {
-          await expect(sourcePane.ghostText.first()).toBeVisible({
-            timeout: Math.min(remaining, 10000),
-          });
-          return;
-        } catch (err) {
-          if (Date.now() >= deadline)
-            await failUnlessServiceGone(err);
-          if (await sourcePane.statusBarNoCompletions.isVisible().catch(() => false)) {
-            console.log('  No completions available -- re-requesting');
-            // Don't let a momentarily-disabled command replace the real
-            // diagnostic; the loop's own failure is the one worth reporting.
-            await executeCommand(page, 'assistantRequestCompletions').catch((e) =>
-              console.log(`  re-request skipped: ${e}`),
-            );
-          }
-        }
+    const expectGhostText = async (timeout = TIMEOUTS.ghostText) => {
+      try {
+        await sourceActions.waitForGhostText(timeout);
+      } catch (err) {
+        await failUnlessServiceGone(err);
       }
     };
 
@@ -200,7 +163,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await typeTriggerOnNewLine(page, 'x <- func');
 
-      await expectGhostText(page);
+      await expectGhostText();
 
       const ghostTextParts = await sourcePane.ghostText.allTextContents();
       const ghostTextContent = ghostTextParts.join('');
@@ -452,14 +415,8 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourcePane.aceTextInput.first().pressSequentially('measurements');
       await sleep(5000);
 
-      // Wait for any NES indicator
-      await expect(
-        sourcePane.nesApply
-          .or(sourcePane.ghostText)
-          .or(sourcePane.nesInsertionPreview)
-          .or(sourcePane.nesGutter)
-          .first()
-      ).toBeVisible({ timeout: 10000 });
+      // Wait for any NES indicator, re-asking if the provider came back empty
+      await expectSuggestionIndicator();
 
       // If diff view appeared (Apply visible), test the Apply button
       if (await sourcePane.nesApply.first().isVisible()) {
@@ -503,7 +460,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await typeTriggerOnNewLine(page, 'x <- func');
 
-      await expectGhostText(page);
+      await expectGhostText();
       console.log('  Ghost text visible — pressing Escape');
 
       // Press Escape until the suggestion is gone AND no completion request is
@@ -540,7 +497,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
 
       await typeTriggerOnNewLine(page, 'x <- func');
 
-      await expectGhostText(page);
+      await expectGhostText();
       console.log('  Ghost text visible — moving cursor away');
 
       // Moving the cursor away from the completion point should dismiss the
@@ -733,7 +690,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await typeTriggerOnNewLine(page, 'x <- calc');
 
       // Wait for ghost text to confirm a real suggestion arrived
-      await expectGhostText(page);
+      await expectGhostText();
       const ghostParts = await sourcePane.ghostText.allTextContents();
       console.log('  Ghost text: "' + ghostParts.join('') + '"');
 
