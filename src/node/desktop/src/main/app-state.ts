@@ -59,7 +59,6 @@ export interface AppState {
   client?: Client;
   eventBus?: TypedEventEmitter<EventBusTypes>;
   argsManager: ArgsManager;
-  projectDirectory?: string;
   stateDirIssues: UserDirIssue[];
 }
 

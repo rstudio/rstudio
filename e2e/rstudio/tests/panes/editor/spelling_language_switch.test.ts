@@ -249,13 +249,13 @@ test.describe('Change Spelling Language', () => {
 
       // Source satellites have no automation bridge. Match the one document
       // by content using the Ace page object, and prime its own spelling cache.
-      // The page event fires while the popup is still bootstrapping GWT, and
-      // the marker lookup throws until an editor is mounted; expect.poll does
-      // not retry a throwing callback, so retry the whole check instead.
+      // 'domcontentloaded' is the popup's initial document, well before GWT
+      // mounts the editor; until then the lookup throws, and expect.poll does
+      // not retry a throw, so poll with toPass.
       const editor = new AceEditor(satellite, 'The colour');
       await expect(async () => {
         expect(await editor.getValue()).toBe(CONTENT);
-      }).toPass({ timeout: 30000 });
+      }).toPass({ timeout: TIMEOUTS.fileOpen });
       await satellite.locator('.ace_text-input').first().click({ force: true });
       await editor.gotoLine(2, 0);
       await satellite.keyboard.type(' ');
