@@ -246,6 +246,7 @@ public:
    void setRequestTimeout(const boost::posix_time::time_duration&) override {}
    void execute(const ResponseHandler&, const ErrorHandler&, const FixedBufferHandler&) override {}
    void setFixedBufferHandler(const FixedBufferHandler& fixedBufferHandler) override { fixedBufferHandler_ = fixedBufferHandler; }
+   void setResponseHeadersHandler(const ResponseHeadersHandler& h) override { responseHeadersHandler_ = h; }
    void setStreamNonChunkedResponses(bool) override {}
    void setBufferPredicate(const boost::function<bool(const http::Response&)>&) override {}
    void setFixedBufferHandlerSupportsPause(bool supportsPause) override { fixedBufferHandlerSupportsPause_ = supportsPause; }
@@ -311,6 +312,7 @@ public:
    }
 
    FixedBufferHandler fixedBufferHandler_;
+   ResponseHeadersHandler responseHeadersHandler_;
    bool resumed_ = false;
    bool closed_ = false;
    bool disableHandlersCalled_ = false;
@@ -328,8 +330,14 @@ struct Fixture
    // which is where FixedBufferProxy snapshots the Set-Cookie headers it has to
    // carry over -- and is the production ordering, since authentication stamps
    // refreshed cookies before dispatching to the handler that builds the proxy.
+   //
+   // preservedCookiesOverride, when supplied, is forwarded to proxy() in place
+   // of the automatic snapshot -- see the launcher proxy's use of it
+   // (proxyToLauncherEndpoints) to make its streamed delivery apply the same
+   // scope-based cookie filtering as its buffered one.
    Fixture(uint64_t maxBufferSize = 1024 * 1024,
-           const http::Headers& preStamped = http::Headers())
+           const http::Headers& preStamped = http::Headers(),
+           const boost::optional<http::Headers>& preservedCookiesOverride = boost::none)
    {
       pClientConnection = boost::make_shared<FakeAsyncConnection>();
       pServerConnection = boost::make_shared<FakeAsyncClient>();
@@ -338,7 +346,7 @@ struct Fixture
          pClientConnection->response().addHeader(header);
 
       pProxy = boost::make_shared<FixedBufferProxy>(pClientConnection, maxBufferSize);
-      pProxy->proxy(pServerConnection);
+      pProxy->proxy(pServerConnection, preservedCookiesOverride);
    }
 
    // Deliver one piece the way AsyncClient's fixedBufferHandler_ invocation would,
@@ -946,6 +954,64 @@ TEST(FixedBufferProxy, PreservesSetCookieAlreadyStampedOnClientResponse)
    EXPECT_TRUE(found);
 }
 
+TEST(FixedBufferProxy, PreservedCookiesOverrideReplacesAutomaticSnapshotEntirely)
+{
+   // Regression test (rstudio-pro#12209 follow-up): a caller that supplies
+   // preservedCookiesOverride -- e.g. the launcher proxy passing
+   // launcherCookieCarryOver()'s scope-filtered result -- must get exactly
+   // that set on the wire, not the union of it with whatever the automatic
+   // snapshot would have found. Otherwise a cookie the override's filtering
+   // intentionally withheld (a Jupyter Notebook scope that already presented
+   // a user-id cookie, say) would still leak onto the streamed response via
+   // the blind snapshot underneath it.
+   Fixture fixture(1024 * 1024,
+                   {http::Header("Set-Cookie", "auth=refreshed")},
+                   http::Headers()); // override: carry over nothing
+
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   for (const http::Header& header : fixture.pClientConnection->writtenHeaders_.headers())
+   {
+      EXPECT_FALSE(boost::iequals(header.name, "Set-Cookie") && header.value == "auth=refreshed");
+   }
+}
+
+TEST(FixedBufferProxy, PreservedCookiesOverrideIsUsedInsteadOfClientResponseCookies)
+{
+   // The mirror case: an override cookie not present on the client
+   // connection's own response at all -- e.g. one selected by
+   // launcherCookieCarryOver()'s Jupyter/VS Code branch -- must still reach
+   // the wire, proving the override is consulted rather than the automatic
+   // snapshot being consulted alongside or instead of it.
+   Fixture fixture(1024 * 1024,
+                   {http::Header("Set-Cookie", "auth=refreshed")},
+                   http::Headers{http::Header("Set-Cookie", "port-token=xyz")});
+
+   std::string body = "hello";
+   http::Response upstream;
+   makeContentLengthResponse(&upstream, body);
+   fixture.deliver(upstream, body);
+   fixture.deliver(upstream, "");
+
+   bool foundOverrideCookie = false;
+   bool foundAutomaticCookie = false;
+   for (const http::Header& header : fixture.pClientConnection->writtenHeaders_.headers())
+   {
+      if (!boost::iequals(header.name, "Set-Cookie"))
+         continue;
+      if (header.value == "port-token=xyz")
+         foundOverrideCookie = true;
+      if (header.value == "auth=refreshed")
+         foundAutomaticCookie = true;
+   }
+   EXPECT_TRUE(foundOverrideCookie);
+   EXPECT_FALSE(foundAutomaticCookie);
+}
+
 TEST(FixedBufferProxy, ClosesConnectionsForEmptyContentLengthZeroResponse)
 {
    Fixture fixture;
@@ -1519,6 +1585,69 @@ TEST(FixedBufferProxy, SubsequentBodyWriteThrowFromChunkCompletionTearsDown)
    EXPECT_TRUE(fixture.pServerConnection->closed_);
    EXPECT_TRUE(fixture.pServerConnection->disableHandlersCalled_);
    EXPECT_EQ(fixture.pProxy.use_count(), 1);
+}
+
+// --- isBelowStreamingThreshold(): the shared size predicate the per-site
+// buffering policies (shouldBufferLocalhostResponse et al.) are built from ---
+
+TEST(FixedBufferProxy, IsBelowStreamingThresholdBelow)
+{
+   http::Response response;
+   response.setHeader("Content-Length", "100");
+   EXPECT_TRUE(http::isBelowStreamingThreshold(response, /*threshold=*/1024));
+}
+
+TEST(FixedBufferProxy, IsBelowStreamingThresholdAt)
+{
+   // exactly at the threshold is NOT below it -- the predicate is a strict "<"
+   http::Response response;
+   response.setHeader("Content-Length", "1024");
+   EXPECT_FALSE(http::isBelowStreamingThreshold(response, /*threshold=*/1024));
+}
+
+TEST(FixedBufferProxy, IsBelowStreamingThresholdAbove)
+{
+   http::Response response;
+   response.setHeader("Content-Length", "2048");
+   EXPECT_FALSE(http::isBelowStreamingThreshold(response, /*threshold=*/1024));
+}
+
+TEST(FixedBufferProxy, IsBelowStreamingThresholdAbsentContentLength)
+{
+   // no declared upper bound -- exactly what streaming exists for
+   http::Response response;
+   EXPECT_FALSE(http::isBelowStreamingThreshold(response, /*threshold=*/1024));
+}
+
+TEST(FixedBufferProxy, IsBelowStreamingThresholdUnparseableContentLength)
+{
+   http::Response response;
+   response.setHeader("Content-Length", "not-a-number");
+   EXPECT_FALSE(http::isBelowStreamingThreshold(response, /*threshold=*/1024));
+}
+
+TEST(FixedBufferProxy, IsBelowStreamingThresholdIgnoresContentLengthWhenTransferEncodingPresent)
+{
+   // RFC 7230 3.3.3 rule 3: Transfer-Encoding takes precedence over
+   // Content-Length, so a chunked response must never be classified as
+   // below-threshold purely because it also carries a small (stale or
+   // malicious) Content-Length -- its body is unbounded regardless of that
+   // value.
+   http::Response response;
+   response.setHeader(kTransferEncoding, kChunkedTransferEncoding);
+   response.setHeader("Content-Length", "10");
+   EXPECT_FALSE(http::isBelowStreamingThreshold(response, /*threshold=*/1024));
+}
+
+TEST(FixedBufferProxy, IsBelowStreamingThresholdDefaultThresholdIsOneMegabyte)
+{
+   http::Response justUnder;
+   justUnder.setHeader("Content-Length", std::to_string(1024 * 1024 - 1));
+   EXPECT_TRUE(http::isBelowStreamingThreshold(justUnder));
+
+   http::Response atThreshold;
+   atThreshold.setHeader("Content-Length", std::to_string(1024 * 1024));
+   EXPECT_FALSE(http::isBelowStreamingThreshold(atThreshold));
 }
 
 } // namespace tests

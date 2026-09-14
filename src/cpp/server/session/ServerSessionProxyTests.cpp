@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include <shared_core/system/User.hpp>
+#include <core/http/HeaderCookieConstants.hpp>
 
 #include <server/session/ServerSessionProxy.hpp>
 
@@ -139,4 +140,153 @@ TEST(ProxyLocalhostResponseTests, NormalizesChunkedSparkUiBeforeRewritingBody)
              std::string::npos);
    EXPECT_NE(preparedResponse.body().find("<img src=\"../static/spark-logo"),
              std::string::npos);
+}
+
+// shouldBufferLocalhostResponse() (ServerSessionProxy.cpp) is the /p/ path's
+// named buffering policy, handed to setBufferPredicate() in
+// proxyLocalhostRequest(). It ORs the header-observable always-buffer cases
+// (websocket upgrade, redirect, SparkUI/Jetty) with the shared size gate
+// (isBelowStreamingThreshold, FixedBufferProxy.hpp) added by this step. These
+// tests exercise the policy directly via the shouldBufferLocalhostResponseForTest()
+// passthrough hook.
+TEST(BufferingPolicyTests, AlwaysBuffersSwitchingProtocolsRegardlessOfSize)
+{
+   http::Response response;
+   response.setStatusCode(http::status::SwitchingProtocols);
+
+   EXPECT_TRUE(session_proxy::shouldBufferLocalhostResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, AlwaysBuffersLocationRedirectRegardlessOfSize)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setHeader("Location", "/redirect-target");
+   response.setContentLength(8388608);
+
+   EXPECT_TRUE(session_proxy::shouldBufferLocalhostResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, AlwaysBuffersRefreshRegardlessOfSize)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setHeader("Refresh", "5; url=/refresh-target");
+   response.setContentLength(8388608);
+
+   EXPECT_TRUE(session_proxy::shouldBufferLocalhostResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, AlwaysBuffersJettyServerRegardlessOfSize)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setHeader("Server", "Jetty(9.4.57)");
+   response.setContentLength(8388608);
+
+   EXPECT_TRUE(session_proxy::shouldBufferLocalhostResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, StreamsLargeResponseWithNoOtherBufferCondition)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setContentLength(8388608);
+
+   EXPECT_FALSE(session_proxy::shouldBufferLocalhostResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, BuffersSmallResponseOnSizeGate)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setContentLength(512);
+
+   EXPECT_TRUE(session_proxy::shouldBufferLocalhostResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, StreamsResponseWithNoContentLength)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+
+   EXPECT_FALSE(session_proxy::shouldBufferLocalhostResponseForTest(response));
+}
+
+// The local-stream /s/ proxy path's named buffering policy
+// (shouldBufferLocalStreamResponse, ServerSessionProxy.cpp), handed to
+// setBufferPredicate() in proxyRequest. proxyRequest is the delivery path for
+// every plain (non-launcher) RStudio session once the request reaches the
+// node the session lives on. Unlike /p/, launcher, or the load balancer, /s/
+// has no header-observable always-buffer condition of its own -- only the
+// shared size gate (isBelowStreamingThreshold, FixedBufferProxy.hpp). These
+// tests exercise the policy directly via the
+// shouldBufferLocalStreamResponseForTest() passthrough hook.
+TEST(BufferingPolicyTests, ShouldBufferLocalStreamResponseStreamsLargeResponse)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setContentLength(8388608);
+
+   EXPECT_FALSE(session_proxy::shouldBufferLocalStreamResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, ShouldBufferLocalStreamResponseBuffersSmallResponse)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.setContentLength(512);
+
+   EXPECT_TRUE(session_proxy::shouldBufferLocalStreamResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, ShouldBufferLocalStreamResponseStreamsResponseWithNoContentLength)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+
+   EXPECT_FALSE(session_proxy::shouldBufferLocalStreamResponseForTest(response));
+}
+
+TEST(BufferingPolicyTests, ShouldBufferLocalStreamResponseDoesNotAlwaysBufferSwitchingProtocols)
+{
+   // Unlike /p/, /s/ never upgrades to a websocket, so a 101 here is not a
+   // condition this policy needs to special-case -- it falls through to the
+   // size gate like any other status.
+   http::Response response;
+   response.setStatusCode(http::status::SwitchingProtocols);
+   response.setContentLength(8388608);
+
+   EXPECT_FALSE(session_proxy::shouldBufferLocalStreamResponseForTest(response));
+}
+
+// Cookie-parity regression test: proxyRequest's streamed /s/ path passes
+// getAuthCookies(ptrConnection->response()) as FixedBufferProxy::proxy()'s
+// preservedCookiesOverride, so it must land exactly the auth-cookie whitelist
+// getAuthCookies() computes -- not a blind copy of every Set-Cookie already on
+// that response. handleProxyResponse, the buffered-path completion handler,
+// already calls
+// writeResponse(response, true, getAuthCookies(ptrConnection->response())),
+// so the streamed path must compute the identical filtered set or the two
+// delivery strategies would diverge on which cookies survive.
+TEST(BufferingPolicyTests, GetAuthCookiesFiltersToWhitelistNotBlindCopyForLocalStreamCookieParity)
+{
+   http::Response response;
+   response.setStatusCode(http::status::Ok);
+   response.addHeader("Set-Cookie", std::string(kUserIdCookie) + "=refreshed-value");
+   response.addHeader("Set-Cookie", "some-other-cookie=should-not-be-carried-over");
+
+   http::Headers authCookies = session_proxy::getAuthCookies(response);
+
+   bool foundAuthCookie = false;
+   bool foundNonAuthCookie = false;
+   for (const http::Header& header : authCookies)
+   {
+      if (header.value.find(std::string(kUserIdCookie) + "=refreshed-value") != std::string::npos)
+         foundAuthCookie = true;
+      if (header.value.find("some-other-cookie") != std::string::npos)
+         foundNonAuthCookie = true;
+   }
+   EXPECT_TRUE(foundAuthCookie);
+   EXPECT_FALSE(foundNonAuthCookie);
 }

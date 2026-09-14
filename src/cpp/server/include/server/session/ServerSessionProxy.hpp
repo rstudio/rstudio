@@ -144,6 +144,14 @@ void prepareLocalhostResponseForTest(
       bool ipv6,
       const core::http::Response& response,
       core::http::Response* pPreparedResponse);
+
+// Exposes the /p/ buffering policy (shouldBufferLocalhostResponse) -- which
+// responses handleLocalhostRequest holds whole rather than streams.
+bool shouldBufferLocalhostResponseForTest(const core::http::Response& response);
+
+// Exposes the /s/ buffering policy (shouldBufferLocalStreamResponse) -- which
+// responses proxyRequest holds whole rather than streams.
+bool shouldBufferLocalStreamResponseForTest(const core::http::Response& response);
 #endif
 
 } // namespace session_proxy

@@ -306,14 +306,21 @@ bool sessionContextForRequest(
    }
 }
 
+// The /s/ path's headers-received hook. Its whole content is the pending-launch
+// bookkeeping, which only needs to know that the session answered -- see
+// ResponseHeadersHandler in AsyncClient.hpp for why hooks live here rather than
+// in the completion handler.
+void handleProxyResponseHeaders(const r_util::SessionContext& context, http::Response&)
+{
+   // if there was a launch pending then remove it
+   sessionManager().removePendingLaunch(context);
+}
+
 void handleProxyResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const r_util::SessionContext& context,
       const http::Response& response)
 {
-   // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context);
-
    // ensure authorization cookies that were automatically refreshed as part of this
    // request are stamped on the response
    ptrConnection->writeResponse(response, true, getAuthCookies(ptrConnection->response()));
@@ -791,6 +798,15 @@ void handleEventsError(
    ptrConnection->writeResponse();
 }
 
+// Which local-stream /s/ responses must be held whole rather than streamed.
+// /s/ has no header-observable always-buffer condition of its own (no
+// WS-upgrade bridging, no body rewrites) -- unlike /p/, launcher, or the load
+// balancer, its only site-specific concern is size.
+bool shouldBufferLocalStreamResponse(const http::Response& response)
+{
+   return http::isBelowStreamingThreshold(response);
+}
+
 Error userIdForUsername(const std::string& username, UidType* pUID)
 {
    static core::thread::ThreadsafeMap<std::string, UidType> cache;
@@ -890,14 +906,19 @@ void proxyRequest(
    // its contents into the client's request instead of deep-copying them
    pClient->request().assign(std::move(*pRequest));
 
-   LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
+   LOG_DEBUG_MESSAGE("- Start streaming server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath() + (connectionRetryProfile.empty() ? "" : " with retry"));
 
    try
    {
       // proxy the request
       boost::shared_ptr<http::FixedBufferProxy> fixedBufferProxy(
             new http::FixedBufferProxy(ptrConnection));
-      fixedBufferProxy->proxy(pClient);
+
+      fixedBufferProxy->proxy(pClient, getAuthCookies(ptrConnection->response()));
+      pClient->setResponseHeadersHandler(
+         boost::bind(handleProxyResponseHeaders, context, _1));
+      pClient->setStreamNonChunkedResponses(true);
+      pClient->setBufferPredicate(shouldBufferLocalStreamResponse);
       pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
                        errorHandler);
 
@@ -1255,6 +1276,36 @@ void proxyVSCodeRequest(
                                boost::bind(handleContentError, ptrConnection, context, _1));
 }
 
+// Which localhost /p/ responses must be held whole rather than streamed.
+//
+// The Jetty test is a deliberate header-level over-approximation of a
+// body-level condition: isSparkUIResponse() greps the body for SparkUI's markup
+// and rewriteSparkUIResponse() rewrites that body, neither of which a streamed
+// response can do -- so every Jetty response is held, not just the SparkUI ones.
+// Redirects are held because prepareLocalhostResponse() rewrites Location and
+// Refresh, and a 101 because it is bridged socket-to-socket rather than written
+// as a body.
+bool shouldBufferLocalhostResponse(const http::Response& response)
+{
+   return response.statusCode() == http::status::SwitchingProtocols ||
+          !response.headerValue("Location").empty() ||
+          !response.headerValue("Refresh").empty() ||
+          boost::algorithm::contains(response.headerValue("Server"), "Jetty") ||
+          http::isBelowStreamingThreshold(response);
+}
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+bool shouldBufferLocalhostResponseForTest(const http::Response& response)
+{
+   return shouldBufferLocalhostResponse(response);
+}
+
+bool shouldBufferLocalStreamResponseForTest(const http::Response& response)
+{
+   return shouldBufferLocalStreamResponse(response);
+}
+#endif
+
 void proxyLocalhostRequest(
       bool ipv6,
       const std::string& username,
@@ -1420,12 +1471,7 @@ void proxyLocalhostRequest(
    // response: SparkUI root-path link fixups (Server: Jetty; see
    // isSparkUIResponse), redirects (Location/Refresh), and websocket upgrades.
    pClient->setStreamNonChunkedResponses(true);
-   pClient->setBufferPredicate([](const http::Response& response) {
-      return response.statusCode() == http::status::SwitchingProtocols ||
-             !response.headerValue("Location").empty() ||
-             !response.headerValue("Refresh").empty() ||
-             boost::algorithm::contains(response.headerValue("Server"), "Jetty");
-   });
+   pClient->setBufferPredicate(shouldBufferLocalhostResponse);
 
    try
    {
