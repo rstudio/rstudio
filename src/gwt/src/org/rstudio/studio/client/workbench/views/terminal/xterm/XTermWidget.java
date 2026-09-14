@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -23,10 +24,14 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalConstants;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent.Handler;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -55,6 +60,9 @@ import java.util.function.Consumer;
  *
  * For title changes (via escape sequences sent to terminal), subscribe to
  * XTermTitleEvent.
+ *
+ * To make file paths in the output clickable, override resolveFileLinks()
+ * and openFileLink().
  */
 public class XTermWidget extends Widget
                          implements RequiresResize,
@@ -65,11 +73,15 @@ public class XTermWidget extends Widget
    /**
     * Creates an XTermWidget.
     */
-   public XTermWidget(XTermOptions options, boolean tabMovesFocus, boolean showWebLinks)
+   public XTermWidget(XTermOptions options,
+                      boolean tabMovesFocus,
+                      boolean showWebLinks,
+                      boolean showFileLinks)
    {
       options_ = options;
       tabMovesFocus_ = tabMovesFocus;
       showWebLinks_ = showWebLinks;
+      showFileLinks_ = showFileLinks;
 
       // Create an element to hold the terminal widget
       setElement(Document.get().createDivElement());
@@ -102,6 +114,9 @@ public class XTermWidget extends Widget
             // at runtime and pass to the API) to bleed through when using DOM-based renderer.
             // Fix by removing the unnecessary 'terminal' class.
             terminal_.removeClass("terminal");
+
+            if (showFileLinks_)
+               terminal_.registerFileLinkProvider(XTermWidget.this, BrowseCap.isMacintosh());
 
             // Handle keystrokes from the xterm and dispatch them
             addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
@@ -184,6 +199,56 @@ public class XTermWidget extends Widget
    {
    }
 
+   /**
+    * Resolve candidate file paths found in terminal output against the
+    * terminal's working directory. The callback receives one entry per
+    * candidate: the path of an existing file, or an empty string. Subclasses
+    * connected to a server-side process override this; the default resolves
+    * nothing.
+    */
+   protected void resolveFileLinks(JsArrayString candidates, CommandWithArg<JsArrayString> callback)
+   {
+      callback.execute(null);
+   }
+
+   /**
+    * Open a file link the user activated.
+    * @param path path as returned by resolveFileLinks()
+    * @param line 1-based line, or 0 if none was given
+    * @param column 1-based column, or 0 if none was given
+    */
+   protected void openFileLink(String path, int line, int column)
+   {
+   }
+
+   // Called from the file link provider (see XTermNative)
+   private void resolveFileLinksNative(JsArrayString candidates, JavaScriptObject callback)
+   {
+      resolveFileLinks(candidates, result -> XTermNative.invokeCallback(callback, result));
+   }
+
+   private void showFileLinkHint(String path)
+   {
+      getElement().setTitle(BrowseCap.isMacintosh() ?
+            constants_.fileLinkHintMac(path) :
+            constants_.fileLinkHint(path));
+   }
+
+   private void hideFileLinkHint()
+   {
+      getElement().removeAttribute("title");
+   }
+
+   /**
+    * Forget cached file link resolutions, e.g. after the terminal's working
+    * directory changed.
+    */
+   protected void clearFileLinkCache()
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.clearFileLinkCache();
+   }
+
    private final Timer resizeTerminalLocal_ = new Timer()
    {
       @Override
@@ -222,8 +287,10 @@ public class XTermWidget extends Widget
       {
          XTermDimensions size = getTerminalSize();
 
-         // ignore if a reasonable size couldn't be computed
-         if (size.cols < 1 || size.rows < 1)
+         // ignore if a reasonable size couldn't be computed; the fit addon
+         // reports NaN before the renderer has measured a character cell,
+         // which the server rejects as a malformed request
+         if (!(size.cols >= 1 && size.rows >= 1))
          {
             return;
          }
@@ -427,10 +494,11 @@ public class XTermWidget extends Widget
       xtermCssLoader_.addCallback(() ->
             xtermLoader_.addCallback(() ->
                xtermWebLinksLoader_.addCallback(() ->
-                  xtermFitLoader_.addCallback(() -> {
+                  xtermFileLinksLoader_.addCallback(() ->
+                     xtermFitLoader_.addCallback(() -> {
          if (command != null)
             command.execute();
-      }))));
+      })))));
    }
 
    public void refresh()
@@ -513,6 +581,9 @@ public class XTermWidget extends Widget
    private static final ExternalJavaScriptLoader xtermWebLinksLoader_ =
       new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermweblinksjs().getSafeUri().asString());
 
+   private static final ExternalJavaScriptLoader xtermFileLinksLoader_ =
+      new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermfilelinksjs().getSafeUri().asString());
+
    private static final ExternalJavaScriptLoader xtermWebGLLoader_ =
       new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermwebgljs().getSafeUri().asString());
 
@@ -521,6 +592,8 @@ public class XTermWidget extends Widget
    private final XTermOptions options_;
    private final boolean tabMovesFocus_;
    private final boolean showWebLinks_;
+   private final boolean showFileLinks_;
 
    private final static String XTERM_CLASS = "xterm-rstudio";
+   private static final TerminalConstants constants_ = GWT.create(TerminalConstants.class);
 }
