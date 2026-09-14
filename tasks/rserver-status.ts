@@ -73,6 +73,10 @@ function reportInstance(instance: Instance): void {
 
   console.log(`    started:  ${instance.startedAt}`);
 
+  if (instance.configHome) {
+    console.log(`    state:    ${instance.configHome} (config), ${instance.dataHome} (data)`);
+  }
+
   if (!rserverAlive) {
     console.log(`    note:     stale record; clear it with \`npm run rserver-stop -- ${instance.checkout}\``);
   }

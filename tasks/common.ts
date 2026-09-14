@@ -33,6 +33,13 @@ export interface Instance {
   gwtPid: number | null;
   dataDir: string;
   secureCookieKey: string;
+  /**
+   * RSTUDIO_CONFIG_HOME / RSTUDIO_DATA_HOME handed to the sessions, or null
+   * when --user-config left them on the real homes. Absent in records written
+   * before these existed, which read as undefined.
+   */
+  configHome: string | null;
+  dataHome: string | null;
   startedAt: string;
 }
 

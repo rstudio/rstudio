@@ -55,12 +55,20 @@ reports the running instance instead (use `--restart` to replace it).
   take a couple of minutes; after that, Java edits are picked up on reload.
   `ant devmode` also opens GWT's Swing "Development Mode" window, exactly as it
   does when run by hand.
-- The server runs with the real `HOME`, so it sees your usual R libraries and
-  RStudio preferences. Two instances therefore share user preferences, the same
-  way two desktop RStudio windows do.
-- State lives in `<checkout>/.rstudio-dev/` (gitignored): `instance.json` plus
-  `rserver.log` and `gwt.log`, which are the first place to look if a start
-  fails.
+- Sessions get their own RStudio config and data homes,
+  `<checkout>/.rstudio-dev/config` and `<checkout>/.rstudio-dev/data`
+  (`RSTUDIO_CONFIG_HOME` / `RSTUDIO_DATA_HOME`, which `rserver` forwards to
+  each `rsession`). Preferences toggled while testing, or written by a script
+  through `.rs.writeUserPref()`, therefore never land in your everyday
+  `~/.config/rstudio`, and two worktrees' instances don't share state. Both
+  directories persist across restarts of the same checkout. To start from your
+  own preferences, copy `~/.config/rstudio/rstudio-prefs.json` into the config
+  home; to use the real homes instead, pass `--user-config`. `HOME` itself is
+  unchanged, so R and its libraries are your usual ones.
+- State lives in `<checkout>/.rstudio-dev/` (gitignored): `instance.json`,
+  `rserver.log` and `gwt.log` -- the first place to look if a start fails --
+  plus the `config` and `data` homes above (session logs are under
+  `data/log/`).
 
 ## startup-timing
 

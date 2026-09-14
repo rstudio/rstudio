@@ -287,7 +287,9 @@ or of a git worktree -- use the repo-level tasks:
 `rserver-dev` builds the backend, starts `rserver` and `ant devmode` on
 per-instance ports (so several worktrees can serve at once), and prints the
 localhost URL. The processes outlive the task; logs and state land in
-`<checkout>/.rstudio-dev/`. See `tasks/README.md` for the options.
+`<checkout>/.rstudio-dev/`, including the sessions' own RStudio config and
+data homes (pass `--user-config` to use yours), so preferences changed while
+testing stay out of `~/.config/rstudio`. See `tasks/README.md` for the options.
 
 
 ## Writing Automated Tests
