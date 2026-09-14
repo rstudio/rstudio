@@ -21,9 +21,11 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
@@ -85,7 +87,8 @@ public class ChunkHtmlPage extends ChunkOutputPage
                @Override
                public void run()
                {
-                  onRenderComplete.execute();
+                  if (onRenderComplete != null)
+                     onRenderComplete.execute();
                }
             };
 
@@ -97,13 +100,18 @@ public class ChunkHtmlPage extends ChunkOutputPage
          @Override
          public void execute()
          {
+            // Inactive gallery pages are detached from the document. Their
+            // theme will be applied when they are selected and loaded again.
+            if (frame_.getWindow() == null)
+               return;
+
             Element body = frame_.getDocument().getBody();
 
             Style bodyStyle = body.getStyle();
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
 
-            syncThemeTextColor(themeColors_, body);
+            syncThemeTextColor(themeColors_, body, metadata);
          }
       };
 
@@ -117,13 +125,28 @@ public class ChunkHtmlPage extends ChunkOutputPage
       });
    }
    
-   public static void syncThemeTextColor(Colors themeColors, Element body)
+   public static void syncThemeTextColor(Colors themeColors, Element body, NotebookHtmlMetadata metadata)
    {
       Style bodyStyle = body.getStyle();
       if (StringUtil.isNullOrEmpty(bodyStyle.getBackgroundColor()) &&
           StringUtil.isNullOrEmpty(body.getClassName()))
       {
          bodyStyle.setColor(themeColors.foreground);
+
+         // Markdown kable output is an HTML fragment without a doctype. In
+         // quirks mode, table colors can remain stale when the body color
+         // changes. Explicit inheritance keeps these tables in sync.
+         if (metadata != null && metadata.isMarkdownKable())
+         {
+            Document document = body.getOwnerDocument();
+            if (document.getElementById(KABLE_THEME_STYLE_ID) == null)
+            {
+               StyleElement style = document.createStyleElement();
+               style.setId(KABLE_THEME_STYLE_ID);
+               style.setInnerText(":where(table) { color: inherit; }");
+               document.getHead().appendChild(style);
+            }
+         }
       }
    }
       
@@ -157,5 +180,6 @@ public class ChunkHtmlPage extends ChunkOutputPage
    final private Widget content_;
    private Colors themeColors_ = null;
    private Command afterRender_;
+   private static final String KABLE_THEME_STYLE_ID = "rstudio-kable-table-theme";
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

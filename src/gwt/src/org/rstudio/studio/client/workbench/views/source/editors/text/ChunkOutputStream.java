@@ -285,7 +285,7 @@ public class ChunkOutputStream extends FlowPanel
       
       afterRender_ = () -> 
       {
-         ChunkHtmlPage.syncThemeTextColor(themeColors_, frame.getDocument().getBody());
+         ChunkHtmlPage.syncThemeTextColor(themeColors_, frame.getDocument().getBody(), metadata);
       };
 
       // when the frame loads, sync its text color -- note that a frame may load
