@@ -7,11 +7,17 @@ import { SourcePaneActions } from '@actions/source_pane.actions';
 import { SourcePane } from '@pages/source_pane.page';
 import { useSuiteSandbox } from '@utils/sandbox';
 import { executeCommand, resetSourcePaneState, setPref } from '@utils/commands';
-import { requireAiCredentials } from '@utils/ai-credentials';
+import {
+  aiServiceOutageReason,
+  hasAiCredentials,
+  requireAiCredentials,
+  type AIProvider,
+} from '@utils/ai-credentials';
 
 for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
   test.describe(provider, { tag: ['@ai'] }, () => {
-    requireAiCredentials(test, key === 'copilot' ? 'copilot' : 'positai');
+    const aiProvider: AIProvider = key === 'copilot' ? 'copilot' : 'positai';
+    requireAiCredentials(test, aiProvider);
 
     // Sets cwd to a per-spec sandbox; relative paths used by createAndOpenFile
     // and closeSourceAndDeleteFile land there.
@@ -63,6 +69,37 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       }
     };
 
+    // A suggestion that never arrived is a real failure only while the
+    // provider's service still answers. The gate probed it at test start,
+    // but the runner's network can degrade mid-run (run 34728179667: the
+    // manifest download timed out and the agent reported NotSignedIn, which
+    // surfaced here as a 30s ghost-text timeout). Re-probe and skip
+    // retroactively when the service is gone; otherwise rethrow untouched.
+    const failUnlessServiceGone = async (err: unknown): Promise<never> => {
+      const reason = await aiServiceOutageReason(aiProvider);
+      if (reason !== null) {
+        test.skip(true, reason);
+      }
+      throw err;
+    };
+
+    // Wait for any NES indicator. The assistant may answer with a diff view
+    // (Apply visible), ghost text, an insertion preview, or just the gutter
+    // marker; which one is the model's call, so accept any of them.
+    const expectSuggestionIndicator = async (timeout = TIMEOUTS.nesApply) => {
+      try {
+        await expect(
+          sourcePane.nesApply
+            .or(sourcePane.ghostText)
+            .or(sourcePane.nesInsertionPreview)
+            .or(sourcePane.nesGutter)
+            .first()
+        ).toBeVisible({ timeout });
+      } catch (err) {
+        await failUnlessServiceGone(err);
+      }
+    };
+
     // Wait for ghost text, re-requesting when the assistant answers with
     // nothing.
     //
@@ -87,7 +124,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
           return;
         } catch (err) {
           if (Date.now() >= deadline)
-            throw err;
+            await failUnlessServiceGone(err);
           if (await sourcePane.statusBarNoCompletions.isVisible().catch(() => false)) {
             console.log('  No completions available -- re-requesting');
             // Don't let a momentarily-disabled command replace the real
@@ -105,6 +142,14 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       assistantActions = new AssistantOptionsActions(page, consoleActions);
       sourceActions = new SourcePaneActions(page, consoleActions);
       sourcePane = sourceActions.sourcePane;
+
+      // beforeAll runs before the beforeEach gate; skip the assistant setup
+      // (which can spend a minute on install prompts against a dead network)
+      // when the tests are going to be skipped anyway. The objects above are
+      // still constructed: afterAll's cleanup uses them either way.
+      if (!(await hasAiCredentials(aiProvider))) {
+        return;
+      }
 
       // Close any leftover source buffers from previous runs WITHOUT saving --
       // a save here would race a now-gone sandbox path from an earlier aborted
@@ -355,14 +400,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourcePane.aceTextInput.pressSequentially('measurements');
       await sleep(5000);
 
-      // Wait for any NES indicator
-      await expect(
-        sourcePane.nesApply
-          .or(sourcePane.ghostText)
-          .or(sourcePane.nesInsertionPreview)
-          .or(sourcePane.nesGutter)
-          .first()
-      ).toBeVisible({ timeout: TIMEOUTS.nesApply });
+      await expectSuggestionIndicator();
 
       // If diff view appeared (Apply visible), test the Discard button
       if (await sourcePane.nesApply.first().isVisible()) {
@@ -543,14 +581,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourcePane.aceTextInput.pressSequentially('final_result');
       await sleep(2000);
 
-      // Wait for any NES indicator
-      await expect(
-        sourcePane.nesApply
-          .or(sourcePane.ghostText)
-          .or(sourcePane.nesInsertionPreview)
-          .or(sourcePane.nesGutter)
-          .first()
-      ).toBeVisible({ timeout: TIMEOUTS.nesApply });
+      await expectSuggestionIndicator();
 
       const contentBefore = await sourceActions.getEditorContent();
       console.log('  NES suggestion visible — pressing Escape');
@@ -595,14 +626,7 @@ for (const [key, provider] of Object.entries(CODE_SUGGESTION_PROVIDERS)) {
       await sourcePane.aceTextInput.pressSequentially('final_total');
       await sleep(5000);
 
-      // Wait for NES suggestion to appear
-      await expect(
-        sourcePane.nesApply
-          .or(sourcePane.ghostText)
-          .or(sourcePane.nesInsertionPreview)
-          .or(sourcePane.nesGutter)
-          .first()
-      ).toBeVisible({ timeout: TIMEOUTS.nesApply });
+      await expectSuggestionIndicator();
       console.log('  NES suggestion visible — editing unrelated line');
 
       // Edit an unrelated line (the placeholder comment on line 6)

@@ -20,6 +20,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
+import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -84,7 +85,18 @@ public class SessionInfo extends JavaScriptObject
    public final native String getPrompt() /*-{
       return this.prompt;
    }-*/;
-   
+
+   /**
+    * The save action a quit or project close would take right now, as one of
+    * the {@link SaveAction} constants, or null if the session did not report
+    * one. The session also publishes this through SaveActionChangedEvent, but
+    * that event is asynchronous -- callers that can run before the first one
+    * arrives must start from this value.
+    */
+   public final native SaveAction getSaveAction() /*-{
+      return (this.save_action == null) ? null : { action: this.save_action };
+   }-*/;
+
    public final native JsArray<RnwWeave> getRnwWeaveTypes() /*-{
       return this.rnw_weave_types;
    }-*/;

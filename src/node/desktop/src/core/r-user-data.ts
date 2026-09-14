@@ -17,6 +17,10 @@ export const kRStudioInitialWorkingDir = 'RS_INITIAL_WD';
 export const kRStudioInitialEnvironment = 'RS_INITIAL_ENV';
 export const kRStudioInitialProject = 'RS_INITIAL_PROJECT';
 
+// value for kRStudioInitialProject asking the session to start with no project;
+// matches kProjectNone in the session (RSessionContext.hpp)
+export const kProjectNone = 'none';
+
 export enum SessionType {
   SessionTypeDesktop = 0,
   SessionTypeServer = 1,

@@ -121,10 +121,17 @@ TEST(SessionRTest, RFunctionRefusesNonMainThread) {
 }
 
 TEST(SessionRTest, SysGetenvSeesCoreSetenv) {
-#ifdef _WIN32
-   // the write-through only reaches R when R shares our C runtime: UCRT
-   // builds of R (>= 4.2). msvcrt builds keep a separate environment copy
-   // that only the r::util::setenv bridge can update
+   // on Windows, the write-through only reaches R when R resolves getenv()
+   // to the same CRT module we do. each module snapshots the Win32
+   // environment block once, lazily, and never re-reads it, so a write into
+   // another module's table stays invisible to R; only the r::util::setenv
+   // bridge helps there
+#if defined(_WIN32) && defined(_DEBUG)
+   // debug builds link ucrtbased.dll, whereas R.dll always links the release
+   // ucrtbase.dll
+   GTEST_SKIP() << "debug builds link ucrtbased.dll; R links ucrtbase.dll";
+#elif defined(_WIN32)
+   // msvcrt builds of R (R < 4.2) keep their own copy of the environment
    bool sharedRuntime = false;
    Error versionError = r::exec::evaluateString("getRversion() >= '4.2.0'", &sharedRuntime);
    ASSERT_FALSE(versionError);

@@ -1232,6 +1232,27 @@ TEST_F(DatabaseTestsFixture, CompoundWhereExpressions)
    }
    ASSERT_EQ(expected.size(), 0) << "missing rows in WHERE AND test";
    ASSERT_FALSE(unexpected) << "unexpected results in WHERE AND test";
+
+   SelectBuilder builder3(sqliteConnection, "BuilderTest");
+   builder3.add("id");
+   builder3.whereNot(QBWhereAnd()
+      .where("bar", 0)
+      .where("foo", 2)
+   );
+
+   sql = builder3.toSQL();
+   EXPECT_EQ(sql, "SELECT id FROM BuilderTest WHERE NOT (bar = :where_1_bar AND foo = :where_1_foo)");
+}
+
+TEST_F(DatabaseTestsFixture, EmptyCompoundWhere)
+{
+   SelectBuilder builder(sqliteConnection, "BuilderTest");
+   builder.add("id").where(QBWhereAnd());
+   EXPECT_EQ(builder.toSQL(), "SELECT id FROM BuilderTest WHERE (1 = 1)");
+
+   SelectBuilder builder2(sqliteConnection, "BuilderTest");
+   builder2.add("id").where(QBWhereOr());
+   EXPECT_EQ(builder2.toSQL(), "SELECT id FROM BuilderTest WHERE (1 = 0)");
 }
 
 TEST_F(DatabaseTestsFixture, RawBuilderWorks)
