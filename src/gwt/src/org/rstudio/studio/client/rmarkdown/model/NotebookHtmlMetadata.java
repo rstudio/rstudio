@@ -27,8 +27,8 @@ public class NotebookHtmlMetadata extends JavaScriptObject
       return this.classes || [];
    }-*/;
 
-   public final native boolean isMarkdownKable() /*-{
-      return this.isMarkdownKable === true;
+   public final native boolean isKable() /*-{
+      return this.isKable === true;
    }-*/;
 
    public final native boolean getSizingPolicyKnitrFigure() /*-{

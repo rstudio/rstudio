@@ -20,7 +20,7 @@ function notebook(code: string): string {
   return ['---', 'output: html_document', '---', '', '```{r}', code, '```', ''].join('\n');
 }
 
-test.describe('Notebook Markdown kable themes', () => {
+test.describe('Notebook kable themes', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   let sourceActions: SourcePaneActions;
@@ -60,7 +60,7 @@ test.describe('Notebook Markdown kable themes', () => {
     await expect(page.frameLocator(OUTPUT_FRAME).locator('td').first()).toBeVisible();
   }
 
-  for (const format of ['default', 'markdown', 'simple']) {
+  for (const format of ['default', 'markdown', 'simple', 'html']) {
     test(`${format} kable follows the theme on first render, rerun, and tab switching`, async ({ rstudioPage: page }) => {
       await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
       const fileName = 'kable-theme.Rmd';
@@ -103,12 +103,39 @@ test.describe('Notebook Markdown kable themes', () => {
     });
   }
 
-  test('gallery pages apply inheritance only to Markdown kable output', async ({ rstudioPage: page }) => {
+  for (const styling of ['inline', 'stylesheet', 'cascade layer']) {
+    test(`HTML kable preserves ${styling} colors through theme changes`, async ({ rstudioPage: page }) => {
+      await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
+      const fileName = 'styled-kable.Rmd';
+      const declarations = 'color: rgb(12, 34, 56); background-color: white;';
+      const tableAttributes = styling === 'inline' ? `style="${declarations}"` : 'class="authored"';
+      const rule = `table.authored { ${declarations} }`;
+      const stylesheet = styling === 'cascade layer' ? `@layer custom { ${rule} }` : rule;
+      const code = [
+        `x <- knitr::kable(data.frame(value = 42), format = "html", table.attr = ${rStringLiteral(tableAttributes)})`,
+        ...(styling === 'inline' ? [] : [`x[] <- paste0(${rStringLiteral(`<style>${stylesheet}</style>`)}, x)`]),
+        'x',
+      ].join('\n');
+      await writeAndOpenFile(page, sandbox.dir, fileName, notebook(code));
+      await runChunk(page);
+      const output = page.frameLocator(OUTPUT_FRAME);
+      await expect(output.locator(KABLE_STYLE)).toHaveCount(1);
+      await expect(output.locator('td')).toHaveCSS('color', 'rgb(12, 34, 56)');
+      await applyTheme(page, LIGHT_THEME, LIGHT_THEME_HREF);
+      await expect(output.locator('td')).toHaveCSS('color', 'rgb(12, 34, 56)');
+      await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
+      await expect(output.locator('td')).toHaveCSS('color', 'rgb(12, 34, 56)');
+      await expect(output.locator(KABLE_STYLE)).toHaveCount(1);
+      await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
+    });
+  }
+
+  test('gallery pages apply inheritance only to kable output', async ({ rstudioPage: page }) => {
     await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
     const fileName = 'kable-gallery.Rmd';
     const html = '<table style="color: rgb(12, 34, 56); background: white"><tr><td>Custom</td></tr></table>';
     await writeAndOpenFile(page, sandbox.dir, fileName, notebook([
-      'knitr::kable(data.frame(value = 42), format = "markdown")',
+      'knitr::kable(data.frame(value = 42), format = "html")',
       `htmltools::HTML(${rStringLiteral(html)})`,
     ].join('\n')));
     await runChunk(page);
@@ -136,7 +163,6 @@ test.describe('Notebook Markdown kable themes', () => {
   });
 
   for (const [name, code] of [
-    ['HTML kable', 'knitr::kable(data.frame(value = 42), format = "html")'],
     ['generic Markdown', 'knitr::asis_output("| value |\\n| --- |\\n| 42 |")'],
     ['custom HTML', `htmltools::HTML(${rStringLiteral('<table style="color: rgb(12, 34, 56); background: white"><tr><td>Custom</td></tr></table>')})`],
   ]) {

@@ -179,9 +179,9 @@
 
   .rs.addS3Override("print.knitr_kable", function(x, ...) {
     output <- knitr::asis_output(x)
-    # Preserve the origin of Markdown tables when converting to generic as-is
+    # Preserve the origin of kable tables when converting to generic as-is
     # output, so the notebook can apply table color inheritance only to these.
-    attr(output, "rstudio_markdown_kable") <- attr(x, "format") %in% c("pipe", "simple")
+    attr(output, "rstudio_kable") <- TRUE
     print(output)
     invisible(x)
   })

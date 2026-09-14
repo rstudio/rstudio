@@ -133,18 +133,20 @@ public class ChunkHtmlPage extends ChunkOutputPage
       {
          bodyStyle.setColor(themeColors.foreground);
 
-         // Markdown kable output is an HTML fragment without a doctype. In
+         // Rendered kable output is an HTML fragment without a doctype. In
          // quirks mode, table colors can remain stale when the body color
          // changes. Explicit inheritance keeps these tables in sync.
-         if (metadata != null && metadata.isMarkdownKable())
+         if (metadata != null && metadata.isKable())
          {
             Document document = body.getOwnerDocument();
             if (document.getElementById(KABLE_THEME_STYLE_ID) == null)
             {
                StyleElement style = document.createStyleElement();
                style.setId(KABLE_THEME_STYLE_ID);
-               style.setInnerText(":where(table) { color: inherit; }");
-               document.getHead().appendChild(style);
+               // Keep this fallback below authored colors, including rules
+               // in cascade layers, by declaring its layer first.
+               style.setInnerText("@layer rstudio-kable { :where(table) { color: inherit; } }");
+               document.getHead().insertFirst(style);
             }
          }
       }
