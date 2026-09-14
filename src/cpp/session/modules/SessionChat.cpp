@@ -4669,8 +4669,8 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
          // The install would land in the user data directory, but a read-only
          // copy (system-wide or bundled) would still outrank it, so the offer
          // could never be satisfied: the prompt would return on every check.
-         DLOG("Not offering {}: the read-only installation in use ({}) would "
-              "still be selected over it", packageVersion, installedVersion);
+         DLOG("Not offering {}: a read-only installation would still be "
+              "selected over it", packageVersion);
       }
       else
       {

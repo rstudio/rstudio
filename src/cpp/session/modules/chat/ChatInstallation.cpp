@@ -121,6 +121,27 @@ core::Error readDeclaredVersion(const core::FilePath& positAiPath, std::string* 
    return core::json::readObject(packageValue.getObject(), "version", *pVersion);
 }
 
+// Reads the protocol protocol.json declares, as quietly as readDeclaredVersion().
+core::Error readDeclaredProtocol(const core::FilePath& positAiPath, std::string* pProtocol)
+{
+   core::FilePath protoFile = positAiPath.completeChildPath(kProtocolVersionFileName);
+   if (!protoFile.exists())
+      return core::fileNotFoundError(protoFile, ERROR_LOCATION);
+
+   std::string content;
+   core::Error error = core::readStringFromFile(protoFile, &content);
+   if (error)
+      return error;
+
+   core::json::Value value;
+   if (value.parse(content) || !value.isObject())
+      return core::systemError(boost::system::errc::bad_message,
+                               "protocol.json is not a JSON object",
+                               ERROR_LOCATION);
+
+   return core::json::readObject(value.getObject(), "protocol", *pProtocol);
+}
+
 } // anonymous namespace
 
 namespace {
@@ -160,7 +181,9 @@ InstallCandidate describeInstallation(const core::FilePath& path, const char* ti
    InstallCandidate candidate;
    candidate.path = path;
    candidate.tier = tier;
-   candidate.compatible = getInstalledProtocolVersion(path) == kProtocolVersion;
+   std::string protocol;
+   candidate.compatible = !readDeclaredProtocol(path, &protocol) &&
+                          protocol == kProtocolVersion;
    if (readDeclaredVersion(path, &candidate.versionText) ||
        !candidate.version.parse(candidate.versionText))
    {
@@ -225,6 +248,17 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
    {
       if (verifyPositAiInstallation(paths.systemPath))
       {
+         // Same silent version change as the managed-mode case above, so it
+         // gets the same once-per-session notice.
+         if (paths.userInstallEnabled && verifyPositAiInstallation(paths.userDataPath) &&
+             RS_ONCE())
+         {
+            WLOG("Ignoring user-level AI installation at {}: posit-assistant-path "
+                 "pins the installation to {}",
+                 paths.userDataPath.getAbsolutePath(),
+                 paths.systemPath.getAbsolutePath());
+         }
+
          DLOG("Using AI installation pinned by posit-assistant-path: {}",
               paths.systemPath.getAbsolutePath());
          return paths.systemPath;
@@ -322,44 +356,19 @@ std::string getInstalledProtocolVersion(const core::FilePath& positAiPath)
    if (positAiPath.isEmpty())
       return "";
 
-   core::FilePath protoFile =
-      positAiPath.completeChildPath(kProtocolVersionFileName);
-   if (!protoFile.exists())
-   {
-      DLOG("No protocol.json found (legacy install)");
-      return "";
-   }
-
-   std::string content;
-   core::Error error = core::readStringFromFile(protoFile, &content);
+   std::string version;
+   core::Error error = readDeclaredProtocol(positAiPath, &version);
    if (error)
    {
-      ELOG("Failed to read protocol.json: {}", error.getMessage());
+      // Legacy installs predate protocol.json; anything else is a damaged file.
+      if (core::isFileNotFoundError(error))
+         DLOG("No protocol.json found (legacy install)");
+      else
+         ELOG("Could not read the Posit Assistant protocol at {}: {}",
+              positAiPath.getAbsolutePath(), error.getSummary());
       return "";
    }
 
-   core::json::Value jsonValue;
-   if (jsonValue.parse(content))
-   {
-      ELOG("Failed to parse protocol.json");
-      return "";
-   }
-
-   if (!jsonValue.isObject())
-   {
-      ELOG("protocol.json is not a JSON object");
-      return "";
-   }
-
-   core::json::Object obj = jsonValue.getObject();
-   if (!obj.hasMember("protocol") ||
-       !obj["protocol"].isString())
-   {
-      ELOG("protocol.json missing \"protocol\" string field");
-      return "";
-   }
-
-   std::string version = obj["protocol"].getString();
    DLOG("Installed protocol version: {}", version);
    return version;
 }

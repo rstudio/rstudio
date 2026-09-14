@@ -50,6 +50,15 @@ void stageInstallation(const FilePath& dir,
                      "{\"protocol\": \"" + protocol + "\"}");
 }
 
+// Stages a compatible installation that declares no version at all, so a
+// test can hold compatibility constant and exercise only the version ranking.
+void stageVersionlessInstallation(const FilePath& dir)
+{
+   stageInstallation(dir);
+   writeStringToFile(dir.completeChildPath(kProtocolVersionFileName),
+                     std::string("{\"protocol\": \"") + kProtocolVersion + "\"}");
+}
+
 } // anonymous namespace
 
 TEST(ChatInstallation, VerifyPositAiInstallationReturnsFalseForNonExistentPath)
@@ -347,7 +356,7 @@ TEST(ChatInstallation, LocateRanksVersionlessInstallationLowest)
    // anything, but is still used when it is all there is.
    FilePath root;
    InstallSearchPaths paths = tempSearchPaths(&root);
-   stageInstallation(paths.userDataPath);
+   stageVersionlessInstallation(paths.userDataPath);
    stageInstallation(paths.bundledPath, "0.1.0");
    EXPECT_EQ(locatePositAssistantInstallation(paths), paths.bundledPath);
 
@@ -606,7 +615,7 @@ TEST(ChatInstallation, UserInstallWouldBeSelectedOverVersionlessReadOnlyInstall)
 {
    FilePath root;
    InstallSearchPaths paths = tempSearchPaths(&root);
-   stageInstallation(paths.systemPath);
+   stageVersionlessInstallation(paths.systemPath);
 
    EXPECT_TRUE(userInstallWouldBeSelected(paths, "1.0.0"));
 
