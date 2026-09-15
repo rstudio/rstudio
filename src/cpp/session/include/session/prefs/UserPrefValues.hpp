@@ -148,6 +148,7 @@ namespace prefs {
 #define kCheckUnexpectedAssignmentInFunctionCall "check_unexpected_assignment_in_function_call"
 #define kWarnIfNoSuchVariableInScope "warn_if_no_such_variable_in_scope"
 #define kWarnVariableDefinedButNotUsed "warn_variable_defined_but_not_used"
+#define kWarnConfusableCharacters "warn_confusable_characters"
 #define kAutoDiscoverPackageDependencies "auto_discover_package_dependencies"
 #define kAutoAppendNewline "auto_append_newline"
 #define kStripTrailingWhitespace "strip_trailing_whitespace"
@@ -166,6 +167,7 @@ namespace prefs {
 #define kSyntaxColorConsole "syntax_color_console"
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
+#define kSmoothScrolling "smooth_scrolling"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
@@ -272,6 +274,7 @@ namespace prefs {
 #define kTerminalRendererCanvas "canvas"
 #define kTerminalRendererDom "dom"
 #define kTerminalWeblinks "terminal_weblinks"
+#define kTerminalFileLinks "terminal_file_links"
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kRmdRenameInScopeBehavior "rmd_rename_in_scope_behavior"
 #define kRmdRenameInScopeBehaviorCurrent "current"
@@ -910,6 +913,12 @@ public:
    core::Error setWarnVariableDefinedButNotUsed(bool val);
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   bool warnConfusableCharacters();
+   core::Error setWarnConfusableCharacters(bool val);
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    bool autoDiscoverPackageDependencies();
@@ -1004,6 +1013,12 @@ public:
     */
    bool scrollPastEndOfDocument();
    core::Error setScrollPastEndOfDocument(bool val);
+
+   /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   bool smoothScrolling();
+   core::Error setSmoothScrolling(bool val);
 
    /**
     * Whether to highlight R function calls in the code editor.
@@ -1456,6 +1471,12 @@ public:
    core::Error setTerminalWeblinks(bool val);
 
    /**
+    * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+    */
+   bool terminalFileLinks();
+   core::Error setTerminalFileLinks(bool val);
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    bool showRmdRenderCommand();
@@ -1576,7 +1597,7 @@ public:
    core::Error setWrapTabNavigation(bool val);
 
    /**
-    * Use a bold label and a blue overline to highlight the active document and pane tabs.
+    * Use a bold label and a blue overline to highlight the active document tab.
     */
    bool highlightActiveTabs();
    core::Error setHighlightActiveTabs(bool val);

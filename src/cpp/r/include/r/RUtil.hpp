@@ -40,8 +40,10 @@ namespace r {
 namespace util {
 
 // NOTE: On Windows, environment variables set via core::system::setenv()
-// are not visible to Sys.getenv() when R is built against a C runtime
-// other than our own (msvcrt builds of R, i.e. R < 4.2).
+// are not visible to Sys.getenv() unless R resolves getenv() to the same
+// C runtime module we do. Two things break that: msvcrt builds of R
+// (R < 4.2), and debug builds of RStudio, which link ucrtbased.dll rather
+// than the release ucrtbase.dll that R.dll always links.
 //
 // These routines should be preferred when getting and
 // setting environment variables in the R session.

@@ -417,6 +417,13 @@ public class AceEditorNative extends JavaScriptObject
    public final native void scrollToRow(int row) /*-{
       this.scrollToRow(row);
    }-*/;
+
+   public final native void scrollToRow(int row, boolean animate) /*-{
+      var scrollTop = this.renderer.scrollTop;
+      this.scrollToRow(row);
+      if (animate)
+         this.renderer.animateScrolling(scrollTop);
+   }-*/;
    
    public final native void centerSelection() /*-{
       this.centerSelection();

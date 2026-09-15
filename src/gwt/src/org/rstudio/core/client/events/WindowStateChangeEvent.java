@@ -35,6 +35,17 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeEvent.Hand
       skipFocusChange_ = keepFocus;
    }
 
+   /**
+    * The NORMAL request a frame makes to surface a tab that asked to be
+    * visible, as opposed to the user (or an owner) asking for the state.
+    */
+   public static WindowStateChangeEvent forEnsureVisible()
+   {
+      WindowStateChangeEvent event = new WindowStateChangeEvent(WindowState.NORMAL);
+      event.ensureVisible_ = true;
+      return event;
+   }
+
    public WindowState getNewState()
    {
       return newState_;
@@ -43,6 +54,11 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeEvent.Hand
    public boolean skipFocusChange()
    {
       return skipFocusChange_;
+   }
+
+   public boolean isEnsureVisible()
+   {
+      return ensureVisible_;
    }
 
    @Override
@@ -64,4 +80,5 @@ public class WindowStateChangeEvent extends GwtEvent<WindowStateChangeEvent.Hand
 
    private final WindowState newState_;
    private final boolean skipFocusChange_;
+   private boolean ensureVisible_ = false;
 }

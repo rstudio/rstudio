@@ -124,6 +124,30 @@ void setChatBackendPort(int port);
  */
 void setChatBackendAuthToken(const std::string& token);
 
+// ============================================================================
+// Served Installation
+// ============================================================================
+
+/**
+ * Set the Posit Assistant installation whose client assets are served under
+ * /ai-chat/.
+ *
+ * Called by SessionChat when the chat backend starts, so the UI is served
+ * from the same installation as the server process it talks to, and so
+ * serving an asset no longer re-runs the tier search -- which reads
+ * package.json and protocol.json for every tier -- on every request.
+ *
+ * Not cleared when the backend stops: the page of a backend that exited can
+ * still request lazily-loaded chunks, and the next start pins again. Pass an
+ * empty path to clear, which restores the pre-start behaviour of resolving
+ * the installation on each request; uninstall does this, having deleted the
+ * directory the pin names. A pinned path that no longer holds a complete
+ * installation resolves per request in the same way, so a removal or a failed
+ * extraction that does not clear the pin still falls back to whatever other
+ * tier holds one.
+ */
+void setInstallationPath(const core::FilePath& path);
+
 } // namespace staticfiles
 } // namespace chat
 } // namespace modules

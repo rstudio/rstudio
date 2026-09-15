@@ -273,6 +273,7 @@ public class RemoteServer implements Server
       listeningForEvents_ = false;
       sessionRelaunchPending_ = false;
       pendingRequests_ = new ArrayList<PendingRpcRequest>();
+      preInitRequests_ = new ArrayList<PendingRpcRequest>();
       session_ = session;
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
@@ -492,6 +493,9 @@ public class RemoteServer implements Server
             clientId_ = sessionInfo.getClientId();
             clientVersion_ = sessionInfo.getClientVersion();
             launchParameters_ = sessionInfo.getLaunchParameters();
+
+            sendPreInitRequests();
+
             requestCallback.onResponseReceived(sessionInfo);
          }
 
@@ -1060,6 +1064,17 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(StringUtil.notNull(handle)));
       params.set(1, JSONBoolean.getInstance(lastLineOnly));
       sendRequest(RPC_SCOPE, PROCESS_ERASE_BUFFER, params, requestCallback);
+   }
+
+   @Override
+   public void processResolveFilePaths(String handle,
+                                       JsArrayString paths,
+                                       ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      setArrayString(params, 1, paths);
+      sendRequest(RPC_SCOPE, PROCESS_RESOLVE_FILE_PATHS, params, requestCallback);
    }
 
    @Override
@@ -3877,6 +3892,20 @@ public class RemoteServer implements Server
          if (!authorized_ && !isAuthStatusRequest(rpcRequest))
          {
             pendingRequests_.add(
+               new PendingRpcRequest(scope, rpcRequest, responseHandler, retryHandler));
+            return rpcRequest;
+         }
+
+         // Until client_init returns we have no client id, and the session
+         // answers any other request with INVALID_CLIENT_ID -- which we treat
+         // as "another client took over" and disconnect this one. Hold such
+         // requests until the id arrives; on the server, client_init can take
+         // seconds while rserver launches the session, so anything sent from
+         // an early callback (e.g. after Ace finishes loading) would hit this.
+         if (clientId_ == null && !canSendBeforeClientInit(rpcRequest))
+         {
+            Debug.log("Holding '" + rpcRequest.getMethod() + "' until client_init completes");
+            preInitRequests_.add(
                new PendingRpcRequest(scope, rpcRequest, responseHandler, retryHandler));
             return rpcRequest;
          }
@@ -7172,6 +7201,36 @@ public class RemoteServer implements Server
       return request.getMethod().equals(AUTH_STATUS);
    }
 
+   // requests that legitimately go out before client_init has returned:
+   // client_init itself, the auth watcher, and abort (the "R is taking longer
+   // to start" dialog's Terminate R / Safe Mode buttons)
+   protected boolean canSendBeforeClientInit(RpcRequest request)
+   {
+      String method = request.getMethod();
+      return method.equals(CLIENT_INIT) ||
+             method.equals(AUTH_STATUS) ||
+             method.equals(ABORT);
+   }
+
+   private void sendPreInitRequests()
+   {
+      List<PendingRpcRequest> requests = preInitRequests_;
+      preInitRequests_ = new ArrayList<PendingRpcRequest>();
+
+      for (PendingRpcRequest request : requests)
+      {
+         if (request.request.isCancelled())
+            continue;
+
+         request.request.setClientId(clientId_);
+         sendRequest(
+            request.scope,
+            request.request,
+            request.responseHandler,
+            request.retryHandler);
+      }
+   }
+
    protected String clientInitId_ = "";
    private String clientId_;
    private String clientVersion_ = "";
@@ -7186,6 +7245,7 @@ public class RemoteServer implements Server
 
    private RemoteServerAuthWatcher authWatcher_;
    private List<PendingRpcRequest> pendingRequests_;
+   private List<PendingRpcRequest> preInitRequests_;
 
    private final RemoteServerAuth serverAuth_;
    private final RemoteServerEventListener serverEventListener_;
@@ -7259,6 +7319,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_SET_CAPTION = "process_set_caption";
    private static final String PROCESS_SET_TITLE = "process_set_title";
    private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
+   private static final String PROCESS_RESOLVE_FILE_PATHS = "process_resolve_file_paths";
    private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
    private static final String PROCESS_GET_BUFFER = "process_get_buffer";
    private static final String PROCESS_USE_RPC = "process_use_rpc";

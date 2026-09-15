@@ -36,6 +36,7 @@ import {
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
+import { registerProcessDiagnostics } from './process-diagnostics';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
@@ -272,6 +273,8 @@ export class Application implements AppState {
   }
 
   private registerAppEvents() {
+    registerProcessDiagnostics();
+
     app.on('before-quit', () => {
       app.releaseSingleInstanceLock();
 
@@ -607,7 +610,9 @@ export class Application implements AppState {
         {
           label: i18next.t('applicationTs.newRstudioWindow'),
           click: () => {
-            this.appLaunch?.launchRStudio({ workingDirectory: appState().projectDirectory });
+            // this command starts a new, separate session: no project, and the user's
+            // default working directory rather than anything from this window (#15669)
+            this.appLaunch?.launchRStudio({ noProject: true });
           },
         },
       ]);

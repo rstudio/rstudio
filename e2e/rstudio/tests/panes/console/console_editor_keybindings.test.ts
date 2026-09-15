@@ -10,35 +10,12 @@ import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { waitForConsoleFocus } from '@pages/console_pane.page';
 import { executeCommand } from '@utils/commands';
 import { YES_BTN } from '@pages/modals.page';
+import { BACKUP_BINDINGS, RESTORE_BINDINGS } from '@utils/keybindings';
 import {
   getConsoleCursorPosition,
   getConsoleScreenRowCount,
   setConsoleInput,
 } from '@utils/console';
-
-// Keybindings live in <config home>/keybindings/. The editor bindings are in
-// editor_bindings.json, but the dialog's Reset button also rewrites the app
-// and addin bindings, so all three are handled. Desktop and spawned-server
-// workers run with a sandboxed RSTUDIO_CONFIG_HOME, but an external server
-// shares its config with the developer, so any pre-existing files are set
-// aside and restored through the R session.
-const BINDINGS_FILES = [
-  'file.path(Sys.getenv("RSTUDIO_CONFIG_HOME",',
-  '  unset = file.path(Sys.getenv("XDG_CONFIG_HOME", unset = "~/.config"), "rstudio")),',
-  '  "keybindings", c("editor_bindings.json", "rstudio_bindings.json", "addins.json"))',
-].join(' ');
-
-const BACKUP_BINDINGS = [
-  `for (f in ${BINDINGS_FILES})`,
-  'if (file.exists(f)) file.rename(f, paste0(f, ".e2e-backup"))',
-].join(' ');
-
-const RESTORE_BINDINGS = [
-  `for (f in ${BINDINGS_FILES}) {`,
-  'unlink(f);',
-  'if (file.exists(paste0(f, ".e2e-backup"))) file.rename(paste0(f, ".e2e-backup"), f)',
-  '}',
-].join(' ');
 
 // Unbound in every RStudio keymap and in Ace's defaults, so it can only reach
 // the console through the rebinding under test.
