@@ -2816,7 +2816,6 @@ Error writeLockFile(const FilePath& lockFilePath,
 
 Error writeLockFile(const FilePath& lockFilePath,
                     const Claim&,
-                    const Claim&,
                     std::string*,
                     FilePath*,
                     int*)
