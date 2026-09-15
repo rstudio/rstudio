@@ -19,6 +19,15 @@ import { killAllTerminals, openTerminal } from '@utils/terminal';
 const XTERM_ROWS = '.xterm-rows > div';
 const XTERM_SELECTION = '.xterm .xterm-selection div';
 
+/**
+ * Text of each rendered terminal row with whitespace stripped (U+00B7 too, as
+ * in terminal.test.ts), so a match doesn't depend on where a line wraps.
+ */
+async function rowTexts(page: Page): Promise<string[]> {
+  const texts = await page.locator(XTERM_ROWS).allInnerTexts();
+  return texts.map((text) => text.replace(/[\s\u00B7]+/g, ''));
+}
+
 async function runInTerminal(page: Page, command: string): Promise<void> {
   await page.keyboard.type(command);
   await page.keyboard.press('Enter');
@@ -81,7 +90,11 @@ test.describe.serial('Terminal: Ctrl+Shift+C / Ctrl+Shift+V', () => {
   });
 
   test.afterAll(async ({ rstudioPage: page }) => {
-    await clearPref(page, 'terminal_renderer').catch(() => {});
+    try {
+      await clearPref(page, 'terminal_renderer');
+    } catch (err) {
+      console.warn('[terminal_clipboard] afterAll clearPref failed:', err);
+    }
   });
 
   test.beforeEach(async ({ rstudioPage: page }) => {
@@ -113,10 +126,13 @@ test.describe.serial('Terminal: Ctrl+Shift+C / Ctrl+Shift+V', () => {
     await page.keyboard.type('echo P=');
     await page.keyboard.press('Control+Shift+V');
 
-    // the pasted text echoes back from the shell; where the paste is read
-    // asynchronously it lands a moment after the key
-    await expect(page.locator(XTERM_ROWS, { hasText: `P=${word}` }).first()).toBeVisible();
+    // where the paste is read asynchronously it lands a moment after the key;
+    // join the rows so a command line that wraps still matches
+    await expect.poll(async () => (await rowTexts(page)).join('')).toContain(`P=${word}`);
     await page.keyboard.press('Enter');
-    await expect(page.locator(XTERM_ROWS, { hasText: `P=${word}` })).toHaveCount(2);
+
+    // the echoed output starts its own row, so compare it whole: a doubled
+    // paste (P=<word><word>) would still pass a substring match
+    await expect.poll(() => rowTexts(page)).toContain(`P=${word}`);
   });
 });
