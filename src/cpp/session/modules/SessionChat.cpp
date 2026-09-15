@@ -6230,6 +6230,13 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
          boost::system::errc::io_error, message, ERROR_LOCATION);
    }
 
+   // The installation the static file handler was serving is gone. Unpin it
+   // here rather than on the success path below, so the backup-removal
+   // failure also leaves asset requests resolving again -- a system-wide or
+   // bundled copy may still be there -- rather than failing against a
+   // directory that no longer exists.
+   staticfiles::setInstallationPath(FilePath());
+
    // Remove any backup left by a failed install/update. Unlike an install,
    // reporting uninstall success while an executable tree remains would leave
    // it behind with no guaranteed later cleanup, so treat failure to remove
@@ -6258,12 +6265,6 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
       s_updateState = UpdateState();
    }
    s_positAssistantVersion.clear();
-
-   // The installation the static file handler was serving is gone. Unpin it,
-   // so asset requests resolve again -- a system-wide or bundled copy may
-   // still be there -- rather than failing against a deleted directory.
-   staticfiles::setInstallationPath(FilePath());
-
    s_expectedShutdown = false;
 
    DLOG("Posit Assistant uninstalled successfully");
