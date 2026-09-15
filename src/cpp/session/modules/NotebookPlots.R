@@ -42,8 +42,8 @@
          args <- c(args, extraList)
    }
 
-   # the option is unset in the plot replay process, where the backend type
-   # arrives via extraArgs instead and must not be cleared
+   # when the option is unset or "default", keep any backend type that
+   # arrived via extraArgs rather than clearing it
    gdBackend <- getOption("RStudioGD.backend")
    if (is.character(gdBackend) && !identical(gdBackend, "default"))
    {
@@ -170,9 +170,14 @@
                                                 height,
                                                 pixelRatio,
                                                 persistOutput,
-                                                extraArgs)
+                                                extraArgs,
+                                                backend = "default")
 {
    require(grDevices, quietly = TRUE)
+
+   # this process doesn't inherit the session's options; restore the graphics
+   # backend, since extraArgs can't carry AGG
+   options(RStudioGD.backend = backend)
    
    # Load any required packages
    requiredPackages <- Sys.getenv("RS_NOTEBOOK_PACKAGES", unset = "")

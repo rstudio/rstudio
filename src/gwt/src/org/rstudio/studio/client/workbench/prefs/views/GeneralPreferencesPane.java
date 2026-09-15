@@ -737,10 +737,14 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
 
    // shown when the effective backend is the Windows GDI device: either
-   // selected explicitly, or the default on a session running on Windows
+   // selected explicitly, or what "(Default)" resolves to -- a backend set in
+   // an R profile, else the platform default on a session running on Windows
    private void updateGraphicsAntialiasNote()
    {
       String backend = graphicsBackend_.getValue();
+      if (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_DEFAULT))
+         backend = session_.getSessionInfo().getGraphicsDefaultBackend();
+
       boolean windowsDevice =
             StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_WINDOWS) ||
             (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_DEFAULT) &&

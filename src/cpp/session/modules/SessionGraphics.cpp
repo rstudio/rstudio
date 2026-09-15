@@ -122,6 +122,11 @@ core::json::Array supportedBackends()
    return backendsJson;
 }
 
+std::string defaultBackend()
+{
+   return s_backendOption.fallback;
+}
+
 SEXP rs_traceGraphicsDevice(SEXP enableSEXP)
 {
    bool enable = r::sexp::asLogical(enableSEXP);

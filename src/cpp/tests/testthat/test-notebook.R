@@ -300,8 +300,8 @@ test_that(".rs.notebookGraphicsDeviceArgs() layers the knitr dev.args option on 
    args <- .rs.notebookGraphicsDeviceArgs(base, "", NULL, devArgs)
    expect_equal(args$type, "cairo")
 
-   # in the plot replay process the option is unset; the backend preference
-   # arrives through extraArgs and must be kept
+   # when the option is unset, a backend type that arrives through extraArgs
+   # must be kept
    options(RStudioGD.backend = NULL)
    args <- .rs.notebookGraphicsDeviceArgs(base, ", type = \"cairo\"", "png", list())
    expect_equal(args$type, "cairo")
