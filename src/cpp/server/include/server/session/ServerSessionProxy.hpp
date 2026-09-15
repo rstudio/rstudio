@@ -149,6 +149,15 @@ void prepareLocalhostResponseForTest(
 // responses handleLocalhostRequest holds whole rather than streams.
 bool shouldBufferLocalhostResponseForTest(const core::http::Response& response);
 
+// Exercises handleLocalhostResponse()'s normal (non-websocket-upgrade)
+// branch, which writes the /p/ response to the client connection.
+void handleLocalhostResponseForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const std::string& port,
+      const std::string& baseAddress,
+      bool ipv6,
+      const core::http::Response& response);
+
 // Exposes the /s/ buffering policy (shouldBufferLocalStreamResponse) -- which
 // responses proxyRequest holds whole rather than streams.
 bool shouldBufferLocalStreamResponseForTest(const core::http::Response& response);

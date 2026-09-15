@@ -537,7 +537,8 @@ void handleLocalhostResponse(
                                ipv6,
                                response,
                                &preparedResponse);
-      ptrConnection->writeResponse(preparedResponse);
+      ptrConnection->writeResponse(preparedResponse, true,
+                                   getAuthCookies(ptrConnection->response()));
    }
 }
 
@@ -1021,6 +1022,30 @@ void prepareLocalhostResponseForTest(
                             ipv6,
                             response,
                             pPreparedResponse);
+}
+
+// Exercises handleLocalhostResponse()'s normal (non-websocket-upgrade) branch,
+// which is what a test needs to confirm auth cookies staged on the connection
+// by an earlier refreshAuthCookies() call survive onto the /p/ response --
+// see getAuthCookies()'s other two call sites (handleProxyResponse and the
+// /s/ FixedBufferProxy path) for the pattern this branch must also follow.
+// ptrLocalhost/username are unused on this branch (they only matter for the
+// websocket-upgrade branch), so callers may pass a null client and an empty
+// username.
+void handleLocalhostResponseForTest(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const std::string& port,
+      const std::string& baseAddress,
+      bool ipv6,
+      const http::Response& response)
+{
+   handleLocalhostResponse(ptrConnection,
+                           boost::shared_ptr<http::IAsyncClient>(),
+                           std::string(),
+                           port,
+                           baseAddress,
+                           ipv6,
+                           response);
 }
 #endif
 
