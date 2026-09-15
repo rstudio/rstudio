@@ -17,7 +17,7 @@ REM Keep this list in sync with the PACKAGES default in the Unix install-package
 REM script; there's no per-platform renv.lock for Windows, so install straight
 REM from CRAN.
 echo -- Installing R packages
-R --vanilla -s -e "options(repos = c(CRAN = 'https://cran.rstudio.com')); install.packages(c('digest', 'purrr', 'rmarkdown', 'testthat', 'xml2', 'yaml'))"
+R --vanilla -s -e "dir.create(Sys.getenv('R_LIBS_USER'), recursive = TRUE, showWarnings = FALSE); options(repos = c(CRAN = 'https://cran.rstudio.com')); install.packages(c('digest', 'purrr', 'rmarkdown', 'testthat', 'xml2', 'yaml'))"
 if ERRORLEVEL 1 (
    echo ^^!^^! ERROR: Failed to install R packages.
    exit /b 1
