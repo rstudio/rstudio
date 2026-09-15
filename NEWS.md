@@ -37,6 +37,7 @@
 - ([#18722](https://github.com/rstudio/rstudio/issues/18722)): Fixed an issue where the diagnostics system reported "unexpected end of document" for R scripts ending with a semicolon
 - ([#18793](https://github.com/rstudio/rstudio/issues/18793)): Fixed an issue where custom Editor keyboard shortcuts were sometimes not applied to the Console at startup until a source document was opened.
 - ([#18794](https://github.com/rstudio/rstudio/issues/18794)): Python interpreter discovery (Global Options > Python > Select...) now bounds each interpreter probe, so a hung Python or conda executable no longer leaves the dialog stuck at "Finding interpreters...".
+- ([#18831](https://github.com/rstudio/rstudio/issues/18831)): Fixed an issue where updating Posit Assistant from the chat pane left the new version being served under the previous version's Content-Security-Policy until RStudio was restarted, which could break the chat pane.
 
 ### Dependencies
 - Copilot Language Server 1.544.0

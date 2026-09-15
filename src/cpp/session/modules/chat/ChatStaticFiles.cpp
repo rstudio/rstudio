@@ -177,75 +177,72 @@ void injectThemeInfo(std::string* pContent)
 }
 
 /**
- * Load CSP directives from dist/csp.json in the Posit Assistant installation.
+ * Load CSP directives from dist/csp.json in the Posit Assistant installation
+ * currently being served.
  *
- * Reads the file once and caches the result. The file is emitted by the
- * databot build and contains the same defaults that DatabotServer uses
- * in its Express middleware.
- *
- * Once loaded (or once a failure is encountered), the result is cached
- * for the lifetime of the session. A missing or broken file will not be
- * retried.
+ * The file is emitted by the databot build and contains the same defaults
+ * that DatabotServer uses in its Express middleware, so it belongs to the
+ * client it ships with. Read on every call rather than cached, because the
+ * installation changes underneath the session: an in-session update extracts
+ * a new package -- over the same directory today, into a new one once
+ * installs are versioned -- and the client served afterwards must be served
+ * under its own policy. Callers are the header cache below, which runs once
+ * per backend start, not once per request.
  *
  * @return Directive map (e.g., {"default-src": "'self'", ...}), or empty
  *         map if the file is missing or unparseable.
  */
 std::map<std::string, std::string> loadCspDirectives()
 {
-   static const auto s_cached = []()
-   {
-      std::map<std::string, std::string> result;
+   std::map<std::string, std::string> result;
 
-      FilePath positAiPath = servedInstallationPath();
-      if (positAiPath.isEmpty())
-         return result;
-
-      FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
-      if (!cspFile.exists())
-         return result;
-
-      std::string content;
-      Error error = readStringFromFile(cspFile, &content);
-      if (error)
-      {
-         WLOG("Failed to read CSP config: {}", error.getMessage());
-         return result;
-      }
-
-      json::Value jsonValue;
-      if (jsonValue.parse(content))
-      {
-         WLOG("Failed to parse CSP config: {}",
-              cspFile.getAbsolutePath());
-         return result;
-      }
-
-      if (!jsonValue.isObject())
-      {
-         WLOG("CSP config must be a JSON object: {}",
-              cspFile.getAbsolutePath());
-         return result;
-      }
-
-      json::Object obj = jsonValue.getObject();
-      for (auto it = obj.begin(); it != obj.end(); ++it)
-      {
-         json::Value val = (*it).getValue();
-         if (val.isString())
-         {
-            result[(*it).getName()] = val.getString();
-         }
-         else
-         {
-            WLOG("Ignoring non-string CSP directive: {}",
-                 (*it).getName());
-         }
-      }
-
+   FilePath positAiPath = servedInstallationPath();
+   if (positAiPath.isEmpty())
       return result;
-   }();
 
-   return s_cached;
+   FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
+   if (!cspFile.exists())
+      return result;
+
+   std::string content;
+   Error error = readStringFromFile(cspFile, &content);
+   if (error)
+   {
+      WLOG("Failed to read CSP config: {}", error.getMessage());
+      return result;
+   }
+
+   json::Value jsonValue;
+   if (jsonValue.parse(content))
+   {
+      WLOG("Failed to parse CSP config: {}",
+           cspFile.getAbsolutePath());
+      return result;
+   }
+
+   if (!jsonValue.isObject())
+   {
+      WLOG("CSP config must be a JSON object: {}",
+           cspFile.getAbsolutePath());
+      return result;
+   }
+
+   json::Object obj = jsonValue.getObject();
+   for (auto it = obj.begin(); it != obj.end(); ++it)
+   {
+      json::Value val = (*it).getValue();
+      if (val.isString())
+      {
+         result[(*it).getName()] = val.getString();
+      }
+      else
+      {
+         WLOG("Ignoring non-string CSP directive: {}",
+              (*it).getName());
+      }
+   }
+
+   return result;
 }
 
 // Cached CSP header string, rebuilt when the backend port changes.
@@ -257,7 +254,10 @@ bool s_cspHeaderBuilt = false;
  * Rebuild the cached CSP header string from dist/csp.json directives.
  *
  * Called once lazily on the first HTML request and again whenever the
- * backend port changes via setChatBackendPort().
+ * backend port changes via setChatBackendPort(). The directives are re-read
+ * on each rebuild, so a backend restart -- which is how an in-session update
+ * takes effect -- serves the policy belonging to the installation now being
+ * served (#18831).
  */
 void rebuildCspHeaderCache()
 {
