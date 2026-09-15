@@ -47,6 +47,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/system/error_code.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/weak_ptr.hpp>
@@ -88,6 +89,13 @@ enum class ResponseMode
    // delimited by connection close (EOF).
    NoContentLength,
 
+   // NoContentLength, but with the headers and body written in two separate
+   // writes with a pause between -- so the client's header parse leaves
+   // responseBuffer_ empty and the body bytes are only seen by a later,
+   // separate async_read() (mirrors ContentLengthSplit's rationale for the
+   // EOF-delimited case).
+   NoContentLengthSplit,
+
    // Accept the connection and never reply, simulating a peer that stalls after
    // the handshake.
    NoResponse,
@@ -118,6 +126,46 @@ enum class ResponseMode
    Raw
 };
 
+// Thread-safe handoff used only by ResponseMode::NoContentLengthSplit: lets a
+// test synchronize LocalServer's body write with the client having actually
+// parsed the response headers (via AsyncClient::setResponseHeadersHandler()),
+// rather than relying on a fixed sleep to (probabilistically) win that race.
+// The client's headers handler runs on the io_context thread while
+// LocalServer blocks on its own dedicated thread, so this needs real
+// cross-thread synchronization rather than a plain flag.
+class HeadersReceivedGate
+{
+public:
+   void notify()
+   {
+      boost::lock_guard<boost::mutex> lock(mutex_);
+      received_ = true;
+      cv_.notify_all();
+   }
+
+   // Bounded wait so a bug that never calls notify() fails the test instead of
+   // hanging it. Times out => FAIL(), rather than silently letting the caller
+   // proceed as if the signal had arrived.
+   void wait()
+   {
+      boost::unique_lock<boost::mutex> lock(mutex_);
+      boost::system_time deadline = boost::get_system_time() + boost::posix_time::seconds(2);
+      while (!received_)
+      {
+         if (!cv_.timed_wait(lock, deadline))
+         {
+            ADD_FAILURE() << "HeadersReceivedGate timed out waiting for headers-parsed signal";
+            return;
+         }
+      }
+   }
+
+private:
+   boost::mutex mutex_;
+   boost::condition_variable cv_;
+   bool received_ = false;
+};
+
 // A minimal blocking HTTP/1.1 server on its own thread. Accepts a single
 // connection, reads the request headers, and writes back a response framed
 // according to the requested ResponseMode. It never sends "Connection: close";
@@ -144,6 +192,14 @@ public:
    unsigned short port() { return acceptor_.local_endpoint().port(); }
    void start() { thread_ = std::thread([this]() { run(); }); }
    void stop() { stop_ = true; }
+
+   // Only consulted by ResponseMode::NoContentLengthSplit; must be called
+   // before start() since it is read (without further synchronization) from
+   // the server thread once writeResponse() runs.
+   void setHeadersReceivedGate(boost::shared_ptr<HeadersReceivedGate> gate)
+   {
+      pHeadersReceivedGate_ = std::move(gate);
+   }
 
 private:
    void run()
@@ -259,6 +315,30 @@ private:
             break;
          }
 
+         case ResponseMode::NoContentLengthSplit:
+         {
+            std::string headers =
+               "HTTP/1.1 200 OK\r\n"
+               "Content-Type: text/plain\r\n"
+               "\r\n";
+            boost::asio::write(socket, boost::asio::buffer(headers), ec);
+            if (ec)
+               return;
+
+            // Wait for the header read to complete (with an empty leftover
+            // buffer) before the body bytes are even written, forcing the
+            // client to see them via a later, separate async_read(). Prefer
+            // an explicit signal from the client's headers-received handler
+            // over a fixed sleep, since a sleep only makes the race
+            // vanishingly unlikely to lose, not impossible.
+            if (pHeadersReceivedGate_)
+               pHeadersReceivedGate_->wait();
+            else
+               std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            boost::asio::write(socket, boost::asio::buffer(body_), ec);
+            break;
+         }
+
          case ResponseMode::TruncatedContentLength:
          {
             std::string resp =
@@ -309,6 +389,7 @@ private:
    std::string body_;
    std::atomic<bool> stop_{false};
    std::thread thread_;
+   boost::shared_ptr<HeadersReceivedGate> pHeadersReceivedGate_;
 };
 
 struct Outcome
@@ -664,6 +745,128 @@ TEST(AsyncClientContentLength, DeliversBodyWithoutContentLengthViaEof)
    EXPECT_EQ(outcome.statusCode, 200);
    EXPECT_EQ(outcome.body, "{\"name\":\"jsonlite\"}\n");
    EXPECT_FALSE(outcome.timedOut);
+}
+
+// TcpIpProxyAsyncClient's stopReadingAndRespond() override
+// (load_balancer/Common.cpp) forces an early close+respond once it believes
+// the body is fully received: `!chunkedEncoding_ && response_.body().length()
+// >= response_.contentLength()`. Message::contentLength() reads an absent
+// Content-Length header as 0, and a streaming response never populates
+// response_.body() (see AsyncClient::streamedBodyComplete()) -- so on a
+// streaming, EOF-delimited response that comparison reads `0 >= 0` as
+// "complete" before a single byte is relayed, and closeAndRespond() would fire
+// immediately with an empty body. This local subclass carries that override
+// shape guarded by isStreamingResponse() (the rstudio-pro#12209 fix), and
+// this test is the regression coverage the guard exists for: reverting the
+// guard reproduces the bug and fails this test with an empty assembled body.
+class GuardedStopReadingAsyncClient : public TcpIpAsyncClient
+{
+public:
+   GuardedStopReadingAsyncClient(boost::asio::io_context& ioContext,
+                                 const std::string& address,
+                                 const std::string& port,
+                                 const boost::posix_time::time_duration& connectionTimeout)
+      : TcpIpAsyncClient(ioContext, address, port, connectionTimeout)
+   {
+   }
+
+private:
+   virtual bool stopReadingAndRespond()
+   {
+      if (isStreamingResponse())
+         return false;
+
+      return !chunkedEncoding_ &&
+             (response_.body().length() >= response_.contentLength());
+   }
+};
+
+TEST(AsyncClientContentLength, StreamedEofDelimitedBodyIsFullyRelayedWhenSubclassStopsReadingOnContentLength)
+{
+   const std::string body = "{\"name\":\"jsonlite\"}\n";
+
+   // NoContentLengthSplit (not the single-write NoContentLength): the body must
+   // arrive in a *separate* async_read() from the one that parsed the headers,
+   // or it would already be sitting in responseBuffer_ (and so already
+   // delivered by the first deliverContentAsChunk() call) by the time the
+   // buggy stopReadingAndRespond() short-circuits the next read -- which would
+   // let this test pass even without the isStreamingResponse() guard.
+   boost::shared_ptr<HeadersReceivedGate> pHeadersReceivedGate =
+      boost::make_shared<HeadersReceivedGate>();
+
+   LocalServer server(ResponseMode::NoContentLengthSplit, /*closeAfterResponse=*/true, body);
+   server.setHeadersReceivedGate(pHeadersReceivedGate);
+   server.start();
+
+   boost::asio::io_context ioc;
+   boost::shared_ptr<GuardedStopReadingAsyncClient> pClient =
+      boost::make_shared<GuardedStopReadingAsyncClient>(
+         ioc, "127.0.0.1", std::to_string(server.port()),
+         boost::posix_time::seconds(5));
+
+   pClient->setStreamNonChunkedResponses(true);
+   pClient->setFixedBufferHandlerSupportsPause(true);
+   // Signal the server the instant headers are parsed, so it only writes the
+   // body once the client has actually left responseBuffer_ empty -- see
+   // HeadersReceivedGate and the comment above for why a fixed sleep isn't
+   // reliable here.
+   pClient->setResponseHeadersHandler(
+      [pHeadersReceivedGate](const http::Response&) { pHeadersReceivedGate->notify(); });
+
+   http::Request& request = pClient->request();
+   request.setMethod("GET");
+   request.setUri("/file");
+   request.setHeader("Connection", "close");
+
+   bool timedOut = false;
+   bool responseHandlerCalled = false;
+   bool sawFinal = false;
+   std::vector<std::string> chunks;
+
+   boost::shared_ptr<boost::asio::system_timer> pTimer =
+      boost::make_shared<boost::asio::system_timer>(ioc, std::chrono::seconds(4));
+   pTimer->async_wait([&](const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::operation_aborted)
+         return;
+      timedOut = true;
+      pClient->close();
+   });
+
+   FixedBufferHandler fixedBufferHandler =
+      [&](const http::Response&, const std::string& chunk) -> bool
+      {
+         if (chunk.empty())
+         {
+            sawFinal = true;
+            pTimer->cancel();
+            return true;
+         }
+
+         chunks.push_back(chunk);
+         return true;
+      };
+
+   pClient->execute(
+      [&](const http::Response&) {
+         responseHandlerCalled = true;
+         pTimer->cancel();
+      },
+      [&](const core::Error&) {
+         pTimer->cancel();
+      },
+      fixedBufferHandler);
+
+   ioc.run();
+   server.stop();
+
+   EXPECT_FALSE(timedOut);
+   EXPECT_TRUE(sawFinal);
+   EXPECT_FALSE(responseHandlerCalled);
+
+   std::string assembled;
+   for (const std::string& chunk : chunks)
+      assembled += chunk;
+   EXPECT_EQ(assembled, body);
 }
 
 // rstudio#17807 (general gap): when setRequestTimeout is configured, a peer
@@ -1305,7 +1508,10 @@ public:
 
    void asyncWrite(const boost::asio::const_buffer& buffer, Socket::Handler handler) override
    {
+      ++asyncWriteCount_;
       std::size_t n = buffer.size();
+      if (onWrite_)
+         onWrite_(n);
       writtenBytes_.append(static_cast<const char*>(buffer.data()), n);
       boost::asio::post(ioc_, [handler, n]() { handler(boost::system::error_code(), n); });
    }
@@ -1313,14 +1519,23 @@ public:
    void asyncWrite(const std::vector<boost::asio::const_buffer>& buffers,
                     Socket::Handler handler) override
    {
+      ++asyncWriteCount_;
       std::size_t total = 0;
       for (const auto& buffer : buffers)
-      {
-         writtenBytes_.append(static_cast<const char*>(buffer.data()), buffer.size());
          total += buffer.size();
-      }
+      if (onWrite_)
+         onWrite_(total);
+      for (const auto& buffer : buffers)
+         writtenBytes_.append(static_cast<const char*>(buffer.data()), buffer.size());
       boost::asio::post(ioc_, [handler, total]() { handler(boost::system::error_code(), total); });
    }
+
+   // invoked synchronously at the start of every asyncWrite() overload above,
+   // with the size of the buffer about to be written, before it is appended to
+   // writtenBytes_ -- lets a test observe both the size of the write that is
+   // about to happen and the state of writtenBytes_ as of just before it lands
+   std::function<void(std::size_t)> onWrite_;
+   int asyncWriteCount_ = 0;
 
    int writeResponseCount_ = 0;
    int writeResponseHeadersCount_ = 0;
