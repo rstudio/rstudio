@@ -5140,14 +5140,11 @@ Error startChatBackend(bool resumeConversation)
    if (error)
       return error;
 
-   // Share the port with the static file handler for CSP connect-src
-   staticfiles::setChatBackendPort(s_chatBackendPort);
-
    // Generate per-session auth token for WebSocket authentication.
    // This is defense-in-depth against local non-browser attackers that
    // bypass origin checks (malware, browser extensions, local processes).
+   // Handed to the static file handler below, once the backend is running.
    s_chatBackendAuthToken = core::system::generateUuid(false);
-   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
@@ -5340,12 +5337,23 @@ Error startChatBackend(bool resumeConversation)
       return error;
    }
 
-   // The backend is running, so serve the chat UI from the installation it
-   // runs rather than re-running the tier search on every static asset
-   // request. Pinned only now that there is a backend to agree with: every
-   // failure above returns with nothing pinned, leaving asset requests to
-   // resolve for themselves as they did before the backend started.
+   // The backend is running, so hand the static file handler what it needs to
+   // serve this backend's UI. Everything it learns about the backend is
+   // published here rather than during startup, so every failure above
+   // returns having told it nothing: asset requests keep resolving the
+   // installation for themselves, as they do before a backend has started.
+   //
+   // The installation goes first, because setChatBackendPort() rebuilds the
+   // CSP header cache, which reads dist/csp.json from the served
+   // installation -- and caches it for the rest of the session.
    staticfiles::setInstallationPath(positAiPath);
+
+   // Share the port with the static file handler for CSP connect-src
+   staticfiles::setChatBackendPort(s_chatBackendPort);
+
+   // In server mode the handler delivers this to the PA client as an
+   // HTTP-only cookie on the index.html response.
+   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    return Success();
 }
