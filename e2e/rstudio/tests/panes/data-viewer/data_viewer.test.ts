@@ -138,8 +138,8 @@ async function lastRenderedRowRect(dataViewer: DataViewerPane): Promise<{
 // Scroll-range geometry of the frozen (pinned) pane against the viewport's.
 // A native horizontal scrollbar takes layout space out of the viewport's
 // clientHeight only; `gutter` is that measured height and `inset` the bottom
-// margin the grid gives the frozen pane to match it (syncPinnedPaneGutter), so
-// the two panes share one scroll range.
+// padding the grid gives the frozen pane to match it (syncPinnedPaneGutter),
+// so the two panes share one scroll range.
 async function pinnedPaneRange(dataViewer: DataViewerPane): Promise<{
   gutter: number;
   inset: number;
@@ -152,7 +152,7 @@ async function pinnedPaneRange(dataViewer: DataViewerPane): Promise<{
     const pinned = el.ownerDocument.getElementById('pinnedPane') as HTMLElement;
     return {
       gutter: el.offsetHeight - el.clientHeight,
-      inset: parseFloat(pinned.style.marginBottom) || 0,
+      inset: parseFloat(pinned.style.paddingBottom) || 0,
       viewportTop: el.scrollTop,
       viewportMax: el.scrollHeight - el.clientHeight,
       pinnedTop: pinned.scrollTop,

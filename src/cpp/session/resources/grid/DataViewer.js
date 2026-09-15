@@ -4030,10 +4030,14 @@ var syncPinnedPaneGutter = function() {
    if (!viewport || !pinnedPane) return;
 
    // The scroll panes carry no border, so this is exactly the bar's gutter.
+   // Padding rather than margin: bottom padding extends the scroll range by
+   // the same amount without shrinking the pane's box, so the strip beside the
+   // bar still takes wheel and middle-click autoscroll (with a margin it fell
+   // through to the non-scrollable #gridPanes).
    var gutter = Math.max(0, viewport.offsetHeight - viewport.clientHeight);
-   var marginBottom = gutter > 0 ? gutter + "px" : "";
-   if (pinnedPane.style.marginBottom !== marginBottom)
-      pinnedPane.style.marginBottom = marginBottom;
+   var paddingBottom = gutter > 0 ? gutter + "px" : "";
+   if (pinnedPane.style.paddingBottom !== paddingBottom)
+      pinnedPane.style.paddingBottom = paddingBottom;
 };
 
 // Height of the viewport area in which data rows are actually visible. The
