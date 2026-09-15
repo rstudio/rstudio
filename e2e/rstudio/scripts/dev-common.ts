@@ -238,7 +238,9 @@ export function resolveCppBuildOutput(tag: string): Record<string, string> | nul
 // GWT devmode runs as a Java process whose command line ends with
 // `org.rstudio.studio.RStudioSuperDevMode`. That token is unique to this
 // project, so matching it avoids colliding with other Java processes.
-export function isGwtDevmodeRunning(): boolean {
+// Returns the full command line of every such process.
+function gwtDevmodeCommandLines(): string[] {
+  let stdout = '';
   if (process.platform === 'win32') {
     // wmic is deprecated on recent Windows but still ships; PowerShell's
     // Get-CimInstance is the modern replacement. Try wmic first since it
@@ -250,31 +252,77 @@ export function isGwtDevmodeRunning(): boolean {
     );
 
     if (wmic.status === 0) {
-      return /RStudioSuperDevMode/.test(wmic.stdout);
+      stdout = wmic.stdout;
+    } else {
+      const ps = spawnSync(
+        'powershell',
+        [
+          '-NoProfile',
+          '-Command',
+          "Get-CimInstance Win32_Process -Filter \"name = 'java.exe'\" | Select-Object -ExpandProperty CommandLine",
+        ],
+        { encoding: 'utf8' },
+      );
+      if (ps.status === 0)
+        stdout = ps.stdout;
     }
-
-    const ps = spawnSync(
-      'powershell',
-      [
-        '-NoProfile',
-        '-Command',
-        "Get-CimInstance Win32_Process -Filter \"name = 'java.exe'\" | Select-Object -ExpandProperty CommandLine",
-      ],
-      { encoding: 'utf8' },
-    );
-
-    return ps.status === 0 && /RStudioSuperDevMode/.test(ps.stdout);
+  } else {
+    // -ww: never truncate the argument list (the classpath is long).
+    const ps = spawnSync('ps', ['-axww', '-o', 'command='], { encoding: 'utf8' });
+    if (ps.status === 0)
+      stdout = ps.stdout;
   }
 
-  const result = spawnSync('pgrep', ['-f', 'RStudioSuperDevMode'], { stdio: 'pipe' });
-  return result.status === 0;
+  return stdout.split(/\r?\n/).filter((line) => /RStudioSuperDevMode/.test(line));
 }
 
-// True if a precompiled GWT bootstrap exists on disk. `ant draft` writes
-// this; presence is enough to know the dev build can serve a working IDE
-// without devmode.
-function hasPrecompiledGwt(): boolean {
-  return fs.existsSync(path.join(REPO_ROOT, 'src/gwt/www/rstudio/rstudio.nocache.js'));
+// The checkout each running devmode compiles. A code server serves exactly
+// one source tree: build.xml's `codeserver` target puts that tree's
+// src/gwt/src first on the Java classpath, so the checkout can be read back
+// from the command line. A devmode for another checkout is worse than none:
+// it answers on the same port, so a Super Dev Mode bootstrap in this
+// checkout's www would silently load the other tree's code.
+export function gwtDevmodeCheckouts(): string[] {
+  const checkouts: string[] = [];
+  for (const line of gwtDevmodeCommandLines()) {
+    const match = /-(?:classpath|cp)\s+"?([^;"\s]+?)[\\/]src[\\/]gwt[\\/]src(?=[:;"\s])/.exec(line);
+    if (match)
+      checkouts.push(match[1]);
+  }
+  return checkouts;
+}
+
+// Compare checkout paths by their real location; worktrees and temp dirs are
+// often reached through symlinks (/tmp on macOS), and Windows paths differ
+// only in case.
+function isSameCheckout(a: string, b: string): boolean {
+  const canonical = (p: string): string => {
+    let real = path.resolve(p);
+    try {
+      real = fs.realpathSync.native(real);
+    } catch {
+      // A path that no longer exists still compares by its literal spelling.
+    }
+    return process.platform === 'win32' ? real.toLowerCase() : real;
+  };
+  return canonical(a) === canonical(b);
+}
+
+const GWT_BOOTSTRAP = path.join(REPO_ROOT, 'src/gwt/www/rstudio/rstudio.nocache.js');
+
+// True if a GWT bootstrap exists on disk. `ant draft` writes a self-contained
+// one; `ant devmode` writes a Super Dev Mode stub that only works while a
+// code server for this checkout answers on localhost:9876.
+function hasGwtBootstrap(): boolean {
+  return fs.existsSync(GWT_BOOTSTRAP);
+}
+
+function isSuperDevModeBootstrap(): boolean {
+  try {
+    return fs.readFileSync(GWT_BOOTSTRAP, 'utf8').includes('__gwt_sdm');
+  } catch {
+    return false;
+  }
 }
 
 // Newest file mtime (ms) under dir, recursively. Symlinks are not followed.
@@ -299,7 +347,7 @@ function newestMtimeMs(dir: string): number {
 // content), so this warns loudly rather than failing the run.
 function warnIfPrecompiledGwtStale(tag: string): void {
   try {
-    const built = fs.statSync(path.join(REPO_ROOT, 'src/gwt/www/rstudio/rstudio.nocache.js')).mtimeMs;
+    const built = fs.statSync(GWT_BOOTSTRAP).mtimeMs;
     const newest = Math.max(
       newestMtimeMs(path.join(REPO_ROOT, 'src/gwt/src')),
       newestMtimeMs(path.join(REPO_ROOT, 'src/gwt/acesupport')),
@@ -316,25 +364,46 @@ function warnIfPrecompiledGwtStale(tag: string): void {
   }
 }
 
+// Refuse to launch without a GWT build this checkout can actually serve.
+// Launching anyway used to cost two 30s attempts that then failed with
+// "window.rstudio.ready never became true", which reads like an IDE fault
+// rather than a missing build (a worktree with an empty www while another
+// checkout's devmode happened to be running).
 export function checkGwtBuildReady(tag: string): void {
   step(tag, 'Checking GWT build state...');
 
-  if (isGwtDevmodeRunning()) {
-    console.log(`[${tag}] GWT devmode is running.`);
+  const buildHints =
+    '    (cd src/gwt && ant devmode)   # active development\n' +
+    '    (cd src/gwt && ant draft)     # one-shot precompile';
+
+  const checkouts = gwtDevmodeCheckouts();
+  if (checkouts.some((checkout) => isSameCheckout(checkout, REPO_ROOT))) {
+    console.log(`[${tag}] GWT devmode is running for this checkout.`);
     return;
   }
-
-  if (hasPrecompiledGwt()) {
-    console.log(`[${tag}] Precompiled GWT bootstrap present (devmode not running).`);
-    warnIfPrecompiledGwtStale(tag);
-    return;
+  for (const other of checkouts) {
+    console.log(`[${tag}] GWT devmode is running, but for ${other}; it cannot serve this checkout.`);
   }
 
-  console.log(
-    `[${tag}] WARNING: no GWT build available. Tests will likely fail until you run one of:\n` +
-      '    (cd src/gwt && ant devmode)   # active development\n' +
-      '    (cd src/gwt && ant draft)     # one-shot precompile',
-  );
+  if (!hasGwtBootstrap()) {
+    fail(
+      tag,
+      `no GWT build for this checkout (${path.relative(REPO_ROOT, GWT_BOOTSTRAP)} is missing). Run one of:\n` +
+        buildHints,
+    );
+  }
+
+  if (isSuperDevModeBootstrap()) {
+    fail(
+      tag,
+      'src/gwt/www holds a Super Dev Mode bootstrap (from `ant devmode`), but no devmode is running ' +
+        'for this checkout; the IDE would stop at the code-server dialog. Run one of:\n' +
+        buildHints,
+    );
+  }
+
+  console.log(`[${tag}] Precompiled GWT bootstrap present (devmode not running).`);
+  warnIfPrecompiledGwtStale(tag);
 }
 
 // Grace period between asking Playwright to stop and force-killing it, so a

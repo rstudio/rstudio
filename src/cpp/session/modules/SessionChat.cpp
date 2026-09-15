@@ -296,6 +296,7 @@ using chat_logging::rs_chatSetLogLevel;
 using chat_installation::bundledPositAssistantInstallPath;
 using chat_installation::locatePositAssistantInstallation;
 using chat_installation::systemPositAssistantInstallPath;
+using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
@@ -4663,6 +4664,14 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
               packageVersion, unsupportedInfo.minimumPackageVersion);
          noCompatibleVersion = true;
       }
+      else if (!userInstallWouldBeSelected(packageVersion))
+      {
+         // The install would land in the user data directory, but a read-only
+         // copy (system-wide or bundled) would still outrank it, so the offer
+         // could never be satisfied: the prompt would return on every check.
+         DLOG("Not offering {}: a read-only installation would still be "
+              "selected over it", packageVersion);
+      }
       else
       {
          isDowngrade = isVersionDowngrade(installedVersion, packageVersion);
@@ -5131,14 +5140,11 @@ Error startChatBackend(bool resumeConversation)
    if (error)
       return error;
 
-   // Share the port with the static file handler for CSP connect-src
-   staticfiles::setChatBackendPort(s_chatBackendPort);
-
    // Generate per-session auth token for WebSocket authentication.
    // This is defense-in-depth against local non-browser attackers that
    // bypass origin checks (malware, browser extensions, local processes).
+   // Handed to the static file handler below, once the backend is running.
    s_chatBackendAuthToken = core::system::generateUuid(false);
-   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
@@ -5330,6 +5336,23 @@ Error startChatBackend(bool resumeConversation)
       clearChatBackendPort();
       return error;
    }
+
+   // Publish only once the backend is running, so a failed start never pins
+   // its installation or announces its port and token (the lock and launch
+   // failures above do reset both, via clearChatBackendPort()).
+   //
+   // The installation goes first so that, if this is the session's first CSP
+   // header rebuild, dist/csp.json -- cached for good, #18831 -- is read from
+   // it. An earlier HTML request, backend stop, or lock or launch failure will
+   // already have cached it.
+   staticfiles::setInstallationPath(positAiPath);
+
+   // Share the port with the static file handler for CSP connect-src
+   staticfiles::setChatBackendPort(s_chatBackendPort);
+
+   // In server mode the handler delivers this to the PA client as an
+   // HTTP-only cookie on the index.html response.
+   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    return Success();
 }
@@ -6214,6 +6237,13 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
       return systemError(
          boost::system::errc::io_error, message, ERROR_LOCATION);
    }
+
+   // The installation the static file handler was serving is gone. Unpin it
+   // here rather than on the success path below, so the backup-removal
+   // failure also leaves asset requests resolving again -- a system-wide or
+   // bundled copy may still be there -- rather than failing against a
+   // directory that no longer exists.
+   staticfiles::setInstallationPath(FilePath());
 
    // Remove any backup left by a failed install/update. Unlike an install,
    // reporting uninstall success while an executable tree remains would leave

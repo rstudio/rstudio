@@ -17,6 +17,7 @@
 {
    .Call("rs_recordHtmlWidget", htmlfile, depfile, list(
       classes = class(x),
+      isKable = .rs.scalar(isTRUE(attr(x, "rstudio_kable"))),
       sizingPolicy = if (is.list(x)) x$sizingPolicy else list()
    ))
 })
