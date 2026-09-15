@@ -135,6 +135,45 @@ async function lastRenderedRowRect(dataViewer: DataViewerPane): Promise<{
   });
 }
 
+// Scroll-range geometry of the frozen (pinned) pane against the viewport's.
+// A native horizontal scrollbar takes layout space out of the viewport's
+// clientHeight only; `gutter` is that measured height and `inset` the bottom
+// padding the grid gives the frozen pane to match it (syncPinnedPaneGutter),
+// so the two panes share one scroll range.
+async function pinnedPaneRange(dataViewer: DataViewerPane): Promise<{
+  gutter: number;
+  inset: number;
+  viewportTop: number;
+  viewportMax: number;
+  pinnedTop: number;
+  pinnedMax: number;
+}> {
+  return dataViewer.viewport.evaluate((el: HTMLElement) => {
+    const pinned = el.ownerDocument.getElementById('pinnedPane') as HTMLElement;
+    return {
+      gutter: el.offsetHeight - el.clientHeight,
+      inset: parseFloat(pinned.style.paddingBottom) || 0,
+      viewportTop: el.scrollTop,
+      viewportMax: el.scrollHeight - el.clientHeight,
+      pinnedTop: pinned.scrollTop,
+      pinnedMax: pinned.scrollHeight - pinned.clientHeight,
+    };
+  });
+}
+
+// The position must SETTLE: further wheeling at the bottom must not move it
+// back up. This is the "bounces" half of #18620, and the one assertion that
+// has to wait out an absence of movement rather than a condition. The 1px
+// tolerance is for fractional scroll offsets under display scaling; a bounce
+// moves the view by a row or more, or by the native bar's gutter.
+async function expectBottomToSettle(page: Page, dataViewer: DataViewerPane): Promise<void> {
+  const readTop = () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop);
+  const settled = await readTop();
+  for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(500);
+  expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
+}
+
 test.describe('Data Viewer', () => {
   let consoleActions: ConsolePaneActions;
   let sourcePane: SourcePane;
@@ -1797,17 +1836,7 @@ test.describe('Data Viewer', () => {
       await expect(dataViewer.horizontalScrollbar).toBeAttached();
 
       await scrollGridToBottom(page, dataViewer, 499);
-
-      // The position must SETTLE: further wheeling at the bottom must not move
-      // it back up. This is the "bounces" half of the report, and the one
-      // assertion that has to wait out an absence of movement rather than a
-      // condition. The 1px tolerance is for fractional scroll offsets under
-      // display scaling; a bounce moves the view by a row or more.
-      const readTop = () => dataViewer.viewport.evaluate((el: HTMLElement) => el.scrollTop);
-      const settled = await readTop();
-      for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 400);
-      await page.waitForTimeout(500);
-      expect(Math.abs((await readTop()) - settled)).toBeLessThanOrEqual(1);
+      await expectBottomToSettle(page, dataViewer);
 
       // The last row is rendered and its bottom edge sits exactly a bar's height
       // above the bottom of the viewport, which is where the bar floats. Before
@@ -1913,6 +1942,14 @@ test.describe('Data Viewer', () => {
       await setPref(page, 'data_viewer_use_overlay_scrollbars', false);
       await expect(dataViewer.horizontalScrollbar).toHaveCount(0);
 
+      // The switch also insets the frozen pane by the native bar's gutter, so
+      // the two panes share one vertical scroll range (0 = 0 where the
+      // platform floats native bars). Read from the same refresh as the
+      // geometry below, before any scroll input.
+      const panes = await pinnedPaneRange(dataViewer);
+      expect(panes.inset).toBe(panes.gutter);
+      expect(Math.abs(panes.pinnedMax - panes.viewportMax)).toBeLessThanOrEqual(1);
+
       // Read before any scroll input: a scroll re-renders and would repair a
       // stale tail by itself, so this is the assertion that pins the resize to
       // the switch. The scroll range loses the tail where the native bar takes
@@ -1968,6 +2005,16 @@ test.describe('Data Viewer', () => {
 
       await scrollGridToBottom(page, dataViewer, 499);
 
+      // With one shared range, maximum scroll puts both panes at the same
+      // offset, so the row labels line up with their rows. Before the fix the
+      // frozen pane's range ended a gutter short: it clamped early, a row out
+      // of step with the grid, and under display scaling that early clamp made
+      // onPinnedScroll yank the viewport back under the bar on every wheel
+      // tick -- the bounce the report describes.
+      const atBottom = await pinnedPaneRange(dataViewer);
+      expect(Math.abs(atBottom.pinnedTop - atBottom.viewportTop)).toBeLessThanOrEqual(1);
+      await expectBottomToSettle(page, dataViewer);
+
       // A bar that sits in layout is already outside clientHeight, so the last
       // row ends flush with the client box; an overlay bar needs the same tail
       // the custom one gets. The 1px tolerance is for fractional scroll offsets
@@ -1992,6 +2039,13 @@ test.describe('Data Viewer', () => {
           { message: 'overlay mode should restore the overscroll tail' },
         )
         .toBe(overlay.scrollHeight);
+      // The frozen pane's inset goes with the native gutter.
+      await expect
+        .poll(
+          () => pinnedPaneRange(dataViewer).then((r) => r.inset),
+          { message: 'overlay mode should drop the frozen pane inset' },
+        )
+        .toBe(0);
     } finally {
       await clearPref(page, 'data_viewer_use_overlay_scrollbars');
       await consoleActions.executeInConsole(

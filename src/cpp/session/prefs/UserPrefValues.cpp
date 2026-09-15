@@ -869,6 +869,19 @@ core::Error UserPrefValues::setWarnVariableDefinedButNotUsed(bool val)
 }
 
 /**
+ * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+ */
+bool UserPrefValues::warnConfusableCharacters()
+{
+   return readPref<bool>("warn_confusable_characters");
+}
+
+core::Error UserPrefValues::setWarnConfusableCharacters(bool val)
+{
+   return writePref("warn_confusable_characters", val);
+}
+
+/**
  * Whether to automatically discover and offer to install missing R package dependencies.
  */
 bool UserPrefValues::autoDiscoverPackageDependencies()
@@ -1074,6 +1087,19 @@ bool UserPrefValues::scrollPastEndOfDocument()
 core::Error UserPrefValues::setScrollPastEndOfDocument(bool val)
 {
    return writePref("scroll_past_end_of_document", val);
+}
+
+/**
+ * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+ */
+bool UserPrefValues::smoothScrolling()
+{
+   return readPref<bool>("smooth_scrolling");
+}
+
+core::Error UserPrefValues::setSmoothScrolling(bool val)
+{
+   return writePref("smooth_scrolling", val);
 }
 
 /**
@@ -2052,6 +2078,19 @@ core::Error UserPrefValues::setTerminalWeblinks(bool val)
 }
 
 /**
+ * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+ */
+bool UserPrefValues::terminalFileLinks()
+{
+   return readPref<bool>("terminal_file_links");
+}
+
+core::Error UserPrefValues::setTerminalFileLinks(bool val)
+{
+   return writePref("terminal_file_links", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -2312,7 +2351,7 @@ core::Error UserPrefValues::setWrapTabNavigation(bool val)
 }
 
 /**
- * Use a bold label and a blue overline to highlight the active document and pane tabs.
+ * Use a bold label and a blue overline to highlight the active document tab.
  */
 bool UserPrefValues::highlightActiveTabs()
 {
@@ -4069,6 +4108,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckUnexpectedAssignmentInFunctionCall,
       kWarnIfNoSuchVariableInScope,
       kWarnVariableDefinedButNotUsed,
+      kWarnConfusableCharacters,
       kAutoDiscoverPackageDependencies,
       kAutoAppendNewline,
       kStripTrailingWhitespace,
@@ -4085,6 +4125,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSyntaxColorConsole,
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
+      kSmoothScrolling,
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
@@ -4160,6 +4201,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalBellStyle,
       kTerminalRenderer,
       kTerminalWeblinks,
+      kTerminalFileLinks,
       kShowRmdRenderCommand,
       kRmdRenameInScopeBehavior,
       kEnableTextDrag,

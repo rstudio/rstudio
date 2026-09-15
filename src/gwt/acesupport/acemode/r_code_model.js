@@ -959,6 +959,9 @@ var RCodeModel = function(session, tokenizer,
       var position = iterator.getCurrentTokenPosition();
       var chunkCount = this.$scopes.getChunkCount()
 
+      // Computed on demand, once per build (see $frontMatterEndRow).
+      var frontMatterEndRow;
+
       do
       {
          // Bail if we've stepped past the max row.
@@ -1003,6 +1006,17 @@ var RCodeModel = function(session, tokenizer,
          // So make sure we manually scrape the header text out of the line.
          if (Utils.startsWith(type, "markup.heading"))
          {
+            // A leading YAML front-matter block is not a heading. The R
+            // Markdown rules tokenize it as YAML, but the plain markdown
+            // rules tokenize its closing '---' as a setext heading (whose
+            // label would be the last front-matter line) and any '# comment'
+            // inside it as an ATX heading.
+            if (frontMatterEndRow === undefined)
+               frontMatterEndRow = this.$frontMatterEndRow();
+
+            if (position.row <= frontMatterEndRow)
+               continue;
+
             // Track both the 'start' and the 'end' of the label position.
             // The scope 'begins' after the end of the label, although we want
             // to include the label as part of the 'preamble'. Note that this is
@@ -1326,6 +1340,26 @@ var RCodeModel = function(session, tokenizer,
       };
 
       return rowTokenizedUpTo;
+   };
+
+   // The last row of a leading YAML front-matter block ('---' on the first
+   // row, closed by '---' or '...'), or -1 when the document has none. An
+   // unclosed block is not front matter: its opening '---' is a plain
+   // horizontal rule.
+   this.$frontMatterEndRow = function()
+   {
+      var session = this.$session;
+      if (!/^\s*---\s*$/.test(session.getLine(0)))
+         return -1;
+
+      var n = session.getLength();
+      for (var row = 1; row < n; row++)
+      {
+         if (/^\s*(?:---|\.\.\.)\s*$/.test(session.getLine(row)))
+            return row;
+      }
+
+      return -1;
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {

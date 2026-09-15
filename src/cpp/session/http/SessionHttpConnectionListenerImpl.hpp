@@ -226,7 +226,8 @@ private:
 private:
    boost::asio::io_context& ioContext() { return acceptorService_.ioContext(); }
 
-   void acceptNextConnection()
+protected:
+   virtual void acceptNextConnection()
    {
       // create the connection
       ptrNextConnection_.reset( new HttpConnectionImpl<ProtocolType>(
@@ -250,7 +251,6 @@ private:
                      boost::asio::placeholders::error)
       );
    }
-
 
    void handleAccept(const boost::system::error_code& ec)
    {
@@ -285,7 +285,7 @@ private:
                {
                     core::Error error = core::Error(ec, ERROR_LOCATION);
                     error.addProperty("description", "RStudio HTTP: Session is exiting due to too many consecutive errors");
-                    LOG_ERROR(error);
+                    logAcceptError(error, ERROR_LOCATION);
                     if (ec == boost::system::errc::too_many_files_open)
                        exitEarly(SESSION_EXIT_TOO_MANY_OPEN_FILES);
                     else if (ec == boost::system::errc::not_enough_memory)
@@ -301,9 +301,9 @@ private:
 
                // Log at different levels based on severity
                if (consecutiveErrorCount_ <= 10)
-                  LOG_ERROR(error);
+                  logAcceptError(error, ERROR_LOCATION);
                else if (consecutiveErrorCount_ % 25 == 0)  // Log every 25th error
-                  LOG_ERROR(error);
+                  logAcceptError(error, ERROR_LOCATION);
             }
          }
       }
@@ -319,6 +319,17 @@ private:
          acceptNextConnection();
       }
       CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   virtual void exitEarly(int status)
+   {
+      session::exitEarly(status);
+   }
+
+private:
+   virtual void logAcceptError(const core::Error& in_error, const core::ErrorLocation& in_location)
+   {
+      core::log::logError(in_error, in_location);
    }
 
    void onHeadersParsed(boost::shared_ptr<HttpConnectionImpl<ProtocolType> > ptrConnection)

@@ -27,6 +27,7 @@
 #include "modules/SessionAssistant.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
+#include "modules/SessionDirty.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFind.hpp"
@@ -316,6 +317,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
+
+   // the save action a quit or project close would take right now
+   sessionInfo["save_action"] = modules::dirty::saveAction();
 
    // resumed
    sessionInfo["resumed"] = resumed;

@@ -1136,11 +1136,18 @@ void startup(const std::string& firstProjectPath)
    std::string switchToProject = projSettings.switchToProjectPath();
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
-   // check for explicit project none scope specified on the command line or desktop via initialProjectPath env var
-   if (session::options().sessionScope().isProjectNone() ||
-      session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
+   // check for explicit project none scope specified on the command line
+   if (session::options().sessionScope().isProjectNone())
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
+   }
+
+   // check for explicit project none from the desktop via the initialProjectPath env var.
+   // this is a new window alongside an existing session, so leave the last project path
+   // alone: flushing it would stop the other window's project from being restored
+   else if (session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
+   {
+      projectFilePath = FilePath();
    }
 
    // check for explicit request for a project (file association or url based)

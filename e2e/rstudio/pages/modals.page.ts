@@ -87,12 +87,13 @@ export async function dismissBlockingModals(page: Page): Promise<string[]> {
  * Close Project, or a project switch -- can put up, choosing "Don't Save".
  * Resolves to true if a prompt was dismissed.
  *
- * The prompt is a race, not a preference problem. The e2e sessions all run
- * with `save_workspace: never`, but the client reaches that value only when
- * the backend pushes a SaveActionChangedEvent; until then ApplicationQuit's
- * `saveAction_` holds its SaveAction.saveAsk() default, and a quit decided in
- * that window prompts. Tests that open and close projects back to back (e.g.
- * restart-under-agent) quit sessions that are seconds old, so they land in it.
+ * The e2e sessions all run with `save_workspace: never`, so this prompt is
+ * never expected. It used to appear anyway when a quit landed before the
+ * client had received its first save_action_changed event; rstudio#18784
+ * fixed that by shipping the save action in SessionInfo. This helper remains
+ * as a sweep so an unrelated regression stalls one close with a logged
+ * dismissal rather than hanging every project test behind the modal;
+ * close_project_after_open.test.ts asserts that it does not fire.
  *
  * Polls rather than waiting a fixed interval: the prompt appears only after
  * the quit's unsaved-changes round trip, and in the common no-prompt case the

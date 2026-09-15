@@ -2718,6 +2718,17 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().getRenderer().setScrollPastEnd(enable);
    }
 
+   public void setSmoothScrolling(boolean enable)
+   {
+      widget_.getEditor().getRenderer().setAnimatedScroll(enable);
+
+      // The animated line navigation commands are deliberately left in place
+      // when disabling: with animatedScroll off, Ace treats an "animate"
+      // scrollIntoView exactly like "cursor", so there is nothing to undo.
+      if (enable)
+         widget_.getEditor().getCommandManager().useAnimatedLineNavigation();
+   }
+
    public void setHighlightRFunctionCalls(boolean highlight)
    {
       _setHighlightRFunctionCallsImpl(highlight);
@@ -3179,7 +3190,7 @@ public class AceEditor implements DocDisplay
    public void moveCursorNearTop(int rowOffset)
    {
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
-      widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset));
+      widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset), true);
    }
 
    @Override
