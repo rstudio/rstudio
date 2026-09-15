@@ -19,6 +19,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include <vector>
+
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
@@ -36,12 +38,55 @@ namespace {
 boost::optional<std::string> s_defaultUser("default");
 boost::optional<FilePath>    s_defaultHome("/tmp/default");
 
+// RAII guard that unsets a set of environment variables, restoring their original values (or
+// leaving them unset) when the guard goes out of scope. Counterpart to EnvironmentScope (in
+// core/system/Environment.hpp), which overrides a variable to a specific value - this instead
+// guarantees a variable is absent for the scope's duration, regardless of what the ambient
+// environment happens to have set.
+class ScopedEnvUnset : boost::noncopyable
+{
+public:
+   explicit ScopedEnvUnset(std::vector<std::string> variables) : variables_(std::move(variables))
+   {
+      for (const auto& variable : variables_)
+      {
+         std::string previousValue;
+         hadValue_.push_back(core::system::getenv(variable, &previousValue));
+         previousValues_.push_back(previousValue);
+         core::system::unsetenv(variable);
+      }
+   }
+
+   ~ScopedEnvUnset()
+   {
+      for (size_t i = 0; i < variables_.size(); ++i)
+      {
+         if (hadValue_[i])
+            core::system::setenv(variables_[i], previousValues_[i]);
+         else
+            core::system::unsetenv(variables_[i]);
+      }
+   }
+
+private:
+   std::vector<std::string> variables_;
+   std::vector<std::string> previousValues_;
+   std::vector<bool> hadValue_;
+};
+
 } // end anonymous namespace
 
 TEST(XdgTest, DirectoryResolution)
 {
+   // userConfigDir/userDataDir/userCacheDir consult these env vars ahead of any explicitly-supplied
+   // home directory (see EnvironmentOverrides below), so clear them here - otherwise this test's
+   // explicit-home-dir assertions are at the mercy of whatever the ambient environment happens to
+   // have set for them.
+   ScopedEnvUnset scopedEnvUnset({"RSTUDIO_CONFIG_HOME", "XDG_CONFIG_HOME", "RSTUDIO_DATA_HOME",
+                                  "XDG_DATA_HOME", "RSTUDIO_CACHE_HOME", "XDG_CACHE_HOME"});
+
    FilePath homePath(core::system::getenv("HOME"));
-   
+
    EXPECT_EQ(homePath.completeChildPath(".config/rstudio"), userConfigDir());
    EXPECT_EQ(homePath.completeChildPath(".config/rstudio"), userConfigDir(s_defaultUser));
    EXPECT_EQ(FilePath("/tmp/default/.config/rstudio"), userConfigDir(s_defaultUser, s_defaultHome));
