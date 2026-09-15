@@ -187,6 +187,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String antialiasingNoneOption();
     String antialiasingGrayOption();
     String antialiasingSubpixelOption();
+    String graphicsAntialiasingWindowsNote();
     String serverHomePageLabel();
     String serverHomePageActiveSessionsOption();
     String serverHomePageAlwaysOption();

@@ -257,3 +257,52 @@ test_that(".rs.rnb.evaluateInlineChunks() returns '' when no inline code present
 
    expect_equal(.rs.rnb.evaluateInlineChunks(rmdPath), "")
 })
+
+test_that(".rs.notebookGraphicsDeviceArgs() layers the knitr dev.args option on the RStudio defaults (#4067)", {
+   oldBackend <- getOption("RStudioGD.backend")
+   on.exit(options(RStudioGD.backend = oldBackend), add = TRUE)
+   options(RStudioGD.backend = "default")
+
+   base <- list(filename = "plot.png", width = 400, height = 300)
+
+   # no chunk option: only the RStudio preferences (extraArgs) apply
+   args <- .rs.notebookGraphicsDeviceArgs(base, ", antialias = \"gray\"", "png", list())
+   expect_equal(args$antialias, "gray")
+   expect_null(args$type)
+
+   # the graphics backend option flows through as the device type
+   options(RStudioGD.backend = "cairo-png")
+   args <- .rs.notebookGraphicsDeviceArgs(base, "", "png", list())
+   expect_equal(args$type, "cairo-png")
+
+   # chunk-level dev.args win over both
+   devArgs <- list(type = "cairo", antialias = "none")
+   args <- .rs.notebookGraphicsDeviceArgs(base, ", antialias = \"gray\"", "png", devArgs)
+   expect_equal(args$type, "cairo")
+   expect_equal(args$antialias, "none")
+   expect_equal(args$filename, "plot.png")
+
+   # per-device argument lists are keyed by device name
+   devArgs <- list(png = list(type = "cairo"), svg = list(family = "serif"))
+   args <- .rs.notebookGraphicsDeviceArgs(base, "", "png", devArgs)
+   expect_equal(args$type, "cairo")
+   expect_null(args$family)
+
+   # unnamed or malformed dev.args are ignored rather than breaking the device
+   args <- .rs.notebookGraphicsDeviceArgs(base, "", "png", list("cairo"))
+   expect_equal(args$type, "cairo-png")
+
+   # with several devices, the first one selects the per-device arguments
+   args <- .rs.notebookGraphicsDeviceArgs(base, "", c("png", "svg"), devArgs)
+   expect_equal(args$type, "cairo")
+
+   # a missing device falls back to png
+   args <- .rs.notebookGraphicsDeviceArgs(base, "", NULL, devArgs)
+   expect_equal(args$type, "cairo")
+
+   # in the plot replay process the option is unset; the backend preference
+   # arrives through extraArgs and must be kept
+   options(RStudioGD.backend = NULL)
+   args <- .rs.notebookGraphicsDeviceArgs(base, ", type = \"cairo\"", "png", list())
+   expect_equal(args$type, "cairo")
+})
