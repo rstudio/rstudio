@@ -293,6 +293,20 @@ FilePath userConfigDir(
    );
 }
 
+#ifndef _WIN32
+FilePath xdgUserConfigHome(
+   const boost::optional<std::string>& user,
+   const boost::optional<FilePath>& homeDir)
+{
+   std::string xdgEnvValue = core::system::getenv("XDG_CONFIG_HOME");
+   if (!xdgEnvValue.empty())
+      return resolveXdgDirImpl(FilePath(xdgEnvValue), user, homeDir);
+
+   FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
+   return FilePath::resolveAliasedPath("~/.config", resolvedHome);
+}
+#endif
+
 FilePath userDataDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)

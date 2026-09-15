@@ -339,8 +339,8 @@
 
 # Load Vim keybindings from a vimrc file
 #
-# Whether to load Vim key mappings from ~/.rstudio-vimrc (or ~/.vimrc) when Vim
-# editor keybindings are enabled.
+# Whether to load Vim key mappings from ~/.rstudio-vimrc, ~/.vimrc, or
+# $XDG_CONFIG_HOME/vim/vimrc when Vim editor keybindings are enabled.
 .rs.uiPrefs$vimLoadVimrc <- list(
    get = function() { .rs.getUserPref("vim_load_vimrc") },
    set = function(value) { .rs.setUserPref("vim_load_vimrc", value) },
