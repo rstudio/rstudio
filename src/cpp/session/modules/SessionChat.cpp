@@ -5140,6 +5140,12 @@ Error startChatBackend(bool resumeConversation)
    if (error)
       return error;
 
+   // Serve the chat UI from the installation this backend runs, rather than
+   // re-running the tier search on every static asset request. Set before the
+   // port, because setChatBackendPort() rebuilds the CSP header cache, which
+   // reads dist/csp.json from the served installation.
+   staticfiles::setInstallationPath(positAiPath);
+
    // Share the port with the static file handler for CSP connect-src
    staticfiles::setChatBackendPort(s_chatBackendPort);
 
@@ -6252,6 +6258,12 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
       s_updateState = UpdateState();
    }
    s_positAssistantVersion.clear();
+
+   // The installation the static file handler was serving is gone. Unpin it,
+   // so asset requests resolve again -- a system-wide or bundled copy may
+   // still be there -- rather than failing against a deleted directory.
+   staticfiles::setInstallationPath(FilePath());
+
    s_expectedShutdown = false;
 
    DLOG("Posit Assistant uninstalled successfully");

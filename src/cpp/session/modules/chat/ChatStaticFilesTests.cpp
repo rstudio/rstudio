@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 #include <core/FileSerializer.hpp>
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
 #include <core/system/System.hpp>
 
 using namespace rstudio::core;
@@ -188,4 +190,101 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
 
    // Cleanup
    tempDir.removeIfExists();
+}
+
+namespace {
+
+// Stages the files verifyPositAiInstallation() requires, plus one client
+// asset. The asset is a .js so the request under test skips the handler's
+// HTML branch, which reads session options and the current editor theme.
+FilePath stageInstallationServingApp(const std::string& assetContent)
+{
+   FilePath dir;
+   FilePath::tempFilePath(dir);
+   dir.ensureDirectory();
+
+   FilePath clientDir = dir.completeChildPath(kClientDirPath);
+   clientDir.ensureDirectory();
+
+   FilePath serverScript = dir.completeChildPath(kServerScriptPath);
+   serverScript.getParent().ensureDirectory();
+   writeStringToFile(serverScript, "// mock server script");
+
+   writeStringToFile(clientDir.completeChildPath(kIndexFileName),
+                     "<html>mock</html>");
+   writeStringToFile(clientDir.completeChildPath("app.js"), assetContent);
+
+   return dir;
+}
+
+// Requests /ai-chat/app.js from whichever installation the handler serves.
+Error requestApp(http::Response* pResponse)
+{
+   http::Request request;
+   request.setUri("/ai-chat/app.js");
+   return handleAIChatRequest(request, pResponse);
+}
+
+// Unpins the installation after each test, so a later test sees the state of
+// a session whose chat backend has not started yet.
+class ChatStaticFilesPin : public ::testing::Test
+{
+protected:
+   void TearDown() override { setInstallationPath(FilePath()); }
+};
+
+} // anonymous namespace
+
+TEST_F(ChatStaticFilesPin, ServesAssetsFromThePinnedInstallation)
+{
+   FilePath install = stageInstallationServingApp("// pinned build");
+   setInstallationPath(install);
+
+   http::Response response;
+   Error error = requestApp(&response);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(response.statusCode(), http::status::Ok);
+   EXPECT_EQ(response.body(), "// pinned build");
+   EXPECT_EQ(response.contentType(), getContentType(".js"));
+
+   install.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesPin, LaterPinReplacesTheEarlierInstallation)
+{
+   FilePath first = stageInstallationServingApp("// first build");
+   FilePath second = stageInstallationServingApp("// second build");
+
+   // A backend restart re-resolves and pins again; the newer pin is what the
+   // page that restart loads must be served from.
+   setInstallationPath(first);
+   setInstallationPath(second);
+
+   http::Response response;
+   Error error = requestApp(&response);
+
+   EXPECT_FALSE(error);
+   EXPECT_EQ(response.body(), "// second build");
+
+   first.removeIfExists();
+   second.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesPin, UnpinnedInstallationIsNotServedFrom)
+{
+   FilePath install = stageInstallationServingApp("// unpinned build");
+   setInstallationPath(install);
+   setInstallationPath(FilePath());
+
+   // With nothing pinned the handler resolves the installation for itself, so
+   // it must not still be serving the one that was pinned. What it resolves to
+   // instead depends on what is installed on this machine, so only the
+   // negative is asserted.
+   http::Response response;
+   requestApp(&response);
+
+   EXPECT_NE(response.body(), "// unpinned build");
+
+   install.removeIfExists();
 }
