@@ -102,17 +102,12 @@
 
    args <- .rs.notebookGraphicsDeviceArgs(args, extraArgs, dev, devArgs)
    
-   # if it looks like we're using AGG, delegate to that
+   # if it looks like we're using AGG, delegate to that; keep only the
+   # arguments it accepts, so that 'dev.args' (e.g. 'background') still apply
    if (identical(args$type, "ragg"))
    {
-      device <- ragg::agg_png(
-         filename = filename,
-         width    = width,
-         height   = height,
-         units    = units,
-         res      = dpi
-      )
-      
+      aggArgs <- args[intersect(names(args), names(formals(ragg::agg_png)))]
+      device <- do.call(ragg::agg_png, aggArgs)
       return(device)
    }
    

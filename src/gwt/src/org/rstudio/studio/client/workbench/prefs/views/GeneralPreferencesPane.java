@@ -727,7 +727,9 @@ public class GeneralPreferencesPane extends PreferencesPane
                   {
                      if (!succeeded)
                      {
+                        // setValue() doesn't fire a change event
                         graphicsBackend_.setValue(UserPrefs.GRAPHICS_BACKEND_DEFAULT);
+                        updateGraphicsAntialiasNote();
                      }
                   });
          }

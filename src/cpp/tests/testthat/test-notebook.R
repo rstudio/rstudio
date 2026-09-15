@@ -306,3 +306,21 @@ test_that(".rs.notebookGraphicsDeviceArgs() layers the knitr dev.args option on 
    args <- .rs.notebookGraphicsDeviceArgs(base, ", type = \"cairo\"", "png", list())
    expect_equal(args$type, "cairo")
 })
+
+test_that(".rs.createNotebookGraphicsDevice() passes dev.args to the AGG device (#4067)", {
+   skip_if_not_installed("ragg")
+
+   oldBackend <- getOption("RStudioGD.backend")
+   on.exit(options(RStudioGD.backend = oldBackend), add = TRUE)
+   options(RStudioGD.backend = "ragg")
+
+   filename <- tempfile(fileext = ".png")
+   on.exit(unlink(filename), add = TRUE)
+
+   # 'antialias' comes from the RStudio preferences, and agg_png() doesn't accept it
+   .rs.createNotebookGraphicsDevice(filename, 100, 100, 96, "px", 1, ", antialias = \"gray\"", "png", list(bg = "red"))
+   bg <- par("bg")
+   dev.off()
+
+   expect_equal(bg, "red")
+})
