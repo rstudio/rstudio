@@ -13,9 +13,6 @@ REM call:install rmarkdown main rstudio --no-build-vignettes
 REM call:install rsconnect main rstudio --no-build-vignettes
 REM call:install renv master rstudio --no-build-vignettes
 
-REM Keep this list in sync with the PACKAGES default in the Unix install-packages
-REM script; there's no per-platform renv.lock for Windows, so install straight
-REM from CRAN.
 echo -- Installing R packages
 R --vanilla -s -e "packages <- c('digest', 'purrr', 'rmarkdown', 'testthat', 'xml2', 'yaml'); userlib <- Sys.getenv('R_LIBS_USER'); dir.create(userlib, recursive = TRUE, showWarnings = FALSE); .libPaths(c(userlib, .libPaths())); options(repos = c(CRAN = 'https://cran.rstudio.com')); install.packages(packages); missing <- setdiff(packages, rownames(installed.packages())); if (length(missing)) stop('Failed to install: ', paste(missing, collapse = ', '))"
 if ERRORLEVEL 1 (
