@@ -353,8 +353,90 @@ public class XTermNative extends JavaScriptObject
          nativeTerm_.focus();
          nativeTerm_.tabMovesFocus = tabMovesFocus;
 
+         // Copy through the browser's copy command: it reaches xterm's own
+         // copy handler (the path Ctrl+Insert and the context menu take) and,
+         // unlike the async clipboard API, works over plain http, which is
+         // how RStudio Server is often reached.
+         var copySelection = function() {
+            var copied = false;
+            try {
+               copied = $doc.execCommand('copy');
+            } catch (error) {
+               console.warn('Terminal copy failed: ' + error);
+            }
+
+            var clipboard = $wnd.navigator.clipboard;
+            if (!copied && clipboard && clipboard.writeText) {
+               clipboard.writeText(nativeTerm_.getSelection())["catch"](function(error) {
+                  console.warn('Terminal copy failed: ' + error);
+               });
+            }
+         };
+
+         var pasteFromClipboard = function() {
+            if ($wnd.desktop && $wnd.desktop.getClipboardText) {
+               $wnd.desktop.getClipboardText(function(text) {
+                  if (text)
+                     nativeTerm_.paste(text);
+               });
+               return;
+            }
+
+            var clipboard = $wnd.navigator.clipboard;
+            if (clipboard && clipboard.readText) {
+               clipboard.readText().then(function(text) {
+                  if (text)
+                     nativeTerm_.paste(text);
+               })["catch"](function(error) {
+                  console.warn('Terminal paste failed: ' + error);
+               });
+            }
+         };
+
+         // Chromium's plain-text paste (Ctrl+Shift+V on Windows and Linux)
+         // dispatches a paste event that xterm already handles; remember when
+         // one arrives so the fallback below doesn't paste a second time.
+         var pasteEventSeen = false;
+         container.addEventListener('paste', function() {
+            pasteEventSeen = true;
+         }, true);
+
          nativeTerm_.attachCustomKeyEventHandler(function (event) {
-            return !(event.keyCode === 9 && nativeTerm_.tabMovesFocus);
+            if (event.keyCode === 9 && nativeTerm_.tabMovesFocus)
+               return false;
+
+            // Ctrl+Shift+C / Ctrl+Shift+V copy and paste, as in most terminal
+            // emulators (#1687). xterm sends nothing to the shell for either
+            // combination, so no key sequence is lost to this.
+            var copyOrPaste = event.type === 'keydown' &&
+                  event.ctrlKey && event.shiftKey && !event.altKey && !event.metaKey;
+            if (!copyOrPaste)
+               return true;
+
+            if (event.keyCode === 67) {
+               if (nativeTerm_.hasSelection())
+                  copySelection();
+
+               // Consume the key even with nothing selected: left to the
+               // browser it opens the developer tools, and on Windows and
+               // Linux desktop it would fall through to the Comment/Uncomment
+               // menu accelerator bound to the same keys.
+               event.preventDefault();
+               return false;
+            }
+
+            if (event.keyCode === 86) {
+               // Let the browser's own paste run first, and read the clipboard
+               // ourselves only when it produced no paste event (Firefox has
+               // no plain-text paste key for text areas; macOS uses Cmd).
+               pasteEventSeen = false;
+               $wnd.setTimeout(function() {
+                  if (!pasteEventSeen)
+                     pasteFromClipboard();
+               }, 0);
+            }
+
+            return true;
          });
 
          return nativeTerm_;
