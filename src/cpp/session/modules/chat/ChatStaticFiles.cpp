@@ -177,75 +177,72 @@ void injectThemeInfo(std::string* pContent)
 }
 
 /**
- * Load CSP directives from dist/csp.json in the Posit Assistant installation.
+ * Load CSP directives from dist/csp.json in the Posit Assistant installation
+ * currently being served.
  *
- * Reads the file once and caches the result. The file is emitted by the
- * databot build and contains the same defaults that DatabotServer uses
- * in its Express middleware.
- *
- * Once loaded (or once a failure is encountered), the result is cached
- * for the lifetime of the session. A missing or broken file will not be
- * retried.
+ * The file is emitted by the databot build and contains the same defaults
+ * that DatabotServer uses in its Express middleware, so it belongs to the
+ * client it ships with. Read on every call rather than cached, because the
+ * installation changes underneath the session: an in-session update extracts
+ * a new package -- over the same directory today, into a new one once
+ * installs are versioned -- and the client served afterwards must be served
+ * under its own policy. Callers are the header cache below, which runs once
+ * per backend start, not once per request.
  *
  * @return Directive map (e.g., {"default-src": "'self'", ...}), or empty
  *         map if the file is missing or unparseable.
  */
 std::map<std::string, std::string> loadCspDirectives()
 {
-   static const auto s_cached = []()
-   {
-      std::map<std::string, std::string> result;
+   std::map<std::string, std::string> result;
 
-      FilePath positAiPath = servedInstallationPath();
-      if (positAiPath.isEmpty())
-         return result;
-
-      FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
-      if (!cspFile.exists())
-         return result;
-
-      std::string content;
-      Error error = readStringFromFile(cspFile, &content);
-      if (error)
-      {
-         WLOG("Failed to read CSP config: {}", error.getMessage());
-         return result;
-      }
-
-      json::Value jsonValue;
-      if (jsonValue.parse(content))
-      {
-         WLOG("Failed to parse CSP config: {}",
-              cspFile.getAbsolutePath());
-         return result;
-      }
-
-      if (!jsonValue.isObject())
-      {
-         WLOG("CSP config must be a JSON object: {}",
-              cspFile.getAbsolutePath());
-         return result;
-      }
-
-      json::Object obj = jsonValue.getObject();
-      for (auto it = obj.begin(); it != obj.end(); ++it)
-      {
-         json::Value val = (*it).getValue();
-         if (val.isString())
-         {
-            result[(*it).getName()] = val.getString();
-         }
-         else
-         {
-            WLOG("Ignoring non-string CSP directive: {}",
-                 (*it).getName());
-         }
-      }
-
+   FilePath positAiPath = servedInstallationPath();
+   if (positAiPath.isEmpty())
       return result;
-   }();
 
-   return s_cached;
+   FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
+   if (!cspFile.exists())
+      return result;
+
+   std::string content;
+   Error error = readStringFromFile(cspFile, &content);
+   if (error)
+   {
+      WLOG("Failed to read CSP config: {}", error.getMessage());
+      return result;
+   }
+
+   json::Value jsonValue;
+   if (jsonValue.parse(content))
+   {
+      WLOG("Failed to parse CSP config: {}",
+           cspFile.getAbsolutePath());
+      return result;
+   }
+
+   if (!jsonValue.isObject())
+   {
+      WLOG("CSP config must be a JSON object: {}",
+           cspFile.getAbsolutePath());
+      return result;
+   }
+
+   json::Object obj = jsonValue.getObject();
+   for (auto it = obj.begin(); it != obj.end(); ++it)
+   {
+      json::Value val = (*it).getValue();
+      if (val.isString())
+      {
+         result[(*it).getName()] = val.getString();
+      }
+      else
+      {
+         WLOG("Ignoring non-string CSP directive: {}",
+              (*it).getName());
+      }
+   }
+
+   return result;
 }
 
 // Cached CSP header string, rebuilt when the backend port changes.
@@ -257,10 +254,20 @@ bool s_cspHeaderBuilt = false;
  * Rebuild the cached CSP header string from dist/csp.json directives.
  *
  * Called once lazily on the first HTML request and again whenever the
- * backend port changes via setChatBackendPort().
+ * backend port changes via setChatBackendPort(). The directives are re-read
+ * on each rebuild, so a backend restart -- which is how an in-session update
+ * takes effect -- serves the policy belonging to the installation now being
+ * served (#18831).
  */
 void rebuildCspHeaderCache()
 {
+   // Held across the read as well as the store. Two rebuilds can overlap --
+   // the lazy one below on an HTTP handler thread, and the one a backend start
+   // makes on the main thread -- and with the read outside the lock the older
+   // installation's directives could be committed last and stick until the
+   // next restart, which is the staleness of #18831 one layer down.
+   std::lock_guard<std::mutex> lock(s_cspMutex);
+
    std::map<std::string, std::string> directives = loadCspDirectives();
 
    // If csp.json was missing, use a restrictive fallback
@@ -321,7 +328,6 @@ void rebuildCspHeaderCache()
       header += pair.first + " " + pair.second;
    }
 
-   std::lock_guard<std::mutex> lock(s_cspMutex);
    s_cachedCspHeader = header;
    s_cspHeaderBuilt = true;
 }
@@ -590,8 +596,22 @@ void setChatBackendAuthToken(const std::string& token)
 
 void setInstallationPath(const FilePath& path)
 {
-   std::lock_guard<std::mutex> lock(s_installationMutex);
-   s_installationPath = path;
+   {
+      std::lock_guard<std::mutex> lock(s_installationMutex);
+      s_installationPath = path;
+   }
+
+   // The policy belongs to the installation, so changing which one is served
+   // rebuilds it here rather than leaving each caller to pair the change with
+   // a setChatBackendPort() call. Uninstall did not pair them -- it stops the
+   // backend, which rebuilds while this pin is still set, and only then clears
+   // it -- so the removed installation's policy outlived it (#18831).
+   //
+   // Outside the lock above: rebuilding reads the pin back through
+   // servedInstallationPath(), so holding it here would take
+   // s_installationMutex before s_cspMutex and deadlock against the one
+   // ordering every other path uses.
+   rebuildCspHeaderCache();
 }
 
 } // namespace staticfiles
