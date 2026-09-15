@@ -39,7 +39,7 @@ namespace install_lock {
 // Coordinates the shared per-user Posit Assistant installation across
 // concurrent rsession processes:
 //
-// - An "in use" lock (locks/sessions/<ownerId>.lock) is held while this
+// - An "in use" lock (locks/sessions/<ownerId>.epoch-<n>.lock) is held while this
 //   session runs the chat backend and/or NES agent from the user-data
 //   install. It is a *held* core::FileLock, never a marker file we clean up:
 //   advisory locks (Windows) are released by the OS the moment the process
@@ -92,10 +92,12 @@ public:
                   boost::none);
 
    // Acquires the in-use lock (first component takes the file lock; the
-   // second just marks itself held). Fails if the owner id is empty (see
-   // checkOwnerId). Fails while this process's own mutation is active: a
-   // re-entrant start dispatched during the mutation must not launch from
-   // the directory being swapped, and the install.lock probe in
+   // second just marks itself held). Each first-component acquisition attempt
+   // uses a new filename so released entries can be cleaned without racing
+   // a later start. Fails if the owner id is empty (see checkOwnerId). Fails
+   // while this process's own mutation is active: a re-entrant start
+   // dispatched during the mutation must not launch from the directory being
+   // swapped, and the install.lock probe in
    // acquireInUseForStart() cannot catch it (our own advisory lock does not
    // conflict in-process), so this in-process check is the only guard.
    //
@@ -133,14 +135,13 @@ public:
    // session's processes are really gone" signal mutators wait on.
    bool inUseHeld() const;
 
-   // Begins a mutation: acquires install.lock (non-blocking), then probes
-   // each other session's lock file by acquiring it — isLocked() cannot
-   // distinguish a free lock from an inspection failure; see the probe loop
-   // in the .cpp — excluding our own file by name (probing a lock this
-   // process holds would release it under POSIX fcntl semantics). Files
-   // whose probe acquisition succeeds are stale leftovers and are deleted.
+   // Begins a mutation: acquires install.lock, then probes each other session's
+   // lock file, excluding only our own currently held file. Unlocked link-based
+   // epoch entries are retired and removed; legacy names that older clients may
+   // reuse are retained. Advisory leftovers are acquired and removed only once
+   // older than the lock timeout (see the probe loop for why not sooner).
    // Fails if the owner id is empty (see checkOwnerId): the own-file
-   // exclusion would otherwise skip a foreign ".lock".
+   // exclusion would otherwise skip a foreign ".epoch-<n>.lock".
    //
    // On failure, *pUserMessage receives user-facing text describing why
    // (another mutator, or live sessions in use). This process's own held
@@ -163,7 +164,7 @@ public:
 private:
    core::FilePath ownSessionLockPath() const;
    // Both entry points refuse an empty owner id, which would name this
-   // session's lock file ".lock" and share it with every other session that
+   // session's lock file ".epoch-<n>.lock" and share it with every other session that
    // has the same defect (#18787).
    core::Error checkOwnerId() const;
    boost::shared_ptr<core::FileLock> makeLock() const;
@@ -175,6 +176,7 @@ private:
    boost::optional<core::FileLock::LockType> lockType_;
    boost::shared_ptr<core::FileLock> inUseLock_;
    boost::shared_ptr<core::FileLock> mutationLock_;
+   uint64_t sessionLockEpoch_;
    uint64_t nextToken_;
    std::array<std::set<uint64_t>, static_cast<std::size_t>(Component::Count)>
       componentTokens_;

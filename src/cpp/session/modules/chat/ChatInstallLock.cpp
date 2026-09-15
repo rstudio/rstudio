@@ -15,18 +15,14 @@
 
 #include "ChatInstallLock.hpp"
 
+#include <algorithm>
 #include <cstddef>
+#include <ctime>
 #include <vector>
 
-// boost/interprocess requires this undef under mingw64 (mirrors
-// core/file_lock/AdvisoryFileLock.cpp)
-#if defined(__GNUC__) && defined(_WIN64)
-   #undef BOOST_USE_WINDOWS_H
-#endif
-#include <boost/interprocess/sync/file_lock.hpp>
+#include <fmt/format.h>
 
 #include <core/Log.hpp>
-#include <core/StringUtils.hpp>
 
 namespace rstudio {
 namespace session {
@@ -41,6 +37,21 @@ namespace {
 const char* const kInstallLockFileName = "install.lock";
 const char* const kSessionLocksDirName = "sessions";
 const char* const kSessionLockSuffix = ".lock";
+const char* const kSessionLockEpochMarker = ".epoch-";
+
+bool isEpochSessionLock(const FilePath& path)
+{
+   std::string stem = path.getStem();
+   std::size_t marker = stem.rfind(kSessionLockEpochMarker);
+   if (marker == std::string::npos || marker == 0)
+      return false;
+
+   std::string epoch = stem.substr(marker + std::string(kSessionLockEpochMarker).size());
+   return !epoch.empty() && std::all_of(epoch.begin(), epoch.end(), [](char ch)
+   {
+      return ch >= '0' && ch <= '9';
+   });
+}
 
 std::size_t componentIndex(InstallLock::Component component)
 {
@@ -66,13 +77,19 @@ std::string sessionsInUseMessage(FileLock::LockType lockType)
       "Close Posit Assistant in your other sessions and try again.";
 
    // Advisory locks vanish with their process; only link-based locks
-   // (macOS, Linux) can linger up to the staleness timeout after a hard crash.
+   // (macOS, Linux) can linger after a hard crash. A cleanly crashed session's
+   // lock clears at the staleness timeout, but one whose process is still
+   // alive yet unresponsive is held for the live-owner grace window (a
+   // multiple of the timeout) so a briefly stalled session does not lose its
+   // lock. Quote that upper bound rather than the bare timeout.
    if (lockType == FileLock::LOCKTYPE_LINKBASED)
    {
-      message += " If another session ended unexpectedly, this may take up "
-                 "to " +
-                 std::to_string(FileLock::getTimeoutInterval().total_seconds()) +
-                 " seconds to clear.";
+      long clearSeconds = FileLock::getTimeoutInterval().total_seconds() *
+                          FileLock::getLiveOwnerGraceMultiplier();
+      message += fmt::format(
+         " If another session ended unexpectedly or stopped "
+         "responding, this may take up to {} seconds to clear.",
+         clearSeconds);
    }
 
    return message;
@@ -85,43 +102,21 @@ enum class LockProbe
    Error
 };
 
-// Non-destructive tri-state lock probe. Unlike FileLock::isLocked() it
-// distinguishes an inspection error from a free lock (so callers can fail
-// closed), and unlike an acquire-and-release probe it never unlinks the lock
-// file (an advisory release unlocks and then deletes the file, opening a
-// takeover race where two mutators end up holding locks on different inodes
-// of the same path).
+// Non-destructive tri-state lock probe. Unlike the bool FileLock::isLocked()
+// it distinguishes an inspection error from a held lock so callers can word
+// their refusal honestly, and it does not alter the lock object's lifecycle
+// state.
 LockProbe probeLock(const FilePath& lockFilePath, FileLock::LockType lockType)
 {
-   if (!lockFilePath.exists())
-      return LockProbe::Free;
-
-   // Link-based locks never run on Windows (FileLock forces advisory there)
-   if (lockType == FileLock::LOCKTYPE_LINKBASED)
+   bool isLocked = true;
+   Error error = FileLock::create(lockType)->isLocked(lockFilePath, &isLocked);
+   if (error)
    {
-      return LinkBasedFileLock::isLockFileStale(lockFilePath)
-         ? LockProbe::Free
-         : LockProbe::Held;
-   }
-
-   try
-   {
-      boost::interprocess::file_lock lock(
-         string_utils::utf8ToSystem(lockFilePath.getAbsolutePath()).c_str());
-      if (lock.try_lock())
-      {
-         lock.unlock();
-         return LockProbe::Free;
-      }
-      return LockProbe::Held;
-   }
-   catch (boost::interprocess::interprocess_exception& e)
-   {
-      LOG_WARNING_MESSAGE(
-         "Unable to inspect lock file '" + lockFilePath.getAbsolutePath() +
-         "': " + e.what());
+      LOG_ERROR(error);
       return LockProbe::Error;
    }
+
+   return isLocked ? LockProbe::Held : LockProbe::Free;
 }
 
 } // anonymous namespace
@@ -133,6 +128,7 @@ InstallLock::InstallLock(
    : locksDir_(locksDir),
      ownerId_(ownerId),
      lockType_(lockType),
+     sessionLockEpoch_(0),
      nextToken_(0),
      mutationActive_(false)
 {
@@ -156,6 +152,11 @@ Error InstallLock::acquireInUse(Component component, uint64_t* pToken)
 
    if (!anyComponentHeld())
    {
+      // Every attempt gets a name this process will never publish again.
+      // Released link locks retain their public path, so a mutator can only
+      // safely remove that entry if no subsequent start can reuse its name.
+      ++sessionLockEpoch_;
+
       error = sessionLocksDir().ensureDirectory();
       if (error)
          return error;
@@ -310,38 +311,75 @@ Error InstallLock::tryBeginMutation(std::string* pUserMessage)
 
       for (const FilePath& child : children)
       {
-         // Skip our own lock file: probing a lock this process holds would
-         // release it under POSIX fcntl semantics. Skip non-.lock entries:
-         // link-based locking creates transient proxy files alongside the
-         // lock files it manages.
-         if (child.getFilename() == ownSessionLockPath().getFilename())
+         // Skip our own lock file: this process already holds it. Skip
+         // non-.lock entries: link-based locking keeps owner files and its
+         // claim namespace beside the lock files it manages.
+         if (anyComponentHeld() &&
+             child.getFilename() == ownSessionLockPath().getFilename())
             continue;
          if (child.getExtensionLowerCase() != kSessionLockSuffix)
             continue;
 
-         // Probe by acquisition: isLocked() reports false both for a free
-         // lock and when inspection fails, which could delete a live lock.
-         // Acquiring distinguishes the cases — success means the file was
-         // stale (an advisory leftover from a crash, or a link-based file
-         // whose owner is gone; file existence alone never means "in use"),
-         // contention means a live session, and anything else fails closed
-         // rather than risk mutating under a session we could not check.
          boost::shared_ptr<FileLock> probe = makeLock();
-         Error probeError = probe->acquire(child);
-         if (!probeError)
+         Error probeError;
+         if (effectiveLockType() == FileLock::LOCKTYPE_LINKBASED)
          {
-            Error releaseError = probe->release();
-            if (releaseError)
-               LOG_ERROR(releaseError);
-            Error removeError = child.removeIfExists();
-            if (removeError)
+            // Inspect without acquiring: acquisition would replace a stale
+            // entry and renew its timestamp, leaving another released file
+            // after the probe. Epoch names are never reused, and mutators
+            // are serialized by install.lock, so an unlocked epoch entry
+            // cannot be replaced by a later start while we remove it.
+            bool locked = true;
+            probeError = probe->isLocked(child, &locked);
+            if (!probeError && locked)
+               probeError = FileLock::noLockAvailableError(child);
+
+            if (!probeError)
             {
-               LOG_WARNING_MESSAGE(
-                  "Failed to remove stale Posit Assistant session lock "
-                  "file '" + child.getAbsolutePath() + "': " +
-                  removeError.getMessage());
+               // Older clients reuse their per-process name. Keep those
+               // entries: even a released marker can become another live
+               // lock between this inspection and a pathname deletion.
+               if (isEpochSessionLock(child))
+               {
+                  // removeIfExists() follows symlinks and would miss the
+                  // dangling public link left after its owner was removed.
+                  Error removeError = child.remove();
+                  if (removeError)
+                     LOG_ERROR(removeError);
+               }
+               continue;
             }
-            continue;
+         }
+         else
+         {
+            // Advisory files have no released marker. Hold the kernel lock
+            // while removing old leftovers; preserve recent files whose
+            // creator may still be between creating and locking them.
+            probeError = probe->acquire(child);
+            if (!probeError)
+            {
+               // Remove the stale leftover only if we can confirm it is older
+               // than the timeout. The unchecked getLastWriteTime() returns 0 on
+               // a stat failure (e.g. a transient ESTALE on network storage),
+               // which would read as ancient and delete a file that may be
+               // seconds old and about to be locked; the checked overload lets us
+               // skip removal on such an error instead.
+               std::time_t settled =
+                  ::time(nullptr) - FileLock::getTimeoutInterval().total_seconds();
+               std::time_t lastWrite = 0;
+               Error timeError = child.getLastWriteTime(lastWrite);
+               if (!timeError && lastWrite < settled)
+               {
+                  Error removeError = child.removeIfExists();
+                  if (removeError)
+                     LOG_ERROR(removeError);
+               }
+
+               Error releaseError = probe->release();
+               if (releaseError)
+                  LOG_ERROR(releaseError);
+               continue;
+            }
          }
 
          Error releaseError = lock->release();
@@ -406,15 +444,21 @@ FilePath InstallLock::sessionLocksDir() const
 
 FilePath InstallLock::ownSessionLockPath() const
 {
-   return sessionLocksDir().completePath(ownerId_ + kSessionLockSuffix);
+   return sessionLocksDir().completePath(
+      fmt::format(
+         "{}{}{}{}",
+         ownerId_,
+         kSessionLockEpochMarker,
+         sessionLockEpoch_,
+         kSessionLockSuffix));
 }
 
 Error InstallLock::checkOwnerId() const
 {
-   // An empty owner id would name this session's lock file ".lock", a path
-   // every other session with the same defect shares (#18787). A starter
+   // An empty owner id would name this session's lock file ".epoch-<n>.lock",
+   // a path every other session with the same defect shares (#18787). A starter
    // would then contend on it and report an update in progress; a mutator
-   // would take a foreign ".lock" for its own, skip probing it, and modify
+   // would take a foreign entry for its own, skip probing it, and modify
    // the installation under a live backend. Refuse both instead so the
    // defect surfaces as a real error.
    if (!ownerId_.empty())
