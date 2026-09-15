@@ -3,8 +3,8 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # One workflow that drives the reusable per-OS E2E "engines" six ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday, so the engines in those
 #     slates get a run during the week without running the whole matrix daily.
-#     The slates cover 13 of the 21 engines; macos14 gets its weekly run from
-#     the Friday cron below, and the remaining seven are reached only by the
+#     The slates cover 13 of the 22 engines; macos14 gets its weekly run from
+#     the Friday cron below, and the remaining eight are reached only by the
 #     Sunday runs.
 #   - Friday afternoon cron: macOS 14 alone, timed to land inside the October
 #     2026 brownout windows for the deprecated macos-14 image (see the pick job).
@@ -18,7 +18,7 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 #     concurrency note below.
 #   - Weekly cron (Sunday 16:00): every macOS and Windows engine, of either
 #     architecture. Four hours after the Linux arm64 run, for the same reason.
-#   - Manual dispatch: every engine at once (all 21, every platform and
+#   - Manual dispatch: every engine at once (all 22, every platform and
 #     architecture), optionally against a specific daily build (the "version"
 #     input) or built from source (the "build_from_source" input).
 #
@@ -160,8 +160,8 @@ jobs:
           #
           # The weekday slates below name 16 engine slots but only 13 distinct
           # engines: macos26, windows2025 and ubuntu24s each appear twice. Of the
-          # eight engines in no slate, macos14's weekly run is the Friday 16:00
-          # cron, and the other seven run only in a Sunday selection.
+          # nine engines in no slate, macos14's weekly run is the Friday 16:00
+          # cron, and the other eight run only in a Sunday selection.
           ENGINES='[
             {"key":"ubuntu22-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-22-x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
             {"key":"ubuntu22-arm64","platform":"linux","arch":"arm64","os":"ubuntu-22-arm64","name":"Ubuntu 22 (arm64)","url_key":"jammy_arm64"},
@@ -183,7 +183,8 @@ jobs:
             {"key":"macos15","platform":"macos","arch":"x86_64"},
             {"key":"windows2025","platform":"windows","arch":"x86_64"},
             {"key":"macos14","platform":"macos","arch":"arm64"},
-            {"key":"macos26","platform":"macos","arch":"arm64"}
+            {"key":"macos26","platform":"macos","arch":"arm64"},
+            {"key":"macos27","platform":"macos","arch":"arm64"}
           ]'
           # Every engine key. The Sunday branches below filter on platform and
           # arch together, which this can't express, so they inline their own jq.
@@ -420,6 +421,21 @@ jobs:
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos26') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      project: desktop
+      build_from_source: ${{ inputs.build_from_source || false }}
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
+  macos27:
+    name: macOS 27 arm64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos27') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-27-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
