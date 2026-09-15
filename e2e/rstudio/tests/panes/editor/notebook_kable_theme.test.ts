@@ -60,10 +60,27 @@ test.describe('Notebook kable themes', () => {
     await expect(page.frameLocator(OUTPUT_FRAME).locator('td').first()).toBeVisible();
   }
 
+  async function selectGalleryPage(page: Page, name: string): Promise<void> {
+    const label = page.getByText(name, { exact: true });
+    // Theme changes can leave gallery controls clipped by Ace's scrollbar.
+    // Scroll Ace's virtual viewport, which DOM scrollIntoView cannot move.
+    await label.evaluate(element => {
+      const viewport = element.closest('.ace_editor')!.getBoundingClientRect();
+      const target = element.getBoundingClientRect();
+      window.rstudio!.documents.activeEditor()!.renderer.scrollBy(
+        0,
+        target.top + target.height / 2 - viewport.top - viewport.height / 2,
+      );
+    });
+    await label.click();
+  }
+
   for (const format of ['default', 'markdown', 'simple', 'html']) {
     test(`${format} kable follows the theme on first render, rerun, and tab switching`, async ({ rstudioPage: page }) => {
       await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
-      const fileName = 'kable-theme.Rmd';
+      // Distinct paths prevent an earlier case's cached output from restoring
+      // alongside this case's output while its new chunk is running.
+      const fileName = `kable-theme-${format}.Rmd`;
       const options = format === 'default' ? '' : `, format = "${format}"`;
       await writeAndOpenFile(page, sandbox.dir, fileName,
         notebook(`knitr::kable(data.frame(value = 42)${options})`));
@@ -106,7 +123,7 @@ test.describe('Notebook kable themes', () => {
   for (const styling of ['inline', 'stylesheet', 'cascade layer']) {
     test(`HTML kable preserves ${styling} colors through theme changes`, async ({ rstudioPage: page }) => {
       await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
-      const fileName = 'styled-kable.Rmd';
+      const fileName = `styled-kable-${styling.replaceAll(' ', '-')}.Rmd`;
       const declarations = 'color: rgb(12, 34, 56); background-color: white;';
       const tableAttributes = styling === 'inline' ? `style="${declarations}"` : 'class="authored"';
       const rule = `table.authored { ${declarations} }`;
@@ -144,19 +161,19 @@ test.describe('Notebook kable themes', () => {
     await expect(output.locator(KABLE_STYLE)).toHaveCount(0);
     await expect(output.locator('td')).toHaveCSS('color', 'rgb(12, 34, 56)');
 
-    await page.getByText('knit_asis', { exact: true }).click();
+    await selectGalleryPage(page, 'knit_asis');
     await expect(output.locator('td')).toHaveText('42');
     await expect(output.locator('td')).toHaveCSS('color', WHITE);
     await expect(output.locator(KABLE_STYLE)).toHaveCount(1);
     await applyTheme(page, LIGHT_THEME, LIGHT_THEME_HREF);
     await expect(output.locator('td')).toHaveCSS('color', BLACK);
 
-    await page.getByText('html', { exact: true }).click();
+    await selectGalleryPage(page, 'html');
     await expect(output.locator('td')).toHaveText('Custom');
     await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
     await expect(output.locator('td')).toHaveCSS('color', 'rgb(12, 34, 56)');
     await expect(output.locator(KABLE_STYLE)).toHaveCount(0);
-    await page.getByText('knit_asis', { exact: true }).click();
+    await selectGalleryPage(page, 'knit_asis');
     await expect(output.locator('td')).toHaveCSS('color', WHITE);
     await expect(output.locator(KABLE_STYLE)).toHaveCount(1);
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [fileName]);
@@ -168,7 +185,7 @@ test.describe('Notebook kable themes', () => {
   ]) {
     test(`${name} does not receive the kable color rule`, async ({ rstudioPage: page }) => {
       await applyTheme(page, DARK_THEME, DARK_THEME_HREF);
-      const fileName = 'other-table-theme.Rmd';
+      const fileName = `other-table-theme-${name.replaceAll(' ', '-')}.Rmd`;
       await writeAndOpenFile(page, sandbox.dir, fileName, notebook(code));
       await runChunk(page);
       const output = page.frameLocator(OUTPUT_FRAME);
@@ -191,7 +208,7 @@ test.describe('Notebook kable themes', () => {
     test(`DT ${style} does not receive the kable color rule`, async ({ rstudioPage: page }) => {
       test.skip(missingPackages.includes('DT'), 'DT is unavailable');
       await applyTheme(page, LIGHT_THEME, LIGHT_THEME_HREF);
-      const fileName = 'widget-table-theme.Rmd';
+      const fileName = `widget-table-theme-${style}.Rmd`;
       const options = style === 'bootstrap' ? ', style = "bootstrap"' : '';
       await writeAndOpenFile(page, sandbox.dir, fileName,
         notebook(`DT::datatable(data.frame(value = 42)${options})`));
