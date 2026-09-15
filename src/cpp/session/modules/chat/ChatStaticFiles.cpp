@@ -82,14 +82,22 @@ FilePath s_installationPath;
  * started -- including after it exits, so a page that outlives its backend
  * can still load chunks. Otherwise the tier search runs, which is the only
  * answer available before the first start.
+ *
+ * A directory that is no longer there counts as nothing pinned: an update
+ * that rolled back without restoring it, or a removal out of band, must not
+ * cost the requests a copy in another tier could still answer. The pin is
+ * left set rather than cleared, since an update can put the same path back.
  */
 FilePath servedInstallationPath()
 {
+   FilePath pinned;
    {
       std::lock_guard<std::mutex> lock(s_installationMutex);
-      if (!s_installationPath.isEmpty())
-         return s_installationPath;
+      pinned = s_installationPath;
    }
+
+   if (!pinned.isEmpty() && pinned.exists())
+      return pinned;
 
    return locatePositAssistantInstallation();
 }

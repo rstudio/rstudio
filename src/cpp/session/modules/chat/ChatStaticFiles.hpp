@@ -141,7 +141,9 @@ void setChatBackendAuthToken(const std::string& token);
  * still request lazily-loaded chunks, and the next start pins again. Pass an
  * empty path to clear, which restores the pre-start behaviour of resolving
  * the installation on each request; uninstall does this, having deleted the
- * directory the pin names.
+ * directory the pin names. A pinned directory that no longer exists resolves
+ * per request in the same way, so a removal that does not clear the pin still
+ * falls back to whatever other tier holds an installation.
  */
 void setInstallationPath(const core::FilePath& path);
 
