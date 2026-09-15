@@ -271,6 +271,36 @@ TEST_F(ChatStaticFilesPin, LaterPinReplacesTheEarlierInstallation)
    second.removeIfExists();
 }
 
+TEST_F(ChatStaticFilesPin, PinnedInstallationThatIsGoneIsNotServedFrom)
+{
+   FilePath install = stageInstallationServingApp("// removed build");
+   setInstallationPath(install);
+
+   // Confirm the pin is live before removing what it names, so the assertion
+   // below is about the removal and not about the pin never having worked.
+   http::Response served;
+   EXPECT_FALSE(requestApp(&served));
+   EXPECT_EQ(served.body(), "// removed build");
+
+   // A rolled-back update or an out-of-band removal leaves the pin naming a
+   // directory that is gone. The handler must resolve for itself rather than
+   // answer from the vanished path for the rest of the session. What it
+   // resolves to depends on what is installed on this machine, so only the
+   // negative is asserted.
+   install.removeIfExists();
+
+   http::Response response;
+   requestApp(&response);
+
+   EXPECT_NE(response.body(), "// removed build");
+
+   // Forbidden is the signature of the dead pin having been used: the client
+   // root under it cannot be canonicalized, so validateAndResolvePath()
+   // rejects the path. Resolving instead answers Ok or NotFound depending on
+   // what this machine has installed, but never this.
+   EXPECT_NE(response.statusCode(), http::status::Forbidden);
+}
+
 TEST_F(ChatStaticFilesPin, UnpinnedInstallationIsNotServedFrom)
 {
    FilePath install = stageInstallationServingApp("// unpinned build");
