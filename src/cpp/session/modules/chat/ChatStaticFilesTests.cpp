@@ -301,6 +301,32 @@ TEST_F(ChatStaticFilesPin, PinnedInstallationThatIsGoneIsNotServedFrom)
    EXPECT_NE(response.statusCode(), http::status::Forbidden);
 }
 
+TEST_F(ChatStaticFilesPin, PartiallyExtractedPinnedInstallationIsNotServedFrom)
+{
+   FilePath install = stageInstallationServingApp("// partial build");
+   setInstallationPath(install);
+
+   http::Response served;
+   EXPECT_FALSE(requestApp(&served));
+   EXPECT_EQ(served.body(), "// partial build");
+
+   // An extraction that failed and could not be cleaned up leaves the root in
+   // place without the files that make it an installation. The asset itself
+   // survives here, so serving it would succeed -- which is exactly why the
+   // pin must be tested against verifyPositAiInstallation() and not merely
+   // for the root's existence.
+   install.completeChildPath(kClientDirPath)
+      .completeChildPath(kIndexFileName)
+      .removeIfExists();
+
+   http::Response response;
+   requestApp(&response);
+
+   EXPECT_NE(response.body(), "// partial build");
+
+   install.removeIfExists();
+}
+
 TEST_F(ChatStaticFilesPin, UnpinnedInstallationIsNotServedFrom)
 {
    FilePath install = stageInstallationServingApp("// unpinned build");

@@ -83,10 +83,14 @@ FilePath s_installationPath;
  * can still load chunks. Otherwise the tier search runs, which is the only
  * answer available before the first start.
  *
- * A directory that is no longer there counts as nothing pinned: an update
- * that rolled back without restoring it, or a removal out of band, must not
- * cost the requests a copy in another tier could still answer. The pin is
- * left set rather than cleared, since an update can put the same path back.
+ * A pinned path that no longer holds an installation counts as nothing
+ * pinned: an update that rolled back without restoring it, a removal out of
+ * band, or an extraction that failed and could not be cleaned up must not
+ * cost the requests a copy in another tier could still answer. Tested with
+ * verifyPositAiInstallation(), the same definition the resolver requires of
+ * a tier, so a half-extracted directory does not stay selected just because
+ * its root is there. The pin is left set rather than cleared, since an update
+ * can put a working installation back at the same path.
  */
 FilePath servedInstallationPath()
 {
@@ -96,7 +100,7 @@ FilePath servedInstallationPath()
       pinned = s_installationPath;
    }
 
-   if (!pinned.isEmpty() && pinned.exists())
+   if (!pinned.isEmpty() && verifyPositAiInstallation(pinned))
       return pinned;
 
    return locatePositAssistantInstallation();
