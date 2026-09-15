@@ -5337,15 +5337,14 @@ Error startChatBackend(bool resumeConversation)
       return error;
    }
 
-   // The backend is running, so hand the static file handler what it needs to
-   // serve this backend's UI. Everything it learns about the backend is
-   // published here rather than during startup, so every failure above
-   // returns having told it nothing: asset requests keep resolving the
-   // installation for themselves, as they do before a backend has started.
+   // Publish only once the backend is running, so a failed start never pins
+   // its installation or announces its port and token (the lock and launch
+   // failures above do reset both, via clearChatBackendPort()).
    //
-   // The installation goes first, because setChatBackendPort() rebuilds the
-   // CSP header cache, which reads dist/csp.json from the served
-   // installation -- and caches it for the rest of the session.
+   // The installation goes first so that, if this is the session's first CSP
+   // header rebuild, dist/csp.json -- cached for good, #18831 -- is read from
+   // it. An earlier HTML request, backend stop, or lock or launch failure will
+   // already have cached it.
    staticfiles::setInstallationPath(positAiPath);
 
    // Share the port with the static file handler for CSP connect-src
