@@ -264,6 +264,10 @@ popd
 
 echo -- Installing packages
 call "%COMMON_SCRIPTS_DIR%\install-packages.cmd"
+if ERRORLEVEL 1 (
+  echo ^^!^^! ERROR: Failed to install R packages.
+  exit /b 1
+)
 
 :: Install the rest of our dependencies into the 'windows' folder.
 cd /d "%WINDOWS_INSTALL_DIR%"
