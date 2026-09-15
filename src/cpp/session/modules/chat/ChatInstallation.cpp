@@ -14,8 +14,12 @@
  */
 
 #include "ChatInstallation.hpp"
+#include "ChatTypes.hpp"
 #include "ChatConstants.hpp"
 #include "ChatLogging.hpp"
+
+#include <algorithm>
+#include <vector>
 
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
@@ -92,61 +96,196 @@ InstallSearchPaths positAssistantSearchPaths()
    return paths;
 }
 
-core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
+namespace {
+
+// Reads the version package.json declares. Quiet by design: the resolver
+// reads every tier on every locate() call, so a tier that cannot report a
+// version must not warn each time -- failures come back as the Error.
+core::Error readDeclaredVersion(const core::FilePath& positAiPath, std::string* pVersion)
 {
-   // 1. Check user data directory (XDG-based, platform-appropriate)
-   // Linux/macOS: ~/.local/share/rstudio/pai/bin
-   // Windows: %LOCALAPPDATA%/rstudio/pai/bin
-   bool userInstallPresent = verifyPositAiInstallation(paths.userDataPath);
-   if (paths.userInstallEnabled && userInstallPresent)
+   core::FilePath packageJson = positAiPath.completeChildPath("package.json");
+   if (!packageJson.exists())
+      return core::fileNotFoundError(packageJson, ERROR_LOCATION);
+
+   std::string content;
+   core::Error error = core::readStringFromFile(packageJson, &content);
+   if (error)
+      return error;
+
+   core::json::Value packageValue;
+   if (packageValue.parse(content) || !packageValue.isObject())
+      return core::systemError(boost::system::errc::bad_message,
+                               "package.json is not a JSON object",
+                               ERROR_LOCATION);
+
+   return core::json::readObject(packageValue.getObject(), "version", *pVersion);
+}
+
+// Reads the protocol protocol.json declares, as quietly as readDeclaredVersion().
+core::Error readDeclaredProtocol(const core::FilePath& positAiPath, std::string* pProtocol)
+{
+   core::FilePath protoFile = positAiPath.completeChildPath(kProtocolVersionFileName);
+   if (!protoFile.exists())
+      return core::fileNotFoundError(protoFile, ERROR_LOCATION);
+
+   std::string content;
+   core::Error error = core::readStringFromFile(protoFile, &content);
+   if (error)
+      return error;
+
+   core::json::Value value;
+   if (value.parse(content) || !value.isObject())
+      return core::systemError(boost::system::errc::bad_message,
+                               "protocol.json is not a JSON object",
+                               ERROR_LOCATION);
+
+   return core::json::readObject(value.getObject(), "protocol", *pProtocol);
+}
+
+} // anonymous namespace
+
+namespace {
+
+using types::SemanticVersion;
+
+// One tier's installation as the resolver ranks it.
+struct InstallCandidate
+{
+   InstallCandidate() : tier(""), compatible(false) {}
+
+   core::FilePath path;
+   const char* tier;
+
+   // protocol.json declares the protocol this build speaks; a missing file
+   // counts as incompatible, matching hasProtocolMismatch()
+   bool compatible;
+
+   // package.json's version; 0.0.0 when the file is missing or unparsable, so
+   // an install that cannot say what it is never claims to be newer
+   SemanticVersion version;
+   std::string versionText;
+};
+
+// Ranks a compatible installation above an incompatible one, and a newer
+// version above an older one. Equal candidates are not ordered, so a stable
+// sort keeps them in the tier order they were collected in.
+bool outranks(const InstallCandidate& lhs, const InstallCandidate& rhs)
+{
+   if (lhs.compatible != rhs.compatible)
+      return lhs.compatible;
+   return lhs.version > rhs.version;
+}
+
+InstallCandidate describeInstallation(const core::FilePath& path, const char* tier)
+{
+   InstallCandidate candidate;
+   candidate.path = path;
+   candidate.tier = tier;
+   std::string protocol;
+   candidate.compatible = !readDeclaredProtocol(path, &protocol) &&
+                          protocol == kProtocolVersion;
+   if (readDeclaredVersion(path, &candidate.versionText) ||
+       !candidate.version.parse(candidate.versionText))
    {
-      DLOG("Using user-level AI installation: {}", paths.userDataPath.getAbsolutePath());
-      return paths.userDataPath;
+      candidate.versionText.clear();
+      candidate.version = SemanticVersion();
+   }
+   return candidate;
+}
+
+// The valid installations that compete by version, best first. Ties keep the
+// order collected here: user, then system, then bundled. A pinned
+// posit-assistant-path never competes -- it is used outright or ends the
+// search -- so the system tier is left out when the path is pinned, and the
+// bundled copy with it (a pinned path that holds no installation must not
+// fall back to the shipped version).
+std::vector<InstallCandidate> rankedCandidates(const InstallSearchPaths& paths,
+                                               bool includeUserInstall)
+{
+   std::vector<InstallCandidate> candidates;
+
+   if (includeUserInstall && paths.userInstallEnabled &&
+       verifyPositAiInstallation(paths.userDataPath))
+   {
+      candidates.push_back(describeInstallation(paths.userDataPath, "user-level"));
    }
 
+   if (!paths.pinnedSystemPath)
+   {
+      if (verifyPositAiInstallation(paths.systemPath))
+         candidates.push_back(describeInstallation(paths.systemPath, "system-wide"));
+      if (verifyPositAiInstallation(paths.bundledPath))
+         candidates.push_back(describeInstallation(paths.bundledPath, "bundled"));
+   }
+
+   std::stable_sort(candidates.begin(), candidates.end(), outranks);
+   return candidates;
+}
+
+} // anonymous namespace
+
+core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
+{
    // An installation left in the user data directory before the administrator
    // disabled user-managed installs -- or copied there to get around the
    // setting -- is ignored, never removed. That silently changes which version
    // runs, and can be a downgrade, so say so once per session (locate() runs
    // on every status, verify, and chat request).
-   if (userInstallPresent && RS_ONCE())
+   if (!paths.userInstallEnabled && verifyPositAiInstallation(paths.userDataPath) &&
+       RS_ONCE())
+   {
       WLOG("Ignoring user-level AI installation at {}: Posit Assistant "
            "installation is managed by the administrator",
            paths.userDataPath.getAbsolutePath());
-
-   // 2. Check the system-wide installation: posit-assistant-path when set, and
-   // otherwise the XDG config directory (/etc/rstudio/pai/bin on Linux and
-   // macOS, C:/ProgramData/rstudio/pai/bin on Windows)
-   if (verifyPositAiInstallation(paths.systemPath))
-   {
-      DLOG("Using system-wide AI installation: {}", paths.systemPath.getAbsolutePath());
-      return paths.systemPath;
    }
 
-   // A path the administrator pinned but that holds no installation ends the
-   // search: falling through to the bundled copy would answer a typo or an
-   // unmounted share with a silent downgrade to whatever version shipped
-   // with RStudio.
+   // posit-assistant-path is the administrator's explicit choice: it is used
+   // as-is, even when a newer copy exists elsewhere. A pinned path that holds
+   // no installation ends the search for read-only copies: falling through to
+   // the bundled one would answer a typo or an unmounted share with a silent
+   // downgrade to whatever version shipped with RStudio.
    if (paths.pinnedSystemPath)
    {
+      if (verifyPositAiInstallation(paths.systemPath))
+      {
+         // Same silent version change as the managed-mode case above, so it
+         // gets the same once-per-session notice.
+         if (paths.userInstallEnabled && verifyPositAiInstallation(paths.userDataPath) &&
+             RS_ONCE())
+         {
+            WLOG("Ignoring user-level AI installation at {}: posit-assistant-path "
+                 "pins the installation to {}",
+                 paths.userDataPath.getAbsolutePath(),
+                 paths.systemPath.getAbsolutePath());
+         }
+
+         DLOG("Using AI installation pinned by posit-assistant-path: {}",
+              paths.systemPath.getAbsolutePath());
+         return paths.systemPath;
+      }
+
       // Warn once per session: locate() runs on every status, verify, and chat
       // request, and a misconfigured path would otherwise flood the log.
       if (RS_ONCE())
          WLOG("posit-assistant-path set but installation invalid: {}",
               paths.systemPath.getAbsolutePath());
    }
-   else
+
+   // Among the remaining tiers -- the user data directory (Linux/macOS:
+   // ~/.local/share/rstudio/pai/bin, Windows: %LOCALAPPDATA%/rstudio/pai/bin),
+   // the XDG system config directory (/etc/rstudio/pai/bin, or
+   // C:/ProgramData/rstudio/pai/bin), and the copy bundled with RStudio --
+   // the newest compatible installation wins, so a per-user install made
+   // before a newer bundle shipped does not shadow it indefinitely.
+   std::vector<InstallCandidate> candidates = rankedCandidates(paths, true);
+   if (!candidates.empty())
    {
-      // 3. Check the copy bundled with RStudio. It ranks last: a
-      // manifest-installed update lands in the user data directory and an
-      // administrator's own install is deliberate, so both outrank it.
-      // Open-source builds ship no bundle and always fall through here.
-      if (verifyPositAiInstallation(paths.bundledPath))
-      {
-         DLOG("Using AI installation bundled with RStudio: {}",
-              paths.bundledPath.getAbsolutePath());
-         return paths.bundledPath;
-      }
+      const InstallCandidate& best = candidates.front();
+      DLOG("Using {} AI installation (version {}): {}",
+           best.tier,
+           best.versionText.empty() ? "unknown" : best.versionText,
+           best.path.getAbsolutePath());
+      return best.path;
    }
 
    DLOG("No valid AI installation found. Checked locations:");
@@ -164,46 +303,42 @@ core::FilePath locatePositAssistantInstallation()
    return locatePositAssistantInstallation(positAssistantSearchPaths());
 }
 
+bool userInstallWouldBeSelected(const InstallSearchPaths& paths, const std::string& version)
+{
+   if (!paths.userInstallEnabled)
+      return false;
+
+   if (paths.pinnedSystemPath && verifyPositAiInstallation(paths.systemPath))
+      return false;
+
+   // The manifest only ever offers packages built for this build's protocol.
+   InstallCandidate proposed;
+   proposed.compatible = true;
+   if (!proposed.version.parse(version))
+      proposed.version = SemanticVersion();
+
+   // The user install itself is what the install overwrites, so only the
+   // read-only tiers compete against the proposed version.
+   std::vector<InstallCandidate> readOnly = rankedCandidates(paths, false);
+   return readOnly.empty() || !outranks(readOnly.front(), proposed);
+}
+
+bool userInstallWouldBeSelected(const std::string& version)
+{
+   return userInstallWouldBeSelected(positAssistantSearchPaths(), version);
+}
+
 std::string getInstalledVersion(const core::FilePath& positAiPath)
 {
    if (positAiPath.isEmpty())
       return "";
 
-   core::FilePath packageJson = positAiPath.completeChildPath("package.json");
-   if (!packageJson.exists())
-   {
-      WLOG("package.json not found in AI installation");
-      return "";
-   }
-
-   // Read and parse package.json
-   std::string content;
-   core::Error error = core::readStringFromFile(packageJson, &content);
-   if (error)
-   {
-      WLOG("Failed to read package.json: {}", error.getMessage());
-      return "";
-   }
-
-   core::json::Value packageValue;
-   if (packageValue.parse(content))
-   {
-      WLOG("Failed to parse package.json");
-      return "";
-   }
-
-   if (!packageValue.isObject())
-   {
-      WLOG("package.json is not a JSON object");
-      return "";
-   }
-
-   core::json::Object packageObj = packageValue.getObject();
    std::string version;
-   error = core::json::readObject(packageObj, "version", version);
+   core::Error error = readDeclaredVersion(positAiPath, &version);
    if (error)
    {
-      WLOG("package.json missing 'version' field");
+      WLOG("Could not read the Posit Assistant version at {}: {}",
+           positAiPath.getAbsolutePath(), error.getSummary());
       return "";
    }
 
@@ -221,44 +356,19 @@ std::string getInstalledProtocolVersion(const core::FilePath& positAiPath)
    if (positAiPath.isEmpty())
       return "";
 
-   core::FilePath protoFile =
-      positAiPath.completeChildPath(kProtocolVersionFileName);
-   if (!protoFile.exists())
-   {
-      DLOG("No protocol.json found (legacy install)");
-      return "";
-   }
-
-   std::string content;
-   core::Error error = core::readStringFromFile(protoFile, &content);
+   std::string version;
+   core::Error error = readDeclaredProtocol(positAiPath, &version);
    if (error)
    {
-      ELOG("Failed to read protocol.json: {}", error.getMessage());
+      // Legacy installs predate protocol.json; anything else is a damaged file.
+      if (core::isFileNotFoundError(error))
+         DLOG("No protocol.json found (legacy install)");
+      else
+         ELOG("Could not read the Posit Assistant protocol at {}: {}",
+              positAiPath.getAbsolutePath(), error.getSummary());
       return "";
    }
 
-   core::json::Value jsonValue;
-   if (jsonValue.parse(content))
-   {
-      ELOG("Failed to parse protocol.json");
-      return "";
-   }
-
-   if (!jsonValue.isObject())
-   {
-      ELOG("protocol.json is not a JSON object");
-      return "";
-   }
-
-   core::json::Object obj = jsonValue.getObject();
-   if (!obj.hasMember("protocol") ||
-       !obj["protocol"].isString())
-   {
-      ELOG("protocol.json missing \"protocol\" string field");
-      return "";
-   }
-
-   std::string version = obj["protocol"].getString();
    DLOG("Installed protocol version: {}", version);
    return version;
 }

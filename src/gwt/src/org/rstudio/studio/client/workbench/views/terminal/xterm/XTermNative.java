@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal.xterm;
 import org.rstudio.core.client.CommandWithArg;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 
@@ -194,6 +195,58 @@ public class XTermNative extends JavaScriptObject
 
    public final native void setTabMovesFocus(boolean movesFocus) /*-{
       this.tabMovesFocus = movesFocus;
+   }-*/;
+
+   /**
+    * Register the link provider that makes file paths in terminal output
+    * clickable (with the platform's open-link modifier held). Candidate
+    * validation, opening, and the hover hint are delegated to the widget.
+    * @param widget owning widget, called back on the UI thread
+    * @param isMac use Cmd rather than Ctrl as the activation modifier
+    */
+   public final native void registerFileLinkProvider(XTermWidget widget, boolean isMac) /*-{
+      if (this.rstudioFileLinks_ || !$wnd.RStudioFileLinks)
+         return;
+
+      var host = {
+         isMac: isMac,
+         resolve: $entry(function(candidates, callback) {
+            widget.@org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget::resolveFileLinksNative(Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JavaScriptObject;)(candidates, callback);
+         }),
+         open: $entry(function(path, line, column) {
+            widget.@org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget::openFileLink(Ljava/lang/String;II)(path, line, column);
+         }),
+         hover: $entry(function(path) {
+            widget.@org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget::showFileLinkHint(Ljava/lang/String;)(path);
+         }),
+         leave: $entry(function() {
+            widget.@org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget::hideFileLinkHint()();
+         })
+      };
+
+      try {
+         var provider = new $wnd.RStudioFileLinks.FileLinkProvider(this, host);
+         this.rstudioFileLinks_ = provider;
+         this.rstudioFileLinksRegistration_ = this.registerLinkProvider(provider);
+      } catch (error) {
+         console.error("Error registering file link provider: " + error);
+      }
+   }-*/;
+
+   /**
+    * Forget cached file link resolutions; used when the terminal's working
+    * directory changes, since relative paths then resolve differently.
+    */
+   public final native void clearFileLinkCache() /*-{
+      if (this.rstudioFileLinks_)
+         this.rstudioFileLinks_.clearCache();
+   }-*/;
+
+   /**
+    * Invoke a JavaScript callback with an array of strings.
+    */
+   public static native void invokeCallback(JavaScriptObject callback, JsArrayString result) /*-{
+      callback(result);
    }-*/;
 
    /**

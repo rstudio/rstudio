@@ -274,6 +274,7 @@ namespace prefs {
 #define kTerminalRendererCanvas "canvas"
 #define kTerminalRendererDom "dom"
 #define kTerminalWeblinks "terminal_weblinks"
+#define kTerminalFileLinks "terminal_file_links"
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kRmdRenameInScopeBehavior "rmd_rename_in_scope_behavior"
 #define kRmdRenameInScopeBehaviorCurrent "current"
@@ -1468,6 +1469,12 @@ public:
     */
    bool terminalWeblinks();
    core::Error setTerminalWeblinks(bool val);
+
+   /**
+    * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+    */
+   bool terminalFileLinks();
+   core::Error setTerminalFileLinks(bool val);
 
    /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.

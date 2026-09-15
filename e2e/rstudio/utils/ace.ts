@@ -117,6 +117,7 @@ export namespace Ace {
     commands: { byName: Record<string, { scrollIntoView?: string; [key: string]: unknown }> };
     renderer: {
       scrollTop: number;
+      scrollBy(deltaX: number, deltaY: number): void;
       $scrollAnimation?: { from: number; to: number } | null;
     };
     session: Session;

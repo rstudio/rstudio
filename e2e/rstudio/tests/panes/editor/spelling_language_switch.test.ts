@@ -245,8 +245,7 @@ test.describe('Change Spelling Language', () => {
       const detached = page.context().waitForEvent('page');
       await executeCommand(page, 'popoutDoc');
       satellite = await detached;
-      await satellite.waitForLoadState('domcontentloaded');
-      expect(satellite.url()).toContain('view=source_window_');
+      await satellite.waitForURL(/view=source_window_/);
 
       // Source satellites have no automation bridge. Match the one document
       // by content using the Ace page object, and prime its own spelling cache.
