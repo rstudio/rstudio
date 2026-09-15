@@ -5140,12 +5140,6 @@ Error startChatBackend(bool resumeConversation)
    if (error)
       return error;
 
-   // Serve the chat UI from the installation this backend runs, rather than
-   // re-running the tier search on every static asset request. Set before the
-   // port, because setChatBackendPort() rebuilds the CSP header cache, which
-   // reads dist/csp.json from the served installation.
-   staticfiles::setInstallationPath(positAiPath);
-
    // Share the port with the static file handler for CSP connect-src
    staticfiles::setChatBackendPort(s_chatBackendPort);
 
@@ -5345,6 +5339,13 @@ Error startChatBackend(bool resumeConversation)
       clearChatBackendPort();
       return error;
    }
+
+   // The backend is running, so serve the chat UI from the installation it
+   // runs rather than re-running the tier search on every static asset
+   // request. Pinned only now that there is a backend to agree with: every
+   // failure above returns with nothing pinned, leaving asset requests to
+   // resolve for themselves as they did before the backend started.
+   staticfiles::setInstallationPath(positAiPath);
 
    return Success();
 }
