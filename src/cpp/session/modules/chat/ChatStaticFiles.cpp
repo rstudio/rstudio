@@ -261,6 +261,13 @@ bool s_cspHeaderBuilt = false;
  */
 void rebuildCspHeaderCache()
 {
+   // Held across the read as well as the store. Two rebuilds can overlap --
+   // the lazy one below on an HTTP handler thread, and the one a backend start
+   // makes on the main thread -- and with the read outside the lock the older
+   // installation's directives could be committed last and stick until the
+   // next restart, which is the staleness of #18831 one layer down.
+   std::lock_guard<std::mutex> lock(s_cspMutex);
+
    std::map<std::string, std::string> directives = loadCspDirectives();
 
    // If csp.json was missing, use a restrictive fallback
@@ -321,7 +328,6 @@ void rebuildCspHeaderCache()
       header += pair.first + " " + pair.second;
    }
 
-   std::lock_guard<std::mutex> lock(s_cspMutex);
    s_cachedCspHeader = header;
    s_cspHeaderBuilt = true;
 }
