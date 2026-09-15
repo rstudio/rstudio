@@ -227,7 +227,9 @@ Error requestApp(http::Response* pResponse)
 
 // Unpins the installation and clears the backend port after each test, so a
 // later test sees the state of a session whose chat backend has not started
-// yet.
+// yet. Both setters rebuild the CSP header from whatever is resolvable on the
+// machine running the tests, so a test asserting on that header must pin an
+// installation of its own rather than rely on the state left here.
 class ChatStaticFilesPin : public ::testing::Test
 {
 protected:
@@ -420,6 +422,29 @@ TEST_F(ChatStaticFilesPin, CspIsReadFromTheInstallationThePinNames)
    // must serve that installation's directives.
    setInstallationPath(second);
    setChatBackendPort(5678);
+
+   std::string header = requestPageCsp();
+   EXPECT_NE(header.find("https://second.example"), std::string::npos);
+   EXPECT_EQ(header.find("https://first.example"), std::string::npos);
+
+   first.removeIfExists();
+   second.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesPin, CspFollowsThePinWithoutABackendPortChange)
+{
+   FilePath first = stageInstallationServingCsp("https://first.example");
+   FilePath second = stageInstallationServingCsp("https://second.example");
+
+   setInstallationPath(first);
+   setChatBackendPort(1234);
+   EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
+
+   // Changing which installation is served is enough on its own: uninstall
+   // unpins without starting a backend, so nothing sets the port afterwards
+   // and a policy that only followed the port would outlive the installation
+   // it came from.
+   setInstallationPath(second);
 
    std::string header = requestPageCsp();
    EXPECT_NE(header.find("https://second.example"), std::string::npos);

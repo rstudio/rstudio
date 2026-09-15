@@ -596,8 +596,22 @@ void setChatBackendAuthToken(const std::string& token)
 
 void setInstallationPath(const FilePath& path)
 {
-   std::lock_guard<std::mutex> lock(s_installationMutex);
-   s_installationPath = path;
+   {
+      std::lock_guard<std::mutex> lock(s_installationMutex);
+      s_installationPath = path;
+   }
+
+   // The policy belongs to the installation, so changing which one is served
+   // rebuilds it here rather than leaving each caller to pair the change with
+   // a setChatBackendPort() call. Uninstall did not pair them -- it stops the
+   // backend, which rebuilds while this pin is still set, and only then clears
+   // it -- so the removed installation's policy outlived it (#18831).
+   //
+   // Outside the lock above: rebuilding reads the pin back through
+   // servedInstallationPath(), so holding it here would take
+   // s_installationMutex before s_cspMutex and deadlock against the one
+   // ordering every other path uses.
+   rebuildCspHeaderCache();
 }
 
 } // namespace staticfiles
