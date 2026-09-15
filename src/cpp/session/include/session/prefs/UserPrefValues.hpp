@@ -148,6 +148,7 @@ namespace prefs {
 #define kCheckUnexpectedAssignmentInFunctionCall "check_unexpected_assignment_in_function_call"
 #define kWarnIfNoSuchVariableInScope "warn_if_no_such_variable_in_scope"
 #define kWarnVariableDefinedButNotUsed "warn_variable_defined_but_not_used"
+#define kWarnConfusableCharacters "warn_confusable_characters"
 #define kAutoDiscoverPackageDependencies "auto_discover_package_dependencies"
 #define kAutoAppendNewline "auto_append_newline"
 #define kStripTrailingWhitespace "strip_trailing_whitespace"
@@ -166,6 +167,7 @@ namespace prefs {
 #define kSyntaxColorConsole "syntax_color_console"
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
+#define kSmoothScrolling "smooth_scrolling"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
@@ -272,6 +274,7 @@ namespace prefs {
 #define kTerminalRendererCanvas "canvas"
 #define kTerminalRendererDom "dom"
 #define kTerminalWeblinks "terminal_weblinks"
+#define kTerminalFileLinks "terminal_file_links"
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kRmdRenameInScopeBehavior "rmd_rename_in_scope_behavior"
 #define kRmdRenameInScopeBehaviorCurrent "current"
@@ -311,6 +314,7 @@ namespace prefs {
 #define kLatexPreviewOnCursorIdleInlineOnly "inline_only"
 #define kLatexPreviewOnCursorIdleAlways "always"
 #define kWrapTabNavigation "wrap_tab_navigation"
+#define kHighlightActiveTabs "highlight_active_tabs"
 #define kMousewheelChangesEditorTab "mousewheel_changes_editor_tab"
 #define kGlobalTheme "global_theme"
 #define kGlobalThemeDefault "default"
@@ -437,6 +441,7 @@ namespace prefs {
 #define kSaveRetryTimeout "save_retry_timeout"
 #define kSaveFilesDurably "save_files_durably"
 #define kInsertNativePipeOperator "insert_native_pipe_operator"
+#define kInsertPlusInGgplotChains "insert_plus_in_ggplot_chains"
 #define kCommandPaletteMru "command_palette_mru"
 #define kShowMemoryUsage "show_memory_usage"
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
@@ -908,6 +913,12 @@ public:
    core::Error setWarnVariableDefinedButNotUsed(bool val);
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   bool warnConfusableCharacters();
+   core::Error setWarnConfusableCharacters(bool val);
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    bool autoDiscoverPackageDependencies();
@@ -1004,6 +1015,12 @@ public:
    core::Error setScrollPastEndOfDocument(bool val);
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   bool smoothScrolling();
+   core::Error setSmoothScrolling(bool val);
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    bool highlightRFunctionCalls();
@@ -1034,7 +1051,7 @@ public:
    core::Error setConsoleLineLengthLimit(int val);
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    int consoleMaxLines();
    core::Error setConsoleMaxLines(int val);
@@ -1454,6 +1471,12 @@ public:
    core::Error setTerminalWeblinks(bool val);
 
    /**
+    * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+    */
+   bool terminalFileLinks();
+   core::Error setTerminalFileLinks(bool val);
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    bool showRmdRenderCommand();
@@ -1572,6 +1595,12 @@ public:
     */
    bool wrapTabNavigation();
    core::Error setWrapTabNavigation(bool val);
+
+   /**
+    * Use a bold label and a blue overline to highlight the active document tab.
+    */
+   bool highlightActiveTabs();
+   core::Error setHighlightActiveTabs(bool val);
 
    /**
     * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
@@ -2064,6 +2093,12 @@ public:
     */
    bool insertNativePipeOperator();
    core::Error setInsertNativePipeOperator(bool val);
+
+   /**
+    * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+    */
+   bool insertPlusInGgplotChains();
+   core::Error setInsertPlusInGgplotChains(bool val);
 
    /**
     * Whether to keep track of recently used commands in the Command Palette

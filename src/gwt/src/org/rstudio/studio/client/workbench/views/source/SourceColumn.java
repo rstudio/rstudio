@@ -352,10 +352,11 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
        // set and active editor
        activeEditor_ = target;
-       if (activeEditor_ != null)
+       if (target != null)
        {
-          activeEditor_.onActivate();
-          display_.selectTab(activeEditor_.asWidget());
+          target.onActivate();
+          if (activeEditor_ == target)
+             display_.selectTab(target.asWidget());
        }
    }
 
@@ -1187,6 +1188,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
    public void onSelection(SelectionEvent<Integer> event)
    {
+      // An asynchronous document callback can outlive its destination column.
+      if (manager_.getByName(name_) != this)
+         return;
+
       if (activeEditor_ != null)
          activeEditor_.onDeactivate();
 
@@ -1194,14 +1199,22 @@ public class SourceColumn implements BeforeShowEvent.Handler,
 
       if (event.getSelectedItem() >= 0)
       {
-         activeEditor_ = editors_.get(event.getSelectedItem());
-         activeEditor_.onActivate();
-         manager_.setActive(name_);
+         final EditingTarget editor = editors_.get(event.getSelectedItem());
+         activeEditor_ = editor;
+         editor.onActivate();
+
+         // Activation can synchronously select another tab or column. Do not
+         // overwrite that selection or announce the editor it superseded.
+         if (activeEditor_ != editor)
+            return;
+         manager_.setActive(this);
+         if (activeEditor_ != editor || !manager_.isActiveEditor(editor))
+            return;
 
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
-               activeEditor_.getPath(),
-               activeEditor_.getId()));
+               editor.getPath(),
+               editor.getId()));
 
          // don't send focus to the tab if we're expecting a debug selection
          // event
@@ -1219,8 +1232,8 @@ public class SourceColumn implements BeforeShowEvent.Handler,
                   focus = tabEvent.getFocus();
                }
 
-               if (focus && activeEditor_ != null)
-                  activeEditor_.focus();
+               if (focus && activeEditor_ == editor && manager_.isActiveEditor(editor))
+                  editor.focus();
             });
          }
          else if (isDebugSelectionPending())

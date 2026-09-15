@@ -31,6 +31,7 @@ import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
+import { startupCheckpoint } from './startup-timing';
 import { waitForUrlWithTimeout } from './url-utils';
 import { isAutomated, registerWebContentsDebugHandlers } from './utils';
 
@@ -87,7 +88,6 @@ export class MainWindow extends GwtWindow {
   appLauncher?: ApplicationLaunch;
   menuCallback: MenuCallback;
   quitConfirmed = false;
-  geometrySaved = false;
   workbenchInitialized = false;
 
   private sessionProcess?: ChildProcess;
@@ -233,7 +233,6 @@ export class MainWindow extends GwtWindow {
     // reset state (in case this occurred in response to a manual reload
     // or reload for a new project context)
     this.quitConfirmed = false;
-    this.geometrySaved = false;
     this.workbenchInitialized = true;
     getEventBus().emit('main-window-loaded');
 
@@ -251,6 +250,13 @@ export class MainWindow extends GwtWindow {
       .catch((error) => {
         logger().logError(error);
       });
+  }
+
+  /**
+   * Shows the "Initializing R" placeholder page while the session starts.
+   */
+  async loadLoadingPage(): Promise<void> {
+    return this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY, false);
   }
 
   async loadUrl(url: string, updateBaseUrl = true): Promise<void> {
@@ -322,13 +328,14 @@ export class MainWindow extends GwtWindow {
   }
 
   closeEvent(event: Electron.Event): void {
-    if (!this.geometrySaved) {
+    if (this.quitConfirmed || !this.sessionProcess || this.sessionProcess.exitCode !== null) {
+      // the window really is closing, so this is where its geometry is final;
+      // recording it on an earlier attempt persisted bounds from a close the
+      // user went on to cancel, ignoring every move or resize after that
+      // (#18818)
       const bounds = this.window.getNormalBounds();
       ElectronDesktopOptions().saveWindowBounds({ ...bounds, maximized: this.window.isMaximized() });
-      this.geometrySaved = true;
-    }
 
-    if (this.quitConfirmed || !this.sessionProcess || this.sessionProcess.exitCode !== null) {
       closeAllSatellites(this.window);
       return;
     }
@@ -347,9 +354,12 @@ export class MainWindow extends GwtWindow {
           // exit to avoid user having to kill/force-close the application
           quit();
         } else {
-          this.executeJavaScript('window.desktopHooks.quitR()')
-            .then(() => (this.quitConfirmed = true))
-            .catch((error: unknown) => logger().logError(error));
+          // quitR() resolves once the quit sequence has been dispatched, not
+          // once the user has answered its prompts, so only quit() -- which
+          // runs after the session exits -- may confirm the quit. A cancelled
+          // quit is indistinguishable from one still being answered, so
+          // closing again just re-runs the sequence (#18818)
+          this.executeJavaScript('window.desktopHooks.quitR()').catch((error: unknown) => logger().logError(error));
         }
       })
       .catch((error: unknown) => {
@@ -387,11 +397,14 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
+        startupCheckpoint('load-failed');
         this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY, false).catch((error: unknown) => logger().logError(error));
         waitForUrlWithTimeout(this.options.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
               logger().logError(error);
+            } else {
+              startupCheckpoint('session-url-reachable');
             }
           })
           .catch((error) => {

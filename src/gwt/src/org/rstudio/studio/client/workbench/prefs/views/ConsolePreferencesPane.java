@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -78,9 +79,11 @@ public class ConsolePreferencesPane extends PreferencesPane
       displayGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);
       panel.add(displayGrid);
 
+      consoleMaxLines_ = numericPref(UserPrefs.MIN_CONSOLE_LINES, NumericValueWidget.NoMaximum, prefs_.consoleMaxLines());
+      consoleLineLengthLimit_ = numericPref(prefs_.consoleLineLengthLimit());
       TwoColumnLayoutGridBuilder truncationGridBuilder = new TwoColumnLayoutGridBuilder();
-      truncationGridBuilder.add(constants_.consoleMaxLinesLabel(), numericPref(prefs_.consoleMaxLines()));
-      truncationGridBuilder.add(constants_.consoleLimitOutputLengthLabel(), numericPref(prefs_.consoleLineLengthLimit()));
+      truncationGridBuilder.add(constants_.consoleMaxLinesLabel(), consoleMaxLines_);
+      truncationGridBuilder.add(constants_.consoleLimitOutputLengthLabel(), consoleLineLengthLimit_);
       LayoutGrid truncationGrid = truncationGridBuilder.get();
       truncationGrid.getElement().getStyle().setMarginLeft(2, Unit.PX);
       panel.add(truncationGrid);
@@ -101,7 +104,8 @@ public class ConsolePreferencesPane extends PreferencesPane
       panel.add(spacedBefore(otherLabel));
       panel.add(spaced(checkboxPref(constants_.otherDoubleClickLabel(), prefs_.consoleDoubleClickSelect())));
       panel.add(spaced(checkboxPref(constants_.warnAutoSuspendPausedLabel(), prefs_.consoleSuspendBlockedNotice())));
-      panel.add(indent(numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay())));
+      consoleSuspendBlockedNoticeDelay_ = numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay());
+      panel.add(indent(consoleSuspendBlockedNoticeDelay_));
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.consoleLabel(), false);
       setTabPanelSize(tabPanel);
@@ -156,12 +160,17 @@ public class ConsolePreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return true;
+      return consoleMaxLines_.validate() &&
+             consoleLineLengthLimit_.validate() &&
+             consoleSuspendBlockedNoticeDelay_.validate();
    }
 
    private boolean initialHighlightConsoleErrors_;
    private final SelectWidget consoleColorMode_;
    private final SelectWidget consoleHighlightConditions_;
+   private final NumericValueWidget consoleMaxLines_;
+   private final NumericValueWidget consoleLineLengthLimit_;
+   private final NumericValueWidget consoleSuspendBlockedNoticeDelay_;
 
    // Injected
    private final UserPrefs prefs_;

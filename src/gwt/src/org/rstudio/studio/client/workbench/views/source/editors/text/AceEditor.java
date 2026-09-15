@@ -15,14 +15,18 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import org.rstudio.core.client.AceSupport;
+import org.rstudio.core.client.AsyncJavaScriptLoader;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -302,21 +306,30 @@ public class AceEditor implements DocDisplay
 
    public static void load(final Command command)
    {
-      aceLoader_.addCallback(() ->
-            aceSupportLoader_.addCallback(() ->
-                  extLanguageToolsLoader_.addCallback(() ->
-                        vimLoader_.addCallback(() ->
-                              emacsLoader_.addCallback(() ->
-                              {
-                                 AceSupport.initialize();
+      // NOTE: the vim / emacs keybindings are not part of the base load; they
+      // are loaded lazily, by the first editor that needs them (loadKeybindings)
+      baseLoader_.execute(command);
+   }
 
-                                 if (command != null)
-                                    command.execute();
-                              })
-                        )
-                  )
-            )
-      );
+   public static boolean keybindingsLoaded()
+   {
+      return keybindingsLoader_.isLoaded();
+   }
+
+   // Run a command once the vim / emacs keybindings have loaded, without
+   // triggering the load itself. Used for setup (like the vim ex commands)
+   // that is only meaningful once some editor has requested the keybindings.
+   public static void onKeybindingsLoaded(final Command command)
+   {
+      if (keybindingsLoaded())
+         command.execute();
+      else
+         keybindingsLoadedCommands_.add(command);
+   }
+
+   public static void loadKeybindings(final Command command)
+   {
+      keybindingsLoader_.execute(command);
    }
 
    public static final native AceEditor getEditor(Element el)
@@ -770,10 +783,83 @@ public class AceEditor implements DocDisplay
 
    private void insertPipeOperator()
    {
+      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+
+      // ggplot2 layers are chained with '+', not with a pipe
+      if (prefs.insertPlusInGgplotChains().getValue() && isCursorInGgplotChain())
+      {
+         insertOperatorWithSpacing("+");
+         return;
+      }
+
       // Use magrittr style pipes if the user has not opted into new native pipe syntax
-      boolean nativePipePreferred = RStudioGinjector.INSTANCE.getUserPrefs().insertNativePipeOperator().getValue();
+      boolean nativePipePreferred = prefs.insertNativePipeOperator().getValue();
       String pipe =  nativePipePreferred ? NATIVE_R_PIPE : MAGRITTR_PIPE;
       insertOperatorWithSpacing(pipe);
+   }
+
+   // Walks backwards from the cursor through the current statement, at the
+   // cursor's own nesting level, looking for a ggplot2-style call. Bracketed
+   // groups are skipped as a unit, so a ggplot chain nested inside a call
+   // argument does not count once the cursor has left those brackets.
+   private boolean isCursorInGgplotChain()
+   {
+      if (!DocumentMode.isCursorInRMode(this) || !hasCodeModel())
+         return false;
+
+      Position position = hasSelection() ? getSelectionStart() : getCursorPosition();
+      TokenCursor cursor = getCodeModel().getTokenCursor();
+      if (!cursor.moveToPosition(position))
+         return false;
+
+      while (true)
+      {
+         if (cursor.isRightBracket())
+         {
+            if (!cursor.bwdToMatchingToken())
+               return false;
+         }
+         else if (cursor.isLeftBracket() || cursor.valueEquals(";"))
+         {
+            // the cursor sits inside this bracket's arguments; any chain lies outside it
+            return false;
+         }
+         else if (PIPE_OPERATORS.contains(cursor.currentValue()))
+         {
+            // a ggplot chain piped into another call is no longer a ggplot chain
+            return false;
+         }
+         else if (cursor.hasType("identifier") &&
+                  cursor.peekFwd(1).valueEquals("(") &&
+                  isGgplotFunctionName(cursor.currentValue()))
+         {
+            return true;
+         }
+
+         int row = cursor.getRow();
+         boolean leadingOperator = cursor.isLookingAtBinaryOp();
+         if (!cursor.moveToPreviousToken())
+            return false;
+
+         // a new row only continues the statement across a binary operator
+         // (trailing or leading) or a comma
+         if (cursor.getRow() != row &&
+             !leadingOperator &&
+             !cursor.isLookingAtBinaryOp() &&
+             !cursor.valueEquals(","))
+         {
+            return false;
+         }
+      }
+   }
+
+   private static boolean isGgplotFunctionName(String name)
+   {
+      for (String prefix : GGPLOT_FUNCTION_PREFIXES)
+         if (name.startsWith(prefix))
+            return !GGPLOT_FUNCTION_EXCLUSIONS.contains(name);
+
+      return GGPLOT_FUNCTIONS.contains(name);
    }
 
    private boolean shouldIndentOnPaste()
@@ -1152,8 +1238,17 @@ public class AceEditor implements DocDisplay
       // create a keyboard previewer for our special hooks
       AceKeyboardPreviewer previewer = new AceKeyboardPreviewer(completionManager_);
 
-      // set default key handler
-      if (useVimMode_)
+      // set default key handler. the vim / emacs keybindings load lazily; if
+      // they are needed here but not yet available, keep default keybindings
+      // and re-run once they arrive -- only this choice of handler waits on
+      // them, so the previewer and event listeners below stay installed in
+      // the interim (and permanently, should the load fail)
+      if ((useVimMode_ || useEmacsKeybindings_) && !keybindingsLoaded())
+      {
+         loadKeybindings(() -> updateKeyboardHandlers());
+         widget_.getEditor().setKeyboardHandler(null);
+      }
+      else if (useVimMode_)
       {
          widget_.getEditor().setKeyboardHandler(KeyboardHandler.vim());
          RStudioGinjector.INSTANCE.getVimrcLoader().ensureLoaded(widget_.getEditor());
@@ -2623,6 +2718,17 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().getRenderer().setScrollPastEnd(enable);
    }
 
+   public void setSmoothScrolling(boolean enable)
+   {
+      widget_.getEditor().getRenderer().setAnimatedScroll(enable);
+
+      // The animated line navigation commands are deliberately left in place
+      // when disabling: with animatedScroll off, Ace treats an "animate"
+      // scrollIntoView exactly like "cursor", so there is nothing to undo.
+      if (enable)
+         widget_.getEditor().getCommandManager().useAnimatedLineNavigation();
+   }
+
    public void setHighlightRFunctionCalls(boolean highlight)
    {
       _setHighlightRFunctionCallsImpl(highlight);
@@ -3084,7 +3190,7 @@ public class AceEditor implements DocDisplay
    public void moveCursorNearTop(int rowOffset)
    {
       int screenRow = getSession().documentToScreenRow(getCursorPosition());
-      widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset));
+      widget_.getEditor().scrollToRow(Math.max(0, screenRow - rowOffset), true);
    }
 
    @Override
@@ -5114,6 +5220,8 @@ public class AceEditor implements DocDisplay
    private static final int DEBUG_CONTEXT_LINES = 2;
    private static final String MAGRITTR_PIPE = "%>%";
    private static final String NATIVE_R_PIPE = "|>";
+   private static final Set<String> PIPE_OPERATORS = new HashSet<>(Arrays.asList(
+         NATIVE_R_PIPE, MAGRITTR_PIPE, "%<>%", "%T>%", "%$%"));
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
@@ -5132,6 +5240,30 @@ public class AceEditor implements DocDisplay
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
+
+   // functions that appear at the top level of a ggplot2 (or extension) chain
+   private static final Set<String> GGPLOT_FUNCTIONS = new HashSet<>(Arrays.asList(
+         "ggplot", "qplot", "quickplot",
+         "labs", "ggtitle", "xlab", "ylab", "xlim", "ylim", "lims", "expand_limits",
+         "guides", "annotate", "theme", "borders",
+         // patchwork
+         "plot_layout", "plot_annotation", "plot_spacer", "wrap_plots", "wrap_elements", "inset_element",
+         // gganimate (its view_ / enter_ / exit_ / shadow_ prefixes are too generic to match on)
+         "ease_aes",
+         "enter_appear", "enter_drift", "enter_fade", "enter_fly", "enter_grow", "enter_manual",
+         "enter_recolor", "enter_recolour", "enter_reset",
+         "exit_disappear", "exit_drift", "exit_fade", "exit_fly", "exit_manual",
+         "exit_recolor", "exit_recolour", "exit_reset", "exit_shrink",
+         "shadow_mark", "shadow_null", "shadow_trail", "shadow_wake",
+         "view_follow", "view_static", "view_step", "view_step_manual", "view_zoom", "view_zoom_manual"));
+
+   private static final String[] GGPLOT_FUNCTION_PREFIXES = {
+         "geom_", "stat_", "scale_", "theme_", "facet_", "coord_", "annotation_", "transition_"
+   };
+
+   // theme_* helpers that act on the global theme rather than on a plot
+   private static final Set<String> GGPLOT_FUNCTION_EXCLUSIONS = new HashSet<>(Arrays.asList(
+         "theme_set", "theme_get", "theme_update", "theme_replace"));
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
    private CompletionContext context_ = null;
@@ -5185,6 +5317,31 @@ public class AceEditor implements DocDisplay
    private static final ExternalJavaScriptLoader extLanguageToolsLoader_ =
          getLoader(AceResources.INSTANCE.extLanguageTools(),
                    AceResources.INSTANCE.extLanguageToolsUncompressed());
+
+   private static final List<Command> keybindingsLoadedCommands_ = new ArrayList<>();
+
+   // ace itself must load before the bundles extending it; within each stage
+   // the scripts load in parallel
+   private static final AsyncJavaScriptLoader baseLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(aceSupportLoader_, extLanguageToolsLoader_)
+               .onFinished(() -> AceSupport.initialize());
+
+   private static final AsyncJavaScriptLoader keybindingsLoader_ =
+         new AsyncJavaScriptLoader()
+               .add(aceLoader_)
+               .add(vimLoader_, emacsLoader_)
+               .onFinished(() ->
+               {
+                  // setup that piggybacks on the keybindings' arrival
+                  AceEditorNative.fixupEmacsKeybindings();
+                  TextEditingTarget.initializeIncrementalSearch();
+
+                  for (Command pendingCommand : keybindingsLoadedCommands_)
+                     pendingCommand.execute();
+                  keybindingsLoadedCommands_.clear();
+               });
 
    private boolean popupVisible_;
 

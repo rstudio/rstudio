@@ -65,6 +65,7 @@ void UserPrefsProjectLayer::onProjectConfigChanged()
 {
    json::Object dataJson;
    dataJson["name"] = kUserPrefsProjectLayer;
+   dataJson["full_layer"] = true;
 
    RECURSIVE_LOCK_MUTEX(mutex_)
    {

@@ -195,8 +195,8 @@ bool isPdfLatexInstalled();
 // is the file a text file
 bool isTextFile(const core::FilePath& targetPath);
 
-// edit a file
-void editFile(const core::FilePath& targetPath, int lineNumber = -1);
+// edit a file (line and column are 1-based; a negative line means "no position")
+void editFile(const core::FilePath& targetPath, int lineNumber = -1, int column = 1);
 
 // find the location of the R script
 core::Error rBinDir(core::FilePath* pRBinDirPath);

@@ -580,6 +580,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String warnVariableDefinedButNotUsedDescription();
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   @DefaultStringValue("Warn about characters that look like ASCII but are not")
+   String warnConfusableCharactersTitle();
+   @DefaultStringValue("Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes")
+   String warnConfusableCharactersDescription();
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    @DefaultStringValue("Detect missing R packages in the editor")
@@ -712,6 +720,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String scrollPastEndOfDocumentDescription();
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   @DefaultStringValue("Smooth scrolling")
+   String smoothScrollingTitle();
+   @DefaultStringValue("Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.")
+   String smoothScrollingDescription();
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    @DefaultStringValue("Highlight R function calls")
@@ -752,11 +768,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String consoleLineLengthLimitDescription();
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    @DefaultStringValue("Maximum lines in R console")
    String consoleMaxLinesTitle();
-   @DefaultStringValue("The maximum number of console actions to store and display in the console scrollback buffer.")
+   @DefaultStringValue("The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.")
    String consoleMaxLinesDescription();
 
    /**
@@ -1324,6 +1340,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalWeblinksDescription();
 
    /**
+    * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+    */
+   @DefaultStringValue("Make file paths in Terminal clickable")
+   String terminalFileLinksTitle();
+   @DefaultStringValue("Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).")
+   String terminalFileLinksDescription();
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    @DefaultStringValue("Show R Markdown render command")
@@ -1486,6 +1510,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String wrapTabNavigationTitle();
    @DefaultStringValue("Whether to wrap around when going to the previous or next editor tab.")
    String wrapTabNavigationDescription();
+
+   /**
+    * Use a bold label and a blue overline to highlight the active document tab.
+    */
+   @DefaultStringValue("Highlight active document tab")
+   String highlightActiveTabsTitle();
+   @DefaultStringValue("Use a bold label and a blue overline to highlight the active document tab.")
+   String highlightActiveTabsDescription();
 
    /**
     * Whether scrolling the mouse wheel over the editor tab bar changes the active editor tab.
@@ -2152,6 +2184,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String insertNativePipeOperatorTitle();
    @DefaultStringValue("Whether the Insert Pipe Operator command should use the native R pipe operator, |>")
    String insertNativePipeOperatorDescription();
+
+   /**
+    * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+    */
+   @DefaultStringValue("Insert + instead of a pipe within ggplot2 chains")
+   String insertPlusInGgplotChainsTitle();
+   @DefaultStringValue("Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain")
+   String insertPlusInGgplotChainsDescription();
 
    /**
     * Whether to keep track of recently used commands in the Command Palette

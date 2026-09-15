@@ -326,6 +326,10 @@ test.describe.serial('User-Added Skills', { tag: ['@ai', '@chat', '@serial'] }, 
     const lastMessage = chatPane.messageItem.last();
     const responseText = await lastMessage.innerText();
 
-    expect(responseText).toMatch(new RegExp(`skill:\\s*${USER_SKILL_NAME}`));
+    // Assistant 1.4.0+ prefixes every tool-call caption with U+200E (LEFT-TO-RIGHT
+    // MARK) so an rtl-truncated file path keeps its leading slash on the left. JS
+    // `\s` does not cover U+200E, so match it explicitly; the class also accepts
+    // the bare whitespace that 1.3.1 and earlier emit.
+    expect(responseText).toMatch(new RegExp(`skill:[\\s\\u200e]*${USER_SKILL_NAME}`));
   });
 });

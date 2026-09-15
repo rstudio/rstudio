@@ -15,6 +15,7 @@
 
 #include "SessionModuleContextInternal.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <vector>
 
@@ -53,6 +54,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
+#include <core/StartupTiming.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
@@ -1471,7 +1473,7 @@ bool isTextFile(const FilePath& targetPath)
 
 }
 
-void editFile(const core::FilePath& filePath, int lineNumber)
+void editFile(const core::FilePath& filePath, int lineNumber, int column)
 {
    // construct file system item (also tag with mime type) and position
    json::Object fileJson = module_context::createFileSystemItem(filePath);
@@ -1481,8 +1483,8 @@ void editFile(const core::FilePath& filePath, int lineNumber)
    if (lineNumber >= 0)
    {
       json::Object positionJson;
-      positionJson["line"] = lineNumber;
-      positionJson["column"] = 1;
+      positionJson["line"] = std::max(lineNumber, 1);
+      positionJson["column"] = std::max(column, 1);
       positionJsonValue = positionJson;
    }
 
@@ -2248,6 +2250,7 @@ std::string libPathsString()
 
 Error sourceModuleRFile(const std::string& rSourceFile)
 {
+   core::startup_timing::ScopedCheckpoint timing("source:" + rSourceFile);
    FilePath modulesPath = session::options().modulesRSourcePath();
    FilePath srcPath = modulesPath.completePath(rSourceFile);
    return r::sourceManager().sourceTools(srcPath);

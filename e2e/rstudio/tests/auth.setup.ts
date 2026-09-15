@@ -345,9 +345,11 @@ async function step<T>(page: Page, name: string, fn: () => Promise<T>, fatal = f
     const wrapped = `[authorize-posit] ${name} failed: ${msg} (page: ${url})`;
     // Failures at credential/authorization steps are fatal (LoginAutomationError);
     // non-credential steps stay transient so a flaky page load lets the Posit AI
-    // tests skip rather than failing the whole run. Note this classifies by
-    // step, not by error kind -- see the catch in the setup body.
-    throw fatal ? new LoginAutomationError(wrapped) : new Error(wrapped);
+    // tests skip rather than failing the whole run. A step that has already
+    // diagnosed a credential rejection itself throws LoginAutomationError, and
+    // that verdict is kept -- see the catch in the setup body.
+    const isFatal = fatal || err instanceof LoginAutomationError;
+    throw isFatal ? new LoginAutomationError(wrapped) : new Error(wrapped);
   }
 }
 
@@ -412,9 +414,36 @@ async function automateLogin(
       const passwordInput = page.locator('input[type="password"]');
       await passwordInput.waitFor({ state: 'visible' });
       await passwordInput.fill(password);
-      await page.getByRole('button', { name: /log.?in|sign.?in|continue/i }).click();
-      await page.waitForURL(/\/oauth\/device/, { timeout: 30000 });
-    }, true);
+      // noWaitAfter: click() otherwise waits for the navigation it triggers
+      // under the runner's actionTimeout (10s), which a slow redirect blew
+      // through and took the whole run down with it. Let the 30s URL wait
+      // below own that budget instead.
+      await page
+        .getByRole('button', { name: /log.?in|sign.?in|continue/i })
+        .click({ noWaitAfter: true });
+      const redirected = await page
+        .waitForURL(/\/oauth\/device/, { timeout: 30000 })
+        .then(() => true, () => false);
+      if (redirected)
+        return;
+
+      // Not redirected. A rejected password is the fatal case, and it shows
+      // up as an error message on the login page; anything else (a slow or
+      // stalled redirect) is transient and lets the Posit AI tests skip. The
+      // text patterns are deliberately narrow: ordinary login-page copy
+      // ("Wrong account?", "Try again") must not read as a rejection.
+      const rejection = page
+        .getByRole('alert')
+        .or(page.getByText(/incorrect|invalid|not recognized|does ?n.t match/i))
+        .first();
+      if (await rejection.isVisible().catch(() => false)) {
+        const rejectionText = await rejection.innerText().catch(() => '');
+        throw new LoginAutomationError(
+          `credentials rejected: ${rejectionText.trim().slice(0, 120)}`,
+        );
+      }
+      throw new Error('no redirect to /oauth/device within 30s of submitting the password');
+    });
     await step(page, 'enter user code', async () => {
       // _complete URL prefills the userCode form; navigate to the bare URI
       // for an empty form to type into.
@@ -512,12 +541,13 @@ function failIfStrict(providerLabel: string, reason: string): void {
 
 setup('authenticate Posit AI', async () => {
   // Explicit headroom above the flow's own budget: browser launch, five login
-  // steps (30s library default each on the raw chromium context -- the
-  // config's actionTimeout doesn't apply there), and the 90s token poll can
-  // legitimately exceed the global 120s test timeout. If the harness timeout
-  // fired here, the catch below would never run and every dependent test
-  // would be marked "did not run"; the withDeadline race below fails through
-  // the transient path well before this outer limit can be reached.
+  // steps (the runner applies the config's actionTimeout to contexts launched
+  // during a test, so 10s per action plus the password step's own 30s URL
+  // wait), and the 90s token poll can legitimately exceed the global 120s
+  // test timeout. If the harness timeout fired here, the catch below would
+  // never run and every dependent test would be marked "did not run"; the
+  // withDeadline race below fails through the transient path well before this
+  // outer limit can be reached.
   setup.setTimeout(240_000);
 
   const sandbox = process.env.PW_SANDBOX;

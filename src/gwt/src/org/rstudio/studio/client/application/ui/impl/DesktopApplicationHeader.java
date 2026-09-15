@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppMenuBar;
 import org.rstudio.core.client.command.CommandBinder;
@@ -147,6 +148,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          {
             public void execute()
             {
+               StartupTiming.mark("workbench-initialized");
                Desktop.getFrame().onWorkbenchInitialized(
                      StringUtil.notNull(sessionInfo.getScratchDir()));
 

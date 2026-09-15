@@ -64,6 +64,42 @@ protected:
    FilePath tempFile_;
 };
 
+TEST_F(ConsoleActionsTest, ReducingCapacityKeepsNewestActions)
+{
+   ConsoleActions& actions = consoleActions();
+   int originalCapacity = actions.capacity();
+
+   // one action per line, each identifiable by its content; asJson() flushes
+   // the pending output buffer so the actions are stored before the capacity
+   // changes (otherwise the flush itself would do the trimming)
+   for (int i = 0; i < 20; i++)
+      actions.add(kConsoleActionOutput, "line " + std::to_string(i) + "\n");
+
+   json::Object actionsJson;
+   actions.asJson(&actionsJson);
+   ASSERT_EQ(20u, actionsJson["data"].getArray().getSize());
+
+   // the scrollback limit can be lowered while the session runs; the oldest
+   // actions should be discarded, not the newest (boost's set_capacity()
+   // would drop from the back)
+   actions.setCapacity(10);
+   EXPECT_EQ(10, actions.capacity());
+
+   actions.asJson(&actionsJson);
+   json::Array dataArray = actionsJson["data"].getArray();
+   ASSERT_EQ(10u, dataArray.getSize());
+   EXPECT_EQ("line 10\n", dataArray[0].getString());
+   EXPECT_EQ("line 19\n", dataArray[9].getString());
+
+   // raising the limit keeps what is there and makes room for more
+   actions.setCapacity(originalCapacity);
+   actions.add(kConsoleActionOutput, "line 20\n");
+   actions.asJson(&actionsJson);
+   EXPECT_EQ("line 10\nline 11\nline 12\nline 13\nline 14\n"
+             "line 15\nline 16\nline 17\nline 18\nline 19\nline 20\n",
+             consoleData(actionsJson));
+}
+
 TEST_F(ConsoleActionsTest, ChunkingDoesNotSplitUtf8Sequences)
 {
    ConsoleActions& actions = consoleActions();

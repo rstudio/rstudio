@@ -21,6 +21,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Document;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -90,6 +92,9 @@ public class UserPrefs extends UserPrefsComputed
       eventBus.addHandler(SessionInitEvent.TYPE, this);
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
+
+      // Satellites receive the same preference updates as the main window.
+      highlightActiveTabs().addValueChangeHandler(event -> syncHighlightActiveTabs());
       
       // Let desktop-side know when Electron-specific preferences change as these are mirrored
       // in the electron-store so they can be used during startup (before the session is started).
@@ -102,6 +107,19 @@ public class UserPrefs extends UserPrefsComputed
          enableMousewheelZoom().addValueChangeHandler(enabled -> Desktop.getFrame().setMousewheelZoomEnabled(enabled.getValue()));
          mousewheelZoomDebounceMs().addValueChangeHandler(debounceMs -> Desktop.getFrame().setMousewheelZoomDebounce(debounceMs.getValue()));
       }
+   }
+
+   /**
+    * Reloads the preference layers from the session info.
+    *
+    * UserPrefs can be constructed before the client_init response arrives
+    * (eager GIN singletons and the application headers inject it during
+    * application startup), in which case the layers start out empty and every
+    * preference reads as its default until this is called.
+    */
+   public void loadFromSessionInfo()
+   {
+      updatePrefs(session_.getSessionInfo().getPrefs());
    }
 
    public void writeUserPrefs()
@@ -127,7 +145,7 @@ public class UserPrefs extends UserPrefsComputed
    // ambiguous, since CommandWithArg and CommandWith2Args are unrelated types.
    public void writeUserPrefsWithDetail(CommandWith2Args<Boolean, String> onCompleted)
    {
-      updatePrefs(session_.getSessionInfo().getPrefs());
+      loadFromSessionInfo();
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
          new ServerRequestCallback<VoidResponse>()
@@ -136,7 +154,10 @@ public class UserPrefs extends UserPrefsComputed
             public void onResponseReceived(VoidResponse v)
             {
                UserPrefsChangedEvent event = new UserPrefsChangedEvent(
-                     session_.getSessionInfo().getUserPrefLayer());
+                     session_.getSessionInfo().getUserPrefLayer(), true);
+
+               // Notify local consumers after the server has saved the prefs.
+               eventBus_.dispatchEvent(event);
 
                if (Satellite.isCurrentWindowSatellite())
                {
@@ -195,7 +216,10 @@ public class UserPrefs extends UserPrefsComputed
    @Override
    public void onUserPrefsChanged(UserPrefsChangedEvent e)
    {
-      syncPrefs(e.getName(), e.getValues());
+      if (e.isFullLayer())
+         replaceLayerValues(e.getName(), e.getValues());
+      else
+         syncPrefs(e.getName(), e.getValues());
    }
 
    @Handler
@@ -276,10 +300,17 @@ public class UserPrefs extends UserPrefsComputed
          false);
    }
    
+   private void syncHighlightActiveTabs()
+   {
+      DomUtils.toggleClass(Document.get().getBody(),
+            "rstudio-highlight-active-tabs", highlightActiveTabs().getValue());
+   }
+
    @Override
    public void onSessionInit(SessionInitEvent event)
    {
-      updatePrefs(session_.getSessionInfo().getPrefs());
+      loadFromSessionInfo();
+      syncHighlightActiveTabs();
 
       origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
       announceScreenReaderState();
@@ -431,6 +462,10 @@ public class UserPrefs extends UserPrefsComputed
    public static final int MAX_SCREEN_READER_CONSOLE_OUTPUT = 999;
 
    public static final int MAX_EDITOR_SCROLL_MULTIPLIER = 200;
+
+   // must match kMinConsoleLines in SessionConsole.cpp, below which the
+   // session ignores console_max_lines
+   public static final int MIN_CONSOLE_LINES = 10;
 
    private final Session session_;
    private final PrefsServerOperations server_;

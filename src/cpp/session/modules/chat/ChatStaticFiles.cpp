@@ -68,6 +68,44 @@ std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
 std::mutex s_authTokenMutex;
 std::string s_chatBackendAuthToken;
 
+// The installation the chat backend was last started from, set by
+// SessionChat.cpp. Empty before the first start, and after an uninstall
+// deletes it. Guarded by a mutex for the same reason as the port: written
+// from the main thread, read from HTTP handler threads.
+std::mutex s_installationMutex;
+FilePath s_installationPath;
+
+/**
+ * The installation to serve client assets from.
+ *
+ * The installation the chat backend was last started from, once it has
+ * started -- including after it exits, so a page that outlives its backend
+ * can still load chunks. Otherwise the tier search runs, which is the only
+ * answer available before the first start.
+ *
+ * A pinned path that no longer holds an installation counts as nothing
+ * pinned: an update that rolled back without restoring it, a removal out of
+ * band, or an extraction that failed and could not be cleaned up must not
+ * cost the requests a copy in another tier could still answer. Tested with
+ * verifyPositAiInstallation(), the same definition the resolver requires of
+ * a tier, so a half-extracted directory does not stay selected just because
+ * its root is there. The pin is left set rather than cleared, since an update
+ * can put a working installation back at the same path.
+ */
+FilePath servedInstallationPath()
+{
+   FilePath pinned;
+   {
+      std::lock_guard<std::mutex> lock(s_installationMutex);
+      pinned = s_installationPath;
+   }
+
+   if (!pinned.isEmpty() && verifyPositAiInstallation(pinned))
+      return pinned;
+
+   return locatePositAssistantInstallation();
+}
+
 /**
  * Inject theme information into HTML content without inline scripts.
  *
@@ -158,7 +196,7 @@ std::map<std::string, std::string> loadCspDirectives()
    {
       std::map<std::string, std::string> result;
 
-      FilePath positAiPath = locatePositAssistantInstallation();
+      FilePath positAiPath = servedInstallationPath();
       if (positAiPath.isEmpty())
          return result;
 
@@ -410,7 +448,7 @@ Error handleAIChatRequest(const http::Request& request,
                           http::Response* pResponse)
 {
    // Locate installation
-   FilePath positAiPath = locatePositAssistantInstallation();
+   FilePath positAiPath = servedInstallationPath();
    if (positAiPath.isEmpty())
    {
       pResponse->setStatusCode(http::status::NotFound);
@@ -548,6 +586,12 @@ void setChatBackendAuthToken(const std::string& token)
 {
    std::lock_guard<std::mutex> lock(s_authTokenMutex);
    s_chatBackendAuthToken = token;
+}
+
+void setInstallationPath(const FilePath& path)
+{
+   std::lock_guard<std::mutex> lock(s_installationMutex);
+   s_installationPath = path;
 }
 
 } // namespace staticfiles

@@ -219,6 +219,9 @@ void ChunkExecContext::connect()
    // the knitr 'dev' option, if set, may override the default graphics device backend
    std::string chunkGraphicsBackend = options_.getOverlayOption("dev", std::string("png"));
 
+   // the knitr 'dev.args' option, if set, supplies extra arguments for that device
+   json::Object chunkDeviceArgs = options_.getOverlayOption("dev.args", json::Object());
+
    // if 'fig.asp' is set, then use that to override 'fig.height'
    double figAsp = options_.getOverlayOption("fig.asp", 0.0);
    if (figAsp != 0.0)
@@ -243,7 +246,7 @@ void ChunkExecContext::connect()
       error = pPlotCapture->connectPlots(
                docId_, chunkId_, nbCtxId_,
                figWidth, figHeight, figDpi,
-               PlotSizeManual, outputPath_, chunkGraphicsBackend);
+               PlotSizeManual, outputPath_, chunkGraphicsBackend, chunkDeviceArgs);
    }
    else
    {
@@ -251,7 +254,7 @@ void ChunkExecContext::connect()
       error = pPlotCapture->connectPlots(
                docId_, chunkId_, nbCtxId_,
                pixelWidth_, 0, figDpi,
-               PlotSizeAutomatic, outputPath_, chunkGraphicsBackend);
+               PlotSizeAutomatic, outputPath_, chunkGraphicsBackend, chunkDeviceArgs);
    }
    if (error)
       LOG_ERROR(error);

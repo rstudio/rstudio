@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <core/http/RequestParser.hpp>
 #include <shared_core/SafeConvert.hpp>
@@ -32,31 +33,6 @@ namespace rstudio {
 namespace core {
 namespace http {
 namespace tests {
-
-std::string simpleRequest(std::string* pBodyStr)
-{
-   std::string bodyStr =
-         "--boundary\r\n"
-         "Content-Disposition: form-data; name=\"field1\"\r\n\r\n"
-         "value1\r\n"
-         "--boundary\r\n"
-         "Content-Disposition: form-data; name=\"field2\"; filename=\"example.txt\"\r\n"
-         "Content-Type: text/plain\r\n\r\n"
-         "This is a simple text file\r\n"
-         "--boundary--\r\n";
-
-   *pBodyStr = bodyStr;
-
-   std::string bodySizeStr = safe_convert::numberToString(bodyStr.size());
-
-   std::string requestStr =
-         "POST /test HTTP/1.1\r\n"
-         "Host: foo.example\r\n"
-         "Content-Type: multipart/form-data; boundary=boundary\r\n"
-         "Content-Length: " + bodySizeStr + "\r\n\r\n" + bodyStr;
-
-   return requestStr;
-}
 
 core::Result<std::string> generateRandomBytes()
 {
@@ -76,107 +52,171 @@ core::Result<std::string> generateRandomBytes()
    return fileBytes;
 }
 
-std::string complexRequest(const std::string& fileBytes,
-                           std::string* pBodyStr)
+struct FormTester
 {
-   std::string bodyStr =
-         "--boundary\r\n"
-         "Content-Disposition: form-data; name=\"field1\"\r\n\r\n"
-         "value1\r\n"
-         "--boundary\r\n"
-         "Content-Disposition: form-data; name=\"field2\"; filename=\"example.txt\"\r\n"
-         "Content-Type: application/octet-stream\r\n\r\n" +
-         fileBytes + "\r\n"
-         "--boundary--\r\n";
-
-   *pBodyStr = bodyStr;
-
-   std::string bodySizeStr = safe_convert::numberToString(bodyStr.size());
-
-   std::string requestStr =
-         "POST /test HTTP/1.1\r\n"
-         "Host: foo.example\r\n"
-         "Content-Type: multipart/form-data; boundary=boundary\r\n"
-         "Content-Length: " + bodySizeStr + "\r\n\r\n" + bodyStr;
-
-   return requestStr;
-}
-
-core::Result<FormHandler> formHandler(const std::string& expectedData)
-{
-   boost::shared_ptr<std::string> data = boost::make_shared<std::string>();
-
-   bool valid = true;
-   auto handler = [=, &valid](const std::string& formData, bool complete) -> bool
+   FormTester(const std::string& boundary = "boundary") : boundary(boundary)
    {
-      (*data) += formData;
+      parser.setFormHandler(
+         [this](const std::string& formData, bool complete) -> bool
+         {
+            return handle(formData, complete);
+         }
+      );
+   }
+   FormTester(const FormTester&) = delete;
 
+   bool handle(const std::string& formData, bool complete)
+   {
+      buffer += formData;
       if (complete)
       {
-         if(*data != expectedData){
-            valid = false;
+         request.setBody(buffer);
+         if (buffer != expectedData)
+         {
+            validationError = systemError(
+               boost::system::errc::invalid_argument,
+               "Form handler validation failed",
+               ERROR_LOCATION
+            );
+            return false;
          }
+         buffer.clear();
       }
       return true;
-   };
+   }
 
-   if(!valid)
+   std::string multipart(
+      const std::string& name,
+      const std::string& data,
+      const std::string& contentType = std::string(),
+      const std::string& filename = std::string(),
+      bool quoteName = true
+   )
    {
-      return tl::unexpected(systemError(boost::system::errc::invalid_argument,
-                                        "Form handler validation failed",
-                                        ERROR_LOCATION));
-   }  
-   return handler;
-}
+      std::ostringstream ss;
+      ss << "\r\n--" << boundary << "\r\n";
+      ss << "Content-Disposition: form-data; name=";
+      if (quoteName)
+        ss << "\"" << name << '"';
+      else
+        ss << name;
+      if (!filename.empty())
+         ss << "; filename=\"" << filename << '"';
+      ss << "\r\n";
+      if (!contentType.empty())
+         ss << "Content-Type: " << contentType << "\r\n";
+      ss << "\r\n";
+      ss << data;
+      return ss.str();
+   }
+
+   void simpleRequest()
+   {
+      complexRequest("This is a simple text file", "text/plain");
+   }
+
+   void complexRequest(const std::string& data, const std::string& contentType)
+   {
+      expectedData = multipart("field1", "value1") +
+         multipart("field2", data, contentType, "example.txt") +
+         "\r\n--" + boundary + "--";
+
+      requestStr = "POST /test HTTP/1.1\r\n"
+         "Host: example.com\r\n"
+         "Content-Type: multipart/form-data; boundary=" + boundary + "\r\n"
+         "Content-Length: " + std::to_string(expectedData.size()) +
+         "\r\n\r\n" + expectedData;
+   }
+
+   RequestParser::status parse()
+   {
+      const char* begin = requestStr.c_str();
+      const char* end = begin + requestStr.size();
+      return parser.parse(request, begin, end);
+   }
+
+   RequestParser::status parseBytes(int count)
+   {
+      if (!parseIter)
+      {
+         parseIter = requestStr.c_str();
+         endIter = parseIter + requestStr.size();
+      }
+
+      const char* stepEnd = parseIter + count;
+      if (stepEnd > endIter)
+         stepEnd = endIter;
+
+      RequestParser::status status = parser.parse(request, parseIter, stepEnd);
+      if (status != RequestParser::headers_parsed && status != RequestParser::form_complete)
+         parseIter = stepEnd;
+
+      return status;
+   }
+
+   bool eof() const
+   {
+      return !parseIter || parseIter >= endIter;
+   }
+
+   std::string boundary;
+   std::string expectedData;
+   std::string requestStr;
+   std::string buffer;
+   Error validationError;
+   Request request;
+   RequestParser parser;
+   const char* parseIter = nullptr;
+   const char* endIter = nullptr;
+};
 
 TEST(HttpTest, SimpleFormParsingWorks)
 {
-   std::string bodyStr;
-   std::string requestStr = simpleRequest(&bodyStr);
-   Request request;
+   FormTester form;
+   form.simpleRequest();
 
-   auto handlerResult = formHandler(bodyStr);
-   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
-   FormHandler handler = *handlerResult;
-
-   RequestParser parser;
-   parser.setFormHandler(handler);
-
-   RequestParser::status status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   RequestParser::status status = form.parse();
    ASSERT_EQ(RequestParser::headers_parsed, status);
 
-   status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   status = form.parse();
    ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "example.txt");
+   EXPECT_EQ(file.contentType, "text/plain");
+   EXPECT_EQ(file.contents, "This is a simple text file");
 }
 
 TEST(HttpTest, SimpleFormParsingWorksOneByteAtATime)
 {
-   std::string bodyStr;
-   std::string requestStr = simpleRequest(&bodyStr);
-   Request request;
-
-   auto handlerResult = formHandler(bodyStr);
-   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
-   FormHandler handler = *handlerResult;
-
-   RequestParser parser;
-   parser.setFormHandler(handler);
+   FormTester form;
+   form.simpleRequest();
 
    RequestParser::status status;
-   for (size_t i = 0; i < requestStr.size() - 1; ++i)
+   do
    {
-      status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + 1);
+      status = form.parseBytes(1);
+      if (status == RequestParser::form_complete)
+         break;
       ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete);
-
-      if (status == rstudio::core::http::RequestParser::headers_parsed)
-      {
-         // need to pass the same buffer to resume
-         i--;
-      }
    }
+   while (!form.eof());
+   ASSERT_EQ(status, RequestParser::form_complete);
 
-   status = parser.parse(request, requestStr.c_str() + requestStr.size() - 1, requestStr.c_str() + requestStr.size());
-   ASSERT_EQ(RequestParser::form_complete, status);
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "example.txt");
+   EXPECT_EQ(file.contentType, "text/plain");
+   EXPECT_EQ(file.contents, "This is a simple text file");
 }
 
 TEST(HttpTest, ComplicatedFormParsingWorks)
@@ -185,22 +225,22 @@ TEST(HttpTest, ComplicatedFormParsingWorks)
    ASSERT_TRUE(result.has_value()) << result.error().getSummary();
    const std::string& fileBytes = *result;
 
-   std::string bodyStr;
-   std::string requestStr = complexRequest(fileBytes, &bodyStr);
-   Request request;
+   FormTester form;
+   form.complexRequest(fileBytes, "application/octet-stream");
 
-   auto handlerResult = formHandler(bodyStr);
-   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
-   FormHandler handler = *handlerResult;
-
-   RequestParser parser;
-   parser.setFormHandler(handler);
-
-   RequestParser::status status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   RequestParser::status status = form.parse();
    ASSERT_EQ(RequestParser::headers_parsed, status);
 
-   status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   status = form.parse();
    ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "example.txt");
+   EXPECT_EQ(file.contentType, "application/octet-stream");
+   EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
 }
 
 TEST(HttpTest, ComplicatedFormParsingWorksOneByteAtATime)
@@ -209,32 +249,27 @@ TEST(HttpTest, ComplicatedFormParsingWorksOneByteAtATime)
    ASSERT_TRUE(result.has_value()) << result.error().getSummary();
    const std::string& fileBytes = *result;
 
-   std::string bodyStr;
-   std::string requestStr = complexRequest(fileBytes, &bodyStr);
-   Request request;
-
-   auto handlerResult = formHandler(bodyStr);
-   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
-   FormHandler handler = *handlerResult;
-
-   RequestParser parser;
-   parser.setFormHandler(handler);
+   FormTester form;
+   form.complexRequest(fileBytes, "application/octet-stream");
 
    RequestParser::status status;
-   for (size_t i = 0; i < requestStr.size() - 1; ++i)
+   do
    {
-      status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + 1);
+      status = form.parseBytes(1);
+      if (status == RequestParser::form_complete)
+         break;
       ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete);
-
-      if (status == rstudio::core::http::RequestParser::headers_parsed)
-      {
-         // need to pass the same buffer to resume
-         i--;
-      }
    }
+   while (!form.eof());
+   ASSERT_EQ(status, RequestParser::form_complete);
 
-   status = parser.parse(request, requestStr.c_str() + requestStr.size() - 1, requestStr.c_str() + requestStr.size());
-   ASSERT_EQ(RequestParser::form_complete, status);
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "example.txt");
+   EXPECT_EQ(file.contentType, "application/octet-stream");
+   EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
 }
 
 TEST(HttpTest, ComplicatedFormParsingWorksRandomByteBoundaries)
@@ -242,42 +277,178 @@ TEST(HttpTest, ComplicatedFormParsingWorksRandomByteBoundaries)
    auto result = generateRandomBytes();
    ASSERT_TRUE(result.has_value()) << result.error().getSummary();
    const std::string& fileBytes = *result;
-
-   std::string bodyStr;
-   std::string requestStr = complexRequest(fileBytes, &bodyStr);
-   Request request;
-
-   auto handlerResult = formHandler(bodyStr);
-   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
-   FormHandler handler = *handlerResult;
-
-   RequestParser parser;
-   parser.setFormHandler(handler);
+   FormTester form;
+   form.complexRequest(fileBytes, "application/octet-stream");
 
    RequestParser::status status;
-
-   for (size_t i = 0; i < requestStr.size();)
+   size_t blockSize = 0;
+   do
    {
-      size_t byteAmount = rand() % 8192 + 1;
-      if (byteAmount > requestStr.size() - i)
-         byteAmount = requestStr.size() - i;
-
-      status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + byteAmount);
-      ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete || status == RequestParser::form_complete);
-
-      if (status == rstudio::core::http::RequestParser::headers_parsed)
-      {
-         // need to pass the same buffer to resume
-         status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + byteAmount);
-         ASSERT_EQ(rstudio::core::http::RequestParser::incomplete, status);
-      }
-      else if (status == rstudio::core::http::RequestParser::form_complete)
-      {
+      blockSize = rand() % 8192 + 1;
+      status = form.parseBytes(blockSize);
+      if (status == RequestParser::form_complete)
          break;
-      }
-
-      i += byteAmount;
+      ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete);
    }
+   while (!form.eof());
+   ASSERT_EQ(status, RequestParser::form_complete);
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "example.txt");
+   EXPECT_EQ(file.contentType, "application/octet-stream");
+   EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
+}
+
+TEST(HttpTest, FormParsingRejectsMalformedMultipart)
+{
+   FormTester form("");
+   form.simpleRequest();
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_EQ(form.request.formFields().size(), 0);
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_TRUE(file.empty());
+}
+
+TEST(HttpTest, FormParsingToleratesMissingPreamble)
+{
+   FormTester form;
+   form.simpleRequest();
+   boost::algorithm::replace_first(form.requestStr, "\r\n\r\n\r\n", "\r\n\r\n");
+   boost::algorithm::replace_first(form.requestStr,
+      "Content-Length: " + std::to_string(form.expectedData.size()),
+      "Content-Length: " + std::to_string(form.expectedData.size() - 2)
+   );
+   form.expectedData.erase(form.expectedData.begin(), form.expectedData.begin() + 2);
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   EXPECT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "example.txt");
+   EXPECT_EQ(file.contentType, "text/plain");
+   EXPECT_EQ(file.contents, "This is a simple text file");
+}
+
+TEST(HttpTest, FormParsingIgnoresEpilogue)
+{
+   FormTester form;
+   form.simpleRequest();
+   std::string extra = form.multipart("field3", "value3");
+   extra = extra.substr(extra.find("Content-Disposition"));
+   boost::algorithm::replace_first(form.requestStr,
+      "Content-Length: " + std::to_string(form.expectedData.size()),
+      "Content-Length: " + std::to_string(form.expectedData.size() + extra.size())
+   );
+   form.requestStr += extra;
+   form.expectedData += extra;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   EXPECT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+   EXPECT_EQ(form.request.formFieldValue("field3"), std::string());
+}
+
+TEST(HttpTest, FormParsingEdgeCases)
+{
+   FormTester form;
+   form.expectedData = form.multipart("field1", "value1") +
+      form.multipart("field2", "test", "text/plain", "semicolon;and\\\"quote.txt") +
+      "\r\n--boundary--";
+
+   form.requestStr = "POST /test HTTP/1.1\r\n"
+      "Host: example.com\r\n"
+      "Content-Type: multipart/form-data; Boundary=\"boundary\" \r\n"
+      "Content-Length: " + std::to_string(form.expectedData.size()) +
+      "\r\n\r\n" + form.expectedData;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   EXPECT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_EQ(file.name, "semicolon;and\"quote.txt");
+}
+
+TEST(HttpTest, FormParsingEdgeCases2)
+{
+   FormTester form;
+   form.expectedData = form.multipart("field1", "value1") +
+      "\r\n--boundary --" +
+      form.multipart("fie\"ld2", "test", "text/plain", "filename.txt") +
+      "\r\n--boundary--";
+
+   form.requestStr = "POST /test HTTP/1.1\r\n"
+      "Host: example.com\r\n"
+      "Content-Type: multipart/form-data; Boundary=\"boundary\" \r\n"
+      "Content-Length: " + std::to_string(form.expectedData.size()) +
+      "\r\n\r\n" + form.expectedData;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   EXPECT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1\r\n--boundary --");
+
+   File file = form.request.uploadedFile("fie\"ld2");
+   EXPECT_EQ(file.name, "filename.txt");
+   EXPECT_TRUE(file.contents == "test") << "uploaded file contents mismatch";
+}
+
+TEST(HttpTest, FormParsingBoundaryTrailingSpaces)
+{
+   FormTester form("boundary \t ");
+   form.expectedData = form.multipart("field1", "value1") +
+      form.multipart("field2", "test", "text/plain", "semi\\\\colon;and\\\"quote\\.txt") +
+      "\r\n--boundary--";
+
+   form.requestStr = "POST /test HTTP/1.1\r\n"
+      "Host: example.com\r\n"
+      "Content-Type: multipart/form-data; Boundary=\"boundary\" \r\n"
+      "Content-Length: " + std::to_string(form.expectedData.size()) +
+      "\r\n\r\n" + form.expectedData;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   EXPECT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_EQ(file.name, "semi\\colon;and\"quote.txt");
 }
 
 } // namespace tests

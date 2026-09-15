@@ -315,15 +315,18 @@ core::Error PlotCapture::connectPlots(
       double dpi,
       PlotSizeBehavior sizeBehavior,
       const FilePath& plotFolder,
-      const std::string& chunkGraphicsBackend)
+      const std::string& chunkGraphicsBackend,
+      const json::Object& chunkDeviceArgs)
 {
    // save identifiers
    docId_ = docId;
    chunkId_ = chunkId;
    nbCtxId_ = nbCtxId;
 
-   // the graphics backend device set by the knitr chunk option 'dev'
+   // the graphics backend device set by the knitr chunk option 'dev', and
+   // the extra device arguments set by the chunk option 'dev.args'
    chunkGraphicsBackend_ = chunkGraphicsBackend;
+   chunkDeviceArgs_ = chunkDeviceArgs;
    
    // the graphics backend device set by the kGraphicsOptionBackend option
    defaultGraphicsBackend_.set(r::options::getOption(kGraphicsOptionBackend));
@@ -454,6 +457,10 @@ core::Error PlotCapture::setGraphicsOption()
 
    // other args (OS dependent)
    setOption.addParam(r::session::graphics::extraBitmapParams());
+
+   // knitr chunk options 'dev' and 'dev.args'
+   setOption.addParam(chunkGraphicsBackend_);
+   setOption.addParam(chunkDeviceArgs_);
 
    return setOption.call();
 }

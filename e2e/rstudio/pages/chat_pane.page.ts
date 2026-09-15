@@ -54,7 +54,18 @@ export class ChatPane extends FramePageObject {
     // input is now a contenteditable <div class="tiptap-input-editor">, not a
     // <textarea>. editor.setEditable() toggles its contenteditable attribute.
     this.chatInput = this.frame.locator('.tiptap-input-editor');
-    this.messageItem = this.frame.locator('[data-message-id]');
+    // The ChatMessage row wrapper and the MessageRenderer content div nested
+    // inside it, so most messages match twice and last() lands on the content.
+    // An allowlist, not `[data-message-id]`: that attribute marks anything tied
+    // to a message, and PA 1.4.0 (#2395) began stamping it on a per-turn footer
+    // rendered *after* the row, which made last() resolve to a "8:54 PM" cost
+    // row. Matching what a message is works against both the released assistant
+    // and the pre-release builds the gate exercises. The row wrapper stays in
+    // the list because messages that render no MessageRenderer (application
+    // events, attachment-only) have no content div to match.
+    this.messageItem = this.frame.locator(
+      '[data-testid="chat-message-user"], [data-testid="chat-message-assistant"], [data-message-id].message-content'
+    );
     // Assistant-role bubbles only. The message wrapper carries the role via an
     // inner .chat-message-assistant / .chat-message-user class (ChatMessage.tsx),
     // so this excludes the user's own prompt bubble -- letting callers match on
@@ -158,10 +169,16 @@ export class ChatPane extends FramePageObject {
     // provider blip itself, so a failed lookup reads as "not substantive"
     // rather than erroring out of the caller's retry loop.
     return await this.messageItem.last().evaluate((el) => {
-      // Each message stamps data-message-id on both the ChatMessage row
-      // wrapper and the nested MessageRenderer content div, so last() lands
-      // on the inner div and the assistant class sits on an ancestor;
-      // closest() covers that shape, querySelector() the row wrapper.
+      // last() is normally the MessageRenderer content div, with the assistant
+      // class on an ancestor; for a message that renders no MessageRenderer it
+      // is the row wrapper, with the class on a descendant. closest() covers
+      // the first shape, querySelector() the second.
+      //
+      // Scoping to the content div rather than the row is what keeps a dead
+      // turn readable: the row also holds TurnRetryCallout, whose "Retry" /
+      // "Continue" button text would count as reply content below and report
+      // an empty turn as substantive, disabling the retry this predicate exists
+      // to trigger.
       if (!el.closest('.chat-message-assistant') && !el.querySelector('.chat-message-assistant')) {
         return false;
       }

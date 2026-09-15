@@ -333,6 +333,7 @@ public class TerminalPane extends WorkbenchPane
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  uiPrefs_.terminalWeblinks().getValue(),
+                                                 uiPrefs_.terminalFileLinks().getValue(),
                                                  session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
@@ -874,6 +875,7 @@ public class TerminalPane extends WorkbenchPane
       terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  uiPrefs_.terminalWeblinks().getValue(),
+                                                 uiPrefs_.terminalFileLinks().getValue(),
                                                  session ->
       {
          terminals_.startTerminal(session, new ResultCallback<Boolean, String>()

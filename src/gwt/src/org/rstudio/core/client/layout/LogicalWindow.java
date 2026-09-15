@@ -18,6 +18,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
@@ -43,6 +44,26 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       normal_.addWindowStateChangeHandler(this);
       normal_.addEnsureHeightHandler(this);
       minimized_.addWindowStateChangeHandler(this);
+
+      // A tab surfacing while the window is already open claims it (e.g.
+      // Render output arriving in a pane a job raised earlier), so a later
+      // hand-back must not put the pane away.
+      normal_.addEnsureVisibleHandler(event -> clearAutoRaisedFromMinimize());
+
+      // User interaction keeps an automatically raised pane open, including
+      // selecting a tab or typing directly into its editor. Capture before
+      // those controls can stop propagation; focus events also arise during
+      // automatic activation and must not cancel the pending restoration.
+      DomUtils.addEventListener(
+            normal_.getElement(),
+            "mousedown",
+            true,
+            event -> clearAutoRaisedFromMinimize());
+      DomUtils.addEventListener(
+            normal_.getElement(),
+            "keydown",
+            true,
+            event -> clearAutoRaisedFromMinimize());
    }
 
    public WindowFrame getNormal()
@@ -111,6 +132,11 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public void onWindowStateChange(WindowStateChangeEvent event)
    {
       WindowState newState = event.getNewState();
+
+      // remember a tab surfacing itself out of MINIMIZE; any other request (a
+      // frame button, an owner) supersedes a pending auto-raise
+      autoRaisedFromMinimize_ =
+            event.isEnsureVisible() && state_ == MINIMIZE && newState == NORMAL;
       if (state_ == EXCLUSIVE && newState == MAXIMIZE)
          newState = NORMAL;
       if (newState == state_)
@@ -120,6 +146,11 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
 
    public void transitionToState(WindowState newState)
    {
+      // an owner or a sibling's transition (maximize, zoom, splitter snap)
+      // moving this window out of NORMAL supersedes a pending auto-raise
+      if (newState != WindowState.NORMAL)
+         autoRaisedFromMinimize_ = false;
+
       normal_.setMaximizedDependentState(newState);
       normal_.setExclusiveDependentState(newState);
       normal_.setLogicalState(newState);
@@ -132,6 +163,27 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public WindowState getState()
    {
       return state_;
+   }
+
+   /**
+    * True when the most recent change to this window was a tab raising it out
+    * of MINIMIZE on its own (an ensure-visible or ensure-height request, e.g.
+    * render output surfacing), rather than the user or an owner asking for it.
+    * Lets a later "return to the console" put the pane back the way the user
+    * left it.
+    */
+   public boolean wasAutoRaisedFromMinimize()
+   {
+      return autoRaisedFromMinimize_;
+   }
+
+   /**
+    * An explicit activation supersedes an automatic raise, even when the
+    * window is already visible and no state change is needed.
+    */
+   public void clearAutoRaisedFromMinimize()
+   {
+      autoRaisedFromMinimize_ = false;
    }
 
    @Override
@@ -158,6 +210,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
          if (getState() != WindowState.MAXIMIZE &&
              getState() != WindowState.EXCLUSIVE)
          {
+            autoRaisedFromMinimize_ = false;
             events_.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
          }
       }
@@ -169,6 +222,7 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
          }
          else if (getState() != WindowState.NORMAL)
          {
+            autoRaisedFromMinimize_ = getState() == WindowState.MINIMIZE;
             events_.fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
          }
       }
@@ -182,4 +236,5 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    private WindowFrame normal_;
    private MinimizedWindowFrame minimized_;
    private WindowState state_;
+   private boolean autoRaisedFromMinimize_ = false;
 }
