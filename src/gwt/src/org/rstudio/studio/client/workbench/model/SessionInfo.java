@@ -720,6 +720,10 @@ public class SessionInfo extends JavaScriptObject
      return this.graphics_backends;
    }-*/;
 
+   public final native String getGraphicsDefaultBackend() /*-{
+     return this.graphics_default_backend || "default";
+   }-*/;
+
    public final native boolean getPythonInitialized() /*-{
       return this.python_initialized;
    }-*/;
