@@ -18,6 +18,7 @@
 - ([#18804](https://github.com/rstudio/rstudio/issues/18804)): File paths printed in the Terminal pane (for example by `git status`, `ls`, or compiler diagnostics) can now be opened in RStudio with Ctrl+Click (Cmd+Click on macOS); a `file:line:column` suffix opens the file at that position. This can be disabled in Global Options > Terminal.
 - ([#15261](https://github.com/rstudio/rstudio/issues/15261)): The Insert Pipe Operator command (Ctrl+Shift+M) now inserts `+` when the cursor is within a ggplot2 chain. This can be disabled in Global Options > Code > Editing.
 - ([#12379](https://github.com/rstudio/rstudio/issues/12379)): Customized editor keyboard shortcuts (e.g. Remove Word Left) now also apply to the Console input.
+- ([#18774](https://github.com/rstudio/rstudio/issues/18774)): RStudio now runs the newest compatible Posit Assistant installation among the copy bundled with RStudio, the system-wide installation, and the user's own, instead of always preferring the user's own. A per-user installation no longer shadows a newer bundled or system-wide copy.
 
 ### Fixed
 - ([#18818](https://github.com/rstudio/rstudio/issues/18818)): Fixed an issue on RStudio Desktop where cancelling the quit prompted by closing the main window left every later close of that window exiting immediately, without prompting to save open documents or the workspace. The window's position and size are now also saved from the close that actually happens, rather than from a close that was cancelled.

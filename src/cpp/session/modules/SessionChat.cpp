@@ -296,6 +296,7 @@ using chat_logging::rs_chatSetLogLevel;
 using chat_installation::bundledPositAssistantInstallPath;
 using chat_installation::locatePositAssistantInstallation;
 using chat_installation::systemPositAssistantInstallPath;
+using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
@@ -4662,6 +4663,14 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
               "no compatible version available",
               packageVersion, unsupportedInfo.minimumPackageVersion);
          noCompatibleVersion = true;
+      }
+      else if (!userInstallWouldBeSelected(packageVersion))
+      {
+         // The install would land in the user data directory, but a read-only
+         // copy (system-wide or bundled) would still outrank it, so the offer
+         // could never be satisfied: the prompt would return on every check.
+         DLOG("Not offering {}: a read-only installation would still be "
+              "selected over it", packageVersion);
       }
       else
       {
