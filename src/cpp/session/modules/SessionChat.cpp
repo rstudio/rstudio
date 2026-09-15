@@ -65,7 +65,6 @@
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
-#include <core/Version.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -297,6 +296,7 @@ using chat_logging::rs_chatSetLogLevel;
 using chat_installation::bundledPositAssistantInstallPath;
 using chat_installation::locatePositAssistantInstallation;
 using chat_installation::systemPositAssistantInstallPath;
+using chat_installation::userInstallWouldBeSelected;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
 using chat_installation::getInstalledProtocolVersion;
@@ -3793,11 +3793,8 @@ const int kManifestDeadlineSeconds = 30;
 // main thread by fetchManifestAsync -- its process callbacks can otherwise fire
 // on the offline-service background thread while R is busy.
 // s_pendingCompletions holds the actions to run once the in-flight check
-// finishes (each RPC caller queues one); s_checkIncludesStartup records whether
-// any caller in the current batch is the startup check (which also runs the
-// recommended-RStudio-version warning).
+// finishes (each RPC caller queues one).
 bool s_checkInProgress = false;
-bool s_checkIncludesStartup = false;
 std::vector<boost::function<void()>> s_pendingCompletions;
 
 // Reset single-flight state and run queued completions. Swap first so a completion
@@ -3805,7 +3802,6 @@ std::vector<boost::function<void()>> s_pendingCompletions;
 void drainPendingCompletions()
 {
    s_checkInProgress = false;
-   s_checkIncludesStartup = false;
    std::vector<boost::function<void()>> completions;
    completions.swap(s_pendingCompletions);
    for (boost::function<void()>& completion : completions)
@@ -3814,7 +3810,7 @@ void drainPendingCompletions()
 
 // Defined further below (after the manifest parse/check helpers); forward-declared
 // here so onDeferredInit's startup kickoff can reference startUpdateCheck.
-void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete);
+void startUpdateCheck(bool force, boost::function<void()> onComplete);
 void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest);
 
 // Automation-only override for chatCheckForUpdates. When set (via the
@@ -4038,70 +4034,6 @@ void fetchManifestAsync(
       false);  // not idleOnly: fire even while R is busy (not only when idle)
 }
 
-
-// Extract recommended RStudio version from manifest
-// Returns Success() and populates output params if field is present and valid
-// Returns error if field is missing or invalid (caller should handle gracefully)
-Error getRecommendedRStudioVersion(
-    const json::Object& manifest,
-    std::string* pVersion,
-    std::string* pUrl)
-{
-   if (!pVersion || !pUrl)
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-   // Look for "recommendedRStudioVersion" object
-   json::Object versionObj;
-   Error error = json::readObject(manifest, "recommendedRStudioVersion", versionObj);
-   if (error)
-   {
-      // Field not present - this is expected for older manifests
-      return error;
-   }
-
-   // Extract "version" and "url" fields
-   std::string version, url;
-   error = json::readObject(versionObj, "version", version, "url", url);
-   if (error)
-   {
-      WLOG("recommendedRStudioVersion missing required fields: {}", error.getMessage());
-      return error;
-   }
-
-   // Validate URL is HTTPS
-   if (!isHttpsUrl(url))
-   {
-      WLOG("Rejecting recommendedRStudioVersion with non-HTTPS URL: {}", url);
-      return systemError(boost::system::errc::protocol_error,
-                        "recommendedRStudioVersion URL must use HTTPS",
-                        ERROR_LOCATION);
-   }
-
-   *pVersion = version;
-   *pUrl = url;
-
-   DLOG("Found recommended RStudio version: {} at {}", version, url);
-   return Success();
-}
-
-// Show warning bar about outdated RStudio version
-void showRStudioVersionWarning(
-    const std::string& recommendedVersion,
-    const std::string& downloadUrl)
-{
-   json::Object msgJson;
-   msgJson["severe"] = false;
-   boost::format fmt(
-      "A newer version of RStudio (%1%) is recommended for Posit AI Pass. "
-      "<a href=\"%2%\" target=\"_blank\" rel=\"noopener noreferrer\">Download the update</a>"
-   );
-   msgJson["message"] = boost::str(fmt %
-      string_utils::htmlEscape(recommendedVersion, true) %
-      string_utils::htmlEscape(downloadUrl, true));
-   ClientEvent event(client_events::kShowWarningBar, msgJson);
-   module_context::enqueClientEvent(event);
-}
-
 // Show warning bar when Posit Assistant is using the test manifest.
 void showTestManifestWarning()
 {
@@ -4142,14 +4074,12 @@ void onDeferredInit(bool)
    // path. The fetch is async, but spawning the --vanilla child R process still
    // has a cost (process creation + R DLL load, often AV-scanned on Windows), so
    // we wait for an idle moment rather than spawning it during session startup.
-   // isStartup=true so the recommended-RStudio-version warning fires (once,
-   // startup-only). Guarded by isPositAssistantWanted() so non-PAI sessions never
-   // spawn the fetch.
+   // Guarded by isPositAssistantWanted() so non-PAI sessions never spawn the fetch.
    if (isPositAssistantWanted())
    {
       module_context::scheduleDelayedWork(
          boost::posix_time::seconds(1),
-         []() { startUpdateCheck(true, false, boost::function<void()>()); },
+         []() { startUpdateCheck(false, boost::function<void()>()); },
          true);  // idleOnly: run after R becomes idle (post client attach)
    }
 }
@@ -4558,13 +4488,10 @@ Error installPackage(const FilePath& packagePath)
 // there) once a manifest fetch completes (success or failure). Computes the new
 // update state from the manifest, writes s_updateState in one atomic locked update
 // (no reset-at-start window), stops the agent when the installed version/protocol
-// is unsupported or the manifest is unavailable, runs the startup-only
-// recommended-RStudio-version warning, then drains any queued single-flight
-// completions.
+// is unsupported or the manifest is unavailable, then drains any queued
+// single-flight completions.
 void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest)
 {
-   bool wasStartup = s_checkIncludesStartup;
-
    std::string installedVersion = getInstalledVersion();
    if (installedVersion.empty())
    {
@@ -4588,9 +4515,6 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    // Staged on the success path (authoritative record from buildSuccessOutcome).
    // Left unset on every other exit, so finish() falls back to preserve-and-bump.
    boost::optional<ManifestCheckRecord> recordToWrite;
-   bool showVersionWarning = false;
-   std::string recommendedVersion;
-   std::string downloadPageUrl;
 
    // Apply the computed state + side effects, then drain waiters. Runs on exactly
    // one exit path.
@@ -4619,9 +4543,6 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
       // "Checking for Posit Assistant installation..." UI for ~10s.
       if (manifestUnavailable || isPositAssistantUnsupported())
          assistant::requestAgentStop();
-
-      if (showVersionWarning)
-         showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
 
       // Persist the attempt. The success path stages an authoritative record;
       // every other exit leaves it unset and we preserve-and-bump (only a success
@@ -4743,6 +4664,14 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
               packageVersion, unsupportedInfo.minimumPackageVersion);
          noCompatibleVersion = true;
       }
+      else if (!userInstallWouldBeSelected(packageVersion))
+      {
+         // The install would land in the user data directory, but a read-only
+         // copy (system-wide or bundled) would still outrank it, so the offer
+         // could never be satisfied: the prompt would return on every check.
+         DLOG("Not offering {}: a read-only installation would still be "
+              "selected over it", packageVersion);
+      }
       else
       {
          isDowngrade = isVersionDowngrade(installedVersion, packageVersion);
@@ -4758,45 +4687,6 @@ void onUpdateCheckComplete(const Error& fetchError, const json::Object& manifest
    {
       DLOG("No update needed (installed: {}, available: {})",
            installedVersion, packageVersion);
-   }
-
-   // Startup-only: warn about an out-of-date prerelease RStudio build. Computed
-   // here, fired in finish() (after the state write); never on a pane-open/Retry
-   // check (wasStartup is false for those).
-   if (wasStartup)
-   {
-      Error versionError =
-         getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
-      if (!versionError)
-      {
-         core::Version current(RSTUDIO_VERSION);
-         core::Version recommended(recommendedVersion);
-         if (recommended.empty())
-         {
-            WLOG("Failed to parse recommended RStudio version: {}", recommendedVersion);
-         }
-         else
-         {
-            std::string versionStr(RSTUDIO_VERSION);
-            bool isPrereleaseBuild =
-               versionStr.find("-daily") != std::string::npos ||
-               versionStr.find("-hourly") != std::string::npos;
-            bool forceCheck =
-               !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
-
-            DLOG("RStudio version check: current={}, recommended={}, isPrerelease={}",
-                 RSTUDIO_VERSION, recommendedVersion, isPrereleaseBuild);
-
-            if (installedVersion == "0.0.0")
-               DLOG("  Skipping version warning (Posit Assistant not installed)");
-            else if (!isPrereleaseBuild && !forceCheck)
-               DLOG("  Skipping version warning (release build)");
-            else if (current < recommended)
-               showVersionWarning = true;
-            else
-               DLOG("  No warning needed (version is current or newer)");
-         }
-      }
    }
 
    finish();
@@ -4935,12 +4825,10 @@ void resolveWithoutManifestFetch()
 // the check finishes; overlapping callers (startup + pane-open + Retry) share a
 // single fetch. Ordering invariant: enqueue the completion BEFORE starting the
 // fetch, so the synchronous DEBUG-manifest path still drains it. Main-thread only.
-void startUpdateCheck(bool isStartup, bool force, boost::function<void()> onComplete)
+void startUpdateCheck(bool force, boost::function<void()> onComplete)
 {
    if (onComplete)
       s_pendingCompletions.push_back(onComplete);
-   if (isStartup)
-      s_checkIncludesStartup = true;
 
    // A caller that joins an in-flight check only enqueues its completion above;
    // `force` is not re-evaluated here, so the in-flight check's own fetch-vs-skip
@@ -5252,14 +5140,11 @@ Error startChatBackend(bool resumeConversation)
    if (error)
       return error;
 
-   // Share the port with the static file handler for CSP connect-src
-   staticfiles::setChatBackendPort(s_chatBackendPort);
-
    // Generate per-session auth token for WebSocket authentication.
    // This is defense-in-depth against local non-browser attackers that
    // bypass origin checks (malware, browser extensions, local processes).
+   // Handed to the static file handler below, once the backend is running.
    s_chatBackendAuthToken = core::system::generateUuid(false);
-   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
@@ -5451,6 +5336,23 @@ Error startChatBackend(bool resumeConversation)
       clearChatBackendPort();
       return error;
    }
+
+   // Publish only once the backend is running, so a failed start never pins
+   // its installation or announces its port and token (the lock and launch
+   // failures above do reset both, via clearChatBackendPort()).
+   //
+   // The installation goes first so that, if this is the session's first CSP
+   // header rebuild, dist/csp.json -- cached for good, #18831 -- is read from
+   // it. An earlier HTML request, backend stop, or lock or launch failure will
+   // already have cached it.
+   staticfiles::setInstallationPath(positAiPath);
+
+   // Share the port with the static file handler for CSP connect-src
+   staticfiles::setChatBackendPort(s_chatBackendPort);
+
+   // In server mode the handler delivers this to the PA client as an
+   // HTTP-only cookie on the index.html response.
+   staticfiles::setChatBackendAuthToken(s_chatBackendAuthToken);
 
    return Success();
 }
@@ -5763,7 +5665,7 @@ void chatCheckForUpdates(const json::JsonRpcRequest& request,
 
    // Otherwise kick (or join) an async check and resolve once it completes.
    DLOG("Update state not populated or recheck forced, performing async check");
-   startUpdateCheck(false, forceRecheck, boost::bind(resolveWithUpdateState, cont));
+   startUpdateCheck(forceRecheck, boost::bind(resolveWithUpdateState, cont));
 }
 
 // Test-only: install (or clear) a one-shot override for chatCheckForUpdates.
@@ -6162,7 +6064,7 @@ void chatInstallUpdate(const json::JsonRpcRequest& request,
    else
    {
       DLOG("Update state not populated, performing async check before install");
-      startUpdateCheck(false, true, boost::bind(performInstall, cont));
+      startUpdateCheck(true, boost::bind(performInstall, cont));
    }
 }
 
@@ -6335,6 +6237,13 @@ Error chatUninstallPositAssistant(const json::JsonRpcRequest& request,
       return systemError(
          boost::system::errc::io_error, message, ERROR_LOCATION);
    }
+
+   // The installation the static file handler was serving is gone. Unpin it
+   // here rather than on the success path below, so the backup-removal
+   // failure also leaves asset requests resolving again -- a system-wide or
+   // bundled copy may still be there -- rather than failing against a
+   // directory that no longer exists.
+   staticfiles::setInstallationPath(FilePath());
 
    // Remove any backup left by a failed install/update. Unlike an install,
    // reporting uninstall success while an executable tree remains would leave
@@ -6556,6 +6465,23 @@ void onShutdown(bool terminatedNormally)
    }
 }
 
+// The owner id names this session's lock file and must be unique per
+// process (see ChatInstallLock.hpp): the session id alone is stable
+// across a session relaunch, so an orphaned predecessor process that
+// outlives the relaunch (#18572) holds a live lock under the
+// replacement's own name, and every chat_start_backend in the
+// replacement then fails with a spurious "update in progress" (#18571).
+// The session id is kept as a prefix so lock files remain attributable
+// (it can be empty for dev/automation-launched sessions); the uuid
+// supplies the per-process uniqueness. Leftover files from dead
+// processes are stale-cleaned by the next mutator.
+std::string makeInstallLockOwnerId()
+{
+   std::string sessionId = module_context::activeSession().id();
+   std::string uuid = core::system::generateUuid(false);
+   return sessionId.empty() ? uuid : sessionId + "-" + uuid;
+}
+
 } // end anonymous namespace
 
 // ============================================================================
@@ -6565,25 +6491,14 @@ install_lock::InstallLock& installLock()
 {
    // Constructed lazily so xdg paths and activeSession() are initialized
    // (FileLock::initialize() has also run by first use; the helper creates
-   // its FileLock instances per-operation, not at construction).
-   // The owner id names this session's lock file and must be unique per
-   // process (see ChatInstallLock.hpp): the session id alone is stable
-   // across a session relaunch, so an orphaned predecessor process that
-   // outlives the relaunch (#18572) holds a live lock under the
-   // replacement's own name, and every chat_start_backend in the
-   // replacement then fails with a spurious "update in progress" (#18571).
-   // The session id is kept as a prefix so lock files remain attributable
-   // (it can be empty for dev/automation-launched sessions); the uuid
-   // supplies the per-process uniqueness. Leftover files from dead
-   // processes are stale-cleaned by the next mutator.
-   static const std::string ownerId =
-      module_context::activeSession().id().empty()
-         ? core::system::generateUuid(false)
-         : module_context::activeSession().id() + "-" +
-              core::system::generateUuid(false);
+   // its FileLock instances per-operation, not at construction). The owner
+   // id is passed straight to the constructor rather than held in its own
+   // `static const std::string`: MSVC in C++20 mode initializes such a
+   // static to an empty string when its initializer is a conditional
+   // expression, which named every session's lock file ".lock" (#18787).
    static install_lock::InstallLock instance(
       xdg::userDataDir().completePath(chat_constants::kPositAiLocksDirName),
-      ownerId);
+      makeInstallLockOwnerId());
    return instance;
 }
 // ============================================================================

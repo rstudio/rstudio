@@ -47,6 +47,7 @@ set(CORE_SOURCE_FILES
    RecursionGuard.cpp
    Settings.cpp
    SocketRpc.cpp
+   StartupTiming.cpp
    StringUtils.cpp
    SqlIdentifier.cpp
    ColorUtils.cpp

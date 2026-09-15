@@ -20,6 +20,7 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { appState } from './app-state';
 import { DesktopBrowserWindow } from './desktop-browser-window';
+import { isAutomated } from './utils';
 
 const SOURCE_WINDOW_PREFIX = '_rstudio_satellite_source_window_';
 
@@ -129,6 +130,10 @@ export class SatelliteWindow extends GwtWindow {
       action: 'allow',
       overrideBrowserWindowOptions: {
         autoHideMenuBar: true,
+        // Electron shows window.open() windows immediately, which on macOS
+        // activates the app; Application.windowCreated() surfaces them with
+        // showInactive() instead during automation runs.
+        show: !isAutomated(),
         webPreferences: {
           additionalArguments: ['--api-keys=desktopInfo|desktop'],
           preload: DesktopBrowserWindow.getPreload(),

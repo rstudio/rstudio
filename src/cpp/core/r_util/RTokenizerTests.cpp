@@ -148,6 +148,19 @@ void testNumbers()
    v.verify(L"2i");
    v.verify(L"4.1i");
    v.verify(L"1e-2i");
+
+   // hex literals: uppercase prefix, binary exponents,
+   // fractions, and suffixes (https://github.com/rstudio/rstudio/issues/14363)
+   v.verify(L"0XFF");
+   v.verify(L"0Xff");
+   v.verify(L"0x1p3");
+   v.verify(L"0xAp-2");
+   v.verify(L"0X2P2");
+   v.verify(L"0x1p-3");
+   v.verify(L"0x1.8p3");
+   v.verify(L"0x.8p2");
+   v.verify(L"0xFi");
+   v.verify(L"0xFL");
 }
 
 

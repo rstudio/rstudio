@@ -754,6 +754,9 @@ public class ElementIds
    public final static String ENC_SHOW_ALL = "enc_show_all";
    public final static String ENC_SET_DEFAULT = "enc_set_default";
 
+   // Change Spelling Language Dialog
+   public final static String CHANGE_SPELLING_LANGUAGE_SELECT = "change_spelling_language_select";
+
    // Modify Keyboard Shortcuts Dialog
    public final static String KYBRD_SHRTCTS_FILTER_WIDGET = "kybrd_shrtcts_fltr";
    public static String getKybrdShrtctsFilterWidget() { return getElementId(KYBRD_SHRTCTS_FILTER_WIDGET); }

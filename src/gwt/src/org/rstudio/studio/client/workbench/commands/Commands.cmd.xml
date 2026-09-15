@@ -209,6 +209,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="findInFiles"/>
          <separator/>
          <cmd refid="checkSpelling"/>
+         <cmd refid="changeSpellingLanguage"/>
          <cmd refid="wordCount"/>
          <separator/>
          <cmd refid="consoleClear"/>
@@ -248,6 +249,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="reindent"/>
          <cmd refid="reformatCode"/>
          <cmd refid="reformatDocument"/>
+         <separator/>
+         <cmd refid="selectCurrentStatement"/>
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
@@ -750,6 +753,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="shrinkSelection" value="Ctrl+Shift+Down" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="sublime"/>
          <shortcut refid="expandSelection" value="Cmd+Alt+Shift+Up" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="shrinkSelection" value="Cmd+Alt+Shift+Down" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="selectCurrentStatement" value="Ctrl+Alt+Shift+S"/>
          <shortcut refid="goToNextSection" value="Cmd+PageDown"/>
          <shortcut refid="goToPrevSection" value="Cmd+PageUp"/>
          <shortcut refid="splitIntoLines" value="Ctrl+Alt+A" disableModes="emacs"/>
@@ -1968,6 +1972,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Execute the entire R statement which contains the cursor."
         context="r"/>
 
+   <cmd id="selectCurrentStatement"
+        label="Select Current Statement"
+        menuLabel="Select Current _Statement"
+        desc="Select the entire R statement which contains the cursor, even when it spans several lines."
+        context="r"/>
+
    <cmd id="executeCurrentParagraph"
         label="Execute Current Paragraph"
         menuLabel="Execute Current _Paragraph"
@@ -2523,6 +2533,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Check _Spelling..."
         context="editor"
         desc="Check spelling in document"/>
+
+   <cmd id="changeSpellingLanguage"
+        menuLabel="Change Spelling _Language..."
+        windowMode="main"
+        desc="Switch the dictionary used for spell checking"/>
 
    <cmd id="wordCount"
         menuLabel="_Word Count"

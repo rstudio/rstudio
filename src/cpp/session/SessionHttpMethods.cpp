@@ -28,11 +28,14 @@
 
 #include "session-config.h"
 
+#include <atomic>
+
 #include <boost/algorithm/string.hpp>
 
 #include <shared_core/json/Json.hpp>
 #include <shared_core/Logger.hpp>
 
+#include <core/StartupTiming.hpp>
 #include <core/Thread.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 #include <core/gwt/GwtLogHandler.hpp>
@@ -72,6 +75,12 @@ namespace session {
 namespace {
 
 core::http::UriHandlerFunction s_defaultUriHandler;
+
+// whether s_defaultUriHandler has been assigned; the listener thread gates
+// its static-asset fast path on this. registerGwtHandlers() runs (in desktop
+// and standalone modes only) before the listener thread starts, so the store
+// is always visible to it; the atomic is defensive, not load-bearing
+std::atomic<bool> s_gwtHandlersRegistered(false);
 
 // version of the executable -- this is the legacy version designator. we
 // set it to double max so that it always invalidates legacy clients
@@ -497,6 +506,16 @@ bool waitForMethod(const std::string& method,
    // make sure to record it
    suspend::addBlockingOp(method, allowSuspend);
 
+   // the main thread only begins serving queued requests here; until now any
+   // request from the client (including the initial page load) has been
+   // waiting in the connection queue
+   static bool s_firstWait = true;
+   if (s_firstWait)
+   {
+      s_firstWait = false;
+      core::startup_timing::checkpoint("first-wait-for-method");
+   }
+
    // wait until we get the method we are looking for
    while (true)
    {
@@ -507,6 +526,13 @@ bool waitForMethod(const std::string& method,
       boost::shared_ptr<HttpConnection> ptrConnection =
           httpConnectionListener().mainConnectionQueue().dequeConnection(
                                             connectionQueueTimeout);
+
+      static bool s_firstConnection = true;
+      if (ptrConnection && s_firstConnection)
+      {
+         s_firstConnection = false;
+         core::startup_timing::checkpoint("first-request:" + ptrConnection->request().uri());
+      }
 
 
       // perform background processing (true for isIdle)
@@ -624,6 +650,39 @@ bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
 {
     return boost::algorithm::starts_with(ptrConnection->request().uri(),
                                          "/rpc/");
+}
+
+bool isStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   // only GET requests that fall through to the GWT file handler: anything
+   // with a module-registered handler, and every RPC or event request, needs
+   // the main thread (and possibly R)
+   if (!s_gwtHandlersRegistered.load(std::memory_order_acquire))
+      return false;
+
+   const core::http::Request& request = ptrConnection->request();
+   if (request.method() != "GET")
+      return false;
+
+   const std::string& uri = request.uri();
+   if (boost::algorithm::starts_with(uri, "/rpc/") ||
+       boost::algorithm::starts_with(uri, "/events/"))
+   {
+      return false;
+   }
+
+   return !uri_handlers::handlers().handlerFor(uri);
+}
+
+void handleStaticAssetRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   // serve with the default (GWT file) handler directly. the caller decided
+   // via isStaticAssetRequest() that no module handler applies; consulting
+   // the handler map again (as handleConnection() would) could pick up a
+   // handler registered in between and run it off the main thread
+   core::http::Response response;
+   s_defaultUriHandler(ptrConnection->request(), &response);
+   ptrConnection->sendResponse(response);
 }
 
 bool isAsyncJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
@@ -935,6 +994,13 @@ WaitResult startHttpConnectionListenerWithTimeout()
 
 void registerGwtHandlers()
 {
+   // called once, before the HTTP listener starts, so the listener thread can
+   // serve the client while R initializes (see isStaticAssetRequest)
+   static bool s_registered = false;
+   if (s_registered)
+      return;
+   s_registered = true;
+
    // alias options
    session::Options& options = session::options();
 
@@ -956,11 +1022,21 @@ void registerGwtHandlers()
    // declare program mode in JS init block (for GWT boot time access)
    std::string initJs = "window.program_mode = \"" + options.programMode() + "\";\n";
 
-   // set default handler
+   // set default handler; the desktop talks to us over loopback, where
+   // compressing the multi-megabyte client costs far more than sending it
+   bool compress = options.programMode() != kSessionProgramModeDesktop;
    s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(),
                                                   "/",
                                                   http::UriFilterFunction(),
-                                                  initJs);
+                                                  initJs,
+                                                  std::string(),
+                                                  false,
+                                                  std::string(),
+                                                  std::string(),
+                                                  compress);
+
+   // publish the handler to the listener thread (see isStaticAssetRequest)
+   s_gwtHandlersRegistered.store(true, std::memory_order_release);
 }
 
 namespace {

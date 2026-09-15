@@ -16,6 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 import sinon from 'sinon';
+import { app } from 'electron';
 
 import { isWindowsDocker } from '../unit-utils';
 import { SecondaryWindow } from '../../../src/main/secondary-window';
@@ -31,6 +32,21 @@ if (!isWindowsDocker()) {
     afterEach(() => {
       clearApplicationSingleton();
       sinon.restore();
+    });
+
+    it('windowOpening creates the window hidden only in automation mode', () => {
+      const showOption = () => {
+        const opening = SecondaryWindow.windowOpening(800, 600);
+        return opening.action === 'allow' ? opening.overrideBrowserWindowOptions?.show : undefined;
+      };
+      assert.isTrue(showOption());
+
+      app.commandLine.appendSwitch('automation-agent');
+      try {
+        assert.isFalse(showOption());
+      } finally {
+        app.commandLine.removeSwitch('automation-agent');
+      }
     });
 
     it('construction creates a hidden BrowserWindow', () => {

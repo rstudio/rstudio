@@ -48,7 +48,7 @@ public class WebContentFileType extends TextFileType
             false,
             false,
             true,
-            false,
+            isMarkdown, // show document outline (markdown headings)
             false);
    }
    

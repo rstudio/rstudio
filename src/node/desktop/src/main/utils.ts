@@ -607,7 +607,6 @@ export function registerWebContentsDebugHandlers(webContents: WebContents) {
     'plugin-crashed',
     'preferred-size-changed',
     'preload-error',
-    'render-process-gone',
     'responsive',
     'select-bluetooth-device',
     'select-client-certificate',

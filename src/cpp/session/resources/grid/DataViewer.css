@@ -941,11 +941,29 @@ th.columnClickable div {
 }
 
 /* "(filtered)" qualifier appended to the column count when the summaries
-   describe a filtered subset rather than the whole frame. Dimmed + italic so
-   it reads as an annotation on the count, not part of it. */
-.sidebar-toggle-filtered {
+   describe a filtered subset rather than the whole frame, and "(N hidden)"
+   when columns are hidden from the grid. Dimmed + italic so they read as
+   annotations on the count, not part of it. */
+.sidebar-toggle-filtered,
+.sidebar-toggle-hidden {
    font-style: italic;
    opacity: 0.7;
+}
+
+/* Show-all / hide-all eye in the panel header, between the help icon and the
+   close glyph. Shares the entry eye's glyphs and state class (see
+   .sidebar-eye-icon below, whose sizing these id-qualified rules outrank);
+   a real button like the help icon. */
+#sidebarToggle .sidebar-toggle-eye {
+   margin-left: 8px;
+   width: 12px;
+   height: 12px;
+   opacity: 0.6;
+}
+
+#sidebarToggle .sidebar-toggle-eye:hover,
+#sidebarToggle .sidebar-toggle-eye:focus-visible {
+   opacity: 1;
 }
 
 /* Help affordance; owns the auto margin that pushes it (and the close
@@ -984,11 +1002,13 @@ th.columnClickable div {
    opacity: 1;
 }
 
-/* ...but not while the help icon is hovered: a click there opens the help
-   dialog instead of reaching the toggle, so the close affordance should
-   not light up as if the header were about to collapse. (The close glyph
-   is a following sibling of the help icon, hence the ~ combinator.) */
-#sidebarToggle .sidebar-toggle-help:hover ~ .sidebar-toggle-close {
+/* ...but not while the help or eye icon is hovered: a click there opens the
+   help dialog / toggles column visibility instead of reaching the toggle, so
+   the close affordance should not light up as if the header were about to
+   collapse. (The close glyph is a following sibling of both, hence the ~
+   combinator.) */
+#sidebarToggle .sidebar-toggle-help:hover ~ .sidebar-toggle-close,
+#sidebarToggle .sidebar-toggle-eye:hover ~ .sidebar-toggle-close {
    opacity: 0.6;
 }
 
@@ -1218,6 +1238,57 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
    cursor: default;
 }
 
+/* Eye icon: hides the column from the grid, or shows it again. Same idle /
+   active opacity treatment as the funnel; the slashed glyph (.col-hidden)
+   marks a hidden column. Also used, with .sidebar-toggle-eye, for the header's
+   show-all / hide-all control. */
+.sidebar-eye-icon {
+   display: inline-block;
+   width: 11px;
+   height: 11px;
+   margin-left: 2px;
+   flex-shrink: 0;
+   align-self: center;
+   cursor: pointer;
+   opacity: 0.3;
+   background-color: var(--grid-fg);
+   -webkit-mask-repeat: no-repeat;
+   -webkit-mask-position: center;
+   -webkit-mask-size: contain;
+   mask-repeat: no-repeat;
+   mask-position: center;
+   mask-size: contain;
+   /* Open eye: a lens with an evenodd iris hole and a pupil. */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill-rule='evenodd' d='M1 6Q3.5 2.5 6 2.5T11 6Q8.5 9.5 6 9.5T1 6ZM6 3.8A2.2 2.2 0 1 0 6 8.2A2.2 2.2 0 1 0 6 3.8Z'/%3E%3Ccircle cx='6' cy='6' r='1.1'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill-rule='evenodd' d='M1 6Q3.5 2.5 6 2.5T11 6Q8.5 9.5 6 9.5T1 6ZM6 3.8A2.2 2.2 0 1 0 6 8.2A2.2 2.2 0 1 0 6 3.8Z'/%3E%3Ccircle cx='6' cy='6' r='1.1'/%3E%3C/svg%3E");
+}
+
+.sidebar-eye-icon:hover,
+.sidebar-eye-icon:focus-visible {
+   opacity: 0.6;
+}
+
+.sidebar-eye-icon.col-hidden {
+   opacity: 0.9;
+   /* Slashed eye. */
+   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill-rule='evenodd' d='M1 6Q3.5 2.5 6 2.5T11 6Q8.5 9.5 6 9.5T1 6ZM6 3.8A2.2 2.2 0 1 0 6 8.2A2.2 2.2 0 1 0 6 3.8Z'/%3E%3Ccircle cx='6' cy='6' r='1.1'/%3E%3Cpath d='M1.5 10.5L10.5 1.5' stroke='black' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill-rule='evenodd' d='M1 6Q3.5 2.5 6 2.5T11 6Q8.5 9.5 6 9.5T1 6ZM6 3.8A2.2 2.2 0 1 0 6 8.2A2.2 2.2 0 1 0 6 3.8Z'/%3E%3Ccircle cx='6' cy='6' r='1.1'/%3E%3Cpath d='M1.5 10.5L10.5 1.5' stroke='black' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.sidebar-eye-icon.col-hidden:hover,
+.sidebar-eye-icon.col-hidden:focus-visible {
+   opacity: 1;
+}
+
+/* A hidden column's entry is dimmed as a whole, except its action icons (the
+   eye especially must stay legible: it is the way back). */
+.sidebar-col.col-hidden .sidebar-col-name,
+.sidebar-col.col-hidden .sidebar-col-type,
+.sidebar-col.col-hidden .sidebar-sparkline,
+.sidebar-col.col-hidden .sidebar-col-footer {
+   opacity: 0.45;
+}
+
 /* Filter icon (funnel glyph). Always shown; faint when inactive, fully opaque
    when the column has an active filter -- the same opacity-based active/idle
    treatment as the pin and sort icons. Clicking it opens the column's filter
@@ -1434,6 +1505,49 @@ body.overlay-scrollbars #sidebarContent::-webkit-scrollbar {
    color: var(--grid-na-color);
    font-size: 10px;
    font-style: italic;
+}
+
+
+/* ==========================================================================
+   All-columns-hidden hint
+   ========================================================================== */
+
+/* Centered over the panes row (which anchors it) while every column is hidden.
+   The sidebar is the only per-column show affordance and may be collapsed, so
+   the hint carries a show-all button. Shown via .visible by
+   updateAllColumnsHiddenHint; below the sticky header (z-index 10) and the
+   error overlay. */
+#allColumnsHiddenHint {
+   display: none;
+   position: absolute;
+   inset: 0;
+   z-index: 5;
+   align-items: center;
+   justify-content: center;
+   gap: 10px;
+   pointer-events: none;
+   color: var(--grid-na-color);
+   font-size: 12px;
+}
+
+#allColumnsHiddenHint.visible {
+   display: flex;
+}
+
+#allColumnsHiddenHint button {
+   pointer-events: auto;
+   font: inherit;
+   color: var(--grid-fg);
+   background-color: var(--grid-header-bg);
+   border: 1px solid var(--grid-border);
+   border-radius: 3px;
+   padding: 3px 8px;
+   cursor: pointer;
+}
+
+#allColumnsHiddenHint button:hover,
+#allColumnsHiddenHint button:focus-visible {
+   background-color: var(--grid-hover-bg);
 }
 
 

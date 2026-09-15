@@ -645,25 +645,30 @@ public class AceEditorWidget extends Composite
          remapForEditImpl("<C-S-v>", "c-s-v");
    }
 
+   // NOTE: the vim / emacs keybindings load lazily, so either module can be
+   // absent here; nothing needs unmapping until it loads
    private static final native void unmapForEditImpl(String vimKeys, String emacsKeys)
    /*-{
 
       // Handle Vim mapping
-      var Vim = $wnd.require("ace/keyboard/vim").handler;
-      var keymap = Vim.defaultKeymap;
-      for (var i = 0; i < keymap.length; i++) {
-         if (keymap[i].keys === vimKeys) {
-            keymap[i].keys = "DISABLED:" + vimKeys;
-            break;
+      var vimModule = $wnd.require("ace/keyboard/vim");
+      if (vimModule) {
+         var keymap = vimModule.handler.defaultKeymap;
+         for (var i = 0; i < keymap.length; i++) {
+            if (keymap[i].keys === vimKeys) {
+               keymap[i].keys = "DISABLED:" + vimKeys;
+               break;
+            }
          }
       }
 
       // Handle Emacs mapping
-      var Emacs = $wnd.require("ace/keyboard/emacs").handler;
-      var bindings = Emacs.commandKeyBinding;
-      bindings["DISABLED:" + emacsKeys] = bindings[emacsKeys];
-      delete bindings[emacsKeys];
-
+      var emacsModule = $wnd.require("ace/keyboard/emacs");
+      if (emacsModule) {
+         var bindings = emacsModule.handler.commandKeyBinding;
+         bindings["DISABLED:" + emacsKeys] = bindings[emacsKeys];
+         delete bindings[emacsKeys];
+      }
 
    }-*/;
 
@@ -671,21 +676,25 @@ public class AceEditorWidget extends Composite
    /*-{
 
       // Handle Vim mapping
-      var Vim = $wnd.require("ace/keyboard/vim").handler;
-      var keymap = Vim.defaultKeymap;
-      for (var i = 0; i < keymap.length; i++) {
-         if (keymap[i].keys === "DISABLED:" + vimKeys) {
-            keymap[i].keys = vimKeys;
-            break;
+      var vimModule = $wnd.require("ace/keyboard/vim");
+      if (vimModule) {
+         var keymap = vimModule.handler.defaultKeymap;
+         for (var i = 0; i < keymap.length; i++) {
+            if (keymap[i].keys === "DISABLED:" + vimKeys) {
+               keymap[i].keys = vimKeys;
+               break;
+            }
          }
       }
 
       // Handle Emacs mapping
-      var Emacs = $wnd.require("ace/keyboard/emacs").handler;
-      var bindings = Emacs.commandKeyBinding;
-      if (bindings["DISABLED:" + emacsKeys] != null) {
-         bindings[emacsKeys] = bindings["DISABLED:" + emacsKeys];
-         delete bindings["DISABLED:" + emacsKeys];
+      var emacsModule = $wnd.require("ace/keyboard/emacs");
+      if (emacsModule) {
+         var bindings = emacsModule.handler.commandKeyBinding;
+         if (bindings["DISABLED:" + emacsKeys] != null) {
+            bindings[emacsKeys] = bindings["DISABLED:" + emacsKeys];
+            delete bindings["DISABLED:" + emacsKeys];
+         }
       }
    }-*/;
 

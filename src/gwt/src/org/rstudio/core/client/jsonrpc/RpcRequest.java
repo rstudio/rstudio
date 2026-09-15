@@ -147,10 +147,6 @@ public class RpcRequest
                      requestLogEntry_.logResponse(ResponseType.Normal,
                                                  responseText);
                      rpcResponse = RpcResponse.parseUnsafe(responseText);
-                     
-                     // response received and validated, process it!
-                     requestCallback.onResponseReceived(enclosingRequest, 
-                                                        rpcResponse);
                   }
                   catch(Exception e)
                   {
@@ -159,7 +155,27 @@ public class RpcRequest
                                                 RpcError.TRANSMISSION_ERROR,
                                                 e.getLocalizedMessage());
                      requestCallback.onError(enclosingRequest, error);
+                     return;
                   }
+
+                  // parse failures are reported as a null response rather
+                  // than an exception
+                  if (rpcResponse == null)
+                  {
+                     RpcError error = RpcError.create(
+                                                RpcError.TRANSMISSION_ERROR,
+                                                "Unable to parse the response from the server");
+                     requestCallback.onError(enclosingRequest, error);
+                     return;
+                  }
+
+                  // response received and validated, process it! NOTE: this is
+                  // deliberately outside the try/catch above: an exception from
+                  // the callback is a client bug, and catching it here would
+                  // both misreport it as a transmission error and hide it from
+                  // the uncaught-exception log
+                  requestCallback.onResponseReceived(enclosingRequest,
+                                                     rpcResponse);
                }
                else
                {
@@ -210,6 +226,8 @@ public class RpcRequest
    
    public void cancel()
    {
+      cancelled_ = true;
+
       if (request_ != null)
       {
          request_.cancel();
@@ -226,6 +244,18 @@ public class RpcRequest
    public String getUrl()
    {
       return url_;
+   }
+
+   // a request created before client_init returned has no client id; the
+   // server layer holds such requests and fills the id in before sending
+   public void setClientId(String clientId)
+   {
+      clientId_ = clientId != null ? new JSONString(clientId) : null;
+   }
+
+   public boolean isCancelled()
+   {
+      return cancelled_;
    }
 
    public String getMethod()
@@ -293,10 +323,11 @@ public class RpcRequest
    final private boolean redactLog_;
    final private String resultFieldName_;
    final private JSONString sourceWindow_;
-   final private JSONString clientId_;
+   private JSONString clientId_;
    final private JSONString clientVersion_;
    final private boolean refreshCredentials_;
    private Request request_ = null;
+   private boolean cancelled_ = false;
    private RequestLogEntry requestLogEntry_ = null;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

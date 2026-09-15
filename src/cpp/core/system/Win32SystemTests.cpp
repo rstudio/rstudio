@@ -15,6 +15,7 @@
 
 #ifdef _WIN32
 
+#include <algorithm>
 #include <sstream>
 
 #include <core/FileUtils.hpp>
@@ -29,6 +30,14 @@
 namespace rstudio {
 namespace core {
 namespace system {
+
+namespace detail {
+
+std::vector<SubprocInfo> getSubprocesses(PidType pid,
+                                       const FILETIME* pParentCreationTime);
+
+} // namespace detail
+
 namespace tests {
 
 // Test fixture for process creation and cleanup.
@@ -133,6 +142,12 @@ static std::string Describe(const std::vector<SubprocInfo>& subprocs)
    for (const SubprocInfo& info : subprocs)
       os << " " << info.exe << "(" << info.pid << ")";
    return os.str();
+}
+
+static bool ContainsProcess(const std::vector<SubprocInfo>& subprocs, PidType pid)
+{
+   return std::any_of(subprocs.begin(), subprocs.end(),
+                     [pid](const SubprocInfo& info) { return info.pid == pid; });
 }
 
 TEST(Win32SystemTest, TestWin7OrLater)
@@ -466,6 +481,75 @@ TEST_F(Win32ProcessTest, EmptySubprocListWhenNoChildProcesses)
 
    std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
    ASSERT_TRUE(children.empty()) << "unexpected children:" << Describe(children);
+}
+
+TEST_F(Win32ProcessTest, RejectsChildCreatedBeforeParent)
+{
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
+   ASSERT_TRUE(ContainsProcess(getSubprocesses(currentProcessId()), pi.dwProcessId));
+
+   // Simulate our pid having been reused by a process created after the child.
+   // The snapshot still names us as its parent, just as it does for an orphan.
+   FILETIME parentCreationTime = {MAXDWORD, MAXLONG};
+   auto children = detail::getSubprocesses(currentProcessId(), &parentCreationTime);
+   EXPECT_FALSE(ContainsProcess(children, pi.dwProcessId));
+}
+
+TEST_F(Win32ProcessTest, KeepsChildCreatedAfterParent)
+{
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
+
+   FILETIME parentCreationTime = {0, 0};
+   auto children = detail::getSubprocesses(currentProcessId(), &parentCreationTime);
+   EXPECT_TRUE(ContainsProcess(children, pi.dwProcessId));
+}
+
+TEST_F(Win32ProcessTest, KeepsChildWithSameCreationTimeAsParent)
+{
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
+
+   FILETIME creationTime, exitTime, kernelTime, userTime;
+   ASSERT_TRUE(::GetProcessTimes(pi.hProcess, &creationTime,
+                                &exitTime, &kernelTime, &userTime));
+   auto children = detail::getSubprocesses(currentProcessId(), &creationTime);
+   EXPECT_TRUE(ContainsProcess(children, pi.dwProcessId));
+}
+
+TEST_F(Win32ProcessTest, KeepsChildWhenParentCreationTimeIsUnavailable)
+{
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
+
+   auto children = detail::getSubprocesses(currentProcessId(), nullptr);
+   EXPECT_TRUE(ContainsProcess(children, pi.dwProcessId));
+}
+
+TEST_F(Win32ProcessTest, KeepsChildWhenCreationTimeCannotBeQueried)
+{
+   ASSERT_TRUE(StartProcess("ping -n 30 127.0.0.1"));
+
+   // Deny new handles to this test process. The fixture's existing process
+   // and job handles still permit cleanup, including after an assertion fails.
+   ACL emptyAcl;
+   ASSERT_TRUE(::InitializeAcl(&emptyAcl, sizeof(emptyAcl), ACL_REVISION));
+   SECURITY_DESCRIPTOR securityDescriptor;
+   ASSERT_TRUE(::InitializeSecurityDescriptor(&securityDescriptor,
+                                              SECURITY_DESCRIPTOR_REVISION));
+   ASSERT_TRUE(::SetSecurityDescriptorDacl(&securityDescriptor, TRUE, &emptyAcl, FALSE));
+   ASSERT_TRUE(::SetKernelObjectSecurity(pi.hProcess, DACL_SECURITY_INFORMATION,
+                                        &securityDescriptor));
+
+   HANDLE child = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pi.dwProcessId);
+   DWORD error = ::GetLastError();
+   CloseHandleOnExitScope closeChild(&child, ERROR_LOCATION);
+   if (child)
+      GTEST_SKIP() << "process query access bypasses the test process DACL";
+   ASSERT_EQ(ERROR_ACCESS_DENIED, error);
+
+   // This child would be rejected if its timestamp were available, but a
+   // failed query must preserve the existing pid match.
+   FILETIME parentCreationTime = {MAXDWORD, MAXLONG};
+   auto children = detail::getSubprocesses(currentProcessId(), &parentCreationTime);
+   EXPECT_TRUE(ContainsProcess(children, pi.dwProcessId));
 }
 
 } // end namespace tests

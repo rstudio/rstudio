@@ -124,11 +124,17 @@ int main(int argc, char* argv[])
    // Without --log, no logging is initialized so automation output stays clean.
    // The RSTUDIO_TEST_LOG_LEVEL env var also works (--log flag takes priority).
    // Recognized levels: DEBUG, INFO, WARN (default), ERR/ERROR.
+   //
+   // --only-database (or RSTUDIO_ONLY_DATABASE=1) restricts the run to the
+   // database-backed fixture tests (the *IntegrationTest suites), skipping
+   // everything else -- used to rerun just those against a real PostgreSQL
+   // instance without repeating the rest of the suite.
    using namespace rstudio::core;
    bool enableLog = false;
    log::LogLevel logLevel = log::LogLevel::WARN;
+   bool onlyDatabase = false;
 
-   // Scan argv for --log or --log=LEVEL, removing it so gtest doesn't see it.
+   // Scan argv for our custom flags, removing them so gtest doesn't see them.
    for (int i = 1; i < argc; )
    {
       std::string arg(argv[i]);
@@ -148,6 +154,13 @@ int main(int argc, char* argv[])
             argv[j] = argv[j + 1];
          --argc;
       }
+      else if (arg == "--only-database")
+      {
+         onlyDatabase = true;
+         for (int j = i; j < argc - 1; ++j)
+            argv[j] = argv[j + 1];
+         --argc;
+      }
       else
       {
          ++i;
@@ -155,7 +168,7 @@ int main(int argc, char* argv[])
    }
    argv[argc] = nullptr;
 
-   // Fall back to env var if --log was not specified
+   // Fall back to env vars if the flags were not specified
    if (!enableLog)
    {
       const char* logLevelEnv = std::getenv("RSTUDIO_TEST_LOG_LEVEL");
@@ -163,6 +176,16 @@ int main(int argc, char* argv[])
       {
          enableLog = true;
          logLevel = parseLogLevel(std::string(logLevelEnv));
+      }
+   }
+
+   if (!onlyDatabase)
+   {
+      const char* onlyDatabaseEnv = std::getenv("RSTUDIO_ONLY_DATABASE");
+      if (onlyDatabaseEnv &&
+          (std::string(onlyDatabaseEnv) == "1" || std::string(onlyDatabaseEnv) == "true"))
+      {
+         onlyDatabase = true;
       }
    }
 
@@ -177,5 +200,9 @@ int main(int argc, char* argv[])
    }
 
    testing::InitGoogleTest(&argc, argv);
+
+   if (onlyDatabase)
+      GTEST_FLAG_SET(filter, "*IntegrationTest*");
+
    return RUN_ALL_TESTS();
 }

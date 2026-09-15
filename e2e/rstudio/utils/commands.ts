@@ -498,8 +498,14 @@ export async function resetSourcePaneState(page: Page): Promise<void> {
 
 /**
  * Wait until a resetSourcePaneState dispatch has actually settled: the active
- * document is the kept Untitled (path === null) AND exactly one source tab
- * remains across all columns.
+ * document is the kept Untitled (path === null), it is clean, AND exactly one
+ * source tab remains across all columns.
+ *
+ * The clean check matters because the kept Untitled is shared across specs: a
+ * dirty one raises a modal Save File prompt the next time anything saves all
+ * documents, blocking every later click. SourceColumnManager only reuses a
+ * clean untitled doc, so a dirty one here means the fresh replacement has not
+ * landed yet.
  *
  * resetToUntitled dispatches a GWT event whose handler reverts dirty targets,
  * then closes every tab except a kept Untitled in an async CPS chain of
@@ -519,7 +525,7 @@ export async function waitForSourcePaneReset(page: Page, timeout = 10000): Promi
   await page.waitForFunction(
     () => {
       const doc = window.rstudio?.documents.active() ?? null;
-      if (doc === null || doc.path !== null) return false;
+      if (doc === null || doc.path !== null || doc.dirty) return false;
       // Count source tabs across all source columns. The DocTabLayoutPanel
       // wrapper tags its root with class `rstudio_source_panel`, and each
       // open document renders one `[role="tab"]` child of the panel's tablist.
@@ -807,11 +813,34 @@ export async function openProject(
   // settle before polling the bridge. On Desktop this is a no-op.
   await page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
 
-  await page.waitForFunction(
-    () => window.rstudio?.ready === true,
-    null,
-    { timeout, polling: 50 },
-  );
+  // A Desktop project switch navigates the window to the new session, and
+  // GWT's bootstrap has no retry: if the main *.cache.js fails to load the
+  // window stays blank forever (run 34637770965 saw net::ERR_NO_BUFFER_SPACE
+  // on Windows, with `rstudio.nocache.js` loaded and nothing after it). So
+  // if ready has not flipped within a grace period AND the automation bridge
+  // was never installed -- window.rstudio is still the bootstrap's global
+  // function, or missing, rather than the bridge object -- reload once to
+  // refetch the bootstrap. A session that is merely slow (bridge installed,
+  // ready still false) is left alone.
+  const started = Date.now();
+  const grace = Math.min(20000, timeout);
+  const readyInGrace = await page
+    .waitForFunction(() => window.rstudio?.ready === true, null, { timeout: grace, polling: 50 })
+    .then(() => true, () => false);
+  if (!readyInGrace) {
+    const bridgeInstalled = await page
+      .evaluate(() => typeof window.rstudio === 'object' && window.rstudio !== null)
+      .catch(() => false);
+    if (!bridgeInstalled) {
+      console.log(`openProject: automation bridge missing ${grace}ms after the switch; reloading once`);
+      await page.reload({ timeout: 30000 }).catch(() => {});
+    }
+    await page.waitForFunction(
+      () => window.rstudio?.ready === true,
+      null,
+      { timeout: Math.max(timeout - (Date.now() - started), 1000), polling: 50 },
+    );
+  }
 
   // ready=true tells us the workbench is wired up, but SessionInfo can
   // still report the previous project's path for a beat -- and the project

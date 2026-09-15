@@ -210,6 +210,9 @@ class Git;
 
 std::vector<PidType> s_pidsToTerminate_;
 
+// git as a shell command, for the callers that run it through a shell; Windows
+// uses gitBin() with runProgram() instead -- see gitExec()
+#ifndef _WIN32
 ShellCommand git()
 {
    if (!s_gitExePath.empty())
@@ -220,6 +223,7 @@ ShellCommand git()
    else
       return ShellCommand("git");
 }
+#endif
 
 
 #ifdef _WIN32
@@ -330,8 +334,11 @@ Error gitExec(const ShellArgs& args,
               core::system::ProcessResult* pResult)
 {
    // if we see an 'index.lock' file within the associated
-   // git repository, try waiting a bit until it's removed
-   waitForIndexLock(workingDir);
+   // git repository, try waiting a bit until it's removed.
+   // an empty working dir means there is no repository to wait on, and would
+   // resolve the lockfile path against the process working directory instead
+   if (!workingDir.isEmpty())
+      waitForIndexLock(workingDir);
 
    // initialize process options
    core::system::ProcessOptions options = procOptions();
@@ -351,8 +358,10 @@ Error gitExec(const ShellArgs& args,
 
    // on Windows, we prefer runProgram() rather than runCommand()
    // as runCommand() requires going through a cmd.exe shell, which
-   // doesn't support UNC paths.
+   // doesn't support UNC paths, and which hangs when a cmd.exe disabled by
+   // Group Policy waits on a keypress that never arrives.
    // https://github.com/rstudio/rstudio/issues/4137
+   // https://github.com/rstudio/rstudio/issues/18735
 #ifdef _WIN32
    error = runProgram(gitBin(), args.args(), "", options, pResult);
 #else
@@ -3361,9 +3370,7 @@ bool initGitBin()
    // Save version
    s_gitVersion = GIT_1_7_2;
    core::system::ProcessResult result;
-   error = core::system::runCommand(git() << "--version",
-                                    procOptions(),
-                                    &result);
+   error = gitExec(gitArgs() << "--version", &result);
    if (error)
       LOG_ERROR(error);
    else

@@ -96,6 +96,29 @@ void writeStandardError(const std::string& output)
 }
 
 
+// set console action capacity from user pref, presuming the value is reasonable
+void applyConsoleMaxLines()
+{
+   int maxLines = prefs::userPrefs().consoleMaxLines();
+   if (maxLines < kMinConsoleLines)
+   {
+      LOG_WARNING_MESSAGE("Console must have at least " +
+            safe_convert::numberToString(kMinConsoleLines) +
+            " lines; ignoring invalid max line setting '" +
+            safe_convert::numberToString(maxLines) + "'");
+   }
+   else
+   {
+      r::session::consoleActions().setCapacity(maxLines);
+   }
+}
+
+void onUserPrefsChanged(const std::string& /*layer*/, const std::string& pref)
+{
+   if (pref == kConsoleMaxLines)
+      applyConsoleMaxLines();
+}
+
 Error initializeOutputCapture()
 {
    return core::system::captureStandardStreams(writeStandardOutput,
@@ -224,19 +247,9 @@ Error initialize()
          return error;
    }
 
-   // set console action capacity from user pref, presuming the value is reasonable
-   int maxLines = prefs::userPrefs().consoleMaxLines();
-   if (maxLines < kMinConsoleLines)
-   {
-      LOG_WARNING_MESSAGE("Console must have at least " + 
-            safe_convert::numberToString(kMinConsoleLines) + 
-            " lines; ignoring invalid max line setting '" +
-            safe_convert::numberToString(maxLines) + "'");
-   }
-   else
-   {
-      r::session::consoleActions().setCapacity(maxLines);
-   }
+   // set console action capacity from user pref, and keep it in sync
+   applyConsoleMaxLines();
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    // register routines
    RS_REGISTER_CALL_METHOD(rs_getPendingInput);

@@ -30,7 +30,8 @@ http::UriHandlerFunction fileHandlerFunction(
       const std::string& gwtPrefix = std::string(),
       bool useEmulatedStack = false,
       const std::string& serverHomepagePath = std::string(),
-      const std::string& frameOptions = std::string());
+      const std::string& frameOptions = std::string(),
+      bool compress = true);
    
 } // namespace gwt
 } // namespace core

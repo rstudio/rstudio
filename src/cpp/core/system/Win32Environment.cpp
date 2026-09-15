@@ -152,8 +152,8 @@ void setenv(const std::string& name, const std::string& value)
    // also write through the C runtime: the CRT keeps its own copy of the
    // environment, snapshotted lazily from the process block and never
    // refreshed by SetEnvironmentVariable, so without this raw ::getenv
-   // calls (including those made by in-process libraries and by R itself,
-   // which reads the environment via its CRT) would not see the update.
+   // calls (including those made by in-process libraries sharing our CRT
+   // module, and by R itself in release builds) would not see the update.
    // a failure in one store but not the other leaves the two out of sync,
    // so log it
    errno_t status = ::_wputenv_s(nameWide.c_str(), valueWide.c_str());
@@ -194,6 +194,13 @@ void unsetenv(const std::string& name)
    }
 }
 
+bool isValidEnvironmentVariableName(const std::string& name)
+{
+   // SetEnvironmentVariable forbids only the empty name and names containing
+   // '='; unlike POSIX, Windows imposes no restriction on the remaining
+   // characters (e.g. ProgramFiles(x86) is a real, always-present variable)
+   return !name.empty() && name.find('=') == std::string::npos;
+}
 
 } // namespace system
 } // namespace core

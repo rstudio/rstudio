@@ -116,7 +116,13 @@ InstallSearchPaths positAssistantSearchPaths();
 /**
  * Locate the Posit Assistant installation directory among the given tiers.
  *
- * Search order:
+ * When posit-assistant-path is set (pinnedSystemPath), that path is the
+ * administrator's explicit choice: it is used when it holds an installation,
+ * and otherwise ends the search for read-only copies -- the bundled copy is
+ * not consulted, so a pinned path that holds no installation does not
+ * silently downgrade to the shipped version.
+ *
+ * Otherwise the newest installation wins among:
  * 1. User data directory (XDG-based, platform-appropriate)
  *    - Linux/macOS: ~/.local/share/rstudio/pai/bin
  *    - Windows: %LOCALAPPDATA%/rstudio/pai/bin
@@ -125,10 +131,12 @@ InstallSearchPaths positAssistantSearchPaths();
  *    or copied there to get around the setting -- is ignored
  * 2. System-wide installation, as given by systemPositAssistantInstallPath()
  * 3. The copy bundled with RStudio, as given by
- *    bundledPositAssistantInstallPath() -- skipped entirely when
- *    posit-assistant-path is set, so a pinned path that holds no
- *    installation reports "not installed" rather than downgrading to the
- *    shipped version
+ *    bundledPositAssistantInstallPath()
+ *
+ * "Newest" ranks an installation whose protocol.json matches this build
+ * above one that does not (a missing file counts as a mismatch), then by the
+ * version in package.json (missing or unparsable ranks lowest). Equal
+ * candidates keep the order above.
  *
  * @param paths The tiers to search
  * @return FilePath to the installation directory, or empty FilePath if not found
@@ -141,6 +149,32 @@ core::FilePath locatePositAssistantInstallation(const InstallSearchPaths& paths)
  * @return FilePath to the installation directory, or empty FilePath if not found
  */
 core::FilePath locatePositAssistantInstallation();
+
+/**
+ * Whether an installation of the given version, written by this session to
+ * the user data directory, would then be the one
+ * locatePositAssistantInstallation() resolves.
+ *
+ * The update check offers the manifest version only when installing it
+ * would change what runs: a copy that is read-only to the user (system-wide
+ * or bundled) and ranks above the offered version would keep winning, and
+ * the offer could never be satisfied. The existing user install is what the
+ * install overwrites, so it never competes.
+ *
+ * @param paths The tiers to search
+ * @param version The package version the manifest offers
+ * @return true if the user data directory would be selected after the install
+ */
+bool userInstallWouldBeSelected(const InstallSearchPaths& paths, const std::string& version);
+
+/**
+ * Whether an installation of the given version in this session's user data
+ * directory would be the one this session runs.
+ *
+ * @param version The package version the manifest offers
+ * @return true if the user data directory would be selected after the install
+ */
+bool userInstallWouldBeSelected(const std::string& version);
 
 /**
  * Get the installed version of Posit Assistant from package.json.

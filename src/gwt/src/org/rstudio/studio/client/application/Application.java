@@ -21,6 +21,7 @@ import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StartupTiming;
 import org.rstudio.core.client.DragDropReceiver;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -30,7 +31,6 @@ import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -93,6 +93,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 import org.rstudio.studio.client.workbench.views.environment.events.MemoryUsageChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -206,6 +207,7 @@ public class Application implements ApplicationEventHandlers
                   final Command dismissLoadingProgress,
                   final ServerRequestCallback<String> connectionStatusCallback)
    {
+      StartupTiming.mark("application-go");
       rootPanel_ = rootPanel;
 
       Widget w = view_.getWidget();
@@ -218,6 +220,7 @@ public class Application implements ApplicationEventHandlers
 
          public void onResponseReceived(final SessionInfo sessionInfo)
          {
+            StartupTiming.mark("client-init-received");
             // initialize workbench
             // if this is a switch project then wait to dismiss the
             // loading progress animation for 10 seconds. typically
@@ -235,21 +238,9 @@ public class Application implements ApplicationEventHandlers
                   }
                }.schedule(10000);
             }
-            else
-            {
-               dismissLoadingProgress.execute();
-            }
 
             // set session info
             session_.setSessionInfo(sessionInfo);
-            
-            // set project path for desktop
-            if (Desktop.isDesktop())
-            {
-               FileSystemItem projectDir = sessionInfo.getActiveProjectDir();
-               if (projectDir != null)
-                  Desktop.getFrame().setProjectDirectory(projectDir.getPath());
-            }
             
             // load MathJax
             MathJaxLoader.ensureMathJaxLoaded();
@@ -267,27 +258,37 @@ public class Application implements ApplicationEventHandlers
                };
             }
 
-            // initialize workbench
-            // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
-            // in desktop mode, though unsure why). The automation agent must be initialized
-            // after this refresh -- registerPrefs() iterates userPrefs_.allPrefs(), and in desktop
-            // mode that returns an incomplete set until the pref refresh has run.
-            // The completion booleans report whether the set_user_state /
-            // set_user_prefs RPCs succeeded, but we deliberately proceed to
-            // build the workbench either way: a transient persistence failure
-            // here must not dead-end startup (see #18019). The RPC error has
-            // already been logged by writeState()/writeUserPrefs().
-            userState_.get().writeState(boolArg ->
+            // UserPrefs can be constructed before this response arrives
+            // (eager GIN singletons and the application headers inject it
+            // during Application construction), leaving its pref layers
+            // empty. Refresh prefs and state from the session info so
+            // everything downstream -- in particular the automation agent,
+            // whose registerPrefs() iterates userPrefs_.allPrefs() -- sees
+            // complete values. No server write-back is needed: these are the
+            // same values the server just sent us, and echoing them via
+            // writeUserPrefs()/writeState() would rewrite the pref and state
+            // files on every load.
+            userPrefs_.get().loadFromSessionInfo();
+            userState_.get().loadFromSessionInfo();
+
+            if (sessionInfo.isAutomationAgent())
             {
-               userPrefs_.get().writeUserPrefs(boolArg1 ->
-               {
-                  if (sessionInfo.isAutomationAgent())
-                  {
-                     ApplicationAutomation automation = pAutomation_.get();
-                     automation.initializeAgent();
-                  }
-                  initializeWorkbench();
-               });
+               ApplicationAutomation automation = pAutomation_.get();
+               automation.initializeAgent();
+            }
+
+            // client_init was sent while Ace was still loading; the
+            // workbench constructs editors (console input, source), so
+            // wait for Ace before building it (a no-op if already loaded)
+            AceEditor.load(() ->
+            {
+               // dismiss the loading UI only now, so a client_init response
+               // that beats the ace load doesn't expose a blank shell
+               // (switch-project keeps its overlay on the timer above)
+               if (!ApplicationAction.isSwitchProject())
+                  dismissLoadingProgress.execute();
+
+               initializeWorkbench();
             });
          }
 
@@ -1109,6 +1110,8 @@ public class Application implements ApplicationEventHandlers
          return;
       }
 
+      StartupTiming.mark("workbench-init-begin");
+
       // Initialize application theme system
       pAppThemes_.get().initializeThemes(rootPanel_.getElement());
       
@@ -1128,7 +1131,9 @@ public class Application implements ApplicationEventHandlers
 
       // create workbench
       Workbench wb = workbench_.get();
+      StartupTiming.mark("workbench-created");
       eventBusProvider_.get().fireEvent(new SessionInitEvent());
+      StartupTiming.mark("session-init-fired");
 
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
@@ -1274,6 +1279,8 @@ public class Application implements ApplicationEventHandlers
 
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
+      StartupTiming.mark("workbench-attached");
+      StartupTiming.markAfterPaint("workbench-painted");
 
       // hide zoom in and zoom out in web mode
       if (!Desktop.hasDesktopFrame())

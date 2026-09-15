@@ -21,28 +21,29 @@ public class Vim
    public Vim(AceEditor editor)
    {
       editor_ = editor.getWidget().getEditor();
-      vim_ = VimAPI.get();
    }
-   
+
    public boolean isActive() { return isActive(editor_); }
    private final native boolean isActive(AceEditorNative editor) /*-{
       return editor.$vimModeHandler != null;
    }-*/;
-   
-   public void exitVisualMode() { exitVisualMode(editor_, vim_); }
+
+   // NOTE: VimAPI is resolved at call time, not construction time -- the vim
+   // keybindings load lazily, and the exit* methods only run when vim mode is
+   // active on the editor, which implies the keybindings have loaded
+   public void exitVisualMode() { exitVisualMode(editor_, VimAPI.get()); }
    private final native void exitVisualMode(AceEditorNative editor, VimAPI vim) /*-{
       var vimState = editor.state.cm.state.vim;
       if (vimState.visualMode)
          vim.exitVisualMode(editor.state.cm);
    }-*/;
-   
-   public void exitInsertMode() { exitInsertMode(editor_, vim_); }
+
+   public void exitInsertMode() { exitInsertMode(editor_, VimAPI.get()); }
    private final native void exitInsertMode(AceEditorNative editor, VimAPI vim) /*-{
       var vimState = editor.state.cm.state.vim;
       if (vimState.insertMode)
          vim.exitInsertMode(editor.state.cm);
    }-*/;
-   
+
    private final AceEditorNative editor_;
-   private final VimAPI vim_;
 }

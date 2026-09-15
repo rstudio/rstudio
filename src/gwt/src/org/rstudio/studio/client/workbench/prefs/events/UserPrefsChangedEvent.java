@@ -36,7 +36,18 @@ public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedEven
 
    public UserPrefsChangedEvent(PrefLayer data)
    {
+      this(data, false);
+   }
+
+   public UserPrefsChangedEvent(PrefLayer data, boolean fullLayer)
+   {
       data_ = data;
+      fullLayer_ = fullLayer;
+   }
+
+   public boolean isFullLayer()
+   {
+      return fullLayer_;
    }
 
    public String getName()
@@ -62,4 +73,5 @@ public class UserPrefsChangedEvent extends CrossWindowEvent<UserPrefsChangedEven
    }
 
    private PrefLayer data_;
+   private boolean fullLayer_;
 }

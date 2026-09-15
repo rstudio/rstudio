@@ -109,6 +109,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String CHECK_UNEXPECTED_ASSIGNMENT_IN_FUNCTION_CALL = "check_unexpected_assignment_in_function_call";
    public static final String WARN_IF_NO_SUCH_VARIABLE_IN_SCOPE = "warn_if_no_such_variable_in_scope";
    public static final String WARN_VARIABLE_DEFINED_BUT_NOT_USED = "warn_variable_defined_but_not_used";
+   public static final String WARN_CONFUSABLE_CHARACTERS = "warn_confusable_characters";
    public static final String AUTO_DISCOVER_PACKAGE_DEPENDENCIES = "auto_discover_package_dependencies";
    public static final String AUTO_APPEND_NEWLINE = "auto_append_newline";
    public static final String STRIP_TRAILING_WHITESPACE = "strip_trailing_whitespace";
@@ -125,6 +126,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SYNTAX_COLOR_CONSOLE = "syntax_color_console";
    public static final String HIGHLIGHT_CONSOLE_ERRORS = "highlight_console_errors";
    public static final String SCROLL_PAST_END_OF_DOCUMENT = "scroll_past_end_of_document";
+   public static final String SMOOTH_SCROLLING = "smooth_scrolling";
    public static final String HIGHLIGHT_R_FUNCTION_CALLS = "highlight_r_function_calls";
    public static final String COLOR_PREVIEW = "color_preview";
    public static final String RAINBOW_PARENTHESES = "rainbow_parentheses";
@@ -200,6 +202,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String TERMINAL_BELL_STYLE = "terminal_bell_style";
    public static final String TERMINAL_RENDERER = "terminal_renderer";
    public static final String TERMINAL_WEBLINKS = "terminal_weblinks";
+   public static final String TERMINAL_FILE_LINKS = "terminal_file_links";
    public static final String SHOW_RMD_RENDER_COMMAND = "show_rmd_render_command";
    public static final String RMD_RENAME_IN_SCOPE_BEHAVIOR = "rmd_rename_in_scope_behavior";
    public static final String ENABLE_TEXT_DRAG = "enable_text_drag";
@@ -220,6 +223,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String DOC_OUTLINE_SHOW = "doc_outline_show";
    public static final String LATEX_PREVIEW_ON_CURSOR_IDLE = "latex_preview_on_cursor_idle";
    public static final String WRAP_TAB_NAVIGATION = "wrap_tab_navigation";
+   public static final String HIGHLIGHT_ACTIVE_TABS = "highlight_active_tabs";
    public static final String MOUSEWHEEL_CHANGES_EDITOR_TAB = "mousewheel_changes_editor_tab";
    public static final String GLOBAL_THEME = "global_theme";
    public static final String USE_DARK_THEME_MODAL_DIALOGS = "use_dark_theme_modal_dialogs";
@@ -302,6 +306,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String SAVE_RETRY_TIMEOUT = "save_retry_timeout";
    public static final String SAVE_FILES_DURABLY = "save_files_durably";
    public static final String INSERT_NATIVE_PIPE_OPERATOR = "insert_native_pipe_operator";
+   public static final String INSERT_PLUS_IN_GGPLOT_CHAINS = "insert_plus_in_ggplot_chains";
    public static final String COMMAND_PALETTE_MRU = "command_palette_mru";
    public static final String SHOW_MEMORY_USAGE = "show_memory_usage";
    public static final String MEMORY_QUERY_INTERVAL_SECONDS = "memory_query_interval_seconds";
@@ -1346,6 +1351,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to warn about characters in R code that look like ASCII but are not, such as the Cyrillic letter 'c' or typographic quotes
+    */
+   public PrefValue<Boolean> warnConfusableCharacters()
+   {
+      return bool(
+         "warn_confusable_characters",
+         _constants.warnConfusableCharactersTitle(), 
+         _constants.warnConfusableCharactersDescription(), 
+         true);
+   }
+
+   /**
     * Whether to automatically discover and offer to install missing R package dependencies.
     */
    public PrefValue<Boolean> autoDiscoverPackageDependencies()
@@ -1549,6 +1566,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the source editor animates scrolling, e.g. when moving the cursor or jumping to a line, instead of jumping instantly.
+    */
+   public PrefValue<Boolean> smoothScrolling()
+   {
+      return bool(
+         "smooth_scrolling",
+         _constants.smoothScrollingTitle(), 
+         _constants.smoothScrollingDescription(), 
+         false);
+   }
+
+   /**
     * Whether to highlight R function calls in the code editor.
     */
    public PrefValue<Boolean> highlightRFunctionCalls()
@@ -1609,7 +1638,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The maximum number of console actions to store and display in the console scrollback buffer.
+    * The maximum number of lines of output to keep in the console scrollback buffer. Very long lines are stored in chunks and may count as more than one line, so slightly fewer lines than this may be restored when a session resumes.
     */
    public PrefValue<Integer> consoleMaxLines()
    {
@@ -2548,6 +2577,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether file paths displayed in the Terminal tab can be opened with Ctrl+Click (Cmd+Click on macOS).
+    */
+   public PrefValue<Boolean> terminalFileLinks()
+   {
+      return bool(
+         "terminal_file_links",
+         _constants.terminalFileLinksTitle(), 
+         _constants.terminalFileLinksDescription(), 
+         true);
+   }
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    public PrefValue<Boolean> showRmdRenderCommand()
@@ -2847,6 +2888,18 @@ public class UserPrefsAccessor extends Prefs
          "wrap_tab_navigation",
          _constants.wrapTabNavigationTitle(), 
          _constants.wrapTabNavigationDescription(), 
+         true);
+   }
+
+   /**
+    * Use a bold label and a blue overline to highlight the active document tab.
+    */
+   public PrefValue<Boolean> highlightActiveTabs()
+   {
+      return bool(
+         "highlight_active_tabs",
+         _constants.highlightActiveTabsTitle(), 
+         _constants.highlightActiveTabsDescription(), 
          true);
    }
 
@@ -3982,6 +4035,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the Insert Pipe Operator command should insert '+' instead of a pipe when the cursor is within a ggplot2 chain
+    */
+   public PrefValue<Boolean> insertPlusInGgplotChains()
+   {
+      return bool(
+         "insert_plus_in_ggplot_chains",
+         _constants.insertPlusInGgplotChainsTitle(), 
+         _constants.insertPlusInGgplotChainsDescription(), 
+         true);
+   }
+
+   /**
     * Whether to keep track of recently used commands in the Command Palette
     */
    public PrefValue<Boolean> commandPaletteMru()
@@ -4801,6 +4866,8 @@ public class UserPrefsAccessor extends Prefs
          warnIfNoSuchVariableInScope().setValue(layer, source.getBool("warn_if_no_such_variable_in_scope"));
       if (source.hasKey("warn_variable_defined_but_not_used"))
          warnVariableDefinedButNotUsed().setValue(layer, source.getBool("warn_variable_defined_but_not_used"));
+      if (source.hasKey("warn_confusable_characters"))
+         warnConfusableCharacters().setValue(layer, source.getBool("warn_confusable_characters"));
       if (source.hasKey("auto_discover_package_dependencies"))
          autoDiscoverPackageDependencies().setValue(layer, source.getBool("auto_discover_package_dependencies"));
       if (source.hasKey("auto_append_newline"))
@@ -4833,6 +4900,8 @@ public class UserPrefsAccessor extends Prefs
          highlightConsoleErrors().setValue(layer, source.getBool("highlight_console_errors"));
       if (source.hasKey("scroll_past_end_of_document"))
          scrollPastEndOfDocument().setValue(layer, source.getBool("scroll_past_end_of_document"));
+      if (source.hasKey("smooth_scrolling"))
+         smoothScrolling().setValue(layer, source.getBool("smooth_scrolling"));
       if (source.hasKey("highlight_r_function_calls"))
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
       if (source.hasKey("color_preview"))
@@ -4983,6 +5052,8 @@ public class UserPrefsAccessor extends Prefs
          terminalRenderer().setValue(layer, source.getString("terminal_renderer"));
       if (source.hasKey("terminal_weblinks"))
          terminalWeblinks().setValue(layer, source.getBool("terminal_weblinks"));
+      if (source.hasKey("terminal_file_links"))
+         terminalFileLinks().setValue(layer, source.getBool("terminal_file_links"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
       if (source.hasKey("rmd_rename_in_scope_behavior"))
@@ -5023,6 +5094,8 @@ public class UserPrefsAccessor extends Prefs
          latexPreviewOnCursorIdle().setValue(layer, source.getString("latex_preview_on_cursor_idle"));
       if (source.hasKey("wrap_tab_navigation"))
          wrapTabNavigation().setValue(layer, source.getBool("wrap_tab_navigation"));
+      if (source.hasKey("highlight_active_tabs"))
+         highlightActiveTabs().setValue(layer, source.getBool("highlight_active_tabs"));
       if (source.hasKey("mousewheel_changes_editor_tab"))
          mousewheelChangesEditorTab().setValue(layer, source.getBool("mousewheel_changes_editor_tab"));
       if (source.hasKey("global_theme"))
@@ -5187,6 +5260,8 @@ public class UserPrefsAccessor extends Prefs
          saveFilesDurably().setValue(layer, source.getBool("save_files_durably"));
       if (source.hasKey("insert_native_pipe_operator"))
          insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
+      if (source.hasKey("insert_plus_in_ggplot_chains"))
+         insertPlusInGgplotChains().setValue(layer, source.getBool("insert_plus_in_ggplot_chains"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
       if (source.hasKey("show_memory_usage"))
@@ -5348,6 +5423,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(checkUnexpectedAssignmentInFunctionCall());
       prefs.add(warnIfNoSuchVariableInScope());
       prefs.add(warnVariableDefinedButNotUsed());
+      prefs.add(warnConfusableCharacters());
       prefs.add(autoDiscoverPackageDependencies());
       prefs.add(autoAppendNewline());
       prefs.add(stripTrailingWhitespace());
@@ -5364,6 +5440,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(syntaxColorConsole());
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
+      prefs.add(smoothScrolling());
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
@@ -5439,6 +5516,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());
+      prefs.add(terminalFileLinks());
       prefs.add(showRmdRenderCommand());
       prefs.add(rmdRenameInScopeBehavior());
       prefs.add(enableTextDrag());
@@ -5459,6 +5537,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
       prefs.add(wrapTabNavigation());
+      prefs.add(highlightActiveTabs());
       prefs.add(mousewheelChangesEditorTab());
       prefs.add(globalTheme());
       prefs.add(useDarkThemeModalDialogs());
@@ -5541,6 +5620,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(saveRetryTimeout());
       prefs.add(saveFilesDurably());
       prefs.add(insertNativePipeOperator());
+      prefs.add(insertPlusInGgplotChains());
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());

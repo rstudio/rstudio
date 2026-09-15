@@ -209,6 +209,55 @@ test.describe('Split editor', () => {
       .toBe(true);
   });
 
+  for (const splitHistory of ['no', 'older']) {
+    test(`selecting a statement preserves Re-Run Previous with ${splitHistory} split history`, async ({ rstudioPage: page }) => {
+      await writeAndOpenFile(page, sandbox.dir, FILE, CONTENT);
+      const views = sourceViews(page);
+
+      await executeCommand(page, 'splitEditorRight');
+      await expect(views).toHaveCount(2);
+      const primary = viewEditor(views.first());
+      const split = viewEditor(views.nth(1));
+
+      const clearVariables = () => consoleActions.executeInConsole(
+        'rm(list = intersect(c("split_x", "split_y"), ls(globalenv())), envir = globalenv())',
+        { wait: true },
+      );
+      await clearVariables();
+
+      // Cover both an empty execution history and an older execution in the
+      // split. Neither may replace the primary view's most recent run.
+      if (splitHistory === 'older') {
+        await split.click();
+        await split.gotoLine(3);
+        await executeCommand(page, 'executeCurrentStatement');
+        await expect.poll(() => consoleActions.evalRLogical('exists("split_y")')).toBe(true);
+      }
+
+      await primary.click();
+      await primary.gotoLine(2);
+      await executeCommand(page, 'executeCurrentStatement');
+      await expect.poll(() => consoleActions.evalRLogical('exists("split_x")')).toBe(true);
+
+      // Removing the results makes it observable which statement is rerun.
+      // A console command does not change the source editor's run history.
+      await clearVariables();
+      await split.click();
+      await split.gotoLine(3);
+      await expect.poll(() => split.hasFocus()).toBe(true);
+      await executeCommand(page, 'selectCurrentStatement');
+      await expect.poll(() => views.nth(1).evaluate(
+        (el) => (el as AceEditorElement).env?.editor?.getSelectedText(),
+      )).toBe('split_y <- 20');
+
+      await executeCommand(page, 'executeLastCode');
+      await expect
+        .poll(() => consoleActions.evalRLogical('exists("split_x") || exists("split_y")'))
+        .toBe(true);
+      expect(await consoleActions.evalRLogical('exists("split_x") && !exists("split_y")')).toBe(true);
+    });
+  }
+
   test('closing a split document releases its editor state', async ({ rstudioPage: page }) => {
     await writeAndOpenFile(page, sandbox.dir, FILE, CONTENT);
     const views = sourceViews(page);

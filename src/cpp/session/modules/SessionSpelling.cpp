@@ -456,6 +456,10 @@ Error initialize()
    // connect to user settings changed
    prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
+   // project dictionary changes are applied after the project preference cache
+   // has been updated
+   module_context::events().onProjectConfigUpdated.connect(syncSpellingEngineDictionaries);
+
    // register rpc methods
    using boost::bind;
    using namespace module_context;
