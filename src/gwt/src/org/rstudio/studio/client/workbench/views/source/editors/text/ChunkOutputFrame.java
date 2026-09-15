@@ -105,6 +105,11 @@ public class ChunkOutputFrame extends DynamicIFrame
          @Override
          public void run()
          {
+            // A theme change can queue this callback just before the source
+            // tab closes. Detached iframes no longer have a content window.
+            if (getWindow() == null)
+               return;
+
             if (loaded_) {
                Element body = getDocument().getBody();
 
