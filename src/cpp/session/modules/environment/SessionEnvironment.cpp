@@ -381,16 +381,12 @@ struct CallFrameResult
    bool hasSourceRefs;       // whether the function has source refs
    SEXP callFunSourceRefs;   // srcref attribute on the original function
 
-   // Resolved or simulated source reference at target depth
-   SEXP srcContextSourceRefs;
-
    CallFrameResult()
       : contextCallfun(R_NilValue),
         contextCloenv(R_NilValue),
         originalCallfun(R_NilValue),
         hasSourceRefs(false),
-        callFunSourceRefs(R_NilValue),
-        srcContextSourceRefs(R_NilValue)
+        callFunSourceRefs(R_NilValue)
    {
    }
 };
@@ -467,15 +463,6 @@ CallFrameResult callFramesFromR(int depth,
       error = r::sexp::getNamedListElement(contextSEXP, "functionName", &result.functionName);
       if (error) LOG_ERROR(error);
       error = r::sexp::getNamedListElement(contextSEXP, "hasSourceRefs", &result.hasSourceRefs);
-      if (error) LOG_ERROR(error);
-   }
-
-   // Extract source context info
-   SEXP srcContextSEXP;
-   error = r::sexp::getNamedListSEXP(resultSEXP, "src_context", &srcContextSEXP);
-   if (!error && srcContextSEXP != R_NilValue)
-   {
-      error = r::sexp::getNamedListSEXP(srcContextSEXP, "srcref", &result.srcContextSourceRefs);
       if (error) LOG_ERROR(error);
    }
 
@@ -976,16 +963,67 @@ void onDetectChanges(module_context::ChangeSource /* source */)
 
 namespace {
 
+// Resolve the debug position after a step that stayed within the same frame.
+// Returns R_NilValue when no position could be determined.
 SEXP inferDebugSrcrefs(
       int depth,
       boost::shared_ptr<LineDebugState> pLineDebugState)
 {
-   // Use the same source-reference resolution as context changes. A raw
-   // R_GetCurrentSrcref result can belong to a caller when the function
-   // being stepped through has no source references (#18754).
+   // Only the active frame is resolved here. Building the whole frame list
+   // would apply the same source-reference rules, but it re-reads source
+   // files and re-deparses source-less functions on every step.
    r::sexp::Protect protect;
-   CallFrameResult cfResult = callFramesFromR(depth, pLineDebugState.get(), &protect);
-   return cfResult.srcContextSourceRefs;
+
+   SEXP lineDebugStateSEXP = R_NilValue;
+   if (pLineDebugState)
+   {
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("lastDebugText", pLineDebugState->lastDebugText);
+      builder.add("lastDebugLine", pLineDebugState->lastDebugLine);
+      lineDebugStateSEXP = r::sexp::create(builder, &protect);
+   }
+
+   // R's evaluator position is not reachable from R's sys.*() functions, so
+   // pass it in; .rs.debugSourceRef decides whether this frame may use it.
+   // A raw R_GetCurrentSrcref result can belong to a caller when the function
+   // being stepped through has no source references (#18754).
+   int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
+   SEXP currentSrcref = R_GetCurrentSrcref(skip);
+
+   SEXP resultSEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.debugSourceRef")
+         .addParam(depth)
+         .addParam(currentSrcref)
+         .addParam(lineDebugStateSEXP)
+         .call(&resultSEXP, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   if (resultSEXP == R_NilValue)
+      return R_NilValue;
+
+   SEXP srcref = R_NilValue;
+   error = r::sexp::getNamedListSEXP(resultSEXP, "srcref", &srcref);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   // Propagate lastDebugLine update back to C++ (for simulated srcref state)
+   if (pLineDebugState)
+   {
+      int updatedLine = -1;
+      error = r::sexp::getNamedListElement(resultSEXP, "lastDebugLine", &updatedLine);
+      if (!error && updatedLine >= 0)
+         pLineDebugState->lastDebugLine = updatedLine;
+   }
+
+   return srcref;
 }
 
 } // end anonymous namespace
@@ -1055,8 +1093,11 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0 && !r::session::inDebugHiddenContext())
    {
+      // Leave the highlight where it is when the new position cannot be
+      // resolved; an empty srcref would report line 0 to the client.
       SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
-      enqueBrowserLineChangedEvent(srcref);
+      if (srcref != R_NilValue)
+         enqueBrowserLineChangedEvent(srcref);
    }
    
 }

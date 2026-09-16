@@ -59,7 +59,11 @@ test.describe('Package function source (#18754)', () => {
       // The automation bridge's activeEditor() covers editable documents;
       // the generated function browser also uses Ace, but is read-only.
       const editor = page.locator("[class*='rstudio_source_panel'] .ace_editor:visible");
-      const readCode = () => editor.evaluate(el => (el as AceEditorElement).env?.editor?.getValue() ?? '');
+      // evaluate() throws while no document is open yet, and again if a tab
+      // switch briefly leaves two editors visible. expect.poll does not retry
+      // a callback that throws, so report "nothing yet" instead of failing.
+      const readCode = () =>
+        editor.evaluate(el => (el as AceEditorElement).env?.editor?.getValue() ?? '').catch(() => '');
       await expect.poll(
         readCode,
         { timeout: TIMEOUTS.fileOpen },

@@ -1205,6 +1205,62 @@
    !is.null(srcref) && is.integer(srcref)
 })
 
+# Helper: can this frame use the runtime srcref from R_GetCurrentSrcref?
+#
+# R_GetCurrentSrcref searches outward through the context stack, so a
+# function without source references is handed its caller's location
+# (#18754). Accept the result only for functions that have their own
+# source, or for contexts evaluating code from elsewhere (primitive eval
+# and top-level source-equivalent contexts).
+.rs.addFunction("canUseCurrentSrcref", function(callfun, cloenv)
+{
+   origFun <- .rs.originalFunction(callfun)
+   !is.null(attr(origFun, "srcref", exact = TRUE)) ||
+      is.primitive(callfun) ||
+      identical(cloenv, globalenv())
+})
+
+# Helper: resolve the source reference for a single frame, used when a debug
+# step stays within the same frame.
+#
+# .rs.callFrames answers the same question, but building every frame
+# descriptor re-reads source files and re-deparses source-less functions on
+# each step -- wasted work when only the current line changed.
+#
+# Returns NULL when no location can be determined, so the caller can leave
+# the client's debug highlight where it is rather than moving it to line 0.
+.rs.addFunction("debugSourceRef", function(depth, currentSrcref, lineDebugState)
+{
+   frame <- sys.nframe() - depth
+   if (depth < 1L || frame < 1L)
+      return(NULL)
+
+   callfun <- sys.function(frame)
+   cloenv <- sys.frame(frame)
+   if (.rs.canUseCurrentSrcref(callfun, cloenv) && .rs.isValidSrcref(currentSrcref))
+   {
+      return(list(srcref = currentSrcref, lastDebugLine = NULL))
+   }
+
+   # No location of its own; recover one from the deparsed function body.
+   info <- "_rs_sourceinfo"
+   attr(info, "_rs_callfun") <- .rs.originalFunction(callfun)
+   if (!is.null(lineDebugState))
+   {
+      attr(info, "_rs_calltext") <- lineDebugState$lastDebugText
+      attr(info, "_rs_lastline") <- lineDebugState$lastDebugLine
+   }
+
+   srcref <- tryCatch(.rs.simulateSourceRefs(info), error = function(e) NULL)
+   if (!.rs.isValidSrcref(srcref) || length(srcref) < 6L ||
+       is.na(srcref[1L]) || srcref[1L] == 0L)
+   {
+      return(NULL)
+   }
+
+   list(srcref = srcref, lastDebugLine = srcref[1L] - 1L)
+})
+
 # Helper: resolve source references, handling byte-code compiled contexts.
 # For byte-compiled code, the srcref on the call may be the symbol
 # <in-bc-interp> rather than a real srcref. In that case, we try to find
@@ -1354,15 +1410,11 @@
       shinyLabel <- attr(origFun, "_rs_shinyDebugLabel", exact = TRUE)
       if (is.null(shinyLabel)) shinyLabel <- ""
 
-      # Source reference resolution:
-      # R_GetCurrentSrcref can search outward when the current function has
-      # no source references, returning its caller's location. Only use it
-      # for functions with source references, or contexts evaluating code
-      # from elsewhere (primitive eval and top-level source-equivalent contexts).
-      # For outer frames, envSrcrefMap maps each frame's env to the source
-      # location of the call made from that frame (set by the next-inner frame).
-      canUseCurrentSrcref <- hasSourceRefs || is.primitive(callfun) ||
-         identical(cloenv, globalenv())
+      # Source reference resolution: the innermost frame uses the runtime
+      # srcref when it is allowed to (see .rs.canUseCurrentSrcref). For outer
+      # frames, envSrcrefMap maps each frame's env to the source location of
+      # the call made from that frame (set by the next-inner frame).
+      canUseCurrentSrcref <- .rs.canUseCurrentSrcref(callfun, cloenv)
       if (contextDepth == 1L && canUseCurrentSrcref && .rs.isValidSrcref(currentSrcref))
       {
          srcContext <- list(srcref = currentSrcref, callfun = callfun, call = call)
@@ -1375,11 +1427,23 @@
          {
             srcContext <- mapped
          }
+         else if (contextDepth > 1L)
+         {
+            # No locatable call was made from this frame, which happens when
+            # a base function builds the inner call itself (lapply, do.call).
+            # Fall back to the srcref of the call that created this frame:
+            # that position belongs to the caller rather than to this frame,
+            # but it is what makes such frames navigable in the traceback.
+            callSrcref <- attr(call, "srcref", exact = TRUE)
+            resolved <- .rs.resolveCallSrcref(callSrcref, callfun)
+            srcContext <- list(srcref = resolved, callfun = callfun, call = call)
+         }
          else
          {
-            # This frame's own call srcref belongs to its caller, not to
-            # the function being executed. Without a location in this
-            # frame, simulate one from the function's deparsed body below.
+            # The innermost frame is excluded from the fallback above: there,
+            # showing the call's srcref is exactly #18754, where a source-less
+            # function reports its caller's location as its own. Without a
+            # location in this frame, simulate one from the deparsed body.
             srcContext <- list(srcref = NULL, callfun = callfun, call = call)
          }
       }
