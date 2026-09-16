@@ -82,17 +82,18 @@ public:
           }
        }
 
-       // Resuming means picking up at a saved offset into the buffer the caller
-       // was handed back, so a shorter one cannot hold that offset. Catch it
-       // here: advancing begin past end wraps the unsigned capacity arithmetic
-       // in copyRangeToBuffer and throws std::length_error out of reserve().
+       // Resuming picks up at a saved offset into the buffer the caller was
+       // handed back, so it has to be replayed whole. A range that drops the
+       // tail silently loses those body bytes; one too short to even hold the
+       // offset puts begin past end, which wraps the unsigned capacity
+       // arithmetic in copyRangeToBuffer and throws std::length_error.
        auto available = std::distance(begin, end);
-       if (bufferPos_.get() > static_cast<size_t>(available))
+       if (static_cast<uintmax_t>(available) != bufferLen_)
        {
           LOG_ERROR_MESSAGE("Request parse for uri " + req.uri_ + " resumed with " +
                             std::to_string(available) + " bytes, but must be replayed the "
-                            "same buffer it returned from, which held " +
-                            std::to_string(bufferPos_.get()) + " parsed bytes");
+                            "same " + std::to_string(bufferLen_) + " byte buffer it "
+                            "returned from");
           cleanup();
           return error;
        }
@@ -123,6 +124,7 @@ public:
           {
              paused_ = true;
              bufferPos_ = std::distance(originalBegin, begin);
+             bufferLen_ = std::distance(originalBegin, end);
              return status::pause;
           }
 
@@ -161,6 +163,7 @@ public:
              // save buffer position so we can continue parsing the body when reinvoked
              parsingBody_ = true;
              bufferPos_ = std::distance(originalBegin, begin);
+             bufferLen_ = std::distance(originalBegin, end);
              return headers_parsed;
           }
        }
@@ -269,6 +272,7 @@ private:
   bool paused_;
   FormHandler formHandler_;
   boost::optional<size_t> bufferPos_;
+  uintmax_t bufferLen_;
   uintmax_t bodyBytesRead_;
 
   std::string formBuffer_;

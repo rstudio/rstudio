@@ -67,6 +67,14 @@ struct FormTester
 
    bool handle(const std::string& formData, bool complete)
    {
+      if (pauseCount > 0)
+      {
+         // FormProxy rejects data it has no room for and expects it redelivered
+         // once it drains, so a paused call must not consume anything.
+         --pauseCount;
+         return false;
+      }
+
       buffer += formData;
       if (complete)
       {
@@ -183,6 +191,7 @@ struct FormTester
    const char* parseIter = nullptr;
    const char* endIter = nullptr;
    const char* resumeEnd = nullptr;
+   int pauseCount = 0;
 };
 
 TEST(HttpTest, SimpleFormParsingWorks)
@@ -515,6 +524,58 @@ TEST(HttpTest, FormParsingRejectsShortBufferOnResume)
       status = form.parser.parse(form.request, begin, begin + 50);
    });
    EXPECT_EQ(RequestParser::error, status);
+}
+
+TEST(HttpTest, FormParsingRejectsTruncatedBufferOnResume)
+{
+   // A replay long enough to hold the saved offset but missing the tail would
+   // silently drop those body bytes rather than blowing up.
+   FormTester form;
+   form.complexRequest(std::string(4096, 'q'), "application/octet-stream");
+
+   const char* begin = form.requestStr.c_str();
+   RequestParser::status status = form.parser.parse(form.request, begin, begin + 1024);
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parser.parse(form.request, begin, begin + 200);
+   EXPECT_EQ(RequestParser::error, status);
+}
+
+TEST(HttpTest, FormParsingResumesAfterPause)
+{
+   const std::string fileBytes(4096, 'p');
+   FormTester form;
+   form.complexRequest(fileBytes, "application/octet-stream");
+
+   // reject the first delivery, the way a full proxy write buffer does
+   form.pauseCount = 1;
+
+   RequestParser::status status;
+   bool sawPause = false;
+   do
+   {
+      status = form.parseBytes(1024);
+      if (status == RequestParser::pause)
+      {
+         sawPause = true;
+         continue;
+      }
+      if (status == RequestParser::form_complete)
+         break;
+      ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete);
+   }
+   while (!form.eof());
+
+   EXPECT_TRUE(sawPause) << "the form handler was never asked to pause";
+   ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
 }
 
 TEST(HttpTest, FormParsingKeepsFirstFileForDuplicateFieldName)
