@@ -1115,6 +1115,10 @@ test_that(".rs.describeCols() tolerates masked summary generics on the search pa
 })
 
 test_that(".rs.describeCols() handles columns holding invalid multibyte text", {
+   # The native-encoded byte below is valid in single-byte locales such as
+   # Windows CP1252, where returning a width hint is the correct behavior.
+   skip_if_not(l10n_info()[["UTF-8"]], "requires a UTF-8 session encoding")
+
    # A column carrying latin1 bytes read as UTF-8 made nchar(type = "width")
    # throw, which aborted the whole describe call and left the grid unusable
    # rather than just dropping the column-width hint.
