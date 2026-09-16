@@ -16,7 +16,9 @@ package org.rstudio.core.client.files;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -76,18 +78,20 @@ public class ConfigFileBacked<T extends JavaScriptObject>
                   object_ = (T)object;
                   loaded_ = true;
                   loading_ = false;
+                  executePending();
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
                   Debug.logError(error);
                   loaded_ = true;
                   loading_ = false;
+                  executePending();
                }
             });
    }
-   
+
    public void execute(final CommandWithArg<T> command)
    {
       if (loaded_)
@@ -95,38 +99,32 @@ public class ConfigFileBacked<T extends JavaScriptObject>
          command.execute(object_);
          return;
       }
-      
-      final Timer executionTimer = new Timer()
+
+      // Queue the command until the read settles; onResponseReceived and
+      // onError both mark the object loaded and flush the queue, so no
+      // command is dropped however long read_config_json takes.
+      pendingCommands_.add(command);
+      load();
+   }
+
+   private void executePending()
+   {
+      List<CommandWithArg<T>> pending = new ArrayList<>(pendingCommands_);
+      pendingCommands_.clear();
+      for (CommandWithArg<T> command : pending)
       {
-         private int retryCount = 0;
-         
-         @Override
-         public void run()
+         // One loader throwing must not suppress the commands behind it.
+         try
          {
-            if (retryCount > 100)
-               return;
-            
-            if (loading_)
-            {
-               retryCount++;
-               schedule(DELAY_MS);
-               return;
-            }
-            
-            if (!loaded_)
-            {
-               load();
-               schedule(DELAY_MS * 2);
-               return;
-            }
-            
             command.execute(object_);
          }
-      };
-      
-      executionTimer.schedule(0);
+         catch (Exception e)
+         {
+            Debug.logException(e);
+         }
+      }
    }
-   
+
    public void set(final T object, final Command command)
    {
       server_.writeConfigJSON(
@@ -161,9 +159,8 @@ public class ConfigFileBacked<T extends JavaScriptObject>
    private boolean loaded_;
    private boolean loading_;
    private T object_;
-   
-   private static final int DELAY_MS = 20;
-   
+   private final List<CommandWithArg<T>> pendingCommands_ = new ArrayList<>();
+
    // Injected ----
    private FilesServerOperations server_;
 }
