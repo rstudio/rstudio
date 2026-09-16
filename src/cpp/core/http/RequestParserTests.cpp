@@ -16,6 +16,8 @@
 #include <cstdlib>
 #include <algorithm>
 #include <iterator>
+#include <random>
+#include <string>
 #include <vector>
 
 #include <boost/make_shared.hpp>
@@ -151,27 +153,24 @@ struct FormTester
          endIter = parseIter + requestStr.size();
       }
 
-      const char* stepEnd;
-      if (resumeEnd)
+      // When the parser returns headers_parsed or pause it records an offset
+      // into the chunk it was handed and expects to be re-invoked with the
+      // exact same buffer, as AsyncConnectionImpl::handleRead does. Hold onto
+      // the chunk end until the parser has actually consumed it -- handing it
+      // a shorter chunk on the retry would leave it pointing past the end.
+      if (!chunkEnd)
       {
-         // headers_parsed and pause both leave the parser holding an offset into
-         // the chunk just consumed, so it has to see that same chunk again; a
-         // shorter one would put the saved offset past the end. This mirrors what
-         // the real connection handlers do when they re-invoke parse().
-         stepEnd = resumeEnd;
-         resumeEnd = nullptr;
-      }
-      else
-      {
-         size_t remaining = static_cast<size_t>(endIter - parseIter);
-         stepEnd = parseIter + std::min(static_cast<size_t>(count), remaining);
+         chunkEnd = parseIter + count;
+         if (chunkEnd > endIter)
+            chunkEnd = endIter;
       }
 
-      RequestParser::status status = parser.parse(request, parseIter, stepEnd);
+      RequestParser::status status = parser.parse(request, parseIter, chunkEnd);
       if (status == RequestParser::headers_parsed || status == RequestParser::pause)
-         resumeEnd = stepEnd;
-      else if (status != RequestParser::form_complete)
-         parseIter = stepEnd;
+         return status;
+
+      parseIter = chunkEnd;
+      chunkEnd = nullptr;
 
       return status;
    }
@@ -185,13 +184,13 @@ struct FormTester
    std::string expectedData;
    std::string requestStr;
    std::string buffer;
+   int pauseCount = 0;
    Error validationError;
    Request request;
    RequestParser parser;
    const char* parseIter = nullptr;
    const char* endIter = nullptr;
-   const char* resumeEnd = nullptr;
-   int pauseCount = 0;
+   const char* chunkEnd = nullptr;
 };
 
 TEST(HttpTest, SimpleFormParsingWorks)
@@ -304,15 +303,22 @@ TEST(HttpTest, ComplicatedFormParsingWorksRandomByteBoundaries)
    FormTester form;
    form.complexRequest(fileBytes, "application/octet-stream");
 
+   // Use a self-contained generator rather than ::rand(), whose state is shared
+   // with every other test in this binary (Base64Tests calls ::srand), which
+   // would make the block sizes depend on which tests ran before this one.
+   // Override the seed to explore other block boundaries locally.
+   unsigned seed = 20260821;
+   if (const char* seedStr = ::getenv("RSTUDIO_TEST_SEED"))
+      seed = static_cast<unsigned>(::strtoul(seedStr, nullptr, 10));
+   SCOPED_TRACE("block size seed: " + std::to_string(seed));
+
+   std::mt19937 rng(seed);
+   std::uniform_int_distribution<int> blockDist(1, 8192);
+
    RequestParser::status status;
-   size_t blockSize = 0;
-   // Seed explicitly so a failure is reproducible: other suites in this binary
-   // call ::srand(), so the block sizes would otherwise depend on test ordering.
-   ::srand(18727);
    do
    {
-      blockSize = rand() % 8192 + 1;
-      status = form.parseBytes(blockSize);
+      status = form.parseBytes(blockDist(rng));
       if (status == RequestParser::form_complete)
          break;
       ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete);
@@ -327,6 +333,23 @@ TEST(HttpTest, ComplicatedFormParsingWorksRandomByteBoundaries)
    EXPECT_EQ(file.name, "example.txt");
    EXPECT_EQ(file.contentType, "application/octet-stream");
    EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
+}
+
+TEST(HttpTest, FormParsingRejectsShrinkingResumeBuffer)
+{
+   FormTester form;
+   form.simpleRequest();
+
+   // headers_parsed leaves an offset into the chunk we just handed the parser,
+   // so it must be re-invoked with that identical chunk
+   const char* begin = form.requestStr.c_str();
+   const char* end = begin + form.requestStr.size();
+   ASSERT_EQ(RequestParser::headers_parsed, form.parser.parse(form.request, begin, end));
+
+   // resuming with a buffer shorter than the saved offset is a caller error,
+   // and must be reported rather than running the parser past the end
+   const char* shortEnd = begin + 8;
+   EXPECT_EQ(RequestParser::error, form.parser.parse(form.request, begin, shortEnd));
 }
 
 TEST(HttpTest, FormParsingRejectsMalformedMultipart)
@@ -507,23 +530,6 @@ TEST(HttpTest, FormParsingResumesWithSmallerChunksAfterHeaders)
    EXPECT_FALSE(file.empty());
    EXPECT_EQ(file.name, "example.txt");
    EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
-}
-
-TEST(HttpTest, FormParsingRejectsShortBufferOnResume)
-{
-   // Resuming with less than the parser handed back used to advance begin past
-   // end and throw std::length_error out of the form buffer's reserve().
-   FormTester form;
-   form.complexRequest(std::string(4096, 'q'), "application/octet-stream");
-
-   const char* begin = form.requestStr.c_str();
-   RequestParser::status status = form.parser.parse(form.request, begin, begin + 424);
-   ASSERT_EQ(RequestParser::headers_parsed, status);
-
-   ASSERT_NO_THROW({
-      status = form.parser.parse(form.request, begin, begin + 50);
-   });
-   EXPECT_EQ(RequestParser::error, status);
 }
 
 TEST(HttpTest, FormParsingRejectsTruncatedBufferOnResume)

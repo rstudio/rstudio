@@ -17,6 +17,8 @@
 #ifndef CORE_HTTP_REQUEST_PARSER_HPP
 #define CORE_HTTP_REQUEST_PARSER_HPP
 
+#include <iterator>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/function.hpp>
 #include <boost/optional.hpp>
@@ -82,18 +84,17 @@ public:
           }
        }
 
-       // Resuming picks up at a saved offset into the buffer the caller was
-       // handed back, so it has to be replayed whole. A range that drops the
-       // tail silently loses those body bytes; one too short to even hold the
-       // offset puts begin past end, which wraps the unsigned capacity
-       // arithmetic in copyRangeToBuffer and throws std::length_error.
-       auto available = std::distance(begin, end);
-       if (static_cast<uintmax_t>(available) != bufferLen_)
+       // bufferPos_ is an offset into the buffer we were handed when we
+       // returned headers_parsed or pause, so the caller must re-invoke us
+       // with that exact same buffer. If it hands us a shorter one instead,
+       // advancing by bufferPos_ would run begin past end, and the negative
+       // distance that follows wraps into an absurd allocation size. A buffer
+       // that still clears bufferPos_ but drops the tail is just as wrong, and
+       // loses those body bytes silently, so compare the whole length.
+       if (static_cast<uintmax_t>(std::distance(begin, end)) != bufferLen_)
        {
-          LOG_ERROR_MESSAGE("Request parse for uri " + req.uri_ + " resumed with " +
-                            std::to_string(available) + " bytes, but must be replayed the "
-                            "same " + std::to_string(bufferLen_) + " byte buffer it "
-                            "returned from");
+          LOG_ERROR_MESSAGE("RequestParser resumed with a different buffer than the one it "
+                            "suspended on for request with uri " + req.uri_);
           cleanup();
           return error;
        }
