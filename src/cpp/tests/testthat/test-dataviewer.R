@@ -1072,3 +1072,79 @@ test_that(".rs.applyTransform() leaves the projection cache alone for working co
    expect_equal(out$num, 1.5)
    expect_false(exists(cacheKey, envir = .rs.SearchDataEnv, inherits = FALSE))
 })
+
+test_that(".rs.describeCols() tolerates masked summary generics on the search path", {
+   # Stats-teaching packages (mosaic, mobilizr) replace base's summary
+   # generics with versions that take different arguments. mobilizr's range()
+   # forwards ... into a call that already fixes na.rm, so range(x, na.rm =
+   # TRUE) -- exactly what the integer column-width hint does -- dies with
+   # 'formal argument "na.rm" matched by multiple actual arguments'. Attaching
+   # such a package from .Rprofile leaves it below tools:rstudio, where our
+   # own unqualified calls resolve to it.
+   # https://github.com/rstudio/rstudio/issues/18842
+   pos <- match("tools:rstudio", search()) + 1L
+   masked <- attach(NULL, name = "test:masked-generics", pos = pos)
+   on.exit(detach("test:masked-generics"), add = TRUE)
+
+   for (nm in c("range", "max", "min", "sum", "mean", "median", "sd", "table"))
+      assign(nm, function(...) stop("masked generic called"), envir = masked)
+
+   tbl <- data.frame(
+      int  = c(1L, 2L, NA, 4L),
+      num  = c(1.5, 2.5, NA, 4.5),
+      chr  = c("a", "bb", NA, "dddd"),
+      fct  = factor(c("x", "y", NA, "x")),
+      lgl  = c(TRUE, FALSE, NA, TRUE),
+      stringsAsFactors = FALSE
+   )
+
+   cols <- .rs.describeCols(tbl)
+   expect_equal(length(cols), ncol(tbl) + 1L)
+
+   # the integer column still gets its histogram and width hint
+   intCol <- cols[[which(vapply(cols, function(c) identical(as.character(c$col_name), "int"), logical(1)))]]
+   expect_equal(as.character(intCol$col_search_type), "numeric")
+   expect_equal(as.integer(intCol$col_max_chars), 1L)
+   expect_equal(as.integer(intCol$col_na_count), 1L)
+
+   # and the per-column summary panel likewise
+   summary <- .rs.summarizeColumn(tbl, 1L)
+   expect_equal(as.integer(summary$n), 4L)
+   expect_equal(as.integer(summary$n_na), 1L)
+   expect_equal(as.numeric(summary$mean), 7 / 3)
+})
+
+test_that(".rs.describeCols() handles columns holding invalid multibyte text", {
+   # A column carrying latin1 bytes read as UTF-8 made nchar(type = "width")
+   # throw, which aborted the whole describe call and left the grid unusable
+   # rather than just dropping the column-width hint.
+   # https://github.com/rstudio/rstudio/issues/18843
+   bad <- "caf\xe9"
+   Encoding(bad) <- "unknown"
+   expect_false(validUTF8(bad))
+
+   tbl <- data.frame(
+      chr = c("ok", bad),
+      fct = factor(c("fine", bad)),
+      stringsAsFactors = FALSE
+   )
+
+   cols <- .rs.describeCols(tbl)
+   expect_equal(length(cols), ncol(tbl) + 1L)
+
+   # no width hint is reported (the client falls back to sampling), but the
+   # rest of the column description is intact
+   chrCol <- cols[[2]]
+   expect_equal(as.character(chrCol$col_name), "chr")
+   expect_equal(as.character(chrCol$col_search_type), "character")
+   expect_null(chrCol$col_max_chars)
+
+   fctCol <- cols[[3]]
+   expect_equal(as.character(fctCol$col_name), "fct")
+   expect_equal(as.character(fctCol$col_search_type), "factor")
+   expect_null(fctCol$col_max_chars)
+
+   # a clean column in the same frame keeps its hint
+   clean <- .rs.describeCols(data.frame(chr = c("a", "bbb"), stringsAsFactors = FALSE))
+   expect_equal(as.integer(clean[[2]]$col_max_chars), 3L)
+})

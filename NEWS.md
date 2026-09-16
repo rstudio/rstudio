@@ -22,6 +22,8 @@
 - ([#18774](https://github.com/rstudio/rstudio/issues/18774)): RStudio now runs the newest compatible Posit Assistant installation among the copy bundled with RStudio, the system-wide installation, and the user's own, instead of always preferring the user's own. A per-user installation no longer shadows a newer bundled or system-wide copy.
 
 ### Fixed
+- ([#18842](https://github.com/rstudio/rstudio/issues/18842)): Fixed an issue where `View()` failed on data frames with integer columns when a package masking R's summary functions (e.g. mosaic or mobilizr) was attached before RStudio's own tools environment, as an `.Rprofile` `library()` call leaves it.
+- ([#18843](https://github.com/rstudio/rstudio/issues/18843)): Fixed an issue where `View()` failed with "invalid multibyte string" on data frames holding text that is not valid in the session's encoding.
 - ([#18818](https://github.com/rstudio/rstudio/issues/18818)): Fixed an issue on RStudio Desktop where cancelling the quit prompted by closing the main window left every later close of that window exiting immediately, without prompting to save open documents or the workspace. The window's position and size are now also saved from the close that actually happens, rather than from a close that was cancelled.
 - ([#13292](https://github.com/rstudio/rstudio/issues/13292)): Fixed inline HTML tables produced by `knitr::kable()` retaining dark text when using a dark editor theme.
 - ([#18784](https://github.com/rstudio/rstudio/issues/18784)): Fixed an issue where quitting, closing a project, or switching projects shortly after a session restart prompted to save the workspace image even when Save workspace was set to Never.
