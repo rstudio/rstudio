@@ -392,10 +392,10 @@ void parseMultipartForm(const std::string& contentType,
       LOG_WARNING_MESSAGE("Invalid multipart/form-data: no sections");
       return;
    }
-   // Include the terminator in the payload so BoundaryFinder closes the final
-   // part on it, and drop any epilogue that follows. Be permissive beyond the
-   // strict requirements of RFC 2046: use best effort to read the last part
-   // even if the terminator is missing.
+   // Hand BoundaryFinder the terminator so it closes the final part on a real
+   // delimiter instead of the end of the view; the parts are identical either
+   // way, since the match anchors at the same CRLF. Missing terminator: read
+   // the last part anyway, more permissively than RFC 2046 requires.
    size_t multipartLen = terminatorPos == std::string::npos
       ? body.size()
       : terminatorPos + terminator.size();

@@ -146,10 +146,10 @@ struct FormTester
       const char* stepEnd;
       if (resumeEnd)
       {
-         // The parser resumes from an offset into the chunk that finished the
-         // headers, so it has to see that same chunk again; a shorter one would
-         // put its saved offset past the end. This mirrors what the real
-         // connection handlers do when they re-invoke parse().
+         // headers_parsed and pause both leave the parser holding an offset into
+         // the chunk just consumed, so it has to see that same chunk again; a
+         // shorter one would put the saved offset past the end. This mirrors what
+         // the real connection handlers do when they re-invoke parse().
          stepEnd = resumeEnd;
          resumeEnd = nullptr;
       }
@@ -160,7 +160,7 @@ struct FormTester
       }
 
       RequestParser::status status = parser.parse(request, parseIter, stepEnd);
-      if (status == RequestParser::headers_parsed)
+      if (status == RequestParser::headers_parsed || status == RequestParser::pause)
          resumeEnd = stepEnd;
       else if (status != RequestParser::form_complete)
          parseIter = stepEnd;
@@ -498,6 +498,23 @@ TEST(HttpTest, FormParsingResumesWithSmallerChunksAfterHeaders)
    EXPECT_FALSE(file.empty());
    EXPECT_EQ(file.name, "example.txt");
    EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
+}
+
+TEST(HttpTest, FormParsingRejectsShortBufferOnResume)
+{
+   // Resuming with less than the parser handed back used to advance begin past
+   // end and throw std::length_error out of the form buffer's reserve().
+   FormTester form;
+   form.complexRequest(std::string(4096, 'q'), "application/octet-stream");
+
+   const char* begin = form.requestStr.c_str();
+   RequestParser::status status = form.parser.parse(form.request, begin, begin + 424);
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   ASSERT_NO_THROW({
+      status = form.parser.parse(form.request, begin, begin + 50);
+   });
+   EXPECT_EQ(RequestParser::error, status);
 }
 
 TEST(HttpTest, FormParsingKeepsFirstFileForDuplicateFieldName)

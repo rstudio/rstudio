@@ -65,8 +65,7 @@ public:
   ///
   /// After headers_parsed or pause is returned the parser holds an offset into
   /// the buffer just consumed, so the caller must re-invoke with that exact same
-  /// [begin, end) range to resume. Passing a shorter range advances begin past
-  /// end and corrupts the form buffer.
+  /// [begin, end) range to resume. A shorter range is rejected with error.
   template <typename InputIterator>
   status parse(Request& req, InputIterator begin, InputIterator end)
   {
@@ -81,6 +80,21 @@ public:
              cleanup();
              return complete;
           }
+       }
+
+       // Resuming means picking up at a saved offset into the buffer the caller
+       // was handed back, so a shorter one cannot hold that offset. Catch it
+       // here: advancing begin past end wraps the unsigned capacity arithmetic
+       // in copyRangeToBuffer and throws std::length_error out of reserve().
+       auto available = std::distance(begin, end);
+       if (bufferPos_.get() > static_cast<size_t>(available))
+       {
+          LOG_ERROR_MESSAGE("Request parse for uri " + req.uri_ + " resumed with " +
+                            std::to_string(available) + " bytes, but must be replayed the "
+                            "same buffer it returned from, which held " +
+                            std::to_string(bufferPos_.get()) + " parsed bytes");
+          cleanup();
+          return error;
        }
 
        begin += bufferPos_.get();
