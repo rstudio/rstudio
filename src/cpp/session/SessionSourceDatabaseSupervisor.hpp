@@ -45,6 +45,11 @@ core::FilePath sessionDirPath();
 
 namespace detail {
 
+core::Error isSessionDirLocked(
+      const core::FilePath& sessionDir,
+      const core::FileLock& advisoryLock,
+      bool* pLocked);
+
 core::Error acquireSessionDirLock(const core::FilePath& sessionDir, core::FileLock& lock);
 
 core::Error reclaimOrphanedSession(

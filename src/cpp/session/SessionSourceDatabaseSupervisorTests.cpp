@@ -15,13 +15,16 @@
 
 #include "SessionSourceDatabaseSupervisor.hpp"
 
+#include <chrono>
 #include <ctime>
+#include <thread>
 #include <vector>
 
 #include <gtest/gtest.h>
 
 #include <core/FileLock.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/system/System.hpp>
 
 using namespace rstudio::core;
 namespace supervisor = rstudio::session::source_database::supervisor;
@@ -36,8 +39,10 @@ protected:
       FileLock::initialize();
       oldUseSymlinks_ = FileLock::useSymlinks();
       oldLoadBalanced_ = FileLock::isLoadBalanced();
+      oldTimeout_ = FileLock::getTimeoutInterval();
       FileLock::setUseSymlinksForTesting(false);
       FileLock::setLoadBalancedForTesting(false);
+      FileLock::setTimeoutInterval(boost::posix_time::seconds(1));
 
       ASSERT_FALSE(FilePath::tempFilePath(temporary_));
       sourceRoot_ = temporary_.completePath("sources");
@@ -52,6 +57,7 @@ protected:
    {
       FileLock::setUseSymlinksForTesting(oldUseSymlinks_);
       FileLock::setLoadBalancedForTesting(oldLoadBalanced_);
+      FileLock::setTimeoutInterval(oldTimeout_);
       EXPECT_FALSE(temporary_.removeIfExists());
    }
 
@@ -70,6 +76,7 @@ protected:
    FilePath targetDir_;
    bool oldUseSymlinks_;
    bool oldLoadBalanced_;
+   boost::posix_time::seconds oldTimeout_{0};
 };
 
 struct LockTypes
@@ -205,6 +212,46 @@ INSTANTIATE_TEST_SUITE_P(
    SourceDatabaseOwnershipTest,
    testing::ValuesIn(lockTypes()));
 
+class FreshAdvisoryLockTest : public SourceDatabaseSupervisorTest,
+                              public testing::WithParamInterface<FileLock::LockType>
+{
+protected:
+   void SetUp() override
+   {
+      SourceDatabaseSupervisorTest::SetUp();
+      AdvisoryFileLock owner;
+      ASSERT_FALSE(owner.acquire(originalDir_.completePath("lock_file")));
+      ASSERT_FALSE(owner.release());
+   }
+};
+
+TEST_P(FreshAdvisoryLockTest, ReopensAfterReleasingANewAdvisoryLock)
+{
+   auto lock = FileLock::create(GetParam());
+   EXPECT_FALSE(supervisor::detail::acquireSessionDirLock(originalDir_, *lock));
+   EXPECT_EQ(originalDir_.completePath("lock_file"), lock->lockFilePath());
+   expectDocuments(originalDir_);
+}
+
+TEST_P(FreshAdvisoryLockTest, RecoversAfterReleasingANewAdvisoryLock)
+{
+   auto lock = FileLock::create(GetParam());
+   bool reclaimed = false;
+   EXPECT_FALSE(supervisor::detail::reclaimOrphanedSession(sourceRoot_, targetDir_, *lock, &reclaimed));
+   EXPECT_TRUE(reclaimed);
+   EXPECT_FALSE(originalDir_.exists());
+   expectDocuments(targetDir_);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+   LockConfigurations,
+   FreshAdvisoryLockTest,
+   testing::Values(FileLock::LOCKTYPE_ADVISORY
+#ifndef _WIN32
+      , FileLock::LOCKTYPE_LINKBASED
+#endif
+   ));
+
 // Model an acquisition failure after the ownership probe, without changing
 // filesystem permissions or relying on a scheduling race.
 class FailingFileLock : public FileLock
@@ -228,6 +275,28 @@ public:
    Error error_;
    int acquisitions;
 };
+
+class ProbeErrorFileLock : public FailingFileLock
+{
+public:
+   explicit ProbeErrorFileLock(const Error& error) : FailingFileLock(error) {}
+
+   Error isLocked(const FilePath&, bool* pLocked) const override
+   {
+      *pLocked = true;
+      return error_;
+   }
+};
+
+TEST_F(SourceDatabaseSupervisorTest, PropagatesOtherAdvisoryProbeErrors)
+{
+   Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+   ProbeErrorFileLock probe(error);
+   bool locked = false;
+   EXPECT_EQ(error, supervisor::detail::isSessionDirLocked(originalDir_, probe, &locked));
+   EXPECT_TRUE(locked);
+   expectDocuments(originalDir_);
+}
 
 TEST_F(SourceDatabaseSupervisorTest, PropagatesContentionAfterTheOwnershipProbe)
 {
@@ -313,9 +382,41 @@ TEST_F(SourceDatabaseSupervisorTest, LeavesRestartingSessionsAlone)
 }
 
 #ifndef _WIN32
+TEST_F(SourceDatabaseSupervisorTest, ChecksLinkOwnershipWhenAdvisoryLockingIsUnsupported)
+{
+   LinkBasedFileLock owner;
+   for (auto code : {boost::system::errc::operation_not_supported,
+                     boost::system::errc::function_not_supported})
+   {
+      ProbeErrorFileLock probe(systemError(code, ERROR_LOCATION));
+      ASSERT_FALSE(owner.acquire(originalDir_.completePath("lock_file")));
+      bool locked = false;
+      EXPECT_FALSE(supervisor::detail::isSessionDirLocked(originalDir_, probe, &locked));
+      EXPECT_TRUE(locked);
+
+      // Released recovery data remains usable when only link locking works.
+      ASSERT_FALSE(owner.release());
+      EXPECT_FALSE(supervisor::detail::isSessionDirLocked(originalDir_, probe, &locked));
+      EXPECT_FALSE(locked);
+      EXPECT_FALSE(owner.acquire(originalDir_.completePath("lock_file")));
+      EXPECT_FALSE(owner.release());
+      expectDocuments(originalDir_);
+   }
+}
+
 TEST_F(SourceDatabaseSupervisorTest, LeavesAnEmptyLockPublicationAlone)
 {
-   ASSERT_FALSE(originalDir_.completePath("lock_file").ensureFile());
+   FileLock::setTimeoutInterval(boost::posix_time::seconds(2));
+   FilePath lockFile = originalDir_.completePath("lock_file");
+   ASSERT_FALSE(lockFile.ensureFile());
+   Error publicationError;
+   std::thread publisher([&]()
+   {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      publicationError = writeStringToFile(
+         lockFile,
+         std::to_string(rstudio::core::system::currentProcessId()) + "\n");
+   });
    FailingFileLock lock{Success()};
    bool reclaimed = true;
    EXPECT_FALSE(supervisor::detail::reclaimOrphanedSession(
@@ -323,6 +424,8 @@ TEST_F(SourceDatabaseSupervisorTest, LeavesAnEmptyLockPublicationAlone)
       targetDir_,
       lock,
       &reclaimed));
+   publisher.join();
+   EXPECT_FALSE(publicationError);
    EXPECT_FALSE(reclaimed);
    EXPECT_TRUE(FileLock::isNoLockAvailable(supervisor::detail::acquireSessionDirLock(originalDir_, lock)));
    EXPECT_EQ(0, lock.acquisitions);

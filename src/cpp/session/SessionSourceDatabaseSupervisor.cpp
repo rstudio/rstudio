@@ -21,6 +21,9 @@
 # include <windows.h>
 #endif
 
+#include <algorithm>
+#include <chrono>
+#include <thread>
 #include <vector>
 
 #include <boost/scope_exit.hpp>
@@ -302,21 +305,10 @@ Error createSessionDirFromPersistent()
    return Success();
 }
 
-// Probe advisory locks first: reading a link lock's metadata can otherwise
-// close a descriptor for an advisory lock held by this process. Each probe
-// fails closed, including when an empty link lock is still being published.
-Error isSessionDirLocked(const FilePath& sessionDir, bool* pLocked)
+bool isLockingUnsupported(const Error& error)
 {
-   FilePath lockFile = sessionLockFilePath(sessionDir);
-   Error error = AdvisoryFileLock().isLocked(lockFile, pLocked);
-   if (error || *pLocked)
-      return error;
-
-#ifndef _WIN32
-   return LinkBasedFileLock().isLocked(lockFile, pLocked);
-#else
-   return Success();
-#endif
+   return error == systemError(boost::system::errc::operation_not_supported, ErrorLocation()) ||
+          error == systemError(boost::system::errc::function_not_supported, ErrorLocation());
 }
 
 Error sessionDirInUseError(const FilePath& sessionDir)
@@ -344,12 +336,48 @@ Error removeAndRecreate(const FilePath& dir)
 
 namespace detail {
 
+Error isSessionDirLocked(const FilePath& sessionDir, const FileLock& advisoryLock, bool* pLocked)
+{
+   FilePath lockFile = sessionLockFilePath(sessionDir);
+#ifndef _WIN32
+   // A recently created empty file can be either a released advisory lock or
+   // an unfinished link-lock publication. Give it time to become unambiguous,
+   // bounded by the configured timeout and a 30-second startup wait.
+   auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(
+      std::min<long>(30, FileLock::getTimeoutInterval().total_seconds()));
+#endif
+   while (true)
+   {
+      // Probe advisory locks first: reading link metadata can otherwise close
+      // a descriptor for an advisory lock held by this process. Unsupported
+      // locking is the only inspection failure we can safely disregard.
+      Error error = advisoryLock.isLocked(lockFile, pLocked);
+      if (error && !isLockingUnsupported(error))
+         return error;
+      if (!error && *pLocked)
+         return Success();
+
+#ifndef _WIN32
+      error = LinkBasedFileLock().isLocked(lockFile, pLocked);
+      if (error || !*pLocked || lockFile.isSymlink() || lockFile.getSize() != 0 ||
+          std::chrono::steady_clock::now() >= deadline)
+      {
+         return error;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#else
+      *pLocked = false;
+      return Success();
+#endif
+   }
+}
+
 Error acquireSessionDirLock(const FilePath& sessionDir, FileLock& lock)
 {
    // An existing database may belong to a session using the other lock type.
    // If ownership cannot be inspected, do not write to it.
    bool locked = true;
-   Error error = isSessionDirLocked(sessionDir, &locked);
+   Error error = isSessionDirLocked(sessionDir, AdvisoryFileLock(), &locked);
    if (error)
       return error;
    if (locked)
@@ -362,11 +390,8 @@ Error acquireSessionDirLock(const FilePath& sessionDir, FileLock& lock)
       // Retain the existing fallback for filesystems without lock support.
       if (FileLock::isNoLockAvailable(error))
          return sessionDirInUseError(sessionDir);
-      if (error != systemError(boost::system::errc::operation_not_supported, ErrorLocation()) &&
-          error != systemError(boost::system::errc::function_not_supported, ErrorLocation()))
-      {
+      if (!isLockingUnsupported(error))
          return error;
-      }
       LOG_ERROR(error);
    }
 
@@ -423,7 +448,7 @@ Error reclaimOrphanedSession(
       // its source database. A transient inspection error therefore defers
       // recovery of this dir to a later start rather than risk a steal.
       bool locked = true;
-      Error lockError = isSessionDirLocked(sessionDir, &locked);
+      Error lockError = isSessionDirLocked(sessionDir, AdvisoryFileLock(), &locked);
       if (lockError)
          LOG_ERROR(lockError);
 
@@ -664,4 +689,3 @@ void resumeSourceDatabase()
 } // namespace source_database
 } // namespace session
 } // namespace rstudio
-
