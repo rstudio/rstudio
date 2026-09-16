@@ -231,20 +231,18 @@ export async function closeProjectIfOpen(page: Page): Promise<boolean> {
     state: 'visible',
     timeout: TIMEOUTS.sessionRestart,
   });
-  await waitForConsoleIdle(page);
 
   // Wait for the new no-project session to finish installing its automation
-  // bridge AND report no active project. The bridge re-installs when the
-  // workbench rebuilds; `project.isActive()` returns false only once the new
-  // SessionInfo has propagated. Polling on both signals catches the case
-  // where the bridge is from the previous (project-bound) session.
+  // bridge AND complete deferred initialization. The project can already
+  // be inactive while ready is still false; returning in that interval lets
+  // the next project open race the previous session's initialization.
   // A modal that the close itself raised (e.g. "Save workspace image to
   // .../.RData?") blocks the close indefinitely, and every wait above is
   // satisfiable by the still-open project's console -- so this wait is where
   // that lands, as a bare 30s timeout. Name the dialog in the failure instead.
   try {
     await page.waitForFunction(
-      () => window.rstudio?.project?.isActive() === false,
+      () => window.rstudio?.ready === true && window.rstudio?.project?.isActive() === false,
       null,
       { timeout: TIMEOUTS.sessionRestart, polling: 100 },
     );
@@ -274,6 +272,10 @@ export async function closeProjectIfOpen(page: Page): Promise<boolean> {
   const okButton = page.locator('button:has-text("OK")').first();
   if (await okButton.isVisible({ timeout: 500 }).catch(() => false))
     await okButton.click();
+
+  // The earlier console checks may have observed the outgoing session.
+  // Check idle only after the replacement session has become ready.
+  await waitForConsoleIdle(page);
 
   return savePromptDismissed;
 }
