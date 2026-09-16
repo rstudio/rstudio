@@ -22,6 +22,7 @@ namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
+   class FileLock;
 }
 }
 
@@ -41,6 +42,18 @@ void suspendSourceDatabase(int status);
 void resumeSourceDatabase();
 
 core::FilePath sessionDirPath();
+
+namespace detail {
+
+core::Error acquireSessionDirLock(const core::FilePath& sessionDir, core::FileLock& lock);
+
+core::Error reclaimOrphanedSession(
+      const core::FilePath& sourceRoot,
+      const core::FilePath& sessionDir,
+      core::FileLock& lock,
+      bool* pReclaimed);
+
+} // namespace detail
 
 } // namespace supervisor
 } // namespace source_database

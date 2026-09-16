@@ -144,12 +144,16 @@ popd
 goto :eof
 
 :run_rsession
+call :setup_session_test_environment
+if errorlevel 1 goto :eof
 echo Running 'rsession' tests...
 "@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" --run-tests --config-file="!SESSION_CONF!"
 call :record "rsession" !ERRORLEVEL!
 goto :eof
 
 :run_r
+call :setup_session_test_environment
+if errorlevel 1 goto :eof
 echo Running 'r' tests...
 
 REM Keep process-wide environment setup outside R and establish it before
@@ -160,18 +164,6 @@ if defined CI set "NO_COLOR=1"
 set "TESTTHAT_TESTS_DIR=@CMAKE_CURRENT_SOURCE_DIR@/tests/testthat"
 set "TESTTHAT_OUTPUT_DIR=@CMAKE_CURRENT_BINARY_DIR@"
 if defined TEST_FILTER set "TESTTHAT_FILTER=!TEST_FILTER!"
-
-REM fresh state/config so the machine's config doesn't affect the tests.
-REM %RANDOM% alone is not unique, so concatenate two draws.
-set "RSTUDIO_TEST_TMP=%TEMP%\rstudio-tests-!RANDOM!!RANDOM!"
-mkdir "!RSTUDIO_TEST_TMP!" 2>nul
-if not exist "!RSTUDIO_TEST_TMP!\" (
-    echo DIAGNOSTICS: failed to create temp dir !RSTUDIO_TEST_TMP! 1>&2
-    set "TEST_FAILURE=1"
-    goto :eof
-)
-set "RSTUDIO_DATA_HOME=!RSTUDIO_TEST_TMP!\data"
-set "RSTUDIO_CONFIG_HOME=!RSTUDIO_TEST_TMP!\config"
 
 REM backslash path for filesystem ops (del/set /p are unreliable with '/')
 set "FAILLOG=@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log"
@@ -204,6 +196,26 @@ goto :eof
 REM ===========================================================================
 REM helpers
 REM ===========================================================================
+
+:setup_session_test_environment
+REM Give each scope fresh state/config, overriding any inherited IDE paths.
+set "RSTUDIO_TEST_TMP=%TEMP%\rstudio-tests-!RANDOM!!RANDOM!"
+mkdir "!RSTUDIO_TEST_TMP!" 2>nul
+if errorlevel 1 (
+    echo DIAGNOSTICS: failed to create temp dir !RSTUDIO_TEST_TMP! 1>&2
+    set "TEST_FAILURE=1"
+    exit /b 1
+)
+set "RSTUDIO_DATA_HOME=!RSTUDIO_TEST_TMP!\data"
+set "RSTUDIO_CONFIG_HOME=!RSTUDIO_TEST_TMP!\config"
+REM Prevent startup from migrating the user's legacy RStudio state here.
+mkdir "!RSTUDIO_DATA_HOME!\client-state" 2>nul && mkdir "!RSTUDIO_CONFIG_HOME!" 2>nul
+if errorlevel 1 (
+    echo DIAGNOSTICS: failed to initialize temp dir !RSTUDIO_TEST_TMP! 1>&2
+    set "TEST_FAILURE=1"
+    exit /b 1
+)
+exit /b 0
 
 REM add_scope <name> -> appends the canonical form of a requested scope to
 REM TEST_SCOPES, or sets SCOPE_ERROR when the name isn't a known scope
