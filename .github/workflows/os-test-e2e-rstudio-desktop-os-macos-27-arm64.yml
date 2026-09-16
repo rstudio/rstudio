@@ -2,17 +2,19 @@ name: "Test: E2E Playwright RStudio (Desktop, macOS 27 ARM64, Open Source)"
 
 # macOS 27 arm64. GitHub ships this OS only under the Xcode-versioned label
 # `xcode-27`, not a `macos-27` alias, so that is what runs-on says below; the
-# file and job are named for the OS under test to match every sibling engine.
+# file and job are named for the OS under test, as in the macOS 14 and 15
+# siblings.
 # The image is a public preview, so expect both queueing delays and unstable
-# software on it. Switch runs-on to `macos-27` if and when GitHub adds that
-# label at GA.
+# software on it. Switch both runs-on values (and the runner name in the
+# PR-comment footer) to `macos-27` if and when GitHub adds that label at GA.
 #
 # `xcode-27` is a standard runner, free and unlimited on public repos. Do NOT
 # change it to `xcode-27-xlarge`: that is a larger runner, which GitHub bills
 # even here.
 #
-# Manual dispatch only for now, per rstudio/rstudio#18821 -- no cron and no PR
-# wiring until the preview image proves stable.
+# No cron of its own and no PR wiring, per rstudio/rstudio#18821. The
+# scheduled rotation reaches it twice a week: the Tuesday weekday slate, and
+# the Sunday macOS+Windows run it joins by virtue of its platform tag.
 
 on:
   workflow_dispatch:
@@ -67,7 +69,7 @@ on:
         type: boolean
         default: false
       build_only:
-        description: "Run only the build job (to seed the rstudio-tools / R-libs / sccache caches) and skip the e2e job."
+        description: "Run only the build job (to seed the rstudio-tools / R-libs / GWT / sccache caches) and skip the e2e job."
         type: boolean
         default: false
       post_pr_comment:
@@ -149,8 +151,8 @@ permissions:
   id-token: write
 
 jobs:
-  # Builds RStudio Desktop from this PR's source on the same runner image as
-  # the e2e job below, then uploads RStudio.app as an artifact for the e2e
+  # Builds RStudio Desktop from this branch's source on the same runner image
+  # as the e2e job below, then uploads RStudio.app as an artifact for the e2e
   # job to consume. Skipped when build_from_source is false, in which case
   # the e2e job downloads the daily .dmg (or rstudio_installer_url) instead.
   build:
@@ -213,8 +215,9 @@ jobs:
       # GWT compilation is the single most expensive JS step (~15-30 min). When
       # GWT Java sources / build scripts haven't changed, cmake skips
       # recompilation via --build-gwt=0 and uses the cached output directly.
-      # Restore-only here; the matching Save GWT output step runs after the build
-      # with if: always() so the cache is written even when a later step fails.
+      # Restore-only here; the matching Save GWT output step after the build
+      # saves only from main-scoped runs after a successful build, and only
+      # on a key miss (see that step's comment).
       - name: Restore GWT output
         id: gwt-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -234,12 +237,16 @@ jobs:
         working-directory: dependencies/osx
         run: ./install-dependencies-osx-arch
 
-      # Save the tools / R-libs caches only from main-scoped runs (the seed
-      # and scheduled workflows), and only on a key miss. A cache saved from a
-      # PR run lands in that PR's merge-ref scope, which no other branch can
-      # restore -- each copy is pure pressure on the repo's 10 GB Actions
-      # cache quota, and that pressure is what evicts main's copies and sends
-      # every PR build cold in the first place.
+      # Save the tools / R-libs caches only from main-scoped runs, and only on
+      # a key miss. This engine has no cache seed, and its scheduled runs
+      # install the daily .dmg, so the build job is skipped and these caches
+      # are never read there; they populate only on a from-source run
+      # dispatched from main.
+      #
+      # A cache saved from a PR run lands in that PR's merge-ref scope, which
+      # no other branch can restore -- each copy is pure pressure on the
+      # repo's 10 GB Actions cache quota, and that pressure is what evicts
+      # main's copies and sends every PR build cold in the first place.
       - name: Save rstudio-tools deps
         if: github.ref == 'refs/heads/main' && steps.tools-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -259,9 +266,9 @@ jobs:
       # variable). The GHA cache backend writes per-object entries into each
       # PR's merge-ref scope, flooding the repo's 10 GB Actions cache quota
       # (6000+ of its entries were sccache objects) and LRU-evicting the
-      # main-scoped copies the seed maintains -- PR builds then compile at a
-      # ~0% hit rate. S3 has no quota or ref scoping, so every run reads and
-      # writes one shared cache.
+      # main-scoped copies the seeded engines maintain -- PR builds elsewhere
+      # in the fleet then compile at a ~0% hit rate. S3 has no quota or ref
+      # scoping, so every run reads and writes one shared cache.
       - name: Configure AWS credentials for sccache
         id: sccache-aws
         if: env.SCCACHE_ROLE_ARN != '' && vars.AWS_SCCACHE_BUCKET != ''
@@ -337,9 +344,8 @@ jobs:
       # bundle. upload-artifact would otherwise zip the directory tree itself
       # and break codesigned binaries on the way back out.
       #
-      # Skipped in build_only (seed) runs: no e2e job consumes the artifact
-      # there, so packaging and uploading it would be pure waste (a large
-      # artifact produced and retained on every nightly seed for nothing).
+      # Skipped in build_only runs: no e2e job consumes the artifact there, so
+      # packaging and uploading it would be pure waste.
       - name: Package RStudio.app
         if: inputs.build_only != true
         working-directory: package/osx/install
@@ -358,7 +364,8 @@ jobs:
     # build is skipped when build_from_source is false; allow this job to
     # run in that case too. needs.build.result is "success" on a normal run
     # and "skipped" on the daily-download path. build_only seeds the build
-    # caches (rstudio-tools / R-libs / sccache) without running e2e, so skip.
+    # caches (rstudio-tools / R-libs / GWT / sccache) without running e2e, so
+    # skip.
     if: |
       always() &&
       inputs.build_only != true &&
