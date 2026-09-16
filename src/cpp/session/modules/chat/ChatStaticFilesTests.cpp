@@ -225,12 +225,19 @@ Error requestApp(http::Response* pResponse)
    return handleAIChatRequest(request, pResponse);
 }
 
-// Unpins the installation after each test, so a later test sees the state of
-// a session whose chat backend has not started yet.
+// Unpins the installation and clears the backend port after each test, so a
+// later test sees the state of a session whose chat backend has not started
+// yet. Both setters rebuild the CSP header from whatever is resolvable on the
+// machine running the tests, so a test asserting on that header must pin an
+// installation of its own rather than rely on the state left here.
 class ChatStaticFilesPin : public ::testing::Test
 {
 protected:
-   void TearDown() override { setInstallationPath(FilePath()); }
+   void TearDown() override
+   {
+      setInstallationPath(FilePath());
+      setChatBackendPort(kChatBackendPortNone);
+   }
 };
 
 } // anonymous namespace
@@ -343,4 +350,106 @@ TEST_F(ChatStaticFilesPin, UnpinnedInstallationIsNotServedFrom)
    EXPECT_NE(response.body(), "// unpinned build");
 
    install.removeIfExists();
+}
+
+namespace {
+
+// Stages an installation whose client serves one non-index HTML page, plus a
+// dist/csp.json carrying the given connect-src. A non-index page takes the
+// handler's CSP branch without the index-only theme injection and auth cookie.
+FilePath stageInstallationServingCsp(const std::string& connectSrc)
+{
+   FilePath dir = stageInstallationServingApp("// csp build");
+
+   writeStringToFile(dir.completeChildPath(kClientDirPath)
+                        .completeChildPath("page.html"),
+                     "<html>page</html>");
+
+   writeStringToFile(dir.completeChildPath(kCspConfigPath),
+                     "{\"connect-src\": \"" + connectSrc + "\"}");
+
+   return dir;
+}
+
+// Requests the non-index page, returning the CSP header the handler set.
+std::string requestPageCsp()
+{
+   http::Request request;
+   request.setUri("/ai-chat/page.html");
+
+   http::Response response;
+   Error error = handleAIChatRequest(request, &response);
+   EXPECT_FALSE(error);
+
+   return response.headerValue("Content-Security-Policy");
+}
+
+} // anonymous namespace
+
+TEST_F(ChatStaticFilesPin, CspFollowsAnUpdateThatReplacesTheInstallationInPlace)
+{
+   FilePath install = stageInstallationServingCsp("https://before.example");
+   setInstallationPath(install);
+   setChatBackendPort(1234);
+
+   EXPECT_NE(requestPageCsp().find("https://before.example"), std::string::npos);
+
+   // An in-session update extracts over the same directory, so the path the
+   // backend restart pins is unchanged -- only the contents differ. The
+   // directives must come from the installation being served, not from
+   // whatever the first request happened to read.
+   writeStringToFile(install.completeChildPath(kCspConfigPath),
+                     "{\"connect-src\": \"https://after.example\"}");
+   setChatBackendPort(5678);
+
+   std::string header = requestPageCsp();
+   EXPECT_NE(header.find("https://after.example"), std::string::npos);
+   EXPECT_EQ(header.find("https://before.example"), std::string::npos);
+
+   install.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesPin, CspIsReadFromTheInstallationThePinNames)
+{
+   FilePath first = stageInstallationServingCsp("https://first.example");
+   FilePath second = stageInstallationServingCsp("https://second.example");
+
+   setInstallationPath(first);
+   setChatBackendPort(1234);
+   EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
+
+   // A restart onto another installation -- what a versioned install does --
+   // must serve that installation's directives.
+   setInstallationPath(second);
+   setChatBackendPort(5678);
+
+   std::string header = requestPageCsp();
+   EXPECT_NE(header.find("https://second.example"), std::string::npos);
+   EXPECT_EQ(header.find("https://first.example"), std::string::npos);
+
+   first.removeIfExists();
+   second.removeIfExists();
+}
+
+TEST_F(ChatStaticFilesPin, CspFollowsThePinWithoutABackendPortChange)
+{
+   FilePath first = stageInstallationServingCsp("https://first.example");
+   FilePath second = stageInstallationServingCsp("https://second.example");
+
+   setInstallationPath(first);
+   setChatBackendPort(1234);
+   EXPECT_NE(requestPageCsp().find("https://first.example"), std::string::npos);
+
+   // Changing which installation is served is enough on its own: uninstall
+   // unpins without starting a backend, so nothing sets the port afterwards
+   // and a policy that only followed the port would outlive the installation
+   // it came from.
+   setInstallationPath(second);
+
+   std::string header = requestPageCsp();
+   EXPECT_NE(header.find("https://second.example"), std::string::npos);
+   EXPECT_EQ(header.find("https://first.example"), std::string::npos);
+
+   first.removeIfExists();
+   second.removeIfExists();
 }

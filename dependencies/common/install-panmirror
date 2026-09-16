@@ -41,7 +41,7 @@ QUARTO_REPO_URL="https://github.com/quarto-dev/quarto.git"
 # Jenkins builder images, so nothing detects a branch tip that moves: images cached
 # before the push keep the old panmirror while freshly built ones get the new code,
 # and the divergence is silent.
-PANMIRROR_BRANCH="release/rstudio-autumn-hawkbit"
+PANMIRROR_BRANCH="release/rstudio-blue-mistflower"
 
 info "PANMIRROR_BRANCH: ${PANMIRROR_BRANCH}"
 

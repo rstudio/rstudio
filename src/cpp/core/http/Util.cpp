@@ -384,19 +384,23 @@ void parseMultipartForm(const std::string& contentType,
    }
 
    // Per RFC 2046, multipart-body ends immediately after the `--` with no CRLF necessary.
-   size_t terminatorPos = body.find("\r\n--" + boundary + "--");
+   const std::string terminator = "\r\n--" + boundary + "--";
+   size_t terminatorPos = body.find(terminator);
    if (terminatorPos == 0 || !body.size())
    {
       // No sections, just a terminating boundary
       LOG_WARNING_MESSAGE("Invalid multipart/form-data: no sections");
       return;
    }
-   // Be permissive beyond the strict requirements of RFC 2046:
-   // Use best effort to read the last part even if the terminator is missing.
-   if (terminatorPos == std::string::npos)
-      terminatorPos = body.size();
+   // Hand BoundaryFinder the terminator so it closes the final part on a real
+   // delimiter instead of the end of the view; the parts are identical either
+   // way, since the match anchors at the same CRLF. Missing terminator: read
+   // the last part anyway, more permissively than RFC 2046 requires.
+   size_t multipartLen = terminatorPos == std::string::npos
+      ? body.size()
+      : terminatorPos + terminator.size();
 
-   std::string_view multipart(&*body.begin(), terminatorPos);
+   std::string_view multipart(body.data(), multipartLen);
 
    // iterate over the multipart sections
    BoundaryFinder finder(boundary);

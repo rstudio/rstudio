@@ -40,7 +40,7 @@
 .rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
-   col <- x[start:min(NROW(x), start + len)]
+   col <- x[start:base::min(NROW(x), start + len)]
    
    # if this object has a format method, use it. catch errors
    # and validate that the format method has given us something 'sane'
@@ -311,6 +311,21 @@
    # Only handles types where the bound is a property of range/levels/type
    # rather than a per-element format() call. Returns NA if the column type
    # is not a known-cheap case so the client falls back to sampling.
+   #
+   # nchar(type = "width") is called with allowNA = TRUE throughout: a column
+   # holding invalid multibyte text (e.g. latin1 bytes read as UTF-8) makes it
+   # throw outright, which would abort the whole describe call and leave the
+   # grid unusable. NA-ing those elements instead lets us detect that case and
+   # fall back to client-side sampling.
+   # https://github.com/rstudio/rstudio/issues/18843
+   #
+   # The summary generics are namespace-qualified here and elsewhere in this
+   # file. They are routinely masked on the search path by stats-teaching
+   # packages (mosaic, mobilizr, ...) whose replacements take different
+   # arguments, and when such a package is attached ahead of 'tools:rstudio'
+   # -- as an .Rprofile library() call leaves it -- our unqualified calls
+   # resolve to those instead of base's and fail.
+   # https://github.com/rstudio/rstudio/issues/18842
    colMaxChars <- function(col) {
       if (length(col) == 0L)
          return(NA_integer_)
@@ -323,14 +338,21 @@
       if (is.factor(col)) {
          lvls <- levels(col)
          if (length(lvls) == 0L) return(0L)
-         return(max(nchar(lvls, type = "width"), na.rm = TRUE))
+         widths <- nchar(lvls, type = "width", allowNA = TRUE)
+         if (anyNA(widths)) return(NA_integer_)
+         return(base::max(widths))
       }
-      if (is.character(col))
-         return(max(nchar(col, type = "width"), 0L, na.rm = TRUE))
+      if (is.character(col)) {
+         # an NA string measures as width 2 ("NA"), so an NA here means the
+         # element could not be measured at all -- no upper bound to report
+         widths <- nchar(col, type = "width", allowNA = TRUE)
+         if (anyNA(widths)) return(NA_integer_)
+         return(base::max(widths, 0L))
+      }
       if (is.integer(col)) {
-         rng <- suppressWarnings(range(col, na.rm = TRUE))
+         rng <- suppressWarnings(base::range(col, na.rm = TRUE))
          if (!all(is.finite(rng))) return(NA_integer_)
-         return(max(nchar(as.character(rng))))
+         return(base::max(nchar(as.character(rng))))
       }
       if (is.numeric(col) && !is.object(col)) {
          # Treat doubles whose values are all integral the same as integer;
@@ -339,8 +361,8 @@
          finiteCol <- col[is.finite(col)]
          if (length(finiteCol) == 0L) return(NA_integer_)
          if (all(finiteCol == trunc(finiteCol))) {
-            rng <- range(finiteCol)
-            return(max(nchar(as.character(rng))))
+            rng <- base::range(finiteCol)
+            return(base::max(nchar(as.character(rng))))
          }
          return(NA_integer_)
       }
@@ -378,11 +400,15 @@
             # Explicit rownames -- cheap to bound for integer/character.
             rnAttr <- attr(x, "row.names", exact = TRUE)
             if (is.integer(rnAttr)) {
-               rng <- suppressWarnings(range(rnAttr, na.rm = TRUE))
+               rng <- suppressWarnings(base::range(rnAttr, na.rm = TRUE))
                if (all(is.finite(rng)))
-                  rnChars <- max(nchar(as.character(rng)))
+                  rnChars <- base::max(nchar(as.character(rng)))
             } else if (is.character(rnAttr)) {
-               rnChars <- max(nchar(rnAttr, type = "width"), 0L, na.rm = TRUE)
+               # as in colMaxChars: an NA width means the element could not be
+               # measured, so there is no upper bound to report
+               widths <- nchar(rnAttr, type = "width", allowNA = TRUE)
+               if (!anyNA(widths))
+                  rnChars <- base::max(widths, 0L)
             }
          }
       }
@@ -536,8 +562,8 @@
                   # smears the discrete structure). Gaps in the range get a
                   # zero-height bar, which is itself informative.
                   int_breaks <- NULL
-                  min_v <- min(hist_vals)
-                  max_v <- max(hist_vals)
+                  min_v <- base::min(hist_vals)
+                  max_v <- base::max(hist_vals)
                   n_distinct <- max_v - min_v + 1
                   if (n_distinct <= 12 && isTRUE(all(hist_vals %% 1 == 0)))
                      int_breaks <- seq(min_v - 0.5, max_v + 0.5, by = 1)
@@ -615,7 +641,7 @@
                   # cells render. col_min/col_max are left NULL (the numeric
                   # footer path keys off their being numbers); the date footer
                   # uses col_min_label/col_max_label instead.
-                  vals <- c(min(epoch), max(epoch), col_breaks)
+                  vals <- c(base::min(epoch), base::max(epoch), col_breaks)
                   labels <- if (inherits(col_obj, "Date"))
                      # as.numeric(Date) is whole days since 1970-01-01; days carry
                      # no timezone, so the origin idiom is unambiguous here.
@@ -671,7 +697,7 @@
             status <- .rs.tryCatch({
                if (is.character(x[[idx]]) && length(x[[idx]]) <= maxCategorizeRows)
                {
-                  counts <- table(x[[idx]], useNA = "no")
+                  counts <- base::table(x[[idx]], useNA = "no")
                   col_n_unique <- length(counts)
                   if (col_n_unique > 0 && col_n_unique <= maxCategoryBars)
                   {
@@ -707,7 +733,7 @@
          }
       }
       # count NA values
-      col_na_count <- sum(is.na(x[[idx]]))
+      col_na_count <- base::sum(is.na(x[[idx]]))
 
       result <- list(
          col_name        = .rs.scalar(col_name),
@@ -758,8 +784,11 @@
       # Optionally include a cheap upper bound on displayed character count.
       # The client uses this for initial column width sizing instead of
       # sampling rows; absence of the field means "sample on the client."
+      # This is only a sizing hint, so any failure computing it degrades to
+      # client-side sampling rather than taking down the whole describe call
+      # (and with it the grid) the way an unguarded throw here used to.
       if (computeMaxChars) {
-         maxCh <- colMaxChars(x[[idx]])
+         maxCh <- .rs.tryOr(NA_integer_, colMaxChars(x[[idx]]))
          if (!is.na(maxCh))
             result$col_max_chars <- .rs.scalar(as.integer(maxCh))
       }
@@ -844,7 +873,7 @@
 
    result <- list(
       n        = .rs.scalar(n),
-      n_na     = .rs.scalar(.rs.tryOr(NA_integer_, sum(is.na(col)))),
+      n_na     = .rs.scalar(.rs.tryOr(NA_integer_, base::sum(is.na(col)))),
       n_unique = .rs.scalar(.rs.tryOr(NA_integer_, length(unique(nonNa))))
    )
 
@@ -852,11 +881,11 @@
    {
       if (!is.null(nonNa) && length(nonNa) > 0)
       {
-         result$min    <- .rs.scalar(.rs.tryOr(NULL, min(nonNa)))
-         result$max    <- .rs.scalar(.rs.tryOr(NULL, max(nonNa)))
-         result$mean   <- .rs.scalar(.rs.tryOr(NULL, mean(nonNa)))
-         result$median <- .rs.scalar(.rs.tryOr(NULL, median(nonNa)))
-         result$sd     <- .rs.scalar(.rs.tryOr(NULL, sd(nonNa)))
+         result$min    <- .rs.scalar(.rs.tryOr(NULL, base::min(nonNa)))
+         result$max    <- .rs.scalar(.rs.tryOr(NULL, base::max(nonNa)))
+         result$mean   <- .rs.scalar(.rs.tryOr(NULL, base::mean(nonNa)))
+         result$median <- .rs.scalar(.rs.tryOr(NULL, stats::median(nonNa)))
+         result$sd     <- .rs.scalar(.rs.tryOr(NULL, stats::sd(nonNa)))
       }
    }
    else if (is.character(col))
@@ -866,9 +895,9 @@
          lens <- .rs.tryOr(NULL, nchar(nonNa))
          if (!is.null(lens))
          {
-            result$min_length <- .rs.scalar(.rs.tryOr(NULL, min(lens)))
-            result$max_length <- .rs.scalar(.rs.tryOr(NULL, max(lens)))
-            result$n_empty    <- .rs.scalar(.rs.tryOr(NULL, sum(lens == 0)))
+            result$min_length <- .rs.scalar(.rs.tryOr(NULL, base::min(lens)))
+            result$max_length <- .rs.scalar(.rs.tryOr(NULL, base::max(lens)))
+            result$n_empty    <- .rs.scalar(.rs.tryOr(NULL, base::sum(lens == 0)))
          }
       }
    }
@@ -878,7 +907,7 @@
       # and any user-set order. When the level count exceeds the cap we
       # truncate to the first N by encoding order, not the N most frequent.
       maxLevels <- 50L
-      tbl <- .rs.tryOr(NULL, table(col, useNA = "no"))
+      tbl <- .rs.tryOr(NULL, base::table(col, useNA = "no"))
       lvls <- .rs.tryOr(NULL, levels(col))
       if (!is.null(tbl) && !is.null(lvls))
       {
@@ -893,15 +922,15 @@
    }
    else if (is.logical(col))
    {
-      result$n_true  <- .rs.scalar(.rs.tryOr(NULL, sum(col == TRUE,  na.rm = TRUE)))
-      result$n_false <- .rs.scalar(.rs.tryOr(NULL, sum(col == FALSE, na.rm = TRUE)))
+      result$n_true  <- .rs.scalar(.rs.tryOr(NULL, base::sum(col == TRUE,  na.rm = TRUE)))
+      result$n_false <- .rs.scalar(.rs.tryOr(NULL, base::sum(col == FALSE, na.rm = TRUE)))
    }
    else if (inherits(col, "Date") || inherits(col, "POSIXct"))
    {
       if (!is.null(nonNa) && length(nonNa) > 0)
       {
-         result$min <- .rs.scalar(.rs.tryOr(NULL, as.character(min(nonNa))))
-         result$max <- .rs.scalar(.rs.tryOr(NULL, as.character(max(nonNa))))
+         result$min <- .rs.scalar(.rs.tryOr(NULL, as.character(base::min(nonNa))))
+         result$max <- .rs.scalar(.rs.tryOr(NULL, as.character(base::max(nonNa))))
       }
 
       # Surface the display timezone (POSIXct only) so the expanded summary can
@@ -923,7 +952,7 @@
       # is negative if they're so-called "automatic" row names
       info <- .row_names_info(x, type = 0L)
       n <- abs(info[[2L]])
-      range <- seq(from = start, to = min(n, start + len))
+      range <- seq(from = start, to = base::min(n, start + len))
       return(as.character(range))
    }
    
@@ -939,7 +968,7 @@
    }
    
    # subset the retrieved row names
-   rowNames <- rowNames[start:min(length(rowNames), start + len)]
+   rowNames <- rowNames[start:base::min(length(rowNames), start + len)]
    
    # encode strings as JSON to force quoting + handle escaping
    # this also lets us differentiate numeric (automatic) row names

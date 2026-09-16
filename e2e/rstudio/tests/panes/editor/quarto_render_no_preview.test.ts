@@ -10,6 +10,7 @@ import { TIMEOUTS } from '@utils/constants';
 import { clearPref, executeCommand, setPref, waitForSourcePaneReset } from '@utils/commands';
 import { closeAndDeleteSandboxFiles, seedSandboxFile, writeAndOpenFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
+import { closeProjectIfOpen, createAndOpenProject } from '@utils/project';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
 import * as path from 'path';
@@ -244,5 +245,49 @@ test.describe.serial('Quarto with no preview', () => {
     // must stop that server rather than treating it as a one-shot render.
     await executeCommand(page, 'closeSourceDoc');
     await expect(jobsPanel).not.toContainText(`Preview: ${fileName}`);
+  });
+});
+
+// The Build pane routes website projects through QuartoPreview with a directory
+// target (#18798). Default-type projects use a different build runner.
+test.describe.serial('Quarto project with no preview', () => {
+  const sandbox = useSuiteSandbox();
+  const projectName = 'quarto_no_preview_website';
+  let projectDir: string;
+
+  test.beforeAll(async ({ rstudioPage: page }) => {
+    test.setTimeout(240000);
+    // Quarto project configuration is read at session startup, so seed it
+    // before opening the project (which restarts the session).
+    await seedSandboxFile(page, sandbox.dir, `${projectName}/_quarto.yml`, heredoc`
+      project:
+        type: website
+      format: html
+    `);
+    await seedSandboxFile(page, sandbox.dir, `${projectName}/index.qmd`, QMD);
+    projectDir = await createAndOpenProject(page, sandbox.dir, projectName);
+    await setPref(page, 'rmd_viewer_type', 'none');
+  });
+
+  test.afterAll(async ({ rstudioPage: page }) => {
+    try {
+      await closeProjectIfOpen(page);
+    } finally {
+      await clearPref(page, 'rmd_viewer_type');
+    }
+  });
+
+  test('Build renders the whole website in a job that finishes', async ({ rstudioPage: page }) => {
+    test.setTimeout(240000);
+    const consoleActions = new ConsolePaneActions(page);
+    await executeCommand(page, 'buildAll');
+
+    const jobsPanel = page.locator(JOBS_PANEL);
+    await expect(jobsPanel).toContainText(`Render: ${projectName}`, { timeout: TIMEOUTS.fileOpen });
+    await expect(jobsPanel).toContainText('Succeeded', { timeout: RENDER_TIMEOUT });
+    await expect(jobsPanel).not.toContainText(`Preview: ${projectName}`);
+
+    const outputPath = path.join(projectDir, '_site', 'index.html');
+    expect(await consoleActions.evalRLogical(`file.exists(${rPathLiteral(outputPath)})`)).toBe(true);
   });
 });

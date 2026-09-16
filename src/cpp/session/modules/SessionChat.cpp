@@ -5341,10 +5341,9 @@ Error startChatBackend(bool resumeConversation)
    // its installation or announces its port and token (the lock and launch
    // failures above do reset both, via clearChatBackendPort()).
    //
-   // The installation goes first so that, if this is the session's first CSP
-   // header rebuild, dist/csp.json -- cached for good, #18831 -- is read from
-   // it. An earlier HTML request, backend stop, or lock or launch failure will
-   // already have cached it.
+   // Both calls below rebuild the CSP header, so the end state is the same
+   // either way; the installation goes first so that no request landing in
+   // between is served under the previous installation's policy (#18831).
    staticfiles::setInstallationPath(positAiPath);
 
    // Share the port with the static file handler for CSP connect-src
