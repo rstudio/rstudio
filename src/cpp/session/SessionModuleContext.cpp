@@ -1350,7 +1350,7 @@ bool addTinytexToPathIfNecessary()
       return false;
    
    s_added = true;
-   core::system::addToSystemPath(binPath);
+   core::system::addToPath(binPath.getAbsolutePath());
    return true;
 }
 
