@@ -3,6 +3,58 @@
 Read this when working on `tests/auth.setup.ts`, `utils/auth.ts`, or anything
 that provisions, reads, or scrubs AI credentials in the sandbox.
 
+## How the pieces fit
+
+```
+  PROVISIONER (positai)            PROVISIONER (copilot)
+  sign in | copy | none            sign in | copy | none
+           |                                |
+           | writes                         | writes
+           v                                v
+  .posit/ai/auth/data.json         .config/github-copilot/auth.db
+                                   (AppData/Local/... on Windows)
+           |                                |
+           +---------------+----------------+
+                           v
+                  <sandbox>/user-home
+                           |
+             +-------------+--------------+
+             v                            v
+      RStudio launches                  GATE
+      HOME=user-home            reads one provider at a time
+      signed into BOTH                   |
+                               +---------+---------+
+                               v                   v
+                            positai             copilot
+                               |                   |
+                     +---------+                   |
+                     |         |                   |
+                     |         +---------+---------+
+                     v                   v
+       Posit-AI-only tests      Shared tests, run once
+       (e.g. tests/panes/       per provider (e.g. tests/
+       posit-assistant-chat/)   panes/editor/
+                                code_suggestions.test.ts)
+```
+
+Each provisioner also writes `<sandbox>/<provider>-auth-status.json`, beside
+the user-home rather than inside it. The gate reads it only to phrase a skip.
+
+Each provider has its own provisioner -- a `setup()` block in
+`tests/auth.setup.ts` that signs in, copies a local store, or does neither.
+It always writes a status file recording what it did, and writes a credential
+store into the sandbox user-home when it has one to write. Nothing calls a
+provisioner and nothing imports from it; the store on disk is the whole
+contract.
+
+Two consumers pick that store up. The launch fixtures point `HOME` at the
+sandbox home, which is what makes the IDE signed in -- and when both
+provisioners succeeded, their stores share one home, so a launched IDE is
+signed into both providers at once.
+The gate (`requireAiCredentials`) reads the same store per provider and skips
+the suite when it can't be used, so one provider failing never skips the
+other's tests.
+
 ## `utils/auth.ts` is the single source of truth
 
 `AI_PROVIDERS`, `credentialPathsFor`, and `scrubCredentials` define every
