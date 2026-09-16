@@ -725,7 +725,7 @@ json::Object pythonEnvironmentStateData(const std::string& environment)
 // used both to initialize the environment state on first load and to send
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
-      bool isDebugStepping,
+      bool /* isDebugStepping */,
       int depth,
       bool includeContents,
       LineDebugState* pLineDebugState)
@@ -838,10 +838,14 @@ json::Object commonEnvironmentStateData(
       varJson["environment_is_local"] = local;
    }
  
-   // If we have source references while we're stepping through, then
-   // we can accurately provide the current context even for the top-most frame.
-   if (isDebugStepping && hasCodeInFrame)
-      varJson["context_depth"] = 1;
+   // The client browses call_frames[context_depth - 1], so context_depth has
+   // to name the frame the browser is actually in. This used to be forced to 1
+   // while stepping, which worked only because R_GetCurrentSrcref's outward
+   // search leaked the stepping position onto the innermost frame. Code run as
+   // a promise inside tryCatch, withCallingHandlers or suppressWarnings leaves
+   // other frames innermost -- source-less ones such as doTryCatch, or the
+   // wrapper itself carrying its own call site -- so forcing 1 pointed the
+   // client at the wrong frame and lost the debug highlight (#18754).
 
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function

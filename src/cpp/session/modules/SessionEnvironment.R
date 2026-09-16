@@ -1410,12 +1410,21 @@
       shinyLabel <- attr(origFun, "_rs_shinyDebugLabel", exact = TRUE)
       if (is.null(shinyLabel)) shinyLabel <- ""
 
-      # Source reference resolution: the innermost frame uses the runtime
-      # srcref when it is allowed to (see .rs.canUseCurrentSrcref). For outer
-      # frames, envSrcrefMap maps each frame's env to the source location of
-      # the call made from that frame (set by the next-inner frame).
+      # Source reference resolution: the frame the browser is actually in
+      # uses the runtime srcref when it is allowed to (see
+      # .rs.canUseCurrentSrcref). That frame is not always the innermost
+      # context -- tryCatch, withCallingHandlers and suppressWarnings force
+      # the debugged code as a promise, leaving base frames such as
+      # doTryCatch further in. For every other frame, envSrcrefMap maps the
+      # frame's env to the source location of the call made from it (set by
+      # the next-inner frame).
+      if (is.null(browserCloenv))
+         isCurrentFrame <- contextDepth == 1L
+      else
+         isCurrentFrame <- identical(cloenv, browserCloenv)
+
       canUseCurrentSrcref <- .rs.canUseCurrentSrcref(callfun, cloenv)
-      if (contextDepth == 1L && canUseCurrentSrcref && .rs.isValidSrcref(currentSrcref))
+      if (isCurrentFrame && canUseCurrentSrcref && .rs.isValidSrcref(currentSrcref))
       {
          srcContext <- list(srcref = currentSrcref, callfun = callfun, call = call)
       }
@@ -1427,7 +1436,7 @@
          {
             srcContext <- mapped
          }
-         else if (contextDepth > 1L)
+         else if (!isCurrentFrame)
          {
             # No locatable call was made from this frame, which happens when
             # a base function builds the inner call itself (lapply, do.call).
@@ -1440,10 +1449,10 @@
          }
          else
          {
-            # The innermost frame is excluded from the fallback above: there,
-            # showing the call's srcref is exactly #18754, where a source-less
-            # function reports its caller's location as its own. Without a
-            # location in this frame, simulate one from the deparsed body.
+            # The browser's own frame is excluded from the fallback above:
+            # there, showing the call's srcref is exactly #18754, where a
+            # source-less function reports its caller's location as its own.
+            # Without a location in this frame, simulate one from the body.
             srcContext <- list(srcref = NULL, callfun = callfun, call = call)
          }
       }
@@ -1483,8 +1492,7 @@
          info <- "_rs_sourceinfo"
          attr(info, "_rs_callfun") <- origFun
 
-         isBrowserFrame <- !is.null(browserCloenv) && !browserUsed &&
-             identical(cloenv, browserCloenv)
+         isBrowserFrame <- isCurrentFrame && !is.null(browserCloenv) && !browserUsed
          if (isBrowserFrame)
          {
             browserUsed <- TRUE
