@@ -1260,10 +1260,10 @@
 #
 # @return A list with components:
 #   - frames: a list of frame descriptor lists (one per function context)
-#   - context_callfun: the callfun at targetDepth (or NULL)
-#   - context_cloenv: the cloenv at targetDepth (or NULL)
-#   - src_context_callfun: the source context's callfun at targetDepth (or NULL)
-#   - src_context_call: the source context's call at targetDepth (or NULL)
+#   - context: the function and environment at targetDepth (or NULL)
+#   - src_context: the resolved or simulated srcref and associated call
+#     and function at targetDepth (or NULL)
+#   - lastDebugLine: the updated simulated browser line (or NULL)
 .rs.addFunction("callFrames", function(targetDepth = 0L,
                                        lineDebugState = NULL,
                                        currentSrcref = NULL)
@@ -1337,6 +1337,8 @@
 
       contextDepth <- contextDepth + 1L
       origFun <- .rs.originalFunction(callfun)
+      funSrcref <- attr(origFun, "srcref", exact = TRUE)
+      hasSourceRefs <- !is.null(funSrcref)
 
       # Function name
       functionName <- tryCatch(
@@ -1353,12 +1355,15 @@
       if (is.null(shinyLabel)) shinyLabel <- ""
 
       # Source reference resolution:
-      # For the innermost frame (contextDepth == 1), use the runtime srcref
-      # passed from C++ (R_GetCurrentSrcref), which reflects the evaluator's
-      # current position inside the function. For outer frames, use the
-      # envSrcrefMap which maps each frame's env to the srcref of the call
-      # made from that frame (set by the next-inner frame's call srcref).
-      if (contextDepth == 1L && .rs.isValidSrcref(currentSrcref))
+      # R_GetCurrentSrcref can search outward when the current function has
+      # no source references, returning its caller's location. Only use it
+      # for functions with source references, or contexts evaluating code
+      # from elsewhere (primitive eval and top-level source-equivalent contexts).
+      # For outer frames, envSrcrefMap maps each frame's env to the source
+      # location of the call made from that frame (set by the next-inner frame).
+      canUseCurrentSrcref <- hasSourceRefs || is.primitive(callfun) ||
+         identical(cloenv, globalenv())
+      if (contextDepth == 1L && canUseCurrentSrcref && .rs.isValidSrcref(currentSrcref))
       {
          srcContext <- list(srcref = currentSrcref, callfun = callfun, call = call)
       }
@@ -1372,10 +1377,10 @@
          }
          else
          {
-            # Fall back to the srcref on this context's own call
-            callSrcref <- attr(call, "srcref", exact = TRUE)
-            resolved <- .rs.resolveCallSrcref(callSrcref, callfun)
-            srcContext <- list(srcref = resolved, callfun = callfun, call = call)
+            # This frame's own call srcref belongs to its caller, not to
+            # the function being executed. Without a location in this
+            # frame, simulate one from the function's deparsed body below.
+            srcContext <- list(srcref = NULL, callfun = callfun, call = call)
          }
       }
 
@@ -1451,6 +1456,7 @@
          }
 
          srcrefInfo <- .rs.srcrefData(simSrcref)
+         srcContext$srcref <- simSrcref
       }
 
       # Call summary
@@ -1490,8 +1496,8 @@
             call           = call,
             functionName   = functionName,
             originalCallfun = origFun,
-            hasSourceRefs  = !is.null(attr(origFun, "srcref", exact = TRUE)),
-            callFunSourceRefs = attr(origFun, "srcref", exact = TRUE)
+            hasSourceRefs  = hasSourceRefs,
+            callFunSourceRefs = funSrcref
          )
          resultSrcContext <- srcContext
       }

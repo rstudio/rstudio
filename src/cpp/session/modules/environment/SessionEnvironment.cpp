@@ -234,11 +234,6 @@ bool isGlobalEnvironmentSerializable()
    return allValuesSerializable;
 }
 
-bool isValidSrcref(SEXP srcref)
-{
-   return srcref && TYPEOF(srcref) != NILSXP && TYPEOF(srcref) != SYMSXP;
-}
-
 bool handleRBrowseEnv(const core::FilePath& filePath)
 {
    if (filePath.getFilename() == "wsbrowser.html")
@@ -386,9 +381,8 @@ struct CallFrameResult
    bool hasSourceRefs;       // whether the function has source refs
    SEXP callFunSourceRefs;   // srcref attribute on the original function
 
-   // Source context info at target depth (for simulated srcrefs)
-   SEXP srcContextCallfun;
-   SEXP srcContextCall;
+   // Resolved or simulated source reference at target depth
+   SEXP srcContextSourceRefs;
 
    CallFrameResult()
       : contextCallfun(R_NilValue),
@@ -396,8 +390,7 @@ struct CallFrameResult
         originalCallfun(R_NilValue),
         hasSourceRefs(false),
         callFunSourceRefs(R_NilValue),
-        srcContextCallfun(R_NilValue),
-        srcContextCall(R_NilValue)
+        srcContextSourceRefs(R_NilValue)
    {
    }
 };
@@ -423,10 +416,10 @@ CallFrameResult callFramesFromR(int depth,
    // during debug stepping). This is not accessible from R's sys.*() functions,
    // so we pass it in.
    //
-   // In R >= 4.5, skip=NA_INTEGER checks R_Srcref first, giving the correct
-   // srcref for the current debug position. In R < 4.5, NA_INTEGER is not
-   // handled specially, so we use skip=0 (checks R_Srcref, then walks
-   // context stack).
+   // In R >= 4.5, skip=NA_INTEGER checks the current evaluator position
+   // before searching outward through the context stack. .rs.callFrames
+   // checks whether the innermost function can use the returned reference.
+   // Older R versions do not handle NA_INTEGER specially, so use skip=0.
    int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
    SEXP currentSrcref = R_GetCurrentSrcref(skip);
 
@@ -482,9 +475,7 @@ CallFrameResult callFramesFromR(int depth,
    error = r::sexp::getNamedListSEXP(resultSEXP, "src_context", &srcContextSEXP);
    if (!error && srcContextSEXP != R_NilValue)
    {
-      error = r::sexp::getNamedListSEXP(srcContextSEXP, "callfun", &result.srcContextCallfun);
-      if (error) LOG_ERROR(error);
-      error = r::sexp::getNamedListSEXP(srcContextSEXP, "call", &result.srcContextCall);
+      error = r::sexp::getNamedListSEXP(srcContextSEXP, "srcref", &result.srcContextSourceRefs);
       if (error) LOG_ERROR(error);
    }
 
@@ -989,52 +980,12 @@ SEXP inferDebugSrcrefs(
       int depth,
       boost::shared_ptr<LineDebugState> pLineDebugState)
 {
-   // R_GetCurrentSrcref(skip) is a public R API that returns the srcref
-   // for the expression currently being evaluated during debugging.
-   //
-   // In R >= 4.5, skip=NA_INTEGER checks R_Srcref (the evaluator's current
-   // position) first, giving the correct srcref during debug stepping.
-   // In R < 4.5, skip=NA_INTEGER is not handled specially and always
-   // returns R_NilValue, so we use skip=0 (checks R_Srcref, then walks
-   // context stack) which is correct on older R.
+   // Use the same source-reference resolution as context changes. A raw
+   // R_GetCurrentSrcref result can belong to a caller when the function
+   // being stepped through has no source references (#18754).
    r::sexp::Protect protect;
-   int skip = r::version() >= core::Version("4.5.0") ? NA_INTEGER : 0;
-   SEXP srcref = R_GetCurrentSrcref(skip);
-   if (isValidSrcref(srcref))
-      return srcref;
-
-   // Fall back to building call frames and simulating source refs
    CallFrameResult cfResult = callFramesFromR(depth, pLineDebugState.get(), &protect);
-
-   // Use the source context's callfun to simulate source refs
-   if (cfResult.srcContextCallfun != R_NilValue)
-   {
-      SEXP info = r::sexp::create("_rs_sourceinfo", &protect);
-      r::sexp::setAttrib(info, "_rs_callfun", cfResult.srcContextCallfun);
-
-      if (pLineDebugState)
-      {
-         SEXP lastDebugSEXP = r::sexp::create(pLineDebugState->lastDebugText, &protect);
-         r::sexp::setAttrib(info, "_rs_calltext", lastDebugSEXP);
-
-         SEXP lastLineSEXP = r::sexp::create(pLineDebugState->lastDebugLine, &protect);
-         r::sexp::setAttrib(info, "_rs_lastline", lastLineSEXP);
-      }
-
-      srcref = R_NilValue;
-      Error error = r::exec::RFunction(".rs.simulateSourceRefs", info)
-            .call(&srcref, &protect);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   if (pLineDebugState && isValidSrcref(srcref))
-   {
-      int lastDebugLine = INTEGER(srcref)[0] - 1;
-      pLineDebugState->lastDebugLine = lastDebugLine;
-   }
-
-   return srcref;
+   return cfResult.srcContextSourceRefs;
 }
 
 } // end anonymous namespace
