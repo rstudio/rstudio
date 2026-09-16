@@ -263,21 +263,51 @@ public class ConsoleInterpreterVersion
 
    private void setRVersionLabel()
    {
+      // Session info already carries the R version, so use it to label the
+      // widget synchronously. The RPC below is queued behind whatever R is
+      // doing (sourcing .Rprofile, restoring the workspace) and so can take a
+      // while to answer during startup, leaving "(unknown)" on screen.
+      String sessionVersion = sessionRVersion();
+      if (!StringUtil.isNullOrEmpty(sessionVersion))
+         label_.setText(rVersionLabel(sessionVersion));
+
       server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
       {
          @Override
          public void onResponseReceived(RVersionSpec versionSpec)
          {
-            label_.setText("R " + versionSpec.getVersion());
+            label_.setText(rVersionLabel(versionSpec.getVersion()));
          }
 
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            label_.setText("Error fetching R version");
+
+            // keep whatever session info gave us rather than replacing a
+            // correct version with an error message
+            if (StringUtil.isNullOrEmpty(sessionVersion))
+               label_.setText("Error fetching R version");
          }
       });
+   }
+
+   private String sessionRVersion()
+   {
+      // use try-catch block in case session info isn't ready yet
+      try
+      {
+         return session_.getSessionInfo().getRVersionsInfo().getRVersion();
+      }
+      catch (Exception e)
+      {
+         return null;
+      }
+   }
+
+   private String rVersionLabel(String version)
+   {
+      return "R " + version;
    }
    
    private String pythonVersionLabel(PythonInterpreter info)
