@@ -630,5 +630,44 @@ test.describe('R debugger', () => {
         { timeout: TIMEOUTS.fileOpen },
       ).toBe(true);
     });
+
+    // lapply() builds the call to FUN itself, so that call carries no source
+    // reference and the lapply() frame has no location of its own. It falls
+    // back to the source reference of the lapply() call, which is what keeps
+    // the frame navigable. Without that fallback the frame reports no file at
+    // all and selecting it cannot move the debug highlight.
+    //
+    // Shares the @desktop_only limitation of the frame-click test above.
+    test('Frames whose inner call is built internally keep their call site (#18754)',
+      { tag: ['@desktop_only'] }, async () => {
+      const fileName = `tb_internal_${Date.now()}.R`;
+      const content = heredoc`
+        ti_inner <- function() {
+           browser()
+           "done"
+        }
+        ti_outer <- function() {
+           lapply(1, function(i) ti_inner())
+        }
+      `;
+
+      await writeAndOpen(fileName, content);
+      await executeCommand(consoleActions.page, 'sourceActiveDocument');
+      await waitForConsoleIdle(consoleActions.page);
+      await consoleActions.executeInConsole('ti_outer()');
+
+      await debuggerActions.waitForDebugMode();
+
+      // Stopped on ti_inner's browser() call, file line 2 (row 1).
+      await debuggerActions.waitForActiveDebugLineRowToBe(1);
+
+      const lapplyFrame = envPane.callFrameByText('lapply').first();
+      await expect(lapplyFrame).toBeVisible({ timeout: TIMEOUTS.fileOpen });
+      await lapplyFrame.click();
+
+      // The lapply() frame resolves to the lapply() call site in the sourced
+      // file, on line 6 (row 5) -- not to a source-less deparsed body.
+      await debuggerActions.waitForActiveDebugLineRowToBe(5);
+    });
   });
 });
