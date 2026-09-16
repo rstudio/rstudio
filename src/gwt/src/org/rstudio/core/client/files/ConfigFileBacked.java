@@ -16,7 +16,9 @@ package org.rstudio.core.client.files;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -76,18 +78,20 @@ public class ConfigFileBacked<T extends JavaScriptObject>
                   object_ = (T)object;
                   loaded_ = true;
                   loading_ = false;
+                  executePending();
                }
-               
+
                @Override
                public void onError(ServerError error)
                {
                   Debug.logError(error);
                   loaded_ = true;
                   loading_ = false;
+                  executePending();
                }
             });
    }
-   
+
    public void execute(final CommandWithArg<T> command)
    {
       if (loaded_)
@@ -95,38 +99,27 @@ public class ConfigFileBacked<T extends JavaScriptObject>
          command.execute(object_);
          return;
       }
-      
-      final Timer executionTimer = new Timer()
-      {
-         private int retryCount = 0;
-         
-         @Override
-         public void run()
-         {
-            if (retryCount > 100)
-               return;
-            
-            if (loading_)
-            {
-               retryCount++;
-               schedule(DELAY_MS);
-               return;
-            }
-            
-            if (!loaded_)
-            {
-               load();
-               schedule(DELAY_MS * 2);
-               return;
-            }
-            
-            command.execute(object_);
-         }
-      };
-      
-      executionTimer.schedule(0);
+
+      // Queue the command until the read settles (onResponseReceived or
+      // onError both mark the object loaded), then start the read if one is
+      // not already in flight. This used to poll on a 20ms Timer and silently
+      // drop the command after ~100 polls; a session that is still busy
+      // starting up (async RPC completion, slow R init) could take longer
+      // than that to answer read_config_json, so the loaded bindings were
+      // never applied until the next EditorLoadedEvent. See
+      // ApplicationCommandManager.loadBindings().
+      pendingCommands_.add(command);
+      load();
    }
-   
+
+   private void executePending()
+   {
+      List<CommandWithArg<T>> pending = new ArrayList<>(pendingCommands_);
+      pendingCommands_.clear();
+      for (CommandWithArg<T> command : pending)
+         command.execute(object_);
+   }
+
    public void set(final T object, final Command command)
    {
       server_.writeConfigJSON(
@@ -161,9 +154,8 @@ public class ConfigFileBacked<T extends JavaScriptObject>
    private boolean loaded_;
    private boolean loading_;
    private T object_;
-   
-   private static final int DELAY_MS = 20;
-   
+   private final List<CommandWithArg<T>> pendingCommands_ = new ArrayList<>();
+
    // Injected ----
    private FilesServerOperations server_;
 }

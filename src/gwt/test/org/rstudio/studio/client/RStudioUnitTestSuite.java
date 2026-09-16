@@ -24,6 +24,7 @@ import org.rstudio.core.client.TextCursorTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
 import org.rstudio.core.client.dom.DomUtilsTests;
+import org.rstudio.core.client.files.ConfigFileBackedTests;
 import org.rstudio.core.client.files.FileSystemItemTests;
 import org.rstudio.core.client.widget.MiniPopupPanelTests;
 import org.rstudio.studio.client.application.ApplicationUtilsTests;
@@ -77,6 +78,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(FileSystemItemTests.class);
+      suite.addTestSuite(ConfigFileBackedTests.class);
       suite.addTestSuite(FileIconTests.class);
       suite.addTestSuite(FileIconRendererTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
