@@ -206,6 +206,18 @@ export default async function globalSetup(config: FullConfig) {
   process.env.PW_SANDBOX = sandbox;
   console.log(`[sandbox] root: ${sandbox}`);
 
+  // Optional local extension, absent in this checkout.
+  let licenseModule: string | undefined;
+  try {
+    licenseModule = require.resolve('../utils/license');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'MODULE_NOT_FOUND') throw err;
+  }
+  if (licenseModule) {
+    console.log(`[sandbox] local setup extension: ${licenseModule}`);
+    await require(licenseModule).seedLicenseState(sandbox, userHome);
+  }
+
   // Sandbox-local ODBC configuration for the Connections pane tests. The
   // desktop fixture points ODBCSYSINI at this directory, so the session sees
   // exactly the drivers registered here (and the machine's real ODBC
