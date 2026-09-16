@@ -3,9 +3,8 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 # One workflow that drives the reusable per-OS E2E "engines" six ways:
 #   - Weekday cron (Mon-Fri): a fixed slate per weekday, so the engines in those
 #     slates get a run during the week without running the whole matrix daily.
-#     The slates cover 13 of the 21 engines; macos14 gets its weekly run from
-#     the Friday cron below, and the remaining seven are reached only by the
-#     Sunday runs.
+#     The slates cover some of the engines. macos14 gets its weekly run from
+#     the Friday cron below, and the rest are reached only by the Sunday runs.
 #   - Friday afternoon cron: macOS 14 alone, timed to land inside the October
 #     2026 brownout windows for the deprecated macos-14 image (see the pick job).
 #   - Weekly cron (Sunday 08:00): every Linux x86_64 engine, for a full-matrix
@@ -18,7 +17,7 @@ name: "Test: E2E Playwright RStudio (Scheduled Rotation and Run-All, Open Source
 #     concurrency note below.
 #   - Weekly cron (Sunday 16:00): every macOS and Windows engine, of either
 #     architecture. Four hours after the Linux arm64 run, for the same reason.
-#   - Manual dispatch: every engine at once (all 21, every platform and
+#   - Manual dispatch: every engine at once (every platform and
 #     architecture), optionally against a specific daily build (the "version"
 #     input) or built from source (the "build_from_source" input).
 #
@@ -143,8 +142,8 @@ jobs:
           # .github/e2e-linux config, name is the job label, and url_key names
           # the resolve job's output holding that engine's version-specific
           # installer URL (empty on latest-daily / build-from-source runs).
-          # select(.os) is what separates them from the five non-Linux engines
-          # when the matrix is built below; those five are keyed on by the
+          # select(.os) is what separates them from the non-Linux engines
+          # when the matrix is built below; those are keyed on by the
           # if: contains(...) guards further down this file and so need only
           # key, platform, and arch.
           #
@@ -158,10 +157,10 @@ jobs:
           # noble_arm64). Every Ubuntu and Rocky engine has a key of its own.
           # These url_keys must agree with each config's daily_platform_key.
           #
-          # The weekday slates below name 16 engine slots but only 13 distinct
-          # engines: macos26, windows2025 and ubuntu24s each appear twice. Of the
-          # eight engines in no slate, macos14's weekly run is the Friday 16:00
-          # cron, and the other seven run only in a Sunday selection.
+          # The weekday slates below name more slots than distinct engines:
+          # macos26, windows2025 and ubuntu24s each appear twice. Of those in
+          # no slate, macos14 runs on the Friday 16:00 cron and the rest only
+          # in a Sunday selection.
           ENGINES='[
             {"key":"ubuntu22-x86_64","platform":"linux","arch":"x86_64","os":"ubuntu-22-x86_64","name":"Ubuntu 22 (x86_64)","url_key":"jammy_amd64"},
             {"key":"ubuntu22-arm64","platform":"linux","arch":"arm64","os":"ubuntu-22-arm64","name":"Ubuntu 22 (arm64)","url_key":"jammy_arm64"},
@@ -183,7 +182,8 @@ jobs:
             {"key":"macos15","platform":"macos","arch":"x86_64"},
             {"key":"windows2025","platform":"windows","arch":"x86_64"},
             {"key":"macos14","platform":"macos","arch":"arm64"},
-            {"key":"macos26","platform":"macos","arch":"arm64"}
+            {"key":"macos26","platform":"macos","arch":"arm64"},
+            {"key":"macos27","platform":"macos","arch":"arm64"}
           ]'
           # Every engine key. The Sunday branches below filter on platform and
           # arch together, which this can't express, so they inline their own jq.
@@ -212,7 +212,7 @@ jobs:
           # engine -- so a version-pinned run would quietly install a different
           # build and report the pinned version as tested. The "Verify a pinned
           # version resolved for every platform" step below cannot catch it: that
-          # checks the action's own 13 outputs, never that an engine's url_key names
+          # checks the action's own outputs, never that an engine's url_key names
           # one of them. The certification workflow carries the same check against
           # its matrix file; keep both in step with the action's outputs.
           RESOLVE_KEYS='["rhel10_x86_64","rhel10_arm64","rhel9_x86_64","rhel9_arm64","noble_amd64","noble_arm64","jammy_amd64","jammy_arm64","resolute_amd64","resolute_arm64","macos","windows","server_noble"]'
@@ -255,7 +255,7 @@ jobs:
           else
             case "$(date -u +%u)" in   # %u: 1=Mon .. 7=Sun
               1) SEL='["ubuntu24d-x86_64","macos26","rocky9-x86_64"]' ;;
-              2) SEL='["ubuntu24s","windows2025","rocky10-arm64"]' ;;
+              2) SEL='["ubuntu24s","windows2025","rocky10-arm64","macos27"]' ;;
               3) SEL='["ubuntu26-x86_64","fedora44-x86_64","macos15","ubuntu22-x86_64"]' ;;
               4) SEL='["fedora43-x86_64","ubuntu24d-arm64","windows2025"]' ;;
               5) SEL='["ubuntu24s","macos26","debian13-arm64"]' ;;
@@ -292,7 +292,7 @@ jobs:
           # Map the selected Linux Desktop engines onto the consolidated
           # workflow's matrix. select(.os) keeps just the Linux entries, since
           # only those carry the os / name / url_key fields the matrix needs;
-          # the five non-Linux engines are reached by the if: contains(...)
+          # the non-Linux engines are reached by the if: contains(...)
           # guards on their own jobs instead.
           LINUX=$(jq -cn --argjson e "$ENGINES" --argjson sel "$SEL" \
             '[$e[] | select(.os) | select(.key as $k | $sel | index($k))]')
@@ -351,7 +351,7 @@ jobs:
       #
       # This workflow's dispatch runs every engine, so it needs every platform.
       # Checked here rather than left to each engine because failing once, before
-      # any runner is provisioned, beats failing 21 times.
+      # any runner is provisioned, beats failing once per engine.
       - name: Verify a pinned version resolved for every platform
         if: ${{ inputs.version != '' && !inputs.build_from_source }}
         env:
@@ -420,6 +420,21 @@ jobs:
     needs: [pick, resolve]
     if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos26') }}
     uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-26-arm64.yml
+    secrets:
+      CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
+      AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
+      AWS_SCCACHE_ROLE_ARN: ${{ secrets.AWS_SCCACHE_ROLE_ARN }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+    with:
+      project: desktop
+      build_from_source: ${{ inputs.build_from_source || false }}
+      rstudio_installer_url: ${{ needs.resolve.outputs.macos }}
+
+  macos27:
+    name: macOS 27 arm64
+    needs: [pick, resolve]
+    if: ${{ contains(fromJSON(needs.pick.outputs.selected), 'macos27') }}
+    uses: ./.github/workflows/os-test-e2e-rstudio-desktop-os-macos-27-arm64.yml
     secrets:
       CONNECT_API_KEY: ${{ secrets.CONNECT_API_KEY }}
       AWS_E2E_REPORTS_ROLE_ARN: ${{ secrets.AWS_E2E_REPORTS_ROLE_ARN }}
