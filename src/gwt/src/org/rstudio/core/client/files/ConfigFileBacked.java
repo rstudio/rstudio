@@ -100,14 +100,9 @@ public class ConfigFileBacked<T extends JavaScriptObject>
          return;
       }
 
-      // Queue the command until the read settles (onResponseReceived or
-      // onError both mark the object loaded), then start the read if one is
-      // not already in flight. This used to poll on a 20ms Timer and silently
-      // drop the command after ~100 polls; a session that is still busy
-      // starting up (async RPC completion, slow R init) could take longer
-      // than that to answer read_config_json, so the loaded bindings were
-      // never applied until the next EditorLoadedEvent. See
-      // ApplicationCommandManager.loadBindings().
+      // Queue the command until the read settles; onResponseReceived and
+      // onError both mark the object loaded and flush the queue, so no
+      // command is dropped however long read_config_json takes.
       pendingCommands_.add(command);
       load();
    }
@@ -117,7 +112,17 @@ public class ConfigFileBacked<T extends JavaScriptObject>
       List<CommandWithArg<T>> pending = new ArrayList<>(pendingCommands_);
       pendingCommands_.clear();
       for (CommandWithArg<T> command : pending)
-         command.execute(object_);
+      {
+         // One loader throwing must not suppress the commands behind it.
+         try
+         {
+            command.execute(object_);
+         }
+         catch (Exception e)
+         {
+            Debug.logException(e);
+         }
+      }
    }
 
    public void set(final T object, final Command command)

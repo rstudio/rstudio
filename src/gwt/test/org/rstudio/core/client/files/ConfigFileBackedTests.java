@@ -18,13 +18,13 @@ import java.util.ArrayList;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerErrorCause;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import com.google.gwt.json.client.JSONValue;
 import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
@@ -261,5 +261,20 @@ public class ConfigFileBackedTests extends GWTTestCase
       config.execute(new RecordingCommand());
 
       assertEquals(1, server.readConfigJSONCallCount);
+   }
+
+   public void testThrowingQueuedCommandDoesNotSuppressLaterCommands()
+   {
+      StubFilesServerOperations server = new StubFilesServerOperations();
+      ConfigFileBacked<JavaScriptObject> config = new ConfigFileBacked<>(
+            server, "test.json", false, createObject());
+
+      config.execute(value -> { throw new RuntimeException("boom"); });
+      RecordingCommand later = new RecordingCommand();
+      config.execute(later);
+
+      server.lastReadCallback.onResponseReceived(createObject());
+
+      assertEquals(1, later.executeCount);
    }
 }
