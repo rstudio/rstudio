@@ -8,7 +8,7 @@ import { test, expect } from '@fixtures/rstudio.fixture';
 import { ConsolePaneActions } from '@actions/console_pane.actions';
 import { TIMEOUTS } from '@utils/constants';
 import { clearPref, executeCommand, setPref, waitForSourcePaneReset } from '@utils/commands';
-import { closeAndDeleteSandboxFiles, writeAndOpenFile } from '@utils/files';
+import { closeAndDeleteSandboxFiles, seedSandboxFile, writeAndOpenFile } from '@utils/files';
 import { heredoc } from '@utils/heredoc';
 import { rPathLiteral } from '@utils/r';
 import { useSuiteSandbox } from '@utils/sandbox';
@@ -65,20 +65,26 @@ test.describe.serial('Quarto with no preview', () => {
   const sandbox = useSuiteSandbox();
   let consoleActions: ConsolePaneActions;
   const fileName = 'quarto_no_preview.qmd';
+  const readyFile = 'render-ready';
+  const releaseFile = 'render-release';
+  const otherFile = 'quarto_other.R';
 
   test.beforeAll(async ({ rstudioPage: page }) => {
     consoleActions = new ConsolePaneActions(page);
-    await setPref(page, 'rmd_viewer_type', 'none');
   });
 
   test.beforeEach(async ({ rstudioPage: page }) => {
     await waitForSourcePaneReset(page);
+    await setPref(page, 'rmd_viewer_type', 'none');
   });
 
   test.afterEach(async ({ rstudioPage: page }) => {
     await closeAndDeleteSandboxFiles(page, sandbox.dir, [
       fileName,
       fileName.replace(/\.qmd$/, '.html'),
+      readyFile,
+      releaseFile,
+      otherFile,
     ]);
   });
 
@@ -130,6 +136,99 @@ test.describe.serial('Quarto with no preview', () => {
     expect(await consoleActions.evalRLogical(`file.exists(${rPathLiteral(outputPath)})`)).toBe(false);
   });
 
+  for (const action of ['close tab', 'close all', 'reload'] as const) {
+    test(`a render finishes after ${action} (#18799)`, async ({ rstudioPage: page }) => {
+      test.setTimeout(240000);
+      expect(await consoleActions.ensurePackages(['rmarkdown'])).toEqual([]);
+
+      if (action === 'close all')
+        await writeAndOpenFile(page, sandbox.dir, otherFile, '# Another open document');
+
+      const readyPath = rPathLiteral(path.join(sandbox.dir, readyFile));
+      const releasePath = rPathLiteral(path.join(sandbox.dir, releaseFile));
+      // Hold the render until the close/reload has reached the session. A
+      // fixed sleep could finish before the action on a slow test runner.
+      await writeAndOpenFile(page, sandbox.dir, fileName, heredoc`
+        ---
+        title: "Render survives source close"
+        format: html
+        ---
+
+        ${'```'}{r}
+        #| include: false
+        writeLines("ready", ${readyPath})
+        deadline <- Sys.time() + 120
+        while (!file.exists(${releasePath})) {
+          if (Sys.time() > deadline)
+            stop("Timed out waiting for the test to release the render")
+          Sys.sleep(0.1)
+        }
+        ${'```'}
+
+        The render continued after the source action.
+      `);
+
+      const docId = await page.evaluate(() => window.rstudio!.documents.active()!.id);
+      const jobsPanel = page.locator(JOBS_PANEL);
+      await executeCommand(page, 'quartoRenderDocument');
+      try {
+        await expect.poll(
+          () => consoleActions.evalRLogical(`file.exists(${readyPath})`),
+          { timeout: RENDER_TIMEOUT },
+        ).toBe(true);
+        await expect(jobsPanel).toContainText(`Render: ${fileName}`);
+
+        if (action === 'reload') {
+          // Client initialization emits onRemoveAll even though it restores
+          // the open documents, exercising the second cleanup handler.
+          await page.reload();
+          await page.waitForFunction(() => window.rstudio?.ready === true, null, {
+            timeout: TIMEOUTS.sessionRestart,
+          });
+        } else {
+          // The job's launch mode must win over a later preference change.
+          if (action === 'close tab')
+            await setPref(page, 'rmd_viewer_type', 'pane');
+
+          const closed = page.waitForResponse(response =>
+            response.url().endsWith('/rpc/close_document') &&
+            response.request().postDataJSON()?.params?.[0] === docId,
+          );
+          await executeCommand(page, action === 'close tab' ? 'closeSourceDoc' : 'closeAllSourceDocs');
+          expect((await (await closed).json()).error).toBeUndefined();
+        }
+
+        // Check that the job remains present before releasing it, then
+        // require successful completion below.
+        await expect(jobsPanel).toContainText(`Render: ${fileName}`);
+        await expect(jobsPanel).toContainText('Running');
+      } finally {
+        // Release even after an assertion failure so teardown can't leave a
+        // background process waiting on a file it has already deleted.
+        await seedSandboxFile(page, sandbox.dir, releaseFile, 'release');
+        await expect(jobsPanel).not.toContainText('Running', { timeout: RENDER_TIMEOUT });
+      }
+
+      await expect(jobsPanel).toContainText('Succeeded', { timeout: RENDER_TIMEOUT });
+      const outputPath = path.join(sandbox.dir, fileName.replace(/\.qmd$/, '.html'));
+      expect(await consoleActions.evalRLogical(`file.exists(${rPathLiteral(outputPath)})`)).toBe(true);
+      await expect(jobsPanel).toContainText(`Render: ${fileName}`);
+    });
+  }
+
+  test('closing a document still stops its preview server', async ({ rstudioPage: page }) => {
+    await setPref(page, 'rmd_viewer_type', 'pane');
+    await writeAndOpenFile(page, sandbox.dir, fileName, QMD);
+    await executeCommand(page, 'quartoRenderDocument');
+
+    const jobsPanel = page.locator(JOBS_PANEL);
+    await expect(jobsPanel).toContainText(`Preview: ${fileName}`, { timeout: TIMEOUTS.fileOpen });
+    await expect(jobsPanel).toContainText(/Browse at:? /, { timeout: RENDER_TIMEOUT });
+
+    await executeCommand(page, 'closeSourceDoc');
+    await expect(jobsPanel).not.toContainText(`Preview: ${fileName}`);
+  });
+
   test('Run Document still starts a Shiny application', async ({ rstudioPage: page }) => {
     test.setTimeout(240000);
     expect(await consoleActions.ensurePackages(['rmarkdown', 'shiny'])).toEqual([]);
@@ -140,5 +239,10 @@ test.describe.serial('Quarto with no preview', () => {
     await expect(jobsPanel).toContainText(`Preview: ${fileName}`, { timeout: TIMEOUTS.fileOpen });
     await expect(jobsPanel).toContainText('==> quarto serve');
     await expect(jobsPanel).toContainText('Listening on', { timeout: RENDER_TIMEOUT });
+
+    // "No Preview" still needs a server for Shiny, so closing its document
+    // must stop that server rather than treating it as a one-shot render.
+    await executeCommand(page, 'closeSourceDoc');
+    await expect(jobsPanel).not.toContainText(`Preview: ${fileName}`);
   });
 });

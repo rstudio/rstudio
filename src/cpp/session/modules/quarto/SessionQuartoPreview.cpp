@@ -51,7 +51,7 @@ namespace preview {
 
 namespace {
 
-// for 'quarto preview' and 'quarto serve' jobs
+// for 'quarto render', 'quarto preview', and 'quarto serve' jobs
 class QuartoPreview : public QuartoJob
 
 {
@@ -118,6 +118,11 @@ public:
    std::string viewerType()
    {
       return viewerType_;
+   }
+
+   bool isRenderOnly() const
+   {
+      return renderOnly_;
    }
 
    bool render(const core::FilePath& previewfile,  std::string format, const json::Value& editorState)
@@ -707,8 +712,8 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
    // resolve source database path
    FilePath resolvedPath = module_context::resolveAliasedPath(path);
 
-   // if this is our active preview then terminate it
-   if (s_pPreview && s_pPreview->isRunning() &&
+   // Only preview servers are tied to the lifetime of their source tab.
+   if (s_pPreview && !s_pPreview->isRenderOnly() && s_pPreview->isRunning() &&
        (s_pPreview->previewTarget() == resolvedPath))
    {
       stopPreview();
@@ -718,7 +723,9 @@ void onSourceDocRemoved(const std::string&, const std::string& path)
 
 void onAllSourceDocsRemoved()
 {
-   stopPreview();
+   // One-shot renders can finish without any source documents open.
+   if (s_pPreview && !s_pPreview->isRenderOnly())
+      stopPreview();
 }
 
 #ifdef WIN32

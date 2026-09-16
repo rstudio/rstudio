@@ -22,6 +22,7 @@
 - ([#18774](https://github.com/rstudio/rstudio/issues/18774)): RStudio now runs the newest compatible Posit Assistant installation among the copy bundled with RStudio, the system-wide installation, and the user's own, instead of always preferring the user's own. A per-user installation no longer shadows a newer bundled or system-wide copy.
 
 ### Fixed
+- ([#18799](https://github.com/rstudio/rstudio/issues/18799)): Closing a Quarto document's source tab no longer cancels an in-progress render when the preview option is set to "(No Preview)".
 - ([#18818](https://github.com/rstudio/rstudio/issues/18818)): Fixed an issue on RStudio Desktop where cancelling the quit prompted by closing the main window left every later close of that window exiting immediately, without prompting to save open documents or the workspace. The window's position and size are now also saved from the close that actually happens, rather than from a close that was cancelled.
 - ([#13292](https://github.com/rstudio/rstudio/issues/13292)): Fixed inline HTML tables produced by `knitr::kable()` retaining dark text when using a dark editor theme.
 - ([#18784](https://github.com/rstudio/rstudio/issues/18784)): Fixed an issue where quitting, closing a project, or switching projects shortly after a session restart prompted to save the workspace image even when Save workspace was set to Never.
