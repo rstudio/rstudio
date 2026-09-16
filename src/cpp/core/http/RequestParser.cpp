@@ -31,6 +31,7 @@ RequestParser::RequestParser()
      isForm_(false),
      paused_(false),
      bufferPos_(boost::none),
+     bufferLen_(0),
      bodyBytesRead_(0),
      MAX_BUFFER_SIZE(defaultMaxBufferSize)
 {
@@ -45,6 +46,7 @@ void RequestParser::reset()
   checkContentLength_ = false;
   isForm_ = paused_ = false;
   bufferPos_ = boost::none;
+  bufferLen_ = 0;
   bodyBytesRead_ = 0;
 }
 

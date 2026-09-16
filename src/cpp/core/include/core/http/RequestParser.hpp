@@ -17,6 +17,8 @@
 #ifndef CORE_HTTP_REQUEST_PARSER_HPP
 #define CORE_HTTP_REQUEST_PARSER_HPP
 
+#include <iterator>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/function.hpp>
 #include <boost/optional.hpp>
@@ -61,6 +63,11 @@ public:
      formBuffer_.reserve(contentLength_ < MAX_BUFFER_SIZE ? contentLength_ : MAX_BUFFER_SIZE);
   }
 
+  /// Parse the next chunk of input.
+  ///
+  /// After headers_parsed or pause is returned the parser holds an offset into
+  /// the buffer just consumed, so the caller must re-invoke with that exact same
+  /// [begin, end) range to resume. A shorter range is rejected with error.
   template <typename InputIterator>
   status parse(Request& req, InputIterator begin, InputIterator end)
   {
@@ -75,6 +82,21 @@ public:
              cleanup();
              return complete;
           }
+       }
+
+       // bufferPos_ is an offset into the buffer we were handed when we
+       // returned headers_parsed or pause, so the caller must re-invoke us
+       // with that exact same buffer. If it hands us a shorter one instead,
+       // advancing by bufferPos_ would run begin past end, and the negative
+       // distance that follows wraps into an absurd allocation size. A buffer
+       // that still clears bufferPos_ but drops the tail is just as wrong, and
+       // loses those body bytes silently, so compare the whole length.
+       if (static_cast<uintmax_t>(std::distance(begin, end)) != bufferLen_)
+       {
+          LOG_ERROR_MESSAGE("RequestParser resumed with a different buffer than the one it "
+                            "suspended on for request with uri " + req.uri_);
+          cleanup();
+          return error;
        }
 
        begin += bufferPos_.get();
@@ -103,6 +125,7 @@ public:
           {
              paused_ = true;
              bufferPos_ = std::distance(originalBegin, begin);
+             bufferLen_ = std::distance(originalBegin, end);
              return status::pause;
           }
 
@@ -141,6 +164,7 @@ public:
              // save buffer position so we can continue parsing the body when reinvoked
              parsingBody_ = true;
              bufferPos_ = std::distance(originalBegin, begin);
+             bufferLen_ = std::distance(originalBegin, end);
              return headers_parsed;
           }
        }
@@ -249,6 +273,7 @@ private:
   bool paused_;
   FormHandler formHandler_;
   boost::optional<size_t> bufferPos_;
+  uintmax_t bufferLen_;
   uintmax_t bodyBytesRead_;
 
   std::string formBuffer_;
