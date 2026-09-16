@@ -52,15 +52,38 @@ namespace graphics {
 
 namespace {
 
+// An R option mirrored from a user preference. The "default" preference value
+// means "no opinion", so it must not clobber a value the user set themselves,
+// e.g. options(RStudioGD.backend = "cairo") in Rprofile.site. We remember the
+// last value we wrote: anything else found in the option was set outside of
+// RStudio and becomes what "default" resolves to.
+//
+// https://github.com/rstudio/rstudio/issues/9275
+struct SyncedOption
+{
+   const char* name;
+   std::string fallback = "default";
+   std::string lastWritten = "default";
+};
+
+SyncedOption s_backendOption{kGraphicsOptionBackend};
+SyncedOption s_antialiasOption{kGraphicsOptionAntialias};
+
+void syncOption(SyncedOption& option, const std::string& prefValue)
+{
+   std::string current = r::options::getOption<std::string>(option.name, "default", false);
+   if (current != option.lastWritten)
+      option.fallback = current;
+
+   std::string value = (prefValue == "default") ? option.fallback : prefValue;
+   r::options::setOption(option.name, value);
+   option.lastWritten = value;
+}
+
 void syncWithPrefs()
 {
-   r::options::setOption(
-            kGraphicsOptionBackend,
-            prefs::userPrefs().graphicsBackend());
-   
-   r::options::setOption(
-            kGraphicsOptionAntialias,
-            prefs::userPrefs().graphicsAntialiasing());
+   syncOption(s_backendOption, prefs::userPrefs().graphicsBackend());
+   syncOption(s_antialiasOption, prefs::userPrefs().graphicsAntialiasing());
 }
 
 void onPreferencesSaved()
@@ -97,6 +120,11 @@ core::json::Array supportedBackends()
    }
    
    return backendsJson;
+}
+
+std::string defaultBackend()
+{
+   return s_backendOption.fallback;
 }
 
 SEXP rs_traceGraphicsDevice(SEXP enableSEXP)

@@ -15,12 +15,15 @@
 
 #include <core/FileLock.hpp>
 
+#include <cmath>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/Settings.hpp>
 #include <core/Log.hpp>
@@ -54,6 +57,12 @@ const char * const kLockTypeLinkBased = "linkbased";
 const char * const kLocksConfFile    = "file-locks";
 const double kDefaultRefreshRate     = 20.0;
 const double kDefaultTimeoutInterval = 30.0;
+const int kDefaultLiveOwnerGraceMultiplier = 10;
+const int kMaxLiveOwnerGraceMultiplier = 1000;
+
+// boost::posix_time::seconds narrows to a 32-bit count, and the refresh timer
+// converts to a system_clock duration; a year is far below either limit.
+const double kMaxIntervalSeconds     = 365.0 * 24.0 * 60.0 * 60.0;
 
 std::string lockTypeToString(FileLock::LockType type)
 {
@@ -77,7 +86,7 @@ FileLock::LockType stringToLockType(const std::string& lockType,
    else if (boost::iequals(lockType, kLockTypeLinkBased))
       return FileLock::LOCKTYPE_LINKBASED;
    
-   LOG_WARNING_MESSAGE("unrecognized lock type '" + lockType + "'");
+   WLOGF("unrecognized lock type '{}'", lockType);
    return defaultLockType;
 }
 
@@ -86,9 +95,9 @@ double getFieldPositive(const Settings& settings,
                         double defaultValue)
 {
    double value = settings.getDouble(name, defaultValue);
-   if (value < 0)
+   if (!std::isfinite(value) || value < 1 || value > kMaxIntervalSeconds)
    {
-      LOG_WARNING_MESSAGE("invalid field '" + name + "': must be positive");
+      WLOGF("invalid field '{}': must be between one second and one year", name);
       return defaultValue;
    }
    
@@ -98,6 +107,25 @@ double getFieldPositive(const Settings& settings,
 bool s_isInitialized = false;
 
 } // end anonymous namespace
+
+bool FileLock::isLocked(const FilePath& lockFilePath) const
+{
+   bool isLocked = true;
+   Error error = this->isLocked(lockFilePath, &isLocked);
+   if (error)
+      LOG_ERROR(error);
+
+   return isLocked;
+}
+
+Error FileLock::noLockAvailableError(const FilePath& lockFilePath)
+{
+   Error error = systemError(
+      boost::system::errc::no_lock_available,
+      ERROR_LOCATION);
+   error.addProperty("lock-file", lockFilePath);
+   return error;
+}
 
 bool FileLock::verifyInitialized()
 {
@@ -154,7 +182,17 @@ void FileLock::initialize(FileLock::LockType fallbackLockType)
    // refresh rate
    double refreshRate = getFieldPositive(settings, "refresh-rate", kDefaultRefreshRate);
    FileLock::s_refreshRate = boost::posix_time::seconds(static_cast<long>(refreshRate));
-   
+
+   // live owner grace (a multiple of the timeout interval)
+   int graceMultiplier = settings.getInt("live-owner-grace-multiplier", kDefaultLiveOwnerGraceMultiplier);
+   if (graceMultiplier < 1 || graceMultiplier > kMaxLiveOwnerGraceMultiplier)
+   {
+      LOG_WARNING_MESSAGE(
+         "invalid field 'live-owner-grace-multiplier': must be between 1 and 1000");
+      graceMultiplier = kDefaultLiveOwnerGraceMultiplier;
+   }
+   FileLock::s_liveOwnerGraceMultiplier = graceMultiplier;
+
    // logging
    bool loggingEnabled = settings.getBool("enable-logging", false);
    FileLock::s_loggingEnabled = loggingEnabled;
@@ -169,6 +207,7 @@ void FileLock::initialize(FileLock::LockType fallbackLockType)
       << "use-symlinks=" << (useSymlinks ? "true" : "false") << ", "
       << "timeout-interval=" << FileLock::s_timeoutInterval.total_seconds() << "s, "
       << "refresh-rate=" << FileLock::s_refreshRate.total_seconds() << "s, "
+      << "live-owner-grace-multiplier=" << FileLock::s_liveOwnerGraceMultiplier << ", "
       << "log-file=" << logFile << ")"
       << std::endl;
    FileLock::log(ss.str());
@@ -235,6 +274,7 @@ void FileLock::log(const std::string& message)
 FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_LINKBASED);
 boost::posix_time::seconds FileLock::s_timeoutInterval(static_cast<long>(kDefaultTimeoutInterval));
 boost::posix_time::seconds FileLock::s_refreshRate(static_cast<long>(kDefaultRefreshRate));
+int FileLock::s_liveOwnerGraceMultiplier(kDefaultLiveOwnerGraceMultiplier);
 bool FileLock::s_loggingEnabled(false);
 bool FileLock::s_isLoadBalanced(false);
 bool FileLock::s_useSymlinks(false);

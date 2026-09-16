@@ -502,6 +502,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["quarto_config"] = quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
+   sessionInfo["graphics_default_backend"] = modules::graphics::defaultBackend();
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
    sessionInfo["presentation_commands"] = options.allowPresentationCommands();
