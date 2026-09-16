@@ -248,6 +248,24 @@ export function credentialPathsFor(provider: AIProvider, homeDir: string): strin
   }
 }
 
+// Remove license files
+function removeLicenseFiles(homeDir: string, remove: (target: string) => void): void {
+  const dir = process.platform === 'win32'
+    ? path.join(homeDir, 'AppData', 'Local', 'RStudio-Desktop')
+    : path.join(homeDir, '.rstudio-desktop');
+
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    if (entry.endsWith('.lic')) remove(path.join(dir, entry));
+  }
+}
+
 // Remove every piece of credential material from the sandbox: each provider's
 // credential paths in each user-home* (the shared template plus any per-worker
 // or per-auth-state copies). Teardown calls this before a sandbox is left on
@@ -289,6 +307,7 @@ export function scrubCredentials(sandbox: string): string[] {
         remove(credentialPath);
       }
     }
+    removeLicenseFiles(home, remove);
   }
 
   return failures;
