@@ -143,12 +143,26 @@ struct FormTester
          endIter = parseIter + requestStr.size();
       }
 
-      const char* stepEnd = parseIter + count;
-      if (stepEnd > endIter)
-         stepEnd = endIter;
+      const char* stepEnd;
+      if (resumeEnd)
+      {
+         // The parser resumes from an offset into the chunk that finished the
+         // headers, so it has to see that same chunk again; a shorter one would
+         // put its saved offset past the end. This mirrors what the real
+         // connection handlers do when they re-invoke parse().
+         stepEnd = resumeEnd;
+         resumeEnd = nullptr;
+      }
+      else
+      {
+         size_t remaining = static_cast<size_t>(endIter - parseIter);
+         stepEnd = parseIter + std::min(static_cast<size_t>(count), remaining);
+      }
 
       RequestParser::status status = parser.parse(request, parseIter, stepEnd);
-      if (status != RequestParser::headers_parsed && status != RequestParser::form_complete)
+      if (status == RequestParser::headers_parsed)
+         resumeEnd = stepEnd;
+      else if (status != RequestParser::form_complete)
          parseIter = stepEnd;
 
       return status;
@@ -168,6 +182,7 @@ struct FormTester
    RequestParser parser;
    const char* parseIter = nullptr;
    const char* endIter = nullptr;
+   const char* resumeEnd = nullptr;
 };
 
 TEST(HttpTest, SimpleFormParsingWorks)
@@ -282,6 +297,9 @@ TEST(HttpTest, ComplicatedFormParsingWorksRandomByteBoundaries)
 
    RequestParser::status status;
    size_t blockSize = 0;
+   // Seed explicitly so a failure is reproducible: other suites in this binary
+   // call ::srand(), so the block sizes would otherwise depend on test ordering.
+   ::srand(18727);
    do
    {
       blockSize = rand() % 8192 + 1;
@@ -449,6 +467,151 @@ TEST(HttpTest, FormParsingBoundaryTrailingSpaces)
 
    File file = form.request.uploadedFile("field2");
    EXPECT_EQ(file.name, "semi\\colon;and\"quote.txt");
+}
+
+TEST(HttpTest, FormParsingResumesWithSmallerChunksAfterHeaders)
+{
+   // The chunk that finishes the headers is replayed to start the body, and
+   // every chunk after it is far smaller than that header block.
+   const std::string fileBytes(64 * 1024, 'z');
+   FormTester form;
+   form.complexRequest(fileBytes, "application/octet-stream");
+
+   RequestParser::status status = form.parseBytes(424);
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   do
+   {
+      status = form.parseBytes(7);
+      if (status == RequestParser::form_complete)
+         break;
+      ASSERT_EQ(RequestParser::incomplete, status);
+   }
+   while (!form.eof());
+   ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "example.txt");
+   EXPECT_TRUE(file.contents == fileBytes) << "uploaded file contents mismatch";
+}
+
+TEST(HttpTest, FormParsingKeepsFirstFileForDuplicateFieldName)
+{
+   FormTester form;
+   form.expectedData =
+      form.multipart("upload", "first contents", "text/plain", "first.txt") +
+      form.multipart("upload", "second contents", "text/csv", "second.txt") +
+      "\r\n--boundary--";
+
+   form.requestStr = "POST /test HTTP/1.1\r\n"
+      "Host: example.com\r\n"
+      "Content-Type: multipart/form-data; boundary=boundary\r\n"
+      "Content-Length: " + std::to_string(form.expectedData.size()) +
+      "\r\n\r\n" + form.expectedData;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   // the first upload for a given field name wins, and the rest are discarded
+   File file = form.request.uploadedFile("upload");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "first.txt");
+   EXPECT_EQ(file.contentType, "text/plain");
+   EXPECT_EQ(file.contents, "first contents");
+}
+
+TEST(HttpTest, FormParsingNestedBoundaryIsPrefixOfOuter)
+{
+   // A nested multipart whose boundary starts with the outer boundary: every
+   // inner delimiter begins with what the outer parser is scanning for, so it
+   // must keep reading past the boundary to reject the match.
+   FormTester form("outer");
+   std::string nested =
+      "\r\n--outerinner\r\n"
+      "Content-Disposition: form-data; name=\"nested1\"\r\n"
+      "\r\n"
+      "nested value 1"
+      "\r\n--outerinner\r\n"
+      "Content-Disposition: form-data; name=\"nested2\"\r\n"
+      "\r\n"
+      "nested value 2"
+      "\r\n--outerinner--";
+
+   form.expectedData = form.multipart("field1", "value1") +
+      form.multipart("field2", nested, "multipart/mixed; boundary=outerinner", "nested.dat") +
+      "\r\n--outer--";
+
+   form.requestStr = "POST /test HTTP/1.1\r\n"
+      "Host: example.com\r\n"
+      "Content-Type: multipart/form-data; boundary=outer\r\n"
+      "Content-Length: " + std::to_string(form.expectedData.size()) +
+      "\r\n\r\n" + form.expectedData;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+   EXPECT_EQ(form.request.formFieldValue("nested1"), std::string());
+
+   // the nested multipart is opaque to the outer parser, delimiters and all
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "nested.dat");
+   EXPECT_TRUE(file.contents == nested) << "nested multipart was split by the outer parser";
+}
+
+TEST(HttpTest, FormParsingOuterBoundaryIsPrefixOfNested)
+{
+   // The mirror case: the outer boundary starts with the nested one, so the
+   // inner delimiters are a truncated form of what the outer parser wants.
+   FormTester form("outerlong");
+   std::string nested =
+      "\r\n--outer\r\n"
+      "Content-Disposition: form-data; name=\"nested1\"\r\n"
+      "\r\n"
+      "nested value 1"
+      "\r\n--outer--";
+
+   form.expectedData = form.multipart("field1", "value1") +
+      form.multipart("field2", nested, "multipart/mixed; boundary=outer", "nested.dat") +
+      "\r\n--outerlong--";
+
+   form.requestStr = "POST /test HTTP/1.1\r\n"
+      "Host: example.com\r\n"
+      "Content-Type: multipart/form-data; boundary=outerlong\r\n"
+      "Content-Length: " + std::to_string(form.expectedData.size()) +
+      "\r\n\r\n" + form.expectedData;
+
+   RequestParser::status status = form.parse();
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = form.parse();
+   ASSERT_EQ(RequestParser::form_complete, status);
+
+   EXPECT_FALSE(form.validationError) << form.validationError;
+
+   EXPECT_EQ(form.request.formFieldValue("field1"), "value1");
+   EXPECT_EQ(form.request.formFieldValue("nested1"), std::string());
+
+   File file = form.request.uploadedFile("field2");
+   EXPECT_FALSE(file.empty());
+   EXPECT_EQ(file.name, "nested.dat");
+   EXPECT_TRUE(file.contents == nested) << "nested multipart was split by the outer parser";
 }
 
 } // namespace tests

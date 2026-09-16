@@ -61,6 +61,12 @@ public:
      formBuffer_.reserve(contentLength_ < MAX_BUFFER_SIZE ? contentLength_ : MAX_BUFFER_SIZE);
   }
 
+  /// Parse the next chunk of input.
+  ///
+  /// After headers_parsed or pause is returned the parser holds an offset into
+  /// the buffer just consumed, so the caller must re-invoke with that exact same
+  /// [begin, end) range to resume. Passing a shorter range advances begin past
+  /// end and corrupts the form buffer.
   template <typename InputIterator>
   status parse(Request& req, InputIterator begin, InputIterator end)
   {
