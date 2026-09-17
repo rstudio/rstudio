@@ -39,6 +39,19 @@ error () {
     exit 1
 }
 
+setupSessionTestEnvironment() {
+   # Each session test scope needs fresh state, even when the caller already
+   # sets these variables for a running IDE or another test invocation.
+   local TEST_STATE_DIR
+   TEST_STATE_DIR=$(mktemp -d -t rstudio-tests-XXXXXXXXXX) ||
+      error "Unable to create temporary session test directory"
+   export RSTUDIO_DATA_HOME="${TEST_STATE_DIR}/data"
+   export RSTUDIO_CONFIG_HOME="${TEST_STATE_DIR}/config"
+   # Prevent startup from migrating the user's legacy RStudio state here.
+   mkdir -p "${RSTUDIO_DATA_HOME}/client-state" "${RSTUDIO_CONFIG_HOME}" ||
+      error "Unable to initialize temporary session test directory"
+}
+
 checkRUnitTestFailure() {
    FAILURES=$(cat "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log")
    if [ "${FAILURES}" != "0" ]; then
@@ -462,6 +475,7 @@ fi
 
 if has-scope "rsession"; then
 
+   setupSessionTestEnvironment
    section "Running 'rsession' tests"
    runWatchdogProcess 5m false                                    \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" \
@@ -472,6 +486,7 @@ fi
 
 if has-scope "r"; then
 
+   setupSessionTestEnvironment
    section "Running 'r' tests"
 
    # Set process-wide environment before rsession starts any worker threads.
@@ -490,12 +505,6 @@ if has-scope "r"; then
       TESTTHAT_FILTER="${TEST_FILTER}"
       export TESTTHAT_FILTER
    fi
-
-   # Establish temporary folders for user state and data; this prevents the state/config on the
-   # machine from affecting the tests
-   RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX)
-   export RSTUDIO_DATA_HOME="${RSTUDIO_FOLDER}/data"
-   export RSTUDIO_CONFIG_HOME="${RSTUDIO_FOLDER}/config"
 
    runWatchdogProcess 5m false                                                   \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \
