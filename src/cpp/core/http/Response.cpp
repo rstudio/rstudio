@@ -82,6 +82,14 @@ public:
 
    std::shared_ptr<StreamBuffer> nextBuffer()
    {
+      // defend against being driven without a successfully initialized stream;
+      // initialize() may have failed to open the file (e.g. permission denied)
+      if (!fileStream_)
+      {
+         LOG_ERROR_MESSAGE("nextBuffer() called with a null file stream");
+         return std::shared_ptr<StreamBuffer>();
+      }
+
       // create buffer to hold the file data
       char* buffer = new char[bufferSize_];
 
@@ -846,7 +854,14 @@ void Response::setStreamFile(const FilePath& filePath,
 
    Error error = streamResponse_->initialize();
    if (error)
+   {
+      // clear the stream response so that isStreamResponse() returns false and
+      // the error body is sent instead of the HTTP server attempting to stream
+      // from a response whose underlying file stream never opened (which would
+      // dereference a null pointer in nextBuffer() and crash the process)
+      streamResponse_.reset();
       setError(status::InternalServerError, error.getMessage());
+   }
 }
 
 } // namespacc http
