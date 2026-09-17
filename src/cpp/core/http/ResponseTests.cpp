@@ -42,10 +42,10 @@ namespace tests {
 
 TEST(ResponseStreamFile, MissingFileDoesNotLeaveAStreamResponse)
 {
-   // a path that is guaranteed not to exist: create a temp file, then remove it
+   // tempFilePath() only generates a unique path; it does not create the file,
+   // so this is a path that is guaranteed not to exist on disk
    FilePath missingFile;
    ASSERT_FALSE(FilePath::tempFilePath(missingFile));
-   ASSERT_FALSE(missingFile.remove());
    ASSERT_FALSE(missingFile.exists());
 
    // advertise gzip so setStreamFile() takes the compressed
