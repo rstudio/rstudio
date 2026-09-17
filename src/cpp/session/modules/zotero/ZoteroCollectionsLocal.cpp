@@ -545,8 +545,14 @@ Error normalizeDatabaseCopy(const FilePath& dbCopyFile)
       if (error)
          return error;
 
-      for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
-         journalMode = it->get<std::string>(0);
+      // rows are fetched lazily, outside the try/catch in Connection::execute, and
+      // a PRAGMA result column has no declared type for soci to describe
+      try
+      {
+         for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+            journalMode = readString(*it, 0);
+      }
+      CATCH_UNEXPECTED_EXCEPTION
    }
 
    pConnection.reset();
