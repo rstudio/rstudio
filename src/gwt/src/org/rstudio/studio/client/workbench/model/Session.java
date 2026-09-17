@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
@@ -46,6 +49,27 @@ public class Session
    public SessionInfo getSessionInfo()
    {
       return sessionInfo_;
+   }
+
+   /**
+    * Runs the callback synchronously if session info is available, or once on
+    * SessionInitEvent otherwise. This guarantees data availability, not that
+    * workbench initialization has completed or that the data is still current.
+    */
+   public void withSessionInfo(CommandWithArg<SessionInfo> callback)
+   {
+      if (sessionInfo_ != null)
+      {
+         callback.execute(sessionInfo_);
+         return;
+      }
+
+      HandlerRegistrations registrations = new HandlerRegistrations();
+      registrations.add(events_.addHandler(SessionInitEvent.TYPE, event ->
+      {
+         registrations.removeHandler();
+         callback.execute(sessionInfo_);
+      }));
    }
 
    public void setSessionInfo(SessionInfo sessionInfo)

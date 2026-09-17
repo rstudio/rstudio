@@ -32,6 +32,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 
@@ -93,7 +94,13 @@ public class ConsoleInterpreterVersion
 
       container_ = new HorizontalPanel();
       label_ = new Label(constants_.unknownLabel());
-      setRVersionLabel();
+      session_.withSessionInfo(info ->
+      {
+         // Seed only once: session info is a startup snapshot, while later
+         // RPC responses can describe a different R after a restart.
+         rVersion_ = info.getRVersionsInfo().getRVersion();
+         setRVersionLabel();
+      });
       
       rLogo_ = createLogo(StandardIcons.INSTANCE.rLogoSvg(), RES.styles().iconR(), isTabbedView);
       
@@ -220,6 +227,7 @@ public class ConsoleInterpreterVersion
       logoContainer_.remove(0);
       logoContainer_.insert(rLogo_, 0);
       setRVersionLabel();
+      refreshRVersion();
    }
 
    private void adaptToPython(PythonInterpreter info)
@@ -231,18 +239,8 @@ public class ConsoleInterpreterVersion
    
    private boolean isPythonActive()
    {
-      boolean active = false;
-      
-      // use try-catch block in case session info isn't ready yet
-      try
-      {
-         active = session_.getSessionInfo().getPythonReplActive();
-      }
-      catch (Exception e)
-      {
-      }
-      
-      return active;
+      SessionInfo info = session_.getSessionInfo();
+      return info != null && info.getPythonReplActive();
    }
    
    @Override
@@ -263,21 +261,37 @@ public class ConsoleInterpreterVersion
 
    private void setRVersionLabel()
    {
+      label_.setText(StringUtil.isNullOrEmpty(rVersion_)
+            ? constants_.unknownLabel()
+            : rVersionLabel(rVersion_));
+   }
+
+   private void refreshRVersion()
+   {
       server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
       {
          @Override
          public void onResponseReceived(RVersionSpec versionSpec)
          {
-            label_.setText("R " + versionSpec.getVersion());
+            rVersion_ = versionSpec.getVersion();
+            setRVersionLabel();
          }
 
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            label_.setText("Error fetching R version");
+
+            // Preserve the last known version, including successful refreshes.
+            if (StringUtil.isNullOrEmpty(rVersion_))
+               label_.setText("Error fetching R version");
          }
       });
+   }
+
+   private String rVersionLabel(String version)
+   {
+      return "R " + version;
    }
    
    private String pythonVersionLabel(PythonInterpreter info)
@@ -305,6 +319,7 @@ public class ConsoleInterpreterVersion
    private final Widget rLogo_;
    private final Widget pythonLogo_;
    private final Label label_;
+   private String rVersion_;
    private HandlerRegistration reticulateHandler_;
 
    // Injected ----

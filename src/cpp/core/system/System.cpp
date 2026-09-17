@@ -51,13 +51,6 @@ namespace rstudio {
 namespace core {
 namespace system {
 
-#ifdef _WIN32
-#define kPathSeparator ";"
-#else
-#define kPathSeparator ":"
-#endif
-
-
 bool realPathsEqual(const FilePath& a, const FilePath& b)
 {
    FilePath aReal, bReal;
@@ -77,16 +70,6 @@ bool realPathsEqual(const FilePath& a, const FilePath& b)
    }
 
    return aReal == bReal;
-}
-
-void addToSystemPath(const FilePath& path, bool prepend)
-{
-   std::string systemPath = system::getenv("PATH");
-   if (prepend)
-      systemPath = path.getAbsolutePath() + kPathSeparator + systemPath;
-   else
-      systemPath = systemPath + kPathSeparator + path.getAbsolutePath();
-   system::setenv("PATH", systemPath);
 }
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)

@@ -60,8 +60,6 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath);
 Error realPath(const std::string& path, FilePath* pRealPath);
 bool realPathsEqual(const FilePath& a, const FilePath& b);
 
-void addToSystemPath(const FilePath& path, bool prepend = false);
-
 // Searches for a program by name and returns its path.
 //
 // A bare name is searched for: on Windows, in the system directories and then the

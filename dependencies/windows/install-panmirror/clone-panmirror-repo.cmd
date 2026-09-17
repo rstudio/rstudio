@@ -28,7 +28,7 @@ if errorlevel 1 (
 :: before the push keep the old panmirror while freshly built ones get the new code,
 :: and the divergence is silent.
 set PANMIRROR_REPO_URL=https://github.com/quarto-dev/quarto.git
-set PANMIRROR_BRANCH=release/rstudio-autumn-hawkbit
+set PANMIRROR_BRANCH=release/rstudio-blue-mistflower
 
 echo -- panmirror branch: %PANMIRROR_BRANCH%
 

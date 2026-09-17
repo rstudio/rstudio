@@ -188,6 +188,50 @@ TEST(EnvironmentTest, ConcurrentAccessorsAreSerialized)
       unsetenv("RSTUDIO_ENV_HAMMER_" + std::to_string(i));
 }
 
+#ifdef _WIN32
+const std::string kSep = ";";
+#else
+const std::string kSep = ":";
+#endif
+
+TEST(EnvironmentTest, AddToPathSkipsAppendingEntryAlreadyPresent)
+{
+   // a restored terminal re-appends the git bin dir to its saved PATH, which
+   // must not gain another copy on each session restart (#18777)
+   std::string path = "/a" + kSep + "/git" + kSep + "/b";
+   addToPath(&path, "/git");
+   EXPECT_EQ("/a" + kSep + "/git" + kSep + "/b", path);
+
+   // entries match whole, not as substrings
+   addToPath(&path, "/gi");
+   EXPECT_EQ("/a" + kSep + "/git" + kSep + "/b" + kSep + "/gi", path);
+
+   Options env;
+   setenv(&env, "PATH", "/a" + kSep + "/git");
+   addToPath(&env, "/git");
+   EXPECT_EQ("/a" + kSep + "/git", getenv(env, "PATH"));
+}
+
+TEST(EnvironmentTest, AddToPathPrependsUnlessAlreadyFirst)
+{
+   std::string path = "/a" + kSep + "/b";
+   addToPath(&path, "/a", true);
+   EXPECT_EQ("/a" + kSep + "/b", path);
+
+   // an entry further down is still prepended, so it takes precedence
+   addToPath(&path, "/b", true);
+   EXPECT_EQ("/b" + kSep + "/a" + kSep + "/b", path);
+}
+
+TEST(EnvironmentTest, AddToPathAlwaysAppendsEmptyEntry)
+{
+   // TeX needs a trailing separator even when the value already has an empty
+   // entry, since the default search path is expanded at each one's position
+   std::string path = "/a" + kSep + kSep + "/b";
+   addToPath(&path, "");
+   EXPECT_EQ("/a" + kSep + kSep + "/b" + kSep, path);
+}
+
 TEST(ResourcesTest, NonzeroResourceMetrics)
 {
    // Used memory should be nonzero
