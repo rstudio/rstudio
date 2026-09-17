@@ -842,9 +842,10 @@ export async function openProject(
     );
   }
 
-  // ready=true tells us the workbench is wired up, but SessionInfo can
-  // still report the previous project's path for a beat -- and the project
-  // menu UI lags that. Poll project.path() against the requested file so
+  // Observe ready and the target path together: the ready wait above can
+  // finish in the outgoing session if its deferred initialization completes
+  // during the switch. The incoming session can then publish its project
+  // path before its own deferred initialization has completed. Poll both so
   // the helper's post-condition is "the bridge agrees this project is
   // active" rather than "ready flipped true." Case-insensitive to match
   // waitForActiveDocument's handling of HFS+ / NTFS.
@@ -860,27 +861,24 @@ export async function openProject(
     await page.waitForFunction(
       (target) => {
         const path = window.rstudio?.project?.path?.() ?? null;
-        return path !== null && path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
+        return window.rstudio?.ready === true && path !== null &&
+          path.replace(/\\/g, '/').toLowerCase() === target.replace(/\\/g, '/').toLowerCase();
       },
       projectFilePath,
       { timeout, polling: 100 },
     );
   } catch (err) {
-    // ready flipped true but the active project never became the target.
-    // OpenProjectErrorEvent also sets ready=true (see ApplicationAutomation
-    // registerReadinessHandlers), so a silently-failed or lost open lands
-    // here as an opaque timeout. Surface what the bridge actually reports so
-    // the failure is "open failed / opened the wrong project" rather than a
-    // bare waitForFunction timeout.
+    // The target project never became ready. OpenProjectErrorEvent also
+    // sets ready=true, so report the active path to distinguish a failed
+    // switch from deferred initialization that has not finished.
     if (err instanceof Error && err.name === 'TimeoutError') {
       const actual = await page
         .evaluate(() => window.rstudio?.project?.path?.() ?? null)
         .catch(() => null);
       throw new Error(
-        `openProject: session became ready but the active project did not ` +
-        `become "${projectFilePath}" within ${timeout}ms (active project: ` +
-        `${actual ?? 'none'}). This usually means the project open failed ` +
-        `(OpenProjectErrorEvent) rather than that it was merely slow.`,
+        `openProject: session did not become ready with the active project ` +
+        `"${projectFilePath}" within ${timeout}ms (active project: ` +
+        `${actual ?? 'none'}).`,
       );
     }
     throw err;
