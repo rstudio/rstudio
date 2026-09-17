@@ -29,6 +29,13 @@ public class EnvironmentContextData extends JavaScriptObject
       return this.context_depth;
    }-*/;
 
+   // The depth of the frame execution is halted in, which differs from
+   // contextDepth() once the user selects another frame from the call stack.
+   // The Python environment state carries no call stack, hence the default.
+   public final native int browseFrameDepth() /*-{
+      return this.browse_frame_depth || 0;
+   }-*/;
+
    public final native String functionName() /*-{
       return this.function_name;
    }-*/;

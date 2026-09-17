@@ -119,7 +119,7 @@ public class EnvironmentPresenter extends BasePresenter
       void addObjects(JsArray<RObject> objects);
       void clearObjects();
       void clearSelection();
-      void setContextDepth(int contextDepth);
+      void setContextDepth(int contextDepth, int browseFrameDepth);
       void removeObject(String object);
       void setEnvironmentName(String name, boolean local);
       void setEnvironmentMonitoring(boolean monitoring);
@@ -220,6 +220,7 @@ public class EnvironmentPresenter extends BasePresenter
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
             loadNewContextState(event.getContextDepth(),
+                  event.getBrowseFrameDepth(),
                   event.getEnvironmentName(),
                   event.environmentMonitoring(),
                   event.getFunctionEnvName(),
@@ -750,6 +751,7 @@ public class EnvironmentPresenter extends BasePresenter
    public void initialize(EnvironmentContextData environmentState)
    {
       loadNewContextState(environmentState.contextDepth(),
+            environmentState.browseFrameDepth(),
             environmentState.environmentName(),
             environmentState.environmentMonitoring(),
             environmentState.functionEnvName(),
@@ -765,7 +767,7 @@ public class EnvironmentPresenter extends BasePresenter
 
    // sets a new context depth; returns true if the new context depth
    // transitions to debug mode
-   private boolean setContextDepth(int contextDepth)
+   private boolean setContextDepth(int contextDepth, int browseFrameDepth)
    {
       boolean enteringDebugMode = false;
 
@@ -784,12 +786,14 @@ public class EnvironmentPresenter extends BasePresenter
          debugCommander_.leaveDebugMode();
       }
       contextDepth_ = contextDepth;
-      view_.setContextDepth(contextDepth_);
+      browseFrameDepth_ = browseFrameDepth;
+      view_.setContextDepth(contextDepth_, browseFrameDepth_);
 
       return enteringDebugMode;
    }
 
    private void loadNewContextState(int contextDepth,
+         int browseFrameDepth,
          String environmentName,
          boolean environmentMonitoring,
          String functionEnvName,
@@ -798,7 +802,7 @@ public class EnvironmentPresenter extends BasePresenter
          boolean useBrowseSources,
          String functionCode)
    {
-      boolean enteringDebugMode = setContextDepth(contextDepth);
+      boolean enteringDebugMode = setContextDepth(contextDepth, browseFrameDepth);
       environmentName_ = environmentName;
       functionEnvName_ = functionEnvName;
       view_.setEnvironmentName(environmentName_, isLocalEvironment);
@@ -1053,7 +1057,7 @@ public class EnvironmentPresenter extends BasePresenter
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                      searchFunction_,
                      currentBrowsePosition_.functionRelativePosition(currentFunctionLineNumber_),
-                     contextDepth_ == 1,
+                     contextDepth_ == browseFrameDepth_,
                      false,
                      true));
             }
@@ -1257,6 +1261,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final DataImportPresenter dataImportPresenter_;
 
    private int contextDepth_;
+   private int browseFrameDepth_;
    private boolean refreshingView_;
    private boolean initialized_;
    private DebugFilePosition currentBrowsePosition_;
