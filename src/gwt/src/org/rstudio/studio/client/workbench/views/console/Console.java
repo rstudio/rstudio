@@ -80,20 +80,15 @@ public class Console
    {
       view_ = view;
       events_ = events;
-      session_ = session;
       pPaneManager_ = pPaneManager;
       
-      try
+      session.withSessionInfo(info ->
       {
-         if (session_.getSessionInfo().getPythonReplActive())
+         if (info.getPythonReplActive())
          {
             view_.adaptToLanguage(Language.PYTHON);
          }
-      }
-      catch (Exception e)
-      {
-         
-      }
+      });
 
       events.addHandler(SendToConsoleEvent.TYPE, event ->
       {
@@ -270,6 +265,5 @@ public class Console
    private final DelayFadeInHelper profilerFadeInHelper_;
    private final EventBus events_;
    private final Display view_;
-   private final Session session_;
    private final Provider<PaneManager> pPaneManager_;
 }
