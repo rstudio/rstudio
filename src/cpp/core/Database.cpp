@@ -219,7 +219,9 @@ bool isSqliteTransientLockError(const soci::soci_error& error)
 
 namespace {
 
-std::string pgEncode(const std::string& str, bool isUrl = true)
+// nodiscard: this returns by value and has no side effects, so discarding the
+// result silently leaves the caller holding the unescaped string.
+[[nodiscard]] std::string pgEncode(const std::string& str, bool isUrl = true)
 {
    // ensure we first decode from URL string format
    std::string val = isUrl ? http::util::urlDecode(str) : str;
@@ -521,8 +523,6 @@ Error parsePostgresqlConnectionOptions(
       {
          *pConnectionStr += " sslmode=verify-ca";
       }
-   } else {
-      pgEncode(*pPassword, false);
    }
 
    return Success();
@@ -621,8 +621,10 @@ public:
             // unless requested to be returned as-is separately
             if (!pPassword_)
             {
-               // unencrypted password
-               connectionStr += " password='" + password + "'";
+               // libpq requires ' and \ to be backslash-escaped within a
+               // quoted connection-string value; the separately-returned
+               // password below stays raw, since it is not embedded anywhere.
+               connectionStr += " password='" + pgEncode(password, false) + "'";
             }
             else
                *pPassword_ = password;
