@@ -145,6 +145,10 @@ void setChatBackendAuthToken(const std::string& token);
  * installation resolves per request in the same way, so a removal or a failed
  * extraction that does not clear the pin still falls back to whatever other
  * tier holds one.
+ *
+ * Rebuilds the Content-Security-Policy header, which is read from the
+ * installation being served, so callers do not have to pair a change here
+ * with a setChatBackendPort() call to avoid serving a stale policy.
  */
 void setInstallationPath(const core::FilePath& path);
 
