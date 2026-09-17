@@ -23,6 +23,7 @@
 - ([#18857](https://github.com/rstudio/rstudio/issues/18857)): The Console pane now shows the R version as soon as the session starts, instead of displaying "(unknown)" until the session finished initializing.
 
 ### Fixed
+- ([#18744](https://github.com/rstudio/rstudio/issues/18744)): RStudio now checks both file-lock types before recovering source documents and reports an error instead of reusing a source database held by another session.
 - ([#18754](https://github.com/rstudio/rstudio/issues/18754)): Fixed an issue where debugging a package function called from another function failed to show and step through its source code.
 - ([#18799](https://github.com/rstudio/rstudio/issues/18799)): Closing a Quarto document's source tab no longer cancels an in-progress render when the preview option is set to "(No Preview)".
 - ([#18842](https://github.com/rstudio/rstudio/issues/18842)): Fixed an issue where `View()` failed on data frames with integer columns when a package masking R's summary functions (e.g. mosaic or mobilizr) was attached before RStudio's own tools environment, as an `.Rprofile` `library()` call leaves it.
