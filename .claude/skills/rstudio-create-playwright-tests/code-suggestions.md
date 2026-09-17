@@ -7,7 +7,13 @@ text, inline suggestions, or next-edit suggestions.
 Any test that exercises Copilot or Posit AI must gate on
 `requireAiCredentials(test, provider)` (`@utils/ai-credentials`) at the top of
 its `describe` block. Without it, a sandbox with no credentials for that
-provider hits the feature's own timeout instead of skipping cleanly.
+provider hits the feature's own timeout instead of skipping cleanly. The gate
+also probes the provider's services from Node, so a runner with no egress
+skips rather than fails. A suggestion wait that runs out of budget should call
+`aiServiceOutageReason(provider)` before failing: it re-probes and returns a
+skip reason when the service went away mid-run (see `failUnlessServiceGone`
+in `code_suggestions.test.ts`). Only skip on that reason -- a timeout with the
+service still answering is a real failure.
 
 ## Copilot ghost text
 
