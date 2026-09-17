@@ -535,15 +535,19 @@ Error normalizeDatabaseCopy(const FilePath& dbCopyFile)
 
    // sqlite reports a refused conversion by returning the unchanged mode rather
    // than by failing, and a copy left in WAL mode is the one thing we can't query
-   database::Rowset rows;
-   database::Query query = pConnection->query("PRAGMA journal_mode = DELETE;");
-   error = pConnection->execute(query, rows);
-   if (error)
-      return error;
-
    std::string journalMode;
-   for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
-      journalMode = it->get<std::string>(0);
+   {
+      // the query owns a soci statement bound to the connection's session, so it
+      // has to be destroyed before the connection is closed below
+      database::Rowset rows;
+      database::Query query = pConnection->query("PRAGMA journal_mode = DELETE;");
+      error = pConnection->execute(query, rows);
+      if (error)
+         return error;
+
+      for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+         journalMode = it->get<std::string>(0);
+   }
 
    pConnection.reset();
 
