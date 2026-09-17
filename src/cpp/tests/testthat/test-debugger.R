@@ -157,27 +157,38 @@ test_that("frames whose inner call is built internally keep their call site", {
 
 })
 
-test_that("the frame being browsed keeps its file location when it has source", {
+test_that("the frame being browsed keeps its own file location", {
 
-   # The runtime srcref can come back empty even for a function carrying its
-   # own source -- byte-compiled code reports the <in-bc-interp> symbol. Such
-   # a frame still has a real position to fall back on, and dropping it would
+   # The runtime srcref can come back empty for a function that carries its
+   # own source, and no inner call need be mapped to the frame either. Such a
+   # frame still has a real position to fall back on, and dropping it would
    # navigate to a deparsed copy of the function rather than to the file.
    # #18754 is about functions with no source of their own, not these.
-   file <- tempfile(pattern = "located-", fileext = ".R")
-   on.exit(unlink(file), add = TRUE)
+   #
+   # The fallback has to be the function's own definition rather than the call
+   # that created the frame: the call site belongs to the caller, so with the
+   # two functions in separate files it names the wrong file entirely.
+   locatedFile <- tempfile(pattern = "located-", fileext = ".R")
+   outerFile <- tempfile(pattern = "outer-", fileext = ".R")
+   on.exit(unlink(c(locatedFile, outerFile)), add = TRUE)
 
    writeLines(c(
+      "# padding so the definition line differs from the call site",
+      "# padding",
       "located_fn <- function() {",
       "   .rs.callFrames(targetDepth = 1L)",
-      "}",
+      "}"
+   ), locatedFile)
+
+   writeLines(c(
       "outer_fn <- function() {",
       "   located_fn()",
       "}"
-   ), file)
+   ), outerFile)
 
    env <- new.env(parent = globalenv())
-   source(file, local = env, keep.source = TRUE)
+   source(locatedFile, local = env, keep.source = TRUE)
+   source(outerFile, local = env, keep.source = TRUE)
 
    # Outside a debug session rs_getBrowserEnv has no environment to report, so
    # the innermost frame stands in for the one the browser would be halted in.
@@ -185,7 +196,9 @@ test_that("the frame being browsed keeps its file location when it has source", 
 
    expect_identical(as.character(frame$function_name), "located_fn")
    expect_true(as.logical(frame$real_sourceref))
-   expect_match(as.character(frame$file_name), basename(file), fixed = TRUE)
+   expect_match(as.character(frame$file_name), basename(locatedFile), fixed = TRUE)
+   expect_identical(as.integer(frame$line_number), 3L)
+   expect_identical(as.integer(frame$end_line_number), 5L)
 
 })
 

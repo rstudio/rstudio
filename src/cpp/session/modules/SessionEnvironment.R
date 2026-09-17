@@ -1445,20 +1445,26 @@
       else
       {
          srcref <- envSrcrefMap[[format(cloenv)]]
-         if (is.null(srcref) && (!isCurrentFrame || hasSourceRefs))
+         if (is.null(srcref) && !isCurrentFrame)
          {
             # No locatable call was made from this frame, which happens when
             # a base function builds the inner call itself (lapply, do.call).
             # Fall back to the srcref of the call that created this frame:
             # that position belongs to the caller rather than to this frame,
             # but it is what makes such frames navigable in the traceback.
-            #
-            # The browser's own frame takes this fallback only when it has
-            # source of its own. Handing a source-less function its caller's
-            # location is exactly #18754; there we leave the srcref unset and
-            # simulate a position from the deparsed body below.
             callSrcref <- attr(call, "srcref", exact = TRUE)
             srcref <- .rs.resolveCallSrcref(callSrcref, callfun)
+         }
+         else if (is.null(srcref) && hasSourceRefs)
+         {
+            # The browsed frame reports where execution is halted, so the
+            # caller's call site is the wrong answer for it -- that position
+            # lives in the calling function, possibly in another file. Use the
+            # function's own definition instead: it is imprecise but stays in
+            # the file the user is debugging. A function with no source of its
+            # own falls through to the simulated position below, which is
+            # #18754.
+            srcref <- funSrcref
          }
       }
 
