@@ -521,8 +521,6 @@ Error parsePostgresqlConnectionOptions(
       {
          *pConnectionStr += " sslmode=verify-ca";
       }
-   } else {
-      pgEncode(*pPassword, false);
    }
 
    return Success();
@@ -621,8 +619,10 @@ public:
             // unless requested to be returned as-is separately
             if (!pPassword_)
             {
-               // unencrypted password
-               connectionStr += " password='" + password + "'";
+               // libpq requires ' and \ to be backslash-escaped within a
+               // quoted connection-string value; the separately-returned
+               // password below stays raw, since it is not embedded anywhere.
+               connectionStr += " password='" + pgEncode(password, false) + "'";
             }
             else
                *pPassword_ = password;
