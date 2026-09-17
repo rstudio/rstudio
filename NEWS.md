@@ -20,6 +20,7 @@
 - ([#12379](https://github.com/rstudio/rstudio/issues/12379)): Customized editor keyboard shortcuts (e.g. Remove Word Left) now also apply to the Console input.
 - ([#1687](https://github.com/rstudio/rstudio/issues/1687)): Ctrl+Shift+C now copies the selection and Ctrl+Shift+V pastes in the Terminal pane, matching the shortcuts used by common terminal emulators.
 - ([#18774](https://github.com/rstudio/rstudio/issues/18774)): RStudio now runs the newest compatible Posit Assistant installation among the copy bundled with RStudio, the system-wide installation, and the user's own, instead of always preferring the user's own. A per-user installation no longer shadows a newer bundled or system-wide copy.
+- ([#18857](https://github.com/rstudio/rstudio/issues/18857)): The Console pane now shows the R version as soon as the session starts, instead of displaying "(unknown)" until the session finished initializing.
 
 ### Fixed
 - ([#18754](https://github.com/rstudio/rstudio/issues/18754)): Fixed an issue where debugging a package function called from another function failed to show and step through its source code.
