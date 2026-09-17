@@ -533,10 +533,31 @@ Error normalizeDatabaseCopy(const FilePath& dbCopyFile)
    if (error)
       return error;
 
-   error = pConnection->executeStr("PRAGMA journal_mode = DELETE;");
+   // sqlite reports a refused conversion by returning the unchanged mode rather
+   // than by failing, and a copy left in WAL mode is the one thing we can't query
+   database::Rowset rows;
+   database::Query query = pConnection->query("PRAGMA journal_mode = DELETE;");
+   error = pConnection->execute(query, rows);
+   if (error)
+      return error;
+
+   std::string journalMode;
+   for (database::RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+      journalMode = it->get<std::string>(0);
+
    pConnection.reset();
 
-   return error;
+   if (journalMode != "delete")
+   {
+      error = systemError(boost::system::errc::io_error,
+                          "Could not take the Zotero database copy out of WAL mode",
+                          ERROR_LOCATION);
+      error.addProperty("copy", dbCopyFile);
+      error.addProperty("journal-mode", journalMode);
+      return error;
+   }
+
+   return Success();
 }
 
 Error refreshDatabaseCopy(const FilePath& dbFile,

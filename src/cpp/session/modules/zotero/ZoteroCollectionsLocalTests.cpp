@@ -15,6 +15,8 @@
 
 #include "ZoteroCollectionsLocal.hpp"
 
+#include <fstream>
+
 #include <boost/shared_ptr.hpp>
 
 #include <shared_core/Error.hpp>
@@ -59,6 +61,20 @@ Error openWritable(const FilePath& file,
       return (*ppConnection)->executeStr("PRAGMA journal_mode = DELETE;");
 
    return Success();
+}
+
+// Bytes 18 and 19 of the sqlite header are the write and read format versions:
+// 1 for a rollback journal, 2 for WAL. Returns -1 if the header can't be read.
+int readJournalFormat(const FilePath& dbPath)
+{
+   std::ifstream stream(dbPath.getAbsolutePath().c_str(), std::ios::binary);
+
+   char header[20] = {};
+   stream.read(header, sizeof(header));
+   if (!stream)
+      return -1;
+
+   return header[18];
 }
 
 Error countRows(boost::shared_ptr<database::IConnection> pConnection,
@@ -161,32 +177,34 @@ protected:
 // database header still declares WAL mode.
 TEST_F(ZoteroDatabaseCopyTest, ReadsCopyOfClosedWalModeDatabase)
 {
-   createSource(JournalMode::Wal, false /* keepOpen */);
+   ASSERT_NO_FATAL_FAILURE(createSource(JournalMode::Wal, false /* keepOpen */));
    ASSERT_FALSE(walFile_.exists());
 
    Error error = prepareDatabaseCopy(dbFile_, copyFile_);
    ASSERT_FALSE(error) << error.asString();
 
+   EXPECT_EQ(1, readJournalFormat(copyFile_));
    EXPECT_EQ(1u, readCopyLibraryCount());
 }
 
 // With Zotero 10 running, recent commits live only in the -wal.
 TEST_F(ZoteroDatabaseCopyTest, ReadsLibrariesHeldInSourceWal)
 {
-   createSource(JournalMode::Wal, true /* keepOpen */);
-   addLibraryToSource(2);
+   ASSERT_NO_FATAL_FAILURE(createSource(JournalMode::Wal, true /* keepOpen */));
+   ASSERT_NO_FATAL_FAILURE(addLibraryToSource(2));
    ASSERT_TRUE(walFile_.exists());
 
    Error error = prepareDatabaseCopy(dbFile_, copyFile_);
    ASSERT_FALSE(error) << error.asString();
 
+   EXPECT_EQ(1, readJournalFormat(copyFile_));
    EXPECT_EQ(2u, readCopyLibraryCount());
 }
 
 // Zotero 9 and earlier use a rollback journal; that path has to keep working.
 TEST_F(ZoteroDatabaseCopyTest, ReadsCopyOfRollbackJournalDatabase)
 {
-   createSource(JournalMode::Rollback, false /* keepOpen */);
+   ASSERT_NO_FATAL_FAILURE(createSource(JournalMode::Rollback, false /* keepOpen */));
    ASSERT_FALSE(walFile_.exists());
 
    Error error = prepareDatabaseCopy(dbFile_, copyFile_);
@@ -199,13 +217,13 @@ TEST_F(ZoteroDatabaseCopyTest, ReadsCopyOfRollbackJournalDatabase)
 // from the main file alone would never look stale again.
 TEST_F(ZoteroDatabaseCopyTest, RefreshesCopyWhenOnlyWalIsNewer)
 {
-   createSource(JournalMode::Wal, true /* keepOpen */);
+   ASSERT_NO_FATAL_FAILURE(createSource(JournalMode::Wal, true /* keepOpen */));
 
    Error error = prepareDatabaseCopy(dbFile_, copyFile_);
    ASSERT_FALSE(error) << error.asString();
    ASSERT_EQ(1u, readCopyLibraryCount());
 
-   addLibraryToSource(2);
+   ASSERT_NO_FATAL_FAILURE(addLibraryToSource(2));
 
    // pin the mtimes so the staleness decision can't turn on clock granularity
    std::time_t walWriteTime = dbFile_.getLastWriteTime() + 60;
