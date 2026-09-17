@@ -203,6 +203,8 @@ export async function createAndOpenProject(
  * A close is a session quit, so it can raise the "Save workspace image?"
  * prompt before anything else happens; dismissSaveWorkspacePrompt clears it
  * (without it the waits below just time out behind the modal's glass).
+ * Resolves to whether that prompt appeared, so a test whose subject is the
+ * prompt itself can assert on it rather than have the sweep hide it.
  *
  * "Close project" is effectively a workbench rebuild -- the same Electron
  * window swaps out the project-bound page for a fresh no-project page. So we
@@ -212,18 +214,18 @@ export async function createAndOpenProject(
  * surfaced and been dismissed. Without this, the caller's next action can
  * land while the new workbench is still mid-init.
  *
- * No-op when no project is open (the toolbar label is "Project: (None)" or
- * the button isn't rendered).
+ * No-op (resolving false) when no project is open (the toolbar label is
+ * "Project: (None)" or the button isn't rendered).
  */
-export async function closeProjectIfOpen(page: Page): Promise<void> {
+export async function closeProjectIfOpen(page: Page): Promise<boolean> {
   const menu = page.locator(PROJECT_MENU);
   const label = (await menu.innerText().catch(() => '')).trim();
   if (label.includes('(None)') || label === '')
-    return;
+    return false;
 
   await menu.click();
   await page.locator(CLOSE_PROJECT_MENU_ITEM).click();
-  await dismissSaveWorkspacePrompt(page);
+  const savePromptDismissed = await dismissSaveWorkspacePrompt(page);
   await page.waitForLoadState('load', { timeout: TIMEOUTS.sessionRestart }).catch(() => {});
   await page.waitForSelector(CONSOLE_INPUT, {
     state: 'visible',
@@ -236,11 +238,34 @@ export async function closeProjectIfOpen(page: Page): Promise<void> {
   // workbench rebuilds; `project.isActive()` returns false only once the new
   // SessionInfo has propagated. Polling on both signals catches the case
   // where the bridge is from the previous (project-bound) session.
-  await page.waitForFunction(
-    () => window.rstudio?.project?.isActive() === false,
-    null,
-    { timeout: TIMEOUTS.sessionRestart, polling: 100 },
-  );
+  // A modal that the close itself raised (e.g. "Save workspace image to
+  // .../.RData?") blocks the close indefinitely, and every wait above is
+  // satisfiable by the still-open project's console -- so this wait is where
+  // that lands, as a bare 30s timeout. Name the dialog in the failure instead.
+  try {
+    await page.waitForFunction(
+      () => window.rstudio?.project?.isActive() === false,
+      null,
+      { timeout: TIMEOUTS.sessionRestart, polling: 100 },
+    );
+  } catch (err) {
+    const blocking = (
+      await page
+        .locator('div.gwt-DialogBox:visible')
+        .first()
+        .innerText()
+        .catch(() => '')
+    )
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (blocking)
+      throw new Error(
+        `closeProjectIfOpen: project still active; a modal dialog is blocking the close: ` +
+          `${JSON.stringify(blocking)}`,
+        { cause: err },
+      );
+    throw err;
+  }
 
   // Dismiss any modal error dialog that surfaced while the new workbench
   // was initializing -- e.g. a Files-pane refresh racing the rsession's
@@ -249,4 +274,6 @@ export async function closeProjectIfOpen(page: Page): Promise<void> {
   const okButton = page.locator('button:has-text("OK")').first();
   if (await okButton.isVisible({ timeout: 500 }).catch(() => false))
     await okButton.click();
+
+  return savePromptDismissed;
 }
