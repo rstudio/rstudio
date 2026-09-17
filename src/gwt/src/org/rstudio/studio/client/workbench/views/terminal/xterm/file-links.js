@@ -66,17 +66,26 @@ var CLOSERS = { ")": "(", "]": "[", "}": "{", ">": "<" };
 // every word that happens to name a file. xterm reads a link's decorations
 // when a hover begins and then swaps in live accessors of its own, so the
 // state at hover time comes from a getter and later changes are written
-// through xterm's object. Only one link is ever hovered, so one tracker
-// serves every terminal.
+// through xterm's object (Linkifier._handleNewLink, read from @xterm/xterm
+// 6.0.0 -- the version pinned in src/gwt/tools/build-xterm). Only one link is
+// ever hovered, so one tracker serves every terminal; it records the owning
+// provider too, so a terminal torn down mid-hover can let go of its link.
 var modifier = {
    isMac: false,
    held: false,
-   link: null
+   link: null,
+   owner: null
 };
 
 function hasModifier(event)
 {
    return modifier.isMac ? !!event.metaKey : !!event.ctrlKey;
+}
+
+function forgetHoveredLink()
+{
+   modifier.link = null;
+   modifier.owner = null;
 }
 
 function setModifierHeld(held)
@@ -250,11 +259,12 @@ FileLinkProvider.prototype._createLink = function(range, match, path)
       },
       hover: function() {
          modifier.link = link;
+         modifier.owner = self;
          host.hover(path);
       },
       leave: function() {
          if (modifier.link === link)
-            modifier.link = null;
+            forgetHoveredLink();
 
          // put our own decorations back, so a later hover of this same link
          // consults the modifier again rather than xterm's remembered state
@@ -264,6 +274,17 @@ FileLinkProvider.prototype._createLink = function(range, match, path)
    };
 
    return link;
+};
+
+// A terminal can be torn down with a link still hovered: xterm's linkifier
+// does not call leave() when it is disposed, and an element detached from the
+// document gets no mouseleave either. The hovered link closes over the
+// provider and the host widget, so without this the dead terminal would be
+// kept alive until some other link happened to be hovered.
+FileLinkProvider.prototype.dispose = function()
+{
+   if (modifier.owner === this)
+      forgetHoveredLink();
 };
 
 FileLinkProvider.prototype.clearCache = function()

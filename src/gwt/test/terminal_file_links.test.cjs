@@ -201,7 +201,7 @@ async function createLink(t, text = "file.R")
       view.events.keyup({});
    });
 
-   return { link: links[0], events: view.events, opened };
+   return { link: links[0], provider, events: view.events, opened };
 }
 
 /**
@@ -209,6 +209,11 @@ async function createLink(t, text = "file.R")
  * the decorations it was built with, then replaces them with live accessors
  * that repaint as they are written. The object standing in for those accessors
  * is returned, so a test can see what the link currently looks like.
+ *
+ * This imitates Linkifier._handleNewLink as of @xterm/xterm 6.0.0, the version
+ * pinned in src/gwt/tools/build-xterm. These tests assert against the
+ * imitation, so re-read that method when xterm is upgraded: a handoff that
+ * changed would leave them green while links stopped lighting up.
  */
 function startHover(link)
 {
@@ -274,6 +279,23 @@ test("the mouse reports a modifier pressed while the document was unfocused", as
    // a release that happens in another window is never delivered as a keyup
    events.blur();
    assert.equal(link.decorations.underline, false);
+});
+
+test("a terminal torn down mid-hover releases only its own link", async t => {
+   const first = await createLink(t);
+   const second = await createLink(t, "other.R");
+   const painted = startHover(second.link);
+   assert.deepEqual(painted, { underline: false, pointerCursor: false });
+
+   // another terminal going away must not drop this hover
+   first.provider.dispose();
+   second.events.keydown({ ctrlKey: true });
+   assert.deepEqual(painted, { underline: true, pointerCursor: true });
+   second.events.keyup({});
+
+   second.provider.dispose();
+   second.events.keydown({ ctrlKey: true });
+   assert.deepEqual(painted, { underline: false, pointerCursor: false });
 });
 
 test("a click without the modifier does not open the file", async t => {
