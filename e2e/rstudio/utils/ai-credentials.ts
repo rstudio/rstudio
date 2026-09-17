@@ -4,8 +4,10 @@ import {
   isExternalServerRun,
   isPositAiAuthenticated,
   readAuthStatus,
+  strictAiAuth,
   type AIProvider,
 } from './auth';
+import { isServiceReachable, reprobeService } from './network';
 
 /**
  * AI provider identifier (defined in auth.ts, the credential single source of
@@ -15,16 +17,35 @@ import {
  */
 export type { AIProvider } from './auth';
 
-// Display label, and the hint shown when a provider's sandbox store is missing
-// outright. Kept in one table so the gate, the beforeAll guard, and the
-// external-server check cannot disagree about how a provider is named.
-const PROVIDERS: Record<AIProvider, { label: string; missingStoreHint: string }> = {
+// Display label, the hint shown when a provider's sandbox store is missing
+// outright, and the external services the provider cannot work without.
+// Kept in one table so the gate, the beforeAll guard, the external-server
+// check, and the mid-run re-probe cannot disagree about how a provider is
+// named or what it needs to reach.
+//
+// serviceUrls are probed from Node (utils/network.ts), not through the
+// product, so an outage or blocked egress on the runner skips the suite while
+// a regression in RStudio's own request path still fails it. The Posit AI
+// list covers the completion/chat service and the install manifest: every
+// session checks cdn.posit.co for the assistant bundle before the agent can
+// run (kManifestUrl in SessionChat.cpp), and a timed-out manifest download
+// leaves the agent uninstalled or NotSignedIn, which then reads as a
+// completion timeout rather than as a network problem (run 34728179667).
+const PROVIDERS: Record<
+  AIProvider,
+  { label: string; missingStoreHint: string; serviceUrls: string[] }
+> = {
   positai: {
     label: 'Posit AI',
     missingStoreHint:
       'No Posit AI credentials in the sandbox. Sign in to Posit AI '
       + 'locally so the setup project can copy the token store, or set '
       + 'POSIT_EMAIL/POSIT_PASSWORD for the sign-in flow.',
+    serviceUrls: [
+      'https://api.posit.ai',
+      'https://gateway.posit.ai',
+      'https://cdn.posit.co/posit-ai/manifest.json',
+    ],
   },
   copilot: {
     label: 'GitHub Copilot',
@@ -32,6 +53,10 @@ const PROVIDERS: Record<AIProvider, { label: string; missingStoreHint: string }>
       'No GitHub Copilot credentials in the sandbox. Sign in to Copilot '
       + 'locally so the setup project can copy the credential store, or '
       + 'set COPILOT_USER/COPILOT_PASSWORD for the sign-in flow.',
+    serviceUrls: [
+      'https://api.github.com',
+      'https://api.githubcopilot.com',
+    ],
   },
 };
 
@@ -88,23 +113,73 @@ function externalServerSkipReason(provider: AIProvider, label: string): string |
     + `directory, not the sandbox)${status ? `: ${status.reason}` : ''}`;
 }
 
+// Why `provider`'s service cannot be reached from this runner, or null when
+// every host answers. `probe` is isServiceReachable (cached for the worker)
+// for the gate, or reprobeService for a mid-run re-check.
+async function serviceSkipReason(
+  provider: AIProvider,
+  probe: (url: string) => Promise<boolean>,
+): Promise<string | null> {
+  const { label, serviceUrls } = PROVIDERS[provider];
+  for (const url of serviceUrls) {
+    if (!(await probe(url))) {
+      return `${label} is unreachable from this runner (${url} did not answer); `
+        + 'an outage or blocked egress is not a product bug';
+    }
+  }
+  return null;
+}
+
 /**
  * Why `provider` cannot be exercised in this run, or null when it can.
  *
  * The single source of truth behind both the `requireAiCredentials` gate below
  * and the `hasAiCredentials` guard: being runnable means the sandbox store is
  * valid AND, on external-server runs, that the store actually reached the
- * remote home. Deriving both from one function is what stops the guard and the
- * gate from disagreeing about whether a suite can run -- a disagreement that
- * would let expensive `beforeAll` setup proceed for tests `beforeEach` then
- * skips.
+ * remote home AND the provider's services answer from this runner. Deriving
+ * all of it from one function is what stops the guard and the gate from
+ * disagreeing about whether a suite can run -- a disagreement that would let
+ * expensive `beforeAll` setup proceed for tests `beforeEach` then skips.
+ *
+ * Under PW_AI_AUTH_STRICT an unreachable service throws instead of skipping:
+ * the setup project has no step that could fail the run for it, so the gate
+ * is where a run that expects the service to be up turns red rather than
+ * green-with-skips.
  */
 async function aiCredentialSkipReason(provider: AIProvider): Promise<string | null> {
   const { label, missingStoreHint } = PROVIDERS[provider];
   if (!(await sandboxStoreHasCredentials(provider))) {
     return skipReason(provider, label, missingStoreHint);
   }
-  return externalServerSkipReason(provider, label);
+
+  const externalReason = externalServerSkipReason(provider, label);
+  if (externalReason !== null) {
+    return externalReason;
+  }
+
+  const serviceReason = await serviceSkipReason(provider, isServiceReachable);
+  if (serviceReason !== null && strictAiAuth()) {
+    throw new Error(`${serviceReason} (failing rather than skipping: PW_AI_AUTH_STRICT is set)`);
+  }
+  return serviceReason;
+}
+
+/**
+ * Re-probe `provider`'s services after a request through the product came
+ * back empty or timed out. The gate's probe only proves the hosts answered at
+ * test start; a runner's network can degrade mid-run (#18426 for the citation
+ * services). Returns a skip reason when a host has since become unreachable,
+ * null when they all still answer -- in which case the failure is real and
+ * the caller must let it stand. The refreshed cache entry also lets later
+ * tests' gates see the degraded state.
+ */
+export async function aiServiceOutageReason(provider: AIProvider): Promise<string | null> {
+  const reason = await serviceSkipReason(provider, reprobeService);
+  if (reason !== null && strictAiAuth()) {
+    // Strict runs want the outage to fail; null makes the caller rethrow.
+    return null;
+  }
+  return reason;
 }
 
 /**
@@ -145,10 +220,13 @@ export async function hasAiCredentials(provider: AIProvider): Promise<boolean> {
  * imported `test` from the file's fixture import.
  *
  * Call this inside any describe (or before its tests) that drives an AI
- * provider, so a missing credential skips cleanly instead of hitting the
- * feature's own timeout. The gate keys off the on-disk credential store. The
- * skip-vs-fail distinction matters: a missing credential is a setup gap, not a
- * product bug, and the test output should reflect that.
+ * provider, so a missing credential or an unreachable service skips cleanly
+ * instead of hitting the feature's own timeout. The gate keys off the on-disk
+ * credential store plus a Node-side reachability probe. The skip-vs-fail
+ * distinction matters: a missing credential is a setup gap and an outage is
+ * an environment problem, not a product bug, and the test output should
+ * reflect that. For a service that degrades after the gate passed, see
+ * aiServiceOutageReason.
  */
 // Playwright's TestType is parameterized by per-test and per-worker fixture
 // argument types. The helper only ever calls beforeEach / skip, which don't
