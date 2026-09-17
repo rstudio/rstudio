@@ -238,7 +238,7 @@ private:
 // A fake IAsyncClient that just captures the FixedBufferHandler passed to
 // setFixedBufferHandler() so the test can drive FixedBufferProxy::queueChunk() directly,
 // and tracks close()/resumeChunkProcessing() calls.
-class FakeAsyncClient : public IAsyncClient
+class FakeAsyncClient final : public IAsyncClient
 {
 public:
    http::Request& request() override { return request_; }
