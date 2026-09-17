@@ -219,7 +219,9 @@ bool isSqliteTransientLockError(const soci::soci_error& error)
 
 namespace {
 
-std::string pgEncode(const std::string& str, bool isUrl = true)
+// nodiscard: this returns by value and has no side effects, so discarding the
+// result silently leaves the caller holding the unescaped string.
+[[nodiscard]] std::string pgEncode(const std::string& str, bool isUrl = true)
 {
    // ensure we first decode from URL string format
    std::string val = isUrl ? http::util::urlDecode(str) : str;
