@@ -308,9 +308,9 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
-   public void setContextDepth(int contextDepth)
+   public void setContextDepth(int contextDepth, int browseFrameDepth)
    {
-      objects_.setContextDepth(contextDepth);
+      objects_.setContextDepth(contextDepth, browseFrameDepth);
 
       // if the environment we're about to show is nested, turn off the toolbar
       // commands that act on the global environment

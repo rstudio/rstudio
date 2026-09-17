@@ -113,6 +113,14 @@ test.describe('Source locations inside wrapper calls', () => {
       await consoleActions.executeInConsole(
         'trace(".rs.callFrames", tracer = quote(.GlobalEnv$debug_frame_builds <- .GlobalEnv$debug_frame_builds + 1L), print = FALSE, where = as.environment("tools:rstudio"))',
       );
+
+      // A trace that failed to install would leave the counter at zero too, so
+      // the assertion below would hold even if the frame rebuilds came back.
+      await consoleActions.executeInConsole(
+        'cat("FRAME_TRACED:", inherits(get(".rs.callFrames", envir = as.environment("tools:rstudio")), "functionWithTrace"), "\\n")',
+      );
+      await expect(consoleActions.consolePane.consoleOutput).toContainText('FRAME_TRACED: TRUE');
+
       for (const row of [2, 3]) {
         await consoleActions.executeInConsole('n');
         await debuggerActions.waitForActiveDebugLineRowToBe(row);

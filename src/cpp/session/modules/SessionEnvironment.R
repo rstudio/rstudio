@@ -1317,8 +1317,7 @@
 # @return A list with components:
 #   - frames: a list of frame descriptor lists (one per function context)
 #   - context: the function and environment at targetDepth (or NULL)
-#   - src_context: the resolved or simulated srcref and associated call
-#     and function at targetDepth (or NULL)
+#   - browser_depth: the depth of the frame the browser is halted in (or 0)
 #   - lastDebugLine: the updated simulated browser line (or NULL)
 .rs.addFunction("callFrames", function(targetDepth = 0L,
                                        lineDebugState = NULL,
@@ -1332,7 +1331,7 @@
 
    if (nframe < 1L)
    {
-      return(list(frames = list(), context = NULL, src_context = NULL))
+      return(list(frames = list(), context = NULL, browser_depth = 0L))
    }
 
    # sys.parents() and sys.calls() include our own frame; we subset below.
@@ -1362,7 +1361,7 @@
       key <- format(parentEnv)
       if (is.null(envSrcrefMap[[key]]))
       {
-         envSrcrefMap[[key]] <- list(srcref = srcref, callfun = callfun, call = calls[[i]])
+         envSrcrefMap[[key]] <- srcref
       }
    }
 
@@ -1374,6 +1373,25 @@
    browserCloenv <- .Call("rs_getBrowserEnv", PACKAGE = "(embedding)")
    browserUsed <- FALSE
 
+   # More than one context can share an environment -- eval(envir = <a frame>),
+   # or top-level code under source(), where several contexts see the global
+   # environment. .rs.getFunctionContext resolves that to the outermost match,
+   # and its answer is the depth the client browses, so resolve it the same way
+   # here rather than treating every context sharing the environment as current.
+   browserDepth <- 1L
+   if (!is.null(browserCloenv))
+   {
+      browserDepth <- 0L
+      for (i in seq_len(nframe))
+      {
+         if (identical(sys.frame(i), browserCloenv))
+         {
+            browserDepth <- nframe - i + 1L
+            break
+         }
+      }
+   }
+
    # -- Phase 3: build frame descriptors --
    # Iterate from innermost to outermost frame to match the C++ convention
    # where the RCNTXT walk starts at R_GlobalContext (innermost) and goes
@@ -1382,7 +1400,6 @@
    contextDepth <- 0L
 
    resultContext <- NULL
-   resultSrcContext <- NULL
    updatedLastDebugLine <- NULL
 
    for (i in rev(seq_len(nframe)))
@@ -1418,46 +1435,33 @@
       # doTryCatch further in. For every other frame, envSrcrefMap maps the
       # frame's env to the source location of the call made from it (set by
       # the next-inner frame).
-      if (is.null(browserCloenv))
-         isCurrentFrame <- contextDepth == 1L
-      else
-         isCurrentFrame <- identical(cloenv, browserCloenv)
+      isCurrentFrame <- contextDepth == browserDepth
 
       canUseCurrentSrcref <- .rs.canUseCurrentSrcref(callfun, cloenv)
       if (isCurrentFrame && canUseCurrentSrcref && .rs.isValidSrcref(currentSrcref))
       {
-         srcContext <- list(srcref = currentSrcref, callfun = callfun, call = call)
+         srcref <- currentSrcref
       }
       else
       {
-         envKey <- format(cloenv)
-         mapped <- envSrcrefMap[[envKey]]
-         if (!is.null(mapped))
-         {
-            srcContext <- mapped
-         }
-         else if (!isCurrentFrame)
+         srcref <- envSrcrefMap[[format(cloenv)]]
+         if (is.null(srcref) && (!isCurrentFrame || hasSourceRefs))
          {
             # No locatable call was made from this frame, which happens when
             # a base function builds the inner call itself (lapply, do.call).
             # Fall back to the srcref of the call that created this frame:
             # that position belongs to the caller rather than to this frame,
             # but it is what makes such frames navigable in the traceback.
+            #
+            # The browser's own frame takes this fallback only when it has
+            # source of its own. Handing a source-less function its caller's
+            # location is exactly #18754; there we leave the srcref unset and
+            # simulate a position from the deparsed body below.
             callSrcref <- attr(call, "srcref", exact = TRUE)
-            resolved <- .rs.resolveCallSrcref(callSrcref, callfun)
-            srcContext <- list(srcref = resolved, callfun = callfun, call = call)
-         }
-         else
-         {
-            # The browser's own frame is excluded from the fallback above:
-            # there, showing the call's srcref is exactly #18754, where a
-            # source-less function reports its caller's location as its own.
-            # Without a location in this frame, simulate one from the body.
-            srcContext <- list(srcref = NULL, callfun = callfun, call = call)
+            srcref <- .rs.resolveCallSrcref(callSrcref, callfun)
          }
       }
 
-      srcref <- srcContext$srcref
       isRealSrcref <- .rs.isValidSrcref(srcref)
       isSourceEquiv <- identical(cloenv, globalenv()) && isRealSrcref
 
@@ -1528,7 +1532,6 @@
          }
 
          srcrefInfo <- .rs.srcrefData(simSrcref)
-         srcContext$srcref <- simSrcref
       }
 
       # Call summary
@@ -1571,7 +1574,6 @@
             hasSourceRefs  = hasSourceRefs,
             callFunSourceRefs = funSrcref
          )
-         resultSrcContext <- srcContext
       }
 
    }
@@ -1582,7 +1584,7 @@
    list(
       frames             = frames,
       context            = resultContext,
-      src_context        = resultSrcContext,
+      browser_depth      = browserDepth,
       lastDebugLine      = updatedLastDebugLine
    )
 })

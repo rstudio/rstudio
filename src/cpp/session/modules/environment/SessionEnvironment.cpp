@@ -381,12 +381,17 @@ struct CallFrameResult
    bool hasSourceRefs;       // whether the function has source refs
    SEXP callFunSourceRefs;   // srcref attribute on the original function
 
+   // Depth of the frame the browser is halted in, which is not the requested
+   // depth once the user selects another frame from the call stack.
+   int browserDepth;
+
    CallFrameResult()
       : contextCallfun(R_NilValue),
         contextCloenv(R_NilValue),
         originalCallfun(R_NilValue),
         hasSourceRefs(false),
-        callFunSourceRefs(R_NilValue)
+        callFunSourceRefs(R_NilValue),
+        browserDepth(0)
    {
    }
 };
@@ -465,6 +470,10 @@ CallFrameResult callFramesFromR(int depth,
       error = r::sexp::getNamedListElement(contextSEXP, "hasSourceRefs", &result.hasSourceRefs);
       if (error) LOG_ERROR(error);
    }
+
+   error = r::sexp::getNamedListElement(resultSEXP, "browser_depth", &result.browserDepth);
+   if (error)
+      LOG_ERROR(error);
 
    // Propagate lastDebugLine update back to C++ (for simulated srcref state)
    if (pLineDebugState != nullptr)
@@ -846,6 +855,11 @@ json::Object commonEnvironmentStateData(
    // other frames innermost -- source-less ones such as doTryCatch, or the
    // wrapper itself carrying its own call site -- so forcing 1 pointed the
    // client at the wrong frame and lost the debug highlight (#18754).
+   //
+   // context_depth also follows the frame the user selects from the call
+   // stack, so the client cannot read it as "execution is halted here". Say
+   // which frame that is instead of leaving it to infer depth 1.
+   varJson["browse_frame_depth"] = depth > 0 ? cfResult.browserDepth : 0;
 
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function
@@ -870,12 +884,24 @@ void enqueContextDepthChangedEvent(bool isDebugStepping,
    module_context::enqueClientEvent(event);
 }
 
+// The last browser position reported to the client. The client arms a timer on
+// every debug command and cancels it only when the server answers, so a step it
+// hears nothing about costs it a needless requery_context round trip.
+json::Object s_lastBrowserLineJson;
+
+void enqueBrowserLineChangedEvent(const json::Object& varJson)
+{
+   ClientEvent event(client_events::kBrowserLineChanged, varJson);
+   module_context::enqueClientEvent(event);
+}
+
 void enqueBrowserLineChangedEvent(const SEXP srcref)
 {
    json::Object varJson;
    sourceRefToJson(srcref, &varJson);
-   ClientEvent event(client_events::kBrowserLineChanged, varJson);
-   module_context::enqueClientEvent(event);
+
+   s_lastBrowserLineJson = varJson;
+   enqueBrowserLineChangedEvent(varJson);
 }
 
 Error setContextDepth(boost::shared_ptr<int> pContextDepth,
@@ -1085,6 +1111,10 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
          pLineDebugState->reset();
       }
 
+      // the client recomputes its position from the new frame, so the line we
+      // last reported no longer describes where it is
+      s_lastBrowserLineJson = json::Object();
+
       // start monitoring the environment at the new depth
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
@@ -1098,10 +1128,14 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    else if (depth > 0 && !r::session::inDebugHiddenContext())
    {
       // Leave the highlight where it is when the new position cannot be
-      // resolved; an empty srcref would report line 0 to the client.
+      // resolved; an empty srcref would report line 0 to the client. Repeat
+      // the last position rather than staying silent, so the client stops
+      // waiting on an answer that is not coming.
       SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
       if (srcref != R_NilValue)
          enqueBrowserLineChangedEvent(srcref);
+      else if (!s_lastBrowserLineJson.isEmpty())
+         enqueBrowserLineChangedEvent(s_lastBrowserLineJson);
    }
    
 }
