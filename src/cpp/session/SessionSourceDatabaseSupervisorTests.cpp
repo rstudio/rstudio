@@ -212,6 +212,15 @@ INSTANTIATE_TEST_SUITE_P(
    SourceDatabaseOwnershipTest,
    testing::ValuesIn(lockTypes()));
 
+std::vector<FileLock::LockType> freshAdvisoryLockTypes()
+{
+   std::vector<FileLock::LockType> types = {FileLock::LOCKTYPE_ADVISORY};
+#ifndef _WIN32
+   types.push_back(FileLock::LOCKTYPE_LINKBASED);
+#endif
+   return types;
+}
+
 class FreshAdvisoryLockTest : public SourceDatabaseSupervisorTest,
                               public testing::WithParamInterface<FileLock::LockType>
 {
@@ -246,11 +255,7 @@ TEST_P(FreshAdvisoryLockTest, RecoversAfterReleasingANewAdvisoryLock)
 INSTANTIATE_TEST_SUITE_P(
    LockConfigurations,
    FreshAdvisoryLockTest,
-   testing::Values(FileLock::LOCKTYPE_ADVISORY
-#ifndef _WIN32
-      , FileLock::LOCKTYPE_LINKBASED
-#endif
-   ));
+   testing::ValuesIn(freshAdvisoryLockTypes()));
 
 // Model an acquisition failure after the ownership probe, without changing
 // filesystem permissions or relying on a scheduling race.
