@@ -15,6 +15,8 @@
 
 #include "ZoteroCollectionsLocal.hpp"
 
+#include <algorithm>
+
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/bind/bind.hpp>
 
@@ -483,6 +485,87 @@ FilePath zoteroSqliteCopyPath(std::string dataDir)
    return zoteroSqliteDir().completePath(sqliteFile);
 }
 
+// the sidecar files sqlite keeps next to a database in WAL mode
+FilePath walFilePath(const FilePath& dbPath)
+{
+   return FilePath(dbPath.getAbsolutePath() + "-wal");
+}
+
+FilePath shmFilePath(const FilePath& dbPath)
+{
+   return FilePath(dbPath.getAbsolutePath() + "-shm");
+}
+
+// The copy is meant to be a single self-contained file. sqlite on macOS keeps
+// the sidecars across a close, so they are removed rather than left to chance.
+void removeDatabaseSidecars(const FilePath& dbCopyFile)
+{
+   Error error = walFilePath(dbCopyFile).removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   error = shmFilePath(dbCopyFile).removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+}
+
+// Discard the copy so that the next attempt starts from a fresh one.
+void removeDatabaseCopy(const FilePath& dbCopyFile)
+{
+   Error error = dbCopyFile.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   removeDatabaseSidecars(dbCopyFile);
+}
+
+// Rewrite the copy's header to rollback mode, checkpointing any copied -wal into
+// the main file on the way. Zotero 10 keeps zotero.sqlite in WAL mode, and a WAL
+// header demands a -wal file that our read-only query connection cannot create.
+Error normalizeDatabaseCopy(const FilePath& dbCopyFile)
+{
+   database::SqliteConnectionOptions options;
+   options.file = string_utils::systemToUtf8(dbCopyFile.getAbsolutePath());
+   options.readonly = false;
+
+   boost::shared_ptr<database::IConnection> pConnection;
+   Error error = database::connect(options, &pConnection);
+   if (error)
+      return error;
+
+   error = pConnection->executeStr("PRAGMA journal_mode = DELETE;");
+   pConnection.reset();
+
+   return error;
+}
+
+Error refreshDatabaseCopy(const FilePath& dbFile,
+                          const FilePath& dbWalFile,
+                          const FilePath& dbCopyFile)
+{
+   Error error = dbFile.copy(dbCopyFile, true);
+   if (error)
+      return error;
+
+   // clear anything left beside the previous copy before pairing the new one
+   // with the source's -wal, which carries commits not yet in zotero.sqlite
+   removeDatabaseSidecars(dbCopyFile);
+   if (dbWalFile.exists())
+   {
+      error = dbWalFile.copy(walFilePath(dbCopyFile), true);
+      if (error)
+         return error;
+   }
+
+   error = normalizeDatabaseCopy(dbCopyFile);
+   if (error)
+      return error;
+
+   removeDatabaseSidecars(dbCopyFile);
+
+   return Success();
+}
+
 Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppConnection)
 {
    // get path to actual sqlite db
@@ -491,29 +574,20 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
    // get path to copy of file we will use for queries
    FilePath dbCopyFile = zoteroSqliteCopyPath(dataDir);
 
-   // if the copy file doesn't exist or is older than the dbFile then make another copy
-   bool databaseIsStale = dbCopyFile.getLastWriteTime() < dbFile.getLastWriteTime();
-   if (databaseIsStale)
-   {
-      TRACE("Copying " + dbFile.getAbsolutePath());
-      std::time_t writeTime = dbFile.getLastWriteTime();
-      Error error = dbFile.copy(dbCopyFile, true);
-      if (error)
-         return error;
-      dbCopyFile.setLastWriteTime(writeTime);
-   }
+   // refresh our copy if the source database has changed since we last copied it
+   Error error = prepareDatabaseCopy(dbFile, dbCopyFile);
+   if (error)
+      return error;
 
    // create connection
    database::SqliteConnectionOptions options;
    options.file = string_utils::systemToUtf8(dbCopyFile.getAbsolutePath());
    options.readonly = true;
-   Error error = database::connect(options, ppConnection);
+   error = database::connect(options, ppConnection);
    if (error)
    {
       // if there is an error connecting then delete the copy (perhaps it's corrupted?)
-      Error removeError = dbCopyFile.remove();
-      if (removeError)
-         LOG_ERROR(error);
+      removeDatabaseCopy(dbCopyFile);
       return error;
    }
 
@@ -522,9 +596,7 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
    if (error)
    {
       // if there is an error running the query then delete the copy (perhaps it's corrupted?)
-      Error removeError = dbCopyFile.remove();
-      if (removeError)
-         LOG_ERROR(error);
+      removeDatabaseCopy(dbCopyFile);
       return error;
    }
 
@@ -836,6 +908,36 @@ DetectedLocalZoteroConfig detectLocalZoteroConfig()
 
 
 } // end anonymous namespace
+
+
+Error prepareDatabaseCopy(const FilePath& dbFile, const FilePath& dbCopyFile)
+{
+   // in WAL mode a commit is appended to the -wal and leaves zotero.sqlite's
+   // mtime untouched, so the copy has to be judged against both files
+   FilePath dbWalFile = walFilePath(dbFile);
+   std::time_t writeTime = dbFile.getLastWriteTime();
+   if (dbWalFile.exists())
+      writeTime = std::max(writeTime, dbWalFile.getLastWriteTime());
+
+   // if the copy file doesn't exist or is older than the source then make another copy
+   bool databaseIsStale = dbCopyFile.getLastWriteTime() < writeTime;
+   if (!databaseIsStale)
+      return Success();
+
+   TRACE("Copying " + dbFile.getAbsolutePath());
+   Error error = refreshDatabaseCopy(dbFile, dbWalFile, dbCopyFile);
+   if (error)
+   {
+      // don't leave a half-prepared copy for the next caller to query
+      removeDatabaseCopy(dbCopyFile);
+      return error;
+   }
+
+   // stamp last, since preparing the copy writes to it
+   dbCopyFile.setLastWriteTime(writeTime);
+
+   return Success();
+}
 
 
 bool localZoteroAvailable()
