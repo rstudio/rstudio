@@ -16,6 +16,7 @@ export class SourcePane extends PageObject {
   public nesDeletionMarker: Locator;
   public nesDiscard: Locator;
   public nesGutter: Locator;
+  public nesIndicator: Locator;
   public nesOffscreenGutter: Locator;
   public publishBtn: Locator;
   public formatOptions: Locator;
@@ -45,6 +46,10 @@ export class SourcePane extends PageObject {
     this.nesDiscard = page.locator("xpath=//*[text()='Discard']");
     this.nesDeletionMarker = page.locator('[class*=ace_next-edit-suggestion-deletion]');
     this.nesGutter = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//*[contains(@class,'ace_nes-gutter')]");
+    // Any presentation of a next-edit suggestion: the multiline diff view,
+    // ghost text, the inline insertion preview, or the gutter marker. Which
+    // one the provider picks depends on the edit, so tests wait for any.
+    this.nesIndicator = this.nesApply.or(this.ghostText).or(this.nesInsertionPreview).or(this.nesGutter).first();
     // Edge-pinned arrow shown in the gutter while an active suggestion is
     // scrolled out of view; clicking it navigates to the suggestion.
     this.nesOffscreenGutter = page.locator("xpath=//div[@role='tabpanel' and not(contains(@style, 'display: none'))]//*[starts-with(@id,'rstudio_source_text_editor')]//*[contains(@class,'ace_nes-offscreen-gutter')]");
