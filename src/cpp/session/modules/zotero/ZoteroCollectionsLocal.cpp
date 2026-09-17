@@ -626,6 +626,11 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
    error = execQuery(*ppConnection, "SELECT * FROM libraries", [](const database::Row&) {});
    if (error)
    {
+      // close first: Windows refuses to delete a file that still has an open handle,
+      // and a copy left behind keeps the mtime that makes it look fresh, so every
+      // later call would reuse the same bad copy
+      ppConnection->reset();
+
       // if there is an error running the query then delete the copy (perhaps it's corrupted?)
       removeDatabaseCopy(dbCopyFile);
       return error;
