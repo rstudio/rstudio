@@ -860,6 +860,12 @@ void Response::setStreamFile(const FilePath& filePath,
       // from a response whose underlying file stream never opened (which would
       // dereference a null pointer in nextBuffer() and crash the process)
       streamResponse_.reset();
+
+      // drop the chunked transfer-encoding header set above for streaming;
+      // setError() sends a fixed-length body, and leaving Transfer-Encoding:
+      // chunked in place makes the error response unparseable to the client
+      removeHeader(kTransferEncoding);
+
       setError(status::InternalServerError, error.getMessage());
    }
 }

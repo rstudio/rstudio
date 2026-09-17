@@ -61,6 +61,10 @@ TEST(ResponseStreamFile, MissingFileDoesNotLeaveAStreamResponse)
    EXPECT_FALSE(response.isStreamResponse());
    EXPECT_FALSE(response.getStreamResponse());
    EXPECT_EQ(response.statusCode(), status::InternalServerError);
+
+   // the error carries a fixed-length body, so the chunked transfer-encoding
+   // set up for streaming must be gone -- otherwise the client cannot parse it
+   EXPECT_NE(response.headerValue(kTransferEncoding), kChunkedTransferEncoding);
 }
 
 #ifndef _WIN32
@@ -84,6 +88,7 @@ TEST(ResponseStreamFile, UnreadableFileDoesNotLeaveAStreamResponse)
    EXPECT_FALSE(response.isStreamResponse());
    EXPECT_FALSE(response.getStreamResponse());
    EXPECT_EQ(response.statusCode(), status::InternalServerError);
+   EXPECT_NE(response.headerValue(kTransferEncoding), kChunkedTransferEncoding);
 
    // restore permissions so the temp file can be cleaned up
    ::chmod(unreadableFile.getAbsolutePath().c_str(), 0600);
