@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
@@ -53,31 +52,20 @@ public class ChatTab extends DelayLoadWorkbenchTab<ChatPresenter>
       // If chat was popped out in a previous session, force-load the
       // presenter eagerly so it can restore the satellite window even
       // when the sidebar is hidden (bypassing DelayLoad deferral).
-      boolean shouldRestore = false;
-      try
+      session.withSessionInfo(info ->
       {
-         JsObject group = session.getSessionInfo().getClientState()
-            .peek("chat-window");
+         JsObject group = info.getClientState().peek("chat-window");
          if (group != null)
          {
             JsObject state = group.getObject("chatSatelliteState");
             if (state != null && Boolean.TRUE.equals(state.getBoolean("poppedOut")))
             {
-               shouldRestore = true;
+               shim_.forceLoad(false, null);
             }
          }
-      }
-      catch (Exception e)
-      {
-         Debug.log("Failed to read chat satellite state: " + e.getMessage());
-      }
-
-      if (shouldRestore)
-      {
-         shim_.forceLoad(false, null);
-      }
+      });
    }
 
-   @SuppressWarnings("unused") private final Shim shim_;
+   private final Shim shim_;
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }
