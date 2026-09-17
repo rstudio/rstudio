@@ -23,6 +23,7 @@
 - ([#18857](https://github.com/rstudio/rstudio/issues/18857)): The Console pane now shows the R version as soon as the session starts, instead of displaying "(unknown)" until the session finished initializing.
 
 ### Fixed
+- ([#18870](https://github.com/rstudio/rstudio/issues/18870)): Fixed an issue where a Restart R that took more than about ten seconds to come back left the console without focus and its prompt unrefreshed, and kept showing the previous R version after a restart into a different R.
 - ([#18744](https://github.com/rstudio/rstudio/issues/18744)): RStudio now checks both file-lock types before recovering source documents and reports an error instead of reusing a source database held by another session.
 - ([#18754](https://github.com/rstudio/rstudio/issues/18754)): Fixed an issue where debugging a package function called from another function failed to show and step through its source code.
 - ([#18799](https://github.com/rstudio/rstudio/issues/18799)): Closing a Quarto document's source tab no longer cancels an in-progress render when the preview option is set to "(No Preview)".
