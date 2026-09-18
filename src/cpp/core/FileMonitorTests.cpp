@@ -26,6 +26,7 @@
 #include <cerrno>
 #include <thread>
 #include <fstream>
+#include <sstream>
 #include <vector>
 
 #include <unistd.h>
@@ -95,9 +96,11 @@ void onUnregistered(CallbackState* pState, system::file_monitor::Handle /*handle
 
 // Pumps the file_monitor callback queue on the current thread and polls
 // the supplied predicate until it returns true or the timeout elapses.
+// The timeout is generous because loaded CI machines can take several
+// seconds to deliver an event; passing runs return as soon as it arrives.
 template <typename Predicate>
 bool waitFor(Predicate pred,
-             std::chrono::milliseconds timeout = std::chrono::seconds(8))
+             std::chrono::milliseconds timeout = std::chrono::seconds(20))
 {
    auto deadline = std::chrono::steady_clock::now() + timeout;
    while (std::chrono::steady_clock::now() < deadline)
@@ -124,6 +127,27 @@ bool hasEventFor(const CallbackState& state,
       }
    }
    return false;
+}
+
+bool hasEventWithPrefix(const CallbackState& state, const std::string& prefix)
+{
+   for (const auto& event : state.events)
+   {
+      if (boost::algorithm::starts_with(event.fileInfo().absolutePath(), prefix))
+         return true;
+   }
+   return false;
+}
+
+// Lists the events received so far, for failure messages: an empty list
+// (nothing delivered) and a wrong-typed event call for different fixes.
+std::string describeEvents(const CallbackState& state)
+{
+   std::ostringstream ostr;
+   ostr << state.events.size() << " event(s) received";
+   for (const auto& event : state.events)
+      ostr << "\n  " << event;
+   return ostr.str();
 }
 
 // Returns true on success. Tests should ASSERT on the result -- a void helper
@@ -154,6 +178,26 @@ bool drainViaSentinel(const FilePath& dir, CallbackState* pState)
    });
 }
 
+// FSEventStreamStart returns before fseventsd delivers to the stream, and
+// kFSEventStreamEventIdSinceNow streams never report changes made before
+// that point. Write probe files until one is observed, so each test starts
+// against a live stream. Probes are left in place; tests ignore them.
+bool awaitStreamLive(const FilePath& dir, CallbackState* pState)
+{
+   std::string prefix = dir.completeChildPath("__file_monitor_test_probe_").getAbsolutePath();
+   for (int attempt = 0; attempt < 15; ++attempt)
+   {
+      if (!writeFile(FilePath(prefix + std::to_string(attempt)), "probe"))
+         return false;
+      if (waitFor([&] { return hasEventWithPrefix(*pState, prefix); },
+                  std::chrono::seconds(2)))
+      {
+         return true;
+      }
+   }
+   return false;
+}
+
 system::file_monitor::Handle startMonitor(
       const FilePath& dir,
       CallbackState* pState,
@@ -181,6 +225,8 @@ system::file_monitor::Handle startMonitor(
    EXPECT_TRUE(waitFor([&] { return pState->registered || pState->registrationError; }));
    EXPECT_TRUE(pState->registered);
    EXPECT_FALSE(pState->registrationError);
+   if (pState->registered)
+      EXPECT_TRUE(awaitStreamLive(dir, pState)) << describeEvents(*pState);
    return pState->handle;
 }
 
@@ -241,7 +287,7 @@ TEST_F(FileMonitorTest, NonRecursiveDetectsFileAdded)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileAdded,
                          child.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    stopMonitor(handle, &state);
 }
@@ -265,7 +311,7 @@ TEST_F(FileMonitorTest, NonRecursiveDetectsFileModified)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileModified,
                          child.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    stopMonitor(handle, &state);
 }
@@ -284,7 +330,7 @@ TEST_F(FileMonitorTest, NonRecursiveDetectsFileRemoved)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileRemoved,
                          child.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    stopMonitor(handle, &state);
 }
@@ -303,7 +349,7 @@ TEST_F(FileMonitorTest, NonRecursiveIgnoresSubtreeChanges)
    FilePath nested = subDir.completeChildPath("deep.txt");
    ASSERT_TRUE(writeFile(nested, "nested activity"));
 
-   ASSERT_TRUE(drainViaSentinel(tempDir_, &state));
+   ASSERT_TRUE(drainViaSentinel(tempDir_, &state)) << describeEvents(state);
 
    for (const auto& event : state.events)
    {
@@ -335,7 +381,7 @@ TEST_F(FileMonitorTest, NonRecursiveAppliesUserFilter)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileAdded,
                          accepted.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    for (const auto& event : state.events)
    {
@@ -381,7 +427,7 @@ TEST_F(FileMonitorTest, SymlinkToExternalTargetEmitsNoEventOnTargetChange)
    // does not call our callback for the link path. The drain sentinel
    // exists only to give the event pump a known endpoint.
    ASSERT_TRUE(writeFile(external.path, "outside, modified"));
-   ASSERT_TRUE(drainViaSentinel(tempDir_, &state));
+   ASSERT_TRUE(drainViaSentinel(tempDir_, &state)) << describeEvents(state);
 
    for (const auto& event : state.events)
    {
@@ -411,7 +457,7 @@ TEST_F(FileMonitorTest, NonRecursiveDetectsSubdirectoryCreatedAfterStart)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileAdded,
                          subDir.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    // The FileAdded should carry isDirectory=true; without that flag the
    // FilesPane would render this as a regular file.
@@ -429,7 +475,7 @@ TEST_F(FileMonitorTest, NonRecursiveDetectsSubdirectoryCreatedAfterStart)
    // Nested activity must remain filtered.
    FilePath nested = subDir.completeChildPath("deep.txt");
    ASSERT_TRUE(writeFile(nested, "nested after start"));
-   ASSERT_TRUE(drainViaSentinel(tempDir_, &state));
+   ASSERT_TRUE(drainViaSentinel(tempDir_, &state)) << describeEvents(state);
 
    for (const auto& event : state.events)
    {
@@ -482,14 +528,14 @@ TEST_F(FileMonitorTest, SymlinkedRootReportsRegisteredPathForm)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileAdded,
                          added.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    ASSERT_FALSE(added.remove());
 
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileRemoved,
                          added.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    for (const auto& event : state.events)
    {
@@ -527,7 +573,7 @@ TEST_F(FileMonitorTest, SymlinkedRootReportsRegisteredPathFormRecursive)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileAdded,
                          nested.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    // the recursive branch can also emit events for enclosing directories
    // (e.g. a FileModified for subdir); every event must be in link form
@@ -571,11 +617,11 @@ TEST_F(FileMonitorTest, RecursiveExcludedPathSuppressesEvents)
    ASSERT_TRUE(waitFor([&] {
       return hasEventFor(state, system::FileChangeEvent::FileAdded,
                          includedFile.getAbsolutePath());
-   }));
+   })) << describeEvents(state);
 
    // drain any straggling deliveries, then confirm nothing surfaced for the
    // excluded directory's contents
-   ASSERT_TRUE(drainViaSentinel(tempDir_, &state));
+   ASSERT_TRUE(drainViaSentinel(tempDir_, &state)) << describeEvents(state);
    EXPECT_FALSE(hasEventFor(state, system::FileChangeEvent::FileAdded,
                             excludedFile.getAbsolutePath()));
 
