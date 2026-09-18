@@ -39,6 +39,10 @@ core::FilePath zoteroDataDirectory();
 
 DetectedLocalZoteroConfig detectedLocalZoteroConfig();
 
+// Refresh dbCopyFile from dbFile if the source has changed since the last copy.
+// Queries run against the copy so that they never touch the database Zotero owns.
+core::Error prepareDatabaseCopy(const core::FilePath& dbFile, const core::FilePath& dbCopyFile);
+
 ZoteroCollectionSource localCollections();
 
 } // end namespace collections
