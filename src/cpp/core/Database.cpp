@@ -217,6 +217,7 @@ bool isSqliteTransientLockError(const soci::soci_error& error)
 
 // Database errors =================================================================================================
 
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
 namespace {
 
 // nodiscard: this returns by value and has no side effects, so discarding the
@@ -236,7 +237,6 @@ namespace {
 Error getPostgresqlPassword(const PostgresqlConnectionOptions& options,
                             std::string& password)
 {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
    // override password from the input with the one from options if any
    if (!options.password.empty())
       password = options.password;
@@ -293,16 +293,12 @@ Error getPostgresqlPassword(const PostgresqlConnectionOptions& options,
       }
    }
    return Success();
-#else
-   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
 }
 
 Error parseConnectionUri(const std::string& uri,
                          std::string& password,
                          std::string* pConnectionStr)
 {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
    boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)",
                    boost::regex::icase);
    boost::cmatch matches;
@@ -460,12 +456,10 @@ Error parseConnectionUri(const std::string& uri,
    }
 
    return Success();
-#else
-   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
 }
 
 } // anonymous namespace
+#endif // RSTUDIO_HAS_SOCI_POSTGRESQL
 
 Error parsePostgresqlConnectionOptions(
     const PostgresqlConnectionOptions& options,

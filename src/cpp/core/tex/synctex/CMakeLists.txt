@@ -47,6 +47,12 @@ add_library(rstudio-core-synctex STATIC
    ${SYNCTEX_HEADER_FILES})
 define_source_file_names(rstudio-core-synctex)
 
+if(NOT MSVC)
+  # the GCC / Clang counterpart of C4018, for the same reason; set on the target
+  # so that it lands after the -Wall added for src/cpp as a whole
+  target_compile_options(rstudio-core-synctex PRIVATE -Wno-sign-compare)
+endif()
+
 if(WIN32)
    target_link_libraries(rstudio-core-synctex rstudio-zlib)
 endif()
