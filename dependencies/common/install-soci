@@ -89,9 +89,17 @@ if [[ "$OSTYPE" = "darwin"* ]]; then
    export POSTGRESQL_ROOT="${HOMEBREW_PREFIX}/opt/libpq"
 fi
 
+# SOCI's Boost lookup is optional and quiet: on a miss it would build without
+# Boost, or against a system Boost (which lacks our namespace), and not say so
+BOOST_CMAKE_DIR="$BOOST_DIR/lib/cmake/Boost-${BOOST_VERSION//_/.}"
+if ! [ -f "$BOOST_CMAKE_DIR/BoostConfig.cmake" ]; then
+   echo "Boost CMake package not found at '$BOOST_CMAKE_DIR'; run install-boost first" >&2
+   exit 1
+fi
+
 # SOCI's find_package(Boost) goes through CMake's deprecated FindBoost module
-# unless CMP0167 is NEW (CMake 3.30+); either way, Boost_ROOT (CMP0074) points
-# it at our Boost's BoostConfig.cmake
+# unless CMP0167 is NEW (CMake 3.30+); either way, Boost_DIR points it
+# straight at our Boost's BoostConfig.cmake, with no search to go astray
 "${CMAKE}" -G"${CMAKE_GENERATOR}"                      \
    -DCMAKE_POLICY_DEFAULT_CMP0063="NEW"                \
    -DCMAKE_POLICY_DEFAULT_CMP0074="NEW"                \
@@ -102,7 +110,7 @@ fi
    -DSOCI_TESTS=OFF                                    \
    -DSOCI_CXX11=ON                                     \
    -DSOCI_EMPTY=OFF                                    \
-   -DBoost_ROOT="$BOOST_DIR"                           \
+   -DBoost_DIR="$BOOST_CMAKE_DIR"                      \
    -DBoost_USE_STATIC_LIBS=ON                          \
    -DWITH_BOOST=ON                                     \
    -DWITH_POSTGRESQL=ON                                \

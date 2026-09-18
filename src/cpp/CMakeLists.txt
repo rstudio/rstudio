@@ -17,12 +17,9 @@
 cmake_minimum_required(VERSION 3.25)
 
 # never fall back to CMake's deprecated FindBoost module; find_package(Boost)
-# uses Boost's own BoostConfig.cmake, which also honors BOOST_ROOT
+# uses Boost's own BoostConfig.cmake
 if(POLICY CMP0167)
    cmake_policy(SET CMP0167 NEW)
-endif()
-if(POLICY CMP0144)
-   cmake_policy(SET CMP0144 NEW)
 endif()
 
 # initialize
@@ -150,6 +147,12 @@ else()
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
+   # CMake no longer adds a default warning level; keep the /W3 it used to add.
+   # cmake/compiler.cmake does this for C++, but runs before C is enabled
+   if(NOT CMAKE_C_FLAGS MATCHES "/W[0-4]")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
+   endif()
+
    # require Windows 10 version 1809 (build 17763), the minimum for the
    # ConPTY pseudoconsole APIs. _WIN32_WINNT/WINVER are per-major-version and
    # share one value across Windows 10 and 11 (0x0A00); NTDDI_VERSION selects
@@ -238,9 +241,31 @@ if(UNIX)
       if(NOT RSTUDIO_USE_SYSTEM_BOOST)
          set(BOOST_FIND_OPTIONS NO_CMAKE_SYSTEM_PATH NO_SYSTEM_ENVIRONMENT_PATH)
       endif()
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} CONFIG REQUIRED
+
+      # FindBoost honored BOOST_ROOT, and CMP0144 has find_package do the same.
+      # set it for this call only: it changes where every package is looked for
+      cmake_policy(PUSH)
+      if(POLICY CMP0144)
+         cmake_policy(SET CMP0144 NEW)
+      endif()
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} CONFIG
          COMPONENTS ${BOOST_LIBS}
          ${BOOST_FIND_OPTIONS})
+      cmake_policy(POP)
+
+      # not REQUIRED above, so that we can say more than CMake's generic error
+      if(NOT Boost_FOUND)
+         message(FATAL_ERROR
+            "Could not find Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} or newer with all of "
+            "the components RStudio needs; the warning above has the details.\n"
+            "Boost is found through the CMake package files it installs "
+            "(<prefix>/lib/cmake/Boost-<version>/BoostConfig.cmake), not through "
+            "CMake's FindBoost module. A Boost installed without them (b2 "
+            "--no-cmake-config, or a distribution package that leaves them out) "
+            "cannot be used.\n"
+            "Set Boost_ROOT or BOOST_ROOT to the prefix of a suitable Boost, or run "
+            "dependencies/common/install-boost to build the copy RStudio normally uses.")
+      endif()
    endif()
 
 # WIN32 BOOST

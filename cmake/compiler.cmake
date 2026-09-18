@@ -112,10 +112,18 @@ if(MSVC)
   # CMake now adds the runtime library and debug information flags itself,
   # from the variables above; drop the copies that build directories
   # configured before we required CMake 3.25 still have in their cache.
-  # only CXX is enabled at this point: setting the C flag variables here
-  # would hide the defaults CMake gives C once src/cpp enables it
-  foreach(CONFIG DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
-    string(REGEX REPLACE "/(MDd?|Zi)" "" CMAKE_CXX_FLAGS_${CONFIG} "${CMAKE_CXX_FLAGS_${CONFIG}}")
+  # edit the cache entries in place: only CXX is enabled at this point, and
+  # a normal variable set here would hide the defaults CMake gives C once
+  # src/cpp enables it
+  foreach(LANG C CXX)
+    foreach(CONFIG DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
+      set(CACHED_FLAGS_VAR "CMAKE_${LANG}_FLAGS_${CONFIG}")
+      if("$CACHE{${CACHED_FLAGS_VAR}}" MATCHES "/(MDd?|Z[iI])")
+        string(REGEX REPLACE " */(MDd?|Z[iI])" "" CACHED_FLAGS "$CACHE{${CACHED_FLAGS_VAR}}")
+        string(STRIP "${CACHED_FLAGS}" CACHED_FLAGS)
+        set_property(CACHE ${CACHED_FLAGS_VAR} PROPERTY VALUE "${CACHED_FLAGS}")
+      endif()
+    endforeach()
   endforeach()
 
   # disable CMake's automatic manifest generation (we always provide our own)

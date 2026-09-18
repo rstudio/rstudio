@@ -114,21 +114,30 @@ build <- function(arch, config) {
    boost_name <- sprintf("boost-%s-win-msvc%s-%s-static", BOOST_VERSION, MSVC_TOOLSET_VERSION, tolower(config))
    boost_root <- file.path(output_dir, boost_name, boost_arch)
 
+   # SOCI's Boost lookup is optional and quiet: on a miss it would build
+   # without Boost, or against some other Boost, and not say so
+   boost_cmake_dir <- file.path(boost_root, "lib/cmake", paste0("Boost-", BOOST_VERSION))
+   if (!file.exists(file.path(boost_cmake_dir, "BoostConfig.cmake")))
+      fatal("Boost CMake package not found at '%s'; run install-boost first", boost_cmake_dir)
+
    sqlite_library_name <- sprintf("sqlite3-%s-%s.lib", tolower(config), arch)
    sqlite_library_path <- file.path(sqlite_dir, sqlite_library_name)
 
-   # put together intro big string; Boost_ROOT (CMP0074) points SOCI's
-   # find_package(Boost) at the BoostConfig.cmake in our Boost prebuilts, and
-   # CMP0167 keeps it off CMake's deprecated FindBoost module (CMake 3.30+)
+   # put together intro big string; Boost_DIR points SOCI's find_package(Boost)
+   # straight at the BoostConfig.cmake in our Boost prebuilts, and CMP0167
+   # keeps it off CMake's deprecated FindBoost module (CMake 3.30+).
+   # Debug and Release share a build directory, so also drop the Boost
+   # component packages (boost_headers_DIR, ...) cached by the other one:
+   # CMake would otherwise keep using them
    args <- interpolate('
       -G "{CMAKE_GENERATOR}"
       -A {winarch}
       -DCMAKE_VERBOSE_MAKEFILE=ON
-      -DCMAKE_POLICY_DEFAULT_CMP0074=NEW
       -DCMAKE_POLICY_DEFAULT_CMP0167=NEW
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5
       -DCMAKE_CXX_FLAGS="/FS /EHsc"
-      -DBoost_ROOT="{boost_root}"
+      -U "boost_*_DIR"
+      -DBoost_DIR="{boost_cmake_dir}"
       -DBoost_USE_STATIC_LIBS=ON
       -DSOCI_TESTS=OFF
       -DSOCI_SHARED=OFF
