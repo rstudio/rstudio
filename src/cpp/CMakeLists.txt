@@ -16,6 +16,15 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.25)
 
+# never fall back to CMake's deprecated FindBoost module; find_package(Boost)
+# uses Boost's own BoostConfig.cmake, which also honors BOOST_ROOT
+if(POLICY CMP0167)
+   cmake_policy(SET CMP0167 NEW)
+endif()
+if(POLICY CMP0144)
+   cmake_policy(SET CMP0144 NEW)
+endif()
+
 # initialize
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/init.cmake")
 
@@ -186,11 +195,6 @@ list(GET RSTUDIO_BOOST_VERSION_LIST 0 RSTUDIO_BOOST_VERSION_MAJOR)
 list(GET RSTUDIO_BOOST_VERSION_LIST 1 RSTUDIO_BOOST_VERSION_MINOR)
 list(GET RSTUDIO_BOOST_VERSION_LIST 2 RSTUDIO_BOOST_VERSION_PATCH)
 
-# disable system boost if we're not using it.
-if(NOT RSTUDIO_USE_SYSTEM_BOOST)
-   set(Boost_NO_SYSTEM_PATHS ON)
-endif()
-
 # disable Boost Signals deprecation warning
 add_definitions(-DBOOST_SIGNALS_NO_DEPRECATION_WARNING)
 
@@ -214,13 +218,11 @@ if(UNIX)
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
-      # find headers
+      # find headers; search only our copy, since it uses its own namespace
       set(Boost_USE_STATIC_LIBS ON)
-      set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} HINTS "${RSTUDIO_TOOLS_BOOST}" EXACT REQUIRED)
-      if(NOT Boost_VERSION LESS 106900)
-         list(REMOVE_ITEM BOOST_LIBS signals)
-      endif()
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT CONFIG REQUIRED
+         PATHS "${RSTUDIO_TOOLS_BOOST}"
+         NO_DEFAULT_PATH)
 
       # define library list manually (find_package doesn't always pick them up)
       set(BOOST_LIB_DIR ${RSTUDIO_TOOLS_BOOST}/lib)
@@ -230,11 +232,15 @@ if(UNIX)
       message(STATUS "Using RStudio-provided Boost ${RSTUDIO_BOOST_REQUESTED_VERSION}")
    else()
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=boost)
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
-      if(NOT Boost_VERSION LESS 106900)
-         list(REMOVE_ITEM BOOST_LIBS signals)
+
+      # unless system Boost was requested, stay out of the system locations
+      # (as FindBoost's Boost_NO_SYSTEM_PATHS, which we used to set, did)
+      if(NOT RSTUDIO_USE_SYSTEM_BOOST)
+         set(BOOST_FIND_OPTIONS NO_CMAKE_SYSTEM_PATH NO_SYSTEM_ENVIRONMENT_PATH)
       endif()
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} CONFIG REQUIRED
+         COMPONENTS ${BOOST_LIBS}
+         ${BOOST_FIND_OPTIONS})
    endif()
 
 # WIN32 BOOST
@@ -257,9 +263,8 @@ else()
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-${RSTUDIO_BOOST_REQUESTED_VERSION}-win-msvc${MSVC_TOOLSET_VERSION}-debug-static/boost${BOOST_ARCH}")
    endif()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}")
-   # CMake 4.x removed FindBoost.cmake (CMP0167). Since the Windows path
-   # hard-codes every Boost path, bypass find_package and wire up
-   # Boost_INCLUDE_DIRS directly -- equivalent validation without the module.
+   # the Windows path hard-codes every Boost path, so skip find_package and
+   # wire up Boost_INCLUDE_DIRS and Boost_LIBRARIES directly
    if(NOT EXISTS "${BOOST_INCLUDEDIR}")
       message(FATAL_ERROR
          "Boost prebuilts for the MSVC ${MSVC_TOOLSET_VERSION} toolset were not found:\n"

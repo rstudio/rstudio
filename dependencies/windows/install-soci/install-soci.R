@@ -113,28 +113,22 @@ build <- function(arch, config) {
    boost_arch <- if (arch == "x86") "boost32" else "boost64"
    boost_name <- sprintf("boost-%s-win-msvc%s-%s-static", BOOST_VERSION, MSVC_TOOLSET_VERSION, tolower(config))
    boost_root <- file.path(output_dir, boost_name, boost_arch)
-   boost_include_dir <- list.files(file.path(boost_root, "include"), full.names = TRUE)
-   boost_library_dir <- file.path(boost_root, "lib")
-
-   boost_version_major <- format(numeric_version(BOOST_VERSION)[1, 1])
-   boost_version_minor <- format(numeric_version(BOOST_VERSION)[1, 2])
-   boost_version_patch <- format(numeric_version(BOOST_VERSION)[1, 3])
 
    sqlite_library_name <- sprintf("sqlite3-%s-%s.lib", tolower(config), arch)
    sqlite_library_path <- file.path(sqlite_dir, sqlite_library_name)
 
-   # put together intro big string
+   # put together intro big string; Boost_ROOT (CMP0074) points SOCI's
+   # find_package(Boost) at the BoostConfig.cmake in our Boost prebuilts, and
+   # CMP0167 keeps it off CMake's deprecated FindBoost module (CMake 3.30+)
    args <- interpolate('
       -G "{CMAKE_GENERATOR}"
       -A {winarch}
       -DCMAKE_VERBOSE_MAKEFILE=ON
+      -DCMAKE_POLICY_DEFAULT_CMP0074=NEW
+      -DCMAKE_POLICY_DEFAULT_CMP0167=NEW
       -DCMAKE_POLICY_VERSION_MINIMUM=3.5
       -DCMAKE_CXX_FLAGS="/FS /EHsc"
-      -DBOOST_INCLUDEDIR="{boost_include_dir}"
-      -DBOOST_LIBRARYDIR="{boost_library_dir}"
-      -DBoost_MAJOR_VERSION="{boost_version_major}"
-      -DBoost_MINOR_VERSION="{boost_version_minor}"
-      -DBoost_SUBMINOR_VERSION="{boost_version_patch}"
+      -DBoost_ROOT="{boost_root}"
       -DBoost_USE_STATIC_LIBS=ON
       -DSOCI_TESTS=OFF
       -DSOCI_SHARED=OFF
