@@ -71,13 +71,14 @@ set(CMAKE_WARN_DEPRECATED FALSE)
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION;CFLAGS;CXXFLAGS;DEPNAME;HOMEPAGE;LICENSE;LICENSE_PATH;AUTHOR;ATTRIBUTION" "PLATFORMS")
 
    set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
    set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
    set(${_NAME}_REVISION   "${_REVISION}"   CACHE INTERNAL "")
    set(${_NAME}_CUSTOM     "${_CUSTOM}"     CACHE INTERNAL "")
    set(${_NAME}_PLATFORMS  "${_PLATFORMS}"  CACHE INTERNAL "")
+   set(${_NAME}_CFLAGS     "${_CFLAGS}"     CACHE INTERNAL "")
    set(${_NAME}_CXXFLAGS   "${_CXXFLAGS}"   CACHE INTERNAL "")
 
    set(${_NAME}_ENABLED FALSE)
@@ -199,9 +200,12 @@ function(fetch)
 
       if(${_PREFIX}_FETCHED)
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
+         set(_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
          set(_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+         set(CMAKE_C_FLAGS "${${_PREFIX}_CFLAGS} ${CMAKE_C_FLAGS}")
          set(CMAKE_CXX_FLAGS "${${_PREFIX}_CXXFLAGS} ${CMAKE_CXX_FLAGS}")
          FetchContent_MakeAvailable("${_NAME}")
+         set(CMAKE_C_FLAGS "${_CMAKE_C_FLAGS}")
          set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS}")
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
@@ -265,6 +269,15 @@ set(USE_BUNDLED_ZLIB OFF CACHE BOOL "" FORCE)
 # its own compiler flags; use the DLL runtime that the rest of the build uses
 # (CMAKE_MSVC_RUNTIME_LIBRARY, see cmake/compiler.cmake), so the two agree
 set(STATIC_CRT OFF CACHE BOOL "" FORCE)
+
+# libgit2 builds as strict C90 with _GNU_SOURCE, but only defines _GNU_SOURCE
+# after its configure checks have run. Those checks now compile as C90 as well
+# (CMP0067: CMake's check functions take the policies of whoever includes them
+# first, which is us), and without _GNU_SOURCE glibc then hides what they look
+# for (e.g. struct stat's st_mtim), so define it for the checks too
+if(NOT MSVC)
+   set(LIBGIT2_CFLAGS "-D_GNU_SOURCE")
+endif()
 
 # Choose libgit2's regex backend. On Windows we use the bundled PCRE ("builtin"),
 # matching libgit2's own auto-detected default there. On Unix we use the libc
