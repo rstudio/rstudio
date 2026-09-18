@@ -62,8 +62,12 @@ runSessionScript <- function(blockSourceDatabase = FALSE) {
              "--log-stderr=1", "--run-script", "writeLines('executed', 'script-ran')")
    if (identical(Sys.info()[["sysname"]], "Darwin"))
    {
-      # Match rstudio-tests: macOS needs a controlling TTY for clean teardown.
-      args <- c("-q", "/dev/null", session, args)
+      # Match rstudio-tests: macOS needs a controlling TTY for clean teardown,
+      # and rsession resolves libR symbols only when libR is preloaded. SIP
+      # strips DYLD_* variables when launching /usr/bin/script, so env sets
+      # the preload after script starts.
+      preload <- paste0("DYLD_INSERT_LIBRARIES=", file.path(R.home("lib"), "libR.dylib"))
+      args <- c("-q", "/dev/null", "/usr/bin/env", preload, session, args)
       session <- "/usr/bin/script"
    }
 

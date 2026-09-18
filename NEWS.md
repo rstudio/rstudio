@@ -24,6 +24,7 @@
 
 ### Fixed
 - ([#18870](https://github.com/rstudio/rstudio/issues/18870)): Fixed an issue where a Restart R that took more than about ten seconds to come back left the console without focus and its prompt unrefreshed, and kept showing the previous R version after a restart into a different R.
+- ([#18864](https://github.com/rstudio/rstudio/issues/18864)): Fixed an RStudio Server crash (segfault) when downloading or exporting a file the user has no read permission on. The download now fails gracefully with an HTTP error instead of streaming from a file stream that never opened.
 - ([#18744](https://github.com/rstudio/rstudio/issues/18744)): RStudio now checks both file-lock types before recovering source documents and reports an error instead of reusing a source database held by another session.
 - ([#18754](https://github.com/rstudio/rstudio/issues/18754)): Fixed an issue where debugging a package function called from another function failed to show and step through its source code.
 - ([#18799](https://github.com/rstudio/rstudio/issues/18799)): Closing a Quarto document's source tab no longer cancels an in-progress render when the preview option is set to "(No Preview)".

@@ -45,6 +45,11 @@ public class ContextDepthChangedEvent extends
       return contextData_.contextDepth();
    }
 
+   public int getBrowseFrameDepth()
+   {
+      return contextData_.browseFrameDepth();
+   }
+
    public JsArray<RObject> getEnvironmentList()
    {
       return contextData_.environmentList();
