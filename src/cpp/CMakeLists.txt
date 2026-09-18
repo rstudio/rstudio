@@ -151,7 +151,9 @@ else()
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
    # CMake no longer adds a default warning level; keep the /W3 it used to add.
-   # cmake/compiler.cmake does this for C++, but runs before C is enabled
+   # cmake/compiler.cmake does this for C++. it can't for C: when configuring
+   # from the root it runs only there (its include guard skips our include
+   # above), where project() has enabled CXX alone
    if(NOT CMAKE_C_FLAGS MATCHES "/W[0-4]")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
    endif()
@@ -277,7 +279,8 @@ if(UNIX)
             "Could not find Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} or newer with all of "
             "the components RStudio needs; CMake's messages above may say why.\n"
             "Boost is found through the CMake package files it installs "
-            "(<prefix>/lib/cmake/Boost-<version>/BoostConfig.cmake), not through "
+            "(BoostConfig.cmake, in cmake/Boost-<version> under the library directory: "
+            "<prefix>/lib, lib64 or lib/<arch>), not through "
             "CMake's FindBoost module. A Boost installed without them (b2 "
             "--no-cmake-config, or a distribution package that leaves them out) "
             "cannot be used.\n"

@@ -112,9 +112,9 @@ if(MSVC)
   # CMake now adds the runtime library and debug information flags itself,
   # from the variables above; drop the copies that build directories
   # configured before we required CMake 3.25 still have in their cache.
-  # edit the cache entries in place: only CXX is enabled at this point, and
-  # a normal variable set here would hide the defaults CMake gives C once
-  # src/cpp enables it
+  # edit the cache entries in place: when configuring from the root, only CXX
+  # is enabled at this point, and a normal variable set here would hide the
+  # defaults CMake gives C once src/cpp enables it
   foreach(LANG C CXX)
     foreach(CONFIG DEBUG RELEASE MINSIZEREL RELWITHDEBINFO)
       set(CACHED_FLAGS_VAR "CMAKE_${LANG}_FLAGS_${CONFIG}")

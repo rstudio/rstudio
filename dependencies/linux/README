@@ -13,10 +13,12 @@ systems. Specific version requirements for various components include:
 
 Boost is normally built by the install-dependencies scripts described below.
 To build against a system Boost instead (-DRSTUDIO_USE_SYSTEM_BOOST=1), that
-Boost must come with its CMake package files (BoostConfig.cmake, installed
-under <prefix>/lib/cmake/Boost-<version>): RStudio finds Boost through them,
-and no longer through CMake's deprecated FindBoost module. Set Boost_ROOT (or
-BOOST_ROOT) to use a Boost outside of the default search locations.
+Boost must come with its CMake package files (BoostConfig.cmake, installed in
+cmake/Boost-<version> under the library directory: <prefix>/lib, lib64, or a
+multiarch lib/<arch> such as /usr/lib/x86_64-linux-gnu): RStudio finds Boost
+through them, and no longer through CMake's deprecated FindBoost module. Set
+Boost_ROOT (or BOOST_ROOT) to use a Boost outside of the default search
+locations.
 
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
 =============================================================================
